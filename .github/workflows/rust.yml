@@ -3,9 +3,9 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
+    steps:    
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --verbose
+      run: cd server && cargo build --verbose
     - name: Run tests
-      run: cargo test --verbose
+      run: cd server && cargo test --verbose
