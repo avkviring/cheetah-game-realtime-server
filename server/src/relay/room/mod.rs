@@ -1,3 +1,3 @@
-pub mod structs;
 pub mod room;
-pub mod users;
+pub mod clients;
+pub mod object;

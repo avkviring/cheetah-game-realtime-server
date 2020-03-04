@@ -1,2 +1,3 @@
 mod room;
+mod object;
 

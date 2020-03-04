@@ -1,29 +1,37 @@
+use crate::relay::room::clients::ClientConfiguration;
 use crate::relay::room::room::Room;
-use crate::relay::room::structs::UserAuth;
 use crate::test::relay::network::StubConnector;
 
-/// Коннект пользователя, который был заявлен в списке пользователей
+const CLIENT_A_HASH: &str = "CLIENT-A-HASH";
+const CLIENT_B_HASH: &str = "CLIENT-B-HASH";
+
+/// Коннект клиента, который был заявлен в списке клиентов
 #[test]
-fn room_user_connect<'a>() {
-    let hashA = "HDJF-OKRD-KDNFK-PWLEO";
-    let mut room = Room::new(vec![UserAuth::new(hashA)]);
-    let mut connector = StubConnector {};
-    let result = room.connect(hashA.to_string(), &mut connector);
+fn room_client_connect() {
+    let mut room = setup();
+    let result = room.connect(CLIENT_A_HASH.to_string());
 
     assert_eq!(result.is_ok(), true);
-    assert_eq!(room.waiting_users.len(), 0);
-    assert_eq!(room.users.len(), 1);
+    assert_eq!(room.waiting_clients.len(), 0);
+    assert_eq!(room.clients.len(), 1);
+
+    let groups = room.clients.first().unwrap().configuration.groups.clone();
+    assert_eq!(groups.get(0).unwrap(), true);
+    assert_eq!(groups.get(3).unwrap(), false);
 }
 
-
-/// Коннект пользователя, который не был заявлен в списке пользователей
+/// Коннект клиента, который не был заявлен в списке клиентов
 #[test]
-fn room_user_connect_when_user_not_found<'a>() {
-    let hashA = "HDJF-OKRD-KDNFK-PWLEO";
-    let mut room = Room::new(vec![UserAuth::new(hashA)]);
-    let mut connector = StubConnector {};
-    let result = room.connect("NOT-FOUND-USER-HASH".to_string(), &mut connector);
+fn room_client_connect_when_client_not_found() {
+    let mut room = setup();
+    let result = room.connect("NOT-FOUND-USER-HASH".to_string());
     assert_eq!(result.is_err(), true);
 }
 
 
+fn setup() -> Room {
+    let client_a_group = vec![0, 1, 2];
+    let mut room = Room::new();
+    room.add_waiting_client(CLIENT_A_HASH, client_a_group);
+    room
+}
