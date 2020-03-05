@@ -25,6 +25,11 @@ pub struct Room {
     client_id_generator: u16,
 }
 
+pub enum CreateObjectError {
+    ClientNotFound,
+    IncorrectGroups,
+}
+
 
 impl<'a> Room {
     pub fn new() -> Self {
@@ -67,20 +72,29 @@ impl<'a> Room {
     /// owner - идентификатор клиента
     /// local_object_id - идентификатор объекта в рамках клиента
     /// groups - список групп
-    pub fn create_client_game_object(&mut self, owner: u16, local_object_id: u32, groups: Vec<u8>) -> u64 {
-        let client = self.get_client(owner).unwrap();
+    pub fn create_client_game_object(&mut self, owner: u16, local_object_id: u32, groups: Vec<u8>) -> Result<u64, CreateObjectError> {
+        let client = self.get_client(owner);
 
+        if client.is_none() {
+            return Result::Err(CreateObjectError::ClientNotFound);
+        }
 
+        let client_groups = &client.unwrap().configuration.groups;
         let objectGroups = if groups.is_empty() {
-            AccessGroups::new_from_groups(&client.configuration.groups)
+            AccessGroups::new_from_groups(client_groups)
         } else {
-            AccessGroups::new_from_vec(groups)
+            let _groups = AccessGroups::new_from_vec(&groups);
+            if !client_groups.contains_groups(&_groups) {
+                return Result::Err(CreateObjectError::IncorrectGroups);
+            }
+            _groups
         };
+
 
         let object = GameObject::new(owner, local_object_id, objectGroups);
         let id = object.id;
         self.objects.insert(object);
-        return id;
+        return Result::Ok(id);
     }
 
     pub fn get_client(&self, client: u16) -> Option<&Client> {
@@ -97,7 +111,7 @@ impl<'a> Room {
         let configuration = ClientConfiguration {
             id: client_id,
             hash: hash.to_string(),
-            groups: AccessGroups::new_from_vec(groups),
+            groups: AccessGroups::new_from_vec(&groups),
         };
         self.waiting_clients.push(configuration);
         return client_id;
@@ -108,3 +122,5 @@ impl<'a> Room {
         return self.client_id_generator;
     }
 }
+
+

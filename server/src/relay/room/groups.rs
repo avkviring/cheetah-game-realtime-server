@@ -13,18 +13,28 @@ impl AccessGroups {
         }
     }
 
-    pub fn new_from_vec(groups: Vec<u8>) -> AccessGroups {
+    pub fn new_from_vec(groups: &Vec<u8>) -> AccessGroups {
         let mut bit_array = BitArray::<u64, U64>::from_elem(false);
         for x in groups {
-            bit_array.set(x as usize, true)
+            bit_array.set(*x as usize, true)
         }
         AccessGroups {
             groups: bit_array
         }
     }
 
+    pub fn contains_group(&self, group: usize) -> bool {
+        return self.groups.get(group).unwrap();
+    }
 
-    pub fn contains_group(&self, group: u8) -> bool {
-        return self.groups.get(group as usize).unwrap();
+    pub fn contains_groups(&self, groups: &AccessGroups) -> bool {
+        for i in 0..groups.groups.len() {
+            if groups.contains_group(i) {
+                if !self.contains_group(i) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
