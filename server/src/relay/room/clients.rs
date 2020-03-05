@@ -6,6 +6,7 @@ use bit_array::BitArray;
 use typenum::{U64, Unsigned};
 
 use crate::relay::room::room::Room;
+use crate::relay::room::groups::AccessGroups;
 
 /// Ожидаемый клиент
 pub struct ClientConfiguration {
@@ -14,7 +15,7 @@ pub struct ClientConfiguration {
     /// авторизационный хеш
     pub hash: String,
     /// группы
-    pub groups: BitArray<u64, U64>,
+    pub groups: AccessGroups,
 }
 
 /// Клиент в комнате

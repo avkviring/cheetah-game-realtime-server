@@ -13,11 +13,11 @@ fn room_client_connect() {
 
     assert_eq!(result.is_ok(), true);
     assert_eq!(room.waiting_clients.len(), 0);
-    assert_eq!(room.clients.len(), 1);
+    assert_eq!(room.get_clients().len(), 1);
 
-    let groups = room.clients.first().unwrap().configuration.groups.clone();
-    assert_eq!(groups.get(0).unwrap(), true);
-    assert_eq!(groups.get(3).unwrap(), false);
+    let groups = &room.get_clients().last().unwrap().configuration.groups;
+    assert_eq!(groups.contains_group(0), true);
+    assert_eq!(groups.contains_group(3), false);
 }
 
 /// Коннект клиента, который не был заявлен в списке клиентов
