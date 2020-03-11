@@ -7,6 +7,11 @@ pub struct AccessGroups {
 }
 
 impl AccessGroups {
+
+    pub fn new() -> AccessGroups {
+        AccessGroups::new_from_vec(&Vec::<u8>::new())
+    }
+
     pub fn new_from_groups(groups: &AccessGroups) -> AccessGroups {
         AccessGroups {
             groups: groups.groups.clone()

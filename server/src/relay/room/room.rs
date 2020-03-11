@@ -41,7 +41,7 @@ impl<'a> Room {
         }
     }
 
-    /// Присоединение клиениа к комнате
+    /// Присоединение клиента к комнате
     /// Хеш клиента должен быть в списке ожидающих клиентов
     pub fn connect(&mut self, client_hash: String) -> Result<(), ()> {
         let result =
@@ -68,19 +68,28 @@ impl<'a> Room {
         };
     }
 
+    /// разрыв связи с пользователем
+    /// окончательный
+    /// реконекты обеспечиывает сетевая часть
+    pub fn disconnect(&mut self, client_id: u16) -> Option<Client> {
+        let option = self.clients.remove(&client_id);
+        if option.is_some() {
+            self.objects.remove_objects_by_owner(client_id)
+        }
+        return option;
+    }
+
     /// Создание клиентского игрового объекта
     /// owner - идентификатор клиента
     /// local_object_id - идентификатор объекта в рамках клиента
     /// groups - список групп
-    pub fn create_client_game_object(&mut self, owner: u16, local_object_id: u32, groups: Vec<u8>) -> Result<u64, CreateObjectError> {
+    pub fn create_client_game_object(&mut self, owner: u16, local_object_id: u32, groups: &Vec<u8>) -> Result<u64, CreateObjectError> {
         let client = self.get_client(owner);
-
         if client.is_none() {
             return Result::Err(CreateObjectError::ClientNotFound);
         }
-
         let client_groups = &client.unwrap().configuration.groups;
-        let objectGroups = if groups.is_empty() {
+        let object_groups = if groups.is_empty() {
             AccessGroups::new_from_groups(client_groups)
         } else {
             let _groups = AccessGroups::new_from_vec(&groups);
@@ -89,13 +98,22 @@ impl<'a> Room {
             }
             _groups
         };
+        self.create_game_object(owner, local_object_id, object_groups)
+    }
 
+    /// Создание игрового объекта от root-а
+    /// object_id - идентификатор объекта
+    pub fn create_root_game_object(&mut self, object_id: u32, groups: &Vec<u8>) -> Result<u64, CreateObjectError> {
+        self.create_game_object(0, object_id, AccessGroups::new_from_vec(groups))
+    }
 
-        let object = GameObject::new(owner, local_object_id, objectGroups);
+    fn create_game_object(&mut self, owner: u16, local_object_id: u32, groups: AccessGroups) -> Result<u64, CreateObjectError> {
+        let object = GameObject::new(owner, local_object_id, groups);
         let id = object.id;
         self.objects.insert(object);
         return Result::Ok(id);
     }
+
 
     pub fn get_client(&self, client: u16) -> Option<&Client> {
         return self.clients.get(&client);

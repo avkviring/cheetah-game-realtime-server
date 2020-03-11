@@ -20,21 +20,21 @@ fn create_group_from_group() {
 
 #[test]
 fn contains_group_should_true_when_equals() {
-    let groupA = AccessGroups::new_from_vec(&vec![25, 50]);
-    let groupB = AccessGroups::new_from_vec(&vec![25, 50]);
-    assert_eq!(groupA.contains_groups(&groupB), true)
+    let group_a = AccessGroups::new_from_vec(&vec![25, 50]);
+    let group_b = AccessGroups::new_from_vec(&vec![25, 50]);
+    assert_eq!(group_a.contains_groups(&group_b), true)
 }
 
 #[test]
 fn contains_group_should_true_when_subgroup() {
-    let groupA = AccessGroups::new_from_vec(&vec![25, 50]);
-    let groupB = AccessGroups::new_from_vec(&vec![25]);
-    assert_eq!(groupA.contains_groups(&groupB), true)
+    let group_a = AccessGroups::new_from_vec(&vec![25, 50]);
+    let group_b = AccessGroups::new_from_vec(&vec![25]);
+    assert_eq!(group_a.contains_groups(&group_b), true)
 }
 
 #[test]
 fn contains_group_should_false() {
-    let groupA = AccessGroups::new_from_vec(&vec![25, 50]);
-    let groupB = AccessGroups::new_from_vec(&vec![15]);
-    assert_eq!(groupA.contains_groups(&groupB), false)
+    let group_a = AccessGroups::new_from_vec(&vec![25, 50]);
+    let group_b = AccessGroups::new_from_vec(&vec![15]);
+    assert_eq!(group_a.contains_groups(&group_b), false)
 }
