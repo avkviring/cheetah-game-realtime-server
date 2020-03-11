@@ -8,7 +8,8 @@ use typenum::U64;
 use crate::relay::network::Connector;
 use crate::relay::room::clients::{Client, ClientConfiguration};
 use crate::relay::room::groups::AccessGroups;
-use crate::relay::room::object::{GameObject, Objects};
+use crate::relay::room::object::GameObject;
+use crate::relay::room::objects::Objects;
 
 /// Описание комнаты
 /// Комната - совокупность всех игроков, например битва.

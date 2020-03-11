@@ -2,10 +2,9 @@ use std::collections::HashMap;
 use std::iter::Map;
 use std::ops::Shl;
 
+use bytes::Bytes;
+
 use crate::relay::room::groups::AccessGroups;
-
-type DataId = u32;
-
 
 /// Игровой объект
 /// содержит данные от пользователей
@@ -13,9 +12,9 @@ pub struct GameObject {
     pub id: u64,
     pub owner: u16,
     /// счетчики
-    counters: HashMap<DataId, DataCounter>,
+    counters: HashMap<u16, DataCounter>,
     /// структуры (для сервера это массивы данных)
-    structs: HashMap<DataId, DataStruct>,
+    structs: HashMap<u16, DataStruct>,
     /// группы доступа
     pub groups: AccessGroups,
 }
@@ -27,7 +26,7 @@ pub struct DataCounter {
 
 /// данные
 pub struct DataStruct {
-    data: Box<[u8]>
+    data: Bytes
 }
 
 impl GameObject {
@@ -40,50 +39,26 @@ impl GameObject {
             groups,
         }
     }
-}
 
-/// Хранение и управление списком игровых объектов
-pub struct Objects {
-    objects: HashMap<u64, GameObject>,
-}
-
-impl Objects {
-    pub fn new() -> Objects {
-        Objects {
-            objects: Default::default()
-        }
+    pub fn update_struct(&mut self, struct_id: u16, data: &[u8]) {
+        self.structs.insert(struct_id, DataStruct { data: Bytes::copy_from_slice(data) });
     }
 
-    pub fn insert(&mut self, object: GameObject) {
-        self.objects.insert(object.id, object);
+    pub fn get_struct(&self, struct_id: u16) -> Option<&Bytes> {
+        self.structs.get(&struct_id).map(|f| &f.data)
     }
 
-    pub fn get(&mut self, id: u64) -> Option<&GameObject> {
-        return self.objects.get(&id);
+    pub fn set_counter(&mut self, counter_id: u16, value: i64) {
+        self.counters.insert(counter_id, DataCounter { counter: value });
     }
 
-    pub fn len(&mut self) -> usize {
-        return self.objects.len();
+    pub fn get_counter(&mut self, counter_id: u16) -> i64 {
+        self.counters.get(&counter_id).map(|f| f.counter).unwrap_or(0)
     }
 
-    pub fn remove_objects_by_owner(&mut self, owner: u16) {
-        let object_for_remove: Vec<u64> = self.objects
-            .values()
-            .filter(|o| o.owner == owner)
-            .map(|f| f.id)
-            .collect();
-
-
-        for object_id in object_for_remove {
-            self.objects.remove(&object_id);
-        }
+    pub fn increment_counter(&mut self, counter_id: u16, value: i64) {
+        let current = self.get_counter(counter_id);
+        self.set_counter(counter_id, current + value)
     }
 }
 
-impl Default for Objects {
-    fn default() -> Self {
-        Objects {
-            objects: Default::default(),
-        }
-    }
-}
