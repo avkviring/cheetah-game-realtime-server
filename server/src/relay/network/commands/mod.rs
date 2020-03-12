@@ -12,6 +12,8 @@ pub trait CommandDecoder {
     const COMMAND_ID: u8;
 
     /// Декодирование команды
+    /// bytes - массив байт, из которого будет прочитана информация
+    /// если результат Option::None то указатель данных в bytes будет сброшен в начало
     fn decode(bytes: &mut Bytes) -> Option<Box<dyn ClientCommandExecutor>>;
 }
 

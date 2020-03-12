@@ -31,15 +31,18 @@ impl Decoder {
     fn decode(&mut self, bytes: &mut Bytes) -> bool {
         // TODO - организовать цикл
         // TODO - организовать накопление данных
-        if bytes.len() > 1 {
-            let command_code = bytes.get_u8();
+        while bytes.has_remaining() {
+            let slice_for_read = &mut bytes.slice(0..bytes.len());
+            let command_code = slice_for_read.get_u8();
             let command: Option<Box<dyn ClientCommandExecutor>> = match command_code {
-                CreateGameObject::COMMAND_ID => CreateGameObject::decode(bytes),
-                DeleteGameObject::COMMAND_ID => DeleteGameObject::decode(bytes),
+                CreateGameObject::COMMAND_ID => CreateGameObject::decode(slice_for_read),
+                DeleteGameObject::COMMAND_ID => DeleteGameObject::decode(slice_for_read),
                 _ => Option::None
             };
+
             if command.is_some() {
-                self.commands.push(command.unwrap())
+                self.commands.push(command.unwrap());
+                bytes.advance(bytes.remaining() - slice_for_read.remaining());
             }
         };
         return self.commands.len() > 0;
