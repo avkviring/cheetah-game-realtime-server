@@ -1,2 +1,3 @@
-/// Абстракция для сетевого взаимодействия с пользователем
-pub trait Connector {}
+pub mod client;
+pub mod decoder;
+pub mod commands;

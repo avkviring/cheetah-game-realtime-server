@@ -5,8 +5,9 @@ use std::collections::{HashMap, HashSet};
 use bit_array::BitArray;
 use typenum::{U64, Unsigned};
 
-use crate::relay::room::room::Room;
+use crate::relay::network::client::ClientStream;
 use crate::relay::room::groups::AccessGroups;
+use crate::relay::room::room::Room;
 
 /// Ожидаемый клиент
 pub struct ClientConfiguration {
@@ -21,7 +22,9 @@ pub struct ClientConfiguration {
 /// Клиент в комнате
 pub struct Client {
     /// конфигурация клиента
-    pub configuration: ClientConfiguration
+    pub configuration: ClientConfiguration,
+    /// сетевой поток клиента
+    pub stream: ClientStream,
 }
 
 /// Группа пользователей

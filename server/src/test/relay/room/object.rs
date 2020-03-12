@@ -9,7 +9,6 @@ use crate::relay::room::clients::ClientConfiguration;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::object::GameObject;
 use crate::relay::room::room::Room;
-use crate::test::relay::network::StubConnector;
 
 #[test]
 fn should_store_struct_data_in_game_object() {

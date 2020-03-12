@@ -1,5 +1,5 @@
 use bit_array::BitArray;
-use typenum::{U64, Unsigned};
+use typenum::U64;
 
 /// Группа доступа
 pub struct AccessGroups {

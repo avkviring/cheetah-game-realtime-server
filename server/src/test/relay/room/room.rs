@@ -1,6 +1,5 @@
 use crate::relay::room::clients::ClientConfiguration;
 use crate::relay::room::room::Room;
-use crate::test::relay::network::StubConnector;
 
 const CLIENT_A_HASH: &str = "CLIENT-A-HASH";
 const CLIENT_B_HASH: &str = "CLIENT-B-HASH";

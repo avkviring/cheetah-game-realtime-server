@@ -5,11 +5,11 @@ use std::ops::Shl;
 use bit_array::BitArray;
 use typenum::U64;
 
-use crate::relay::network::Connector;
 use crate::relay::room::clients::{Client, ClientConfiguration};
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::object::GameObject;
 use crate::relay::room::objects::Objects;
+use crate::relay::network::client::ClientStream;
 
 /// Описание комнаты
 /// Комната - совокупность всех игроков, например битва.
@@ -59,7 +59,8 @@ impl<'a> Room {
                 self.clients.insert(
                     client_configuration.id,
                     Client {
-                        configuration: client_configuration
+                        configuration: client_configuration,
+                        stream: ClientStream::stub(),
                     });
                 Result::Ok(())
             }
