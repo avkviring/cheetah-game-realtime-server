@@ -14,7 +14,6 @@ use crate::test::relay::network::StubConnector;
 #[test]
 fn should_store_struct_data_in_game_object() {
     let mut object = setup();
-
     let struct_id: u16 = 10;
     object.update_struct(struct_id, &[1, 2, 3]);
     let data = object.get_struct(struct_id);

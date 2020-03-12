@@ -91,9 +91,9 @@ impl<'a> Room {
         }
         let client_groups = &client.unwrap().configuration.groups;
         let object_groups = if groups.is_empty() {
-            AccessGroups::new_from_groups(client_groups)
+            client_groups.clone()
         } else {
-            let _groups = AccessGroups::new_from_vec(&groups);
+            let _groups = AccessGroups::from(groups);
             if !client_groups.contains_groups(&_groups) {
                 return Result::Err(CreateObjectError::IncorrectGroups);
             }
@@ -105,7 +105,7 @@ impl<'a> Room {
     /// Создание игрового объекта от root-а
     /// object_id - идентификатор объекта
     pub fn create_root_game_object(&mut self, object_id: u32, groups: &Vec<u8>) -> Result<u64, CreateObjectError> {
-        self.create_game_object(0, object_id, AccessGroups::new_from_vec(groups))
+        self.create_game_object(0, object_id, AccessGroups::from(groups))
     }
 
     fn create_game_object(&mut self, owner: u16, local_object_id: u32, groups: AccessGroups) -> Result<u64, CreateObjectError> {
@@ -130,7 +130,7 @@ impl<'a> Room {
         let configuration = ClientConfiguration {
             id: client_id,
             hash: hash.to_string(),
-            groups: AccessGroups::new_from_vec(&groups),
+            groups: AccessGroups::from(&groups),
         };
         self.waiting_clients.push(configuration);
         return client_id;

@@ -7,25 +7,8 @@ pub struct AccessGroups {
 }
 
 impl AccessGroups {
-
     pub fn new() -> AccessGroups {
-        AccessGroups::new_from_vec(&Vec::<u8>::new())
-    }
-
-    pub fn new_from_groups(groups: &AccessGroups) -> AccessGroups {
-        AccessGroups {
-            groups: groups.groups.clone()
-        }
-    }
-
-    pub fn new_from_vec(groups: &Vec<u8>) -> AccessGroups {
-        let mut bit_array = BitArray::<u64, U64>::from_elem(false);
-        for x in groups {
-            bit_array.set(*x as usize, true)
-        }
-        AccessGroups {
-            groups: bit_array
-        }
+        AccessGroups::from(&Vec::<u8>::new())
     }
 
     pub fn contains_group(&self, group: usize) -> bool {
@@ -41,5 +24,27 @@ impl AccessGroups {
             }
         }
         return true;
+    }
+}
+
+
+impl Clone for AccessGroups {
+    fn clone(&self) -> Self {
+        AccessGroups {
+            groups: self.groups.clone()
+        }
+    }
+}
+
+
+impl From<&Vec<u8>> for AccessGroups {
+    fn from(groups: &Vec<u8>) -> AccessGroups {
+        let mut bit_array = BitArray::<u64, U64>::from_elem(false);
+        for x in groups {
+            bit_array.set(*x as usize, true)
+        }
+        AccessGroups {
+            groups: bit_array
+        }
     }
 }
