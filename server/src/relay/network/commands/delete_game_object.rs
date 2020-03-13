@@ -1,6 +1,6 @@
-use bytes::Bytes;
+use bytebuffer::ByteBuffer;
 
-use crate::relay::network::commands::{ClientCommandExecutor, CommandDecoder};
+use crate::relay::network::commands::{ClientCommandDecoder, ClientCommandExecutor};
 use crate::relay::room::clients::Client;
 use crate::relay::room::room::Room;
 
@@ -10,10 +10,10 @@ pub struct DeleteGameObject {
 }
 
 
-impl CommandDecoder for DeleteGameObject {
+impl ClientCommandDecoder for DeleteGameObject {
     const COMMAND_ID: u8 = 2;
 
-    fn decode(bytes: &mut Bytes) -> Option<Box<ClientCommandExecutor>> {
+    fn decode(bytes: &mut ByteBuffer) -> Option<Box<ClientCommandExecutor>> {
         unimplemented!()
     }
 }

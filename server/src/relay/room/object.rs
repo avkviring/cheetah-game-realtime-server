@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::iter::Map;
 use std::ops::Shl;
 
-use bytes::Bytes;
-
 use crate::relay::room::groups::AccessGroups;
 
 /// Игровой объект
@@ -26,7 +24,7 @@ pub struct DataCounter {
 
 /// данные
 pub struct DataStruct {
-    data: Bytes
+    data: Vec<u8>
 }
 
 impl GameObject {
@@ -40,11 +38,11 @@ impl GameObject {
         }
     }
 
-    pub fn update_struct(&mut self, struct_id: u16, data: &[u8]) {
-        self.structs.insert(struct_id, DataStruct { data: Bytes::copy_from_slice(data) });
+    pub fn update_struct(&mut self, struct_id: u16, data: Vec<u8>) {
+        self.structs.insert(struct_id, DataStruct { data });
     }
 
-    pub fn get_struct(&self, struct_id: u16) -> Option<&Bytes> {
+    pub fn get_struct(&self, struct_id: u16) -> Option<&Vec<u8>> {
         self.structs.get(&struct_id).map(|f| &f.data)
     }
 

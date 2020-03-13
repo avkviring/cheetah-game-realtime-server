@@ -1,9 +1,7 @@
-use bytes::{Buf, BufMut, Bytes, BytesMut};
 
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::object::GameObject;
 use crate::relay::room::objects::Objects;
-use bytes::buf::{BufExt, BufMutExt};
 
 #[test]
 fn should_insert_objects() {
@@ -31,20 +29,4 @@ fn should_remove_objects_by_owner() {
 fn setup_game_objects() -> Objects {
     let objects = Objects::new();
     return objects;
-}
-
-#[test]
-fn test() {
-    let mut buf = Bytes::from("abcdef");
-    let mut slice = buf.slice(0..buf.len());
-    slice.get_u32();
-    buf.advance(buf.remaining() - slice.remaining());
-
-    println!("{} {}", buf.remaining(), slice.remaining());
-    println!("{} {}", buf.get_u8(), slice.get_u8());
-
-
-
-
-
 }

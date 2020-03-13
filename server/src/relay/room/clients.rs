@@ -31,3 +31,23 @@ pub struct Client {
 pub struct UsersGroup<'a> {
     users: Vec<&'a Client>,
 }
+
+
+impl ClientConfiguration {
+    fn stub() -> ClientConfiguration {
+        ClientConfiguration {
+            id: 0,
+            hash: "".to_string(),
+            groups: AccessGroups::new(),
+        }
+    }
+}
+
+impl Client {
+    pub(crate) fn stub() -> Client {
+        Client {
+            configuration: ClientConfiguration::stub(),
+            stream: ClientStream::stub(),
+        }
+    }
+}
