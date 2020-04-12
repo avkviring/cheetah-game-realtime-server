@@ -8,17 +8,15 @@ use std::rc::Rc;
 
 use bytebuffer::ByteBuffer;
 
-use crate::relay::network::commands::{ClientCommandExecutor, ClientCommandDecoder};
-use crate::relay::network::commands::create_game_object::CreateGameObject;
-use crate::relay::network::commands::delete_game_object::DeleteGameObject;
 use crate::relay::room::clients::Client;
 use crate::relay::room::room::Room;
+use crate::relay::network::command::c2s::C2SCommandExecutor;
 
 /// Декодирование сетевого потока в набор команд
 pub struct Decoder {
     client: Rc<Client>,
-    commands: Vec<Box<dyn ClientCommandExecutor>>,
-    decoders: HashMap<u8, fn(&mut ByteBuffer) -> Option<Box<dyn ClientCommandExecutor>>>,
+    commands: Vec<Box<dyn C2SCommandExecutor>>,
+    decoders: HashMap<u8, fn(&mut ByteBuffer) -> Option<Box<dyn C2SCommandExecutor>>>,
 }
 
 
@@ -31,7 +29,7 @@ impl Decoder {
         }
     }
 
-    pub fn add_decoder(&mut self, command_id: u8, decoder: fn(&mut ByteBuffer) -> Option<Box<dyn ClientCommandExecutor>>) {
+    pub fn add_decoder(&mut self, command_id: u8, decoder: fn(&mut ByteBuffer) -> Option<Box<dyn C2SCommandExecutor>>) {
         self.decoders.insert(command_id, decoder);
     }
 
@@ -43,7 +41,7 @@ impl Decoder {
             let command_code = bytes.read_u8().unwrap();
             let decoder = self.decoders.get(&command_code);
             if decoder.is_some() {
-                let command: Option<Box<dyn ClientCommandExecutor>> = decoder.unwrap()(bytes);
+                let command: Option<Box<dyn C2SCommandExecutor>> = decoder.unwrap()(bytes);
                 if command.is_some() {
                     self.commands.push(command.unwrap());
                     let data = bytes.read_bytes(bytes.get_wpos() - bytes.get_rpos()).unwrap();
