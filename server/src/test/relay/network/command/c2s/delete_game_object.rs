@@ -1,8 +1,7 @@
 use bytebuffer::ByteBuffer;
 
-use crate::relay::network::command::c2s::delete_game_object::DeleteGameObjectC2SCommand;
-use traitcast::TraitcastFrom;
 use crate::relay::network::command::c2s::C2SCommandDecoder;
+use crate::relay::network::command::c2s::delete_game_object::DeleteGameObjectC2SCommand;
 
 #[test]
 fn should_decode_delete_game_object() {

@@ -1,6 +1,6 @@
 mod room;
-mod object;
 mod objects;
+mod clients;
 mod groups;
 
 

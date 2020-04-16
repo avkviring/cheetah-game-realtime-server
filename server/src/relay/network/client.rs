@@ -1,4 +1,3 @@
-use std::cell::Cell;
 use std::net::TcpStream;
 
 pub struct ClientStream {

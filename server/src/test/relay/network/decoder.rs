@@ -47,7 +47,7 @@ fn should_decode_more_one_command() {
 
 
 fn setup() -> (Decoder, ByteBuffer, u8) {
-	let mut decoder = Decoder::new(Rc::new(Client::stub()));
+	let mut decoder = Decoder::new(Rc::new(Client::stub(0)));
 	let command_id = 55;
 	decoder.add_decoder(command_id, decode);
 	(decoder, ByteBuffer::new(), command_id)
