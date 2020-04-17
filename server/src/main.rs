@@ -1,6 +1,4 @@
 extern crate stderrlog;
-
-use log::{error, LevelFilter};
 use stderrlog::Timestamp;
 
 mod relay;

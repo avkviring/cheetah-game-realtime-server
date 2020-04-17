@@ -1,11 +1,7 @@
-use std::borrow::Borrow;
-use std::cell::Ref;
 use std::cmp::Ordering;
-use std::ops::Deref;
 
-use crate::relay::room::clients::{Client, ClientConfiguration};
+use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
-use crate::relay::room::room::Room;
 use crate::relay::room::objects::object::GameObject;
 
 #[test]

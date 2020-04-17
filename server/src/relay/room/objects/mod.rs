@@ -6,14 +6,14 @@ use crate::relay::room::clients::Client;
 use crate::relay::room::groups::{Access, AccessGroups};
 use crate::relay::room::objects::object::{GameObject, ObjectFieldType};
 use crate::relay::room::objects::owner::Owner;
-use crate::relay::room::room::{ClientId, GlobalObjectId, LocalObjectId, Room};
+use crate::relay::room::room::{GlobalObjectId, LocalObjectId, Room};
 
 pub mod object;
 pub mod owner;
 
 /// Хранение и управление списком игровых объектов
 pub struct Objects {
-	objects: HashMap<u64, Rc<RefCell<GameObject>>>,
+	objects: HashMap<GlobalObjectId, Rc<RefCell<GameObject>>>,
 }
 
 #[derive(Debug)]
@@ -37,27 +37,27 @@ impl Default for Objects {
 }
 
 impl Objects {
-	pub fn create_client_game_object(&mut self, owner: &Client, local_object_id: u32, groups: AccessGroups) -> u64 {
+	pub fn create_client_game_object(&mut self, owner: &Client, local_object_id: LocalObjectId, groups: AccessGroups) -> GlobalObjectId {
 		let object = GameObject::new_client_object(owner, local_object_id, groups);
 		return self.insert(object);
 	}
 	
-	pub fn create_root_game_object(&mut self, id: u32, groups: AccessGroups) -> u64 {
-		let object = GameObject::new_root_object(id as u64, groups);
+	pub fn create_root_game_object(&mut self, id: LocalObjectId, groups: AccessGroups) -> GlobalObjectId {
+		let object = GameObject::new_root_object(id as GlobalObjectId, groups);
 		return self.insert(object);
 	}
 	
-	pub fn insert(&mut self, object: GameObject) -> u64 {
+	pub fn insert(&mut self, object: GameObject) -> GlobalObjectId {
 		let id = object.id;
 		self.objects.insert(id, Rc::new(RefCell::new(object)));
 		return id;
 	}
 	
-	pub fn get(&self, id: u64) -> Option<&Rc<RefCell<GameObject>>> {
-		return self.objects.get(&id);
+	pub fn get(&self, id: GlobalObjectId) -> Option<Rc<RefCell<GameObject>>> {
+		return self.objects.get(&id).and_then(|f| Option::Some(f.clone()));
 	}
 	
-	pub fn get_by_owner(&self, client: &Client, local_object_id: u32) -> Option<&Rc<RefCell<GameObject>>> {
+	pub fn get_by_owner(&self, client: &Client, local_object_id: LocalObjectId) -> Option<Rc<RefCell<GameObject>>> {
 		let id = GameObject::to_global_object_id(client, local_object_id);
 		return self.get(id);
 	}
@@ -67,7 +67,7 @@ impl Objects {
 	}
 	
 	pub fn delete_objects_by_owner(&mut self, owner: Owner) {
-		let object_for_remove: Vec<u64> = self.objects
+		let object_for_remove: Vec<GlobalObjectId> = self.objects
 			.values()
 			.filter(|o| {
 				(*((*o).clone())).borrow().owner == owner
@@ -80,7 +80,7 @@ impl Objects {
 		}
 	}
 	
-	pub fn delete_object(&mut self, global_object_id: u64) {
+	pub fn delete_object(&mut self, global_object_id: GlobalObjectId) {
 		self.objects.remove(&global_object_id);
 	}
 }
