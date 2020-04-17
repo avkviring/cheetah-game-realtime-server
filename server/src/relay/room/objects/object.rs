@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 use std::ops::Shl;
 
+use log::Level::Debug;
+
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::objects::owner::Owner;
+
+pub type FieldID = u16;
 
 /// Игровой объект
 /// содержит данные от пользователей
@@ -11,17 +15,23 @@ pub struct GameObject {
 	pub id: u64,
 	pub owner: Owner,
 	/// счетчики
-	counters: HashMap<u16, DataCounter>,
+	long_counters: HashMap<FieldID, LongCounter>,
+	float_counters: HashMap<FieldID, FloatCounter>,
 	/// структуры (для сервера это массивы данных)
-	structures: HashMap<u16, DataStruct>,
+	structures: HashMap<FieldID, DataStruct>,
 	/// группы доступа
 	pub groups: AccessGroups,
 }
 
 
 /// счетчик
-pub struct DataCounter {
+pub struct LongCounter {
 	counter: i64
+}
+
+/// счетчик
+pub struct FloatCounter {
+	counter: f64
 }
 
 /// данные
@@ -44,7 +54,8 @@ impl GameObject {
 		GameObject {
 			id: GameObject::to_global_object_id(client, local_object_id),
 			owner: Owner::new_owner(client),
-			counters: Default::default(),
+			long_counters: Default::default(),
+			float_counters: Default::default(),
 			structures: Default::default(),
 			groups,
 		}
@@ -54,32 +65,49 @@ impl GameObject {
 		GameObject {
 			id,
 			owner: Owner::new_root_owner(),
-			counters: Default::default(),
+			long_counters: Default::default(),
+			float_counters: Default::default(),
 			structures: Default::default(),
 			groups,
 		}
 	}
 	
-	pub fn update_struct(&mut self, struct_id: u16, data: Vec<u8>) {
-		self.structures.insert(struct_id, DataStruct { data });
+	pub fn update_struct(&mut self, field_id: FieldID, data: Vec<u8>) {
+		self.structures.insert(field_id, DataStruct { data });
 	}
 	
-	pub fn get_struct(&self, struct_id: u16) -> Option<&Vec<u8>> {
-		self.structures.get(&struct_id).map(|f| &f.data)
+	pub fn get_struct(&self, field_id: FieldID) -> Option<&Vec<u8>> {
+		self.structures.get(&field_id).map(|f| &f.data)
 	}
 	
-	pub fn set_counter(&mut self, counter_id: u16, value: i64) {
-		self.counters.insert(counter_id, DataCounter { counter: value });
+	pub fn set_long_counter(&mut self, field_id: FieldID, value: i64) {
+		self.long_counters.insert(field_id, LongCounter { counter: value });
 	}
 	
-	pub fn get_counter(&mut self, counter_id: u16) -> i64 {
-		self.counters.get(&counter_id).map(|f| f.counter).unwrap_or(0)
+	pub fn get_long_counter(&self, field_id: FieldID) -> i64 {
+		self.long_counters.get(&field_id).map(|f| f.counter).unwrap_or(0)
 	}
 	
-	pub fn increment_counter(&mut self, counter_id: u16, value: i64) {
-		let current = self.get_counter(counter_id);
-		self.set_counter(counter_id, current + value)
+	pub fn increment_long_counter(&mut self, field_id: FieldID, value: i64) -> i64 {
+		let new_value = self.get_long_counter(field_id) + value;
+		self.set_long_counter(field_id, new_value);
+		return new_value;
 	}
+	
+	pub fn set_float_counter(&mut self, field_id: FieldID, value: f64) {
+		self.float_counters.insert(field_id, FloatCounter { counter: value });
+	}
+	
+	pub fn get_float_counter(&self, field_id: FieldID) -> f64 {
+		self.float_counters.get(&field_id).map(|f| f.counter).unwrap_or(0.0)
+	}
+	
+	pub fn increment_float_counter(&mut self, field_id: FieldID, value: f64) -> f64 {
+		let new_value = self.get_float_counter(field_id) + value;
+		self.set_float_counter(field_id, new_value);
+		return new_value;
+	}
+	
 	
 	pub fn to_global_object_id(client: &Client, local_object_id: u32) -> u64 {
 		(client.configuration.id as u64).shl(32) + local_object_id as u64

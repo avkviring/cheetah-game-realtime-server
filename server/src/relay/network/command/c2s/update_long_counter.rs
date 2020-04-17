@@ -5,13 +5,14 @@ use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor,
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
-use crate::relay::room::objects::object::ObjectFieldType;
-use crate::relay::room::room::Room;
+use crate::relay::room::objects::object::{FieldID, ObjectFieldType};
+use crate::relay::room::room::{GlobalObjectId, Room};
 
 /// Обновление счетчика
+#[derive(Debug)]
 pub struct UpdateLongCounterC2SCommand {
-	pub global_object_id: u64,
-	pub counter_id: u16,
+	pub global_object_id: GlobalObjectId,
+	pub field_id: FieldID,
 	pub increment: i64,
 }
 
@@ -29,7 +30,7 @@ impl C2SCommandDecoder for UpdateLongCounterC2SCommand {
 			Option::Some(Box::new(
 				UpdateLongCounterC2SCommand {
 					global_object_id: global_object_id.unwrap(),
-					counter_id: counter_id.unwrap(),
+					field_id: counter_id.unwrap(),
 					increment: increment.unwrap(),
 				}
 			))
@@ -47,20 +48,20 @@ impl C2SCommandExecutor for UpdateLongCounterC2SCommand {
 				client,
 				self.global_object_id,
 				ObjectFieldType::LongCounter,
-				self.counter_id);
+				self.field_id);
 		
 		match result_check {
 			Ok(object) => {
-				object.increment_counter(self.counter_id, self.increment);
-				trace_c2s_command("UpdateLongCounter", room, client, format!("increment done, result {}", object.get_counter(self.counter_id)));
+				let value = object.increment_long_counter(self.field_id, self.increment);
+				trace_c2s_command("UpdateLongCounter", room, client, format!("increment done, result {}", value));
 			}
 			Err(error) => {
 				match error {
 					ErrorGetObjectWithCheckAccess::ObjectNotFound => {
-						error_c2s_command("UpdateLongCounter", room, client, format!("object not found {}", self.counter_id));
+						error_c2s_command("UpdateLongCounter", room, client, format!("object not found {}", self.field_id));
 					}
 					ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
-						error_c2s_command("UpdateLongCounter", room, client, format!("client has not write access to objects {} field {} type {:?}", self.global_object_id, self.counter_id, ObjectFieldType::LongCounter));
+						error_c2s_command("UpdateLongCounter", room, client, format!("client has not write access to objects {} field {} type {:?}", self.global_object_id, self.field_id, ObjectFieldType::LongCounter));
 					}
 				}
 			}

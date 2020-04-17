@@ -7,7 +7,8 @@ use crate::relay::room::room::Room;
 
 pub mod create_game_object;
 pub mod delete_game_object;
-pub mod update_u64_counter;
+pub mod update_long_counter;
+pub mod update_float_counter;
 
 /// Декодер входящей команды
 pub trait C2SCommandDecoder {

@@ -4,7 +4,7 @@ use crate::relay::network::command::c2s::C2SCommandDecoder;
 use crate::relay::network::command::c2s::create_game_object::CreateGameObjectC2SCommand;
 
 #[test]
-fn should_decode_create_game_object() {
+fn should_decode() {
     let mut buffer = ByteBuffer::new();
     buffer.write_u32(100);
     buffer.write_u8(2);
@@ -22,7 +22,7 @@ fn should_decode_create_game_object() {
 }
 
 #[test]
-fn should_not_decode_create_game_object_when_data_not_enough() {
+fn should_not_decode_when_data_not_enough() {
     let mut buffer = ByteBuffer::new();
     buffer.write_u32(100);
     buffer.write_u8(2);
