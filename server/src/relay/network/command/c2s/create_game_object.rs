@@ -1,7 +1,7 @@
 use bytebuffer::ByteBuffer;
 use log::{error, trace};
 
-use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor};
+use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, trace_c2s_command};
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::objects::CreateObjectError;
@@ -46,23 +46,21 @@ impl C2SCommandDecoder for CreateGameObjectC2SCommand {
 
 impl C2SCommandExecutor for CreateGameObjectC2SCommand {
 	fn execute(&self, client: &Client, room: &mut Room) {
-		trace!("Creating game objects from client {} with params {:?}", client.configuration.hash, self);
-		
+		trace_c2s_command("CreateGameObject", room, client, format!("params {:?}", self));
 		let groups = if self.groups.is_empty() {
 			Option::None
 		} else {
 			Option::Some(AccessGroups::from(self.groups.clone()))
 		};
-		
 		let result = room.create_client_game_object(client, self.local_id, groups);
 		match result {
 			Ok(id) => {
-				trace!("Game objects {} created from client {}", id, client.configuration.hash)
+				trace_c2s_command("CreateGameObject", room, client, format!("Object created with id {}", id));
 			}
 			Err(error) => {
 				match error {
 					CreateObjectError::IncorrectGroups => {
-						error!("Create game objects from client {} error: Incorrect access group", client.configuration.hash)
+						error_c2s_command("CreateGameObject", room, client, format!("Incorrect access group"));
 					}
 				}
 			}

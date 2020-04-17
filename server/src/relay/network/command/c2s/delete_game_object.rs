@@ -2,7 +2,7 @@ use bytebuffer::ByteBuffer;
 use log::error;
 use log::trace;
 
-use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor};
+use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, trace_c2s_command};
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
@@ -29,7 +29,7 @@ impl C2SCommandDecoder for DeleteGameObjectC2SCommand {
 
 impl C2SCommandExecutor for DeleteGameObjectC2SCommand {
 	fn execute(&self, client: &Client, room: &mut Room) {
-		trace!("C2S:\tDeleteGameObject : client {} params {:?}", client.configuration.hash, self);
+		trace_c2s_command("DeleteGameObject", room, client, format!("params {:?}", self));
 		let result = room.get_object_with_check_access(Access::ROOT, client, self.global_object_id);
 		match result {
 			Ok(object) => {
@@ -38,10 +38,10 @@ impl C2SCommandExecutor for DeleteGameObjectC2SCommand {
 			Err(error) => {
 				match error {
 					ErrorGetObjectWithCheckAccess::ObjectNotFound => {
-						error!("objects not found {}", self.global_object_id);
+						error_c2s_command("DeleteGameObject", room, client, format!("object not found {}", self.global_object_id));
 					}
 					ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
-						error!("client has access to delete objects {}", self.global_object_id)
+						error_c2s_command("DeleteGameObject", room, client, format!("access not allowed {}", self.global_object_id));
 					}
 				}
 			}

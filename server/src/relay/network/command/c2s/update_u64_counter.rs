@@ -1,12 +1,12 @@
 use bytebuffer::ByteBuffer;
 use log::error;
 
-use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor};
+use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, trace_c2s_command};
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
-use crate::relay::room::room::Room;
 use crate::relay::room::objects::object::ObjectFieldType;
+use crate::relay::room::room::Room;
 
 /// Обновление счетчика
 pub struct UpdateLongCounterC2SCommand {
@@ -39,6 +39,8 @@ impl C2SCommandDecoder for UpdateLongCounterC2SCommand {
 
 impl C2SCommandExecutor for UpdateLongCounterC2SCommand {
 	fn execute(&self, client: &Client, room: &mut Room) {
+		trace_c2s_command("UpdateLongCounter", room, client, format!("params {:?}", self));
+		
 		let result_check = room
 			.get_object_with_check_field_access(
 				Access::WRITE,
@@ -49,15 +51,16 @@ impl C2SCommandExecutor for UpdateLongCounterC2SCommand {
 		
 		match result_check {
 			Ok(object) => {
-				object.increment_counter(self.counter_id, self.increment)
+				object.increment_counter(self.counter_id, self.increment);
+				trace_c2s_command("UpdateLongCounter", room, client, format!("increment done, result {}", object.get_counter(self.counter_id)));
 			}
 			Err(error) => {
 				match error {
 					ErrorGetObjectWithCheckAccess::ObjectNotFound => {
-						error!("objects not found {}", self.global_object_id);
+						error_c2s_command("UpdateLongCounter", room, client, format!("object not found {}", self.counter_id));
 					}
 					ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
-						error!("client has not write access to objects {} field {} type {:?}", self.global_object_id, self.counter_id, ObjectFieldType::LongCounter)
+						error_c2s_command("UpdateLongCounter", room, client, format!("client has not write access to objects {} field {} type {:?}", self.global_object_id, self.counter_id, ObjectFieldType::LongCounter));
 					}
 				}
 			}

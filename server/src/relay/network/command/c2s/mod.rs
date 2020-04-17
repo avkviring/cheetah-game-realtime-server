@@ -26,3 +26,12 @@ pub trait C2SCommandExecutor: TraitcastFrom {
 	/// Выполнить команду
 	fn execute(&self, client: &Client, room: &mut Room);
 }
+
+
+pub fn trace_c2s_command(command: &str, room: &Room, client: &Client, message: String) {
+	log::trace!("C2S: {:<10} : room {} : client {} : message {}", command, room.id, client.configuration.hash, message);
+}
+
+pub fn error_c2s_command(command: &str, room: &Room, client: &Client, message: String) {
+	log::trace!("C2S: {:<10} : room {} : client {} : message {}", command, room.id, client.configuration.hash, message);
+}

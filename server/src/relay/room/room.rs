@@ -12,6 +12,7 @@ pub type GlobalObjectId = u64;
 /// Комнату создается по команде с match making.
 /// При создании необходимо указать список ожидаемых пользователей.
 pub struct Room {
+	pub id: String,
 	/// коллектор событий для отправки на клиент
 	pub events_collector: EventsCollector,
 	/// клиенты
@@ -23,6 +24,7 @@ pub struct Room {
 impl Room {
 	pub fn new() -> Self {
 		Room {
+			id: Default::default(),
 			events_collector: Default::default(),
 			clients: Default::default(),
 			objects: Default::default(),
