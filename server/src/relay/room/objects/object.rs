@@ -46,6 +46,7 @@ pub enum ObjectFieldType {
 	Struct,
 	StringToIdMap,
 	IdSet,
+	Event,
 }
 
 
@@ -108,6 +109,8 @@ impl GameObject {
 		return new_value;
 	}
 	
+	
+	pub fn send_event(&self, field_id: FieldID, event: Vec<u8>) {}
 	
 	pub fn to_global_object_id(client: &Client, local_object_id: u32) -> u64 {
 		(client.configuration.id as u64).shl(32) + local_object_id as u64

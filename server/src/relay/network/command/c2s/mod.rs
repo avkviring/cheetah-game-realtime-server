@@ -1,3 +1,6 @@
+use std::borrow::BorrowMut;
+use std::cell::RefMut;
+
 /// Команды с клиента
 use bytebuffer::ByteBuffer;
 use traitcast::TraitcastFrom;
@@ -7,14 +10,13 @@ use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
 use crate::relay::room::objects::object::{FieldID, GameObject, ObjectFieldType};
 use crate::relay::room::room::{GlobalObjectId, Room};
-use std::borrow::BorrowMut;
-use std::cell::RefMut;
 
 pub mod create_game_object;
 pub mod delete_game_object;
 pub mod update_long_counter;
 pub mod update_float_counter;
 pub mod update_struct;
+pub mod event;
 
 /// Декодер входящей команды
 pub trait C2SCommandDecoder {
@@ -44,12 +46,12 @@ pub fn error_c2s_command(command: &str, room: &Room, client: &Client, message: S
 }
 
 pub fn get_field_and_change<F>(command_name: &str,
-						   room: &mut Room,
-						   client: &Client,
-						   global_object_id: GlobalObjectId,
-						   field_id: FieldID,
-						   object_field_type: ObjectFieldType,
-						   action: F,
+							   room: &mut Room,
+							   client: &Client,
+							   global_object_id: GlobalObjectId,
+							   field_id: FieldID,
+							   object_field_type: ObjectFieldType,
+							   action: F,
 ) where F: FnOnce(&mut GameObject) -> String {
 	let result_check = room
 		.get_object_with_check_field_access(
