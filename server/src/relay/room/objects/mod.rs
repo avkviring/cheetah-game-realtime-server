@@ -140,14 +140,13 @@ impl Room {
 										access: Access,
 										client: &Client,
 										global_object_id: u64) ->
-										Result<&GameObject, ErrorGetObjectWithCheckAccess> {
-		// let object = self.objects.get(global_object_id);
-		// return if object.is_some() {
-		// 	Result::Ok(object.unwrap())
-		// } else {
-		// 	Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound)
-		// };
-		unimplemented!()
+										Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {
+		let object = self.objects.get(global_object_id);
+		return if object.is_some() {
+			Result::Ok(object.unwrap())
+		} else {
+			Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound)
+		};
 	}
 	
 	pub fn delete_game_object(&mut self, game_object: &GameObject) {

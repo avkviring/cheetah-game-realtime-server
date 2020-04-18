@@ -6,6 +6,7 @@ use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor}
 use crate::relay::network::command::c2s::update_struct::UpdateStructC2SCommand;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::room::Room;
+use crate::test::relay::room::setup_and_two_client;
 
 #[test]
 fn should_decode() {
@@ -76,10 +77,8 @@ fn test_execute_command() {
 	let struct_data = vec![1, 2, 3, 4, 5];
 	let field_id = 10;
 	
-	let mut room = Room::new();
-	room.add_client_to_waiting_list("HASH".to_string(), AccessGroups::new());
-	let client = room.client_connect("HASH".to_string()).ok().unwrap();
-	let global_object_id = room.create_client_game_object(client.borrow(), 0, Option::None).ok().unwrap();
+	let (mut room, client, _) = setup_and_two_client();
+	let global_object_id = room.create_client_game_object(&client.clone(), 0, Option::None).ok().unwrap();
 	
 	let command = UpdateStructC2SCommand {
 		global_object_id,

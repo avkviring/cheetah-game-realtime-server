@@ -33,7 +33,7 @@ impl C2SCommandExecutor for DeleteGameObjectC2SCommand {
 		let result = room.get_object_with_check_access(Access::ROOT, client, self.global_object_id);
 		match result {
 			Ok(object) => {
-				room.objects.delete_object(object.id)
+				room.objects.delete_object(object.clone().borrow().id)
 			}
 			Err(error) => {
 				match error {

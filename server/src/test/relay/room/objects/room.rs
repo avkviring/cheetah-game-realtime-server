@@ -3,6 +3,7 @@ use std::rc::Rc;
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::room::Room;
+use crate::test::relay::room::setup_and_two_client;
 
 #[test]
 fn create_client_game_object() {
@@ -48,24 +49,9 @@ fn create_client_game_object_when_missing_client_group() {
 }
 
 
-
 #[test]
 fn create_root_game_object() {
 	let (mut room, _, _) = setup_and_two_client();
 	let id = room.create_root_game_object(255, AccessGroups::new()).ok().unwrap();
 	assert_eq!(id, 255);
-}
-
-fn setup_and_two_client() -> (Room, Rc<Client>, Rc<Client>) {
-	let mut room = Room::new();
-	
-	let client_a_hash = "CLIENT-A";
-	room.add_client_to_waiting_list(client_a_hash.to_string(), AccessGroups::from(vec![0, 5]));
-	let first_client = room.client_connect(client_a_hash.to_string()).unwrap();
-	
-	let client_b_hash = "CLIENT-B";
-	room.add_client_to_waiting_list(client_b_hash.to_string(), AccessGroups::from(vec![0, 5]));
-	let second_client = room.client_connect(client_b_hash.to_string()).unwrap();
-	
-	(room, first_client, second_client)
 }
