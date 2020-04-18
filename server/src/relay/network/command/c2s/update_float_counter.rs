@@ -1,7 +1,7 @@
 use bytebuffer::ByteBuffer;
 use log::error;
 
-use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, trace_c2s_command};
+use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, get_field_and_change, trace_c2s_command};
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
@@ -41,45 +41,19 @@ impl C2SCommandDecoder for UpdateFloatCounterC2SCommand {
 impl C2SCommandExecutor for UpdateFloatCounterC2SCommand {
 	fn execute(&self, client: &Client, room: &mut Room) {
 		trace_c2s_command("UpdateFloatCounter", room, client, format!("params {:?}", self));
-		
-		let result_check = room
-			.get_object_with_check_field_access(
-				Access::WRITE,
-				client,
-				self.global_object_id,
-				ObjectFieldType::LongCounter,
-				self.field_id);
-		
-		match result_check {
-			Ok(object) => {
-				let value = object.increment_float_counter(self.field_id, self.increment);
-				trace_c2s_command("UpdateFloatCounter", room, client, format!("increment done, result {}", value));
-			}
-			Err(error) => {
-				match error {
-					ErrorGetObjectWithCheckAccess::ObjectNotFound => {
-						error_c2s_command(
-							"UpdateFloatCounter",
-							room,
-							client,
-							format!("object not found {}", self.field_id),
-						);
-					}
-					ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
-						error_c2s_command(
-							"UpdateFloatCounter",
-							room,
-							client,
-							format!(
-								"client has not write access to objects {} field {} type {:?}",
-								self.global_object_id,
-								self.field_id,
-								ObjectFieldType::LongCounter),
-						);
-					}
-				}
-			}
-		}
+		get_field_and_change(
+			"UpdateFloatCounter",
+			room,
+			client,
+			self.global_object_id,
+			self.field_id,
+			ObjectFieldType::FloatCounter,
+			|object|
+				{
+					let value = object.increment_float_counter(self.field_id, self.increment);
+					format!("increment done, result {}", value)
+				},
+		);
 	}
 }
 

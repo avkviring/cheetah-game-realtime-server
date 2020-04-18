@@ -1,7 +1,7 @@
 use bytebuffer::ByteBuffer;
 use log::error;
 
-use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, trace_c2s_command};
+use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, get_field_and_change, trace_c2s_command};
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
@@ -41,31 +41,18 @@ impl C2SCommandDecoder for UpdateLongCounterC2SCommand {
 impl C2SCommandExecutor for UpdateLongCounterC2SCommand {
 	fn execute(&self, client: &Client, room: &mut Room) {
 		trace_c2s_command("UpdateLongCounter", room, client, format!("params {:?}", self));
-		
-		let result_check = room
-			.get_object_with_check_field_access(
-				Access::WRITE,
-				client,
-				self.global_object_id,
-				ObjectFieldType::LongCounter,
-				self.field_id);
-		
-		match result_check {
-			Ok(object) => {
+		get_field_and_change(
+			"UpdateLongCounter",
+			room,
+			client,
+			self.global_object_id,
+			self.field_id,
+			ObjectFieldType::LongCounter,
+			|object| {
 				let value = object.increment_long_counter(self.field_id, self.increment);
-				trace_c2s_command("UpdateLongCounter", room, client, format!("increment done, result {}", value));
-			}
-			Err(error) => {
-				match error {
-					ErrorGetObjectWithCheckAccess::ObjectNotFound => {
-						error_c2s_command("UpdateLongCounter", room, client, format!("object not found {}", self.field_id));
-					}
-					ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
-						error_c2s_command("UpdateLongCounter", room, client, format!("client has not write access to objects {} field {} type {:?}", self.global_object_id, self.field_id, ObjectFieldType::LongCounter));
-					}
-				}
-			}
-		}
+				format!("increment done, result {}", value)
+			},
+		)
 	}
 }
 
