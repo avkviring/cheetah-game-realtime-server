@@ -7,6 +7,8 @@ use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
 use crate::relay::room::objects::object::{FieldID, GameObject, ObjectFieldType};
 use crate::relay::room::room::{GlobalObjectId, Room};
+use std::borrow::BorrowMut;
+use std::cell::RefMut;
 
 pub mod create_game_object;
 pub mod delete_game_object;
@@ -59,7 +61,7 @@ pub fn get_field_and_change<F>(command_name: &str,
 	
 	match result_check {
 		Ok(object) => {
-			let message = action(object);
+			let message = action(&mut *(*(object.clone())).borrow_mut());
 			trace_c2s_command(command_name, room, client, message)
 		}
 		Err(error) => {

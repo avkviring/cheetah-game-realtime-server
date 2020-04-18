@@ -120,41 +120,22 @@ impl Room {
 	}
 	
 	/// проверка прав доступа к полю объекта
-	/// сделано через room так как надо проверять права администратора
 	pub fn get_object_with_check_field_access(&mut self,
 											  access: Access,
 											  client: &Client,
 											  global_object_id: u64,
 											  object_field_type: ObjectFieldType,
 											  field_id: u16) ->
-											  Result<&mut GameObject, ErrorGetObjectWithCheckAccess> {
-		// let object = self.objects.get_mut(global_object_id);
-		// return if object.is_some() {
-		// 	Result::Ok(object.unwrap())
-		// } else {
-		// 	Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound)
-		// };
-		unimplemented!();
+											  Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {
+		let object = self.objects.get(global_object_id);
+		return if object.is_some() {
+			Result::Ok(object.unwrap())
+		} else {
+			Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound)
+		};
 	}
 	
 	/// проверка прав доступа к полю объекта
-	/// сделано через room так как надо проверять права администратора
-	pub fn get_object_with_check_access_mut(&mut self,
-											access: Access,
-											client: &Client,
-											global_object_id: u64) ->
-											Result<&mut GameObject, ErrorGetObjectWithCheckAccess> {
-		// let object = self.objects.get_mut(global_object_id);
-		// return if object.is_some() {
-		// 	Result::Ok(object.unwrap())
-		// } else {
-		// 	Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound)
-		// };
-		unimplemented!();
-	}
-	
-	/// проверка прав доступа к полю объекта
-	/// сделано через room так как надо проверять права администратора
 	pub fn get_object_with_check_access(&self,
 										access: Access,
 										client: &Client,
