@@ -15,10 +15,10 @@ pub struct GameObject {
 	pub id: u64,
 	pub owner: Owner,
 	/// счетчики
-	long_counters: HashMap<FieldID, LongCounter>,
-	float_counters: HashMap<FieldID, FloatCounter>,
+	pub long_counters: HashMap<FieldID, LongCounter>,
+	pub float_counters: HashMap<FieldID, FloatCounter>,
 	/// структуры (для сервера это массивы данных)
-	structures: HashMap<FieldID, DataStruct>,
+	pub structures: HashMap<FieldID, DataStruct>,
 	/// группы доступа
 	pub groups: AccessGroups,
 }
@@ -26,17 +26,17 @@ pub struct GameObject {
 
 /// счетчик
 pub struct LongCounter {
-	counter: i64
+	pub counter: i64
 }
 
 /// счетчик
 pub struct FloatCounter {
-	counter: f64
+	pub counter: f64
 }
 
 /// данные
 pub struct DataStruct {
-	data: Vec<u8>
+	pub data: Vec<u8>
 }
 
 #[derive(Debug)]
