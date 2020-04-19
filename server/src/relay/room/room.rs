@@ -1,5 +1,5 @@
 use crate::relay::room::clients::Clients;
-use crate::relay::room::events::EventsCollector;
+use crate::relay::room::events::S2CCommandCollector;
 use crate::relay::room::objects::Objects;
 
 pub type ClientId = u16;
@@ -14,7 +14,7 @@ pub type GlobalObjectId = u64;
 pub struct Room {
 	pub id: String,
 	/// коллектор событий для отправки на клиент
-	pub events_collector: EventsCollector,
+	pub events_collector: S2CCommandCollector,
 	/// клиенты
 	pub clients: Clients,
 	/// список игровых объектов в комнате

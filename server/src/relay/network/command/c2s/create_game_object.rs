@@ -5,13 +5,13 @@ use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor,
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::objects::CreateObjectError;
-use crate::relay::room::room::Room;
+use crate::relay::room::room::{Room, LocalObjectId};
 
 /// команда создания игрового объекта
 #[derive(Debug)]
 pub struct CreateGameObjectC2SCommand {
 	/// локальный идентификатор объекта
-	pub local_id: u32,
+	pub local_id: LocalObjectId,
 	pub groups: Vec<u8>,
 }
 
