@@ -1,9 +1,8 @@
-use bit_array::BitArray;
-use typenum::U64;
+use std::ops::{BitAnd, Shl, Shr};
 
 /// Группа доступа
 pub struct AccessGroups {
-	groups: BitArray<u64, U64>,
+	groups: u64,
 }
 
 #[derive(Debug)]
@@ -18,19 +17,13 @@ impl AccessGroups {
 		AccessGroups::from(Vec::<u8>::new())
 	}
 	
-	pub fn contains_group(&self, group: usize) -> bool {
-		return self.groups.get(group).unwrap();
+	pub fn contains_group(&self, group: u8) -> bool {
+		let bits = (1 as u64).shl(group as u64);
+		return self.groups.bitand(bits) == bits;
 	}
 	
-	pub fn contains_groups(&self, groups: &AccessGroups) -> bool {
-		for i in 0..groups.groups.len() {
-			if groups.contains_group(i) {
-				if !self.contains_group(i) {
-					return false;
-				}
-			}
-		}
-		return true;
+	pub fn contains_any(&self, groups: &AccessGroups) -> bool {
+		return self.groups.bitand(groups.groups) > 0;
 	}
 }
 
@@ -46,12 +39,13 @@ impl Clone for AccessGroups {
 
 impl From<Vec<u8>> for AccessGroups {
 	fn from(groups: Vec<u8>) -> AccessGroups {
-		let mut bit_array = BitArray::<u64, U64>::from_elem(false);
-		for x in groups {
-			bit_array.set(x as usize, true)
+		let mut value: u64 = 0;
+		for group in groups {
+			let bit = (1 as u64).shl(group as u64);
+			value += bit
 		}
 		AccessGroups {
-			groups: bit_array
+			groups: value
 		}
 	}
 }
