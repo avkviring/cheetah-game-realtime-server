@@ -1,14 +1,14 @@
 use bytebuffer::ByteBuffer;
 
-use crate::relay::room::events::{AffectedClients, S2CCommand};
+use crate::relay::network::command::s2c::{AffectedClients, S2CCommand};
 use crate::relay::room::objects::object::GameObject;
 use crate::relay::room::room::GlobalObjectId;
 
 /// Загрузка объекта на клиент
 /// со всеми данными
-struct UploadObjectS2CCommand {
-	affected_clients: AffectedClients,
-	cloned_object: GameObject,
+pub struct UploadObjectS2CCommand {
+	pub affected_clients: AffectedClients,
+	pub cloned_object: GameObject,
 }
 
 impl S2CCommand for UploadObjectS2CCommand {
@@ -21,12 +21,12 @@ impl S2CCommand for UploadObjectS2CCommand {
 	}
 	
 	fn encode(&self, bytes: &mut ByteBuffer) {
-		bytes.write_u64(self.cloned_object.global_object_id);
+		bytes.write_u64(self.cloned_object.id);
 		let structures = &self.cloned_object.structures;
 		bytes.write_u16(structures.len() as u16);
 		for (id, data) in structures {
 			bytes.write_u16(*id);
-			bytes.write_u16(*data.data.len());
+			bytes.write_u16(data.data.len() as u16);
 			bytes.write_bytes(&*data.data)
 		}
 		
@@ -34,14 +34,14 @@ impl S2CCommand for UploadObjectS2CCommand {
 		bytes.write_u16(long_counters.len() as u16);
 		for (id, data) in long_counters {
 			bytes.write_u16(*id);
-			bytes.write_i64(*data.counter);
+			bytes.write_i64(data.counter);
 		}
 		
 		let float_counters = &self.cloned_object.float_counters;
 		bytes.write_u16(float_counters.len() as u16);
 		for (id, data) in float_counters {
 			bytes.write_u16(*id);
-			bytes.write_i64(*data.counter);
+			bytes.write_f64(data.counter);
 		}
 	}
 }

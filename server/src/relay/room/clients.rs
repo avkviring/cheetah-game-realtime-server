@@ -44,12 +44,27 @@ impl ClientConfiguration {
 			groups: AccessGroups::new(),
 		}
 	}
+	
+	fn stub_with_access_group(client_id: ClientId, group: Vec<u8>) -> ClientConfiguration {
+		ClientConfiguration {
+			id: client_id,
+			hash: format!("{}", client_id),
+			groups: AccessGroups::from(group),
+		}
+	}
 }
 
 impl Client {
 	pub fn stub(client_id: u16) -> Client {
 		Client {
 			configuration: ClientConfiguration::stub(client_id),
+			stream: ClientStream::stub(),
+		}
+	}
+	
+	pub fn stub_with_access_group(client_id: u16, groups: Vec<u8>) -> Client {
+		Client {
+			configuration: ClientConfiguration::stub_with_access_group(client_id, groups),
 			stream: ClientStream::stub(),
 		}
 	}

@@ -1,9 +1,11 @@
+use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::{Access, AccessGroups};
+use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::object::{GameObject, ObjectFieldType};
 use crate::relay::room::objects::owner::Owner;
 use crate::relay::room::room::{GlobalObjectId, LocalObjectId, Room};
@@ -103,20 +105,29 @@ impl Room {
 			owner.configuration.groups.clone()
 		} else {
 			let groups = groups.unwrap();
-			if !client_groups.contains_groups(&groups) {
+			if !client_groups.contains_any(&groups) {
 				return Result::Err(CreateObjectError::IncorrectGroups);
 			}
 			groups
 		};
 		
-		Result::Ok(self.objects.create_client_game_object(&owner, local_object_id, object_groups))
+		let id = self.objects.create_client_game_object(&owner, local_object_id, object_groups);
+		self.notify_create_object(id);
+		Result::Ok(id)
 	}
 	
 	/// Создание игрового объекта от root-а
 	/// object_id - идентификатор объекта
 	pub fn create_root_game_object(&mut self, object_id: u32, groups: AccessGroups) -> Result<u64, CreateObjectError> {
 		let id = self.objects.create_root_game_object(object_id, groups);
+		self.notify_create_object(id);
 		Result::Ok(id)
+	}
+	
+	fn notify_create_object(&mut self, global_object_id: GlobalObjectId) {
+		let rc = self.objects.get(global_object_id).unwrap().clone();
+		let rc_game_object = (*rc).borrow();
+		self.listener.on_object_created(&rc_game_object);
 	}
 	
 	/// проверка прав доступа к полю объекта
@@ -150,7 +161,8 @@ impl Room {
 	}
 	
 	pub fn delete_game_object(&mut self, game_object: &GameObject) {
-		self.objects.delete_object(game_object.id)
+		self.listener.on_object_delete(game_object);
+		self.objects.delete_object(game_object.id);
 	}
 }
 

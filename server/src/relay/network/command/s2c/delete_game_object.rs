@@ -1,11 +1,11 @@
 use bytebuffer::ByteBuffer;
 
-use crate::relay::room::events::{AffectedClients, S2CCommand};
 use crate::relay::room::room::GlobalObjectId;
+use crate::relay::network::command::s2c::{AffectedClients, S2CCommand};
 
-struct DeleteObjectS2CCommand {
-	affected_clients: AffectedClients,
-	global_object_id: GlobalObjectId,
+pub struct DeleteObjectS2CCommand {
+	pub affected_clients: AffectedClients,
+	pub global_object_id: GlobalObjectId,
 }
 
 impl S2CCommand for DeleteObjectS2CCommand {

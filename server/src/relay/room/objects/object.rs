@@ -5,7 +5,9 @@ use log::Level::Debug;
 
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
+use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::owner::Owner;
+use crate::relay::room::room::Room;
 
 pub type FieldID = u16;
 
@@ -117,3 +119,22 @@ impl GameObject {
 	}
 }
 
+
+impl Room {
+	pub fn object_increment_long_counter(&mut self, object: &mut GameObject, field_id: FieldID, value: i64) -> i64 {
+		let result = object.increment_long_counter(field_id, value);
+		self.listener.on_object_long_counter_change(field_id, object);
+		return result;
+	}
+	
+	pub fn object_increment_float_counter(&mut self, object: &mut GameObject, field_id: FieldID, value: f64) -> f64 {
+		let result = object.increment_float_counter(field_id, value);
+		self.listener.on_object_float_counter_change(field_id, object);
+		return result;
+	}
+	
+	pub fn object_update_struct(&mut self, object: &mut GameObject, field_id: FieldID, value: &Vec<u8>) {
+		object.update_struct(field_id, value.clone());
+		self.listener.on_object_struct_changed(field_id, object);
+	}
+}

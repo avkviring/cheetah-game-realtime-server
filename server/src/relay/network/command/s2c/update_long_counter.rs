@@ -1,19 +1,19 @@
 use bytebuffer::ByteBuffer;
 
-use crate::relay::room::events::{AffectedClients, S2CCommand};
 use crate::relay::room::objects::object::FieldID;
 use crate::relay::room::room::GlobalObjectId;
+use crate::relay::network::command::s2c::{AffectedClients, S2CCommand};
 
-struct UpdateFloatCounterS2CCommand {
-	affected_clients: AffectedClients,
-	global_object_id: GlobalObjectId,
-	field_id: FieldID,
-	value: f64,
+pub struct UpdateLongCounterS2CCommand {
+	pub affected_clients: AffectedClients,
+	pub global_object_id: GlobalObjectId,
+	pub field_id: FieldID,
+	pub value: i64,
 }
 
-impl S2CCommand for UpdateFloatCounterS2CCommand {
+impl S2CCommand for UpdateLongCounterS2CCommand {
 	fn get_command_id(&self) -> u8 {
-		4
+		3
 	}
 	
 	fn get_affected_clients(&self) -> &AffectedClients {
@@ -23,6 +23,6 @@ impl S2CCommand for UpdateFloatCounterS2CCommand {
 	fn encode(&self, bytes: &mut ByteBuffer) {
 		bytes.write_u64(self.global_object_id);
 		bytes.write_u16(self.field_id);
-		bytes.write_f64(self.value);
+		bytes.write_i64(self.value);
 	}
 }

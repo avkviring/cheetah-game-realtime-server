@@ -78,3 +78,37 @@ pub fn get_field_and_change<F>(command_name: &str,
 		}
 	}
 }
+
+pub fn get_field_and_change2<F>(command_name: &str,
+							   room: &mut Room,
+							   client: &Client,
+							   global_object_id: GlobalObjectId,
+							   field_id: FieldID,
+							   object_field_type: ObjectFieldType,
+							   action: F,
+) where F: FnOnce(&mut Room, &mut GameObject) -> String {
+	let result_check = room
+		.get_object_with_check_field_access(
+			Access::WRITE,
+			client,
+			global_object_id,
+			object_field_type,
+			field_id);
+	
+	match result_check {
+		Ok(object) => {
+			let message = action(room, &mut *(*(object.clone())).borrow_mut());
+			trace_c2s_command(command_name, room, client, message)
+		}
+		Err(error) => {
+			match error {
+				ErrorGetObjectWithCheckAccess::ObjectNotFound => {
+					error_c2s_command(command_name, room, client, format!("object not found {}", global_object_id));
+				}
+				ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
+					error_c2s_command(command_name, room, client, format!("client has not write access to objects {} field {}", global_object_id, field_id));
+				}
+			}
+		}
+	}
+}

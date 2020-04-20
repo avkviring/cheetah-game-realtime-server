@@ -1,11 +1,10 @@
 use bytebuffer::ByteBuffer;
-
-use crate::relay::room::events::{AffectedClients, S2CCommand};
 use crate::relay::room::room::GlobalObjectId;
+use crate::relay::network::command::s2c::{AffectedClients, S2CCommand};
 
-struct CreateObjectS2CCommand {
-	affected_clients: AffectedClients,
-	global_object_id: GlobalObjectId,
+pub struct CreateObjectS2CCommand {
+	pub(crate) affected_clients: AffectedClients,
+	pub(crate) global_object_id: GlobalObjectId,
 }
 
 impl S2CCommand for CreateObjectS2CCommand {
