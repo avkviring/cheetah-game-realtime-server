@@ -3,6 +3,8 @@ use crate::relay::room::room::ClientId;
 
 /// владелец
 /// или клиент или root
+
+#[derive(Debug, Clone)]
 pub struct Owner {
 	client: Option<ClientId>
 }

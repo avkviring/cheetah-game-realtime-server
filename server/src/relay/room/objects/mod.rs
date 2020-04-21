@@ -6,7 +6,7 @@ use std::rc::Rc;
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::{Access, AccessGroups};
 use crate::relay::room::listener::RoomListener;
-use crate::relay::room::objects::object::{GameObject, ObjectFieldType};
+use crate::relay::room::objects::object::{GameObject, GameObjectTemplate, ObjectFieldType};
 use crate::relay::room::objects::owner::Owner;
 use crate::relay::room::room::{GlobalObjectId, LocalObjectId, Room};
 
@@ -39,13 +39,13 @@ impl Default for Objects {
 }
 
 impl Objects {
-	pub fn create_client_game_object(&mut self, owner: &Client, local_object_id: LocalObjectId, groups: AccessGroups) -> GlobalObjectId {
-		let object = GameObject::new_client_object(owner, local_object_id, groups);
+	pub fn create_client_game_object(&mut self, owner: &Client, local_object_id: LocalObjectId, template: &GameObjectTemplate) -> GlobalObjectId {
+		let object = GameObject::new_client_object(owner, local_object_id, template);
 		return self.insert(object);
 	}
 	
-	pub fn create_root_game_object(&mut self, id: LocalObjectId, groups: AccessGroups) -> GlobalObjectId {
-		let object = GameObject::new_root_object(id as GlobalObjectId, groups);
+	pub fn create_root_game_object(&mut self, id: LocalObjectId, template: &GameObjectTemplate) -> GlobalObjectId {
+		let object = GameObject::new_root_object(id as GlobalObjectId, template);
 		return self.insert(object);
 	}
 	
@@ -99,27 +99,23 @@ impl Room {
 	pub fn create_client_game_object(&mut self,
 									 owner: &Client,
 									 local_object_id: LocalObjectId,
-									 groups: Option<AccessGroups>) -> Result<GlobalObjectId, CreateObjectError> {
+									 template: &GameObjectTemplate) -> Result<GlobalObjectId, CreateObjectError> {
 		let client_groups = &owner.configuration.groups;
-		let object_groups = if groups.is_none() {
-			owner.configuration.groups.clone()
-		} else {
-			let groups = groups.unwrap();
-			if !client_groups.contains_any(&groups) {
-				return Result::Err(CreateObjectError::IncorrectGroups);
-			}
-			groups
-		};
+		let groups = &template.groups;
+		if !client_groups.contains_any(&groups) {
+			return Result::Err(CreateObjectError::IncorrectGroups);
+		}
 		
-		let id = self.objects.create_client_game_object(&owner, local_object_id, object_groups);
+		
+		let id = self.objects.create_client_game_object(&owner, local_object_id, template);
 		self.notify_create_object(id);
 		Result::Ok(id)
 	}
 	
 	/// Создание игрового объекта от root-а
 	/// object_id - идентификатор объекта
-	pub fn create_root_game_object(&mut self, object_id: u32, groups: AccessGroups) -> Result<u64, CreateObjectError> {
-		let id = self.objects.create_root_game_object(object_id, groups);
+	pub fn create_root_game_object(&mut self, object_id: u32, template: &GameObjectTemplate) -> Result<u64, CreateObjectError> {
+		let id = self.objects.create_root_game_object(object_id, template);
 		self.notify_create_object(id);
 		Result::Ok(id)
 	}

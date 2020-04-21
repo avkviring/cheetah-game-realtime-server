@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::ops::Shl;
 
 use log::Level::Debug;
+use typenum::Gr;
 
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
@@ -10,9 +11,11 @@ use crate::relay::room::objects::owner::Owner;
 use crate::relay::room::room::Room;
 
 pub type FieldID = u16;
+pub type GroupType = u64;
 
 /// Игровой объект
 /// содержит данные от пользователей
+#[derive(Debug, Clone)]
 pub struct GameObject {
 	pub id: u64,
 	pub owner: Owner,
@@ -25,18 +28,32 @@ pub struct GameObject {
 	pub groups: AccessGroups,
 }
 
+#[derive(Debug, Clone)]
+pub struct GameObjectTemplate {
+	/// счетчики
+	pub long_counters: HashMap<FieldID, LongCounter>,
+	pub float_counters: HashMap<FieldID, FloatCounter>,
+	/// структуры (для сервера это массивы данных)
+	pub structures: HashMap<FieldID, DataStruct>,
+	/// группы доступа
+	pub groups: AccessGroups,
+}
+
 
 /// счетчик
+#[derive(Debug, Clone)]
 pub struct LongCounter {
 	pub counter: i64
 }
 
 /// счетчик
+#[derive(Debug, Clone)]
 pub struct FloatCounter {
 	pub counter: f64
 }
 
 /// данные
+#[derive(Debug, Clone)]
 pub struct DataStruct {
 	pub data: Vec<u8>
 }
@@ -53,25 +70,30 @@ pub enum ObjectFieldType {
 
 
 impl GameObject {
-	pub fn new_client_object(client: &Client, local_object_id: u32, groups: AccessGroups) -> GameObject {
-		GameObject {
-			id: GameObject::to_global_object_id(client, local_object_id),
-			owner: Owner::new_owner(client),
-			long_counters: Default::default(),
-			float_counters: Default::default(),
-			structures: Default::default(),
-			groups,
-		}
+	pub fn new_client_object(client: &Client, local_object_id: u32, template: &GameObjectTemplate) -> GameObject {
+		GameObject::new(
+			GameObject::to_global_object_id(client, local_object_id),
+			Owner::new_owner(client),
+			template,
+		)
 	}
 	
-	pub fn new_root_object(id: u64, groups: AccessGroups) -> GameObject {
+	pub fn new_root_object(id: u64, template: &GameObjectTemplate) -> GameObject {
+		GameObject::new(
+			id,
+			Owner::new_root_owner(),
+			template,
+		)
+	}
+	
+	pub fn new(id: u64, owner: Owner, template: &GameObjectTemplate) -> GameObject {
 		GameObject {
 			id,
-			owner: Owner::new_root_owner(),
-			long_counters: Default::default(),
-			float_counters: Default::default(),
-			structures: Default::default(),
-			groups,
+			owner: owner.clone(),
+			long_counters: template.long_counters.clone(),
+			float_counters: template.float_counters.clone(),
+			structures: template.structures.clone(),
+			groups: template.groups.clone(),
 		}
 	}
 	
@@ -112,7 +134,7 @@ impl GameObject {
 	}
 	
 	
-	pub fn send_event(&self, field_id: FieldID, event: Vec<u8>) {}
+	pub fn send_event(&self, field_id: FieldID, event: &Vec<u8>) {}
 	
 	pub fn to_global_object_id(client: &Client, local_object_id: u32) -> u64 {
 		(client.configuration.id as u64).shl(32) + local_object_id as u64
@@ -136,5 +158,31 @@ impl Room {
 	pub fn object_update_struct(&mut self, object: &mut GameObject, field_id: FieldID, value: &Vec<u8>) {
 		object.update_struct(field_id, value.clone());
 		self.listener.on_object_struct_changed(field_id, object);
+	}
+	
+	pub fn object_send_event(&mut self, object: &mut GameObject, field_id: FieldID, event_data: &Vec<u8>) {
+		object.send_event(field_id, event_data);
+		self.listener.on_object_event_fired(field_id, &event_data, object);
+	}
+}
+
+
+impl GameObjectTemplate {
+	pub fn stub() -> GameObjectTemplate {
+		GameObjectTemplate {
+			long_counters: Default::default(),
+			float_counters: Default::default(),
+			structures: Default::default(),
+			groups: AccessGroups::new(),
+		}
+	}
+	
+	pub fn stub_with_group(group: GroupType) -> GameObjectTemplate {
+		GameObjectTemplate {
+			long_counters: Default::default(),
+			float_counters: Default::default(),
+			structures: Default::default(),
+			groups: AccessGroups::from(group),
+		}
 	}
 }

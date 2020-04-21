@@ -13,7 +13,7 @@ pub struct UploadObjectS2CCommand {
 
 impl S2CCommand for UploadObjectS2CCommand {
 	fn get_command_id(&self) -> u8 {
-		7
+		1
 	}
 	
 	fn get_affected_clients(&self) -> &AffectedClients {

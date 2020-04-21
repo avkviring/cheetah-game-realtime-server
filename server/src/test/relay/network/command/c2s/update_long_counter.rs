@@ -5,6 +5,7 @@ use crate::relay::network::command::c2s::update_long_counter::UpdateLongCounterC
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::room::Room;
 use crate::test::relay::room::setup_and_two_client;
+use crate::relay::room::objects::object::GameObjectTemplate;
 
 #[test]
 fn should_decode() {
@@ -46,7 +47,11 @@ fn test_execute_command() {
 	let field_id = 10;
 	
 	let (mut room, client, _) = setup_and_two_client();
-	let global_object_id = room.create_client_game_object(&client.clone(), 0, Option::None).ok().unwrap();
+	let global_object_id = room.create_client_game_object(
+		&client.clone(),
+		0,
+		&GameObjectTemplate::stub_with_group(0b100000)
+	).ok().unwrap();
 	
 	let command = UpdateLongCounterC2SCommand {
 		global_object_id,

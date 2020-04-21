@@ -3,6 +3,7 @@ use bytebuffer::ByteBuffer;
 use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor};
 use crate::relay::network::command::c2s::delete_game_object::DeleteGameObjectC2SCommand;
 use crate::test::relay::room::setup_and_two_client;
+use crate::relay::room::objects::object::GameObjectTemplate;
 
 #[test]
 fn should_decode() {
@@ -30,7 +31,11 @@ fn should_not_decode_when_data_not_enough() {
 #[test]
 fn test_execute_command() {
 	let (mut room, client, _) = setup_and_two_client();
-	let global_object_id = room.create_client_game_object(&client.clone(), 0, Option::None).ok().unwrap();
+	let global_object_id = room.create_client_game_object(
+		&client.clone(),
+		0,
+		&GameObjectTemplate::stub_with_group(0b100000)
+	).ok().unwrap();
 	
 	let command = DeleteGameObjectC2SCommand {
 		global_object_id,

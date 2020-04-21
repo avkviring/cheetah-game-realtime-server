@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use crate::relay::network::client::ClientStream;
 use crate::relay::room::groups::AccessGroups;
+use crate::relay::room::objects::object::GroupType;
 use crate::relay::room::objects::owner::Owner;
 use crate::relay::room::room::{ClientId, Room};
 
@@ -45,7 +46,7 @@ impl ClientConfiguration {
 		}
 	}
 	
-	fn stub_with_access_group(client_id: ClientId, group: Vec<u8>) -> ClientConfiguration {
+	fn stub_with_access_group(client_id: ClientId, group: GroupType) -> ClientConfiguration {
 		ClientConfiguration {
 			id: client_id,
 			hash: format!("{}", client_id),
@@ -62,7 +63,7 @@ impl Client {
 		}
 	}
 	
-	pub fn stub_with_access_group(client_id: u16, groups: Vec<u8>) -> Client {
+	pub fn stub_with_access_group(client_id: u16, groups: GroupType) -> Client {
 		Client {
 			configuration: ClientConfiguration::stub_with_access_group(client_id, groups),
 			stream: ClientStream::stub(),

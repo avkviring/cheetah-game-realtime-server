@@ -56,9 +56,9 @@ impl C2SCommandExecutor for EventC2SCommand {
 			self.global_object_id,
 			self.field_id,
 			ObjectFieldType::Event,
-			|object|
+			|room, object|
 				{
-					object.send_event(self.field_id, self.event_data.clone());
+					room.object_send_event(object, self.field_id, &self.event_data);
 					format!("send event {} done", self.field_id)
 				},
 		);

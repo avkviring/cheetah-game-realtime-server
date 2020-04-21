@@ -1,6 +1,7 @@
 use std::ops::{BitAnd, Shl, Shr};
 
 /// Группа доступа
+#[derive(Debug)]
 pub struct AccessGroups {
 	groups: u64,
 }
@@ -14,7 +15,7 @@ pub enum Access {
 
 impl AccessGroups {
 	pub fn new() -> AccessGroups {
-		AccessGroups::from(Vec::<u8>::new())
+		AccessGroups::from(0)
 	}
 	
 	pub fn contains_group(&self, group: u8) -> bool {
@@ -36,16 +37,10 @@ impl Clone for AccessGroups {
 	}
 }
 
-
-impl From<Vec<u8>> for AccessGroups {
-	fn from(groups: Vec<u8>) -> AccessGroups {
-		let mut value: u64 = 0;
-		for group in groups {
-			let bit = (1 as u64).shl(group as u64);
-			value += bit
-		}
+impl From<u64> for AccessGroups {
+	fn from(groups: u64) -> AccessGroups {
 		AccessGroups {
-			groups: value
+			groups
 		}
 	}
 }

@@ -1,7 +1,7 @@
 use bytebuffer::ByteBuffer;
 use log::error;
 
-use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, get_field_and_change, get_field_and_change2, trace_c2s_command};
+use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, get_field_and_change, trace_c2s_command};
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
@@ -49,7 +49,7 @@ impl C2SCommandDecoder for UpdateStructC2SCommand {
 impl C2SCommandExecutor for UpdateStructC2SCommand {
 	fn execute(&self, client: &Client, room: &mut Room) {
 		trace_c2s_command("UpdateStruct", room, client, format!("params {:?}", self));
-		get_field_and_change2(
+		get_field_and_change(
 			"UpdateStruct",
 			room,
 			client,

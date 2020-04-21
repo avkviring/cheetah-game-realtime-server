@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
-use crate::relay::room::objects::object::{GameObject, FieldID};
+use crate::relay::room::objects::object::{GameObject, FieldID, GameObjectTemplate};
 
 #[test]
 fn should_store_struct_data_in_game_object() {
@@ -52,6 +52,6 @@ fn test_float_counter() {
 
 
 fn setup() -> GameObject {
-	GameObject::new_client_object(&Client::stub(0), 0, AccessGroups::new())
+	GameObject::new_client_object(&Client::stub(0), 0, &GameObjectTemplate::stub())
 }
 

@@ -3,21 +3,20 @@ use std::rc::Rc;
 
 use bytebuffer::ByteBuffer;
 
-use crate::relay::network::command::c2s::create_game_object::CreateGameObjectC2SCommand;
+use crate::relay::network::command::c2s::upload_game_object::UploadGameObjectC2SCommand;
 use crate::relay::network::command::c2s::delete_game_object::DeleteGameObjectC2SCommand;
-use crate::relay::network::command::s2c::create_game_object::CreateObjectS2CCommand;
 use crate::relay::network::command::s2c::delete_game_object::DeleteObjectS2CCommand;
 use crate::relay::network::command::s2c::event::EventS2CCommand;
 use crate::relay::network::command::s2c::update_float_counter::UpdateFloatCounterS2CCommand;
 use crate::relay::network::command::s2c::update_long_counter::UpdateLongCounterS2CCommand;
 use crate::relay::network::command::s2c::update_struct::UpdateStructS2CCommand;
+use crate::relay::network::command::s2c::upload_object::UploadObjectS2CCommand;
 use crate::relay::room::clients::{Client, Clients};
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::object::{FieldID, GameObject};
 use crate::relay::room::room::{ClientId, Room};
 
-pub mod create_game_object;
 pub mod delete_game_object;
 pub mod update_long_counter;
 pub mod update_float_counter;
@@ -49,10 +48,11 @@ impl RoomListener for S2CCommandCollector {
 	fn on_object_created(&mut self, game_object: &GameObject) {
 		let cloned_room_rc = self.room.clone();
 		let room = cloned_room_rc.borrow();
+		let object = game_object.clone();
 		self.commands.push(Box::new(
-			CreateObjectS2CCommand {
+			UploadObjectS2CCommand {
 				affected_clients: AffectedClients::new(&room.clients, &game_object.groups),
-				global_object_id: game_object.id,
+				cloned_object: object,
 			}
 		))
 	}
