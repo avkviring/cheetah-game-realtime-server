@@ -1,0 +1,28 @@
+name: Send push notification to Telegram
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: send notifiction
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: get commit message
+        run: |
+          echo "<b>PUSH</b>" > commit_message.txt
+          echo "${{ github.actor }} в ${{ github.repository }}" >> commit_message.txt
+          echo "<pre>" >> commit_message.txt
+          git log --format=%B ${{ github.event.before }}..${{ github.event.head_commit.id}} >> commit_message.txt
+          echo "</pre>" >> commit_message.txt
+          echo "<a href='${{ github.event.head_commit.url }}'>подробнее</a>" >> commit_message.txt
+      - uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: html
+          message_file: commit_message.txt
