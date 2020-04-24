@@ -157,7 +157,7 @@ impl Room {
 	
 	pub fn object_update_struct(&mut self, object: &mut GameObject, field_id: FieldID, value: &Vec<u8>) {
 		object.update_struct(field_id, value.clone());
-		self.listener.on_object_struct_changed(field_id, object);
+		self.listener.on_object_struct_updated(field_id, object);
 	}
 	
 	pub fn object_send_event(&mut self, object: &mut GameObject, field_id: FieldID, event_data: &Vec<u8>) {

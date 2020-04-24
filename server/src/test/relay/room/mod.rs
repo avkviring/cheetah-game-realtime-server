@@ -7,6 +7,7 @@ mod room;
 mod objects;
 mod clients;
 mod groups;
+mod listener;
 
 pub fn setup_and_two_client() -> (Room, Rc<Client>, Rc<Client>) {
 	let mut room = Room::new();

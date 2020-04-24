@@ -107,7 +107,7 @@ impl RoomListener for S2CCommandCollector {
 		))
 	}
 	
-	fn on_object_struct_changed(&mut self, field_id: FieldID, game_object: &GameObject) {
+	fn on_object_struct_updated(&mut self, field_id: FieldID, game_object: &GameObject) {
 		let cloned_room_rc = self.room.clone();
 		let room = cloned_room_rc.borrow();
 		self.commands.push(Box::new(
