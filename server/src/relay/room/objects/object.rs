@@ -8,14 +8,14 @@ use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::owner::Owner;
-use crate::relay::room::room::Room;
+use crate::relay::room::room::{GlobalObjectId, Room};
 
 pub type FieldID = u16;
 pub type GroupType = u64;
 
 /// Игровой объект
 /// содержит данные от пользователей
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GameObject {
 	pub id: u64,
 	pub owner: Owner,
@@ -41,19 +41,19 @@ pub struct GameObjectTemplate {
 
 
 /// счетчик
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LongCounter {
 	pub counter: i64
 }
 
 /// счетчик
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FloatCounter {
 	pub counter: f64
 }
 
 /// данные
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DataStruct {
 	pub data: Vec<u8>
 }
@@ -95,6 +95,10 @@ impl GameObject {
 			structures: template.structures.clone(),
 			groups: template.groups.clone(),
 		}
+	}
+	
+	pub fn stub(id: GlobalObjectId) -> GameObject {
+		return GameObject::new_root_object(id, &GameObjectTemplate::stub());
 	}
 	
 	pub fn update_struct(&mut self, field_id: FieldID, data: Vec<u8>) {
@@ -145,24 +149,24 @@ impl GameObject {
 impl Room {
 	pub fn object_increment_long_counter(&mut self, object: &mut GameObject, field_id: FieldID, value: i64) -> i64 {
 		let result = object.increment_long_counter(field_id, value);
-		self.listener.on_object_long_counter_change(field_id, object);
+		self.listener.on_object_long_counter_change(field_id, object, &self.clients);
 		return result;
 	}
 	
 	pub fn object_increment_float_counter(&mut self, object: &mut GameObject, field_id: FieldID, value: f64) -> f64 {
 		let result = object.increment_float_counter(field_id, value);
-		self.listener.on_object_float_counter_change(field_id, object);
+		self.listener.on_object_float_counter_change(field_id, object, &self.clients);
 		return result;
 	}
 	
 	pub fn object_update_struct(&mut self, object: &mut GameObject, field_id: FieldID, value: &Vec<u8>) {
 		object.update_struct(field_id, value.clone());
-		self.listener.on_object_struct_updated(field_id, object);
+		self.listener.on_object_struct_updated(field_id, object, &self.clients);
 	}
 	
 	pub fn object_send_event(&mut self, object: &mut GameObject, field_id: FieldID, event_data: &Vec<u8>) {
 		object.send_event(field_id, event_data);
-		self.listener.on_object_event_fired(field_id, &event_data, object);
+		self.listener.on_object_event_fired(field_id, &event_data, object, &self.clients);
 	}
 }
 
@@ -177,6 +181,7 @@ impl GameObjectTemplate {
 		}
 	}
 	
+	/// todo переделать на AccessGroup
 	pub fn stub_with_group(group: GroupType) -> GameObjectTemplate {
 		GameObjectTemplate {
 			long_counters: Default::default(),

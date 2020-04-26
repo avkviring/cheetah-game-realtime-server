@@ -1,7 +1,7 @@
 use std::ops::{BitAnd, Shl, Shr};
 
 /// Группа доступа
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AccessGroups {
 	groups: u64,
 }
@@ -25,15 +25,6 @@ impl AccessGroups {
 	
 	pub fn contains_any(&self, groups: &AccessGroups) -> bool {
 		return self.groups.bitand(groups.groups) > 0;
-	}
-}
-
-
-impl Clone for AccessGroups {
-	fn clone(&self) -> Self {
-		AccessGroups {
-			groups: self.groups.clone()
-		}
 	}
 }
 

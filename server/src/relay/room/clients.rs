@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use crate::relay::network::client::ClientStream;
 use crate::relay::room::groups::AccessGroups;
+use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::object::GroupType;
 use crate::relay::room::objects::owner::Owner;
 use crate::relay::room::room::{ClientId, Room};
@@ -123,6 +124,8 @@ impl Room {
 						id,
 						client.clone());
 				
+				self.listener.on_client_connect(&client.clone(), &self.objects);
+				
 				Result::Ok(client.clone())
 			}
 			Err(_) => {
@@ -150,7 +153,8 @@ impl Room {
 	pub fn client_disconnect(&mut self, client: &Client) -> Option<Rc<Client>> {
 		let option = self.clients.clients.remove(&client.configuration.id);
 		if option.is_some() {
-			self.objects.delete_objects_by_owner(Owner::new_owner(client))
+			self.objects.delete_objects_by_owner(Owner::new_owner(client));
+			self.listener.on_client_disconnect(client);
 		}
 		return option;
 	}

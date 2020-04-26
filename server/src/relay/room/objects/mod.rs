@@ -9,13 +9,14 @@ use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::object::{GameObject, GameObjectTemplate, ObjectFieldType};
 use crate::relay::room::objects::owner::Owner;
 use crate::relay::room::room::{GlobalObjectId, LocalObjectId, Room};
+use indexmap::map::IndexMap;
 
 pub mod object;
 pub mod owner;
 
 /// Хранение и управление списком игровых объектов
 pub struct Objects {
-	objects: HashMap<GlobalObjectId, Rc<RefCell<GameObject>>>,
+	objects: IndexMap<GlobalObjectId, Rc<RefCell<GameObject>>>,
 }
 
 #[derive(Debug)]
@@ -85,6 +86,27 @@ impl Objects {
 	pub fn delete_object(&mut self, global_object_id: GlobalObjectId) {
 		self.objects.remove(&global_object_id);
 	}
+	
+	/// Получить объекты для группы в порядке их создания
+	pub fn get_objects_by_group_in_create_order(&self, access_group: &AccessGroups) -> Vec<Rc<RefCell<GameObject>>> {
+		// полный перебор объектов
+		// но из-за сессионной природы битвы возможно этот вариант быстрее чем постоянно формировать
+		// структуры для быстрого поиска объектов
+		self
+			.objects
+			.values()
+			.filter(|&o| {
+				let o = o.clone();
+				let o = &*o;
+				let o = o.borrow();
+				o.groups.contains_any(access_group)
+			})
+			.map(|o| {
+				let o = o.clone();
+				o
+			})
+			.collect::<Vec<_>>()
+	}
 }
 
 
@@ -123,7 +145,7 @@ impl Room {
 	fn notify_create_object(&mut self, global_object_id: GlobalObjectId) {
 		let rc = self.objects.get(global_object_id).unwrap().clone();
 		let rc_game_object = (*rc).borrow();
-		self.listener.on_object_created(&rc_game_object);
+		self.listener.on_object_created(&rc_game_object, &self.clients);
 	}
 	
 	/// проверка прав доступа к полю объекта
@@ -157,7 +179,7 @@ impl Room {
 	}
 	
 	pub fn delete_game_object(&mut self, game_object: &GameObject) {
-		self.listener.on_object_delete(game_object);
+		self.listener.on_object_delete(game_object, &self.clients);
 		self.objects.delete_object(game_object.id);
 	}
 }

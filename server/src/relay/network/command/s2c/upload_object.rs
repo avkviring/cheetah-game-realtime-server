@@ -6,6 +6,7 @@ use crate::relay::room::room::GlobalObjectId;
 
 /// Загрузка объекта на клиент
 /// со всеми данными
+#[derive(Debug, PartialEq)]
 pub struct UploadObjectS2CCommand {
 	pub affected_clients: AffectedClients,
 	pub cloned_object: GameObject,
