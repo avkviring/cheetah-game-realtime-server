@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Shl;
 
-use log::Level::Debug;
-use typenum::Gr;
-
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::listener::RoomListener;
@@ -63,8 +60,6 @@ pub enum ObjectFieldType {
 	LongCounter,
 	FloatCounter,
 	Struct,
-	StringToIdMap,
-	IdSet,
 	Event,
 }
 
@@ -138,7 +133,7 @@ impl GameObject {
 	}
 	
 	
-	pub fn send_event(&self, field_id: FieldID, event: &Vec<u8>) {}
+	pub fn send_event(&self, _field_id: FieldID, _event: &Vec<u8>) {}
 	
 	pub fn to_global_object_id(client: &Client, local_object_id: u32) -> u64 {
 		(client.configuration.id as u64).shl(32) + local_object_id as u64

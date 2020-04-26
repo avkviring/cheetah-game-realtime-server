@@ -1,6 +1,4 @@
 use bytebuffer::ByteBuffer;
-use log::error;
-use log::trace;
 
 use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, trace_c2s_command};
 use crate::relay::room::clients::Client;

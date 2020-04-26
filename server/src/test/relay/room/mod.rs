@@ -1,4 +1,4 @@
-use std::cell::{Cell, RefCell};
+use std::cell::{ RefCell};
 use std::rc::Rc;
 
 use crate::relay::room::clients::{Client, Clients};

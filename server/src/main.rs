@@ -7,6 +7,7 @@ mod relay;
 mod test;
 
 fn main() {
+	1;
 	init_logger();
 	
 	

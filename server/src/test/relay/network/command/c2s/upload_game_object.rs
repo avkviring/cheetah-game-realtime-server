@@ -6,7 +6,7 @@ use bytebuffer::ByteBuffer;
 use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor};
 use crate::relay::network::command::c2s::upload_game_object::UploadGameObjectC2SCommand;
 use crate::relay::room::groups::AccessGroups;
-use crate::relay::room::objects::object::{DataStruct, FieldID, FloatCounter, GameObject, GameObjectTemplate, LongCounter};
+use crate::relay::room::objects::object::{DataStruct, FloatCounter, GameObject, GameObjectTemplate, LongCounter};
 use crate::test::relay::room::setup_and_two_client;
 
 #[test]

@@ -1,9 +1,10 @@
-use std::ops::{BitAnd, Shl, Shr};
+use std::ops::{BitAnd, Shl};
+use crate::relay::room::objects::object::GroupType;
 
 /// Группа доступа
 #[derive(Debug, Clone, PartialEq)]
 pub struct AccessGroups {
-	groups: u64,
+	groups: GroupType,
 }
 
 #[derive(Debug)]

@@ -1,11 +1,9 @@
-use std::borrow::Borrow;
-use std::cell::{Cell, RefCell, RefMut};
+use std::cell::{ RefCell};
 use std::rc::Rc;
 
-use crate::relay::room::listener::RoomListener;
-use crate::relay::room::objects::object::{GameObject, GameObjectTemplate};
+use crate::relay::room::objects::object::GameObjectTemplate;
 use crate::relay::room::room::Room;
-use crate::test::relay::room::{setup_client, setup_listener, TestListener};
+use crate::test::relay::room::{setup_client, setup_listener};
 
 #[test]
 fn should_invoke_on_object_create() {

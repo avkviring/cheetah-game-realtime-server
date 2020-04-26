@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
 use crate::relay::room::clients::Client;
-use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::objects::object::{GameObject, FieldID, GameObjectTemplate};
 
 #[test]

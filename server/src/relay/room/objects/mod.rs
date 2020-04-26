@@ -1,6 +1,4 @@
-use std::borrow::Borrow;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::relay::room::clients::Client;
@@ -150,11 +148,11 @@ impl Room {
 	
 	/// проверка прав доступа к полю объекта
 	pub fn get_object_with_check_field_access(&mut self,
-											  access: Access,
-											  client: &Client,
+											  _access: Access,
+											  _client: &Client,
 											  global_object_id: u64,
-											  object_field_type: ObjectFieldType,
-											  field_id: u16) ->
+											  _object_field_type: ObjectFieldType,
+											  _field_id: u16) ->
 											  Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {
 		let object = self.objects.get(global_object_id);
 		return if object.is_some() {
@@ -166,8 +164,8 @@ impl Room {
 	
 	/// проверка прав доступа к полю объекта
 	pub fn get_object_with_check_access(&self,
-										access: Access,
-										client: &Client,
+										_access: Access,
+										_client: &Client,
 										global_object_id: u64) ->
 										Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {
 		let object = self.objects.get(global_object_id);

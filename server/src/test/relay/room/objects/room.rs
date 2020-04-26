@@ -1,9 +1,4 @@
-use std::rc::Rc;
-
-use crate::relay::room::clients::Client;
-use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::objects::object::GameObjectTemplate;
-use crate::relay::room::room::Room;
 use crate::test::relay::room::setup_and_two_client;
 
 #[test]

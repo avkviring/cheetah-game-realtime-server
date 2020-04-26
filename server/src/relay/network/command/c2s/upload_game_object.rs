@@ -1,14 +1,10 @@
 use std::collections::HashMap;
-use std::error::Error;
-
 use bytebuffer::ByteBuffer;
-use log::{error, trace};
-
 use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, error_c2s_command, trace_c2s_command};
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::objects::CreateObjectError;
-use crate::relay::room::objects::object::{DataStruct, FieldID, FloatCounter, GameObject, GameObjectTemplate, LongCounter};
+use crate::relay::room::objects::object::{DataStruct, FieldID, FloatCounter, GameObjectTemplate, LongCounter};
 use crate::relay::room::room::{LocalObjectId, Room};
 
 /// команда создания игрового объекта

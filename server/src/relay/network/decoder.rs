@@ -44,7 +44,7 @@ impl Decoder {
 					self.commands.push(command.unwrap());
 					let data = bytes.read_bytes(bytes.get_wpos() - bytes.get_rpos()).unwrap();
 					bytes.clear();
-					bytes.write(data.as_slice());
+					bytes.write(data.as_slice()).ok();
 				} else {
 					bytes.set_rpos(rpos);
 					break;

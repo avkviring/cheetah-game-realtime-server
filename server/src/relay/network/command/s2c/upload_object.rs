@@ -2,7 +2,6 @@ use bytebuffer::ByteBuffer;
 
 use crate::relay::network::command::s2c::{AffectedClients, S2CCommand};
 use crate::relay::room::objects::object::GameObject;
-use crate::relay::room::room::GlobalObjectId;
 
 /// Загрузка объекта на клиент
 /// со всеми данными

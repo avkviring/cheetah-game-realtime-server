@@ -1,12 +1,9 @@
-use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use bytebuffer::ByteBuffer;
 use traitcast::TraitcastFrom;
 
-use crate::relay::network::command::c2s::delete_game_object::DeleteGameObjectC2SCommand;
-use crate::relay::network::command::c2s::upload_game_object::UploadGameObjectC2SCommand;
 use crate::relay::network::command::s2c::delete_game_object::DeleteObjectS2CCommand;
 use crate::relay::network::command::s2c::event::EventS2CCommand;
 use crate::relay::network::command::s2c::update_float_counter::UpdateFloatCounterS2CCommand;
@@ -18,7 +15,7 @@ use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::object::{FieldID, GameObject};
 use crate::relay::room::objects::Objects;
-use crate::relay::room::room::{ClientId, Room};
+use crate::relay::room::room::ClientId;
 
 pub mod delete_game_object;
 pub mod update_long_counter;
@@ -98,7 +95,7 @@ impl RoomListener for S2CCommandCollector {
 	}
 	
 	
-	fn on_client_disconnect(&mut self, client: &Client) {
+	fn on_client_disconnect(&mut self, _client: &Client) {
 		// ничего не делаем на данный момент
 		// так как объекты созданные пользователям
 		// удалит room
