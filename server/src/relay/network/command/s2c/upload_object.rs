@@ -6,12 +6,12 @@ use crate::relay::room::objects::object::GameObject;
 /// Загрузка объекта на клиент
 /// со всеми данными
 #[derive(Debug, PartialEq)]
-pub struct UploadObjectS2CCommand {
+pub struct UploadGameObjectS2CCommand {
 	pub affected_clients: AffectedClients,
 	pub cloned_object: GameObject,
 }
 
-impl S2CCommand for UploadObjectS2CCommand {
+impl S2CCommand for UploadGameObjectS2CCommand {
 	fn get_command_id(&self) -> u8 {
 		1
 	}

@@ -118,7 +118,13 @@ impl Room {
 	pub fn client_disconnect(&mut self, client: &Client) -> Option<Rc<Client>> {
 		let option = self.clients.clients.remove(&client.configuration.id);
 		if option.is_some() {
-			self.objects.delete_objects_by_owner(Owner::new_owner(client));
+			let objects = self.objects.get_objects_by_owner(Owner::new_owner(client));
+			objects.iter().for_each(|o| {
+				let o = o.clone();
+				let o = &*o;
+				let o = o.borrow();
+				self.delete_game_object(&o);
+			});
 			self.listener.on_client_disconnect(client);
 		}
 		return option;

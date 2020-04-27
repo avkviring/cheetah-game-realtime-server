@@ -4,6 +4,7 @@ use crate::relay::room::objects::object::FieldID;
 use crate::relay::room::room::GlobalObjectId;
 use crate::relay::network::command::s2c::{AffectedClients, S2CCommand};
 
+#[derive(Debug, PartialEq)]
 pub struct UpdateFloatCounterS2CCommand {
 	pub affected_clients: AffectedClients,
 	pub global_object_id: GlobalObjectId,

@@ -4,12 +4,12 @@ use std::rc::Rc;
 use bytebuffer::ByteBuffer;
 use traitcast::TraitcastFrom;
 
-use crate::relay::network::command::s2c::delete_game_object::DeleteObjectS2CCommand;
+use crate::relay::network::command::s2c::delete_game_object::DeleteGameObjectS2CCommand;
 use crate::relay::network::command::s2c::event::EventS2CCommand;
 use crate::relay::network::command::s2c::update_float_counter::UpdateFloatCounterS2CCommand;
 use crate::relay::network::command::s2c::update_long_counter::UpdateLongCounterS2CCommand;
 use crate::relay::network::command::s2c::update_struct::UpdateStructS2CCommand;
-use crate::relay::network::command::s2c::upload_object::UploadObjectS2CCommand;
+use crate::relay::network::command::s2c::upload_object::UploadGameObjectS2CCommand;
 use crate::relay::room::clients::{Client, Clients};
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::listener::RoomListener;
@@ -61,7 +61,7 @@ impl RoomListener for S2CCommandCollector {
 	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
 		let object = game_object.clone();
 		self.push(Box::new(
-			UploadObjectS2CCommand {
+			UploadGameObjectS2CCommand {
 				affected_clients: AffectedClients::new_from_clients(clients, &game_object.groups),
 				cloned_object: object,
 			}
@@ -70,7 +70,7 @@ impl RoomListener for S2CCommandCollector {
 	
 	fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {
 		self.push(Box::new(
-			DeleteObjectS2CCommand {
+			DeleteGameObjectS2CCommand {
 				affected_clients: AffectedClients::new_from_clients(clients, &game_object.groups),
 				global_object_id: game_object.id,
 			}
@@ -86,7 +86,7 @@ impl RoomListener for S2CCommandCollector {
 				let o = &*o;
 				let o = o.borrow();
 				self.push(Box::new(
-					UploadObjectS2CCommand {
+					UploadGameObjectS2CCommand {
 						affected_clients: AffectedClients::new_from_client(client),
 						cloned_object: o.clone(),
 					}

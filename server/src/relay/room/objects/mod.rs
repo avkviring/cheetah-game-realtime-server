@@ -1,13 +1,14 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use indexmap::map::IndexMap;
+
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::{Access, AccessGroups};
 use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::object::{GameObject, GameObjectTemplate, ObjectFieldType};
 use crate::relay::room::objects::owner::Owner;
 use crate::relay::room::room::{GlobalObjectId, LocalObjectId, Room};
-use indexmap::map::IndexMap;
 
 pub mod object;
 pub mod owner;
@@ -67,18 +68,15 @@ impl Objects {
 		return self.objects.len();
 	}
 	
-	pub fn delete_objects_by_owner(&mut self, owner: Owner) {
-		let object_for_remove: Vec<GlobalObjectId> = self.objects
+	pub fn get_objects_by_owner(&mut self, owner: Owner) -> Vec<Rc<RefCell<GameObject>>> {
+		let object_for_remove: Vec<Rc<RefCell<GameObject>>> = self.objects
 			.values()
 			.filter(|o| {
 				(*((*o).clone())).borrow().owner == owner
 			})
-			.map(|o| (*(*o).clone()).borrow().id)
+			.map(|o| (*o).clone())
 			.collect();
-		
-		for object_id in object_for_remove {
-			self.objects.remove(&object_id);
-		}
+		return object_for_remove;
 	}
 	
 	pub fn delete_object(&mut self, global_object_id: GlobalObjectId) {
@@ -116,6 +114,7 @@ impl Room {
 	/// * `local_object_id` - идентификатор объекта в рамках клиента
 	/// * `groups` - группы доступа
 	///
+	#[deprecated]
 	pub fn create_client_game_object(&mut self,
 									 owner: &Client,
 									 local_object_id: LocalObjectId,

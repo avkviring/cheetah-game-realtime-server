@@ -28,8 +28,8 @@ pub fn setup_client(room: &mut Room, client_hash: &str, group: GroupType) -> Rc<
 }
 
 pub fn setup_listener(room: &mut Room) -> Rc<RefCell<Vec<String>>> {
-	let mut results = Rc::new(RefCell::new(Vec::<String>::new()));
-	let mut listener = Box::new(TestListener { results: results.clone() });
+	let results = Rc::new(RefCell::new(Vec::<String>::new()));
+	let listener = Box::new(TestListener { results: results.clone() });
 	room.listener.add_listener(listener);
 	results
 }
@@ -41,42 +41,42 @@ struct TestListener {
 
 impl RoomListener for TestListener {
 	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_object_create {}", game_object.id));
 	}
 	
 	fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_object_delete {}", game_object.id));
 	}
 	
 	fn on_client_connect(&mut self, client: &Client, objects: &Objects) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_client_connect {}", client.configuration.id));
 	}
 	
 	fn on_client_disconnect(&mut self, client: &Client) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_client_disconnect {}", client.configuration.id));
 	}
 	
 	fn on_object_long_counter_change(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_object_long_counter_change {} {} {}", game_object.id, field_id, game_object.get_long_counter(field_id)));
 	}
 	
 	fn on_object_float_counter_change(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_object_float_counter_change {} {} {}", game_object.id, field_id, game_object.get_float_counter(field_id)));
 	}
 	
 	fn on_object_event_fired(&mut self, field_id: u16, event_data: &Vec<u8>, game_object: &GameObject, clients: &Clients) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_object_event_fired {} {} {:?}", game_object.id, field_id, event_data));
 	}
 	
 	fn on_object_struct_updated(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
-		let mut rc = self.results.clone();
+		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_object_struct_updated {} {} {:?}", game_object.id, field_id, game_object.get_struct(field_id).unwrap()));
 	}
 }
