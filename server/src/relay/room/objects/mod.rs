@@ -60,7 +60,7 @@ impl Objects {
 	}
 	
 	pub fn get_by_owner(&self, client: &Client, local_object_id: LocalObjectId) -> Option<Rc<RefCell<GameObject>>> {
-		let id = GameObject::to_global_object_id(client, local_object_id);
+		let id = GameObject::get_global_object_id_by_client(client, local_object_id);
 		return self.get(id);
 	}
 	
@@ -103,6 +103,14 @@ impl Objects {
 			})
 			.collect::<Vec<_>>()
 	}
+	
+	pub fn get_object_ids(&self) -> Vec<GlobalObjectId> {
+		self
+			.objects
+			.keys()
+			.map(|k| *k)
+			.collect()
+	}
 }
 
 
@@ -114,7 +122,6 @@ impl Room {
 	/// * `local_object_id` - идентификатор объекта в рамках клиента
 	/// * `groups` - группы доступа
 	///
-	#[deprecated]
 	pub fn create_client_game_object(&mut self,
 									 owner: &Client,
 									 local_object_id: LocalObjectId,
@@ -124,8 +131,6 @@ impl Room {
 		if !client_groups.contains_any(&groups) {
 			return Result::Err(CreateObjectError::IncorrectGroups);
 		}
-		
-		
 		let id = self.objects.create_client_game_object(&owner, local_object_id, template);
 		self.notify_create_object(id);
 		Result::Ok(id)

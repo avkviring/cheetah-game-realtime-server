@@ -1,29 +1,47 @@
 extern crate stderrlog;
+
+
+use std::sync::{Arc, Mutex};
+use std::thread;
+
 use stderrlog::Timestamp;
+
+use crate::relay::network::server::tcp::TCPServer;
+use crate::relay::rooms::Rooms;
 
 mod relay;
 
 #[cfg(test)]
 mod test;
 
+
 fn main() {
-	1;
 	init_logger();
-	
-	
-	// let listener = TcpListener::bind("127.0.0.1:5555").unwrap();
-	// for stream in listener.incoming() {
-	// 	print!("income");
-	// 	let mut tcp_stream = stream.unwrap();
-	// 	tcp_stream.write(&[65 as u8, 66 as u8, 10 as u8]);
-	// }
+	//init_rest();
+	start_server();
+}
+
+fn start_server() {
+	let rooms = Arc::new(Mutex::new(Rooms::new()));
+	let handler = thread::spawn(|| {
+		let mut server = TCPServer::new("0.0.0.0:5050".to_string(), rooms);
+		server.start();
+	});
+	let result = handler.join();
+	match result {
+		Ok(_) => {}
+		Err(e) => {
+			log::error!("main: error join to tcp thread {:?}", e);
+		}
+	}
 }
 
 fn init_logger() {
 	stderrlog::new()
 		.verbosity(4)
 		.quiet(false)
-		.timestamp(Timestamp::Millisecond)
+		.show_level(true)
+		.timestamp(Timestamp::Second)
 		.init()
 		.unwrap();
 }

@@ -1,5 +1,5 @@
-use bytebuffer::ByteBuffer;
-use crate::relay::network::command::c2s::{C2SCommandDecoder, C2SCommandExecutor, get_field_and_change, trace_c2s_command};
+use crate::relay::network::command::c2s::{get_field_and_change, trace_c2s_command};
+use crate::relay::network::types::niobuffer::NioBuffer;
 use crate::relay::room::clients::Client;
 use crate::relay::room::objects::object::{FieldID, ObjectFieldType};
 use crate::relay::room::room::{GlobalObjectId, Room};
@@ -13,29 +13,26 @@ pub struct UpdateLongCounterC2SCommand {
 }
 
 
-impl C2SCommandDecoder for UpdateLongCounterC2SCommand {
-	const COMMAND_ID: u8 = 3;
+impl UpdateLongCounterC2SCommand {
+	pub const COMMAND_ID: u8 = 3;
 	
-	fn decode(bytes: &mut ByteBuffer) -> Option<Box<dyn C2SCommandExecutor>> {
+	pub fn decode(bytes: &mut NioBuffer) -> Option<UpdateLongCounterC2SCommand> {
 		let global_object_id = bytes.read_u64();
 		let counter_id = bytes.read_u16();
 		let increment = bytes.read_i64();
-		return if global_object_id.is_err() || counter_id.is_err() || increment.is_err() {
+		if global_object_id.is_err() || counter_id.is_err() || increment.is_err() {
 			Option::None
 		} else {
-			Option::Some(Box::new(
+			Option::Some(
 				UpdateLongCounterC2SCommand {
-					global_object_id: global_object_id.unwrap(),
-					field_id: counter_id.unwrap(),
-					increment: increment.unwrap(),
+					global_object_id: global_object_id.ok().unwrap(),
+					field_id: counter_id.ok().unwrap(),
+					increment: increment.ok().unwrap(),
 				}
-			))
-		};
+			)
+		}
 	}
-}
-
-impl C2SCommandExecutor for UpdateLongCounterC2SCommand {
-	fn execute(&self, client: &Client, room: &mut Room) {
+	pub fn execute(&self, client: &Client, room: &mut Room) {
 		trace_c2s_command("UpdateLongCounter", room, client, format!("params {:?}", self));
 		get_field_and_change(
 			"UpdateLongCounter",

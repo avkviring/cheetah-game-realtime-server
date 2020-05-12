@@ -1,10 +1,10 @@
-extern crate typenum;
-
+use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Values;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::relay::network::client::ClientStream;
+use crate::relay::network::types::hash::HashValue;
+use crate::relay::room::clients::ClientConnectError::ClientNotInWatingList;
 use crate::relay::room::groups::AccessGroups;
 use crate::relay::room::listener::RoomListener;
 use crate::relay::room::objects::owner::Owner;
@@ -16,7 +16,7 @@ pub struct Clients {
 	/// генератор идентификатора пользователя
 	pub client_id_generator: ClientId,
 	/// список ожидаемых клиентов
-	pub waiting_clients: Vec<ClientConfiguration>,
+	pub waiting_clients: HashMap<HashValue, ClientConfiguration>,
 }
 
 /// Ожидаемый клиент
@@ -24,7 +24,7 @@ pub struct ClientConfiguration {
 	/// уникальный идентификатор клиента в рамках комнаты
 	pub id: ClientId,
 	/// авторизационный хеш
-	pub hash: String,
+	pub hash: HashValue,
 	/// группы
 	pub groups: AccessGroups,
 }
@@ -35,6 +35,11 @@ pub struct Client {
 	pub configuration: ClientConfiguration,
 	/// сетевой поток клиента
 	pub stream: ClientStream,
+}
+
+#[derive(Debug)]
+pub enum ClientConnectError {
+	ClientNotInWatingList
 }
 
 impl Clients {
@@ -52,30 +57,23 @@ impl Clients {
 
 impl Default for Clients {
 	fn default() -> Self {
-		return Clients {
+		Clients {
 			clients: Default::default(),
-			client_id_generator: 0,
-			waiting_clients: vec![],
-		};
+			client_id_generator: Default::default(),
+			waiting_clients: Default::default(),
+		}
 	}
 }
 
 impl Room {
 	/// Присоединение клиента к комнате
 	/// Хеш клиента должен быть в списке ожидающих клиентов
-	pub fn client_connect(&mut self, client_hash: String) -> Result<Rc<Client>, ()> {
-		let result =
-			self
-				.clients
-				.waiting_clients
-				.iter()
-				.position(|x| x.hash == client_hash)
-				.map(|position| self.clients.waiting_clients.remove(position))
-				.ok_or(());
-		
-		
-		return match result {
-			Ok(client_configuration) => {
+	pub fn client_connect(&mut self, client_hash: &HashValue) -> Result<Rc<Client>, ClientConnectError> {
+		self
+			.clients
+			.waiting_clients.remove(client_hash)
+			.ok_or(ClientNotInWatingList)
+			.map(|client_configuration| {
 				let id = client_configuration.id;
 				let client = Rc::new(
 					Client {
@@ -90,25 +88,20 @@ impl Room {
 						client.clone());
 				
 				self.listener.on_client_connect(&client.clone(), &self.objects);
-				
-				Result::Ok(client.clone())
-			}
-			Err(_) => {
-				Result::Err(())
-			}
-		};
+				client
+			})
 	}
 	
 	/// Добавить ожидающего клиента
-	pub fn add_client_to_waiting_list(&mut self, hash: String, groups: AccessGroups) -> ClientId {
+	pub fn add_client_to_waiting_list(&mut self, hash: &HashValue, groups: AccessGroups) -> ClientId {
 		let client_id = self.clients.get_next_client_id();
 		let configuration = ClientConfiguration {
 			id: client_id,
-			hash,
+			hash: hash.clone(),
 			groups,
 		};
-		self.clients.waiting_clients.push(configuration);
-		return client_id;
+		self.clients.waiting_clients.insert(hash.clone(), configuration);
+		client_id
 	}
 	
 	
@@ -127,6 +120,6 @@ impl Room {
 			});
 			self.listener.on_client_disconnect(client);
 		}
-		return option;
+		option
 	}
 }

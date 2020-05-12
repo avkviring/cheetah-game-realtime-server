@@ -1,47 +1,66 @@
-use bytebuffer::ByteBuffer;
+use std::collections::HashMap;
 
-use crate::relay::network::command::s2c::{AffectedClients, S2CCommand};
-use crate::relay::room::objects::object::GameObject;
+use crate::relay::network::command::s2c::S2CCommand;
+use crate::relay::network::types::niobuffer::{NioBuffer, NioBufferError};
+use crate::relay::room::objects::object::{DataStruct, FieldID, FloatCounter, GameObject, LongCounter};
 
 /// Загрузка объекта на клиент
 /// со всеми данными
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct UploadGameObjectS2CCommand {
-	pub affected_clients: AffectedClients,
 	pub cloned_object: GameObject,
 }
 
 impl S2CCommand for UploadGameObjectS2CCommand {
-	fn get_command_id(&self) -> u8 {
-		1
-	}
-	
-	fn get_affected_clients(&self) -> &AffectedClients {
-		return &self.affected_clients;
-	}
-	
-	fn encode(&self, bytes: &mut ByteBuffer) {
-		bytes.write_u64(self.cloned_object.id);
+	fn encode(&self, buffer: &mut NioBuffer) -> bool {
 		let structures = &self.cloned_object.structures;
-		bytes.write_u16(structures.len() as u16);
-		for (id, data) in structures {
-			bytes.write_u16(*id);
-			bytes.write_u16(data.data.len() as u16);
-			bytes.write_bytes(&*data.data)
-		}
-		
 		let long_counters = &self.cloned_object.long_counters;
-		bytes.write_u16(long_counters.len() as u16);
-		for (id, data) in long_counters {
-			bytes.write_u16(*id);
-			bytes.write_i64(data.counter);
-		}
-		
 		let float_counters = &self.cloned_object.float_counters;
-		bytes.write_u16(float_counters.len() as u16);
-		for (id, data) in float_counters {
-			bytes.write_u16(*id);
-			bytes.write_f64(data.counter);
-		}
+		
+		buffer
+			.write_u64(self.cloned_object.id)
+			.and_then(|_| buffer.write_u16(long_counters.len() as u16))
+			.and_then(|_| buffer.write_u16(float_counters.len() as u16))
+			.and_then(|_| buffer.write_u16(structures.len() as u16))
+			.and_then(|_| write_long_counters(buffer, long_counters))
+			.and_then(|_| write_float_counters(buffer, float_counters))
+			.and_then(|_| write_structures(buffer, structures))
+			.is_ok()
 	}
 }
+
+
+fn write_long_counters(buffer: &mut NioBuffer, counters: &HashMap<FieldID, LongCounter>) -> Result<(), NioBufferError> {
+	counters.iter().map(|(id, data)|
+		{
+			buffer
+				.write_u16(*id)
+				.and_then(|_| buffer.write_i64(data.counter))
+		})
+		.find(|f| f.is_err())
+		.unwrap_or_else(|| Result::Ok(()))
+}
+
+fn write_float_counters(buffer: &mut NioBuffer, counters: &HashMap<FieldID, FloatCounter>) -> Result<(), NioBufferError> {
+	counters.iter().map(|(id, data)|
+		{
+			buffer
+				.write_u16(*id)
+				.and_then(|_| buffer.write_f64(data.counter))
+		})
+		.find(|f| f.is_err())
+		.unwrap_or_else(|| Result::Ok(()))
+}
+
+fn write_structures(buffer: &mut NioBuffer, structures: &HashMap<FieldID, DataStruct>) -> Result<(), NioBufferError> {
+	structures.iter().map(|(id, data)|
+		{
+			buffer
+				.write_u16(*id)
+				.and_then(|_| buffer.write_u16(data.data.len() as u16))
+				.and_then(|_| buffer.write_bytes(&*data.data))
+		})
+		.find(|f| f.is_err())
+		.unwrap_or_else(|| Result::Ok(()))
+}
+

@@ -1,7 +1,10 @@
-/// Команды с клиента
-use bytebuffer::ByteBuffer;
-use traitcast::TraitcastFrom;
-
+use crate::relay::network::command::c2s::delete_game_object::DeleteGameObjectC2SCommand;
+use crate::relay::network::command::c2s::event::EventC2SCommand;
+use crate::relay::network::command::c2s::update_float_counter::UpdateFloatCounterC2SCommand;
+use crate::relay::network::command::c2s::update_long_counter::UpdateLongCounterC2SCommand;
+use crate::relay::network::command::c2s::update_struct::UpdateStructC2SCommand;
+use crate::relay::network::command::c2s::upload_game_object::UploadGameObjectC2SCommand;
+use crate::relay::network::types::niobuffer::NioBuffer;
 use crate::relay::room::clients::Client;
 use crate::relay::room::groups::Access;
 use crate::relay::room::objects::ErrorGetObjectWithCheckAccess;
@@ -15,32 +18,65 @@ pub mod update_float_counter;
 pub mod update_struct;
 pub mod event;
 
-/// Декодер входящей команды
-pub trait C2SCommandDecoder {
-	/// идентификатор команды
-	const COMMAND_ID: u8;
-	
-	/// Декодирование команды
-	/// bytes - массив байт, из которого будет прочитана информация
-	/// если результат Option::None то указатель данных в bytes будет сброшен в начало
-	fn decode(bytes: &mut ByteBuffer) -> Option<Box<dyn C2SCommandExecutor>>;
+
+///
+/// Декодирование и выполнение C2S команд
+/// return - количество декодированных команд
+///
+pub fn decode_end_execute_c2s_commands(buffer: &mut NioBuffer, client: &Client, room: &mut Room) -> usize {
+	let mut command_count = 0;
+	while buffer.has_remaining() {
+		buffer.mark();
+		let command_code = buffer.read_u8().ok().unwrap();
+		let command_decoded = match command_code {
+			UploadGameObjectC2SCommand::COMMAND_ID => {
+				UploadGameObjectC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			}
+			DeleteGameObjectC2SCommand::COMMAND_ID => {
+				DeleteGameObjectC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			}
+			UpdateLongCounterC2SCommand::COMMAND_ID => {
+				UpdateLongCounterC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			}
+			UpdateFloatCounterC2SCommand::COMMAND_ID => {
+				UpdateFloatCounterC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			}
+			UpdateStructC2SCommand::COMMAND_ID => {
+				UpdateStructC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			}
+			EventC2SCommand::COMMAND_ID => {
+				EventC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			}
+			C2S_TEST_COMMAND => {
+				buffer.read_u64().map(|_| {}).ok()
+			}
+			_ => {
+				log::error!("decoder: unknown command type {}", command_code);
+				Option::None
+			}
+		};
+		
+		if command_decoded.is_some() {
+			command_count += 1;
+		} else {
+			buffer.reset().ok();
+			break;
+		}
+	};
+	command_count
 }
 
-
-/// Интерфейс команды с клиента
-pub trait C2SCommandExecutor: TraitcastFrom {
-	/// Выполнить команду
-	fn execute(&self, client: &Client, room: &mut Room);
-}
+pub const C2S_TEST_COMMAND: u8 = 255;
 
 
 pub fn trace_c2s_command(command: &str, room: &Room, client: &Client, message: String) {
-	log::trace!("C2S: {:<10} : room {} : client {} : message {}", command, room.id, client.configuration.hash, message);
+	log::trace!("C2S {:<10} : room {} : client {} : {}", command, room.hash, client.configuration.hash, message);
 }
 
 pub fn error_c2s_command(command: &str, room: &Room, client: &Client, message: String) {
-	log::trace!("C2S: {:<10} : room {} : client {} : message {}", command, room.id, client.configuration.hash, message);
+	log::error!("C2S {:<10} : room {} : client {} : {}", command, room.hash, client.configuration.hash, message);
 }
+
 pub fn get_field_and_change<F>(command_name: &str,
 							   room: &mut Room,
 							   client: &Client,

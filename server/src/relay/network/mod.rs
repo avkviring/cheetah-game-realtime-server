@@ -1,3 +1,4 @@
 pub mod client;
-pub mod decoder;
 pub mod command;
+pub mod server;
+pub mod types;
