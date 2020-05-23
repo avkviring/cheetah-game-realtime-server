@@ -1,0 +1,16 @@
+[package]
+name = "relay-plugin"
+version = "0.0.1"
+authors = ["kviring <alex@kviring.com>"]
+edition = "2018"
+
+[lib]
+name = "relay"
+crate-type = ["staticlib","cdylib"]
+
+[dependencies]
+lazy_static = "1.4.0"
+
+[dev-dependencies]
+bitflags = { path = "../../server"}
+
