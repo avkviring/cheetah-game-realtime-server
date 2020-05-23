@@ -1,0 +1,229 @@
+use std::cmp::min;
+use std::io::{Read, Write};
+use std::net::TcpStream;
+use std::sync::{Arc, mpsc, Mutex};
+use std::thread;
+use std::thread::JoinHandle;
+use std::time::Duration;
+
+use rand::Rng;
+use stderrlog::Timestamp;
+
+use cheetah_relay::network::server::tcp::TCPServer;
+use cheetah_relay::network::types::hash::HashValue;
+use cheetah_relay::network::types::niobuffer::NioBuffer;
+use cheetah_relay::room::groups::AccessGroups;
+use cheetah_relay::room::objects::object::GameObject;
+use cheetah_relay::room::request::{ClientInfo, RoomRequest};
+use cheetah_relay::room::room::{GlobalObjectId, LocalObjectId};
+use cheetah_relay::rooms::Rooms;
+
+#[test]
+fn should_connect_client_to_room() {
+	let addr = "127.0.0.1:5050";
+	let (rooms, _) = setup(addr);
+	let (room_hash, mut clients) = create_room(&rooms);
+	let client_hash = clients.pop().unwrap();
+	
+	let mut buffer = NioBuffer::new();
+	create_client_and_send_hashes(&mut buffer, &room_hash, &client_hash);
+	
+	let mut stream = TcpStream::connect(addr).unwrap();
+	send(&mut stream, &mut buffer);
+	
+	let clients = get_clients(rooms, &room_hash);
+	assert_eq!(clients.iter().any(|p| p.hash == client_hash), true)
+}
+
+#[test]
+fn should_disconnect_client_from_room() {
+	let addr = "127.0.0.1:5051";
+	let (rooms, _) = setup(addr);
+	let (room_hash, mut clients) = create_room(&rooms);
+	let client_hash = clients.pop().unwrap();
+	{
+		let mut buffer = NioBuffer::new();
+		create_client_and_send_hashes(&mut buffer, &room_hash, &client_hash);
+		let mut stream = TcpStream::connect(addr).unwrap();
+		send(&mut stream, &mut buffer);
+	}
+	thread::sleep(Duration::from_secs(1));
+	let clients = get_clients(rooms, &room_hash);
+	assert_eq!(clients.is_empty(), true)
+}
+
+#[test]
+fn should_client_create_object() {
+	let addr = "127.0.0.1:5052";
+	let (rooms, _) = setup(addr);
+	let (room_hash, mut clients) = create_room(&rooms);
+	let client_hash = clients.pop().unwrap();
+	let mut buffer = NioBuffer::new();
+	create_client_and_send_hashes(&mut buffer, &room_hash, &client_hash);
+	create_object(&mut buffer, 100);
+	
+	let mut stream = TcpStream::connect(addr).unwrap();
+	send(&mut stream, &mut buffer);
+	
+	let clients = get_clients(rooms.clone(), &room_hash);
+	let client = clients.iter().find(|p| p.hash == client_hash).unwrap();
+	let objects = get_objects(rooms, &room_hash);
+	assert_eq!(objects.iter().any(|id| *id == GameObject::get_global_object_id_by_client_id(client.id, 100)), true);
+}
+
+
+///
+/// Проверяем загрузку объекта при подключении второго клиента
+///
+#[test]
+fn should_receive_command_from_server() {
+	let addr = "127.0.0.1:5053";
+	let (rooms, _) = setup(addr);
+	let (room_hash, mut clients) = create_room(&rooms);
+	let client_a = clients.pop().unwrap();
+	let client_b = clients.pop().unwrap();
+	
+	let mut buffer_for_write_client_a = NioBuffer::new();
+	create_client_and_send_hashes(&mut buffer_for_write_client_a, &room_hash, &client_a);
+	create_object(&mut buffer_for_write_client_a, 100);
+	let mut stream = TcpStream::connect(addr).unwrap();
+	send(&mut stream, &mut buffer_for_write_client_a);
+	
+	
+	let mut buffer_for_write_client_b = NioBuffer::new();
+	create_client_and_send_hashes(&mut buffer_for_write_client_b, &room_hash, &client_b);
+	let mut stream = TcpStream::connect(addr).unwrap();
+	send(&mut stream, &mut buffer_for_write_client_b);
+	
+	let mut readed = NioBuffer::new();
+	thread::sleep(Duration::from_secs(1));
+	let size = stream.read(readed.to_slice()).unwrap();
+	readed.set_position(0);
+	readed.set_limit(size);
+	
+	
+	let clients = get_clients(rooms.clone(), &room_hash);
+	let client_a_id = clients.iter().find(|f| f.hash == client_a).unwrap().id;
+	
+	assert_eq!(readed.read_u8().unwrap(), 1); // command id (UploadObject)
+	assert_eq!(readed.read_u64().unwrap(), GameObject::get_global_object_id_by_client_id(client_a_id, 100)); // object id
+	assert_eq!(readed.read_u16().unwrap(), 1); // long counter count
+	assert_eq!(readed.read_u16().unwrap(), 1); // float counter count
+	assert_eq!(readed.read_u16().unwrap(), 1); // struct counter count
+	
+	assert_eq!(readed.read_u16().unwrap(), 10); // long counter field id
+	assert_eq!(readed.read_i64().unwrap(), 55); // long counter value
+	
+	assert_eq!(readed.read_u16().unwrap(), 15); // float counter field id
+	assert_eq!(readed.read_f64().unwrap() as i64, 15); // float counter value
+	
+	assert_eq!(readed.read_u16().unwrap(), 5); // struct field id
+	assert_eq!(readed.read_u16().unwrap(), 10); // struct size id
+	assert_eq!(readed.read_to_vec(10).unwrap(), vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+}
+
+
+fn create_object(buffer: &mut NioBuffer, local_object_id: LocalObjectId) {
+	buffer.write_u8(1).ok();
+	buffer.write_u32(local_object_id).ok(); // local_object_id
+	buffer.write_u64(0b110).ok(); // groups
+	buffer.write_u16(1).ok(); // long counter count
+	buffer.write_u16(1).ok(); // float counter count
+	buffer.write_u16(1).ok(); // struct counter count
+	
+	buffer.write_u16(10).ok(); // long counter field id
+	buffer.write_i64(55).ok(); // long counter value
+	
+	buffer.write_u16(15).ok(); // float counter field id
+	buffer.write_f64(15.0).ok(); // float counter value
+	
+	
+	buffer.write_u16(5).ok(); // struct field id
+	buffer.write_u16(10).ok(); // struct size id
+	buffer.write_bytes(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).ok(); // field data
+}
+
+
+/// создать клиента и  отправить хеш
+fn create_client_and_send_hashes(buffer: &mut NioBuffer, room_hash: &HashValue, client_hash: &HashValue) {
+	send_hash(&room_hash, buffer);
+	send_hash(&client_hash, buffer);
+}
+
+
+/// создать комнату
+fn create_room(rooms: &Arc<Mutex<Rooms>>) -> (HashValue, Vec<HashValue>) {
+	let room_hash = HashValue::from("room_hash");
+	let clients = vec![HashValue::from("client_hash_a"), HashValue::from("client_hash_b")];
+	{
+		let rooms = &*rooms.clone();
+		let mut rooms = rooms.lock().unwrap();
+		rooms.create_room(&room_hash);
+		clients.iter().for_each(|c| {
+			rooms.send_room_request(
+				&room_hash,
+				RoomRequest::AddWaitingClient(
+					c.clone(),
+					AccessGroups::from(0b110),
+				),
+			).unwrap_or_default();
+		});
+	}
+	thread::sleep(Duration::from_secs(1));
+	(room_hash, clients)
+}
+
+
+/// отправляем хеш порциями для проверки алгоритма чтения на сервере
+fn send_hash(hash: &HashValue, buffer: &mut NioBuffer) {
+	buffer.write_bytes(&hash.value).ok();
+}
+
+
+fn send(stream: &mut TcpStream, data: &mut NioBuffer) {
+	data.flip();
+	let mut rng = rand::thread_rng();
+	while data.has_remaining() {
+		let block_size = min(rng.gen_range(0, 200), data.remaining());
+		let size = data.read_to_vec(block_size).ok().unwrap();
+		stream.write(&size).ok();
+		thread::sleep(Duration::from_secs(1));
+	}
+}
+
+
+fn setup(addr: &'static str) -> (Arc<Mutex<Rooms>>, JoinHandle<()>) {
+	init_logger();
+	let rooms = Arc::new(Mutex::new(Rooms::new()));
+	let cloned_rooms = rooms.clone();
+	let handle = thread::spawn(move || {
+		let mut server = TCPServer::new(addr.to_string(), cloned_rooms);
+		server.start();
+	});
+	(rooms, handle)
+}
+
+fn init_logger() {
+	stderrlog::new()
+		.verbosity(4)
+		.quiet(false)
+		.show_level(true)
+		.timestamp(Timestamp::Millisecond)
+		.init();
+}
+
+fn get_clients(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<ClientInfo> {
+	let rooms = &*rooms;
+	let rooms = rooms.lock().unwrap();
+	let (sender, receiver) = mpsc::channel();
+	rooms.send_room_request(&room_hash, RoomRequest::GetClients(sender)).ok().unwrap();
+	receiver.recv_timeout(Duration::from_secs(1)).ok().unwrap()
+}
+
+fn get_objects(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<GlobalObjectId> {
+	let rooms = &*rooms;
+	let rooms = rooms.lock().unwrap();
+	let (sender, receiver) = mpsc::channel();
+	rooms.send_room_request(&room_hash, RoomRequest::GetObjects(sender)).unwrap_or_default();
+	receiver.recv_timeout(Duration::from_secs(1)).ok().unwrap()
+}
