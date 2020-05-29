@@ -3,12 +3,13 @@ use std::rc::Rc;
 
 use cheetah_relay::network::types::hash::ToHashValue;
 use cheetah_relay::room::clients::{Client, Clients};
-use cheetah_relay::room::groups::AccessGroups;
 use cheetah_relay::room::listener::RoomListener;
-use cheetah_relay::room::objects::object::{GameObject, GroupType};
 use cheetah_relay::room::objects::Objects;
 use cheetah_relay::room::room::Room;
 use crate::unit::relay::room::room::room_stub;
+use cheetah_relay_common::constants::GroupType;
+use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay::room::objects::object::GameObject;
 
 pub mod room;
 pub mod objects;

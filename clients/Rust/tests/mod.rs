@@ -1,5 +1,2 @@
-
-#[test]
-fn test() {
-
-}
+#[cfg(test)]
+pub mod integration;

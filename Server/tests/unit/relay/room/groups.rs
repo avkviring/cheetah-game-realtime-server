@@ -1,4 +1,4 @@
-use cheetah_relay::room::groups::AccessGroups;
+use cheetah_relay_common::room::access::AccessGroups;
 
 #[test]
 fn create_group_from_vec() {

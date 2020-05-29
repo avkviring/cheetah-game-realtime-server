@@ -1,9 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use cheetah_relay_common::constants::FieldID;
+
 use crate::room::clients::{Client, Clients};
 /// глобальный listener для обработки событий room
-use crate::room::objects::object::{FieldID, GameObject};
+use crate::room::objects::object::GameObject;
 use crate::room::objects::Objects;
 
 pub trait RoomListener {

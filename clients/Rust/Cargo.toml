@@ -1,16 +1,20 @@
 [package]
-name = "relay-plugin"
+name = "cheetah_relay_client"
 version = "0.0.1"
 authors = ["kviring <alex@kviring.com>"]
 edition = "2018"
 
 [lib]
-name = "relay"
-crate-type = ["staticlib","cdylib"]
+name = "cheetah_relay_client"
+crate-type = ["staticlib","cdylib", "lib"]
 
 [dependencies]
 lazy_static = "1.4.0"
+intptr = "0.1"
+cheetah_relay_common = { path = "../../Common"}
 
 [dev-dependencies]
-bitflags = { path = "../../server"}
+cheetah_relay = { path = "../../Server"}
+log = "0.4"
+stderrlog = "0.4"
 

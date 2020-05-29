@@ -1,5 +1,6 @@
 use crate::room::clients::Client;
-use crate::room::room::ClientId;
+use cheetah_relay_common::constants::ClientId;
+
 
 /// владелец
 /// или клиент или root

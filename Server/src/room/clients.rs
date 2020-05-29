@@ -1,14 +1,15 @@
-use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Values;
+use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::network::client::ClientStream;
+use cheetah_relay_common::constants::ClientId;
+use cheetah_relay_common::room::access::AccessGroups;
+
 use crate::network::types::hash::HashValue;
-use crate::room::clients::ClientConnectError::ClientNotInWatingList;
-use crate::room::groups::AccessGroups;
+use crate::room::clients::ClientConnectError::ClientNotInWaitingList;
 use crate::room::listener::RoomListener;
 use crate::room::objects::owner::Owner;
-use crate::room::room::{ClientId, Room};
+use crate::room::room::Room;
 
 pub struct Clients {
 	/// список клиентов
@@ -33,19 +34,17 @@ pub struct ClientConfiguration {
 pub struct Client {
 	/// конфигурация клиента
 	pub configuration: ClientConfiguration,
-	/// сетевой поток клиента
-	pub stream: ClientStream,
 }
 
 #[derive(Debug)]
 pub enum ClientConnectError {
-	ClientNotInWatingList
+	ClientNotInWaitingList
 }
 
 impl Clients {
 	pub fn get_next_client_id(&mut self) -> ClientId {
 		self.client_id_generator += 1;
-		return self.client_id_generator;
+		self.client_id_generator
 	}
 	pub fn get_client(&self, client: u16) -> Option<&Rc<Client>> {
 		return self.clients.get(&client);
@@ -72,13 +71,12 @@ impl Room {
 		self
 			.clients
 			.waiting_clients.remove(client_hash)
-			.ok_or(ClientNotInWatingList)
+			.ok_or(ClientNotInWaitingList)
 			.map(|client_configuration| {
 				let id = client_configuration.id;
 				let client = Rc::new(
 					Client {
-						configuration: client_configuration,
-						stream: ClientStream { stream: Option::None },
+						configuration: client_configuration
 					});
 				
 				self.clients
