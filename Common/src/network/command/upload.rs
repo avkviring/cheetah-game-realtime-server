@@ -8,7 +8,7 @@ use crate::room::fields::GameObjectFields;
 /// Загрузка объекта
 /// - C -> S
 ///
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct UploadGameObjectC2SCommand {
 	pub local_id: LocalObjectId,
 	pub access_groups: AccessGroups,

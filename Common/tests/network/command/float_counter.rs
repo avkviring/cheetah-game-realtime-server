@@ -1,69 +1,30 @@
-use cheetah_relay_common::network::command::{Decoder, Encoder};
-use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
-use cheetah_relay_common::network::niobuffer::NioBuffer;
+use std::u64::MAX;
 
-use crate::network::command::create_buffer_with_capacity;
+use cheetah_relay_common::network::command::float_counter::{SetFloatCounterCommand, IncrementFloatCounterC2SCommand};
+
+use crate::network::command::{should_decode_after_encode, should_decode_fail_when_buffer_is_not_enough, should_encode_fail_when_buffer_is_not_enough};
 
 #[test]
-fn should_decode() {
-	let mut buffer = NioBuffer::new();
-	buffer.write_u64(100).ok().unwrap();
-	buffer.write_u16(5).ok().unwrap();
-	buffer.write_f64(10.0).ok().unwrap();
-	buffer.flip();
-	
-	let result = IncrementFloatCounterC2SCommand::decode(&mut buffer);
-	assert_eq!(result.is_ok(), true);
-	let command = result.unwrap();
-	
-	assert_eq!(command.global_object_id, 100);
-	assert_eq!(command.field_id, 5);
-	assert_eq!(command.increment as u64, 10);
+fn test_codec_for_set_float_counter_command() {
+    let structure = SetFloatCounterCommand {
+        global_object_id: MAX - 1,
+        field_id: 10500,
+        value: 200.0,
+    };
+    should_decode_after_encode(&structure);
+    should_encode_fail_when_buffer_is_not_enough(&structure);
+    should_decode_fail_when_buffer_is_not_enough(&structure);
 }
 
 #[test]
-fn should_decode_fail_when_data_not_enough() {
-	let mut buffer = NioBuffer::new();
-	buffer.write_u32(100).ok().unwrap();
-	buffer.flip();
-	let result = IncrementFloatCounterC2SCommand::decode(&mut buffer);
-	assert_eq!(result.is_ok(), false);
+fn test_codec_for_increment_float_counter_command() {
+    let structure = IncrementFloatCounterC2SCommand {
+        global_object_id: MAX - 1,
+        field_id: 10500,
+        increment: 200.0,
+    };
+    should_decode_after_encode(&structure);
+    should_encode_fail_when_buffer_is_not_enough(&structure);
+    should_decode_fail_when_buffer_is_not_enough(&structure);
 }
 
-#[test]
-fn should_encode_when_buffer_is_enough() {
-	let mut buffer = create_buffer_with_capacity(8 + 2 + 8);
-	assert_eq!(create_command().encode(&mut buffer).is_ok(), true)
-}
-
-#[test]
-fn should_encode_fail_when_buffer_for_write_is_small_1() {
-	let mut buffer = create_buffer_with_capacity(0);
-	assert_eq!(create_command().encode(&mut buffer).is_ok(), false)
-}
-
-#[test]
-fn should_encode_fail_when_buffer_for_write_is_small_2() {
-	let mut buffer = create_buffer_with_capacity(8);
-	assert_eq!(create_command().encode(&mut buffer).is_ok(), false)
-}
-
-#[test]
-fn should_encode_fail_when_buffer_for_write_is_small_3() {
-	let mut buffer = create_buffer_with_capacity(8 + 2);
-	assert_eq!(create_command().encode(&mut buffer).is_ok(), false)
-}
-
-#[test]
-fn should_encode_fail_when_buffer_for_write_is_small_4() {
-	let mut buffer = create_buffer_with_capacity(8 + 2 + 7);
-	assert_eq!(create_command().encode(&mut buffer).is_ok(), false)
-}
-
-fn create_command() -> SetFloatCounterCommand {
-	SetFloatCounterCommand {
-		global_object_id: Default::default(),
-		field_id: Default::default(),
-		value: Default::default(),
-	}
-}

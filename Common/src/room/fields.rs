@@ -29,16 +29,14 @@ impl Default for GameObjectFields {
 
 impl Encoder for GameObjectFields {
     fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-        write(buffer, &self.long_counters, |buffer, value| buffer.write_i64(*value))
-            .and_then(|_| write(buffer, &self.float_counters, |buffer, value| buffer.write_f64(*value)))
-            .and_then(|_| {
-                write(buffer, &self.structures, |buffer, value|
-                    {
-                        buffer
-                            .write_u8(value.len() as u8)
-                            .and_then(|_| buffer.write_bytes(value))
-                    })
-            })
+        write(buffer, &self.long_counters, |buffer, value| buffer.write_i64(*value))?;
+        write(buffer, &self.float_counters, |buffer, value| buffer.write_f64(*value))?;
+        write(buffer, &self.structures, |buffer, value| {
+            buffer
+                .write_u8(value.len() as u8)
+                .and_then(|_| buffer.write_bytes(value))
+        })?;
+        Result::Ok(())
     }
 }
 
@@ -48,7 +46,7 @@ impl Decoder for GameObjectFields {
             long_counters: read(buffer, |buffer| buffer.read_i64())?,
             float_counters: read(buffer, |buffer| buffer.read_f64())?,
             structures: read(buffer, |buffer| {
-                let size = buffer.read_u16()? as usize;
+                let size = buffer.read_u8()? as usize;
                 buffer.read_to_vec(size)
             })?,
         })

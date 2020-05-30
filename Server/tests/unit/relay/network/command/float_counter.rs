@@ -26,7 +26,7 @@ fn test_execute_command() {
         global_object_id,
         field_id,
         increment: 20.0,
-    }.execute(&client.clone(), &mut room);
+    }.execute(&client, &mut room);
 
 
     let rc_object = room.objects.get(global_object_id).unwrap();

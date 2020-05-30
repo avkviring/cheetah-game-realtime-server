@@ -6,7 +6,7 @@ use crate::network::niobuffer::{NioBuffer, NioBufferError};
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct IncrementLongCounterC2SCommand {
 	pub global_object_id: GlobalObjectId,
 	pub field_id: FieldID,

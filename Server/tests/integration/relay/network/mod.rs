@@ -1,4 +1,5 @@
 use std::cmp::min;
+use std::fs::read;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::{Arc, mpsc, Mutex};
@@ -14,9 +15,12 @@ use cheetah_relay::network::types::hash::HashValue;
 use cheetah_relay::room::objects::object::GameObject;
 use cheetah_relay::room::request::{ClientInfo, RoomRequest};
 use cheetah_relay::rooms::Rooms;
-use cheetah_relay_common::constants::{LocalObjectId, GlobalObjectId};
+use cheetah_relay_common::constants::{GlobalObjectId, LocalObjectId};
+use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
+use cheetah_relay_common::network::command::upload::{UploadGameObjectC2SCommand, UploadGameObjectS2CCommand};
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::room::fields::GameObjectFields;
 
 #[test]
 fn should_connect_client_to_room() {
@@ -105,42 +109,32 @@ fn should_receive_command_from_server() {
     let clients = get_clients(rooms.clone(), &room_hash);
     let client_a_id = clients.iter().find(|f| f.hash == client_a).unwrap().id;
 
-    assert_eq!(readed.read_u8().unwrap(), 1); // command id (UploadObject)
-    assert_eq!(readed.read_u64().unwrap(), GameObject::get_global_object_id_by_client_id(client_a_id, 100)); // object id
-    assert_eq!(readed.read_u16().unwrap(), 1); // long counter count
-    assert_eq!(readed.read_u16().unwrap(), 1); // float counter count
-    assert_eq!(readed.read_u16().unwrap(), 1); // struct counter count
-
-    assert_eq!(readed.read_u16().unwrap(), 10); // long counter field id
-    assert_eq!(readed.read_i64().unwrap(), 55); // long counter value
-
-    assert_eq!(readed.read_u16().unwrap(), 15); // float counter field id
-    assert_eq!(readed.read_f64().unwrap() as i64, 15); // float counter value
-
-    assert_eq!(readed.read_u16().unwrap(), 5); // struct field id
-    assert_eq!(readed.read_u16().unwrap(), 10); // struct size id
-    assert_eq!(readed.read_to_vec(10).unwrap(), vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    assert_eq!(readed.read_u8().unwrap(), UploadGameObjectS2CCommand::COMMAND_CODE);
+    let command = UploadGameObjectS2CCommand::decode(&mut readed).unwrap();
+    assert_eq!(*command.fields.long_counters.get(&10).unwrap(), 55);
+    assert_eq!(*command.fields.float_counters.get(&15).unwrap() as i64, 15);
+    assert_eq!(command.fields.structures.get(&10).unwrap(), &vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 }
 
 
 fn create_object(buffer: &mut NioBuffer, local_object_id: LocalObjectId) {
-    buffer.write_u8(1).ok();
-    buffer.write_u32(local_object_id).ok(); // local_object_id
-    buffer.write_u64(0b110).ok(); // groups
-    buffer.write_u16(1).ok(); // long counter count
-    buffer.write_u16(1).ok(); // float counter count
-    buffer.write_u16(1).ok(); // struct counter count
+    buffer.write_u8(UploadGameObjectC2SCommand::COMMAND_CODE).ok();
+    let mut fields = GameObjectFields {
+        long_counters: Default::default(),
+        float_counters: Default::default(),
+        structures: Default::default(),
+    };
+    fields.long_counters.insert(10, 55);
+    fields.float_counters.insert(15, 15.0);
+    fields.structures.insert(5, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
-    buffer.write_u16(10).ok(); // long counter field id
-    buffer.write_i64(55).ok(); // long counter value
+    let command = UploadGameObjectC2SCommand {
+        local_id: local_object_id,
+        access_groups: AccessGroups::from(0b110),
+        fields,
+    };
 
-    buffer.write_u16(15).ok(); // float counter field id
-    buffer.write_f64(15.0).ok(); // float counter value
-
-
-    buffer.write_u16(5).ok(); // struct field id
-    buffer.write_u16(10).ok(); // struct size id
-    buffer.write_bytes(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).ok(); // field data
+    command.encode(buffer);
 }
 
 
@@ -187,8 +181,9 @@ fn send(stream: &mut TcpStream, data: &mut NioBuffer) {
         let block_size = min(rng.gen_range(0, 200), data.remaining());
         let size = data.read_to_vec(block_size).ok().unwrap();
         stream.write(&size).ok();
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_millis(100));
     }
+    thread::sleep(Duration::from_secs(1));
 }
 
 

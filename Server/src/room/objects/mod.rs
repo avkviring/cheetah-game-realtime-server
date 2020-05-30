@@ -102,21 +102,21 @@ impl Objects {
         // полный перебор объектов
         // но из-за сессионной природы битвы возможно этот вариант быстрее чем постоянно формировать
         // структуры для быстрого поиска объектов
-        // self
-        //     .objects
-        //     .values()
-        //     .filter(|&o| {
-        //         let o = o.clone();
-        //         let o = &*o;
-        //         let o = o.borrow();
-        //         o.groups.contains_any(access_group)
-        //     })
-        //     .map(|o| {
-        //         let o = o.clone();
-        //         o
-        //     })
-        //     .collect::<Vec<_>>()
-        unimplemented!()
+        self
+            .objects
+            .values()
+            .filter(|&o| {
+                let o = o.clone();
+                let o = &*o;
+                let o = o.borrow();
+                o.access_groups.contains_any(access_group)
+            })
+            .map(|o| {
+                let o = o.clone();
+                o
+            })
+            .collect::<Vec<_>>()
+
     }
 
     pub fn get_object_ids(&self) -> Vec<GlobalObjectId> {
