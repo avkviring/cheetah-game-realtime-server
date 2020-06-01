@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -43,32 +42,6 @@ impl Default for Objects {
 }
 
 impl Objects {
-    pub fn create_client_game_object(&mut self,
-                                     owner: &Client,
-                                     local_object_id: LocalObjectId,
-                                     access_group: AccessGroups,
-                                     fields: GameObjectFields)
-                                     ->
-                                     GlobalObjectId {
-        let object = GameObject::new_client_object(owner, local_object_id, access_group, fields);
-        self.insert(object)
-    }
-
-    pub fn create_root_game_object(&mut self,
-                                   id: LocalObjectId,
-                                   access_group: AccessGroups,
-                                   fields: GameObjectFields,
-    ) -> GlobalObjectId {
-        let object = GameObject::new_root_object(id as GlobalObjectId, access_group, fields);
-        self.insert(object)
-    }
-
-    pub fn insert(&mut self, object: GameObject) -> GlobalObjectId {
-        let id = object.id;
-        self.objects.insert(id, Rc::new(RefCell::new(object)));
-        return id;
-    }
-
     pub fn get(&self, id: GlobalObjectId) -> Option<Rc<RefCell<GameObject>>> {
         return self.objects.get(&id).and_then(|f| Option::Some(f.clone()));
     }
@@ -93,10 +66,6 @@ impl Objects {
         return object_for_remove;
     }
 
-    pub fn delete_object(&mut self, global_object_id: GlobalObjectId) {
-        self.objects.remove(&global_object_id);
-    }
-
     /// Получить объекты для группы в порядке их создания
     pub fn get_objects_by_group_in_create_order(&self, access_group: &AccessGroups) -> Vec<Rc<RefCell<GameObject>>> {
         // полный перебор объектов
@@ -116,7 +85,6 @@ impl Objects {
                 o
             })
             .collect::<Vec<_>>()
-
     }
 
     pub fn get_object_ids(&self) -> Vec<GlobalObjectId> {
@@ -146,8 +114,15 @@ impl Room {
         if !client_groups.contains_any(&access_group) {
             return Result::Err(CreateObjectError::IncorrectGroups);
         }
-        let id = self.objects.create_client_game_object(&owner, local_object_id, access_group, fields);
-        self.notify_create_object(id);
+
+        let object = GameObject::new(
+            GameObject::get_global_object_id_by_client(owner, local_object_id),
+            Owner::new_owner(owner),
+            client_groups.clone(),
+            fields,
+        );
+        let id = object.id;
+        self.insert_game_object(object);
         Result::Ok(id)
     }
 
@@ -158,15 +133,22 @@ impl Room {
                                    access_group: AccessGroups,
                                    fields: GameObjectFields,
     ) -> Result<u64, CreateObjectError> {
-        let id = self.objects.create_root_game_object(object_id, access_group, fields);
-        self.notify_create_object(id);
+        let object = GameObject::new(
+            object_id as u64,
+            Owner::new_root_owner(),
+            access_group,
+            fields,
+        );
+        let id = object.id;
+        self.insert_game_object(object);
         Result::Ok(id)
     }
 
-    fn notify_create_object(&mut self, global_object_id: GlobalObjectId) {
-        let rc = self.objects.get(global_object_id).unwrap().clone();
-        let rc_game_object = (*rc).borrow();
-        self.listener.on_object_created(&rc_game_object, &self.clients);
+    pub fn insert_game_object(&mut self, object: GameObject) -> GlobalObjectId {
+        let id = object.id;
+        self.listener.on_object_created(&object, &self.clients);
+        self.objects.objects.insert(id, Rc::new(RefCell::new(object)));
+        id
     }
 
     /// проверка прав доступа к полю объекта
@@ -178,11 +160,10 @@ impl Room {
                                               _field_id: u16) ->
                                               Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {
         let object = self.objects.get(global_object_id);
-        return if object.is_some() {
-            Result::Ok(object.unwrap())
-        } else {
-            Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound)
-        };
+        match object {
+            Some(object) => { Result::Ok(object) }
+            None => { Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound) }
+        }
     }
 
     /// проверка прав доступа к полю объекта
@@ -192,16 +173,15 @@ impl Room {
                                         global_object_id: u64) ->
                                         Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {
         let object = self.objects.get(global_object_id);
-        return if object.is_some() {
-            Result::Ok(object.unwrap())
-        } else {
-            Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound)
-        };
+        match object {
+            Some(object) => { Result::Ok(object) }
+            None => { Result::Err(ErrorGetObjectWithCheckAccess::ObjectNotFound) }
+        }
     }
 
     pub fn delete_game_object(&mut self, game_object: &GameObject) {
         self.listener.on_object_delete(game_object, &self.clients);
-        self.objects.delete_object(game_object.id);
+        self.objects.objects.remove(&game_object.id);
     }
 }
 

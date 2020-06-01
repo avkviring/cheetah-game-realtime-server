@@ -31,30 +31,12 @@ pub enum ObjectFieldType {
 
 
 impl GameObject {
-    pub fn new_client_object(client: &Client, local_object_id: u32, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
-        GameObject::new(
-            GameObject::get_global_object_id_by_client(client, local_object_id),
-            Owner::new_owner(client),
-            access_groups,
-            fields,
-        )
-    }
-
-    pub fn new_root_object(id: u64, access_group: AccessGroups, fields: GameObjectFields) -> GameObject {
-        GameObject::new(
-            id,
-            Owner::new_root_owner(),
-            access_group,
-            fields,
-        )
-    }
-
     pub fn new(id: u64, owner: Owner, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
         GameObject {
             id,
-            owner: owner,
-            access_groups: access_groups,
-            fields: fields,
+            owner,
+            access_groups,
+            fields,
         }
     }
 

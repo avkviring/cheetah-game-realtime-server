@@ -1,11 +1,10 @@
 use std::cmp::Ordering;
 
+use cheetah_relay::room::objects::object::GameObject;
+use cheetah_relay::room::objects::owner::Owner;
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-
-use crate::unit::relay::room::clients::client_stub;
-use cheetah_relay::room::objects::object::GameObject;
 
 #[test]
 fn should_store_struct_data_in_game_object() {
@@ -49,13 +48,17 @@ fn test_float_counter() {
     object.set_float_counter(field_id, 100.0);
     let count1 = object.increment_float_counter(field_id, 5.0);
     let count2 = object.get_float_counter(field_id);
-    assert_eq!(count1, 105.0 as f64);
-    assert_eq!(count1, count2);
+    assert_eq!(count1 as u64, 105);
+    assert_eq!(count1 as u64, count2 as u64);
 }
 
 
 fn setup() -> GameObject {
-    GameObject::new_client_object(&client_stub(0), 0, AccessGroups::default(), GameObjectFields::default())
+    GameObject::new(
+        0,
+        Owner::new_root_owner(),
+        AccessGroups::default(),
+        GameObjectFields::default())
 }
 
 
