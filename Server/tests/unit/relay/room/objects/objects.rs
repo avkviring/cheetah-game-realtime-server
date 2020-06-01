@@ -50,9 +50,9 @@ fn create_game_object(id: u64) -> GameObject {
     )
 }
 
-fn create_game_object_with_client(id: u64, client: &Client) -> GameObject {
+fn create_game_object_with_client(id: u32, client: &Client) -> GameObject {
     GameObject::new(
-        id,
+        GameObject::get_global_object_id_by_client(client, id),
         Owner::new_owner(client),
         AccessGroups::default(),
         GameObjectFields::default(),

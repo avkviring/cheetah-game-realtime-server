@@ -35,20 +35,20 @@ pub enum ErrorGetObjectWithCheckAccess {
 
 impl Default for Objects {
     fn default() -> Self {
-        return Objects {
+        Objects {
             objects: Default::default(),
-        };
+        }
     }
 }
 
 impl Objects {
     pub fn get(&self, id: GlobalObjectId) -> Option<Rc<RefCell<GameObject>>> {
-        return self.objects.get(&id).and_then(|f| Option::Some(f.clone()));
+        self.objects.get(&id).and_then(|f| Option::Some(f.clone()))
     }
 
     pub fn get_by_owner(&self, client: &Client, local_object_id: LocalObjectId) -> Option<Rc<RefCell<GameObject>>> {
         let id = GameObject::get_global_object_id_by_client(client, local_object_id);
-        return self.get(id);
+        self.get(id)
     }
 
     pub fn len(&mut self) -> usize {
@@ -56,14 +56,13 @@ impl Objects {
     }
 
     pub fn get_objects_by_owner(&mut self, owner: Owner) -> Vec<Rc<RefCell<GameObject>>> {
-        let object_for_remove: Vec<Rc<RefCell<GameObject>>> = self.objects
+        self.objects
             .values()
             .filter(|o| {
                 (*((*o).clone())).borrow().owner == owner
             })
             .map(|o| (*o).clone())
-            .collect();
-        return object_for_remove;
+            .collect()
     }
 
     /// Получить объекты для группы в порядке их создания
@@ -126,8 +125,10 @@ impl Room {
         Result::Ok(id)
     }
 
+    ///
     /// Создание игрового объекта от root-а
     /// object_id - идентификатор объекта
+    ///
     pub fn create_root_game_object(&mut self,
                                    object_id: u32,
                                    access_group: AccessGroups,

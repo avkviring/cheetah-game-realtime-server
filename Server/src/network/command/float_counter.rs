@@ -36,8 +36,8 @@ impl ServerCommandExecutor for SetFloatCounterCommand {
 			ObjectFieldType::FloatCounter,
 			|room, object|
 				{
-					let value = room.object_set_float_counter(object, self.field_id, self.value);
-					format!("set done, result {}", value)
+					room.object_set_float_counter(object, self.field_id, self.value);
+					format!("set done, result {}", self.value)
 				},
 		);
 	}

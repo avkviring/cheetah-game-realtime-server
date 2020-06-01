@@ -35,8 +35,8 @@ impl ServerCommandExecutor for SetLongCounterCommand {
 			self.field_id,
 			ObjectFieldType::LongCounter,
 			|room, object| {
-				let value = room.object_set_long_counter(object, self.field_id, self.value);
-				format!("set done, result {}", value)
+				room.object_set_long_counter(object, self.field_id, self.value);
+				format!("set done, result {}", self.value)
 			},
 		)
 	}
