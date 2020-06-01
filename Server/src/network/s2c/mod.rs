@@ -1,13 +1,13 @@
 use std::collections::{HashMap, VecDeque};
 
 use cheetah_relay_common::constants::{ClientId, FieldID};
+use cheetah_relay_common::network::command::{CommandCode, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloatCounterCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
 use cheetah_relay_common::network::command::structure::SetStructCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectS2CCommand;
-use cheetah_relay_common::network::command::{CommandCode, Encoder};
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::room::access::AccessGroups;
 
@@ -186,6 +186,28 @@ impl RoomListener for S2CCommandCollector {
             data: game_object.get_struct(field_id).unwrap().clone(),
         };
         self.push(&affected_clients, S2CCommandUnion::SetStruct(command));
+    }
+
+    fn on_object_long_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
+        let affected_clients =
+            AffectedClients::new_from_clients(&clients, &game_object.access_groups);
+        let command = SetLongCounterCommand {
+            global_object_id: game_object.id,
+            field_id,
+            value: game_object.get_long_counter(field_id),
+        };
+        self.push(&affected_clients, S2CCommandUnion::SetLongCounter(command));
+    }
+
+    fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
+        let affected_clients =
+            AffectedClients::new_from_clients(&clients, &game_object.access_groups);
+        let command = SetFloatCounterCommand {
+            global_object_id: game_object.id,
+            field_id,
+            value: game_object.get_float_counter(field_id),
+        };
+        self.push(&affected_clients, S2CCommandUnion::SetFloatCounter(command));
     }
 }
 

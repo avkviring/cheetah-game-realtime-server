@@ -71,6 +71,7 @@ impl Room {
 
     pub fn object_set_long_counter(&mut self, object: &mut GameObject, field_id: FieldID, value: i64) {
         object.fields.long_counters.insert(field_id, value);
+        self.listener.on_object_long_counter_set(field_id, object, &self.clients);
     }
 
     pub fn object_increment_float_counter(&mut self, object: &mut GameObject, field_id: FieldID, value: f64) -> f64 {
@@ -85,6 +86,7 @@ impl Room {
 
     pub fn object_set_float_counter(&mut self, object: &mut GameObject, field_id: FieldID, value: f64) {
         object.fields.float_counters.insert(field_id, value);
+        self.listener.on_object_float_counter_set(field_id, object, &self.clients);
     }
 
     pub fn object_update_struct(&mut self, object: &mut GameObject, field_id: FieldID, value: Vec<u8>) {
