@@ -1,95 +1,113 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use cheetah_relay_common::constants::FieldID;
+
 use crate::room::clients::{Client, Clients};
 /// глобальный listener для обработки событий room
-use crate::room::objects::object::{FieldID, GameObject};
+use crate::room::objects::object::GameObject;
 use crate::room::objects::Objects;
 
 pub trait RoomListener {
-	#[allow(unused)]
-	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {}
-	#[allow(unused)]
-	fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {}
-	#[allow(unused)]
-	fn on_client_connect(&mut self, client: &Client, objects: &Objects) {}
-	#[allow(unused)]
-	fn on_client_disconnect(&mut self, client: &Client) {}
-	#[allow(unused)]
-	fn on_object_long_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {}
-	#[allow(unused)]
-	fn on_object_float_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {}
-	#[allow(unused)]
-	fn on_object_event_fired(&mut self, field_id: FieldID, event_data: &[u8], game_object: &GameObject, clients: &Clients) {}
-	#[allow(unused)]
-	fn on_object_struct_updated(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {}
+    #[allow(unused)]
+    fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {}
+    #[allow(unused)]
+    fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {}
+    #[allow(unused)]
+    fn on_client_connect(&mut self, client: &Client, objects: &Objects) {}
+    #[allow(unused)]
+    fn on_client_disconnect(&mut self, client: &Client) {}
+    #[allow(unused)]
+    fn on_object_long_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {}
+    #[allow(unused)]
+    fn on_object_float_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {}
+    #[allow(unused)]
+    fn on_object_event_fired(&mut self, field_id: FieldID, event_data: &[u8], game_object: &GameObject, clients: &Clients) {}
+    #[allow(unused)]
+    fn on_object_struct_updated(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {}
+    #[allow(unused)]
+    fn on_object_long_counter_set(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients);
+    #[allow(unused)]
+    fn on_object_float_counter_set(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients);
 }
 
 pub struct CompositeRoomListener {
-	listeners: Vec<Rc<RefCell<dyn RoomListener>>>
+    listeners: Vec<Rc<RefCell<dyn RoomListener>>>
 }
 
 impl CompositeRoomListener {
-	pub fn add_listener(&mut self, listener: Rc<RefCell<dyn RoomListener>>) {
-		self.listeners.push(listener);
-	}
+    pub fn add_listener(&mut self, listener: Rc<RefCell<dyn RoomListener>>) {
+        self.listeners.push(listener);
+    }
 }
 
 
 impl RoomListener for CompositeRoomListener {
-	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_object_created(game_object, clients)
-		}
-	}
-	
-	fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_object_delete(game_object, clients)
-		}
-	}
-	
-	fn on_client_connect(&mut self, client: &Client, objects: &Objects) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_client_connect(client, objects)
-		}
-	}
-	
-	fn on_client_disconnect(&mut self, client: &Client) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_client_disconnect(client)
-		}
-	}
-	
-	fn on_object_long_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_object_long_counter_change(field_id, game_object, clients)
-		}
-	}
-	
-	fn on_object_float_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_object_float_counter_change(field_id, game_object, clients)
-		}
-	}
-	
-	fn on_object_event_fired(&mut self, field_id: FieldID, event_data: &[u8], game_object: &GameObject, clients: &Clients) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_object_event_fired(field_id, event_data, game_object, clients)
-		}
-	}
-	
-	fn on_object_struct_updated(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {
-		for listener in self.listeners.iter_mut() {
-			listener.borrow_mut().on_object_struct_updated(field_id, game_object, clients)
-		}
-	}
+    fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_created(game_object, clients)
+        }
+    }
+
+    fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_delete(game_object, clients)
+        }
+    }
+
+    fn on_client_connect(&mut self, client: &Client, objects: &Objects) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_client_connect(client, objects)
+        }
+    }
+
+    fn on_client_disconnect(&mut self, client: &Client) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_client_disconnect(client)
+        }
+    }
+
+    fn on_object_long_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_long_counter_change(field_id, game_object, clients)
+        }
+    }
+
+    fn on_object_float_counter_change(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_float_counter_change(field_id, game_object, clients)
+        }
+    }
+
+    fn on_object_event_fired(&mut self, field_id: FieldID, event_data: &[u8], game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_event_fired(field_id, event_data, game_object, clients)
+        }
+    }
+
+    fn on_object_struct_updated(&mut self, field_id: FieldID, game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_struct_updated(field_id, game_object, clients)
+        }
+    }
+
+    fn on_object_long_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_long_counter_set(field_id, game_object, clients)
+        }
+    }
+
+    fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
+        for listener in self.listeners.iter_mut() {
+            listener.borrow_mut().on_object_float_counter_set(field_id, game_object, clients)
+        }
+    }
 }
 
 impl Default for CompositeRoomListener {
-	fn default() -> Self {
-		CompositeRoomListener {
-			listeners: Default::default()
-		}
-	}
+    fn default() -> Self {
+        CompositeRoomListener {
+            listeners: Default::default()
+        }
+    }
 }

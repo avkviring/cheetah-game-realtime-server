@@ -3,9 +3,7 @@ use crate::room::listener::CompositeRoomListener;
 use crate::room::objects::Objects;
 use crate::network::types::hash::HashValue;
 
-pub type ClientId = u16;
-pub type LocalObjectId = u32;
-pub type GlobalObjectId = u64;
+
 
 /// Описание комнаты
 /// Комната - совокупность всех игроков, например битва.

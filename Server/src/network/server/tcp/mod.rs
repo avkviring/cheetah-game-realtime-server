@@ -10,7 +10,7 @@ use mio::net::{TcpListener, TcpStream};
 use crate::network::types::hash::HashValue;
 use crate::room::request::RoomRequest;
 use crate::rooms::{Rooms, SendRoomRequestError};
-use crate::network::types::niobuffer::NioBuffer;
+use cheetah_relay_common::network::niobuffer::NioBuffer;
 
 pub mod room_tcp;
 
@@ -27,14 +27,14 @@ impl TCPServer {
 	pub fn new(addr: String, rooms: Arc<Mutex<Rooms>>) -> TCPServer {
 		TCPServer {
 			rooms,
-			addr: addr.parse().unwrap_or_else(|it| panic!("tcp server: cannot parse {} to valid network address", it)),
+			addr: addr.parse().unwrap_or_else(|it| panic!("tcp server: cannot parse {} to valid client.network address", it)),
 			client_token_generator: 100,
 			clients: Default::default(),
 		}
 	}
 	
 	pub fn start(&mut self) {
-		let mut poll = Poll::new().unwrap_or_else(|_| panic!("tcp server: cannot create network pool"));
+		let mut poll = Poll::new().unwrap_or_else(|_| panic!("tcp server: cannot create client.network pool"));
 		let mut events = Events::with_capacity(1024);
 		let mut server = TcpListener::bind(self.addr.clone()).unwrap_or_else(|_| panic!("tcp server: error bind server socket {}", self.addr));
 		

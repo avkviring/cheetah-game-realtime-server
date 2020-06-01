@@ -6,9 +6,10 @@ use mio::net::TcpStream;
 
 use crate::network::server::tcp::room_tcp::TCPRoom;
 use crate::room::clients::ClientConnectError;
-use crate::room::groups::AccessGroups;
-use crate::room::room::{ClientId, GlobalObjectId, Room};
+use crate::room::room::Room;
 use crate::network::types::hash::HashValue;
+use cheetah_relay_common::constants::{GlobalObjectId, ClientId};
+use cheetah_relay_common::room::access::AccessGroups;
 
 /// Исполнение внешних запросов к комнате
 /// Запросы передаются через mpsc:Receiver
@@ -114,7 +115,7 @@ impl RoomRequests {
 			}
 			Err(e) => {
 				match e {
-					ClientConnectError::ClientNotInWatingList => {
+					ClientConnectError::ClientNotInWaitingList => {
 						log::error!("room requests: error connect client {:?} to room {}",e, room.hash)
 					}
 				}
