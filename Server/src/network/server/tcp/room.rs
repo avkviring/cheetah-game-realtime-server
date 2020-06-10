@@ -125,7 +125,7 @@ impl TcpRoom {
 		match write_result {
 			Ok(_) => {
 				let mut connection = TcpConnection::new(stream, buffer_for_read, token);
-				connection.execute_read_commands(|buffer| {
+				connection.process_read_buffer(|buffer| {
 					decode_end_execute_c2s_commands(buffer, &client, room)
 				});
 				connection.watch_read(&mut self.poll).unwrap();

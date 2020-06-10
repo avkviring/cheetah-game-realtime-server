@@ -8,6 +8,7 @@ use cheetah_relay_common::network::command::structure::SetStructCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::{UploadGameObjectC2SCommand, UploadGameObjectS2CCommand};
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
+use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 
 pub mod upload;
 pub mod long_counter;
@@ -39,8 +40,8 @@ pub enum S2CCommandUnion {
 }
 
 
-pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CCommandUnion>) -> Result<(), NioBufferError> {
-	let command = read_buffer.read_u8()?;
+pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CCommandUnion>) -> Result<(), OnReadBufferError> {
+	let command = read_buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	let result = match command {
 		UploadGameObjectS2CCommand::COMMAND_CODE => {
 			UploadGameObjectS2CCommand::decode(read_buffer).map(S2CCommandUnion::Upload)
@@ -59,7 +60,7 @@ pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CComman
 		}
 		UnloadGameObjectCommand::COMMAND_CODE => { UnloadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Unload) }
 		code => {
-			return Result::Err(NioBufferError::Overflow);
+			return Result::Err(OnReadBufferError::UnknownCommand);
 		}
 	};
 	match result {
@@ -68,7 +69,7 @@ pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CComman
 			Result::Ok(())
 		}
 		Err(e) => {
-			Result::Err(e)
+			Result::Err(OnReadBufferError::NioBufferError(e))
 		}
 	}
 }

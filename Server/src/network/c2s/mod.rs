@@ -7,6 +7,7 @@ use cheetah_relay_common::network::command::structure::SetStructCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectC2SCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
+use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 use cheetah_relay_common::room::access::Access;
 
 use crate::room::clients::Client;
@@ -29,29 +30,42 @@ pub fn decode_end_execute_c2s_commands(
 	buffer: &mut NioBuffer,
 	client: &Client,
 	room: &mut Room,
-) -> Result<(), NioBufferError> {
-	let command_code = buffer.read_u8()?;
+) -> Result<(), OnReadBufferError> {
+	
+	let command_code = buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	match command_code {
 		UploadGameObjectC2SCommand::COMMAND_CODE => {
-			UploadGameObjectC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			UploadGameObjectC2SCommand::decode(buffer)
+				.map(|f| f.execute(client, room))
+				.map_err(OnReadBufferError::NioBufferError)
 		}
 		UnloadGameObjectCommand::COMMAND_CODE => {
-			UnloadGameObjectCommand::decode(buffer).map(|f| f.execute(client, room))
+			UnloadGameObjectCommand::decode(buffer)
+				.map(|f| f.execute(client, room))
+				.map_err(OnReadBufferError::NioBufferError)
 		}
 		IncrementLongCounterC2SCommand::COMMAND_CODE => {
-			IncrementLongCounterC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			IncrementLongCounterC2SCommand::decode(buffer)
+				.map(|f| f.execute(client, room))
+				.map_err(OnReadBufferError::NioBufferError)
 		}
 		IncrementFloatCounterC2SCommand::COMMAND_CODE => {
-			IncrementFloatCounterC2SCommand::decode(buffer).map(|f| f.execute(client, room))
+			IncrementFloatCounterC2SCommand::decode(buffer)
+				.map(|f| f.execute(client, room))
+				.map_err(OnReadBufferError::NioBufferError)
 		}
 		SetStructCommand::COMMAND_CODE => {
-			SetStructCommand::decode(buffer).map(|f| f.execute(client, room))
+			SetStructCommand::decode(buffer)
+				.map(|f| f.execute(client, room))
+				.map_err(OnReadBufferError::NioBufferError)
 		}
 		EventCommand::COMMAND_CODE => {
-			EventCommand::decode(buffer).map(|f| f.execute(client, room))
+			EventCommand::decode(buffer)
+				.map(|f| f.execute(client, room))
+				.map_err(OnReadBufferError::NioBufferError)
 		}
 		_ => {
-			Result::Err(NioBufferError::Overflow)
+			Result::Err(OnReadBufferError::UnknownCommand)
 		}
 	}
 }

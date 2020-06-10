@@ -30,10 +30,15 @@ pub enum TcpConnectionError {
 	EventError,
 }
 
+#[derive(Debug)]
+pub enum OnReadBufferError {
+	UnknownCommand,
+	NioBufferError(NioBufferError),
+}
+
 
 impl TcpConnection {
 	pub fn new(stream: TcpStream, buffer_for_read: NioBuffer, token: Token) -> Self {
-		stream.set_nodelay(true);
 		let mut buffer_for_write = NioBuffer::new();
 		buffer_for_write.flip();
 		TcpConnection {
@@ -45,13 +50,13 @@ impl TcpConnection {
 			token,
 		}
 	}
-	pub fn process_event<F>(&mut self, event: &Event, poll: &mut Poll, readed_command_executor: F) -> Result<(), TcpConnectionError>
-		where F: FnMut(&mut NioBuffer) -> Result<(), NioBufferError> {
+	pub fn process_event<F>(&mut self, event: &Event, poll: &mut Poll, on_read_buffer: F) -> Result<(), TcpConnectionError>
+		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
 		if event.is_error() {
 			return Result::Err(TcpConnectionError::EventError);
 		}
 		if event.is_readable() {
-			self.read(readed_command_executor)?
+			self.read(on_read_buffer)?
 		}
 		if event.is_writable() {
 			self.write(poll)?
@@ -59,11 +64,11 @@ impl TcpConnection {
 		Result::Ok(())
 	}
 	
-	pub fn execute_read_commands<F>(&mut self, mut readed_command_executor: F) where F: FnMut(&mut NioBuffer) -> Result<(), NioBufferError> {
+	pub fn process_read_buffer<F>(&mut self, mut on_read_buffer: F) where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
 		self.read_buffer.flip();
 		loop {
 			self.read_buffer.mark();
-			match readed_command_executor(&mut self.read_buffer) {
+			match on_read_buffer(&mut self.read_buffer) {
 				Ok(_) => {}
 				Err(_) => {
 					self.read_buffer.reset();
@@ -78,7 +83,7 @@ impl TcpConnection {
 	///
 	/// Кодирование команд в буфер для записи
 	///
-	pub fn prepare_commands_for_send<C, F>(&mut self, poll: &mut Poll, commands: &mut VecDeque<C>, mut encoder: F) -> Result<(), TcpConnectionError>
+	pub fn prepare_commands_for_send<C, F>(&mut self, poll: &mut Poll, commands: &mut VecDeque<C>, mut command_to_buffer: F) -> Result<(), TcpConnectionError>
 		where F: FnMut(&mut NioBuffer, &C) -> Result<(), NioBufferError>, C: Debug {
 		if !commands.is_empty() {
 			self.write_buffer.compact();
@@ -87,7 +92,7 @@ impl TcpConnection {
 					None => { break; }
 					Some(command) => {
 						self.write_buffer.mark();
-						match encoder(&mut self.write_buffer, &command) {
+						match command_to_buffer(&mut self.write_buffer, &command) {
 							Ok(_) => {}
 							Err(_) => {
 								commands.push_front(command);
@@ -108,8 +113,8 @@ impl TcpConnection {
 	///
 	/// Читаем, декодируем и исполняем данные из сокета
 	///
-	fn read<F>(&mut self, mut readed_command_executor: F) -> Result<(), TcpConnectionError>
-		where F: FnMut(&mut NioBuffer) -> Result<(), NioBufferError> {
+	fn read<F>(&mut self, on_read_buffer: F) -> Result<(), TcpConnectionError>
+		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
 		let read_result = self.stream.read(&mut self.read_buffer.to_slice());
 		match read_result {
 			Ok(0) => {
@@ -117,7 +122,7 @@ impl TcpConnection {
 			}
 			Ok(size) => {
 				self.read_buffer.set_position(self.read_buffer.position() + size).unwrap();
-				self.execute_read_commands(readed_command_executor);
+				self.process_read_buffer(on_read_buffer);
 				Result::Ok(())
 			}
 			Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
