@@ -124,7 +124,7 @@ impl TCPClient {
 				Result::Ok(count_success_event)
 			}
 			Err(e) => {
-				Logger::error(format!("tcp_client process_events pool {:?}", e));
+				log::error!("tcp_client process_events pool {:?}", e);
 				Result::Err(())
 			}
 		}
@@ -170,7 +170,7 @@ impl TCPClient {
 				Status::Connecting
 			}
 			Err(e) => {
-				Logger::error(format!("tcp client connect {:?}", e));
+				log::error!("tcp client connect {:?}", e);
 				Status::Disconnected
 			}
 		}

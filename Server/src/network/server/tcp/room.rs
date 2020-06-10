@@ -152,7 +152,7 @@ impl TcpRoom {
 					let connection = &mut connection_with_client.connection;
 					log::trace!("tcp room: disconnect client {:?}", client);
 					room.client_disconnect(&client.clone());
-					self.poll.registry().deregister(&mut connection.stream).unwrap();
+					connection.stop_watch(&mut self.poll);
 				}
 			}
 		}

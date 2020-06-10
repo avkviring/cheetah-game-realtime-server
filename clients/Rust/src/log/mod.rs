@@ -35,18 +35,4 @@ impl Logger {
 			}
 		}
 	}
-	
-	pub fn error(error: String) {
-		let mut logger = LOG_REF.lock().unwrap();
-		let message = format!("[error] {}", error);
-		logger.items.push_back(message.clone());
-		println!("{}", message);
-	}
-	
-	pub fn trace(trace: String) {
-		let mut logger = LOG_REF.lock().unwrap();
-		let message = format!("[trace] {}", trace);
-		logger.items.push_back(message.clone());
-		println!("{}", message);
-	}
 }

@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::io;
-use std::io::{Read, Write};
+use std::io::{Error, Read, Write};
 
 use mio::{Interest, Poll, Token};
 use mio::event::Event;
@@ -10,11 +10,11 @@ use mio::net::TcpStream;
 use crate::network::niobuffer::{NioBuffer, NioBufferError};
 
 ///
-/// Чтение/запись команд в tcp socket
+/// Чтение/запись/выполнение команд в/из tcp socket
 ///
 #[derive(Debug)]
 pub struct TcpConnection {
-	pub stream: TcpStream,
+	stream: TcpStream,
 	pub read_buffer: Box<NioBuffer>,
 	pub write_buffer: Box<NioBuffer>,
 	watch_read: bool,
@@ -212,6 +212,17 @@ impl TcpConnection {
 			}
 			Err(e) => {
 				Result::Err(TcpConnectionError::Error(format!("{:?}", e)))
+			}
+		}
+	}
+	
+	pub fn stop_watch(&mut self, poll: &mut Poll) -> Result<(), TcpConnectionError> {
+		match poll.registry().deregister(&mut self.stream) {
+			Ok(_) => {
+				Result::Ok(())
+			}
+			Err(e) => {
+				Result::Err(TcpConnectionError::Error(format!("stop watch error {:?}", e)))
 			}
 		}
 	}

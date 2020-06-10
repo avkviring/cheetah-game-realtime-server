@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::mpsc::{RecvError, Sender, SendError};
+use std::sync::mpsc::{Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
 
@@ -83,12 +83,12 @@ impl Clients {
 			match client.sender.send(ClientRequestType::Close) {
 				Ok(_) => { true }
 				Err(e) => {
-					Logger::error(format!("destroy_client error in channel {:?}", e));
+					log::error!("destroy_client error in channel {:?}", e);
 					false
 				}
 			}
 		} else {
-			Logger::error(format!("destroy_client client not found"));
+			log::error!("destroy_client client not found");
 			false
 		}
 	}
@@ -154,13 +154,13 @@ impl Clients {
 								Result::Ok(())
 							}
 							Err(e) => {
-								Logger::error(format!("collect commands from server error in receive {:?}", e));
+								log::error!("collect commands from server error in receive {:?}", e);
 								Result::Err(ClientsErrors::CollectS2CCommand)
 							}
 						}
 					}
 					Err(e) => {
-						Logger::error(format!("collect commands from server error in send {:?}", e));
+						log::error!("collect commands from server error in send {:?}", e);
 						Result::Err(ClientsErrors::CollectS2CCommand)
 					}
 				}
