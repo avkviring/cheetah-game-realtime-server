@@ -5,11 +5,11 @@ use std::rc::Rc;
 use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::room::access::AccessGroups;
 
-use crate::network::types::hash::HashValue;
 use crate::room::clients::ClientConnectError::ClientNotInWaitingList;
 use crate::room::listener::RoomListener;
 use crate::room::objects::owner::Owner;
 use crate::room::room::Room;
+use cheetah_relay_common::network::hash::HashValue;
 
 pub struct Clients {
 	/// список клиентов
@@ -21,6 +21,7 @@ pub struct Clients {
 }
 
 /// Ожидаемый клиент
+#[derive(Debug)]
 pub struct ClientConfiguration {
 	/// уникальный идентификатор клиента в рамках комнаты
 	pub id: ClientId,
@@ -31,6 +32,7 @@ pub struct ClientConfiguration {
 }
 
 /// Клиент в комнате
+#[derive(Debug)]
 pub struct Client {
 	/// конфигурация клиента
 	pub configuration: ClientConfiguration,
@@ -47,10 +49,10 @@ impl Clients {
 		self.client_id_generator
 	}
 	pub fn get_client(&self, client: u16) -> Option<&Rc<Client>> {
-		return self.clients.get(&client);
+		self.clients.get(&client)
 	}
 	pub fn get_clients(&self) -> Values<'_, u16, Rc<Client>> {
-		return self.clients.values();
+		self.clients.values()
 	}
 }
 

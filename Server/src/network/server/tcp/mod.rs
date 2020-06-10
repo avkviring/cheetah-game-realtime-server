@@ -7,13 +7,20 @@ use std::sync::{Arc, Mutex};
 use mio::{Events, Interest, Poll, Token};
 use mio::net::{TcpListener, TcpStream};
 
-use crate::network::types::hash::HashValue;
-use crate::room::request::RoomRequest;
-use crate::rooms::{Rooms, SendRoomRequestError};
+use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 
-pub mod room_tcp;
+use crate::room::request::RoomRequest;
+use crate::rooms::{Rooms, SendRoomRequestError};
 
+pub mod room;
+
+///
+/// Сетевой TCP сервер
+/// - принимает новые соединения
+/// - читает hash комнаты и клиента
+/// - передает соединение в обработчик сети для комнаты
+///
 pub struct TCPServer {
 	rooms: Arc<Mutex<Rooms>>,
 	addr: SocketAddr,
@@ -59,9 +66,9 @@ impl TCPServer {
 					SERVER => {
 						loop {
 							match server.accept() {
-								Ok((stream, addr)) => {
+								Ok((stream, _)) => {
 									log::trace!("tcp server: accept new connection");
-									self.register_new_client(&mut poll, stream, addr)
+									self.register_new_client(&mut poll, stream)
 								}
 								Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
 									break;
@@ -87,7 +94,7 @@ impl TCPServer {
 	fn read_hashes_from_client(&mut self, token: &Token, poll: &Poll) {
 		let clients = &mut self.clients;
 		let mut client = clients.remove(token).unwrap();
-		let stream = &mut client.connection.stream;
+		let stream = &mut client.stream;
 		let capacity = client.read_data.len();
 		let available_in_buffer = capacity - client.read_count;
 		let result = stream.read(&mut client.read_data[client.read_count..capacity]);
@@ -102,7 +109,7 @@ impl TCPServer {
 					let rooms = &*self.rooms.clone();
 					let room_hash = HashValue::from(&client.read_data[0..HashValue::SIZE]);
 					let client_hash = HashValue::from(&client.read_data[HashValue::SIZE..HashValue::SIZE * 2]);
-					let mut stream = client.connection.stream;
+					let mut stream = client.stream;
 					poll.registry().deregister(&mut stream);
 					let result_send_request = rooms
 						.lock()
@@ -112,7 +119,6 @@ impl TCPServer {
 							RoomRequest::TCPClientConnect(
 								client_hash,
 								stream,
-								client.connection.addr.clone(),
 								Vec::from(&client.read_data[HashValue::SIZE * 2..client.read_count]),
 							),
 						);
@@ -140,18 +146,13 @@ impl TCPServer {
 		}
 	}
 	
-	fn register_new_client(&mut self, poll: &mut Poll, stream: TcpStream, addr: SocketAddr,
-	) {
-		let mut connection = ClientConnection {
-			stream,
-			addr,
-		};
+	fn register_new_client(&mut self, poll: &mut Poll, mut stream: TcpStream) {
 		let token = Token(self.client_token_generator);
 		self.client_token_generator += 1;
 		poll
 			.registry()
 			.register(
-				&mut connection.stream,
+				&mut stream,
 				token,
 				Interest::READABLE,
 			).unwrap_or_else(|_| log::error!("Error register client tcp listener"));
@@ -159,7 +160,7 @@ impl TCPServer {
 		self.clients.insert(
 			token,
 			IncomingClient {
-				connection,
+				stream,
 				read_data: [0; NioBuffer::NIO_BUFFER_CAPACITY],
 				read_count: 0,
 			});
@@ -173,14 +174,10 @@ impl TCPServer {
 
 
 struct IncomingClient {
-	connection: ClientConnection,
+	stream: TcpStream,
 	read_data: [u8; NioBuffer::NIO_BUFFER_CAPACITY],
 	read_count: usize,
 }
 
 
-struct ClientConnection {
-	stream: TcpStream,
-	addr: SocketAddr,
-}
 

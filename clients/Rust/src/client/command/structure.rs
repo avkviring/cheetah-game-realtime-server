@@ -1,37 +1,26 @@
+use cheetah_relay_common::network::command::structure::SetStructCommand;
+
 use crate::client::command::C2SCommandUnion;
-use crate::client::ffi::{C2SCommandFFIType, S2CCommandFFI, S2CCommandFFICollector, S2CCommandFFIType};
+use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, CommandFFI, S2CCommandFFIType, Server2ClientFFIConverter};
 
-#[derive(Debug)]
-pub struct SetStructC2S {
-	pub object_id: u64,
-	pub field_id: u16,
-	pub data: Vec<u8>,
-}
-
-#[derive(Debug)]
-pub struct SetStructS2C {
-	pub object_id: u64,
-	pub field_id: u16,
-	pub data: Vec<u8>,
-}
-
-impl S2CCommandFFICollector for SetStructS2C {
-	fn collect(self, command: &mut S2CCommandFFI) {
-		command.s2c_command_type = S2CCommandFFIType::SetStruct;
-		command.object_id = self.object_id;
+impl Server2ClientFFIConverter for SetStructCommand {
+	fn to_ffi(self, command: &mut CommandFFI) {
+		command.command_type_s2c = S2CCommandFFIType::SetStruct;
+		command.object_id = self.global_object_id;
 		command.field_id = self.field_id;
 		command.structure = From::from(self.data);
 	}
 }
 
-impl SetStructC2S {
-	pub fn from(command: S2CCommandFFI) -> C2SCommandUnion {
-		debug_assert!(command.c2s_command_type == C2SCommandFFIType::SetStruct);
+impl Client2ServerFFIConverter for SetStructCommand {
+	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion {
+		debug_assert!(ffi.command_type_c2s == C2SCommandFFIType::SetStruct);
 		C2SCommandUnion::SetStruct(
-			SetStructC2S {
-				object_id: command.object_id,
-				field_id: command.field_id,
-				data: From::from(command.structure),
+			SetStructCommand {
+				global_object_id: ffi.object_id,
+				field_id: ffi.field_id,
+				data: From::from(ffi.structure),
 			})
 	}
 }
+

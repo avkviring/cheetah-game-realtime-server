@@ -232,8 +232,16 @@ macro_rules! NioBuffer {
 		write!(write_f32, f32);
 		write!(write_f64, f64);
 	}
+
+	impl Default for $name {
+	fn default() -> Self {
+		$name::new()
+	}
 }
 }
+}
+
+
 
 
 

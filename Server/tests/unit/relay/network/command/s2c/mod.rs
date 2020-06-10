@@ -51,7 +51,7 @@ fn should_s2c_collect_on_object_create() {
         collector,
         id,
         S2CCommandUnion::UploadGameObject(UploadGameObjectS2CCommand {
-            id: 10,
+            global_object_id: 10,
             fields: Default::default(),
         }),
     );
@@ -71,7 +71,7 @@ fn should_s2c_collect_on_client_connect() {
         commands.clone(),
         id,
         S2CCommandUnion::UploadGameObject(UploadGameObjectS2CCommand {
-            id: 10,
+            global_object_id: 10,
             fields: Default::default(),
         }),
     );
@@ -80,7 +80,7 @@ fn should_s2c_collect_on_client_connect() {
         commands,
         id,
         S2CCommandUnion::UploadGameObject(UploadGameObjectS2CCommand {
-            id: 11,
+            global_object_id: 11,
             fields: Default::default(),
         }),
     );
@@ -225,7 +225,7 @@ fn should_s2c_collect_on_fire_event() {
         commands,
         client.configuration.id,
         S2CCommandUnion::Event(EventCommand {
-            global_object_id: id,
+            id: id,
             field_id: 10,
             event: vec![1, 2, 3, 4, 5],
         }),

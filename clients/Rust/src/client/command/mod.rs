@@ -1,9 +1,13 @@
-use crate::client::command::event::{ReceiveEventS2C, SendEventC2S};
-use crate::client::command::float_counter::{IncrementFloatCounterC2S, SetFloatCounterS2C};
-use crate::client::command::long_counter::{IncrementLongCounterC2S, SetLongCounterS2C};
-use crate::client::command::structure::{SetStructC2S, SetStructS2C};
-use crate::client::command::unload::{UnloadObjectC2S, UnloadObjectS2C};
-use crate::client::command::upload::{UploadObjectC2S, UploadObjectS2C};
+use std::collections::VecDeque;
+
+use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
+use cheetah_relay_common::network::command::event::EventCommand;
+use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
+use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
+use cheetah_relay_common::network::command::structure::SetStructCommand;
+use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
+use cheetah_relay_common::network::command::upload::{UploadGameObjectC2SCommand, UploadGameObjectS2CCommand};
+use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 
 pub mod upload;
 pub mod long_counter;
@@ -12,20 +16,96 @@ pub mod structure;
 pub mod event;
 pub mod unload;
 
+#[derive(Debug)]
 pub enum C2SCommandUnion {
-	Upload(UploadObjectC2S),
-	IncrementLongCounter(IncrementLongCounterC2S),
-	IncrementFloatCounter(IncrementFloatCounterC2S),
-	SetStruct(SetStructC2S),
-	SendEvent(SendEventC2S),
-	Unload(UnloadObjectC2S),
+	Upload(UploadGameObjectC2SCommand),
+	SetLongCounter(SetLongCounterCommand),
+	IncrementLongCounter(IncrementLongCounterC2SCommand),
+	SetFloatCounter(SetFloatCounterCommand),
+	IncrementFloatCounter(IncrementFloatCounterC2SCommand),
+	SetStruct(SetStructCommand),
+	Event(EventCommand),
+	Unload(UnloadGameObjectCommand),
 }
 
+#[derive(Debug)]
 pub enum S2CCommandUnion {
-	Upload(UploadObjectS2C),
-	SetLongCounter(SetLongCounterS2C),
-	SetFloatCounter(SetFloatCounterS2C),
-	SetStruct(SetStructS2C),
-	ReceiveEvent(ReceiveEventS2C),
-	Unload(UnloadObjectS2C),
+	Upload(UploadGameObjectS2CCommand),
+	SetLongCounter(SetLongCounterCommand),
+	SetFloatCounter(SetFloatCounterCommand),
+	SetStruct(SetStructCommand),
+	Event(EventCommand),
+	Unload(UnloadGameObjectCommand),
+}
+
+
+pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CCommandUnion>) -> Result<(), NioBufferError> {
+	let command = read_buffer.read_u8()?;
+	let result = match command {
+		UploadGameObjectS2CCommand::COMMAND_CODE => {
+			UploadGameObjectS2CCommand::decode(read_buffer).map(S2CCommandUnion::Upload)
+		}
+		EventCommand::COMMAND_CODE => {
+			EventCommand::decode(read_buffer).map(S2CCommandUnion::Event)
+		}
+		SetStructCommand::COMMAND_CODE => {
+			SetStructCommand::decode(read_buffer).map(S2CCommandUnion::SetStruct)
+		}
+		SetLongCounterCommand::COMMAND_CODE => {
+			SetLongCounterCommand::decode(read_buffer).map(S2CCommandUnion::SetLongCounter)
+		}
+		SetFloatCounterCommand::COMMAND_CODE => {
+			SetFloatCounterCommand::decode(read_buffer).map(S2CCommandUnion::SetFloatCounter)
+		}
+		UnloadGameObjectCommand::COMMAND_CODE => { UnloadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Unload) }
+		code => {
+			return Result::Err(NioBufferError::Overflow);
+		}
+	};
+	match result {
+		Ok(command) => {
+			collector.push(command);
+			Result::Ok(())
+		}
+		Err(e) => {
+			Result::Err(e)
+		}
+	}
+}
+
+pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandUnion) -> Result<(), NioBufferError> {
+	match command {
+		C2SCommandUnion::Upload(command) => {
+			buffer.write_u8(UploadGameObjectC2SCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+		C2SCommandUnion::SetLongCounter(command) => {
+			buffer.write_u8(SetLongCounterCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+		C2SCommandUnion::IncrementLongCounter(command) => {
+			buffer.write_u8(IncrementLongCounterC2SCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+		C2SCommandUnion::SetFloatCounter(command) => {
+			buffer.write_u8(SetFloatCounterCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+		C2SCommandUnion::IncrementFloatCounter(command) => {
+			buffer.write_u8(IncrementFloatCounterC2SCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+		C2SCommandUnion::SetStruct(command) => {
+			buffer.write_u8(SetStructCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+		C2SCommandUnion::Event(command) => {
+			buffer.write_u8(EventCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+		C2SCommandUnion::Unload(command) => {
+			buffer.write_u8(UnloadGameObjectCommand::COMMAND_CODE)?;
+			command.encode(buffer)
+		}
+	}
 }

@@ -2,35 +2,46 @@ use std::collections::HashMap;
 
 use cheetah_relay_common::constants::{MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
 
+use crate::client::command::C2SCommandUnion;
+
 ///
 /// Структура для обмена данными с C#
 /// фактически - эмуляция union
 /// используется в единственном экземпляре
 ///
 #[repr(C)]
-pub struct S2CCommandFFI {
-	pub s2c_command_type: S2CCommandFFIType,
-	pub c2s_command_type: C2SCommandFFIType,
+pub struct CommandFFI {
+	pub command_type_s2c: S2CCommandFFIType,
+	pub command_type_c2s: C2SCommandFFIType,
 	pub object_id: u64,
 	pub field_id: u16,
-	pub long_counters: FieldsFFI<i64>,
-	pub float_counters: FieldsFFI<f64>,
-	pub structures: FieldsFFI<FieldFFIBinary>,
 	pub structure: FieldFFIBinary,
 	pub event: FieldFFIBinary,
 	pub long_value: i64,
 	pub float_value: f64,
+	pub access_group: u64,
+	pub long_counters: FieldsFFI<i64>,
+	pub float_counters: FieldsFFI<f64>,
+	pub structures: FieldsFFI<FieldFFIBinary>,
 }
 
+
 ///
-/// Заполнение FFI структуры данными для произвольной команды
+/// Конвертер команды в FFI структуру
 ///
-pub trait S2CCommandFFICollector {
-	fn collect(self, command: &mut S2CCommandFFI);
+pub trait Server2ClientFFIConverter {
+	fn to_ffi(self, ffi: &mut CommandFFI);
+}
+
+
+///
+/// Конвертер FFI структуры в команду
+pub trait Client2ServerFFIConverter {
+	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion;
 }
 
 #[repr(u8)]
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum S2CCommandFFIType {
 	Upload,
 	SetLongCounter,
@@ -41,11 +52,13 @@ pub enum S2CCommandFFIType {
 }
 
 #[repr(u8)]
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum C2SCommandFFIType {
 	Upload,
 	IncrementLongCounter,
+	SetLongCounter,
 	IncrementFloatCounter,
+	SetFloatCounter,
 	SetStruct,
 	SendEvent,
 	Unload,
@@ -102,11 +115,11 @@ impl<T> Default for FieldFFI<T> where T: Default {
 }
 
 
-impl Default for S2CCommandFFI {
+impl Default for CommandFFI {
 	fn default() -> Self {
-		S2CCommandFFI {
-			s2c_command_type: S2CCommandFFIType::None,
-			c2s_command_type: C2SCommandFFIType::None,
+		CommandFFI {
+			command_type_s2c: S2CCommandFFIType::Unload,
+			command_type_c2s: C2SCommandFFIType::Unload,
 			object_id: Default::default(),
 			field_id: Default::default(),
 			long_counters: Default::default(),
@@ -116,6 +129,7 @@ impl Default for S2CCommandFFI {
 			event: Default::default(),
 			long_value: Default::default(),
 			float_value: Default::default(),
+			access_group: Default::default()
 		}
 	}
 }

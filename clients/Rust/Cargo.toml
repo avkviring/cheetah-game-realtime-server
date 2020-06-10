@@ -12,6 +12,7 @@ crate-type = ["staticlib","cdylib", "lib"]
 lazy_static = "1.4.0"
 intptr = "0.1"
 cheetah_relay_common = { path = "../../Common"}
+mio = { version = "0.7.0", features = ["os-poll", "tcp"]}
 
 [dev-dependencies]
 cheetah_relay = { path = "../../Server"}

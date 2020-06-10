@@ -21,7 +21,7 @@ pub struct UploadGameObjectC2SCommand {
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub struct UploadGameObjectS2CCommand {
-	pub id: GlobalObjectId,
+	pub global_object_id: GlobalObjectId,
 	pub fields: GameObjectFields,
 }
 
@@ -55,7 +55,7 @@ impl Decoder for UploadGameObjectC2SCommand {
 
 impl Encoder for UploadGameObjectS2CCommand {
 	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-		buffer.write_u64(self.id)?;
+		buffer.write_u64(self.global_object_id)?;
 		self.fields.encode(buffer)?;
 		Result::Ok(())
 	}
@@ -64,7 +64,7 @@ impl Encoder for UploadGameObjectS2CCommand {
 impl Decoder for UploadGameObjectS2CCommand {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
 		Result::Ok(UploadGameObjectS2CCommand {
-			id: buffer.read_u64()?,
+			global_object_id: buffer.read_u64()?,
 			fields: GameObjectFields::decode(buffer)?,
 		})
 	}

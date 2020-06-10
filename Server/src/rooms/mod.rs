@@ -7,7 +7,7 @@ use std::thread::JoinHandle;
 
 use crate::room::request::RoomRequest;
 use crate::room::cycle::RoomCycle;
-use crate::network::types::hash::HashValue;
+use cheetah_relay_common::network::hash::HashValue;
 
 /// комнаты
 pub struct Rooms {

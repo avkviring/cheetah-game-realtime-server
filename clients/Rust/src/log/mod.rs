@@ -20,15 +20,6 @@ lazy_static! {
     static ref LOG_REF: Mutex<Logger> = Mutex::new(Default::default());
 }
 
-
-#[repr(u8)]
-#[derive(Debug)]
-pub enum ErrorCode {
-	CollectS2cCommand,
-	DestroyClient,
-	NONE,
-}
-
 impl Logger {
 	pub fn collect_logs(collector: fn(*const c_char)) {
 		let mut logger = LOG_REF.lock().unwrap();
@@ -45,25 +36,17 @@ impl Logger {
 		}
 	}
 	
-	pub fn log_error(code: ErrorCode, error: String) {
+	pub fn error(error: String) {
 		let mut logger = LOG_REF.lock().unwrap();
-		let message = format!("[error] code = {:?}, message = {}", code, error);
+		let message = format!("[error] {}", error);
 		logger.items.push_back(message.clone());
 		println!("{}", message);
 	}
 	
-	pub fn log_trace(trace: String) {
+	pub fn trace(trace: String) {
 		let mut logger = LOG_REF.lock().unwrap();
-		let message = format!("[trace] message = {}", trace);
+		let message = format!("[trace] {}", trace);
 		logger.items.push_back(message.clone());
 		println!("{}", message);
-	}
-	
-	pub fn last_error_code() -> ErrorCode {
-		ErrorCode::NONE
-	}
-	
-	pub fn last_error_message() -> String {
-		"".to_string()
 	}
 }

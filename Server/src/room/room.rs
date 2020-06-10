@@ -1,8 +1,7 @@
 use crate::room::clients::Clients;
 use crate::room::listener::CompositeRoomListener;
 use crate::room::objects::Objects;
-use crate::network::types::hash::HashValue;
-
+use cheetah_relay_common::network::hash::HashValue;
 
 
 /// Описание комнаты

@@ -12,7 +12,7 @@ impl ServerCommandExecutor for EventCommand {
 			"Event",
 			room,
 			client,
-			self.global_object_id,
+			self.id,
 			self.field_id,
 			ObjectFieldType::Event,
 			|room, object|
