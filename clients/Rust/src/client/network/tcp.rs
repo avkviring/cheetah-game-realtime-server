@@ -1,28 +1,17 @@
-use std::io::{Error, Read, Write};
-use std::io;
 use std::net::SocketAddr;
-use std::ops::Deref;
 use std::str::FromStr;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 
-use mio::{Events, Interest, Poll, Token};
+use mio::{Events, Poll, Token};
 use mio::net::TcpStream;
 
-use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
-use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
-use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
-use cheetah_relay_common::network::command::structure::SetStructCommand;
-use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::{UploadGameObjectC2SCommand, UploadGameObjectS2CCommand};
-use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
-use cheetah_relay_common::network::tcp::connection::{TcpConnection, TcpConnectionError};
+use cheetah_relay_common::network::niobuffer::NioBuffer;
+use cheetah_relay_common::network::tcp::connection::TcpConnection;
 
 use crate::client::{Client, NetworkStatus};
-use crate::client::command::{C2SCommandUnion, decode_command, encode_command, S2CCommandUnion};
-use crate::client::command::C2SCommandUnion::{Event, SetStruct};
+use crate::client::command::{decode_command, encode_command};
 
-const token: Token = Token(0);
+const TOKEN: Token = Token(0);
 
 #[derive(Debug)]
 pub struct TCPClient {
@@ -158,7 +147,7 @@ impl TCPClient {
 		let address = SocketAddr::from_str(self.server_address.as_str()).unwrap();
 		match TcpStream::connect(address) {
 			Ok(stream) => {
-				let mut connection = TcpConnection::new(stream, NioBuffer::new(), token);
+				let mut connection = TcpConnection::new(stream, NioBuffer::new(), TOKEN);
 				connection.write_buffer.clear();
 				connection.write_buffer.write_bytes(&client.room_hash.value).unwrap();
 				connection.write_buffer.write_bytes(&client.client_hash.value).unwrap();

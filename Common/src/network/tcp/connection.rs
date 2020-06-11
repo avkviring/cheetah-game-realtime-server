@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::io;
-use std::io::{Error, Read, Write};
+use std::io::{Read, Write};
 
 use mio::{Interest, Poll, Token};
 use mio::event::Event;
@@ -32,7 +32,7 @@ pub enum TcpConnectionError {
 
 #[derive(Debug)]
 pub enum OnReadBufferError {
-	UnknownCommand,
+	UnknownCommand(u8),
 	NioBufferError(NioBufferError),
 }
 
@@ -71,7 +71,7 @@ impl TcpConnection {
 			match on_read_buffer(&mut self.read_buffer) {
 				Ok(_) => {}
 				Err(_) => {
-					self.read_buffer.reset();
+					self.read_buffer.reset().unwrap();
 					break;
 				}
 			}
@@ -83,7 +83,8 @@ impl TcpConnection {
 	///
 	/// Кодирование команд в буфер для записи
 	///
-	pub fn prepare_commands_for_send<C, F>(&mut self, poll: &mut Poll, commands: &mut VecDeque<C>, mut command_to_buffer: F) -> Result<(), TcpConnectionError>
+	pub fn prepare_commands_for_send<C, F>(&mut self, poll: &mut Poll, commands: &mut VecDeque<C>, mut command_to_buffer: F) -> Result<(),
+		TcpConnectionError>
 		where F: FnMut(&mut NioBuffer, &C) -> Result<(), NioBufferError>, C: Debug {
 		if !commands.is_empty() {
 			self.write_buffer.compact();

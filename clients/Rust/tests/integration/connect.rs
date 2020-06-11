@@ -10,8 +10,11 @@ fn should_fail_connect_to_server_when_server_not_running() {
 	let room_hash = HashValue::from("room_hash");
 	let client_hash = HashValue::from("client_hash");
 	let client = setup_client(address, &room_hash, &client_hash);
-	let status = get_connection_status(client);
-	assert_eq!(status, NetworkStatus::Disconnected);
+	get_connection_status(
+		client,
+		|status| { assert_eq!(status, NetworkStatus::Disconnected); },
+		|| { assert!(false) },
+	);
 }
 
 #[test]
@@ -22,8 +25,11 @@ fn should_connect_to_server() {
 	let (_, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms, &room_hash, &client_hash);
 	let client = setup_client(address, &room_hash, &client_hash);
-	let status = get_connection_status(client);
-	assert_eq!(status, NetworkStatus::OnLine);
+	get_connection_status(
+		client,
+		|status| { assert_eq!(status, NetworkStatus::OnLine); },
+		|| { assert!(false) },
+	);
 }
 
 #[test]
@@ -35,8 +41,11 @@ fn should_connect_to_room_server() {
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);
 	
 	let client = setup_client(address, &room_hash, &client_hash);
-	let status = get_connection_status(client);
-	assert_eq!(status, NetworkStatus::OnLine);
+	get_connection_status(
+		client,
+		|status| { assert_eq!(status, NetworkStatus::OnLine); },
+		|| { assert!(false) },
+	);
 	
 	let clients = get_server_room_clients(&room_hash, rooms.clone());
 	assert_eq!(clients.iter().any(|c| c.hash == client_hash), true);

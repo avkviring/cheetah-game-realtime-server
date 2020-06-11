@@ -8,7 +8,6 @@ pub enum ClientRequestType {
 	GetS2CCommands(Sender<Vec<S2CCommandUnion>>),
 	SendCommandToServer(C2SCommandUnion),
 	GetConnectionStatus(Sender<NetworkStatus>),
-	Close,
 }
 
 
@@ -42,12 +41,9 @@ impl ExternalRequestProcessor {
 					ClientRequestType::GetConnectionStatus(response) => {
 						response.send(client.network_status.clone());
 					}
-					ClientRequestType::Close => {
-						client.close();
-					}
 				}
 			}
-			Err(e) => {
+			Err(_) => {
 				// все нормально, просто нет сообщений
 			}
 		}

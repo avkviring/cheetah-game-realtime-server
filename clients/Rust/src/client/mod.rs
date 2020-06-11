@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::command::{C2SCommandUnion, S2CCommandUnion};
-use crate::client::request::{ClientRequestType, ExternalRequestProcessor};
 
 pub mod ffi;
 pub mod command;
@@ -60,6 +59,4 @@ impl Client {
 	pub fn schedule_command_to_server(&mut self, command: C2SCommandUnion) {
 		self.scheduled_command_to_server.push_back(command);
 	}
-	
-	pub fn close(&mut self) {}
 }

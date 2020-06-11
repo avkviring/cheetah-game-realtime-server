@@ -29,7 +29,6 @@ fn execute<F, T>(body: F) -> T
 
 #[repr(C)]
 pub enum LogLevel {
-	Trace,
 	Info,
 	Warn,
 	Error,
@@ -43,7 +42,6 @@ pub extern "C" fn init() {
 #[no_mangle]
 pub extern "C" fn set_max_log_level(log_level: LogLevel) {
 	log::set_max_level(match log_level {
-		LogLevel::Trace => { log::LevelFilter::Trace }
 		LogLevel::Info => { log::LevelFilter::Info }
 		LogLevel::Warn => { log::LevelFilter::Warn }
 		LogLevel::Error => { log::LevelFilter::Error }
@@ -74,19 +72,45 @@ pub unsafe extern "C" fn create_client(addr: *const c_char, room_hash: *const c_
 }
 
 
-#[no_mangle]
-pub extern "C" fn get_connection_status(client: u16) -> NetworkStatus {
-	execute(|api| api.get_connection_status(client).ok().unwrap())
+pub extern "C" fn get_connection_status<F, E>(client_id: u16, on_result: F, on_error: E) where F: FnOnce(NetworkStatus) -> (), E: FnOnce() -> () {
+	execute(|api| {
+		match api.get_connection_status(client_id) {
+			Ok(status) => { on_result(status) }
+			Err(e) => {
+				log::error!("get_connection_status error {:?}", e);
+				on_error();
+				destroy_client(client_id);
+			}
+		}
+	})
 }
 
-#[no_mangle]
-pub extern "C" fn receive_commands_from_server<F>(client_id: u16, collector: F) where F: FnMut(&CommandFFI) -> () {
-	execute(|api| api.collect_s2c_commands(client_id, collector));
+
+pub extern "C" fn receive_commands_from_server<F, E>(client_id: u16, collector: F, on_error: E) where F: FnMut(&CommandFFI) -> (), E: FnOnce() -> () {
+	execute(|api| {
+		match api.collect_s2c_commands(client_id, collector) {
+			Ok(_) => {}
+			Err(e) => {
+				log::error!("collect_s2c_commands error {:?}", e);
+				on_error();
+				destroy_client(client_id);
+			}
+		}
+	});
 }
 
-#[no_mangle]
-pub extern "C" fn send_command_to_server(client_id: u16, command: &CommandFFI) {
-	execute(|api| api.send_command_to_server(client_id, command));
+
+pub extern "C" fn send_command_to_server<E>(client_id: u16, command: &CommandFFI, on_error: E) where E: FnOnce() -> () {
+	execute(|api| {
+		match api.send_command_to_server(client_id, command) {
+			Ok(_) => {}
+			Err(e) => {
+				log::error!("send_command_to_server error {:?}", e);
+				on_error();
+				destroy_client(client_id);
+			}
+		}
+	});
 }
 
 #[no_mangle]

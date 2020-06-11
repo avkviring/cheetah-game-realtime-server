@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
@@ -60,7 +58,7 @@ pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CComman
 		}
 		UnloadGameObjectCommand::COMMAND_CODE => { UnloadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Unload) }
 		code => {
-			return Result::Err(OnReadBufferError::UnknownCommand);
+			return Result::Err(OnReadBufferError::UnknownCommand(code));
 		}
 	};
 	match result {

@@ -8,7 +8,7 @@ use mio::event::Event;
 use mio::net::TcpStream;
 
 use cheetah_relay_common::network::niobuffer::NioBuffer;
-use cheetah_relay_common::network::tcp::connection::TcpConnection;
+use cheetah_relay_common::network::tcp::connection::{TcpConnection, TcpConnectionError};
 
 use crate::network::c2s::decode_end_execute_c2s_commands;
 use crate::network::s2c::{encode_s2c_commands, S2CCommandCollector};
@@ -63,13 +63,13 @@ impl TcpRoom {
 	fn prepare_commands_to_clients(&mut self) {
 		let mut collector = self.s2c_collector.borrow_mut();
 		let poll = &mut self.poll;
-		self.clients.iter_mut().for_each(|(token, connectionWithClient)| {
-			let client = &mut connectionWithClient.client;
+		self.clients.iter_mut().for_each(|(_, connection_with_client)| {
+			let client = &mut connection_with_client.client;
 			let commands = collector.commands_by_client.get_mut(&client.configuration.id);
 			match commands {
 				None => {}
 				Some(commands) => {
-					let connection = &mut connectionWithClient.connection;
+					let connection = &mut connection_with_client.connection;
 					connection.prepare_commands_for_send(
 						poll,
 						commands,
@@ -152,7 +152,12 @@ impl TcpRoom {
 					let connection = &mut connection_with_client.connection;
 					log::trace!("tcp room: disconnect client {:?}", client);
 					room.client_disconnect(&client.clone());
-					connection.stop_watch(&mut self.poll);
+					match connection.stop_watch(&mut self.poll) {
+						Ok(_) => {}
+						Err(e) => {
+							log::warn!("tcp room: stop_watch error {:?}", e);
+						}
+					}
 				}
 			}
 		}

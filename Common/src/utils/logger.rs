@@ -26,13 +26,23 @@ pub struct LogListener;
 static LOG_LISTENER: LogListener = LogListener {};
 
 impl log::Log for LogListener {
-	fn enabled(&self, metadata: &log::Metadata) -> bool {
+	fn enabled(&self, _metadata: &log::Metadata) -> bool {
 		true
 	}
 	
 	fn log(&self, record: &log::Record) {
 		let mut collector = LOG_COLLECTOR.lock().unwrap();
-		let message = format!("[{}] ({} in {}) {}", record.level(), record.file().unwrap(), record.line().unwrap(), record.args());
+		let message = match record.level() {
+			log::Level::Trace => {
+				format!("[{}] {}", record.level(), record.args())
+			}
+			log::Level::Info => {
+				format!("[{}] {}", record.level(), record.args())
+			}
+			_ => {
+				format!("[{}] ({} in {}) {}", record.level(), record.file().unwrap(), record.line().unwrap(), record.args())
+			}
+		};
 		println!("{}", message);
 		collector.items.push_back(message);
 	}

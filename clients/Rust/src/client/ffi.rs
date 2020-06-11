@@ -1,4 +1,6 @@
+use core::fmt;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 
 use cheetah_relay_common::constants::{MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
 
@@ -10,6 +12,7 @@ use crate::client::command::C2SCommandUnion;
 /// используется в единственном экземпляре
 ///
 #[repr(C)]
+#[derive(Debug)]
 pub struct CommandFFI {
 	pub command_type_s2c: S2CCommandFFIType,
 	pub command_type_c2s: C2SCommandFFIType,
@@ -71,6 +74,15 @@ pub struct FieldFFIBinary {
 	pub value: [u8; MAX_SIZE_STRUCT],
 }
 
+impl Debug for FieldFFIBinary {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		f
+			.debug_struct("$name")
+			.field("size", &self.binary_size)
+			.finish()
+	}
+}
+
 impl Default for FieldFFIBinary {
 	fn default() -> Self {
 		FieldFFIBinary {
@@ -88,6 +100,14 @@ pub struct FieldsFFI<T> where T: Default {
 	pub values: [FieldFFI<T>; MAX_FIELDS_IN_OBJECT],
 }
 
+impl<T> Debug for FieldsFFI<T> where T: Default {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		f
+			.debug_struct("$name")
+			.field("size", &self.size)
+			.finish()
+	}
+}
 
 impl<T> Default for FieldsFFI<T> where T: Default + Copy {
 	fn default() -> Self {
@@ -129,7 +149,7 @@ impl Default for CommandFFI {
 			event: Default::default(),
 			long_value: Default::default(),
 			float_value: Default::default(),
-			access_group: Default::default()
+			access_group: Default::default(),
 		}
 	}
 }

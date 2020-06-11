@@ -48,7 +48,7 @@ macro_rules! read {
 	  };
 }
 
-macro_rules! NioBuffer {
+macro_rules! nio_buffer {
 	($name:ident, $size:expr) => {
 	
 	/// буфер, аналогичный Nio Buffer из Java
@@ -63,7 +63,7 @@ macro_rules! NioBuffer {
 	impl From<&[u8]> for $name {
 		fn from(data: &[u8]) -> Self {
 			let mut buffer = $name::new();
-			buffer.write_bytes(data);
+			buffer.write_bytes(data).unwrap();
 			buffer
 		}
 	}
@@ -245,4 +245,4 @@ macro_rules! NioBuffer {
 
 
 
-NioBuffer!(NioBuffer,1024*100);
+nio_buffer!(NioBuffer,1024*100);

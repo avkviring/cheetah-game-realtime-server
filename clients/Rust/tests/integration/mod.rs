@@ -50,7 +50,7 @@ fn setup_server(addr: &'static str) -> (Server, HashValue, Arc<Mutex<Rooms>>) {
 
 fn add_wating_client_to_room(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue, client_hash: &HashValue) {
 	let rooms = &*rooms;
-	let mut rooms = rooms.lock().unwrap();
+	let rooms = rooms.lock().unwrap();
 	rooms.send_room_request(
 		&room_hash,
 		RoomRequest::AddWaitingClient(client_hash.clone(), AccessGroups::from(0b111)),

@@ -1,12 +1,11 @@
-use std::cell::RefCell;
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{Arc, mpsc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
 use cheetah_relay::room::request::RoomRequest;
 use cheetah_relay_client::{receive_commands_from_server, send_command_to_server};
-use cheetah_relay_client::client::ffi::{C2SCommandFFIType, S2CCommandFFIType, Server2ClientFFIConverter};
+use cheetah_relay_client::client::ffi::{C2SCommandFFIType, S2CCommandFFIType};
 use cheetah_relay_client::client::ffi::CommandFFI;
 use cheetah_relay_common::network::hash::HashValue;
 
@@ -28,7 +27,7 @@ fn should_send_command_to_server() {
 	ffi.command_type_c2s = C2SCommandFFIType::Upload;
 	ffi.object_id = 100;
 	ffi.access_group = 0b100;
-	send_command_to_server(client, &ffi);
+	send_command_to_server(client, &ffi, || assert!(false));
 	thread::sleep(Duration::from_secs(1));
 	
 	
@@ -58,13 +57,13 @@ fn should_receive_command_to_server() {
 	ffi.command_type_c2s = C2SCommandFFIType::Upload;
 	ffi.object_id = 100;
 	ffi.access_group = 0b100;
-	send_command_to_server(client_a, &ffi);
+	send_command_to_server(client_a, &ffi, || assert!(false));
 	thread::sleep(Duration::from_secs(2));
 	
 	let client_b = setup_client(address, &room_hash, &client_hash_b);
 	
-	let mut collect_upload_command = Arc::new(AtomicBool::new(false));
-	let mut move_arc = collect_upload_command.clone();
+	let collect_upload_command = Arc::new(AtomicBool::new(false));
+	let move_arc = collect_upload_command.clone();
 	// проверяем входящие команды на втором клиенте
 	let collector = move |ffi: &CommandFFI| {
 		if ffi.command_type_s2c == S2CCommandFFIType::Upload {
@@ -75,6 +74,7 @@ fn should_receive_command_to_server() {
 	receive_commands_from_server(
 		client_b,
 		collector,
+		|| assert!(false),
 	);
 	
 	assert_eq!((&*collect_upload_command).load(Ordering::SeqCst), true);

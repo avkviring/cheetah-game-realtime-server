@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{RecvError, Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
 
@@ -23,19 +23,23 @@ use crate::client::thread::ClientThread;
 /// - создание клиента/выполнение запросов от Unity/удаление клиента
 /// - все методы Clients выполняются в главном потоке Unity
 ///
+///
+#[derive(Debug)]
 pub struct Clients {
 	clients: HashMap<u16, ClientAPI>,
 	client_generator_id: u16,
 	s2c_command_ffi: CommandFFI,
 }
 
+#[derive(Debug)]
 pub enum ClientsErrors {
-	ClientNotFound,
-	CollectS2CCommand,
-	GetConnectionStatus,
-	SendCommandToServerError,
+	ClientNotFound(u16),
+	CollectS2CCommand(String),
+	GetConnectionStatus(RecvError),
+	SendCommandToServerError(SendError<ClientRequestType>),
 }
 
+#[derive(Debug)]
 pub struct ClientAPI {
 	sender: Sender<ClientRequestType>,
 	handler: JoinHandle<()>,
@@ -78,17 +82,15 @@ impl Clients {
 		&mut self,
 		client_id: u16,
 	) -> bool {
-		if let Some(client) = self.clients.remove(&client_id) {
-			match client.sender.send(ClientRequestType::Close) {
-				Ok(_) => { true }
-				Err(e) => {
-					log::error!("destroy_client error in channel {:?}", e);
-					false
-				}
+		match self.clients.remove(&client_id) {
+			None => {
+				log::error!("Clients::destroy_client client with id {} not found", client_id);
+				true
 			}
-		} else {
-			log::error!("destroy_client client not found");
-			false
+			Some(_) => {
+				log::trace!("Clients::destroy_client client {}", client_id);
+				false
+			}
 		}
 	}
 	
@@ -99,7 +101,7 @@ impl Clients {
 	) -> Result<(), ClientsErrors> {
 		match self.clients.get(&client_id) {
 			None => {
-				Result::Err(ClientsErrors::ClientNotFound)
+				Result::Err(ClientsErrors::ClientNotFound(client_id))
 			}
 			Some(client) => {
 				let command = match command.command_type_c2s {
@@ -112,12 +114,17 @@ impl Clients {
 					C2SCommandFFIType::SetLongCounter => { SetLongCounterCommand::from_ffi(command) }
 					C2SCommandFFIType::SetFloatCounter => { SetFloatCounterCommand::from_ffi(command) }
 				};
+				
+				if log::log_enabled!(log::Level::Info) {
+					log::info!("schedule command to server {:?}", command);
+				}
+				
 				match client.sender.send(ClientRequestType::SendCommandToServer(command)) {
 					Ok(_) => {
 						Result::Ok(())
 					}
-					Err(_) => {
-						Result::Err(ClientsErrors::SendCommandToServerError)
+					Err(e) => {
+						Result::Err(ClientsErrors::SendCommandToServerError(e))
 					}
 				}
 			}
@@ -131,7 +138,7 @@ impl Clients {
 		mut collector: F,
 	) -> Result<(), ClientsErrors> where F: FnMut(&CommandFFI) -> () {
 		match self.clients.get(&client_id) {
-			None => { Result::Err(ClientsErrors::ClientNotFound) }
+			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 			Some(client) => {
 				let (sender, receiver) = std::sync::mpsc::channel();
 				match client.sender.send(ClientRequestType::GetS2CCommands(sender)) {
@@ -140,6 +147,9 @@ impl Clients {
 							Ok(commands) => {
 								let command_ffi = &mut self.s2c_command_ffi;
 								commands.into_iter().for_each(|command| {
+									if log::log_enabled!(log::Level::Info) {
+										log::info!("receive command from server {:?}", command);
+									}
 									match command {
 										S2CCommandUnion::Upload(command) => { command.to_ffi(command_ffi) }
 										S2CCommandUnion::SetLongCounter(command) => { command.to_ffi(command_ffi) }
@@ -153,14 +163,12 @@ impl Clients {
 								Result::Ok(())
 							}
 							Err(e) => {
-								log::error!("collect commands from server error in receive {:?}", e);
-								Result::Err(ClientsErrors::CollectS2CCommand)
+								Result::Err(ClientsErrors::CollectS2CCommand(format!("{:?}", e)))
 							}
 						}
 					}
 					Err(e) => {
-						log::error!("collect commands from server error in send {:?}", e);
-						Result::Err(ClientsErrors::CollectS2CCommand)
+						Result::Err(ClientsErrors::CollectS2CCommand(format!("{:?}", e)))
 					}
 				}
 			}
@@ -177,11 +185,11 @@ impl Clients {
 						Result::Ok(status)
 					}
 					Err(e) => {
-						Result::Err(ClientsErrors::GetConnectionStatus)
+						Result::Err(ClientsErrors::GetConnectionStatus(e))
 					}
 				}
 			}
-			None => { Result::Err(ClientsErrors::ClientNotFound) }
+			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 		}
 	}
 }

@@ -64,8 +64,8 @@ pub fn decode_end_execute_c2s_commands(
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}
-		_ => {
-			Result::Err(OnReadBufferError::UnknownCommand)
+		code => {
+			Result::Err(OnReadBufferError::UnknownCommand(code))
 		}
 	}
 }
