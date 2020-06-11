@@ -21,7 +21,6 @@ use cheetah_relay_common::network::tcp::connection::{TcpConnection, TcpConnectio
 use crate::client::{Client, NetworkStatus};
 use crate::client::command::{C2SCommandUnion, decode_command, encode_command, S2CCommandUnion};
 use crate::client::command::C2SCommandUnion::{Event, SetStruct};
-use crate::log::Logger;
 
 const token: Token = Token(0);
 

@@ -1,20 +1,19 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
 use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::utils::logger::LogListener;
 
-use crate::client::NetworkStatus;
 use crate::client::ffi::CommandFFI;
+use crate::client::NetworkStatus;
 use crate::clients::Clients;
-use crate::log::Logger;
 
 pub mod client;
 pub mod clients;
-pub mod log;
 
 lazy_static! {
     static ref API_REF: Mutex<Clients > = Mutex::new(Default::default());
@@ -26,6 +25,38 @@ fn execute<F, T>(body: F) -> T
 	let api = API_REF.lock();
 	let api = &mut *(api.unwrap());
 	body(api)
+}
+
+#[repr(C)]
+pub enum LogLevel {
+	Trace,
+	Info,
+	Warn,
+	Error,
+}
+
+#[no_mangle]
+pub extern "C" fn init() {
+	LogListener::setup_logger();
+}
+
+#[no_mangle]
+pub extern "C" fn set_max_log_level(log_level: LogLevel) {
+	log::set_max_level(match log_level {
+		LogLevel::Trace => { log::LevelFilter::Trace }
+		LogLevel::Info => { log::LevelFilter::Info }
+		LogLevel::Warn => { log::LevelFilter::Warn }
+		LogLevel::Error => { log::LevelFilter::Error }
+	});
+}
+
+#[no_mangle]
+pub extern "C" fn collect_logs(on_log_message: fn(*const c_char)) {
+	let collector = &mut cheetah_relay_common::utils::logger::LOG_COLLECTOR.lock().unwrap();
+	collector.items.iter().for_each(|message| {
+		let c_str = CString::new(message.clone()).unwrap();
+		on_log_message(c_str.as_ptr() as *const c_char);
+	});
 }
 
 
@@ -49,7 +80,7 @@ pub extern "C" fn get_connection_status(client: u16) -> NetworkStatus {
 }
 
 #[no_mangle]
-pub extern "C" fn receive_commands_from_server<F>(client_id: u16, collector: F) where F: FnMut(&CommandFFI)->()  {
+pub extern "C" fn receive_commands_from_server<F>(client_id: u16, collector: F) where F: FnMut(&CommandFFI) -> () {
 	execute(|api| api.collect_s2c_commands(client_id, collector));
 }
 
@@ -61,11 +92,6 @@ pub extern "C" fn send_command_to_server(client_id: u16, command: &CommandFFI) {
 #[no_mangle]
 pub extern "C" fn destroy_client(client_id: u16) {
 	execute(|api| api.destroy_client(client_id));
-}
-
-#[no_mangle]
-pub extern "C" fn collect_logs(collector: fn(*const c_char)) {
-	Logger::collect_logs(collector);
 }
 
 

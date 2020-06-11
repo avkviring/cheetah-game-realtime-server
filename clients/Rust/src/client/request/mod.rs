@@ -1,9 +1,8 @@
-use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
+use std::sync::mpsc::{Receiver, Sender};
 use std::time::Duration;
 
 use crate::client::{Client, NetworkStatus};
 use crate::client::command::{C2SCommandUnion, S2CCommandUnion};
-use crate::log::Logger;
 
 pub enum ClientRequestType {
 	GetS2CCommands(Sender<Vec<S2CCommandUnion>>),

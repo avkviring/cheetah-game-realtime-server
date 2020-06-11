@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::mpsc::{Sender, SendError};
+use std::sync::mpsc::Sender;
 use std::thread;
 use std::thread::JoinHandle;
 
@@ -16,7 +16,6 @@ use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, CommandFF
 use crate::client::NetworkStatus;
 use crate::client::request::ClientRequestType;
 use crate::client::thread::ClientThread;
-use crate::log::Logger;
 
 ///
 /// Реестр клиентов
