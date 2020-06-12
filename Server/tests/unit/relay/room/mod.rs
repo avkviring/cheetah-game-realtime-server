@@ -4,7 +4,7 @@ use cheetah_relay::room::clients::{Client, Clients};
 use cheetah_relay::room::listener::RoomListener;
 use cheetah_relay::room::objects::object::GameObject;
 use cheetah_relay::room::objects::Objects;
-use cheetah_relay::room::room::Room;
+use cheetah_relay::room::Room;
 use cheetah_relay_common::constants::GroupType;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;

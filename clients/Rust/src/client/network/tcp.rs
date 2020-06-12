@@ -6,10 +6,10 @@ use mio::{Events, Poll, Token};
 use mio::net::TcpStream;
 
 use cheetah_relay_common::network::niobuffer::NioBuffer;
-use cheetah_relay_common::network::tcp::connection::TcpConnection;
+use cheetah_relay_common::network::tcp::connection::{OnReadBufferError, TcpConnection};
 
 use crate::client::{Client, NetworkStatus};
-use crate::client::command::{decode_command, encode_command};
+use crate::client::command::{decode_command, encode_command, S2CCommandUnion};
 
 const TOKEN: Token = Token(0);
 
@@ -94,6 +94,7 @@ impl TCPClient {
 		self.prepare_to_send_commands(client)?;
 		let poll = &mut self.poll;
 		let connection = self.connection.as_mut().unwrap();
+		self.events.clear();
 		match poll.poll(&mut self.events, Option::Some(Duration::from_millis(1))) {
 			Ok(_) => {
 				let mut count_success_event = 0;
@@ -101,7 +102,15 @@ impl TCPClient {
 					match connection.process_event(
 						event,
 						poll,
-						|buffer| { decode_command(buffer, &mut client.commands_from_server) }) {
+						|buffer| {
+							match decode_command(buffer) {
+								Ok(command) => {
+									client.commands_from_server.push(command);
+									Result::Ok(())
+								}
+								Err(e) => { Result::Err(e) }
+							}
+						}) {
 						Ok(_) => {}
 						Err(_) => {
 							return Result::Err(());

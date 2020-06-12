@@ -3,7 +3,7 @@ use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC
 use crate::network::c2s::{get_field_and_change, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;
 use crate::room::objects::object::ObjectFieldType;
-use crate::room::room::Room;
+use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongCounterC2SCommand {
 	fn execute(self, client: &Client, room: &mut Room) {

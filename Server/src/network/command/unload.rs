@@ -4,7 +4,7 @@ use cheetah_relay_common::room::access::Access;
 use crate::network::c2s::{error_c2s_command, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;
 use crate::room::objects::ErrorGetObjectWithCheckAccess;
-use crate::room::room::Room;
+use crate::room::Room;
 
 impl ServerCommandExecutor for UnloadGameObjectCommand {
     fn execute(self, client: &Client, room: &mut Room) {

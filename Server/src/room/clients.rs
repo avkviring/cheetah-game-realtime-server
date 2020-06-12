@@ -8,8 +8,8 @@ use cheetah_relay_common::room::access::AccessGroups;
 use crate::room::clients::ClientConnectError::ClientNotInWaitingList;
 use crate::room::listener::RoomListener;
 use crate::room::objects::owner::Owner;
-use crate::room::room::Room;
 use cheetah_relay_common::network::hash::HashValue;
+use crate::room::Room;
 
 pub struct Clients {
 	/// список клиентов

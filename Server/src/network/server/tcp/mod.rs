@@ -3,6 +3,8 @@ use std::io;
 use std::io::Read;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{Receiver, TryRecvError};
+use std::time::Duration;
 
 use mio::{Events, Interest, Poll, Token};
 use mio::net::{TcpListener, TcpStream};
@@ -16,34 +18,44 @@ use crate::rooms::{Rooms, SendRoomRequestError};
 pub mod room;
 
 ///
-/// Сетевой TCP сервер
+/// Слушает серверный порт и принимает коннекты клиентов
+///
 /// - принимает новые соединения
 /// - читает hash комнаты и клиента
 /// - передает соединение в обработчик сети для комнаты
 ///
-pub struct TCPServer {
+pub struct TCPAcceptor {
+	running: bool,
 	rooms: Arc<Mutex<Rooms>>,
-	addr: SocketAddr,
+	address: SocketAddr,
 	client_token_generator: usize,
 	clients: HashMap<Token, IncomingClient>,
+	receiver: Receiver<TCPAcceptorRequest>,
+}
+
+#[derive(Debug)]
+pub enum TCPAcceptorRequest {
+	Close
 }
 
 const SERVER: Token = Token(1);
 
-impl TCPServer {
-	pub fn new(addr: String, rooms: Arc<Mutex<Rooms>>) -> TCPServer {
-		TCPServer {
+impl TCPAcceptor {
+	pub fn new(address: String, rooms: Arc<Mutex<Rooms>>, receiver: Receiver<TCPAcceptorRequest>) -> TCPAcceptor {
+		TCPAcceptor {
+			running: true,
 			rooms,
-			addr: addr.parse().unwrap_or_else(|it| panic!("tcp server: cannot parse {} to valid client.network address", it)),
+			address: address.parse().unwrap_or_else(|it| panic!("tcp server: cannot parse {} to valid client.network address", it)),
 			client_token_generator: 100,
 			clients: Default::default(),
+			receiver,
 		}
 	}
 	
 	pub fn start(&mut self) {
 		let mut poll = Poll::new().unwrap_or_else(|_| panic!("tcp server: cannot create client.network pool"));
 		let mut events = Events::with_capacity(1024);
-		let mut server = TcpListener::bind(self.addr.clone()).unwrap_or_else(|_| panic!("tcp server: error bind server socket {}", self.addr));
+		let mut server = TcpListener::bind(self.address).unwrap_or_else(|_| panic!("tcp server: error bind server socket {}", self.address));
 		
 		
 		poll
@@ -52,37 +64,61 @@ impl TCPServer {
 				&mut server,
 				SERVER,
 				Interest::READABLE | Interest::WRITABLE,
-			).unwrap_or_else(|_| panic!("tcp server: error register tcp listener {}", self.addr));
+			).unwrap_or_else(|_| panic!("tcp server: error register tcp listener {}", self.address));
 		
+		while self.running {
+			self.process_requests();
+			self.process_network_events(&mut poll, &mut events, &mut server)
+		}
 		
-		loop {
-			events.clear();
-			poll
-				.poll(&mut events, None)
-				.unwrap_or_else(|e| panic!("tcp server: error poll {}", e));
-			
-			for event in events.iter() {
-				match event.token() {
-					SERVER => {
-						loop {
-							match server.accept() {
-								Ok((stream, _)) => {
-									log::trace!("tcp server: accept new connection");
-									self.register_new_client(&mut poll, stream)
-								}
-								Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-									break;
-								}
-								Err(e) => {
-									log::error!("tcp server: error accept new client {}", e);
-								}
+		poll.registry().deregister(&mut server);
+	}
+	
+	fn process_requests(&mut self) {
+		match self.receiver.try_recv() {
+			Ok(command) => {
+				match command {
+					TCPAcceptorRequest::Close => { self.running = false; }
+				}
+			}
+			Err(e) => {
+				match e {
+					TryRecvError::Empty => {}
+					TryRecvError::Disconnected => {
+						panic!("tcp server: request disconnected {}", e)
+					}
+				}
+			}
+		}
+	}
+	
+	fn process_network_events(&mut self, mut poll: &mut Poll, mut events: &mut Events, server: &mut TcpListener) {
+		events.clear();
+		poll
+			.poll(&mut events, Option::Some(Duration::from_millis(10)))
+			.unwrap_or_else(|e| panic!("tcp server: error poll {}", e));
+		
+		for event in events.iter() {
+			match event.token() {
+				SERVER => {
+					loop {
+						match server.accept() {
+							Ok((stream, _)) => {
+								log::trace!("tcp server: accept new connection");
+								self.register_new_client(&mut poll, stream)
+							}
+							Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
+								break;
+							}
+							Err(e) => {
+								log::error!("tcp server: error accept new client {}", e);
 							}
 						}
 					}
-					token => {
-						if event.is_readable() {
-							self.read_hashes_from_client(&token, &poll);
-						}
+				}
+				token => {
+					if event.is_readable() {
+						self.read_hashes_from_client(&token, &poll);
 					}
 				}
 			}
@@ -105,7 +141,7 @@ impl TCPServer {
 				}
 				
 				client.read_count += size;
-				if TCPServer::is_read_hashes(client.read_count) {
+				if TCPAcceptor::is_read_hashes(client.read_count) {
 					let rooms = &*self.rooms.clone();
 					let room_hash = HashValue::from(&client.read_data[0..HashValue::SIZE]);
 					let client_hash = HashValue::from(&client.read_data[HashValue::SIZE..HashValue::SIZE * 2]);

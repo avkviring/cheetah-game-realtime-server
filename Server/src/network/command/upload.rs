@@ -3,7 +3,7 @@ use cheetah_relay_common::network::command::upload::UploadGameObjectC2SCommand;
 use crate::network::c2s::{error_c2s_command, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;
 use crate::room::objects::CreateObjectError;
-use crate::room::room::Room;
+use crate::room::Room;
 
 impl ServerCommandExecutor for UploadGameObjectC2SCommand {
 	fn execute(self, client: &Client, room: &mut Room) {

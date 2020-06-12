@@ -3,7 +3,7 @@ use cheetah_relay_common::network::command::{CommandCode, Decoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::IncrementFloatCounterC2SCommand;
 use cheetah_relay_common::network::command::long_counter::IncrementLongCounterC2SCommand;
-use cheetah_relay_common::network::command::structure::SetStructCommand;
+use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectC2SCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
@@ -13,7 +13,7 @@ use cheetah_relay_common::room::access::Access;
 use crate::room::clients::Client;
 use crate::room::objects::ErrorGetObjectWithCheckAccess;
 use crate::room::objects::object::{GameObject, ObjectFieldType};
-use crate::room::room::Room;
+use crate::room::Room;
 
 ///
 /// Выполнение серверной команды
@@ -54,8 +54,8 @@ pub fn decode_end_execute_c2s_commands(
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}
-		SetStructCommand::COMMAND_CODE => {
-			SetStructCommand::decode(buffer)
+		StructureCommand::COMMAND_CODE => {
+			StructureCommand::decode(buffer)
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}

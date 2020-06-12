@@ -2,7 +2,7 @@ use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
-use cheetah_relay_common::network::command::structure::SetStructCommand;
+use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::{UploadGameObjectC2SCommand, UploadGameObjectS2CCommand};
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
@@ -22,7 +22,7 @@ pub enum C2SCommandUnion {
 	IncrementLongCounter(IncrementLongCounterC2SCommand),
 	SetFloatCounter(SetFloatCounterCommand),
 	IncrementFloatCounter(IncrementFloatCounterC2SCommand),
-	SetStruct(SetStructCommand),
+	Structure(StructureCommand),
 	Event(EventCommand),
 	Unload(UnloadGameObjectCommand),
 }
@@ -32,13 +32,13 @@ pub enum S2CCommandUnion {
 	Upload(UploadGameObjectS2CCommand),
 	SetLongCounter(SetLongCounterCommand),
 	SetFloatCounter(SetFloatCounterCommand),
-	SetStruct(SetStructCommand),
+	SetStruct(StructureCommand),
 	Event(EventCommand),
 	Unload(UnloadGameObjectCommand),
 }
 
 
-pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CCommandUnion>) -> Result<(), OnReadBufferError> {
+pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, OnReadBufferError> {
 	let command = read_buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	let result = match command {
 		UploadGameObjectS2CCommand::COMMAND_CODE => {
@@ -47,8 +47,8 @@ pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CComman
 		EventCommand::COMMAND_CODE => {
 			EventCommand::decode(read_buffer).map(S2CCommandUnion::Event)
 		}
-		SetStructCommand::COMMAND_CODE => {
-			SetStructCommand::decode(read_buffer).map(S2CCommandUnion::SetStruct)
+		StructureCommand::COMMAND_CODE => {
+			StructureCommand::decode(read_buffer).map(S2CCommandUnion::SetStruct)
 		}
 		SetLongCounterCommand::COMMAND_CODE => {
 			SetLongCounterCommand::decode(read_buffer).map(S2CCommandUnion::SetLongCounter)
@@ -61,15 +61,7 @@ pub fn decode_command(read_buffer: &mut NioBuffer, collector: &mut Vec<S2CComman
 			return Result::Err(OnReadBufferError::UnknownCommand(code));
 		}
 	};
-	match result {
-		Ok(command) => {
-			collector.push(command);
-			Result::Ok(())
-		}
-		Err(e) => {
-			Result::Err(OnReadBufferError::NioBufferError(e))
-		}
-	}
+	result.map_err(OnReadBufferError::NioBufferError)
 }
 
 pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandUnion) -> Result<(), NioBufferError> {
@@ -94,8 +86,8 @@ pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandUnion) -> Resu
 			buffer.write_u8(IncrementFloatCounterC2SCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
-		C2SCommandUnion::SetStruct(command) => {
-			buffer.write_u8(SetStructCommand::COMMAND_CODE)?;
+		C2SCommandUnion::Structure(command) => {
+			buffer.write_u8(StructureCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::Event(command) => {

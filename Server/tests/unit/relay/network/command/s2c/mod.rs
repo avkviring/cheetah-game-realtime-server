@@ -4,12 +4,12 @@ use std::rc::Rc;
 use cheetah_relay::network::s2c::{AffectedClients, S2CCommandCollector, S2CCommandUnion};
 use cheetah_relay::room::clients::Clients;
 use cheetah_relay::room::objects::object::GameObject;
-use cheetah_relay::room::room::Room;
+use cheetah_relay::room::Room;
 use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloatCounterCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
-use cheetah_relay_common::network::command::structure::SetStructCommand;
+use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectS2CCommand;
 use cheetah_relay_common::room::access::AccessGroups;
@@ -225,7 +225,7 @@ fn should_s2c_collect_on_fire_event() {
         commands,
         client.configuration.id,
         S2CCommandUnion::Event(EventCommand {
-            id: id,
+            global_object_id: id,
             field_id: 10,
             event: vec![1, 2, 3, 4, 5],
         }),
@@ -254,10 +254,10 @@ fn should_s2c_collect_on_update_struct() {
     assert_command(
         commands,
         client.configuration.id,
-        S2CCommandUnion::SetStruct(SetStructCommand {
+        S2CCommandUnion::SetStruct(StructureCommand {
             global_object_id: id,
             field_id: 10,
-            data: vec![1, 2, 3, 4, 5],
+            structure: vec![1, 2, 3, 4, 5],
         }),
     );
 }

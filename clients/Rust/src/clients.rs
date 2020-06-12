@@ -6,7 +6,7 @@ use std::thread::JoinHandle;
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
-use cheetah_relay_common::network::command::structure::SetStructCommand;
+use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectC2SCommand;
 use cheetah_relay_common::network::hash::HashValue;
@@ -108,8 +108,8 @@ impl Clients {
 					C2SCommandFFIType::Upload => { UploadGameObjectC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementLongCounter => { IncrementLongCounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementFloatCounter => { IncrementFloatCounterC2SCommand::from_ffi(command) }
-					C2SCommandFFIType::SetStruct => { SetStructCommand::from_ffi(command) }
-					C2SCommandFFIType::SendEvent => { EventCommand::from_ffi(command) }
+					C2SCommandFFIType::Structure => { StructureCommand::from_ffi(command) }
+					C2SCommandFFIType::Event => { EventCommand::from_ffi(command) }
 					C2SCommandFFIType::Unload => { UnloadGameObjectCommand::from_ffi(command) }
 					C2SCommandFFIType::SetLongCounter => { SetLongCounterCommand::from_ffi(command) }
 					C2SCommandFFIType::SetFloatCounter => { SetFloatCounterCommand::from_ffi(command) }

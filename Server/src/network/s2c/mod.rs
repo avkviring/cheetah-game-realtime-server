@@ -5,7 +5,7 @@ use cheetah_relay_common::network::command::{CommandCode, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloatCounterCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
-use cheetah_relay_common::network::command::structure::SetStructCommand;
+use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectS2CCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
@@ -31,7 +31,7 @@ pub enum S2CCommandUnion {
 	Event(EventCommand),
 	SetFloatCounter(SetFloatCounterCommand),
 	SetLongCounter(SetLongCounterCommand),
-	SetStruct(SetStructCommand),
+	SetStruct(StructureCommand),
 }
 
 impl S2CCommandUnion {
@@ -42,7 +42,7 @@ impl S2CCommandUnion {
 			S2CCommandUnion::SetLongCounter(_) => SetLongCounterCommand::COMMAND_CODE,
 			S2CCommandUnion::SetFloatCounter(_) => SetFloatCounterCommand::COMMAND_CODE,
 			S2CCommandUnion::Event(_) => EventCommand::COMMAND_CODE,
-			S2CCommandUnion::SetStruct(_) => SetStructCommand::COMMAND_CODE,
+			S2CCommandUnion::SetStruct(_) => StructureCommand::COMMAND_CODE,
 		}
 	}
 }
@@ -165,7 +165,7 @@ impl RoomListener for S2CCommandCollector {
 		let affected_clients =
 			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
 		let command = EventCommand {
-			id: game_object.id,
+			global_object_id: game_object.id,
 			field_id,
 			event: Vec::from(event_data),
 		};
@@ -180,10 +180,10 @@ impl RoomListener for S2CCommandCollector {
 	) {
 		let affected_clients =
 			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
-		let command = SetStructCommand {
+		let command = StructureCommand {
 			global_object_id: game_object.id,
 			field_id,
-			data: game_object.get_struct(field_id).unwrap().clone(),
+			structure: game_object.get_struct(field_id).unwrap().clone(),
 		};
 		self.push(&affected_clients, S2CCommandUnion::SetStruct(command));
 	}

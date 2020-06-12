@@ -2,12 +2,12 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use cheetah_relay::room::objects::object::GameObject;
-use cheetah_relay::room::room::Room;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 
 use crate::unit::relay::room::{setup_client, setup_listener};
 use crate::unit::relay::room::room::room_stub;
+use cheetah_relay::room::Room;
 
 #[test]
 fn should_invoke_on_object_create() {

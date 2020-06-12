@@ -11,7 +11,7 @@ use crate::room::clients::Client;
 use crate::room::listener::RoomListener;
 use crate::room::objects::object::{GameObject, ObjectFieldType};
 use crate::room::objects::owner::Owner;
-use crate::room::room::Room;
+use crate::room::Room;
 
 pub mod object;
 pub mod owner;

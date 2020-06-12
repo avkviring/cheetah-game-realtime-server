@@ -1,7 +1,7 @@
 use cheetah_relay::room::clients::Client;
 use cheetah_relay::room::objects::object::GameObject;
 use cheetah_relay::room::objects::owner::Owner;
-use cheetah_relay::room::room::Room;
+use cheetah_relay::room::Room;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 

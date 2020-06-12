@@ -4,7 +4,6 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use mio::{Events, Interest, Poll, Token};
-use mio::event::Event;
 use mio::net::TcpStream;
 
 use cheetah_relay_common::network::niobuffer::NioBuffer;
@@ -13,7 +12,7 @@ use cheetah_relay_common::network::tcp::connection::{TcpConnection, TcpConnectio
 use crate::network::c2s::decode_end_execute_c2s_commands;
 use crate::network::s2c::{encode_s2c_commands, S2CCommandCollector};
 use crate::room::clients::Client;
-use crate::room::room::Room;
+use crate::room::Room;
 
 /// Поддержка TCP на уровне комнаты
 pub struct TcpRoom {
@@ -46,11 +45,6 @@ impl TcpRoom {
 	
 	/// цикл обработки команд
 	pub fn cycle(&mut self, room: &mut Room) {
-		self
-			.poll
-			.poll(&mut self.events, Option::Some(Duration::from_millis(1)))
-			.unwrap();
-		
 		self.prepare_commands_to_clients();
 		self.process_events(room);
 		self.delete_disconnected_clients(room);
@@ -84,6 +78,13 @@ impl TcpRoom {
 	
 	fn process_events(&mut self, room: &mut Room) {
 		let poll = &mut self.poll;
+		
+		self.events.clear();
+		poll
+			.poll(&mut self.events, Option::Some(Duration::from_millis(1)))
+			.unwrap();
+		
+		
 		for event in &self.events {
 			let token = event.token();
 			let connection_with_client = self.clients.get_mut(&token);

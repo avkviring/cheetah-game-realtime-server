@@ -14,6 +14,7 @@ use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod connect;
 pub mod command;
+pub mod disconnect;
 
 fn get_server_room_clients(room_hash: &HashValue, rooms: Arc<Mutex<Rooms>>) -> Vec<ClientInfo> {
 	let (sender, receiver) = mpsc::channel();

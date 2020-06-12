@@ -1,4 +1,4 @@
-use cheetah_relay::room::room::Room;
+use cheetah_relay::room::Room;
 use cheetah_relay_common::room::access::AccessGroups;
 use crate::unit::relay::room::{setup_and_two_client, setup_client, setup_listener};
 use cheetah_relay_common::network::hash::HashValue;

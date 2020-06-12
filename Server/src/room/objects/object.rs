@@ -7,7 +7,7 @@ use cheetah_relay_common::room::fields::GameObjectFields;
 use crate::room::clients::Client;
 use crate::room::listener::RoomListener;
 use crate::room::objects::owner::Owner;
-use crate::room::room::Room;
+use crate::room::Room;
 
 /// Игровой объект
 /// содержит данные от пользователей

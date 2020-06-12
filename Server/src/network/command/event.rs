@@ -3,7 +3,7 @@ use cheetah_relay_common::network::command::event::EventCommand;
 use crate::network::c2s::{get_field_and_change, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;
 use crate::room::objects::object::ObjectFieldType;
-use crate::room::room::Room;
+use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
 	fn execute(self, client: &Client, room: &mut Room) {
@@ -12,7 +12,7 @@ impl ServerCommandExecutor for EventCommand {
 			"Event",
 			room,
 			client,
-			self.id,
+			self.global_object_id,
 			self.field_id,
 			ObjectFieldType::Event,
 			|room, object|

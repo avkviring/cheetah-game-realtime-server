@@ -49,8 +49,8 @@ pub enum S2CCommandFFIType {
 	Upload,
 	SetLongCounter,
 	SetFloatCounter,
-	SetStruct,
-	ReceiveEvent,
+	Structure,
+	Event,
 	Unload,
 }
 
@@ -62,8 +62,8 @@ pub enum C2SCommandFFIType {
 	SetLongCounter,
 	IncrementFloatCounter,
 	SetFloatCounter,
-	SetStruct,
-	SendEvent,
+	Structure,
+	Event,
 	Unload,
 }
 
@@ -72,6 +72,13 @@ pub enum C2SCommandFFIType {
 pub struct FieldFFIBinary {
 	pub binary_size: usize,
 	pub value: [u8; MAX_SIZE_STRUCT],
+}
+
+
+impl FieldFFIBinary {
+	pub fn as_slice(&self) -> &[u8] {
+		&self.value[0..self.binary_size]
+	}
 }
 
 impl Debug for FieldFFIBinary {
@@ -91,7 +98,6 @@ impl Default for FieldFFIBinary {
 		}
 	}
 }
-
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -133,7 +139,6 @@ impl<T> Default for FieldFFI<T> where T: Default {
 		}
 	}
 }
-
 
 impl Default for CommandFFI {
 	fn default() -> Self {
