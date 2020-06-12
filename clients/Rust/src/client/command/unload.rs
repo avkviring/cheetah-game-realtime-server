@@ -1,30 +1,23 @@
+use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
+
 use crate::client::command::C2SCommandUnion;
-use crate::client::ffi::{C2SCommandFFIType, S2CCommandFFI, S2CCommandFFICollector, S2CCommandFFIType};
+use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, CommandFFI, S2CCommandFFIType, Server2ClientFFIConverter};
 
-#[derive(Debug)]
-pub struct UnloadObjectC2S {
-	pub object_id: u64
-}
-
-#[derive(Debug)]
-pub struct UnloadObjectS2C {
-	pub object_id: u64
-}
-
-impl S2CCommandFFICollector for UnloadObjectS2C {
-	fn collect(self, command: &mut S2CCommandFFI) {
-		command.s2c_command_type = S2CCommandFFIType::Unload;
-		command.object_id = self.object_id;
+impl Server2ClientFFIConverter for UnloadGameObjectCommand {
+	fn to_ffi(self, ffi: &mut CommandFFI) {
+		ffi.command_type_s2c = S2CCommandFFIType::Unload;
+		ffi.object_id = self.global_object_id;
 	}
 }
 
 
-impl UnloadObjectC2S {
-	pub fn from(command: S2CCommandFFI) -> C2SCommandUnion {
-		debug_assert!(command.c2s_command_type == C2SCommandFFIType::Unload);
+impl Client2ServerFFIConverter for UnloadGameObjectCommand {
+	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion {
+		debug_assert!(ffi.command_type_c2s == C2SCommandFFIType::Unload);
 		C2SCommandUnion::Unload(
-			UnloadObjectC2S {
-				object_id: command.object_id
+			UnloadGameObjectCommand {
+				global_object_id: ffi.object_id
 			})
 	}
 }
+

@@ -1,37 +1,37 @@
+use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
+
 use crate::client::command::C2SCommandUnion;
-use crate::client::ffi::{C2SCommandFFIType, S2CCommandFFI, S2CCommandFFICollector, S2CCommandFFIType};
+use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, CommandFFI, S2CCommandFFIType, Server2ClientFFIConverter};
 
-#[derive(Debug)]
-pub struct IncrementLongCounterC2S {
-	pub object_id: u64,
-	pub field_id: u16,
-	pub increment: i64,
-}
-
-#[derive(Debug)]
-pub struct SetLongCounterS2C {
-	pub object_id: u64,
-	pub field_id: u16,
-	pub value: i64,
-}
-
-impl S2CCommandFFICollector for SetLongCounterS2C {
-	fn collect(self, command: &mut S2CCommandFFI) {
-		command.s2c_command_type = S2CCommandFFIType::SetLongCounter;
-		command.object_id = self.object_id;
-		command.field_id = self.field_id;
-		command.long_value = self.value;
+impl Server2ClientFFIConverter for SetLongCounterCommand {
+	fn to_ffi(self, ffi: &mut CommandFFI) {
+		ffi.command_type_s2c = S2CCommandFFIType::SetLongCounter;
+		ffi.object_id = self.global_object_id;
+		ffi.field_id = self.field_id;
+		ffi.long_value = self.value;
 	}
 }
 
-impl IncrementLongCounterC2S {
-	pub fn from(command: S2CCommandFFI) -> C2SCommandUnion {
-		debug_assert!(command.c2s_command_type == C2SCommandFFIType::IncrementLongCounter);
+impl Client2ServerFFIConverter for SetLongCounterCommand {
+	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion {
+		debug_assert!(ffi.command_type_c2s == C2SCommandFFIType::SetLongCounter);
+		C2SCommandUnion::SetLongCounter(
+			SetLongCounterCommand {
+				global_object_id: ffi.object_id,
+				field_id: ffi.field_id,
+				value: ffi.long_value,
+			})
+	}
+}
+
+impl Client2ServerFFIConverter for IncrementLongCounterC2SCommand {
+	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion {
+		debug_assert!(ffi.command_type_c2s == C2SCommandFFIType::IncrementLongCounter);
 		C2SCommandUnion::IncrementLongCounter(
-			IncrementLongCounterC2S {
-				object_id: command.object_id,
-				field_id: command.field_id,
-				increment: command.long_value,
+			IncrementLongCounterC2SCommand {
+				global_object_id: ffi.object_id,
+				field_id: ffi.field_id,
+				increment: ffi.long_value,
 			})
 	}
 }

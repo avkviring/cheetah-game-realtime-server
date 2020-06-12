@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 
 use cheetah_relay::network::c2s::ServerCommandExecutor;
-use cheetah_relay_common::network::command::structure::SetStructCommand;
+use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::unit::relay::room::setup_and_two_client;
@@ -19,10 +19,10 @@ fn test_execute_command() {
         Default::default(),
     ).ok().unwrap();
 
-    let command = SetStructCommand {
+    let command = StructureCommand {
         global_object_id,
         field_id,
-        data: struct_data.clone(),
+        structure: struct_data.clone(),
     };
     command.execute(client.borrow(), &mut room);
 

@@ -8,15 +8,6 @@ pub struct HashValue {
 	pub value: [u8; HashValue::SIZE]
 }
 
-pub trait ToHashValue {
-	fn to_hash_value(&self) -> HashValue;
-}
-
-impl ToHashValue for str {
-	fn to_hash_value(&self) -> HashValue {
-		HashValue::from(self)
-	}
-}
 
 impl Display for HashValue {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -29,12 +20,20 @@ impl Display for HashValue {
 	}
 }
 
+impl From<&HashValue> for String {
+	fn from(hash: &HashValue) -> Self {
+		String::from_utf8(hash.value.to_vec()).unwrap()
+	}
+}
+
 impl From<&str> for HashValue {
 	fn from(str: &str) -> Self {
-		let mut bytes = [0 as u8; HashValue::SIZE];
+		let mut bytes = [b'_'; HashValue::SIZE];
 		let src_bytes = str.as_bytes();
 		let size = min(bytes.len(), src_bytes.len());
 		bytes[..size].copy_from_slice(&src_bytes[..size]);
+		
+		
 		HashValue {
 			value: bytes
 		}

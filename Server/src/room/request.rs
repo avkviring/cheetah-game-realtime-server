@@ -1,15 +1,14 @@
-use std::net::SocketAddr;
-use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
-use std::time::Duration;
+use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
 use mio::net::TcpStream;
 
-use crate::network::server::tcp::room_tcp::TCPRoom;
-use crate::room::clients::ClientConnectError;
-use crate::room::room::Room;
-use crate::network::types::hash::HashValue;
-use cheetah_relay_common::constants::{GlobalObjectId, ClientId};
+use cheetah_relay_common::constants::{ClientId, GlobalObjectId};
+use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
+
+use crate::network::server::tcp::room::TcpRoom;
+use crate::room::clients::ClientConnectError;
+use crate::room::Room;
 
 /// Исполнение внешних запросов к комнате
 /// Запросы передаются через mpsc:Receiver
@@ -21,14 +20,33 @@ pub struct RoomRequests {
 #[derive(Debug)]
 pub enum RoomRequest {
 	AddWaitingClient(HashValue, AccessGroups),
-	TCPClientConnect(HashValue, TcpStream, SocketAddr, Vec<u8>),
+	TCPClientConnect(HashValue, TcpStream, Vec<u8>),
 	GetClients(Sender<Vec<ClientInfo>>),
 	GetObjects(Sender<Vec<GlobalObjectId>>),
+	Destroy,
 }
 
+#[derive(Debug)]
 pub struct ClientInfo {
 	pub id: ClientId,
 	pub hash: HashValue,
+}
+
+#[derive(Debug)]
+pub enum RequestResult {
+	///
+	/// Удалить комнату
+	///
+	Destroy,
+	///
+	/// Нет запросов
+	///
+	EmptyRequest,
+	
+	///
+	/// Обработан запрос
+	///
+	SingleRequest,
 }
 
 impl RoomRequests {
@@ -39,30 +57,40 @@ impl RoomRequests {
 	}
 	
 	
-	pub fn cycle(&mut self, room: &mut Room, tcp_room: &mut TCPRoom) {
-		let command = self.receiver.recv_timeout(Duration::from_millis(1));
+	pub fn cycle(&mut self, room: &mut Room, tcp_room: &mut TcpRoom) -> Result<RequestResult, TryRecvError> {
+		let command = self.receiver.try_recv();
 		match command {
 			Ok(command) => {
+				println!("request room cycle {:?}", command);
 				match command {
-					RoomRequest::TCPClientConnect(hash, stream, addr, data) => {
-						self.do_tcp_client_connect(room, tcp_room, &hash, stream, addr, data.as_slice());
+					RoomRequest::TCPClientConnect(hash, stream, data) => {
+						self.do_tcp_client_connect(room, tcp_room, &hash, stream, data.as_slice());
+						Result::Ok(RequestResult::SingleRequest)
 					}
 					RoomRequest::AddWaitingClient(client_hash, access_group) => {
 						self.do_add_waiting_client(room, &client_hash, access_group);
+						Result::Ok(RequestResult::SingleRequest)
 					}
 					RoomRequest::GetClients(sender) => {
 						self.do_get_clients(room, sender);
+						Result::Ok(RequestResult::SingleRequest)
 					}
 					RoomRequest::GetObjects(sender) => {
-						self.do_get_objects(room, sender)
+						self.do_get_objects(room, sender);
+						Result::Ok(RequestResult::SingleRequest)
+					}
+					RoomRequest::Destroy => {
+						Result::Ok(RequestResult::Destroy)
 					}
 				}
 			}
 			Err(e) => {
 				match e {
-					RecvTimeoutError::Timeout => {}
-					RecvTimeoutError::Disconnected => {
-						log::error!("room requests: Error in receive command: {}",e)
+					TryRecvError::Empty => {
+						Result::Ok(RequestResult::EmptyRequest)
+					}
+					TryRecvError::Disconnected => {
+						Result::Err(e)
 					}
 				}
 			}
@@ -102,13 +130,13 @@ impl RoomRequests {
 		room.add_client_to_waiting_list(&client_hash, access_group);
 	}
 	
-	fn do_tcp_client_connect(&self, room: &mut Room, tcp_room: &mut TCPRoom, hash: &HashValue, stream: TcpStream, addr: SocketAddr, data: &[u8]) {
+	fn do_tcp_client_connect(&self, room: &mut Room, tcp_room: &mut TcpRoom, hash: &HashValue, stream: TcpStream, data: &[u8]) {
 		let client = room.client_connect(&hash);
 		match client {
 			Ok(client) => {
 				log::trace!("room requests: connect client {} to room {}", client.configuration.hash, room.hash);
 				let result = tcp_room
-					.add_client(room, client.clone(), stream, addr, data);
+					.new_connection(room, client.clone(), stream, data);
 				if result.is_err() {
 					room.client_disconnect(&*client);
 				}

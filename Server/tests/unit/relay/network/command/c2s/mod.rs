@@ -11,9 +11,9 @@ use crate::unit::relay::room::room::room_stub;
 fn should_decode_result_false_if_empty_buffer() {
     let mut buffer = NioBuffer::new();
     buffer.flip();
-    let command_count =
+    let result =
         decode_end_execute_c2s_commands(&mut buffer, &client_stub(0), &mut room_stub());
-    assert_eq!(command_count, 0);
+    assert_eq!(result.is_ok(), false);
 }
 
 #[test]
@@ -21,10 +21,9 @@ fn should_decode_result_false_if_partial_buffer() {
     let mut buffer = NioBuffer::new();
     buffer.write_u8(EventCommand::COMMAND_CODE).unwrap();
     buffer.flip();
-    let command_count =
+    let result =
         decode_end_execute_c2s_commands(&mut buffer, &client_stub(0), &mut room_stub());
-    assert_eq!(command_count, 0);
-    assert_eq!(buffer.read_u8().ok().unwrap(), EventCommand::COMMAND_CODE)
+    assert_eq!(result.is_ok(), false);
 }
 
 #[test]
@@ -38,9 +37,9 @@ fn should_decode() {
     buffer.write_u8(UploadGameObjectC2SCommand::COMMAND_CODE).unwrap();
     command.encode(&mut buffer).unwrap();
     buffer.flip();
-    let command_count =
+    let result =
         decode_end_execute_c2s_commands(&mut buffer, &client_stub(0), &mut room_stub());
-    assert_eq!(command_count, 1);
+    assert_eq!(result.is_ok(), true);
 }
 
 #[test]
@@ -58,6 +57,10 @@ fn should_decode_more_one_command() {
     buffer.flip();
 
     let decode_result = decode_end_execute_c2s_commands(&mut buffer, &client_stub(0), &mut room_stub());
+    assert_eq!(decode_result.is_ok(), true);
+    assert_eq!(buffer.has_remaining(), true);
+    
+    let decode_result = decode_end_execute_c2s_commands(&mut buffer, &client_stub(0), &mut room_stub());
+    assert_eq!(decode_result.is_ok(), true);
     assert_eq!(buffer.has_remaining(), false);
-    assert_eq!(decode_result, 2);
 }

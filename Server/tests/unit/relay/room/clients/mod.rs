@@ -1,15 +1,15 @@
 use cheetah_relay::network::client::ClientStream;
-use cheetah_relay::network::types::hash::ToHashValue;
 use cheetah_relay::room::clients::{Client, ClientConfiguration};
 use cheetah_relay_common::constants::{ClientId, GroupType};
 use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::network::hash::HashValue;
 
 mod room;
 
 pub fn client_configuration_stub(client_id: ClientId) -> ClientConfiguration {
     ClientConfiguration {
         id: client_id,
-        hash: format!("{}", client_id).as_str().to_hash_value(),
+        hash: HashValue::from(format!("{}", client_id).as_str()),
         groups: AccessGroups::default(),
     }
 }
@@ -17,7 +17,7 @@ pub fn client_configuration_stub(client_id: ClientId) -> ClientConfiguration {
 pub fn client_configuration_stub_with_access_group(client_id: ClientId, group: GroupType) -> ClientConfiguration {
     ClientConfiguration {
         id: client_id,
-        hash: format!("{}", client_id).as_str().to_hash_value(),
+        hash: HashValue::from(format!("{}", client_id).as_str()),
         groups: AccessGroups::from(group),
     }
 }

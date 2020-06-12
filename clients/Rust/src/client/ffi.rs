@@ -1,6 +1,10 @@
+use core::fmt;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 
 use cheetah_relay_common::constants::{MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
+
+use crate::client::command::C2SCommandUnion;
 
 ///
 /// Структура для обмена данными с C#
@@ -8,46 +12,58 @@ use cheetah_relay_common::constants::{MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
 /// используется в единственном экземпляре
 ///
 #[repr(C)]
-pub struct S2CCommandFFI {
-	pub s2c_command_type: S2CCommandFFIType,
-	pub c2s_command_type: C2SCommandFFIType,
+#[derive(Debug)]
+pub struct CommandFFI {
+	pub command_type_s2c: S2CCommandFFIType,
+	pub command_type_c2s: C2SCommandFFIType,
 	pub object_id: u64,
 	pub field_id: u16,
-	pub long_counters: FieldsFFI<i64>,
-	pub float_counters: FieldsFFI<f64>,
-	pub structures: FieldsFFI<FieldFFIBinary>,
 	pub structure: FieldFFIBinary,
 	pub event: FieldFFIBinary,
 	pub long_value: i64,
 	pub float_value: f64,
+	pub access_group: u64,
+	pub long_counters: FieldsFFI<i64>,
+	pub float_counters: FieldsFFI<f64>,
+	pub structures: FieldsFFI<FieldFFIBinary>,
 }
 
+
 ///
-/// Заполнение FFI структуры данными для произвольной команды
+/// Конвертер команды в FFI структуру
 ///
-pub trait S2CCommandFFICollector {
-	fn collect(self, command: &mut S2CCommandFFI);
+pub trait Server2ClientFFIConverter {
+	fn to_ffi(self, ffi: &mut CommandFFI);
+}
+
+
+///
+/// Конвертер FFI структуры в команду
+pub trait Client2ServerFFIConverter {
+	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion;
 }
 
 #[repr(u8)]
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum S2CCommandFFIType {
 	Upload,
 	SetLongCounter,
 	SetFloatCounter,
-	SetStruct,
-	ReceiveEvent,
+	Structure,
+	Event,
 	Unload,
 }
 
 #[repr(u8)]
-#[derive(PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum C2SCommandFFIType {
 	Upload,
 	IncrementLongCounter,
+	SetLongCounter,
 	IncrementFloatCounter,
-	SetStruct,
-	SendEvent,
+	SetFloatCounter,
+	Structure,
+	Event,
 	Unload,
 }
 
@@ -56,6 +72,22 @@ pub enum C2SCommandFFIType {
 pub struct FieldFFIBinary {
 	pub binary_size: usize,
 	pub value: [u8; MAX_SIZE_STRUCT],
+}
+
+
+impl FieldFFIBinary {
+	pub fn as_slice(&self) -> &[u8] {
+		&self.value[0..self.binary_size]
+	}
+}
+
+impl Debug for FieldFFIBinary {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		f
+			.debug_struct("$name")
+			.field("size", &self.binary_size)
+			.finish()
+	}
 }
 
 impl Default for FieldFFIBinary {
@@ -67,7 +99,6 @@ impl Default for FieldFFIBinary {
 	}
 }
 
-
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct FieldsFFI<T> where T: Default {
@@ -75,6 +106,14 @@ pub struct FieldsFFI<T> where T: Default {
 	pub values: [FieldFFI<T>; MAX_FIELDS_IN_OBJECT],
 }
 
+impl<T> Debug for FieldsFFI<T> where T: Default {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		f
+			.debug_struct("$name")
+			.field("size", &self.size)
+			.finish()
+	}
+}
 
 impl<T> Default for FieldsFFI<T> where T: Default + Copy {
 	fn default() -> Self {
@@ -101,12 +140,11 @@ impl<T> Default for FieldFFI<T> where T: Default {
 	}
 }
 
-
-impl Default for S2CCommandFFI {
+impl Default for CommandFFI {
 	fn default() -> Self {
-		S2CCommandFFI {
-			s2c_command_type: S2CCommandFFIType::None,
-			c2s_command_type: C2SCommandFFIType::None,
+		CommandFFI {
+			command_type_s2c: S2CCommandFFIType::Unload,
+			command_type_c2s: C2SCommandFFIType::Unload,
 			object_id: Default::default(),
 			field_id: Default::default(),
 			long_counters: Default::default(),
@@ -116,6 +154,7 @@ impl Default for S2CCommandFFI {
 			event: Default::default(),
 			long_value: Default::default(),
 			float_value: Default::default(),
+			access_group: Default::default(),
 		}
 	}
 }

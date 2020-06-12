@@ -1,43 +1,33 @@
-use std::collections::HashMap;
-
+use cheetah_relay_common::network::command::upload::{UploadGameObjectC2SCommand, UploadGameObjectS2CCommand};
+use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::room::fields::GameObjectFields;
 use crate::client::command::C2SCommandUnion;
-use crate::client::ffi::{C2SCommandFFIType, FieldsFFI, S2CCommandFFI, S2CCommandFFICollector, S2CCommandFFIType};
+use crate::client::ffi::{C2SCommandFFIType, FieldsFFI, Client2ServerFFIConverter, CommandFFI, S2CCommandFFIType, Server2ClientFFIConverter};
 
-#[derive(Debug)]
-pub struct UploadObjectC2S {
-	pub object_id: u64,
-	pub long_counters: HashMap<u16, i64>,
-	pub float_counters: HashMap<u16, f64>,
-	pub structures: HashMap<u16, Vec<u8>>,
-}
-
-#[derive(Debug)]
-pub struct UploadObjectS2C {
-	pub object_id: u64,
-	pub long_counters: HashMap<u16, i64>,
-	pub float_counters: HashMap<u16, f64>,
-	pub structures: HashMap<u16, Vec<u8>>,
-}
-
-impl S2CCommandFFICollector for UploadObjectS2C {
-	fn collect(self, command: &mut S2CCommandFFI) {
-		command.s2c_command_type = S2CCommandFFIType::Upload;
-		command.object_id = self.object_id;
-		command.long_counters = FieldsFFI::from(&self.long_counters);
-		command.float_counters = FieldsFFI::from(&self.float_counters);
-		command.structures = FieldsFFI::from(&self.structures);
+impl Server2ClientFFIConverter for UploadGameObjectS2CCommand {
+	fn to_ffi(self, command: &mut CommandFFI) {
+		command.command_type_s2c = S2CCommandFFIType::Upload;
+		command.object_id = self.global_object_id;
+		command.long_counters = FieldsFFI::from(&self.fields.long_counters);
+		command.float_counters = FieldsFFI::from(&self.fields.float_counters);
+		command.structures = FieldsFFI::from(&self.fields.structures);
 	}
 }
 
-impl UploadObjectC2S {
-	pub fn from(command: S2CCommandFFI) -> C2SCommandUnion {
-		debug_assert!(command.c2s_command_type == C2SCommandFFIType::Upload);
+impl Client2ServerFFIConverter for UploadGameObjectC2SCommand {
+	fn from_ffi(command: &CommandFFI) -> C2SCommandUnion {
+		debug_assert!(command.command_type_c2s == C2SCommandFFIType::Upload);
 		C2SCommandUnion::Upload(
-			UploadObjectC2S {
-				object_id: command.object_id,
-				long_counters: From::from(command.long_counters),
-				float_counters: From::from(command.float_counters),
-				structures: From::from(command.structures),
+			UploadGameObjectC2SCommand {
+				local_id: command.object_id as u32,
+				access_groups: AccessGroups::from(command.access_group),
+				fields: GameObjectFields {
+					long_counters: From::from(command.long_counters),
+					float_counters: From::from(command.float_counters),
+					structures: From::from(command.structures),
+				},
 			})
 	}
 }
+
+

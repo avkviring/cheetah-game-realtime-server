@@ -22,7 +22,7 @@ fn test_codec_for_upload_game_object_c2s_command() {
 #[test]
 fn test_codec_for_upload_game_object_s2c_command() {
     let mut structure = UploadGameObjectS2CCommand {
-        id: std::u64::MAX,
+        global_object_id: std::u64::MAX,
         fields: Default::default(),
     };
     structure.fields.long_counters.insert(10, 100);

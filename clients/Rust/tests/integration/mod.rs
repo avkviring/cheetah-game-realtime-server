@@ -1,41 +1,66 @@
-use std::ffi::{CStr, CString};
-use std::sync::{Arc, Mutex};
+use std::ffi::CString;
+use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
-use std::thread::JoinHandle;
+use std::time::Duration;
 
 use stderrlog::Timestamp;
 
-use cheetah_relay::network::server::tcp::TCPServer;
+use cheetah_relay::room::request::{ClientInfo, RoomRequest};
 use cheetah_relay::rooms::Rooms;
+use cheetah_relay::server::Server;
 use cheetah_relay_client::create_client;
+use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::room::access::AccessGroups;
 
-#[test]
-fn test() {
-	// let addr = "127.0.0.1:5001";
-	// let (room, _) = setup(addr);
-	// let addr_cstring = CString::from(addr);
-	//
-	// let clientA = create_client(
-	// 	addr_cstring.as_ptr(),
-	// 	|c| {}
-	// );
-	
-	
-	
+pub mod connect;
+pub mod command;
+pub mod disconnect;
+
+fn get_server_room_clients(room_hash: &HashValue, rooms: Arc<Mutex<Rooms>>) -> Vec<ClientInfo> {
+	let (sender, receiver) = mpsc::channel();
+	let rooms = rooms.lock().unwrap();
+	rooms.send_room_request(room_hash, RoomRequest::GetClients(sender)).ok().unwrap();
+	receiver.recv().unwrap()
 }
 
-fn setup(addr: &'static str) -> (Arc<Mutex<Rooms>>, JoinHandle<()>) {
-	init_logger();
-	let rooms = Arc::new(Mutex::new(Rooms::new()));
-	let cloned_rooms = rooms.clone();
-	let handle = thread::spawn(move || {
-		let mut server = TCPServer::new(addr.to_string(), cloned_rooms);
-		server.start();
-	});
-	(rooms, handle)
+
+fn setup_client(address: &str, room_hash: &HashValue, client_hash: &HashValue) -> u16 {
+	unsafe {
+		let address = CString::new(address.to_string()).unwrap();
+		let room_hash = CString::new(String::from(room_hash)).unwrap();
+		let client_hash = CString::new(String::from(client_hash).as_str()).unwrap();
+		let client = create_client(address.as_ptr(), room_hash.as_ptr(), client_hash.as_ptr());
+		thread::sleep(Duration::from_secs(3));
+		client
+	}
 }
 
-fn init_logger() {
+
+fn setup_server(addr: &'static str) -> (Server, HashValue, Arc<Mutex<Rooms>>) {
+	let room_hash = HashValue::from("room_hash");
+	let server = Server::new(addr.to_string());
+	let arc = server.rooms.clone();
+	let rooms = arc;
+	let rooms = &*rooms;
+	let mut rooms = rooms.lock().unwrap();
+		rooms.create_room(&room_hash);
+	
+	let rooms = server.rooms.clone();
+	(server, room_hash, rooms)
+}
+
+fn add_wating_client_to_room(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue, client_hash: &HashValue) {
+	let rooms = &*rooms;
+	let rooms = rooms.lock().unwrap();
+	rooms.send_room_request(
+		&room_hash,
+		RoomRequest::AddWaitingClient(client_hash.clone(), AccessGroups::from(0b111)),
+	).ok().unwrap();
+	
+	thread::sleep(Duration::from_secs(1)); // ждем пока сервер запуститься
+}
+
+fn setup_logger() {
 	stderrlog::new()
 		.verbosity(4)
 		.quiet(false)

@@ -1,9 +1,9 @@
-use cheetah_relay::network::types::hash::{HashValue, ToHashValue};
 /// Тесты room cвязанные с коннектом клиента
 
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 use crate::unit::relay::room::room::room_stub;
+use cheetah_relay_common::network::hash::HashValue;
 
 const CLIENT_HASH: &str = "12312313212";
 
@@ -31,15 +31,16 @@ fn room_client_connect() {
 #[test]
 fn room_client_connect_when_client_not_found() {
     let mut room = room_stub();
-    let result = room.client_connect(&"NOT-FOUND-USER-HASH".to_hash_value());
+    let result = room.client_connect(&HashValue::from("NOT-FOUND-USER-HASH"));
     assert_eq!(result.is_err(), true);
 }
 
 #[test]
 fn room_client_disconnect() {
     let mut room = room_stub();
-    room.add_client_to_waiting_list(&CLIENT_HASH.to_hash_value(), AccessGroups::default());
-    let client = room.client_connect(&CLIENT_HASH.to_hash_value());
+    let client_hash = HashValue::from(CLIENT_HASH);
+    room.add_client_to_waiting_list(&client_hash, AccessGroups::default());
+    let client = room.client_connect(&client_hash);
     room.client_disconnect(&client.ok().unwrap().clone());
     assert_eq!(room.clients.clients.is_empty(), true);
 }
@@ -48,8 +49,9 @@ fn room_client_disconnect() {
 #[test]
 fn room_client_disconnect_should_delete_client_object() {
     let mut room = room_stub();
-    room.add_client_to_waiting_list(&CLIENT_HASH.to_hash_value(), AccessGroups::default());
-    let connect_result = room.client_connect(&CLIENT_HASH.to_hash_value());
+    let client_hash = &HashValue::from(CLIENT_HASH);
+    room.add_client_to_waiting_list(client_hash, AccessGroups::default());
+    let connect_result = room.client_connect(client_hash);
     let client = connect_result.ok().unwrap();
     room.create_client_game_object(
         &client.clone(),
