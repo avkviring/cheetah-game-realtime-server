@@ -1,4 +1,6 @@
 use std::sync::mpsc::Receiver;
+use std::thread;
+use std::time::Duration;
 
 use cheetah_relay_common::network::hash::HashValue;
 
@@ -30,6 +32,7 @@ impl ClientThread {
 			let network_status = self.tcp_client.cycle(&mut self.client);
 			self.client.network_status = network_status;
 			self.requests.cycle(&mut self.client);
+			thread::sleep(Duration::from_nanos(100));
 		}
 	}
 }
