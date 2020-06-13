@@ -17,7 +17,7 @@ fn should_send_command_to_server() {
 	let address = "127.0.0.1:6001";
 	let client_hash = HashValue::from("client_hash");
 	
-	let (_, room_hash, rooms) = setup_server(address);
+	let (_server, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);
 	let client = setup_client(address, &room_hash, &client_hash);
 	
@@ -46,7 +46,7 @@ fn should_receive_command_to_server() {
 	let client_hash_a = HashValue::from("client_hash_a");
 	let client_hash_b = HashValue::from("client_hash_b");
 	
-	let (_, room_hash, rooms) = setup_server(address);
+	let (_server, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash_a);
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash_b);
 	

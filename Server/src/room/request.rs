@@ -61,7 +61,6 @@ impl RoomRequests {
 		let command = self.receiver.try_recv();
 		match command {
 			Ok(command) => {
-				println!("request room cycle {:?}", command);
 				match command {
 					RoomRequest::TCPClientConnect(hash, stream, data) => {
 						self.do_tcp_client_connect(room, tcp_room, &hash, stream, data.as_slice());

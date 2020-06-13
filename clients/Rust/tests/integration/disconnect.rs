@@ -10,7 +10,7 @@ use crate::integration::{add_wating_client_to_room, setup_client, setup_logger, 
 #[test]
 fn should_disconnect_to_server() {
 	setup_logger();
-	let address = "127.0.0.1:5002";
+	let address = "127.0.0.1:7002";
 	let client_hash = HashValue::from("client_hash");
 	
 	let (mut server, room_hash, rooms) = setup_server(address);
@@ -22,7 +22,7 @@ fn should_disconnect_to_server() {
 		|status| { assert_eq!(status, NetworkStatus::OnLine); },
 		|| { assert!(false) },
 	);
-	server.close();
+	drop(server);
 	thread::sleep(Duration::from_secs(1));
 	get_connection_status(
 		client,

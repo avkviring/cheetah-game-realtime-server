@@ -59,11 +59,9 @@ impl Rooms {
 	}
 	
 	pub fn send_room_request(&self, room_hash: &HashValue, request: RoomRequest) -> Result<(), SendRoomRequestError> {
-		println!("rooms::send_room_request {:?}", request);
 		let registry = &*self.registry.clone();
 		let registry = registry.lock().unwrap();
 		let room = registry.get(room_hash);
-		println!("rooms::send_room_request (lock) {:?}", request);
 		match room {
 			None => {
 				Result::Err(SendRoomRequestError::RoomNotFound)

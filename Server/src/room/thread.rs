@@ -32,7 +32,6 @@ impl RoomThread {
 				Ok(result) => {
 					match result {
 						RequestResult::Destroy => {
-							println!("destroy room signal");
 							break;
 						}
 						RequestResult::EmptyRequest => {}
@@ -44,6 +43,5 @@ impl RoomThread {
 				}
 			}
 		}
-		println!("destroy room");
 	}
 }

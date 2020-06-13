@@ -1,15 +1,13 @@
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
-use std::thread;
 use std::thread::{Builder, JoinHandle};
 
 use crate::network::server::tcp::{TCPAcceptor, TCPAcceptorRequest};
-use crate::room::request::RoomRequest;
 use crate::rooms::Rooms;
 
 pub struct Server {
 	pub rooms: Arc<Mutex<Rooms>>,
-	pub tcp_acceptor_handler: JoinHandle<()>,
+	pub tcp_acceptor_handler: Option<JoinHandle<()>>,
 	pub sender: Sender<TCPAcceptorRequest>,
 }
 
@@ -28,20 +26,19 @@ impl Server {
 		
 		Server {
 			rooms,
-			tcp_acceptor_handler,
+			tcp_acceptor_handler: Option::Some(tcp_acceptor_handler),
 			sender,
 		}
-	}
-	
-	pub fn close(mut self) {
-		println!("server: close");
-		self.sender.send(TCPAcceptorRequest::Close).unwrap();
-		self.tcp_acceptor_handler.join();
-		let rooms = &mut self.rooms.lock().unwrap();
-		rooms.close_all_rooms();
 	}
 }
 
 
-
+impl Drop for Server {
+	fn drop(&mut self) {
+		self.sender.send(TCPAcceptorRequest::Close).unwrap();
+		let rooms = &mut self.rooms.lock().unwrap();
+		rooms.close_all_rooms();
+		self.tcp_acceptor_handler.take().unwrap().join().unwrap();
+	}
+}
 
