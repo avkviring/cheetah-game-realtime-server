@@ -35,7 +35,7 @@ fn should_connect_client_to_room() {
 	let mut stream = TcpStream::connect(addr).unwrap();
 	send(&mut stream, &mut buffer);
 	
-	let clients = get_clients(server.rooms, &room_hash);
+	let clients = get_clients(server.rooms.clone(), &room_hash);
 	assert_eq!(clients.iter().any(|p| p.hash == client_hash), true)
 }
 
@@ -52,7 +52,7 @@ fn should_disconnect_client_from_room() {
 		send(&mut stream, &mut buffer);
 	}
 	thread::sleep(Duration::from_secs(1));
-	let clients = get_clients(server.rooms, &room_hash);
+	let clients = get_clients(server.rooms.clone(), &room_hash);
 	assert_eq!(clients.is_empty(), true)
 }
 
@@ -71,7 +71,7 @@ fn should_client_create_object() {
 	
 	let clients = get_clients(server.rooms.clone(), &room_hash);
 	let client = clients.iter().find(|p| p.hash == client_hash).unwrap();
-	let objects = get_objects(server.rooms, &room_hash);
+	let objects = get_objects(server.rooms.clone(), &room_hash);
 	assert_eq!(
 		objects
 			.iter()
