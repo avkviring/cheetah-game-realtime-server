@@ -1,14 +1,15 @@
-use cheetah_relay_common::constants::{FieldID, GlobalObjectId};
+use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::network::command::{CommandCode, Decoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::IncrementFloatCounterC2SCommand;
 use cheetah_relay_common::network::command::long_counter::IncrementLongCounterC2SCommand;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectC2SCommand;
-use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
+use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 use cheetah_relay_common::room::access::Access;
+use cheetah_relay_common::room::object::GameObjectId;
 
 use crate::room::clients::Client;
 use crate::room::objects::ErrorGetObjectWithCheckAccess;
@@ -31,11 +32,10 @@ pub fn decode_end_execute_c2s_commands(
 	client: &Client,
 	room: &mut Room,
 ) -> Result<(), OnReadBufferError> {
-	
 	let command_code = buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	match command_code {
-		UploadGameObjectC2SCommand::COMMAND_CODE => {
-			UploadGameObjectC2SCommand::decode(buffer)
+		UploadGameObjectCommand::COMMAND_CODE => {
+			UploadGameObjectCommand::decode(buffer)
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}
@@ -94,7 +94,7 @@ pub fn get_field_and_change<F>(
 	command_name: &str,
 	room: &mut Room,
 	client: &Client,
-	global_object_id: GlobalObjectId,
+	object_id: &GameObjectId,
 	field_id: FieldID,
 	object_field_type: ObjectFieldType,
 	action: F,
@@ -104,7 +104,7 @@ pub fn get_field_and_change<F>(
 	let result_check = room.get_object_with_check_field_access(
 		Access::WRITE,
 		client,
-		global_object_id,
+		&object_id,
 		object_field_type,
 		field_id,
 	);
@@ -120,7 +120,7 @@ pub fn get_field_and_change<F>(
 					command_name,
 					room,
 					client,
-					format!("object not found {}", global_object_id),
+					format!("object not found {:?}", &object_id),
 				);
 			}
 			ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
@@ -128,10 +128,7 @@ pub fn get_field_and_change<F>(
 					command_name,
 					room,
 					client,
-					format!(
-						"client has not write access to objects {} field {}",
-						global_object_id, field_id
-					),
+					format!("client has not write access to objects {:?} field {}", &object_id, field_id),
 				);
 			}
 		},

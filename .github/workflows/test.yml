@@ -1,0 +1,14 @@
+name: Rust
+on: [push]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: test common
+        run: cd Common && cargo test
+      - name: test server
+        run: cd Server && cargo test
+      - name: test rust client
+        run: cd clients/Rust && cargo test
+

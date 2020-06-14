@@ -45,12 +45,12 @@ struct TestListener {
 impl RoomListener for TestListener {
 	fn on_object_created(&mut self, game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();
-		rc.borrow_mut().push(format!("on_object_create {}", game_object.id));
+		rc.borrow_mut().push(format!("on_object_create {:?}", game_object.id.id));
 	}
 	
 	fn on_object_delete(&mut self, game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();
-		rc.borrow_mut().push(format!("on_object_delete {}", game_object.id));
+		rc.borrow_mut().push(format!("on_object_delete {:?}", game_object.id.id));
 	}
 	
 	fn on_client_connect(&mut self, client: &Client, _objects: &Objects) {
@@ -65,29 +65,29 @@ impl RoomListener for TestListener {
 	
 	fn on_object_long_counter_change(&mut self, field_id: u16, game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();
-		rc.borrow_mut().push(format!("on_object_long_counter_change {} {} {}", game_object.id, field_id, game_object.get_long_counter(field_id)));
+		rc.borrow_mut().push(format!("on_object_long_counter_change {:?} {} {}", game_object.id.id, field_id, game_object.get_long_counter(field_id)));
 	}
 	
 	fn on_object_float_counter_change(&mut self, field_id: u16, game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();
-		rc.borrow_mut().push(format!("on_object_float_counter_change {} {} {}", game_object.id, field_id, game_object.get_float_counter(field_id)));
+		rc.borrow_mut().push(format!("on_object_float_counter_change {:?} {} {}", game_object.id.id, field_id, game_object.get_float_counter(field_id)));
 	}
 	
 	fn on_object_event_fired(&mut self, field_id: u16, event_data: &[u8], game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();
-		rc.borrow_mut().push(format!("on_object_event_fired {} {} {:?}", game_object.id, field_id, event_data));
+		rc.borrow_mut().push(format!("on_object_event_fired {:?} {} {:?}", game_object.id.id, field_id, event_data));
 	}
 	
 	fn on_object_struct_updated(&mut self, field_id: u16, game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();
-		rc.borrow_mut().push(format!("on_object_struct_updated {} {} {:?}", game_object.id, field_id, game_object.get_struct(field_id).unwrap()));
+		rc.borrow_mut().push(format!("on_object_struct_updated {:?} {} {:?}", game_object.id.id, field_id, game_object.get_struct(field_id).unwrap()));
 	}
 	
 	fn on_object_long_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
 		let rc = self.results.clone();
 		rc.borrow_mut().push(format!(
-			"on_object_long_counter_set {} {} {:?}",
-			game_object.id,
+			"on_object_long_counter_set {:?} {} {:?}",
+			game_object.id.id,
 			field_id,
 			game_object.get_long_counter(field_id)));
 	}
@@ -95,8 +95,8 @@ impl RoomListener for TestListener {
 	fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
 		let rc = self.results.clone();
 		rc.borrow_mut().push(format!(
-			"on_object_float_counter_set {} {} {:?}",
-			game_object.id,
+			"on_object_float_counter_set {:?} {} {:?}",
+			game_object.id.id,
 			field_id,
 			game_object.get_float_counter(field_id)));
 	}

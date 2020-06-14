@@ -11,8 +11,7 @@ fn main() {
 }
 
 fn start_server() {
-	let server = Server::new("127.0.0.1:5000".to_string());
-	server.tcp_acceptor_handler.join();
+	let _server = Server::new("127.0.0.1:5000".to_string());
 }
 
 fn init_logger() {

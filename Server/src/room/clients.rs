@@ -7,9 +7,9 @@ use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::clients::ClientConnectError::ClientNotInWaitingList;
 use crate::room::listener::RoomListener;
-use crate::room::objects::owner::Owner;
 use cheetah_relay_common::network::hash::HashValue;
 use crate::room::Room;
+use cheetah_relay_common::room::owner::Owner;
 
 pub struct Clients {
 	/// список клиентов
@@ -111,7 +111,7 @@ impl Room {
 	pub fn client_disconnect(&mut self, client: &Client) -> Option<Rc<Client>> {
 		let option = self.clients.clients.remove(&client.configuration.id);
 		if option.is_some() {
-			let objects = self.objects.get_objects_by_owner(Owner::new_owner(client));
+			let objects = self.objects.get_objects_by_owner(Owner::Client(client.configuration.id));
 			objects.iter().for_each(|o| {
 				let o = o.clone();
 				let o = &*o;

@@ -8,7 +8,7 @@ use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounte
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectC2SCommand;
+use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::command::S2CCommandUnion;
@@ -105,7 +105,7 @@ impl Clients {
 			}
 			Some(client) => {
 				let command = match command.command_type_c2s {
-					C2SCommandFFIType::Upload => { UploadGameObjectC2SCommand::from_ffi(command) }
+					C2SCommandFFIType::Upload => { UploadGameObjectCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementLongCounter => { IncrementLongCounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementFloatCounter => { IncrementFloatCounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::Structure => { StructureCommand::from_ffi(command) }

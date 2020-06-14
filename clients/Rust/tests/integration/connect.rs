@@ -22,7 +22,7 @@ fn should_connect_to_server() {
 	setup_logger();
 	let address = "127.0.0.1:5002";
 	let client_hash = HashValue::from("client_hash");
-	let (_, room_hash, rooms) = setup_server(address);
+	let (_server, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms, &room_hash, &client_hash);
 	let client = setup_client(address, &room_hash, &client_hash);
 	get_connection_status(
@@ -37,7 +37,7 @@ fn should_connect_to_room_server() {
 	let address = "127.0.0.1:5003";
 	let client_hash = HashValue::from("client_hash");
 	
-	let (_, room_hash, rooms) = setup_server(address);
+	let (_server, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);
 	
 	let client = setup_client(address, &room_hash, &client_hash);

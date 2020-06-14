@@ -1,20 +1,16 @@
-use std::ops::Shl;
-
-use cheetah_relay_common::constants::{ClientId, FieldID};
+use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
+use cheetah_relay_common::room::object::GameObjectId;
 
-use crate::room::clients::Client;
 use crate::room::listener::RoomListener;
-use crate::room::objects::owner::Owner;
 use crate::room::Room;
 
 /// Игровой объект
 /// содержит данные от пользователей
 #[derive(Debug, Clone, PartialEq)]
 pub struct GameObject {
-	pub id: u64,
-	pub owner: Owner,
+	pub id: GameObjectId,
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFields,
 }
@@ -30,10 +26,9 @@ pub enum ObjectFieldType {
 
 
 impl GameObject {
-	pub fn new(id: u64, owner: Owner, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
+	pub fn new(id: GameObjectId, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
 		GameObject {
 			id,
-			owner,
 			access_groups,
 			fields,
 		}
@@ -46,12 +41,6 @@ impl GameObject {
 	}
 	pub fn get_struct(&self, field_id: FieldID) -> Option<&Vec<u8>> {
 		self.fields.structures.get(&field_id)
-	}
-	pub fn get_global_object_id_by_client(client: &Client, local_object_id: u32) -> u64 {
-		GameObject::get_global_object_id_by_client_id(client.configuration.id, local_object_id)
-	}
-	pub fn get_global_object_id_by_client_id(client_id: ClientId, local_object_id: u32) -> u64 {
-		(client_id as u64).shl(32) + local_object_id as u64
 	}
 }
 
