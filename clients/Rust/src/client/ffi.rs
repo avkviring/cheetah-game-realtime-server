@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
 use cheetah_relay_common::constants::{MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
+use cheetah_relay_common::room::object::GameObjectId;
+use cheetah_relay_common::room::owner::Owner;
 
 use crate::client::command::C2SCommandUnion;
 
@@ -16,8 +18,8 @@ use crate::client::command::C2SCommandUnion;
 pub struct CommandFFI {
 	pub command_type_s2c: S2CCommandFFIType,
 	pub command_type_c2s: C2SCommandFFIType,
-	pub object_id: u64,
 	pub field_id: u16,
+	pub object_id: ObjectId,
 	pub structure: FieldFFIBinary,
 	pub event: FieldFFIBinary,
 	pub long_value: i64,
@@ -26,6 +28,22 @@ pub struct CommandFFI {
 	pub long_counters: FieldsFFI<i64>,
 	pub float_counters: FieldsFFI<f64>,
 	pub structures: FieldsFFI<FieldFFIBinary>,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct ObjectId {
+	pub id: u32,
+	pub client: u16,
+	pub id_type: ObjectIdType,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum ObjectIdType {
+	Root,
+	Current,
+	Client,
 }
 
 
@@ -42,6 +60,7 @@ pub trait Server2ClientFFIConverter {
 pub trait Client2ServerFFIConverter {
 	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion;
 }
+
 
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -199,5 +218,42 @@ impl<IN: Default + Clone, OUT: From<IN>> From<FieldsFFI<IN>> for HashMap<u16, OU
 			result.insert(key, value);
 		});
 		result
+	}
+}
+
+impl Default for ObjectId {
+	fn default() -> Self {
+		ObjectId {
+			id: 0,
+			client: 0,
+			id_type: ObjectIdType::Root,
+		}
+	}
+}
+
+impl ObjectId {
+	pub fn set_from(&mut self, id: &GameObjectId) {
+		self.id = id.id;
+		match id.owner {
+			Owner::Root => { self.id_type = ObjectIdType::Root }
+			Owner::CurrentClient => {
+				self.id_type = ObjectIdType::Current;
+			}
+			Owner::Client(client) => {
+				self.id_type = ObjectIdType::Client;
+				self.client = client
+			}
+		}
+	}
+	
+	pub fn to_common_game_object_id(&self) -> GameObjectId {
+		GameObjectId {
+			owner: match self.id_type {
+				ObjectIdType::Root => { Owner::Root }
+				ObjectIdType::Current => { Owner::CurrentClient }
+				ObjectIdType::Client => { Owner::Client(self.client) }
+			},
+			id: self.id,
+		}
 	}
 }

@@ -12,7 +12,7 @@ impl ServerCommandExecutor for IncrementFloatCounterC2SCommand {
 			"IncrementFloatCounter",
 			room,
 			client,
-			self.global_object_id,
+			&self.object_id,
 			self.field_id,
 			ObjectFieldType::FloatCounter,
 			|room, object|
@@ -31,7 +31,7 @@ impl ServerCommandExecutor for SetFloatCounterCommand {
 			"SetFloatCounter",
 			room,
 			client,
-			self.global_object_id,
+			&self.object_id,
 			self.field_id,
 			ObjectFieldType::FloatCounter,
 			|room, object|

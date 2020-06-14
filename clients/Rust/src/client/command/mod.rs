@@ -4,7 +4,7 @@ use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounte
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::{UploadGameObjectC2SCommand, UploadGameObjectS2CCommand};
+use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 
@@ -17,7 +17,7 @@ pub mod unload;
 
 #[derive(Debug)]
 pub enum C2SCommandUnion {
-	Upload(UploadGameObjectC2SCommand),
+	Upload(UploadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
 	IncrementLongCounter(IncrementLongCounterC2SCommand),
 	SetFloatCounter(SetFloatCounterCommand),
@@ -29,7 +29,7 @@ pub enum C2SCommandUnion {
 
 #[derive(Debug)]
 pub enum S2CCommandUnion {
-	Upload(UploadGameObjectS2CCommand),
+	Upload(UploadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
 	SetFloatCounter(SetFloatCounterCommand),
 	SetStruct(StructureCommand),
@@ -41,8 +41,8 @@ pub enum S2CCommandUnion {
 pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, OnReadBufferError> {
 	let command = read_buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	let result = match command {
-		UploadGameObjectS2CCommand::COMMAND_CODE => {
-			UploadGameObjectS2CCommand::decode(read_buffer).map(S2CCommandUnion::Upload)
+		UploadGameObjectCommand::COMMAND_CODE => {
+			UploadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Upload)
 		}
 		EventCommand::COMMAND_CODE => {
 			EventCommand::decode(read_buffer).map(S2CCommandUnion::Event)
@@ -67,7 +67,7 @@ pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, On
 pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandUnion) -> Result<(), NioBufferError> {
 	match command {
 		C2SCommandUnion::Upload(command) => {
-			buffer.write_u8(UploadGameObjectC2SCommand::COMMAND_CODE)?;
+			buffer.write_u8(UploadGameObjectCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::SetLongCounter(command) => {

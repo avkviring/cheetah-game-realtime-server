@@ -1,25 +1,27 @@
-use cheetah_relay_common::network::command::upload::UploadGameObjectC2SCommand;
+use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 
 use crate::network::c2s::{error_c2s_command, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;
-use crate::room::objects::CreateObjectError;
 use crate::room::Room;
 
-impl ServerCommandExecutor for UploadGameObjectC2SCommand {
+impl ServerCommandExecutor for UploadGameObjectCommand {
 	fn execute(self, client: &Client, room: &mut Room) {
 		trace_c2s_command("UploadGameObject", room, client, format!("{:?}", self));
-		let result = room.create_client_game_object(client, self.local_id, self.access_groups, self.fields);
-		match result {
-			Ok(id) => {
-				trace_c2s_command("UploadGameObject", room, client, format!("Object created with id {}", id));
-			}
-			Err(error) => {
-				match error {
-					CreateObjectError::IncorrectGroups => {
-						error_c2s_command("UploadGameObject", room, client, "Incorrect access group".to_string());
-					}
-				}
-			}
-		}
+		if self.access_groups.is_sub_groups(&client.configuration.groups) {
+			room.new_game_object(self.object_id.clone(), self.access_groups.clone(), self.fields);
+			trace_c2s_command(
+				"UploadGameObject",
+				room,
+				client,
+				format!("Object created with id {:?}", self.object_id),
+			);
+		} else {
+			error_c2s_command(
+				"UploadGameObject",
+				room,
+				client,
+				format!("Incorrect access group {:?} with client groups {:?}", self.access_groups, client.configuration.groups),
+			);
+		};
 	}
 }

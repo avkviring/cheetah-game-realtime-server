@@ -7,17 +7,22 @@ use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {
 	fn execute(self, client: &Client, room: &mut Room) {
-		trace_c2s_command("UpdateStruct", room, client, format!("params {:?}", self));
+		trace_c2s_command("UpdateStruct", room, client, format!("params {:?}", &self));
+		
+		let object_id = &self.object_id;
+		let field_id = self.field_id;
+		let structure = self.structure.clone();
+		
 		get_field_and_change(
 			"UpdateStruct",
 			room,
 			client,
-			self.global_object_id,
+			object_id,
 			self.field_id,
 			ObjectFieldType::Struct,
 			|room, object|
 				{
-					room.object_update_struct(object, self.field_id, self.structure);
+					room.object_update_struct(object, field_id, structure);
 					format!("update struct done")
 				},
 		);

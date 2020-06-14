@@ -1,13 +1,14 @@
-use crate::constants::{FieldID, GlobalObjectId};
+use crate::constants::FieldID;
 use crate::network::command::{CommandCode, Decoder, Encoder};
 use crate::network::niobuffer::{NioBuffer, NioBufferError};
+use crate::room::object::GameObjectId;
 
 ///
 /// Событие по объекту
 /// - C->S, S->C
 #[derive(Debug, Clone, PartialEq)]
 pub struct EventCommand {
-	pub global_object_id: GlobalObjectId,
+	pub object_id: GameObjectId,
 	pub field_id: FieldID,
 	pub event: Vec<u8>,
 }
@@ -20,7 +21,7 @@ impl Decoder for EventCommand {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
 		Result::Ok(
 			EventCommand {
-				global_object_id: buffer.read_u64()?,
+				object_id: GameObjectId::decode(buffer)?,
 				field_id: buffer.read_u16()?,
 				event: buffer.read_to_vec_with_u16_size()?,
 			})
@@ -29,7 +30,7 @@ impl Decoder for EventCommand {
 
 impl Encoder for EventCommand {
 	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-		buffer.write_u64(self.global_object_id)?;
+		self.object_id.encode(buffer)?;
 		buffer.write_u16(self.field_id)?;
 		buffer.write_u16(self.event.len() as u16)?;
 		buffer.write_bytes(&self.event)?;

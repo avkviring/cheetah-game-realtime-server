@@ -1,8 +1,6 @@
 pub type FieldID = u16;
 pub type GroupType = u64;
 pub type ClientId = u16;
-pub type LocalObjectId = u32;
-pub type GlobalObjectId = u64;
 
 ///
 /// Максимальное количество FieldId в игровом объекте (для каждого типа данных)

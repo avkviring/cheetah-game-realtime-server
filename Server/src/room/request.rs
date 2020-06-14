@@ -2,9 +2,10 @@ use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
 use mio::net::TcpStream;
 
-use cheetah_relay_common::constants::{ClientId, GlobalObjectId};
+use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::room::object::GameObjectId;
 
 use crate::network::server::tcp::room::TcpRoom;
 use crate::room::clients::ClientConnectError;
@@ -22,7 +23,7 @@ pub enum RoomRequest {
 	AddWaitingClient(HashValue, AccessGroups),
 	TCPClientConnect(HashValue, TcpStream, Vec<u8>),
 	GetClients(Sender<Vec<ClientInfo>>),
-	GetObjects(Sender<Vec<GlobalObjectId>>),
+	GetObjects(Sender<Vec<GameObjectId>>),
 	Destroy,
 }
 
@@ -96,7 +97,7 @@ impl RoomRequests {
 		}
 	}
 	
-	fn do_get_objects(&self, room: &Room, sender: Sender<Vec<GlobalObjectId>>) {
+	fn do_get_objects(&self, room: &Room, sender: Sender<Vec<GameObjectId>>) {
 		log::trace!("room requests: get objects from room {}", room.hash);
 		let result = sender.send(room.objects.get_object_ids());
 		match result {

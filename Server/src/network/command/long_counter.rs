@@ -12,7 +12,7 @@ impl ServerCommandExecutor for IncrementLongCounterC2SCommand {
 			"IncrementLongCounter",
 			room,
 			client,
-			self.global_object_id,
+			&self.object_id,
 			self.field_id,
 			ObjectFieldType::LongCounter,
 			|room, object| {
@@ -31,7 +31,7 @@ impl ServerCommandExecutor for SetLongCounterCommand {
 			"SetLongCounter",
 			room,
 			client,
-			self.global_object_id,
+			&self.object_id,
 			self.field_id,
 			ObjectFieldType::LongCounter,
 			|room, object| {

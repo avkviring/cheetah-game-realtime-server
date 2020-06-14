@@ -9,56 +9,60 @@ use crate::network::niobuffer::{NioBuffer, NioBufferError};
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub struct AccessGroups {
-    groups: GroupType,
+	pub groups: GroupType,
 }
 
 #[derive(Debug)]
 pub enum Access {
-    READ,
-    WRITE,
-    ROOT,
+	READ,
+	WRITE,
+	ROOT,
 }
 
 impl AccessGroups {
-    pub fn contains_group(&self, group: u8) -> bool {
-        let bits = (1 as u64).shl(group as u64);
-        self.groups.bitand(bits) == bits
-    }
-
-    pub fn contains_any(&self, groups: &AccessGroups) -> bool {
-        return self.groups.bitand(groups.groups) > 0;
-    }
+	pub fn contains_group(&self, group: u8) -> bool {
+		let bits = (1 as u64).shl(group as u64);
+		self.groups.bitand(bits) == bits
+	}
+	
+	pub fn contains_any(&self, groups: &AccessGroups) -> bool {
+		return self.groups.bitand(groups.groups) > 0;
+	}
+	
+	pub fn is_sub_groups(&self, groups: &AccessGroups) -> bool {
+		groups.groups.bitand(self.groups) == self.groups
+	}
 }
 
 impl Default for AccessGroups {
-    fn default() -> Self {
-        AccessGroups::from(0)
-    }
+	fn default() -> Self {
+		AccessGroups::from(0)
+	}
 }
 
 impl From<u64> for AccessGroups {
-    fn from(groups: u64) -> AccessGroups {
-        AccessGroups {
-            groups
-        }
-    }
+	fn from(groups: u64) -> AccessGroups {
+		AccessGroups {
+			groups
+		}
+	}
 }
 
 impl Decoder for AccessGroups {
-    fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
-        match buffer.read_u64() {
-            Ok(value) => {
-                Result::Ok(AccessGroups::from(value))
-            }
-            Err(e) => {
-                Result::Err(e)
-            }
-        }
-    }
+	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
+		match buffer.read_u64() {
+			Ok(value) => {
+				Result::Ok(AccessGroups::from(value))
+			}
+			Err(e) => {
+				Result::Err(e)
+			}
+		}
+	}
 }
 
 impl Encoder for AccessGroups {
-    fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-        buffer.write_u64(self.groups)
-    }
+	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
+		buffer.write_u64(self.groups)
+	}
 }
