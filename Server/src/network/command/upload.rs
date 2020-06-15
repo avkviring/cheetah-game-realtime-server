@@ -8,13 +8,24 @@ impl ServerCommandExecutor for UploadGameObjectCommand {
 	fn execute(self, client: &Client, room: &mut Room) {
 		trace_c2s_command("UploadGameObject", room, client, format!("{:?}", self));
 		if self.access_groups.is_sub_groups(&client.configuration.groups) {
-			room.new_game_object(self.object_id.clone(), self.access_groups.clone(), self.fields);
-			trace_c2s_command(
-				"UploadGameObject",
-				room,
-				client,
-				format!("Object created with id {:?}", self.object_id),
-			);
+			match room.new_game_object(self.object_id.clone(), self.access_groups.clone(), self.fields) {
+				Ok(_) => {
+					trace_c2s_command(
+						"UploadGameObject",
+						room,
+						client,
+						format!("Object created with id {:?}", self.object_id),
+					);
+				}
+				Err(_) => {
+					error_c2s_command(
+						"UploadGameObject",
+						room,
+						client,
+						format!("Object already exists with id {:?}", self.object_id),
+					);
+				}
+			}
 		} else {
 			error_c2s_command(
 				"UploadGameObject",

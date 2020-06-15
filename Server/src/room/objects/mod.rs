@@ -27,6 +27,11 @@ pub enum ErrorGetObjectWithCheckAccess {
 }
 
 
+#[derive(Debug)]
+pub enum GameObjectCreateErrors {
+	AlreadyExists(GameObjectId)
+}
+
 impl Default for Objects {
 	fn default() -> Self {
 		Objects {
@@ -96,20 +101,28 @@ impl Room {
 	pub fn new_game_object(&mut self,
 						   object_id: GameObjectId,
 						   access_group: AccessGroups,
-						   fields: GameObjectFields)  {
+						   fields: GameObjectFields) -> Result<(), GameObjectCreateErrors> {
 		let object = GameObject::new(
 			object_id,
 			access_group,
 			fields,
 		);
-		self.insert_game_object(object);
+		self.insert_game_object(object)
 	}
 	
 	
-	pub fn insert_game_object(&mut self, object: GameObject) {
-		let id = object.id.clone();
-		self.listener.on_object_created(&object, &self.clients);
-		self.objects.objects.insert(id, Rc::new(RefCell::new(object)));
+	pub fn insert_game_object(&mut self, object: GameObject) -> Result<(), GameObjectCreateErrors> {
+		match self.objects.objects.get(&object.id) {
+			None => {
+				let id = object.id.clone();
+				self.listener.on_object_created(&object, &self.clients);
+				self.objects.objects.insert(id, Rc::new(RefCell::new(object)));
+				Result::Ok(())
+			}
+			Some(_) => {
+				Result::Err(GameObjectCreateErrors::AlreadyExists(object.id.clone()))
+			}
+		}
 	}
 	
 	/// проверка прав доступа к полю объекта
