@@ -147,14 +147,14 @@ impl<T> Default for FieldsFFI<T> where T: Default + Copy {
 #[derive(Copy, Clone)]
 pub struct FieldFFI<T> where T: Default {
 	pub field_id: u16,
-	pub values: T,
+	pub value: T,
 }
 
 impl<T> Default for FieldFFI<T> where T: Default {
 	fn default() -> FieldFFI<T> {
 		FieldFFI {
 			field_id: Default::default(),
-			values: Default::default(),
+			value: Default::default(),
 		}
 	}
 }
@@ -188,7 +188,7 @@ impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&HashMap<u16, IN>> for Fiel
 		for (i, (key, value)) in value.into_iter().enumerate() {
 			let mut field = &mut result.values[i];
 			field.field_id = key.clone();
-			field.values = From::<IN>::from(value.clone());
+			field.value = From::<IN>::from(value.clone());
 		};
 		result
 	}
@@ -214,7 +214,7 @@ impl<IN: Default + Clone, OUT: From<IN>> From<FieldsFFI<IN>> for HashMap<u16, OU
 		let mut result = HashMap::<u16, OUT>::new();
 		value.values[0..value.size].iter().for_each(|v| {
 			let key = v.field_id;
-			let value = From::<IN>::from(v.values.clone());
+			let value = From::<IN>::from(v.value.clone());
 			result.insert(key, value);
 		});
 		result
