@@ -1,5 +1,4 @@
 pub mod client;
-pub mod command;
+pub mod c2s;
 pub mod server;
 pub mod s2c;
-pub mod c2s;

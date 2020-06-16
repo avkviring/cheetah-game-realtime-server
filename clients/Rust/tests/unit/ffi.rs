@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use cheetah_relay_client::client::ffi::{FieldFFI, FieldFFIBinary, FieldsFFI, ObjectId};
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
+use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::owner::ClientOwner;
 
 #[test]
 fn should_convert_game_object_id() {
-	let owners = vec![Owner::Root, Owner::CurrentClient, Owner::Client(100)];
+	let owners = vec![ClientOwner::Root, ClientOwner::CurrentClient, ClientOwner::Client(100)];
 	for owner in owners {
 		let mut ffi_game_object_id = ObjectId::default();
-		let source = GameObjectId::new(100, owner);
+		let source = ClientGameObjectId::new(100, owner);
 		ffi_game_object_id.set_from(&source);
 		let converted = ffi_game_object_id.to_common_game_object_id();
 		assert_eq!(source, converted);

@@ -1,7 +1,7 @@
 use crate::constants::FieldID;
 use crate::network::command::{CommandCode, Decoder, Encoder};
 use crate::network::niobuffer::{NioBuffer, NioBufferError};
-use crate::room::object::GameObjectId;
+use crate::room::object::ClientGameObjectId;
 
 ///
 /// Обновление счетчика
@@ -9,7 +9,7 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Debug, PartialEq)]
 pub struct IncrementFloatCounterC2SCommand {
-	pub object_id: GameObjectId,
+	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,
 	pub increment: f64,
 }
@@ -20,7 +20,7 @@ pub struct IncrementFloatCounterC2SCommand {
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub struct SetFloatCounterCommand {
-	pub object_id: GameObjectId,
+	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,
 	pub value: f64,
 }
@@ -46,7 +46,7 @@ impl Encoder for IncrementFloatCounterC2SCommand {
 impl Decoder for IncrementFloatCounterC2SCommand {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
 		Result::Ok(IncrementFloatCounterC2SCommand {
-			object_id: GameObjectId::decode(buffer)?,
+			object_id: ClientGameObjectId::decode(buffer)?,
 			field_id: buffer.read_u16()?,
 			increment: buffer.read_f64()?,
 		})
@@ -65,7 +65,7 @@ impl Encoder for SetFloatCounterCommand {
 impl Decoder for SetFloatCounterCommand {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
 		Result::Ok(SetFloatCounterCommand {
-			object_id: GameObjectId::decode(buffer)?,
+			object_id: ClientGameObjectId::decode(buffer)?,
 			field_id: buffer.read_u16()?,
 			value: buffer.read_f64()?,
 		})

@@ -1,7 +1,7 @@
 use crate::constants::FieldID;
 use crate::network::command::{CommandCode, Decoder, Encoder};
 use crate::network::niobuffer::{NioBuffer, NioBufferError};
-use crate::room::object::GameObjectId;
+use crate::room::object::ClientGameObjectId;
 
 ///
 /// Обновить структуру в обьекте
@@ -9,7 +9,7 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructureCommand {
-	pub object_id: GameObjectId,
+	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,
 	pub structure: Vec<u8>,
 }
@@ -21,7 +21,7 @@ impl CommandCode for StructureCommand {
 impl Decoder for StructureCommand {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
 		Result::Ok(StructureCommand {
-			object_id: GameObjectId::decode(buffer)?,
+			object_id: ClientGameObjectId::decode(buffer)?,
 			field_id: buffer.read_u16()?,
 			structure: buffer.read_to_vec_with_u16_size()?,
 		})

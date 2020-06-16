@@ -1,16 +1,21 @@
-use cheetah_relay_common::constants::FieldID;
+use cheetah_relay_common::constants::{ClientId, FieldID};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::GameObjectId;
+use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::room::listener::RoomListener;
 use crate::room::Room;
+use crate::room::objects::id::ServerGameObjectId;
 
+
+///
 /// Игровой объект
 /// содержит данные от пользователей
+///
 #[derive(Debug, Clone, PartialEq)]
 pub struct GameObject {
-	pub id: GameObjectId,
+	pub id: ServerGameObjectId,
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFields,
 }
@@ -26,7 +31,7 @@ pub enum ObjectFieldType {
 
 
 impl GameObject {
-	pub fn new(id: GameObjectId, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
+	pub fn new(id: ServerGameObjectId, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
 		GameObject {
 			id,
 			access_groups,
@@ -86,3 +91,5 @@ impl Room {
 		self.listener.on_object_event_fired(field_id, event_data, object, &self.clients);
 	}
 }
+
+

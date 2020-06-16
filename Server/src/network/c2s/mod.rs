@@ -1,3 +1,10 @@
+pub mod unload;
+pub mod event;
+pub mod float_counter;
+pub mod long_counter;
+pub mod structure;
+pub mod upload;
+
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::network::command::{CommandCode, Decoder};
 use cheetah_relay_common::network::command::event::EventCommand;
@@ -9,7 +16,7 @@ use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 use cheetah_relay_common::room::access::Access;
-use cheetah_relay_common::room::object::GameObjectId;
+use cheetah_relay_common::room::object::ClientGameObjectId;
 
 use crate::room::clients::Client;
 use crate::room::objects::ErrorGetObjectWithCheckAccess;
@@ -94,7 +101,7 @@ pub fn get_field_and_change<F>(
 	command_name: &str,
 	room: &mut Room,
 	client: &Client,
-	object_id: &GameObjectId,
+	object_id: &ClientGameObjectId,
 	field_id: FieldID,
 	object_field_type: ObjectFieldType,
 	action: F,

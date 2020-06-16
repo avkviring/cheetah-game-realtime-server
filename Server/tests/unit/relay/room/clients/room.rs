@@ -1,8 +1,7 @@
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
 
 use crate::unit::relay::room::room::room_stub;
 
@@ -55,7 +54,7 @@ fn room_client_disconnect_should_delete_client_object() {
 	let connect_result = room.client_connect(client_hash);
 	let client = connect_result.ok().unwrap();
 	room.new_game_object(
-		GameObjectId::new(0, Owner::Client(client.configuration.id)),
+		ServerGameObjectId::new(0, ServerOwner::Client(client.configuration.id)),
 		AccessGroups::default(),
 		GameObjectFields::default(),
 	);

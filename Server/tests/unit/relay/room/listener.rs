@@ -1,15 +1,14 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use cheetah_relay::room::objects::object::GameObject;
+use cheetah_relay::room::objects::object::{GameObject};
 use cheetah_relay::room::Room;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
 
 use crate::unit::relay::room::{setup_client, setup_listener};
 use crate::unit::relay::room::room::room_stub;
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 
 #[test]
 fn should_invoke_on_object_create() {
@@ -92,7 +91,7 @@ fn should_client_disconnect() {
 fn setup() -> (Room, Rc<RefCell<Vec<String>>>, Rc<RefCell<GameObject>>) {
 	let mut room = room_stub();
 	let results = setup_listener(&mut room);
-	let object_id = GameObjectId::new(10, Owner::Root);
+	let object_id = ServerGameObjectId::new(10, ServerOwner::Root);
 	room.new_game_object(
 		object_id.clone(),
 		AccessGroups::default(),

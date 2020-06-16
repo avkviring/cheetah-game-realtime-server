@@ -8,7 +8,6 @@ use std::time::Duration;
 use rand::Rng;
 use stderrlog::Timestamp;
 
-use cheetah_relay::room::objects::object::GameObject;
 use cheetah_relay::room::request::{ClientInfo, RoomRequest};
 use cheetah_relay::rooms::Rooms;
 use cheetah_relay::server::Server;
@@ -18,8 +17,9 @@ use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
+use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::owner::ClientOwner;
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 
 #[test]
 fn should_connect_client_to_room() {
@@ -63,7 +63,7 @@ fn should_client_create_object() {
 	let client_hash = clients.pop().unwrap();
 	let mut buffer = NioBuffer::new();
 	create_client_and_send_hashes(&mut buffer, &room_hash, &client_hash);
-	let object_id = GameObjectId::new(100, Owner::Root);
+	let object_id = ServerGameObjectId::new(100, ServerOwner::Root);
 	create_object(&mut buffer, object_id.clone());
 	
 	let mut stream = TcpStream::connect(addr).unwrap();
@@ -98,7 +98,7 @@ fn should_receive_command_from_server() {
 	
 	let mut buffer_for_write_client_a = NioBuffer::new();
 	create_client_and_send_hashes(&mut buffer_for_write_client_a, &room_hash, &client_a);
-	create_object(&mut buffer_for_write_client_a, GameObjectId::new(100, Owner::Root));
+	create_object(&mut buffer_for_write_client_a, ServerGameObjectId::new(100, ServerOwner::Root));
 	let mut stream_for_client_a = TcpStream::connect(addr).unwrap();
 	send(&mut stream_for_client_a, &mut buffer_for_write_client_a);
 	
@@ -122,7 +122,7 @@ fn should_receive_command_from_server() {
 	);
 }
 
-fn create_object(buffer: &mut NioBuffer, object_id: GameObjectId) {
+fn create_object(buffer: &mut NioBuffer, object_id: ServerGameObjectId) {
 	buffer
 		.write_u8(UploadGameObjectCommand::COMMAND_CODE)
 		.ok();
@@ -134,7 +134,7 @@ fn create_object(buffer: &mut NioBuffer, object_id: GameObjectId) {
 		.insert(5, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 	
 	let command = UploadGameObjectCommand {
-		object_id,
+		object_id: ClientGameObjectId::new(object_id.id, ClientOwner::Root),
 		access_groups: AccessGroups::from(0b110),
 		fields,
 	};
@@ -218,7 +218,7 @@ fn get_clients(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<ClientInf
 	receiver.recv_timeout(Duration::from_secs(1)).ok().unwrap()
 }
 
-fn get_objects(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<GameObjectId> {
+fn get_objects(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<ServerGameObjectId> {
 	let rooms = &*rooms;
 	let rooms = rooms.lock().unwrap();
 	let (sender, receiver) = mpsc::channel();

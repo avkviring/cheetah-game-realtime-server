@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
 use cheetah_relay_common::constants::{MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
+use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::client::command::C2SCommandUnion;
 
@@ -232,26 +232,26 @@ impl Default for ObjectId {
 }
 
 impl ObjectId {
-	pub fn set_from(&mut self, id: &GameObjectId) {
+	pub fn set_from(&mut self, id: &ClientGameObjectId) {
 		self.id = id.id;
 		match id.owner {
-			Owner::Root => { self.id_type = ObjectIdType::Root }
-			Owner::CurrentClient => {
+			ClientOwner::Root => { self.id_type = ObjectIdType::Root }
+			ClientOwner::CurrentClient => {
 				self.id_type = ObjectIdType::Current;
 			}
-			Owner::Client(client) => {
+			ClientOwner::Client(client) => {
 				self.id_type = ObjectIdType::Client;
 				self.client = client
 			}
 		}
 	}
 	
-	pub fn to_common_game_object_id(&self) -> GameObjectId {
-		GameObjectId {
+	pub fn to_common_game_object_id(&self) -> ClientGameObjectId {
+		ClientGameObjectId {
 			owner: match self.id_type {
-				ObjectIdType::Root => { Owner::Root }
-				ObjectIdType::Current => { Owner::CurrentClient }
-				ObjectIdType::Client => { Owner::Client(self.client) }
+				ObjectIdType::Root => { ClientOwner::Root }
+				ObjectIdType::Current => { ClientOwner::CurrentClient }
+				ObjectIdType::Client => { ClientOwner::Client(self.client) }
 			},
 			id: self.id,
 		}

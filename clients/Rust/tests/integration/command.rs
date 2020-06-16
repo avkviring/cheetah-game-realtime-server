@@ -8,8 +8,8 @@ use cheetah_relay_client::{receive_commands_from_server, send_command_to_server}
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, S2CCommandFFIType};
 use cheetah_relay_client::client::ffi::CommandFFI;
 use cheetah_relay_common::network::hash::HashValue;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
+use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::integration::{add_wating_client_to_room, setup_client, setup_logger, setup_server};
 
@@ -27,7 +27,7 @@ fn should_send_command_to_server() {
 	// upload object
 	let mut ffi = CommandFFI::default();
 	ffi.command_type_c2s = C2SCommandFFIType::Upload;
-	ffi.object_id.set_from(&GameObjectId::new(100, Owner::CurrentClient));
+	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
 	send_command_to_server(client, &ffi, || assert!(false));
 	thread::sleep(Duration::from_secs(1));
@@ -57,7 +57,7 @@ fn should_receive_command_to_server() {
 	// upload object
 	let mut ffi = CommandFFI::default();
 	ffi.command_type_c2s = C2SCommandFFIType::Upload;
-	ffi.object_id.set_from(&GameObjectId::new(100, Owner::CurrentClient));
+	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
 	send_command_to_server(client_a, &ffi, || assert!(false));
 	thread::sleep(Duration::from_secs(2));

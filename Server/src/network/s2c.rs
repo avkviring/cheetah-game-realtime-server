@@ -10,6 +10,7 @@ use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::room::access::AccessGroups;
+
 use crate::room::clients::{Client, Clients};
 use crate::room::listener::RoomListener;
 use crate::room::objects::object::GameObject;
@@ -29,7 +30,7 @@ pub enum S2CCommandUnion {
 	Event(EventCommand),
 	SetFloatCounter(SetFloatCounterCommand),
 	SetLongCounter(SetLongCounterCommand),
-	SetStruct(StructureCommand),
+	Struct(StructureCommand),
 }
 
 impl S2CCommandUnion {
@@ -40,20 +41,22 @@ impl S2CCommandUnion {
 			S2CCommandUnion::SetLongCounter(_) => SetLongCounterCommand::COMMAND_CODE,
 			S2CCommandUnion::SetFloatCounter(_) => SetFloatCounterCommand::COMMAND_CODE,
 			S2CCommandUnion::Event(_) => EventCommand::COMMAND_CODE,
-			S2CCommandUnion::SetStruct(_) => StructureCommand::COMMAND_CODE,
+			S2CCommandUnion::Struct(_) => StructureCommand::COMMAND_CODE,
+		}
+	}
+}
+
+
+impl Default for S2CCommandCollector {
+	fn default() -> Self {
+		S2CCommandCollector {
+			commands_by_client: Default::default(),
 		}
 	}
 }
 
 impl S2CCommandCollector {
-	pub fn new() -> Self {
-		S2CCommandCollector {
-			commands_by_client: Default::default(),
-		}
-	}
-	
-	fn push(&mut self, affected_client: &AffectedClients, command: S2CCommandUnion) {
-		log::trace!("S2C {:?} : {:?}", command, affected_client);
+	fn push<F: FnMut(&ClientId) -> S2CCommandUnion>(&mut self, affected_client: AffectedClients, mut command_factory: F) {
 		affected_client.clients.iter().for_each(|client| {
 			let buffer = self.commands_by_client.get_mut(&client);
 			match buffer {
@@ -62,7 +65,9 @@ impl S2CCommandCollector {
                     client
                 ),
 				Some(buffers) => {
-					buffers.push_back(command.clone());
+					let command = command_factory(client);
+					log::trace!("S2C {:?} : {:?}", command, affected_client);
+					buffers.push_back(command);
 				}
 			}
 		})
@@ -71,28 +76,24 @@ impl S2CCommandCollector {
 
 impl RoomListener for S2CCommandCollector {
 	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
-		let affected_clients =
-			AffectedClients::new_from_clients(clients, &game_object.access_groups);
-		let command = UploadGameObjectCommand {
-			object_id: game_object.id.clone(),
-			access_groups: game_object.access_groups.clone(),
-			fields: game_object.fields.clone(),
-		};
-		self.push(
-			&affected_clients,
-			S2CCommandUnion::UploadGameObject(command),
+		self.push(AffectedClients::new_from_clients(clients, &game_object.access_groups), |client|
+			S2CCommandUnion::UploadGameObject(
+				UploadGameObjectCommand {
+					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					access_groups: game_object.access_groups.clone(),
+					fields: game_object.fields.clone(),
+				}),
 		);
 	}
 	
 	fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {
-		let affected_clients =
-			AffectedClients::new_from_clients(clients, &game_object.access_groups);
-		let command = UnloadGameObjectCommand {
-			object_id: game_object.id.clone(),
-		};
-		self.push(
-			&affected_clients,
-			S2CCommandUnion::UnloadGameObject(command),
+		self.push(AffectedClients::new_from_clients(clients, &game_object.access_groups), |client|
+			{
+				S2CCommandUnion::UnloadGameObject(
+					UnloadGameObjectCommand {
+						object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					})
+			},
 		);
 	}
 	
@@ -107,14 +108,15 @@ impl RoomListener for S2CCommandCollector {
 				let o = &*o;
 				let o = o.borrow();
 				let affected_clients = AffectedClients::new_from_client(client);
-				let command = UploadGameObjectCommand {
-					object_id: o.id.clone(),
-					access_groups: o.access_groups.clone(),
-					fields: o.fields.clone(),
-				};
-				self.push(
-					&affected_clients,
-					S2CCommandUnion::UploadGameObject(command),
+				self.push(affected_clients, |client|
+					{
+						S2CCommandUnion::UploadGameObject(
+							UploadGameObjectCommand {
+								object_id: o.id.to_client_object_id(Option::Some(*client)),
+								access_groups: o.access_groups.clone(),
+								fields: o.fields.clone(),
+							})
+					},
 				)
 			})
 	}
@@ -129,14 +131,14 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		let affected_clients =
-			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
-		let command = SetLongCounterCommand {
-			object_id: game_object.id.clone(),
-			field_id,
-			value: game_object.get_long_counter(field_id),
-		};
-		self.push(&affected_clients, S2CCommandUnion::SetLongCounter(command))
+		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+			S2CCommandUnion::SetLongCounter(
+				SetLongCounterCommand {
+					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					field_id,
+					value: game_object.get_long_counter(field_id),
+				}),
+		)
 	}
 	
 	fn on_object_float_counter_change(
@@ -145,14 +147,14 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		let affected_clients =
-			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
-		let command = SetFloatCounterCommand {
-			object_id: game_object.id.clone(),
-			field_id,
-			value: game_object.get_float_counter(field_id),
-		};
-		self.push(&affected_clients, S2CCommandUnion::SetFloatCounter(command))
+		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+			S2CCommandUnion::SetFloatCounter(
+				SetFloatCounterCommand {
+					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					field_id,
+					value: game_object.get_float_counter(field_id),
+				}),
+		)
 	}
 	
 	fn on_object_event_fired(
@@ -162,14 +164,14 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		let affected_clients =
-			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
-		let command = EventCommand {
-			object_id: game_object.id.clone(),
-			field_id,
-			event: Vec::from(event_data),
-		};
-		self.push(&affected_clients, S2CCommandUnion::Event(command))
+		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+			S2CCommandUnion::Event(
+				EventCommand {
+					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					field_id,
+					event: Vec::from(event_data),
+				}),
+		)
 	}
 	
 	fn on_object_struct_updated(
@@ -178,36 +180,36 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		let affected_clients =
-			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
-		let command = StructureCommand {
-			object_id: game_object.id.clone(),
-			field_id,
-			structure: game_object.get_struct(field_id).unwrap().clone(),
-		};
-		self.push(&affected_clients, S2CCommandUnion::SetStruct(command));
+		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+			S2CCommandUnion::Struct(
+				StructureCommand {
+					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					field_id,
+					structure: game_object.get_struct(field_id).unwrap().clone(),
+				}),
+		)
 	}
 	
 	fn on_object_long_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
-		let affected_clients =
-			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
-		let command = SetLongCounterCommand {
-			object_id: game_object.id.clone(),
-			field_id,
-			value: game_object.get_long_counter(field_id),
-		};
-		self.push(&affected_clients, S2CCommandUnion::SetLongCounter(command));
+		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+			S2CCommandUnion::SetLongCounter(
+				SetLongCounterCommand {
+					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					field_id,
+					value: game_object.get_long_counter(field_id),
+				}),
+		)
 	}
 	
 	fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
-		let affected_clients =
-			AffectedClients::new_from_clients(&clients, &game_object.access_groups);
-		let command = SetFloatCounterCommand {
-			object_id: game_object.id.clone(),
-			field_id,
-			value: game_object.get_float_counter(field_id),
-		};
-		self.push(&affected_clients, S2CCommandUnion::SetFloatCounter(command));
+		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+			S2CCommandUnion::SetFloatCounter(
+				SetFloatCounterCommand {
+					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					field_id,
+					value: game_object.get_float_counter(field_id),
+				}),
+		)
 	}
 }
 
@@ -244,7 +246,7 @@ pub fn encode_s2c_commands(buffer: &mut NioBuffer, command: &S2CCommandUnion) ->
 		S2CCommandUnion::Event(command) => command.encode(buffer),
 		S2CCommandUnion::SetFloatCounter(command) => command.encode(buffer),
 		S2CCommandUnion::SetLongCounter(command) => command.encode(buffer),
-		S2CCommandUnion::SetStruct(command) => command.encode(buffer),
+		S2CCommandUnion::Struct(command) => command.encode(buffer),
 		S2CCommandUnion::UploadGameObject(command) => command.encode(buffer),
 	}
 }

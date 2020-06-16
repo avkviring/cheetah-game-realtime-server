@@ -3,13 +3,13 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use cheetah_relay_common::constants::ClientId;
+use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::clients::ClientConnectError::ClientNotInWaitingList;
 use crate::room::listener::RoomListener;
-use cheetah_relay_common::network::hash::HashValue;
 use crate::room::Room;
-use cheetah_relay_common::room::owner::Owner;
+use crate::room::objects::id::ServerOwner;
 
 pub struct Clients {
 	/// список клиентов
@@ -60,7 +60,7 @@ impl Default for Clients {
 	fn default() -> Self {
 		Clients {
 			clients: Default::default(),
-			client_id_generator: Default::default(),
+			client_id_generator: 128, // резерв
 			waiting_clients: Default::default(),
 		}
 	}
@@ -111,7 +111,7 @@ impl Room {
 	pub fn client_disconnect(&mut self, client: &Client) -> Option<Rc<Client>> {
 		let option = self.clients.clients.remove(&client.configuration.id);
 		if option.is_some() {
-			let objects = self.objects.get_objects_by_owner(Owner::Client(client.configuration.id));
+			let objects = self.objects.get_objects_by_owner(ServerOwner::Client(client.configuration.id));
 			objects.iter().for_each(|o| {
 				let o = o.clone();
 				let o = &*o;
