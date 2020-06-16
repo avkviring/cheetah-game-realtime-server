@@ -3,7 +3,6 @@ use std::rc::Rc;
 
 use cheetah_relay::network::s2c::{AffectedClients, S2CCommandCollector, S2CCommandUnion};
 use cheetah_relay::room::clients::{Client, Clients};
-use cheetah_relay::room::objects::object::GameObject;
 use cheetah_relay::room::Room;
 use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::network::command::event::EventCommand;
@@ -14,12 +13,14 @@ use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
+use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::unit::relay::room::clients::client_stub_with_access_group;
 use crate::unit::relay::room::room::room_stub;
 use crate::unit::relay::room::setup_client;
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
+use cheetah_relay::room::objects::object::GameObject;
 
 #[test]
 fn test_affects_client() {
@@ -45,14 +46,14 @@ fn test_affects_client() {
 fn should_s2c_collect_on_object_create() {
 	let (mut room, collector) = setup();
 	let client = setup_client(&mut room, "HASH", 0b100);
-	let (client, object_id, object) = setup_client_and_object(&mut room);
+	let (client, server_object_id, client_object_id, object) = setup_client_and_object(&mut room);
 	
 	let id = client.configuration.id;
 	assert_command(
 		collector,
 		id,
 		S2CCommandUnion::UploadGameObject(UploadGameObjectCommand {
-			object_id,
+			object_id: client_object_id,
 			access_groups: AccessGroups::from(0b100),
 			fields: Default::default(),
 		}),
@@ -64,10 +65,10 @@ fn should_s2c_collect_on_client_connect() {
 	let (mut room, commands) = setup();
 	
 	
-	room.new_game_object(GameObjectId::new(10, Owner::Root), AccessGroups::from(0b100), GameObjectFields::default());
-	room.new_game_object(GameObjectId::new(11, Owner::Root), AccessGroups::from(0b100), GameObjectFields::default());
-	room.new_game_object(GameObjectId::new(9, Owner::Root), AccessGroups::from(0b100), GameObjectFields::default());
-	room.new_game_object(GameObjectId::new(1, Owner::Root), AccessGroups::from(0b100), GameObjectFields::default());
+	room.new_game_object(ServerGameObjectId::new(10, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default());
+	room.new_game_object(ServerGameObjectId::new(11, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default());
+	room.new_game_object(ServerGameObjectId::new(9, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default());
+	room.new_game_object(ServerGameObjectId::new(1, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default());
 	
 	let client = setup_client(&mut room, "HASH", 0b100);
 	let id = client.configuration.id;
@@ -75,7 +76,7 @@ fn should_s2c_collect_on_client_connect() {
 		commands.clone(),
 		id,
 		S2CCommandUnion::UploadGameObject(UploadGameObjectCommand {
-			object_id: GameObjectId::new(10, Owner::Root),
+			object_id: ClientGameObjectId::new(10, ClientOwner::Root),
 			fields: Default::default(),
 			access_groups: AccessGroups::from(0b100),
 		}),
@@ -85,7 +86,7 @@ fn should_s2c_collect_on_client_connect() {
 		commands.clone(),
 		id,
 		S2CCommandUnion::UploadGameObject(UploadGameObjectCommand {
-			object_id: GameObjectId::new(11, Owner::Root),
+			object_id: ClientGameObjectId::new(11, ClientOwner::Root),
 			fields: Default::default(),
 			access_groups: AccessGroups::from(0b100),
 		}),
@@ -97,17 +98,17 @@ fn should_s2c_collect_on_client_disconnect() {
 	let (mut room, commands) = setup();
 	let client_a = setup_client(&mut room, "HASH_A", 0b100);
 	room.new_game_object(
-		GameObjectId::new(1, Owner::Client(client_a.configuration.id)),
+		ServerGameObjectId::new(1, ServerOwner::Client(client_a.configuration.id)),
 		AccessGroups::from(0b100),
 		GameObjectFields::default(),
 	);
 	room.new_game_object(
-		GameObjectId::new(2, Owner::Client(client_a.configuration.id)),
+		ServerGameObjectId::new(2, ServerOwner::Client(client_a.configuration.id)),
 		AccessGroups::from(0b100),
 		GameObjectFields::default(),
 	);
 	room.new_game_object(
-		GameObjectId::new(3, Owner::Client(client_a.configuration.id)),
+		ServerGameObjectId::new(3, ServerOwner::Client(client_a.configuration.id)),
 		AccessGroups::from(0b100),
 		GameObjectFields::default(),
 	);
@@ -120,7 +121,7 @@ fn should_s2c_collect_on_client_disconnect() {
 		commands.clone(),
 		client_b.configuration.id,
 		S2CCommandUnion::UnloadGameObject(UnloadGameObjectCommand {
-			object_id: GameObjectId::new(1, Owner::Client(client_a.configuration.id)),
+			object_id: ClientGameObjectId::new(1, ClientOwner::Client(client_a.configuration.id)),
 		}),
 	);
 	
@@ -128,15 +129,15 @@ fn should_s2c_collect_on_client_disconnect() {
 		commands.clone(),
 		client_b.configuration.id,
 		S2CCommandUnion::UnloadGameObject(UnloadGameObjectCommand {
-			object_id: GameObjectId::new(2, Owner::Client(client_a.configuration.id)),
+			object_id: ClientGameObjectId::new(2, ClientOwner::Client(client_a.configuration.id)),
 		}),
 	);
-
+	
 	assert_command(
 		commands.clone(),
 		client_b.configuration.id,
 		S2CCommandUnion::UnloadGameObject(UnloadGameObjectCommand {
-			object_id: GameObjectId::new(3, Owner::Client(client_a.configuration.id)),
+			object_id: ClientGameObjectId::new(3, ClientOwner::Client(client_a.configuration.id)),
 		}),
 	);
 }
@@ -144,7 +145,7 @@ fn should_s2c_collect_on_client_disconnect() {
 #[test]
 fn should_s2c_collect_on_update_long_counter() {
 	let (mut room, commands) = setup();
-	let (client, object_id, object) = setup_client_and_object(&mut room);
+	let (client, server_object_id, client_object_id, object) = setup_client_and_object(&mut room);
 	
 	room.object_increment_long_counter(&mut object.borrow_mut(), 1, 155);
 	clear_commands(commands.clone(), client.configuration.id);
@@ -154,7 +155,7 @@ fn should_s2c_collect_on_update_long_counter() {
 		commands,
 		client.configuration.id,
 		S2CCommandUnion::SetLongCounter(SetLongCounterCommand {
-			object_id: object_id.clone(),
+			object_id: client_object_id,
 			field_id: 1,
 			value: 210,
 		}),
@@ -165,7 +166,7 @@ fn should_s2c_collect_on_update_long_counter() {
 #[test]
 fn should_s2c_collect_on_update_float_counter() {
 	let (mut room, commands) = setup();
-	let (client, object_id, object) = setup_client_and_object(&mut room);
+	let (client, server_object_id, client_object_id, object) = setup_client_and_object(&mut room);
 	
 	room.object_increment_float_counter(&mut object.borrow_mut(), 1, 155.0);
 	clear_commands(commands.clone(), client.configuration.id);
@@ -175,7 +176,7 @@ fn should_s2c_collect_on_update_float_counter() {
 		commands,
 		client.configuration.id,
 		S2CCommandUnion::SetFloatCounter(SetFloatCounterCommand {
-			object_id,
+			object_id: client_object_id,
 			field_id: 1,
 			value: 210.0,
 		}),
@@ -185,7 +186,7 @@ fn should_s2c_collect_on_update_float_counter() {
 #[test]
 fn should_s2c_collect_on_fire_event() {
 	let (mut room, commands) = setup();
-	let (client, object_id, object) = setup_client_and_object(&mut room);
+	let (client, server_object_id, client_object_id, object) = setup_client_and_object(&mut room);
 	clear_commands(commands.clone(), client.configuration.id);
 	room.object_send_event(&mut object.borrow_mut(), 10, &vec![1, 2, 3, 4, 5]);
 	
@@ -193,7 +194,7 @@ fn should_s2c_collect_on_fire_event() {
 		commands,
 		client.configuration.id,
 		S2CCommandUnion::Event(EventCommand {
-			object_id,
+			object_id: client_object_id,
 			field_id: 10,
 			event: vec![1, 2, 3, 4, 5],
 		}),
@@ -203,15 +204,15 @@ fn should_s2c_collect_on_fire_event() {
 #[test]
 fn should_s2c_collect_on_update_struct() {
 	let (mut room, commands) = setup();
-	let (client, object_id, object) = setup_client_and_object(&mut room);
+	let (client, server_object_id, client_object_id, object) = setup_client_and_object(&mut room);
 	clear_commands(commands.clone(), client.configuration.id);
 	room.object_update_struct(&mut object.borrow_mut(), 10, vec![1, 2, 3, 4, 5]);
 	
 	assert_command(
 		commands,
 		client.configuration.id,
-		S2CCommandUnion::SetStruct(StructureCommand {
-			object_id,
+		S2CCommandUnion::Struct(StructureCommand {
+			object_id: client_object_id,
 			field_id: 10,
 			structure: vec![1, 2, 3, 4, 5],
 		}),
@@ -240,21 +241,22 @@ fn assert_command(
 
 fn setup() -> (Room, Rc<RefCell<S2CCommandCollector>>) {
 	let mut room = room_stub();
-	let collector = Rc::new(RefCell::new(S2CCommandCollector::new()));
+	let collector = Rc::new(RefCell::new(S2CCommandCollector::default()));
 	room.listener.add_listener(collector.clone());
 	(room, collector)
 }
 
-fn setup_client_and_object(mut room: &mut Room) -> (Rc<Client>, GameObjectId, Rc<RefCell<GameObject>>) {
+fn setup_client_and_object(mut room: &mut Room) -> (Rc<Client>, ServerGameObjectId, ClientGameObjectId, Rc<RefCell<GameObject>>) {
 	let client = setup_client(&mut room, "HASH_A", 0b100);
-	let object_id = GameObjectId::new(1, Owner::Client(client.configuration.id));
+	let server_object_id = ServerGameObjectId::new(1, ServerOwner::Client(client.configuration.id));
+	let client_object_id = server_object_id.to_client_object_id(Option::Some(client.configuration.id));
 	room
 		.new_game_object(
-			object_id.clone(),
+			server_object_id.clone(),
 			AccessGroups::from(0b100),
 			GameObjectFields::default(),
 		);
 	
-	let object = room.objects.get(&object_id).unwrap();
-	(client, object_id, object)
+	let object = room.objects.get(&server_object_id).unwrap();
+	(client, server_object_id, client_object_id, object)
 }

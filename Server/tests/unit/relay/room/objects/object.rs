@@ -6,8 +6,7 @@ use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 
 #[test]
 fn should_store_struct_data_in_game_object() {
@@ -58,7 +57,7 @@ fn test_float_counter() {
 
 fn setup() -> (Room, GameObject) {
 	let object = GameObject::new(
-		GameObjectId::new(100, Owner::Root),
+		ServerGameObjectId::new(100, ServerOwner::Root),
 		AccessGroups::default(),
 		GameObjectFields::default());
 	let room = Room::new(HashValue::from(""));

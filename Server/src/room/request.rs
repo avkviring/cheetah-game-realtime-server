@@ -5,11 +5,11 @@ use mio::net::TcpStream;
 use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::object::GameObjectId;
 
 use crate::network::server::tcp::room::TcpRoom;
 use crate::room::clients::ClientConnectError;
 use crate::room::Room;
+use crate::room::objects::id::ServerGameObjectId;
 
 /// Исполнение внешних запросов к комнате
 /// Запросы передаются через mpsc:Receiver
@@ -23,7 +23,7 @@ pub enum RoomRequest {
 	AddWaitingClient(HashValue, AccessGroups),
 	TCPClientConnect(HashValue, TcpStream, Vec<u8>),
 	GetClients(Sender<Vec<ClientInfo>>),
-	GetObjects(Sender<Vec<GameObjectId>>),
+	GetObjects(Sender<Vec<ServerGameObjectId>>),
 	Destroy,
 }
 
@@ -97,7 +97,7 @@ impl RoomRequests {
 		}
 	}
 	
-	fn do_get_objects(&self, room: &Room, sender: Sender<Vec<GameObjectId>>) {
+	fn do_get_objects(&self, room: &Room, sender: Sender<Vec<ServerGameObjectId>>) {
 		log::trace!("room requests: get objects from room {}", room.hash);
 		let result = sender.send(room.objects.get_object_ids());
 		match result {

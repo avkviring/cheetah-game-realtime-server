@@ -1,17 +1,17 @@
 use crate::constants::ClientId;
 use crate::network::command::{Decoder, Encoder};
 use crate::network::niobuffer::{NioBuffer, NioBufferError};
-use crate::room::owner::Owner;
+use crate::room::owner::ClientOwner;
 
 ///
-/// Идентификатор игрового объекта
+/// Идентификатор игрового объекта на клиенте
 ///
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]
-pub struct GameObjectId {
+pub struct ClientGameObjectId {
 	///
 	/// Создатель игрового объекта
 	///
-	pub owner: Owner,
+	pub owner: ClientOwner,
 	
 	///
 	/// Идентификатор игрового объекта в рамках владельца
@@ -19,24 +19,24 @@ pub struct GameObjectId {
 	pub id: u32,
 }
 
-impl GameObjectId {
-	pub fn new(id: u32, owner: Owner) -> Self {
-		GameObjectId {
+impl ClientGameObjectId {
+	pub fn new(id: u32, owner: ClientOwner) -> Self {
+		ClientGameObjectId {
 			owner,
 			id,
 		}
 	}
 }
 
-impl Decoder for GameObjectId {
+impl Decoder for ClientGameObjectId {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
 		let id = buffer.read_u32()?;
-		let owner = Owner::decode(buffer)?;
-		Result::Ok(GameObjectId::new(id, owner))
+		let owner = ClientOwner::decode(buffer)?;
+		Result::Ok(ClientGameObjectId::new(id, owner))
 	}
 }
 
-impl Encoder for GameObjectId {
+impl Encoder for ClientGameObjectId {
 	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
 		buffer.write_u32(self.id)?;
 		self.owner.encode(buffer)?;
@@ -44,8 +44,8 @@ impl Encoder for GameObjectId {
 	}
 }
 
-impl Default for GameObjectId {
+impl Default for ClientGameObjectId {
 	fn default() -> Self {
-		GameObjectId::new(0, Owner::Root)
+		ClientGameObjectId::new(0, ClientOwner::Root)
 	}
 }

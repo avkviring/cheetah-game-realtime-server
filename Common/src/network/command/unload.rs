@@ -1,6 +1,6 @@
 use crate::network::command::{CommandCode, Decoder, Encoder};
 use crate::network::niobuffer::{NioBuffer, NioBufferError};
-use crate::room::object::GameObjectId;
+use crate::room::object::ClientGameObjectId;
 
 ///
 /// удаление игрового объекта
@@ -8,7 +8,7 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnloadGameObjectCommand {
-	pub object_id: GameObjectId
+	pub object_id: ClientGameObjectId
 }
 
 impl CommandCode for UnloadGameObjectCommand {
@@ -18,7 +18,7 @@ impl CommandCode for UnloadGameObjectCommand {
 impl Decoder for UnloadGameObjectCommand {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
 		Result::Ok(
-			UnloadGameObjectCommand { object_id: GameObjectId::decode(buffer)? }
+			UnloadGameObjectCommand { object_id: ClientGameObjectId::decode(buffer)? }
 		)
 	}
 }

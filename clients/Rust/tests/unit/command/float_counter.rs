@@ -1,12 +1,12 @@
 use cheetah_relay_client::client::command::C2SCommandUnion;
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, CommandFFI, S2CCommandFFIType, Server2ClientFFIConverter};
 use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::Owner;
+use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::owner::ClientOwner;
 
 #[test]
 fn should_to_ffi() {
-	let object_id = GameObjectId::new(100, Owner::Root);
+	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
 	let command = SetFloatCounterCommand {
 		object_id: object_id.clone(),
 		field_id: 10,
@@ -24,7 +24,7 @@ fn should_to_ffi() {
 
 #[test]
 fn should_set_float_counter_from_ffi() {
-	let object_id = GameObjectId::new(100, Owner::Root);
+	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
 	let mut ffi = CommandFFI::default();
 	ffi.command_type_c2s = C2SCommandFFIType::SetFloatCounter;
 	ffi.object_id.set_from(&object_id);
@@ -38,7 +38,7 @@ fn should_set_float_counter_from_ffi() {
 
 #[test]
 fn should_increment_float_counter_from_ffi() {
-	let object_id = GameObjectId::new(100, Owner::Root);
+	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
 	let mut ffi = CommandFFI::default();
 	ffi.command_type_c2s = C2SCommandFFIType::IncrementFloatCounter;
 	ffi.object_id.set_from(&object_id);

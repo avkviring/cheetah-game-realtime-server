@@ -31,7 +31,7 @@ struct ConnectionWithClient {
 
 impl TcpRoom {
 	pub fn new(room: &mut Room) -> TcpRoom {
-		let collector = Rc::new(RefCell::new(S2CCommandCollector::new()));
+		let collector = Rc::new(RefCell::new(S2CCommandCollector::default()));
 		room.listener.add_listener(collector.clone());
 		TcpRoom {
 			poll: Poll::new().unwrap(),
