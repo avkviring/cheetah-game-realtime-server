@@ -21,15 +21,6 @@ pub struct GameObject {
 }
 
 
-#[derive(Debug)]
-pub enum ObjectFieldType {
-	LongCounter,
-	FloatCounter,
-	Struct,
-	Event,
-}
-
-
 impl GameObject {
 	pub fn new(id: ServerGameObjectId, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
 		GameObject {

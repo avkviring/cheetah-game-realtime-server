@@ -1,10 +1,3 @@
-pub mod unload;
-pub mod event;
-pub mod float_counter;
-pub mod long_counter;
-pub mod structure;
-pub mod upload;
-
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::network::command::{CommandCode, Decoder};
 use cheetah_relay_common::network::command::event::EventCommand;
@@ -15,13 +8,19 @@ use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
-use cheetah_relay_common::room::access::Access;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 
 use crate::room::clients::Client;
 use crate::room::objects::ErrorGetObjectWithCheckAccess;
-use crate::room::objects::object::{GameObject, ObjectFieldType};
+use crate::room::objects::object::GameObject;
 use crate::room::Room;
+
+pub mod unload;
+pub mod event;
+pub mod float_counter;
+pub mod long_counter;
+pub mod structure;
+pub mod upload;
 
 ///
 /// Выполнение серверной команды
@@ -102,18 +101,13 @@ pub fn get_field_and_change<F>(
 	room: &mut Room,
 	client: &Client,
 	object_id: &ClientGameObjectId,
-	field_id: FieldID,
-	object_field_type: ObjectFieldType,
 	action: F,
 ) where
 	F: FnOnce(&mut Room, &mut GameObject) -> String,
 {
 	let result_check = room.get_object_with_check_field_access(
-		Access::WRITE,
 		client,
 		&object_id,
-		object_field_type,
-		field_id,
 	);
 	
 	match result_check {
@@ -128,14 +122,6 @@ pub fn get_field_and_change<F>(
 					room,
 					client,
 					format!("object not found {:?}", &object_id),
-				);
-			}
-			ErrorGetObjectWithCheckAccess::AccessNotAllowed => {
-				error_c2s_command(
-					command_name,
-					room,
-					client,
-					format!("client has not write access to objects {:?} field {}", &object_id, field_id),
 				);
 			}
 		},

@@ -1,9 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use indexmap::map::{IndexMap, MutableKeys};
+use indexmap::map::IndexMap;
 
-use cheetah_relay_common::room::access::{Access, AccessGroups};
 use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 
@@ -11,8 +10,8 @@ use crate::room::clients::Client;
 use crate::room::listener::RoomListener;
 use crate::room::objects::id::{ServerGameObjectId, ServerOwner};
 use crate::room::objects::object::GameObject;
-use crate::room::objects::object::ObjectFieldType;
 use crate::room::Room;
+use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod object;
 pub mod id;
@@ -24,8 +23,7 @@ pub struct Objects {
 
 #[derive(Debug)]
 pub enum ErrorGetObjectWithCheckAccess {
-	ObjectNotFound,
-	AccessNotAllowed,
+	ObjectNotFound
 }
 
 
@@ -129,11 +127,8 @@ impl Room {
 	
 	/// проверка прав доступа к полю объекта
 	pub fn get_object_with_check_field_access(&mut self,
-											  _access: Access,
 											  client: &Client,
-											  object_id: &ClientGameObjectId,
-											  _object_field_type: ObjectFieldType,
-											  _field_id: u16) ->
+											  object_id: &ClientGameObjectId) ->
 											  Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {
 		let object_id = ServerGameObjectId::from_client_object_id(Option::Some(client.configuration.id), object_id);
 		let object = self.objects.get(&object_id);
@@ -145,7 +140,6 @@ impl Room {
 	
 	/// проверка прав доступа к полю объекта
 	pub fn get_object_with_check_access(&self,
-										_access: Access,
 										client: &Client,
 										object_id: &ClientGameObjectId) ->
 										Result<Rc<RefCell<GameObject>>, ErrorGetObjectWithCheckAccess> {

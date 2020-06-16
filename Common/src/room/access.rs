@@ -12,13 +12,6 @@ pub struct AccessGroups {
 	pub groups: GroupType,
 }
 
-#[derive(Debug)]
-pub enum Access {
-	READ,
-	WRITE,
-	ROOT,
-}
-
 impl AccessGroups {
 	pub fn contains_group(&self, group: u8) -> bool {
 		let bits = (1 as u64).shl(group as u64);
@@ -26,7 +19,7 @@ impl AccessGroups {
 	}
 	
 	pub fn contains_any(&self, groups: &AccessGroups) -> bool {
-		return self.groups.bitand(groups.groups) > 0;
+		self.groups.bitand(groups.groups) > 0
 	}
 	
 	pub fn is_sub_groups(&self, groups: &AccessGroups) -> bool {
