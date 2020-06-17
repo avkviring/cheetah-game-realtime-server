@@ -15,8 +15,8 @@ pub struct RoomThread {
 }
 
 impl RoomThread {
-	pub fn new(room_hash: HashValue, receiver: Receiver<RoomRequest>) -> RoomThread {
-		let mut room = Room::new(room_hash);
+	pub fn new(room_hash: HashValue, auto_create_client: bool, receiver: Receiver<RoomRequest>) -> RoomThread {
+		let mut room = Room::new(room_hash, auto_create_client);
 		let tcp = TcpRoom::new(&mut room);
 		RoomThread {
 			requests: RoomRequests::new(receiver),

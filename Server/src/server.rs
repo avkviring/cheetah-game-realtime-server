@@ -11,11 +11,36 @@ pub struct Server {
 	pub sender: Sender<TCPAcceptorRequest>,
 }
 
-impl Server {
+pub struct ServerBuilder {
+	auto_create_rooms_and_clients: bool,
+	listen_address: String,
+}
+
+impl ServerBuilder {
 	pub fn new(listen_address: String) -> Self {
+		ServerBuilder {
+			auto_create_rooms_and_clients: false,
+			listen_address,
+		}
+	}
+	
+	pub fn enable_auto_create_room_and_client(mut self) -> Self {
+		self.auto_create_rooms_and_clients = true;
+		self
+	}
+	
+	
+	pub fn build(self) -> Server {
+		Server::new(self.listen_address, self.auto_create_rooms_and_clients)
+	}
+}
+
+
+impl Server {
+	pub fn new(listen_address: String, auto_create_rooms_and_clients: bool) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		
-		let rooms = Arc::new(Mutex::new(Rooms::default()));
+		let rooms = Arc::new(Mutex::new(Rooms::new(auto_create_rooms_and_clients)));
 		let cloned_rooms = rooms.clone();
 		let tcp_acceptor_handler = Builder::new()
 			.name("tcp acceptor".to_string())

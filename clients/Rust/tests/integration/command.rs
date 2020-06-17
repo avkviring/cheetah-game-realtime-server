@@ -34,7 +34,7 @@ fn should_send_command_to_server() {
 	
 	
 	// check objects
-	let rooms = &rooms.lock().unwrap();
+	let rooms = &mut rooms.lock().unwrap();
 	let (sender, receiver) = mpsc::channel();
 	rooms.send_room_request(&room_hash, RoomRequest::GetObjects(sender)).ok().unwrap();
 	let objects = receiver.recv().unwrap();

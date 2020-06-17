@@ -33,6 +33,7 @@ pub fn hash_value_stub() -> HashValue {
 
 pub fn room_stub() -> Room {
 	Room {
+		auto_create_client: false,
 		hash: hash_value_stub(),
 		listener: Default::default(),
 		clients: Default::default(),

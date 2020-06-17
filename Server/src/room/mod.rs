@@ -15,6 +15,11 @@ pub mod request;
 /// Комната создается по команде с mm сервера.
 /// При создании необходимо указать список ожидаемых пользователей.
 pub struct Room {
+	///
+	/// true - создавать клиент даже если он не в списке ожидающих
+	///
+	pub auto_create_client: bool,
+	
 	pub hash: HashValue,
 	/// клиенты
 	pub clients: Clients,
@@ -25,8 +30,9 @@ pub struct Room {
 }
 
 impl Room {
-	pub fn new(hash_value: HashValue) -> Self {
+	pub fn new(hash_value: HashValue, auto_create_client: bool) -> Self {
 		Room {
+			auto_create_client,
 			hash: hash_value,
 			listener: Default::default(),
 			clients: Default::default(),

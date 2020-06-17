@@ -2,7 +2,7 @@ extern crate stderrlog;
 
 use stderrlog::Timestamp;
 
-use cheetah_relay::server::Server;
+use cheetah_relay::server::{Server, ServerBuilder};
 
 fn main() {
 	init_logger();
@@ -11,7 +11,7 @@ fn main() {
 }
 
 fn start_server() {
-	let _server = Server::new("127.0.0.1:5000".to_string());
+	let server = ServerBuilder::new("127.0.0.1:5000".to_string()).build();
 }
 
 fn init_logger() {
