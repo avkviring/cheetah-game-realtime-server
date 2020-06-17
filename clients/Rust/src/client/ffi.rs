@@ -89,14 +89,14 @@ pub enum C2SCommandFFIType {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct FieldFFIBinary {
-	pub binary_size: usize,
+	pub binary_size: u8,
 	pub value: [u8; MAX_SIZE_STRUCT],
 }
 
 
 impl FieldFFIBinary {
 	pub fn as_slice(&self) -> &[u8] {
-		&self.value[0..self.binary_size]
+		&self.value[0..self.binary_size as usize]
 	}
 }
 
@@ -121,7 +121,7 @@ impl Default for FieldFFIBinary {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct FieldsFFI<T> where T: Default {
-	pub size: usize,
+	pub size: u8,
 	pub values: [FieldFFI<T>; MAX_FIELDS_IN_OBJECT],
 }
 
@@ -184,7 +184,7 @@ impl Default for CommandFFI {
 impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&HashMap<u16, IN>> for FieldsFFI<OUT> {
 	fn from(value: &HashMap<u16, IN>) -> Self {
 		let mut result: FieldsFFI<OUT> = Default::default();
-		result.size = value.len();
+		result.size = value.len() as u8;
 		for (i, (key, value)) in value.into_iter().enumerate() {
 			let mut field = &mut result.values[i];
 			field.field_id = key.clone();
@@ -197,7 +197,7 @@ impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&HashMap<u16, IN>> for Fiel
 impl From<Vec<u8>> for FieldFFIBinary {
 	fn from(value: Vec<u8>) -> Self {
 		let mut result: FieldFFIBinary = Default::default();
-		result.binary_size = value.len();
+		result.binary_size = value.len() as u8;
 		result.value[0..value.len()].copy_from_slice(&value);
 		result
 	}
@@ -205,14 +205,14 @@ impl From<Vec<u8>> for FieldFFIBinary {
 
 impl From<FieldFFIBinary> for Vec<u8> {
 	fn from(value: FieldFFIBinary) -> Self {
-		Vec::from(&value.value[0..value.binary_size])
+		Vec::from(&value.value[0..value.binary_size as usize])
 	}
 }
 
 impl<IN: Default + Clone, OUT: From<IN>> From<FieldsFFI<IN>> for HashMap<u16, OUT> {
 	fn from(value: FieldsFFI<IN>) -> Self {
 		let mut result = HashMap::<u16, OUT>::new();
-		value.values[0..value.size].iter().for_each(|v| {
+		value.values[0..value.size as usize].iter().for_each(|v| {
 			let key = v.field_id;
 			let value = From::<IN>::from(v.value.clone());
 			result.insert(key, value);
