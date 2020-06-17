@@ -1,23 +1,25 @@
-using System;
 using System.Runtime.InteropServices;
 
 namespace Cheetach.Relay
 {
+    /**
+     * Структура для передачи данных из/в Rust часть клиента
+     */
     [StructLayout(LayoutKind.Sequential)]
     public struct CommandFFI
     {
         public S2CCommandFFIType commandTypeS2C;
         public C2SCommandFFIType commandTypeC2S;
-        public UInt16 fieldId;
+        public ushort fieldId;
         public ObjectId objectId;
         public FieldFFIBinary structureData;
         public FieldFFIBinary eventData;
-        public Int64 longValue;
+        public long longValue;
         public double floatValue;
-        public UInt64 accessGroup;
-        public long_counters: FieldsFFI<i64>;
-        public float_counters: FieldsFFI<f64>;
-        public structures: FieldsFFI<FieldFFIBinary>;
+        public ulong accessGroup;
+        public FieldsFFI<long> long_counters;
+        public FieldsFFI<double> float_counters;
+        public FieldsFFI<FieldFFIBinary> structures;
     }
 
     public enum C2SCommandFFIType
@@ -45,8 +47,8 @@ namespace Cheetach.Relay
     [StructLayout(LayoutKind.Sequential)]
     public struct ObjectId
     {
-        public UInt32 id;
-        public UInt16 client;
+        public uint id;
+        public ushort client;
         public ObjectIdType idType;
     }
 
@@ -60,8 +62,31 @@ namespace Cheetach.Relay
     [StructLayout(LayoutKind.Sequential)]
     public struct FieldFFIBinary
     {
-        public UInt64 binarySize;
+        public byte binarySize;
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 255)]
         public byte[] value;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FieldsFFI<T>
+    {
+        public byte size;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 255)]
+        public FieldFFI<T>[] values;
+    }
+
+    public struct FieldFFI<T>
+    {
+        public ushort fieldId;
+        public T value;
+    }
+
+    public enum LogLevel
+    {
+        Info,
+        Warn,
+        Error,
     }
 }

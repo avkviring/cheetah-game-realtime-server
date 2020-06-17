@@ -5,6 +5,9 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
+use log::Level;
+use widestring::U16CString;
+
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::utils::logger::LogListener;
 
@@ -35,8 +38,10 @@ pub enum LogLevel {
 }
 
 #[no_mangle]
-pub extern "C" fn init() {
+pub extern "C" fn init_logger() {
 	LogListener::setup_logger();
+	set_max_log_level(LogLevel::Info);
+	log::info!("init logger");
 }
 
 #[no_mangle]
@@ -49,12 +54,26 @@ pub extern "C" fn set_max_log_level(log_level: LogLevel) {
 }
 
 #[no_mangle]
-pub extern "C" fn collect_logs(on_log_message: fn(*const c_char)) {
+pub extern "C" fn collect_logs(on_log_message: fn(LogLevel, *const u16)) {
 	let collector = &mut cheetah_relay_common::utils::logger::LOG_COLLECTOR.lock().unwrap();
-	collector.items.iter().for_each(|message| {
-		let c_str = CString::new(message.clone()).unwrap();
-		on_log_message(c_str.as_ptr() as *const c_char);
-	});
+	loop {
+		match collector.items.pop_front() {
+			None => {
+				break;
+			}
+			Some(record) => {
+				let string = U16CString::from_str(record.message).unwrap();
+				let level = match record.log_level {
+					Level::Error => { LogLevel::Error }
+					Level::Warn => { LogLevel::Warn }
+					Level::Info => { LogLevel::Info }
+					Level::Debug => { LogLevel::Info }
+					Level::Trace => { LogLevel::Info }
+				};
+				on_log_message(level, string.as_ptr());
+			}
+		}
+	}
 }
 
 

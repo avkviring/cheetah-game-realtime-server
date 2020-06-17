@@ -1,5 +1,5 @@
 {
-  "name": "Namespace.Cheetach.Relay.Client.LowLevel",
+  "name": "Cheetach.Relay",
   "references": [],
   "optionalUnityReferences": [],
   "includePlatforms": [],

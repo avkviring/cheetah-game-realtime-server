@@ -3,11 +3,14 @@ use std::sync::Mutex;
 
 #[derive(Debug)]
 pub struct LogCollector {
-	pub items: VecDeque<String>
+	pub items: VecDeque<LogRecord>
 }
 
 #[derive(Debug)]
-struct LogRecord {}
+pub struct LogRecord {
+	pub log_level: log::Level,
+	pub message: String,
+}
 
 lazy_static! {
 	pub static ref LOG_COLLECTOR:Mutex<LogCollector> = Mutex::new(LogCollector::new());
@@ -34,17 +37,20 @@ impl log::Log for LogListener {
 		let mut collector = LOG_COLLECTOR.lock().unwrap();
 		let message = match record.level() {
 			log::Level::Trace => {
-				format!("[{}] {}", record.level(), record.args())
+				format!("{}", record.args())
 			}
 			log::Level::Info => {
-				format!("[{}] {}", record.level(), record.args())
+				format!("{}", record.args())
 			}
 			_ => {
-				format!("[{}] ({} in {}) {}", record.level(), record.file().unwrap(), record.line().unwrap(), record.args())
+				format!("({} in {}) {}", record.file().unwrap(), record.line().unwrap(), record.args())
 			}
 		};
-		println!("{}", message);
-		collector.items.push_back(message);
+		println!("[{:?}] {}", record.level(), message);
+		collector.items.push_back(LogRecord {
+			log_level: record.level(),
+			message,
+		});
 	}
 	
 	fn flush(&self) {}
@@ -52,7 +58,7 @@ impl log::Log for LogListener {
 
 impl LogListener {
 	pub fn setup_logger() {
-		log::set_logger(&LOG_LISTENER).unwrap();
+		log::set_logger(&LOG_LISTENER);
 		log::set_max_level(log::LevelFilter::Trace);
 	}
 }
