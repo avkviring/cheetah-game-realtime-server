@@ -6,7 +6,7 @@ use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::Client;
 use crate::client::network::tcp::TCPClient;
-use crate::client::request::{ClientRequestType, ExternalRequestProcessor};
+use crate::client::request::{ClientRequestType, ExternalRequestProcessor, RequestResult};
 
 pub struct ClientThread {
 	client: Client,
@@ -31,7 +31,18 @@ impl ClientThread {
 		loop {
 			let network_status = self.tcp_client.cycle(&mut self.client);
 			self.client.network_status = network_status;
-			self.requests.cycle(&mut self.client);
+			match self.requests.cycle(&mut self.client) {
+				Ok(result) => {
+					match result {
+						RequestResult::Ok => {}
+						RequestResult::Close => { break; }
+					}
+				}
+				Err(e) => {
+					log::error!("client thread error");
+					break;
+				}
+			}
 			thread::sleep(Duration::from_nanos(100));
 		}
 	}

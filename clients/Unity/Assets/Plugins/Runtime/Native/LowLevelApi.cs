@@ -11,7 +11,6 @@ namespace Cheetach.Relay
 #endif
 
 
-// pub extern "C" fn collect_logs(on_log_message: fn(*const c_char));
 // pub unsafe extern "C" fn create_client(addr: *const c_char, room_hash: *const c_char, client_hash: *const c_char) -> u16;
 // pub extern "C" fn get_connection_status<F, E>(client_id: u16, on_result: F, on_error: E);
 // pub extern "C" fn receive_commands_from_server<F, E>(client_id: u16, collector: F, on_error: E);
@@ -29,5 +28,29 @@ namespace Cheetach.Relay
 
         [DllImport(dllName: Import, CallingConvention = CallingConvention.Cdecl, EntryPoint = "collect_logs")]
         public static extern void CollectLogs(LogCollector collector);
+
+
+        [DllImport(dllName: Import, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_client")]
+        public static extern ushort CreateClient(
+            [MarshalAs(UnmanagedType.LPStr)] string serverAddress,
+            [MarshalAs(UnmanagedType.LPStr)] string roomHash,
+            [MarshalAs(UnmanagedType.LPStr)] string clientHash);
+
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void NetworkStatusDelegate(NetworkStatus status);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void ErrorDelegate();
+
+
+        [DllImport(dllName: Import, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_connection_status")]
+        public static extern void GetConnectionStatus(
+            ushort client,
+            NetworkStatusDelegate statusDelegate,
+            ErrorDelegate errorDelegate);
+
+        [DllImport(dllName: Import, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_client")]
+        public static extern void DestroyClient(ushort client);
     }
 }

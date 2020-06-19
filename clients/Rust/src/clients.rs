@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use std::sync::mpsc::{RecvError, Sender, SendError};
+use std::sync::mpsc::{RecvError, RecvTimeoutError, Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
+use std::time::Duration;
 
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
@@ -35,14 +36,23 @@ pub struct Clients {
 pub enum ClientsErrors {
 	ClientNotFound(u16),
 	CollectS2CCommand(String),
-	GetConnectionStatus(RecvError),
-	SendCommandToServerError(SendError<ClientRequestType>),
+	RecvError(RecvError),
+	TimeOut(RecvTimeoutError),
+	SendError(SendError<ClientRequestType>),
 }
 
 #[derive(Debug)]
 pub struct ClientAPI {
 	sender: Sender<ClientRequestType>,
-	handler: JoinHandle<()>,
+	handler: Option<JoinHandle<()>>,
+}
+
+
+impl Drop for ClientAPI {
+	fn drop(&mut self) {
+		self.sender.send(ClientRequestType::Close);
+		self.handler.take().unwrap().join();
+	}
 }
 
 impl Default for Clients {
@@ -69,12 +79,13 @@ impl Clients {
 		});
 		let client_api = ClientAPI {
 			sender,
-			handler,
+			handler: Option::Some(handler),
 		};
-		
 		self.client_generator_id += 1;
 		let current_generator_id = self.client_generator_id;
 		self.clients.insert(current_generator_id.clone(), client_api);
+		
+		log::info!("Clients::create_client with id {}", current_generator_id);
 		current_generator_id
 	}
 	
@@ -124,7 +135,7 @@ impl Clients {
 						Result::Ok(())
 					}
 					Err(e) => {
-						Result::Err(ClientsErrors::SendCommandToServerError(e))
+						Result::Err(ClientsErrors::SendError(e))
 					}
 				}
 			}
@@ -179,13 +190,19 @@ impl Clients {
 		match self.clients.get(&client_id) {
 			Some(client) => {
 				let (sender, receiver) = std::sync::mpsc::channel();
-				client.sender.send(ClientRequestType::GetConnectionStatus(sender)).unwrap();
-				match receiver.recv() {
-					Ok(status) => {
-						Result::Ok(status)
+				match client.sender.send(ClientRequestType::GetConnectionStatus(sender)) {
+					Ok(_) => {
+						match receiver.recv_timeout(Duration::from_millis(100)) {
+							Ok(status) => {
+								Result::Ok(status)
+							}
+							Err(e) => {
+								Result::Err(ClientsErrors::TimeOut(e))
+							}
+						}
 					}
 					Err(e) => {
-						Result::Err(ClientsErrors::GetConnectionStatus(e))
+						Result::Err(ClientsErrors::SendError(e))
 					}
 				}
 			}

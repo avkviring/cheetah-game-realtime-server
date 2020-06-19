@@ -89,4 +89,11 @@ namespace Cheetach.Relay
         Warn,
         Error,
     }
+
+    public enum NetworkStatus
+    {
+        Connecting,
+        OnLine,
+        Disconnected,
+    }
 }

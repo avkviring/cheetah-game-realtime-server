@@ -1,10 +1,11 @@
+using System;
 using Cheetach.Relay;
 using UnityEngine;
 
 namespace Runtime
 {
     /**
-     * Показывает ошибки из нативной части клиента и сервера      
+     * Перенаправляет ошибки из нативной части клиента и сервера в консоль Unity    
      */
     public class LogGatewayComponent : MonoBehaviour
     {
@@ -27,6 +28,8 @@ namespace Runtime
                 case LogLevel.Error:
                     Debug.LogError(log);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(level), level, null);
             }
         }
 
