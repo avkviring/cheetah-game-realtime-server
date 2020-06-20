@@ -35,7 +35,7 @@ fn should_disconnect_to_server_when_server_closed() {
 #[test]
 fn should_disconnect_client() {
 	setup_logger();
-	let address = "127.0.0.1:7002";
+	let address = "127.0.0.1:7003";
 	let client_hash = HashValue::from("client_hash");
 	
 	let (mut server, room_hash, rooms) = setup_server(address);

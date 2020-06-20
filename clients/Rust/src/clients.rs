@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{RecvError, RecvTimeoutError, Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
@@ -45,6 +46,8 @@ pub enum ClientsErrors {
 pub struct ClientAPI {
 	sender: Sender<ClientRequestType>,
 	handler: Option<JoinHandle<()>>,
+	commands_from_server: Arc<Mutex<Vec<S2CCommandUnion>>>,
+	network_status: Arc<Mutex<NetworkStatus>>,
 }
 
 
@@ -73,13 +76,30 @@ impl Clients {
 						 client_hash: HashValue,
 	) -> u16 {
 		let (sender, receiver) = std::sync::mpsc::channel();
+		
+		
+		let commands_from_server = Arc::new(Mutex::new(Vec::new()));
+		let network_status = Arc::new(Mutex::new(NetworkStatus::None));
+		let commands_from_server_cloned = commands_from_server.clone();
+		let network_status_cloned = network_status.clone();
+		
 		let handler = thread::spawn(move || {
-			let mut client = ClientThread::new(server_address, room_hash, client_hash, receiver);
+			let mut client = ClientThread::new(
+				server_address,
+				room_hash,
+				client_hash,
+				receiver,
+				commands_from_server_cloned,
+				network_status_cloned,
+			);
 			client.run()
 		});
+		
 		let client_api = ClientAPI {
 			sender,
 			handler: Option::Some(handler),
+			commands_from_server,
+			network_status,
 		};
 		self.client_generator_id += 1;
 		let current_generator_id = self.client_generator_id;
@@ -129,7 +149,6 @@ impl Clients {
 				if log::log_enabled!(log::Level::Info) {
 					log::info!("schedule command to server {:?}", command);
 				}
-				
 				match client.sender.send(ClientRequestType::SendCommandToServer(command)) {
 					Ok(_) => {
 						Result::Ok(())
@@ -151,37 +170,27 @@ impl Clients {
 		match self.clients.get(&client_id) {
 			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 			Some(client) => {
-				let (sender, receiver) = std::sync::mpsc::channel();
-				match client.sender.send(ClientRequestType::GetS2CCommands(sender)) {
-					Ok(_) => {
-						match receiver.recv() {
-							Ok(commands) => {
-								let command_ffi = &mut self.s2c_command_ffi;
-								commands.into_iter().for_each(|command| {
-									if log::log_enabled!(log::Level::Info) {
-										log::info!("receive command from server {:?}", command);
-									}
-									match command {
-										S2CCommandUnion::Upload(command) => { command.to_ffi(command_ffi) }
-										S2CCommandUnion::SetLongCounter(command) => { command.to_ffi(command_ffi) }
-										S2CCommandUnion::SetFloatCounter(command) => { command.to_ffi(command_ffi) }
-										S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }
-										S2CCommandUnion::Event(command) => { command.to_ffi(command_ffi) }
-										S2CCommandUnion::Unload(command) => { command.to_ffi(command_ffi) }
-									};
-									collector(command_ffi);
-								});
-								Result::Ok(())
-							}
-							Err(e) => {
-								Result::Err(ClientsErrors::CollectS2CCommand(format!("{:?}", e)))
-							}
-						}
+				let commands = &mut client.commands_from_server.lock().unwrap();
+				let cloned_commands: Vec<_> = commands.drain(..).collect();
+				drop(commands);
+				
+				
+				let command_ffi = &mut self.s2c_command_ffi;
+				cloned_commands.into_iter().for_each(|command| {
+					if log::log_enabled!(log::Level::Info) {
+						log::info!("receive command from server {:?}", command);
 					}
-					Err(e) => {
-						Result::Err(ClientsErrors::CollectS2CCommand(format!("{:?}", e)))
-					}
-				}
+					match command {
+						S2CCommandUnion::Upload(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::SetLongCounter(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::SetFloatCounter(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::Event(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::Unload(command) => { command.to_ffi(command_ffi) }
+					};
+					collector(command_ffi);
+				});
+				Result::Ok(())
 			}
 		}
 	}
@@ -189,22 +198,7 @@ impl Clients {
 	pub fn get_connection_status(&self, client_id: u16) -> Result<NetworkStatus, ClientsErrors> {
 		match self.clients.get(&client_id) {
 			Some(client) => {
-				let (sender, receiver) = std::sync::mpsc::channel();
-				match client.sender.send(ClientRequestType::GetConnectionStatus(sender)) {
-					Ok(_) => {
-						match receiver.recv_timeout(Duration::from_millis(100)) {
-							Ok(status) => {
-								Result::Ok(status)
-							}
-							Err(e) => {
-								Result::Err(ClientsErrors::TimeOut(e))
-							}
-						}
-					}
-					Err(e) => {
-						Result::Err(ClientsErrors::SendError(e))
-					}
-				}
+				Result::Ok(*client.network_status.lock().unwrap())
 			}
 			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 		}

@@ -64,20 +64,16 @@ fn should_receive_command_to_server() {
 	
 	let client_b = setup_client(address, &room_hash, &client_hash_b);
 	
-	let collect_upload_command = Arc::new(AtomicBool::new(false));
-	let move_arc = collect_upload_command.clone();
-	// проверяем входящие команды на втором клиенте
-	let collector = move |ffi: &CommandFFI| {
-		if ffi.command_type_s2c == S2CCommandFFIType::Upload {
-			(&*move_arc).store(true, Ordering::SeqCst);
-		}
-	};
 	
 	receive_commands_from_server(
 		client_b,
-		collector,
+		|ffi: &CommandFFI| {
+			if ffi.command_type_s2c == S2CCommandFFIType::Upload {
+				assert!(true);
+			} else {
+				assert!(false);
+			}
+		},
 		|| assert!(false),
 	);
-	
-	assert_eq!((&*collect_upload_command).load(Ordering::SeqCst), true);
 }

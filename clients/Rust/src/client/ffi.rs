@@ -62,7 +62,7 @@ pub trait Client2ServerFFIConverter {
 }
 
 
-#[repr(u8)]
+#[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum S2CCommandFFIType {
 	Upload,
@@ -73,7 +73,7 @@ pub enum S2CCommandFFIType {
 	Unload,
 }
 
-#[repr(u8)]
+#[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum C2SCommandFFIType {
 	Upload,
@@ -89,14 +89,14 @@ pub enum C2SCommandFFIType {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct FieldFFIBinary {
-	pub binary_size: u8,
+	pub count: u8,
 	pub value: [u8; MAX_SIZE_STRUCT],
 }
 
 
 impl FieldFFIBinary {
 	pub fn as_slice(&self) -> &[u8] {
-		&self.value[0..self.binary_size as usize]
+		&self.value[0..self.count as usize]
 	}
 }
 
@@ -104,7 +104,7 @@ impl Debug for FieldFFIBinary {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		f
 			.debug_struct("$name")
-			.field("size", &self.binary_size)
+			.field("size", &self.count)
 			.finish()
 	}
 }
@@ -112,7 +112,7 @@ impl Debug for FieldFFIBinary {
 impl Default for FieldFFIBinary {
 	fn default() -> Self {
 		FieldFFIBinary {
-			binary_size: 0,
+			count: 0,
 			value: [0; MAX_SIZE_STRUCT],
 		}
 	}
@@ -121,15 +121,16 @@ impl Default for FieldFFIBinary {
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct FieldsFFI<T> where T: Default {
-	pub size: u8,
-	pub values: [FieldFFI<T>; MAX_FIELDS_IN_OBJECT],
+	pub count: u8,
+	pub fields: [u16; MAX_FIELDS_IN_OBJECT],
+	pub values: [T; MAX_FIELDS_IN_OBJECT],
 }
 
 impl<T> Debug for FieldsFFI<T> where T: Default {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		f
 			.debug_struct("$name")
-			.field("size", &self.size)
+			.field("size", &self.count)
 			.finish()
 	}
 }
@@ -137,7 +138,8 @@ impl<T> Debug for FieldsFFI<T> where T: Default {
 impl<T> Default for FieldsFFI<T> where T: Default + Copy {
 	fn default() -> Self {
 		FieldsFFI {
-			size: Default::default(),
+			count: Default::default(),
+			fields: [Default::default(); MAX_FIELDS_IN_OBJECT],
 			values: [Default::default(); MAX_FIELDS_IN_OBJECT],
 		}
 	}
@@ -184,11 +186,10 @@ impl Default for CommandFFI {
 impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&HashMap<u16, IN>> for FieldsFFI<OUT> {
 	fn from(value: &HashMap<u16, IN>) -> Self {
 		let mut result: FieldsFFI<OUT> = Default::default();
-		result.size = value.len() as u8;
+		result.count = value.len() as u8;
 		for (i, (key, value)) in value.into_iter().enumerate() {
-			let mut field = &mut result.values[i];
-			field.field_id = key.clone();
-			field.value = From::<IN>::from(value.clone());
+			result.fields[i] = key.clone();
+			result.values[i] = From::<IN>::from(value.clone())
 		};
 		result
 	}
@@ -197,7 +198,7 @@ impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&HashMap<u16, IN>> for Fiel
 impl From<Vec<u8>> for FieldFFIBinary {
 	fn from(value: Vec<u8>) -> Self {
 		let mut result: FieldFFIBinary = Default::default();
-		result.binary_size = value.len() as u8;
+		result.count = value.len() as u8;
 		result.value[0..value.len()].copy_from_slice(&value);
 		result
 	}
@@ -205,18 +206,18 @@ impl From<Vec<u8>> for FieldFFIBinary {
 
 impl From<FieldFFIBinary> for Vec<u8> {
 	fn from(value: FieldFFIBinary) -> Self {
-		Vec::from(&value.value[0..value.binary_size as usize])
+		Vec::from(&value.value[0..value.count as usize])
 	}
 }
 
 impl<IN: Default + Clone, OUT: From<IN>> From<FieldsFFI<IN>> for HashMap<u16, OUT> {
 	fn from(value: FieldsFFI<IN>) -> Self {
 		let mut result = HashMap::<u16, OUT>::new();
-		value.values[0..value.size as usize].iter().for_each(|v| {
-			let key = v.field_id;
-			let value = From::<IN>::from(v.value.clone());
-			result.insert(key, value);
-		});
+		for i in 0..value.count as usize {
+			let field = value.fields[i].clone();
+			let value = From::<IN>::from(value.values[i].clone());
+			result.insert(field, value);
+		}
 		result
 	}
 }

@@ -105,7 +105,7 @@ impl TCPClient {
 						|buffer| {
 							match decode_command(buffer) {
 								Ok(command) => {
-									client.commands_from_server.push(command);
+									client.commands_from_server.lock().unwrap().push(command);
 									Result::Ok(())
 								}
 								Err(e) => { Result::Err(e) }
