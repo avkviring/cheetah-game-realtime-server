@@ -24,10 +24,11 @@ pub struct TcpConnection {
 }
 
 #[derive(Debug)]
-pub enum TcpConnectionError {
+pub enum ProcessNetworkEventError {
 	Broken,
 	Error(String),
 	EventError,
+	Buffer(OnReadBufferError),
 }
 
 #[derive(Debug)]
@@ -50,10 +51,10 @@ impl TcpConnection {
 			token,
 		}
 	}
-	pub fn process_event<F>(&mut self, event: &Event, poll: &mut Poll, on_read_buffer: F) -> Result<(), TcpConnectionError>
+	pub fn process_event<F>(&mut self, event: &Event, poll: &mut Poll, on_read_buffer: F) -> Result<(), ProcessNetworkEventError>
 		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
 		if event.is_error() {
-			return Result::Err(TcpConnectionError::EventError);
+			return Result::Err(ProcessNetworkEventError::EventError);
 		}
 		if event.is_readable() {
 			self.read(on_read_buffer)?
@@ -64,19 +65,27 @@ impl TcpConnection {
 		Result::Ok(())
 	}
 	
-	pub fn process_read_buffer<F>(&mut self, mut on_read_buffer: F) where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
+	pub fn process_read_buffer<F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError>>(&mut self, mut on_read_buffer: F) -> Result<(), OnReadBufferError> {
 		self.read_buffer.flip();
 		loop {
 			self.read_buffer.mark();
+			
 			match on_read_buffer(&mut self.read_buffer) {
 				Ok(_) => {}
-				Err(_) => {
-					self.read_buffer.reset().unwrap();
-					break;
+				Err(e) => {
+					return match e {
+						OnReadBufferError::UnknownCommand(_) => {
+							Result::Err(e)
+						}
+						OnReadBufferError::NioBufferError(_) => {
+							self.read_buffer.reset().unwrap();
+							self.read_buffer.compact();
+							Result::Ok(())
+						}
+					};
 				}
 			}
 		}
-		self.read_buffer.compact();
 	}
 	
 	
@@ -84,7 +93,7 @@ impl TcpConnection {
 	/// Кодирование команд в буфер для записи
 	///
 	pub fn prepare_commands_for_send<C, F>(&mut self, poll: &mut Poll, commands: &mut VecDeque<C>, mut command_to_buffer: F) -> Result<(),
-		TcpConnectionError>
+		ProcessNetworkEventError>
 		where F: FnMut(&mut NioBuffer, &C) -> Result<(), NioBufferError>, C: Debug {
 		if !commands.is_empty() {
 			self.write_buffer.compact();
@@ -114,16 +123,16 @@ impl TcpConnection {
 	///
 	/// Читаем, декодируем и исполняем данные из сокета
 	///
-	fn read<F>(&mut self, on_read_buffer: F) -> Result<(), TcpConnectionError>
+	fn read<F>(&mut self, on_read_buffer: F) -> Result<(), ProcessNetworkEventError>
 		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
 		let read_result = self.stream.read(&mut self.read_buffer.to_slice());
 		match read_result {
 			Ok(0) => {
-				Result::Err(TcpConnectionError::Broken)
+				Result::Err(ProcessNetworkEventError::Broken)
 			}
 			Ok(size) => {
 				self.read_buffer.set_position(self.read_buffer.position() + size).unwrap();
-				self.process_read_buffer(on_read_buffer);
+				self.process_read_buffer(on_read_buffer).map_err(ProcessNetworkEventError::Buffer)?;
 				Result::Ok(())
 			}
 			Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
@@ -133,18 +142,18 @@ impl TcpConnection {
 				Result::Ok(())
 			}
 			Err(e) => {
-				Result::Err(TcpConnectionError::Error(format!("{:?}", e)))
+				Result::Err(ProcessNetworkEventError::Error(format!("{:?}", e)))
 			}
 		}
 	}
 	
-	fn write(&mut self, poll: &mut Poll) -> Result<(), TcpConnectionError> {
+	fn write(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
 		if self.write_buffer.has_remaining() {
 			let result = self.stream.write(&mut self.write_buffer.to_slice());
 			match result {
 				Ok(size) => {
 					if let Err(e) = self.write_buffer.set_position(self.write_buffer.position() + size) {
-						Result::Err(TcpConnectionError::Error(format!("write buffer - error when set new position {:?}", e)))
+						Result::Err(ProcessNetworkEventError::Error(format!("write buffer - error when set new position {:?}", e)))
 					} else {
 						if !self.write_buffer.has_remaining() {
 							self.watch_read(poll)?;
@@ -161,7 +170,7 @@ impl TcpConnection {
 					Result::Ok(())
 				}
 				Err(e) => {
-					Result::Err(TcpConnectionError::Error(format!("{:?}", e)))
+					Result::Err(ProcessNetworkEventError::Error(format!("{:?}", e)))
 				}
 			}
 		} else {
@@ -173,7 +182,7 @@ impl TcpConnection {
 	///
 	/// Подписаться на write события
 	///
-	pub fn watch_write_and_read(&mut self, poll: &mut Poll) -> Result<(), TcpConnectionError> {
+	pub fn watch_write_and_read(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
 		let interest = Interest::WRITABLE.add(Interest::READABLE);
 		match self.watch(poll, interest) {
 			Ok(_) => {
@@ -189,7 +198,7 @@ impl TcpConnection {
 	///
 	/// Подписаться на read события
 	///
-	pub fn watch_read(&mut self, poll: &mut Poll) -> Result<(), TcpConnectionError> {
+	pub fn watch_read(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
 		if !self.watch_read {
 			match self.watch(poll, Interest::READABLE) {
 				Ok(_) => {
@@ -197,7 +206,7 @@ impl TcpConnection {
 					Result::Ok(())
 				}
 				Err(e) => {
-					Result::Err(TcpConnectionError::Error(format!("{:?}", e)))
+					Result::Err(ProcessNetworkEventError::Error(format!("{:?}", e)))
 				}
 			}
 		} else {
@@ -205,7 +214,7 @@ impl TcpConnection {
 		}
 	}
 	
-	fn watch(&mut self, poll: &mut Poll, interest: Interest) -> Result<(), TcpConnectionError> {
+	fn watch(&mut self, poll: &mut Poll, interest: Interest) -> Result<(), ProcessNetworkEventError> {
 		let result = if self.registered_in_poll {
 			poll.registry().reregister(&mut self.stream, self.token.clone(), interest)
 		} else {
@@ -217,18 +226,18 @@ impl TcpConnection {
 				Result::Ok(())
 			}
 			Err(e) => {
-				Result::Err(TcpConnectionError::Error(format!("{:?}", e)))
+				Result::Err(ProcessNetworkEventError::Error(format!("{:?}", e)))
 			}
 		}
 	}
 	
-	pub fn stop_watch(&mut self, poll: &mut Poll) -> Result<(), TcpConnectionError> {
+	pub fn stop_watch(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
 		match poll.registry().deregister(&mut self.stream) {
 			Ok(_) => {
 				Result::Ok(())
 			}
 			Err(e) => {
-				Result::Err(TcpConnectionError::Error(format!("stop watch error {:?}", e)))
+				Result::Err(ProcessNetworkEventError::Error(format!("stop watch error {:?}", e)))
 			}
 		}
 	}
