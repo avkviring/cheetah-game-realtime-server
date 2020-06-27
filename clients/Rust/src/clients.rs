@@ -14,7 +14,7 @@ use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::command::S2CCommandUnion;
-use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, CommandFFI, Server2ClientFFIConverter};
+use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, Server2ClientFFIConverter};
 use crate::client::NetworkStatus;
 use crate::client::request::ClientRequestType;
 use crate::client::thread::ClientThread;
@@ -30,7 +30,7 @@ use crate::client::thread::ClientThread;
 pub struct Clients {
 	clients: HashMap<u16, ClientAPI>,
 	client_generator_id: u16,
-	s2c_command_ffi: CommandFFI,
+	s2c_command_ffi: Command,
 }
 
 #[derive(Debug)]
@@ -128,7 +128,7 @@ impl Clients {
 	pub fn send_command_to_server(
 		&mut self,
 		client_id: u16,
-		command: &CommandFFI,
+		command: &Command,
 	) -> Result<(), ClientsErrors> {
 		match self.clients.get(&client_id) {
 			None => {
@@ -166,7 +166,7 @@ impl Clients {
 		&mut self,
 		client_id: u16,
 		mut collector: F,
-	) -> Result<(), ClientsErrors> where F: FnMut(&CommandFFI) -> () {
+	) -> Result<(), ClientsErrors> where F: FnMut(&Command) -> () {
 		match self.clients.get(&client_id) {
 			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 			Some(client) => {

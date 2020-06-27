@@ -11,7 +11,7 @@ use widestring::U16CString;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::utils::logger::LogListener;
 
-use crate::client::ffi::CommandFFI;
+use crate::client::ffi::Command;
 use crate::client::NetworkStatus;
 use crate::clients::Clients;
 
@@ -106,7 +106,7 @@ pub extern "C" fn get_connection_status(client_id: u16, on_result: fn(NetworkSta
 }
 
 #[no_mangle]
-pub extern "C" fn receive_commands_from_server(client_id: u16, collector: fn(&CommandFFI), on_error: fn()) {
+pub extern "C" fn receive_commands_from_server(client_id: u16, collector: fn(&Command), on_error: fn()) {
 	execute(|api| {
 		match api.collect_s2c_commands(client_id, collector) {
 			Ok(_) => {}
@@ -121,7 +121,7 @@ pub extern "C" fn receive_commands_from_server(client_id: u16, collector: fn(&Co
 
 
 #[no_mangle]
-pub extern "C" fn send_command_to_server(client_id: u16, command: &CommandFFI, on_error: fn()) {
+pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_error: fn()) {
 	execute(|api| {
 		log::info!("try command send");
 		match api.send_command_to_server(client_id, command) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-UNITY_PLUGINS_DIR=../Unity/Assets/Plugins/
+UNITY_PLUGINS_DIR=../Unity/Assets/CheetahRelay/
 
 cargo build
 rm -f "$UNITY_PLUGINS_DIR"/x86_64/libcheetah_relay_client.dylib
