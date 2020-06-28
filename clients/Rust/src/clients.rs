@@ -36,9 +36,6 @@ pub struct Clients {
 #[derive(Debug)]
 pub enum ClientsErrors {
 	ClientNotFound(u16),
-	CollectS2CCommand(String),
-	RecvError(RecvError),
-	TimeOut(RecvTimeoutError),
 	SendError(SendError<ClientRequestType>),
 }
 
