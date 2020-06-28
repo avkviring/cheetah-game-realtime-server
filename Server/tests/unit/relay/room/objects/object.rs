@@ -60,7 +60,7 @@ fn setup() -> (Room, GameObject) {
 		ServerGameObjectId::new(100, ServerOwner::Root),
 		AccessGroups::default(),
 		GameObjectFields::default());
-	let room = Room::new(HashValue::from(""));
+	let room = Room::new(HashValue::from(""), false);
 	(room, object)
 }
 

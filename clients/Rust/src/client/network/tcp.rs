@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::{AddrParseError, SocketAddr};
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
@@ -105,7 +105,7 @@ impl TCPClient {
 						|buffer| {
 							match decode_command(buffer) {
 								Ok(command) => {
-									client.commands_from_server.push(command);
+									client.commands_from_server.lock().unwrap().push(command);
 									Result::Ok(())
 								}
 								Err(e) => { Result::Err(e) }
@@ -153,21 +153,28 @@ impl TCPClient {
 	
 	
 	fn create_connect(&mut self, client: &mut Client) -> Status {
-		let address = SocketAddr::from_str(self.server_address.as_str()).unwrap();
-		match TcpStream::connect(address) {
-			Ok(stream) => {
-				let mut connection = TcpConnection::new(stream, NioBuffer::new(), TOKEN);
-				connection.write_buffer.clear();
-				connection.write_buffer.write_bytes(&client.room_hash.value).unwrap();
-				connection.write_buffer.write_bytes(&client.client_hash.value).unwrap();
-				connection.write_buffer.flip();
-				connection.watch_write_and_read(&mut self.poll).unwrap();
-				self.connection = Option::Some(connection);
-				self.connection_start_time = Instant::now();
-				Status::Connecting
+		match SocketAddr::from_str(self.server_address.as_str()) {
+			Ok(address) => {
+				match TcpStream::connect(address) {
+					Ok(stream) => {
+						let mut connection = TcpConnection::new(stream, NioBuffer::new(), TOKEN);
+						connection.write_buffer.clear();
+						connection.write_buffer.write_bytes(&client.room_hash.value).unwrap();
+						connection.write_buffer.write_bytes(&client.client_hash.value).unwrap();
+						connection.write_buffer.flip();
+						connection.watch_write_and_read(&mut self.poll).unwrap();
+						self.connection = Option::Some(connection);
+						self.connection_start_time = Instant::now();
+						Status::Connecting
+					}
+					Err(e) => {
+						log::error!("tcp client connect fail {:?}", e);
+						Status::Disconnected
+					}
+				}
 			}
 			Err(e) => {
-				log::error!("tcp client connect {:?}", e);
+				log::error!("tcp client connect fail {:?}", e);
 				Status::Disconnected
 			}
 		}

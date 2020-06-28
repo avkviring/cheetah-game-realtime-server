@@ -7,7 +7,7 @@ use mio::{Events, Interest, Poll, Token};
 use mio::net::TcpStream;
 
 use cheetah_relay_common::network::niobuffer::NioBuffer;
-use cheetah_relay_common::network::tcp::connection::{TcpConnection, TcpConnectionError};
+use cheetah_relay_common::network::tcp::connection::{ProcessNetworkEventError, TcpConnection};
 
 use crate::network::c2s::decode_end_execute_c2s_commands;
 use crate::network::s2c::{encode_s2c_commands, S2CCommandCollector};

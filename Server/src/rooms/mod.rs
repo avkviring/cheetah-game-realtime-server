@@ -14,7 +14,8 @@ use crate::room::thread::RoomThread;
 /// Реестр комнат
 ///
 pub struct Rooms {
-	registry: Arc<Mutex<HashMap<HashValue, RoomThreadController>>>
+	auto_create_rooms_and_clients: bool,
+	registry: Arc<Mutex<HashMap<HashValue, RoomThreadController>>>,
 }
 
 ///
@@ -31,21 +32,22 @@ pub enum SendRoomRequestError {
 }
 
 
-impl Default for Rooms {
-	fn default() -> Self {
+impl Rooms {
+	pub fn new(auto_create_rooms_and_clients: bool) -> Self {
 		Rooms {
-			registry: Default::default()
+			auto_create_rooms_and_clients,
+			registry: Default::default(),
 		}
 	}
-}
-
-impl Rooms {
+	
+	
 	pub fn create_room(&mut self, room_hash: &HashValue) {
 		let (sender, receiver) = mpsc::channel();
 		
 		let cloned_room_hash = room_hash.clone();
-		let handle = thread::spawn(|| {
-			let mut room_cycle = RoomThread::new(cloned_room_hash, receiver);
+		let auto_create_rooms_and_clients = self.auto_create_rooms_and_clients;
+		let handle = thread::spawn(move || {
+			let mut room_cycle = RoomThread::new(cloned_room_hash, auto_create_rooms_and_clients, receiver);
 			room_cycle.run();
 		});
 		
@@ -58,13 +60,20 @@ impl Rooms {
 		});
 	}
 	
-	pub fn send_room_request(&self, room_hash: &HashValue, request: RoomRequest) -> Result<(), SendRoomRequestError> {
+	pub fn send_room_request(&mut self, room_hash: &HashValue, request: RoomRequest) -> Result<(), SendRoomRequestError> {
 		let registry = &*self.registry.clone();
 		let registry = registry.lock().unwrap();
 		let room = registry.get(room_hash);
 		match room {
 			None => {
-				Result::Err(SendRoomRequestError::RoomNotFound)
+				if self.auto_create_rooms_and_clients {
+					log::trace!("Auto create room {:?}", room_hash);
+					drop(registry);
+					self.create_room(room_hash);
+					self.send_room_request(room_hash, request)
+				} else {
+					Result::Err(SendRoomRequestError::RoomNotFound)
+				}
 			}
 			Some(room) => {
 				match room.sender.send(request) {

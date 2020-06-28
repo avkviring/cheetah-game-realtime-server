@@ -1,8 +1,11 @@
 extern crate stderrlog;
 
+use std::thread;
+use std::time::Duration;
+
 use stderrlog::Timestamp;
 
-use cheetah_relay::server::Server;
+use cheetah_relay::server::{Server, ServerBuilder};
 
 fn main() {
 	init_logger();
@@ -11,13 +14,15 @@ fn main() {
 }
 
 fn start_server() {
-	let _server = Server::new("127.0.0.1:5000".to_string());
+	let server = ServerBuilder::new("127.0.0.1:5000".to_string()).enable_auto_create_room_and_client().build();
+	loop {
+		thread::sleep(Duration::from_secs(1));
+	}
 }
 
 fn init_logger() {
 	stderrlog::new()
 		.verbosity(4)
-		.quiet(false)
 		.show_level(true)
 		.timestamp(Timestamp::Second)
 		.init()

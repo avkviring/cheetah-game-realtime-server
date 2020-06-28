@@ -1,13 +1,11 @@
-use std::sync::mpsc::{Receiver, Sender, SendError, TryRecvError};
-use std::time::Duration;
+use std::sync::mpsc::{Receiver, TryRecvError};
 
-use crate::client::{Client, NetworkStatus};
-use crate::client::command::{C2SCommandUnion, S2CCommandUnion};
+use crate::client::Client;
+use crate::client::command::C2SCommandUnion;
 
 pub enum ClientRequestType {
-	GetS2CCommands(Sender<Vec<S2CCommandUnion>>),
 	SendCommandToServer(C2SCommandUnion),
-	GetConnectionStatus(Sender<NetworkStatus>),
+	Close,
 }
 
 
@@ -19,6 +17,11 @@ pub struct ExternalRequestProcessor {
 	receiver: Receiver<ClientRequestType>
 }
 
+pub enum RequestResult {
+	Ok,
+	Close,
+}
+
 impl ExternalRequestProcessor {
 	pub fn new(receiver: Receiver<ClientRequestType>) -> Self {
 		ExternalRequestProcessor {
@@ -26,28 +29,24 @@ impl ExternalRequestProcessor {
 		}
 	}
 	
-	pub fn cycle(&mut self, client: &mut Client) -> Result<(), ()> {
+	pub fn cycle(&mut self, client: &mut Client) -> Result<RequestResult, ()> {
 		let result = self.receiver.try_recv();
 		match result {
 			Ok(request) => {
 				match request {
-					ClientRequestType::GetS2CCommands(response) => {
-						let commands = client.get_commands_from_server();
-						response.send(commands).map_err(|_| ())
-					}
 					ClientRequestType::SendCommandToServer(command) => {
 						client.schedule_command_to_server(command);
-						Result::Ok(())
+						Result::Ok(RequestResult::Ok)
 					}
-					ClientRequestType::GetConnectionStatus(response) => {
-						response.send(client.network_status.clone()).map_err(|_| ())
+					ClientRequestType::Close => {
+						Result::Ok(RequestResult::Close)
 					}
 				}
 			}
 			Err(e) => {
 				match e {
 					TryRecvError::Empty => {
-						Result::Ok(())
+						Result::Ok(RequestResult::Ok)
 					}
 					TryRecvError::Disconnected => {
 						Result::Err(())

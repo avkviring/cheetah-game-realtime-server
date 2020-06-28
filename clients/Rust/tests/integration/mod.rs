@@ -7,7 +7,7 @@ use stderrlog::Timestamp;
 
 use cheetah_relay::room::request::{ClientInfo, RoomRequest};
 use cheetah_relay::rooms::Rooms;
-use cheetah_relay::server::Server;
+use cheetah_relay::server::{Server, ServerBuilder};
 use cheetah_relay_client::create_client;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
@@ -18,7 +18,7 @@ pub mod disconnect;
 
 fn get_server_room_clients(room_hash: &HashValue, rooms: Arc<Mutex<Rooms>>) -> Vec<ClientInfo> {
 	let (sender, receiver) = mpsc::channel();
-	let rooms = rooms.lock().unwrap();
+	let mut rooms = rooms.lock().unwrap();
 	rooms.send_room_request(room_hash, RoomRequest::GetClients(sender)).ok().unwrap();
 	receiver.recv().unwrap()
 }
@@ -38,12 +38,12 @@ fn setup_client(address: &str, room_hash: &HashValue, client_hash: &HashValue) -
 
 fn setup_server(addr: &'static str) -> (Server, HashValue, Arc<Mutex<Rooms>>) {
 	let room_hash = HashValue::from("room_hash");
-	let server = Server::new(addr.to_string());
+	let server = ServerBuilder::new(addr.to_string()).build();
 	let arc = server.rooms.clone();
 	let rooms = arc;
 	let rooms = &*rooms;
 	let mut rooms = rooms.lock().unwrap();
-		rooms.create_room(&room_hash);
+	rooms.create_room(&room_hash);
 	
 	let rooms = server.rooms.clone();
 	(server, room_hash, rooms)
@@ -51,7 +51,7 @@ fn setup_server(addr: &'static str) -> (Server, HashValue, Arc<Mutex<Rooms>>) {
 
 fn add_wating_client_to_room(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue, client_hash: &HashValue) {
 	let rooms = &*rooms;
-	let rooms = rooms.lock().unwrap();
+	let mut rooms = rooms.lock().unwrap();
 	rooms.send_room_request(
 		&room_hash,
 		RoomRequest::AddWaitingClient(client_hash.clone(), AccessGroups::from(0b111)),

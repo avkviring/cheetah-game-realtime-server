@@ -8,8 +8,8 @@ use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::clients::ClientConnectError::ClientNotInWaitingList;
 use crate::room::listener::RoomListener;
-use crate::room::Room;
 use crate::room::objects::id::ServerOwner;
+use crate::room::Room;
 
 pub struct Clients {
 	/// список клиентов
@@ -70,10 +70,9 @@ impl Room {
 	/// Присоединение клиента к комнате
 	/// Хеш клиента должен быть в списке ожидающих клиентов
 	pub fn client_connect(&mut self, client_hash: &HashValue) -> Result<Rc<Client>, ClientConnectError> {
-		self
+		let result = self
 			.clients
 			.waiting_clients.remove(client_hash)
-			.ok_or(ClientNotInWaitingList)
 			.map(|client_configuration| {
 				let id = client_configuration.id;
 				let client = Rc::new(
@@ -89,7 +88,21 @@ impl Room {
 				
 				self.listener.on_client_connect(&client.clone(), &self.objects);
 				client
-			})
+			});
+		
+		match result {
+			None => {
+				if self.auto_create_client {
+					self.add_client_to_waiting_list(client_hash, AccessGroups::from(std::u64::MAX));
+					self.client_connect(client_hash)
+				} else {
+					Result::Err(ClientNotInWaitingList)
+				}
+			}
+			Some(client) => {
+				Result::Ok(client)
+			}
+		}
 	}
 	
 	/// Добавить ожидающего клиента

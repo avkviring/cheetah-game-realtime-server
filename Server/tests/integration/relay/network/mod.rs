@@ -8,9 +8,10 @@ use std::time::Duration;
 use rand::Rng;
 use stderrlog::Timestamp;
 
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 use cheetah_relay::room::request::{ClientInfo, RoomRequest};
 use cheetah_relay::rooms::Rooms;
-use cheetah_relay::server::Server;
+use cheetah_relay::server::{Server, ServerBuilder};
 use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
 use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
@@ -19,7 +20,9 @@ use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
-use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
+
+pub mod autocreate;
+
 
 #[test]
 fn should_connect_client_to_room() {
@@ -195,7 +198,7 @@ fn send(stream: &mut TcpStream, data: &mut NioBuffer) {
 
 fn setup(addr: &'static str) -> Server {
 	init_logger();
-	Server::new(addr.to_string())
+	ServerBuilder::new(addr.to_string()).build()
 }
 
 fn init_logger() {
@@ -209,7 +212,7 @@ fn init_logger() {
 
 fn get_clients(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<ClientInfo> {
 	let rooms = &*rooms;
-	let rooms = rooms.lock().unwrap();
+	let mut rooms = rooms.lock().unwrap();
 	let (sender, receiver) = mpsc::channel();
 	rooms
 		.send_room_request(&room_hash, RoomRequest::GetClients(sender))
@@ -220,7 +223,7 @@ fn get_clients(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<ClientInf
 
 fn get_objects(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<ServerGameObjectId> {
 	let rooms = &*rooms;
-	let rooms = rooms.lock().unwrap();
+	let mut rooms = rooms.lock().unwrap();
 	let (sender, receiver) = mpsc::channel();
 	rooms
 		.send_room_request(&room_hash, RoomRequest::GetObjects(sender))

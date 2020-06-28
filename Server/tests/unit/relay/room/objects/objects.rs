@@ -39,7 +39,7 @@ fn should_get_objects_by_owner() {
 }
 
 fn setup() -> Room {
-	Room::new(HashValue::from(""))
+	Room::new(HashValue::from(""), false)
 }
 
 fn create_game_object(id: u32) -> GameObject {

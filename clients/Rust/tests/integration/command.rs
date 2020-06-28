@@ -6,7 +6,7 @@ use std::time::Duration;
 use cheetah_relay::room::request::RoomRequest;
 use cheetah_relay_client::{receive_commands_from_server, send_command_to_server};
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, S2CCommandFFIType};
-use cheetah_relay_client::client::ffi::CommandFFI;
+use cheetah_relay_client::client::ffi::Command;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
@@ -25,16 +25,23 @@ fn should_send_command_to_server() {
 	
 	thread::sleep(Duration::from_secs(1));
 	// upload object
-	let mut ffi = CommandFFI::default();
+	let mut ffi = Command::default();
 	ffi.command_type_c2s = C2SCommandFFIType::Upload;
 	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
+	ffi.structures.count = 1;
+	ffi.structures.fields[0] = 1;
+	ffi.structures.sizes[0] = 2;
+	ffi.structures.values[0] = 0x64;
+	ffi.structures.values[1] = 0x65;
+	
+	
 	send_command_to_server(client, &ffi, || assert!(false));
 	thread::sleep(Duration::from_secs(1));
 	
 	
 	// check objects
-	let rooms = &rooms.lock().unwrap();
+	let rooms = &mut rooms.lock().unwrap();
 	let (sender, receiver) = mpsc::channel();
 	rooms.send_room_request(&room_hash, RoomRequest::GetObjects(sender)).ok().unwrap();
 	let objects = receiver.recv().unwrap();
@@ -55,7 +62,7 @@ fn should_receive_command_to_server() {
 	let client_a = setup_client(address, &room_hash, &client_hash_a);
 	
 	// upload object
-	let mut ffi = CommandFFI::default();
+	let mut ffi = Command::default();
 	ffi.command_type_c2s = C2SCommandFFIType::Upload;
 	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
@@ -64,20 +71,16 @@ fn should_receive_command_to_server() {
 	
 	let client_b = setup_client(address, &room_hash, &client_hash_b);
 	
-	let collect_upload_command = Arc::new(AtomicBool::new(false));
-	let move_arc = collect_upload_command.clone();
-	// проверяем входящие команды на втором клиенте
-	let collector = move |ffi: &CommandFFI| {
-		if ffi.command_type_s2c == S2CCommandFFIType::Upload {
-			(&*move_arc).store(true, Ordering::SeqCst);
-		}
-	};
 	
 	receive_commands_from_server(
 		client_b,
-		collector,
+		|ffi: &Command| {
+			if ffi.command_type_s2c == S2CCommandFFIType::Upload {
+				assert!(true);
+			} else {
+				assert!(false);
+			}
+		},
 		|| assert!(false),
 	);
-	
-	assert_eq!((&*collect_upload_command).load(Ordering::SeqCst), true);
 }

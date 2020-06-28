@@ -1,10 +1,10 @@
 use cheetah_relay_common::network::command::structure::StructureCommand;
 
 use crate::client::command::C2SCommandUnion;
-use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, CommandFFI, S2CCommandFFIType, Server2ClientFFIConverter};
+use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
 
 impl Server2ClientFFIConverter for StructureCommand {
-	fn to_ffi(self, command: &mut CommandFFI) {
+	fn to_ffi(self, command: &mut Command) {
 		command.command_type_s2c = S2CCommandFFIType::Structure;
 		command.object_id.set_from(&self.object_id);
 		command.field_id = self.field_id;
@@ -13,7 +13,7 @@ impl Server2ClientFFIConverter for StructureCommand {
 }
 
 impl Client2ServerFFIConverter for StructureCommand {
-	fn from_ffi(ffi: &CommandFFI) -> C2SCommandUnion {
+	fn from_ffi(ffi: &Command) -> C2SCommandUnion {
 		debug_assert!(ffi.command_type_c2s == C2SCommandFFIType::Structure);
 		C2SCommandUnion::Structure(
 			StructureCommand {

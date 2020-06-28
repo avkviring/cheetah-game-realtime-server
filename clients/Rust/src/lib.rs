@@ -11,7 +11,7 @@ use widestring::U16CString;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::utils::logger::LogListener;
 
-use crate::client::ffi::CommandFFI;
+use crate::client::ffi::Command;
 use crate::client::NetworkStatus;
 use crate::clients::Clients;
 
@@ -91,7 +91,8 @@ pub unsafe extern "C" fn create_client(addr: *const c_char, room_hash: *const c_
 }
 
 
-pub extern "C" fn get_connection_status<F, E>(client_id: u16, on_result: F, on_error: E) where F: FnOnce(NetworkStatus) -> (), E: FnOnce() -> () {
+#[no_mangle]
+pub extern "C" fn get_connection_status(client_id: u16, on_result: fn(NetworkStatus), on_error: fn()) {
 	execute(|api| {
 		match api.get_connection_status(client_id) {
 			Ok(status) => { on_result(status) }
@@ -104,8 +105,8 @@ pub extern "C" fn get_connection_status<F, E>(client_id: u16, on_result: F, on_e
 	})
 }
 
-
-pub extern "C" fn receive_commands_from_server<F, E>(client_id: u16, collector: F, on_error: E) where F: FnMut(&CommandFFI) -> (), E: FnOnce() -> () {
+#[no_mangle]
+pub extern "C" fn receive_commands_from_server(client_id: u16, collector: fn(&Command), on_error: fn()) {
 	execute(|api| {
 		match api.collect_s2c_commands(client_id, collector) {
 			Ok(_) => {}
@@ -119,10 +120,14 @@ pub extern "C" fn receive_commands_from_server<F, E>(client_id: u16, collector: 
 }
 
 
-pub extern "C" fn send_command_to_server<E>(client_id: u16, command: &CommandFFI, on_error: E) where E: FnOnce() -> () {
+#[no_mangle]
+pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_error: fn()) {
 	execute(|api| {
+		log::info!("try command send");
 		match api.send_command_to_server(client_id, command) {
-			Ok(_) => {}
+			Ok(_) => {
+				log::info!("command sended");
+			}
 			Err(e) => {
 				log::error!("send_command_to_server error {:?}", e);
 				on_error();
