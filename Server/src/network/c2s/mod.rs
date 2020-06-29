@@ -1,7 +1,7 @@
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::network::command::{CommandCode, Decoder};
 use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
+use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
@@ -60,13 +60,13 @@ pub fn decode_end_execute_c2s_commands(
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}
-		IncrementFloatCounterC2SCommand::COMMAND_CODE => {
-			IncrementFloatCounterC2SCommand::decode(buffer)
+		IncrementFloat64CounterC2SCommand::COMMAND_CODE => {
+			IncrementFloat64CounterC2SCommand::decode(buffer)
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}
-		SetFloatCounterCommand::COMMAND_CODE => {
-			SetFloatCounterCommand::decode(buffer)
+		SetFloat64CounterCommand::COMMAND_CODE => {
+			SetFloat64CounterCommand::decode(buffer)
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}

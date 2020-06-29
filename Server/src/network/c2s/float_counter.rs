@@ -1,10 +1,10 @@
-use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
+use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 
 use crate::network::c2s::{get_field_and_change, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;
 use crate::room::Room;
 
-impl ServerCommandExecutor for IncrementFloatCounterC2SCommand {
+impl ServerCommandExecutor for IncrementFloat64CounterC2SCommand {
 	fn execute(self, client: &Client, room: &mut Room) {
 		trace_c2s_command("IncrementFloatCounter", room, client, format!("params {:?}", self));
 		get_field_and_change(
@@ -21,7 +21,7 @@ impl ServerCommandExecutor for IncrementFloatCounterC2SCommand {
 	}
 }
 
-impl ServerCommandExecutor for SetFloatCounterCommand {
+impl ServerCommandExecutor for SetFloat64CounterCommand {
 	fn execute(self, client: &Client, room: &mut Room) {
 		trace_c2s_command("SetFloatCounter", room, client, format!("params {:?}", self));
 		get_field_and_change(
