@@ -1,4 +1,4 @@
-use std::net::{AddrParseError, SocketAddr};
+use std::net::SocketAddr;
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
@@ -6,10 +6,10 @@ use mio::{Events, Poll, Token};
 use mio::net::TcpStream;
 
 use cheetah_relay_common::network::niobuffer::NioBuffer;
-use cheetah_relay_common::network::tcp::connection::{OnReadBufferError, TcpConnection};
+use cheetah_relay_common::network::tcp::connection::TcpConnection;
 
 use crate::client::{Client, NetworkStatus};
-use crate::client::command::{decode_command, encode_command, S2CCommandUnion};
+use crate::client::command::{decode_command, encode_command};
 
 const TOKEN: Token = Token(0);
 

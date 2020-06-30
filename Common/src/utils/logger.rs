@@ -58,7 +58,11 @@ impl log::Log for LogListener {
 
 impl LogListener {
 	pub fn setup_logger() {
-		log::set_logger(&LOG_LISTENER);
-		log::set_max_level(log::LevelFilter::Trace);
+		match log::set_logger(&LOG_LISTENER) {
+			Ok(_) => {
+				log::set_max_level(log::LevelFilter::Trace);
+			}
+			Err(_) => {}
+		}
 	}
 }
