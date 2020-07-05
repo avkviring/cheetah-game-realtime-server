@@ -43,7 +43,7 @@ impl ClientThread {
 						RequestResult::Close => { break; }
 					}
 				}
-				Err(e) => {
+				Err(_) => {
 					log::error!("client thread error");
 					break;
 				}

@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{RecvError, RecvTimeoutError, Sender, SendError};
+use std::sync::mpsc::{Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
-use std::time::Duration;
 
 use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
+use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
@@ -50,8 +49,12 @@ pub struct ClientAPI {
 
 impl Drop for ClientAPI {
 	fn drop(&mut self) {
-		self.sender.send(ClientRequestType::Close);
-		self.handler.take().unwrap().join();
+		match self.sender.send(ClientRequestType::Close) {
+			Ok(_) => {
+				self.handler.take().unwrap().join().unwrap();
+			}
+			Err(_) => {}
+		}
 	}
 }
 
@@ -135,12 +138,12 @@ impl Clients {
 				let command = match command.command_type_c2s {
 					C2SCommandFFIType::Upload => { UploadGameObjectCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementLongCounter => { IncrementLongCounterC2SCommand::from_ffi(command) }
-					C2SCommandFFIType::IncrementFloatCounter => { IncrementFloatCounterC2SCommand::from_ffi(command) }
+					C2SCommandFFIType::IncrementFloatCounter => { IncrementFloat64CounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::Structure => { StructureCommand::from_ffi(command) }
 					C2SCommandFFIType::Event => { EventCommand::from_ffi(command) }
 					C2SCommandFFIType::Unload => { UnloadGameObjectCommand::from_ffi(command) }
 					C2SCommandFFIType::SetLongCounter => { SetLongCounterCommand::from_ffi(command) }
-					C2SCommandFFIType::SetFloatCounter => { SetFloatCounterCommand::from_ffi(command) }
+					C2SCommandFFIType::SetFloatCounter => { SetFloat64CounterCommand::from_ffi(command) }
 				};
 				
 				if log::log_enabled!(log::Level::Info) {

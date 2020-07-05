@@ -1,15 +1,12 @@
-use core::fmt;
-use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 
-use cheetah_relay_common::constants::{MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::client::command::C2SCommandUnion;
+use crate::client::ffi::bytes::Bytes;
 use crate::client::ffi::counters::Counters;
 use crate::client::ffi::structures::Structures;
-use crate::client::ffi::bytes::Bytes;
 
 pub mod structures;
 pub mod counters;

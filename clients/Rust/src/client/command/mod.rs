@@ -1,6 +1,6 @@
 use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{IncrementFloatCounterC2SCommand, SetFloatCounterCommand};
+use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
@@ -20,8 +20,8 @@ pub enum C2SCommandUnion {
 	Upload(UploadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
 	IncrementLongCounter(IncrementLongCounterC2SCommand),
-	SetFloatCounter(SetFloatCounterCommand),
-	IncrementFloatCounter(IncrementFloatCounterC2SCommand),
+	SetFloatCounter(SetFloat64CounterCommand),
+	IncrementFloatCounter(IncrementFloat64CounterC2SCommand),
 	Structure(StructureCommand),
 	Event(EventCommand),
 	Unload(UnloadGameObjectCommand),
@@ -31,7 +31,7 @@ pub enum C2SCommandUnion {
 pub enum S2CCommandUnion {
 	Upload(UploadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
-	SetFloatCounter(SetFloatCounterCommand),
+	SetFloatCounter(SetFloat64CounterCommand),
 	SetStruct(StructureCommand),
 	Event(EventCommand),
 	Unload(UnloadGameObjectCommand),
@@ -53,8 +53,8 @@ pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, On
 		SetLongCounterCommand::COMMAND_CODE => {
 			SetLongCounterCommand::decode(read_buffer).map(S2CCommandUnion::SetLongCounter)
 		}
-		SetFloatCounterCommand::COMMAND_CODE => {
-			SetFloatCounterCommand::decode(read_buffer).map(S2CCommandUnion::SetFloatCounter)
+		SetFloat64CounterCommand::COMMAND_CODE => {
+			SetFloat64CounterCommand::decode(read_buffer).map(S2CCommandUnion::SetFloatCounter)
 		}
 		UnloadGameObjectCommand::COMMAND_CODE => { UnloadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Unload) }
 		code => {
@@ -79,11 +79,11 @@ pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandUnion) -> Resu
 			command.encode(buffer)
 		}
 		C2SCommandUnion::SetFloatCounter(command) => {
-			buffer.write_u8(SetFloatCounterCommand::COMMAND_CODE)?;
+			buffer.write_u8(SetFloat64CounterCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::IncrementFloatCounter(command) => {
-			buffer.write_u8(IncrementFloatCounterC2SCommand::COMMAND_CODE)?;
+			buffer.write_u8(IncrementFloat64CounterC2SCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::Structure(command) => {

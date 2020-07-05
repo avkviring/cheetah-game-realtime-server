@@ -6,7 +6,7 @@ use cheetah_relay::room::clients::{Client, Clients};
 use cheetah_relay::room::Room;
 use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::SetFloatCounterCommand;
+use cheetah_relay_common::network::command::float_counter::SetFloat64CounterCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
@@ -175,7 +175,7 @@ fn should_s2c_collect_on_update_float_counter() {
 	assert_command(
 		commands,
 		client.configuration.id,
-		S2CCommandUnion::SetFloatCounter(SetFloatCounterCommand {
+		S2CCommandUnion::SetFloatCounter(SetFloat64CounterCommand {
 			object_id: client_object_id,
 			field_id: 1,
 			value: 210.0,

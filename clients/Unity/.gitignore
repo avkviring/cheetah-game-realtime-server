@@ -72,6 +72,5 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # скомпилированные библиотеки нативной части
-/Assets/Plugins/x86_64/
 InitTest*.unity
 InitTest*.unity.meta

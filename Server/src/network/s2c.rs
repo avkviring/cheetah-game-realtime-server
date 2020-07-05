@@ -3,7 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use cheetah_relay_common::constants::{ClientId, FieldID};
 use cheetah_relay_common::network::command::{CommandCode, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::SetFloatCounterCommand;
+use cheetah_relay_common::network::command::float_counter::SetFloat64CounterCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
@@ -28,7 +28,7 @@ pub enum S2CCommandUnion {
 	UploadGameObject(UploadGameObjectCommand),
 	UnloadGameObject(UnloadGameObjectCommand),
 	Event(EventCommand),
-	SetFloatCounter(SetFloatCounterCommand),
+	SetFloatCounter(SetFloat64CounterCommand),
 	SetLongCounter(SetLongCounterCommand),
 	Struct(StructureCommand),
 }
@@ -39,7 +39,7 @@ impl S2CCommandUnion {
 			S2CCommandUnion::UploadGameObject(_) => UploadGameObjectCommand::COMMAND_CODE,
 			S2CCommandUnion::UnloadGameObject(_) => UnloadGameObjectCommand::COMMAND_CODE,
 			S2CCommandUnion::SetLongCounter(_) => SetLongCounterCommand::COMMAND_CODE,
-			S2CCommandUnion::SetFloatCounter(_) => SetFloatCounterCommand::COMMAND_CODE,
+			S2CCommandUnion::SetFloatCounter(_) => SetFloat64CounterCommand::COMMAND_CODE,
 			S2CCommandUnion::Event(_) => EventCommand::COMMAND_CODE,
 			S2CCommandUnion::Struct(_) => StructureCommand::COMMAND_CODE,
 		}
@@ -149,7 +149,7 @@ impl RoomListener for S2CCommandCollector {
 	) {
 		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
 			S2CCommandUnion::SetFloatCounter(
-				SetFloatCounterCommand {
+				SetFloat64CounterCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
 					field_id,
 					value: game_object.get_float_counter(field_id),
@@ -204,7 +204,7 @@ impl RoomListener for S2CCommandCollector {
 	fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
 		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
 			S2CCommandUnion::SetFloatCounter(
-				SetFloatCounterCommand {
+				SetFloat64CounterCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
 					field_id,
 					value: game_object.get_float_counter(field_id),

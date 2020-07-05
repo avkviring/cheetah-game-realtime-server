@@ -1,4 +1,3 @@
-use crate::constants::ClientId;
 use crate::network::command::{Decoder, Encoder};
 use crate::network::niobuffer::{NioBuffer, NioBufferError};
 use crate::room::owner::ClientOwner;

@@ -1,7 +1,7 @@
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 
 use crate::client::command::C2SCommandUnion;
-use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, ObjectIdType, S2CCommandFFIType, Server2ClientFFIConverter};
+use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
 
 impl Server2ClientFFIConverter for UnloadGameObjectCommand {
 	fn to_ffi(self, ffi: &mut Command) {
