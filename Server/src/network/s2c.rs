@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::rc::Rc;
 
 use cheetah_relay_common::constants::{ClientId, FieldID};
 use cheetah_relay_common::network::command::{CommandCode, Encoder};
@@ -21,6 +22,7 @@ use crate::room::objects::Objects;
 /// и когда настанет время - отправляем их клиентам
 pub struct S2CCommandCollector {
 	pub commands_by_client: HashMap<ClientId, VecDeque<S2CCommandUnion>>,
+	pub current_client: Option<Rc<Client>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -51,6 +53,7 @@ impl Default for S2CCommandCollector {
 	fn default() -> Self {
 		S2CCommandCollector {
 			commands_by_client: Default::default(),
+			current_client: Default::default(),
 		}
 	}
 }
@@ -75,8 +78,16 @@ impl S2CCommandCollector {
 }
 
 impl RoomListener for S2CCommandCollector {
+	fn set_current_client(&mut self, client: Rc<Client>) {
+		self.current_client = Option::Some(client);
+	}
+	
+	fn unset_current_client(&mut self) {
+		self.current_client = Option::None
+	}
+	
 	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
-		self.push(AffectedClients::new_from_clients(clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, clients, &game_object.access_groups), |client|
 			S2CCommandUnion::UploadGameObject(
 				UploadGameObjectCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
@@ -87,7 +98,7 @@ impl RoomListener for S2CCommandCollector {
 	}
 	
 	fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {
-		self.push(AffectedClients::new_from_clients(clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, clients, &game_object.access_groups), |client|
 			{
 				S2CCommandUnion::UnloadGameObject(
 					UnloadGameObjectCommand {
@@ -131,7 +142,7 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, &clients, &game_object.access_groups), |client|
 			S2CCommandUnion::SetLongCounter(
 				SetLongCounterCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
@@ -147,7 +158,7 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, &clients, &game_object.access_groups), |client|
 			S2CCommandUnion::SetFloatCounter(
 				SetFloat64CounterCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
@@ -164,7 +175,7 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, &clients, &game_object.access_groups), |client|
 			S2CCommandUnion::Event(
 				EventCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
@@ -180,7 +191,7 @@ impl RoomListener for S2CCommandCollector {
 		game_object: &GameObject,
 		clients: &Clients,
 	) {
-		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, &clients, &game_object.access_groups), |client|
 			S2CCommandUnion::Struct(
 				StructureCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
@@ -191,7 +202,7 @@ impl RoomListener for S2CCommandCollector {
 	}
 	
 	fn on_object_long_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
-		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, &clients, &game_object.access_groups), |client|
 			S2CCommandUnion::SetLongCounter(
 				SetLongCounterCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
@@ -202,7 +213,7 @@ impl RoomListener for S2CCommandCollector {
 	}
 	
 	fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
-		self.push(AffectedClients::new_from_clients(&clients, &game_object.access_groups), |client|
+		self.push(AffectedClients::new_from_clients(&self.current_client, &clients, &game_object.access_groups), |client|
 			S2CCommandUnion::SetFloatCounter(
 				SetFloat64CounterCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
@@ -220,9 +231,18 @@ pub struct AffectedClients {
 }
 
 impl AffectedClients {
-	pub fn new_from_clients(clients: &Clients, groups: &AccessGroups) -> AffectedClients {
+	pub fn new_from_clients(current_client: &Option<Rc<Client>>, clients: &Clients, groups: &AccessGroups) -> AffectedClients {
 		let mut affected_clients = vec![];
+		
+		let current_client_id = match current_client {
+			None => { 0 }
+			Some(client) => { client.configuration.id }
+		};
+		
 		for client in clients.get_clients() {
+			if current_client_id == client.configuration.id {
+				continue;
+			}
 			if groups.contains_any(&client.configuration.groups) {
 				affected_clients.push(client.configuration.id);
 			}

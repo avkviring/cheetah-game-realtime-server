@@ -1,8 +1,8 @@
 use std::cmp::min;
-use std::io::{Read, Write};
+use std::io::{Read, Write, Error};
 use std::net::TcpStream;
 use std::sync::{Arc, mpsc, Mutex};
-use std::thread;
+use std::{thread, io};
 use std::time::Duration;
 
 use rand::Rng;
@@ -72,8 +72,6 @@ fn should_client_create_object() {
 	let mut stream = TcpStream::connect(addr).unwrap();
 	send(&mut stream, &mut buffer);
 	
-	let clients = get_clients(server.rooms.clone(), &room_hash);
-	let client = clients.iter().find(|p| p.hash == client_hash).unwrap();
 	let objects = get_objects(server.rooms.clone(), &room_hash);
 	assert_eq!(
 		objects
@@ -82,6 +80,43 @@ fn should_client_create_object() {
 		true
 	);
 }
+
+
+///
+/// Проверям что команды с клиента не возращаются ему же
+#[test]
+fn should_dont_send_upload_for_self_object() {
+	let addr = "127.0.0.1:5052";
+	let server = setup(addr);
+	let (room_hash, mut clients) = create_room(&server.rooms);
+	let client_hash = clients.pop().unwrap();
+	let mut buffer = NioBuffer::new();
+	
+	create_client_and_send_hashes(&mut buffer, &room_hash, &client_hash);
+	let object_id = ServerGameObjectId::new(100, ServerOwner::Root);
+	create_object(&mut buffer, object_id.clone());
+	
+	let mut stream = TcpStream::connect(addr).unwrap();
+	send(&mut stream, &mut buffer);
+	
+	let mut readed = NioBuffer::new();
+	stream.set_read_timeout(Option::Some(Duration::from_secs(2)));
+	match stream.read(readed.to_slice())  {
+		Ok(_) => {
+			assert!(false);
+		},
+		Err(e) => {
+			if e.kind() == io::ErrorKind::WouldBlock {
+				// нет данных для чтения - и это правилно
+				assert!(true);
+			} else {
+				assert!(false);
+			}
+		},
+	};
+	
+}
+
 
 ///
 /// Проверяем загрузку объекта при подключении второго клиента

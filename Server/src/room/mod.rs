@@ -1,6 +1,8 @@
+use std::rc::Rc;
+
 use cheetah_relay_common::network::hash::HashValue;
 
-use crate::room::clients::Clients;
+use crate::room::clients::{Client, Clients};
 use crate::room::listener::CompositeRoomListener;
 use crate::room::objects::Objects;
 
@@ -36,7 +38,9 @@ impl Room {
 			hash: hash_value,
 			listener: Default::default(),
 			clients: Default::default(),
-			objects: Default::default(),
+			objects: Default::default()
 		}
 	}
+	
+	
 }

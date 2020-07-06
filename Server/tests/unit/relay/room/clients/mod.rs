@@ -3,6 +3,7 @@ use cheetah_relay::room::clients::{Client, ClientConfiguration};
 use cheetah_relay_common::constants::{ClientId, GroupType};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::network::hash::HashValue;
+use std::rc::Rc;
 
 mod room;
 
@@ -22,10 +23,10 @@ pub fn client_configuration_stub_with_access_group(client_id: ClientId, group: G
     }
 }
 
-pub fn client_stub(client_id: u16) -> Client {
-    Client {
+pub fn client_stub(client_id: u16) -> Rc<Client> {
+    Rc::new(Client {
         configuration: client_configuration_stub(client_id),
-    }
+    })
 }
 
 pub fn client_stub_with_access_group(client_id: u16, groups: GroupType) -> Client {

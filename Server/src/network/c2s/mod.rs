@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::network::command::{CommandCode, Decoder};
 use cheetah_relay_common::network::command::event::EventCommand;
@@ -11,6 +13,7 @@ use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 
 use crate::room::clients::Client;
+use crate::room::listener::RoomListener;
 use crate::room::objects::ErrorGetObjectWithCheckAccess;
 use crate::room::objects::object::GameObject;
 use crate::room::Room;
@@ -35,11 +38,13 @@ pub trait ServerCommandExecutor {
 ///
 pub fn decode_end_execute_c2s_commands(
 	buffer: &mut NioBuffer,
-	client: &Client,
+	client: Rc<Client>,
 	room: &mut Room,
 ) -> Result<(), OnReadBufferError> {
+	room.listener.set_current_client(client.clone());
+	let client = &client.clone();
 	let command_code = buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
-	match command_code {
+	let result = match command_code {
 		UploadGameObjectCommand::COMMAND_CODE => {
 			UploadGameObjectCommand::decode(buffer)
 				.map(|f| f.execute(client, room))
@@ -83,7 +88,9 @@ pub fn decode_end_execute_c2s_commands(
 		code => {
 			Result::Err(OnReadBufferError::UnknownCommand(code))
 		}
-	}
+	};
+	room.listener.unset_current_client();
+	result
 }
 
 pub fn trace_c2s_command(command: &str, room: &Room, client: &Client, message: String) {

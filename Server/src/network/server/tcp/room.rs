@@ -7,11 +7,12 @@ use mio::{Events, Interest, Poll, Token};
 use mio::net::TcpStream;
 
 use cheetah_relay_common::network::niobuffer::NioBuffer;
-use cheetah_relay_common::network::tcp::connection::{ProcessNetworkEventError, TcpConnection};
+use cheetah_relay_common::network::tcp::connection::{OnReadBufferError, ProcessNetworkEventError, TcpConnection};
 
 use crate::network::c2s::decode_end_execute_c2s_commands;
 use crate::network::s2c::{encode_s2c_commands, S2CCommandCollector};
 use crate::room::clients::Client;
+use crate::room::listener::RoomListener;
 use crate::room::Room;
 
 /// Поддержка TCP на уровне комнаты
@@ -96,7 +97,7 @@ impl TcpRoom {
 						event,
 						poll,
 						|buffer| {
-							decode_end_execute_c2s_commands(buffer, client, room)
+							decode_end_execute_c2s_commands(buffer, client.clone(), room)
 						},
 					) {
 						Ok(_) => {}
@@ -126,16 +127,21 @@ impl TcpRoom {
 		match write_result {
 			Ok(_) => {
 				let mut connection = TcpConnection::new(stream, buffer_for_read, token);
-				connection.process_read_buffer(|buffer| {
-					decode_end_execute_c2s_commands(buffer, &client, room)
-				});
-				connection.watch_read(&mut self.poll).unwrap();
-				
-				self.clients.insert(token.clone(), ConnectionWithClient {
-					client,
-					connection,
-				});
-				Result::Ok(())
+				match connection.process_read_buffer(|buffer| {
+					decode_end_execute_c2s_commands(buffer, client.clone(), room)
+				}) {
+					Ok(_) => {
+						connection.watch_read(&mut self.poll).unwrap();
+						self.clients.insert(token.clone(), ConnectionWithClient {
+							client,
+							connection,
+						});
+						Result::Ok(())
+					}
+					Err(e) => {
+						Result::Err(format!("{:?}", e))
+					}
+				}
 			}
 			Err(e) => {
 				Result::Err(format!("{:?}", e))

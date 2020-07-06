@@ -21,7 +21,7 @@ pub struct Clients {
 }
 
 /// Ожидаемый клиент
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ClientConfiguration {
 	/// уникальный идентификатор клиента в рамках комнаты
 	pub id: ClientId,
@@ -32,7 +32,7 @@ pub struct ClientConfiguration {
 }
 
 /// Клиент в комнате
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Client {
 	/// конфигурация клиента
 	pub configuration: ClientConfiguration,

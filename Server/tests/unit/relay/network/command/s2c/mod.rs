@@ -26,9 +26,10 @@ use cheetah_relay::room::objects::object::GameObject;
 fn test_affects_client() {
 	let groups = AccessGroups::from(0b111);
 	let mut clients = Clients::default();
+	let client = Rc::new(client_stub_with_access_group(0, 0b1));
 	clients
 		.clients
-		.insert(0, Rc::new(client_stub_with_access_group(0, 0b1)));
+		.insert(0, client.clone());
 	clients
 		.clients
 		.insert(1, Rc::new(client_stub_with_access_group(1, 0b100000)));
@@ -36,8 +37,8 @@ fn test_affects_client() {
 		.clients
 		.insert(2, Rc::new(client_stub_with_access_group(2, 0b111)));
 	
-	let affected_client = AffectedClients::new_from_clients(&clients, &groups);
-	assert_eq!(affected_client.clients.contains(&0), true);
+	let affected_client = AffectedClients::new_from_clients(&Option::Some(client.clone()), &clients, &groups);
+	assert_eq!(affected_client.clients.contains(&0), false);
 	assert_eq!(affected_client.clients.contains(&1), false);
 	assert_eq!(affected_client.clients.contains(&2), true);
 }

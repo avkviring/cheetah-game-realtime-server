@@ -43,6 +43,12 @@ struct TestListener {
 }
 
 impl RoomListener for TestListener {
+	fn set_current_client(&mut self, client: Rc<Client>) {
+	}
+	
+	fn unset_current_client(&mut self) {
+	}
+	
 	fn on_object_created(&mut self, game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();
 		rc.borrow_mut().push(format!("on_object_create {:?}", game_object.id.id));
