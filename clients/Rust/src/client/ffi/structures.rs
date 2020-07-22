@@ -57,7 +57,6 @@ impl From<&HashMap<FieldID, Vec<u8>>> for Structures {
 			index += 1;
 		}
 		structures.count = index as u8;
-		log::error!("to structure {:?}", structures);
 		structures
 	}
 }

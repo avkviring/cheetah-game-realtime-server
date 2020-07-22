@@ -159,7 +159,7 @@ impl TCPAcceptor {
 							),
 						);
 					match result_send_request {
-						Ok(_) => {}
+						Ok(_) => {},
 						Err(e) => {
 							match e {
 								SendRoomRequestError::RoomNotFound => {
@@ -172,6 +172,13 @@ impl TCPAcceptor {
 						}
 					}
 				} else {
+					poll
+						.registry()
+						.reregister(
+							stream,
+							token.clone(),
+							Interest::READABLE,
+						).unwrap_or_else(|_| log::error!("Error register client tcp listener"));
 					clients.insert(token.clone(), client);
 				}
 			}

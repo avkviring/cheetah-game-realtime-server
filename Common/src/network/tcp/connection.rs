@@ -17,7 +17,6 @@ pub struct TcpConnection {
 	stream: TcpStream,
 	pub read_buffer: Box<NioBuffer>,
 	pub write_buffer: Box<NioBuffer>,
-	watch_read: bool,
 	registered_in_poll: bool,
 	pub token: Token,
 	
@@ -46,20 +45,23 @@ impl TcpConnection {
 			stream,
 			read_buffer: Box::new(buffer_for_read),
 			write_buffer: Box::new(buffer_for_write),
-			watch_read: false,
 			registered_in_poll: false,
 			token,
 		}
 	}
 	pub fn process_event<F>(&mut self, event: &Event, poll: &mut Poll, on_read_buffer: F) -> Result<(), ProcessNetworkEventError>
 		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
+		log::info!("process_event: {:?}", event);
 		if event.is_error() {
 			return Result::Err(ProcessNetworkEventError::EventError);
 		}
 		if event.is_readable() {
-			self.read(on_read_buffer)?
+			log::info!("process_event: read");
+			self.read(on_read_buffer, poll)?
 		}
+		
 		if event.is_writable() {
+			log::info!("process_event: write");
 			self.write(poll)?
 		}
 		Result::Ok(())
@@ -123,10 +125,10 @@ impl TcpConnection {
 	///
 	/// Читаем, декодируем и исполняем данные из сокета
 	///
-	fn read<F>(&mut self, on_read_buffer: F) -> Result<(), ProcessNetworkEventError>
+	fn read<F>(&mut self, on_read_buffer: F, poll: &mut Poll) -> Result<(), ProcessNetworkEventError>
 		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
 		let read_result = self.stream.read(&mut self.read_buffer.to_slice());
-		match read_result {
+		let result = match read_result {
 			Ok(0) => {
 				Result::Err(ProcessNetworkEventError::Broken)
 			}
@@ -144,7 +146,9 @@ impl TcpConnection {
 			Err(e) => {
 				Result::Err(ProcessNetworkEventError::Error(format!("{:?}", e)))
 			}
-		}
+		};
+		self.watch_read(poll);
+		result
 	}
 	
 	fn write(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
@@ -155,6 +159,7 @@ impl TcpConnection {
 					if let Err(e) = self.write_buffer.set_position(self.write_buffer.position() + size) {
 						Result::Err(ProcessNetworkEventError::Error(format!("write buffer - error when set new position {:?}", e)))
 					} else {
+						log::info!("Connection:write count = {}, remaining = {}", size, self.write_buffer.remaining());
 						if !self.write_buffer.has_remaining() {
 							self.watch_read(poll)?;
 						} else {
@@ -183,35 +188,14 @@ impl TcpConnection {
 	/// Подписаться на write события
 	///
 	pub fn watch_write_and_read(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
-		let interest = Interest::WRITABLE.add(Interest::READABLE);
-		match self.watch(poll, interest) {
-			Ok(_) => {
-				self.watch_read = true;
-				Result::Ok(())
-			}
-			Err(e) => {
-				Result::Err(e)
-			}
-		}
+		self.watch(poll, Interest::WRITABLE.add(Interest::READABLE))
 	}
 	
 	///
 	/// Подписаться на read события
 	///
 	pub fn watch_read(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
-		if !self.watch_read {
-			match self.watch(poll, Interest::READABLE) {
-				Ok(_) => {
-					self.watch_read = true;
-					Result::Ok(())
-				}
-				Err(e) => {
-					Result::Err(ProcessNetworkEventError::Error(format!("{:?}", e)))
-				}
-			}
-		} else {
-			Result::Ok(())
-		}
+		self.watch(poll, Interest::WRITABLE.add(Interest::READABLE))
 	}
 	
 	fn watch(&mut self, poll: &mut Poll, interest: Interest) -> Result<(), ProcessNetworkEventError> {

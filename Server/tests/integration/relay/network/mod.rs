@@ -86,7 +86,7 @@ fn should_client_create_object() {
 /// Проверям что команды с клиента не возращаются ему же
 #[test]
 fn should_dont_send_upload_for_self_object() {
-	let addr = "127.0.0.1:5052";
+	let addr = "127.0.0.1:5053";
 	let server = setup(addr);
 	let (room_hash, mut clients) = create_room(&server.rooms);
 	let client_hash = clients.pop().unwrap();
@@ -123,7 +123,7 @@ fn should_dont_send_upload_for_self_object() {
 ///
 #[test]
 fn should_receive_command_from_server() {
-	let addr = "127.0.0.1:5053";
+	let addr = "127.0.0.1:5054";
 	let server = setup(addr);
 	let (room_hash, mut clients) = create_room(&server.rooms);
 	let client_a = clients.pop().unwrap();
