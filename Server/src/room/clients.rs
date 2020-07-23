@@ -11,6 +11,7 @@ use crate::room::listener::RoomListener;
 use crate::room::objects::id::ServerOwner;
 use crate::room::Room;
 
+#[derive(Debug)]
 pub struct Clients {
 	/// список клиентов
 	pub clients: HashMap<ClientId, Rc<Client>>,

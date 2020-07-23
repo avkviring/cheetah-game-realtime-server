@@ -48,7 +48,7 @@ impl ClientThread {
 					break;
 				}
 			}
-			thread::sleep(Duration::from_nanos(100));
+			thread::sleep(Duration::from_millis(1));
 		}
 	}
 }
