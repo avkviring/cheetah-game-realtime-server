@@ -3,11 +3,10 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::time::Duration;
 
-use mio::{Events, Interest, Poll, Token};
-use mio::net::TcpStream;
-
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::network::tcp::connection::{OnReadBufferError, ProcessNetworkEventError, TcpConnection};
+use mio::{Events, Interest, Poll, Token};
+use mio::net::TcpStream;
 
 use crate::network::c2s::decode_end_execute_c2s_commands;
 use crate::network::s2c::{encode_s2c_commands, S2CCommandCollector};
@@ -127,15 +126,11 @@ impl TcpRoom {
 		match write_result {
 			Ok(_) => {
 				let mut connection = TcpConnection::new(stream, buffer_for_read, token);
-				match connection.process_read_buffer(|buffer| {
-					decode_end_execute_c2s_commands(buffer, client.clone(), room)
-				}) {
+				let result = connection.process_read_buffer(|buffer| { decode_end_execute_c2s_commands(buffer, client.clone(), room) });
+				match result {
 					Ok(_) => {
-						connection.watch_read(&mut self.poll).unwrap();
-						self.clients.insert(token.clone(), ConnectionWithClient {
-							client,
-							connection,
-						});
+						connection.watch(&mut self.poll).unwrap();
+						self.clients.insert(token.clone(), ConnectionWithClient { client, connection });
 						Result::Ok(())
 					}
 					Err(e) => {

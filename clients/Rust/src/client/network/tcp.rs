@@ -2,11 +2,10 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
-use mio::{Events, Poll, Token};
-use mio::net::TcpStream;
-
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::network::tcp::connection::TcpConnection;
+use mio::{Events, Poll, Token};
+use mio::net::TcpStream;
 
 use crate::client::{Client, NetworkStatus};
 use crate::client::command::{decode_command, encode_command};
@@ -91,7 +90,7 @@ impl TCPClient {
 	
 	
 	fn process_network_events(&mut self, client: &mut Client) -> Result<usize, ()> {
-		self.prepare_to_send_commands(client)?;
+		self.prepare_to_send_commands(client);
 		let poll = &mut self.poll;
 		let connection = self.connection.as_mut().unwrap();
 		self.events.clear();
@@ -162,7 +161,8 @@ impl TCPClient {
 						connection.write_buffer.write_bytes(&client.room_hash.value).unwrap();
 						connection.write_buffer.write_bytes(&client.client_hash.value).unwrap();
 						connection.write_buffer.flip();
-						connection.watch_write_and_read(&mut self.poll).unwrap();
+						connection.enable_write_events();
+						connection.watch(&mut self.poll).unwrap();
 						self.connection = Option::Some(connection);
 						self.connection_start_time = Instant::now();
 						Status::Connecting

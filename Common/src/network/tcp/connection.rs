@@ -19,7 +19,7 @@ pub struct TcpConnection {
 	pub write_buffer: Box<NioBuffer>,
 	registered_in_poll: bool,
 	pub token: Token,
-	
+	enable_write_events: bool,
 }
 
 #[derive(Debug)]
@@ -42,28 +42,28 @@ impl TcpConnection {
 		let mut buffer_for_write = NioBuffer::new();
 		buffer_for_write.flip();
 		TcpConnection {
-			stream,
+			stream: stream,
 			read_buffer: Box::new(buffer_for_read),
 			write_buffer: Box::new(buffer_for_write),
 			registered_in_poll: false,
-			token,
+			token: token,
+			enable_write_events: false,
 		}
 	}
 	pub fn process_event<F>(&mut self, event: &Event, poll: &mut Poll, on_read_buffer: F) -> Result<(), ProcessNetworkEventError>
 		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
-		log::info!("process_event: {:?}", event);
 		if event.is_error() {
 			return Result::Err(ProcessNetworkEventError::EventError);
 		}
 		if event.is_readable() {
-			log::info!("process_event: read");
-			self.read(on_read_buffer, poll)?
+			self.read(on_read_buffer)?
 		}
 		
 		if event.is_writable() {
-			log::info!("process_event: write");
-			self.write(poll)?
+			self.write()?
 		}
+		
+		self.watch(poll)?;
 		Result::Ok(())
 	}
 	
@@ -94,9 +94,7 @@ impl TcpConnection {
 	///
 	/// Кодирование команд в буфер для записи
 	///
-	pub fn prepare_commands_for_send<C, F>(&mut self, poll: &mut Poll, commands: &mut VecDeque<C>, mut command_to_buffer: F) -> Result<(),
-		ProcessNetworkEventError>
-		where F: FnMut(&mut NioBuffer, &C) -> Result<(), NioBufferError>, C: Debug {
+	pub fn prepare_commands_for_send<C: Debug, F: FnMut(&mut NioBuffer, &C) -> Result<(), NioBufferError>>(&mut self, poll: &mut Poll, commands: &mut VecDeque<C>, mut command_to_buffer: F) -> Result<(), ProcessNetworkEventError> {
 		if !commands.is_empty() {
 			self.write_buffer.compact();
 			loop {
@@ -116,7 +114,8 @@ impl TcpConnection {
 				}
 			};
 			self.write_buffer.flip();
-			self.watch_write_and_read(poll)
+			self.enable_write_events();
+			self.watch(poll)
 		} else {
 			Result::Ok(())
 		}
@@ -125,7 +124,7 @@ impl TcpConnection {
 	///
 	/// Читаем, декодируем и исполняем данные из сокета
 	///
-	fn read<F>(&mut self, on_read_buffer: F, poll: &mut Poll) -> Result<(), ProcessNetworkEventError>
+	fn read<F>(&mut self, on_read_buffer: F) -> Result<(), ProcessNetworkEventError>
 		where F: FnMut(&mut NioBuffer) -> Result<(), OnReadBufferError> {
 		let read_result = self.stream.read(&mut self.read_buffer.to_slice());
 		let result = match read_result {
@@ -147,11 +146,10 @@ impl TcpConnection {
 				Result::Err(ProcessNetworkEventError::Error(format!("{:?}", e)))
 			}
 		};
-		self.watch_read(poll);
 		result
 	}
 	
-	fn write(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
+	fn write(&mut self) -> Result<(), ProcessNetworkEventError> {
 		if self.write_buffer.has_remaining() {
 			let result = self.stream.write(&mut self.write_buffer.to_slice());
 			match result {
@@ -159,11 +157,10 @@ impl TcpConnection {
 					if let Err(e) = self.write_buffer.set_position(self.write_buffer.position() + size) {
 						Result::Err(ProcessNetworkEventError::Error(format!("write buffer - error when set new position {:?}", e)))
 					} else {
-						log::info!("Connection:write count = {}, remaining = {}", size, self.write_buffer.remaining());
 						if !self.write_buffer.has_remaining() {
-							self.watch_read(poll)?;
+							self.disable_write_events();
 						} else {
-							self.watch_write_and_read(poll)?;
+							self.enable_write_events();
 						}
 						Result::Ok(())
 					}
@@ -185,20 +182,28 @@ impl TcpConnection {
 	
 	
 	///
-	/// Подписаться на write события
+	/// Подписываться на события записи
+	/// применится после вызова метода watch
 	///
-	pub fn watch_write_and_read(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
-		self.watch(poll, Interest::WRITABLE.add(Interest::READABLE))
+	pub fn enable_write_events(&mut self) {
+		self.enable_write_events = true;
 	}
 	
 	///
-	/// Подписаться на read события
+	/// Не подписываться на события записи
+	/// применится после вызова метода watch
 	///
-	pub fn watch_read(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
-		self.watch(poll, Interest::WRITABLE.add(Interest::READABLE))
+	pub fn disable_write_events(&mut self) {
+		self.enable_write_events = false;
 	}
 	
-	fn watch(&mut self, poll: &mut Poll, interest: Interest) -> Result<(), ProcessNetworkEventError> {
+	///
+	/// подписаться на сетевые события
+	/// подписка работает до первого события, после этого надо снова подписываться
+	///
+	pub fn watch(&mut self, poll: &mut Poll) -> Result<(), ProcessNetworkEventError> {
+		let interest = if self.enable_write_events { Interest::WRITABLE.add(Interest::READABLE) } else { Interest::READABLE };
+		
 		let result = if self.registered_in_poll {
 			poll.registry().reregister(&mut self.stream, self.token.clone(), interest)
 		} else {
