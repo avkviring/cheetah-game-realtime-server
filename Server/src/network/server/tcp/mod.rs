@@ -95,7 +95,7 @@ impl TCPAcceptor {
 	fn process_network_events(&mut self, mut poll: &mut Poll, mut events: &mut Events, server: &mut TcpListener) {
 		events.clear();
 		poll
-			.poll(&mut events, Option::Some(Duration::from_nanos(100)))
+			.poll(&mut events, Option::Some(Duration::from_millis(10)))
 			.unwrap_or_else(|e| panic!("tcp server: error poll {}", e));
 		
 		for event in events.iter() {
