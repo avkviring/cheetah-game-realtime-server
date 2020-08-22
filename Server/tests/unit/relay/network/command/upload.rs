@@ -31,7 +31,7 @@ fn test_execute_command() {
 		},
 	};
 	
-	command.execute(&client.clone(), &mut room);
+	command.execute(&client, &mut room);
 	
 	let rc_object = room.objects.get(&object_id).unwrap();
 	let game_object = (*rc_object).borrow();

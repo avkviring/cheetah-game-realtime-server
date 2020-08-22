@@ -1,8 +1,6 @@
-use cheetah_relay_common::constants::{ClientId, FieldID};
+use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::ClientGameObjectId;
-use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::room::listener::RoomListener;
 use crate::room::Room;

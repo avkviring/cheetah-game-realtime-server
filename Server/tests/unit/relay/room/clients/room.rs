@@ -41,7 +41,7 @@ fn room_client_disconnect() {
 	let client_hash = HashValue::from(CLIENT_HASH);
 	room.add_client_to_waiting_list(&client_hash, AccessGroups::default());
 	let client = room.client_connect(&client_hash);
-	room.client_disconnect(&client.ok().unwrap().clone());
+	room.client_disconnect(&client.ok().unwrap());
 	assert_eq!(room.clients.clients.is_empty(), true);
 }
 
@@ -57,7 +57,7 @@ fn room_client_disconnect_should_delete_client_object() {
 		ServerGameObjectId::new(0, ServerOwner::Client(client.configuration.id)),
 		AccessGroups::default(),
 		GameObjectFields::default(),
-	);
+	).unwrap();
 	room.client_disconnect(&client.clone());
 	assert_eq!(room.objects.len(), 0);
 }

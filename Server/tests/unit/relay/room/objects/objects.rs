@@ -13,7 +13,7 @@ fn should_insert_objects() {
 	let mut room = setup();
 	let object = create_game_object(10);
 	let object_id = object.id.clone();
-	room.insert_game_object(object);
+	room.insert_game_object(object).unwrap();
 	assert_eq!(room.objects.get(&object_id).is_some(), true)
 }
 
@@ -24,10 +24,10 @@ fn should_get_objects_by_owner() {
 	let client_a = client_stub(1);
 	let client_b = client_stub(2);
 	
-	room.insert_game_object(create_game_object_with_client(10, &client_a));
-	room.insert_game_object(create_game_object_with_client(55, &client_a));
-	room.insert_game_object(create_game_object_with_client(5, &client_b));
-	room.insert_game_object(create_game_object_with_client(15, &client_b));
+	room.insert_game_object(create_game_object_with_client(10, &client_a)).unwrap();
+	room.insert_game_object(create_game_object_with_client(55, &client_a)).unwrap();
+	room.insert_game_object(create_game_object_with_client(5, &client_b)).unwrap();
+	room.insert_game_object(create_game_object_with_client(15, &client_b)).unwrap();
 	
 	let objects = room.objects.get_objects_by_owner(ServerOwner::Client(client_a.configuration.id));
 	assert_eq!(objects.len(), 2);

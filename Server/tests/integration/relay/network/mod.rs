@@ -1,5 +1,5 @@
 use std::cmp::min;
-use std::io::{Read, Write, Error};
+use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::{Arc, mpsc, Mutex};
 use std::{thread, io};
@@ -94,13 +94,15 @@ fn should_dont_send_upload_for_self_object() {
 	
 	create_client_and_send_hashes(&mut buffer, &room_hash, &client_hash);
 	let object_id = ServerGameObjectId::new(100, ServerOwner::Root);
-	create_object(&mut buffer, object_id.clone());
+	create_object(&mut buffer, object_id);
 	
 	let mut stream = TcpStream::connect(addr).unwrap();
 	send(&mut stream, &mut buffer);
 	
 	let mut readed = NioBuffer::new();
-	stream.set_read_timeout(Option::Some(Duration::from_secs(2)));
+	stream
+		.set_read_timeout(Option::Some(Duration::from_secs(2)))
+		.expect("socket set_read_timeout error");
 	match stream.read(readed.to_slice())  {
 		Ok(_) => {
 			assert!(false);
@@ -142,10 +144,12 @@ fn should_receive_command_from_server() {
 	
 	thread::sleep(Duration::from_secs(2));
 	let mut readed = NioBuffer::new();
-	stream_for_client_b.set_read_timeout(Option::Some(Duration::from_secs(2)));
+	stream_for_client_b
+		.set_read_timeout(Option::Some(Duration::from_secs(2)))
+		.expect("set_read_timeout error");
 	let size = stream_for_client_b.read(readed.to_slice()).unwrap();
-	readed.set_position(0);
-	readed.set_limit(size);
+	readed.set_position(0).expect("");
+	readed.set_limit(size).expect("");
 	
 	assert_eq!(
 		readed.read_u8().unwrap(),
@@ -177,7 +181,7 @@ fn create_object(buffer: &mut NioBuffer, object_id: ServerGameObjectId) {
 		fields,
 	};
 	
-	command.encode(buffer);
+	command.encode(buffer).unwrap();
 }
 
 /// создать клиента и  отправить хеш
@@ -242,7 +246,8 @@ fn init_logger() {
 		.quiet(false)
 		.show_level(true)
 		.timestamp(Timestamp::Millisecond)
-		.init();
+		.init()
+		.unwrap_or(());
 }
 
 fn get_clients(rooms: Arc<Mutex<Rooms>>, room_hash: &HashValue) -> Vec<ClientInfo> {

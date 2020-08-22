@@ -20,7 +20,7 @@ fn test_execute_command() {
 	};
 	command.execute(client.borrow(), &mut room);
 	
-	let rc_object = room.objects.get(&server_object_id).unwrap().clone();
+	let rc_object = room.objects.get(&server_object_id).unwrap();
 	let object = (*rc_object).borrow();
 	let object_struct_data = object.get_struct(field_id).unwrap();
 	assert_eq!(object_struct_data, &struct_data)

@@ -46,7 +46,7 @@ impl Objects {
 	}
 	
 	pub fn len(&mut self) -> usize {
-		return self.objects.len();
+		self.objects.len()
 	}
 	
 	pub fn get_objects_by_owner(&mut self, owner: ServerOwner) -> Vec<Rc<RefCell<GameObject>>> {
@@ -73,10 +73,7 @@ impl Objects {
 				let o = o.borrow();
 				o.access_groups.contains_any(access_group)
 			})
-			.map(|o| {
-				let o = o.clone();
-				o
-			})
+			.cloned()
 			.collect::<Vec<_>>()
 	}
 	
@@ -84,7 +81,7 @@ impl Objects {
 		self
 			.objects
 			.keys()
-			.map(|k| k.clone())
+			.cloned()
 			.collect()
 	}
 }

@@ -4,7 +4,7 @@ use cheetah_relay::server::ServerBuilder;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 
-use crate::integration::relay::network::{create_client_and_send_hashes, get_clients, init_logger, send, setup};
+use crate::integration::relay::network::{create_client_and_send_hashes, get_clients, init_logger, send};
 use std::thread;
 use std::time::Duration;
 

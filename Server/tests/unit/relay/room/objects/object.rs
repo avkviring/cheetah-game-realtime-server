@@ -25,7 +25,7 @@ fn should_store_struct_data_in_game_object() {
 
 #[test]
 fn should_error_when_struct_not_found_in_game_object() {
-	let (_, mut object) = setup();
+	let (_, object) = setup();
 	let struct_id: u16 = 10;
 	let data = object.get_struct(struct_id);
 	assert_eq!(data.is_none(), true);

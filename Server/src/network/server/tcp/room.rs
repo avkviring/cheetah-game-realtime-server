@@ -4,14 +4,13 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use cheetah_relay_common::network::niobuffer::NioBuffer;
-use cheetah_relay_common::network::tcp::connection::{OnReadBufferError, ProcessNetworkEventError, TcpConnection};
-use mio::{Events, Interest, Poll, Token};
+use cheetah_relay_common::network::tcp::connection::TcpConnection;
+use mio::{Events, Poll, Token};
 use mio::net::TcpStream;
 
 use crate::network::c2s::decode_end_execute_c2s_commands;
 use crate::network::s2c::{encode_s2c_commands, S2CCommandCollector};
 use crate::room::clients::Client;
-use crate::room::listener::RoomListener;
 use crate::room::Room;
 
 /// Поддержка TCP на уровне комнаты
@@ -57,6 +56,7 @@ impl TcpRoom {
 	fn prepare_commands_to_clients(&mut self) {
 		let mut collector = self.s2c_collector.borrow_mut();
 		let poll = &mut self.poll;
+		let schedule_for_close = &mut self.schedule_for_close;
 		self.clients.iter_mut().for_each(|(_, connection_with_client)| {
 			let client = &mut connection_with_client.client;
 			let commands = collector.commands_by_client.get_mut(&client.configuration.id);
@@ -64,13 +64,19 @@ impl TcpRoom {
 				None => {}
 				Some(commands) => {
 					let connection = &mut connection_with_client.connection;
-					connection.prepare_commands_for_send(
+					match connection.prepare_commands_for_send(
 						poll,
 						commands,
 						|buffer, command| {
 							encode_s2c_commands(buffer, command)
 						},
-					);
+					) {
+						Ok(_) => {},
+						Err(e) => {
+							log::error!("error prepare commands for send {:?} - closing client", e);
+							schedule_for_close.insert(connection_with_client.connection.token);
+						},
+					}
 				}
 			}
 		});
@@ -84,7 +90,7 @@ impl TcpRoom {
 			.poll(&mut self.events, Option::Some(Duration::from_millis(1)))
 			.unwrap();
 		
-		
+		let schedule_for_close = &mut self.schedule_for_close;
 		for event in &self.events {
 			let token = event.token();
 			let connection_with_client = self.clients.get_mut(&token);
@@ -102,7 +108,7 @@ impl TcpRoom {
 						Ok(_) => {}
 						Err(e) => {
 							log::error!("tcp room: closing connect {:?} {:?}", token,e);
-							self.schedule_for_close.insert(token);
+							schedule_for_close.insert(token);
 						}
 					}
 				}
@@ -130,7 +136,7 @@ impl TcpRoom {
 				match result {
 					Ok(_) => {
 						connection.watch(&mut self.poll).unwrap();
-						self.clients.insert(token.clone(), ConnectionWithClient { client, connection });
+						self.clients.insert(token, ConnectionWithClient { client, connection });
 						Result::Ok(())
 					}
 					Err(e) => {

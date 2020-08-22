@@ -20,7 +20,7 @@ impl ServerCommandExecutor for StructureCommand {
 			|room, object|
 				{
 					room.object_update_struct(object, field_id, structure);
-					format!("update struct done")
+					"update struct done".to_string()
 				},
 		);
 	}

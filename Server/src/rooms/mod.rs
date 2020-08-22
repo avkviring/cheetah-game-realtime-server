@@ -3,7 +3,6 @@ use std::sync::{Arc, mpsc, Mutex};
 use std::sync::mpsc::{Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
-use std::time::Duration;
 
 use cheetah_relay_common::network::hash::HashValue;
 
@@ -93,7 +92,7 @@ impl Rooms {
 		self.registry.lock().unwrap().remove(room_hash);
 	}
 	
-	pub fn collect_rooms_hashes<F>(&self, mut collector: F) where F: FnMut(&HashValue) -> () {
+	pub fn collect_rooms_hashes<F>(&self, mut collector: F) where F: FnMut(&HashValue) {
 		let registry = &mut self.registry.lock().unwrap();
 		for hash in registry.keys() {
 			collector(hash);
@@ -118,7 +117,12 @@ impl Rooms {
 		let mut registry = self.registry.lock().unwrap();
 		for room in &rooms {
 			let controller = registry.remove(room).unwrap();
-			controller.handle.join();
+			match controller.handle.join() {
+				Ok(_) => {}
+				Err(e) => {
+					log::error!("error {:?} when close room {}", e, room);
+				}
+			}
 		}
 	}
 }

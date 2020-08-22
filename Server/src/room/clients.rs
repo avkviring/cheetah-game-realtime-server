@@ -87,7 +87,7 @@ impl Room {
 						id,
 						client.clone());
 				
-				self.listener.on_client_connect(&client.clone(), &self.objects);
+				self.listener.on_client_connect(&client, &self.objects);
 				client
 			});
 		

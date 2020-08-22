@@ -1,14 +1,14 @@
 extern crate stderrlog;
 
-use std::process::exit;
-use std::sync::{Arc, Mutex};
+
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
 use stderrlog::Timestamp;
 
-use cheetah_relay::server::{Server, ServerBuilder};
+use cheetah_relay::server::ServerBuilder;
 
 fn main() {
 	init_logger();

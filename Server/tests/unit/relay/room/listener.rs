@@ -12,7 +12,7 @@ use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 
 #[test]
 fn should_invoke_on_object_create() {
-	let (mut room, invoked, object) = setup();
+	let (_room, invoked, _object) = setup();
 	assert_eq!((&*invoked).borrow().last().unwrap(), "on_object_create 10");
 }
 
@@ -96,8 +96,8 @@ fn setup() -> (Room, Rc<RefCell<Vec<String>>>, Rc<RefCell<GameObject>>) {
 		object_id.clone(),
 		AccessGroups::default(),
 		GameObjectFields::default(),
-	);
-	let object = room.objects.get(&object_id).unwrap().clone();
-	(room, results.clone(), object)
+	).expect("error create game object");
+	let object = room.objects.get(&object_id).unwrap();
+	(room, results, object)
 }
 

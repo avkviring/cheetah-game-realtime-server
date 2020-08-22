@@ -6,11 +6,10 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{Receiver, TryRecvError};
 use std::time::Duration;
 
-use mio::{Events, Interest, Poll, Token};
-use mio::net::{TcpListener, TcpStream};
-
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
+use mio::{Events, Interest, Poll, Token};
+use mio::net::{TcpListener, TcpStream};
 
 use crate::room::request::RoomRequest;
 use crate::rooms::{Rooms, SendRoomRequestError};
@@ -71,7 +70,10 @@ impl TCPAcceptor {
 			self.process_network_events(&mut poll, &mut events, &mut server)
 		}
 		
-		poll.registry().deregister(&mut server);
+		poll
+			.registry()
+			.deregister(&mut server)
+			.expect("error after server stopped");
 	}
 	
 	fn process_requests(&mut self) {
@@ -146,7 +148,14 @@ impl TCPAcceptor {
 					let room_hash = HashValue::from(&client.read_data[0..HashValue::SIZE]);
 					let client_hash = HashValue::from(&client.read_data[HashValue::SIZE..HashValue::SIZE * 2]);
 					let mut stream = client.stream;
-					poll.registry().deregister(&mut stream);
+					
+					match poll.registry().deregister(&mut stream) {
+						Ok(_) => {}
+						Err(e) => {
+							log::error!("fail deregister client socket {:?}", e)
+						}
+					}
+					
 					let result_send_request = rooms
 						.lock()
 						.unwrap()
@@ -159,7 +168,7 @@ impl TCPAcceptor {
 							),
 						);
 					match result_send_request {
-						Ok(_) => {},
+						Ok(_) => {}
 						Err(e) => {
 							match e {
 								SendRoomRequestError::RoomNotFound => {
@@ -176,10 +185,10 @@ impl TCPAcceptor {
 						.registry()
 						.reregister(
 							stream,
-							token.clone(),
+							*token,
 							Interest::READABLE,
 						).unwrap_or_else(|_| log::error!("Error register client tcp listener"));
-					clients.insert(token.clone(), client);
+					clients.insert(*token, client);
 				}
 			}
 			Err(e) => {
