@@ -42,11 +42,11 @@ impl TcpConnection {
 		let mut buffer_for_write = NioBuffer::new();
 		buffer_for_write.flip();
 		TcpConnection {
-			stream: stream,
+			stream,
 			read_buffer: Box::new(buffer_for_read),
 			write_buffer: Box::new(buffer_for_write),
 			registered_in_poll: false,
-			token: token,
+			token,
 			enable_write_events: false,
 		}
 	}

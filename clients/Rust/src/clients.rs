@@ -103,7 +103,7 @@ impl Clients {
 		};
 		self.client_generator_id += 1;
 		let current_generator_id = self.client_generator_id;
-		self.clients.insert(current_generator_id.clone(), client_api);
+		self.clients.insert(current_generator_id, client_api);
 		
 		log::info!("Clients::create_client with id {}", current_generator_id);
 		current_generator_id
@@ -166,7 +166,7 @@ impl Clients {
 		&mut self,
 		client_id: u16,
 		mut collector: F,
-	) -> Result<(), ClientsErrors> where F: FnMut(&Command) -> () {
+	) -> Result<(), ClientsErrors> where F: FnMut(&Command)  {
 		match self.clients.get(&client_id) {
 			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 			Some(client) => {

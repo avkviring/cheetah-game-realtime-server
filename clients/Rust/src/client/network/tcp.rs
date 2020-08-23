@@ -90,7 +90,9 @@ impl TCPClient {
 	
 	
 	fn process_network_events(&mut self, client: &mut Client) -> Result<usize, ()> {
-		self.prepare_to_send_commands(client);
+		
+		self.prepare_to_send_commands(client)?;
+		
 		let poll = &mut self.poll;
 		let connection = self.connection.as_mut().unwrap();
 		self.events.clear();
