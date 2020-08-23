@@ -15,7 +15,7 @@ fn test_execute_command() {
 		object_id: client_object_id.clone(),
 		field_id,
 		increment: 10.0,
-	}.execute(&client.clone(), &mut room);
+	}.execute(&client, &mut room);
 	
 	IncrementFloat64CounterC2SCommand {
 		object_id: client_object_id,

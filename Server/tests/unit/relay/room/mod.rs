@@ -43,7 +43,7 @@ struct TestListener {
 }
 
 impl RoomListener for TestListener {
-	fn set_current_client(&mut self, client: Rc<Client>) {
+	fn set_current_client(&mut self, _: Rc<Client>) {
 	}
 	
 	fn unset_current_client(&mut self) {
@@ -89,7 +89,7 @@ impl RoomListener for TestListener {
 		rc.borrow_mut().push(format!("on_object_struct_updated {:?} {} {:?}", game_object.id.id, field_id, game_object.get_struct(field_id).unwrap()));
 	}
 	
-	fn on_object_long_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
+	fn on_object_long_counter_set(&mut self, field_id: u16, game_object: &GameObject, _: &Clients) {
 		let rc = self.results.clone();
 		rc.borrow_mut().push(format!(
 			"on_object_long_counter_set {:?} {} {:?}",
@@ -98,7 +98,7 @@ impl RoomListener for TestListener {
 			game_object.get_long_counter(field_id)));
 	}
 	
-	fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, clients: &Clients) {
+	fn on_object_float_counter_set(&mut self, field_id: u16, game_object: &GameObject, _: &Clients) {
 		let rc = self.results.clone();
 		rc.borrow_mut().push(format!(
 			"on_object_float_counter_set {:?} {} {:?}",

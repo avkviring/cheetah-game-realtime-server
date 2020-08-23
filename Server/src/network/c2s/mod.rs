@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use cheetah_relay_common::constants::FieldID;
+
 use cheetah_relay_common::network::command::{CommandCode, Decoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
@@ -42,7 +42,7 @@ pub fn decode_end_execute_c2s_commands(
 	room: &mut Room,
 ) -> Result<(), OnReadBufferError> {
 	room.listener.set_current_client(client.clone());
-	let client = &client.clone();
+	let client = &client;
 	let command_code = buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	let result = match command_code {
 		UploadGameObjectCommand::COMMAND_CODE => {
@@ -129,7 +129,7 @@ pub fn get_field_and_change<F>(
 	
 	match result_check {
 		Ok(object) => {
-			let message = action(room, &mut *(*(object.clone())).borrow_mut());
+			let message = action(room, &mut object.borrow_mut());
 			trace_c2s_command(command_name, room, client, message)
 		}
 		Err(error) => match error {

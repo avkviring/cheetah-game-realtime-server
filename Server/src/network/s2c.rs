@@ -110,7 +110,7 @@ impl RoomListener for S2CCommandCollector {
 	
 	fn on_client_connect(&mut self, client: &Client, objects: &Objects) {
 		self.commands_by_client
-			.insert(client.configuration.id.clone(), Default::default());
+			.insert(client.configuration.id, Default::default());
 		objects
 			.get_objects_by_group_in_create_order(&client.configuration.groups)
 			.iter()

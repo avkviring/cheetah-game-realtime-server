@@ -12,6 +12,6 @@ fn test_execute_command() {
 	let command = UnloadGameObjectCommand {
 		object_id: client_object_id,
 	};
-	command.execute(&client.clone(), &mut room);
+	command.execute(&client, &mut room);
 	assert_eq!(room.objects.get(&server_object_id).is_none(), true);
 }

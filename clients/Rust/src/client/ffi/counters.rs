@@ -35,8 +35,8 @@ impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&HashMap<u16, IN>> for Coun
 	fn from(value: &HashMap<u16, IN>) -> Self {
 		let mut result: Counters<OUT> = Default::default();
 		result.count = value.len() as u8;
-		for (i, (key, value)) in value.into_iter().enumerate() {
-			result.fields[i] = key.clone();
+		for (i, (key, value)) in value.iter().enumerate() {
+			result.fields[i] = *key;
 			result.values[i] = From::<IN>::from(value.clone())
 		};
 		result
@@ -47,7 +47,7 @@ impl<IN: Default + Clone, OUT: From<IN>> From<&Counters<IN>> for HashMap<u16, OU
 	fn from(value: &Counters<IN>) -> Self {
 		let mut result = HashMap::<u16, OUT>::new();
 		for i in 0..value.count as usize {
-			let field = value.fields[i].clone();
+			let field = value.fields[i];
 			let value = From::<IN>::from(value.values[i].clone());
 			result.insert(field, value);
 		}

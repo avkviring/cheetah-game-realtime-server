@@ -15,15 +15,15 @@ fn test_execute_command() {
 		object_id: client_object_id.clone(),
 		field_id,
 		increment: 10,
-	}.execute(&client.clone(), &mut room);
+	}.execute(&client, &mut room);
 	
 	IncrementLongCounterC2SCommand {
 		object_id: client_object_id,
 		field_id,
 		increment: 20,
-	}.execute(&client.clone(), &mut room);
+	}.execute(&client, &mut room);
 	
-	let rc_object = room.objects.get(&server_object_id).unwrap().clone();
+	let rc_object = room.objects.get(&server_object_id).unwrap();
 	let object = (*rc_object).borrow();
 	assert_eq!(object.get_long_counter(field_id), 30)
 }

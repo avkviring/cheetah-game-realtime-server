@@ -11,7 +11,7 @@ fn create_group_from_vec() {
 
 #[test]
 fn should_clone() {
-	let group = AccessGroups::from(0b1001).clone();
+	let group = AccessGroups::from(0b1001);
 	assert_eq!(group.contains_group(0), true);
 	assert_eq!(group.contains_group(1), false);
 	assert_eq!(group.contains_group(2), false);

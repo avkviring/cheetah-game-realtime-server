@@ -22,6 +22,6 @@ fn create_game_object(room: &mut Room, client: &Rc<Client>) -> (ServerGameObject
 		server_object_id.clone(),
 		AccessGroups::from(0b10_0000),
 		Default::default(),
-	);
+	).unwrap();
 	(server_object_id, client_object_id)
 }
