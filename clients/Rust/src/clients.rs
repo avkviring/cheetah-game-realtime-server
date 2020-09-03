@@ -173,8 +173,6 @@ impl Clients {
 				let commands = &mut client.commands_from_server.lock().unwrap();
 				let cloned_commands: Vec<_> = commands.drain(..).collect();
 				drop(commands);
-				
-				
 				let command_ffi = &mut self.s2c_command_ffi;
 				cloned_commands.into_iter().for_each(|command| {
 					if log::log_enabled!(log::Level::Info) {

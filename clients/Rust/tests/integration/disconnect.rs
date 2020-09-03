@@ -20,7 +20,7 @@ fn should_disconnect_to_server_when_server_closed() {
 	let client = setup_client(address, &room_hash, &client_hash);
 	get_connection_status(
 		client,
-		|status| { assert_eq!(status, NetworkStatus::OnLine); },
+		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },
 	);
 	drop(server);
@@ -44,7 +44,7 @@ fn should_disconnect_client() {
 	let client = setup_client(address, &room_hash, &client_hash);
 	get_connection_status(
 		client,
-		|status| { assert_eq!(status, NetworkStatus::OnLine); },
+		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },
 	);
 	destroy_client(client);
