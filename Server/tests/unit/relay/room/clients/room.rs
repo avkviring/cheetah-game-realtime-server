@@ -55,6 +55,7 @@ fn room_client_disconnect_should_delete_client_object() {
 	let client = connect_result.ok().unwrap();
 	room.new_game_object(
 		ServerGameObjectId::new(0, ServerOwner::Client(client.configuration.id)),
+		123,
 		AccessGroups::default(),
 		GameObjectFields::default(),
 	).unwrap();

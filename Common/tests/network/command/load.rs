@@ -9,6 +9,7 @@ use crate::network::command::{should_decode_after_encode, should_decode_fail_whe
 fn test_codec_for_load_game_object_c2s_command() {
 	let mut structure = LoadGameObjectCommand {
 		object_id: ClientGameObjectId::new(std::u32::MAX, ClientOwner::Root),
+		template: 123,
 		access_groups: AccessGroups::from(std::u64::MAX),
 		fields: Default::default(),
 	};

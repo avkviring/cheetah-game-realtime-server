@@ -1,12 +1,13 @@
-use cheetah_relay::room::clients::Client;
-use cheetah_relay::room::Room;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 
-use crate::unit::relay::room::clients::client_stub;
-use cheetah_relay::room::objects::id::{ServerOwner, ServerGameObjectId};
+use cheetah_relay::room::clients::Client;
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 use cheetah_relay::room::objects::object::GameObject;
+use cheetah_relay::room::Room;
+
+use crate::unit::relay::room::clients::client_stub;
 
 #[test]
 fn should_insert_objects() {
@@ -45,6 +46,7 @@ fn setup() -> Room {
 fn create_game_object(id: u32) -> GameObject {
 	GameObject::new(
 		ServerGameObjectId::new(id, ServerOwner::Root),
+		123,
 		AccessGroups::default(),
 		GameObjectFields::default(),
 	)
@@ -53,6 +55,7 @@ fn create_game_object(id: u32) -> GameObject {
 fn create_game_object_with_client(id: u32, client: &Client) -> GameObject {
 	GameObject::new(
 		ServerGameObjectId::new(id, ServerOwner::Client(client.configuration.id)),
+		123,
 		AccessGroups::default(),
 		GameObjectFields::default(),
 	)

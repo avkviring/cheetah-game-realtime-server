@@ -1,17 +1,10 @@
+use std::{io, thread};
 use std::cmp::min;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::{Arc, mpsc, Mutex};
-use std::{thread, io};
 use std::time::Duration;
 
-use rand::Rng;
-use stderrlog::Timestamp;
-
-use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
-use cheetah_relay::room::request::{ClientInfo, RoomRequest};
-use cheetah_relay::rooms::Rooms;
-use cheetah_relay::server::{Server, ServerBuilder};
 use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
 use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
@@ -20,6 +13,13 @@ use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
+use rand::Rng;
+use stderrlog::Timestamp;
+
+use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
+use cheetah_relay::room::request::{ClientInfo, RoomRequest};
+use cheetah_relay::rooms::Rooms;
+use cheetah_relay::server::{Server, ServerBuilder};
 
 pub mod autocreate;
 
@@ -103,10 +103,10 @@ fn should_dont_send_upload_for_self_object() {
 	stream
 		.set_read_timeout(Option::Some(Duration::from_secs(2)))
 		.expect("socket set_read_timeout error");
-	match stream.read(readed.to_slice())  {
+	match stream.read(readed.to_slice()) {
 		Ok(_) => {
 			assert!(false);
-		},
+		}
 		Err(e) => {
 			if e.kind() == io::ErrorKind::WouldBlock {
 				// нет данных для чтения - и это правилно
@@ -114,9 +114,8 @@ fn should_dont_send_upload_for_self_object() {
 			} else {
 				assert!(false);
 			}
-		},
+		}
 	};
-	
 }
 
 
@@ -177,6 +176,7 @@ fn create_object(buffer: &mut NioBuffer, object_id: ServerGameObjectId) {
 	
 	let command = LoadGameObjectCommand {
 		object_id: ClientGameObjectId::new(object_id.id, ClientOwner::Root),
+		template: 123,
 		access_groups: AccessGroups::from(0b110),
 		fields,
 	};

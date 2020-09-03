@@ -12,6 +12,7 @@ fn should_load_game_objects_when_new_client_connected() {
 	room
 		.new_game_object(
 			ServerGameObjectId::new(10, ServerOwner::Client(client_a.configuration.id)),
+			123,
 			AccessGroups::from(0b1),
 			Default::default(),
 		)
@@ -19,6 +20,7 @@ fn should_load_game_objects_when_new_client_connected() {
 	room
 		.new_game_object(
 			ServerGameObjectId::new(20, ServerOwner::Client(client_a.configuration.id)),
+			123,
 			AccessGroups::from(0b1),
 			Default::default(),
 		)
