@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use cheetah_relay_client::client::ffi::bytes::Bytes;
-use cheetah_relay_client::client::ffi::C2SCommandFFIType::Structure;
 use cheetah_relay_client::client::ffi::counters::Counters;
 use cheetah_relay_client::client::ffi::ObjectId;
 use cheetah_relay_client::client::ffi::structures::Structures;
