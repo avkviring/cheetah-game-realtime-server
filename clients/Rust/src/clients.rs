@@ -105,7 +105,7 @@ impl Clients {
 		let current_generator_id = self.client_generator_id;
 		self.clients.insert(current_generator_id, client_api);
 		
-		log::info!("Clients::create_client with id {}", current_generator_id);
+		log::info!("Clients::create connection with id {}", current_generator_id);
 		current_generator_id
 	}
 	
@@ -115,11 +115,11 @@ impl Clients {
 	) -> bool {
 		match self.clients.remove(&client_id) {
 			None => {
-				log::error!("Clients::destroy_client client with id {} not found", client_id);
+				log::error!("Clients::destroy connection with id {} not found", client_id);
 				true
 			}
 			Some(_) => {
-				log::trace!("Clients::destroy_client client {}", client_id);
+				log::trace!("Clients::destroy connection {}", client_id);
 				false
 			}
 		}
