@@ -3,7 +3,6 @@ use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConve
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
-use cheetah_relay_client::client::ffi::bytes::Bytes;
 
 #[test]
 fn should_to_ffi() {

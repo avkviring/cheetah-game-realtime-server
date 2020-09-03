@@ -15,6 +15,7 @@ log = "0.4"
 cheetah_relay_common = { path = "../../Common"}
 mio = { version = "0.7.0", features = ["os-poll", "tcp"]}
 widestring="0.4.2"
+hex = "0.4.2"
 
 [dev-dependencies]
 cheetah_relay = { path = "../../Server"}

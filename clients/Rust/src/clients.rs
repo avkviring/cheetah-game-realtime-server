@@ -9,7 +9,7 @@ use cheetah_relay_common::network::command::float_counter::{IncrementFloat64Coun
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::command::S2CCommandUnion;
@@ -105,7 +105,7 @@ impl Clients {
 		let current_generator_id = self.client_generator_id;
 		self.clients.insert(current_generator_id, client_api);
 		
-		log::info!("Clients::create_client with id {}", current_generator_id);
+		log::info!("Clients::create connection with id {}", current_generator_id);
 		current_generator_id
 	}
 	
@@ -115,11 +115,11 @@ impl Clients {
 	) -> bool {
 		match self.clients.remove(&client_id) {
 			None => {
-				log::error!("Clients::destroy_client client with id {} not found", client_id);
+				log::error!("Clients::destroy connection with id {} not found", client_id);
 				true
 			}
 			Some(_) => {
-				log::trace!("Clients::destroy_client client {}", client_id);
+				log::trace!("Clients::destroy connection {}", client_id);
 				false
 			}
 		}
@@ -136,7 +136,7 @@ impl Clients {
 			}
 			Some(client) => {
 				let command = match command.command_type_c2s {
-					C2SCommandFFIType::Upload => { UploadGameObjectCommand::from_ffi(command) }
+					C2SCommandFFIType::Load => { LoadGameObjectCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementLongCounter => { IncrementLongCounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementFloatCounter => { IncrementFloat64CounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::Structure => { StructureCommand::from_ffi(command) }
@@ -173,15 +173,13 @@ impl Clients {
 				let commands = &mut client.commands_from_server.lock().unwrap();
 				let cloned_commands: Vec<_> = commands.drain(..).collect();
 				drop(commands);
-				
-				
 				let command_ffi = &mut self.s2c_command_ffi;
 				cloned_commands.into_iter().for_each(|command| {
 					if log::log_enabled!(log::Level::Info) {
 						log::info!("receive command from server {:?}", command);
 					}
 					match command {
-						S2CCommandUnion::Upload(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::Load(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetLongCounter(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetFloatCounter(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }

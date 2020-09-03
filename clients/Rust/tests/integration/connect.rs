@@ -27,7 +27,7 @@ fn should_connect_to_server() {
 	let client = setup_client(address, &room_hash, &client_hash);
 	get_connection_status(
 		client,
-		|status| { assert_eq!(status, NetworkStatus::OnLine); },
+		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },
 	);
 }
@@ -43,7 +43,7 @@ fn should_connect_to_room_server() {
 	let client = setup_client(address, &room_hash, &client_hash);
 	get_connection_status(
 		client,
-		|status| { assert_eq!(status, NetworkStatus::OnLine); },
+		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },
 	);
 	

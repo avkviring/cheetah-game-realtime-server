@@ -1,4 +1,4 @@
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 
@@ -7,9 +7,9 @@ use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, 
 use crate::client::ffi::counters::Counters;
 use crate::client::ffi::structures::Structures;
 
-impl Server2ClientFFIConverter for UploadGameObjectCommand {
+impl Server2ClientFFIConverter for LoadGameObjectCommand {
 	fn to_ffi(self, command: &mut Command) {
-		command.command_type_s2c = S2CCommandFFIType::Upload;
+		command.command_type_s2c = S2CCommandFFIType::Load;
 		command.object_id.set_from(&self.object_id);
 		command.access_group = self.access_groups.groups;
 		command.long_counters = Counters::from(&self.fields.long_counters);
@@ -18,12 +18,12 @@ impl Server2ClientFFIConverter for UploadGameObjectCommand {
 	}
 }
 
-impl Client2ServerFFIConverter for UploadGameObjectCommand {
+impl Client2ServerFFIConverter for LoadGameObjectCommand {
 	fn from_ffi(command: &Command) -> C2SCommandUnion {
-		debug_assert!(command.command_type_c2s == C2SCommandFFIType::Upload);
+		debug_assert!(command.command_type_c2s == C2SCommandFFIType::Load);
 		let structures = From::from(&command.structures);
-		C2SCommandUnion::Upload(
-			UploadGameObjectCommand {
+		C2SCommandUnion::Load(
+			LoadGameObjectCommand {
 				object_id: command.object_id.to_common_game_object_id(),
 				access_groups: AccessGroups::from(command.access_group),
 				fields: GameObjectFields {

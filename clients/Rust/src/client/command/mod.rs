@@ -4,7 +4,7 @@ use cheetah_relay_common::network::command::float_counter::{IncrementFloat64Coun
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 
@@ -17,7 +17,7 @@ pub mod unload;
 
 #[derive(Debug)]
 pub enum C2SCommandUnion {
-	Upload(UploadGameObjectCommand),
+	Load(LoadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
 	IncrementLongCounter(IncrementLongCounterC2SCommand),
 	SetFloatCounter(SetFloat64CounterCommand),
@@ -29,7 +29,7 @@ pub enum C2SCommandUnion {
 
 #[derive(Debug)]
 pub enum S2CCommandUnion {
-	Upload(UploadGameObjectCommand),
+	Load(LoadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
 	SetFloatCounter(SetFloat64CounterCommand),
 	SetStruct(StructureCommand),
@@ -41,8 +41,8 @@ pub enum S2CCommandUnion {
 pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, OnReadBufferError> {
 	let command = read_buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	let result = match command {
-		UploadGameObjectCommand::COMMAND_CODE => {
-			UploadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Upload)
+		LoadGameObjectCommand::COMMAND_CODE => {
+			LoadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Load)
 		}
 		EventCommand::COMMAND_CODE => {
 			EventCommand::decode(read_buffer).map(S2CCommandUnion::Event)
@@ -66,8 +66,8 @@ pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, On
 
 pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandUnion) -> Result<(), NioBufferError> {
 	match command {
-		C2SCommandUnion::Upload(command) => {
-			buffer.write_u8(UploadGameObjectCommand::COMMAND_CODE)?;
+		C2SCommandUnion::Load(command) => {
+			buffer.write_u8(LoadGameObjectCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::SetLongCounter(command) => {

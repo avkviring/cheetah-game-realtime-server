@@ -36,7 +36,7 @@ impl Debug for Structures {
 		for i in 0..self.count as usize {
 			let start_offset = i * MAX_SIZE_STRUCT;
 			let end_offset = start_offset + self.sizes[i] as usize;
-			debug_struct.field(format!("data[{}]", i).as_str(), &self.values[start_offset..end_offset].to_vec());
+			debug_struct.field(format!("data[{}]", i).as_str(), &hex::encode_upper(&self.values[start_offset..end_offset]));
 		}
 		
 		

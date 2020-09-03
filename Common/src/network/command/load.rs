@@ -8,19 +8,19 @@ use crate::room::object::ClientGameObjectId;
 /// Загрузка объекта
 ///
 #[derive(Debug, PartialEq, Clone)]
-pub struct UploadGameObjectCommand {
+pub struct LoadGameObjectCommand {
 	pub object_id: ClientGameObjectId,
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFields,
 }
 
 
-impl CommandCode for UploadGameObjectCommand {
+impl CommandCode for LoadGameObjectCommand {
 	const COMMAND_CODE: u8 = 8;
 }
 
 
-impl Encoder for UploadGameObjectCommand {
+impl Encoder for LoadGameObjectCommand {
 	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
 		self.object_id.encode(buffer)?;
 		self.access_groups.encode(buffer)?;
@@ -29,9 +29,9 @@ impl Encoder for UploadGameObjectCommand {
 	}
 }
 
-impl Decoder for UploadGameObjectCommand {
+impl Decoder for LoadGameObjectCommand {
 	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
-		Result::Ok(UploadGameObjectCommand {
+		Result::Ok(LoadGameObjectCommand {
 			object_id: ClientGameObjectId::decode(buffer)?,
 			access_groups: AccessGroups::decode(buffer)?,
 			fields: GameObjectFields::decode(buffer)?,

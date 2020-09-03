@@ -7,7 +7,7 @@ use cheetah_relay_common::network::command::float_counter::SetFloat64CounterComm
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::ClientGameObjectId;
@@ -54,7 +54,7 @@ fn should_s2c_collect_on_object_create() {
 	assert_command(
 		collector,
 		id,
-		S2CCommandUnion::UploadGameObject(UploadGameObjectCommand {
+		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
 			object_id: client_object_id,
 			access_groups: AccessGroups::from(0b100),
 			fields: Default::default(),
@@ -77,7 +77,7 @@ fn should_s2c_collect_on_client_connect() {
 	assert_command(
 		commands.clone(),
 		id,
-		S2CCommandUnion::UploadGameObject(UploadGameObjectCommand {
+		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
 			object_id: ClientGameObjectId::new(10, ClientOwner::Root),
 			fields: Default::default(),
 			access_groups: AccessGroups::from(0b100),
@@ -87,7 +87,7 @@ fn should_s2c_collect_on_client_connect() {
 	assert_command(
 		commands,
 		id,
-		S2CCommandUnion::UploadGameObject(UploadGameObjectCommand {
+		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
 			object_id: ClientGameObjectId::new(11, ClientOwner::Root),
 			fields: Default::default(),
 			access_groups: AccessGroups::from(0b100),

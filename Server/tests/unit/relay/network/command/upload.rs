@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cheetah_relay::network::c2s::ServerCommandExecutor;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 
@@ -21,7 +21,7 @@ fn test_execute_command() {
 	structures.insert(50, vec![0, 1, 2, 3, 4]);
 	
 	let object_id = ServerGameObjectId::new(155, ServerOwner::Root);
-	let command = UploadGameObjectCommand {
+	let command = LoadGameObjectCommand {
 		object_id: object_id.to_client_object_id(Option::None),
 		access_groups: AccessGroups::from(0b10_0000),
 		fields: GameObjectFields {

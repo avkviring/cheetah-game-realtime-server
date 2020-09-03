@@ -66,7 +66,7 @@ impl TCPClient {
 		match self.status {
 			Status::None => { NetworkStatus::Connecting }
 			Status::Connecting => { NetworkStatus::Connecting }
-			Status::Connected => { NetworkStatus::OnLine }
+			Status::Connected => { NetworkStatus::Connected }
 			Status::Disconnected => { NetworkStatus::Disconnected }
 		}
 	}

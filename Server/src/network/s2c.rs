@@ -8,7 +8,7 @@ use cheetah_relay_common::network::command::float_counter::SetFloat64CounterComm
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::room::access::AccessGroups;
 
@@ -27,7 +27,7 @@ pub struct S2CCommandCollector {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum S2CCommandUnion {
-	UploadGameObject(UploadGameObjectCommand),
+	LoadGameObject(LoadGameObjectCommand),
 	UnloadGameObject(UnloadGameObjectCommand),
 	Event(EventCommand),
 	SetFloatCounter(SetFloat64CounterCommand),
@@ -38,7 +38,7 @@ pub enum S2CCommandUnion {
 impl S2CCommandUnion {
 	fn get_code(&self) -> u8 {
 		match self {
-			S2CCommandUnion::UploadGameObject(_) => UploadGameObjectCommand::COMMAND_CODE,
+			S2CCommandUnion::LoadGameObject(_) => LoadGameObjectCommand::COMMAND_CODE,
 			S2CCommandUnion::UnloadGameObject(_) => UnloadGameObjectCommand::COMMAND_CODE,
 			S2CCommandUnion::SetLongCounter(_) => SetLongCounterCommand::COMMAND_CODE,
 			S2CCommandUnion::SetFloatCounter(_) => SetFloat64CounterCommand::COMMAND_CODE,
@@ -88,8 +88,8 @@ impl RoomListener for S2CCommandCollector {
 	
 	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
 		self.push(AffectedClients::new_from_clients(&self.current_client, clients, &game_object.access_groups), |client|
-			S2CCommandUnion::UploadGameObject(
-				UploadGameObjectCommand {
+			S2CCommandUnion::LoadGameObject(
+				LoadGameObjectCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
 					access_groups: game_object.access_groups.clone(),
 					fields: game_object.fields.clone(),
@@ -121,8 +121,8 @@ impl RoomListener for S2CCommandCollector {
 				let affected_clients = AffectedClients::new_from_client(client);
 				self.push(affected_clients, |client|
 					{
-						S2CCommandUnion::UploadGameObject(
-							UploadGameObjectCommand {
+						S2CCommandUnion::LoadGameObject(
+							LoadGameObjectCommand {
 								object_id: o.id.to_client_object_id(Option::Some(*client)),
 								access_groups: o.access_groups.clone(),
 								fields: o.fields.clone(),
@@ -267,6 +267,6 @@ pub fn encode_s2c_commands(buffer: &mut NioBuffer, command: &S2CCommandUnion) ->
 		S2CCommandUnion::SetFloatCounter(command) => command.encode(buffer),
 		S2CCommandUnion::SetLongCounter(command) => command.encode(buffer),
 		S2CCommandUnion::Struct(command) => command.encode(buffer),
-		S2CCommandUnion::UploadGameObject(command) => command.encode(buffer),
+		S2CCommandUnion::LoadGameObject(command) => command.encode(buffer),
 	}
 }

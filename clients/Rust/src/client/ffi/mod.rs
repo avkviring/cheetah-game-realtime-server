@@ -70,7 +70,7 @@ pub enum ObjectIdType {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum S2CCommandFFIType {
-	Upload,
+	Load,
 	SetLongCounter,
 	SetFloatCounter,
 	Structure,
@@ -81,7 +81,7 @@ pub enum S2CCommandFFIType {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum C2SCommandFFIType {
-	Upload,
+	Load,
 	IncrementLongCounter,
 	SetLongCounter,
 	IncrementFloatCounter,
