@@ -23,6 +23,7 @@ fn test_execute_command() {
 	let object_id = ServerGameObjectId::new(155, ServerOwner::Root);
 	let command = LoadGameObjectCommand {
 		object_id: object_id.to_client_object_id(Option::None),
+		template: 123,
 		access_groups: AccessGroups::from(0b10_0000),
 		fields: GameObjectFields {
 			long_counters,

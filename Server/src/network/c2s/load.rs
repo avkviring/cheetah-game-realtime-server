@@ -10,7 +10,7 @@ impl ServerCommandExecutor for LoadGameObjectCommand {
 		trace_c2s_command("LoadGameObject", room, client, format!("{:?}", self));
 		if self.access_groups.is_sub_groups(&client.configuration.groups) {
 			let object_id = ServerGameObjectId::from_client_object_id(Option::Some(client.configuration.id), &self.object_id);
-			match room.new_game_object(object_id, self.access_groups.clone(), self.fields) {
+			match room.new_game_object(object_id, self.template, self.access_groups.clone(), self.fields) {
 				Ok(_) => {
 					trace_c2s_command(
 						"LoadGameObject",

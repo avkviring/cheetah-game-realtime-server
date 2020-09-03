@@ -30,6 +30,7 @@ fn should_decode_result_false_if_partial_buffer() {
 fn should_decode() {
 	let command = LoadGameObjectCommand {
 		object_id: Default::default(),
+		template: 123,
 		access_groups: Default::default(),
 		fields: Default::default(),
 	};
@@ -46,6 +47,7 @@ fn should_decode() {
 fn should_decode_more_one_command() {
 	let command = LoadGameObjectCommand {
 		object_id: Default::default(),
+		template: 123,
 		access_groups: Default::default(),
 		fields: Default::default(),
 	};

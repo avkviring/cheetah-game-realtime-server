@@ -5,10 +5,10 @@ use cheetah_relay_common::constants::{ClientId, FieldID};
 use cheetah_relay_common::network::command::{CommandCode, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloat64CounterCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::room::access::AccessGroups;
 
@@ -91,6 +91,7 @@ impl RoomListener for S2CCommandCollector {
 			S2CCommandUnion::LoadGameObject(
 				LoadGameObjectCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
+					template: game_object.template,
 					access_groups: game_object.access_groups.clone(),
 					fields: game_object.fields.clone(),
 				}),
@@ -124,6 +125,7 @@ impl RoomListener for S2CCommandCollector {
 						S2CCommandUnion::LoadGameObject(
 							LoadGameObjectCommand {
 								object_id: o.id.to_client_object_id(Option::Some(*client)),
+								template: o.template,
 								access_groups: o.access_groups.clone(),
 								fields: o.fields.clone(),
 							})

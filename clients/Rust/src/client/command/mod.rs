@@ -8,7 +8,7 @@ use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 
-pub mod upload;
+pub mod load;
 pub mod long_counter;
 pub mod float_counter;
 pub mod structure;

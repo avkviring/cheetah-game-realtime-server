@@ -1,17 +1,16 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use indexmap::map::IndexMap;
-
+use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::ClientGameObjectId;
+use indexmap::map::IndexMap;
 
 use crate::room::clients::Client;
 use crate::room::listener::RoomListener;
 use crate::room::objects::id::{ServerGameObjectId, ServerOwner};
 use crate::room::objects::object::GameObject;
 use crate::room::Room;
-use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod object;
 pub mod id;
@@ -97,10 +96,12 @@ impl Room {
 	///
 	pub fn new_game_object(&mut self,
 						   object_id: ServerGameObjectId,
+						   template: u16,
 						   access_group: AccessGroups,
 						   fields: GameObjectFields) -> Result<(), GameObjectCreateErrors> {
 		let object = GameObject::new(
 			object_id,
+			template,
 			access_group,
 			fields,
 		);

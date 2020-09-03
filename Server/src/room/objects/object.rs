@@ -14,15 +14,17 @@ use crate::room::objects::id::ServerGameObjectId;
 #[derive(Debug, Clone, PartialEq)]
 pub struct GameObject {
 	pub id: ServerGameObjectId,
+	pub template: u16,
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFields,
 }
 
 
 impl GameObject {
-	pub fn new(id: ServerGameObjectId, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
+	pub fn new(id: ServerGameObjectId, template:u16, access_groups: AccessGroups, fields: GameObjectFields) -> GameObject {
 		GameObject {
 			id,
+			template,
 			access_groups,
 			fields,
 		}

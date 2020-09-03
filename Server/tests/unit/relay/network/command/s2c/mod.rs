@@ -4,10 +4,10 @@ use std::rc::Rc;
 use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloat64CounterCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::ClientGameObjectId;
@@ -56,6 +56,7 @@ fn should_s2c_collect_on_object_create() {
 		id,
 		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
 			object_id: client_object_id,
+			template: 123,
 			access_groups: AccessGroups::from(0b100),
 			fields: Default::default(),
 		}),
@@ -67,10 +68,10 @@ fn should_s2c_collect_on_client_connect() {
 	let (mut room, commands) = setup();
 	
 	
-	room.new_game_object(ServerGameObjectId::new(10, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
-	room.new_game_object(ServerGameObjectId::new(11, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
-	room.new_game_object(ServerGameObjectId::new(9, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
-	room.new_game_object(ServerGameObjectId::new(1, ServerOwner::Root), AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
+	room.new_game_object(ServerGameObjectId::new(10, ServerOwner::Root), 123, AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
+	room.new_game_object(ServerGameObjectId::new(11, ServerOwner::Root), 123, AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
+	room.new_game_object(ServerGameObjectId::new(9, ServerOwner::Root), 123, AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
+	room.new_game_object(ServerGameObjectId::new(1, ServerOwner::Root), 123, AccessGroups::from(0b100), GameObjectFields::default()).unwrap();
 	
 	let client = setup_client(&mut room, "HASH", 0b100);
 	let id = client.configuration.id;
@@ -79,6 +80,7 @@ fn should_s2c_collect_on_client_connect() {
 		id,
 		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
 			object_id: ClientGameObjectId::new(10, ClientOwner::Root),
+			template: 123,
 			fields: Default::default(),
 			access_groups: AccessGroups::from(0b100),
 		}),
@@ -89,6 +91,7 @@ fn should_s2c_collect_on_client_connect() {
 		id,
 		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
 			object_id: ClientGameObjectId::new(11, ClientOwner::Root),
+			template: 123,
 			fields: Default::default(),
 			access_groups: AccessGroups::from(0b100),
 		}),
@@ -101,16 +104,19 @@ fn should_s2c_collect_on_client_disconnect() {
 	let client_a = setup_client(&mut room, "HASH_A", 0b100);
 	room.new_game_object(
 		ServerGameObjectId::new(1, ServerOwner::Client(client_a.configuration.id)),
+		123,
 		AccessGroups::from(0b100),
 		GameObjectFields::default(),
 	).unwrap();
 	room.new_game_object(
 		ServerGameObjectId::new(2, ServerOwner::Client(client_a.configuration.id)),
+		123,
 		AccessGroups::from(0b100),
 		GameObjectFields::default(),
 	).unwrap();
 	room.new_game_object(
 		ServerGameObjectId::new(3, ServerOwner::Client(client_a.configuration.id)),
+		123,
 		AccessGroups::from(0b100),
 		GameObjectFields::default(),
 	).unwrap();
@@ -255,6 +261,7 @@ fn setup_client_and_object(mut room: &mut Room) -> (Rc<Client>, ServerGameObject
 	room
 		.new_game_object(
 			server_object_id.clone(),
+			123,
 			AccessGroups::from(0b100),
 			GameObjectFields::default(),
 		).unwrap();

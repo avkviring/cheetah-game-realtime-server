@@ -94,6 +94,7 @@ fn setup() -> (Room, Rc<RefCell<Vec<String>>>, Rc<RefCell<GameObject>>) {
 	let object_id = ServerGameObjectId::new(10, ServerOwner::Root);
 	room.new_game_object(
 		object_id.clone(),
+		123,
 		AccessGroups::default(),
 		GameObjectFields::default(),
 	).expect("error create game object");

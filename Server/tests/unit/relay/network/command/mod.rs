@@ -1,10 +1,11 @@
 use std::rc::Rc;
 
-use cheetah_relay::room::clients::Client;
-use cheetah_relay::room::Room;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::ClientGameObjectId;
+
+use cheetah_relay::room::clients::Client;
 use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
+use cheetah_relay::room::Room;
 
 pub mod c2s;
 pub mod s2c;
@@ -20,6 +21,7 @@ fn create_game_object(room: &mut Room, client: &Rc<Client>) -> (ServerGameObject
 	let client_object_id = server_object_id.to_client_object_id(Option::Some(client.configuration.id));
 	room.new_game_object(
 		server_object_id.clone(),
+		123,
 		AccessGroups::from(0b10_0000),
 		Default::default(),
 	).unwrap();

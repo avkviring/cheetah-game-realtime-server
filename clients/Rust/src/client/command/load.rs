@@ -11,6 +11,7 @@ impl Server2ClientFFIConverter for LoadGameObjectCommand {
 	fn to_ffi(self, command: &mut Command) {
 		command.command_type_s2c = S2CCommandFFIType::Load;
 		command.object_id.set_from(&self.object_id);
+		command.object_template = self.template;
 		command.access_group = self.access_groups.groups;
 		command.long_counters = Counters::from(&self.fields.long_counters);
 		command.float_counters = Counters::from(&self.fields.float_counters);
@@ -25,6 +26,7 @@ impl Client2ServerFFIConverter for LoadGameObjectCommand {
 		C2SCommandUnion::Load(
 			LoadGameObjectCommand {
 				object_id: command.object_id.to_common_game_object_id(),
+				template: command.object_template,
 				access_groups: AccessGroups::from(command.access_group),
 				fields: GameObjectFields {
 					long_counters: From::from(&command.long_counters),
