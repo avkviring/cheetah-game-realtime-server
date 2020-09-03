@@ -9,7 +9,7 @@ use cheetah_relay_common::network::command::float_counter::{IncrementFloat64Coun
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::command::S2CCommandUnion;
@@ -136,7 +136,7 @@ impl Clients {
 			}
 			Some(client) => {
 				let command = match command.command_type_c2s {
-					C2SCommandFFIType::Upload => { UploadGameObjectCommand::from_ffi(command) }
+					C2SCommandFFIType::Load => { LoadGameObjectCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementLongCounter => { IncrementLongCounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::IncrementFloatCounter => { IncrementFloat64CounterC2SCommand::from_ffi(command) }
 					C2SCommandFFIType::Structure => { StructureCommand::from_ffi(command) }
@@ -179,7 +179,7 @@ impl Clients {
 						log::info!("receive command from server {:?}", command);
 					}
 					match command {
-						S2CCommandUnion::Upload(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::Load(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetLongCounter(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetFloatCounter(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }

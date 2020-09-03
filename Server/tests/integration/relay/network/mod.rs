@@ -13,7 +13,7 @@ use cheetah_relay::room::request::{ClientInfo, RoomRequest};
 use cheetah_relay::rooms::Rooms;
 use cheetah_relay::server::{Server, ServerBuilder};
 use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::room::access::AccessGroups;
@@ -153,9 +153,9 @@ fn should_receive_command_from_server() {
 	
 	assert_eq!(
 		readed.read_u8().unwrap(),
-		UploadGameObjectCommand::COMMAND_CODE
+		LoadGameObjectCommand::COMMAND_CODE
 	);
-	let command = UploadGameObjectCommand::decode(&mut readed).unwrap();
+	let command = LoadGameObjectCommand::decode(&mut readed).unwrap();
 	assert_eq!(*command.fields.long_counters.get(&10).unwrap(), 55);
 	assert_eq!(*command.fields.float_counters.get(&15).unwrap() as i64, 15);
 	assert_eq!(
@@ -166,7 +166,7 @@ fn should_receive_command_from_server() {
 
 fn create_object(buffer: &mut NioBuffer, object_id: ServerGameObjectId) {
 	buffer
-		.write_u8(UploadGameObjectCommand::COMMAND_CODE)
+		.write_u8(LoadGameObjectCommand::COMMAND_CODE)
 		.ok();
 	let mut fields = GameObjectFields::default();
 	fields.long_counters.insert(10, 55);
@@ -175,7 +175,7 @@ fn create_object(buffer: &mut NioBuffer, object_id: ServerGameObjectId) {
 		.structures
 		.insert(5, vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 	
-	let command = UploadGameObjectCommand {
+	let command = LoadGameObjectCommand {
 		object_id: ClientGameObjectId::new(object_id.id, ClientOwner::Root),
 		access_groups: AccessGroups::from(0b110),
 		fields,

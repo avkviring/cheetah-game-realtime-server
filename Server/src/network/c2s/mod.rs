@@ -7,7 +7,7 @@ use cheetah_relay_common::network::command::float_counter::{IncrementFloat64Coun
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
 use cheetah_relay_common::room::object::ClientGameObjectId;
@@ -23,7 +23,7 @@ pub mod event;
 pub mod float_counter;
 pub mod long_counter;
 pub mod structure;
-pub mod upload;
+pub mod load;
 
 ///
 /// Выполнение серверной команды
@@ -45,8 +45,8 @@ pub fn decode_end_execute_c2s_commands(
 	let client = &client;
 	let command_code = buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
 	let result = match command_code {
-		UploadGameObjectCommand::COMMAND_CODE => {
-			UploadGameObjectCommand::decode(buffer)
+		LoadGameObjectCommand::COMMAND_CODE => {
+			LoadGameObjectCommand::decode(buffer)
 				.map(|f| f.execute(client, room))
 				.map_err(OnReadBufferError::NioBufferError)
 		}

@@ -1,4 +1,4 @@
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
@@ -6,8 +6,8 @@ use cheetah_relay_common::room::owner::ClientOwner;
 use crate::network::command::{should_decode_after_encode, should_decode_fail_when_buffer_is_not_enough, should_encode_fail_when_buffer_is_not_enough};
 
 #[test]
-fn test_codec_for_upload_game_object_c2s_command() {
-	let mut structure = UploadGameObjectCommand {
+fn test_codec_for_load_game_object_c2s_command() {
+	let mut structure = LoadGameObjectCommand {
 		object_id: ClientGameObjectId::new(std::u32::MAX, ClientOwner::Root),
 		access_groups: AccessGroups::from(std::u64::MAX),
 		fields: Default::default(),

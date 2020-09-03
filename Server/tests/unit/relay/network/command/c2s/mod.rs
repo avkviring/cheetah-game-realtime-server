@@ -1,7 +1,7 @@
 use cheetah_relay::network::c2s::decode_end_execute_c2s_commands;
 use cheetah_relay_common::network::command::{CommandCode, Encoder};
 use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::upload::UploadGameObjectCommand;
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 
 use crate::unit::relay::room::clients::client_stub;
@@ -28,13 +28,13 @@ fn should_decode_result_false_if_partial_buffer() {
 
 #[test]
 fn should_decode() {
-	let command = UploadGameObjectCommand {
+	let command = LoadGameObjectCommand {
 		object_id: Default::default(),
 		access_groups: Default::default(),
 		fields: Default::default(),
 	};
 	let mut buffer = NioBuffer::new();
-	buffer.write_u8(UploadGameObjectCommand::COMMAND_CODE).unwrap();
+	buffer.write_u8(LoadGameObjectCommand::COMMAND_CODE).unwrap();
 	command.encode(&mut buffer).unwrap();
 	buffer.flip();
 	let result =
@@ -44,15 +44,15 @@ fn should_decode() {
 
 #[test]
 fn should_decode_more_one_command() {
-	let command = UploadGameObjectCommand {
+	let command = LoadGameObjectCommand {
 		object_id: Default::default(),
 		access_groups: Default::default(),
 		fields: Default::default(),
 	};
 	let mut buffer = NioBuffer::new();
-	buffer.write_u8(UploadGameObjectCommand::COMMAND_CODE).unwrap();
+	buffer.write_u8(LoadGameObjectCommand::COMMAND_CODE).unwrap();
 	command.encode(&mut buffer).unwrap();
-	buffer.write_u8(UploadGameObjectCommand::COMMAND_CODE).unwrap();
+	buffer.write_u8(LoadGameObjectCommand::COMMAND_CODE).unwrap();
 	command.encode(&mut buffer).unwrap();
 	buffer.flip();
 	
