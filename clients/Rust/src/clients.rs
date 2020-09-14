@@ -6,10 +6,10 @@ use std::thread::JoinHandle;
 
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::command::S2CCommandUnion;
@@ -146,9 +146,8 @@ impl Clients {
 					C2SCommandFFIType::SetFloatCounter => { SetFloat64CounterCommand::from_ffi(command) }
 				};
 				
-				if log::log_enabled!(log::Level::Info) {
-					log::info!("schedule command to server {:?}", command);
-				}
+				log::info!("schedule command to server {:?}", command);
+				
 				match client.sender.send(ClientRequestType::SendCommandToServer(command)) {
 					Ok(_) => {
 						Result::Ok(())

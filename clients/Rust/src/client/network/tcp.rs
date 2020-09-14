@@ -96,7 +96,7 @@ impl TCPClient {
 		let poll = &mut self.poll;
 		let connection = self.connection.as_mut().unwrap();
 		self.events.clear();
-		match poll.poll(&mut self.events, Option::Some(Duration::from_millis(1))) {
+		match poll.poll(&mut self.events, Option::Some(Duration::from_millis(0))) {
 			Ok(_) => {
 				let mut count_success_event = 0;
 				for event in &self.events {

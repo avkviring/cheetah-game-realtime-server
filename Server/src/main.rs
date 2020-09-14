@@ -17,7 +17,7 @@ fn main() {
 }
 
 fn start_server() {
-	let server = ServerBuilder::new("127.0.0.1:5000".to_string()).enable_auto_create_room_and_client().build();
+	let server = ServerBuilder::new("0.0.0.0:5000".to_string()).enable_auto_create_room_and_client().build();
 	
 	let running = Arc::new(AtomicBool::new(true));
 	let r = running.clone();
