@@ -19,7 +19,7 @@ pub struct ExternalRequestProcessor {
 
 pub enum RequestResult {
 	Ok,
-	Close,
+	Close
 }
 
 impl ExternalRequestProcessor {
@@ -30,26 +30,27 @@ impl ExternalRequestProcessor {
 	}
 	
 	pub fn cycle(&mut self, client: &mut Client) -> Result<RequestResult, ()> {
-		let result = self.receiver.try_recv();
-		match result {
-			Ok(request) => {
-				match request {
-					ClientRequestType::SendCommandToServer(command) => {
-						client.schedule_command_to_server(command);
-						Result::Ok(RequestResult::Ok)
-					}
-					ClientRequestType::Close => {
-						Result::Ok(RequestResult::Close)
+		loop {
+			let result = self.receiver.try_recv();
+			match result {
+				Ok(request) => {
+					match request {
+						ClientRequestType::SendCommandToServer(command) => {
+							client.schedule_command_to_server(command);
+						}
+						ClientRequestType::Close => {
+							return Result::Ok(RequestResult::Close)
+						}
 					}
 				}
-			}
-			Err(e) => {
-				match e {
-					TryRecvError::Empty => {
-						Result::Ok(RequestResult::Ok)
-					}
-					TryRecvError::Disconnected => {
-						Result::Err(())
+				Err(e) => {
+					match e {
+						TryRecvError::Empty => {
+							return Result::Ok(RequestResult::Ok)
+						}
+						TryRecvError::Disconnected => {
+							return Result::Err(())
+						}
 					}
 				}
 			}

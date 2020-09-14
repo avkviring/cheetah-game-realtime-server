@@ -39,6 +39,7 @@ pub enum OnReadBufferError {
 
 impl TcpConnection {
 	pub fn new(stream: TcpStream, buffer_for_read: NioBuffer, token: Token) -> Self {
+		stream.set_nodelay(true);
 		let mut buffer_for_write = NioBuffer::new();
 		buffer_for_write.flip();
 		TcpConnection {

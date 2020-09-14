@@ -5,11 +5,10 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
-use log::Level;
-use widestring::U16CString;
-
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::utils::logger::LogListener;
+use log::Level;
+use widestring::U16CString;
 
 use crate::client::ffi::Command;
 use crate::client::NetworkStatus;
@@ -40,8 +39,7 @@ pub enum LogLevel {
 #[no_mangle]
 pub extern "C" fn init_logger() {
 	LogListener::setup_logger();
-	set_max_log_level(LogLevel::Info);
-	log::info!("init logger");
+	set_max_log_level(LogLevel::Error);
 }
 
 #[no_mangle]
@@ -107,6 +105,10 @@ pub extern "C" fn get_connection_status(client_id: u16, on_result: fn(NetworkSta
 
 #[no_mangle]
 pub extern "C" fn receive_commands_from_server(client_id: u16, collector: fn(&Command), on_error: fn()) {
+	do_receive_commands_from_server(client_id, collector, on_error);
+}
+
+pub fn do_receive_commands_from_server<F>(client_id: u16, collector: F, on_error: fn()) where F: FnMut(&Command) {
 	execute(|api| {
 		match api.collect_s2c_commands(client_id, collector) {
 			Ok(_) => {}
@@ -123,11 +125,8 @@ pub extern "C" fn receive_commands_from_server(client_id: u16, collector: fn(&Co
 #[no_mangle]
 pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_error: fn()) {
 	execute(|api| {
-		log::info!("try command send");
 		match api.send_command_to_server(client_id, command) {
-			Ok(_) => {
-				log::info!("command sended");
-			}
+			Ok(_) => {}
 			Err(e) => {
 				log::error!("send_command_to_server error {:?}", e);
 				on_error();
@@ -141,7 +140,5 @@ pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_e
 pub extern "C" fn destroy_client(client_id: u16) {
 	execute(|api| api.destroy_client(client_id));
 }
-
-
 
 
