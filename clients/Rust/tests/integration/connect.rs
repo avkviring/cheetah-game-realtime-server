@@ -1,5 +1,5 @@
 use cheetah_relay_client::client::NetworkStatus;
-use cheetah_relay_client::{get_connection_status, do_get_connection_status};
+use cheetah_relay_client::do_get_connection_status;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::integration::{add_wating_client_to_room, get_server_room_clients, setup_client, setup_logger, setup_server};

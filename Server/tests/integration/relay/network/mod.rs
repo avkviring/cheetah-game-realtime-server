@@ -7,6 +7,8 @@ use std::time::Duration;
 
 use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
 use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
+use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::network::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::network::niobuffer::NioBuffer;
 use cheetah_relay_common::room::access::AccessGroups;
@@ -150,8 +152,10 @@ fn should_receive_command_from_server() {
 	readed.set_position(0).expect("");
 	readed.set_limit(size).expect("");
 	
+	
+	let readed_meta = S2CMetaCommandInformation::decode(&mut readed).unwrap();
 	assert_eq!(
-		readed.read_u8().unwrap(),
+		readed_meta.command_code,
 		LoadGameObjectCommand::COMMAND_CODE
 	);
 	let command = LoadGameObjectCommand::decode(&mut readed).unwrap();
@@ -164,9 +168,12 @@ fn should_receive_command_from_server() {
 }
 
 fn create_object(buffer: &mut NioBuffer, object_id: ServerGameObjectId) {
-	buffer
-		.write_u8(LoadGameObjectCommand::COMMAND_CODE)
+	C2SMetaCommandInformation
+	::new(LoadGameObjectCommand::COMMAND_CODE, 0)
+		.encode(buffer)
 		.ok();
+	
+	
 	let mut fields = GameObjectFields::default();
 	fields.long_counters.insert(10, 55);
 	fields.float_counters.insert(15, 15.0);

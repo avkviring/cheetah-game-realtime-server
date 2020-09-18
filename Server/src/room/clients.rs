@@ -36,7 +36,7 @@ pub struct ClientConfiguration {
 #[derive(Debug, PartialEq)]
 pub struct Client {
 	/// конфигурация клиента
-	pub configuration: ClientConfiguration,
+    pub configuration: ClientConfiguration,
 }
 
 #[derive(Debug)]

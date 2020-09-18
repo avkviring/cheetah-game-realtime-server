@@ -1,10 +1,12 @@
 use std::sync::mpsc::{Receiver, TryRecvError};
 
+use cheetah_relay_common::network::command::{C2SCommandUnion, C2SCommandWithMeta};
+use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
+
 use crate::client::Client;
-use crate::client::command::C2SCommandUnion;
 
 pub enum ClientRequestType {
-	SendCommandToServer(C2SCommandUnion),
+	SendCommandToServer(C2SCommandUnion, C2SMetaCommandInformation),
 	Close,
 }
 
@@ -19,7 +21,7 @@ pub struct ExternalRequestProcessor {
 
 pub enum RequestResult {
 	Ok,
-	Close
+	Close,
 }
 
 impl ExternalRequestProcessor {
@@ -35,21 +37,21 @@ impl ExternalRequestProcessor {
 			match result {
 				Ok(request) => {
 					match request {
-						ClientRequestType::SendCommandToServer(command) => {
-							client.schedule_command_to_server(command);
+						ClientRequestType::SendCommandToServer(command, meta) => {
+							client.schedule_command_to_server(C2SCommandWithMeta {command, meta});
 						}
 						ClientRequestType::Close => {
-							return Result::Ok(RequestResult::Close)
+							return Result::Ok(RequestResult::Close);
 						}
 					}
 				}
 				Err(e) => {
 					match e {
 						TryRecvError::Empty => {
-							return Result::Ok(RequestResult::Ok)
+							return Result::Ok(RequestResult::Ok);
 						}
 						TryRecvError::Disconnected => {
-							return Result::Err(())
+							return Result::Err(());
 						}
 					}
 				}

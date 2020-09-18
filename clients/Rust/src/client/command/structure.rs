@@ -1,7 +1,7 @@
 use cheetah_relay_common::network::command::structure::StructureCommand;
 
-use crate::client::command::C2SCommandUnion;
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
+use cheetah_relay_common::network::command::C2SCommandUnion;
 
 impl Server2ClientFFIConverter for StructureCommand {
 	fn to_ffi(self, command: &mut Command) {

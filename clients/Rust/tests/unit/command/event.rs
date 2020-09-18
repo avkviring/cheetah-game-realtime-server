@@ -1,9 +1,9 @@
-use cheetah_relay_client::client::command::C2SCommandUnion;
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
 use cheetah_relay_client::client::ffi::bytes::Bytes;
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
+use cheetah_relay_common::network::command::C2SCommandUnion;
 
 #[test]
 fn should_to_ffi() {
@@ -32,7 +32,6 @@ fn should_from_ffi() {
 	ffi.field_id = 10;
 	ffi.event = Bytes::from(vec![1, 2, 3]);
 	let command = EventCommand::from_ffi(&ffi);
-	
 	assert!(matches!(&command,C2SCommandUnion::Event(ref event) if event.object_id == object_id));
 	assert!(matches!(&command,C2SCommandUnion::Event(ref event) if event.field_id == 10));
 	assert!(matches!(&command,C2SCommandUnion::Event(ref event) if event.event.as_slice() == vec![1,2,3].as_slice()));

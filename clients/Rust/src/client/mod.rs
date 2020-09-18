@@ -1,9 +1,8 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
+use cheetah_relay_common::network::command::{C2SCommandWithMeta, S2CCommandWithMeta};
 use cheetah_relay_common::network::hash::HashValue;
-
-use crate::client::command::{C2SCommandUnion, S2CCommandUnion};
 
 pub mod ffi;
 pub mod command;
@@ -16,8 +15,8 @@ pub struct Client {
 	pub room_hash: HashValue,
 	pub client_hash: HashValue,
 	pub network_status: Arc<Mutex<NetworkStatus>>,
-	pub scheduled_command_to_server: VecDeque<C2SCommandUnion>,
-	pub commands_from_server: Arc<Mutex<Vec<S2CCommandUnion>>>,
+	pub scheduled_command_to_server: VecDeque<C2SCommandWithMeta>,
+	pub commands_from_server: Arc<Mutex<Vec<S2CCommandWithMeta>>>,
 }
 
 
@@ -41,11 +40,10 @@ pub enum NetworkStatus {
 	Disconnected,
 }
 
-
 impl Client {
 	pub fn new(room_hash: HashValue,
 			   client_hash: HashValue,
-			   commands_from_server: Arc<Mutex<Vec<S2CCommandUnion>>>,
+			   commands_from_server: Arc<Mutex<Vec<S2CCommandWithMeta>>>,
 			   network_status: Arc<Mutex<NetworkStatus>>) -> Client {
 		Client {
 			room_hash,
@@ -56,7 +54,7 @@ impl Client {
 		}
 	}
 	
-	pub fn schedule_command_to_server(&mut self, command: C2SCommandUnion) {
+	pub fn schedule_command_to_server(&mut self, command: C2SCommandWithMeta) {
 		self.scheduled_command_to_server.push_back(command);
 	}
 }

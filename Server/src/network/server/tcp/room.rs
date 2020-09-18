@@ -71,11 +71,11 @@ impl TcpRoom {
 							encode_s2c_commands(buffer, command)
 						},
 					) {
-						Ok(_) => {},
+						Ok(_) => {}
 						Err(e) => {
 							log::error!("error prepare commands for send {:?} - closing client", e);
 							schedule_for_close.insert(connection_with_client.connection.token);
-						},
+						}
 					}
 				}
 			}
@@ -96,7 +96,7 @@ impl TcpRoom {
 			let connection_with_client = self.clients.get_mut(&token);
 			match connection_with_client {
 				Some(connection_with_client) => {
-					let client = &mut connection_with_client.client;
+					let client = connection_with_client.client.clone();
 					let connection = &mut connection_with_client.connection;
 					match connection.process_event(
 						event,
