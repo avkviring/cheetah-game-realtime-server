@@ -34,7 +34,7 @@ fn start_server() {
 
 fn init_logger() {
 	stderrlog::new()
-		.verbosity(4)
+		.verbosity(0)
 		.show_level(true)
 		.timestamp(Timestamp::Second)
 		.init()
