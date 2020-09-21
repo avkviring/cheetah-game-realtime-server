@@ -11,7 +11,7 @@ mkdir -p $OUTPUT/x86_64/
 cp clients/Rust/target/release/libcheetah_relay_client.dylib $OUTPUT/x86_64/libcheetah_relay_client.bundle
 
 # android
-rm -f $OUTPUT/Android/librelay.so
+rm -f $OUTPUT/Android/armeabi-v7a/libcheetah_relay_client.so
 mkdir -p $OUTPUT/Android/
 cross build --manifest-path clients/Rust/Cargo.toml --target armv7-linux-androideabi --release --message-format short
 cp clients/Rust/target/armv7-linux-androideabi/release/libcheetah_relay_client.so $OUTPUT/Android/
