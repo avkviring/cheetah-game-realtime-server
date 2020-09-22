@@ -2,7 +2,7 @@ use core::fmt;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-use cheetah_relay_common::constants::{FieldID, MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
+use cheetah_relay_common::constants::{FieldID, MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT, ALL_STRUCTURES_SIZE};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -10,7 +10,7 @@ pub struct Structures {
 	pub count: u8,
 	pub fields: [u16; MAX_FIELDS_IN_OBJECT],
 	pub sizes: [u8; MAX_FIELDS_IN_OBJECT],
-	pub values: [u8; MAX_FIELDS_IN_OBJECT * MAX_SIZE_STRUCT],
+	pub values: [u8; ALL_STRUCTURES_SIZE],
 }
 
 
@@ -20,7 +20,7 @@ impl Default for Structures {
 			count: Default::default(),
 			fields: [0; MAX_FIELDS_IN_OBJECT],
 			sizes: [0; MAX_FIELDS_IN_OBJECT],
-			values: [0; MAX_FIELDS_IN_OBJECT * MAX_SIZE_STRUCT],
+			values: [0; ALL_STRUCTURES_SIZE],
 		}
 	}
 }

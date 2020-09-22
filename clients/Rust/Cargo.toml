@@ -6,7 +6,7 @@ edition = "2018"
 
 [lib]
 name = "cheetah_relay_client"
-crate-type = ["staticlib","cdylib", "lib"]
+crate-type = ["staticlib","cdylib","lib"]
 
 [dependencies]
 lazy_static = "1.4.0"
