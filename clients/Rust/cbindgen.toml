@@ -1,0 +1,91 @@
+language = "C"
+
+############## Options for Wrapping the Contents of the Header #################
+include_version = false
+namespaces = []
+using_namespaces = []
+sys_includes = []
+includes = []
+no_includes = false
+after_includes = "#define MAX_FIELDS_IN_OBJECT 255\n#define MAX_SIZE_STRUCT 255\n#define ALL_STRUCTURES_SIZE (MAX_FIELDS_IN_OBJECT * MAX_SIZE_STRUCT)"
+
+
+############################ Code Style Options ################################
+braces = "SameLine"
+line_length = 100
+tab_width = 2
+documentation_style = "auto"
+
+
+
+
+############################# Codegen Options ##################################
+style = "both"
+
+[defines]
+# "target_os = freebsd" = "DEFINE_FREEBSD"
+# "feature = serde" = "DEFINE_SERDE"
+
+[export]
+include = []
+exclude = []
+# prefix = "CAPI_"
+item_types = []
+renaming_overrides_prefixing = false
+[export.rename]
+[export.body]
+
+
+[fn]
+rename_args = "None"
+# must_use = "MUST_USE_FUNC"
+# no_return = "NO_RETURN"
+# prefix = "START_FUNC"
+# postfix = "END_FUNC"
+args = "auto"
+sort_by = "Name"
+
+[struct]
+rename_fields = "None"
+derive_constructor = false
+derive_eq = false
+derive_neq = false
+derive_lt = false
+derive_lte = false
+derive_gt = false
+derive_gte = false
+
+[enum]
+rename_variants = "None"
+add_sentinel = false
+prefix_with_name = true
+derive_helper_methods = false
+derive_const_casts = false
+derive_mut_casts = false
+# cast_assert_name = "ASSERT"
+derive_tagged_enum_destructor = false
+derive_tagged_enum_copy_constructor = false
+enum_class = true
+private_default_tagged_enum_constructor = false
+
+[const]
+allow_static_const = true
+allow_constexpr = false
+
+[macro_expansion]
+bitflags = false
+
+############## Options for How Your Rust library Should Be Parsed ##############
+[parse]
+parse_deps = false
+# include = []
+exclude = []
+clean = false
+extra_bindings = []
+
+
+[parse.expand]
+crates = []
+all_features = false
+default_features = true
+features = []
