@@ -4,7 +4,7 @@ use std::time::Duration;
 use cheetah_relay_common::network::hash::HashValue;
 
 use cheetah_relay::room::request::RoomRequest;
-use cheetah_relay_client::{destroy_client, get_connection_status};
+use cheetah_relay_client::{destroy_client, get_connection_status, do_get_connection_status};
 use cheetah_relay_client::client::NetworkStatus;
 
 use crate::integration::{add_wating_client_to_room, setup_client, setup_logger, setup_server};
@@ -19,14 +19,14 @@ fn should_disconnect_to_server_when_server_closed() {
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);
 	
 	let client = setup_client(address, &room_hash, &client_hash);
-	get_connection_status(
+	do_get_connection_status(
 		client,
 		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },
 	);
 	drop(server);
 	thread::sleep(Duration::from_secs(1));
-	get_connection_status(
+	do_get_connection_status(
 		client,
 		|status| { assert_eq!(status, NetworkStatus::Disconnected); },
 		|| { assert!(false) },
@@ -43,7 +43,7 @@ fn should_disconnect_client() {
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);
 	
 	let client = setup_client(address, &room_hash, &client_hash);
-	get_connection_status(
+	do_get_connection_status(
 		client,
 		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },

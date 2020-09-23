@@ -7,7 +7,7 @@ use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 use easybench::{bench, bench_env};
 
-use cheetah_relay_client::{do_receive_commands_from_server, receive_commands_from_server, send_command_to_server};
+use cheetah_relay_client::{do_receive_commands_from_server, receive_commands_from_server, send_command_to_server, do_send_command_to_server};
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Command, S2CCommandFFIType};
 
 use crate::integration::{add_wating_client_to_room, setup_client, setup_logger, setup_server};
@@ -32,7 +32,7 @@ fn benchmark_send_command() {
 		let count = 100;
 		for i in 0..count {
 			ffi.field_id = i;
-			send_command_to_server(client, &ffi, || assert!(false));
+			do_send_command_to_server(client, &ffi, || assert!(false));
 		}
 	});
 	
@@ -73,7 +73,7 @@ fn benchmark_send_and_receive_commands() {
 		let count = 100;
 		for i in 0..count {
 			ffi.field_id = i;
-			send_command_to_server(client_a, &ffi, || assert!(false));
+			do_send_command_to_server(client_a, &ffi, || assert!(false));
 		}
 		let mut recv_count = 0;
 		while recv_count < count {
@@ -106,7 +106,7 @@ fn create_object_on_server(client: u16) -> ClientGameObjectId {
 	let objectId = ClientGameObjectId::new(100, ClientOwner::CurrentClient);
 	ffi.object_id.set_from(&objectId);
 	ffi.access_group = 0b100;
-	send_command_to_server(client, &ffi, || assert!(false));
+	do_send_command_to_server(client, &ffi, || assert!(false));
 	objectId
 }
 

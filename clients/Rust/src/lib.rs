@@ -52,7 +52,7 @@ pub extern "C" fn set_max_log_level(log_level: LogLevel) {
 }
 
 #[no_mangle]
-pub extern "C" fn collect_logs(on_log_message: fn(LogLevel, *const u16)) {
+pub extern "C" fn collect_logs(on_log_message: extern fn(LogLevel, *const u16)) {
 	let collector = &mut cheetah_relay_common::utils::logger::LOG_COLLECTOR.lock().unwrap();
 	loop {
 		match collector.items.pop_front() {
@@ -89,8 +89,7 @@ pub unsafe extern "C" fn create_client(addr: *const c_char, room_hash: *const c_
 }
 
 
-#[no_mangle]
-pub extern "C" fn get_connection_status(client_id: u16, on_result: fn(NetworkStatus), on_error: fn()) {
+pub fn do_get_connection_status<F, E>(client_id: u16, on_result: F, on_error: E) where F: FnOnce(NetworkStatus), E: FnOnce() {
 	execute(|api| {
 		match api.get_connection_status(client_id) {
 			Ok(status) => { on_result(status) }
@@ -103,12 +102,7 @@ pub extern "C" fn get_connection_status(client_id: u16, on_result: fn(NetworkSta
 	})
 }
 
-#[no_mangle]
-pub extern "C" fn receive_commands_from_server(client_id: u16, collector: fn(&Command), on_error: fn()) {
-	do_receive_commands_from_server(client_id, collector, on_error);
-}
-
-pub fn do_receive_commands_from_server<F>(client_id: u16, collector: F, on_error: fn()) where F: FnMut(&Command) {
+pub fn do_receive_commands_from_server<F, E>(client_id: u16, collector: F, on_error: E) where F: FnMut(&Command), E: FnOnce() {
 	execute(|api| {
 		match api.collect_s2c_commands(client_id, collector) {
 			Ok(_) => {}
@@ -121,9 +115,7 @@ pub fn do_receive_commands_from_server<F>(client_id: u16, collector: F, on_error
 	});
 }
 
-
-#[no_mangle]
-pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_error: fn()) {
+pub fn do_send_command_to_server<E>(client_id: u16, command: &Command, on_error: E) where E: FnOnce() {
 	execute(|api| {
 		match api.send_command_to_server(client_id, command) {
 			Ok(_) => {}
@@ -136,9 +128,28 @@ pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_e
 	});
 }
 
+
+#[no_mangle]
+pub extern "C" fn receive_commands_from_server(client_id: u16, collector: extern fn(&Command), on_error: extern fn()) {
+	do_receive_commands_from_server(client_id, |command: &Command| collector(command), || on_error());
+}
+
+#[no_mangle]
+pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_error: extern fn()) {
+	do_send_command_to_server(client_id, command, || on_error())
+}
+
+#[no_mangle]
+pub extern "C" fn get_connection_status(client_id: u16, on_result: extern fn(NetworkStatus), on_error: extern fn()) {
+	do_get_connection_status(client_id, |status| on_result(status), || on_error())
+}
+
+
 #[no_mangle]
 pub extern "C" fn destroy_client(client_id: u16) {
 	execute(|api| api.destroy_client(client_id));
 }
+
+
 
 
