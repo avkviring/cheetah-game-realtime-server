@@ -3,10 +3,10 @@ use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
 
+use cheetah_relay_common::network::command::S2CCommandWithMeta;
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::client::{Client, NetworkStatus};
-use crate::client::command::S2CCommandUnion;
 use crate::client::network::tcp::TCPClient;
 use crate::client::request::{ClientRequestType, ExternalRequestProcessor, RequestResult};
 
@@ -22,7 +22,7 @@ impl ClientThread {
 		room_hash: HashValue,
 		client_hash: HashValue,
 		receiver: Receiver<ClientRequestType>,
-		commands_from_server: Arc<Mutex<Vec<S2CCommandUnion>>>,
+		commands_from_server: Arc<Mutex<Vec<S2CCommandWithMeta>>>,
 		network_status: Arc<Mutex<NetworkStatus>>,
 	) -> ClientThread {
 		ClientThread {

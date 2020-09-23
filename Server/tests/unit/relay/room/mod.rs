@@ -1,13 +1,16 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+
+use cheetah_relay_common::constants::GroupType;
+use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::room::access::AccessGroups;
+
 use cheetah_relay::room::clients::{Client, Clients};
 use cheetah_relay::room::listener::RoomListener;
 use cheetah_relay::room::objects::object::GameObject;
 use cheetah_relay::room::objects::Objects;
 use cheetah_relay::room::Room;
-use cheetah_relay_common::constants::GroupType;
-use cheetah_relay_common::network::hash::HashValue;
-use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::unit::relay::room::room::room_stub;
 
@@ -43,11 +46,13 @@ struct TestListener {
 }
 
 impl RoomListener for TestListener {
-	fn set_current_client(&mut self, _: Rc<Client>) {
-	}
+	fn set_current_client(&mut self, _: Rc<Client>) {}
 	
-	fn unset_current_client(&mut self) {
-	}
+	fn unset_current_client(&mut self) {}
+	
+	fn set_current_meta_info(&mut self, meta: Rc<C2SMetaCommandInformation>) {}
+	
+	fn unset_current_meta_info(&mut self) {}
 	
 	fn on_object_created(&mut self, game_object: &GameObject, _clients: &Clients) {
 		let rc = self.results.clone();

@@ -6,6 +6,7 @@ use cheetah_relay_common::constants::FieldID;
 use crate::room::clients::{Client, Clients};
 use crate::room::objects::object::GameObject;
 use crate::room::objects::Objects;
+use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
 
 /// глобальный listener для обработки событий room
 pub trait RoomListener {
@@ -13,6 +14,10 @@ pub trait RoomListener {
 	fn set_current_client(&mut self, client: Rc<Client>);
 	#[allow(unused)]
 	fn unset_current_client(&mut self);
+	#[allow(unused)]
+	fn set_current_meta_info(&mut self, meta: Rc<C2SMetaCommandInformation>);
+	#[allow(unused)]
+	fn unset_current_meta_info(&mut self);
 	#[allow(unused)]
 	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {}
 	#[allow(unused)]
@@ -56,6 +61,18 @@ impl RoomListener for CompositeRoomListener {
 	fn unset_current_client(&mut self) {
 		for listener in self.listeners.iter_mut() {
 			listener.borrow_mut().unset_current_client()
+		}
+	}
+	
+	fn set_current_meta_info(&mut self, meta: Rc<C2SMetaCommandInformation>) {
+		for listener in self.listeners.iter_mut() {
+			listener.borrow_mut().set_current_meta_info(meta.clone());
+		}
+	}
+	
+	fn unset_current_meta_info(&mut self) {
+		for listener in self.listeners.iter_mut() {
+			listener.borrow_mut().unset_current_meta_info();
 		}
 	}
 	

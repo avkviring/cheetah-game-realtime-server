@@ -1,9 +1,10 @@
 use std::fmt::Debug;
 
+use cheetah_relay_common::constants::ClientId;
+use cheetah_relay_common::network::command::C2SCommandUnion;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 
-use crate::client::command::C2SCommandUnion;
 use crate::client::ffi::bytes::Bytes;
 use crate::client::ffi::counters::Counters;
 use crate::client::ffi::structures::Structures;
@@ -34,6 +35,8 @@ pub struct Command {
 	pub long_counters: Counters<i64>,
 	pub float_counters: Counters<f64>,
 	pub structures: Structures,
+	pub meta_timestamp: u64,
+	pub meta_source_client: ClientId,
 }
 
 ///
@@ -109,6 +112,8 @@ impl Default for Command {
 			long_value: Default::default(),
 			float_value: Default::default(),
 			access_group: Default::default(),
+			meta_timestamp: Default::default(),
+			meta_source_client: Default::default()
 		}
 	}
 }

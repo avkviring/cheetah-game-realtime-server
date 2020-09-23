@@ -20,6 +20,7 @@ pub struct TcpConnection {
 	registered_in_poll: bool,
 	pub token: Token,
 	enable_write_events: bool,
+	is_set_nodelay: bool,
 }
 
 #[derive(Debug)]
@@ -39,7 +40,6 @@ pub enum OnReadBufferError {
 
 impl TcpConnection {
 	pub fn new(stream: TcpStream, buffer_for_read: NioBuffer, token: Token) -> Self {
-		stream.set_nodelay(true);
 		let mut buffer_for_write = NioBuffer::new();
 		buffer_for_write.flip();
 		TcpConnection {
@@ -49,6 +49,7 @@ impl TcpConnection {
 			registered_in_poll: false,
 			token,
 			enable_write_events: false,
+			is_set_nodelay: false,
 		}
 	}
 	pub fn process_event<F>(&mut self, event: &Event, poll: &mut Poll, on_read_buffer: F) -> Result<(), ProcessNetworkEventError>
@@ -151,6 +152,11 @@ impl TcpConnection {
 	}
 	
 	fn write(&mut self) -> Result<(), ProcessNetworkEventError> {
+		if !self.is_set_nodelay {
+			self.stream.set_nodelay(true).expect(format!("set nodelay error {:?}", self.stream).as_str());
+			self.is_set_nodelay = true
+		}
+		
 		if self.write_buffer.has_remaining() {
 			let result = self.stream.write(&mut self.write_buffer.to_slice());
 			match result {

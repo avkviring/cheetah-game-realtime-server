@@ -1,12 +1,14 @@
-use cheetah_relay_common::network::command::{CommandCode, Decoder, Encoder};
+use cheetah_relay_common::network::command::{C2SCommandUnion, CommandCode, Decoder, Encoder, S2CCommandUnion, S2CCommandWithMeta};
 use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
-use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
+use cheetah_relay_common::network::command::float_counter::{SetFloat64CounterCommand};
+use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
+use cheetah_relay_common::network::command::long_counter::{SetLongCounterCommand};
+use cheetah_relay_common::network::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
+use crate::client::C2SCommandWithMeta;
 
 pub mod load;
 pub mod long_counter;
@@ -15,32 +17,10 @@ pub mod structure;
 pub mod event;
 pub mod unload;
 
-#[derive(Debug)]
-pub enum C2SCommandUnion {
-	Load(LoadGameObjectCommand),
-	SetLongCounter(SetLongCounterCommand),
-	IncrementLongCounter(IncrementLongCounterC2SCommand),
-	SetFloatCounter(SetFloat64CounterCommand),
-	IncrementFloatCounter(IncrementFloat64CounterC2SCommand),
-	Structure(StructureCommand),
-	Event(EventCommand),
-	Unload(UnloadGameObjectCommand),
-}
 
-#[derive(Debug)]
-pub enum S2CCommandUnion {
-	Load(LoadGameObjectCommand),
-	SetLongCounter(SetLongCounterCommand),
-	SetFloatCounter(SetFloat64CounterCommand),
-	SetStruct(StructureCommand),
-	Event(EventCommand),
-	Unload(UnloadGameObjectCommand),
-}
-
-
-pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, OnReadBufferError> {
-	let command = read_buffer.read_u8().map_err(OnReadBufferError::NioBufferError)?;
-	let result = match command {
+pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandWithMeta, OnReadBufferError> {
+	let meta = S2CMetaCommandInformation::decode(read_buffer).map_err(OnReadBufferError::NioBufferError)?;
+	let result = match meta.command_code {
 		LoadGameObjectCommand::COMMAND_CODE => {
 			LoadGameObjectCommand::decode(read_buffer).map(S2CCommandUnion::Load)
 		}
@@ -61,41 +41,41 @@ pub fn decode_command(read_buffer: &mut NioBuffer) -> Result<S2CCommandUnion, On
 			return Result::Err(OnReadBufferError::UnknownCommand(code));
 		}
 	};
-	result.map_err(OnReadBufferError::NioBufferError)
+	match result {
+		Ok(command) => {
+			Result::Ok(S2CCommandWithMeta { meta, command })
+		}
+		Err(error) => {
+			Result::Err(OnReadBufferError::NioBufferError(error))
+		}
+	}
 }
 
-pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandUnion) -> Result<(), NioBufferError> {
-	match command {
+pub fn encode_command(buffer: &mut NioBuffer, command: &C2SCommandWithMeta) -> Result<(), NioBufferError> {
+	command.meta.encode(buffer)?;
+	match &command.command {
 		C2SCommandUnion::Load(command) => {
-			buffer.write_u8(LoadGameObjectCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::SetLongCounter(command) => {
-			buffer.write_u8(SetLongCounterCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::IncrementLongCounter(command) => {
-			buffer.write_u8(IncrementLongCounterC2SCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::SetFloatCounter(command) => {
-			buffer.write_u8(SetFloat64CounterCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::IncrementFloatCounter(command) => {
-			buffer.write_u8(IncrementFloat64CounterC2SCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::Structure(command) => {
-			buffer.write_u8(StructureCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::Event(command) => {
-			buffer.write_u8(EventCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 		C2SCommandUnion::Unload(command) => {
-			buffer.write_u8(UnloadGameObjectCommand::COMMAND_CODE)?;
 			command.encode(buffer)
 		}
 	}

@@ -1,8 +1,8 @@
-use cheetah_relay_client::client::command::C2SCommandUnion;
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
 use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
+use cheetah_relay_common::network::command::C2SCommandUnion;
 
 #[test]
 fn should_to_ffi() {

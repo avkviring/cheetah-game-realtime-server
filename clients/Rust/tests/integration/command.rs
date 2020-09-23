@@ -2,13 +2,14 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
-use cheetah_relay::room::request::RoomRequest;
-use cheetah_relay_client::{receive_commands_from_server, send_command_to_server, do_receive_commands_from_server, do_send_command_to_server};
-use cheetah_relay_client::client::ffi::{C2SCommandFFIType, S2CCommandFFIType};
-use cheetah_relay_client::client::ffi::Command;
 use cheetah_relay_common::network::hash::HashValue;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
+
+use cheetah_relay::room::request::RoomRequest;
+use cheetah_relay_client::{do_receive_commands_from_server, do_send_command_to_server};
+use cheetah_relay_client::client::ffi::{C2SCommandFFIType, S2CCommandFFIType};
+use cheetah_relay_client::client::ffi::Command;
 
 use crate::integration::{add_wating_client_to_room, setup_client, setup_logger, setup_server};
 
@@ -48,7 +49,7 @@ fn should_send_command_to_server() {
 }
 
 #[test]
-fn should_receive_command_to_server() {
+fn should_receive_command_from_server() {
 	setup_logger();
 	let address = "127.0.0.1:6002";
 	let client_hash_a = HashValue::from("client_hash_a");
@@ -63,6 +64,7 @@ fn should_receive_command_to_server() {
 	// upload object
 	let mut ffi = Command::default();
 	ffi.command_type_c2s = C2SCommandFFIType::Load;
+	ffi.meta_timestamp = 123;
 	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
 	do_send_command_to_server(client_a, &ffi, || assert!(false));
@@ -73,9 +75,10 @@ fn should_receive_command_to_server() {
 	
 	do_receive_commands_from_server(
 		client_b,
-		|ffi: &Command| {
-			if ffi.command_type_s2c == S2CCommandFFIType::Load {
-				assert!(true);
+		|command: &Command| {
+			if command.command_type_s2c == S2CCommandFFIType::Load {
+				assert_eq!(command.meta_timestamp, 123);
+				assert!(command.meta_source_client != 0);
 			} else {
 				assert!(false);
 			}

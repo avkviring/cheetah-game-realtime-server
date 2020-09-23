@@ -2,11 +2,13 @@ use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
 use cheetah_relay_common::constants::{ClientId, FieldID};
-use cheetah_relay_common::network::command::{CommandCode, Encoder};
+use cheetah_relay_common::network::command::{Encoder, S2CCommandUnion, S2CCommandWithMeta};
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloat64CounterCommand;
 use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
+use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::network::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
@@ -21,31 +23,9 @@ use crate::room::objects::Objects;
 /// накапливаем изменения
 /// и когда настанет время - отправляем их клиентам
 pub struct S2CCommandCollector {
-	pub commands_by_client: HashMap<ClientId, VecDeque<S2CCommandUnion>>,
+	pub commands_by_client: HashMap<ClientId, VecDeque<S2CCommandWithMeta>>,
 	pub current_client: Option<Rc<Client>>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum S2CCommandUnion {
-	LoadGameObject(LoadGameObjectCommand),
-	UnloadGameObject(UnloadGameObjectCommand),
-	Event(EventCommand),
-	SetFloatCounter(SetFloat64CounterCommand),
-	SetLongCounter(SetLongCounterCommand),
-	Struct(StructureCommand),
-}
-
-impl S2CCommandUnion {
-	fn get_code(&self) -> u8 {
-		match self {
-			S2CCommandUnion::LoadGameObject(_) => LoadGameObjectCommand::COMMAND_CODE,
-			S2CCommandUnion::UnloadGameObject(_) => UnloadGameObjectCommand::COMMAND_CODE,
-			S2CCommandUnion::SetLongCounter(_) => SetLongCounterCommand::COMMAND_CODE,
-			S2CCommandUnion::SetFloatCounter(_) => SetFloat64CounterCommand::COMMAND_CODE,
-			S2CCommandUnion::Event(_) => EventCommand::COMMAND_CODE,
-			S2CCommandUnion::Struct(_) => StructureCommand::COMMAND_CODE,
-		}
-	}
+	pub current_meta_info: Option<Rc<C2SMetaCommandInformation>>,
 }
 
 
@@ -54,6 +34,7 @@ impl Default for S2CCommandCollector {
 		S2CCommandCollector {
 			commands_by_client: Default::default(),
 			current_client: Default::default(),
+			current_meta_info: Default::default(),
 		}
 	}
 }
@@ -70,7 +51,13 @@ impl S2CCommandCollector {
 				Some(buffers) => {
 					let command = command_factory(client);
 					log::trace!("S2C {:?} : {:?}", command, affected_client);
-					buffers.push_back(command);
+					let meta_from_client = self.current_meta_info.as_ref().unwrap().clone();
+					let meta = S2CMetaCommandInformation::new(command.get_code(), *client, &meta_from_client);
+					buffers.push_back(
+						S2CCommandWithMeta {
+							meta,
+							command,
+						});
 				}
 			}
 		})
@@ -86,9 +73,17 @@ impl RoomListener for S2CCommandCollector {
 		self.current_client = Option::None
 	}
 	
+	fn set_current_meta_info(&mut self, meta: Rc<C2SMetaCommandInformation>) {
+		self.current_meta_info = Option::Some(meta.clone())
+	}
+	
+	fn unset_current_meta_info(&mut self) {
+		self.current_meta_info = Option::None
+	}
+	
 	fn on_object_created(&mut self, game_object: &GameObject, clients: &Clients) {
 		self.push(AffectedClients::new_from_clients(&self.current_client, clients, &game_object.access_groups), |client|
-			S2CCommandUnion::LoadGameObject(
+			S2CCommandUnion::Load(
 				LoadGameObjectCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
 					template: game_object.template,
@@ -101,7 +96,7 @@ impl RoomListener for S2CCommandCollector {
 	fn on_object_delete(&mut self, game_object: &GameObject, clients: &Clients) {
 		self.push(AffectedClients::new_from_clients(&self.current_client, clients, &game_object.access_groups), |client|
 			{
-				S2CCommandUnion::UnloadGameObject(
+				S2CCommandUnion::Unload(
 					UnloadGameObjectCommand {
 						object_id: game_object.id.to_client_object_id(Option::Some(*client)),
 					})
@@ -122,7 +117,7 @@ impl RoomListener for S2CCommandCollector {
 				let affected_clients = AffectedClients::new_from_client(client);
 				self.push(affected_clients, |client|
 					{
-						S2CCommandUnion::LoadGameObject(
+						S2CCommandUnion::Load(
 							LoadGameObjectCommand {
 								object_id: o.id.to_client_object_id(Option::Some(*client)),
 								template: o.template,
@@ -194,7 +189,7 @@ impl RoomListener for S2CCommandCollector {
 		clients: &Clients,
 	) {
 		self.push(AffectedClients::new_from_clients(&self.current_client, &clients, &game_object.access_groups), |client|
-			S2CCommandUnion::Struct(
+			S2CCommandUnion::SetStruct(
 				StructureCommand {
 					object_id: game_object.id.to_client_object_id(Option::Some(*client)),
 					field_id,
@@ -261,14 +256,19 @@ impl AffectedClients {
 	}
 }
 
-pub fn encode_s2c_commands(buffer: &mut NioBuffer, command: &S2CCommandUnion) -> Result<(), NioBufferError> {
-	buffer.write_u8(command.get_code())?;
-	match &command {
-		S2CCommandUnion::UnloadGameObject(command) => command.encode(buffer),
+pub fn encode_s2c_commands(
+	buffer: &mut NioBuffer,
+	command: &S2CCommandWithMeta,
+)
+	-> Result<(), NioBufferError> {
+	command.meta.encode(buffer)?;
+	
+	match &command.command {
+		S2CCommandUnion::Unload(command) => command.encode(buffer),
 		S2CCommandUnion::Event(command) => command.encode(buffer),
 		S2CCommandUnion::SetFloatCounter(command) => command.encode(buffer),
 		S2CCommandUnion::SetLongCounter(command) => command.encode(buffer),
-		S2CCommandUnion::Struct(command) => command.encode(buffer),
-		S2CCommandUnion::LoadGameObject(command) => command.encode(buffer),
+		S2CCommandUnion::SetStruct(command) => command.encode(buffer),
+		S2CCommandUnion::Load(command) => command.encode(buffer),
 	}
 }

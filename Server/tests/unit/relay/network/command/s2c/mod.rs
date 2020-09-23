@@ -6,6 +6,8 @@ use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloat64CounterCommand;
 use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::network::command::long_counter::SetLongCounterCommand;
+use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::network::command::S2CCommandUnion;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
@@ -13,8 +15,9 @@ use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 
-use cheetah_relay::network::s2c::{AffectedClients, S2CCommandCollector, S2CCommandUnion};
+use cheetah_relay::network::s2c::{AffectedClients, S2CCommandCollector};
 use cheetah_relay::room::clients::{Client, Clients};
+use cheetah_relay::room::listener::RoomListener;
 use cheetah_relay::room::objects::id::{ServerGameObjectId, ServerOwner};
 use cheetah_relay::room::objects::object::GameObject;
 use cheetah_relay::room::Room;
@@ -54,7 +57,7 @@ fn should_s2c_collect_on_object_create() {
 	assert_command(
 		collector,
 		id,
-		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
+		S2CCommandUnion::Load(LoadGameObjectCommand {
 			object_id: client_object_id,
 			template: 123,
 			access_groups: AccessGroups::from(0b100),
@@ -78,7 +81,7 @@ fn should_s2c_collect_on_client_connect() {
 	assert_command(
 		commands.clone(),
 		id,
-		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
+		S2CCommandUnion::Load(LoadGameObjectCommand {
 			object_id: ClientGameObjectId::new(10, ClientOwner::Root),
 			template: 123,
 			fields: Default::default(),
@@ -89,7 +92,7 @@ fn should_s2c_collect_on_client_connect() {
 	assert_command(
 		commands,
 		id,
-		S2CCommandUnion::LoadGameObject(LoadGameObjectCommand {
+		S2CCommandUnion::Load(LoadGameObjectCommand {
 			object_id: ClientGameObjectId::new(11, ClientOwner::Root),
 			template: 123,
 			fields: Default::default(),
@@ -128,15 +131,13 @@ fn should_s2c_collect_on_client_disconnect() {
 	assert_command(
 		commands.clone(),
 		client_b.configuration.id,
-		S2CCommandUnion::UnloadGameObject(UnloadGameObjectCommand {
-			object_id: ClientGameObjectId::new(1, ClientOwner::Client(client_a.configuration.id)),
-		}),
+		S2CCommandUnion::Unload(UnloadGameObjectCommand { object_id: ClientGameObjectId::new(1, ClientOwner::Client(client_a.configuration.id)) }),
 	);
 	
 	assert_command(
 		commands.clone(),
 		client_b.configuration.id,
-		S2CCommandUnion::UnloadGameObject(UnloadGameObjectCommand {
+		S2CCommandUnion::Unload(UnloadGameObjectCommand {
 			object_id: ClientGameObjectId::new(2, ClientOwner::Client(client_a.configuration.id)),
 		}),
 	);
@@ -144,7 +145,7 @@ fn should_s2c_collect_on_client_disconnect() {
 	assert_command(
 		commands,
 		client_b.configuration.id,
-		S2CCommandUnion::UnloadGameObject(UnloadGameObjectCommand {
+		S2CCommandUnion::Unload(UnloadGameObjectCommand {
 			object_id: ClientGameObjectId::new(3, ClientOwner::Client(client_a.configuration.id)),
 		}),
 	);
@@ -219,7 +220,7 @@ fn should_s2c_collect_on_update_struct() {
 	assert_command(
 		commands,
 		client.configuration.id,
-		S2CCommandUnion::Struct(StructureCommand {
+		S2CCommandUnion::SetStruct(StructureCommand {
 			object_id: client_object_id,
 			field_id: 10,
 			structure: vec![1, 2, 3, 4, 5],
@@ -244,13 +245,14 @@ fn assert_command(
 	let commands = collector.commands_by_client.get_mut(&client_id).unwrap();
 	assert_eq!(!commands.is_empty(), true);
 	let actual = commands.pop_front().unwrap();
-	assert_eq!(actual, expected)
+	assert_eq!(actual.command, expected)
 }
 
 fn setup() -> (Room, Rc<RefCell<S2CCommandCollector>>) {
 	let mut room = room_stub();
 	let collector = Rc::new(RefCell::new(S2CCommandCollector::default()));
 	room.listener.add_listener(collector.clone());
+	room.listener.set_current_meta_info(Rc::new(C2SMetaCommandInformation::new(0, 0)));
 	(room, collector)
 }
 
