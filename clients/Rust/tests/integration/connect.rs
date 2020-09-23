@@ -1,5 +1,5 @@
 use cheetah_relay_client::client::NetworkStatus;
-use cheetah_relay_client::get_connection_status;
+use cheetah_relay_client::{get_connection_status, do_get_connection_status};
 use cheetah_relay_common::network::hash::HashValue;
 
 use crate::integration::{add_wating_client_to_room, get_server_room_clients, setup_client, setup_logger, setup_server};
@@ -10,7 +10,7 @@ fn should_fail_connect_to_server_when_server_not_running() {
 	let room_hash = HashValue::from("room_hash");
 	let client_hash = HashValue::from("client_hash");
 	let client = setup_client(address, &room_hash, &client_hash);
-	get_connection_status(
+	do_get_connection_status(
 		client,
 		|status| { assert_eq!(status, NetworkStatus::Disconnected); },
 		|| { assert!(false) },
@@ -25,7 +25,7 @@ fn should_connect_to_server() {
 	let (_server, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms, &room_hash, &client_hash);
 	let client = setup_client(address, &room_hash, &client_hash);
-	get_connection_status(
+	do_get_connection_status(
 		client,
 		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },
@@ -41,7 +41,7 @@ fn should_connect_to_room_server() {
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);
 	
 	let client = setup_client(address, &room_hash, &client_hash);
-	get_connection_status(
+	do_get_connection_status(
 		client,
 		|status| { assert_eq!(status, NetworkStatus::Connected); },
 		|| { assert!(false) },

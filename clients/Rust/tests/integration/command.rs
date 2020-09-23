@@ -3,7 +3,7 @@ use std::thread;
 use std::time::Duration;
 
 use cheetah_relay::room::request::RoomRequest;
-use cheetah_relay_client::{receive_commands_from_server, send_command_to_server};
+use cheetah_relay_client::{receive_commands_from_server, send_command_to_server, do_receive_commands_from_server, do_send_command_to_server};
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, S2CCommandFFIType};
 use cheetah_relay_client::client::ffi::Command;
 use cheetah_relay_common::network::hash::HashValue;
@@ -35,7 +35,7 @@ fn should_send_command_to_server() {
 	ffi.structures.values[1] = 0x65;
 	
 	
-	send_command_to_server(client, &ffi, || assert!(false));
+	do_send_command_to_server(client, &ffi, || assert!(false));
 	thread::sleep(Duration::from_secs(1));
 	
 	
@@ -65,13 +65,13 @@ fn should_receive_command_to_server() {
 	ffi.command_type_c2s = C2SCommandFFIType::Load;
 	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
-	send_command_to_server(client_a, &ffi, || assert!(false));
+	do_send_command_to_server(client_a, &ffi, || assert!(false));
 	thread::sleep(Duration::from_secs(2));
 	
 	let client_b = setup_client(address, &room_hash, &client_hash_b);
 	
 	
-	receive_commands_from_server(
+	do_receive_commands_from_server(
 		client_b,
 		|ffi: &Command| {
 			if ffi.command_type_s2c == S2CCommandFFIType::Load {
