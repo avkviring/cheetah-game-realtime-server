@@ -1,13 +1,14 @@
+use serde::{Deserialize, Serialize};
+
 use crate::constants::FieldID;
-use crate::network::command::{CommandCode, Decoder, Encoder};
-use crate::network::niobuffer::{NioBuffer, NioBufferError};
+use crate::network::command::CommandCode;
 use crate::room::object::ClientGameObjectId;
 
 ///
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct IncrementLongCounterC2SCommand {
 	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,
@@ -18,7 +19,7 @@ pub struct IncrementLongCounterC2SCommand {
 /// Установка счетчика
 /// - C->S, S->C
 ///
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetLongCounterCommand {
 	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,
@@ -32,43 +33,4 @@ impl CommandCode for IncrementLongCounterC2SCommand {
 
 impl CommandCode for SetLongCounterCommand {
 	const COMMAND_CODE: u8 = 5;
-}
-
-impl Encoder for IncrementLongCounterC2SCommand {
-	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-		self.object_id.encode(buffer)?;
-		buffer.write_u16(self.field_id)?;
-		buffer.write_i64(self.increment)?;
-		Result::Ok(())
-	}
-}
-
-impl Decoder for IncrementLongCounterC2SCommand {
-	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
-		Result::Ok(IncrementLongCounterC2SCommand {
-			object_id: ClientGameObjectId::decode(buffer)?,
-			field_id: buffer.read_u16()?,
-			increment: buffer.read_i64()?,
-		})
-	}
-}
-
-
-impl Encoder for SetLongCounterCommand {
-	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-		self.object_id.encode(buffer)?;
-		buffer.write_u16(self.field_id)?;
-		buffer.write_i64(self.value)?;
-		Result::Ok(())
-	}
-}
-
-impl Decoder for SetLongCounterCommand {
-	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
-		Result::Ok(SetLongCounterCommand {
-			object_id: ClientGameObjectId::decode(buffer)?,
-			field_id: buffer.read_u16()?,
-			value: buffer.read_i64()?,
-		})
-	}
 }

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use cheetah_relay_common::network::command::{CommandCode, Decoder};
+use cheetah_relay_common::network::command::CommandCode;
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
@@ -8,7 +8,6 @@ use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC
 use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::room::object::ClientGameObjectId;
 
 use crate::room::clients::Client;
@@ -25,7 +24,7 @@ pub mod structure;
 pub mod load;
 
 pub enum OnReadBufferError {
-	NioBufferError(NioBufferError),
+	//NioBufferError(NioBufferError),
 	UnknownCommand(u8)
 }
 
@@ -40,67 +39,67 @@ pub trait ServerCommandExecutor {
 /// Декодирование и выполнение C2S команд
 /// return - количество декодированных команд
 ///
-pub fn decode_end_execute_c2s_commands(
-	buffer: &mut NioBuffer,
-	client: Rc<Client>,
-	room: &mut Room,
-) -> Result<(), OnReadBufferError> {
-	room.listener.set_current_client(client.clone());
-	let client = &client.clone();
-	
-	let meta = C2SMetaCommandInformation::decode(buffer).map_err(OnReadBufferError::NioBufferError)?;
-	
-	let command_code = meta.command_code;
-	room.listener.set_current_meta_info(Rc::new(meta));
-	
-	let result = match command_code {
-		LoadGameObjectCommand::COMMAND_CODE => {
-			LoadGameObjectCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		UnloadGameObjectCommand::COMMAND_CODE => {
-			UnloadGameObjectCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		IncrementLongCounterC2SCommand::COMMAND_CODE => {
-			IncrementLongCounterC2SCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		SetLongCounterCommand::COMMAND_CODE => {
-			SetLongCounterCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		IncrementFloat64CounterC2SCommand::COMMAND_CODE => {
-			IncrementFloat64CounterC2SCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		SetFloat64CounterCommand::COMMAND_CODE => {
-			SetFloat64CounterCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		StructureCommand::COMMAND_CODE => {
-			StructureCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		EventCommand::COMMAND_CODE => {
-			EventCommand::decode(buffer)
-				.map(|f| f.execute(client, room))
-				.map_err(OnReadBufferError::NioBufferError)
-		}
-		code => {
-			Result::Err(OnReadBufferError::UnknownCommand(code))
-		}
-	};
-	room.listener.unset_current_client();
-	result
-}
+// pub fn decode_end_execute_c2s_commands(
+// 	buffer: &mut NioBuffer,
+// 	client: Rc<Client>,
+// 	room: &mut Room,
+// ) -> Result<(), OnReadBufferError> {
+// 	room.listener.set_current_client(client.clone());
+// 	let client = &client.clone();
+//
+// 	let meta = C2SMetaCommandInformation::decode(buffer).map_err(OnReadBufferError::NioBufferError)?;
+//
+// 	let command_code = meta.command_code;
+// 	room.listener.set_current_meta_info(Rc::new(meta));
+//
+// 	let result = match command_code {
+// 		LoadGameObjectCommand::COMMAND_CODE => {
+// 			LoadGameObjectCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		UnloadGameObjectCommand::COMMAND_CODE => {
+// 			UnloadGameObjectCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		IncrementLongCounterC2SCommand::COMMAND_CODE => {
+// 			IncrementLongCounterC2SCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		SetLongCounterCommand::COMMAND_CODE => {
+// 			SetLongCounterCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		IncrementFloat64CounterC2SCommand::COMMAND_CODE => {
+// 			IncrementFloat64CounterC2SCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		SetFloat64CounterCommand::COMMAND_CODE => {
+// 			SetFloat64CounterCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		StructureCommand::COMMAND_CODE => {
+// 			StructureCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		EventCommand::COMMAND_CODE => {
+// 			EventCommand::decode(buffer)
+// 				.map(|f| f.execute(client, room))
+// 				.map_err(OnReadBufferError::NioBufferError)
+// 		}
+// 		code => {
+// 			Result::Err(OnReadBufferError::UnknownCommand(code))
+// 		}
+// 	};
+// 	room.listener.unset_current_client();
+// 	result
+// }
 
 pub fn trace_c2s_command(command: &str, room: &Room, client: &Client, message: String) {
 	log::trace!(

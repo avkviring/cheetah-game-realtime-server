@@ -1,10 +1,9 @@
-use crate::network::command::{Decoder, Encoder};
-use crate::network::niobuffer::{NioBuffer, NioBufferError};
+use serde::{Deserialize, Serialize};
 
 ///
 /// Служебная информация для каждой входящей команды
 ///
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
 pub struct C2SMetaCommandInformation {
 	pub command_code: u8,
 	///
@@ -20,24 +19,5 @@ impl C2SMetaCommandInformation {
 			command_code,
 			timestamp,
 		}
-	}
-}
-
-impl Decoder for C2SMetaCommandInformation {
-	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
-		Result::Ok(
-			Self {
-				command_code: buffer.read_u8()?,
-				timestamp: buffer.read_u64()?,
-			}
-		)
-	}
-}
-
-impl Encoder for C2SMetaCommandInformation {
-	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-		buffer.write_u8(self.command_code)?;
-		buffer.write_u64(self.timestamp)?;
-		Result::Ok(())
 	}
 }

@@ -1,13 +1,12 @@
 use std::ops::{BitAnd, Shl};
-
+use serde::{Deserialize, Serialize};
 use crate::constants::GroupType;
-use crate::network::command::{Decoder, Encoder};
-use crate::network::niobuffer::{NioBuffer, NioBufferError};
+
 
 ///
 /// Группа доступа
 ///
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AccessGroups {
 	pub groups: GroupType,
 }
@@ -38,24 +37,5 @@ impl From<u64> for AccessGroups {
 		AccessGroups {
 			groups
 		}
-	}
-}
-
-impl Decoder for AccessGroups {
-	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
-		match buffer.read_u64() {
-			Ok(value) => {
-				Result::Ok(AccessGroups::from(value))
-			}
-			Err(e) => {
-				Result::Err(e)
-			}
-		}
-	}
-}
-
-impl Encoder for AccessGroups {
-	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-		buffer.write_u64(self.groups)
 	}
 }

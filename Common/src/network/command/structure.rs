@@ -1,13 +1,14 @@
+use serde::{Deserialize, Serialize};
+
 use crate::constants::FieldID;
-use crate::network::command::{CommandCode, Decoder, Encoder};
-use crate::network::niobuffer::{NioBuffer, NioBufferError};
+use crate::network::command::CommandCode;
 use crate::room::object::ClientGameObjectId;
 
 ///
 /// Обновить структуру в обьекте
 /// - C->S, S->C
 ///
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StructureCommand {
 	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,
@@ -16,24 +17,4 @@ pub struct StructureCommand {
 
 impl CommandCode for StructureCommand {
 	const COMMAND_CODE: u8 = 6;
-}
-
-impl Decoder for StructureCommand {
-	fn decode(buffer: &mut NioBuffer) -> Result<Self, NioBufferError> {
-		Result::Ok(StructureCommand {
-			object_id: ClientGameObjectId::decode(buffer)?,
-			field_id: buffer.read_u16()?,
-			structure: buffer.read_to_vec_with_u16_size()?,
-		})
-	}
-}
-
-impl Encoder for StructureCommand {
-	fn encode(&self, buffer: &mut NioBuffer) -> Result<(), NioBufferError> {
-		self.object_id.encode(buffer)?;
-		buffer.write_u16(self.field_id)?;
-		buffer.write_u16(self.structure.len() as u16)?;
-		buffer.write_bytes(&self.structure)?;
-		Result::Ok(())
-	}
 }
