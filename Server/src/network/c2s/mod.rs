@@ -8,8 +8,7 @@ use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC
 use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::niobuffer::NioBuffer;
-use cheetah_relay_common::network::tcp::connection::OnReadBufferError;
+use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::room::object::ClientGameObjectId;
 
 use crate::room::clients::Client;
@@ -24,6 +23,11 @@ pub mod float_counter;
 pub mod long_counter;
 pub mod structure;
 pub mod load;
+
+pub enum OnReadBufferError {
+	NioBufferError(NioBufferError),
+	UnknownCommand(u8)
+}
 
 ///
 /// Выполнение серверной команды
