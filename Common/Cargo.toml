@@ -8,3 +8,5 @@ edition = "2018"
 lazy_static = "1.4.0"
 log = "0.4"
 mio = { version = "0.7.0", features = ["os-poll", "tcp"]}
+serde = { version = "1.0.116", features = ["derive"] }
+rmp-serde = "0.14.4"

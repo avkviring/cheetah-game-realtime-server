@@ -2,7 +2,8 @@ use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
 use cheetah_relay_common::constants::{ClientId, FieldID};
-use cheetah_relay_common::network::command::{Encoder, S2CCommandUnion, S2CCommandWithMeta};
+use cheetah_relay_common::network::command::S2CCommandUnion;
+use cheetah_relay_common::network::command::S2CCommandWithMeta;
 use cheetah_relay_common::network::command::event::EventCommand;
 use cheetah_relay_common::network::command::float_counter::SetFloat64CounterCommand;
 use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
@@ -11,7 +12,6 @@ use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation
 use cheetah_relay_common::network::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::network::command::structure::StructureCommand;
 use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::niobuffer::{NioBuffer, NioBufferError};
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::clients::{Client, Clients};
@@ -256,19 +256,19 @@ impl AffectedClients {
 	}
 }
 
-pub fn encode_s2c_commands(
-	buffer: &mut NioBuffer,
-	command: &S2CCommandWithMeta,
-)
-	-> Result<(), NioBufferError> {
-	command.meta.encode(buffer)?;
-	
-	match &command.command {
-		S2CCommandUnion::Unload(command) => command.encode(buffer),
-		S2CCommandUnion::Event(command) => command.encode(buffer),
-		S2CCommandUnion::SetFloatCounter(command) => command.encode(buffer),
-		S2CCommandUnion::SetLongCounter(command) => command.encode(buffer),
-		S2CCommandUnion::SetStruct(command) => command.encode(buffer),
-		S2CCommandUnion::Load(command) => command.encode(buffer),
-	}
-}
+// pub fn encode_s2c_commands(
+// 	buffer: &mut NioBuffer,
+// 	command: &S2CCommandWithMeta,
+// )
+// 	-> Result<(), NioBufferError> {
+// 	command.meta.encode(buffer)?;
+//
+// 	match &command.command {
+// 		S2CCommandUnion::Unload(command) => command.encode(buffer),
+// 		S2CCommandUnion::Event(command) => command.encode(buffer),
+// 		S2CCommandUnion::SetFloatCounter(command) => command.encode(buffer),
+// 		S2CCommandUnion::SetLongCounter(command) => command.encode(buffer),
+// 		S2CCommandUnion::SetStruct(command) => command.encode(buffer),
+// 		S2CCommandUnion::Load(command) => command.encode(buffer),
+// 	}
+// }
