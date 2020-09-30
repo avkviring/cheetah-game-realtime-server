@@ -16,10 +16,6 @@ pub mod structure;
 pub mod load;
 pub mod meta;
 
-pub trait CommandCode {
-	const COMMAND_CODE: u8;
-}
-
 #[derive(Debug)]
 pub enum C2SCommandUnion {
 	Load(LoadGameObjectCommand),
@@ -52,18 +48,4 @@ pub struct S2CCommandWithMeta {
 pub struct C2SCommandWithMeta {
 	pub meta: C2SMetaCommandInformation,
 	pub command: C2SCommandUnion,
-}
-
-
-impl S2CCommandUnion {
-	pub fn get_code(&self) -> u8 {
-		match self {
-			S2CCommandUnion::Load(_) => LoadGameObjectCommand::COMMAND_CODE,
-			S2CCommandUnion::Unload(_) => UnloadGameObjectCommand::COMMAND_CODE,
-			S2CCommandUnion::SetLongCounter(_) => SetLongCounterCommand::COMMAND_CODE,
-			S2CCommandUnion::SetFloatCounter(_) => SetFloat64CounterCommand::COMMAND_CODE,
-			S2CCommandUnion::Event(_) => EventCommand::COMMAND_CODE,
-			S2CCommandUnion::SetStruct(_) => StructureCommand::COMMAND_CODE,
-		}
-	}
 }

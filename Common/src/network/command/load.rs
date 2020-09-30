@@ -1,4 +1,3 @@
-use crate::network::command::CommandCode;
 use crate::room::access::AccessGroups;
 use crate::room::fields::GameObjectFields;
 use crate::room::object::ClientGameObjectId;
@@ -15,9 +14,4 @@ pub struct LoadGameObjectCommand {
 	pub template: u16,
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFields,
-}
-
-
-impl CommandCode for LoadGameObjectCommand {
-	const COMMAND_CODE: u8 = 8;
 }

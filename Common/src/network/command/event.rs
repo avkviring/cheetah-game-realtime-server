@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 use crate::constants::FieldID;
-use crate::network::command::CommandCode;
 use crate::room::object::ClientGameObjectId;
 
 ///
@@ -12,8 +11,4 @@ pub struct EventCommand {
 	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,
 	pub event: Vec<u8>,
-}
-
-impl CommandCode for EventCommand {
-	const COMMAND_CODE: u8 = 1;
 }
