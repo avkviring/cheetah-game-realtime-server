@@ -7,7 +7,7 @@ use crate::room::object::ClientGameObjectId;
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct IncrementFloat64CounterC2SCommand {
 	pub object_id: ClientGameObjectId,
 	pub field_id: FieldID,

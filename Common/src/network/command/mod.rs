@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::network::command::event::EventCommand;
 use crate::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 use crate::network::command::load::LoadGameObjectCommand;
@@ -7,7 +9,6 @@ use crate::network::command::meta::s2c::S2CMetaCommandInformation;
 use crate::network::command::structure::StructureCommand;
 use crate::network::command::unload::UnloadGameObjectCommand;
 
-
 pub mod event;
 pub mod unload;
 pub mod float_counter;
@@ -16,7 +17,7 @@ pub mod structure;
 pub mod load;
 pub mod meta;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum C2SCommandUnion {
 	Load(LoadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
@@ -26,6 +27,7 @@ pub enum C2SCommandUnion {
 	Structure(StructureCommand),
 	Event(EventCommand),
 	Unload(UnloadGameObjectCommand),
+	Test(String),
 }
 
 #[derive(Debug, PartialEq)]

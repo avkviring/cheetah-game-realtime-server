@@ -2,8 +2,13 @@ use std::cmp::min;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
+pub type UserPrivateKey = [u8; 32];
+pub type UserPublicKey = [u8; 4];
+
 /// Hash клиента и комнаты
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct HashValue {
 	pub value: [u8; HashValue::SIZE]
 }
