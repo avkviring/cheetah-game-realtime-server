@@ -1,13 +1,13 @@
 use std::rc::Rc;
 
-use cheetah_relay_common::network::command::CommandCode;
-use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
-use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
-use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
-use cheetah_relay_common::network::command::structure::StructureCommand;
-use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
+use cheetah_relay_common::commands::command::CommandCode;
+use cheetah_relay_common::commands::command::event::EventCommand;
+use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
+use cheetah_relay_common::commands::command::load::LoadGameObjectCommand;
+use cheetah_relay_common::commands::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
+use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::commands::command::structure::StructureCommand;
+use cheetah_relay_common::commands::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 
 use crate::room::clients::Client;

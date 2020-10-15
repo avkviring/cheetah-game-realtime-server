@@ -1,4 +1,4 @@
-use cheetah_relay_common::network::command::event::EventCommand;
+use cheetah_relay_common::commands::command::event::EventCommand;
 
 use crate::client::command::C2SCommandUnion;
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};

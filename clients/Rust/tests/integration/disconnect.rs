@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::hash::HashValue;
 
 use cheetah_relay::room::request::RoomRequest;
 use cheetah_relay_client::{destroy_client, do_get_connection_status};

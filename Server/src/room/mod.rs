@@ -1,6 +1,6 @@
 
 
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::hash::HashValue;
 
 use crate::room::clients::Clients;
 use crate::room::listener::CompositeRoomListener;

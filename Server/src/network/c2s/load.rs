@@ -1,4 +1,4 @@
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
+use cheetah_relay_common::commands::command::load::LoadGameObjectCommand;
 
 use crate::network::c2s::{error_c2s_command, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;

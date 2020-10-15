@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
-use cheetah_relay_common::network::command::{C2SCommandWithMeta, S2CCommandWithMeta};
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::command::{C2SCommandWithMeta, S2CCommandWithMeta};
+use cheetah_relay_common::commands::hash::HashValue;
 
 pub mod ffi;
 pub mod command;

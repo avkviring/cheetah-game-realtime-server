@@ -1,4 +1,4 @@
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
+use cheetah_relay_common::commands::command::load::LoadGameObjectCommand;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 

@@ -4,7 +4,7 @@ use std::sync::mpsc::{Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
 
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::hash::HashValue;
 
 use crate::room::request::RoomRequest;
 use crate::room::thread::RoomThread;

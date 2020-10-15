@@ -9,7 +9,7 @@ use cheetah_relay::room::request::{ClientInfo, RoomRequest};
 use cheetah_relay::rooms::Rooms;
 use cheetah_relay::server::{Server, ServerBuilder};
 use cheetah_relay_client::create_client;
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod connect;

@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::sync::Mutex;
+use lazy_static::lazy_static;
 
 #[derive(Debug)]
 pub struct LogCollector {

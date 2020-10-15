@@ -1,4 +1,4 @@
-use cheetah_relay_common::network::command::event::EventCommand;
+use cheetah_relay_common::commands::command::event::EventCommand;
 
 use crate::network::c2s::{get_field_and_change, ServerCommandExecutor, trace_c2s_command};
 use crate::room::clients::Client;

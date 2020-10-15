@@ -4,15 +4,15 @@ use std::sync::mpsc::{Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
 
-use cheetah_relay_common::network::command::{CommandCode, S2CCommandUnion, S2CCommandWithMeta};
-use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
-use cheetah_relay_common::network::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
-use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
-use cheetah_relay_common::network::command::structure::StructureCommand;
-use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::command::{CommandCode, S2CCommandUnion, S2CCommandWithMeta};
+use cheetah_relay_common::commands::command::event::EventCommand;
+use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
+use cheetah_relay_common::commands::command::load::LoadGameObjectCommand;
+use cheetah_relay_common::commands::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
+use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::commands::command::structure::StructureCommand;
+use cheetah_relay_common::commands::command::unload::UnloadGameObjectCommand;
+use cheetah_relay_common::commands::hash::HashValue;
 
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, Server2ClientFFIConverter};
 use crate::client::NetworkStatus;
