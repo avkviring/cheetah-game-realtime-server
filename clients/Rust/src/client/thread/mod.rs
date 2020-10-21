@@ -3,8 +3,8 @@ use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::Duration;
 
-use cheetah_relay_common::network::command::S2CCommandWithMeta;
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::command::S2CCommandWithMeta;
+use cheetah_relay_common::commands::hash::HashValue;
 
 use crate::client::{Client, NetworkStatus};
 use crate::client::request::{ClientRequestType, ExternalRequestProcessor, RequestResult};

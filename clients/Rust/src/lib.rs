@@ -5,7 +5,7 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::hash::HashValue;
 use cheetah_relay_common::utils::logger::LogListener;
 use log::Level;
 use widestring::U16CString;

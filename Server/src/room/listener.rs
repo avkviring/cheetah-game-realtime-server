@@ -6,7 +6,7 @@ use cheetah_relay_common::constants::FieldID;
 use crate::room::clients::{Client, Clients};
 use crate::room::objects::object::GameObject;
 use crate::room::objects::Objects;
-use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 
 /// глобальный listener для обработки событий room
 pub trait RoomListener {

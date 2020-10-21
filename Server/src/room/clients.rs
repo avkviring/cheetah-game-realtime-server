@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use cheetah_relay_common::constants::ClientId;
-use cheetah_relay_common::network::hash::HashValue;
+use cheetah_relay_common::commands::hash::HashValue;
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::clients::ClientConnectError::ClientNotInWaitingList;

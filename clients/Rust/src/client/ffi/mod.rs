@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use cheetah_relay_common::constants::ClientId;
-use cheetah_relay_common::network::command::C2SCommandUnion;
+use cheetah_relay_common::commands::command::C2SCommandUnion;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 

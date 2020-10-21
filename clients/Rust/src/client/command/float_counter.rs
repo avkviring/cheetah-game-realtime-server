@@ -1,4 +1,4 @@
-use cheetah_relay_common::network::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
+use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
 
 use crate::client::command::C2SCommandUnion;
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};

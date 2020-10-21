@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::constants::ClientId;
-use crate::network::command::meta::c2s::C2SMetaCommandInformation;
+use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
 
 ///
 /// Служебная информация для исходящей команды

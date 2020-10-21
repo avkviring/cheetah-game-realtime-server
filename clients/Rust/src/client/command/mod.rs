@@ -1,14 +1,14 @@
-use cheetah_relay_common::network::command::CommandCode;
-use cheetah_relay_common::network::command::C2SCommandUnion;
-use cheetah_relay_common::network::command::S2CCommandUnion;
-use cheetah_relay_common::network::command::S2CCommandWithMeta;
-use cheetah_relay_common::network::command::event::EventCommand;
-use cheetah_relay_common::network::command::float_counter::{SetFloat64CounterCommand};
-use cheetah_relay_common::network::command::load::LoadGameObjectCommand;
-use cheetah_relay_common::network::command::long_counter::{SetLongCounterCommand};
-use cheetah_relay_common::network::command::meta::s2c::S2CMetaCommandInformation;
-use cheetah_relay_common::network::command::structure::StructureCommand;
-use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
+use cheetah_relay_common::commands::command::CommandCode;
+use cheetah_relay_common::commands::command::C2SCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommandWithMeta;
+use cheetah_relay_common::commands::command::event::EventCommand;
+use cheetah_relay_common::commands::command::float_counter::{SetFloat64CounterCommand};
+use cheetah_relay_common::commands::command::load::LoadGameObjectCommand;
+use cheetah_relay_common::commands::command::long_counter::{SetLongCounterCommand};
+use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
+use cheetah_relay_common::commands::command::structure::StructureCommand;
+use cheetah_relay_common::commands::command::unload::UnloadGameObjectCommand;
 use crate::client::C2SCommandWithMeta;
 
 pub mod load;

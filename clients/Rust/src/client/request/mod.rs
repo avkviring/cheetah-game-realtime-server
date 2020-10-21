@@ -1,7 +1,7 @@
 use std::sync::mpsc::{Receiver, TryRecvError};
 
-use cheetah_relay_common::network::command::{C2SCommandUnion, C2SCommandWithMeta};
-use cheetah_relay_common::network::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::commands::command::{C2SCommandUnion, C2SCommandWithMeta};
+use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 
 use crate::client::Client;
 

@@ -1,9 +1,9 @@
-use cheetah_relay_common::network::command::unload::UnloadGameObjectCommand;
+use cheetah_relay_common::commands::command::unload::UnloadGameObjectCommand;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
-use cheetah_relay_common::network::command::C2SCommandUnion;
+use cheetah_relay_common::commands::command::C2SCommandUnion;
 
 #[test]
 fn should_to_ffi() {
