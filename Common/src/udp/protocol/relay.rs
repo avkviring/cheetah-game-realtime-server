@@ -46,7 +46,7 @@ impl RelayProtocol {
 			additional_frame_builders: Default::default(),
 			disconnect_handler: Default::default(),
 			rtt: Default::default(),
-			keepAlive: Default::default(),
+			keep_alive: Default::default(),
 		}
 	}
 	
@@ -77,7 +77,7 @@ impl RelayProtocol {
 			&mut self.out_commands_collector,
 			&mut self.disconnect_handler,
 			&mut self.rtt,
-			&mut self.keepAlive
+			&mut self.keep_alive
 		];
 		let contains_data =
 			builders
