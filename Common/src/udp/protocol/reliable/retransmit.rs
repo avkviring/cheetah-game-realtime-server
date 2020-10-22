@@ -6,6 +6,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
+use crate::udp::protocol::congestion::CongestionControl;
 use crate::udp::protocol::frame::{Frame, FrameId};
 use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
@@ -53,7 +54,7 @@ impl Default for Retransmitter {
 			frames: Default::default(),
 			wait_ask_frames: Default::default(),
 			max_retransmit_count: 0,
-			timeout: Duration::from_millis(200),
+			timeout: CongestionControl::DEFAULT_ASK_TIMEOUT,
 		}
 	}
 }

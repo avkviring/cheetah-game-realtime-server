@@ -17,7 +17,7 @@ use crate::udp::protocol::frame::headers::Header;
 pub struct RoundTripTimeHandler {
 	start_time: Instant,
 	scheduled_response: Option<RoundTripTimeHeader>,
-	rtt: Option<Duration>,
+	pub rtt: Option<Duration>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]

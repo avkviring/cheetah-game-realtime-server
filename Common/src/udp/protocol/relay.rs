@@ -3,6 +3,7 @@ use std::time::Instant;
 use crate::udp::protocol::{DisconnectedStatus, FrameBuilder, FrameBuiltListener, FrameReceivedListener};
 use crate::udp::protocol::commands::input::InCommandsCollector;
 use crate::udp::protocol::commands::output::OutCommandsCollector;
+use crate::udp::protocol::congestion::CongestionControl;
 use crate::udp::protocol::disconnect::handler::DisconnectHandler;
 use crate::udp::protocol::disconnect::watcher::DisconnectWatcher;
 use crate::udp::protocol::frame::Frame;
@@ -31,6 +32,7 @@ pub struct RelayProtocol {
 	pub rtt: RoundTripTimeHandler,
 	pub keep_alive: KeepAlive,
 	pub additional_frame_builders: Vec<Box<dyn FrameBuilder>>,
+	pub congestion_control: CongestionControl,
 }
 
 impl RelayProtocol {
@@ -47,7 +49,17 @@ impl RelayProtocol {
 			disconnect_handler: Default::default(),
 			rtt: Default::default(),
 			keep_alive: Default::default(),
+			congestion_control: Default::default(),
 		}
+	}
+	
+	
+	///
+	/// Данный метод необходимо периодически вызывать
+	/// для обработки внутренних данных
+	/// 
+	pub fn cycle(&mut self, now: Instant) {
+		self.congestion_control.rebalance(&now, &self.rtt, &mut self.retransmitter);
 	}
 	
 	///
