@@ -3,6 +3,8 @@ use std::collections::{HashSet, LinkedList};
 use std::ops::Sub;
 use std::time::{Duration, Instant};
 
+use serde::{Deserialize, Serialize};
+
 use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 use crate::udp::protocol::frame::{Frame, FrameId};
 use crate::udp::protocol::frame::headers::Header;
@@ -34,6 +36,14 @@ pub struct FrameAndTime {
 	pub retransmit_count: u8,
 }
 
+///
+/// Заголовок для указания факта повторной передачи данного фрейма
+///
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub struct RetransmitMarkHeader {
+	pub retransmit_count: u8
+}
+
 
 impl Default for Retransmitter {
 	fn default() -> Self {
@@ -61,7 +71,7 @@ impl Retransmitter {
 					self.frames.pop_front();
 					Option::None
 				} else if now.sub(frame_and_time.time) >= Retransmitter::TIMEOUT {
-					let frame_and_time = self.frames.pop_front().unwrap();
+					let mut frame_and_time = self.frames.pop_front().unwrap();
 					let retransmit_count = frame_and_time.retransmit_count + 1;
 					self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);
 					self.frames.push_back(FrameAndTime {
@@ -69,6 +79,7 @@ impl Retransmitter {
 						frame: frame_and_time.frame.clone(),
 						retransmit_count,
 					});
+					frame_and_time.frame.headers.add(Header::RetransmitMark(RetransmitMarkHeader { retransmit_count }));
 					Option::Some(frame_and_time.frame)
 				} else {
 					Option::None
@@ -137,7 +148,6 @@ mod tests {
 		assert!(matches!(handler.get_retransmit_frame(&Instant::now()), Option::None));
 	}
 	
-	
 	///
 	/// Для фрейма не получено подтверждение, но таймаут ожидания еще не прошел
 	///
@@ -148,6 +158,25 @@ mod tests {
 		handler.on_frame_built(&create_reliability_frame(1), &now);
 		assert!(matches!(handler.get_retransmit_frame(&now), Option::None));
 	}
+	
+	///
+	/// Для фрейма не получено подтверждение, но таймаут ожидания еще не прошел
+	///
+	#[test]
+	fn should_add_retransmit_mark() {
+		let mut handler = Retransmitter::default();
+		let now = Instant::now();
+		handler.on_frame_built(&create_reliability_frame(1), &now);
+		let get_time = now.add(Retransmitter::TIMEOUT);
+		
+		assert!(
+			matches!(
+				handler.get_retransmit_frame(&get_time),
+				Option::Some(frame) if frame.headers.first(Header::predicate_RetransmitMark).is_some()
+			)
+		);
+	}
+	
 	
 	///
 	/// Для фрейма не получено подтверждение, таймаут ожидания прошел

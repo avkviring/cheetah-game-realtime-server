@@ -4,7 +4,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
-use crate::udp::protocol::{FrameReceivedListener, FrameBuilder};
+use crate::udp::protocol::{FrameBuilder, FrameReceivedListener};
 use crate::udp::protocol::frame::Frame;
 use crate::udp::protocol::frame::headers::Header;
 
@@ -39,6 +39,11 @@ impl Default for RoundTripTimeHandler {
 impl FrameReceivedListener for RoundTripTimeHandler {
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		
+		// игнорируем повторно отосланные фреймы, так как они не показательны для измерения rtt
+		if frame.headers.first(Header::predicate_RetransmitMark).is_some() {
+			return;
+		}
+		
 		// запрос на измерение от удаленной стороны
 		let request_header: Option<&RoundTripTimeHeader> = frame.headers.first(Header::predicate_RoundTripTimeRequest);
 		match request_header {
@@ -65,7 +70,6 @@ impl FrameReceivedListener for RoundTripTimeHandler {
 
 
 impl FrameBuilder for RoundTripTimeHandler {
-	
 	fn contains_self_data(&self, now: &Instant) -> bool {
 		false
 	}
@@ -90,12 +94,18 @@ mod tests {
 	use std::ops::Add;
 	use std::time::{Duration, Instant};
 	
-	use crate::udp::protocol::{FrameReceivedListener, FrameBuilder};
+	use crate::udp::protocol::{FrameBuilder, FrameReceivedListener};
 	use crate::udp::protocol::frame::Frame;
-	use crate::udp::protocol::others::rtt::RoundTripTimeHandler;
+	use crate::udp::protocol::frame::headers::Header;
+	use crate::udp::protocol::others::rtt::{RoundTripTimeHandler, RoundTripTimeHeader};
+	use crate::udp::protocol::reliable::retransmit::RetransmitMarkHeader;
 	
 	#[test]
-	pub fn test() {
+	///
+	/// Тестируем обмен между двумя handler-ми.
+	/// После обмена должно быть определено rtt.
+	///
+	pub fn should_calculate_rtt() {
 		let mut handler_a = RoundTripTimeHandler::default();
 		let mut handler_b = RoundTripTimeHandler::default();
 		
@@ -110,5 +120,38 @@ mod tests {
 		handler_a.on_frame_received(&frame_b_a, &now.add(Duration::from_millis(100)));
 		
 		assert!(matches!(handler_a.rtt, Option::Some(time) if time == Duration::from_millis(100)))
+	}
+	
+	#[test]
+	///
+	/// Для retransmit фреймов операции получения response должны быть игнорированы
+	///
+	pub fn should_ignore_retransmit_frame_when_receive_response() {
+		let mut handler = RoundTripTimeHandler::default();
+		let now = Instant::now();
+		let mut frame = Frame::new(10);
+		frame.headers.add(Header::RetransmitMark(RetransmitMarkHeader { retransmit_count: 1 }));
+		frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 100 }));
+		handler.on_frame_received(&frame, &now);
+		assert!(matches!(handler.rtt, Option::None));
+	}
+	
+	#[test]
+	///
+	/// Для retransmit фреймов операции получения request должны быть игнорированы
+	///
+	pub fn should_ignore_retransmit_frame_when_receive_request() {
+		let mut handler = RoundTripTimeHandler::default();
+		let now = Instant::now();
+		
+		let mut input_frame = Frame::new(10);
+		input_frame.headers.add(Header::RetransmitMark(RetransmitMarkHeader { retransmit_count: 1 }));
+		input_frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
+		handler.on_frame_received(&input_frame, &now);
+		
+		let mut output_frame = Frame::new(10);
+		handler.build_frame(&mut output_frame, &now);
+		
+		assert!(matches!(output_frame.headers.first(Header::predicate_RoundTripTimeResponse), Option::None));
 	}
 }

@@ -4,8 +4,9 @@ use cheetah_relay_macro::EnumMatchPredicates;
 
 use crate::commands::hash::UserPublicKey;
 use crate::udp::protocol::disconnect::handler::DisconnectHeader;
-use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
 use crate::udp::protocol::others::rtt::RoundTripTimeHeader;
+use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
+use crate::udp::protocol::reliable::retransmit::RetransmitMarkHeader;
 
 ///
 /// Дополнительные UDP заголовки
@@ -46,6 +47,11 @@ pub enum Header {
 	/// Измерение rtt - ответ
 	///
 	RoundTripTimeResponse(RoundTripTimeHeader),
+	
+	///
+	/// Фрейм отослан повторно
+	///
+	RetransmitMark(RetransmitMarkHeader),
 }
 
 
