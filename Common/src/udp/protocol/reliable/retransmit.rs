@@ -28,6 +28,8 @@ pub struct Retransmitter {
 	/// Максимальное количество повтора пакета
 	///
 	pub max_retransmit_count: u8,
+	
+	pub timeout: Duration,
 }
 
 pub struct FrameAndTime {
@@ -51,12 +53,12 @@ impl Default for Retransmitter {
 			frames: Default::default(),
 			wait_ask_frames: Default::default(),
 			max_retransmit_count: 0,
+			timeout: Duration::from_millis(200),
 		}
 	}
 }
 
 impl Retransmitter {
-	pub const TIMEOUT: Duration = Duration::from_millis(200);
 	pub const RETRANSMIT_LIMIT: u8 = 10;
 	///
 	/// Получить фрейм для повторной отправки (если такой есть)
@@ -70,7 +72,7 @@ impl Retransmitter {
 				if !self.wait_ask_frames.contains(&frame_and_time.frame.header.frame_id) {
 					self.frames.pop_front();
 					Option::None
-				} else if now.sub(frame_and_time.time) >= Retransmitter::TIMEOUT {
+				} else if now.sub(frame_and_time.time) >= self.timeout {
 					let mut frame_and_time = self.frames.pop_front().unwrap();
 					let retransmit_count = frame_and_time.retransmit_count + 1;
 					self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);
@@ -167,7 +169,7 @@ mod tests {
 		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		handler.on_frame_built(&create_reliability_frame(1), &now);
-		let get_time = now.add(Retransmitter::TIMEOUT);
+		let get_time = now.add(handler.timeout);
 		
 		assert!(
 			matches!(
@@ -188,11 +190,11 @@ mod tests {
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
 		
-		let get_time = now.add(Retransmitter::TIMEOUT);
+		let get_time = now.add(handler.timeout);
 		assert!(
 			matches!(
 				handler.get_retransmit_frame(&get_time),
-				Option::Some(retransmit_frame) if retransmit_frame ==frame )
+				Option::Some(retransmit_frame) if retransmit_frame.header.frame_id ==frame.header.frame_id )
 		);
 	}
 	
@@ -206,7 +208,7 @@ mod tests {
 		let frame = create_unreliable_frame(1);
 		handler.on_frame_built(&frame, &now);
 		
-		let get_time = now.add(Retransmitter::TIMEOUT);
+		let get_time = now.add(handler.timeout);
 		assert!(
 			matches!(
 				handler.get_retransmit_frame(&get_time),
@@ -224,7 +226,7 @@ mod tests {
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
 		handler.on_frame_received(&create_ask_frame(100, frame.header.frame_id), &now);
-		let get_time = now.add(Retransmitter::TIMEOUT);
+		let get_time = now.add(handler.timeout);
 		assert!(
 			matches!(
 				handler.get_retransmit_frame(&get_time),
@@ -242,22 +244,22 @@ mod tests {
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
 		
-		let get_time = now.add(Retransmitter::TIMEOUT);
+		let get_time = now.add(handler.timeout);
 		assert!(
 			matches!(
 				handler.get_retransmit_frame(&get_time),
-				Option::Some(retransmit_frame) if retransmit_frame ==frame )
+				Option::Some(retransmit_frame) if retransmit_frame.header.frame_id ==frame.header.frame_id )
 		);
 		assert!(
 			matches!(
 				handler.get_retransmit_frame(&get_time),
 				Option::None )
 		);
-		let get_time = get_time.add(Retransmitter::TIMEOUT);
+		let get_time = get_time.add(handler.timeout);
 		assert!(
 			matches!(
 				handler.get_retransmit_frame(&get_time),
-				Option::Some(retransmit_frame) if retransmit_frame ==frame )
+				Option::Some(retransmit_frame) if retransmit_frame.header.frame_id ==frame.header.frame_id )
 		);
 	}
 	
@@ -274,13 +276,13 @@ mod tests {
 		
 		let mut get_time = now.clone();
 		for _ in 0..Retransmitter::RETRANSMIT_LIMIT - 1 {
-			get_time = get_time.add(Retransmitter::TIMEOUT);
+			get_time = get_time.add(handler.timeout);
 			handler.get_retransmit_frame(&get_time);
 		}
 		
 		assert_eq!(handler.disconnected(&get_time), false);
 		
-		get_time = get_time.add(Retransmitter::TIMEOUT);
+		get_time = get_time.add(handler.timeout);
 		handler.get_retransmit_frame(&get_time);
 		
 		assert_eq!(handler.disconnected(&get_time), true);
