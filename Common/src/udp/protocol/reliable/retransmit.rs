@@ -77,18 +77,25 @@ impl Retransmitter {
 					let mut frame_and_time = self.frames.pop_front().unwrap();
 					let retransmit_count = frame_and_time.retransmit_count + 1;
 					self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);
+					let mut frame_to_send = frame_and_time.frame;
 					self.frames.push_back(FrameAndTime {
 						time: now.clone(),
-						frame: frame_and_time.frame.clone(),
+						frame: frame_to_send.clone(),
 						retransmit_count,
 					});
-					frame_and_time.frame.headers.add(Header::RetransmitMark(RetransmitMarkHeader { retransmit_count }));
-					Option::Some(frame_and_time.frame)
+					frame_to_send.headers.add(Header::RetransmitMark(RetransmitMarkHeader { retransmit_count }));
+					Option::Some(frame_to_send)
 				} else {
 					Option::None
 				}
 			}
 		}
+	}
+	
+	fn create_retransmit_frame(source: &Frame) -> Frame {
+		let mut frame = source.clone();
+		frame.commands.unreliability.clear();
+		frame
 	}
 }
 
@@ -115,13 +122,14 @@ impl FrameBuiltListener for Retransmitter {
 		if !frame.commands.reliability.is_empty() {
 			self.frames.push_back(FrameAndTime {
 				time: now.clone(),
-				frame: frame.clone(),
+				frame: Retransmitter::create_retransmit_frame(frame),
 				retransmit_count: 0,
 			});
 			self.wait_ask_frames.insert(frame.header.frame_id);
 		}
 	}
 }
+
 
 impl DisconnectedStatus for Retransmitter {
 	fn disconnected(&mut self, now: &Instant) -> bool {
@@ -287,6 +295,22 @@ mod tests {
 		handler.get_retransmit_frame(&get_time);
 		
 		assert_eq!(handler.disconnected(&get_time), true);
+	}
+	
+	
+	///
+	/// В повторно отправленном фрейме не должно быть команд с ненадежной доставкой
+	///
+	#[test]
+	fn should_delete_unreliable_commands_for_retransmit_frame() {
+		let mut handler = Retransmitter::default();
+		let mut frame = create_reliability_frame(1);
+		frame.commands.unreliability.push(ApplicationCommand::Ping("".to_string()));
+		let now = Instant::now();
+		handler.on_frame_built(&frame, &now);
+		
+		let now = now.add(handler.timeout);
+		assert!(matches!(handler.get_retransmit_frame(&now), Option::Some(frame) if frame.commands.unreliability.is_empty()))
 	}
 	
 	
