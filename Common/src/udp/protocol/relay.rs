@@ -67,7 +67,7 @@ impl RelayProtocol {
 	///
 	pub fn on_frame_received(&mut self, frame: Frame, now: Instant) {
 		self.disconnect_watcher.on_frame_received(&frame, &now);
-		match self.replay_protection.is_replayed_frame(&frame, &now) {
+		match self.replay_protection.set_and_check(&frame, &now) {
 			Ok(replayed) => {
 				if !replayed {
 					self.disconnect_handler.on_frame_received(&frame, &now);
@@ -132,6 +132,13 @@ impl RelayProtocol {
 	}
 	
 	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<Frame> {
-		self.retransmitter.get_retransmit_frame(&now)
+		let next_frame_id = self.next_frame_id + 1;
+		match self.retransmitter.get_retransmit_frame(&now, next_frame_id) {
+			None => { Option::None }
+			Some(frame) => {
+				self.next_frame_id = next_frame_id;
+				Option::Some(frame)
+			}
+		}
 	}
 }

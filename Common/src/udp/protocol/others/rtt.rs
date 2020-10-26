@@ -58,7 +58,7 @@ impl FrameReceivedListener for RoundTripTimeHandler {
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		
 		// игнорируем повторно отосланные фреймы, так как они не показательны для измерения rtt
-		if frame.headers.first(Header::predicate_RetransmitMark).is_some() {
+		if frame.headers.first(Header::predicate_RetransmitFrame).is_some() {
 			return;
 		}
 		
@@ -119,7 +119,7 @@ mod tests {
 	use crate::udp::protocol::frame::Frame;
 	use crate::udp::protocol::frame::headers::Header;
 	use crate::udp::protocol::others::rtt::{RoundTripTimeHandler, RoundTripTimeHeader};
-	use crate::udp::protocol::reliable::retransmit::RetransmitMarkHeader;
+	use crate::udp::protocol::reliable::retransmit::RetransmitFrameHeader;
 	
 	#[test]
 	///
@@ -151,7 +151,7 @@ mod tests {
 		let mut handler = RoundTripTimeHandler::default();
 		let now = Instant::now();
 		let mut frame = Frame::new(10);
-		frame.headers.add(Header::RetransmitMark(RetransmitMarkHeader { retransmit_count: 1 }));
+		frame.headers.add(Header::RetransmitFrame(RetransmitFrameHeader { original_frame_id: 0, retransmit_count: 1 }));
 		frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&frame, &now);
 		assert!(handler.rtt.is_empty(), true);
@@ -166,7 +166,7 @@ mod tests {
 		let now = Instant::now();
 		
 		let mut input_frame = Frame::new(10);
-		input_frame.headers.add(Header::RetransmitMark(RetransmitMarkHeader { retransmit_count: 1 }));
+		input_frame.headers.add(Header::RetransmitFrame(RetransmitFrameHeader { original_frame_id: 0, retransmit_count: 1 }));
 		input_frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&input_frame, &now);
 		

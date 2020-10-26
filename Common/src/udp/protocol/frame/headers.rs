@@ -6,7 +6,7 @@ use crate::commands::hash::UserPublicKey;
 use crate::udp::protocol::disconnect::handler::DisconnectHeader;
 use crate::udp::protocol::others::rtt::RoundTripTimeHeader;
 use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
-use crate::udp::protocol::reliable::retransmit::RetransmitMarkHeader;
+use crate::udp::protocol::reliable::retransmit::RetransmitFrameHeader;
 
 ///
 /// Дополнительные UDP заголовки
@@ -51,7 +51,7 @@ pub enum Header {
 	///
 	/// Фрейм отослан повторно
 	///
-	RetransmitMark(RetransmitMarkHeader),
+	RetransmitFrame(RetransmitFrameHeader),
 }
 
 

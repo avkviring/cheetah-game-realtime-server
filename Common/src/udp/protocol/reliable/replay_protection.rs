@@ -28,8 +28,11 @@ impl Default for FrameReplayProtection {
 impl FrameReplayProtection {
 	pub const BUFFER_SIZE: usize = MAX_FRAME_PER_SECONDS * 120;
 	
-	pub fn is_replayed_frame(&mut self, frame: &Frame, _: &Instant) -> Result<bool, ()> {
-		let frame_id = frame.header.frame_id;
+	///
+	/// Отметить фрейм как принятый и проверить его статус
+	///
+	pub fn set_and_check(&mut self, frame: &Frame, _: &Instant) -> Result<bool, ()> {
+		let frame_id = frame.get_original_frame_id();
 		
 		if frame_id > self.max_frame_id {
 			self.max_frame_id = frame_id;
@@ -71,8 +74,8 @@ mod tests {
 		let mut protection = FrameReplayProtection::default();
 		let frame_a = Frame::new(1000);
 		let now = Instant::now();
-		assert_eq!(protection.is_replayed_frame(&frame_a, &now).unwrap(), false);
-		assert_eq!(protection.is_replayed_frame(&frame_a, &now).unwrap(), true);
+		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), false);
+		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), true);
 	}
 	
 	#[test]
@@ -81,8 +84,8 @@ mod tests {
 		let frame_a = Frame::new(1000 + FrameReplayProtection::BUFFER_SIZE as u64);
 		let frame_b = Frame::new(10);
 		let now = Instant::now();
-		assert_eq!(protection.is_replayed_frame(&frame_a, &now).unwrap(), false);
-		assert_eq!(protection.is_replayed_frame(&frame_b, &now).is_err(), true);
+		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), false);
+		assert_eq!(protection.set_and_check(&frame_b, &now).is_err(), true);
 	}
 	
 	#[test]
@@ -91,8 +94,8 @@ mod tests {
 		let now = Instant::now();
 		for i in 1..(FrameReplayProtection::BUFFER_SIZE * 2) as u64 {
 			let frame = Frame::new(i);
-			assert_eq!(protection.is_replayed_frame(&frame, &now).unwrap(), false);
-			assert_eq!(protection.is_replayed_frame(&frame, &now).unwrap(), true);
+			assert_eq!(protection.set_and_check(&frame, &now).unwrap(), false);
+			assert_eq!(protection.set_and_check(&frame, &now).unwrap(), true);
 		}
 	}
 	
@@ -102,11 +105,11 @@ mod tests {
 		let now = Instant::now();
 		for i in 1..FrameReplayProtection::BUFFER_SIZE as u64 {
 			let frame = Frame::new(i);
-			protection.is_replayed_frame(&frame, &now);
+			protection.set_and_check(&frame, &now);
 			if i > 2 {
 				for j in 1..i {
 					let frame = Frame::new(j);
-					assert_eq!(protection.is_replayed_frame(&frame, &now).unwrap(), true);
+					assert_eq!(protection.set_and_check(&frame, &now).unwrap(), true);
 				}
 			}
 		}

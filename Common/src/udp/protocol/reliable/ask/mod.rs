@@ -1,7 +1,7 @@
 use std::ops::Add;
 use std::time::{Duration, Instant};
 
-use crate::udp::protocol::{FrameReceivedListener, NOT_EXIST_FRAME_ID, FrameBuilder};
+use crate::udp::protocol::{FrameBuilder, FrameReceivedListener, NOT_EXIST_FRAME_ID};
 use crate::udp::protocol::frame::{Frame, FrameId};
 use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
@@ -11,6 +11,7 @@ pub mod header;
 
 ///
 /// Управление рассылкой подтверждения о приеме пакетов
+/// - подтверждается [frame.header.frame_id], а не [frame.get_original_id()]
 ///
 pub struct AskSender {
 	///
@@ -149,7 +150,7 @@ mod tests {
 	use std::ops::Add;
 	use std::time::Instant;
 	
-	use crate::udp::protocol::{FrameReceivedListener, FrameBuilder};
+	use crate::udp::protocol::{FrameBuilder, FrameReceivedListener};
 	use crate::udp::protocol::frame::applications::ApplicationCommand;
 	use crate::udp::protocol::frame::Frame;
 	use crate::udp::protocol::frame::headers::Header;
