@@ -1,8 +1,9 @@
 use std::cmp::max;
 use std::collections::{BTreeMap, HashMap, HashSet, LinkedList};
-use std::ops::Sub;
+use std::ops::{Rem, Sub};
 use std::time::{Duration, Instant};
 
+use lru::LruCache;
 use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
@@ -10,6 +11,7 @@ use crate::udp::protocol::congestion::CongestionControl;
 use crate::udp::protocol::frame::{Frame, FrameId};
 use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
+use crate::udp::protocol::reliable::statistics::RetransmitStatistics;
 
 ///
 /// Повторная посылка фреймов, для которых не пришло подтверждение
@@ -33,17 +35,14 @@ pub struct Retransmitter {
 	///
 	/// Связь повторно отправленных фреймов с оригинальными (для обработки ASK ответов)
 	///
-	retransmit_to_original: HashMap<FrameId, FrameId>,
-	
-	///
-	/// Очередь для чистки [retransmit_to_original]
-	///
-	retransmit_to_original_cleaner_queue: LinkedList<FrameId>,
+	retransmit_to_original: LruCache<FrameId, FrameId>,
 	
 	///
 	/// Время ожидания ASK на фрейм
 	///
-	pub ask_wait_duration: Duration,
+	ask_wait_duration: Duration,
+	
+	statistics: RetransmitStatistics,
 }
 
 pub struct ScheduledFrame {
@@ -78,9 +77,9 @@ impl Default for Retransmitter {
 			frames: Default::default(),
 			unasked_frames: Default::default(),
 			max_retransmit_count: Default::default(),
-			retransmit_to_original: Default::default(),
-			retransmit_to_original_cleaner_queue: Default::default(),
+			retransmit_to_original: LruCache::new(Retransmitter::RETRANSMIT_TO_ORIGINAL_MAX_LEN),
 			ask_wait_duration: Retransmitter::DEFAULT_ASK_TIMEOUT,
+			statistics: Default::default(),
 		}
 	}
 }
@@ -99,7 +98,9 @@ impl Retransmitter {
 	
 	///
 	/// Максимальная длина [self.retransmit_to_original]
+	///
 	/// - должно гарантированно хватить все фреймы, ожидающие ASK
+	/// - включая ASK на повторно отосланные фреймы
 	///
 	pub const RETRANSMIT_TO_ORIGINAL_MAX_LEN: usize = 4096;
 	
@@ -131,9 +132,10 @@ impl Retransmitter {
 						let retransmit_header = Header::RetransmitFrame(RetransmitFrameHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
 						
-						self.store_retransmit_to_original_link(retransmit_frame_id, original_frame_id);
+						self.retransmit_to_original.put(retransmit_frame_id, original_frame_id);
 						
 						self.frames.push_back(scheduled_frame);
+						self.statistics.on_retransmit_frame(now);
 						return Option::Some(retransmit_frame);
 					} else {
 						return Option::None;
@@ -143,14 +145,6 @@ impl Retransmitter {
 		}
 	}
 	
-	fn store_retransmit_to_original_link(&mut self, retransmit_frame_id: FrameId, original_frame_id: FrameId) {
-		self.retransmit_to_original.insert(retransmit_frame_id, original_frame_id);
-		self.retransmit_to_original_cleaner_queue.push_front(retransmit_frame_id);
-		if self.retransmit_to_original_cleaner_queue.len() > Retransmitter::RETRANSMIT_TO_ORIGINAL_MAX_LEN {
-			let frame_id = self.retransmit_to_original_cleaner_queue.pop_back().unwrap();
-			self.retransmit_to_original.remove(&frame_id);
-		}
-	}
 	
 	fn schedule_retransmit(&mut self, frame: Frame, original_frame_id: FrameId, retransmit_count: u8, now: &Instant) {
 		self.frames.push_back(ScheduledFrame {
@@ -167,19 +161,21 @@ impl FrameReceivedListener for Retransmitter {
 	///
 	/// Обрабатываем подтверждения фреймов
 	///
-	fn on_frame_received(&mut self, frame: &Frame, _: &Instant) {
+	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		let ask_headers: Vec<&AskFrameHeader> = frame.headers.find(Header::predicate_AskFrame);
 		ask_headers.iter().for_each(|ask_header| {
 			ask_header.get_frames().iter().for_each(|frame_id| {
-				let original_frame_id = match self.retransmit_to_original.remove(frame_id) {
+				let original_frame_id = match self.retransmit_to_original.get(frame_id) {
 					None => {
 						*frame_id
 					}
 					Some(original_frame_id) => {
-						original_frame_id
+						*original_frame_id
 					}
 				};
-				self.unasked_frames.remove(&original_frame_id);
+				
+				!self.unasked_frames.remove(&original_frame_id);
+				self.statistics.on_ask_received(*frame_id, original_frame_id, now);
 			})
 		});
 	}
@@ -364,12 +360,12 @@ mod tests {
 				handler.get_retransmit_frame(&get_time,3),
 				Option::None )
 		);
-		// let get_time = get_time.add(handler.ask_wait_duration);
-		// assert!(
-		// 	matches!(
-		// 		handler.get_retransmit_frame(&get_time,4),
-		// 		Option::Some(retransmit_frame) if retransmit_frame.header.frame_id == 4 )
-		// );
+		let get_time = get_time.add(handler.ask_wait_duration);
+		assert!(
+			matches!(
+				handler.get_retransmit_frame(&get_time,4),
+				Option::Some(retransmit_frame) if retransmit_frame.header.frame_id == 4 )
+		);
 	}
 	
 	
