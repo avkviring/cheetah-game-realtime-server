@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::frame::applications::ApplicationCommands;
-use crate::udp::protocol::frame::headers::Headers;
+use crate::udp::protocol::frame::headers::{Header, Headers};
+use crate::udp::protocol::reliable::retransmit::RetransmitFrameHeader;
 
 pub mod headers;
 pub mod applications;
@@ -53,5 +54,29 @@ impl Frame {
 			headers: Default::default(),
 			commands: ApplicationCommands::default(),
 		}
+	}
+	
+	///
+	///  Получить оригинальный frame_id
+	/// - для повторно отосланных фреймов - id изначального фрейма
+	/// - для всех остальных id фрейма
+	/// 
+	pub fn get_original_frame_id(&self) -> FrameId {
+		match self.headers.first(Header::predicate_RetransmitFrame) {
+			None => {
+				self.header.frame_id
+			}
+			Some(value) => {
+				value.original_frame_id
+			}
+		}
+	}
+	
+	
+	///
+	/// Фрейм с надежной доставкой?
+	/// 
+	pub fn is_reliability(&self) -> bool {
+		!self.commands.reliability.is_empty()
 	}
 }

@@ -3,6 +3,7 @@ use std::time::Instant;
 use crate::udp::protocol::{DisconnectedStatus, FrameBuilder, FrameBuiltListener, FrameReceivedListener};
 use crate::udp::protocol::commands::input::InCommandsCollector;
 use crate::udp::protocol::commands::output::OutCommandsCollector;
+use crate::udp::protocol::congestion::CongestionControl;
 use crate::udp::protocol::disconnect::handler::DisconnectHandler;
 use crate::udp::protocol::disconnect::watcher::DisconnectWatcher;
 use crate::udp::protocol::frame::Frame;
@@ -31,6 +32,7 @@ pub struct RelayProtocol {
 	pub rtt: RoundTripTimeHandler,
 	pub keep_alive: KeepAlive,
 	pub additional_frame_builders: Vec<Box<dyn FrameBuilder>>,
+	pub congestion_control: CongestionControl,
 }
 
 impl RelayProtocol {
@@ -47,7 +49,17 @@ impl RelayProtocol {
 			disconnect_handler: Default::default(),
 			rtt: Default::default(),
 			keep_alive: Default::default(),
+			congestion_control: Default::default(),
 		}
+	}
+	
+	
+	///
+	/// Данный метод необходимо периодически вызывать
+	/// для обработки внутренних данных
+	/// 
+	pub fn cycle(&mut self, now: Instant) {
+		self.congestion_control.rebalance(&now, &self.rtt, &mut self.retransmitter);
 	}
 	
 	///
@@ -55,7 +67,7 @@ impl RelayProtocol {
 	///
 	pub fn on_frame_received(&mut self, frame: Frame, now: Instant) {
 		self.disconnect_watcher.on_frame_received(&frame, &now);
-		match self.replay_protection.is_replayed_frame(&frame, &now) {
+		match self.replay_protection.set_and_check(&frame, &now) {
 			Ok(replayed) => {
 				if !replayed {
 					self.disconnect_handler.on_frame_received(&frame, &now);
@@ -120,6 +132,13 @@ impl RelayProtocol {
 	}
 	
 	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<Frame> {
-		self.retransmitter.get_retransmit_frame(&now)
+		let next_frame_id = self.next_frame_id + 1;
+		match self.retransmitter.get_retransmit_frame(&now, next_frame_id) {
+			None => { Option::None }
+			Some(frame) => {
+				self.next_frame_id = next_frame_id;
+				Option::Some(frame)
+			}
+		}
 	}
 }
