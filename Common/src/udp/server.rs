@@ -1,7 +1,9 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::io::Cursor;
+use std::rc::Rc;
 use std::time::Instant;
 
 use crate::commands::hash::{UserPrivateKey, UserPublicKey};
@@ -13,7 +15,7 @@ use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::relay::RelayProtocol;
 
 pub struct UdpServer<PeerAddress> {
-	pub channel: Box<dyn Channel<PeerAddress>>,
+	pub channel: Rc<RefCell<dyn Channel<PeerAddress>>>,
 	pub sessions: HashMap<UserPublicKey, UserSession<PeerAddress>>,
 }
 
@@ -31,7 +33,7 @@ pub enum UserSessionState {
 }
 
 impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
-	pub fn new(channel: Box<dyn Channel<PeerAddress>>) -> UdpServer<PeerAddress> {
+	pub fn new(channel: Rc<RefCell<dyn Channel<PeerAddress>>>) -> UdpServer<PeerAddress> {
 		UdpServer {
 			channel,
 			sessions: Default::default(),
@@ -39,17 +41,43 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 	}
 	
 	pub fn cycle(&mut self, now: &Instant) {
+		self.do_read(now);
+		self.do_write(now)
+	}
+	
+	fn do_write(&mut self, now: &Instant) {
+		let channel = &self.channel.clone();
+		self.sessions.iter_mut().for_each(|(_, session)| {
+			match session.address {
+				None => {}
+				Some(ref address) => {
+					match session.protocol.build_next_frame(now) {
+						None => {}
+						Some(mut frame) => {
+							let (binary, commands) = frame.encode(&mut Cipher::new(&session.private_key));
+							session.protocol.out_commands_collector.add_unsent_commands(commands);
+							let address = session.address.as_ref().unwrap();
+							channel.borrow_mut().send(address, binary);
+						}
+					}
+				}
+			}
+		})
+	}
+	
+	fn do_read(&mut self, now: &Instant) {
 		loop {
+			
 			// read
-			match self.channel.try_recv() {
+			let channel = self.channel.clone();
+			let channel = channel.borrow();
+			match channel.try_recv() {
 				None => { break; }
 				Some((address, data)) => {
 					let mut cursor = Cursor::new(data.as_slice());
 					let headers = Frame::decode_headers(&mut cursor);
 					match headers {
 						Ok((header, additional_headers)) => {
-							let session_found = false;
-							
 							let user_public_key_header: Option<&UserPublicKey> = additional_headers.first(Header::predicate_UserPublicKey);
 							match user_public_key_header {
 								None => {
@@ -81,19 +109,6 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 					}
 				}
 			}
-			
-			
-			// write
-			let channel = &self.channel;
-			self.sessions.iter_mut().for_each(|(_, session)| {
-				let mut frame = session.protocol.build_next_frame(now).unwrap();
-				let (binary, commands) = frame.encode(&mut Cipher::new(&session.private_key));
-				session.protocol.out_commands_collector.add_unsent_commands(commands);
-				let address = session.address.as_ref().unwrap();
-				channel.send(address, binary);
-			})
-			
-			// client timeout(?)
 		}
 	}
 	

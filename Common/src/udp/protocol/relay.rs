@@ -59,7 +59,7 @@ impl RelayProtocol {
 	/// для обработки внутренних данных
 	/// 
 	pub fn cycle(&mut self, now: &Instant) {
-		self.congestion_control.rebalance(now, &self.rtt,  &mut self.retransmitter);
+		self.congestion_control.rebalance(now, &self.rtt, &mut self.retransmitter);
 	}
 	
 	///
@@ -84,6 +84,15 @@ impl RelayProtocol {
 	/// Создание фрейма для отправки
 	///
 	pub fn build_next_frame(&mut self, now: &Instant) -> Option<Frame> {
+		
+		match self.get_next_retransmit_frame(now) {
+			None => {}
+			Some(frame) => {
+				return Option::Some(frame);
+			}
+		}
+		
+		
 		let mut builders: [&mut dyn FrameBuilder; 5] = [
 			&mut self.ack_sender,
 			&mut self.out_commands_collector,

@@ -52,6 +52,11 @@ pub enum Header {
 	/// Фрейм отослан повторно
 	///
 	RetransmitFrame(RetransmitFrameHeader),
+	
+	///
+	/// Приветственный пакет
+	///
+	Hello
 }
 
 

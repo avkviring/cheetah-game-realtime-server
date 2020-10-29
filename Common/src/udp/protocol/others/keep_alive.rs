@@ -22,7 +22,7 @@ impl FrameBuilder for KeepAlive {
 	fn contains_self_data(&self, now: &Instant) -> bool {
 		match self.last_send.as_ref() {
 			None => {
-				true
+				false
 			}
 			Some(last_time) => {
 				now.sub(*last_time) >= KeepAlive::INTERVAL

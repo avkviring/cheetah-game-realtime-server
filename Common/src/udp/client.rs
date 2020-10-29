@@ -1,5 +1,7 @@
+use std::cell::RefCell;
 use std::hash::Hash;
 use std::io::Cursor;
+use std::rc::Rc;
 use std::time::Instant;
 
 use crate::commands::hash::{UserPrivateKey, UserPublicKey};
@@ -7,13 +9,14 @@ use crate::udp::channel::Channel;
 use crate::udp::client::ClientState::CONNECTED;
 use crate::udp::protocol::codec::cipher::Cipher;
 use crate::udp::protocol::frame::Frame;
+use crate::udp::protocol::others::hello::HelloSender;
 use crate::udp::protocol::others::public_key::UserPublicKeyFrameBuilder;
 use crate::udp::protocol::relay::RelayProtocol;
 
 pub struct UdpClient<PeerAddres> {
 	pub private_key: UserPrivateKey,
 	pub public_key: UserPublicKey,
-	pub channel: Box<dyn Channel<PeerAddres>>,
+	pub channel: Rc<RefCell<dyn Channel<PeerAddres>>>,
 	pub state: ClientState,
 	pub server_address: PeerAddres,
 	pub protocol: RelayProtocol,
@@ -29,10 +32,11 @@ pub enum ClientState {
 impl<PeerAddress: Hash> UdpClient<PeerAddress> {
 	pub fn new(private_key: UserPrivateKey,
 			   public_key: UserPublicKey,
-			   channel: Box<dyn Channel<PeerAddress>>,
+			   channel: Rc<RefCell<dyn Channel<PeerAddress>>>,
 			   server_address: PeerAddress) -> UdpClient<PeerAddress> {
 		let mut protocol = RelayProtocol::new();
 		protocol.add_frame_builder(Box::new(UserPublicKeyFrameBuilder(public_key)));
+		protocol.add_frame_builder(Box::new(HelloSender::default()));
 		UdpClient {
 			private_key,
 			public_key,
@@ -45,9 +49,28 @@ impl<PeerAddress: Hash> UdpClient<PeerAddress> {
 	
 	pub fn cycle(&mut self, now: &Instant) {
 		self.protocol.cycle(now);
-		
+		self.do_read(&now);
+		self.do_write(&now)
+	}
+	
+	fn do_write(&mut self, now: &&Instant) {
+		let frame = self.protocol.build_next_frame(&now);
+		match frame {
+			None => {}
+			Some(mut frame) => {
+				let (buffer, unsended_commands) = frame.encode(&mut Cipher::new(&self.private_key));
+				let channel = self.channel.clone();
+				channel.borrow_mut().send(&self.server_address, buffer);
+				self.protocol.out_commands_collector.add_unsent_commands(unsended_commands);
+			}
+		}
+	}
+	
+	fn do_read(&mut self, now: &&Instant) {
 		loop {
-			match self.channel.try_recv() {
+			let channel = self.channel.clone();
+			let channel = channel.borrow();
+			match channel.try_recv() {
 				None => { break; }
 				Some((server_address, data)) => {
 					let mut cursor = Cursor::new(data.as_slice());
@@ -57,8 +80,8 @@ impl<PeerAddress: Hash> UdpClient<PeerAddress> {
 							let frame = Frame::decode_frame(cursor, Cipher::new(&self.private_key), header, additional_headers);
 							match frame {
 								Ok(frame) => {
+									self.protocol.on_frame_received(frame, &now);
 									self.state = CONNECTED;
-									println!("client recv protocol {:?}", frame)
 								}
 								Err(e) => {
 									log::error!("recv protocol {:?}", e)
@@ -70,17 +93,6 @@ impl<PeerAddress: Hash> UdpClient<PeerAddress> {
 						}
 					}
 				}
-			}
-		}
-		
-		//write
-		let frame = self.protocol.build_next_frame(&now);
-		match frame {
-			None => {}
-			Some(mut frame) => {
-				let (buffer, unsended_commands) = frame.encode(&mut Cipher::new(&self.private_key));
-				self.channel.send(&self.server_address, buffer);
-				self.protocol.out_commands_collector.add_unsent_commands(unsended_commands);
 			}
 		}
 	}

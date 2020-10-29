@@ -24,7 +24,7 @@ impl CongestionControl {
 	pub fn rebalance(&mut self,
 					 now: &Instant,
 					 rtt: &dyn RoundTripTime,
-					 retransmitter: &mut Retransmitter,
+					 retransmitter: &mut dyn Retransmitter,
 	) {
 		if !self.is_time_to_rebalance(now) {
 			return;
@@ -41,15 +41,13 @@ impl CongestionControl {
 		if let Option::Some(average_rtt) = average_rtt {
 			let koeff = match retransmitter.get_redundant_frames_percent(now) {
 				None => { 1.5 }
-				Some(percent) => {
-					match percent {
-						0.0..=0.1 => 1.1,
-						0.1..=0.2 => 1.5,
-						0.2..=0.5 => 2.0,
-						0.5..=0.8 => 2.5,
-						_ => { 3.0 }
-					}
-				}
+				Some(percent) => match percent {
+					0.0..=0.1 => 1.1,
+					0.1..=0.2 => 1.5,
+					0.2..=0.5 => 2.0,
+					0.5..=0.8 => 2.5,
+					_ => { 3.0 }
+				},
 			};
 			let new_retransmit_timeout = average_rtt.mul_f64(koeff);
 			
@@ -75,12 +73,13 @@ mod tests {
 	use std::ops::Add;
 	use std::time::{Duration, Instant};
 	
+	use mockall::predicate;
+	
 	use crate::udp::protocol::congestion::CongestionControl;
 	use crate::udp::protocol::others::rtt::MockRoundTripTime;
 	use crate::udp::protocol::others::rtt::RoundTripTime;
 	use crate::udp::protocol::reliable::retransmit::MockRetransmitter;
 	use crate::udp::protocol::reliable::retransmit::Retransmitter;
-	use mockall::predicate;
 	
 	#[test]
 	pub fn should_invoke_set_ack_wait_duration() {

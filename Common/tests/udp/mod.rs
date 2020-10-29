@@ -1,21 +1,26 @@
+use std::ops::Add;
+use std::time::{Duration, Instant};
+
+use rand::RngCore;
 use rand::rngs::OsRng;
 
 use cheetah_relay_common::commands::hash::{UserPrivateKey, UserPublicKey};
-use rand::RngCore;
-use cheetah_relay_common::udp::protocol::frame::applications::ApplicationCommand;
-use std::time::Instant;
 use cheetah_relay_common::udp::channel::Transport;
-use cheetah_relay_common::udp::server::UdpServer;
 use cheetah_relay_common::udp::client::UdpClient;
-use crate::udp::stub::{TransportStub, AddressStub};
+use cheetah_relay_common::udp::protocol::frame::applications::ApplicationCommand;
+use cheetah_relay_common::udp::server::UdpServer;
+
+use crate::udp::stub::{AddressStub, ChannelQuality, TransportStub};
 
 pub mod stub;
 
 
+///
+/// Тестирование отправки команд с клиента на сервер
+///
 #[test]
-fn should_send_and_receive_commands() {
-	let transport = TransportStub::new();
-	
+fn should_send_from_client() {
+	let transport = TransportStub::new(ChannelQuality::default());
 	let (mut server, public_key, mut client, mut transport) = setup(transport);
 	
 	client.protocol.out_commands_collector.add_reliability_command(ApplicationCommand::Ping("test reliability".to_string()));
@@ -32,8 +37,52 @@ fn should_send_and_receive_commands() {
 	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(v) if *v == "test unreliability".to_string())).is_some());
 }
 
+///
+/// Тестирование отправки команды с сервера на клиент
+///
+#[test]
+fn should_send_from_server() {
+	let transport = TransportStub::new(ChannelQuality::default());
+	let (mut server, public_key, mut client, mut transport) = setup(transport);
+	
+	let now = Instant::now();
+	client.cycle(&now);
+	server.cycle(&now);
+	
+	let protocol = &mut server.get_user_sessions(&public_key).protocol;
+	protocol.out_commands_collector.add_reliability_command(ApplicationCommand::Ping("ping from server".to_string()));
+	server.cycle(&now);
+	client.cycle(&now);
+	
+	let commands = client.protocol.in_commands_collector.get_and_remove_commands();
+	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(v) if *v == "ping from server".to_string())).is_some());
+}
 
-fn setup(transport: Box<Transport<AddressStub>>) -> (UdpServer<AddressStub>, [u8; 4], UdpClient<AddressStub>, Box<dyn Transport<AddressStub>>) {
+///
+/// Тестирование надежной доставки по ненадежному каналу
+#[test]
+fn should_transfer_reliable_on_unreliable_channel() {
+	let mut channel_quality = ChannelQuality::default();
+	channel_quality.add_reliable_percent(0..=5, 0.0);
+	let transport = TransportStub::new(channel_quality);
+	
+	let (mut server, public_key, mut client, mut transport) = setup(transport);
+	client.protocol.out_commands_collector.add_reliability_command(ApplicationCommand::Ping("test".to_string()));
+	
+	let mut now = Instant::now();
+	for i in 0..6 {
+		now = now.add(Duration::from_millis(300));
+		client.cycle(&now);
+		server.cycle(&now);
+	}
+	
+	let protocol = &mut server.get_user_sessions(&public_key).protocol;
+	let commands = protocol.in_commands_collector.get_and_remove_commands();
+	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(_))).is_some());
+}
+
+
+fn setup(transport: Box<dyn Transport<AddressStub>>) -> (UdpServer<AddressStub>, [u8; 4], UdpClient<AddressStub>, Box<dyn Transport<AddressStub>>) {
 	let server_address = AddressStub::new(0);
 	let mut server = UdpServer::new(transport.create_channel(server_address.clone()));
 	

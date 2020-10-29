@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 
-use crate::udp::protocol::{DisconnectedStatus, FrameReceivedListener, FrameBuilder};
+use crate::udp::protocol::{DisconnectedStatus, FrameBuilder, FrameReceivedListener};
 use crate::udp::protocol::frame::Frame;
 use crate::udp::protocol::frame::headers::Header;
 
@@ -42,11 +42,13 @@ impl DisconnectHandler {
 
 impl FrameBuilder for DisconnectHandler {
 	fn contains_self_data(&self, now: &Instant) -> bool {
-		self.disconnecting_by_self
+		self.disconnecting_by_self && !self.disconnected_by_self
 	}
 	
 	fn build_frame(&mut self, frame: &mut Frame, now: &Instant) {
-		frame.headers.add(Header::Disconnect(DisconnectHeader::default()));
+		if self.disconnecting_by_self {
+			frame.headers.add(Header::Disconnect(DisconnectHeader::default()));
+		}
 		self.disconnected_by_self = true;
 	}
 }
@@ -68,9 +70,10 @@ impl DisconnectedStatus for DisconnectHandler {
 mod tests {
 	use std::time::Instant;
 	
-	use crate::udp::protocol::{DisconnectedStatus, FrameReceivedListener, FrameBuilder};
+	use crate::udp::protocol::{DisconnectedStatus, FrameBuilder, FrameReceivedListener};
 	use crate::udp::protocol::disconnect::handler::DisconnectHandler;
 	use crate::udp::protocol::frame::Frame;
+	use crate::udp::protocol::frame::headers::Header;
 	
 	#[test]
 	pub fn should_disconnect() {
@@ -92,5 +95,14 @@ mod tests {
 		
 		assert_eq!(self_handler.disconnected(&now), true);
 		assert_eq!(remote_handler.disconnected(&now), true);
+	}
+	
+	#[test]
+	pub fn should_not_disconnect() {
+		let now = Instant::now();
+		let mut handler = DisconnectHandler::default();
+		let mut frame = Frame::new(10);
+		handler.build_frame(&mut frame, &now);
+		assert!(matches!(frame.headers.first(Header::predicate_Disconnect), Option::None));
 	}
 }

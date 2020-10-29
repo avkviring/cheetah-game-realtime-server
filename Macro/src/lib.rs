@@ -19,7 +19,12 @@ pub fn enum_match_predicates(input: TokenStream) -> TokenStream {
 		let var_id = &v.ident;
 		let name_field = Ident::new(&format!("predicate_{}", var_id), Span::call_site());
 		let fields = v.fields.clone().into_token_stream();
-		quote! {
+		if fields.is_empty() {
+			quote! {
+			
+			}
+		} else {
+			quote! {
 			impl #name {
 				pub fn #name_field(header: &Self)->Option<&#fields> {
 				match header {
@@ -28,6 +33,7 @@ pub fn enum_match_predicates(input: TokenStream) -> TokenStream {
 					}
 				}
 			}
+		}
 		}
 	});
 	

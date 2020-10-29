@@ -19,6 +19,7 @@ impl OutCommandsCollector {
 	pub fn add_unsent_commands(&mut self, commands: ApplicationCommands) {
 		self.commands.add(&commands);
 	}
+	
 	pub fn add_reliability_command(&mut self, command: ApplicationCommand) {
 		self.commands.reliability.push(command);
 	}
