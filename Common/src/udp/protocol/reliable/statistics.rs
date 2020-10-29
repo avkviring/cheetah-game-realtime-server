@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use generic_array::typenum::U8;
 use lru::LruCache;
 
-use crate::collections::event_collector::EventCollectorByTime;
+use crate::collections::event_collector_by_time::EventCollectorByTime;
 use crate::udp::protocol::frame::FrameId;
 
 ///
@@ -70,7 +70,7 @@ impl RetransmitStatistics {
 	///
 	/// Время измерения для одной ячейки в [redundant_frames_measurements]
 	///
-	const MEASURE_DURATION: Duration = Duration::from_millis(1000);
+	const MEASURE_DURATION: Duration = Duration::from_millis(5000);
 	
 	
 	///
@@ -220,6 +220,5 @@ mod tests {
 		
 		let now = now.add(RetransmitStatistics::MEASURE_DURATION);
 		assert!(matches!(statistics.get_average_retransmit_frames(&now), Option::Some(v) if v ==3));
-	
 	}
 }

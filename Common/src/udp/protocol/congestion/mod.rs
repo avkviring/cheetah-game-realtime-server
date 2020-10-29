@@ -1,9 +1,9 @@
 use std::cmp::{max, min};
 use std::collections::VecDeque;
-use std::ops::Sub;
+use std::ops::{Mul, Sub};
 use std::time::{Duration, Instant};
 
-use crate::udp::protocol::others::rtt::RoundTripTimeHandler;
+use crate::udp::protocol::others::rtt::{RoundTripTime, RoundTripTimeImpl};
 use crate::udp::protocol::reliable::retransmit::Retransmitter;
 
 ///
@@ -11,7 +11,8 @@ use crate::udp::protocol::reliable::retransmit::Retransmitter;
 ///
 #[derive(Default)]
 pub struct CongestionControl {
-	pub last_balanced: Option<Instant>,
+	last_balanced: Option<Instant>,
+	
 }
 
 impl CongestionControl {
@@ -30,47 +31,51 @@ impl CongestionControl {
 	///
 	pub const MAX_ASK_TIMEOUT: Duration = Duration::from_millis(600);
 	
-	///
-	/// Коррекция времени ASK ответа для учета непредвиденных ситуаций
-	///
-	pub const ASK_TIME_CORRECTION: Duration = Duration::from_millis(15);
 	
-	
-	pub fn rebalance(&mut self, now: &Instant, rtt: &RoundTripTimeHandler, retransmitter: &mut Retransmitter) {
+	pub fn rebalance(&mut self,
+					 now: &Instant,
+					 rtt: &dyn RoundTripTime,
+					 retransmitter: &mut Retransmitter,
+	) {
 		if !self.is_time_to_rebalance(now) {
 			return;
 		}
 		
-		self.rebalance_ask_timeout(retransmitter);
+		self.rebalance_ask_timeout(now, retransmitter, rtt);
 	}
 	
 	///
 	/// Балансируем время ожидания ask для пакета
 	///
-	fn rebalance_ask_timeout(&mut self, retransmitter: &mut Retransmitter) {
-		// let average_rtt = self.calculate_average_rtt();
-		// if let Option::Some(average_rtt) = average_rtt {
-		// 	let new_retransmit_timeout = average_rtt + CongestionControl::ASK_TIME_CORRECTION.as_millis() as u64;
-		// 	let new_retransmit_timeout = max(new_retransmit_timeout, CongestionControl::MIN_ASK_TIMEOUT.as_millis() as u64);
-		// 	let new_retransmit_timeout = min(new_retransmit_timeout, CongestionControl::MAX_ASK_TIMEOUT.as_millis() as u64);
-		// 	retransmitter.timeout = Duration::from_millis(new_retransmit_timeout);
-		// }
+	fn rebalance_ask_timeout(&mut self, now: &Instant, retransmitter: &mut dyn Retransmitter, rtt: &dyn RoundTripTime) {
+		let average_rtt = rtt.get_rtt();
+		if let Option::Some(average_rtt) = average_rtt {
+			let koeff = match retransmitter.get_redundant_frames_percent(now) {
+				None => { 1.5 }
+				Some(percent) => {
+					match percent {
+						0.0..=0.1 => 1.1,
+						0.1..=0.2 => 1.5,
+						0.2..=0.5 => 2.0,
+						0.5..=0.8 => 2.5,
+						_ => { 3.0 }
+					}
+				}
+			};
+			let new_retransmit_timeout = average_rtt.mul_f64(koeff);
+			
+			retransmitter.set_ask_wait_duration(new_retransmit_timeout);
+		}
 	}
 	
 	
 	pub fn is_time_to_rebalance(&mut self, now: &Instant) -> bool {
-		match self.last_balanced {
-			None => {
-				self.last_balanced = Option::Some(now.clone());
-				true
-			}
-			Some(ref last_balanced) if now.sub(last_balanced.clone()) >= CongestionControl::REBALANCE_PERIOD => {
-				self.last_balanced = Option::Some(now.clone());
-				true
-			}
-			_ => {
-				false
-			}
+		let start_time = self.last_balanced.get_or_insert(now.clone());
+		if (now.sub(*start_time) >= CongestionControl::REBALANCE_PERIOD) {
+			self.last_balanced.replace(now.clone());
+			true
+		} else {
+			false
 		}
 	}
 }
@@ -82,10 +87,51 @@ mod tests {
 	use std::time::{Duration, Instant};
 	
 	use crate::udp::protocol::congestion::CongestionControl;
-	use crate::udp::protocol::others::rtt::RoundTripTimeHandler;
+	use crate::udp::protocol::others::rtt::MockRoundTripTime;
+	use crate::udp::protocol::others::rtt::RoundTripTime;
+	use crate::udp::protocol::reliable::retransmit::MockRetransmitter;
 	use crate::udp::protocol::reliable::retransmit::Retransmitter;
+	use mockall::predicate;
+	
+	#[test]
+	pub fn should_invoke_set_ask_wait_duration() {
+		let mut congestion = CongestionControl::default();
+		let now = Instant::now();
+		let mut retransmitter = setup_retransmitter(vec![0.15]);
+		let rtt = setup_rtt(vec![Duration::from_millis(2)]);
+		
+		retransmitter.expect_set_ask_wait_duration()
+			.times(1)
+			.with(predicate::eq(Duration::from_millis(3)))
+			.returning(|duration| ());
+		
+		
+		congestion.rebalance(&now, rtt.as_ref(), retransmitter.as_mut());
+		let now = now.add(CongestionControl::REBALANCE_PERIOD);
+		congestion.rebalance(&now, rtt.as_ref(), retransmitter.as_mut());
+		
+		retransmitter.checkpoint();
+	}
 	
 	
+	fn setup_retransmitter(values: Vec<f64>) -> Box<MockRetransmitter> {
+		let mut retransmitter = MockRetransmitter::new();
+		values.into_iter().for_each(|v| {
+			retransmitter
+				.expect_get_redundant_frames_percent()
+				.returning(move |_| Option::Some(v));
+		});
+		
+		Box::new(retransmitter)
+	}
 	
-	
+	fn setup_rtt(vec: Vec<Duration>) -> Box<MockRoundTripTime> {
+		let mut rtt = MockRoundTripTime::new();
+		vec.into_iter().for_each(|v| {
+			rtt
+				.expect_get_rtt()
+				.returning(move || Option::Some(v));
+		});
+		Box::new(rtt)
+	}
 }

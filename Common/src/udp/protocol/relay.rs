@@ -8,10 +8,10 @@ use crate::udp::protocol::disconnect::handler::DisconnectHandler;
 use crate::udp::protocol::disconnect::watcher::DisconnectWatcher;
 use crate::udp::protocol::frame::Frame;
 use crate::udp::protocol::others::keep_alive::KeepAlive;
-use crate::udp::protocol::others::rtt::RoundTripTimeHandler;
+use crate::udp::protocol::others::rtt::RoundTripTimeImpl;
 use crate::udp::protocol::reliable::ask::AskSender;
 use crate::udp::protocol::reliable::replay_protection::FrameReplayProtection;
-use crate::udp::protocol::reliable::retransmit::Retransmitter;
+use crate::udp::protocol::reliable::retransmit::RetransmitterImpl;
 
 ///
 /// Реализация игрового протокола, поверх ненадежного канала доставки данных (например, через UDP)
@@ -24,12 +24,12 @@ pub struct RelayProtocol {
 	pub next_frame_id: u64,
 	pub replay_protection: FrameReplayProtection,
 	pub ask_sender: AskSender,
-	pub retransmitter: Retransmitter,
+	pub retransmitter: RetransmitterImpl,
 	pub disconnect_watcher: DisconnectWatcher,
 	pub disconnect_handler: DisconnectHandler,
 	pub in_commands_collector: InCommandsCollector,
 	pub out_commands_collector: OutCommandsCollector,
-	pub rtt: RoundTripTimeHandler,
+	pub rtt: RoundTripTimeImpl,
 	pub keep_alive: KeepAlive,
 	pub additional_frame_builders: Vec<Box<dyn FrameBuilder>>,
 	pub congestion_control: CongestionControl,
@@ -59,7 +59,7 @@ impl RelayProtocol {
 	/// для обработки внутренних данных
 	/// 
 	pub fn cycle(&mut self, now: Instant) {
-		self.congestion_control.rebalance(&now, &self.rtt, &mut self.retransmitter);
+		self.congestion_control.rebalance(&now, &self.rtt,  &mut self.retransmitter);
 	}
 	
 	///
