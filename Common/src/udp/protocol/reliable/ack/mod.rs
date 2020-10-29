@@ -60,7 +60,6 @@ impl AckSender {
 	///
 	pub const SCHEDULE_SEND_TIME: Duration = Duration::from_millis(1);
 	
-	
 	///
 	/// Количество подтверждаемых фреймов для одного исходящего пакета
 	///
@@ -197,7 +196,7 @@ mod tests {
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 		
-		let header = out_frame.headers.first(Header::predicate_AskFrame);
+		let header = out_frame.headers.first(Header::predicate_AckFrame);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == in_frame.header.frame_id));
 	}
 	
@@ -221,7 +220,7 @@ mod tests {
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 		
-		let header: Option<&AckFrameHeader> = out_frame.headers.first(Header::predicate_AskFrame);
+		let header: Option<&AckFrameHeader> = out_frame.headers.first(Header::predicate_AckFrame);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == 10));
 		let frames = header.unwrap().get_frames();
 		
@@ -251,7 +250,7 @@ mod tests {
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 		
-		let headers: Vec<&AckFrameHeader> = out_frame.headers.find(Header::predicate_AskFrame);
+		let headers: Vec<&AckFrameHeader> = out_frame.headers.find(Header::predicate_AckFrame);
 		assert_eq!(headers.len(), 2);
 		assert_eq!(headers[0].start_frame_id, frame_a.header.frame_id);
 		assert_eq!(headers[1].start_frame_id, frame_b.header.frame_id);

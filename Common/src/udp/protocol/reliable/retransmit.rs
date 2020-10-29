@@ -4,10 +4,9 @@ use std::ops::{Rem, Sub};
 use std::time::{Duration, Instant};
 
 use lru::LruCache;
-use serde::{Deserialize, Serialize};
-
 #[cfg(test)]
 use mockall::{automock, mock, predicate::*};
+use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 use crate::udp::protocol::congestion::CongestionControl;
@@ -62,6 +61,7 @@ pub struct RetransmitterImpl {
 	statistics: RetransmitStatistics,
 }
 
+#[derive(Debug)]
 pub struct ScheduledFrame {
 	pub time: Instant,
 	pub original_frame_id: FrameId,
@@ -110,7 +110,7 @@ impl RetransmitterImpl {
 	pub const RETRANSMIT_LIMIT: u8 = 100;
 	
 	///
-	/// Время ожидания ASK по умолчанию
+	/// Время ожидания ACK по умолчанию
 	///
 	pub const DEFAULT_ACK_TIMEOUT: Duration = Duration::from_millis(300);
 	
