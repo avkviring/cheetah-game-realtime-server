@@ -1,13 +1,14 @@
-use std::any::Any;
 use std::collections::VecDeque;
-use std::ops::Sub;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+#[cfg(test)]
+use mockall::{automock, mock, predicate::*};
 use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::{FrameBuilder, FrameReceivedListener};
 use crate::udp::protocol::frame::Frame;
 use crate::udp::protocol::frame::headers::Header;
+use std::ops::Div;
 
 ///
 /// Замеры времени round-trip
@@ -15,7 +16,12 @@ use crate::udp::protocol::frame::headers::Header;
 /// - отсылает ответ на запрос RoundTrip удаленной стороны
 /// - принимает свой RoundTrip и сохраняет rtt
 ///
-pub struct RoundTripTimeHandler {
+#[cfg_attr(test, automock)]
+pub trait RoundTripTime {
+	fn get_rtt(&self) -> Option<Duration>;
+}
+
+pub struct RoundTripTimeImpl {
 	start_time: Instant,
 	scheduled_response: Option<RoundTripTimeHeader>,
 	pub rtt: VecDeque<Duration>,
@@ -27,7 +33,7 @@ pub struct RoundTripTimeHeader {
 }
 
 
-impl Default for RoundTripTimeHandler {
+impl Default for RoundTripTimeImpl {
 	fn default() -> Self {
 		Self {
 			start_time: Instant::now(),
@@ -37,24 +43,27 @@ impl Default for RoundTripTimeHandler {
 	}
 }
 
-impl RoundTripTimeHandler {
+impl RoundTripTimeImpl {
 	pub const AVERAGE_RTT_MIN_LEN: usize = 10;
-	
+}
+
+impl RoundTripTime for RoundTripTimeImpl {
 	///
 	/// Скользящий средний для rtt
 	///
-	pub fn calculate_average_rtt(&self) -> Option<u64> {
-		if self.rtt.len() < RoundTripTimeHandler::AVERAGE_RTT_MIN_LEN {
+	fn get_rtt(&self) -> Option<Duration> {
+		if self.rtt.len() < RoundTripTimeImpl::AVERAGE_RTT_MIN_LEN {
 			Option::None
 		} else {
-			let sum_rtt: u64 = self.rtt.iter().map(|i| i.as_millis() as u64).sum();
-			let average_rtt = sum_rtt / self.rtt.len() as u64;
+			let sum_rtt: Duration = self.rtt.iter().sum();
+			let average_rtt = sum_rtt.div(self.rtt.len() as u32);
 			Option::Some(average_rtt)
 		}
 	}
 }
 
-impl FrameReceivedListener for RoundTripTimeHandler {
+
+impl FrameReceivedListener for RoundTripTimeImpl {
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		
 		// игнорируем повторно отосланные фреймы, так как они не показательны для измерения rtt
@@ -80,7 +89,7 @@ impl FrameReceivedListener for RoundTripTimeHandler {
 				let current_time = now.duration_since(self.start_time).as_millis() as u64;
 				if current_time >= header_time {
 					self.rtt.push_back(Duration::from_millis(current_time - header_time));
-					if self.rtt.len() > RoundTripTimeHandler::AVERAGE_RTT_MIN_LEN {
+					if self.rtt.len() > RoundTripTimeImpl::AVERAGE_RTT_MIN_LEN {
 						self.rtt.pop_front();
 					}
 				}
@@ -90,7 +99,7 @@ impl FrameReceivedListener for RoundTripTimeHandler {
 }
 
 
-impl FrameBuilder for RoundTripTimeHandler {
+impl FrameBuilder for RoundTripTimeImpl {
 	fn contains_self_data(&self, now: &Instant) -> bool {
 		false
 	}
@@ -118,7 +127,7 @@ mod tests {
 	use crate::udp::protocol::{FrameBuilder, FrameReceivedListener};
 	use crate::udp::protocol::frame::Frame;
 	use crate::udp::protocol::frame::headers::Header;
-	use crate::udp::protocol::others::rtt::{RoundTripTimeHandler, RoundTripTimeHeader};
+	use crate::udp::protocol::others::rtt::{RoundTripTime, RoundTripTimeHeader, RoundTripTimeImpl};
 	use crate::udp::protocol::reliable::retransmit::RetransmitFrameHeader;
 	
 	#[test]
@@ -127,8 +136,8 @@ mod tests {
 	/// После обмена должно быть определено rtt.
 	///
 	pub fn should_calculate_rtt() {
-		let mut handler_a = RoundTripTimeHandler::default();
-		let mut handler_b = RoundTripTimeHandler::default();
+		let mut handler_a = RoundTripTimeImpl::default();
+		let mut handler_b = RoundTripTimeImpl::default();
 		
 		let now = Instant::now();
 		
@@ -148,7 +157,7 @@ mod tests {
 	/// Для retransmit фреймов операции получения response должны быть игнорированы
 	///
 	pub fn should_ignore_retransmit_frame_when_receive_response() {
-		let mut handler = RoundTripTimeHandler::default();
+		let mut handler = RoundTripTimeImpl::default();
 		let now = Instant::now();
 		let mut frame = Frame::new(10);
 		frame.headers.add(Header::RetransmitFrame(RetransmitFrameHeader { original_frame_id: 0, retransmit_count: 1 }));
@@ -162,7 +171,7 @@ mod tests {
 	/// Для retransmit фреймов операции получения request должны быть игнорированы
 	///
 	pub fn should_ignore_retransmit_frame_when_receive_request() {
-		let mut handler = RoundTripTimeHandler::default();
+		let mut handler = RoundTripTimeImpl::default();
 		let now = Instant::now();
 		
 		let mut input_frame = Frame::new(10);
@@ -183,15 +192,15 @@ mod tests {
 	///
 	#[test]
 	pub fn should_calculate_rtt_average() {
-		let mut handler = RoundTripTimeHandler::default();
-		for i in 0..RoundTripTimeHandler::AVERAGE_RTT_MIN_LEN {
+		let mut handler = RoundTripTimeImpl::default();
+		for i in 0..RoundTripTimeImpl::AVERAGE_RTT_MIN_LEN {
 			let mut frame = Frame::new(10);
 			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, &now);
 		}
-		let average = handler.calculate_average_rtt();
-		assert!(matches!(average, Some(average) if average==4));
+		let average = handler.get_rtt();
+		assert!(matches!(average, Some(average) if average==Duration::from_micros(4500)));
 	}
 	
 	///
@@ -199,13 +208,13 @@ mod tests {
 	///
 	#[test]
 	pub fn should_limit_on_length_rtt() {
-		let mut handler = RoundTripTimeHandler::default();
-		for i in 0..2 * RoundTripTimeHandler::AVERAGE_RTT_MIN_LEN {
+		let mut handler = RoundTripTimeImpl::default();
+		for i in 0..2 * RoundTripTimeImpl::AVERAGE_RTT_MIN_LEN {
 			let mut frame = Frame::new(10);
 			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, &now);
 		}
-		assert_eq!(handler.rtt.len(), RoundTripTimeHandler::AVERAGE_RTT_MIN_LEN);
+		assert_eq!(handler.rtt.len(), RoundTripTimeImpl::AVERAGE_RTT_MIN_LEN);
 	}
 }

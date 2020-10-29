@@ -6,6 +6,9 @@ use std::time::{Duration, Instant};
 use lru::LruCache;
 use serde::{Deserialize, Serialize};
 
+#[cfg(test)]
+use mockall::{automock, mock, predicate::*};
+
 use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 use crate::udp::protocol::congestion::CongestionControl;
 use crate::udp::protocol::frame::{Frame, FrameId};
@@ -16,7 +19,21 @@ use crate::udp::protocol::reliable::statistics::RetransmitStatistics;
 ///
 /// Повторная посылка фреймов, для которых не пришло подтверждение
 ///
-pub struct Retransmitter {
+#[cfg_attr(test, automock)]
+pub trait Retransmitter {
+	///
+	/// Установить время ожидания ответа на посланный фрейм
+	///
+	fn set_ask_wait_duration(&mut self, duration: Duration);
+	
+	///
+	/// Получить процент излишне повторно отправленных пакетов
+	///
+	fn get_redundant_frames_percent(&mut self, now: &Instant) -> Option<f64>;
+}
+
+
+pub struct RetransmitterImpl {
 	///
 	/// Фреймы, отсортированные по времени отсылки
 	///
@@ -52,6 +69,7 @@ pub struct ScheduledFrame {
 	pub retransmit_count: u8,
 }
 
+
 ///
 /// Заголовок для указания факта повторной передачи данного фрейма
 ///
@@ -71,20 +89,20 @@ impl RetransmitFrameHeader {
 }
 
 
-impl Default for Retransmitter {
+impl Default for RetransmitterImpl {
 	fn default() -> Self {
 		Self {
 			frames: Default::default(),
 			unasked_frames: Default::default(),
 			max_retransmit_count: Default::default(),
-			retransmit_to_original: LruCache::new(Retransmitter::RETRANSMIT_TO_ORIGINAL_MAX_LEN),
-			ask_wait_duration: Retransmitter::DEFAULT_ASK_TIMEOUT,
+			retransmit_to_original: LruCache::new(RetransmitterImpl::RETRANSMIT_TO_ORIGINAL_MAX_LEN),
+			ask_wait_duration: RetransmitterImpl::DEFAULT_ASK_TIMEOUT,
 			statistics: Default::default(),
 		}
 	}
 }
 
-impl Retransmitter {
+impl RetransmitterImpl {
 	///
 	/// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
 	/// примерно 30 секунд без подтверждения при [DEFAULT_ASK_TIMEOUT]
@@ -157,7 +175,22 @@ impl Retransmitter {
 }
 
 
-impl FrameReceivedListener for Retransmitter {
+impl Retransmitter for RetransmitterImpl {
+	fn set_ask_wait_duration(&mut self, duration: Duration) {
+		self.ask_wait_duration = duration;
+	}
+	
+	fn get_redundant_frames_percent(&mut self, now: &Instant) -> Option<f64> {
+		let redundant = self.statistics.get_average_redundant_frames(now);
+		let retransmit = self.statistics.get_average_retransmit_frames(now);
+		redundant.zip(retransmit).map(|(redundant, retransmit)| {
+			redundant as f64 / retransmit as f64
+		})
+	}
+}
+
+
+impl FrameReceivedListener for RetransmitterImpl {
 	///
 	/// Обрабатываем подтверждения фреймов
 	///
@@ -181,7 +214,7 @@ impl FrameReceivedListener for Retransmitter {
 	}
 }
 
-impl FrameBuiltListener for Retransmitter {
+impl FrameBuiltListener for RetransmitterImpl {
 	///
 	/// Фрейм отослан - запоминаем для повтора
 	///
@@ -202,9 +235,9 @@ impl FrameBuiltListener for Retransmitter {
 }
 
 
-impl DisconnectedStatus for Retransmitter {
+impl DisconnectedStatus for RetransmitterImpl {
 	fn disconnected(&mut self, now: &Instant) -> bool {
-		self.max_retransmit_count >= Retransmitter::RETRANSMIT_LIMIT
+		self.max_retransmit_count >= RetransmitterImpl::RETRANSMIT_LIMIT
 	}
 }
 
@@ -219,14 +252,14 @@ mod tests {
 	use crate::udp::protocol::frame::applications::ApplicationCommand;
 	use crate::udp::protocol::frame::headers::Header;
 	use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
-	use crate::udp::protocol::reliable::retransmit::Retransmitter;
+	use crate::udp::protocol::reliable::retransmit::RetransmitterImpl;
 	
 	#[test]
 	///
 	/// Если не было отосланных фреймов - то нет фреймов и для повтора
 	///
 	fn should_empty_when_get_retransmit_frame() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		assert!(matches!(handler.get_retransmit_frame(&Instant::now(), 1), Option::None));
 	}
 	
@@ -235,7 +268,7 @@ mod tests {
 	///
 	#[test]
 	fn should_empty_when_no_timeout() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		handler.on_frame_built(&create_reliability_frame(1), &now);
 		assert!(matches!(handler.get_retransmit_frame(&now,2), Option::None));
@@ -246,7 +279,7 @@ mod tests {
 	///
 	#[test]
 	fn should_add_retransmit_header() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		let original_frame = create_reliability_frame(1);
 		handler.on_frame_built(&original_frame, &now);
@@ -268,7 +301,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_retransmit_frame_when_timeout() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
@@ -286,7 +319,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_for_unreliable_frame() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		let frame = create_unreliable_frame(1);
 		handler.on_frame_built(&frame, &now);
@@ -304,7 +337,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_then_ask() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
@@ -322,7 +355,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_then_ask_retransmitted_frame() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
@@ -344,7 +377,7 @@ mod tests {
 	///
 	#[test]
 	fn should_retransmit_after_retransmit() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
@@ -374,13 +407,13 @@ mod tests {
 	///
 	#[test]
 	fn should_close_after_fail_retransmits() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
 		
 		let mut get_time = now.clone();
-		for _ in 0..Retransmitter::RETRANSMIT_LIMIT - 1 {
+		for _ in 0..RetransmitterImpl::RETRANSMIT_LIMIT - 1 {
 			get_time = get_time.add(handler.ask_wait_duration);
 			handler.get_retransmit_frame(&get_time, 2);
 		}
@@ -399,7 +432,7 @@ mod tests {
 	///
 	#[test]
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
-		let mut handler = Retransmitter::default();
+		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
 		frame.commands.unreliability.push(ApplicationCommand::Ping("".to_string()));
 		let now = Instant::now();

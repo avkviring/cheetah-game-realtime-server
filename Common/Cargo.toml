@@ -21,3 +21,4 @@ generic-array = "0.14.4"
 
 [dev-dependencies]
 easybench = "1.0.0"
+mockall = "0.8.0"
