@@ -9,7 +9,7 @@ use crate::udp::protocol::disconnect::watcher::DisconnectWatcher;
 use crate::udp::protocol::frame::Frame;
 use crate::udp::protocol::others::keep_alive::KeepAlive;
 use crate::udp::protocol::others::rtt::RoundTripTimeImpl;
-use crate::udp::protocol::reliable::ask::AskSender;
+use crate::udp::protocol::reliable::ack::AckSender;
 use crate::udp::protocol::reliable::replay_protection::FrameReplayProtection;
 use crate::udp::protocol::reliable::retransmit::RetransmitterImpl;
 
@@ -23,7 +23,7 @@ use crate::udp::protocol::reliable::retransmit::RetransmitterImpl;
 pub struct RelayProtocol {
 	pub next_frame_id: u64,
 	pub replay_protection: FrameReplayProtection,
-	pub ask_sender: AskSender,
+	pub ack_sender: AckSender,
 	pub retransmitter: RetransmitterImpl,
 	pub disconnect_watcher: DisconnectWatcher,
 	pub disconnect_handler: DisconnectHandler,
@@ -41,7 +41,7 @@ impl RelayProtocol {
 			next_frame_id: 1,
 			disconnect_watcher: Default::default(),
 			replay_protection: Default::default(),
-			ask_sender: Default::default(),
+			ack_sender: Default::default(),
 			in_commands_collector: Default::default(),
 			out_commands_collector: Default::default(),
 			retransmitter: Default::default(),
@@ -58,22 +58,22 @@ impl RelayProtocol {
 	/// Данный метод необходимо периодически вызывать
 	/// для обработки внутренних данных
 	/// 
-	pub fn cycle(&mut self, now: Instant) {
-		self.congestion_control.rebalance(&now, &self.rtt,  &mut self.retransmitter);
+	pub fn cycle(&mut self, now: &Instant) {
+		self.congestion_control.rebalance(now, &self.rtt,  &mut self.retransmitter);
 	}
 	
 	///
 	/// Обработка входящего фрейма
 	///
-	pub fn on_frame_received(&mut self, frame: Frame, now: Instant) {
-		self.disconnect_watcher.on_frame_received(&frame, &now);
-		match self.replay_protection.set_and_check(&frame, &now) {
+	pub fn on_frame_received(&mut self, frame: Frame, now: &Instant) {
+		self.disconnect_watcher.on_frame_received(&frame, now);
+		match self.replay_protection.set_and_check(&frame, now) {
 			Ok(replayed) => {
 				if !replayed {
-					self.disconnect_handler.on_frame_received(&frame, &now);
-					self.ask_sender.on_frame_received(&frame, &now);
-					self.rtt.on_frame_received(&frame, &now);
-					self.in_commands_collector.on_frame_received(&frame, &now);
+					self.disconnect_handler.on_frame_received(&frame, now);
+					self.ack_sender.on_frame_received(&frame, now);
+					self.rtt.on_frame_received(&frame, now);
+					self.in_commands_collector.on_frame_received(&frame, now);
 				}
 			}
 			Err(_) => {}
@@ -85,7 +85,7 @@ impl RelayProtocol {
 	///
 	pub fn build_next_frame(&mut self, now: &Instant) -> Option<Frame> {
 		let mut builders: [&mut dyn FrameBuilder; 5] = [
-			&mut self.ask_sender,
+			&mut self.ack_sender,
 			&mut self.out_commands_collector,
 			&mut self.disconnect_handler,
 			&mut self.rtt,

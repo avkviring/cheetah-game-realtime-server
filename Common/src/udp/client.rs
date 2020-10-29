@@ -43,9 +43,10 @@ impl<PeerAddress: Hash> UdpClient<PeerAddress> {
 		}
 	}
 	
-	pub fn cycle(&mut self, now:Instant) {
+	pub fn cycle(&mut self, now: &Instant) {
+		self.protocol.cycle(now);
+		
 		loop {
-			// read
 			match self.channel.try_recv() {
 				None => { break; }
 				Some((server_address, data)) => {

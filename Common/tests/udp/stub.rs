@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::rc::Rc;
+use cheetah_relay_common::udp::channel::{Transport, Channel};
 
-use crate::udp::channel::{Channel, Transport};
 
 #[derive(Hash, Clone, Debug, Eq, PartialEq, Copy)]
 pub struct AddressStub {

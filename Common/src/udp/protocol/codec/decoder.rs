@@ -149,7 +149,7 @@ pub mod tests {
 	use crate::udp::protocol::frame::applications::ApplicationCommand;
 	use crate::udp::protocol::frame::Frame;
 	use crate::udp::protocol::frame::headers::Header;
-	use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
+	use crate::udp::protocol::reliable::ack::header::AckFrameHeader;
 	
 	const PRIVATE_KEY: &[u8; 32] = &[
 		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9,
@@ -162,8 +162,8 @@ pub mod tests {
 	fn should_encode_decode_frame() {
 		let mut frame = Frame::new(0);
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		frame.headers.add(Header::AskFrame(AskFrameHeader::new(10)));
-		frame.headers.add(Header::AskFrame(AskFrameHeader::new(15)));
+		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
+		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
 		frame.commands.reliability.push(ApplicationCommand::Ping("test".to_string()));
 		let (data, _) = frame.encode(&mut cipher);
 		

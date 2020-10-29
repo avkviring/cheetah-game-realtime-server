@@ -7,7 +7,9 @@ use std::time::Instant;
 use crate::commands::hash::{UserPrivateKey, UserPublicKey};
 use crate::udp::channel::Channel;
 use crate::udp::protocol::codec::cipher::Cipher;
+use crate::udp::protocol::codec::decoder::UdpFrameDecodeError;
 use crate::udp::protocol::frame::Frame;
+use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::relay::RelayProtocol;
 
 pub struct UdpServer<PeerAddress> {
@@ -36,7 +38,7 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 		}
 	}
 	
-	pub fn cycle(&mut self, now: Instant) {
+	pub fn cycle(&mut self, now: &Instant) {
 		loop {
 			// read
 			match self.channel.try_recv() {
@@ -47,26 +49,30 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 					match headers {
 						Ok((header, additional_headers)) => {
 							let session_found = false;
-							// for i in 0..additional_headers.len() {
-							// 	if let AdditionalUdpHeader::UserPublicKeyC2S(public_key) = additional_headers.get(i).unwrap() {
-							// 		let session = self.sessions.get_mut(public_key).unwrap();
-							// 		let protocol = UdpFrame::decode_frame(cursor, Cipher::new(&session.private_key), header, additional_headers);
-							// 		match protocol {
-							// 			Ok(protocol) => {
-							// 				println!("server recv {:?}", protocol);
-							// 				session.handlers.on_frame_recv(protocol);
-							// 				session.address = Option::Some(address)
-							// 			}
-							// 			Err(e) => {
-							// 				log::error!("protocol skip {:?}", e)
-							// 			}
-							// 		}
-							// 		session_found = true;
-							// 		break;
-							// 	}
-							// }
-							if !session_found {
-								log::error!("protocol skip - session not found")
+							
+							let user_public_key_header: Option<&UserPublicKey> = additional_headers.first(Header::predicate_UserPublicKey);
+							match user_public_key_header {
+								None => {
+									log::error!("public key header not found, peer address {:?}", address);
+								}
+								Some(public_key) => {
+									match self.sessions.get_mut(public_key) {
+										None => {
+											log::error!("user session not found, peer address {:?}", address);
+										}
+										Some(session) => {
+											match Frame::decode_frame(cursor, Cipher::new(&session.private_key), header, additional_headers) {
+												Ok(frame) => {
+													session.protocol.on_frame_received(frame, now);
+													session.address = Option::Some(address);
+												}
+												Err(e) => {
+													log::error!("error decode frame {:?}", e)
+												}
+											}
+										}
+									}
+								}
 							}
 						}
 						Err(e) => {
@@ -80,7 +86,7 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 			// write
 			let channel = &self.channel;
 			self.sessions.iter_mut().for_each(|(_, session)| {
-				let mut frame = session.protocol.build_next_frame(&now).unwrap();
+				let mut frame = session.protocol.build_next_frame(now).unwrap();
 				let (binary, commands) = frame.encode(&mut Cipher::new(&session.private_key));
 				session.protocol.out_commands_collector.add_unsent_commands(commands);
 				let address = session.address.as_ref().unwrap();
