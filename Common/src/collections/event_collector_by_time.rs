@@ -138,7 +138,7 @@ mod tests {
 	
 	use generic_array::typenum::U8;
 	
-	use crate::collections::event_collector::EventCollectorByTime;
+	use crate::collections::event_collector_by_time::EventCollectorByTime;
 	
 	#[test]
 	///
