@@ -1,5 +1,4 @@
 use std::cmp::{max, min};
-use std::collections::VecDeque;
 use std::ops::{Mul, Sub};
 use std::time::{Duration, Instant};
 
@@ -21,16 +20,6 @@ impl CongestionControl {
 	///
 	pub const REBALANCE_PERIOD: Duration = Duration::from_millis(500);
 	
-	///
-	/// Минимальное время ожидания ask
-	///
-	pub const MIN_ASK_TIMEOUT: Duration = Duration::from_millis(50);
-	
-	///
-	/// Максимальное время ожидания ask
-	///
-	pub const MAX_ASK_TIMEOUT: Duration = Duration::from_millis(600);
-	
 	
 	pub fn rebalance(&mut self,
 					 now: &Instant,
@@ -41,13 +30,13 @@ impl CongestionControl {
 			return;
 		}
 		
-		self.rebalance_ask_timeout(now, retransmitter, rtt);
+		self.rebalance_ack_timeout(now, retransmitter, rtt);
 	}
 	
 	///
-	/// Балансируем время ожидания ask для пакета
+	/// Балансируем время ожидания ack для пакета
 	///
-	fn rebalance_ask_timeout(&mut self, now: &Instant, retransmitter: &mut dyn Retransmitter, rtt: &dyn RoundTripTime) {
+	fn rebalance_ack_timeout(&mut self, now: &Instant, retransmitter: &mut dyn Retransmitter, rtt: &dyn RoundTripTime) {
 		let average_rtt = rtt.get_rtt();
 		if let Option::Some(average_rtt) = average_rtt {
 			let koeff = match retransmitter.get_redundant_frames_percent(now) {
@@ -64,7 +53,7 @@ impl CongestionControl {
 			};
 			let new_retransmit_timeout = average_rtt.mul_f64(koeff);
 			
-			retransmitter.set_ask_wait_duration(new_retransmit_timeout);
+			retransmitter.set_ack_wait_duration(new_retransmit_timeout);
 		}
 	}
 	
@@ -94,13 +83,13 @@ mod tests {
 	use mockall::predicate;
 	
 	#[test]
-	pub fn should_invoke_set_ask_wait_duration() {
+	pub fn should_invoke_set_ack_wait_duration() {
 		let mut congestion = CongestionControl::default();
 		let now = Instant::now();
 		let mut retransmitter = setup_retransmitter(vec![0.15]);
 		let rtt = setup_rtt(vec![Duration::from_millis(2)]);
 		
-		retransmitter.expect_set_ask_wait_duration()
+		retransmitter.expect_set_ack_wait_duration()
 			.times(1)
 			.with(predicate::eq(Duration::from_millis(3)))
 			.returning(|duration| ());

@@ -10,7 +10,7 @@ use crate::udp::protocol::frame::FrameId;
 /// - N зависит от [AskFrameHeader::CAPACITY]
 ///
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct AskFrameHeader {
+pub struct AckFrameHeader {
 	///
 	/// id подтверждаемого пакета
 	///
@@ -18,22 +18,22 @@ pub struct AskFrameHeader {
 	
 	///
 	/// Битовая маска для подтверждения следующих фреймов
-	/// - каждый бит - +1 к [asked_frame_id]
+	/// - каждый бит - +1 к [acked_frame_id]
 	///
-	frames: [u8; AskFrameHeader::CAPACITY / 8],
+	frames: [u8; AckFrameHeader::CAPACITY / 8],
 }
 
-impl AskFrameHeader {
+impl AckFrameHeader {
 	///
 	/// Максимальная разница между start_frame_id и frame_id
 	/// Если разница меньше - то структура может сохранить frame_id
 	///
 	pub const CAPACITY: usize = 8 * 8;
 	
-	pub fn new(asked_frame_id: FrameId) -> Self {
+	pub fn new(acked_frame_id: FrameId) -> Self {
 		Self {
-			start_frame_id: asked_frame_id,
-			frames: [0; AskFrameHeader::CAPACITY / 8],
+			start_frame_id: acked_frame_id,
+			frames: [0; AckFrameHeader::CAPACITY / 8],
 		}
 	}
 	
@@ -47,7 +47,7 @@ impl AskFrameHeader {
 			return false;
 		}
 		let offset = (frame_id - self.start_frame_id - 1) as usize;
-		if offset >= AskFrameHeader::CAPACITY {
+		if offset >= AckFrameHeader::CAPACITY {
 			return false;
 		}
 		
@@ -61,7 +61,7 @@ impl AskFrameHeader {
 	pub fn get_frames(&self) -> Vec<u64> {
 		let mut result = Vec::new();
 		result.push(self.start_frame_id);
-		for i in 0..AskFrameHeader::CAPACITY {
+		for i in 0..AckFrameHeader::CAPACITY {
 			let byte_offset = i / 8;
 			let bit_offset = i - byte_offset * 8;
 			let byte = self.frames[byte_offset].clone();
@@ -77,7 +77,7 @@ impl AskFrameHeader {
 
 #[cfg(test)]
 mod tests {
-	use crate::udp::protocol::reliable::ask::header::AskFrameHeader;
+	use crate::udp::protocol::reliable::ack::header::AckFrameHeader;
 	
 	#[test]
 	///
@@ -85,7 +85,7 @@ mod tests {
 	///
 	pub fn should_store_frame_id() {
 		let frame_first = 100;
-		let mut header = AskFrameHeader::new(frame_first);
+		let mut header = AckFrameHeader::new(frame_first);
 		let offset = vec![1, 2, 3, 4, 7, 9, 15];
 		offset.iter().for_each(|i| {
 			header.store_frame_id(frame_first + i);
@@ -106,7 +106,7 @@ mod tests {
 	///
 	pub fn should_store_frame_fail_if_not_enough_capacity() {
 		let frame_first = 100;
-		let mut header = AskFrameHeader::new(frame_first);
-		assert_eq!(header.store_frame_id(frame_first + AskFrameHeader::CAPACITY as u64 + 1), false)
+		let mut header = AckFrameHeader::new(frame_first);
+		assert_eq!(header.store_frame_id(frame_first + AckFrameHeader::CAPACITY as u64 + 1), false)
 	}
 }
