@@ -1,6 +1,8 @@
-use std::io::Cursor;
+use std::io::{Cursor, Write};
 
-use byteorder::ReadBytesExt;
+use byteorder::{ReadBytesExt, WriteBytesExt};
+use heapless::consts::*;
+use heapless::Vec as HeaplessVec;
 use rmp_serde::Serializer;
 use serde::{Deserialize, Serialize};
 
@@ -48,16 +50,23 @@ impl Frame {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 		
+		
 		// commands - decrypt
 		let nonce = header.frame_id.to_be_bytes() as [u8; 8];
 		let ad = &data[0..header_end as usize];
-		let msg = &data[header_end as usize..data.len()];
 		
-		let decrypted = cipher.decrypt(msg, ad, nonce).map_err(|_| { UdpFrameDecodeError::DecryptedError })?;
+		let mut vec: HeaplessVec<u8, U2048> = HeaplessVec::new();
+		vec.extend_from_slice(&data[header_end as usize..data.len()]);
+		
+		cipher.decrypt(&mut vec, ad, nonce).map_err(|_| { UdpFrameDecodeError::DecryptedError })?;
+		
 		// commands - decompress
-		let decompressed = packet_decompress(&decrypted).map_err(|_| { UdpFrameDecodeError::DecompressError })?;
+		let mut decompressed_buffer = [0; 2048];
+		let decompressed_size = packet_decompress(&mut vec, &mut decompressed_buffer).map_err(|_| { UdpFrameDecodeError::DecompressError })?;
+		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 		
-		let mut cursor = Cursor::new(decompressed);
+		
+		let mut cursor = Cursor::new(decompressed_buffer);
 		let unreliability = Frame::decode_commands(&mut cursor)?;
 		let reliability = Frame::decode_commands(&mut cursor)?;
 		
@@ -72,7 +81,7 @@ impl Frame {
 		})
 	}
 	
-	fn decode_commands(cursor: &mut Cursor<Vec<u8>>) -> Result<Vec<ApplicationCommand>, UdpFrameDecodeError> {
+	fn decode_commands(cursor: &mut Cursor<&[u8]>) -> Result<Vec<ApplicationCommand>, UdpFrameDecodeError> {
 		let mut commands = Vec::new();
 		let commands_count = cursor.read_u8().map_err(|_| { UdpFrameDecodeError::CommandCountReadError })?;
 		let mut deserializer = rmp_serde::Deserializer::new(cursor);
@@ -91,38 +100,55 @@ impl Frame {
 	/// - остаток команд возвращается как результат функции
 	/// - данные команды также удаляются из исходного фрейма
 	///
-	pub fn encode(&mut self, cipher: &mut Cipher) -> (Vec<u8>, ApplicationCommands) {
-		let mut frame = Vec::new();
-		let mut serializer = Serializer::new(&mut frame);
-		self.header.serialize(&mut serializer).unwrap();
+	pub fn encode(&mut self, cipher: &mut Cipher, out: &mut [u8]) -> (ApplicationCommands, usize) {
+		let mut frame_cursor = Cursor::new(out);
+		let mut serializer = Serializer::new(&mut frame_cursor);
+		self.header.serialize(&mut serializer);
 		self.headers.serialize(&mut serializer).unwrap();
+		drop(serializer);
 		
-		let mut serialized_commands = Vec::new();
+		
+		let mut commands_buffer = [0 as u8; Frame::MAX_FRAME_SIZE * 2];
+		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		let unreliability_remaining =
 			Frame::serialized_commands(
 				&mut self.commands.unreliability,
-				frame.len(),
-				&mut serialized_commands);
+				frame_cursor.position(),
+				&mut commands_cursor);
 		
 		let reliability_remaining =
 			Frame::serialized_commands(
 				&mut self.commands.reliability,
-				frame.len(),
-				&mut serialized_commands);
+				frame_cursor.position(),
+				&mut commands_cursor);
 		
-		let compressed_commands = packet_compress(&serialized_commands).unwrap();
-		let encrypted_commands = cipher.encrypt(&compressed_commands, &frame, self.header.frame_id.to_be_bytes());
-		frame.extend_from_slice(&encrypted_commands);
-		(frame, ApplicationCommands { reliability: reliability_remaining, unreliability: unreliability_remaining })
+		let mut vec: HeaplessVec<u8, U2048> = HeaplessVec::new();
+		unsafe { vec.set_len(2048); }
+		
+		let commands_position = commands_cursor.position() as usize;
+		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
+		unsafe { vec.set_len(compressed_size); }
+		
+		let frame_position = frame_cursor.position() as usize;
+		cipher.encrypt(
+			&mut vec,
+			&frame_cursor.get_ref()[0..frame_position],
+			self.header.frame_id.to_be_bytes())
+			.unwrap();
+		
+		
+		frame_cursor.write_all(&vec).unwrap();
+		
+		(ApplicationCommands { reliability: reliability_remaining, unreliability: unreliability_remaining }, frame_cursor.position() as usize)
 	}
 	
-	fn serialized_commands(commands: &mut Vec<ApplicationCommand>, frame_length: usize, out: &mut Vec<u8>) -> Vec<ApplicationCommand> {
-		out.push(0);
-		let position = out.len() - 1;
+	fn serialized_commands(commands: &mut Vec<ApplicationCommand>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommand> {
+		let head_position = out.position();
+		out.write_u8(0);
 		let mut commands_count = 0;
 		let mut remaining_commands = Vec::new();
 		commands.retain(|command| {
-			if frame_length + out.len() < Frame::MAX_FRAME_SIZE && commands_count < 255 {
+			if frame_length + out.position() < Frame::MAX_FRAME_SIZE as u64 && commands_count < 255 {
 				to_vec(command, out);
 				commands_count += 1;
 				true
@@ -131,12 +157,16 @@ impl Frame {
 				false
 			}
 		});
-		out[position] = commands_count;
+		let position = out.position();
+		out.set_position(head_position);
+		out.write_u8(commands_count);
+		out.set_position(position);
+		
 		remaining_commands
 	}
 }
 
-fn to_vec<T: Serialize>(item: T, out: &mut Vec<u8>) {
+fn to_vec<T: Serialize>(item: T, out: &mut Cursor<&mut [u8]>) {
 	item.serialize(&mut Serializer::new(out)).unwrap();
 }
 
@@ -165,9 +195,11 @@ pub mod tests {
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
 		frame.commands.reliability.push(ApplicationCommand::Ping("test".to_string()));
-		let (data, _) = frame.encode(&mut cipher);
+		let mut buffer = [0; 1024];
+		let (_, size) = frame.encode(&mut cipher, &mut buffer);
+		let buffer = &buffer[0..size];
 		
-		let mut cursor = Cursor::new(data.as_slice());
+		let mut cursor = Cursor::new(buffer);
 		let (header, additional_header) = Frame::decode_headers(&mut cursor).unwrap();
 		let decoded_frame = Frame::decode_frame(cursor, cipher.clone(), header, additional_header).unwrap();
 		
@@ -183,12 +215,14 @@ pub mod tests {
 		for _ in 0..COMMAND_COUNT {
 			frame.commands.reliability.push(ApplicationCommand::Ping("1234567890".to_string()));
 		}
-		let (data, remaining_commands) = frame.encode(&mut cipher);
+		let mut buffer = [0; 1024];
+		let (remaining_commands, size) = frame.encode(&mut cipher, &mut buffer);
+		let buffer = &buffer[0..size];
 		
-		assert!(data.len() <= Frame::MAX_FRAME_SIZE);
+		assert!(buffer.len() <= Frame::MAX_FRAME_SIZE);
 		assert_eq!(remaining_commands.reliability.len() + frame.commands.reliability.len(), COMMAND_COUNT);
 		
-		let mut cursor = Cursor::new(data.as_slice());
+		let mut cursor = Cursor::new(buffer);
 		let (header, additional_header) = Frame::decode_headers(&mut cursor).unwrap();
 		let decoded_frame = Frame::decode_frame(cursor, cipher.clone(), header, additional_header).unwrap();
 		

@@ -58,22 +58,24 @@ impl<PeerAddress: Hash> UdpClient<PeerAddress> {
 		match frame {
 			None => {}
 			Some(mut frame) => {
-				let (buffer, unsended_commands) = frame.encode(&mut Cipher::new(&self.private_key));
+				let mut buffer = [0; 2048];
+				let (unsended_commands, size) = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer);
 				let channel = self.channel.clone();
-				channel.borrow_mut().send(&self.server_address, buffer);
+				channel.borrow_mut().send(&self.server_address, &buffer[0..size]).ok().expect("write fail");
 				self.protocol.out_commands_collector.add_unsent_commands(unsended_commands);
 			}
 		}
 	}
 	
 	fn do_read(&mut self, now: &&Instant) {
+		let mut buffer = [0; 2048];
 		loop {
 			let channel = self.channel.clone();
 			let channel = channel.borrow();
-			match channel.try_recv() {
-				None => { break; }
-				Some((server_address, data)) => {
-					let mut cursor = Cursor::new(data.as_slice());
+			match channel.receive(&mut buffer) {
+				Err(_) => { break; }
+				Ok((size, _)) => {
+					let mut cursor = Cursor::new(&buffer[0..size]);
 					let header = Frame::decode_headers(&mut cursor);
 					match header {
 						Ok((header, additional_headers)) => {
