@@ -9,7 +9,6 @@ use std::time::Instant;
 use crate::commands::hash::{UserPrivateKey, UserPublicKey};
 use crate::udp::channel::Channel;
 use crate::udp::protocol::codec::cipher::Cipher;
-use crate::udp::protocol::codec::decoder::UdpFrameDecodeError;
 use crate::udp::protocol::frame::Frame;
 use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::relay::RelayProtocol;
@@ -47,6 +46,7 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 	
 	fn do_write(&mut self, now: &Instant) {
 		let channel = &self.channel.clone();
+		let mut buffer = [0; 2048];
 		self.sessions.iter_mut().for_each(|(_, session)| {
 			match session.address {
 				None => {}
@@ -54,10 +54,10 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 					match session.protocol.build_next_frame(now) {
 						None => {}
 						Some(mut frame) => {
-							let (binary, commands) = frame.encode(&mut Cipher::new(&session.private_key));
+							let (commands, size) = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 							session.protocol.out_commands_collector.add_unsent_commands(commands);
 							let address = session.address.as_ref().unwrap();
-							channel.borrow_mut().send(address, binary);
+							channel.borrow_mut().send(address, &buffer[0..size]).ok().expect("write fail");
 						}
 					}
 				}
@@ -67,14 +67,14 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 	
 	fn do_read(&mut self, now: &Instant) {
 		loop {
-			
+			let mut buffer = [0; 2048];
 			// read
 			let channel = self.channel.clone();
 			let channel = channel.borrow();
-			match channel.try_recv() {
-				None => { break; }
-				Some((address, data)) => {
-					let mut cursor = Cursor::new(data.as_slice());
+			match channel.receive(&mut buffer) {
+				Err(_) => { break; }
+				Ok((size, address)) => {
+					let mut cursor = Cursor::new(&buffer[0..size]);
 					let headers = Frame::decode_headers(&mut cursor);
 					match headers {
 						Ok((header, additional_headers)) => {

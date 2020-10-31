@@ -1,5 +1,7 @@
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
-use chacha20poly1305::aead::{Aead, NewAead, Payload};
+use chacha20poly1305::aead::{Aead, AeadInPlace, NewAead, Payload};
+use heapless::consts::*;
+use heapless::Vec;
 
 use crate::commands::hash::UserPrivateKey;
 
@@ -22,34 +24,34 @@ impl<'a> Cipher<'a> {
 		}
 	}
 	
-	pub fn encrypt(&mut self, msg: &[u8], ad: &[u8], nonce: [u8; 8]) -> Vec<u8> {
+	
+	pub fn encrypt(&mut self, buffer: &mut Vec<u8, U2048>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
 		let cipher = ChaCha20Poly1305::new(key);
-		cipher.encrypt(nonce, Payload {
-			msg,
-			aad: ad,
-		}).unwrap()
+		cipher.encrypt_in_place(nonce, ad, buffer).map_err(|e| ())?;
+		Result::Ok(())
 	}
 	
-	pub fn decrypt(&mut self, msg: &[u8], ad: &[u8], nonce: [u8; 8]) -> Result<Vec<u8>, ()> {
+	pub fn decrypt(&mut self, buffer: &mut Vec<u8, U2048>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
 		let cipher = ChaCha20Poly1305::new(key);
-		cipher.decrypt(nonce, Payload {
-			msg,
-			aad: ad,
-		}).map_err(|_| ())
+		cipher.decrypt_in_place(nonce, ad, buffer).map_err(|e| ())?;
+		Result::Ok(())
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use easybench::bench;
+	use heapless::consts::*;
+	use heapless::Vec;
+	
 	use crate::udp::protocol::codec::cipher::Cipher;
 	
 	const PRIVATE_KEY: &[u8; 32] = &[
@@ -69,35 +71,42 @@ mod tests {
 	///
 	#[test]
 	fn bench_cipher() {
-		let aad = vec![0, 1, 2, 3];
 		println!("{}", bench(|| {
 			let mut cipher = Cipher::new(PRIVATE_KEY);
-			let encrypted = cipher.encrypt(&ORIGINAL, &AD, NONCE);
-			cipher.decrypt(&encrypted, &*aad, NONCE).unwrap();
+			let mut buffer: Vec<u8, U2048> = Vec::new();
+			buffer.extend_from_slice(&ORIGINAL);
+			cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
+			cipher.decrypt(&mut buffer, &AD, NONCE).unwrap();
 		}))
 	}
 	
 	#[test]
 	fn should_cipher() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let encrypted = cipher.encrypt(&ORIGINAL, &AD, NONCE);
-		let decrypted = cipher.decrypt(&encrypted, &AD, NONCE).unwrap();
-		assert_eq!(decrypted, ORIGINAL);
-		assert_ne!(decrypted, encrypted);
+		let mut buffer: Vec<u8, U2048> = Vec::new();
+		buffer.extend_from_slice(&ORIGINAL);
+		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
+		assert_ne!(&buffer, &ORIGINAL);
+		cipher.decrypt(&mut buffer, &AD, NONCE).unwrap();
+		assert_eq!(&buffer, &ORIGINAL);
 	}
 	
 	#[test]
 	fn should_fail_when_different_ad() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let encrypted = cipher.encrypt(&ORIGINAL, &AD, NONCE);
-		assert!(matches!(cipher.decrypt(&encrypted, &OTHER_AD, NONCE), Result::Err(())));
+		let mut buffer: Vec<u8, U2048> = Vec::new();
+		buffer.extend_from_slice(&ORIGINAL);
+		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
+		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(())));
 	}
 	
 	#[test]
 	fn should_fail_when_broken_packet() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut encrypted = cipher.encrypt(&ORIGINAL, &AD, NONCE);
-		encrypted[0] = 0;
-		assert!(matches!(cipher.decrypt(&encrypted, &OTHER_AD, NONCE), Result::Err(())));
+		let mut buffer: Vec<u8, U2048> = Vec::new();
+		buffer.extend_from_slice(&ORIGINAL);
+		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
+		buffer[0] = 0;
+		assert!(matches!(cipher.decrypt(&mut buffer, &AD, NONCE), Result::Err(())));
 	}
 }
