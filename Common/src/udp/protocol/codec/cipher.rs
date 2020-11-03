@@ -1,5 +1,5 @@
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
-use chacha20poly1305::aead::{Aead, AeadInPlace, NewAead, Payload};
+use chacha20poly1305::aead::{AeadInPlace, NewAead};
 use heapless::consts::*;
 use heapless::Vec;
 
@@ -31,7 +31,7 @@ impl<'a> Cipher<'a> {
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
 		let cipher = ChaCha20Poly1305::new(key);
-		cipher.encrypt_in_place(nonce, ad, buffer).map_err(|e| ())?;
+		cipher.encrypt_in_place(nonce, ad, buffer).map_err(|_| ())?;
 		Result::Ok(())
 	}
 	
@@ -41,7 +41,7 @@ impl<'a> Cipher<'a> {
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
 		let cipher = ChaCha20Poly1305::new(key);
-		cipher.decrypt_in_place(nonce, ad, buffer).map_err(|e| ())?;
+		cipher.decrypt_in_place(nonce, ad, buffer).map_err(|_| ())?;
 		Result::Ok(())
 	}
 }
@@ -74,7 +74,7 @@ mod tests {
 		println!("{}", bench(|| {
 			let mut cipher = Cipher::new(PRIVATE_KEY);
 			let mut buffer: Vec<u8, U2048> = Vec::new();
-			buffer.extend_from_slice(&ORIGINAL);
+			buffer.extend_from_slice(&ORIGINAL).unwrap();
 			cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 			cipher.decrypt(&mut buffer, &AD, NONCE).unwrap();
 		}))
@@ -84,7 +84,7 @@ mod tests {
 	fn should_cipher() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		let mut buffer: Vec<u8, U2048> = Vec::new();
-		buffer.extend_from_slice(&ORIGINAL);
+		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		assert_ne!(&buffer, &ORIGINAL);
 		cipher.decrypt(&mut buffer, &AD, NONCE).unwrap();
@@ -95,7 +95,7 @@ mod tests {
 	fn should_fail_when_different_ad() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		let mut buffer: Vec<u8, U2048> = Vec::new();
-		buffer.extend_from_slice(&ORIGINAL);
+		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(())));
 	}
@@ -104,7 +104,7 @@ mod tests {
 	fn should_fail_when_broken_packet() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		let mut buffer: Vec<u8, U2048> = Vec::new();
-		buffer.extend_from_slice(&ORIGINAL);
+		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		buffer[0] = 0;
 		assert!(matches!(cipher.decrypt(&mut buffer, &AD, NONCE), Result::Err(())));

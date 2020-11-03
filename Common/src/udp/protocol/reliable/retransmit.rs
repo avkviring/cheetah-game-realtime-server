@@ -1,15 +1,14 @@
 use std::cmp::max;
-use std::collections::{BTreeMap, HashMap, HashSet, LinkedList};
-use std::ops::{Rem, Sub};
+use std::collections::{HashSet, LinkedList};
+use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use lru::LruCache;
 #[cfg(test)]
-use mockall::{automock, mock, predicate::*};
+use mockall::{automock, predicate::*};
 use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
-use crate::udp::protocol::congestion::CongestionControl;
 use crate::udp::protocol::frame::{Frame, FrameId};
 use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::reliable::ack::header::AckFrameHeader;
@@ -207,7 +206,7 @@ impl FrameReceivedListener for RetransmitterImpl {
 					}
 				};
 				
-				!self.unacked_frames.remove(&original_frame_id);
+				self.unacked_frames.remove(&original_frame_id);
 				self.statistics.on_ack_received(*frame_id, original_frame_id, now);
 			})
 		});
@@ -236,7 +235,7 @@ impl FrameBuiltListener for RetransmitterImpl {
 
 
 impl DisconnectedStatus for RetransmitterImpl {
-	fn disconnected(&mut self, now: &Instant) -> bool {
+	fn disconnected(&mut self, _: &Instant) -> bool {
 		self.max_retransmit_count >= RetransmitterImpl::RETRANSMIT_LIMIT
 	}
 }

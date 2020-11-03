@@ -1,10 +1,6 @@
 pub fn packet_compress(input: &[u8], output: &mut [u8]) -> Result<usize, ()> {
 	let mut encoder = snap::raw::Encoder::new();
-	encoder.compress(input, output).map_err(|e| {
-		println!("{:?}", e);
-		()
-	}
-	)
+	encoder.compress(input, output).map_err(|_| { () })
 }
 
 pub fn packet_decompress(input: &[u8], output: &mut [u8]) -> Result<usize, ()> {

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::commands::command::load::LoadGameObjectCommand;
+use crate::commands::command::{C2SCommandUnion, C2SCommandWithMeta, S2CCommandUnion, S2CCommandWithMeta};
 use crate::room::object::ClientGameObjectId;
 
 ///
@@ -52,6 +52,8 @@ impl ApplicationCommandDescription {
 pub enum ApplicationCommand {
 	TestSimple(String),
 	TestObject(ClientGameObjectId, String),
+	S2CCommandWithMeta(S2CCommandWithMeta),
+	C2SCommandWithMeta(C2SCommandWithMeta),
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -84,10 +86,63 @@ pub type ChannelSequence = u32;
 
 impl ApplicationCommand {
 	pub fn get_object_id(&self) -> Option<&ClientGameObjectId> {
-		match self {
+		match &self {
 			ApplicationCommand::TestSimple(_) => { Option::None }
 			ApplicationCommand::TestObject(object_id, _) => {
 				Option::Some(object_id)
+			}
+			ApplicationCommand::S2CCommandWithMeta(command_with_meta) => {
+				match &command_with_meta.command {
+					S2CCommandUnion::Load(c) => {
+						Option::Some(&c.object_id)
+					}
+					S2CCommandUnion::SetLongCounter(c) => {
+						Option::Some(&c.object_id)
+					}
+					S2CCommandUnion::SetFloatCounter(c) => {
+						Option::Some(&c.object_id)
+					}
+					S2CCommandUnion::SetStruct(c) => {
+						Option::Some(&c.object_id)
+					}
+					S2CCommandUnion::Event(c) => {
+						Option::Some(&c.object_id)
+					}
+					S2CCommandUnion::Unload(c) => {
+						Option::Some(&c.object_id)
+					}
+				}
+			}
+			ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
+				match &command_with_meta.command {
+					C2SCommandUnion::Load(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::SetLongCounter(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::IncrementLongCounter(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::SetFloatCounter(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::IncrementFloatCounter(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::Structure(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::Event(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::Unload(c) => {
+						Option::Some(&c.object_id)
+					}
+					C2SCommandUnion::Test(c) => {
+						Option::None
+					}
+				}
 			}
 		}
 	}

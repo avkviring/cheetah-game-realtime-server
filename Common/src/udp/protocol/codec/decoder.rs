@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::udp::protocol::codec::cipher::Cipher;
 use crate::udp::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::udp::protocol::frame::{Frame, FrameHeader};
-use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommands};
+use crate::udp::protocol::frame::applications::{ApplicationCommandDescription, ApplicationCommands};
 use crate::udp::protocol::frame::headers::Headers;
 
 #[derive(Debug)]
@@ -56,13 +56,13 @@ impl Frame {
 		let ad = &data[0..header_end as usize];
 		
 		let mut vec: HeaplessVec<u8, U2048> = HeaplessVec::new();
-		vec.extend_from_slice(&data[header_end as usize..data.len()]);
+		vec.extend_from_slice(&data[header_end as usize..data.len()]).unwrap();
 		
 		cipher.decrypt(&mut vec, ad, nonce).map_err(|_| { UdpFrameDecodeError::DecryptedError })?;
 		
 		// commands - decompress
 		let mut decompressed_buffer = [0; 2048];
-		let decompressed_size = packet_decompress(&mut vec, &mut decompressed_buffer).map_err(|_| { UdpFrameDecodeError::DecompressError })?;
+		let decompressed_size = packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| { UdpFrameDecodeError::DecompressError })?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 		
 		
@@ -103,7 +103,7 @@ impl Frame {
 	pub fn encode(&mut self, cipher: &mut Cipher, out: &mut [u8]) -> (ApplicationCommands, usize) {
 		let mut frame_cursor = Cursor::new(out);
 		let mut serializer = Serializer::new(&mut frame_cursor);
-		self.header.serialize(&mut serializer);
+		self.header.serialize(&mut serializer).unwrap();
 		self.headers.serialize(&mut serializer).unwrap();
 		drop(serializer);
 		
@@ -144,7 +144,7 @@ impl Frame {
 	
 	fn serialized_commands(commands: &mut Vec<ApplicationCommandDescription>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommandDescription> {
 		let head_position = out.position();
-		out.write_u8(0);
+		out.write_u8(0).unwrap();
 		let mut commands_count = 0;
 		let mut remaining_commands = Vec::new();
 		commands.retain(|command| {
@@ -159,7 +159,7 @@ impl Frame {
 		});
 		let position = out.position();
 		out.set_position(head_position);
-		out.write_u8(commands_count);
+		out.write_u8(commands_count).unwrap();
 		out.set_position(position);
 		
 		remaining_commands

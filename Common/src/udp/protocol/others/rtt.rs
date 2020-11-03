@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant};
 
 #[cfg(test)]
-use mockall::{automock, mock, predicate::*};
+use mockall::{automock, predicate::*};
 use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::{FrameBuilder, FrameReceivedListener};
@@ -100,7 +100,7 @@ impl FrameReceivedListener for RoundTripTimeImpl {
 
 
 impl FrameBuilder for RoundTripTimeImpl {
-	fn contains_self_data(&self, now: &Instant) -> bool {
+	fn contains_self_data(&self, _: &Instant) -> bool {
 		false
 	}
 	

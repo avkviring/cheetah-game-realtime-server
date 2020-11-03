@@ -14,7 +14,7 @@ use crate::udp::stub::{AddressStub, ChannelQuality, create_user_private_key_stub
 #[test]
 fn should_send_from_client() {
 	let transport = TransportStub::new(ChannelQuality::default());
-	let (mut server, public_key, mut client, mut transport) = setup(transport);
+	let (mut server, public_key, mut client) = setup(transport);
 	
 	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test reliability".to_string()));
 	client.protocol.out_commands_collector.add_unreliability_command(new_ping_command("test unreliability".to_string()));
@@ -36,7 +36,7 @@ fn should_send_from_client() {
 #[test]
 fn should_send_from_server() {
 	let transport = TransportStub::new(ChannelQuality::default());
-	let (mut server, public_key, mut client, mut transport) = setup(transport);
+	let (mut server, public_key, mut client) = setup(transport);
 	
 	let now = Instant::now();
 	client.cycle(&now);
@@ -61,7 +61,7 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	channel_quality.add_reliable_percent(0..=5, 0.0);
 	let transport = TransportStub::new(channel_quality);
 	
-	let (mut server, public_key, mut client, mut transport) = setup(transport);
+	let (mut server, public_key, mut client) = setup(transport);
 	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test".to_string()));
 	
 	let mut now = Instant::now();
@@ -77,7 +77,7 @@ fn should_transfer_reliable_on_unreliable_channel() {
 }
 
 
-fn setup(transport: Box<dyn Transport<AddressStub>>) -> (UdpServer<AddressStub>, [u8; 4], UdpClient<AddressStub>, Box<dyn Transport<AddressStub>>) {
+fn setup(transport: Box<dyn Transport<AddressStub>>) -> (UdpServer<AddressStub>, [u8; 4], UdpClient<AddressStub>) {
 	let server_address = AddressStub::new(0);
 	let channel = transport.create_channel(server_address.clone()).ok().unwrap();
 	let mut server = UdpServer::new(channel);
@@ -89,7 +89,7 @@ fn setup(transport: Box<dyn Transport<AddressStub>>) -> (UdpServer<AddressStub>,
 	let client_address = AddressStub::new(1);
 	let client_channel = transport.create_channel(client_address).ok().unwrap();
 	let mut client = UdpClient::new(private_key, public_key, client_channel, server_address);
-	(server, public_key, client, transport)
+	(server, public_key, client)
 }
 
 

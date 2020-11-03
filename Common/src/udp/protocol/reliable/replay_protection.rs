@@ -105,7 +105,7 @@ mod tests {
 		let now = Instant::now();
 		for i in 1..FrameReplayProtection::BUFFER_SIZE as u64 {
 			let frame = Frame::new(i);
-			protection.set_and_check(&frame, &now);
+			protection.set_and_check(&frame, &now).unwrap();
 			if i > 2 {
 				for j in 1..i {
 					let frame = Frame::new(j);

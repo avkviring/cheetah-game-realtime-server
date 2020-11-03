@@ -17,7 +17,7 @@ pub mod structure;
 pub mod load;
 pub mod meta;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum C2SCommandUnion {
 	Load(LoadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
@@ -30,7 +30,7 @@ pub enum C2SCommandUnion {
 	Test(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum S2CCommandUnion {
 	Load(LoadGameObjectCommand),
 	SetLongCounter(SetLongCounterCommand),
@@ -40,13 +40,13 @@ pub enum S2CCommandUnion {
 	Unload(UnloadGameObjectCommand),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct S2CCommandWithMeta {
 	pub meta: S2CMetaCommandInformation,
 	pub command: S2CCommandUnion,
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct C2SCommandWithMeta {
 	pub meta: C2SMetaCommandInformation,
 	pub command: C2SCommandUnion,

@@ -50,14 +50,14 @@ impl<T: Copy + PartialEq + AddAssign<T> + Int, N: ArrayLength<T>> EventCollector
 	pub fn switch_measure_position(&mut self, now: &Instant) {
 		let start_time = match self.start_measurement_time {
 			None => {
-				self.start_measurement_time = Option::Some(now.clone());
+				self.start_measurement_time = Option::Some(*now);
 				now
 			}
 			Some(ref time) => { time }
 		};
 		
 		if now.sub(*start_time) >= self.measure_time {
-			self.start_measurement_time = Option::Some(now.clone());
+			self.start_measurement_time = Option::Some(*now);
 			let mut new_position = self.position + 1;
 			if new_position == self.ring_buffer.len() {
 				new_position = 0;
@@ -89,13 +89,13 @@ impl<T: Copy + PartialEq + AddAssign<T> + Int, N: ArrayLength<T>> EventCollector
 	pub fn on_event(&mut self, now: &Instant) {
 		self.switch_measure_position(now);
 		let option = self.current_value.add_with_overflow_control(T::one());
-		if option.is_some() {
-			self.current_value = option.unwrap();
+		if let Some(value) = option {
+			self.current_value = value;
 		}
 	}
 }
 
-trait Int: Sized {
+pub trait Int: Sized {
 	fn one() -> Self;
 	fn add_with_overflow_control(&self, b: Self) -> Option<Self>;
 }
@@ -145,7 +145,7 @@ mod tests {
 	/// Если не прошло время агрегации - сумма и количество не может быть определено
 	///
 	pub fn should_return_none_if_not_enough_duration() {
-		let (mut collector, duration) = setup();
+		let (mut collector, _) = setup();
 		let now = Instant::now();
 		collector.on_event(&now);
 		assert!(matches!(collector.get_sum_and_count(&now), Option::None));

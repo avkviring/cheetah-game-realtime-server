@@ -13,11 +13,11 @@ pub struct HelloSender {
 }
 
 impl FrameBuilder for HelloSender {
-	fn contains_self_data(&self, now: &Instant) -> bool {
+	fn contains_self_data(&self, _: &Instant) -> bool {
 		!self.sent
 	}
 	
-	fn build_frame(&mut self, frame: &mut Frame, now: &Instant) {
+	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
 		self.sent = true;
 		frame.headers.add(Header::Hello)
 	}

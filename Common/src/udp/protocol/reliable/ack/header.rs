@@ -53,7 +53,7 @@ impl AckFrameHeader {
 		
 		let byte_offset = offset / 8;
 		let bit_offset = offset - byte_offset * 8;
-		let byte = self.frames[byte_offset].clone();
+		let byte = self.frames[byte_offset];
 		self.frames[byte_offset] = byte + 1.shl(bit_offset) as u8;
 		true
 	}
@@ -64,7 +64,7 @@ impl AckFrameHeader {
 		for i in 0..AckFrameHeader::CAPACITY {
 			let byte_offset = i / 8;
 			let bit_offset = i - byte_offset * 8;
-			let byte = self.frames[byte_offset].clone();
+			let byte = self.frames[byte_offset];
 			if byte.bitand(1.shl(bit_offset) as u8) > 0 {
 				result.push(self.start_frame_id + i as u64 + 1);
 			}

@@ -1,11 +1,8 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, VecDeque};
-use std::iter::Map;
-use std::time::Instant;
-
 use crate::room::object::ClientGameObjectId;
 use crate::udp::protocol::frame::{Frame, FrameId};
-use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription, ApplicationCommands, ChannelId, ChannelSequence};
+use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ChannelId, ChannelSequence};
 
 ///
 /// Коллектор входящих команд
@@ -92,7 +89,7 @@ impl InCommandsCollector {
 			buffer.push(
 				SequenceApplicationCommand {
 					sequence,
-					command: command,
+					command,
 				});
 		}
 	}
@@ -152,7 +149,7 @@ mod tests {
 	use crate::room::object::ClientGameObjectId;
 	use crate::room::owner::ClientOwner;
 	use crate::udp::protocol::commands::input::InCommandsCollector;
-	use crate::udp::protocol::frame::{Frame, FrameId};
+	use crate::udp::protocol::frame::Frame;
 	use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	
 	#[test]
