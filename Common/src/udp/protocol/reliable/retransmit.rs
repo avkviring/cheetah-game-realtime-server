@@ -249,7 +249,7 @@ mod tests {
 	
 	use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 	use crate::udp::protocol::frame::{Frame, FrameId};
-	use crate::udp::protocol::frame::applications::ApplicationCommand;
+	use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use crate::udp::protocol::frame::headers::Header;
 	use crate::udp::protocol::reliable::ack::header::AckFrameHeader;
 	use crate::udp::protocol::reliable::retransmit::RetransmitterImpl;
@@ -434,7 +434,10 @@ mod tests {
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
-		frame.commands.unreliability.push(ApplicationCommand::Ping("".to_string()));
+		frame.commands.unreliability.push(ApplicationCommandDescription::new(
+			ApplicationCommandChannel::Unordered,
+			ApplicationCommand::TestSimple("".to_string()),
+		));
 		let now = Instant::now();
 		handler.on_frame_built(&frame, &now);
 		
@@ -445,7 +448,11 @@ mod tests {
 	
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.commands.reliability.push(ApplicationCommand::Ping("".to_string()));
+		frame.commands.reliability.push(
+			ApplicationCommandDescription::new(
+				ApplicationCommandChannel::Unordered,
+				ApplicationCommand::TestSimple("".to_string()),
+			));
 		frame
 	}
 	

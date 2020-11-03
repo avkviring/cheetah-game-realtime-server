@@ -6,7 +6,7 @@ use cheetah_relay_common::udp::client::UdpClient;
 use cheetah_relay_common::udp::protocol::frame::applications::ApplicationCommand;
 use cheetah_relay_common::udp::server::UdpServer;
 
-use crate::udp::stub::{AddressStub, ChannelQuality, create_user_private_key_stub, create_user_public_key_stub, TransportStub};
+use crate::udp::stub::{AddressStub, ChannelQuality, create_user_private_key_stub, create_user_public_key_stub, new_ping_command, TransportStub};
 
 ///
 /// Тестирование отправки команд с клиента на сервер
@@ -16,18 +16,18 @@ fn should_send_from_client() {
 	let transport = TransportStub::new(ChannelQuality::default());
 	let (mut server, public_key, mut client, mut transport) = setup(transport);
 	
-	client.protocol.out_commands_collector.add_reliability_command(ApplicationCommand::Ping("test reliability".to_string()));
-	client.protocol.out_commands_collector.add_unreliability_command(ApplicationCommand::Ping("test unreliability".to_string()));
+	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test reliability".to_string()));
+	client.protocol.out_commands_collector.add_unreliability_command(new_ping_command("test unreliability".to_string()));
 	
 	let now = Instant::now();
 	client.cycle(&now);
 	server.cycle(&now);
 	
 	let protocol = &mut server.get_user_sessions(&public_key).protocol;
-	let commands = protocol.in_commands_collector.get_and_remove_commands();
+	let commands = protocol.in_commands_collector.get_commands();
 	
-	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(v) if *v == "test reliability".to_string())).is_some());
-	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(v) if *v == "test unreliability".to_string())).is_some());
+	assert!(commands.iter().find(|p| matches!(&p, ApplicationCommand::TestSimple(v) if *v == "test reliability".to_string())).is_some());
+	assert!(commands.iter().find(|p| matches!(&p, ApplicationCommand::TestSimple(v) if *v == "test unreliability".to_string())).is_some());
 }
 
 ///
@@ -43,12 +43,14 @@ fn should_send_from_server() {
 	server.cycle(&now);
 	
 	let protocol = &mut server.get_user_sessions(&public_key).protocol;
-	protocol.out_commands_collector.add_reliability_command(ApplicationCommand::Ping("ping from server".to_string()));
+	let ping_message = "ping from server".to_string();
+	protocol.out_commands_collector.add_reliability_command(new_ping_command(ping_message));
 	server.cycle(&now);
 	client.cycle(&now);
 	
-	let commands = client.protocol.in_commands_collector.get_and_remove_commands();
-	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(v) if *v == "ping from server".to_string())).is_some());
+	let commands = client.protocol.in_commands_collector.get_commands();
+	//ApplicationCommand::Ping()
+	assert!(commands.iter().find(|p| matches!(&p, ApplicationCommand::TestSimple(ping_message))).is_some());
 }
 
 ///
@@ -60,7 +62,7 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	let transport = TransportStub::new(channel_quality);
 	
 	let (mut server, public_key, mut client, mut transport) = setup(transport);
-	client.protocol.out_commands_collector.add_reliability_command(ApplicationCommand::Ping("test".to_string()));
+	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test".to_string()));
 	
 	let mut now = Instant::now();
 	for i in 0..6 {
@@ -70,8 +72,8 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	}
 	
 	let protocol = &mut server.get_user_sessions(&public_key).protocol;
-	let commands = protocol.in_commands_collector.get_and_remove_commands();
-	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(_))).is_some());
+	let commands = protocol.in_commands_collector.get_commands();
+	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::TestSimple(_))).is_some());
 }
 
 

@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommands};
+use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommands, ApplicationCommandDescription};
 use crate::udp::protocol::frame::Frame;
 use crate::udp::protocol::FrameBuilder;
 
@@ -20,10 +20,10 @@ impl OutCommandsCollector {
 		self.commands.add(&commands);
 	}
 	
-	pub fn add_reliability_command(&mut self, command: ApplicationCommand) {
+	pub fn add_reliability_command(&mut self, command: ApplicationCommandDescription) {
 		self.commands.reliability.push(command);
 	}
-	pub fn add_unreliability_command(&mut self, command: ApplicationCommand) {
+	pub fn add_unreliability_command(&mut self, command: ApplicationCommandDescription) {
 		self.commands.unreliability.push(command);
 	}
 }

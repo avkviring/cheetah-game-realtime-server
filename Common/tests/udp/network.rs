@@ -1,24 +1,22 @@
-use std::cell::RefCell;
 use std::net::SocketAddr;
-use std::rc::Rc;
 use std::str::FromStr;
-use std::time::{Instant, Duration};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use cheetah_relay_common::udp::channel::{Channel, Transport, TransportError, UDPTransport};
 use cheetah_relay_common::udp::client::UdpClient;
-use cheetah_relay_common::udp::protocol::frame::applications::ApplicationCommand;
+use cheetah_relay_common::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 use cheetah_relay_common::udp::server::UdpServer;
 
-use crate::udp::stub::{create_user_private_key_stub, create_user_public_key_stub};
-use std::thread;
+use crate::udp::stub::{create_user_private_key_stub, create_user_public_key_stub, new_ping_command};
 
 #[test]
 fn should_send_throught_udp() {
 	let transport = UDPTransport::default();
 	let (mut server, public_key, mut client) = setup_udp(transport);
 	
-	client.protocol.out_commands_collector.add_reliability_command(ApplicationCommand::Ping("test reliability".to_string()));
-	client.protocol.out_commands_collector.add_unreliability_command(ApplicationCommand::Ping("test unreliability".to_string()));
+	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test reliability".to_string()));
+	client.protocol.out_commands_collector.add_unreliability_command(new_ping_command("test unreliability".to_string()));
 	
 	let now = Instant::now();
 	for _ in 0..10 {
@@ -28,13 +26,11 @@ fn should_send_throught_udp() {
 	}
 	
 	let protocol = &mut server.get_user_sessions(&public_key).protocol;
-	let commands = protocol.in_commands_collector.get_and_remove_commands();
+	let commands = protocol.in_commands_collector.get_commands();
 	
-	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(v) if *v == "test reliability".to_string())).is_some());
-	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::Ping(v) if *v == "test unreliability".to_string())).is_some());
+	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::TestSimple(v) if *v == "test reliability".to_string())).is_some());
+	assert!(commands.iter().find(|p| matches!(p, ApplicationCommand::TestSimple(v) if *v == "test unreliability".to_string())).is_some());
 }
-
-
 
 
 fn setup_udp(transport: UDPTransport) -> (UdpServer<SocketAddr>, [u8; 4], UdpClient<SocketAddr>) {

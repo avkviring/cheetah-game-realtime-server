@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::udp::protocol::codec::cipher::Cipher;
 use crate::udp::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::udp::protocol::frame::{Frame, FrameHeader};
-use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommands};
+use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommands};
 use crate::udp::protocol::frame::headers::Headers;
 
 #[derive(Debug)]
@@ -81,7 +81,7 @@ impl Frame {
 		})
 	}
 	
-	fn decode_commands(cursor: &mut Cursor<&[u8]>) -> Result<Vec<ApplicationCommand>, UdpFrameDecodeError> {
+	fn decode_commands(cursor: &mut Cursor<&[u8]>) -> Result<Vec<ApplicationCommandDescription>, UdpFrameDecodeError> {
 		let mut commands = Vec::new();
 		let commands_count = cursor.read_u8().map_err(|_| { UdpFrameDecodeError::CommandCountReadError })?;
 		let mut deserializer = rmp_serde::Deserializer::new(cursor);
@@ -142,7 +142,7 @@ impl Frame {
 		(ApplicationCommands { reliability: reliability_remaining, unreliability: unreliability_remaining }, frame_cursor.position() as usize)
 	}
 	
-	fn serialized_commands(commands: &mut Vec<ApplicationCommand>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommand> {
+	fn serialized_commands(commands: &mut Vec<ApplicationCommandDescription>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommandDescription> {
 		let head_position = out.position();
 		out.write_u8(0);
 		let mut commands_count = 0;
@@ -176,7 +176,7 @@ pub mod tests {
 	use std::io::Cursor;
 	
 	use crate::udp::protocol::codec::cipher::Cipher;
-	use crate::udp::protocol::frame::applications::ApplicationCommand;
+	use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use crate::udp::protocol::frame::Frame;
 	use crate::udp::protocol::frame::headers::Header;
 	use crate::udp::protocol::reliable::ack::header::AckFrameHeader;
@@ -194,7 +194,11 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
-		frame.commands.reliability.push(ApplicationCommand::Ping("test".to_string()));
+		frame.commands.reliability.push(
+			ApplicationCommandDescription::new(
+				ApplicationCommandChannel::Unordered,
+				ApplicationCommand::TestSimple("test".to_string()),
+			));
 		let mut buffer = [0; 1024];
 		let (_, size) = frame.encode(&mut cipher, &mut buffer);
 		let buffer = &buffer[0..size];
@@ -213,7 +217,12 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		const COMMAND_COUNT: usize = 400;
 		for _ in 0..COMMAND_COUNT {
-			frame.commands.reliability.push(ApplicationCommand::Ping("1234567890".to_string()));
+			frame.commands.reliability.push(
+				ApplicationCommandDescription::new(
+					ApplicationCommandChannel::Unordered,
+					ApplicationCommand::TestSimple("1234567890".to_string()),
+				)
+			);
 		}
 		let mut buffer = [0; 1024];
 		let (remaining_commands, size) = frame.encode(&mut cipher, &mut buffer);

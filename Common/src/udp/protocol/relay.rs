@@ -73,7 +73,7 @@ impl RelayProtocol {
 					self.disconnect_handler.on_frame_received(&frame, now);
 					self.ack_sender.on_frame_received(&frame, now);
 					self.rtt.on_frame_received(&frame, now);
-					self.in_commands_collector.on_frame_received(&frame, now);
+					self.in_commands_collector.collect(frame);
 				}
 			}
 			Err(_) => {}
