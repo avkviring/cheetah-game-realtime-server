@@ -10,6 +10,7 @@ use rand::rngs::OsRng;
 
 use cheetah_relay_common::commands::hash::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::udp::channel::{Channel, Transport, TransportError};
+use cheetah_relay_common::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 
 #[derive(Hash, Clone, Debug, Eq, PartialEq, Copy)]
 pub struct AddressStub {
@@ -143,4 +144,7 @@ pub fn create_user_public_key_stub() -> UserPublicKey {
 	result
 }
 
+pub fn new_ping_command(ping: String) -> ApplicationCommandDescription {
+	ApplicationCommandDescription::new(ApplicationCommandChannel::Unordered, ApplicationCommand::TestSimple(ping))
+}
 

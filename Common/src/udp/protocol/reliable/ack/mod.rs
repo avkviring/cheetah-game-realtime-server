@@ -150,7 +150,7 @@ mod tests {
 	use std::time::Instant;
 	
 	use crate::udp::protocol::{FrameBuilder, FrameReceivedListener};
-	use crate::udp::protocol::frame::applications::ApplicationCommand;
+	use crate::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommandChannel};
 	use crate::udp::protocol::frame::Frame;
 	use crate::udp::protocol::frame::headers::Header;
 	use crate::udp::protocol::reliable::ack::AckSender;
@@ -174,7 +174,7 @@ mod tests {
 		let mut reliable = AckSender::default();
 		let time = Instant::now();
 		let mut frame = Frame::new(10);
-		frame.commands.reliability.push(ApplicationCommand::Ping("".to_string()));
+		frame.commands.reliability.push(create_command());
 		reliable.on_frame_received(&frame, &time);
 		assert_eq!(reliable.contains_self_data(&time), false);
 		assert_eq!(reliable.contains_self_data(&time.add(AckSender::SCHEDULE_SEND_TIME)), true);
@@ -189,7 +189,7 @@ mod tests {
 		let mut time = Instant::now();
 		
 		let mut in_frame = Frame::new(10);
-		in_frame.commands.reliability.push(ApplicationCommand::Ping("ping".to_string()));
+		in_frame.commands.reliability.push(create_command());
 		reliable.on_frame_received(&in_frame, &time);
 		
 		time = time.add(AckSender::SCHEDULE_SEND_TIME);
@@ -212,7 +212,7 @@ mod tests {
 		
 		for i in 0..AckSender::BUFFER_SIZE {
 			let mut in_frame = Frame::new(10 + i as u64);
-			in_frame.commands.reliability.push(ApplicationCommand::Ping("ping".to_string()));
+			in_frame.commands.reliability.push(create_command());
 			reliable.on_frame_received(&in_frame, &time);
 		}
 		
@@ -240,11 +240,14 @@ mod tests {
 		let time = Instant::now();
 		
 		let mut frame_a = Frame::new(10);
-		frame_a.commands.reliability.push(ApplicationCommand::Ping("".to_string()));
+		frame_a.commands.reliability.push(ApplicationCommandDescription::new(
+			ApplicationCommandChannel::Unordered,
+			ApplicationCommand::TestSimple("".to_string()),
+		));
 		reliable.on_frame_received(&frame_a, &time);
 		
 		let mut frame_b = Frame::new(10 + AckFrameHeader::CAPACITY as u64 + 1);
-		frame_b.commands.reliability.push(ApplicationCommand::Ping("".to_string()));
+		frame_b.commands.reliability.push(create_command());
 		reliable.on_frame_received(&frame_b, &time);
 		
 		let mut out_frame = Frame::new(20);
@@ -254,5 +257,12 @@ mod tests {
 		assert_eq!(headers.len(), 2);
 		assert_eq!(headers[0].start_frame_id, frame_a.header.frame_id);
 		assert_eq!(headers[1].start_frame_id, frame_b.header.frame_id);
+	}
+	
+	fn create_command() -> ApplicationCommandDescription {
+		ApplicationCommandDescription::new(
+			ApplicationCommandChannel::Unordered,
+			ApplicationCommand::TestSimple("".to_string()),
+		)
 	}
 }
