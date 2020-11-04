@@ -9,7 +9,7 @@ use crate::udp::protocol::frame::headers::Header;
 ///
 /// Быстрое закрытие соединения по команде с удаленной стороны
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DisconnectHandler {
 	///
 	/// Соединение разорвано удаленной стороной
@@ -41,11 +41,11 @@ impl DisconnectHandler {
 }
 
 impl FrameBuilder for DisconnectHandler {
-	fn contains_self_data(&self, now: &Instant) -> bool {
+	fn contains_self_data(&self, _: &Instant) -> bool {
 		self.disconnecting_by_self && !self.disconnected_by_self
 	}
 	
-	fn build_frame(&mut self, frame: &mut Frame, now: &Instant) {
+	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
 		if self.disconnecting_by_self {
 			frame.headers.add(Header::Disconnect(DisconnectHeader::default()));
 		}
@@ -54,14 +54,14 @@ impl FrameBuilder for DisconnectHandler {
 }
 
 impl FrameReceivedListener for DisconnectHandler {
-	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
+	fn on_frame_received(&mut self, frame: &Frame, _: &Instant) {
 		let headers: Option<&DisconnectHeader> = frame.headers.first(Header::predicate_Disconnect);
 		self.disconnected_by_peer = headers.is_some();
 	}
 }
 
 impl DisconnectedStatus for DisconnectHandler {
-	fn disconnected(&mut self, now: &Instant) -> bool {
+	fn disconnected(&mut self, _: &Instant) -> bool {
 		self.disconnected_by_peer || self.disconnected_by_self
 	}
 }

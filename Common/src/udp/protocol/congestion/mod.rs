@@ -1,14 +1,13 @@
-use std::cmp::{max, min};
-use std::ops::{Mul, Sub};
+use std::ops::Sub;
 use std::time::{Duration, Instant};
 
-use crate::udp::protocol::others::rtt::{RoundTripTime, RoundTripTimeImpl};
+use crate::udp::protocol::others::rtt::RoundTripTime;
 use crate::udp::protocol::reliable::retransmit::Retransmitter;
 
 ///
 /// Контроль скорости для устранения перегрузок канала
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct CongestionControl {
 	last_balanced: Option<Instant>,
 	
@@ -26,7 +25,7 @@ impl CongestionControl {
 					 rtt: &dyn RoundTripTime,
 					 retransmitter: &mut dyn Retransmitter,
 	) {
-		if !self.is_time_to_rebalance(now) {
+		if !self.can_rebalance(now) {
 			return;
 		}
 		
@@ -56,9 +55,9 @@ impl CongestionControl {
 	}
 	
 	
-	pub fn is_time_to_rebalance(&mut self, now: &Instant) -> bool {
+	fn can_rebalance(&mut self, now: &Instant) -> bool {
 		let start_time = self.last_balanced.get_or_insert(now.clone());
-		if (now.sub(*start_time) >= CongestionControl::REBALANCE_PERIOD) {
+		if now.sub(*start_time) >= CongestionControl::REBALANCE_PERIOD {
 			self.last_balanced.replace(now.clone());
 			true
 		} else {
@@ -77,9 +76,7 @@ mod tests {
 	
 	use crate::udp::protocol::congestion::CongestionControl;
 	use crate::udp::protocol::others::rtt::MockRoundTripTime;
-	use crate::udp::protocol::others::rtt::RoundTripTime;
 	use crate::udp::protocol::reliable::retransmit::MockRetransmitter;
-	use crate::udp::protocol::reliable::retransmit::Retransmitter;
 	
 	#[test]
 	pub fn should_invoke_set_ack_wait_duration() {

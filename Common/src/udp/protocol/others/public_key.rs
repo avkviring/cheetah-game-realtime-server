@@ -9,6 +9,7 @@ use crate::udp::protocol::FrameBuilder;
 /// Добавляет заголовок с UserPublicKey
 /// Используется только на клиенте, для передачи ключа на сервер
 ///
+#[derive(Debug)]
 pub struct UserPublicKeyFrameBuilder(pub UserPublicKey);
 
 

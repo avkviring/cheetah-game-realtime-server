@@ -26,7 +26,7 @@ fn should_send_command_to_server() {
 	thread::sleep(Duration::from_secs(1));
 	// upload object
 	let mut ffi = Command::default();
-	ffi.command_type_c2s = C2SCommandFFIType::Load;
+	ffi.command_type_c2s = C2SCommandFFIType::Create;
 	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
 	ffi.structures.count = 1;
@@ -63,7 +63,7 @@ fn should_receive_command_from_server() {
 	
 	// upload object
 	let mut ffi = Command::default();
-	ffi.command_type_c2s = C2SCommandFFIType::Load;
+	ffi.command_type_c2s = C2SCommandFFIType::Create;
 	ffi.meta_timestamp = 123;
 	ffi.object_id.set_from(&ClientGameObjectId::new(100, ClientOwner::CurrentClient));
 	ffi.access_group = 0b100;
@@ -76,7 +76,7 @@ fn should_receive_command_from_server() {
 	do_receive_commands_from_server(
 		client_b,
 		|command: &Command| {
-			if command.command_type_s2c == S2CCommandFFIType::Load {
+			if command.command_type_s2c == S2CCommandFFIType::Create {
 				assert_eq!(command.meta_timestamp, 123);
 				assert!(command.meta_source_client != 0);
 			} else {

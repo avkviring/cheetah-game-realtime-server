@@ -7,6 +7,6 @@ use crate::room::object::ClientGameObjectId;
 /// - направления C->S, S->C
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct UnloadGameObjectCommand {
+pub struct DeleteGameObjectCommand {
 	pub object_id: ClientGameObjectId
 }

@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 
 
 ///
-/// Загрузка объекта
+/// Создание игрового объекта
 /// - направления C->S, S->C
 ///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct LoadGameObjectCommand {
+pub struct CreateGameObjectCommand {
 	pub object_id: ClientGameObjectId,
 	pub template: u16,
 	pub access_groups: AccessGroups,

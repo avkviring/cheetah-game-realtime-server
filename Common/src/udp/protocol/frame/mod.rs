@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::frame::applications::ApplicationCommands;
 use crate::udp::protocol::frame::headers::{Header, Headers};
-use crate::udp::protocol::reliable::retransmit::RetransmitFrameHeader;
 
 pub mod headers;
 pub mod applications;
@@ -77,6 +76,6 @@ impl Frame {
 	/// Фрейм с надежной доставкой?
 	/// 
 	pub fn is_reliability(&self) -> bool {
-		!self.commands.reliability.is_empty()
+		!self.commands.reliable.is_empty()
 	}
 }

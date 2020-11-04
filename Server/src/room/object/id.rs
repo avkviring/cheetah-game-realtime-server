@@ -24,17 +24,11 @@ pub enum ServerOwner {
 }
 
 impl ServerGameObjectId {
-	pub fn new(id: u32, owner: ServerOwner) -> Self {
-		ServerGameObjectId {
-			id,
-			owner,
-		}
-	}
 	///
 	/// Конвертация клиентского id в серверный
 	/// если current_client - None, то конвертация возможна только для Owner != ClientOwner::CurrentClient
 	///
-	pub fn from_client_object_id(current_client: Option<ClientId>, client_object_id: &ClientGameObjectId) -> ServerGameObjectId {
+	pub fn new(current_client: Option<ClientId>, client_object_id: &ClientGameObjectId) -> ServerGameObjectId {
 		ServerGameObjectId {
 			id: client_object_id.id,
 			owner: match client_object_id.owner {

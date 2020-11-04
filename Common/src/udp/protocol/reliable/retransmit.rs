@@ -1,15 +1,14 @@
 use std::cmp::max;
-use std::collections::{BTreeMap, HashMap, HashSet, LinkedList};
-use std::ops::{Rem, Sub};
+use std::collections::{HashSet, LinkedList};
+use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use lru::LruCache;
 #[cfg(test)]
-use mockall::{automock, mock, predicate::*};
+use mockall::{automock, predicate::*};
 use serde::{Deserialize, Serialize};
 
 use crate::udp::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
-use crate::udp::protocol::congestion::CongestionControl;
 use crate::udp::protocol::frame::{Frame, FrameId};
 use crate::udp::protocol::frame::headers::Header;
 use crate::udp::protocol::reliable::ack::header::AckFrameHeader;
@@ -32,6 +31,7 @@ pub trait Retransmitter {
 }
 
 
+#[derive(Debug)]
 pub struct RetransmitterImpl {
 	///
 	/// Фреймы, отсортированные по времени отсылки
@@ -207,7 +207,7 @@ impl FrameReceivedListener for RetransmitterImpl {
 					}
 				};
 				
-				!self.unacked_frames.remove(&original_frame_id);
+				self.unacked_frames.remove(&original_frame_id);
 				self.statistics.on_ack_received(*frame_id, original_frame_id, now);
 			})
 		});
@@ -222,7 +222,7 @@ impl FrameBuiltListener for RetransmitterImpl {
 		if frame.is_reliability() {
 			let original_grame_id = frame.header.frame_id;
 			let mut frame = frame.clone();
-			frame.commands.unreliability.clear();
+			frame.commands.unreliable.clear();
 			self.schedule_retransmit(
 				frame,
 				original_grame_id,
@@ -236,7 +236,7 @@ impl FrameBuiltListener for RetransmitterImpl {
 
 
 impl DisconnectedStatus for RetransmitterImpl {
-	fn disconnected(&mut self, now: &Instant) -> bool {
+	fn disconnected(&mut self, _: &Instant) -> bool {
 		self.max_retransmit_count >= RetransmitterImpl::RETRANSMIT_LIMIT
 	}
 }
@@ -434,24 +434,24 @@ mod tests {
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
-		frame.commands.unreliability.push(ApplicationCommandDescription::new(
-			ApplicationCommandChannel::Unordered,
-			ApplicationCommand::TestSimple("".to_string()),
+		frame.commands.unreliable.push(ApplicationCommandDescription::new(
+            ApplicationCommandChannel::ReliableUnordered,
+            ApplicationCommand::TestSimple("".to_string()),
 		));
 		let now = Instant::now();
 		handler.on_frame_built(&frame, &now);
 		
 		let now = now.add(handler.ack_wait_duration);
-		assert!(matches!(handler.get_retransmit_frame(&now,2), Option::Some(frame) if frame.commands.unreliability.is_empty()))
+		assert!(matches!(handler.get_retransmit_frame(&now,2), Option::Some(frame) if frame.commands.unreliable.is_empty()))
 	}
 	
 	
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.commands.reliability.push(
+		frame.commands.reliable.push(
 			ApplicationCommandDescription::new(
-				ApplicationCommandChannel::Unordered,
-				ApplicationCommand::TestSimple("".to_string()),
+                ApplicationCommandChannel::ReliableUnordered,
+                ApplicationCommand::TestSimple("".to_string()),
 			));
 		frame
 	}

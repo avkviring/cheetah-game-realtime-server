@@ -13,6 +13,7 @@ pub mod header;
 /// Управление рассылкой подтверждения о приеме пакетов
 /// - подтверждается [frame.header.frame_id], а не [frame.get_original_id()]
 ///
+#[derive(Debug)]
 pub struct AckSender {
 	///
 	/// Кольцевой буфер c frame_id,
@@ -120,7 +121,7 @@ impl FrameBuilder for AckSender {
 impl FrameReceivedListener for AckSender {
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		// если нет reliability команд - то подтверждать не надо
-		if !frame.commands.reliability.is_empty() {
+		if !frame.commands.reliable.is_empty() {
 			let frame_id = frame.header.frame_id;
 			
 			// записываем frame_id в буфер
@@ -174,7 +175,7 @@ mod tests {
 		let mut reliable = AckSender::default();
 		let time = Instant::now();
 		let mut frame = Frame::new(10);
-		frame.commands.reliability.push(create_command());
+		frame.commands.reliable.push(create_command());
 		reliable.on_frame_received(&frame, &time);
 		assert_eq!(reliable.contains_self_data(&time), false);
 		assert_eq!(reliable.contains_self_data(&time.add(AckSender::SCHEDULE_SEND_TIME)), true);
@@ -189,7 +190,7 @@ mod tests {
 		let mut time = Instant::now();
 		
 		let mut in_frame = Frame::new(10);
-		in_frame.commands.reliability.push(create_command());
+		in_frame.commands.reliable.push(create_command());
 		reliable.on_frame_received(&in_frame, &time);
 		
 		time = time.add(AckSender::SCHEDULE_SEND_TIME);
@@ -212,7 +213,7 @@ mod tests {
 		
 		for i in 0..AckSender::BUFFER_SIZE {
 			let mut in_frame = Frame::new(10 + i as u64);
-			in_frame.commands.reliability.push(create_command());
+			in_frame.commands.reliable.push(create_command());
 			reliable.on_frame_received(&in_frame, &time);
 		}
 		
@@ -240,14 +241,14 @@ mod tests {
 		let time = Instant::now();
 		
 		let mut frame_a = Frame::new(10);
-		frame_a.commands.reliability.push(ApplicationCommandDescription::new(
-			ApplicationCommandChannel::Unordered,
-			ApplicationCommand::TestSimple("".to_string()),
+		frame_a.commands.reliable.push(ApplicationCommandDescription::new(
+            ApplicationCommandChannel::ReliableUnordered,
+            ApplicationCommand::TestSimple("".to_string()),
 		));
 		reliable.on_frame_received(&frame_a, &time);
 		
 		let mut frame_b = Frame::new(10 + AckFrameHeader::CAPACITY as u64 + 1);
-		frame_b.commands.reliability.push(create_command());
+		frame_b.commands.reliable.push(create_command());
 		reliable.on_frame_received(&frame_b, &time);
 		
 		let mut out_frame = Frame::new(20);
@@ -261,8 +262,8 @@ mod tests {
 	
 	fn create_command() -> ApplicationCommandDescription {
 		ApplicationCommandDescription::new(
-			ApplicationCommandChannel::Unordered,
-			ApplicationCommand::TestSimple("".to_string()),
+            ApplicationCommandChannel::ReliableUnordered,
+            ApplicationCommand::TestSimple("".to_string()),
 		)
 	}
 }

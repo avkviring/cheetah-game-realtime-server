@@ -6,12 +6,12 @@ use std::thread::JoinHandle;
 
 use cheetah_relay_common::commands::command::{CommandCode, S2CCommandUnion, S2CCommandWithMeta};
 use cheetah_relay_common::commands::command::event::EventCommand;
-use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64CounterC2SCommand, SetFloat64CounterCommand};
-use cheetah_relay_common::commands::command::load::LoadGameObjectCommand;
-use cheetah_relay_common::commands::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
+use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
+use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
-use cheetah_relay_common::commands::command::unload::UnloadGameObjectCommand;
+use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::hash::HashValue;
 
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, Server2ClientFFIConverter};
@@ -137,22 +137,22 @@ impl Clients {
 			}
 			Some(client_api) => {
 				let (client_command, command_code) = match command.command_type_c2s {
-					C2SCommandFFIType::Load =>
-						(LoadGameObjectCommand::from_ffi(command), LoadGameObjectCommand::COMMAND_CODE),
+					C2SCommandFFIType::Create =>
+						(CreateGameObjectCommand::from_ffi(command), CreateGameObjectCommand::COMMAND_CODE),
 					C2SCommandFFIType::IncrementLongCounter =>
-						(IncrementLongCounterC2SCommand::from_ffi(command), IncrementLongCounterC2SCommand::COMMAND_CODE),
+						(IncrementLongC2SCommand::from_ffi(command), IncrementLongC2SCommand::COMMAND_CODE),
 					C2SCommandFFIType::IncrementFloatCounter =>
-						(IncrementFloat64CounterC2SCommand::from_ffi(command), IncrementFloat64CounterC2SCommand::COMMAND_CODE),
+						(IncrementFloat64C2SCommand::from_ffi(command), IncrementFloat64C2SCommand::COMMAND_CODE),
 					C2SCommandFFIType::Structure =>
 						(StructureCommand::from_ffi(command), StructureCommand::COMMAND_CODE),
 					C2SCommandFFIType::Event =>
 						(EventCommand::from_ffi(command), EventCommand::COMMAND_CODE),
 					C2SCommandFFIType::Unload =>
-						(UnloadGameObjectCommand::from_ffi(command), UnloadGameObjectCommand::COMMAND_CODE),
+						(DeleteGameObjectCommand::from_ffi(command), DeleteGameObjectCommand::COMMAND_CODE),
 					C2SCommandFFIType::SetLongCounter =>
-						(SetLongCounterCommand::from_ffi(command), SetLongCounterCommand::COMMAND_CODE),
+						(SetLongCommand::from_ffi(command), SetLongCommand::COMMAND_CODE),
 					C2SCommandFFIType::SetFloatCounter =>
-						(SetFloat64CounterCommand::from_ffi(command), SetFloat64CounterCommand::COMMAND_CODE)
+						(SetFloat64Command::from_ffi(command), SetFloat64Command::COMMAND_CODE)
 				};
 				
 				log::info!("schedule command to server {:?}", client_command);
@@ -188,12 +188,12 @@ impl Clients {
 						log::info!("receive command from server {:?}", command);
 					}
 					match command.command {
-						S2CCommandUnion::Load(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::SetLongCounter(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::SetFloatCounter(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::Create(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::SetLong(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::SetFloat64(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::Event(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::Unload(command) => { command.to_ffi(command_ffi) }
+						S2CCommandUnion::Delete(command) => { command.to_ffi(command_ffi) }
 					};
 					command_ffi.meta_timestamp = command.meta.timestamp;
 					command_ffi.meta_source_client = command.meta.client;

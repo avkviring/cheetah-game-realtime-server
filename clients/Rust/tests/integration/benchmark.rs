@@ -76,7 +76,7 @@ fn benchmark_send_and_receive_commands() {
 				client_b,
 				|ffi: &Command| {
 					match ffi.command_type_s2c {
-						S2CCommandFFIType::Load => {}
+						S2CCommandFFIType::Create => {}
 						S2CCommandFFIType::SetFloatCounter => {
 							recv_count = recv_count + 1;
 						}
@@ -97,7 +97,7 @@ fn benchmark_send_and_receive_commands() {
 
 fn create_object_on_server(client: u16) -> ClientGameObjectId {
 	let mut ffi = Command::default();
-	ffi.command_type_c2s = C2SCommandFFIType::Load;
+	ffi.command_type_c2s = C2SCommandFFIType::Create;
 	let object_id = ClientGameObjectId::new(100, ClientOwner::CurrentClient);
 	ffi.object_id.set_from(&object_id);
 	ffi.access_group = 0b100;

@@ -56,7 +56,6 @@ impl<PeerAddress: Hash + Debug> UdpServer<PeerAddress> {
 						Some(mut frame) => {
 							let (commands, size) = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 							session.protocol.out_commands_collector.add_unsent_commands(commands);
-							let address = session.address.as_ref().unwrap();
 							channel.borrow_mut().send(address, &buffer[0..size]).ok().expect("write fail");
 						}
 					}

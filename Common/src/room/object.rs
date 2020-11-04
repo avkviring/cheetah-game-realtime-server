@@ -6,6 +6,7 @@ use crate::room::owner::ClientOwner;
 ///
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct ClientGameObjectId {
+
 	///
 	/// Создатель игрового объекта
 	///

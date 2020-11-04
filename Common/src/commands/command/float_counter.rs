@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::commands::command::GameObjectCommand;
 use crate::constants::FieldID;
 use crate::room::object::ClientGameObjectId;
 
@@ -8,10 +9,10 @@ use crate::room::object::ClientGameObjectId;
 /// - C->S
 ///
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub struct IncrementFloat64CounterC2SCommand {
-	pub object_id: ClientGameObjectId,
-	pub field_id: FieldID,
-	pub increment: f64,
+pub struct IncrementFloat64C2SCommand {
+    pub object_id: ClientGameObjectId,
+    pub field_id: FieldID,
+    pub increment: f64,
 }
 
 ///
@@ -19,8 +20,20 @@ pub struct IncrementFloat64CounterC2SCommand {
 /// - C->S, S->C
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SetFloat64CounterCommand {
-	pub object_id: ClientGameObjectId,
-	pub field_id: FieldID,
-	pub value: f64,
+pub struct SetFloat64Command {
+    pub object_id: ClientGameObjectId,
+    pub field_id: FieldID,
+    pub value: f64,
+}
+
+impl GameObjectCommand for IncrementFloat64C2SCommand {
+    fn get_object_id(&self) -> &ClientGameObjectId {
+        &self.object_id
+    }
+}
+
+impl GameObjectCommand for SetFloat64Command {
+    fn get_object_id(&self) -> &ClientGameObjectId {
+        &self.object_id
+    }
 }

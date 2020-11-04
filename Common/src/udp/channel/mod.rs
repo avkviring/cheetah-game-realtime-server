@@ -4,8 +4,6 @@ use std::io::{Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 use std::rc::Rc;
 
-use log::Level::Trace;
-
 ///
 /// Абстракция для канала данных
 /// - две реализации - UDP и Stub (для тестов)

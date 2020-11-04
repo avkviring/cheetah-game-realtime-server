@@ -7,7 +7,7 @@ use crate::udp::protocol::frame::Frame;
 ///
 /// Если за определенное время не было входящих пакетов - считаем что связь разорвана
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DisconnectWatcher {
 	pub last_in_frame_time: Option<Instant>
 }

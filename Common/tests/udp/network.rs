@@ -3,20 +3,20 @@ use std::str::FromStr;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::udp::channel::{Channel, Transport, TransportError, UDPTransport};
+use cheetah_relay_common::udp::channel::{Transport, TransportError, UDPTransport};
 use cheetah_relay_common::udp::client::UdpClient;
-use cheetah_relay_common::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+use cheetah_relay_common::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel};
 use cheetah_relay_common::udp::server::UdpServer;
 
-use crate::udp::stub::{create_user_private_key_stub, create_user_public_key_stub, new_ping_command};
+use crate::udp::stub::{create_user_private_key_stub, create_user_public_key_stub};
 
 #[test]
 fn should_send_throught_udp() {
 	let transport = UDPTransport::default();
 	let (mut server, public_key, mut client) = setup_udp(transport);
 	
-	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test reliability".to_string()));
-	client.protocol.out_commands_collector.add_unreliability_command(new_ping_command("test unreliability".to_string()));
+	client.protocol.out_commands_collector.add_command(ApplicationCommandChannel::ReliableUnordered, ApplicationCommand::TestSimple("test reliability".to_string()));
+	client.protocol.out_commands_collector.add_command(ApplicationCommandChannel::UnreliableUnordered, ApplicationCommand::TestSimple("test unreliability".to_string()));
 	
 	let now = Instant::now();
 	for _ in 0..10 {
