@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use crate::udp::protocol::frame::{Frame, FrameId};
+use std::fmt::Debug;
 
 pub mod codec;
 pub mod frame;
@@ -38,7 +39,7 @@ pub trait FrameReceivedListener {
 ///
 /// Наполнение данными исходящего фрейма
 ///
-pub trait FrameBuilder {
+pub trait FrameBuilder: Debug {
 	///
 	/// Есть ли собственные данные для отправки?
 	///

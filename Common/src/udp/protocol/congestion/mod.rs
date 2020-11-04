@@ -7,7 +7,7 @@ use crate::udp::protocol::reliable::retransmit::Retransmitter;
 ///
 /// Контроль скорости для устранения перегрузок канала
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct CongestionControl {
 	last_balanced: Option<Instant>,
 	

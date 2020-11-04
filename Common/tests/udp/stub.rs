@@ -143,8 +143,3 @@ pub fn create_user_public_key_stub() -> UserPublicKey {
 	OsRng.fill_bytes(&mut result);
 	result
 }
-
-pub fn new_ping_command(ping: String) -> ApplicationCommandDescription {
-	ApplicationCommandDescription::new(ApplicationCommandChannel::Unordered, ApplicationCommand::TestSimple(ping))
-}
-

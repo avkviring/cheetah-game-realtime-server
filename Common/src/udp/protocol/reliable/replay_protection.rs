@@ -10,6 +10,7 @@ use crate::udp::protocol::frame::{Frame, FrameId};
 /// - если пришел очень старый фрейм, которые уже не влазить в буфер - то мы не можем однозначно сказать был ли он или нет,
 ///   в таком случаем мы разрываем соединения
 ///
+#[derive(Debug)]
 pub struct FrameReplayProtection {
 	pub max_frame_id: FrameId,
 	pub received_frames: [FrameId; FrameReplayProtection::BUFFER_SIZE],

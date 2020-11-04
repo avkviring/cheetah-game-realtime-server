@@ -3,10 +3,10 @@ use std::time::{Duration, Instant};
 
 use cheetah_relay_common::udp::channel::Transport;
 use cheetah_relay_common::udp::client::UdpClient;
-use cheetah_relay_common::udp::protocol::frame::applications::ApplicationCommand;
+use cheetah_relay_common::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel};
 use cheetah_relay_common::udp::server::UdpServer;
 
-use crate::udp::stub::{AddressStub, ChannelQuality, create_user_private_key_stub, create_user_public_key_stub, new_ping_command, TransportStub};
+use crate::udp::stub::{AddressStub, ChannelQuality, create_user_private_key_stub, create_user_public_key_stub, TransportStub};
 
 ///
 /// Тестирование отправки команд с клиента на сервер
@@ -15,9 +15,10 @@ use crate::udp::stub::{AddressStub, ChannelQuality, create_user_private_key_stub
 fn should_send_from_client() {
 	let transport = TransportStub::new(ChannelQuality::default());
 	let (mut server, public_key, mut client) = setup(transport);
-	
-	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test reliability".to_string()));
-	client.protocol.out_commands_collector.add_unreliability_command(new_ping_command("test unreliability".to_string()));
+
+
+	client.protocol.out_commands_collector.add_command(ApplicationCommandChannel::ReliableUnordered, ApplicationCommand::TestSimple("test reliability".to_string()));
+	client.protocol.out_commands_collector.add_command(ApplicationCommandChannel::UnreliableUnordered, ApplicationCommand::TestSimple("test unreliability".to_string()));
 	
 	let now = Instant::now();
 	client.cycle(&now);
@@ -44,7 +45,8 @@ fn should_send_from_server() {
 	
 	let protocol = &mut server.get_user_sessions(&public_key).protocol;
 	let ping_message = "ping from server".to_string();
-	protocol.out_commands_collector.add_reliability_command(new_ping_command(ping_message));
+	protocol.out_commands_collector.add_command(ApplicationCommandChannel::ReliableUnordered, ApplicationCommand::TestSimple(ping_message));
+
 	server.cycle(&now);
 	client.cycle(&now);
 	
@@ -62,7 +64,8 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	let transport = TransportStub::new(channel_quality);
 	
 	let (mut server, public_key, mut client) = setup(transport);
-	client.protocol.out_commands_collector.add_reliability_command(new_ping_command("test".to_string()));
+	client.protocol.out_commands_collector.add_command(ApplicationCommandChannel::ReliableUnordered, ApplicationCommand::TestSimple("test".to_string()));
+
 	
 	let mut now = Instant::now();
 	for i in 0..6 {

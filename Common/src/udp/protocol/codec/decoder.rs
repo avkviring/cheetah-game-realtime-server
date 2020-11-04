@@ -75,8 +75,8 @@ impl Frame {
 			headers: additional_headers,
 			commands: ApplicationCommands
 			{
-				reliability,
-				unreliability,
+                reliable: reliability,
+				unreliable: unreliability,
 			},
 		})
 	}
@@ -112,13 +112,13 @@ impl Frame {
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		let unreliability_remaining =
 			Frame::serialized_commands(
-				&mut self.commands.unreliability,
+				&mut self.commands.unreliable,
 				frame_cursor.position(),
 				&mut commands_cursor);
 		
 		let reliability_remaining =
 			Frame::serialized_commands(
-				&mut self.commands.reliability,
+				&mut self.commands.reliable,
 				frame_cursor.position(),
 				&mut commands_cursor);
 		
@@ -139,7 +139,7 @@ impl Frame {
 		
 		frame_cursor.write_all(&vec).unwrap();
 		
-		(ApplicationCommands { reliability: reliability_remaining, unreliability: unreliability_remaining }, frame_cursor.position() as usize)
+		(ApplicationCommands { reliable: reliability_remaining, unreliable: unreliability_remaining }, frame_cursor.position() as usize)
 	}
 	
 	fn serialized_commands(commands: &mut Vec<ApplicationCommandDescription>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommandDescription> {
@@ -194,10 +194,10 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
-		frame.commands.reliability.push(
+		frame.commands.reliable.push(
 			ApplicationCommandDescription::new(
-				ApplicationCommandChannel::Unordered,
-				ApplicationCommand::TestSimple("test".to_string()),
+                ApplicationCommandChannel::ReliableUnordered,
+                ApplicationCommand::TestSimple("test".to_string()),
 			));
 		let mut buffer = [0; 1024];
 		let (_, size) = frame.encode(&mut cipher, &mut buffer);
@@ -217,10 +217,10 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		const COMMAND_COUNT: usize = 400;
 		for _ in 0..COMMAND_COUNT {
-			frame.commands.reliability.push(
+			frame.commands.reliable.push(
 				ApplicationCommandDescription::new(
-					ApplicationCommandChannel::Unordered,
-					ApplicationCommand::TestSimple("1234567890".to_string()),
+                    ApplicationCommandChannel::ReliableUnordered,
+                    ApplicationCommand::TestSimple("1234567890".to_string()),
 				)
 			);
 		}
@@ -229,7 +229,7 @@ pub mod tests {
 		let buffer = &buffer[0..size];
 		
 		assert!(buffer.len() <= Frame::MAX_FRAME_SIZE);
-		assert_eq!(remaining_commands.reliability.len() + frame.commands.reliability.len(), COMMAND_COUNT);
+		assert_eq!(remaining_commands.reliable.len() + frame.commands.reliable.len(), COMMAND_COUNT);
 		
 		let mut cursor = Cursor::new(buffer);
 		let (header, additional_header) = Frame::decode_headers(&mut cursor).unwrap();

@@ -1,5 +1,5 @@
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
-use cheetah_relay_common::commands::command::long_counter::{IncrementLongCounterC2SCommand, SetLongCounterCommand};
+use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 use cheetah_relay_common::commands::command::C2SCommandUnion;
@@ -7,7 +7,7 @@ use cheetah_relay_common::commands::command::C2SCommandUnion;
 #[test]
 fn should_to_ffi() {
 	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
-	let command = SetLongCounterCommand {
+	let command = SetLongCommand {
 		object_id: object_id.clone(),
 		field_id: 10,
 		value: 1,
@@ -30,7 +30,7 @@ fn should_set_float_counter_from_ffi() {
 	ffi.object_id.set_from(&object_id);
 	ffi.field_id = 10;
 	ffi.long_value = 1;
-	let command = SetLongCounterCommand::from_ffi(&ffi);
+	let command = SetLongCommand::from_ffi(&ffi);
 	assert!(matches!(&command,C2SCommandUnion::SetLongCounter(ref long_counter) if long_counter.object_id == object_id));
 	assert!(matches!(&command,C2SCommandUnion::SetLongCounter(ref long_counter) if long_counter.field_id == 10));
 	assert!(matches!(&command,C2SCommandUnion::SetLongCounter(ref long_counter) if long_counter.value == 1));
@@ -44,7 +44,7 @@ fn should_increment_float_counter_from_ffi() {
 	ffi.object_id.set_from(&object_id);
 	ffi.field_id = 10;
 	ffi.long_value = 1;
-	let command = IncrementLongCounterC2SCommand::from_ffi(&ffi);
+	let command = IncrementLongC2SCommand::from_ffi(&ffi);
 	assert!(matches!(&command,C2SCommandUnion::IncrementLongCounter(ref long_counter) if long_counter.object_id == object_id));
 	assert!(matches!(&command,C2SCommandUnion::IncrementLongCounter(ref long_counter) if long_counter.field_id == 10));
 	assert!(matches!(&command,C2SCommandUnion::IncrementLongCounter(ref long_counter) if long_counter.increment == 1));

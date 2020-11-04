@@ -12,6 +12,7 @@ use crate::udp::protocol::frame::FrameId;
 /// - количество повторно отправленных фреймов
 /// - количество излишне повторно отправленных фреймов
 ///
+#[derive(Debug)]
 pub struct RetransmitStatistics {
 	//
 	// Статистика по излишне отправленным фреймам

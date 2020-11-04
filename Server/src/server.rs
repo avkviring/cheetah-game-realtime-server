@@ -1,8 +1,9 @@
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread::{Builder, JoinHandle};
+use crate::network::rooms::Rooms;
 
-use crate::rooms::Rooms;
+//use crate::rooms::Rooms;
 
 pub struct Server {
 	pub rooms: Arc<Mutex<Rooms>>,
@@ -37,22 +38,23 @@ impl ServerBuilder {
 
 impl Server {
 	pub fn new(listen_address: String, auto_create_rooms_and_clients: bool) -> Self {
-		//let (sender, receiver) = std::sync::mpsc::channel();
-		
-		let rooms = Arc::new(Mutex::new(Rooms::new(auto_create_rooms_and_clients)));
-		let cloned_rooms = rooms.clone();
-		let tcp_acceptor_handler = Builder::new()
-			.name("tcp acceptor".to_string())
-			.spawn(move || {
-				// let mut server = TCPAcceptor::new(listen_address, cloned_rooms, receiver);
-				// server.start();
-			}).unwrap();
-		
-		Server {
-			rooms,
-			tcp_acceptor_handler: Option::Some(tcp_acceptor_handler),
-			//sender,
-		}
+		// //let (sender, receiver) = std::sync::mpsc::channel();
+		//
+		// let rooms = Arc::new(Mutex::new(Rooms::new(auto_create_rooms_and_clients)));
+		// let cloned_rooms = rooms.clone();
+		// let tcp_acceptor_handler = Builder::new()
+		// 	.name("tcp acceptor".to_string())
+		// 	.spawn(move || {
+		// 		// let mut server = TCPAcceptor::new(listen_address, cloned_rooms, receiver);
+		// 		// server.start();
+		// 	}).unwrap();
+		//
+		// Server {
+		// 	rooms,
+		// 	tcp_acceptor_handler: Option::Some(tcp_acceptor_handler),
+		// 	//sender,
+		// }
+		panic!();
 	}
 }
 

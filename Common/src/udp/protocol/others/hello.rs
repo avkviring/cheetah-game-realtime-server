@@ -7,7 +7,7 @@ use crate::udp::protocol::FrameBuilder;
 ///
 /// Однократная отправка HELLO
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct HelloSender {
 	sent: bool
 }

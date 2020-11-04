@@ -21,6 +21,7 @@ pub trait RoundTripTime {
 	fn get_rtt(&self) -> Option<Duration>;
 }
 
+#[derive(Debug)]
 pub struct RoundTripTimeImpl {
 	start_time: Instant,
 	scheduled_response: Option<RoundTripTimeHeader>,

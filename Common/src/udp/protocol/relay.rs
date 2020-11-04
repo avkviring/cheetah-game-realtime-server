@@ -20,6 +20,8 @@ use crate::udp::protocol::reliable::retransmit::RetransmitterImpl;
 /// - надежная доставка
 /// - защита от повторов
 ///
+
+#[derive(Debug)]
 pub struct RelayProtocol {
 	pub next_frame_id: u64,
 	pub replay_protection: FrameReplayProtection,

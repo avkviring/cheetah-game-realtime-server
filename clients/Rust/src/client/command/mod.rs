@@ -3,12 +3,12 @@ use cheetah_relay_common::commands::command::C2SCommandUnion;
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
 use cheetah_relay_common::commands::command::event::EventCommand;
-use cheetah_relay_common::commands::command::float_counter::{SetFloat64CounterCommand};
-use cheetah_relay_common::commands::command::load::LoadGameObjectCommand;
-use cheetah_relay_common::commands::command::long_counter::{SetLongCounterCommand};
+use cheetah_relay_common::commands::command::float_counter::{SetFloat64Command};
+use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
+use cheetah_relay_common::commands::command::long_counter::{SetLongCommand};
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
-use cheetah_relay_common::commands::command::unload::UnloadGameObjectCommand;
+use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use crate::client::C2SCommandWithMeta;
 
 pub mod load;

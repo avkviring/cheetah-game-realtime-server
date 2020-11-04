@@ -7,7 +7,7 @@ use crate::udp::protocol::frame::Frame;
 ///
 /// Поддержание канала в открытом состоянии если нет прикладных команд
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct KeepAlive {
 	last_send: Option<Instant>
 }

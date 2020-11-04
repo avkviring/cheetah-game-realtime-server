@@ -76,6 +76,6 @@ impl Frame {
 	/// Фрейм с надежной доставкой?
 	/// 
 	pub fn is_reliability(&self) -> bool {
-		!self.commands.reliability.is_empty()
+		!self.commands.reliable.is_empty()
 	}
 }

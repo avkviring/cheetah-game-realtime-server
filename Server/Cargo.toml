@@ -12,7 +12,6 @@ log = "0.4"
 stderrlog = "0.4.3"
 indexmap = "1.5.1"
 ctrlc = "3.1.6"
-mio = { version = "0.7.0", features = ["os-poll", "tcp"]}
 cheetah_relay_common = {path = "../Common/"}
 
 [dev-dependencies]

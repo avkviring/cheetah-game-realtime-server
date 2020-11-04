@@ -9,7 +9,7 @@ use crate::udp::protocol::frame::headers::Header;
 ///
 /// Быстрое закрытие соединения по команде с удаленной стороны
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DisconnectHandler {
 	///
 	/// Соединение разорвано удаленной стороной
