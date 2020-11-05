@@ -1,10 +1,10 @@
 use std::ops::Add;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::udp::channel::Transport;
-use cheetah_relay_common::udp::client::UdpClient;
-use cheetah_relay_common::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel};
-use cheetah_relay_common::udp::server::UdpServer;
+use cheetah_relay_common::protocol::channel::Transport;
+use cheetah_relay_common::protocol::client::UdpClient;
+use cheetah_relay_common::protocol::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel};
+use cheetah_relay_common::protocol::server::UdpServer;
 
 use crate::udp::stub::{AddressStub, ChannelQuality, create_user_private_key_stub, create_user_public_key_stub, TransportStub};
 

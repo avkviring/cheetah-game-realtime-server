@@ -1,35 +1,13 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::hash::Hash;
-use std::ops::{Range, RangeInclusive};
+use std::ops::RangeInclusive;
 use std::rc::Rc;
 
 use rand::{Rng, RngCore};
 use rand::rngs::OsRng;
 
 use cheetah_relay_common::commands::hash::{UserPrivateKey, UserPublicKey};
-use cheetah_relay_common::udp::channel::{Channel, Transport, TransportError};
-use cheetah_relay_common::udp::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
-
-#[derive(Hash, Clone, Debug, Eq, PartialEq, Copy)]
-pub struct AddressStub {
-	pub id: u64
-}
-
-impl AddressStub {
-	pub fn new(id: u64) -> Self {
-		Self {
-			id
-		}
-	}
-}
-
-pub struct TransportStub {
-	pub source_to_packet: Rc<RefCell<HashMap<AddressStub, Vec<PacketStub>>>>,
-	pub channel_quality: ChannelQuality,
-}
-
 
 #[derive(Default, Clone)]
 pub struct ChannelQuality {
