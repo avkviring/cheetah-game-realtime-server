@@ -61,7 +61,7 @@ impl Frame {
 	/// - для всех остальных id фрейма
 	/// 
 	pub fn get_original_frame_id(&self) -> FrameId {
-		match self.headers.first(Header::predicate_RetransmitFrame) {
+		match self.headers.first(Header::predicate_retransmit_frame) {
 			None => {
 				self.header.frame_id
 			}

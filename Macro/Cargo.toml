@@ -10,6 +10,7 @@ edition = "2018"
 syn = "1.0"
 quote = "1.0"
 proc-macro2 = "1.0.24"
+Inflector = "0.11.4"
 
 [lib]
 proc-macro = true

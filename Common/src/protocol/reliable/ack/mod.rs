@@ -151,7 +151,7 @@ mod tests {
 	use std::time::Instant;
 	
 	use crate::protocol::{FrameBuilder, FrameReceivedListener};
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommandChannel};
+	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use crate::protocol::frame::Frame;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::reliable::ack::AckSender;
@@ -197,7 +197,7 @@ mod tests {
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 		
-		let header = out_frame.headers.first(Header::predicate_AckFrame);
+		let header = out_frame.headers.first(Header::predicate_ack_frame);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == in_frame.header.frame_id));
 	}
 	
@@ -221,7 +221,7 @@ mod tests {
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 		
-		let header: Option<&AckFrameHeader> = out_frame.headers.first(Header::predicate_AckFrame);
+		let header: Option<&AckFrameHeader> = out_frame.headers.first(Header::predicate_ack_frame);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == 10));
 		let frames = header.unwrap().get_frames();
 		
@@ -242,8 +242,8 @@ mod tests {
 		
 		let mut frame_a = Frame::new(10);
 		frame_a.commands.reliable.push(ApplicationCommandDescription::new(
-            ApplicationCommandChannel::ReliableUnordered,
-            ApplicationCommand::TestSimple("".to_string()),
+			ApplicationCommandChannel::ReliableUnordered,
+			ApplicationCommand::TestSimple("".to_string()),
 		));
 		reliable.on_frame_received(&frame_a, &time);
 		
@@ -254,7 +254,7 @@ mod tests {
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 		
-		let headers: Vec<&AckFrameHeader> = out_frame.headers.find(Header::predicate_AckFrame);
+		let headers: Vec<&AckFrameHeader> = out_frame.headers.find(Header::predicate_ack_frame);
 		assert_eq!(headers.len(), 2);
 		assert_eq!(headers[0].start_frame_id, frame_a.header.frame_id);
 		assert_eq!(headers[1].start_frame_id, frame_b.header.frame_id);
@@ -262,8 +262,8 @@ mod tests {
 	
 	fn create_command() -> ApplicationCommandDescription {
 		ApplicationCommandDescription::new(
-            ApplicationCommandChannel::ReliableUnordered,
-            ApplicationCommand::TestSimple("".to_string()),
+			ApplicationCommandChannel::ReliableUnordered,
+			ApplicationCommand::TestSimple("".to_string()),
 		)
 	}
 }

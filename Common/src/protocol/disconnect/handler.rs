@@ -55,7 +55,7 @@ impl FrameBuilder for DisconnectHandler {
 
 impl FrameReceivedListener for DisconnectHandler {
 	fn on_frame_received(&mut self, frame: &Frame, _: &Instant) {
-		let headers: Option<&DisconnectHeader> = frame.headers.first(Header::predicate_Disconnect);
+		let headers: Option<&DisconnectHeader> = frame.headers.first(Header::predicate_disconnect);
 		self.disconnected_by_peer = headers.is_some();
 	}
 }
@@ -103,6 +103,6 @@ mod tests {
 		let mut handler = DisconnectHandler::default();
 		let mut frame = Frame::new(10);
 		handler.build_frame(&mut frame, &now);
-		assert!(matches!(frame.headers.first(Header::predicate_Disconnect), Option::None));
+		assert!(matches!(frame.headers.first(Header::predicate_disconnect), Option::None));
 	}
 }

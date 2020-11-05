@@ -195,7 +195,7 @@ impl FrameReceivedListener for RetransmitterImpl {
 	/// Обрабатываем подтверждения фреймов
 	///
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
-		let ack_headers: Vec<&AckFrameHeader> = frame.headers.find(Header::predicate_AckFrame);
+		let ack_headers: Vec<&AckFrameHeader> = frame.headers.find(Header::predicate_ack_frame);
 		ack_headers.iter().for_each(|ack_header| {
 			ack_header.get_frames().iter().for_each(|frame_id| {
 				let original_frame_id = match self.retransmit_to_original.get(frame_id) {
@@ -290,7 +290,7 @@ mod tests {
 				Option::Some(frame)
 				if frame.header.frame_id == 2
 				&&
-				frame.headers.first(Header::predicate_RetransmitFrame).unwrap().original_frame_id==original_frame.header.frame_id
+				frame.headers.first(Header::predicate_retransmit_frame).unwrap().original_frame_id==original_frame.header.frame_id
 			)
 		);
 	}

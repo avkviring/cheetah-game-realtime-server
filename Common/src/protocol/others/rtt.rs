@@ -68,12 +68,12 @@ impl FrameReceivedListener for RoundTripTimeImpl {
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		
 		// игнорируем повторно отосланные фреймы, так как они не показательны для измерения rtt
-		if frame.headers.first(Header::predicate_RetransmitFrame).is_some() {
+		if frame.headers.first(Header::predicate_retransmit_frame).is_some() {
 			return;
 		}
 		
 		// запрос на измерение от удаленной стороны
-		let request_header: Option<&RoundTripTimeHeader> = frame.headers.first(Header::predicate_RoundTripTimeRequest);
+		let request_header: Option<&RoundTripTimeHeader> = frame.headers.first(Header::predicate_round_trip_time_request);
 		match request_header {
 			None => {}
 			Some(header) => {
@@ -82,7 +82,7 @@ impl FrameReceivedListener for RoundTripTimeImpl {
 		}
 		
 		// нам пришло наше же измерение от удаленной стороны
-		let response_header: Option<&RoundTripTimeHeader> = frame.headers.first(Header::predicate_RoundTripTimeResponse);
+		let response_header: Option<&RoundTripTimeHeader> = frame.headers.first(Header::predicate_round_trip_time_response);
 		match response_header {
 			None => {}
 			Some(header) => {
@@ -183,7 +183,7 @@ mod tests {
 		let mut output_frame = Frame::new(10);
 		handler.build_frame(&mut output_frame, &now);
 		
-		assert!(matches!(output_frame.headers.first(Header::predicate_RoundTripTimeResponse), Option::None));
+		assert!(matches!(output_frame.headers.first(Header::predicate_round_trip_time_response), Option::None));
 	}
 	
 	///
