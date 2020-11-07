@@ -26,5 +26,5 @@ fn should_from_ffi() {
 	ffi.command_type_c2s = C2SCommandFFIType::Unload;
 	ffi.object_id.set_from(&object_id);
 	let command = DeleteGameObjectCommand::from_ffi(&ffi);
-	assert!(matches!(&command,C2SCommandUnion::Unload(ref unload) if unload.object_id == object_id));
+	assert!(matches!(&command,C2SCommandUnion::Delete(ref unload) if unload.object_id == object_id));
 }

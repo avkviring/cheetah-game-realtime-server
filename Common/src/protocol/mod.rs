@@ -63,7 +63,7 @@ pub trait FrameBuiltListener {
 /// Статус разрыва связи в канале
 ///
 pub trait DisconnectedStatus {
-	fn disconnected(&mut self, now: &Instant) -> bool;
+	fn disconnected(&self, now: &Instant) -> bool;
 }
 
 

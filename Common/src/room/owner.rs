@@ -1,5 +1,6 @@
-use crate::constants::ClientId;
 use serde::{Deserialize, Serialize};
+
+use crate::commands::hash::UserPublicKey;
 
 ///
 /// владелец - клиент или root
@@ -8,6 +9,6 @@ use serde::{Deserialize, Serialize};
 pub enum ClientOwner {
 	Root,
 	CurrentClient,
-	Client(ClientId),
+	Client(UserPublicKey),
 }
 

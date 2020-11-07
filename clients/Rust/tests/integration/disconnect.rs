@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-use cheetah_relay_common::commands::hash::HashValue;
+use cheetah_relay_common::commands::hash::RoomId;
 
 use cheetah_relay::room::request::RoomRequest;
 use cheetah_relay_client::{destroy_client, do_get_connection_status};
@@ -13,7 +13,7 @@ use crate::integration::{add_wating_client_to_room, setup_client, setup_logger, 
 fn should_disconnect_to_server_when_server_closed() {
 	setup_logger();
 	let address = "127.0.0.1:7002";
-	let client_hash = HashValue::from("client_hash");
+	let client_hash = RoomId::from("client_hash");
 	
 	let (server, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);
@@ -37,7 +37,7 @@ fn should_disconnect_to_server_when_server_closed() {
 fn should_disconnect_client() {
 	setup_logger();
 	let address = "127.0.0.1:7003";
-	let client_hash = HashValue::from("client_hash");
+	let client_hash = RoomId::from("client_hash");
 	
 	let (server, room_hash, rooms) = setup_server(address);
 	add_wating_client_to_room(rooms.clone(), &room_hash, &client_hash);

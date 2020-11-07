@@ -27,7 +27,7 @@ pub enum C2SCommandUnion {
     IncrementFloatCounter(IncrementFloat64C2SCommand),
     Structure(StructureCommand),
     Event(EventCommand),
-    Unload(DeleteGameObjectCommand),
+    Delete(DeleteGameObjectCommand),
     Test(String),
 }
 

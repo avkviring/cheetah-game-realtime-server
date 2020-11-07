@@ -1,4 +1,4 @@
-use cheetah_relay_common::constants::ClientId;
+use cheetah_relay_common::commands::hash::UserPublicKey;
 use cheetah_relay_common::room::object::ClientGameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 
@@ -20,7 +20,7 @@ pub struct ServerGameObjectId {
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub enum ServerOwner {
 	Root,
-	Client(ClientId),
+	Client(UserPublicKey),
 }
 
 impl ServerGameObjectId {
@@ -28,7 +28,7 @@ impl ServerGameObjectId {
 	/// Конвертация клиентского id в серверный
 	/// если current_client - None, то конвертация возможна только для Owner != ClientOwner::CurrentClient
 	///
-	pub fn new(current_client: Option<ClientId>, client_object_id: &ClientGameObjectId) -> ServerGameObjectId {
+	pub fn new(current_client: Option<UserPublicKey>, client_object_id: &ClientGameObjectId) -> ServerGameObjectId {
 		ServerGameObjectId {
 			id: client_object_id.id,
 			owner: match client_object_id.owner {
@@ -42,7 +42,7 @@ impl ServerGameObjectId {
 	/// Конвертация серверного id в клиентский
 	/// если current_client - None, то конвертация возможна только для Owner = Root
 	///
-	pub fn to_client_object_id(&self, current_client: Option<ClientId>) -> ClientGameObjectId {
+	pub fn to_client_object_id(&self, current_client: Option<UserPublicKey>) -> ClientGameObjectId {
 		ClientGameObjectId {
 			id: self.id,
 			owner: match self.owner {

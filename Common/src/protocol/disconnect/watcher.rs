@@ -23,7 +23,7 @@ impl FrameReceivedListener for DisconnectWatcher {
 }
 
 impl DisconnectedStatus for DisconnectWatcher {
-	fn disconnected(&mut self, now: &Instant) -> bool {
+	fn disconnected(&self, now: &Instant) -> bool {
 		match self.last_in_frame_time {
 			None => {
 				false

@@ -21,7 +21,7 @@ pub struct ApplicationCommands {
 }
 
 impl ApplicationCommands {
-    pub fn add(&mut self, command: &Self) {
+    pub fn add_first(&mut self, command: &Self) {
         self.reliable.extend_from_slice(&command.reliable);
         self.unreliable.extend_from_slice(&command.unreliable);
     }
@@ -148,7 +148,7 @@ impl ApplicationCommand {
                     C2SCommandUnion::Event(c) => {
                         Option::Some(&c.object_id)
                     }
-                    C2SCommandUnion::Unload(c) => {
+                    C2SCommandUnion::Delete(c) => {
                         Option::Some(&c.object_id)
                     }
                     C2SCommandUnion::Test(c) => {

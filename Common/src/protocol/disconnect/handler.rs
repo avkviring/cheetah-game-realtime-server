@@ -61,7 +61,7 @@ impl FrameReceivedListener for DisconnectHandler {
 }
 
 impl DisconnectedStatus for DisconnectHandler {
-	fn disconnected(&mut self, _: &Instant) -> bool {
+	fn disconnected(&self, _: &Instant) -> bool {
 		self.disconnected_by_peer || self.disconnected_by_self
 	}
 }

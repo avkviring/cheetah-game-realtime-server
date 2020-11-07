@@ -20,7 +20,6 @@ use crate::protocol::reliable::retransmit::RetransmitterImpl;
 /// - надежная доставка
 /// - защита от повторов
 ///
-
 #[derive(Debug)]
 pub struct RelayProtocol {
 	pub next_frame_id: u64,
@@ -35,10 +34,10 @@ pub struct RelayProtocol {
 	pub keep_alive: KeepAlive,
 	pub additional_frame_builders: Vec<Box<dyn FrameBuilder>>,
 	pub congestion_control: CongestionControl,
+	pub in_frame_counter: u64,
 }
-
-impl RelayProtocol {
-	pub fn new() -> Self {
+impl Default for RelayProtocol {
+	fn default() -> Self {
 		Self {
 			next_frame_id: 1,
 			disconnect_watcher: Default::default(),
@@ -52,9 +51,11 @@ impl RelayProtocol {
 			rtt: Default::default(),
 			keep_alive: Default::default(),
 			congestion_control: Default::default(),
+			in_frame_counter: Default::default(),
 		}
 	}
-	
+}
+impl RelayProtocol {
 	
 	///
 	/// Данный метод необходимо периодически вызывать
@@ -68,6 +69,7 @@ impl RelayProtocol {
 	/// Обработка входящего фрейма
 	///
 	pub fn on_frame_received(&mut self, frame: Frame, now: &Instant) {
+		self.in_frame_counter += 1;
 		self.disconnect_watcher.on_frame_received(&frame, now);
 		match self.replay_protection.set_and_check(&frame, now) {
 			Ok(replayed) => {
@@ -86,7 +88,6 @@ impl RelayProtocol {
 	/// Создание фрейма для отправки
 	///
 	pub fn build_next_frame(&mut self, now: &Instant) -> Option<Frame> {
-		
 		match self.get_next_retransmit_frame(now) {
 			None => {}
 			Some(frame) => {
@@ -132,10 +133,17 @@ impl RelayProtocol {
 	///
 	/// Разорвана ли связь?
 	///
-	pub fn disconnected(&mut self, now: Instant) -> bool {
-		self.retransmitter.disconnected(&now)
-			|| self.disconnect_watcher.disconnected(&now)
-			|| self.disconnect_handler.disconnected(&now)
+	pub fn disconnected(&self, now: &Instant) -> bool {
+		self.retransmitter.disconnected(now)
+			|| self.disconnect_watcher.disconnected(now)
+			|| self.disconnect_handler.disconnected(now)
+	}
+	
+	///
+	/// Установлено ли соединения?
+	///
+	pub fn connected(&self, now: &Instant) -> bool {
+		self.in_frame_counter > 0 && !self.disconnected(now)
 	}
 	
 	pub fn add_frame_builder(&mut self, builder: Box<dyn FrameBuilder>) {

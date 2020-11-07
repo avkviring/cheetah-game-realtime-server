@@ -14,7 +14,7 @@ impl Server2ClientFFIConverter for DeleteGameObjectCommand {
 impl Client2ServerFFIConverter for DeleteGameObjectCommand {
 	fn from_ffi(ffi: &Command) -> C2SCommandUnion {
 		debug_assert!(ffi.command_type_c2s == C2SCommandFFIType::Unload);
-		C2SCommandUnion::Unload(
+		C2SCommandUnion::Delete(
 			DeleteGameObjectCommand {
 				object_id: ffi.object_id.to_common_game_object_id()
 			})

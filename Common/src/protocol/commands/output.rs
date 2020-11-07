@@ -17,7 +17,7 @@ pub struct OutCommandsCollector {
 
 impl OutCommandsCollector {
     pub fn add_unsent_commands(&mut self, commands: ApplicationCommands) {
-        self.commands.add(&commands);
+        self.commands.add_first(&commands);
     }
 
     pub fn add_command(&mut self, channel: ApplicationCommandChannel, command: ApplicationCommand) {
@@ -48,7 +48,7 @@ impl FrameBuilder for OutCommandsCollector {
     }
 
     fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
-        frame.commands.add(&self.commands);
+        frame.commands.add_first(&self.commands);
         self.commands.clear();
     }
 }

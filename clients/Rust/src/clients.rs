@@ -12,7 +12,7 @@ use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SComm
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::commands::hash::HashValue;
+use cheetah_relay_common::commands::hash::RoomId;
 
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, Server2ClientFFIConverter};
 use crate::client::NetworkStatus;
@@ -73,8 +73,8 @@ impl Default for Clients {
 impl Clients {
 	pub fn create_client(&mut self,
 						 server_address: String,
-						 room_hash: HashValue,
-						 client_hash: HashValue,
+						 room_hash: RoomId,
+						 client_hash: RoomId,
 	) -> u16 {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		
@@ -196,7 +196,7 @@ impl Clients {
 						S2CCommandUnion::Delete(command) => { command.to_ffi(command_ffi) }
 					};
 					command_ffi.meta_timestamp = command.meta.timestamp;
-					command_ffi.meta_source_client = command.meta.client;
+					command_ffi.meta_source_client = command.meta.user_public_key;
 					collector(command_ffi);
 				});
 				Result::Ok(())

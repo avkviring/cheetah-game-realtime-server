@@ -5,7 +5,7 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
-use cheetah_relay_common::commands::hash::HashValue;
+use cheetah_relay_common::commands::hash::RoomId;
 use cheetah_relay_common::utils::logger::LogListener;
 use log::Level;
 use widestring::U16CString;
@@ -83,8 +83,8 @@ pub unsafe extern "C" fn create_client(addr: *const c_char, room_hash: *const c_
 		.unwrap()
 		.to_string();
 	
-	let room_hash = HashValue::from(CStr::from_ptr(room_hash).to_str().unwrap());
-	let client_hash = HashValue::from(CStr::from_ptr(client_hash).to_str().unwrap());
+	let room_hash = RoomId::from(CStr::from_ptr(room_hash).to_str().unwrap());
+	let client_hash = RoomId::from(CStr::from_ptr(client_hash).to_str().unwrap());
 	execute(|api| api.create_client(server_address, room_hash, client_hash))
 }
 

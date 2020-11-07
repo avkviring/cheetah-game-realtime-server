@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 use cheetah_relay_common::commands::command::{C2SCommandWithMeta, S2CCommandWithMeta};
-use cheetah_relay_common::commands::hash::HashValue;
+use cheetah_relay_common::commands::hash::RoomId;
 
 pub mod ffi;
 pub mod command;
@@ -12,8 +12,8 @@ pub mod thread;
 
 #[derive(Debug)]
 pub struct Client {
-	pub room_hash: HashValue,
-	pub client_hash: HashValue,
+	pub room_hash: RoomId,
+	pub client_hash: RoomId,
 	pub network_status: Arc<Mutex<NetworkStatus>>,
 	pub scheduled_command_to_server: VecDeque<C2SCommandWithMeta>,
 	pub commands_from_server: Arc<Mutex<Vec<S2CCommandWithMeta>>>,
@@ -41,8 +41,8 @@ pub enum NetworkStatus {
 }
 
 impl Client {
-	pub fn new(room_hash: HashValue,
-			   client_hash: HashValue,
+	pub fn new(room_hash: RoomId,
+			   client_hash: RoomId,
 			   commands_from_server: Arc<Mutex<Vec<S2CCommandWithMeta>>>,
 			   network_status: Arc<Mutex<NetworkStatus>>) -> Client {
 		Client {

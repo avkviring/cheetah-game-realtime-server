@@ -236,7 +236,7 @@ impl FrameBuiltListener for RetransmitterImpl {
 
 
 impl DisconnectedStatus for RetransmitterImpl {
-	fn disconnected(&mut self, _: &Instant) -> bool {
+	fn disconnected(&self, _: &Instant) -> bool {
 		self.max_retransmit_count >= RetransmitterImpl::RETRANSMIT_LIMIT
 	}
 }
