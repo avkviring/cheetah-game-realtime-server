@@ -2,23 +2,13 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
-use std::rc::Rc;
-use std::sync::mpsc::{Receiver, Sender, SendError, TryRecvError};
-use std::time::Instant;
 
-use log::logger;
-
-use cheetah_relay_common::commands::command::C2SCommandUnion;
 use cheetah_relay_common::commands::hash::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
-use cheetah_relay_common::protocol::codec::decoder::UdpFrameDecodeError;
 use cheetah_relay_common::protocol::frame::{Frame, FrameHeader};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::headers::{Header, Headers};
-use cheetah_relay_common::protocol::relay::RelayProtocol;
 
-use crate::room::command::{CommandContext, execute};
-use crate::room::Room;
 use crate::rooms::{OutFrame, Rooms};
 
 #[derive(Debug)]

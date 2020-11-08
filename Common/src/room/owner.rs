@@ -8,7 +8,6 @@ use crate::commands::hash::UserPublicKey;
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub enum ClientOwner {
 	Root,
-	CurrentClient,
 	Client(UserPublicKey),
 }
 

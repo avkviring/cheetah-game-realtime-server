@@ -8,8 +8,6 @@ use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, Ap
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::access::AccessGroups;
-
-use crate::room::command::{CommandContext, execute};
 use crate::room::Room;
 
 #[derive(Default)]

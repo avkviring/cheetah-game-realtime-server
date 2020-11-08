@@ -1,5 +1,5 @@
 use cheetah_relay_common::commands::hash::RoomId;
-use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 use easybench::bench;
 
@@ -95,10 +95,10 @@ fn benchmark_send_and_receive_commands() {
 }
 
 
-fn create_object_on_server(client: u16) -> ClientGameObjectId {
+fn create_object_on_server(client: u16) -> GameObjectId {
 	let mut ffi = Command::default();
 	ffi.command_type_c2s = C2SCommandFFIType::Create;
-	let object_id = ClientGameObjectId::new(100, ClientOwner::CurrentClient);
+	let object_id = GameObjectId::new(100, ClientOwner::CurrentClient);
 	ffi.object_id.set_from(&object_id);
 	ffi.access_group = 0b100;
 	do_send_command_to_server(client, &ffi, || assert!(false));

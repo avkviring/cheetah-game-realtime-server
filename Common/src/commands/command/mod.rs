@@ -8,7 +8,7 @@ use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
 use crate::commands::command::meta::s2c::S2CMetaCommandInformation;
 use crate::commands::command::structure::StructureCommand;
 use crate::commands::command::unload::DeleteGameObjectCommand;
-use crate::room::object::ClientGameObjectId;
+use crate::room::object::GameObjectId;
 
 pub mod event;
 pub mod unload;
@@ -58,5 +58,5 @@ pub struct C2SCommandWithMeta {
 /// Метод получения идентификатора объекта, для команд выполняемых от имени объекта
 ///
 pub trait GameObjectCommand {
-    fn get_object_id(&self) -> &ClientGameObjectId;
+    fn get_object_id(&self) -> &GameObjectId;
 }

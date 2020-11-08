@@ -8,7 +8,7 @@ use crate::constants::GroupType;
 /// Группа доступа
 ///
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
-pub struct AccessGroups(u64);
+pub struct AccessGroups(pub u64);
 
 impl AccessGroups {
 	pub fn contains_group(&self, group: u8) -> bool {

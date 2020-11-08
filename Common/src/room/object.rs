@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
+
 use crate::room::owner::ClientOwner;
 
 ///
 /// Идентификатор игрового объекта на клиенте
 ///
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
-pub struct ClientGameObjectId {
-
+pub struct GameObjectId {
 	///
 	/// Создатель игрового объекта
 	///
@@ -18,16 +18,17 @@ pub struct ClientGameObjectId {
 	pub id: u32,
 }
 
-impl ClientGameObjectId {
+impl GameObjectId {
 	pub fn new(id: u32, owner: ClientOwner) -> Self {
-		ClientGameObjectId {
+		GameObjectId {
 			owner,
 			id,
 		}
 	}
 }
-impl Default for ClientGameObjectId {
+
+impl Default for GameObjectId {
 	fn default() -> Self {
-		ClientGameObjectId::new(0, ClientOwner::Root)
+		GameObjectId::new(0, ClientOwner::Root)
 	}
 }

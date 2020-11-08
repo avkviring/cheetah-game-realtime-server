@@ -3,7 +3,7 @@ use std::collections::{BinaryHeap, HashMap, VecDeque};
 
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription, ChannelId, ChannelSequence};
-use crate::room::object::ClientGameObjectId;
+use crate::room::object::GameObjectId;
 
 ///
 /// Коллектор входящих команд
@@ -20,7 +20,7 @@ pub struct InCommandsCollector {
 #[derive(Debug, Hash, Eq, PartialEq)]
 enum ChannelKey {
 	Group(ChannelId),
-	ClientGameObjectId(ClientGameObjectId),
+	ClientGameObjectId(GameObjectId),
 }
 
 
@@ -150,7 +150,7 @@ mod tests {
 	use crate::protocol::commands::input::InCommandsCollector;
 	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use crate::protocol::frame::Frame;
-	use crate::room::object::ClientGameObjectId;
+	use crate::room::object::GameObjectId;
 	use crate::room::owner::ClientOwner;
 	
 	#[test]
@@ -373,7 +373,7 @@ mod tests {
 		fn add_object_command(mut self, channel: ApplicationCommandChannel, object_id: u32, content: String) -> Self {
 			let command_description = ApplicationCommandDescription::new(
 				channel,
-				ApplicationCommand::TestObject(ClientGameObjectId::new(object_id, ClientOwner::CurrentClient), content),
+				ApplicationCommand::TestObject(GameObjectId::new(object_id, ClientOwner::CurrentClient), content),
 			);
 			self.commands.reliable.push(command_description);
 			self

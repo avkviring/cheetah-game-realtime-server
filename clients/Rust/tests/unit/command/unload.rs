@@ -1,5 +1,5 @@
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
@@ -7,7 +7,7 @@ use cheetah_relay_common::commands::command::C2SCommandUnion;
 
 #[test]
 fn should_to_ffi() {
-	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
+	let object_id = GameObjectId::new(100, ClientOwner::Root);
 	let command = DeleteGameObjectCommand {
 		object_id: object_id.clone(),
 	};
@@ -21,7 +21,7 @@ fn should_to_ffi() {
 
 #[test]
 fn should_from_ffi() {
-	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
+	let object_id = GameObjectId::new(100, ClientOwner::Root);
 	let mut ffi = Command::default();
 	ffi.command_type_c2s = C2SCommandFFIType::Unload;
 	ffi.object_id.set_from(&object_id);

@@ -6,18 +6,18 @@ use std::time::Instant;
 use indexmap::map::{IndexMap, MutableKeys};
 
 use cheetah_relay_common::commands::command::{S2CCommandUnion, S2CCommandWithMeta};
+use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::hash::{RoomId, UserPublicKey};
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommands};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::object::GameObjectId;
 
-use crate::room::command::{CommandContext, execute};
+use crate::room::command::execute;
 use crate::room::object::GameObject;
-use crate::room::object::server_object_id::ServerGameObjectId;
 use crate::rooms::OutFrame;
 
 pub mod command;
@@ -27,7 +27,10 @@ pub mod object;
 pub struct Room {
 	pub id: RoomId,
 	users: HashMap<UserPublicKey, User>,
-	objects: IndexMap<ServerGameObjectId, GameObject>,
+	objects: IndexMap<GameObjectId, GameObject>,
+	current_channel: Option<ApplicationCommandChannel>,
+	current_meta: Option<C2SMetaCommandInformation>,
+	current_user: Option<UserPublicKey>,
 }
 
 #[derive(Debug)]
@@ -38,18 +41,15 @@ pub struct User {
 }
 
 
-#[derive(Debug)]
-pub enum GameObjectCreateErrors {
-	AlreadyExists(ServerGameObjectId)
-}
-
-
 impl Room {
 	pub fn new(id: RoomId) -> Self {
 		Room {
 			id,
 			users: Default::default(),
 			objects: Default::default(),
+			current_channel: Default::default(),
+			current_meta: Default::default(),
+			current_user: Default::default(),
 		}
 	}
 	
@@ -79,27 +79,21 @@ impl Room {
 		}
 	}
 	
-	pub fn send_to_clients<F>(&mut self,
-							  access_group: AccessGroups,
-							  game_object_id: ServerGameObjectId,
-							  context: &CommandContext,
-							  mut command_factory: F) where F: FnMut(&UserPublicKey, ClientGameObjectId) -> S2CCommandUnion {
-		let current_user_public_key = context.current_client.unwrap().public_key;
-		let meta = &context.meta.as_ref().unwrap();
+	pub fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
+		let current_user_public_key = self.current_user.as_ref().unwrap();
+		let meta = self.current_meta.as_ref().unwrap();
+		let channel = self.current_channel.as_ref().unwrap();
 		let now = Instant::now();
+		let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+			meta: S2CMetaCommandInformation::new(current_user_public_key.clone(), meta),
+			command,
+		});
 		self.users.values_mut()
-			.filter(|user| user.public_key != current_user_public_key)
+			.filter(|user| user.public_key != *current_user_public_key)
 			.filter(|user| user.protocol.connected(&now))
-			.filter(|user| user.access_groups.contains_any(&access_group))
+			.filter(|user| user.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
-				let command = command_factory(&user.public_key, game_object_id.to_client_object_id(Option::Some(user.public_key)));
-				user.protocol.out_commands_collector.add_command(
-					context.channel.clone(),
-					ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-						meta: S2CMetaCommandInformation::new(current_user_public_key, meta),
-						command,
-					}),
-				)
+				user.protocol.out_commands_collector.add_command(channel.clone(), application_command.clone())
 			});
 	}
 	
@@ -123,12 +117,10 @@ impl Room {
 		for application_command in commands {
 			match application_command.command {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
-					let context = CommandContext {
-						current_client: None,
-						channel: application_command.channel,
-						meta: Option::Some(command_with_meta.meta),
-					};
-					execute(command_with_meta.command, self, &context);
+					self.current_channel.replace(application_command.channel.clone());
+					self.current_meta.replace(command_with_meta.meta.clone());
+					self.current_user.replace(user_public_key.clone());
+					execute(command_with_meta.command, self, &user_public_key);
 				}
 				_ => {
 					log::error!("receive unsupported command from client {:?}", application_command)
@@ -142,14 +134,12 @@ impl Room {
 	/// TODO - добавить проверку прав
 	///
 	pub fn get_object(&mut self,
-					  user_public_key: UserPublicKey,
-					  object_id: &ClientGameObjectId) ->
+					  object_id: &GameObjectId) ->
 					  Option<&mut GameObject> {
-		let object_id = ServerGameObjectId::new(Option::Some(user_public_key), object_id);
-		match self.objects.get_full_mut2(&object_id) {
-			Some((_, _, object)) => { Option::Some(object) }
+		match self.objects.get_mut(object_id) {
+			Some(object) => { Option::Some(object) }
 			None => {
-				log::error!("game object not found {:?} {:?}", user_public_key, object_id);
+				log::error!("game object not found {:?}", object_id);
 				Option::None
 			}
 		}

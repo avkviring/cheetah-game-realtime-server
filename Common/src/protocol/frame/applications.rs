@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::{C2SCommandUnion, C2SCommandWithMeta, S2CCommandUnion, S2CCommandWithMeta};
-use crate::room::object::ClientGameObjectId;
+use crate::room::object::GameObjectId;
 
 ///
 /// Прикладные команды
@@ -51,7 +51,7 @@ impl ApplicationCommandDescription {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ApplicationCommand {
     TestSimple(String),
-    TestObject(ClientGameObjectId, String),
+    TestObject(GameObjectId, String),
     S2CCommandWithMeta(S2CCommandWithMeta),
     C2SCommandWithMeta(C2SCommandWithMeta),
 }
@@ -97,7 +97,7 @@ pub type ChannelSequence = u32;
 
 
 impl ApplicationCommand {
-    pub fn get_object_id(&self) -> Option<&ClientGameObjectId> {
+    pub fn get_object_id(&self) -> Option<&GameObjectId> {
         match &self {
             ApplicationCommand::TestSimple(_) => { Option::None }
             ApplicationCommand::TestObject(object_id, _) => {

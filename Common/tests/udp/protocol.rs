@@ -10,8 +10,8 @@ use crate::udp::stub::Channel;
 ///
 #[test]
 fn should_send_from_client() {
-	let mut peer_a = RelayProtocol::new();
-	let mut peer_b = RelayProtocol::new();
+	let mut peer_a = RelayProtocol::default();
+	let mut peer_b = RelayProtocol::default();
 	
 	peer_a
 		.out_commands_collector
@@ -32,16 +32,16 @@ fn should_send_from_client() {
 	
 	let commands = peer_b.in_commands_collector.get_commands();
 	
-	assert!(commands.iter().find(|p| matches!(&p, ApplicationCommand::TestSimple(v) if *v == "test reliability".to_string())).is_some());
-	assert!(commands.iter().find(|p| matches!(&p, ApplicationCommand::TestSimple(v) if *v == "test unreliability".to_string())).is_some());
+	assert!(commands.iter().find(|p| matches!(&p.command, ApplicationCommand::TestSimple(v) if *v == "test reliability".to_string())).is_some());
+	assert!(commands.iter().find(|p| matches!(&p.command, ApplicationCommand::TestSimple(v) if *v == "test unreliability".to_string())).is_some());
 }
 
 ///
 /// Тестирование надежной доставки по ненадежному каналу
 #[test]
 fn should_transfer_reliable_on_unreliable_channel() {
-	let mut peer_a = RelayProtocol::new();
-	let mut peer_b = RelayProtocol::new();
+	let mut peer_a = RelayProtocol::default();
+	let mut peer_b = RelayProtocol::default();
 	
 	peer_a
 		.out_commands_collector
@@ -68,5 +68,5 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	
 	let commands = peer_b.in_commands_collector.get_commands();
 	assert_eq!(commands.len(), 1);
-	assert!(commands.iter().find(|p| matches!(&p, ApplicationCommand::TestSimple(v) if *v == "test reliability".to_string())).is_some());
+	assert!(commands.iter().find(|p| matches!(&p.command, ApplicationCommand::TestSimple(v) if *v == "test reliability".to_string())).is_some());
 }

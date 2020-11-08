@@ -1,12 +1,12 @@
 use cheetah_relay_client::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
 use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
-use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 use cheetah_relay_common::commands::command::C2SCommandUnion;
 
 #[test]
 fn should_to_ffi() {
-	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
+	let object_id = GameObjectId::new(100, ClientOwner::Root);
 	let command = SetLongCommand {
 		object_id: object_id.clone(),
 		field_id: 10,
@@ -24,7 +24,7 @@ fn should_to_ffi() {
 
 #[test]
 fn should_set_float_counter_from_ffi() {
-	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
+	let object_id = GameObjectId::new(100, ClientOwner::Root);
 	let mut ffi = Command::default();
 	ffi.command_type_c2s = C2SCommandFFIType::SetLongCounter;
 	ffi.object_id.set_from(&object_id);
@@ -38,7 +38,7 @@ fn should_set_float_counter_from_ffi() {
 
 #[test]
 fn should_increment_float_counter_from_ffi() {
-	let object_id = ClientGameObjectId::new(100, ClientOwner::Root);
+	let object_id = GameObjectId::new(100, ClientOwner::Root);
 	let mut ffi = Command::default();
 	ffi.command_type_c2s = C2SCommandFFIType::IncrementLongCounter;
 	ffi.object_id.set_from(&object_id);
