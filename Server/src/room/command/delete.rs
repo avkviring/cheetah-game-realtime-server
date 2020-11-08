@@ -1,36 +1,38 @@
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
+use cheetah_relay_common::commands::hash::UserPublicKey;
+use cheetah_relay_common::room::owner::ClientOwner;
 
-use crate::room::command::{CommandContext, ServerRoomCommandExecutor};
-use crate::room::object::GameObject;
-use crate::room::object::id::ServerGameObjectId;
-use crate::room::Room;
+use crate::room::{Room, User};
+use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 
-impl Room {
-    pub fn delete_game_object(&mut self, id: &ServerGameObjectId, context: &CommandContext) {
-        let object: Option<&mut GameObject> = self.objects.get_mut(id);
-        match object {
-            None => {
-                log::error!("game object not found {:?}", id)
-            }
-            Some(object) => {
-                object.send_to_clients(context, |_, object_id| {
-                    S2CCommandUnion::Delete(DeleteGameObjectCommand { object_id })
-                });
-                self.objects.remove(id);
-            }
-        }
-    }
-}
-
-
-impl ServerRoomCommandExecutor for DeleteGameObjectCommand {
-    fn execute(self, room: &mut Room, context: &CommandContext) {
-        let result = room.get_object_with_check_access(context.current_client.unwrap(), &self.object_id);
-        if let Some(object) = result {
-            let id = &object.id.clone();
-            room.delete_game_object(id, context);
-        }
-    }
+impl ServerCommandExecutor for DeleteGameObjectCommand {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+		let user = room.get_user(user_public_key).unwrap();
+		if let ClientOwner::Client(object_id_user) = self.object_id.owner {
+			if object_id_user != user.public_key {
+				error_c2s_command(
+					"DeleteGameObjectCommand",
+					room,
+					&user.public_key,
+					format!("User not owner for game object {:?} for user {:?}", self.object_id, user),
+				);
+				return;
+			}
+		}
+		
+		let user_public_key = user.public_key.clone();
+		if let Some(object) = room.remove_object(&self.object_id) {
+			let access_groups = object.access_groups;
+			room.send(access_groups, S2CCommandUnion::Delete(self));
+		} else {
+			error_c2s_command(
+				"DeleteGameObjectCommand",
+				room,
+				&user_public_key,
+				format!("game object not found {:?}", self.object_id),
+			);
+		}
+	}
 }
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::room::object::ClientGameObjectId;
+use crate::room::object::GameObjectId;
 
 ///
 /// удаление игрового объекта
@@ -8,5 +8,5 @@ use crate::room::object::ClientGameObjectId;
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeleteGameObjectCommand {
-	pub object_id: ClientGameObjectId
+	pub object_id: GameObjectId
 }

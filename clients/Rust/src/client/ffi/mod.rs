@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::commands::command::C2SCommandUnion;
-use cheetah_relay_common::room::object::ClientGameObjectId;
+use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::client::ffi::bytes::Bytes;
@@ -129,7 +129,7 @@ impl Default for ObjectId {
 }
 
 impl ObjectId {
-	pub fn set_from(&mut self, id: &ClientGameObjectId) {
+	pub fn set_from(&mut self, id: &GameObjectId) {
 		self.id = id.id;
 		match id.owner {
 			ClientOwner::Root => { self.id_type = ObjectIdType::Root }
@@ -143,8 +143,8 @@ impl ObjectId {
 		}
 	}
 	
-	pub fn to_common_game_object_id(&self) -> ClientGameObjectId {
-		ClientGameObjectId {
+	pub fn to_common_game_object_id(&self) -> GameObjectId {
+		GameObjectId {
 			owner: match self.id_type {
 				ObjectIdType::Root => { ClientOwner::Root }
 				ObjectIdType::Current => { ClientOwner::CurrentClient }

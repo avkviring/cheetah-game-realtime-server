@@ -1,83 +1,57 @@
+use std::process::id;
+
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommandUnion;
-use cheetah_relay_common::constants::ClientId;
-use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::fields::GameObjectFields;
-use cheetah_relay_common::room::object::ClientGameObjectId;
-use cheetah_relay_common::udp::protocol::frame::applications::ApplicationCommand::S2CCommandWithMeta;
+use cheetah_relay_common::room::owner::ClientOwner;
 
-use crate::room::{GameObjectCreateErrors, Room};
-use crate::room::command::{CommandContext, error_c2s_command, ServerRoomCommandExecutor, trace_c2s_command};
+use crate::room::{Room, User};
+use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::object::GameObject;
-use crate::room::object::id::ServerGameObjectId;
+use std::collections::HashMap;
+use cheetah_relay_common::commands::hash::UserPublicKey;
 
-impl Room {
-    pub fn create_game_object(&mut self,
-                              object_id: &ClientGameObjectId,
-                              template: u16,
-                              access_groups: AccessGroups,
-                              fields: GameObjectFields,
-                              context: &CommandContext,
-    ) -> Result<&GameObject, GameObjectCreateErrors> {
-        let id = ServerGameObjectId::new(context.current_client.map(|c| c.configuration.id), object_id);
-        if self.objects.get(&id).is_some() {
-            Result::Err(GameObjectCreateErrors::AlreadyExists(id))
-        } else {
-            let mut object = GameObject::new(
-                id.clone(),
-                template,
-                access_groups.clone(),
-                fields.clone(),
-                self.collector.clone(),
-            );
-
-            object.send_to_clients(context, |client_id, object_id| {
-                S2CCommandUnion::Create(CreateGameObjectCommand {
-                    object_id,
-                    template,
-                    access_groups: access_groups.clone(),
-                    fields: fields.clone(),
-                })
-            });
-
-
-            self.objects.insert(id.clone(), object);
-            Result::Ok(self.objects.get(&id).unwrap())
-        }
-    }
-}
-
-
-impl ServerRoomCommandExecutor for CreateGameObjectCommand {
-    fn execute(self, room: &mut Room, context: &CommandContext) {
-        let client = context.current_client.unwrap();
-        if self.access_groups.is_sub_groups(&client.configuration.groups) {
-            let id = self.object_id;
-            match room.create_game_object(&id, self.template, self.access_groups, self.fields, context) {
-                Ok(_) => {
-                    trace_c2s_command(
-                        "LoadGameObject",
-                        room,
-                        client,
-                        format!("Object created with id {:?}", id),
-                    );
-                }
-                Err(_) => {
-                    error_c2s_command(
-                        "LoadGameObject",
-                        room,
-                        client,
-                        format!("Object already exists with id {:?}", id),
-                    );
-                }
-            }
-        } else {
-            error_c2s_command(
-                "LoadGameObject",
-                room,
-                client,
-                format!("Incorrect access group {:?} with client groups {:?}", self.access_groups, client.configuration.groups),
-            );
-        };
-    }
+impl ServerCommandExecutor for CreateGameObjectCommand {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+		let user = room.get_user(user_public_key).unwrap();
+		if !self.access_groups.is_sub_groups(&user.access_groups) {
+			error_c2s_command(
+				"CreateGameObjectCommand",
+				room,
+				&user.public_key,
+				format!("Incorrect access group {:?} with client groups {:?}", self.access_groups, user.access_groups),
+			);
+			return;
+		}
+		
+		if let ClientOwner::Client(object_id_user) = self.object_id.owner {
+			if object_id_user != user.public_key {
+				error_c2s_command(
+					"CreateGameObjectCommand",
+					room,
+					&user.public_key,
+					format!("Incorrect object_id {:?} for user {:?}", self.object_id, user),
+				);
+				return;
+			}
+		}
+		
+		if room.contains_object(&self.object_id) {
+			error_c2s_command(
+				"CreateGameObjectCommand",
+				room,
+				&user.public_key,
+				format!("Object already exists with id {:?}", self.object_id),
+			);
+			return;
+		}
+		
+		let mut object = GameObject {
+			id: self.object_id.clone(),
+			template: self.template,
+			access_groups: self.access_groups,
+			fields: self.fields.clone(),
+		};
+		room.insert_object(object);
+		room.send(self.access_groups, S2CCommandUnion::Create(self));
+	}
 }

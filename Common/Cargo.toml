@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 lazy_static = "1.4.0"
 log = "0.4"
-serde = { version = "1.0.116", features = ["derive"] }
+serde = { version = "1.0.116", features = ["derive", "rc"] }
 rmp-serde = "0.14.4"
 rand = "0.7.3"
 snap = "1.0.1"
