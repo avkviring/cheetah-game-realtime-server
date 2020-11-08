@@ -4,6 +4,8 @@ use std::rc::Rc;
 use std::time::Instant;
 
 use indexmap::map::{IndexMap, MutableKeys};
+#[cfg(test)]
+use mockall::{automock, predicate::*};
 
 use cheetah_relay_common::commands::command::{S2CCommandUnion, S2CCommandWithMeta};
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
@@ -24,7 +26,7 @@ pub mod command;
 pub mod object;
 
 #[derive(Debug)]
-pub struct Room {
+pub struct RoomImpl {
 	pub id: RoomId,
 	users: HashMap<UserPublicKey, User>,
 	objects: IndexMap<GameObjectId, GameObject>,
@@ -40,46 +42,29 @@ pub struct User {
 	protocol: RelayProtocol,
 }
 
+#[cfg_attr(test, automock)]
+pub trait Room {
+	fn get_id(&self) -> RoomId;
+	fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion);
+	fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame);
+	fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>);
+	fn return_commands(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands);
+	
+	fn register_user(&mut self, user_public_key: UserPublicKey, access_groups: AccessGroups);
+	fn get_user<'a>(&'a self, user_public_key: &UserPublicKey) -> Option<&'a User>;
+	
+	fn insert_object(&mut self, object: GameObject);
+	fn get_object<'a>(&'a mut self, object_id: &GameObjectId) -> Option<&'a mut GameObject>;
+	fn contains_object(&self, object_id: &GameObjectId) -> bool;
+	fn remove_object(&mut self, object_id: &GameObjectId) -> Option<GameObject>;
+}
 
-impl Room {
-	pub fn new(id: RoomId) -> Self {
-		Room {
-			id,
-			users: Default::default(),
-			objects: Default::default(),
-			current_channel: Default::default(),
-			current_meta: Default::default(),
-			current_user: Default::default(),
-		}
+impl Room for RoomImpl {
+	fn get_id(&self) -> RoomId {
+		self.id
 	}
 	
-	pub fn register_user(&mut self, public_key: UserPublicKey, access_groups: AccessGroups) {
-		let user = User {
-			public_key,
-			access_groups,
-			protocol: Default::default(),
-		};
-		self.users.insert(public_key, user);
-	}
-	
-	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>) {
-		let now = Instant::now();
-		for (user_public_key, user) in self.users.iter_mut() {
-			if let Some(frame) = user.protocol.build_next_frame(&now) {
-				out_frames.push_front(OutFrame { user_public_key: user_public_key.clone(), frame });
-			}
-		}
-	}
-	pub fn return_commands(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands) {
-		match self.users.get_mut(user_public_key) {
-			None => {}
-			Some(user) => {
-				user.protocol.out_commands_collector.add_unsent_commands(commands);
-			}
-		}
-	}
-	
-	pub fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
+	fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
 		let current_user_public_key = self.current_user.as_ref().unwrap();
 		let meta = self.current_meta.as_ref().unwrap();
 		let channel = self.current_channel.as_ref().unwrap();
@@ -97,8 +82,17 @@ impl Room {
 			});
 	}
 	
+	fn get_object(&mut self, object_id: &GameObjectId) -> Option<&mut GameObject> {
+		match self.objects.get_mut(object_id) {
+			Some(object) => { Option::Some(object) }
+			None => {
+				log::error!("game object not found {:?}", object_id);
+				Option::None
+			}
+		}
+	}
 	
-	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame) {
+	fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame) {
 		let user = self.users.get_mut(&user_public_key);
 		let mut commands = VecDeque::new();
 		match user {
@@ -129,19 +123,60 @@ impl Room {
 		}
 	}
 	
-	///
-	/// Получение игрового объекта с проверкой прав доступа
-	/// TODO - добавить проверку прав
-	///
-	pub fn get_object(&mut self,
-					  object_id: &GameObjectId) ->
-					  Option<&mut GameObject> {
-		match self.objects.get_mut(object_id) {
-			Some(object) => { Option::Some(object) }
-			None => {
-				log::error!("game object not found {:?}", object_id);
-				Option::None
+	fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>) {
+		let now = Instant::now();
+		for (user_public_key, user) in self.users.iter_mut() {
+			if let Some(frame) = user.protocol.build_next_frame(&now) {
+				out_frames.push_front(OutFrame { user_public_key: user_public_key.clone(), frame });
 			}
+		}
+	}
+	
+	fn return_commands(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands) {
+		match self.users.get_mut(user_public_key) {
+			None => {}
+			Some(user) => {
+				user.protocol.out_commands_collector.add_unsent_commands(commands);
+			}
+		}
+	}
+	
+	fn remove_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
+		self.objects.remove(object_id)
+	}
+	
+	fn contains_object(&self, object_id: &GameObjectId) -> bool {
+		self.objects.contains_key(object_id)
+	}
+	
+	fn insert_object(&mut self, object: GameObject) {
+		self.objects.insert(object.id.clone(), object);
+	}
+	
+	fn register_user(&mut self, user_public_key: UserPublicKey, access_groups: AccessGroups) {
+		let user = User {
+			public_key: user_public_key,
+			access_groups,
+			protocol: Default::default(),
+		};
+		self.users.insert(user_public_key, user);
+	}
+	
+	fn get_user<'a>(&'a self, user_public_key: &UserPublicKey) -> Option<&'a User> {
+		self.users.get(user_public_key)
+	}
+}
+
+
+impl RoomImpl {
+	pub fn new(id: RoomId) -> Self {
+		RoomImpl {
+			id,
+			users: Default::default(),
+			objects: Default::default(),
+			current_channel: Default::default(),
+			current_meta: Default::default(),
+			current_user: Default::default(),
 		}
 	}
 }

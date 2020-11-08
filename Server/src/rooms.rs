@@ -8,12 +8,13 @@ use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, Ap
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::access::AccessGroups;
-use crate::room::Room;
+
+use crate::room::{Room, RoomImpl};
 
 #[derive(Default)]
 pub struct Rooms {
-	rooms: HashMap<RoomId, Rc<RefCell<Room>>>,
-	user_to_room: HashMap<UserPublicKey, Rc<RefCell<Room>>>,
+	rooms: HashMap<RoomId, Rc<RefCell<RoomImpl>>>,
+	user_to_room: HashMap<UserPublicKey, Rc<RefCell<RoomImpl>>>,
 	changed_rooms: HashSet<RoomId>,
 }
 
@@ -31,7 +32,7 @@ pub enum RegisterUserError {
 
 impl Rooms {
 	pub fn create_room(&mut self, room_id: RoomId) {
-		let room = Room::new(room_id.clone());
+		let room = RoomImpl::new(room_id.clone());
 		self.rooms.insert(room_id, Rc::new(RefCell::new(room)));
 	}
 	
@@ -74,7 +75,7 @@ impl Rooms {
 	}
 }
 
-fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, mut action: F) where F: FnOnce(&mut Rooms, &mut Room) -> () {
+fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, mut action: F) where F: FnOnce(&mut Rooms, &mut RoomImpl) -> () {
 	let room = rooms.user_to_room.get(user_public_key);
 	match room {
 		None => {

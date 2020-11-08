@@ -8,28 +8,28 @@ use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
-		let user = room.users.get(user_public_key).unwrap();
+		let user = room.get_user(user_public_key).unwrap();
 		if let ClientOwner::Client(object_id_user) = self.object_id.owner {
 			if object_id_user != user.public_key {
 				error_c2s_command(
 					"DeleteGameObjectCommand",
 					room,
-					user,
+					&user.public_key,
 					format!("User not owner for game object {:?} for user {:?}", self.object_id, user),
 				);
 				return;
 			}
 		}
 		
-		
-		if let Some(object) = room.objects.remove(&self.object_id) {
+		let user_public_key = user.public_key.clone();
+		if let Some(object) = room.remove_object(&self.object_id) {
 			let access_groups = object.access_groups;
 			room.send(access_groups, S2CCommandUnion::Delete(self));
 		} else {
 			error_c2s_command(
 				"DeleteGameObjectCommand",
 				room,
-				user,
+				&user_public_key,
 				format!("game object not found {:?}", self.object_id),
 			);
 		}

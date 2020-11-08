@@ -15,3 +15,4 @@ ctrlc = "3.1.6"
 cheetah_relay_common = { path = "../Common/" }
 
 [dev-dependencies]
+mockall = "0.8.0"
