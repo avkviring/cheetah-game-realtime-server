@@ -373,7 +373,7 @@ mod tests {
 		fn add_object_command(mut self, channel: ApplicationCommandChannel, object_id: u32, content: String) -> Self {
 			let command_description = ApplicationCommandDescription::new(
 				channel,
-				ApplicationCommand::TestObject(GameObjectId::new(object_id, ClientOwner::CurrentClient), content),
+				ApplicationCommand::TestObject(GameObjectId::new(object_id, ClientOwner::Root), content),
 			);
 			self.commands.reliable.push(command_description);
 			self

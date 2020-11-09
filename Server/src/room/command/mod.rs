@@ -18,10 +18,10 @@ pub mod float;
 /// Выполнение серверной команды
 ///
 pub trait ServerCommandExecutor {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey);
+	fn execute(self, room: &mut dyn Room, user_public_key: &UserPublicKey);
 }
 
-pub fn trace_c2s_command(command: &str, room: &Room, user_public_key: &UserPublicKey, message: String) {
+pub fn trace_c2s_command(command: &str, room: &dyn Room, user_public_key: &UserPublicKey, message: String) {
 	log::trace!(
 		"C2S {:<10} : room {} : client {} : {}",
 		command,
@@ -31,7 +31,7 @@ pub fn trace_c2s_command(command: &str, room: &Room, user_public_key: &UserPubli
 	);
 }
 
-pub fn error_c2s_command(command: &str, room: &Room, user_public_key: &UserPublicKey, message: String) {
+pub fn error_c2s_command(command: &str, room: &dyn Room, user_public_key: &UserPublicKey, message: String) {
 	log::error!(
 		"C2S {:<10} : room {} : client {} : {}",
 		command,
