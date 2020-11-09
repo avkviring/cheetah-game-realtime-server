@@ -20,6 +20,7 @@ use cheetah_relay_common::room::object::GameObjectId;
 
 use crate::room::command::execute;
 use crate::room::object::GameObject;
+use crate::room::tests::RoomStub;
 use crate::rooms::OutFrame;
 
 pub mod command;
@@ -56,7 +57,7 @@ pub trait Room {
 	fn insert_object(&mut self, object: GameObject);
 	fn get_object<'a>(&'a mut self, object_id: &GameObjectId) -> Option<&'a mut GameObject>;
 	fn contains_object(&self, object_id: &GameObjectId) -> bool;
-	fn remove_object(&mut self, object_id: &GameObjectId) -> Option<GameObject>;
+	fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject>;
 }
 
 impl Room for RoomImpl {
@@ -141,7 +142,7 @@ impl Room for RoomImpl {
 		}
 	}
 	
-	fn remove_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
+	fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
 		self.objects.remove(object_id)
 	}
 	
@@ -177,6 +178,130 @@ impl RoomImpl {
 			current_channel: Default::default(),
 			current_meta: Default::default(),
 			current_user: Default::default(),
+		}
+	}
+}
+
+
+#[cfg(test)]
+mod tests {
+	use std::collections::{HashMap, VecDeque};
+	
+	use cheetah_relay_common::commands::command::S2CCommandUnion;
+	use cheetah_relay_common::commands::hash::UserPublicKey;
+	use cheetah_relay_common::protocol::frame::applications::ApplicationCommands;
+	use cheetah_relay_common::protocol::frame::Frame;
+	use cheetah_relay_common::room::access::AccessGroups;
+	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_relay_common::room::owner::ClientOwner;
+	
+	use crate::room::{Room, User};
+	use crate::room::object::GameObject;
+	use crate::rooms::OutFrame;
+	
+	pub struct RoomStub {
+		object_id_generator: u32,
+		user_public_key_generator: u32,
+		objects: HashMap<GameObjectId, GameObject>,
+		users: HashMap<UserPublicKey, User>,
+		pub out_command: VecDeque<(AccessGroups, S2CCommandUnion)>,
+	}
+	
+	
+	impl RoomStub {
+		pub fn new() -> Self {
+			Self {
+				object_id_generator: 0,
+				user_public_key_generator: 0,
+				objects: Default::default(),
+				users: Default::default(),
+				out_command: Default::default(),
+			}
+		}
+		
+		pub fn create_user(&mut self, access_groups: AccessGroups) -> UserPublicKey {
+			self.user_public_key_generator += 1;
+			let user_public_key = self.user_public_key_generator;
+			let user = User {
+				public_key: user_public_key.clone(),
+				access_groups,
+				protocol: Default::default(),
+			};
+			self.users.insert(user_public_key, user);
+			user_public_key
+		}
+		
+		pub fn create_object(&mut self) -> GameObjectId {
+			self.object_id_generator += 1;
+			let id = GameObjectId::new(self.object_id_generator, ClientOwner::Root);
+			let object = GameObject {
+				id: id.clone(),
+				template: 0,
+				access_groups: Default::default(),
+				fields: Default::default(),
+			};
+			self.objects.insert(id.clone(), object);
+			id
+		}
+		
+		pub fn create_object_with_owner(&mut self, owner: &UserPublicKey) -> GameObjectId {
+			self.object_id_generator += 1;
+			let id = GameObjectId::new(self.object_id_generator, ClientOwner::Client(owner.clone()));
+			let object = GameObject {
+				id: id.clone(),
+				template: 0,
+				access_groups: Default::default(),
+				fields: Default::default(),
+			};
+			self.objects.insert(id.clone(), object);
+			id
+		}
+	}
+	
+	
+	impl Room for RoomStub {
+		fn get_id(&self) -> u64 {
+			unimplemented!()
+		}
+		
+		fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
+			self.out_command.push_front((access_groups, command));
+		}
+		
+		fn on_frame_received(&mut self, user_public_key: &u32, frame: Frame) {
+			unimplemented!()
+		}
+		
+		fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>) {
+			unimplemented!()
+		}
+		
+		fn return_commands(&mut self, user_public_key: &u32, commands: ApplicationCommands) {
+			unimplemented!()
+		}
+		
+		fn register_user(&mut self, user_public_key: u32, access_groups: AccessGroups) {
+			unimplemented!()
+		}
+		
+		fn get_user<'a>(&'a self, user_public_key: &u32) -> Option<&'a User> {
+			self.users.get(user_public_key)
+		}
+		
+		fn insert_object(&mut self, object: GameObject) {
+			self.objects.insert(object.id.clone(), object);
+		}
+		
+		fn get_object<'a>(&'a mut self, object_id: &GameObjectId) -> Option<&'a mut GameObject> {
+			self.objects.get_mut(object_id)
+		}
+		
+		fn contains_object(&self, object_id: &GameObjectId) -> bool {
+			self.objects.contains_key(object_id)
+		}
+		
+		fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
+			self.objects.remove(object_id)
 		}
 	}
 }

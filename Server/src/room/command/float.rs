@@ -6,7 +6,7 @@ use crate::room::{Room, User};
 use crate::room::command::ServerCommandExecutor;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
-	fn execute(self, room: &mut Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let value = object.fields.floats
 				.entry(self.field_id)
@@ -28,7 +28,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 
 
 impl ServerCommandExecutor for SetFloat64Command {
-	fn execute(self, room: &mut Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.floats.insert(self.field_id, self.value);
 			let access_groups = object.access_groups;
@@ -40,22 +40,73 @@ impl ServerCommandExecutor for SetFloat64Command {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::float_counter::SetFloat64Command;
-	use cheetah_relay_common::commands::command::S2CCommandUnion::SetFloat64;
+	use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+	use cheetah_relay_common::commands::command::S2CCommandUnion;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;
 	
-	use crate::room::{MockRoom, Room, User};
 	use crate::room::command::ServerCommandExecutor;
+	use crate::room::Room;
+	use crate::room::tests::RoomStub;
 	
 	#[test]
-	fn test() {
-		// let mut room = MockRoom::new(0);
-		// let command = SetFloat64Command {
-		// 	object_id: GameObjectId::new(0, ClientOwner::Client(12)),
-		// 	field_id: 10,
-		// 	value: 100.100,
-		// };
-		// command.execute(&mut room,&12);
+	fn should_set_float_command() {
+		let mut room = RoomStub::new();
+		let object_id = room.create_object();
+		let command = SetFloat64Command {
+			object_id: object_id.clone(),
+			field_id: 10,
+			value: 100.100,
+		};
+		command.clone().execute(&mut room, &12);
+		
+		let object = room.get_object(&object_id).unwrap();
+		assert_eq!(*object.fields.floats.get(&10).unwrap() as u64, 100);
+		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::SetFloat64(c))) if c==command));
+	}
+	
+	#[test]
+	fn should_increment_float_command() {
+		let mut room = RoomStub::new();
+		let object_id = room.create_object();
+		let command = IncrementFloat64C2SCommand {
+			object_id: object_id.clone(),
+			field_id: 10,
+			increment: 100.100,
+		};
+		command.clone().execute(&mut room, &12);
+		command.clone().execute(&mut room, &12);
+		
+		let object = room.get_object(&object_id).unwrap();
+		assert_eq!(*object.fields.floats.get(&10).unwrap() as u64, 200);
+		
+		let result = SetFloat64Command {
+			object_id: object_id.clone(),
+			field_id: 10,
+			value: 200.200,
+		};
+		room.out_command.pop_back();
+		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::SetFloat64(c))) if c==result));
+	}
+	
+	#[test]
+	fn should_not_panic_when_set_float_command_not_panic_for_missing_object() {
+		let mut room = RoomStub::new();
+		let command = SetFloat64Command {
+			object_id: GameObjectId::new(10, ClientOwner::Root),
+			field_id: 10,
+			value: 100.100,
+		};
+		command.execute(&mut room, &12);
+	}
+	#[test]
+	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
+		let mut room = RoomStub::new();
+		let command = IncrementFloat64C2SCommand {
+			object_id: GameObjectId::new(10, ClientOwner::Root),
+			field_id: 10,
+			increment: 100.100,
+		};
+		command.execute(&mut room, &12);
 	}
 }
