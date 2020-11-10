@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-use std::process::id;
-
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::hash::UserPublicKey;
@@ -141,9 +138,9 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let mut room = RoomStub::new();
 		let user_public_key = room.create_user(AccessGroups(0b11));
-		let object_id = room.create_object_with_owner(&user_public_key);
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.create_object(&user_public_key);
 		object.template = 777;
+		let object_id = object.id.clone();
 		
 		let mut command = CreateGameObjectCommand {
 			object_id: object_id.clone(),

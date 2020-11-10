@@ -31,7 +31,7 @@ mod tests {
 	#[test]
 	pub fn should_set_structure() {
 		let mut room = RoomStub::new();
-		let object_id = room.create_object();
+		let object_id = room.create_object(&0).id.clone();
 		let command = StructureCommand {
 			object_id: object_id.clone(),
 			field_id: 100,

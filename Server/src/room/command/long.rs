@@ -52,7 +52,7 @@ mod tests {
 	#[test]
 	fn should_set_long_command() {
 		let mut room = RoomStub::new();
-		let object_id = room.create_object();
+		let object_id = room.create_object(&0).id.clone();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -68,7 +68,7 @@ mod tests {
 	#[test]
 	fn should_increment_long_command() {
 		let mut room = RoomStub::new();
-		let object_id = room.create_object();
+		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,

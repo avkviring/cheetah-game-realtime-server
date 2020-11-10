@@ -2,8 +2,8 @@ use cheetah_relay_common::commands::command::event::EventCommand;
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::hash::UserPublicKey;
 
-use crate::room::{Room, User};
 use crate::room::command::ServerCommandExecutor;
+use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
 	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
@@ -27,7 +27,7 @@ mod tests {
 	#[test]
 	pub fn should_send_event() {
 		let mut room = RoomStub::new();
-		let object_id = room.create_object();
+		let object_id = room.create_object(&0).id.clone();
 		let command = EventCommand {
 			object_id: object_id.clone(),
 			field_id: 100,

@@ -52,7 +52,7 @@ mod tests {
 	fn should_delete() {
 		let mut room = RoomStub::new();
 		let user_public_key = room.create_user(AccessGroups(55));
-		let object_id = room.create_object_with_owner(&user_public_key);
+		let object_id = room.create_object(&user_public_key).id.clone();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone()
 		};
@@ -79,7 +79,7 @@ mod tests {
 		let mut room = RoomStub::new();
 		let user_a = room.create_user(AccessGroups(55));
 		let user_b = room.create_user(AccessGroups(55));
-		let object_id = room.create_object_with_owner(&user_a);
+		let object_id = room.create_object(&user_a).id.clone();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone()
 		};

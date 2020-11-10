@@ -2,7 +2,7 @@ use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2S
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::hash::UserPublicKey;
 
-use crate::room::{Room, User};
+use crate::room::Room;
 use crate::room::command::ServerCommandExecutor;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
@@ -52,7 +52,7 @@ mod tests {
 	#[test]
 	fn should_set_float_command() {
 		let mut room = RoomStub::new();
-		let object_id = room.create_object();
+		let object_id = room.create_object(&0).id.clone();
 		let command = SetFloat64Command {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -68,7 +68,7 @@ mod tests {
 	#[test]
 	fn should_increment_float_command() {
 		let mut room = RoomStub::new();
-		let object_id = room.create_object();
+		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementFloat64C2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -99,6 +99,7 @@ mod tests {
 		};
 		command.execute(&mut room, &12);
 	}
+	
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
 		let mut room = RoomStub::new();

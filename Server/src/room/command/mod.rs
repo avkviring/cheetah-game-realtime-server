@@ -12,6 +12,7 @@ pub mod create;
 pub mod delete;
 pub mod long;
 pub mod float;
+pub mod load_room;
 
 
 ///
@@ -68,7 +69,9 @@ pub fn execute(command: C2SCommandUnion, room: &mut Room, user_public_key: &User
 		C2SCommandUnion::Delete(command) => {
 			command.execute(room, user_public_key)
 		}
-		
 		C2SCommandUnion::Test(_) => {}
+		C2SCommandUnion::LoadRoom => {
+			load_room::load_room(room, user_public_key);
+		}
 	}
 }
