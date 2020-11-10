@@ -40,7 +40,8 @@ pub struct User {
 
 pub trait Room {
 	fn get_id(&self) -> RoomId;
-	fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion);
+	fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommandUnion);
+	fn send_to_user(&mut self, user_public_key: &UserPublicKey, command: S2CCommandUnion);
 	fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame);
 	fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>);
 	fn return_commands(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands);
@@ -50,7 +51,7 @@ pub trait Room {
 	fn get_object<'a>(&'a mut self, object_id: &GameObjectId) -> Option<&'a mut GameObject>;
 	fn contains_object(&self, object_id: &GameObjectId) -> bool;
 	fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject>;
-	fn process_objects(&self, f: &dyn Fn(&GameObject) -> ());
+	fn process_objects(&self, f: &mut dyn FnMut(&GameObject) -> ());
 }
 
 impl Room for RoomImpl {
@@ -58,7 +59,7 @@ impl Room for RoomImpl {
 		self.id
 	}
 	
-	fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
+	fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
 		let current_user_public_key = self.current_user.as_ref().unwrap();
 		let meta = self.current_meta.as_ref().unwrap();
 		let channel = self.current_channel.as_ref().unwrap();
@@ -74,6 +75,26 @@ impl Room for RoomImpl {
 			.for_each(|user| {
 				user.protocol.out_commands_collector.add_command(channel.clone(), application_command.clone())
 			});
+	}
+	
+	fn send_to_user(&mut self, user_public_key: &u32, command: S2CCommandUnion) {
+		match self.users.get_mut(user_public_key) {
+			None => {
+				log::error!("room.send_to_user - user not found {:?}", user_public_key)
+			}
+			Some(user) => {
+				let now = Instant::now();
+				if user.protocol.connected(&now) {
+					let meta = self.current_meta.as_ref().unwrap();
+					let channel = self.current_channel.as_ref().unwrap();
+					let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+						meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
+						command,
+					});
+					user.protocol.out_commands_collector.add_command(channel.clone(), application_command);
+				}
+			}
+		}
 	}
 	
 	fn get_object(&mut self, object_id: &GameObjectId) -> Option<&mut GameObject> {
@@ -160,7 +181,7 @@ impl Room for RoomImpl {
 		self.users.get(user_public_key)
 	}
 	
-	fn process_objects(&self, f: &dyn Fn(&GameObject) -> ()) {
+	fn process_objects(&self, mut f: &mut dyn FnMut(&GameObject) -> ()) {
 		self.objects.values().for_each(|o| f(o));
 	}
 }
@@ -199,7 +220,8 @@ mod tests {
 		object_id_generator: u32,
 		user_public_key_generator: u32,
 		real_impl: RoomImpl,
-		pub out_command: VecDeque<(AccessGroups, S2CCommandUnion)>,
+		pub out_commands: VecDeque<(AccessGroups, S2CCommandUnion)>,
+		pub out_commands_by_users: HashMap<UserPublicKey, VecDeque<S2CCommandUnion>>,
 	}
 	
 	impl RoomStub {}
@@ -211,7 +233,8 @@ mod tests {
 				object_id_generator: 0,
 				user_public_key_generator: 0,
 				real_impl: RoomImpl::new(0),
-				out_command: Default::default(),
+				out_commands: Default::default(),
+				out_commands_by_users: Default::default(),
 			}
 		}
 		
@@ -248,8 +271,13 @@ mod tests {
 			unimplemented!()
 		}
 		
-		fn send(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
-			self.out_command.push_front((access_groups, command));
+		fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
+			self.out_commands.push_front((access_groups, command));
+		}
+		
+		fn send_to_user(&mut self, user_public_key: &u32, command: S2CCommandUnion) {
+			let commands = self.out_commands_by_users.entry(user_public_key.clone()).or_insert(VecDeque::new());
+			commands.push_front(command);
 		}
 		
 		fn on_frame_received(&mut self, user_public_key: &u32, frame: Frame) {
@@ -288,7 +316,7 @@ mod tests {
 			self.real_impl.delete_object(object_id)
 		}
 		
-		fn process_objects(&self, f: &dyn Fn(&GameObject)) {
+		fn process_objects(&self, mut f: &mut dyn FnMut(&GameObject)) {
 			self.real_impl.process_objects(f);
 		}
 	}

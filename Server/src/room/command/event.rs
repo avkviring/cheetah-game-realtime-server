@@ -9,7 +9,7 @@ impl ServerCommandExecutor for EventCommand {
 	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let groups = object.access_groups.clone();
-			room.send(groups, S2CCommandUnion::Event(self))
+			room.send_to_group(groups, S2CCommandUnion::Event(self))
 		}
 	}
 }
@@ -34,7 +34,7 @@ mod tests {
 			event: vec![1, 2, 3, 4, 5],
 		};
 		command.clone().execute(&mut room, &32);
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::Event(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::Event(c))) if c==command));
 	}
 	
 	#[test]

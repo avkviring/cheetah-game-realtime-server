@@ -11,7 +11,7 @@ impl ServerCommandExecutor for StructureCommand {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.structures.insert(self.field_id, self.structure.clone());
 			let groups = object.access_groups.clone();
-			room.send(groups, S2CCommandUnion::SetStruct(self))
+			room.send_to_group(groups, S2CCommandUnion::SetStruct(self))
 		}
 	}
 }
@@ -42,7 +42,7 @@ mod tests {
 		let object = room.get_object(&object_id).unwrap();
 		
 		assert_eq!(*object.fields.structures.get(&100).unwrap(), command.structure);
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::SetStruct(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::SetStruct(c))) if c==command));
 	}
 	
 	#[test]

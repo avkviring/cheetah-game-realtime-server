@@ -20,37 +20,41 @@ pub mod meta;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum C2SCommandUnion {
-    Create(CreateGameObjectCommand),
-    SetLongCounter(SetLongCommand),
-    IncrementLongCounter(IncrementLongC2SCommand),
-    SetFloatCounter(SetFloat64Command),
-    IncrementFloatCounter(IncrementFloat64C2SCommand),
-    Structure(StructureCommand),
-    Event(EventCommand),
-    Delete(DeleteGameObjectCommand),
-    Test(String),
+	Create(CreateGameObjectCommand),
+	SetLongCounter(SetLongCommand),
+	IncrementLongCounter(IncrementLongC2SCommand),
+	SetFloatCounter(SetFloat64Command),
+	IncrementFloatCounter(IncrementFloat64C2SCommand),
+	Structure(StructureCommand),
+	Event(EventCommand),
+	Delete(DeleteGameObjectCommand),
+	Test(String),
+	///
+	/// Загрузить все объекты комнаты
+	///
+	LoadRoom,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum S2CCommandUnion {
-    Create(CreateGameObjectCommand),
-    SetLong(SetLongCommand),
-    SetFloat64(SetFloat64Command),
-    SetStruct(StructureCommand),
-    Event(EventCommand),
-    Delete(DeleteGameObjectCommand),
+	Create(CreateGameObjectCommand),
+	SetLong(SetLongCommand),
+	SetFloat64(SetFloat64Command),
+	SetStruct(StructureCommand),
+	Event(EventCommand),
+	Delete(DeleteGameObjectCommand),
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct S2CCommandWithMeta {
-    pub meta: S2CMetaCommandInformation,
-    pub command: S2CCommandUnion,
+	pub meta: S2CMetaCommandInformation,
+	pub command: S2CCommandUnion,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct C2SCommandWithMeta {
-    pub meta: C2SMetaCommandInformation,
-    pub command: C2SCommandUnion,
+	pub meta: C2SMetaCommandInformation,
+	pub command: C2SCommandUnion,
 }
 
 
@@ -58,5 +62,5 @@ pub struct C2SCommandWithMeta {
 /// Метод получения идентификатора объекта, для команд выполняемых от имени объекта
 ///
 pub trait GameObjectCommand {
-    fn get_object_id(&self) -> &GameObjectId;
+	fn get_object_id(&self) -> &GameObjectId;
 }

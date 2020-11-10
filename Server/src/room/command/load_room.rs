@@ -1,10 +1,35 @@
+use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
+use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::hash::UserPublicKey;
 
-use crate::room::Room;
+use crate::room::{Room, User};
 
 pub fn load_room(room: &mut dyn Room, user_public_key: &UserPublicKey) {
-	//room.process_objects()
-	
+	let mut out = Vec::new();
+	match room.get_user(user_public_key) {
+		None => {
+			log::error!("load_room user not found {:?}", user_public_key);
+		}
+		Some(user) => {
+			let access_group = user.access_groups;
+			
+			
+			room.process_objects(&mut |o| {
+				if o.access_groups.contains_any(&access_group) {
+					out.push(CreateGameObjectCommand {
+						object_id: o.id.clone(),
+						template: o.template.clone(),
+						access_groups: o.access_groups,
+						fields: o.fields.clone(),
+					});
+				}
+			});
+			
+			for command in out {
+				room.send_to_user(user_public_key, S2CCommandUnion::Create(command));
+			}
+		}
+	}
 }
 
 #[cfg(test)]
@@ -30,9 +55,10 @@ mod tests {
 		
 		load_room(&mut room, &user_a);
 		
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::Create(c))) if c.object_id==object_a_1));
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::Create(c))) if c.object_id==object_a_2));
-		assert!(matches!(room.out_command.pop_back(), None));
+		let commands = &mut room.out_commands_by_users.get_mut(&user_a).unwrap();
+		assert!(matches!(commands.pop_back(), Some(S2CCommandUnion::Create(c)) if c.object_id==object_a_1));
+		assert!(matches!(commands.pop_back(), Some(S2CCommandUnion::Create(c)) if c.object_id==object_a_2));
+		assert!(matches!(commands.pop_back(), None));
 	}
 }
 

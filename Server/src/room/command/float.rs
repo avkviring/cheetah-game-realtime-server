@@ -15,7 +15,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 				.clone();
 			
 			let access_groups = object.access_groups.clone();
-			room.send(access_groups, S2CCommandUnion::SetFloat64(
+			room.send_to_group(access_groups, S2CCommandUnion::SetFloat64(
 				SetFloat64Command {
 					object_id: self.object_id,
 					field_id: self.field_id,
@@ -32,7 +32,7 @@ impl ServerCommandExecutor for SetFloat64Command {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.floats.insert(self.field_id, self.value);
 			let access_groups = object.access_groups;
-			room.send(access_groups, S2CCommandUnion::SetFloat64(self));
+			room.send_to_group(access_groups, S2CCommandUnion::SetFloat64(self));
 		}
 	}
 }
@@ -62,7 +62,7 @@ mod tests {
 		
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.fields.floats.get(&10).unwrap() as u64, 100);
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::SetFloat64(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::SetFloat64(c))) if c==command));
 	}
 	
 	#[test]
@@ -85,8 +85,8 @@ mod tests {
 			field_id: 10,
 			value: 200.200,
 		};
-		room.out_command.pop_back();
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::SetFloat64(c))) if c==result));
+		room.out_commands.pop_back();
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::SetFloat64(c))) if c==result));
 	}
 	
 	#[test]

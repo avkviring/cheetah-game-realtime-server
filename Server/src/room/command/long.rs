@@ -15,7 +15,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				.clone();
 			
 			let access_groups = object.access_groups.clone();
-			room.send(access_groups, S2CCommandUnion::SetLong(
+			room.send_to_group(access_groups, S2CCommandUnion::SetLong(
 				SetLongCommand {
 					object_id: self.object_id,
 					field_id: self.field_id,
@@ -32,7 +32,7 @@ impl ServerCommandExecutor for SetLongCommand {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.longs.insert(self.field_id, self.value);
 			let access_groups = object.access_groups.clone();
-			room.send(access_groups, S2CCommandUnion::SetLong(self));
+			room.send_to_group(access_groups, S2CCommandUnion::SetLong(self));
 		}
 	}
 }
@@ -62,7 +62,7 @@ mod tests {
 		
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.fields.longs.get(&10).unwrap(), 100);
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::SetLong(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::SetLong(c))) if c==command));
 	}
 	
 	#[test]
@@ -85,8 +85,8 @@ mod tests {
 			field_id: 10,
 			value: 200,
 		};
-		room.out_command.pop_back();
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::SetLong(c))) if c==result));
+		room.out_commands.pop_back();
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::SetLong(c))) if c==result));
 	}
 	
 	#[test]

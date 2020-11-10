@@ -49,7 +49,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			fields: self.fields.clone(),
 		};
 		room.insert_object(object);
-		room.send(self.access_groups, S2CCommandUnion::Create(self));
+		room.send_to_group(self.access_groups, S2CCommandUnion::Create(self));
 	}
 }
 
@@ -88,7 +88,7 @@ mod tests {
 					&& object.access_groups == command.access_groups
 					&& object.fields == command.fields
 		));
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::Create(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::Create(c))) if c==command));
 	}
 	
 	///
@@ -108,7 +108,7 @@ mod tests {
 		
 		command.clone().execute(&mut room, &user_public_key);
 		assert!(matches!(room.get_object(&object_id), None));
-		assert!(matches!(room.out_command.pop_back(), None));
+		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 	
 	///
@@ -128,7 +128,7 @@ mod tests {
 		
 		command.clone().execute(&mut room, &user_public_key);
 		assert!(matches!(room.get_object(&object_id), None));
-		assert!(matches!(room.out_command.pop_back(), None));
+		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 	
 	//
@@ -152,6 +152,6 @@ mod tests {
 		command.clone().execute(&mut room, &user_public_key);
 		
 		assert!(matches!(room.get_object(&object_id), Some(object) if object.template == 777));
-		assert!(matches!(room.out_command.pop_back(), None));
+		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }

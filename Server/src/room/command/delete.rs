@@ -24,7 +24,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 		let user_public_key = user.public_key.clone();
 		if let Some(object) = room.delete_object(&self.object_id) {
 			let access_groups = object.access_groups;
-			room.send(access_groups, S2CCommandUnion::Delete(self));
+			room.send_to_group(access_groups, S2CCommandUnion::Delete(self));
 		} else {
 			error_c2s_command(
 				"DeleteGameObjectCommand",
@@ -60,7 +60,7 @@ mod tests {
 		command.clone().execute(&mut room, &user_public_key);
 		
 		assert!(matches!(room.get_object(&object_id), None));
-		assert!(matches!(room.out_command.pop_back(), Some((.., S2CCommandUnion::Delete(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::Delete(c))) if c==command));
 	}
 	
 	#[test]
@@ -87,6 +87,6 @@ mod tests {
 		command.clone().execute(&mut room, &user_b);
 		
 		assert!(matches!(room.get_object(&object_id), Some(_)));
-		assert!(matches!(room.out_command.pop_back(), None));
+		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }
