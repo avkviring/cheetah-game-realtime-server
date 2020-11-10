@@ -29,7 +29,7 @@ struct UserSession {
 impl UDPServer {
 	pub fn new(address: SocketAddr) -> Result<Self, Error> {
 		let socket = UdpSocket::bind(address)?;
-		socket.set_nonblocking(true);
+		socket.set_nonblocking(true).unwrap();
 		Result::Ok(
 			Self {
 				sessions: Default::default(),

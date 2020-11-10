@@ -42,7 +42,7 @@ pub fn enum_match_predicates(input: TokenStream) -> TokenStream {
 			impl #name {
 				pub fn #name_field(header: &Self)->Option<&#f> {
 				match header {
-						Self::#var_id(#f) => Option::Some(&#f),
+						Self::#var_id(value) => Option::Some(&value),
 						_ => Option::None
 					}
 				}

@@ -40,11 +40,11 @@ impl CongestionControl {
 		if let Option::Some(average_rtt) = average_rtt {
 			let koeff = match retransmitter.get_redundant_frames_percent(now) {
 				None => { 1.5 }
-				Some(percent) => match percent {
-					0.0..=0.1 => 1.1,
-					0.1..=0.2 => 1.5,
-					0.2..=0.5 => 2.0,
-					0.5..=0.8 => 2.5,
+				Some(percent) => match (percent * 100.0) as u64 {
+					0..=10 => 1.1,
+					11..=20 => 1.5,
+					21..=30 => 2.0,
+					31..=80 => 2.5,
 					_ => { 3.0 }
 				},
 			};
@@ -88,7 +88,7 @@ mod tests {
 		retransmitter.expect_set_ack_wait_duration()
 			.times(1)
 			.with(predicate::eq(Duration::from_millis(3)))
-			.returning(|duration| ());
+			.returning(|_| ());
 		
 		
 		congestion.rebalance(&now, rtt.as_ref(), retransmitter.as_mut());

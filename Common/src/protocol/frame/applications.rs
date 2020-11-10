@@ -151,7 +151,7 @@ impl ApplicationCommand {
 					C2SCommandUnion::Delete(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::Test(c) => {
+					C2SCommandUnion::Test(_) => {
 						Option::None
 					}
 					C2SCommandUnion::LoadRoom => {

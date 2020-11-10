@@ -2,8 +2,6 @@ use std::ops::{BitAnd, Shl};
 
 use serde::{Deserialize, Serialize};
 
-use crate::constants::GroupType;
-
 ///
 /// Группа доступа
 ///
@@ -23,6 +21,7 @@ impl AccessGroups {
 	pub fn is_sub_groups(&self, groups: &AccessGroups) -> bool {
 		groups.0.bitand(self.0) == self.0
 	}
+
 }
 
 

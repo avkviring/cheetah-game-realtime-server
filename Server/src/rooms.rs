@@ -1,11 +1,11 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
-use std::time::Instant;
 
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommands};
+
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
-use cheetah_relay_common::protocol::relay::RelayProtocol;
+
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::{Room, RoomImpl};
@@ -32,7 +32,7 @@ pub enum RegisterUserError {
 
 impl Rooms {
 	pub fn create_room(&mut self, room_id: RoomId) {
-		let room = RoomImpl::new(room_id.clone());
+		let room = RoomImpl::new(room_id);
 		self.rooms.insert(room_id, Rc::new(RefCell::new(room)));
 	}
 	
@@ -75,7 +75,7 @@ impl Rooms {
 	}
 }
 
-fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, mut action: F) where F: FnOnce(&mut Rooms, &mut RoomImpl) -> () {
+fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, action: F) where F: FnOnce(&mut Rooms, &mut RoomImpl) -> () {
 	let room = rooms.user_to_room.get(user_public_key);
 	match room {
 		None => {

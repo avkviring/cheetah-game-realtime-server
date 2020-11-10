@@ -316,7 +316,7 @@ mod tests {
 			self.real_impl.delete_object(object_id)
 		}
 		
-		fn process_objects(&self, mut f: &mut dyn FnMut(&GameObject)) {
+		fn process_objects(&self, f: &mut dyn FnMut(&GameObject)) {
 			self.real_impl.process_objects(f);
 		}
 	}

@@ -42,7 +42,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			return;
 		}
 		
-		let mut object = GameObject {
+		let object = GameObject {
 			id: self.object_id.clone(),
 			template: self.template,
 			access_groups: self.access_groups,
@@ -99,7 +99,7 @@ mod tests {
 		let mut room = RoomStub::new();
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ClientOwner::Client(1000));
-		let mut command = CreateGameObjectCommand {
+		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
@@ -142,7 +142,7 @@ mod tests {
 		object.template = 777;
 		let object_id = object.id.clone();
 		
-		let mut command = CreateGameObjectCommand {
+		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
