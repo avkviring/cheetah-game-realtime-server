@@ -18,7 +18,7 @@ impl DisconnectWatcher {
 
 impl FrameReceivedListener for DisconnectWatcher {
 	fn on_frame_received(&mut self, _: &Frame, now: &Instant) {
-		self.last_in_frame_time = Option::Some(now.clone());
+		self.last_in_frame_time = Option::Some(*now);
 	}
 }
 
@@ -49,7 +49,7 @@ mod tests {
 						///
 	#[test]
 	pub fn should_not_disconnect_when_zero_in_frame() {
-		let mut handler = DisconnectWatcher::default();
+		let handler = DisconnectWatcher::default();
 		let now = Instant::now();
 		assert_eq!(handler.disconnected(&now), false);
 	}

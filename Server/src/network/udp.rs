@@ -1,15 +1,13 @@
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 
-use cheetah_relay_common::commands::hash::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
-use cheetah_relay_common::protocol::frame::{Frame, FrameHeader};
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommands};
-use cheetah_relay_common::protocol::frame::headers::{Header, Headers};
+use cheetah_relay_common::protocol::frame::Frame;
+use cheetah_relay_common::protocol::frame::headers::Header;
 
 use crate::rooms::{OutFrame, Rooms};
+use cheetah_relay_common::room::{UserPublicKey, UserPrivateKey};
 
 #[derive(Debug)]
 pub struct UDPServer {
@@ -29,7 +27,7 @@ struct UserSession {
 impl UDPServer {
 	pub fn new(address: SocketAddr) -> Result<Self, Error> {
 		let socket = UdpSocket::bind(address)?;
-		socket.set_nonblocking(true);
+		socket.set_nonblocking(true).unwrap();
 		Result::Ok(
 			Self {
 				sessions: Default::default(),
