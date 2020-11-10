@@ -6,7 +6,6 @@ use indexmap::map::{IndexMap, MutableKeys};
 use cheetah_relay_common::commands::command::{S2CCommandUnion, S2CCommandWithMeta};
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
-use cheetah_relay_common::commands::hash::{RoomId, UserPublicKey};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
@@ -17,6 +16,7 @@ use cheetah_relay_common::room::object::GameObjectId;
 use crate::room::command::execute;
 use crate::room::object::GameObject;
 use crate::rooms::OutFrame;
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
 
 pub mod command;
 pub mod object;
@@ -205,7 +205,6 @@ mod tests {
 	use std::slice::Iter;
 	
 	use cheetah_relay_common::commands::command::S2CCommandUnion;
-	use cheetah_relay_common::commands::hash::UserPublicKey;
 	use cheetah_relay_common::protocol::frame::applications::ApplicationCommands;
 	use cheetah_relay_common::protocol::frame::Frame;
 	use cheetah_relay_common::room::access::AccessGroups;
@@ -215,6 +214,7 @@ mod tests {
 	use crate::room::{Room, RoomImpl, User};
 	use crate::room::object::GameObject;
 	use crate::rooms::OutFrame;
+	use cheetah_relay_common::room::UserPublicKey;
 	
 	pub struct RoomStub {
 		object_id_generator: u32,

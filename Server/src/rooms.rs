@@ -3,13 +3,13 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 use std::time::Instant;
 
-use cheetah_relay_common::commands::hash::{RoomId, UserPublicKey};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::{Room, RoomImpl};
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
 
 #[derive(Default)]
 pub struct Rooms {

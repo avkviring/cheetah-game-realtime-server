@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
+use crate::room::UserPublicKey;
 
-use crate::commands::hash::UserPublicKey;
 
 ///
 /// владелец - клиент или root

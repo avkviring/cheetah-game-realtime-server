@@ -3,7 +3,6 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use cheetah_relay_common::commands::hash::RoomId;
 
 use crate::network::udp::UDPServer;
 use crate::rooms::Rooms;

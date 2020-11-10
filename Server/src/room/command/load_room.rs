@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommandUnion;
-use cheetah_relay_common::commands::hash::UserPublicKey;
+use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::{Room, User};
 

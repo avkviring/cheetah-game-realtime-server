@@ -2,11 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_macro::EnumMatchPredicates;
 
-use crate::commands::hash::UserPublicKey;
 use crate::protocol::disconnect::handler::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
 use crate::protocol::reliable::ack::header::AckFrameHeader;
 use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
+use crate::room::UserPublicKey;
 
 ///
 /// Дополнительные UDP заголовки

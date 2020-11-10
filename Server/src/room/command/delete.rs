@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::commands::hash::UserPublicKey;
+use cheetah_relay_common::room::UserPublicKey;
 use cheetah_relay_common::room::owner::ClientOwner;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};

@@ -2,8 +2,8 @@ use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
 use chacha20poly1305::aead::{AeadInPlace, NewAead};
 use heapless::consts::*;
 use heapless::Vec;
+use crate::room::UserPrivateKey;
 
-use crate::commands::hash::UserPrivateKey;
 
 ///
 /// Шифрование пакета

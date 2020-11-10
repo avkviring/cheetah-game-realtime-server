@@ -1,9 +1,9 @@
 use std::time::Instant;
 
-use crate::commands::hash::UserPublicKey;
 use crate::protocol::frame::Frame;
 use crate::protocol::frame::headers::Header;
 use crate::protocol::FrameBuilder;
+use crate::room::UserPublicKey;
 
 ///
 /// Добавляет заголовок с UserPublicKey

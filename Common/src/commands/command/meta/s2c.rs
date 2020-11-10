@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
-use crate::commands::hash::UserPublicKey;
+use crate::room::UserPublicKey;
 
 ///
 /// Служебная информация для исходящей команды

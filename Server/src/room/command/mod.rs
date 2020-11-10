@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::{C2SCommandUnion, GameObjectCommand};
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-use cheetah_relay_common::commands::hash::UserPublicKey;
+use cheetah_relay_common::room::UserPublicKey;
 use cheetah_relay_common::protocol::frame::applications::ApplicationCommandChannel;
 
 use crate::room::{Room, User};

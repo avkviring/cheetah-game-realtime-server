@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
-use cheetah_relay_common::commands::hash::UserPublicKey;
+use cheetah_relay_common::room::UserPublicKey;
 use cheetah_relay_common::constants::FieldID;
 
 use crate::room::{Room, User};

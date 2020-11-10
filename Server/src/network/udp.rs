@@ -3,13 +3,13 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 
-use cheetah_relay_common::commands::hash::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_relay_common::protocol::frame::{Frame, FrameHeader};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::headers::{Header, Headers};
 
 use crate::rooms::{OutFrame, Rooms};
+use cheetah_relay_common::room::{UserPublicKey, UserPrivateKey};
 
 #[derive(Debug)]
 pub struct UDPServer {
