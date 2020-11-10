@@ -39,7 +39,6 @@ impl ServerCommandExecutor for SetLongCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
 	use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_relay_common::commands::command::S2CCommandUnion;
 	use cheetah_relay_common::room::object::GameObjectId;

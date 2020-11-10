@@ -3,7 +3,7 @@ use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::room::UserPublicKey;
 use cheetah_relay_common::room::owner::ClientOwner;
 
-use crate::room::{Room, User};
+use crate::room::Room;
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::object::GameObject;
 
@@ -62,7 +62,6 @@ mod tests {
 	use cheetah_relay_common::room::owner::ClientOwner;
 	
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::object::GameObject;
 	use crate::room::Room;
 	use crate::room::tests::RoomStub;
 	
@@ -119,7 +118,7 @@ mod tests {
 		let mut room = RoomStub::new();
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ClientOwner::Client(user_public_key));
-		let mut command = CreateGameObjectCommand {
+		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),

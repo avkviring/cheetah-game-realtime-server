@@ -2,7 +2,7 @@ use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::room::UserPublicKey;
 
-use crate::room::{Room, User};
+use crate::room::Room;
 
 pub fn load_room(room: &mut dyn Room, user_public_key: &UserPublicKey) {
 	let mut out = Vec::new();
@@ -49,9 +49,9 @@ mod tests {
 		let object_a_2 = room.create_object_with_access_groups(groups_a).id.clone();
 		
 		let groups_b = AccessGroups(0b10);
-		let user_b = room.create_user(groups_b);
-		let object_b_1 = room.create_object_with_access_groups(groups_b).id.clone();
-		let object_b_2 = room.create_object_with_access_groups(groups_b).id.clone();
+		room.create_user(groups_b);
+		room.create_object_with_access_groups(groups_b);
+		room.create_object_with_access_groups(groups_b);
 		
 		load_room(&mut room, &user_a);
 		

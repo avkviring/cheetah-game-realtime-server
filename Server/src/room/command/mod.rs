@@ -1,10 +1,8 @@
-use cheetah_relay_common::commands::command::{C2SCommandUnion, GameObjectCommand};
-use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::commands::command::C2SCommandUnion;
 use cheetah_relay_common::room::UserPublicKey;
-use cheetah_relay_common::protocol::frame::applications::ApplicationCommandChannel;
 
-use crate::room::{Room, User};
-use crate::room::object::GameObject;
+use crate::room::Room;
+
 
 pub mod event;
 pub mod structure;
@@ -42,7 +40,7 @@ pub fn error_c2s_command(command: &str, room: &dyn Room, user_public_key: &UserP
 	);
 }
 
-pub fn execute(command: C2SCommandUnion, room: &mut Room, user_public_key: &UserPublicKey) {
+pub fn execute(command: C2SCommandUnion, room: &mut dyn Room, user_public_key: &UserPublicKey) {
 	match command {
 		C2SCommandUnion::Create(command) => {
 			command.execute(room, user_public_key);

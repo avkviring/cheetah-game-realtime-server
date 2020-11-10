@@ -1,12 +1,10 @@
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
-use cheetah_relay_common::protocol::frame::{Frame, FrameHeader};
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommands};
-use cheetah_relay_common::protocol::frame::headers::{Header, Headers};
+use cheetah_relay_common::protocol::frame::Frame;
+use cheetah_relay_common::protocol::frame::headers::Header;
 
 use crate::rooms::{OutFrame, Rooms};
 use cheetah_relay_common::room::{UserPublicKey, UserPrivateKey};

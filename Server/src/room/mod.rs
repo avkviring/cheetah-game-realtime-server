@@ -1,22 +1,21 @@
 use std::collections::{HashMap, VecDeque};
 use std::time::Instant;
 
-use indexmap::map::{IndexMap, MutableKeys};
+use indexmap::map::IndexMap;
 
 use cheetah_relay_common::commands::command::{S2CCommandUnion, S2CCommandWithMeta};
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription, ApplicationCommands};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::GameObjectId;
 
 use crate::room::command::execute;
 use crate::room::object::GameObject;
 use crate::rooms::OutFrame;
-use cheetah_relay_common::room::{RoomId, UserPublicKey};
 
 pub mod command;
 pub mod object;
@@ -181,7 +180,7 @@ impl Room for RoomImpl {
 		self.users.get(user_public_key)
 	}
 	
-	fn process_objects(&self, mut f: &mut dyn FnMut(&GameObject) -> ()) {
+	fn process_objects(&self, f: &mut dyn FnMut(&GameObject) -> ()) {
 		self.objects.values().for_each(|o| f(o));
 	}
 }
@@ -202,7 +201,6 @@ impl RoomImpl {
 #[cfg(test)]
 mod tests {
 	use std::collections::{HashMap, VecDeque};
-	use std::slice::Iter;
 	
 	use cheetah_relay_common::commands::command::S2CCommandUnion;
 	use cheetah_relay_common::protocol::frame::applications::ApplicationCommands;
@@ -210,11 +208,11 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;
+	use cheetah_relay_common::room::UserPublicKey;
 	
 	use crate::room::{Room, RoomImpl, User};
 	use crate::room::object::GameObject;
 	use crate::rooms::OutFrame;
-	use cheetah_relay_common::room::UserPublicKey;
 	
 	pub struct RoomStub {
 		object_id_generator: u32,
@@ -281,19 +279,19 @@ mod tests {
 		}
 		
 		fn on_frame_received(&mut self, user_public_key: &u32, frame: Frame) {
-			unimplemented!()
+			self.real_impl.on_frame_received(user_public_key, frame);
 		}
 		
 		fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>) {
-			unimplemented!()
+			self.real_impl.collect_out_frames(out_frames);
 		}
 		
 		fn return_commands(&mut self, user_public_key: &u32, commands: ApplicationCommands) {
-			unimplemented!()
+			self.real_impl.return_commands(user_public_key, commands);
 		}
 		
 		fn register_user(&mut self, user_public_key: u32, access_groups: AccessGroups) {
-			unimplemented!()
+			self.real_impl.register_user(user_public_key, access_groups);
 		}
 		
 		fn get_user<'a>(&'a self, user_public_key: &u32) -> Option<&'a User> {
