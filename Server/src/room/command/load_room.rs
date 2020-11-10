@@ -4,7 +4,7 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::Room;
 
-pub fn load_room(room: &mut dyn Room, user_public_key: &UserPublicKey) {
+pub fn load_room(room: &mut Room, user_public_key: &UserPublicKey) {
 	let mut out = Vec::new();
 	match room.get_user(user_public_key) {
 		None => {
@@ -38,11 +38,11 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 	
 	use crate::room::command::load_room::load_room;
-	use crate::room::tests::RoomStub;
+	use crate::room::Room;
 	
 	#[test]
 	pub fn test() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let groups_a = AccessGroups(0b100);
 		let user_a = room.create_user(groups_a);
 		let object_a_1 = room.create_object_with_access_groups(groups_a).id.clone();

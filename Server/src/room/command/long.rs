@@ -6,7 +6,7 @@ use crate::room::command::ServerCommandExecutor;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let value = object.fields.longs
 				.entry(self.field_id)
@@ -28,7 +28,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 
 
 impl ServerCommandExecutor for SetLongCommand {
-	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.longs.insert(self.field_id, self.value);
 			let access_groups = object.access_groups.clone();
@@ -46,11 +46,10 @@ mod tests {
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
-	use crate::room::tests::RoomStub;
 	
 	#[test]
 	fn should_set_long_command() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let object_id = room.create_object(&0).id.clone();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
@@ -66,7 +65,7 @@ mod tests {
 	
 	#[test]
 	fn should_increment_long_command() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
@@ -90,7 +89,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_set_long_command_not_panic_for_missing_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let command = SetLongCommand {
 			object_id: GameObjectId::new(10, ClientOwner::Root),
 			field_id: 10,
@@ -101,7 +100,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let command = IncrementLongC2SCommand {
 			object_id: GameObjectId::new(10, ClientOwner::Root),
 			field_id: 10,

@@ -6,7 +6,7 @@ use crate::room::Room;
 use crate::room::command::ServerCommandExecutor;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
-	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let value = object.fields.floats
 				.entry(self.field_id)
@@ -28,7 +28,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 
 
 impl ServerCommandExecutor for SetFloat64Command {
-	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.floats.insert(self.field_id, self.value);
 			let access_groups = object.access_groups;
@@ -47,11 +47,10 @@ mod tests {
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
-	use crate::room::tests::RoomStub;
 	
 	#[test]
 	fn should_set_float_command() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let object_id = room.create_object(&0).id.clone();
 		let command = SetFloat64Command {
 			object_id: object_id.clone(),
@@ -67,7 +66,7 @@ mod tests {
 	
 	#[test]
 	fn should_increment_float_command() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementFloat64C2SCommand {
 			object_id: object_id.clone(),
@@ -91,7 +90,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_set_float_command_not_panic_for_missing_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let command = SetFloat64Command {
 			object_id: GameObjectId::new(10, ClientOwner::Root),
 			field_id: 10,
@@ -102,7 +101,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let command = IncrementFloat64C2SCommand {
 			object_id: GameObjectId::new(10, ClientOwner::Root),
 			field_id: 10,

@@ -8,7 +8,7 @@ use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::object::GameObject;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(self, room: &mut dyn Room, user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		let user = room.get_user(user_public_key).unwrap();
 		if !self.access_groups.is_sub_groups(&user.access_groups) {
 			error_c2s_command(
@@ -63,11 +63,10 @@ mod tests {
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
-	use crate::room::tests::RoomStub;
 	
 	#[test]
 	fn should_create() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ClientOwner::Client(user_public_key));
 		let mut command = CreateGameObjectCommand {
@@ -95,7 +94,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ClientOwner::Client(1000));
 		let command = CreateGameObjectCommand {
@@ -115,7 +114,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ClientOwner::Client(user_public_key));
 		let command = CreateGameObjectCommand {
@@ -135,7 +134,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_replace_exists_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object = room.create_object(&user_public_key);
 		object.template = 777;

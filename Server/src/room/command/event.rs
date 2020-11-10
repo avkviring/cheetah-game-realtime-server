@@ -6,7 +6,7 @@ use crate::room::command::ServerCommandExecutor;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let groups = object.access_groups.clone();
 			room.send_to_group(groups, S2CCommandUnion::Event(self))
@@ -22,11 +22,11 @@ mod tests {
 	use cheetah_relay_common::room::owner::ClientOwner;
 	
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::tests::RoomStub;
+	use crate::room::Room;
 	
 	#[test]
 	pub fn should_send_event() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let object_id = room.create_object(&0).id.clone();
 		let command = EventCommand {
 			object_id: object_id.clone(),
@@ -39,7 +39,7 @@ mod tests {
 	
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let command = EventCommand {
 			object_id: GameObjectId::new(10, ClientOwner::Root),
 			field_id: 100,

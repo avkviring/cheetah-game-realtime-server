@@ -7,7 +7,7 @@ use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(self, room: &mut dyn Room, user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		let user = room.get_user(user_public_key).unwrap();
 		if let ClientOwner::Client(object_id_user) = self.object_id.owner {
 			if object_id_user != user.public_key {
@@ -46,11 +46,10 @@ mod tests {
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
-	use crate::room::tests::RoomStub;
 	
 	#[test]
 	fn should_delete() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(55));
 		let object_id = room.create_object(&user_public_key).id.clone();
 		let command = DeleteGameObjectCommand {
@@ -65,7 +64,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_missing_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(55));
 		let object_id = GameObjectId::new(100, ClientOwner::Client(user_public_key));
 		let command = DeleteGameObjectCommand {
@@ -76,7 +75,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_delete_if_not_owner() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let user_a = room.create_user(AccessGroups(55));
 		let user_b = room.create_user(AccessGroups(55));
 		let object_id = room.create_object(&user_a).id.clone();

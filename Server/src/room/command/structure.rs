@@ -7,7 +7,7 @@ use crate::room::Room;
 use crate::room::command::ServerCommandExecutor;
 
 impl ServerCommandExecutor for StructureCommand {
-	fn execute(self, room: &mut dyn Room, _: &UserPublicKey) {
+	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.structures.insert(self.field_id, self.structure.clone());
 			let groups = object.access_groups.clone();
@@ -26,11 +26,10 @@ mod tests {
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
-	use crate::room::tests::RoomStub;
 	
 	#[test]
 	pub fn should_set_structure() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let object_id = room.create_object(&0).id.clone();
 		let command = StructureCommand {
 			object_id: object_id.clone(),
@@ -47,7 +46,7 @@ mod tests {
 	
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
-		let mut room = RoomStub::new();
+		let mut room = Room::new(0);
 		let command = StructureCommand {
 			object_id: GameObjectId::new(10, ClientOwner::Root),
 			field_id: 100,
