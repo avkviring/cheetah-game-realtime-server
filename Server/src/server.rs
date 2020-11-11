@@ -1,8 +1,7 @@
 use std::net::SocketAddr;
 use std::thread;
 use std::thread::JoinHandle;
-use std::time::Duration;
-
+use std::time::{Duration, Instant};
 
 use crate::network::udp::UDPServer;
 use crate::rooms::Rooms;
@@ -40,7 +39,9 @@ impl ServerThread {
 	
 	pub fn run(&mut self) {
 		loop {
+			let now = Instant::now();
 			self.udp_server.cycle(&mut self.rooms);
+			self.rooms.cycle(&now);
 			thread::sleep(Duration::from_micros(500));
 		}
 	}

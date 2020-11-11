@@ -1,15 +1,14 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
+use std::time::Instant;
 
-
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommands};
+use cheetah_relay_common::protocol::frame::applications::ApplicationCommands;
 use cheetah_relay_common::protocol::frame::Frame;
-
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::Room;
-use cheetah_relay_common::room::{RoomId, UserPublicKey};
 
 #[derive(Default)]
 pub struct Rooms {
@@ -73,9 +72,13 @@ impl Rooms {
 				rooms.changed_rooms.insert(room.id.clone());
 			});
 	}
+	
+	pub fn cycle(&mut self, now: &Instant) {
+		self.rooms.values().for_each(|r| r.clone().borrow_mut().cycle(now));
+	}
 }
 
-fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, action: F) where F: FnOnce(&mut Rooms, &mut Room)  {
+fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, action: F) where F: FnOnce(&mut Rooms, &mut Room) {
 	let room = rooms.user_to_room.get(user_public_key);
 	match room {
 		None => {
