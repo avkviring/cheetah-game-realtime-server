@@ -1,13 +1,14 @@
 extern crate stderrlog;
 
-
+use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
-use std::time::Duration;
 
 use stderrlog::Timestamp;
 
+use cheetah_relay::server::Server;
 
 fn main() {
 	init_logger();
@@ -16,24 +17,21 @@ fn main() {
 }
 
 fn start_server() {
-	// let server = ServerBuilder::new("0.0.0.0:5000".to_string()).enable_auto_create_room_and_client().build();
-	//
-	// let running = Arc::new(AtomicBool::new(true));
-	// let r = running.clone();
-	//
-	// ctrlc::set_handler(move || {
-	// 	r.store(false, Ordering::SeqCst);
-	// }).expect("Error setting Ctrl-C handler");
-	//
-	// while running.load(Ordering::SeqCst) {
-	// 	thread::sleep(Duration::from_secs(1));
-	// }
-	// drop(server); // для наглядности
+	let running_flag = Arc::new(AtomicBool::new(true));
+	let server = Server::new(SocketAddr::from_str("0.0.0.0:5000").unwrap(), running_flag.clone());
+	let r = running_flag.clone();
+	
+	
+	ctrlc::set_handler(move || {
+		r.store(false, Ordering::Relaxed);
+	}).expect("Error setting Ctrl-C handler");
+	
+	server.join();
 }
 
 fn init_logger() {
 	stderrlog::new()
-		.verbosity(0)
+		.verbosity(6)
 		.show_level(true)
 		.timestamp(Timestamp::Second)
 		.init()

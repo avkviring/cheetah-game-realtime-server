@@ -3,6 +3,8 @@ use std::collections::VecDeque;
 use std::net::SocketAddr;
 use std::ops::Sub;
 use std::path::PrefixComponent;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, TryRecvError};
 use std::thread;
 use std::thread::JoinHandle;
@@ -26,13 +28,13 @@ enum Request {
 
 
 impl Server {
-	pub fn new(address: SocketAddr) -> Self {
+	pub fn new(address: SocketAddr, halt_signal: Arc<AtomicBool>) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		
-		let handler = thread::spawn(move || { ServerThread::new(address, receiver).run(); });
+		let handler = thread::spawn(move || { ServerThread::new(address, receiver, halt_signal).run(); });
 		Self {
 			handler,
-			sender,
+			sender
 		}
 	}
 	
@@ -67,7 +69,7 @@ impl Server {
 		}
 	}
 	
-	pub fn wait(self) {
+	pub fn join(self) {
 		self.handler.join().unwrap();
 	}
 }
@@ -79,22 +81,23 @@ struct ServerThread {
 	receiver: Receiver<Request>,
 	max_duration: u128,
 	avg_duration: u128,
-	
+	halt_signal: Arc<AtomicBool>,
 }
 
 impl ServerThread {
-	pub fn new(address: SocketAddr, receiver: Receiver<Request>) -> Self {
+	pub fn new(address: SocketAddr, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
 			udp_server: UDPServer::new(address).unwrap(),
 			rooms: Default::default(),
 			receiver,
 			max_duration: 0,
 			avg_duration: 0,
+			halt_signal,
 		}
 	}
 	
 	pub fn run(&mut self) {
-		loop {
+		while self.halt_signal.load(Ordering::Relaxed) {
 			let start_instant = Instant::now();
 			self.udp_server.cycle(&mut self.rooms);
 			self.rooms.cycle(&start_instant);
@@ -125,7 +128,7 @@ impl ServerThread {
 		if self.avg_duration == 0 {
 			self.avg_duration = duration;
 		} else {
-			self.avg_duration += (self.avg_duration + duration) / 2;
+			self.avg_duration = (self.avg_duration + duration) / 2;
 		}
 		self.max_duration = max(self.max_duration, duration);
 	}
