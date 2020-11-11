@@ -37,7 +37,7 @@ impl UDPServer {
 			})
 	}
 	
-	pub fn add_user(&mut self, public_key: UserPublicKey, private_key: UserPrivateKey) {
+	pub fn register_user(&mut self, public_key: UserPublicKey, private_key: UserPrivateKey) {
 		self.sessions.insert(public_key, UserSession {
 			peer_address: Default::default(),
 			private_key,

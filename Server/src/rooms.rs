@@ -1,3 +1,4 @@
+use std::alloc::rust_oom;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
@@ -24,19 +25,30 @@ pub struct OutFrame {
 	pub frame: Frame,
 }
 
+#[derive(Debug)]
 pub enum RegisterUserError {
 	RoomNotFound,
 	AlreadyRegistered,
 }
 
+#[derive(Debug)]
+pub enum RegisterRoomError {
+	AlreadyRegistered
+}
+
 impl Rooms {
-	pub fn create_room(&mut self, room_id: RoomId) {
-		let room = Room::new(room_id);
-		self.rooms.insert(room_id, Rc::new(RefCell::new(room)));
+	pub fn create_room(&mut self, room_id: RoomId) -> Result<(), RegisterRoomError> {
+		if self.rooms.contains_key(&room_id) {
+			Result::Err((RegisterRoomError::AlreadyRegistered))
+		} else {
+			let room = Room::new(room_id);
+			self.rooms.insert(room_id, Rc::new(RefCell::new(room)));
+			Result::Ok(())
+		}
 	}
 	
-	pub fn register_user(&mut self, public_key: UserPublicKey, room_id: &RoomId, access_group: AccessGroups) -> Result<(), RegisterUserError> {
-		match self.rooms.get(room_id) {
+	pub fn register_user(&mut self, room_id: RoomId, public_key: UserPublicKey, access_group: AccessGroups) -> Result<(), RegisterUserError> {
+		match self.rooms.get(&room_id) {
 			None => {
 				Result::Err(RegisterUserError::RoomNotFound)
 			}
