@@ -19,6 +19,7 @@ use cheetah_relay_common::room::owner::ClientOwner;
 use crate::room::command::execute;
 use crate::room::object::GameObject;
 use crate::rooms::OutFrame;
+use fnv::{FnvBuildHasher, FnvHashMap};
 
 pub mod command;
 pub mod object;
@@ -26,7 +27,7 @@ pub mod object;
 #[derive(Debug)]
 pub struct Room {
 	pub id: RoomId,
-	users: HashMap<UserPublicKey, User>,
+	users: HashMap<UserPublicKey, User, FnvBuildHasher>,
 	objects: IndexMap<GameObjectId, GameObject>,
 	current_channel: Option<ApplicationCommandChannel>,
 	current_meta: Option<C2SMetaCommandInformation>,
@@ -52,7 +53,7 @@ impl Room {
 	pub fn new(id: RoomId) -> Self {
 		Room {
 			id,
-			users: Default::default(),
+			users: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
 			current_meta: Default::default(),

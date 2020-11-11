@@ -32,10 +32,10 @@ fn start_server() {
 
 
 fn register_test_users(server: &mut Server) {
-	for room in 0..5 {
+	for room in 0..3 {
 		server.register_room(room).ok().unwrap();
 		for user in 0..10 {
-			let public_key = user as u32;
+			let public_key = (room*255 + user) as u32;
 			let mut private_key = [0; 32];
 			private_key[0] = room as u8;
 			private_key[1] = user as u8;

@@ -3,6 +3,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 use std::time::Instant;
 
+use fnv::FnvBuildHasher;
+
 use cheetah_relay_common::protocol::frame::applications::ApplicationCommands;
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::room::{RoomId, UserPublicKey};
@@ -12,9 +14,9 @@ use crate::room::Room;
 
 #[derive(Default)]
 pub struct Rooms {
-	rooms: HashMap<RoomId, Rc<RefCell<Room>>>,
-	user_to_room: HashMap<UserPublicKey, Rc<RefCell<Room>>>,
-	changed_rooms: HashSet<RoomId>,
+	rooms: HashMap<RoomId, Rc<RefCell<Room>>, FnvBuildHasher>,
+	user_to_room: HashMap<UserPublicKey, Rc<RefCell<Room>>, FnvBuildHasher>,
+	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 }
 
 

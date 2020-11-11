@@ -1,8 +1,6 @@
 use std::cmp::max;
-use std::collections::VecDeque;
 use std::net::SocketAddr;
 use std::ops::Sub;
-use std::path::PrefixComponent;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, TryRecvError};

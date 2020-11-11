@@ -1,6 +1,8 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, VecDeque};
 
+use fnv::FnvBuildHasher;
+
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::frame::applications::{ApplicationCommandChannel, ApplicationCommandDescription, ChannelId, ChannelSequence};
 use crate::room::object::GameObjectId;
@@ -11,9 +13,9 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Default, Debug)]
 pub struct InCommandsCollector {
-	ordered: HashMap<ChannelKey, FrameId>,
-	sequence_commands: HashMap<ChannelKey, BinaryHeap<SequenceApplicationCommand>>,
-	sequence_last: HashMap<ChannelKey, ChannelSequence>,
+	ordered: HashMap<ChannelKey, FrameId, FnvBuildHasher>,
+	sequence_commands: HashMap<ChannelKey, BinaryHeap<SequenceApplicationCommand>, FnvBuildHasher>,
+	sequence_last: HashMap<ChannelKey, ChannelSequence, FnvBuildHasher>,
 	commands: VecDeque<ApplicationCommandDescription>,
 }
 
