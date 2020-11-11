@@ -27,6 +27,16 @@ enum Request {
 }
 
 
+pub enum RegisterRoomRequestError {
+	ChannelError(RecvTimeoutError),
+	Error(RegisterRoomError),
+}
+
+pub enum RegisterUserRequestError {
+	ChannelError(RecvTimeoutError),
+	Error(RegisterUserError),
+}
+
 impl Server {
 	pub fn new(address: SocketAddr, halt_signal: Arc<AtomicBool>) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
@@ -34,19 +44,30 @@ impl Server {
 		let handler = thread::spawn(move || { ServerThread::new(address, receiver, halt_signal).run(); });
 		Self {
 			handler,
-			sender
+			sender,
 		}
 	}
 	
-	pub fn register_room(&mut self, room_id: RoomId) -> Result<Result<(), RegisterRoomError>, RecvTimeoutError> {
+	
+	pub fn register_room(&mut self, room_id: RoomId) -> Result<(), RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(Request::RegisterRoom(room_id, sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => {
-				Result::Ok(r)
+				match r {
+					Ok(e) => {
+						log::info!("create room {:?}", room_id);
+						Result::Ok(())
+					}
+					Err(e) => {
+						log::error!("fail create room {:?}", e);
+						Result::Err(RegisterRoomRequestError::Error(e))
+					}
+				}
 			}
 			Err(e) => {
-				Result::Err(e)
+				log::error!("fail create room {:?}", e);
+				Result::Err(RegisterRoomRequestError::ChannelError(e))
 			}
 		}
 	}
@@ -56,15 +77,25 @@ impl Server {
 						 public_key: UserPublicKey,
 						 private_key: UserPrivateKey,
 						 access_groups: AccessGroups,
-	) -> Result<Result<(), RegisterUserError>, RecvTimeoutError> {
+	) -> Result<(), RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(Request::RegisterUser(room_id, public_key, private_key, access_groups, sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => {
-				Result::Ok(r)
+				match r {
+					Ok(_) => {
+						log::info!("create user {:?} in room {:?}", public_key, room_id);
+						Result::Ok(())
+					}
+					Err(e) => {
+						log::error!("fail create user {:?} in room {:?} with error {:?}", public_key, room_id, e);
+						Result::Err(RegisterUserRequestError::Error(e))
+					}
+				}
 			}
 			Err(e) => {
-				Result::Err(e)
+				log::error!("fail create user {:?} in room {:?} with error {:?}", public_key, room_id, e);
+				Result::Err(RegisterUserRequestError::ChannelError(e))
 			}
 		}
 	}
@@ -107,7 +138,7 @@ impl ServerThread {
 	}
 	
 	fn do_request(&mut self) {
-		if let Ok(request) = self.receiver.try_recv() {
+		while let Ok(request) = self.receiver.try_recv() {
 			match request {
 				Request::RegisterRoom(roomId, sender) => {
 					sender.send(self.rooms.create_room(roomId));
