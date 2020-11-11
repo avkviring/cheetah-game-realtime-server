@@ -249,6 +249,7 @@ impl Room {
 			u.protocol.cycle(now);
 			if u.protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
 				disconnected_user[disconnected_users_count] = u.public_key.clone();
+				disconnected_users_count+=1;
 			}
 		});
 		

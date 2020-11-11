@@ -40,7 +40,7 @@ pub enum RegisterRoomError {
 impl Rooms {
 	pub fn create_room(&mut self, room_id: RoomId) -> Result<(), RegisterRoomError> {
 		if self.rooms.contains_key(&room_id) {
-			Result::Err((RegisterRoomError::AlreadyRegistered))
+			Result::Err(RegisterRoomError::AlreadyRegistered)
 		} else {
 			let room = Room::new(room_id);
 			self.rooms.insert(room_id, Rc::new(RefCell::new(room)));

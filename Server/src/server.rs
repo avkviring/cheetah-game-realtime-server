@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use std::ops::Sub;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, TryRecvError};
+use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
@@ -53,7 +53,7 @@ impl Server {
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => {
 				match r {
-					Ok(e) => {
+					Ok(_) => {
 						log::info!("create room {:?}", room_id);
 						Result::Ok(())
 					}
@@ -138,11 +138,22 @@ impl ServerThread {
 	fn do_request(&mut self) {
 		while let Ok(request) = self.receiver.try_recv() {
 			match request {
-				Request::RegisterRoom(roomId, sender) => {
-					sender.send(self.rooms.create_room(roomId));
+				Request::RegisterRoom(room_id, sender) => {
+					match sender.send(self.rooms.create_room(room_id)) {
+						Ok(_) => {}
+						Err(e) => {
+							log::error!("[Request::RegisterRoom] error send response {:?}",e)
+						}
+					}
 				}
 				Request::RegisterUser(room_id, public_key, private_key, access_group, sender) => {
-					sender.send(self.rooms.register_user(room_id, public_key, access_group));
+					self.udp_server.register_user(public_key, private_key);
+					match sender.send(self.rooms.register_user(room_id, public_key, access_group)) {
+						Ok(_) => {}
+						Err(e) => {
+							log::error!("[Request::RegisterUser] error send response {:?}",e)
+						}
+					}
 				}
 			}
 		}
