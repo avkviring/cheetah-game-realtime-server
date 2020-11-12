@@ -75,7 +75,7 @@ impl Frame {
 			headers: additional_headers,
 			commands: ApplicationCommands
 			{
-                reliable: reliability,
+				reliable: reliability,
 				unreliable: unreliability,
 			},
 		})
@@ -100,7 +100,7 @@ impl Frame {
 	/// - остаток команд возвращается как результат функции
 	/// - данные команды также удаляются из исходного фрейма
 	///
-	pub fn encode(&mut self, cipher: &mut Cipher, out: &mut [u8]) -> (ApplicationCommands, usize) {
+	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> (ApplicationCommands, usize) {
 		let mut frame_cursor = Cursor::new(out);
 		let mut serializer = Serializer::new(&mut frame_cursor);
 		self.header.serialize(&mut serializer).unwrap();
@@ -112,13 +112,13 @@ impl Frame {
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		let unreliability_remaining =
 			Frame::serialized_commands(
-				&mut self.commands.unreliable,
+				&self.commands.unreliable,
 				frame_cursor.position(),
 				&mut commands_cursor);
 		
 		let reliability_remaining =
 			Frame::serialized_commands(
-				&mut self.commands.reliable,
+				&self.commands.reliable,
 				frame_cursor.position(),
 				&mut commands_cursor);
 		
@@ -142,21 +142,21 @@ impl Frame {
 		(ApplicationCommands { reliable: reliability_remaining, unreliable: unreliability_remaining }, frame_cursor.position() as usize)
 	}
 	
-	fn serialized_commands(commands: &mut Vec<ApplicationCommandDescription>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommandDescription> {
+	fn serialized_commands(commands: &Vec<ApplicationCommandDescription>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommandDescription> {
 		let head_position = out.position();
 		out.write_u8(0).unwrap();
 		let mut commands_count = 0;
 		let mut remaining_commands = Vec::new();
-		commands.retain(|command| {
+		for command in commands {
 			if frame_length + out.position() < Frame::MAX_FRAME_SIZE as u64 && commands_count < 255 {
 				to_vec(command, out);
 				commands_count += 1;
-				true
 			} else {
 				remaining_commands.push(command.clone());
-				false
 			}
-		});
+		}
+		
+		
 		let position = out.position();
 		out.set_position(head_position);
 		out.write_u8(commands_count).unwrap();
@@ -196,8 +196,8 @@ pub mod tests {
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
 		frame.commands.reliable.push(
 			ApplicationCommandDescription::new(
-                ApplicationCommandChannel::ReliableUnordered,
-                ApplicationCommand::TestSimple("test".to_string()),
+				ApplicationCommandChannel::ReliableUnordered,
+				ApplicationCommand::TestSimple("test".to_string()),
 			));
 		let mut buffer = [0; 1024];
 		let (_, size) = frame.encode(&mut cipher, &mut buffer);
@@ -219,8 +219,8 @@ pub mod tests {
 		for _ in 0..COMMAND_COUNT {
 			frame.commands.reliable.push(
 				ApplicationCommandDescription::new(
-                    ApplicationCommandChannel::ReliableUnordered,
-                    ApplicationCommand::TestSimple("1234567890".to_string()),
+					ApplicationCommandChannel::ReliableUnordered,
+					ApplicationCommand::TestSimple("1234567890".to_string()),
 				)
 			);
 		}
