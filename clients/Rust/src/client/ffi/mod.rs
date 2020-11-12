@@ -6,8 +6,8 @@ use cheetah_relay_common::room::owner::ClientOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::client::ffi::bytes::Bytes;
-use crate::client::ffi::values::Values;
 use crate::client::ffi::structures::Structures;
+use crate::client::ffi::values::Values;
 
 pub mod structures;
 pub mod values;
@@ -147,6 +147,27 @@ impl ObjectId {
 				ObjectIdType::User => { ClientOwner::User(self.user_public_key) }
 			},
 			id: self.id,
+		}
+	}
+}
+
+
+#[cfg(test)]
+mod tests {
+	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_relay_common::room::owner::ClientOwner;
+	
+	use crate::client::ffi::ObjectId;
+	
+	#[test]
+	fn should_convert_game_object_id() {
+		let owners = vec![ClientOwner::Root, ClientOwner::User(100)];
+		for owner in owners {
+			let mut ffi_game_object_id = ObjectId::default();
+			let source = GameObjectId::new(100, owner);
+			ffi_game_object_id.set_from(&source);
+			let converted = ffi_game_object_id.to_common_game_object_id();
+			assert_eq!(source, converted);
 		}
 	}
 }

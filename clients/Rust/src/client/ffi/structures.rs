@@ -77,3 +77,25 @@ impl From<&Structures> for HashMap<FieldID, Vec<u8>, FnvBuildHasher> {
 }
 
 
+#[cfg(test)]
+mod tests {
+	use std::collections::HashMap;
+	
+	use fnv::FnvBuildHasher;
+	
+	use cheetah_relay_common::constants::FieldID;
+	
+	use crate::client::ffi::structures::Structures;
+	
+	#[test]
+	fn should_convert_structures() {
+		let mut source = HashMap::<FieldID, Vec<u8>, FnvBuildHasher>::default();
+		source.insert(10, vec![1, 2, 3, 4, 5]);
+		source.insert(20, vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+		
+		let structures = Structures::from(&source);
+		let converted = HashMap::<FieldID, Vec<u8>, FnvBuildHasher>::from(&structures);
+		
+		assert_eq!(source, converted);
+	}
+}

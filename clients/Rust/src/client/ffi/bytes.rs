@@ -1,6 +1,7 @@
-use cheetah_relay_common::constants::MAX_SIZE_STRUCT;
-use std::fmt::{Debug, Formatter};
 use core::fmt;
+use std::fmt::{Debug, Formatter};
+
+use cheetah_relay_common::constants::MAX_SIZE_STRUCT;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -48,3 +49,15 @@ impl From<Bytes> for Vec<u8> {
 	}
 }
 
+#[cfg(test)]
+mod tests {
+	use crate::client::ffi::bytes::Bytes;
+	
+	#[test]
+	fn should_convert_bytes() {
+		let source: Vec<u8> = vec![1, 2, 3, 4, 5];
+		let field_ffi_binary = Bytes::from(source.clone());
+		let converted = Vec::from(field_ffi_binary.clone());
+		assert_eq!(source, converted);
+	}
+}

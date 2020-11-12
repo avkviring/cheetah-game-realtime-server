@@ -56,3 +56,22 @@ impl<IN: Default + Clone, OUT: From<IN>> From<&Values<IN>> for HashMap<u16, OUT,
 		result
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use std::collections::HashMap;
+	
+	use fnv::{FnvBuildHasher, FnvHashMap};
+	
+	use crate::client::ffi::values::Values;
+	
+	#[test]
+	fn should_convert_values() {
+		let mut source = FnvHashMap::default();
+		source.insert(10 as u16, 255 as u8);
+		source.insert(20 as u16, 255 as u8);
+		let fields = Values::<u8>::from(&source);
+		let converted = HashMap::<u16, u8, FnvBuildHasher>::from(&fields);
+		assert_eq!(source, converted);
+	}
+}
