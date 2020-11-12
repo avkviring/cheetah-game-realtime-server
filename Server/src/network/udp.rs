@@ -5,7 +5,7 @@ use std::net::{SocketAddr, UdpSocket};
 use fnv::{FnvBuildHasher, FnvHashMap};
 
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
-use cheetah_relay_common::protocol::frame::Frame;
+use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::protocol::frame::headers::Header;
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
 
@@ -24,6 +24,7 @@ pub struct UDPServer {
 struct UserSession {
 	peer_address: Option<SocketAddr>,
 	private_key: UserPrivateKey,
+	max_receive_frame_id: FrameId,
 }
 
 impl UDPServer {
@@ -43,6 +44,7 @@ impl UDPServer {
 		self.sessions.insert(public_key, UserSession {
 			peer_address: Default::default(),
 			private_key,
+			max_receive_frame_id: 0,
 		});
 	}
 	
@@ -118,7 +120,10 @@ impl UDPServer {
 								let private_key = &session.private_key;
 								match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
 									Ok(frame) => {
-										session.peer_address.replace(address);
+										if frame.header.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
+											session.peer_address.replace(address);
+											session.max_receive_frame_id = frame.header.frame_id;
+										}
 										rooms.on_frame_received(&public_key, frame);
 									}
 									Err(e) => {
@@ -143,11 +148,12 @@ mod tests {
 	use std::net::SocketAddr;
 	use std::str::FromStr;
 	
+	use cheetah_relay_common::protocol::codec::cipher::Cipher;
+	use cheetah_relay_common::protocol::frame::Frame;
+	use cheetah_relay_common::protocol::frame::headers::Header;
+	
 	use crate::network::udp::UDPServer;
 	use crate::rooms::Rooms;
-	use cheetah_relay_common::protocol::frame::Frame;
-	use cheetah_relay_common::protocol::codec::cipher::Cipher;
-	use cheetah_relay_common::protocol::frame::headers::Header;
 	
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
@@ -165,7 +171,7 @@ mod tests {
 		let mut buffer = [0; 2048];
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::UserPublicKey(0));
-		let size = frame.encode(&mut Cipher::new(&[0;32]), &mut buffer).1;
+		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).1;
 		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap());
 	}
 	
@@ -175,7 +181,41 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; 2048];
 		let mut frame = Frame::new(0);
-		let size = frame.encode(&mut Cipher::new(&[0;32]), &mut buffer).1;
+		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).1;
 		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap());
+	}
+	
+	
+	///
+	/// Проверяем что адрес пользователя не будет переписан фреймом из прошлого
+	///
+	#[test]
+	fn should_keep_address_from_last_frame() {
+		let mut udp_server = UDPServer::new(SocketAddr::from_str("127.0.0.1:5004").unwrap()).unwrap();
+		let mut rooms = Rooms::default();
+		let mut buffer = [0; 2048];
+		
+		
+		let public_key = 0;
+		let private_key = [0; 32];
+		
+		udp_server.register_user(public_key, private_key);
+		
+		let mut frame = Frame::new(100);
+		frame.headers.add(Header::UserPublicKey(public_key));
+		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer).1;
+		
+		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
+		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
+		
+		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1);
+		
+		
+		let mut frame = Frame::new(10);
+		frame.headers.add(Header::UserPublicKey(public_key));
+		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer).1;
+		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2);
+		
+		assert_eq!(udp_server.sessions.get(&public_key).unwrap().peer_address.unwrap(), addr_1);
 	}
 }
