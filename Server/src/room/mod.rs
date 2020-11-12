@@ -263,7 +263,7 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::S2CCommandUnion;
-	use cheetah_relay_common::room::{RoomId, UserPublicKey};
+	use cheetah_relay_common::room::UserPublicKey;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;

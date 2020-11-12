@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 
-use fnv::{FnvHashMap, FnvBuildHasher};
+use fnv::{FnvBuildHasher, FnvHashMap};
 
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_relay_common::protocol::frame::Frame;
@@ -85,41 +85,7 @@ impl UDPServer {
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
 			match result {
-				Ok((size, address)) => {
-					let mut cursor = Cursor::new(&buffer[0..size]);
-					match Frame::decode_headers(&mut cursor) {
-						Ok((frame_header, headers)) => {
-							let user_public_key_header: Option<UserPublicKey> = headers.first(Header::predicate_user_public_key).cloned();
-							match user_public_key_header {
-								None => {
-									log::error!("user public key not found");
-								}
-								Some(public_key) => {
-									match self.sessions.get_mut(&public_key) {
-										None => {
-											log::error!("user session not found for key {:?}", public_key);
-										}
-										Some(session) => {
-											let private_key = &session.private_key;
-											match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
-												Ok(frame) => {
-													session.peer_address.replace(address);
-													rooms.on_frame_received(&public_key, frame);
-												}
-												Err(e) => {
-													log::error!("error decode frame {:?}", e)
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-						Err(e) => {
-							log::error!("decode headers error {:?}", e);
-						}
-					}
-				}
+				Ok((size, address)) => self.process_in_frame(rooms, &mut buffer, size, address),
 				Err(e) => {
 					match e.kind() {
 						ErrorKind::WouldBlock => {
@@ -132,5 +98,84 @@ impl UDPServer {
 				}
 			}
 		}
+	}
+	
+	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; 2048], size: usize, address: SocketAddr) {
+		let mut cursor = Cursor::new(&buffer[0..size]);
+		match Frame::decode_headers(&mut cursor) {
+			Ok((frame_header, headers)) => {
+				let user_public_key_header: Option<UserPublicKey> = headers.first(Header::predicate_user_public_key).cloned();
+				match user_public_key_header {
+					None => {
+						log::error!("user public key not found");
+					}
+					Some(public_key) => {
+						match self.sessions.get_mut(&public_key) {
+							None => {
+								log::error!("user session not found for key {:?}", public_key);
+							}
+							Some(session) => {
+								let private_key = &session.private_key;
+								match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
+									Ok(frame) => {
+										session.peer_address.replace(address);
+										rooms.on_frame_received(&public_key, frame);
+									}
+									Err(e) => {
+										log::error!("error decode frame {:?}", e)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			Err(e) => {
+				log::error!("decode headers error {:?}", e);
+			}
+		}
+	}
+}
+
+
+#[cfg(test)]
+mod tests {
+	use std::net::SocketAddr;
+	use std::str::FromStr;
+	
+	use crate::network::udp::UDPServer;
+	use crate::rooms::Rooms;
+	use cheetah_relay_common::protocol::frame::Frame;
+	use cheetah_relay_common::protocol::codec::cipher::Cipher;
+	use cheetah_relay_common::protocol::frame::headers::Header;
+	
+	#[test]
+	fn should_not_panic_when_wrong_in_data() {
+		let mut udp_server = UDPServer::new(SocketAddr::from_str("127.0.0.1:5001").unwrap()).unwrap();
+		let mut rooms = Rooms::default();
+		let buffer = [0; 2048];
+		let usize = 100 as usize;
+		udp_server.process_in_frame(&mut rooms, &buffer, usize, SocketAddr::from_str("127.0.0.1:5002").unwrap());
+	}
+	
+	#[test]
+	fn should_not_panic_when_wrong_user() {
+		let mut udp_server = UDPServer::new(SocketAddr::from_str("127.0.0.1:5002").unwrap()).unwrap();
+		let mut rooms = Rooms::default();
+		let mut buffer = [0; 2048];
+		let mut frame = Frame::new(0);
+		frame.headers.add(Header::UserPublicKey(0));
+		let size = frame.encode(&mut Cipher::new(&[0;32]), &mut buffer).1;
+		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap());
+	}
+	
+	#[test]
+	fn should_not_panic_when_missing_user_header() {
+		let mut udp_server = UDPServer::new(SocketAddr::from_str("127.0.0.1:5003").unwrap()).unwrap();
+		let mut rooms = Rooms::default();
+		let mut buffer = [0; 2048];
+		let mut frame = Frame::new(0);
+		let size = frame.encode(&mut Cipher::new(&[0;32]), &mut buffer).1;
+		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap());
 	}
 }
