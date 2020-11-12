@@ -14,7 +14,6 @@ use cheetah_relay_common::utils::logger::LogListener;
 use crate::client::ffi::Command;
 use crate::client::NetworkStatus;
 use crate::clients::Clients;
-use widestring::U16CString;
 
 pub mod client;
 pub mod clients;

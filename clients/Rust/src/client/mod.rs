@@ -7,8 +7,8 @@ use cheetah_relay_common::room::{RoomId, UserPublicKey};
 pub mod ffi;
 pub mod command;
 pub mod network;
-pub mod request;
 pub mod thread;
+pub mod request;
 
 #[derive(Debug)]
 pub struct Client {
