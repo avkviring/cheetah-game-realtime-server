@@ -190,7 +190,7 @@ impl Room {
 	
 	///
 	/// Связь с пользователям разорвана
-	///  - удаляем все созданные им объекты с уведомлением других пользователей
+	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
 	pub fn disconnect_user(&mut self, user_public_key: &UserPublicKey) {
 		match self.users.remove(user_public_key) {
