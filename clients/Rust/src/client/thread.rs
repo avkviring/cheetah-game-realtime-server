@@ -1,17 +1,14 @@
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Receiver;
-use std::thread;
-use std::time::Duration;
 
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
-use cheetah_relay_common::commands::hash::RoomId;
 
 use crate::client::{Client, NetworkStatus};
 use crate::client::request::{ClientRequestType, ExternalRequestProcessor, RequestResult};
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
 
 pub struct ClientThread {
 	client: Client,
-	// tcp_client: TCPClient,
 	requests: ExternalRequestProcessor,
 }
 
@@ -19,13 +16,13 @@ impl ClientThread {
 	pub fn new(
 		server_address: String,
 		room_hash: RoomId,
-		client_hash: RoomId,
+		user_public_key: UserPublicKey,
 		receiver: Receiver<ClientRequestType>,
 		commands_from_server: Arc<Mutex<Vec<S2CCommandWithMeta>>>,
 		network_status: Arc<Mutex<NetworkStatus>>,
 	) -> ClientThread {
 		ClientThread {
-			client: Client::new(room_hash, client_hash, commands_from_server, network_status),
+			client: Client::new(room_hash, user_public_key, commands_from_server, network_status),
 			// tcp_client: TCPClient::new(server_address),
 			requests: ExternalRequestProcessor::new(receiver),
 		}

@@ -1,16 +1,16 @@
 use std::fmt::Debug;
 
-use cheetah_relay_common::constants::ClientId;
 use cheetah_relay_common::commands::command::C2SCommandUnion;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
+use cheetah_relay_common::room::UserPublicKey;
 
 use crate::client::ffi::bytes::Bytes;
-use crate::client::ffi::counters::Counters;
 use crate::client::ffi::structures::Structures;
+use crate::client::ffi::values::Values;
 
 pub mod structures;
-pub mod counters;
+pub mod values;
 pub mod bytes;
 
 
@@ -32,11 +32,11 @@ pub struct Command {
 	pub long_value: i64,
 	pub float_value: f64,
 	pub access_group: u64,
-	pub long_counters: Counters<i64>,
-	pub float_counters: Counters<f64>,
+	pub longs: Values<i64>,
+	pub floats: Values<f64>,
 	pub structures: Structures,
 	pub meta_timestamp: u64,
-	pub meta_source_client: ClientId,
+	pub meta_source_client: UserPublicKey,
 }
 
 ///
@@ -58,7 +58,7 @@ pub trait Client2ServerFFIConverter {
 #[derive(Debug)]
 pub struct ObjectId {
 	pub id: u32,
-	pub client: u16,
+	pub user_public_key: UserPublicKey,
 	pub id_type: ObjectIdType,
 }
 
@@ -66,8 +66,7 @@ pub struct ObjectId {
 #[derive(Debug)]
 pub enum ObjectIdType {
 	Root,
-	Current,
-	Client,
+	User,
 }
 
 
@@ -93,6 +92,7 @@ pub enum C2SCommandFFIType {
 	Structure,
 	Event,
 	Unload,
+	LoadRoom,
 }
 
 
@@ -104,8 +104,8 @@ impl Default for Command {
 			object_id: Default::default(),
 			object_template: Default::default(),
 			field_id: Default::default(),
-			long_counters: Default::default(),
-			float_counters: Default::default(),
+			longs: Default::default(),
+			floats: Default::default(),
 			structures: Default::default(),
 			structure: Default::default(),
 			event: Default::default(),
@@ -113,7 +113,7 @@ impl Default for Command {
 			float_value: Default::default(),
 			access_group: Default::default(),
 			meta_timestamp: Default::default(),
-			meta_source_client: Default::default()
+			meta_source_client: Default::default(),
 		}
 	}
 }
@@ -122,7 +122,7 @@ impl Default for ObjectId {
 	fn default() -> Self {
 		ObjectId {
 			id: 0,
-			client: 0,
+			user_public_key: 0,
 			id_type: ObjectIdType::Root,
 		}
 	}
@@ -133,12 +133,9 @@ impl ObjectId {
 		self.id = id.id;
 		match id.owner {
 			ClientOwner::Root => { self.id_type = ObjectIdType::Root }
-			ClientOwner::CurrentClient => {
-				self.id_type = ObjectIdType::Current;
-			}
-			ClientOwner::Client(client) => {
-				self.id_type = ObjectIdType::Client;
-				self.client = client
+			ClientOwner::User(user_public_key) => {
+				self.id_type = ObjectIdType::User;
+				self.user_public_key = user_public_key
 			}
 		}
 	}
@@ -147,10 +144,30 @@ impl ObjectId {
 		GameObjectId {
 			owner: match self.id_type {
 				ObjectIdType::Root => { ClientOwner::Root }
-				ObjectIdType::Current => { ClientOwner::CurrentClient }
-				ObjectIdType::Client => { ClientOwner::Client(self.client) }
+				ObjectIdType::User => { ClientOwner::User(self.user_public_key) }
 			},
 			id: self.id,
+		}
+	}
+}
+
+
+#[cfg(test)]
+mod tests {
+	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_relay_common::room::owner::ClientOwner;
+	
+	use crate::client::ffi::ObjectId;
+	
+	#[test]
+	fn should_convert_game_object_id() {
+		let owners = vec![ClientOwner::Root, ClientOwner::User(100)];
+		for owner in owners {
+			let mut ffi_game_object_id = ObjectId::default();
+			let source = GameObjectId::new(100, owner);
+			ffi_game_object_id.set_from(&source);
+			let converted = ffi_game_object_id.to_common_game_object_id();
+			assert_eq!(source, converted);
 		}
 	}
 }

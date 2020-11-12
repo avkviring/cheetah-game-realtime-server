@@ -4,7 +4,7 @@ use std::sync::mpsc::{Sender, SendError};
 use std::thread;
 use std::thread::JoinHandle;
 
-use cheetah_relay_common::commands::command::{CommandCode, S2CCommandUnion, S2CCommandWithMeta};
+use cheetah_relay_common::commands::command::{S2CCommandUnion, S2CCommandWithMeta};
 use cheetah_relay_common::commands::command::event::EventCommand;
 use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
@@ -12,7 +12,7 @@ use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SComm
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::commands::hash::RoomId;
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
 
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, Server2ClientFFIConverter};
 use crate::client::NetworkStatus;
@@ -73,8 +73,8 @@ impl Default for Clients {
 impl Clients {
 	pub fn create_client(&mut self,
 						 server_address: String,
-						 room_hash: RoomId,
-						 client_hash: RoomId,
+						 room_id: RoomId,
+						 user_public_key: UserPublicKey,
 	) -> u16 {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		
@@ -87,8 +87,8 @@ impl Clients {
 		let handler = thread::spawn(move || {
 			let mut client = ClientThread::new(
 				server_address,
-				room_hash,
-				client_hash,
+				room_id,
+				user_public_key,
 				receiver,
 				commands_from_server_cloned,
 				network_status_cloned,
@@ -136,28 +136,24 @@ impl Clients {
 				Result::Err(ClientsErrors::ClientNotFound(client_id))
 			}
 			Some(client_api) => {
-				let (client_command, command_code) = match command.command_type_c2s {
-					C2SCommandFFIType::Create =>
-						(CreateGameObjectCommand::from_ffi(command), CreateGameObjectCommand::COMMAND_CODE),
-					C2SCommandFFIType::IncrementLongCounter =>
-						(IncrementLongC2SCommand::from_ffi(command), IncrementLongC2SCommand::COMMAND_CODE),
-					C2SCommandFFIType::IncrementFloatCounter =>
-						(IncrementFloat64C2SCommand::from_ffi(command), IncrementFloat64C2SCommand::COMMAND_CODE),
-					C2SCommandFFIType::Structure =>
-						(StructureCommand::from_ffi(command), StructureCommand::COMMAND_CODE),
-					C2SCommandFFIType::Event =>
-						(EventCommand::from_ffi(command), EventCommand::COMMAND_CODE),
-					C2SCommandFFIType::Unload =>
-						(DeleteGameObjectCommand::from_ffi(command), DeleteGameObjectCommand::COMMAND_CODE),
-					C2SCommandFFIType::SetLongCounter =>
-						(SetLongCommand::from_ffi(command), SetLongCommand::COMMAND_CODE),
-					C2SCommandFFIType::SetFloatCounter =>
-						(SetFloat64Command::from_ffi(command), SetFloat64Command::COMMAND_CODE)
+				let client_command = match command.command_type_c2s {
+					C2SCommandFFIType::Create => CreateGameObjectCommand::from_ffi(command),
+					C2SCommandFFIType::IncrementLongCounter => IncrementLongC2SCommand::from_ffi(command),
+					C2SCommandFFIType::IncrementFloatCounter => IncrementFloat64C2SCommand::from_ffi(command),
+					C2SCommandFFIType::Structure => StructureCommand::from_ffi(command),
+					C2SCommandFFIType::Event => EventCommand::from_ffi(command),
+					C2SCommandFFIType::Unload => DeleteGameObjectCommand::from_ffi(command),
+					C2SCommandFFIType::SetLongCounter => SetLongCommand::from_ffi(command),
+					C2SCommandFFIType::SetFloatCounter => SetFloat64Command::from_ffi(command),
+					C2SCommandFFIType::LoadRoom => {
+						todo!("make it")
+					}
 				};
 				
 				log::info!("schedule command to server {:?}", client_command);
 				
-				let request_type = ClientRequestType::SendCommandToServer(client_command, C2SMetaCommandInformation::new(command_code, command.meta_timestamp));
+				let meta_command_information = C2SMetaCommandInformation { timestamp: command.meta_timestamp };
+				let request_type = ClientRequestType::SendCommandToServer(client_command, meta_command_information);
 				match client_api.sender.send(request_type) {
 					Ok(_) => {
 						Result::Ok(())
@@ -184,9 +180,7 @@ impl Clients {
 				drop(commands); // снимаем lock, так как при вызове функции collector() возможна ситуация deadlock
 				let command_ffi = &mut self.s2c_command_ffi;
 				cloned_commands.into_iter().for_each(|command| {
-					if log::log_enabled!(log::Level::Info) {
-						log::info!("receive command from server {:?}", command);
-					}
+					log::info!("receive command from server {:?}", command);
 					match command.command {
 						S2CCommandUnion::Create(command) => { command.to_ffi(command_ffi) }
 						S2CCommandUnion::SetLong(command) => { command.to_ffi(command_ffi) }

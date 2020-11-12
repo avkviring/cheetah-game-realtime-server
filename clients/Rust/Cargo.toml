@@ -13,9 +13,9 @@ lazy_static = "1.4.0"
 intptr = "0.1"
 log = "0.4"
 cheetah_relay_common = { path = "../../Common"}
-mio = { version = "0.7.0", features = ["os-poll", "tcp"]}
 widestring="0.4.2"
 hex = "0.4.2"
+fnv = "1.0.7"
 
 [dev-dependencies]
 cheetah_relay = { path = "../../Server"}

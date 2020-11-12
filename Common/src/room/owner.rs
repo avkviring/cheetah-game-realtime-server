@@ -8,6 +8,6 @@ use crate::room::UserPublicKey;
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub enum ClientOwner {
 	Root,
-	Client(UserPublicKey),
+	User(UserPublicKey),
 }
 
