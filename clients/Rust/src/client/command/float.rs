@@ -1,7 +1,7 @@
 use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
 
-use crate::client::command::C2SCommandUnion;
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, S2CCommandFFIType, Server2ClientFFIConverter};
+use cheetah_relay_common::commands::command::C2SCommandUnion;
 
 impl Server2ClientFFIConverter for SetFloat64Command {
 	fn to_ffi(self, ffi: &mut Command) {

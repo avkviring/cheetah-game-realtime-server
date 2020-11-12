@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use cheetah_relay_client::client::ffi::bytes::Bytes;
-use cheetah_relay_client::client::ffi::counters::Counters;
+use cheetah_relay_client::client::ffi::values::Values;
 use cheetah_relay_client::client::ffi::ObjectId;
 use cheetah_relay_client::client::ffi::structures::Structures;
 use cheetah_relay_common::constants::FieldID;
@@ -10,7 +10,7 @@ use cheetah_relay_common::room::owner::ClientOwner;
 
 #[test]
 fn should_convert_game_object_id() {
-	let owners = vec![ClientOwner::Root, ClientOwner::CurrentClient, ClientOwner::Client(100)];
+	let owners = vec![ClientOwner::Root, ClientOwner::CurrentClient, ClientOwner::User(100)];
 	for owner in owners {
 		let mut ffi_game_object_id = ObjectId::default();
 		let source = GameObjectId::new(100, owner);
@@ -25,7 +25,7 @@ fn should_convert_counters() {
 	let mut source = HashMap::new();
 	source.insert(10 as u16, 255 as u8);
 	source.insert(20 as u16, 255 as u8);
-	let fields = Counters::<u8>::from(&source);
+	let fields = Values::<u8>::from(&source);
 	let converted = HashMap::<u16, u8>::from(&fields);
 	assert_eq!(source, converted);
 }

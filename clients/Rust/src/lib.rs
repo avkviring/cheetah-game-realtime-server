@@ -5,14 +5,16 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 
-use cheetah_relay_common::commands::hash::RoomId;
-use cheetah_relay_common::utils::logger::LogListener;
 use log::Level;
-use widestring::U16CString;
+
+
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
+use cheetah_relay_common::utils::logger::LogListener;
 
 use crate::client::ffi::Command;
 use crate::client::NetworkStatus;
 use crate::clients::Clients;
+use widestring::U16CString;
 
 pub mod client;
 pub mod clients;
@@ -77,15 +79,12 @@ pub extern "C" fn collect_logs(on_log_message: extern fn(LogLevel, *const u16)) 
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn create_client(addr: *const c_char, room_hash: *const c_char, client_hash: *const c_char) -> u16 {
+pub unsafe extern "C" fn create_client(addr: *const c_char, room_id: RoomId, user_public_key: UserPublicKey) -> u16 {
 	let server_address = CStr::from_ptr(addr)
 		.to_str()
 		.unwrap()
 		.to_string();
-	
-	let room_hash = RoomId::from(CStr::from_ptr(room_hash).to_str().unwrap());
-	let client_hash = RoomId::from(CStr::from_ptr(client_hash).to_str().unwrap());
-	execute(|api| api.create_client(server_address, room_hash, client_hash))
+	execute(|api| api.create_client(server_address, room_id, user_public_key))
 }
 
 

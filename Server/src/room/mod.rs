@@ -198,7 +198,7 @@ impl Room {
 			Some(user) => {
 				let mut objects = Vec::new();
 				self.process_objects(&mut |o| {
-					if let ClientOwner::Client(owner) = o.id.owner {
+					if let ClientOwner::User(owner) = o.id.owner {
 						if owner == user.public_key {
 							objects.push((o.id.clone(), o.access_groups.clone()));
 						}
@@ -280,7 +280,7 @@ mod tests {
 		
 		pub fn create_object(&mut self, owner: &UserPublicKey) -> &mut GameObject {
 			self.object_id_generator += 1;
-			let id = GameObjectId::new(self.object_id_generator, ClientOwner::Client(owner.clone()));
+			let id = GameObjectId::new(self.object_id_generator, ClientOwner::User(owner.clone()));
 			let object = GameObject {
 				id: id.clone(),
 				template: 0,

@@ -2,7 +2,9 @@ use core::fmt;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-use cheetah_relay_common::constants::{FieldID, MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT, ALL_STRUCTURES_SIZE};
+use fnv::FnvBuildHasher;
+
+use cheetah_relay_common::constants::{ALL_STRUCTURES_SIZE, FieldID, MAX_FIELDS_IN_OBJECT, MAX_SIZE_STRUCT};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -45,8 +47,8 @@ impl Debug for Structures {
 }
 
 
-impl From<&HashMap<FieldID, Vec<u8>>> for Structures {
-	fn from(from: &HashMap<u16, Vec<u8>>) -> Self {
+impl From<&HashMap<FieldID, Vec<u8>, FnvBuildHasher>> for Structures {
+	fn from(from: &HashMap<u16, Vec<u8>, FnvBuildHasher>) -> Self {
 		let mut structures: Structures = Default::default();
 		let mut index = 0;
 		for (field, value) in from {
@@ -61,7 +63,7 @@ impl From<&HashMap<FieldID, Vec<u8>>> for Structures {
 	}
 }
 
-impl From<&Structures> for HashMap<FieldID, Vec<u8>> {
+impl From<&Structures> for HashMap<FieldID, Vec<u8>, FnvBuildHasher> {
 	fn from(from: &Structures) -> Self {
 		let mut result = HashMap::default();
 		for index in 0..from.count as usize {
