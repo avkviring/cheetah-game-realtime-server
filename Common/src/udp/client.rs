@@ -12,7 +12,7 @@ use crate::protocol::relay::RelayProtocol;
 use crate::room::{UserPrivateKey, UserPublicKey};
 
 pub struct UdpClient {
-	pub state: ClientState,
+	pub state: ConnectionStatus,
 	pub protocol: RelayProtocol,
 	private_key: UserPrivateKey,
 	server_address: SocketAddr,
@@ -20,8 +20,9 @@ pub struct UdpClient {
 	out_frames: VecDeque<Frame>,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum ClientState {
+#[derive(Debug, PartialEq, Copy, Clone)]
+#[repr(C)]
+pub enum ConnectionStatus {
 	None,
 	Disconnected,
 	Connected,
@@ -32,7 +33,6 @@ impl UdpClient {
 	pub fn new(private_key: UserPrivateKey,
 			   public_key: UserPublicKey,
 			   server_address: SocketAddr) -> Result<UdpClient, ()> {
-		
 		let mut protocol = RelayProtocol::default();
 		protocol.add_frame_builder(Box::new(UserPublicKeyFrameBuilder(public_key)));
 		protocol.add_frame_builder(Box::new(HelloSender::default()));
@@ -40,7 +40,7 @@ impl UdpClient {
 		let socket = UdpClient::find_free_socket()?;
 		
 		Result::Ok(UdpClient {
-			state: ClientState::None,
+			state: ConnectionStatus::None,
 			protocol,
 			private_key,
 			server_address,
@@ -64,12 +64,24 @@ impl UdpClient {
 	}
 	
 	pub fn cycle(&mut self, now: &Instant) {
+		if self.state == ConnectionStatus::Disconnected {
+			return;
+		}
+		
 		self.protocol.cycle(now);
-		self.do_read(&now);
-		self.do_write(&now)
+		self.do_read(now);
+		self.do_write(now);
+		
+		if self.protocol.connected(now) {
+			self.state = ConnectionStatus::Connected
+		}
+		
+		if self.protocol.disconnected(now) {
+			self.state = ConnectionStatus::Disconnected
+		}
 	}
 	
-	fn do_write(&mut self, now: &&Instant) {
+	fn do_write(&mut self, now: &Instant) {
 		if let Some(frame) = self.protocol.build_next_frame(&now) {
 			self.out_frames.push_front(frame);
 		}
@@ -91,7 +103,7 @@ impl UdpClient {
 						ErrorKind::WouldBlock => {}
 						_ => {
 							log::error!("error send {:?}", e);
-							self.state = ClientState::Disconnected;
+							self.state = ConnectionStatus::Disconnected;
 						}
 					}
 				}
@@ -99,7 +111,7 @@ impl UdpClient {
 		}
 	}
 	
-	fn do_read(&mut self, now: &&Instant) {
+	fn do_read(&mut self, now: &Instant) {
 		let mut buffer = [0; 2048];
 		loop {
 			match self.socket.recv(&mut buffer) {
@@ -108,7 +120,7 @@ impl UdpClient {
 						ErrorKind::WouldBlock => {}
 						_ => {
 							log::error!("error receive {:?}", e);
-							self.state = ClientState::Disconnected;
+							self.state = ConnectionStatus::Disconnected;
 						}
 					}
 					break;
@@ -122,7 +134,6 @@ impl UdpClient {
 							match frame {
 								Ok(frame) => {
 									self.protocol.on_frame_received(frame, &now);
-									self.state = ClientState::Connected;
 								}
 								Err(e) => {
 									log::error!("error decode frame {:?}", e)

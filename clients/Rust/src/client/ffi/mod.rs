@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use cheetah_relay_common::commands::command::C2SCommandUnion;
+use cheetah_relay_common::protocol::frame::applications::{ChannelSequence, GroupId};
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ClientOwner;
 use cheetah_relay_common::room::UserPublicKey;
@@ -12,6 +13,7 @@ use crate::client::ffi::values::Values;
 pub mod structures;
 pub mod values;
 pub mod bytes;
+pub mod channel;
 
 
 ///
@@ -37,6 +39,9 @@ pub struct Command {
 	pub structures: Structures,
 	pub meta_timestamp: u64,
 	pub meta_source_client: UserPublicKey,
+	pub channel: ChannelFFI,
+	pub channel_group_id: GroupId,
+	pub channel_sequence: ChannelSequence,
 }
 
 ///
@@ -53,6 +58,20 @@ pub trait Client2ServerFFIConverter {
 	fn from_ffi(ffi: &Command) -> C2SCommandUnion;
 }
 
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum ChannelFFI {
+	None,
+	ReliableUnordered,
+	ReliableOrderedByObject,
+	ReliableOrderedByGroup,
+	UnreliableUnordered,
+	UnreliableOrderedByObject,
+	UnreliableOrderedByGroup,
+	ReliableSequenceByObject,
+	ReliableSequenceByGroup,
+}
 
 #[repr(C)]
 #[derive(Debug)]
@@ -114,6 +133,9 @@ impl Default for Command {
 			access_group: Default::default(),
 			meta_timestamp: Default::default(),
 			meta_source_client: Default::default(),
+			channel: ChannelFFI::None,
+			channel_group_id: 0,
+			channel_sequence: 0
 		}
 	}
 }
