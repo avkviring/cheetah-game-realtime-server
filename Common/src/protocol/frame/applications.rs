@@ -69,7 +69,7 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	ReliableOrderedByGroup(ChannelId),
+	ReliableOrderedByGroup(GroupId),
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -81,7 +81,7 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByGroup(ChannelId),
+	UnreliableOrderedByGroup(GroupId),
 	///
 	/// Выполняем команды строго по-порядку по объекту
 	///
@@ -89,10 +89,10 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Выполняем команды строго по-порядку по группе
 	///
-	ReliableSequenceByGroup(ChannelId, ChannelSequence),
+	ReliableSequenceByGroup(GroupId, ChannelSequence),
 }
 
-pub type ChannelId = u16;
+pub type GroupId = u16;
 pub type ChannelSequence = u32;
 
 

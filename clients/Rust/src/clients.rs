@@ -1,10 +1,12 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
+use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{Sender, SendError};
+use std::sync::mpsc::Sender;
 use std::thread;
 use std::thread::JoinHandle;
 
-use cheetah_relay_common::commands::command::{S2CCommandUnion, S2CCommandWithMeta};
+use cheetah_relay_common::commands::command::{C2SCommandUnion, C2SCommandWithMeta, S2CCommandUnion};
 use cheetah_relay_common::commands::command::event::EventCommand;
 use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
@@ -12,12 +14,12 @@ use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SComm
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::room::{RoomId, UserPublicKey};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::udp::client::ConnectionStatus;
 
+use crate::client::Client;
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, Server2ClientFFIConverter};
-use crate::client::NetworkStatus;
-use crate::client::request::ClientRequestType;
-use crate::client::thread::ClientThread;
 
 ///
 /// Реестр клиентов
@@ -36,21 +38,26 @@ pub struct Clients {
 #[derive(Debug)]
 pub enum ClientsErrors {
 	ClientNotFound(u16),
-	SendError(SendError<ClientRequestType>),
 }
 
 #[derive(Debug)]
 pub struct ClientAPI {
-	sender: Sender<ClientRequestType>,
+	pub out_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
+	pub in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 	handler: Option<JoinHandle<()>>,
-	commands_from_server: Arc<Mutex<Vec<S2CCommandWithMeta>>>,
-	network_status: Arc<Mutex<NetworkStatus>>,
+	state: Arc<Mutex<ConnectionStatus>>,
+	sender: Sender<ClientRequest>,
+}
+
+#[derive(Debug)]
+pub enum ClientRequest {
+	Close
 }
 
 
 impl Drop for ClientAPI {
 	fn drop(&mut self) {
-		match self.sender.send(ClientRequestType::Close) {
+		match self.sender.send(ClientRequest::Close) {
 			Ok(_) => {
 				self.handler.take().unwrap().join().unwrap();
 			}
@@ -71,43 +78,49 @@ impl Default for Clients {
 
 
 impl Clients {
-	pub fn create_client(&mut self,
-						 server_address: String,
-						 room_id: RoomId,
-						 user_public_key: UserPublicKey,
-	) -> u16 {
+	pub fn create_client(&mut self, server_address: String, user_public_key: UserPublicKey, user_private_key: UserPrivateKey) -> Result<u16, ()> {
+		let out_commands = Arc::new(Mutex::new(VecDeque::new()));
+		let in_commands = Arc::new(Mutex::new(VecDeque::new()));
+		let state = Arc::new(Mutex::new(ConnectionStatus::None));
+		
+		let out_commands_cloned = out_commands.clone();
+		let in_commands_cloned = in_commands.clone();
+		let state_cloned = state.clone();
+		
+		
 		let (sender, receiver) = std::sync::mpsc::channel();
-		
-		
-		let commands_from_server = Arc::new(Mutex::new(Vec::new()));
-		let network_status = Arc::new(Mutex::new(NetworkStatus::None));
-		let commands_from_server_cloned = commands_from_server.clone();
-		let network_status_cloned = network_status.clone();
-		
-		let handler = thread::spawn(move || {
-			let mut client = ClientThread::new(
-				server_address,
-				room_id,
-				user_public_key,
-				receiver,
-				commands_from_server_cloned,
-				network_status_cloned,
-			);
-			client.run()
-		});
-		
-		let client_api = ClientAPI {
-			sender,
-			handler: Option::Some(handler),
-			commands_from_server,
-			network_status,
-		};
-		self.client_generator_id += 1;
-		let current_generator_id = self.client_generator_id;
-		self.clients.insert(current_generator_id, client_api);
-		
-		log::info!("Clients::create connection with id {}", current_generator_id);
-		current_generator_id
+		match Client::new(
+			SocketAddr::from_str(server_address.as_str()).unwrap(),
+			user_public_key,
+			user_private_key,
+			out_commands,
+			in_commands,
+			state,
+			receiver,
+		) {
+			Ok(client) => {
+				let handler = thread::spawn(move || {
+					client.run();
+				});
+				
+				let client_api = ClientAPI {
+					out_commands: out_commands_cloned,
+					in_commands: in_commands_cloned,
+					handler: Option::Some(handler),
+					state: state_cloned,
+					sender,
+				};
+				self.client_generator_id += 1;
+				let current_generator_id = self.client_generator_id;
+				self.clients.insert(current_generator_id, client_api);
+				
+				log::info!("Clients::create connection with id {}", current_generator_id);
+				Result::Ok(current_generator_id)
+			}
+			Err(_) => {
+				Result::Err(())
+			}
+		}
 	}
 	
 	pub fn destroy_client(
@@ -119,7 +132,7 @@ impl Clients {
 				log::error!("Clients::destroy connection with id {} not found", client_id);
 				true
 			}
-			Some(_) => {
+			Some(client) => {
 				log::trace!("Clients::destroy connection {}", client_id);
 				false
 			}
@@ -129,8 +142,7 @@ impl Clients {
 	pub fn send_command_to_server(
 		&mut self,
 		client_id: u16,
-		command: &Command,
-	) -> Result<(), ClientsErrors> {
+		command: &Command) -> Result<(), ClientsErrors> {
 		match self.clients.get_mut(&client_id) {
 			None => {
 				Result::Err(ClientsErrors::ClientNotFound(client_id))
@@ -145,23 +157,22 @@ impl Clients {
 					C2SCommandFFIType::Unload => DeleteGameObjectCommand::from_ffi(command),
 					C2SCommandFFIType::SetLongCounter => SetLongCommand::from_ffi(command),
 					C2SCommandFFIType::SetFloatCounter => SetFloat64Command::from_ffi(command),
-					C2SCommandFFIType::LoadRoom => {
-						todo!("make it")
-					}
+					C2SCommandFFIType::LoadRoom => { C2SCommandUnion::LoadRoom }
 				};
 				
 				log::info!("schedule command to server {:?}", client_command);
 				
-				let meta_command_information = C2SMetaCommandInformation { timestamp: command.meta_timestamp };
-				let request_type = ClientRequestType::SendCommandToServer(client_command, meta_command_information);
-				match client_api.sender.send(request_type) {
-					Ok(_) => {
-						Result::Ok(())
-					}
-					Err(e) => {
-						Result::Err(ClientsErrors::SendError(e))
-					}
-				}
+				let meta = C2SMetaCommandInformation { timestamp: command.meta_timestamp };
+				let command = ApplicationCommandDescription {
+					channel: command.to_channel(),
+					command: ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
+						meta,
+						command: client_command,
+					}),
+				};
+				
+				client_api.out_commands.lock().unwrap().push_front(command);
+				Result::Ok(())
 			}
 		}
 	}
@@ -175,33 +186,35 @@ impl Clients {
 		match self.clients.get(&client_id) {
 			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 			Some(client) => {
-				let commands = &mut client.commands_from_server.lock().unwrap();
+				let commands = &mut client.in_commands.lock().unwrap();
 				let cloned_commands: Vec<_> = commands.drain(..).collect();
 				drop(commands); // снимаем lock, так как при вызове функции collector() возможна ситуация deadlock
 				let command_ffi = &mut self.s2c_command_ffi;
 				cloned_commands.into_iter().for_each(|command| {
-					log::info!("receive command from server {:?}", command);
-					match command.command {
-						S2CCommandUnion::Create(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::SetLong(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::SetFloat64(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::Event(command) => { command.to_ffi(command_ffi) }
-						S2CCommandUnion::Delete(command) => { command.to_ffi(command_ffi) }
-					};
-					command_ffi.meta_timestamp = command.meta.timestamp;
-					command_ffi.meta_source_client = command.meta.user_public_key;
-					collector(command_ffi);
+					if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
+						log::info!("receive command from server {:?}", command);
+						match command.command {
+							S2CCommandUnion::Create(command) => { command.to_ffi(command_ffi) }
+							S2CCommandUnion::SetLong(command) => { command.to_ffi(command_ffi) }
+							S2CCommandUnion::SetFloat64(command) => { command.to_ffi(command_ffi) }
+							S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }
+							S2CCommandUnion::Event(command) => { command.to_ffi(command_ffi) }
+							S2CCommandUnion::Delete(command) => { command.to_ffi(command_ffi) }
+						};
+						command_ffi.meta_timestamp = command.meta.timestamp;
+						command_ffi.meta_source_client = command.meta.user_public_key;
+						collector(command_ffi);
+					}
 				});
 				Result::Ok(())
 			}
 		}
 	}
 	
-	pub fn get_connection_status(&self, client_id: u16) -> Result<NetworkStatus, ClientsErrors> {
+	pub fn get_connection_status(&self, client_id: u16) -> Result<ConnectionStatus, ClientsErrors> {
 		match self.clients.get(&client_id) {
 			Some(client) => {
-				Result::Ok(*client.network_status.lock().unwrap())
+				Result::Ok(*client.state.lock().unwrap())
 			}
 			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
 		}

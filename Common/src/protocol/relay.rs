@@ -55,6 +55,12 @@ impl Default for RelayProtocol {
 		}
 	}
 }
+
+
+unsafe impl Send for RelayProtocol {
+
+}
+
 impl RelayProtocol {
 	
 	///

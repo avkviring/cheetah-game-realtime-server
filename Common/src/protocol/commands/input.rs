@@ -4,7 +4,7 @@ use std::collections::{BinaryHeap, HashMap, VecDeque};
 use fnv::FnvBuildHasher;
 
 use crate::protocol::frame::{Frame, FrameId};
-use crate::protocol::frame::applications::{ApplicationCommandChannel, ApplicationCommandDescription, ChannelId, ChannelSequence};
+use crate::protocol::frame::applications::{ApplicationCommandChannel, ApplicationCommandDescription, GroupId, ChannelSequence};
 use crate::room::object::GameObjectId;
 
 ///
@@ -21,7 +21,7 @@ pub struct InCommandsCollector {
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 enum ChannelKey {
-	Group(ChannelId),
+	Group(GroupId),
 	ClientGameObjectId(GameObjectId),
 }
 

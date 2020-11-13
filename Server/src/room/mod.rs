@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::time::Instant;
 
+use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
@@ -8,7 +9,7 @@ use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformatio
 use cheetah_relay_common::commands::command::S2CCommandUnion;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommands};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::{RoomId, UserPublicKey};
@@ -19,7 +20,6 @@ use cheetah_relay_common::room::owner::ClientOwner;
 use crate::room::command::execute;
 use crate::room::object::GameObject;
 use crate::rooms::OutFrame;
-use fnv::{FnvBuildHasher, FnvHashMap};
 
 pub mod command;
 pub mod object;
@@ -95,7 +95,11 @@ impl Room {
 			.filter(|user| user.protocol.connected(&now))
 			.filter(|user| user.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
-				user.protocol.out_commands_collector.add_command(channel.clone(), application_command.clone())
+				let description = ApplicationCommandDescription {
+					channel: channel.clone(),
+					command: application_command.clone(),
+				};
+				user.protocol.out_commands_collector.add_command(description)
 			});
 	}
 	
@@ -119,7 +123,11 @@ impl Room {
 						meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
 						command,
 					});
-					user.protocol.out_commands_collector.add_command(channel.clone(), application_command);
+					let description = ApplicationCommandDescription {
+						channel: channel.clone(),
+						command: application_command.clone(),
+					};
+					user.protocol.out_commands_collector.add_command(description);
 				}
 			}
 		}
@@ -249,7 +257,7 @@ impl Room {
 			u.protocol.cycle(now);
 			if u.protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
 				disconnected_user[disconnected_users_count] = u.public_key.clone();
-				disconnected_users_count+=1;
+				disconnected_users_count += 1;
 			}
 		});
 		
@@ -263,10 +271,10 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::S2CCommandUnion;
-	use cheetah_relay_common::room::UserPublicKey;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;
+	use cheetah_relay_common::room::UserPublicKey;
 	
 	use crate::room::object::GameObject;
 	use crate::room::Room;

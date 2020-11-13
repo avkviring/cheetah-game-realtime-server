@@ -1,5 +1,6 @@
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 use cheetah_relay_common::protocol::relay::RelayProtocol;
+
 use crate::udp::stub::Channel;
 
 ///
@@ -12,16 +13,16 @@ fn should_send_from_client() {
 	
 	peer_a
 		.out_commands_collector
-		.add_command(
-			ApplicationCommandChannel::ReliableUnordered,
-			ApplicationCommand::TestSimple("test reliability".to_string()),
-		);
+		.add_command(ApplicationCommandDescription {
+			channel: ApplicationCommandChannel::ReliableUnordered,
+			command: ApplicationCommand::TestSimple("test reliability".to_string()),
+		});
 	peer_a
 		.out_commands_collector
-		.add_command(
-			ApplicationCommandChannel::UnreliableUnordered,
-			ApplicationCommand::TestSimple("test unreliability".to_string()),
-		);
+		.add_command(ApplicationCommandDescription {
+			channel: ApplicationCommandChannel::UnreliableUnordered,
+			command: ApplicationCommand::TestSimple("test unreliability".to_string()),
+		});
 	
 	let mut channel = Channel::default();
 	channel.cycle(1, &mut peer_a, &mut peer_b);
@@ -42,16 +43,16 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	
 	peer_a
 		.out_commands_collector
-		.add_command(
-			ApplicationCommandChannel::ReliableUnordered,
-			ApplicationCommand::TestSimple("test reliability".to_string()),
-		);
+		.add_command(ApplicationCommandDescription {
+			channel: ApplicationCommandChannel::ReliableUnordered,
+			command: ApplicationCommand::TestSimple("test reliability".to_string()),
+		});
 	peer_a
 		.out_commands_collector
-		.add_command(
-			ApplicationCommandChannel::UnreliableUnordered,
-			ApplicationCommand::TestSimple("test unreliability".to_string()),
-		);
+		.add_command(ApplicationCommandDescription {
+			channel: ApplicationCommandChannel::UnreliableUnordered,
+			command: ApplicationCommand::TestSimple("test unreliability".to_string()),
+		});
 	
 	let mut channel = Channel::default();
 	channel.add_reliable_percent(0..=10, 0.0);

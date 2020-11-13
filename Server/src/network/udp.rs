@@ -58,7 +58,7 @@ impl UDPServer {
 		rooms.collect_out_frames(&mut self.tmp_out_frames);
 		let mut buffer = [0; 2048];
 		
-		while let Some(OutFrame { user_public_key, frame }) = self.tmp_out_frames.back_mut() {
+		while let Some(OutFrame { user_public_key, frame }) = self.tmp_out_frames.back() {
 			match self.sessions.get(&user_public_key) {
 				None => {}
 				Some(session) => {

@@ -6,20 +6,20 @@ use std::os::raw::c_char;
 use std::sync::Mutex;
 
 use log::Level;
+use widestring::U16CString;
 
-
-use cheetah_relay_common::room::{RoomId, UserPublicKey};
+use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::udp::client::ConnectionStatus;
 use cheetah_relay_common::utils::logger::LogListener;
 
 use crate::client::ffi::Command;
-use crate::client::NetworkStatus;
 use crate::clients::Clients;
 
 pub mod client;
 pub mod clients;
 
 lazy_static! {
-    static ref API_REF: Mutex<Clients > = Mutex::new(Default::default());
+    static ref API_REF: Mutex<Clients> = Mutex::new(Default::default());
 }
 
 fn execute<F, T>(body: F) -> T
@@ -78,16 +78,27 @@ pub extern "C" fn collect_logs(on_log_message: extern fn(LogLevel, *const u16)) 
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn create_client(addr: *const c_char, room_id: RoomId, user_public_key: UserPublicKey) -> u16 {
+pub unsafe extern "C" fn create_client(
+	addr: *const c_char,
+	user_public_key: UserPublicKey,
+	user_private_key: &UserPrivateKey,
+	on_error: extern fn(),
+	on_create: extern fn(u16),
+) {
 	let server_address = CStr::from_ptr(addr)
 		.to_str()
 		.unwrap()
 		.to_string();
-	execute(|api| api.create_client(server_address, room_id, user_public_key))
+	execute(|api| {
+		match api.create_client(server_address, user_public_key, user_private_key.clone()) {
+			Ok(client_id) => { on_create(client_id) }
+			Err(_) => { on_error() }
+		}
+	});
 }
 
 
-pub fn do_get_connection_status<F, E>(client_id: u16, on_result: F, on_error: E) where F: FnOnce(NetworkStatus), E: FnOnce() {
+pub fn do_get_connection_status<F, E>(client_id: u16, on_result: F, on_error: E) where F: FnOnce(ConnectionStatus), E: FnOnce() {
 	execute(|api| {
 		match api.get_connection_status(client_id) {
 			Ok(status) => { on_result(status) }
@@ -126,7 +137,6 @@ pub fn do_send_command_to_server<E>(client_id: u16, command: &Command, on_error:
 	});
 }
 
-
 #[no_mangle]
 pub extern "C" fn receive_commands_from_server(client_id: u16, collector: extern fn(&Command), on_error: extern fn()) {
 	do_receive_commands_from_server(client_id, |command: &Command| collector(command), || on_error());
@@ -138,10 +148,9 @@ pub extern "C" fn send_command_to_server(client_id: u16, command: &Command, on_e
 }
 
 #[no_mangle]
-pub extern "C" fn get_connection_status(client_id: u16, on_result: extern fn(NetworkStatus), on_error: extern fn()) {
+pub extern "C" fn get_connection_status(client_id: u16, on_result: extern fn(ConnectionStatus), on_error: extern fn()) {
 	do_get_connection_status(client_id, |status| on_result(status), || on_error())
 }
-
 
 #[no_mangle]
 pub extern "C" fn destroy_client(client_id: u16) {
