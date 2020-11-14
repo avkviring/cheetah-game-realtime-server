@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
 use std::net::SocketAddr;
+use std::ops::Add;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{Receiver, TryRecvError};
+use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -21,6 +22,7 @@ pub struct Client {
 	in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 	udp_client: UdpClient,
 	receiver: Receiver<ClientRequest>,
+	protocol_time_offset: Option<Duration>,
 }
 
 
@@ -41,6 +43,7 @@ impl Client {
 				in_commands,
 				udp_client: UdpClient::new(user_private_key, user_public_key, server_address)?,
 				receiver,
+				protocol_time_offset: None,
 			})
 	}
 	
@@ -60,21 +63,26 @@ impl Client {
 				in_commands.push_front(command);
 			}
 			
-			self.udp_client.cycle(&Instant::now());
+			let mut now = Instant::now();
+			if let Some(offset) = self.protocol_time_offset {
+				now = now.add(offset);
+			}
+			self.udp_client.cycle(&now);
 			
 			let state = self.state.clone();
 			*state.lock().unwrap() = self.udp_client.state.clone();
-			
 			
 			match self.receiver.try_recv() {
 				Ok(ClientRequest::Close) => {
 					return;
 				}
+				Ok(ClientRequest::SetProtocolTimeOffset(duration)) => {
+					self.protocol_time_offset = Option::Some(duration);
+				}
 				Err(_) => {}
 			}
 			
-			
-			thread::sleep(Duration::from_millis(1));
+			thread::sleep(Duration::from_millis(7));
 		}
 	}
 }

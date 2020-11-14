@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
+
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
@@ -22,7 +23,7 @@ lazy_static! {
     static ref API_REF: Mutex<Clients> = Mutex::new(Default::default());
 }
 
-fn execute<F, T>(body: F) -> T
+pub fn execute<F, T>(body: F) -> T
 	where F: FnOnce(&mut Clients) -> T
 {
 	let api = API_REF.lock();
@@ -76,19 +77,13 @@ pub extern "C" fn collect_logs(on_log_message: extern fn(LogLevel, *const u16)) 
 }
 
 
-#[no_mangle]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe extern "C" fn create_client(
-	addr: *const c_char,
+pub fn do_create_client<E, C>(
+	server_address: String,
 	user_public_key: UserPublicKey,
 	user_private_key: &UserPrivateKey,
-	on_error: extern fn(),
-	on_create: extern fn(u16),
-) {
-	let server_address = CStr::from_ptr(addr)
-		.to_str()
-		.unwrap()
-		.to_string();
+	on_error: E,
+	on_create: C,
+) where E: FnOnce() -> (), C: FnOnce(u16) -> () {
 	execute(|api| {
 		match api.create_client(server_address, user_public_key, user_private_key.clone()) {
 			Ok(client_id) => { on_create(client_id) }
@@ -157,6 +152,20 @@ pub extern "C" fn destroy_client(client_id: u16) {
 	execute(|api| api.destroy_client(client_id));
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn create_client(
+	addr: *const c_char,
+	user_public_key: UserPublicKey,
+	user_private_key: &UserPrivateKey,
+	on_error: extern fn(),
+	on_create: extern fn(u16),
+) {
+	let server_address = CStr::from_ptr(addr)
+		.to_str()
+		.unwrap()
+		.to_string();
+	do_create_client(server_address, user_public_key, user_private_key, || on_error(), |c| on_create(c));
+}
 
 
 

@@ -1,6 +1,6 @@
 extern crate stderrlog;
 
-use std::net::SocketAddr;
+use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -18,13 +18,14 @@ fn main() {
 }
 
 fn start_server() {
-	let running_flag = Arc::new(AtomicBool::new(true));
-	let mut server = Server::new(SocketAddr::from_str("0.0.0.0:5000").unwrap(), running_flag.clone());
+	let halt_signal = Arc::new(AtomicBool::new(false));
+	let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:5000").unwrap()).unwrap();
+	let mut server = Server::new(socket, halt_signal.clone());
 	
 	register_test_users(&mut server);
 	
 	ctrlc::set_handler(move || {
-		running_flag.store(false, Ordering::Relaxed);
+		halt_signal.store(true, Ordering::Relaxed);
 	}).expect("Error setting Ctrl-C handler");
 	
 	server.join();

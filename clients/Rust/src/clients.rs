@@ -5,6 +5,9 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 use std::thread::JoinHandle;
+use std::time::Duration;
+
+use fnv::FnvBuildHasher;
 
 use cheetah_relay_common::commands::command::{C2SCommandUnion, C2SCommandWithMeta, S2CCommandUnion};
 use cheetah_relay_common::commands::command::event::EventCommand;
@@ -14,12 +17,14 @@ use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SComm
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::client::Client;
 use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, Server2ClientFFIConverter};
+
+pub type ClientId = u16;
 
 ///
 /// Реестр клиентов
@@ -30,8 +35,8 @@ use crate::client::ffi::{C2SCommandFFIType, Client2ServerFFIConverter, Command, 
 ///
 #[derive(Debug)]
 pub struct Clients {
-	clients: HashMap<u16, ClientAPI>,
-	client_generator_id: u16,
+	clients: HashMap<ClientId, ClientAPI, FnvBuildHasher>,
+	client_generator_id: ClientId,
 	s2c_command_ffi: Command,
 }
 
@@ -51,7 +56,8 @@ pub struct ClientAPI {
 
 #[derive(Debug)]
 pub enum ClientRequest {
-	Close
+	SetProtocolTimeOffset(Duration),
+	Close,
 }
 
 
@@ -78,10 +84,10 @@ impl Default for Clients {
 
 
 impl Clients {
-	pub fn create_client(&mut self, server_address: String, user_public_key: UserPublicKey, user_private_key: UserPrivateKey) -> Result<u16, ()> {
+	pub fn create_client(&mut self, server_address: String, user_public_key: UserPublicKey, user_private_key: UserPrivateKey) -> Result<ClientId, ()> {
 		let out_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let in_commands = Arc::new(Mutex::new(VecDeque::new()));
-		let state = Arc::new(Mutex::new(ConnectionStatus::None));
+		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
 		
 		let out_commands_cloned = out_commands.clone();
 		let in_commands_cloned = in_commands.clone();
@@ -132,7 +138,7 @@ impl Clients {
 				log::error!("Clients::destroy connection with id {} not found", client_id);
 				true
 			}
-			Some(client) => {
+			Some(_) => {
 				log::trace!("Clients::destroy connection {}", client_id);
 				false
 			}
@@ -180,7 +186,7 @@ impl Clients {
 	
 	pub fn collect_s2c_commands<F>(
 		&mut self,
-		client_id: u16,
+		client_id: ClientId,
 		mut collector: F,
 	) -> Result<(), ClientsErrors> where F: FnMut(&Command) {
 		match self.clients.get(&client_id) {
@@ -211,12 +217,19 @@ impl Clients {
 		}
 	}
 	
-	pub fn get_connection_status(&self, client_id: u16) -> Result<ConnectionStatus, ClientsErrors> {
+	pub fn get_connection_status(&self, client_id: ClientId) -> Result<ConnectionStatus, ClientsErrors> {
 		match self.clients.get(&client_id) {
 			Some(client) => {
 				Result::Ok(*client.state.lock().unwrap())
 			}
 			None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
+		}
+	}
+	
+	
+	pub fn set_protocol_time_offset(&self, client_id: ClientId, time_offset: Duration) {
+		if let Some(client) = self.clients.get(&client_id) {
+			client.sender.send(ClientRequest::SetProtocolTimeOffset(time_offset)).unwrap();
 		}
 	}
 }

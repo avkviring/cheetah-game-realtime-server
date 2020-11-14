@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 use std::io::{Cursor, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
-use std::str::FromStr;
 use std::time::Instant;
 
 use crate::protocol::codec::cipher::Cipher;
@@ -10,6 +9,7 @@ use crate::protocol::others::hello::HelloSender;
 use crate::protocol::others::public_key::UserPublicKeyFrameBuilder;
 use crate::protocol::relay::RelayProtocol;
 use crate::room::{UserPrivateKey, UserPublicKey};
+use crate::udp::bind_to_free_socket;
 
 pub struct UdpClient {
 	pub state: ConnectionStatus,
@@ -23,8 +23,14 @@ pub struct UdpClient {
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[repr(C)]
 pub enum ConnectionStatus {
-	None,
+	Connecting,
+	///
+	/// Соединение закрыто
+	///
 	Disconnected,
+	///
+	/// Соединение установлено
+	///
 	Connected,
 }
 
@@ -33,14 +39,15 @@ impl UdpClient {
 	pub fn new(private_key: UserPrivateKey,
 			   public_key: UserPublicKey,
 			   server_address: SocketAddr) -> Result<UdpClient, ()> {
-		let mut protocol = RelayProtocol::default();
+		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.add_frame_builder(Box::new(UserPublicKeyFrameBuilder(public_key)));
 		protocol.add_frame_builder(Box::new(HelloSender::default()));
 		
-		let socket = UdpClient::find_free_socket()?;
+		let socket = bind_to_free_socket()?.0;
+		socket.set_nonblocking(true).map_err(|_|())?;
 		
 		Result::Ok(UdpClient {
-			state: ConnectionStatus::None,
+			state: ConnectionStatus::Connecting,
 			protocol,
 			private_key,
 			server_address,
@@ -49,19 +56,6 @@ impl UdpClient {
 		})
 	}
 	
-	
-	pub fn find_free_socket() -> Result<UdpSocket, ()> {
-		for port in 2048..8912 {
-			match UdpSocket::bind(SocketAddr::from_str(format!("0.0.0.0:{:}", port).as_str()).unwrap()) {
-				Ok(socket) => {
-					return Result::Ok(socket);
-				}
-				Err(_) => {}
-			}
-		}
-		
-		Result::Err(())
-	}
 	
 	pub fn cycle(&mut self, now: &Instant) {
 		if self.state == ConnectionStatus::Disconnected {

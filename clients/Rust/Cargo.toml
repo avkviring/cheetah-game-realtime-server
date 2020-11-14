@@ -16,6 +16,7 @@ cheetah_relay_common = { path = "../../Common"}
 widestring="0.4.2"
 hex = "0.4.2"
 fnv = "1.0.7"
+rand = "0.7.3"
 
 [dev-dependencies]
 cheetah_relay = { path = "../../Server"}

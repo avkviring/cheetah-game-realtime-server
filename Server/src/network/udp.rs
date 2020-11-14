@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
+use std::time::Instant;
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 
@@ -28,9 +29,8 @@ struct UserSession {
 }
 
 impl UDPServer {
-	pub fn new(address: SocketAddr) -> Result<Self, Error> {
-		let socket = UdpSocket::bind(address)?;
-		socket.set_nonblocking(true).unwrap();
+	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
+		socket.set_nonblocking(true)?;
 		Result::Ok(
 			Self {
 				sessions: FnvHashMap::default(),
@@ -48,14 +48,14 @@ impl UDPServer {
 		});
 	}
 	
-	pub fn cycle(&mut self, rooms: &mut Rooms) {
-		self.receive(rooms);
-		self.send(rooms)
+	pub fn cycle(&mut self, rooms: &mut Rooms, now: &Instant) {
+		self.receive(rooms, now);
+		self.send(rooms, now);
 	}
 	
 	
-	fn send(&mut self, rooms: &mut Rooms) {
-		rooms.collect_out_frames(&mut self.tmp_out_frames);
+	fn send(&mut self, rooms: &mut Rooms, now:&Instant) {
+		rooms.collect_out_frames(&mut self.tmp_out_frames, now);
 		let mut buffer = [0; 2048];
 		
 		while let Some(OutFrame { user_public_key, frame }) = self.tmp_out_frames.back() {
@@ -82,12 +82,12 @@ impl UDPServer {
 		}
 	}
 	
-	fn receive(&mut self, rooms: &mut Rooms) {
+	fn receive(&mut self, rooms: &mut Rooms, now:&Instant) {
 		let mut buffer = [0; 2048];
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
 			match result {
-				Ok((size, address)) => self.process_in_frame(rooms, &mut buffer, size, address),
+				Ok((size, address)) => self.process_in_frame(rooms, &mut buffer, size, address, now),
 				Err(e) => {
 					match e.kind() {
 						ErrorKind::WouldBlock => {
@@ -102,7 +102,7 @@ impl UDPServer {
 		}
 	}
 	
-	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; 2048], size: usize, address: SocketAddr) {
+	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; 2048], size: usize, address: SocketAddr, now: &Instant) {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_header, headers)) => {
@@ -124,7 +124,7 @@ impl UDPServer {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.header.frame_id;
 										}
-										rooms.on_frame_received(&public_key, frame);
+										rooms.on_frame_received(&public_key, frame, now);
 									}
 									Err(e) => {
 										log::error!("error decode frame {:?}", e)
