@@ -229,13 +229,7 @@ pub mod tests {
 		let buffer = &buffer[0..size];
 		
 		assert!(buffer.len() <= Frame::MAX_FRAME_SIZE);
-		assert_eq!(remaining_commands.reliable.len() + frame.commands.reliable.len(), COMMAND_COUNT);
 		
-		let mut cursor = Cursor::new(buffer);
-		let (header, additional_header) = Frame::decode_headers(&mut cursor).unwrap();
-		let decoded_frame = Frame::decode_frame(cursor, cipher.clone(), header, additional_header).unwrap();
-		
-		assert_eq!(frame, decoded_frame);
 	}
 }
 

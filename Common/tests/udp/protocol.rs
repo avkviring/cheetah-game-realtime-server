@@ -2,14 +2,15 @@ use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, Ap
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 
 use crate::udp::stub::Channel;
+use std::time::Instant;
 
 ///
 /// Тестирование отправки команд с клиента на сервер
 ///
 #[test]
 fn should_send_from_client() {
-	let mut peer_a = RelayProtocol::default();
-	let mut peer_b = RelayProtocol::default();
+	let mut peer_a = RelayProtocol::new(&Instant::now());
+	let mut peer_b = RelayProtocol::new(&Instant::now());
 	
 	peer_a
 		.out_commands_collector
@@ -38,8 +39,8 @@ fn should_send_from_client() {
 /// Тестирование надежной доставки по ненадежному каналу
 #[test]
 fn should_transfer_reliable_on_unreliable_channel() {
-	let mut peer_a = RelayProtocol::default();
-	let mut peer_b = RelayProtocol::default();
+	let mut peer_a = RelayProtocol::new(&Instant::now());
+	let mut peer_b = RelayProtocol::new(&Instant::now());
 	
 	peer_a
 		.out_commands_collector

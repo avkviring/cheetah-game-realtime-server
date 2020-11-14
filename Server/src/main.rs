@@ -20,7 +20,7 @@ fn main() {
 fn start_server() {
 	let halt_signal = Arc::new(AtomicBool::new(false));
 	let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:5000").unwrap()).unwrap();
-	let mut server = Server::new(socket, halt_signal.clone());
+	let mut server = Server::new(socket);
 	
 	register_test_users(&mut server);
 	
