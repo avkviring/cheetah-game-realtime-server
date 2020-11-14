@@ -133,8 +133,7 @@ impl Room {
 		}
 	}
 	
-	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>) {
-		let now = Instant::now();
+	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		for (user_public_key, user) in self.users.iter_mut() {
 			if let Some(frame) = user.protocol.build_next_frame(&now) {
 				out_frames.push_front(OutFrame { user_public_key: user_public_key.clone(), frame });
@@ -142,7 +141,7 @@ impl Room {
 		}
 	}
 	
-	pub fn process_in_frame(&mut self, user_public_key: &UserPublicKey, frame: Frame) {
+	pub fn process_in_frame(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
 		let user = self.users.get_mut(&user_public_key);
 		let mut commands = VecDeque::new();
 		match user {
@@ -151,7 +150,7 @@ impl Room {
 			}
 			Some(user) => {
 				let protocol = &mut user.protocol;
-				protocol.on_frame_received(frame, &Instant::now());
+				protocol.on_frame_received(frame, now);
 				while let Some(application_command) = protocol.in_commands_collector.get_commands().pop_back() {
 					commands.push_front(application_command);
 				}
@@ -186,7 +185,7 @@ impl Room {
 		let user = User {
 			public_key: user_public_key,
 			access_groups,
-			protocol: Default::default(),
+			protocol: RelayProtocol::new(&Instant::now()),
 		};
 		self.users.insert(user_public_key, user);
 	}

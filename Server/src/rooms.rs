@@ -57,7 +57,6 @@ impl Rooms {
 				let room = room.clone();
 				room.borrow_mut().register_user(public_key, access_group);
 				self.user_to_room.insert(public_key, room);
-				
 				Result::Ok(())
 			} else {
 				Result::Err(RegisterUserError::AlreadyRegistered)
@@ -65,11 +64,11 @@ impl Rooms {
 		}
 	}
 	
-	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>) {
+	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		self.changed_rooms.iter().for_each(|room_id| {
 			let room = self.rooms.get(&room_id).unwrap().clone();
 			let mut room = room.borrow_mut();
-			room.collect_out_frame(out_frames);
+			room.collect_out_frame(out_frames, now);
 		});
 		self.changed_rooms.clear();
 	}
@@ -78,10 +77,10 @@ impl Rooms {
 		on_user_room(self, user_public_key, |_, room| room.send_to_user_first(user_public_key, commands));
 	}
 	
-	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame) {
+	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
 		on_user_room(self, user_public_key, |rooms, room|
 			{
-				room.process_in_frame(user_public_key, frame);
+				room.process_in_frame(user_public_key, frame, now);
 				rooms.changed_rooms.insert(room.id.clone());
 			});
 	}

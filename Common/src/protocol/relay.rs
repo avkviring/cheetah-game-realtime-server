@@ -36,11 +36,15 @@ pub struct RelayProtocol {
 	pub congestion_control: CongestionControl,
 	pub in_frame_counter: u64,
 }
-impl Default for RelayProtocol {
-	fn default() -> Self {
+
+
+unsafe impl Send for RelayProtocol {}
+
+impl RelayProtocol {
+	pub fn new(now: &Instant) -> Self {
 		Self {
 			next_frame_id: 1,
-			disconnect_watcher: Default::default(),
+			disconnect_watcher: DisconnectWatcher::new(now),
 			replay_protection: Default::default(),
 			ack_sender: Default::default(),
 			in_commands_collector: Default::default(),
@@ -54,14 +58,6 @@ impl Default for RelayProtocol {
 			in_frame_counter: Default::default(),
 		}
 	}
-}
-
-
-unsafe impl Send for RelayProtocol {
-
-}
-
-impl RelayProtocol {
 	
 	///
 	/// Данный метод необходимо периодически вызывать

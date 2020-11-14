@@ -1,6 +1,6 @@
 use std::cmp::max;
-use std::net::SocketAddr;
-use std::ops::Sub;
+use std::net::UdpSocket;
+use std::ops::{Add, Sub};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
@@ -13,15 +13,21 @@ use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::network::udp::UDPServer;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
+use crate::server::Request::TimeOffset;
 
 pub struct Server {
-	handler: JoinHandle<()>,
+	handler: Option<JoinHandle<()>>,
 	sender: Sender<Request>,
+	halt_signal: Arc<AtomicBool>,
 }
 
 enum Request {
 	RegisterRoom(RoomId, Sender<Result<(), RegisterRoomError>>),
 	RegisterUser(RoomId, UserPublicKey, UserPrivateKey, AccessGroups, Sender<Result<(), RegisterUserError>>),
+	///
+	/// Смещение текущего времени для тестирования
+	///
+	TimeOffset(Duration),
 }
 
 
@@ -35,15 +41,27 @@ pub enum RegisterUserRequestError {
 	Error(RegisterUserError),
 }
 
+impl Drop for Server {
+	fn drop(&mut self) {
+		self.halt_signal.store(true, Ordering::Relaxed);
+	}
+}
+
 impl Server {
-	pub fn new(address: SocketAddr, halt_signal: Arc<AtomicBool>) -> Self {
+	pub fn new(socket: UdpSocket) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		
-		let handler = thread::spawn(move || { ServerThread::new(address, receiver, halt_signal).run(); });
+		let halt_signal = Arc::new(AtomicBool::new(false));
+		let cloned_halt_signal = halt_signal.clone();
+		let handler = thread::spawn(move || { ServerThread::new(socket, receiver, halt_signal).run(); });
 		Self {
-			handler,
+			handler: Option::Some(handler),
 			sender,
+			halt_signal: cloned_halt_signal
 		}
+	}
+	
+	pub fn get_halt_signal(&self) -> Arc<AtomicBool> {
+		self.halt_signal.clone()
 	}
 	
 	
@@ -98,8 +116,13 @@ impl Server {
 		}
 	}
 	
-	pub fn join(self) {
-		self.handler.join().unwrap();
+	pub fn set_time_offset(&self, duration: Duration) {
+		self.sender.send(TimeOffset(duration)).unwrap();
+	}
+	
+	
+	pub fn join(mut self) {
+		self.handler.take().unwrap().join().unwrap();
 	}
 }
 
@@ -111,27 +134,32 @@ struct ServerThread {
 	max_duration: u128,
 	avg_duration: u128,
 	halt_signal: Arc<AtomicBool>,
+	time_offset: Option<Duration>,
 }
 
 impl ServerThread {
-	pub fn new(address: SocketAddr, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
+	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
-			udp_server: UDPServer::new(address).unwrap(),
+			udp_server: UDPServer::new(socket).unwrap(),
 			rooms: Default::default(),
 			receiver,
 			max_duration: 0,
 			avg_duration: 0,
 			halt_signal,
+			time_offset: None,
 		}
 	}
 	
 	pub fn run(&mut self) {
-		while self.halt_signal.load(Ordering::Relaxed) {
-			let start_instant = Instant::now();
-			self.udp_server.cycle(&mut self.rooms);
-			self.rooms.cycle(&start_instant);
+		while !self.halt_signal.load(Ordering::Relaxed) {
+			let mut now = Instant::now();
+			if let Some(time_offset) = self.time_offset {
+				now = now.add(time_offset);
+			}
+			self.udp_server.cycle(&mut self.rooms, &now);
+			self.rooms.cycle(&now);
 			self.do_request();
-			self.statistics(start_instant);
+			self.statistics(now);
 		}
 	}
 	
@@ -142,7 +170,7 @@ impl ServerThread {
 					match sender.send(self.rooms.create_room(room_id)) {
 						Ok(_) => {}
 						Err(e) => {
-							log::error!("[Request::RegisterRoom] error send response {:?}",e)
+							log::error!("[Request::RegisterRoom] error send response {:?}", e)
 						}
 					}
 				}
@@ -151,9 +179,12 @@ impl ServerThread {
 					match sender.send(self.rooms.register_user(room_id, public_key, access_group)) {
 						Ok(_) => {}
 						Err(e) => {
-							log::error!("[Request::RegisterUser] error send response {:?}",e)
+							log::error!("[Request::RegisterUser] error send response {:?}", e)
 						}
 					}
+				}
+				TimeOffset(time_offset) => {
+					self.time_offset = Option::Some(time_offset);
 				}
 			}
 		}
