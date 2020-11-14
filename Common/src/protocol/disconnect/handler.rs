@@ -19,7 +19,7 @@ pub struct DisconnectHandler {
 	///
 	/// Запрос на разрыв соединения
 	///
-	disconnecting_by_self: bool,
+	disconnecting_by_self_request: bool,
 	
 	///
 	/// Отправили заголовок на разрыв соединения
@@ -36,20 +36,20 @@ impl DisconnectHandler {
 	/// Разорвать соединение с удаленной стороной
 	///
 	pub fn disconnect(&mut self) {
-		self.disconnecting_by_self = true;
+		self.disconnecting_by_self_request = true;
 	}
 }
 
 impl FrameBuilder for DisconnectHandler {
 	fn contains_self_data(&self, _: &Instant) -> bool {
-		self.disconnecting_by_self && !self.disconnected_by_self
+		self.disconnecting_by_self_request && !self.disconnected_by_self
 	}
 	
 	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
-		if self.disconnecting_by_self {
+		if self.disconnecting_by_self_request {
 			frame.headers.add(Header::Disconnect(DisconnectHeader::default()));
+			self.disconnected_by_self = true;
 		}
-		self.disconnected_by_self = true;
 	}
 }
 
@@ -103,6 +103,7 @@ mod tests {
 		let mut handler = DisconnectHandler::default();
 		let mut frame = Frame::new(10);
 		handler.build_frame(&mut frame, &now);
+		assert_eq!(handler.disconnected(&now), false);
 		assert!(matches!(frame.headers.first(Header::predicate_disconnect), Option::None));
 	}
 }

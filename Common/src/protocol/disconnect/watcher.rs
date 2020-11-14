@@ -7,31 +7,30 @@ use crate::protocol::frame::Frame;
 ///
 /// Если за определенное время не было входящих пакетов - считаем что связь разорвана
 ///
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct DisconnectWatcher {
-	pub last_in_frame_time: Option<Instant>
+	pub last_in_frame_time: Instant
 }
+
 
 impl DisconnectWatcher {
 	pub const TIMEOUT: Duration = Duration::from_secs(10);
+	pub fn new(now: &Instant) -> Self {
+		Self {
+			last_in_frame_time: *now
+		}
+	}
 }
 
 impl FrameReceivedListener for DisconnectWatcher {
 	fn on_frame_received(&mut self, _: &Frame, now: &Instant) {
-		self.last_in_frame_time = Option::Some(*now);
+		self.last_in_frame_time = *now;
 	}
 }
 
 impl DisconnectedStatus for DisconnectWatcher {
 	fn disconnected(&self, now: &Instant) -> bool {
-		match self.last_in_frame_time {
-			None => {
-				false
-			}
-			Some(ref prev) => {
-				now.sub(*prev) > DisconnectWatcher::TIMEOUT
-			}
-		}
+		now.sub(self.last_in_frame_time) > DisconnectWatcher::TIMEOUT
 	}
 }
 
@@ -44,14 +43,24 @@ mod tests {
 	use crate::protocol::disconnect::watcher::DisconnectWatcher;
 	use crate::protocol::frame::Frame;
 	
-	///
-						/// Если не было ни одного входящего фрейма - то канал не закрыт (но и не открыт)
-						///
 	#[test]
-	pub fn should_not_disconnect_when_zero_in_frame() {
-		let handler = DisconnectWatcher::default();
+	///
+	/// После запуска - канал некоторые время считается открытым
+	///
+	pub fn should_not_disconnect_when_start() {
 		let now = Instant::now();
+		let handler = DisconnectWatcher::new(&now);
 		assert_eq!(handler.disconnected(&now), false);
+	}
+	
+	///
+	/// Разрыв связи через timeout после старта, если не было ни одного фрейма
+	///
+	#[test]
+	pub fn should_disconnect_after_timeout() {
+		let now = Instant::now();
+		let handler = DisconnectWatcher::new(&now);
+		assert_eq!(handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT).add(Duration::from_millis(1))), true);
 	}
 	
 	///
@@ -59,8 +68,8 @@ mod tests {
 	///
 	#[test]
 	pub fn should_not_disconnect_when_not_timeout_after_frame() {
-		let mut handler = DisconnectWatcher::default();
 		let now = Instant::now();
+		let mut handler = DisconnectWatcher::new(&now);
 		let frame = Frame::new(0);
 		handler.on_frame_received(&frame, &now);
 		assert_eq!(handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT - Duration::from_millis(1))), false);
@@ -71,8 +80,8 @@ mod tests {
 	///
 	#[test]
 	pub fn should_disconnect_when_not_timeout_after_frame() {
-		let mut handler = DisconnectWatcher::default();
 		let now = Instant::now();
+		let mut handler = DisconnectWatcher::new(&now);
 		let frame = Frame::new(0);
 		handler.on_frame_received(&frame, &now);
 		assert_eq!(handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT + Duration::from_millis(1))), true);
