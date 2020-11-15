@@ -57,19 +57,20 @@ impl UDPServer {
 	fn send(&mut self, rooms: &mut Rooms, now: &Instant) {
 		rooms.collect_out_frames(&mut self.tmp_out_frames, now);
 		let mut buffer = [0; 2048];
-		
 		while let Some(OutFrame { user_public_key, frame }) = self.tmp_out_frames.back() {
-			match self.sessions.get(&user_public_key) {
+			match self.sessions.get(user_public_key) {
 				None => {}
 				Some(session) => {
+					//println!("send frame {:?} {:?}", user_public_key, frame);
 					let (commands, buffer_size) = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 					rooms.return_commands(&user_public_key, commands);
 					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
 						Ok(size) => {
-							if size != buffer.len() {
-								log::error!("panic - size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
+							if size == buffer_size {
+								self.tmp_out_frames.pop_back();
+							} else {
+								log::error!("size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
 							}
-							self.tmp_out_frames.pop_back();
 						}
 						Err(e) => {
 							if let ErrorKind::WouldBlock = e.kind() {
@@ -124,6 +125,7 @@ impl UDPServer {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.header.frame_id;
 										}
+										//println!("recv frame {:?} {:?}", public_key, frame);
 										rooms.on_frame_received(&public_key, frame, now);
 									}
 									Err(e) => {

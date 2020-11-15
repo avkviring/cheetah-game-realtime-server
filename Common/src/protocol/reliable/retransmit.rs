@@ -206,7 +206,6 @@ impl FrameReceivedListener for RetransmitterImpl {
 						*original_frame_id
 					}
 				};
-				
 				self.unacked_frames.remove(&original_frame_id);
 				self.statistics.on_ack_received(*frame_id, original_frame_id, now);
 			})

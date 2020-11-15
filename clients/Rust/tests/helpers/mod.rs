@@ -23,7 +23,7 @@ pub struct Helper {
 
 
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub struct UserKeys {
 	pub public: UserPublicKey,
 	pub private: UserPrivateKey,

@@ -14,7 +14,7 @@ pub struct KeepAlive {
 
 
 impl KeepAlive {
-	const INTERVAL: Duration = Duration::from_secs(1);
+	const INTERVAL: Duration = Duration::from_secs(10);
 }
 
 impl FrameBuilder for KeepAlive {
