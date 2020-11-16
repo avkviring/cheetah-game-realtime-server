@@ -195,10 +195,10 @@ pub mod tests {
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
 		frame.commands.reliable.push(
-			ApplicationCommandDescription::new(
-				ApplicationCommandChannel::ReliableUnordered,
-				ApplicationCommand::TestSimple("test".to_string()),
-			));
+			ApplicationCommandDescription {
+				channel: ApplicationCommandChannel::ReliableUnordered,
+				command: ApplicationCommand::TestSimple("test".to_string()),
+			});
 		let mut buffer = [0; 1024];
 		let (_, size) = frame.encode(&mut cipher, &mut buffer);
 		let buffer = &buffer[0..size];
@@ -218,18 +218,17 @@ pub mod tests {
 		const COMMAND_COUNT: usize = 400;
 		for _ in 0..COMMAND_COUNT {
 			frame.commands.reliable.push(
-				ApplicationCommandDescription::new(
-					ApplicationCommandChannel::ReliableUnordered,
-					ApplicationCommand::TestSimple("1234567890".to_string()),
-				)
+				ApplicationCommandDescription {
+					channel: ApplicationCommandChannel::ReliableUnordered,
+					command: ApplicationCommand::TestSimple("1234567890".to_string()),
+				}
 			);
 		}
 		let mut buffer = [0; 1024];
-		let (remaining_commands, size) = frame.encode(&mut cipher, &mut buffer);
+		let (_, size) = frame.encode(&mut cipher, &mut buffer);
 		let buffer = &buffer[0..size];
 		
 		assert!(buffer.len() <= Frame::MAX_FRAME_SIZE);
-		
 	}
 }
 

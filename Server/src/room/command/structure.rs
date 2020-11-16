@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::S2CCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -11,7 +11,7 @@ impl ServerCommandExecutor for StructureCommand {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.structures.insert(self.field_id, self.structure.clone());
 			let groups = object.access_groups.clone();
-			room.send_to_group(groups, S2CCommandUnion::SetStruct(self))
+			room.send_to_group(groups, S2CCommand::SetStruct(self))
 		}
 	}
 }
@@ -19,7 +19,7 @@ impl ServerCommandExecutor for StructureCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::S2CCommandUnion;
+	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::commands::command::structure::StructureCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;
@@ -41,7 +41,7 @@ mod tests {
 		let object = room.get_object(&object_id).unwrap();
 		
 		assert_eq!(*object.fields.structures.get(&100).unwrap(), command.structure);
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::SetStruct(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStruct(c))) if c==command));
 	}
 	
 	#[test]

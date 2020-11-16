@@ -19,10 +19,10 @@ pub mod load;
 pub mod meta;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub enum C2SCommandUnion {
+pub enum C2SCommand {
 	Create(CreateGameObjectCommand),
-	SetLongCounter(SetLongCommand),
-	IncrementLongCounter(IncrementLongC2SCommand),
+	SetLongValue(SetLongCommand),
+	IncrementLongValue(IncrementLongC2SCommand),
 	SetFloatCounter(SetFloat64Command),
 	IncrementFloatCounter(IncrementFloat64C2SCommand),
 	Structure(StructureCommand),
@@ -36,7 +36,7 @@ pub enum C2SCommandUnion {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub enum S2CCommandUnion {
+pub enum S2CCommand {
 	Create(CreateGameObjectCommand),
 	SetLong(SetLongCommand),
 	SetFloat64(SetFloat64Command),
@@ -48,13 +48,13 @@ pub enum S2CCommandUnion {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct S2CCommandWithMeta {
 	pub meta: S2CMetaCommandInformation,
-	pub command: S2CCommandUnion,
+	pub command: S2CCommand,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct C2SCommandWithMeta {
 	pub meta: C2SMetaCommandInformation,
-	pub command: C2SCommandUnion,
+	pub command: C2SCommand,
 }
 
 

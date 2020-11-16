@@ -4,7 +4,7 @@ use std::collections::{BinaryHeap, HashMap, VecDeque};
 use fnv::FnvBuildHasher;
 
 use crate::protocol::frame::{Frame, FrameId};
-use crate::protocol::frame::applications::{ApplicationCommandChannel, ApplicationCommandDescription, GroupId, ChannelSequence};
+use crate::protocol::frame::applications::{ApplicationCommandChannel, ApplicationCommandDescription, ChannelGroupId, ChannelSequence};
 use crate::room::object::GameObjectId;
 
 ///
@@ -21,7 +21,7 @@ pub struct InCommandsCollector {
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 enum ChannelKey {
-	Group(GroupId),
+	Group(ChannelGroupId),
 	ClientGameObjectId(GameObjectId),
 }
 
@@ -368,15 +368,15 @@ mod tests {
 	
 	impl Frame {
 		fn add_command(mut self, channel: ApplicationCommandChannel, content: String) -> Self {
-			self.commands.reliable.push(ApplicationCommandDescription::new(channel, ApplicationCommand::TestSimple(content)));
+			self.commands.reliable.push(ApplicationCommandDescription { channel, command: ApplicationCommand::TestSimple(content) });
 			self
 		}
 		
 		fn add_object_command(mut self, channel: ApplicationCommandChannel, object_id: u32, content: String) -> Self {
-			let command_description = ApplicationCommandDescription::new(
+			let command_description = ApplicationCommandDescription {
 				channel,
-				ApplicationCommand::TestObject(GameObjectId::new(object_id, ClientOwner::Root), content),
-			);
+				command: ApplicationCommand::TestObject(GameObjectId::new(object_id, ClientOwner::Root), content),
+			};
 			self.commands.reliable.push(command_description);
 			self
 		}

@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::C2SCommandUnion;
+use cheetah_relay_common::commands::command::C2SCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::Room;
@@ -40,35 +40,35 @@ pub fn error_c2s_command(command: &str, room: &Room, user_public_key: &UserPubli
 	);
 }
 
-pub fn execute(command: C2SCommandUnion, room: &mut Room, user_public_key: &UserPublicKey) {
+pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPublicKey) {
 	match command {
-		C2SCommandUnion::Create(command) => {
+		C2SCommand::Create(command) => {
 			command.execute(room, user_public_key);
 		}
-		C2SCommandUnion::SetLongCounter(command) => {
+		C2SCommand::SetLongValue(command) => {
 			command.execute(room, user_public_key)
 		}
 		
-		C2SCommandUnion::IncrementLongCounter(command) => {
+		C2SCommand::IncrementLongValue(command) => {
 			command.execute(room, user_public_key)
 		}
-		C2SCommandUnion::SetFloatCounter(command) => {
+		C2SCommand::SetFloatCounter(command) => {
 			command.execute(room, user_public_key)
 		}
-		C2SCommandUnion::IncrementFloatCounter(command) => {
+		C2SCommand::IncrementFloatCounter(command) => {
 			command.execute(room, user_public_key)
 		}
-		C2SCommandUnion::Structure(command) => {
+		C2SCommand::Structure(command) => {
 			command.execute(room, user_public_key)
 		}
-		C2SCommandUnion::Event(command) => {
+		C2SCommand::Event(command) => {
 			command.execute(room, user_public_key)
 		}
-		C2SCommandUnion::Delete(command) => {
+		C2SCommand::Delete(command) => {
 			command.execute(room, user_public_key)
 		}
-		C2SCommandUnion::Test(_) => {}
-		C2SCommandUnion::LoadRoom => {
+		C2SCommand::Test(_) => {}
+		C2SCommand::LoadRoom => {
 			load_room::load_room(room, user_public_key);
 		}
 	}

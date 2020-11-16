@@ -151,7 +151,7 @@ mod tests {
 	use std::time::Instant;
 	
 	use crate::protocol::{FrameBuilder, FrameReceivedListener};
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommandChannel};
 	use crate::protocol::frame::Frame;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::reliable::ack::AckSender;
@@ -241,10 +241,10 @@ mod tests {
 		let time = Instant::now();
 		
 		let mut frame_a = Frame::new(10);
-		frame_a.commands.reliable.push(ApplicationCommandDescription::new(
-			ApplicationCommandChannel::ReliableUnordered,
-			ApplicationCommand::TestSimple("".to_string()),
-		));
+		frame_a.commands.reliable.push(ApplicationCommandDescription {
+			channel: ApplicationCommandChannel::ReliableUnordered,
+			command: ApplicationCommand::TestSimple("".to_string())
+		});
 		reliable.on_frame_received(&frame_a, &time);
 		
 		let mut frame_b = Frame::new(10 + AckFrameHeader::CAPACITY as u64 + 1);
@@ -261,9 +261,9 @@ mod tests {
 	}
 	
 	fn create_command() -> ApplicationCommandDescription {
-		ApplicationCommandDescription::new(
-			ApplicationCommandChannel::ReliableUnordered,
-			ApplicationCommand::TestSimple("".to_string()),
-		)
+		ApplicationCommandDescription {
+			channel: ApplicationCommandChannel::ReliableUnordered,
+			command: ApplicationCommand::TestSimple("".to_string()),
+		}
 	}
 }
