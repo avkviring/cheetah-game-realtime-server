@@ -1,5 +1,5 @@
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
-use cheetah_relay_common::commands::command::S2CCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 use cheetah_relay_common::room::owner::ClientOwner;
 
@@ -49,14 +49,14 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			fields: self.fields.clone(),
 		};
 		room.insert_object(object);
-		room.send_to_group(self.access_groups, S2CCommandUnion::Create(self));
+		room.send_to_group(self.access_groups, S2CCommand::Create(self));
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
-	use cheetah_relay_common::commands::command::S2CCommandUnion;
+	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;
@@ -86,7 +86,7 @@ mod tests {
 					&& object.access_groups == command.access_groups
 					&& object.fields == command.fields
 		));
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::Create(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Create(c))) if c==command));
 	}
 	
 	///

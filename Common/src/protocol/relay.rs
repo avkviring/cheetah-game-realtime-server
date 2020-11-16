@@ -73,6 +73,7 @@ impl RelayProtocol {
 	pub fn on_frame_received(&mut self, frame: Frame, now: &Instant) {
 		self.in_frame_counter += 1;
 		self.disconnect_watcher.on_frame_received(&frame, now);
+		self.retransmitter.on_frame_received(&frame, now);
 		match self.replay_protection.set_and_check(&frame, now) {
 			Ok(replayed) => {
 				if !replayed {

@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::S2CCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::room::UserPublicKey;
 use cheetah_relay_common::room::owner::ClientOwner;
@@ -24,7 +24,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 		let user_public_key = user.public_key.clone();
 		if let Some(object) = room.delete_object(&self.object_id) {
 			let access_groups = object.access_groups;
-			room.send_to_group(access_groups, S2CCommandUnion::Delete(self));
+			room.send_to_group(access_groups, S2CCommand::Delete(self));
 		} else {
 			error_c2s_command(
 				"DeleteGameObjectCommand",
@@ -38,7 +38,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::S2CCommandUnion;
+	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
@@ -59,7 +59,7 @@ mod tests {
 		command.clone().execute(&mut room, &user_public_key);
 		
 		assert!(matches!(room.get_object(&object_id), None));
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::Delete(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Delete(c))) if c==command));
 	}
 	
 	#[test]

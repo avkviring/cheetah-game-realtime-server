@@ -6,10 +6,10 @@ use indexmap::map::IndexMap;
 
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
-use cheetah_relay_common::commands::command::S2CCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription, ApplicationCommands};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::{RoomId, UserPublicKey};
@@ -29,7 +29,7 @@ pub struct Room {
 	pub id: RoomId,
 	users: HashMap<UserPublicKey, User, FnvBuildHasher>,
 	objects: IndexMap<GameObjectId, GameObject>,
-	current_channel: Option<ApplicationCommandChannel>,
+	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserPublicKey>,
 	#[cfg(test)]
@@ -37,9 +37,9 @@ pub struct Room {
 	#[cfg(test)]
 	user_public_key_generator: u32,
 	#[cfg(test)]
-	pub out_commands: VecDeque<(AccessGroups, S2CCommandUnion)>,
+	pub out_commands: VecDeque<(AccessGroups, S2CCommand)>,
 	#[cfg(test)]
-	pub out_commands_by_users: HashMap<UserPublicKey, VecDeque<S2CCommandUnion>>,
+	pub out_commands_by_users: HashMap<UserPublicKey, VecDeque<S2CCommand>>,
 }
 
 #[derive(Debug)]
@@ -73,7 +73,7 @@ impl Room {
 		self.id
 	}
 	
-	pub fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommandUnion) {
+	pub fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommand) {
 		#[cfg(test)]
 			self.out_commands.push_front((access_groups, command.clone()));
 		
@@ -84,7 +84,7 @@ impl Room {
 		
 		let current_user_public_key = self.current_user.as_ref().unwrap();
 		let meta = self.current_meta.as_ref().unwrap();
-		let channel = self.current_channel.as_ref().unwrap();
+		let channel_type = self.current_channel.as_ref().unwrap();
 		let now = Instant::now();
 		let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
 			meta: S2CMetaCommandInformation::new(current_user_public_key.clone(), meta),
@@ -95,15 +95,11 @@ impl Room {
 			.filter(|user| user.protocol.connected(&now))
 			.filter(|user| user.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
-				let description = ApplicationCommandDescription {
-					channel: channel.clone(),
-					command: application_command.clone(),
-				};
-				user.protocol.out_commands_collector.add_command(description)
+				user.protocol.out_commands_collector.add_command(channel_type.clone(), application_command.clone())
 			});
 	}
 	
-	pub fn send_to_user(&mut self, user_public_key: &u32, command: S2CCommandUnion) {
+	pub fn send_to_user(&mut self, user_public_key: &u32, command: S2CCommand) {
 		#[cfg(test)]
 			{
 				let commands = self.out_commands_by_users.entry(user_public_key.clone()).or_insert(VecDeque::new());
@@ -123,11 +119,7 @@ impl Room {
 						meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
 						command,
 					});
-					let description = ApplicationCommandDescription {
-						channel: channel.clone(),
-						command: application_command.clone(),
-					};
-					user.protocol.out_commands_collector.add_command(description);
+					user.protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
 				}
 			}
 		}
@@ -160,7 +152,7 @@ impl Room {
 		for application_command in commands {
 			match application_command.command {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
-					self.current_channel.replace(application_command.channel.clone());
+					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
 					self.current_user.replace(user_public_key.clone());
 					execute(command_with_meta.command, self, &user_public_key);
@@ -214,7 +206,7 @@ impl Room {
 				
 				for (id, access_groups) in objects {
 					self.delete_object(&id);
-					self.send_to_group(access_groups, S2CCommandUnion::Delete(DeleteGameObjectCommand { object_id: id }));
+					self.send_to_group(access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
 				}
 			}
 		};
@@ -269,7 +261,7 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::S2CCommandUnion;
+	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;
@@ -329,7 +321,7 @@ mod tests {
 		assert!(room.contains_object(&object_b_2));
 		println!("{:?}", room.out_commands);
 		
-		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommandUnion::Delete(command))) if command.object_id == object_a_1));
-		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommandUnion::Delete(command))) if command.object_id == object_a_2));
+		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1));
+		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2));
 	}
 }

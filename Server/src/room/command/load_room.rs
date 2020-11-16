@@ -1,5 +1,5 @@
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
-use cheetah_relay_common::commands::command::S2CCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::Room;
@@ -26,7 +26,7 @@ pub fn load_room(room: &mut Room, user_public_key: &UserPublicKey) {
 			});
 			
 			for command in out {
-				room.send_to_user(user_public_key, S2CCommandUnion::Create(command));
+				room.send_to_user(user_public_key, S2CCommand::Create(command));
 			}
 		}
 	}
@@ -34,7 +34,7 @@ pub fn load_room(room: &mut Room, user_public_key: &UserPublicKey) {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::S2CCommandUnion;
+	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	
 	use crate::room::command::load_room::load_room;
@@ -56,8 +56,8 @@ mod tests {
 		load_room(&mut room, &user_a);
 		
 		let commands = &mut room.out_commands_by_users.get_mut(&user_a).unwrap();
-		assert!(matches!(commands.pop_back(), Some(S2CCommandUnion::Create(c)) if c.object_id==object_a_1));
-		assert!(matches!(commands.pop_back(), Some(S2CCommandUnion::Create(c)) if c.object_id==object_a_2));
+		assert!(matches!(commands.pop_back(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1));
+		assert!(matches!(commands.pop_back(), Some(S2CCommand::Create(c)) if c.object_id==object_a_2));
 		assert!(matches!(commands.pop_back(), None));
 	}
 }

@@ -2,9 +2,9 @@ use std::sync::atomic::Ordering;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_client::do_get_connection_status;
+use cheetah_relay_client::ffi::control::{get_connection_status, set_current_client};
+use cheetah_relay_client::ffi::execute_with_client;
 use cheetah_relay_common::protocol::disconnect::watcher::DisconnectWatcher;
-use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::helpers::Helper;
@@ -17,11 +17,7 @@ fn should_connect_to_server() {
 	let (server, client) = helper.setup_server_and_client();
 	helper.wait_first_frame();
 	
-	do_get_connection_status(
-		client,
-		|status| { assert_eq!(status, ConnectionStatus::Connected); },
-		|| { assert!(false) },
-	);
+	execute_with_client(|api| { assert_eq!(api.get_connection_status(), ConnectionStatus::Connected) });
 	drop(server)
 }
 
@@ -31,20 +27,14 @@ fn should_disconnect_when_server_closed() {
 	let (server, client) = helper.setup_server_and_client();
 	helper.wait_first_frame();
 	
-	do_get_connection_status(
-		client,
-		|status| { assert_eq!(status, ConnectionStatus::Connected); },
-		|| { assert!(false) },
-	);
+	set_current_client(client);
+	execute_with_client(|api| { assert_eq!(api.get_connection_status(), ConnectionStatus::Connected) });
 	
 	drop(server);
 	
-	helper.set_protocol_time_offset(client, DisconnectWatcher::TIMEOUT);
+	set_current_client(client);
+	execute_with_client(|api| { api.set_protocol_time_offset(DisconnectWatcher::TIMEOUT); });
 	thread::sleep(Duration::from_millis(100));
 	
-	do_get_connection_status(
-		client,
-		|status| { assert_eq!(status, ConnectionStatus::Disconnected); },
-		|| { assert!(false) },
-	);
+	execute_with_client(|api| { assert_eq!(api.get_connection_status(), ConnectionStatus::Disconnected) });
 }

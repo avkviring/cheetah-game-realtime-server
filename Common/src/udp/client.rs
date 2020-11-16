@@ -11,6 +11,7 @@ use crate::protocol::relay::RelayProtocol;
 use crate::room::{UserPrivateKey, UserPublicKey};
 use crate::udp::bind_to_free_socket;
 
+#[derive(Debug)]
 pub struct UdpClient {
 	pub state: ConnectionStatus,
 	pub protocol: RelayProtocol,

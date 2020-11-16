@@ -6,23 +6,27 @@ use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::protocol::frame::applications::ApplicationCommandDescription;
+use cheetah_relay_common::commands::command::C2SCommandWithMeta;
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription};
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::udp::client::{ConnectionStatus, UdpClient};
 
-use crate::clients::ClientRequest;
+use crate::registry::ClientRequest;
 
-pub mod ffi;
-pub mod command;
-
-
+#[derive(Debug)]
 pub struct Client {
 	state: Arc<Mutex<ConnectionStatus>>,
-	out_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
+	out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 	in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 	udp_client: UdpClient,
 	receiver: Receiver<ClientRequest>,
 	protocol_time_offset: Option<Duration>,
+}
+
+#[derive(Debug)]
+pub struct OutApplicationCommand {
+	pub channel_type: ApplicationCommandChannelType,
+	pub command: C2SCommandWithMeta,
 }
 
 
@@ -31,7 +35,7 @@ impl Client {
 		server_address: SocketAddr,
 		user_public_key: UserPublicKey,
 		user_private_key: UserPrivateKey,
-		out_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
+		out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
@@ -53,7 +57,11 @@ impl Client {
 			let cloned_out_commands = self.out_commands.clone();
 			let out_commands = &mut cloned_out_commands.lock().unwrap();
 			while let Some(command) = out_commands.pop_back() {
-				self.udp_client.protocol.out_commands_collector.add_command(command);
+				self
+					.udp_client
+					.protocol
+					.out_commands_collector
+					.add_command(command.channel_type, ApplicationCommand::C2SCommandWithMeta(command.command));
 			}
 			
 			let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_commands();

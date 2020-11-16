@@ -1,7 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::commands::command::{C2SCommandUnion, C2SCommandWithMeta, S2CCommandUnion, S2CCommandWithMeta};
+use crate::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
 use crate::room::object::GameObjectId;
+
+pub type ChannelGroupId = u16;
+pub type ChannelSequence = u32;
+
 
 ///
 /// Прикладные команды
@@ -39,15 +43,6 @@ pub struct ApplicationCommandDescription {
 }
 
 
-impl ApplicationCommandDescription {
-	pub fn new(channel: ApplicationCommandChannel, command: ApplicationCommand) -> Self {
-		Self {
-			channel,
-			command,
-		}
-	}
-}
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ApplicationCommand {
 	TestSimple(String),
@@ -56,6 +51,50 @@ pub enum ApplicationCommand {
 	C2SCommandWithMeta(C2SCommandWithMeta),
 }
 
+
+///
+/// Тип канала для отправки
+///
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub enum ApplicationCommandChannelType {
+	///
+	/// Выполняем команды без учета порядка
+	///
+	ReliableUnordered,
+	///
+	/// Отбрасываем команды из прошлого по объекту
+	///
+	ReliableOrderedByObject,
+	///
+	/// Отбрасываем команды из прошлого по группе
+	///
+	ReliableOrderedByGroup(ChannelGroupId),
+	///
+	/// Выполняем команды без учета порядка
+	///
+	UnreliableUnordered,
+	///
+	/// Отбрасываем команды из прошлого по объекту
+	///
+	UnreliableOrderedByObject,
+	///
+	/// Отбрасываем команды из прошлого по группе
+	///
+	UnreliableOrderedByGroup(ChannelGroupId),
+	///
+	/// Выполняем команды строго по-порядку по объекту
+	///
+	ReliableSequenceByObject,
+	///
+	/// Выполняем команды строго по-порядку по группе
+	///
+	ReliableSequenceByGroup(ChannelGroupId),
+}
+
+
+///
+/// Канал для отправки, отличается от [ApplicationCommandChannelType] полным набором данных для канала
+///
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum ApplicationCommandChannel {
 	///
@@ -69,7 +108,7 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	ReliableOrderedByGroup(GroupId),
+	ReliableOrderedByGroup(ChannelGroupId),
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -81,7 +120,7 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByGroup(GroupId),
+	UnreliableOrderedByGroup(ChannelGroupId),
 	///
 	/// Выполняем команды строго по-порядку по объекту
 	///
@@ -89,11 +128,24 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Выполняем команды строго по-порядку по группе
 	///
-	ReliableSequenceByGroup(GroupId, ChannelSequence),
+	ReliableSequenceByGroup(ChannelGroupId, ChannelSequence),
 }
 
-pub type GroupId = u16;
-pub type ChannelSequence = u32;
+
+impl From<&ApplicationCommandChannel> for ApplicationCommandChannelType {
+	fn from(channel: &ApplicationCommandChannel) -> Self {
+		match channel {
+			ApplicationCommandChannel::ReliableUnordered => { ApplicationCommandChannelType::ReliableUnordered }
+			ApplicationCommandChannel::ReliableOrderedByObject => { ApplicationCommandChannelType::ReliableOrderedByObject }
+			ApplicationCommandChannel::ReliableOrderedByGroup(channel) => { ApplicationCommandChannelType::ReliableOrderedByGroup(*channel) }
+			ApplicationCommandChannel::UnreliableUnordered => { ApplicationCommandChannelType::UnreliableUnordered }
+			ApplicationCommandChannel::UnreliableOrderedByObject => { ApplicationCommandChannelType::UnreliableOrderedByObject }
+			ApplicationCommandChannel::UnreliableOrderedByGroup(channel) => { ApplicationCommandChannelType::UnreliableOrderedByGroup(*channel) }
+			ApplicationCommandChannel::ReliableSequenceByObject(_) => { ApplicationCommandChannelType::ReliableSequenceByObject }
+			ApplicationCommandChannel::ReliableSequenceByGroup(channel, _) => { ApplicationCommandChannelType::ReliableSequenceByGroup(*channel) }
+		}
+	}
+}
 
 
 impl ApplicationCommand {
@@ -105,56 +157,56 @@ impl ApplicationCommand {
 			}
 			ApplicationCommand::S2CCommandWithMeta(command_with_meta) => {
 				match &command_with_meta.command {
-					S2CCommandUnion::Create(c) => {
+					S2CCommand::Create(c) => {
 						Option::Some(&c.object_id)
 					}
-					S2CCommandUnion::SetLong(c) => {
+					S2CCommand::SetLong(c) => {
 						Option::Some(&c.object_id)
 					}
-					S2CCommandUnion::SetFloat64(c) => {
+					S2CCommand::SetFloat64(c) => {
 						Option::Some(&c.object_id)
 					}
-					S2CCommandUnion::SetStruct(c) => {
+					S2CCommand::SetStruct(c) => {
 						Option::Some(&c.object_id)
 					}
-					S2CCommandUnion::Event(c) => {
+					S2CCommand::Event(c) => {
 						Option::Some(&c.object_id)
 					}
-					S2CCommandUnion::Delete(c) => {
+					S2CCommand::Delete(c) => {
 						Option::Some(&c.object_id)
 					}
 				}
 			}
 			ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 				match &command_with_meta.command {
-					C2SCommandUnion::Create(c) => {
+					C2SCommand::Create(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::SetLongCounter(c) => {
+					C2SCommand::SetLongValue(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::IncrementLongCounter(c) => {
+					C2SCommand::IncrementLongValue(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::SetFloatCounter(c) => {
+					C2SCommand::SetFloatCounter(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::IncrementFloatCounter(c) => {
+					C2SCommand::IncrementFloatCounter(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::Structure(c) => {
+					C2SCommand::Structure(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::Event(c) => {
+					C2SCommand::Event(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::Delete(c) => {
+					C2SCommand::Delete(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommandUnion::Test(_) => {
+					C2SCommand::Test(_) => {
 						Option::None
 					}
-					C2SCommandUnion::LoadRoom => {
+					C2SCommand::LoadRoom => {
 						Option::None
 					}
 				}

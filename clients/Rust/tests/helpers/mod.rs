@@ -1,6 +1,4 @@
 use std::net::SocketAddr;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
 use std::thread;
 use std::time::Duration;
 
@@ -9,8 +7,8 @@ use rand::rngs::OsRng;
 use stderrlog::Timestamp;
 
 use cheetah_relay::server::Server;
-use cheetah_relay_client::{do_create_client, execute};
-use cheetah_relay_client::clients::ClientId;
+use cheetah_relay_client::ffi::control::do_create_client;
+use cheetah_relay_client::registry::ClientId;
 use cheetah_relay_common::room::{RoomId, UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::udp::bind_to_free_socket;
@@ -22,8 +20,7 @@ pub struct Helper {
 }
 
 
-
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub struct UserKeys {
 	pub public: UserPublicKey,
 	pub private: UserPrivateKey,
@@ -45,11 +42,6 @@ impl Helper {
 		}
 	}
 	
-	pub fn set_protocol_time_offset(&self, client: ClientId, time_offset: Duration) {
-		execute(|api| {
-			api.set_protocol_time_offset(client, time_offset);
-		})
-	}
 	
 	pub fn create_server_and_room(&mut self) -> (Server, SocketAddr, RoomId) {
 		self.room_id_generator += 1;
@@ -88,10 +80,8 @@ impl Helper {
 	}
 	
 	pub fn wait_first_frame(&self) {
-		// самый простой вариант
 		thread::sleep(Duration::from_millis(100));
 	}
-	
 }
 
 

@@ -1,5 +1,5 @@
 use cheetah_relay_common::commands::command::event::EventCommand;
-use cheetah_relay_common::commands::command::S2CCommandUnion;
+use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
@@ -9,7 +9,7 @@ impl ServerCommandExecutor for EventCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let groups = object.access_groups.clone();
-			room.send_to_group(groups, S2CCommandUnion::Event(self))
+			room.send_to_group(groups, S2CCommand::Event(self))
 		}
 	}
 }
@@ -17,7 +17,7 @@ impl ServerCommandExecutor for EventCommand {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::event::EventCommand;
-	use cheetah_relay_common::commands::command::S2CCommandUnion;
+	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ClientOwner;
 	
@@ -34,7 +34,7 @@ mod tests {
 			event: vec![1, 2, 3, 4, 5],
 		};
 		command.clone().execute(&mut room, &32);
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommandUnion::Event(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
 	
 	#[test]
