@@ -1,7 +1,7 @@
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
-use cheetah_relay_common::room::owner::ClientOwner;
+use cheetah_relay_common::room::owner::ObjectOwner;
 
 use crate::room::Room;
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
@@ -20,7 +20,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			return;
 		}
 		
-		if let ClientOwner::User(object_id_user) = self.object_id.owner {
+		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
 			if object_id_user != user.public_key {
 				error_c2s_command(
 					"CreateGameObjectCommand",
@@ -59,7 +59,7 @@ mod tests {
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ClientOwner;
+	use cheetah_relay_common::room::owner::ObjectOwner;
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
@@ -68,7 +68,7 @@ mod tests {
 	fn should_create() {
 		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(0b11));
-		let object_id = GameObjectId::new(1, ClientOwner::User(user_public_key));
+		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
 		let mut command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
@@ -96,7 +96,7 @@ mod tests {
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
 		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(0b11));
-		let object_id = GameObjectId::new(1, ClientOwner::User(1000));
+		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
@@ -116,7 +116,7 @@ mod tests {
 	fn should_not_create_when_access_group_is_wrong() {
 		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(0b11));
-		let object_id = GameObjectId::new(1, ClientOwner::User(user_public_key));
+		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,

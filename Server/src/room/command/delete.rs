@@ -1,7 +1,7 @@
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::room::UserPublicKey;
-use cheetah_relay_common::room::owner::ClientOwner;
+use cheetah_relay_common::room::owner::ObjectOwner;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::Room;
@@ -9,7 +9,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		let user = room.get_user(user_public_key).unwrap();
-		if let ClientOwner::User(object_id_user) = self.object_id.owner {
+		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
 			if object_id_user != user.public_key {
 				error_c2s_command(
 					"DeleteGameObjectCommand",
@@ -42,7 +42,7 @@ mod tests {
 	use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ClientOwner;
+	use cheetah_relay_common::room::owner::ObjectOwner;
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
@@ -66,7 +66,7 @@ mod tests {
 	fn should_not_panic_when_missing_object() {
 		let mut room = Room::new(0);
 		let user_public_key = room.create_user(AccessGroups(55));
-		let object_id = GameObjectId::new(100, ClientOwner::User(user_public_key));
+		let object_id = GameObjectId::new(100, ObjectOwner::User(user_public_key));
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone()
 		};

@@ -52,7 +52,7 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPubli
 		C2SCommand::IncrementLongValue(command) => {
 			command.execute(room, user_public_key)
 		}
-		C2SCommand::SetFloatCounter(command) => {
+		C2SCommand::SetFloatValue(command) => {
 			command.execute(room, user_public_key)
 		}
 		C2SCommand::IncrementFloatCounter(command) => {

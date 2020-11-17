@@ -188,7 +188,7 @@ impl ApplicationCommand {
 					C2SCommand::IncrementLongValue(c) => {
 						Option::Some(&c.object_id)
 					}
-					C2SCommand::SetFloatCounter(c) => {
+					C2SCommand::SetFloatValue(c) => {
 						Option::Some(&c.object_id)
 					}
 					C2SCommand::IncrementFloatCounter(c) => {

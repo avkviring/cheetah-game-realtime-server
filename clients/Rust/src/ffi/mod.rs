@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::ClientOwner;
+use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::controller::ClientController;
@@ -56,7 +56,7 @@ pub struct GameObjectIdFFI {
 
 impl From<&GameObjectId> for GameObjectIdFFI {
 	fn from(from: &GameObjectId) -> Self {
-		let owner = if let ClientOwner::User(public_key) = from.owner {
+		let owner = if let ObjectOwner::User(public_key) = from.owner {
 			public_key
 		} else {
 			0
@@ -71,8 +71,35 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 impl From<&GameObjectIdFFI> for GameObjectId {
 	fn from(from: &GameObjectIdFFI) -> Self {
 		Self {
-			owner: ClientOwner::User(from.owner),
+			owner: ObjectOwner::User(from.owner),
 			id: from.owner,
+		}
+	}
+}
+
+
+#[repr(C)]
+pub struct BufferFFI {
+	pub len: u8,
+	pub buffer: *const u8,
+}
+
+impl From<&BufferFFI> for Vec<u8> {
+	fn from(source: &BufferFFI) -> Self {
+		unsafe {
+			let slice = std::ptr::slice_from_raw_parts(source.buffer, source.len as usize);
+			let mut result = Vec::new();
+			result.copy_from_slice(&*slice);
+			result
+		}
+	}
+}
+
+impl From<&Vec<u8>> for BufferFFI {
+	fn from(source: &Vec<u8>) -> Self {
+		BufferFFI {
+			len: source.len() as u8,
+			buffer: source.as_ptr(),
 		}
 	}
 }

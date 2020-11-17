@@ -43,7 +43,7 @@ mod tests {
 	use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ClientOwner;
+	use cheetah_relay_common::room::owner::ObjectOwner;
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
@@ -92,7 +92,7 @@ mod tests {
 	fn should_not_panic_when_set_float_command_not_panic_for_missing_object() {
 		let mut room = Room::new(0);
 		let command = SetFloat64Command {
-			object_id: GameObjectId::new(10, ClientOwner::Root),
+			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
 			value: 100.100,
 		};
@@ -103,7 +103,7 @@ mod tests {
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
 		let mut room = Room::new(0);
 		let command = IncrementFloat64C2SCommand {
-			object_id: GameObjectId::new(10, ClientOwner::Root),
+			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
 			increment: 100.100,
 		};

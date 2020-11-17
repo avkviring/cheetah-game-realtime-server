@@ -23,7 +23,7 @@ pub enum C2SCommand {
 	Create(CreateGameObjectCommand),
 	SetLongValue(SetLongCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
-	SetFloatCounter(SetFloat64Command),
+	SetFloatValue(SetFloat64Command),
 	IncrementFloatCounter(IncrementFloat64C2SCommand),
 	Structure(StructureCommand),
 	Event(EventCommand),

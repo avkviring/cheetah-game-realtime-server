@@ -42,7 +42,7 @@ mod tests {
 	use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ClientOwner;
+	use cheetah_relay_common::room::owner::ObjectOwner;
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
@@ -91,7 +91,7 @@ mod tests {
 	fn should_not_panic_when_set_long_command_not_panic_for_missing_object() {
 		let mut room = Room::new(0);
 		let command = SetLongCommand {
-			object_id: GameObjectId::new(10, ClientOwner::Root),
+			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
 			value: 100,
 		};
@@ -102,7 +102,7 @@ mod tests {
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
 		let mut room = Room::new(0);
 		let command = IncrementLongC2SCommand {
-			object_id: GameObjectId::new(10, ClientOwner::Root),
+			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
 			increment: 100,
 		};

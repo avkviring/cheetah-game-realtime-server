@@ -22,7 +22,6 @@ pub type ClientId = u16;
 /// - все методы Clients выполняются в главном потоке Unity
 ///
 ///
-#[derive(Debug)]
 pub struct Clients {
 	pub controllers: HashMap<ClientId, ClientController, FnvBuildHasher>,
 	client_generator_id: ClientId,
@@ -75,6 +74,7 @@ impl Clients {
 				});
 				
 				let controller = ClientController::new(
+					user_public_key,
 					handler,
 					state_cloned,
 					in_commands_cloned,
