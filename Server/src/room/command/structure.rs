@@ -22,7 +22,7 @@ mod tests {
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::commands::command::structure::StructureCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ClientOwner;
+	use cheetah_relay_common::room::owner::ObjectOwner;
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
@@ -48,7 +48,7 @@ mod tests {
 	pub fn should_not_panic_when_missing_object() {
 		let mut room = Room::new(0);
 		let command = StructureCommand {
-			object_id: GameObjectId::new(10, ClientOwner::Root),
+			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 100,
 			structure: vec![1, 2, 3, 4, 5],
 		};

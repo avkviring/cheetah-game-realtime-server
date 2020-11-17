@@ -6,21 +6,28 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
+use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription, ChannelGroupId};
+use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::room::fields::GameObjectFields;
+use cheetah_relay_common::room::object::GameObjectId;
+use cheetah_relay_common::room::owner::ObjectOwner;
+use cheetah_relay_common::room::UserPublicKey;
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::client::OutApplicationCommand;
+use crate::ffi::{BufferFFI, GameObjectIdFFI};
 use crate::ffi::channel::Channel;
-use crate::ffi::GameObjectIdFFI;
+use crate::ffi::command::create::GameObjectFieldsFFI;
 use crate::registry::ClientRequest;
 
 ///
 /// Управление сетевым потоком клиента
 ///
-#[derive(Debug)]
 pub struct ClientController {
+	user_public_key: UserPublicKey,
 	out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 	in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 	handler: Option<JoinHandle<()>>,
@@ -28,7 +35,13 @@ pub struct ClientController {
 	sender: Sender<ClientRequest>,
 	create_time: Instant,
 	channel: ApplicationCommandChannelType,
-	listener_long_value: Option<extern fn(GameObjectIdFFI, FieldID, i64)>,
+	game_object_id_generator: u32,
+	listener_long_value: Option<extern fn(&GameObjectIdFFI, FieldID, i64)>,
+	listener_float_value: Option<extern fn(&GameObjectIdFFI, FieldID, f64)>,
+	listener_event: Option<extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)>,
+	listener_structure: Option<extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)>,
+	listener_delete_object: Option<extern fn(&GameObjectIdFFI)>,
+	listener_create_object: Option<extern fn(&GameObjectIdFFI, u16, &GameObjectFieldsFFI)>,
 }
 
 
@@ -46,6 +59,7 @@ impl Drop for ClientController {
 
 impl ClientController {
 	pub fn new(
+		user_public_key: UserPublicKey,
 		handler: JoinHandle<()>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
@@ -53,6 +67,7 @@ impl ClientController {
 		sender: Sender<ClientRequest>,
 	) -> Self {
 		Self {
+			user_public_key,
 			out_commands,
 			in_commands,
 			handler: Option::Some(handler),
@@ -60,7 +75,13 @@ impl ClientController {
 			sender,
 			create_time: Instant::now(),
 			channel: ApplicationCommandChannelType::ReliableSequenceByGroup(0),
+			game_object_id_generator: 0,
 			listener_long_value: None,
+			listener_float_value: None,
+			listener_event: None,
+			listener_structure: None,
+			listener_delete_object: None,
+			listener_create_object: None,
 		}
 	}
 	
@@ -84,6 +105,7 @@ impl ClientController {
 	pub fn get_connection_status(&self) -> ConnectionStatus {
 		*self.state.lock().unwrap()
 	}
+	
 	pub fn set_current_channel(&mut self, channel: Channel, group: ChannelGroupId) {
 		self.channel = match channel {
 			Channel::ReliableUnordered => {
@@ -123,24 +145,79 @@ impl ClientController {
 		for command in cloned_commands {
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
 				match command.command {
-					S2CCommand::Create(_) => {}
+					S2CCommand::Create(command) => {
+						if let Some(ref listener) = self.listener_create_object {
+							let object_id = From::from(&command.object_id);
+							listener(&object_id, command.template, &From::from(command.fields));
+						}
+					}
 					S2CCommand::SetLong(command) => {
 						if let Some(ref listener) = self.listener_long_value {
 							let object_id = From::from(&command.object_id);
-							listener(object_id, command.field_id, command.value);
+							listener(&object_id, command.field_id, command.value);
 						}
 					}
-					S2CCommand::SetFloat64(_) => {}
-					S2CCommand::SetStruct(_) => {}
-					S2CCommand::Event(_) => {}
-					S2CCommand::Delete(_) => {}
+					S2CCommand::SetFloat64(command) => {
+						if let Some(ref listener) = self.listener_float_value {
+							let object_id = From::from(&command.object_id);
+							listener(&object_id, command.field_id, command.value);
+						}
+					}
+					S2CCommand::SetStruct(command) => {
+						if let Some(ref listener) = self.listener_structure {
+							let object_id = From::from(&command.object_id);
+							listener(&object_id, command.field_id, &From::from(&command.structure));
+						}
+					}
+					S2CCommand::Event(command) => {
+						if let Some(ref listener) = self.listener_event {
+							let object_id = From::from(&command.object_id);
+							listener(&object_id, command.field_id, &From::from(&command.event));
+						}
+					}
+					S2CCommand::Delete(command) => {
+						if let Some(ref listener) = self.listener_delete_object {
+							let object_id = From::from(&command.object_id);
+							listener(&object_id);
+						}
+					}
 				}
 			}
 		}
 	}
 	
 	
-	pub fn register_long_value_listener(&mut self, listener: extern fn(GameObjectIdFFI, FieldID, i64)) {
+	pub fn register_long_value_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, i64)) {
 		self.listener_long_value = Option::Some(listener);
+	}
+	pub fn register_float_value_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, f64)) {
+		self.listener_float_value = Option::Some(listener);
+	}
+	pub fn register_event_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)) {
+		self.listener_event = Option::Some(listener);
+	}
+	pub fn register_structure_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)) {
+		self.listener_structure = Option::Some(listener);
+	}
+	pub fn register_delete_object_listener(&mut self, listener: extern fn(&GameObjectIdFFI)) {
+		self.listener_delete_object = Option::Some(listener);
+	}
+	
+	pub fn register_create_object_listener(&mut self, listener: extern fn(&GameObjectIdFFI, u16, &GameObjectFieldsFFI)) {
+		self.listener_create_object = Option::Some(listener);
+	}
+	
+	
+	pub fn create_game_object(&mut self, template: u16, access_group: u64, fields: GameObjectFields) -> GameObjectIdFFI {
+		self.game_object_id_generator += 1;
+		let game_object_id = GameObjectId::new(self.game_object_id_generator, ObjectOwner::User(self.user_public_key));
+		self.send(C2SCommand::Create(CreateGameObjectCommand {
+			object_id: game_object_id.clone(),
+			template,
+			access_groups: AccessGroups(access_group),
+			fields,
+		}));
+		
+		From::from(&game_object_id)
 	}
 }

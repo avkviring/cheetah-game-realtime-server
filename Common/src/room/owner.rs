@@ -6,7 +6,7 @@ use crate::room::UserPublicKey;
 /// владелец - клиент или root
 ///
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
-pub enum ClientOwner {
+pub enum ObjectOwner {
 	Root,
 	User(UserPublicKey),
 }

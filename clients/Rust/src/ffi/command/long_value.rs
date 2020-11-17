@@ -8,7 +8,7 @@ use crate::ffi::{GameObjectIdFFI, execute_with_client};
 
 #[no_mangle]
 #[allow(unused_must_use)]
-pub extern fn register_long_value_listener(listener: extern fn(GameObjectIdFFI, FieldID, i64)) {
+pub extern fn register_long_value_listener(listener: extern fn(&GameObjectIdFFI, FieldID, i64)) {
 	execute_with_client(|client|{
 		client.register_long_value_listener(listener);
 	});

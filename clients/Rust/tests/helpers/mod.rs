@@ -73,7 +73,7 @@ impl Helper {
 	
 	pub fn setup_server_and_client(&mut self) -> (Server, ClientId) {
 		let user_keys = self.create_user_keys();
-		let (mut server, server_address, mut room_id) = self.create_server_and_room();
+		let (mut server, server_address, room_id) = self.create_server_and_room();
 		server.register_user(room_id, user_keys.public, user_keys.private, AccessGroups(0b111)).ok().unwrap();
 		let client = self.create_client(server_address.to_string().as_str(), user_keys);
 		(server, client)
