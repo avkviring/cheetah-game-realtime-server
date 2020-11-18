@@ -95,18 +95,23 @@ impl Clients {
 		}
 	}
 	
-	pub fn destroy_client(
-		&mut self,
-		client_id: u16,
-	) -> bool {
-		match self.controllers.remove(&client_id) {
+	pub fn destroy_client(&mut self) -> bool {
+		match self.current_client {
 			None => {
-				log::error!("Clients::destroy connection with id {} not found", client_id);
-				true
-			}
-			Some(_) => {
-				log::trace!("Clients::destroy connection {}", client_id);
+				log::error!("[registry:destroy] current client not set");
 				false
+			}
+			Some(ref current_client) => {
+				match self.controllers.remove(current_client) {
+					None => {
+						log::error!("[registry:destroy] connection with id {} not found", current_client);
+						true
+					}
+					Some(_) => {
+						log::trace!("[registry:destroy] connection {}", current_client);
+						false
+					}
+				}
 			}
 		}
 	}

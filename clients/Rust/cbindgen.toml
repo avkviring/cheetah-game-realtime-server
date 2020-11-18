@@ -7,7 +7,6 @@ using_namespaces = []
 sys_includes = []
 includes = []
 no_includes = false
-after_includes = "#define MAX_FIELDS_IN_OBJECT 255\n#define MAX_SIZE_STRUCT 255\n#define ALL_STRUCTURES_SIZE (MAX_FIELDS_IN_OBJECT * MAX_SIZE_STRUCT)"
 
 
 ############################ Code Style Options ################################

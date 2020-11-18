@@ -4,8 +4,8 @@ use std::os::raw::c_char;
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
+use crate::ffi::{BufferFFI, execute, execute_with_client};
 use crate::registry::ClientId;
-use crate::ffi::{execute, execute_with_client};
 
 #[no_mangle]
 pub extern "C" fn get_connection_status(on_result: extern fn(ConnectionStatus), on_error: extern fn()) {
@@ -35,15 +35,20 @@ pub extern "C" fn set_current_client(client_id: ClientId) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn destroy_client(client_id: u16) {
-	execute(|api| api.destroy_client(client_id));
+pub extern "C" fn destroy_client() -> bool {
+	execute(|api| api.destroy_client())
+}
+
+#[no_mangle]
+pub extern "C" fn receive() -> bool {
+	execute_with_client(|client| client.receive()).is_ok()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
 	user_public_key: UserPublicKey,
-	user_private_key: &UserPrivateKey,
+	user_private_key_buffer: &BufferFFI,
 	on_error: extern fn(),
 	on_create: extern fn(u16),
 ) {
@@ -51,7 +56,9 @@ pub unsafe extern "C" fn create_client(
 		.to_str()
 		.unwrap()
 		.to_string();
-	do_create_client(server_address, user_public_key, user_private_key, || on_error(), |c| on_create(c));
+	let mut user_private_key = [0; 32];
+	user_private_key.copy_from_slice(&user_private_key_buffer.buffer[0..32]);
+	do_create_client(server_address, user_public_key, &user_private_key, || on_error(), |c| on_create(c));
 }
 
 pub fn do_create_client<E, C>(

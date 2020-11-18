@@ -10,7 +10,6 @@ pub mod delete;
 pub mod room;
 pub mod create;
 
-#[allow(unused_must_use)]
-fn send_command(command: C2SCommand) {
-	execute_with_client(|client| { client.send(command); });
+fn send_command(command: C2SCommand) -> bool {
+	execute_with_client(|client| { client.send(command); }).is_ok()
 }
