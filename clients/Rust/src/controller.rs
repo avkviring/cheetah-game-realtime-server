@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
+use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription, ChannelGroupId};
 use cheetah_relay_common::room::access::AccessGroups;
@@ -36,12 +37,12 @@ pub struct ClientController {
 	create_time: Instant,
 	channel: ApplicationCommandChannelType,
 	game_object_id_generator: u32,
-	listener_long_value: Option<extern fn(&GameObjectIdFFI, FieldID, i64)>,
-	listener_float_value: Option<extern fn(&GameObjectIdFFI, FieldID, f64)>,
-	listener_event: Option<extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)>,
-	listener_structure: Option<extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)>,
-	listener_delete_object: Option<extern fn(&GameObjectIdFFI)>,
-	listener_create_object: Option<extern fn(&GameObjectIdFFI, u16, &GameObjectFieldsFFI)>,
+	listener_long_value: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, i64)>,
+	listener_float_value: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, f64)>,
+	listener_event: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, &BufferFFI)>,
+	listener_structure: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, &BufferFFI)>,
+	listener_delete_object: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI)>,
+	listener_create_object: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, u16, &GameObjectFieldsFFI)>,
 }
 
 
@@ -135,7 +136,7 @@ impl ClientController {
 		}
 	}
 	
-	pub fn process_in_commands(&mut self) {
+	pub fn receive(&mut self) {
 		let commands = self.in_commands.clone();
 		let mut commands = commands.lock().unwrap();
 		let commands = &mut *commands;
@@ -144,41 +145,42 @@ impl ClientController {
 		
 		for command in cloned_commands {
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
+				let meta = &command.meta;
 				match command.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {
 							let object_id = From::from(&command.object_id);
-							listener(&object_id, command.template, &From::from(command.fields));
+							listener(meta, &object_id, command.template, &From::from(command.fields));
 						}
 					}
 					S2CCommand::SetLong(command) => {
 						if let Some(ref listener) = self.listener_long_value {
 							let object_id = From::from(&command.object_id);
-							listener(&object_id, command.field_id, command.value);
+							listener(meta, &object_id, command.field_id, command.value);
 						}
 					}
 					S2CCommand::SetFloat64(command) => {
 						if let Some(ref listener) = self.listener_float_value {
 							let object_id = From::from(&command.object_id);
-							listener(&object_id, command.field_id, command.value);
+							listener(meta, &object_id, command.field_id, command.value);
 						}
 					}
 					S2CCommand::SetStruct(command) => {
 						if let Some(ref listener) = self.listener_structure {
 							let object_id = From::from(&command.object_id);
-							listener(&object_id, command.field_id, &From::from(&command.structure));
+							listener(meta, &object_id, command.field_id, &From::from(&command.structure));
 						}
 					}
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
 							let object_id = From::from(&command.object_id);
-							listener(&object_id, command.field_id, &From::from(&command.event));
+							listener(meta, &object_id, command.field_id, &From::from(&command.event));
 						}
 					}
 					S2CCommand::Delete(command) => {
 						if let Some(ref listener) = self.listener_delete_object {
 							let object_id = From::from(&command.object_id);
-							listener(&object_id);
+							listener(meta, &object_id);
 						}
 					}
 				}
@@ -187,23 +189,23 @@ impl ClientController {
 	}
 	
 	
-	pub fn register_long_value_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, i64)) {
+	pub fn register_long_value_listener(&mut self, listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, i64)) {
 		self.listener_long_value = Option::Some(listener);
 	}
-	pub fn register_float_value_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, f64)) {
+	pub fn register_float_value_listener(&mut self, listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, f64)) {
 		self.listener_float_value = Option::Some(listener);
 	}
-	pub fn register_event_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)) {
+	pub fn register_event_listener(&mut self, listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, &BufferFFI)) {
 		self.listener_event = Option::Some(listener);
 	}
-	pub fn register_structure_listener(&mut self, listener: extern fn(&GameObjectIdFFI, FieldID, &BufferFFI)) {
+	pub fn register_structure_listener(&mut self, listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, &BufferFFI)) {
 		self.listener_structure = Option::Some(listener);
 	}
-	pub fn register_delete_object_listener(&mut self, listener: extern fn(&GameObjectIdFFI)) {
+	pub fn register_delete_object_listener(&mut self, listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI)) {
 		self.listener_delete_object = Option::Some(listener);
 	}
 	
-	pub fn register_create_object_listener(&mut self, listener: extern fn(&GameObjectIdFFI, u16, &GameObjectFieldsFFI)) {
+	pub fn register_create_object_listener(&mut self, listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, u16, &GameObjectFieldsFFI)) {
 		self.listener_create_object = Option::Some(listener);
 	}
 	

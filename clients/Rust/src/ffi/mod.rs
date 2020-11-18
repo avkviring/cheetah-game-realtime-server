@@ -5,6 +5,7 @@ use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::controller::ClientController;
+use crate::ffi::command::create::MAX_SIZE_STRUCT;
 use crate::registry::Clients;
 
 pub mod logs;
@@ -81,25 +82,23 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 #[repr(C)]
 pub struct BufferFFI {
 	pub len: u8,
-	pub buffer: *const u8,
+	pub buffer: [u8; MAX_SIZE_STRUCT],
 }
 
 impl From<&BufferFFI> for Vec<u8> {
 	fn from(source: &BufferFFI) -> Self {
-		unsafe {
-			let slice = std::ptr::slice_from_raw_parts(source.buffer, source.len as usize);
-			let mut result = Vec::new();
-			result.copy_from_slice(&*slice);
-			result
-		}
+		Vec::from(&source.buffer[0..source.len as usize])
 	}
 }
 
 impl From<&Vec<u8>> for BufferFFI {
 	fn from(source: &Vec<u8>) -> Self {
-		BufferFFI {
+		let mut result = BufferFFI {
 			len: source.len() as u8,
-			buffer: source.as_ptr(),
-		}
+			buffer: [0; MAX_SIZE_STRUCT],
+		};
+		let buffer = &mut result.buffer[0..source.len()];
+		buffer.copy_from_slice(source);
+		result
 	}
 }

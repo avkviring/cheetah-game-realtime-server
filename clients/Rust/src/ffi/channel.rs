@@ -17,9 +17,8 @@ pub enum Channel {
 }
 
 #[no_mangle]
-#[allow(unused_must_use)]
-pub extern fn set_current_channel(channel: Channel, group: ChannelGroupId) {
+pub extern fn set_channel(channel: Channel, group: ChannelGroupId) -> bool {
 	execute_with_client(|client| {
 		client.set_current_channel(channel, group);
-	});
+	}).is_ok()
 }

@@ -2,32 +2,33 @@ use std::collections::HashMap;
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 
+use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::fields::GameObjectFields;
 
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
 
+/// Зарегистрировать обработчик загрузки нового игрового объекта
 #[no_mangle]
-#[allow(unused_must_use)]
-pub extern fn register_create_object_listener(listener: extern fn(&GameObjectIdFFI, template: u16, fields: &GameObjectFieldsFFI)) {
+pub extern fn set_create_object_listener(
+	listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, template: u16, fields: &GameObjectFieldsFFI)) -> bool {
 	execute_with_client(|client| {
 		client.register_create_object_listener(listener);
-	});
+	}).is_ok()
 }
 
 #[no_mangle]
-#[allow(unused_must_use)]
-pub extern "C" fn create(template: u16, access_group: u64, fields: &GameObjectFieldsFFI, on_create: extern fn(&GameObjectIdFFI)) {
+pub extern "C" fn create(template: u16, access_group: u64, fields: &GameObjectFieldsFFI, on_create: extern fn(&GameObjectIdFFI)) -> bool {
 	execute_with_client(|client| {
 		let game_object_id = client.create_game_object(template, access_group, From::from(fields));
 		on_create(&game_object_id);
-	});
+	}).is_ok()
 }
 
 
-const MAX_FIELDS_IN_OBJECT: usize = 255;
-const MAX_SIZE_STRUCT: usize = 255;
-const ALL_STRUCTURES_SIZE: usize = MAX_FIELDS_IN_OBJECT * MAX_SIZE_STRUCT;
+pub const MAX_FIELDS_IN_OBJECT: usize = 255;
+pub const MAX_SIZE_STRUCT: usize = 255;
+pub const ALL_STRUCTURES_SIZE: usize = MAX_FIELDS_IN_OBJECT * MAX_SIZE_STRUCT;
 
 #[repr(C)]
 pub struct GameObjectFieldsFFI {

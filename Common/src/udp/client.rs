@@ -26,13 +26,13 @@ pub struct UdpClient {
 pub enum ConnectionStatus {
 	Connecting,
 	///
-	/// Соединение закрыто
-	///
-	Disconnected,
-	///
 	/// Соединение установлено
 	///
 	Connected,
+	///
+	/// Соединение закрыто
+	///
+	Disconnected,
 }
 
 
