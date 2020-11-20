@@ -69,15 +69,16 @@ impl InCommandsCollector {
 	
 	fn process_sequence(&mut self, channel_key: ChannelKey, sequence: u32, command: ApplicationCommandDescription) {
 		let mut last = *self.sequence_last.get(&channel_key).unwrap_or(&0);
-		if sequence - last == 1 {
+		if sequence == 0 || sequence == last + 1 {
 			last = sequence;
 			self.commands.push_front(command);
+			
 			match self.sequence_commands.get_mut(&channel_key) {
 				None => {}
 				Some(buffer) => {
 					while let Option::Some(peek) = buffer.peek() {
 						let sequence = peek.sequence;
-						if sequence - last == 1 {
+						if sequence == last + 1 {
 							self.commands.push_front(buffer.pop().unwrap().command);
 							last = sequence;
 						} else {
@@ -86,6 +87,7 @@ impl InCommandsCollector {
 					}
 				}
 			}
+			
 			self.sequence_last.insert(channel_key, last);
 		} else {
 			let buffer = self.sequence_commands.entry(channel_key).or_insert_with(|| BinaryHeap::default());
@@ -267,11 +269,11 @@ mod tests {
 		let content_4 = "command_4".to_string();
 		let content_5 = "command_5".to_string();
 		
-		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 1), content_1.clone()));
-		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 3), content_3.clone()));
-		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 5), content_5.clone()));
-		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 4), content_4.clone()));
-		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 2), content_2.clone()));
+		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 0), content_1.clone()));
+		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 2), content_3.clone()));
+		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 4), content_5.clone()));
+		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 3), content_4.clone()));
+		in_commands.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 1), content_2.clone()));
 		
 		assert!(matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content)if content==content_1));
 		assert!(matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content) if content==content_2));
@@ -321,11 +323,11 @@ mod tests {
 		let content_4 = "command_4".to_string();
 		let content_5 = "command_5".to_string();
 		
-		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(1), 1, content_1.clone()));
-		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(3), 1, content_3.clone()));
-		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(5), 1, content_5.clone()));
-		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(4), 1, content_4.clone()));
-		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(2), 1, content_2.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(0), 1, content_1.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(2), 1, content_3.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(4), 1, content_5.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(3), 1, content_4.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(ApplicationCommandChannel::ReliableSequenceByObject(1), 1, content_2.clone()));
 		
 		assert!(matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1));
 		assert!(matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_2));
