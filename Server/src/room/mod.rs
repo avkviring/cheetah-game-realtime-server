@@ -202,7 +202,7 @@ impl Room {
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
 	pub fn disconnect_user(&mut self, user_public_key: &UserPublicKey) {
-		log::error!("[room ({:?})] disconnect user({:?})", self.id, user_public_key);
+		log::info!("[room ({:?})] disconnect user({:?})", self.id, user_public_key);
 		match self.users.remove(user_public_key) {
 			None => {}
 			Some(user) => {

@@ -8,12 +8,10 @@ pub fn load_room(room: &mut Room, user_public_key: &UserPublicKey) {
 	let mut out = Vec::new();
 	match room.get_user(user_public_key) {
 		None => {
-			log::error!("load_room user not found {:?}", user_public_key);
+			log::error!("[load_room] user not found {:?}", user_public_key);
 		}
 		Some(user) => {
 			let access_group = user.access_groups;
-			
-			
 			room.process_objects(&mut |o| {
 				if o.access_groups.contains_any(&access_group) {
 					out.push(CreateGameObjectCommand {
