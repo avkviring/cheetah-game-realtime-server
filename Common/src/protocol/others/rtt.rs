@@ -138,8 +138,8 @@ mod tests {
 	/// После обмена должно быть определено rtt.
 	///
 	pub fn should_calculate_rtt() {
-		let mut handler_a = RoundTripTimeImpl::default();
-		let mut handler_b = RoundTripTimeImpl::default();
+		let mut handler_a = RoundTripTimeImpl::new(&Instant::now());
+		let mut handler_b = RoundTripTimeImpl::new(&Instant::now());
 		
 		let now = Instant::now();
 		
@@ -159,7 +159,7 @@ mod tests {
 	/// Для retransmit фреймов операции получения response должны быть игнорированы
 	///
 	pub fn should_ignore_retransmit_frame_when_receive_response() {
-		let mut handler = RoundTripTimeImpl::default();
+		let mut handler = RoundTripTimeImpl::new(&Instant::now());
 		let now = Instant::now();
 		let mut frame = Frame::new(10);
 		frame.headers.add(Header::RetransmitFrame(RetransmitFrameHeader { original_frame_id: 0, retransmit_count: 1 }));
@@ -173,7 +173,7 @@ mod tests {
 	/// Для retransmit фреймов операции получения request должны быть игнорированы
 	///
 	pub fn should_ignore_retransmit_frame_when_receive_request() {
-		let mut handler = RoundTripTimeImpl::default();
+		let mut handler = RoundTripTimeImpl::new(&Instant::now());
 		let now = Instant::now();
 		
 		let mut input_frame = Frame::new(10);
@@ -194,7 +194,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_calculate_rtt_average() {
-		let mut handler = RoundTripTimeImpl::default();
+		let mut handler = RoundTripTimeImpl::new(&Instant::now());
 		for i in 0..RoundTripTimeImpl::AVERAGE_RTT_MIN_LEN {
 			let mut frame = Frame::new(10);
 			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
@@ -210,7 +210,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_limit_on_length_rtt() {
-		let mut handler = RoundTripTimeImpl::default();
+		let mut handler = RoundTripTimeImpl::new(&Instant::now());
 		for i in 0..2 * RoundTripTimeImpl::AVERAGE_RTT_MIN_LEN {
 			let mut frame = Frame::new(10);
 			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
