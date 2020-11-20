@@ -47,6 +47,13 @@ pub struct User {
 	pub public_key: UserPublicKey,
 	pub access_groups: AccessGroups,
 	protocol: Option<RelayProtocol>,
+	attached: bool,
+}
+
+impl User {
+	pub fn attach_to_room(&mut self) {
+		self.attached = true;
+	}
 }
 
 impl Room {
@@ -91,6 +98,7 @@ impl Room {
 		});
 		self.users.values_mut()
 			.filter(|user| user.public_key != *current_user_public_key)
+			.filter(|user| user.attached)
 			.filter(|user| user.protocol.is_some())
 			.filter(|user| user.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
@@ -112,13 +120,15 @@ impl Room {
 			}
 			Some(user) => {
 				if let Some(ref mut protocol) = user.protocol {
-					let meta = self.current_meta.as_ref().unwrap();
-					let channel = self.current_channel.as_ref().unwrap();
-					let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-						meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
-						command,
-					});
-					protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+					if user.attached {
+						let meta = self.current_meta.as_ref().unwrap();
+						let channel = self.current_channel.as_ref().unwrap();
+						let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+							meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
+							command,
+						});
+						protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+					}
 				}
 			}
 		}
@@ -188,12 +198,17 @@ impl Room {
 			public_key: user_public_key,
 			access_groups,
 			protocol: None,
+			attached: false
 		};
 		self.users.insert(user_public_key, user);
 	}
 	
 	pub fn get_user(&self, user_public_key: &UserPublicKey) -> Option<&User> {
 		self.users.get(user_public_key)
+	}
+	
+	pub fn get_user_mut(&mut self, user_public_key: &UserPublicKey) -> Option<&mut User> {
+		self.users.get_mut(user_public_key)
 	}
 	
 	

@@ -32,7 +32,7 @@ pub enum C2SCommand {
 	///
 	/// Загрузить все объекты комнаты
 	///
-	LoadRoom,
+	AttachToRoom,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
