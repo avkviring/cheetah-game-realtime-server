@@ -94,7 +94,7 @@ fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, action: F
 	let room = rooms.user_to_room.get(user_public_key);
 	match room {
 		None => {
-			log::error!("room for user not found for {:?}", user_public_key);
+			log::error!("[rooms] user({:?} not found ", user_public_key);
 		}
 		Some(room) => {
 			let room = room.clone();

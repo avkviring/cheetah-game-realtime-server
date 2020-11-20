@@ -61,7 +61,7 @@ impl UDPServer {
 			match self.sessions.get(user_public_key) {
 				None => {}
 				Some(session) => {
-					//println!("send frame {:?} {:?}", user_public_key, frame);
+					log::info!("[udp] server -> user({:?}) {:?}", user_public_key, frame);
 					let (commands, buffer_size) = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 					rooms.return_commands(&user_public_key, commands);
 					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
@@ -69,7 +69,7 @@ impl UDPServer {
 							if size == buffer_size {
 								self.tmp_out_frames.pop_back();
 							} else {
-								log::error!("size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
+								log::error!("[udp] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
 							}
 						}
 						Err(e) => {
@@ -95,7 +95,7 @@ impl UDPServer {
 							return;
 						}
 						_ => {
-							log::error!("error in socket.recv_from {:?}", e);
+							log::error!("[udp] error in socket.recv_from {:?}", e);
 						}
 					}
 				}
@@ -110,26 +110,27 @@ impl UDPServer {
 				let user_public_key_header: Option<UserPublicKey> = headers.first(Header::predicate_user_public_key).cloned();
 				match user_public_key_header {
 					None => {
-						log::error!("user public key not found");
+						log::error!("[udp] user public key not found");
 					}
 					Some(public_key) => {
 						match self.sessions.get_mut(&public_key) {
 							None => {
-								log::error!("user session not found for key {:?}", public_key);
+								log::error!("[udp] user session not found for key {:?}", public_key);
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
 								match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
 									Ok(frame) => {
+										
 										if frame.header.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.header.frame_id;
 										}
-										//println!("recv frame {:?} {:?}", public_key, frame);
+										log::info!("[udp] user({:?}) -> server {:?}", public_key, frame);
 										rooms.on_frame_received(&public_key, frame, now);
 									}
 									Err(e) => {
-										log::error!("error decode frame {:?}", e)
+										log::error!("[udp] error decode frame {:?}", e)
 									}
 								}
 							}

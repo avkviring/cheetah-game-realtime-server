@@ -52,7 +52,7 @@ impl RelayProtocol {
 			retransmitter: Default::default(),
 			additional_frame_builders: Default::default(),
 			disconnect_handler: Default::default(),
-			rtt: Default::default(),
+			rtt: RoundTripTimeImpl::new(now),
 			keep_alive: Default::default(),
 			congestion_control: Default::default(),
 			in_frame_counter: Default::default(),

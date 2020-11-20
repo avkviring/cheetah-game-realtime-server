@@ -56,7 +56,7 @@ impl Server {
 		Self {
 			handler: Option::Some(handler),
 			sender,
-			halt_signal: cloned_halt_signal
+			halt_signal: cloned_halt_signal,
 		}
 	}
 	
@@ -72,17 +72,17 @@ impl Server {
 			Ok(r) => {
 				match r {
 					Ok(_) => {
-						log::info!("create room {:?}", room_id);
+						log::info!("[server] create room({:?})", room_id);
 						Result::Ok(())
 					}
 					Err(e) => {
-						log::error!("fail create room {:?}", e);
+						log::error!("[server] fail create room({:?})", e);
 						Result::Err(RegisterRoomRequestError::Error(e))
 					}
 				}
 			}
 			Err(e) => {
-				log::error!("fail create room {:?}", e);
+				log::error!("[server] fail create room({:?})", e);
 				Result::Err(RegisterRoomRequestError::ChannelError(e))
 			}
 		}
@@ -100,17 +100,17 @@ impl Server {
 			Ok(r) => {
 				match r {
 					Ok(_) => {
-						log::info!("create user {:?} in room {:?}", public_key, room_id);
+						log::info!("[server] create user({:?}) in room ({:?})", public_key, room_id);
 						Result::Ok(())
 					}
 					Err(e) => {
-						log::error!("fail create user {:?} in room {:?} with error {:?}", public_key, room_id, e);
+						log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", public_key, room_id, e);
 						Result::Err(RegisterUserRequestError::Error(e))
 					}
 				}
 			}
 			Err(e) => {
-				log::error!("fail create user {:?} in room {:?} with error {:?}", public_key, room_id, e);
+				log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", public_key, room_id, e);
 				Result::Err(RegisterUserRequestError::ChannelError(e))
 			}
 		}

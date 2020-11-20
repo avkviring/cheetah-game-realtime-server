@@ -14,7 +14,8 @@ pub struct KeepAlive {
 
 
 impl KeepAlive {
-	const INTERVAL: Duration = Duration::from_secs(10);
+ 	// должно быть кратно меньше чем время разрыва соединения
+	const INTERVAL: Duration = Duration::from_secs(1);
 }
 
 impl FrameBuilder for KeepAlive {

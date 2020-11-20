@@ -46,7 +46,7 @@ pub struct Room {
 pub struct User {
 	pub public_key: UserPublicKey,
 	pub access_groups: AccessGroups,
-	protocol: RelayProtocol,
+	protocol: Option<RelayProtocol>,
 }
 
 impl Room {
@@ -85,17 +85,17 @@ impl Room {
 		let current_user_public_key = self.current_user.as_ref().unwrap();
 		let meta = self.current_meta.as_ref().unwrap();
 		let channel_type = self.current_channel.as_ref().unwrap();
-		let now = Instant::now();
 		let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
 			meta: S2CMetaCommandInformation::new(current_user_public_key.clone(), meta),
 			command,
 		});
 		self.users.values_mut()
 			.filter(|user| user.public_key != *current_user_public_key)
-			.filter(|user| user.protocol.connected(&now))
+			.filter(|user| user.protocol.is_some())
 			.filter(|user| user.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
-				user.protocol.out_commands_collector.add_command(channel_type.clone(), application_command.clone())
+				let protocol = user.protocol.as_mut().unwrap();
+				protocol.out_commands_collector.add_command(channel_type.clone(), application_command.clone())
 			});
 	}
 	
@@ -108,18 +108,17 @@ impl Room {
 		
 		match self.users.get_mut(user_public_key) {
 			None => {
-				log::error!("room.send_to_user - user not found {:?}", user_public_key)
+				log::error!("[room] send to unknown user {:?}", user_public_key)
 			}
 			Some(user) => {
-				let now = Instant::now();
-				if user.protocol.connected(&now) {
+				if let Some(ref mut protocol) = user.protocol {
 					let meta = self.current_meta.as_ref().unwrap();
 					let channel = self.current_channel.as_ref().unwrap();
 					let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
 						meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
 						command,
 					});
-					user.protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+					protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
 				}
 			}
 		}
@@ -127,8 +126,10 @@ impl Room {
 	
 	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		for (user_public_key, user) in self.users.iter_mut() {
-			if let Some(frame) = user.protocol.build_next_frame(&now) {
-				out_frames.push_front(OutFrame { user_public_key: user_public_key.clone(), frame });
+			if let Some(ref mut protocol) = user.protocol {
+				if let Some(frame) = protocol.build_next_frame(&now) {
+					out_frames.push_front(OutFrame { user_public_key: user_public_key.clone(), frame });
+				}
 			}
 		}
 	}
@@ -138,10 +139,14 @@ impl Room {
 		let mut commands = VecDeque::new();
 		match user {
 			None => {
-				log::error!("user not found for frame {:?}", user_public_key);
+				log::error!("[room ({:?})] user({:?}) not found for input frame", self.id, user_public_key);
 			}
 			Some(user) => {
 				let protocol = &mut user.protocol;
+				if protocol.is_none() {
+					protocol.replace(RelayProtocol::new(now));
+				}
+				let protocol = protocol.as_mut().unwrap();
 				protocol.on_frame_received(frame, now);
 				while let Some(application_command) = protocol.in_commands_collector.get_commands().pop_back() {
 					commands.push_front(application_command);
@@ -158,7 +163,7 @@ impl Room {
 					execute(command_with_meta.command, self, &user_public_key);
 				}
 				_ => {
-					log::error!("receive unsupported command from client {:?}", application_command)
+					log::error!("[room ({:?})] receive unsupported command {:?}", self.id, application_command)
 				}
 			}
 		}
@@ -168,7 +173,12 @@ impl Room {
 		match self.users.get_mut(user_public_key) {
 			None => {}
 			Some(user) => {
-				user.protocol.out_commands_collector.add_unsent_commands(commands);
+				match user.protocol {
+					None => {}
+					Some(ref mut protocol) => {
+						protocol.out_commands_collector.add_unsent_commands(commands);
+					}
+				}
 			}
 		}
 	}
@@ -177,7 +187,7 @@ impl Room {
 		let user = User {
 			public_key: user_public_key,
 			access_groups,
-			protocol: RelayProtocol::new(&Instant::now()),
+			protocol: None,
 		};
 		self.users.insert(user_public_key, user);
 	}
@@ -192,6 +202,7 @@ impl Room {
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
 	pub fn disconnect_user(&mut self, user_public_key: &UserPublicKey) {
+		log::error!("[room ({:?})] disconnect user({:?})", self.id, user_public_key);
 		match self.users.remove(user_public_key) {
 			None => {}
 			Some(user) => {
@@ -220,7 +231,7 @@ impl Room {
 		match self.objects.get_mut(object_id) {
 			Some(object) => { Option::Some(object) }
 			None => {
-				log::error!("game object not found {:?}", object_id);
+				log::error!("[room] game object not found {:?}", object_id);
 				Option::None
 			}
 		}
@@ -245,10 +256,11 @@ impl Room {
 		let mut disconnected_user: [u32; 10] = [0; 10];
 		let mut disconnected_users_count = 0;
 		self.users.values_mut().for_each(|u| {
-			u.protocol.cycle(now);
-			if u.protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
-				disconnected_user[disconnected_users_count] = u.public_key.clone();
-				disconnected_users_count += 1;
+			if let Some(ref mut protocol) = u.protocol {
+				if protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
+					disconnected_user[disconnected_users_count] = u.public_key.clone();
+					disconnected_users_count += 1;
+				}
 			}
 		});
 		

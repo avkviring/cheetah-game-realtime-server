@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::ops::Div;
 use std::time::{Duration, Instant};
 
 #[cfg(test)]
@@ -8,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use crate::protocol::{FrameBuilder, FrameReceivedListener};
 use crate::protocol::frame::Frame;
 use crate::protocol::frame::headers::Header;
-use std::ops::Div;
 
 ///
 /// Замеры времени round-trip
@@ -34,18 +34,19 @@ pub struct RoundTripTimeHeader {
 }
 
 
-impl Default for RoundTripTimeImpl {
-	fn default() -> Self {
+
+
+impl RoundTripTimeImpl {
+	pub const AVERAGE_RTT_MIN_LEN: usize = 10;
+	
+	pub fn new(start_time: &Instant) -> Self {
 		Self {
-			start_time: Instant::now(),
+			start_time: *start_time,
 			scheduled_response: None,
 			rtt: Default::default(),
 		}
 	}
-}
-
-impl RoundTripTimeImpl {
-	pub const AVERAGE_RTT_MIN_LEN: usize = 10;
+	
 }
 
 impl RoundTripTime for RoundTripTimeImpl {
