@@ -10,7 +10,7 @@ use crate::registry::Clients;
 
 pub mod logs;
 pub mod command;
-pub mod control;
+pub mod client;
 pub mod channel;
 
 lazy_static! {
