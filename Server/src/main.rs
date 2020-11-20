@@ -2,8 +2,7 @@ extern crate stderrlog;
 
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering;
 
 
 use stderrlog::Timestamp;
@@ -18,10 +17,10 @@ fn main() {
 }
 
 fn start_server() {
-	let halt_signal = Arc::new(AtomicBool::new(false));
 	let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:5000").unwrap()).unwrap();
 	let mut server = Server::new(socket);
 	
+	let halt_signal = server.get_halt_signal().clone();
 	register_test_users(&mut server);
 	
 	ctrlc::set_handler(move || {
