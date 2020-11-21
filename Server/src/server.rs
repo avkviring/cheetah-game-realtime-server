@@ -48,11 +48,11 @@ impl Drop for Server {
 }
 
 impl Server {
-	pub fn new(socket: UdpSocket) -> Self {
+	pub fn new(socket: UdpSocket, auto_create_user: bool) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
-		let handler = thread::spawn(move || { ServerThread::new(socket, receiver, halt_signal).run(); });
+		let handler = thread::spawn(move || { ServerThread::new(socket, receiver, halt_signal, auto_create_user).run(); });
 		Self {
 			handler: Option::Some(handler),
 			sender,
@@ -138,10 +138,10 @@ struct ServerThread {
 }
 
 impl ServerThread {
-	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
+	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>, auto_create_user: bool) -> Self {
 		Self {
-			udp_server: UDPServer::new(socket).unwrap(),
-			rooms: Default::default(),
+			udp_server: UDPServer::new(socket, auto_create_user).unwrap(),
+			rooms: Rooms::new(auto_create_user),
 			receiver,
 			max_duration: 0,
 			avg_duration: 0,

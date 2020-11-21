@@ -137,7 +137,7 @@ mod tests {
 				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
 				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
 					meta: C2SMetaCommandInformation { timestamp: 0 },
-					command: C2SCommand::LoadRoom,
+					command: C2SCommand::AttachToRoom,
 				}),
 			);
 		};

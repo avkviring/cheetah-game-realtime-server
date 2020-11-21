@@ -4,16 +4,17 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::Room;
 
-pub fn load_room(room: &mut Room, user_public_key: &UserPublicKey) {
+pub fn attach_to_room(room: &mut Room, user_public_key: &UserPublicKey) {
 	let mut out = Vec::new();
-	match room.get_user(user_public_key) {
+	match room.get_user_mut(user_public_key) {
 		None => {
-			log::error!("load_room user not found {:?}", user_public_key);
+			log::error!("[load_room] user not found {:?}", user_public_key);
 		}
 		Some(user) => {
+			
+			user.attach_to_room();
+			
 			let access_group = user.access_groups;
-			
-			
 			room.process_objects(&mut |o| {
 				if o.access_groups.contains_any(&access_group) {
 					out.push(CreateGameObjectCommand {
@@ -37,7 +38,7 @@ mod tests {
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	
-	use crate::room::command::load_room::load_room;
+	use crate::room::command::load_room::attach_to_room;
 	use crate::room::Room;
 	
 	#[test]
@@ -53,7 +54,7 @@ mod tests {
 		room.create_object_with_access_groups(groups_b);
 		room.create_object_with_access_groups(groups_b);
 		
-		load_room(&mut room, &user_a);
+		attach_to_room(&mut room, &user_a);
 		
 		let commands = &mut room.out_commands_by_users.get_mut(&user_a).unwrap();
 		assert!(matches!(commands.pop_back(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1));

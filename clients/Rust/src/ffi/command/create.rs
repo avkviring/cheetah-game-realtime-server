@@ -18,10 +18,15 @@ pub extern fn set_create_object_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn create(template: u16, access_group: u64, fields: &GameObjectFieldsFFI, on_create: extern fn(&GameObjectIdFFI)) -> bool {
+pub extern "C" fn create_object(
+	template: u16,
+	access_group: u64,
+	fields: &GameObjectFieldsFFI,
+	result: &mut GameObjectIdFFI,
+) -> bool {
 	execute_with_client(|client| {
 		let game_object_id = client.create_game_object(template, access_group, From::from(fields));
-		on_create(&game_object_id);
+		*result = game_object_id;
 	}).is_ok()
 }
 

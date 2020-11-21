@@ -105,11 +105,11 @@ impl Clients {
 				match self.controllers.remove(current_client) {
 					None => {
 						log::error!("[registry:destroy] connection with id {} not found", current_client);
-						true
+						false
 					}
 					Some(_) => {
 						log::trace!("[registry:destroy] connection {}", current_client);
-						false
+						true
 					}
 				}
 			}

@@ -10,7 +10,7 @@ use crate::registry::Clients;
 
 pub mod logs;
 pub mod command;
-pub mod control;
+pub mod client;
 pub mod channel;
 
 lazy_static! {
@@ -73,7 +73,7 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 	fn from(from: &GameObjectIdFFI) -> Self {
 		Self {
 			owner: ObjectOwner::User(from.owner),
-			id: from.owner,
+			id: from.id,
 		}
 	}
 }
@@ -100,5 +100,24 @@ impl From<&Vec<u8>> for BufferFFI {
 		let buffer = &mut result.buffer[0..source.len()];
 		buffer.copy_from_slice(source);
 		result
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_relay_common::room::owner::ObjectOwner;
+	
+	use crate::ffi::GameObjectIdFFI;
+	
+	#[test]
+	fn should_convert_object_id() {
+		let object_id = GameObjectId {
+			owner: ObjectOwner::User(123),
+			id: 100,
+		};
+		let object_id_fff = GameObjectIdFFI::from(&object_id);
+		let converted_object_id = GameObjectId::from(&object_id_fff);
+		assert_eq!(object_id, converted_object_id);
 	}
 }

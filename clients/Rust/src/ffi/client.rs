@@ -8,13 +8,14 @@ use crate::ffi::{BufferFFI, execute, execute_with_client};
 use crate::registry::ClientId;
 
 #[no_mangle]
-pub extern "C" fn get_connection_status(on_result: extern fn(ConnectionStatus), on_error: extern fn()) {
+pub extern "C" fn get_connection_status(result: &mut ConnectionStatus) -> bool {
 	match execute_with_client(|api| { api.get_connection_status() }) {
 		Ok(status) => {
-			on_result(status)
+			*result = status;
+			true
 		}
 		Err(_) => {
-			on_error()
+			false
 		}
 	}
 }
@@ -49,30 +50,31 @@ pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
 	user_public_key: UserPublicKey,
 	user_private_key_buffer: &BufferFFI,
-	on_error: extern fn(),
-	on_create: extern fn(u16),
-) {
+	out_client_id: &mut u16,
+) -> bool {
 	let server_address = CStr::from_ptr(addr)
 		.to_str()
 		.unwrap()
 		.to_string();
 	let mut user_private_key = [0; 32];
 	user_private_key.copy_from_slice(&user_private_key_buffer.buffer[0..32]);
-	do_create_client(server_address, user_public_key, &user_private_key, || on_error(), |c| on_create(c));
+	do_create_client(server_address, user_public_key, &user_private_key, out_client_id)
 }
 
-pub fn do_create_client<E, C>(
+pub fn do_create_client(
 	server_address: String,
 	user_public_key: UserPublicKey,
 	user_private_key: &UserPrivateKey,
-	on_error: E,
-	on_create: C,
-) where E: FnOnce() -> (), C: FnOnce(u16) -> () {
+	out_client_id: &mut u16,
+) -> bool {
 	execute(|api| {
 		match api.create_client(server_address, user_public_key, user_private_key.clone()) {
-			Ok(client_id) => { on_create(client_id) }
-			Err(_) => { on_error() }
+			Ok(client_id) => {
+				*out_client_id = client_id;
+				true
+			}
+			Err(_) => { false }
 		}
-	});
+	})
 }
 

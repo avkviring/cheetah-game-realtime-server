@@ -32,6 +32,7 @@ pub struct Room {
 	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserPublicKey>,
+	auto_create_user: bool,
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -47,10 +48,17 @@ pub struct User {
 	pub public_key: UserPublicKey,
 	pub access_groups: AccessGroups,
 	protocol: Option<RelayProtocol>,
+	attached: bool,
+}
+
+impl User {
+	pub fn attach_to_room(&mut self) {
+		self.attached = true;
+	}
 }
 
 impl Room {
-	pub fn new(id: RoomId) -> Self {
+	pub fn new(id: RoomId, auto_create_user: bool) -> Self {
 		Room {
 			id,
 			users: FnvHashMap::default(),
@@ -58,6 +66,7 @@ impl Room {
 			current_channel: Default::default(),
 			current_meta: Default::default(),
 			current_user: Default::default(),
+			auto_create_user,
 			#[cfg(test)]
 			object_id_generator: 0,
 			#[cfg(test)]
@@ -91,6 +100,7 @@ impl Room {
 		});
 		self.users.values_mut()
 			.filter(|user| user.public_key != *current_user_public_key)
+			.filter(|user| user.attached)
 			.filter(|user| user.protocol.is_some())
 			.filter(|user| user.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
@@ -112,13 +122,15 @@ impl Room {
 			}
 			Some(user) => {
 				if let Some(ref mut protocol) = user.protocol {
-					let meta = self.current_meta.as_ref().unwrap();
-					let channel = self.current_channel.as_ref().unwrap();
-					let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-						meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
-						command,
-					});
-					protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+					if user.attached {
+						let meta = self.current_meta.as_ref().unwrap();
+						let channel = self.current_channel.as_ref().unwrap();
+						let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+							meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
+							command,
+						});
+						protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+					}
 				}
 			}
 		}
@@ -135,7 +147,10 @@ impl Room {
 	}
 	
 	pub fn process_in_frame(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
+		self.auto_create_user(&user_public_key);
+		
 		let user = self.users.get_mut(&user_public_key);
+		
 		let mut commands = VecDeque::new();
 		match user {
 			None => {
@@ -169,6 +184,15 @@ impl Room {
 		}
 	}
 	
+	fn auto_create_user(&mut self, user_public_key: &UserPublicKey) {
+		if !self.auto_create_user {
+			return;
+		}
+		if !self.users.contains_key(&user_public_key) {
+			self.register_user(user_public_key.clone(), AccessGroups(0b111111));
+		}
+	}
+	
 	pub fn send_to_user_first(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands) {
 		match self.users.get_mut(user_public_key) {
 			None => {}
@@ -188,6 +212,7 @@ impl Room {
 			public_key: user_public_key,
 			access_groups,
 			protocol: None,
+			attached: false,
 		};
 		self.users.insert(user_public_key, user);
 	}
@@ -196,13 +221,17 @@ impl Room {
 		self.users.get(user_public_key)
 	}
 	
+	pub fn get_user_mut(&mut self, user_public_key: &UserPublicKey) -> Option<&mut User> {
+		self.users.get_mut(user_public_key)
+	}
+	
 	
 	///
 	/// Связь с пользователям разорвана
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
 	pub fn disconnect_user(&mut self, user_public_key: &UserPublicKey) {
-		log::error!("[room ({:?})] disconnect user({:?})", self.id, user_public_key);
+		log::info!("[room ({:?})] disconnect user({:?})", self.id, user_public_key);
 		match self.users.remove(user_public_key) {
 			None => {}
 			Some(user) => {

@@ -137,11 +137,13 @@ impl ClientController {
 	}
 	
 	pub fn receive(&mut self) {
-		let commands = self.in_commands.clone();
-		let mut commands = commands.lock().unwrap();
-		let commands = &mut *commands;
+		let commands_arc = self.in_commands.clone();
+		let commands_lock = commands_arc.lock();
+		let mut commands = commands_lock.unwrap();
 		let cloned_commands = commands.clone();
 		commands.clear();
+		
+		drop(commands);
 		
 		for command in cloned_commands {
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {

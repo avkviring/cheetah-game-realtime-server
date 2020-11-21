@@ -8,4 +8,4 @@ cd ../../../
 rm -f $OUTPUT/x86_64/libcheetah_relay_client.dylib
 cargo build --manifest-path clients/Rust/Cargo.toml
 mkdir -p $OUTPUT/x86_64/
-cp clients/Rust/target/debug/libcheetah_relay_client.dylib $OUTPUT/x86_64/libcheetah_relay_client.bundle
+cp target/debug/libcheetah_relay_client.dylib $OUTPUT/x86_64/libcheetah_relay_client.bundle

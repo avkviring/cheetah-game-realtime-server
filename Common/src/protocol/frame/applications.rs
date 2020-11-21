@@ -206,7 +206,7 @@ impl ApplicationCommand {
 					C2SCommand::Test(_) => {
 						Option::None
 					}
-					C2SCommand::LoadRoom => {
+					C2SCommand::AttachToRoom => {
 						Option::None
 					}
 				}
