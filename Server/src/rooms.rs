@@ -12,11 +12,11 @@ use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::Room;
 
-#[derive(Default)]
 pub struct Rooms {
 	rooms: HashMap<RoomId, Rc<RefCell<Room>>, FnvBuildHasher>,
 	user_to_room: HashMap<UserPublicKey, Rc<RefCell<Room>>, FnvBuildHasher>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
+	auto_create_user: bool,
 }
 
 
@@ -38,11 +38,20 @@ pub enum RegisterRoomError {
 }
 
 impl Rooms {
+	pub fn new(auto_create_user: bool) -> Rooms {
+		Self {
+			rooms: Default::default(),
+			user_to_room: Default::default(),
+			changed_rooms: Default::default(),
+			auto_create_user,
+		}
+	}
+	
 	pub fn create_room(&mut self, room_id: RoomId) -> Result<(), RegisterRoomError> {
 		if self.rooms.contains_key(&room_id) {
 			Result::Err(RegisterRoomError::AlreadyRegistered)
 		} else {
-			let room = Room::new(room_id);
+			let room = Room::new(room_id, self.auto_create_user);
 			self.rooms.insert(room_id, Rc::new(RefCell::new(room)));
 			Result::Ok(())
 		}
@@ -78,11 +87,29 @@ impl Rooms {
 	}
 	
 	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
+		self.auto_create_user(user_public_key);
+		
 		on_user_room(self, user_public_key, |rooms, room|
 			{
 				room.process_in_frame(user_public_key, frame, now);
 				rooms.changed_rooms.insert(room.id.clone());
 			});
+	}
+	
+	fn auto_create_user(&mut self, user_public_key: &u32) {
+		if !self.auto_create_user {
+			return;
+		}
+		
+		if self.user_to_room.get(user_public_key).is_none() {
+			if !self.rooms.contains_key(&0) {
+				self.create_room(0).unwrap();
+			}
+			
+			let room = self.rooms.get(&0).unwrap();
+			let room = room.clone();
+			self.user_to_room.insert(user_public_key.clone(), room);
+		}
 	}
 	
 	pub fn cycle(&mut self, now: &Instant) {
@@ -91,8 +118,7 @@ impl Rooms {
 }
 
 fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, action: F) where F: FnOnce(&mut Rooms, &mut Room) {
-	let room = rooms.user_to_room.get(user_public_key);
-	match room {
+	match rooms.user_to_room.get(user_public_key) {
 		None => {
 			log::error!("[rooms] user({:?} not found ", user_public_key);
 		}

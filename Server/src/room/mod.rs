@@ -32,6 +32,7 @@ pub struct Room {
 	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserPublicKey>,
+	auto_create_user: bool,
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -57,7 +58,7 @@ impl User {
 }
 
 impl Room {
-	pub fn new(id: RoomId) -> Self {
+	pub fn new(id: RoomId, auto_create_user: bool) -> Self {
 		Room {
 			id,
 			users: FnvHashMap::default(),
@@ -65,6 +66,7 @@ impl Room {
 			current_channel: Default::default(),
 			current_meta: Default::default(),
 			current_user: Default::default(),
+			auto_create_user,
 			#[cfg(test)]
 			object_id_generator: 0,
 			#[cfg(test)]
@@ -145,7 +147,10 @@ impl Room {
 	}
 	
 	pub fn process_in_frame(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
+		self.auto_create_user(&user_public_key);
+		
 		let user = self.users.get_mut(&user_public_key);
+		
 		let mut commands = VecDeque::new();
 		match user {
 			None => {
@@ -179,6 +184,15 @@ impl Room {
 		}
 	}
 	
+	fn auto_create_user(&mut self, user_public_key: &UserPublicKey) {
+		if !self.auto_create_user {
+			return;
+		}
+		if !self.users.contains_key(&user_public_key) {
+			self.register_user(user_public_key.clone(), AccessGroups(0b111111));
+		}
+	}
+	
 	pub fn send_to_user_first(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands) {
 		match self.users.get_mut(user_public_key) {
 			None => {}
@@ -198,7 +212,7 @@ impl Room {
 			public_key: user_public_key,
 			access_groups,
 			protocol: None,
-			attached: false
+			attached: false,
 		};
 		self.users.insert(user_public_key, user);
 	}
