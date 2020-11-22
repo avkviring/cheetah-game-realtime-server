@@ -93,7 +93,9 @@ impl FrameBuilder for AckSender {
 			if frame_id == NOT_EXIST_FRAME_ID {
 				continue;
 			}
-			self.ack_counts[i] += 1;
+			if self.ack_counts[i] < 254 {
+				self.ack_counts[i] += 1;
+			}
 			match current_header {
 				None => {
 					let header = AckFrameHeader::new(frame_id);
@@ -151,7 +153,7 @@ mod tests {
 	use std::time::Instant;
 	
 	use crate::protocol::{FrameBuilder, FrameReceivedListener};
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription, ApplicationCommandChannel};
+	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use crate::protocol::frame::Frame;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::reliable::ack::AckSender;
@@ -243,7 +245,7 @@ mod tests {
 		let mut frame_a = Frame::new(10);
 		frame_a.commands.reliable.push(ApplicationCommandDescription {
 			channel: ApplicationCommandChannel::ReliableUnordered,
-			command: ApplicationCommand::TestSimple("".to_string())
+			command: ApplicationCommand::TestSimple("".to_string()),
 		});
 		reliable.on_frame_received(&frame_a, &time);
 		
