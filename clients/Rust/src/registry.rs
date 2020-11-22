@@ -85,11 +85,12 @@ impl Clients {
 				let client_id = self.client_generator_id;
 				self.controllers.insert(client_id, controller);
 				
-				log::info!("Clients::create connection with id {}", client_id);
+				log::info!("[registry] create client({})", client_id);
 				self.current_client = Some(client_id);
 				Result::Ok(client_id)
 			}
 			Err(_) => {
+				log::error!("[registry] error create client");
 				Result::Err(())
 			}
 		}
