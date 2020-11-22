@@ -82,6 +82,9 @@ impl Client {
 			
 			match self.receiver.try_recv() {
 				Ok(ClientRequest::Close) => {
+					self.udp_client.protocol.disconnect_handler.disconnect();
+					let mut now = Instant::now();
+					self.udp_client.cycle(&now);
 					return;
 				}
 				Ok(ClientRequest::SetProtocolTimeOffset(duration)) => {
