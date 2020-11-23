@@ -116,40 +116,6 @@ impl Clients {
 			}
 		}
 	}
-	
-	
-	// pub fn collect_s2c_commands<F>(
-	// 	&mut self,
-	// 	client_id: ClientId,
-	// 	mut collector: F,
-	// ) -> Result<(), ClientsErrors> where F: FnMut(&Command) {
-	// 	match self.clients.get(&client_id) {
-	// 		None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
-	// 		Some(client) => {
-	// 			let commands = &mut client.in_commands.lock().unwrap();
-	// 			let cloned_commands: Vec<_> = commands.drain(..).collect();
-	// 			drop(commands); // снимаем lock, так как при вызове функции collector() возможна ситуация deadlock
-	// 			let command_ffi = &mut self.s2c_command_ffi;
-	// 			cloned_commands.into_iter().for_each(|command| {
-	// 				if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
-	// 					log::info!("receive command from server {:?}", command);
-	// 					match command.command {
-	// 						S2CCommandUnion::Create(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::SetLong(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::SetFloat64(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::Event(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::Delete(command) => { command.to_ffi(command_ffi) }
-	// 					};
-	// 					command_ffi.meta_timestamp = command.meta.timestamp;
-	// 					command_ffi.meta_source_client = command.meta.user_public_key;
-	// 					collector(command_ffi);
-	// 				}
-	// 			});
-	// 			Result::Ok(())
-	// 		}
-	// 	}
-	// }
 }
 
 
