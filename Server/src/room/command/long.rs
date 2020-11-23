@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
+use cheetah_relay_common::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -39,7 +39,7 @@ impl ServerCommandExecutor for SetLongCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
+	use cheetah_relay_common::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;

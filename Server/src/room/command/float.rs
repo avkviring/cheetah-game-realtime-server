@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+use cheetah_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -40,7 +40,7 @@ impl ServerCommandExecutor for SetFloat64Command {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+	use cheetah_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
