@@ -151,7 +151,7 @@ impl Room {
 		
 		let user = self.users.get_mut(&user_public_key);
 		
-		let mut commands = VecDeque::new();
+		let mut commands = Vec::new();
 		match user {
 			None => {
 				log::error!("[room ({:?})] user({:?}) not found for input frame", self.id, user_public_key);
@@ -164,7 +164,7 @@ impl Room {
 				let protocol = protocol.as_mut().unwrap();
 				protocol.on_frame_received(frame, now);
 				while let Some(application_command) = protocol.in_commands_collector.get_commands().pop_back() {
-					commands.push_front(application_command);
+					commands.push(application_command);
 				}
 			}
 		}
