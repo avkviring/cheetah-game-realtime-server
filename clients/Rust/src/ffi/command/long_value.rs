@@ -1,5 +1,5 @@
 use cheetah_relay_common::commands::command::C2SCommand;
-use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
+use cheetah_relay_common::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::constants::FieldID;
 
