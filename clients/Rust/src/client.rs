@@ -54,8 +54,9 @@ impl Client {
 	
 	pub fn run(mut self) {
 		loop {
-			let cloned_out_commands = self.out_commands.clone();
-			let out_commands = &mut cloned_out_commands.lock().unwrap();
+			let arc_out_commands = self.out_commands.clone();
+			let lock_for_out_commands = arc_out_commands.lock();
+			let mut out_commands = lock_for_out_commands.unwrap();
 			while let Some(command) = out_commands.pop_back() {
 				self
 					.udp_client
@@ -63,13 +64,18 @@ impl Client {
 					.out_commands_collector
 					.add_command(command.channel_type, ApplicationCommand::C2SCommandWithMeta(command.command));
 			}
+			drop(out_commands);
+			drop(arc_out_commands);
 			
 			let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_commands();
-			let cloned_in_commands = self.in_commands.clone();
-			let in_commands = &mut cloned_in_commands.lock().unwrap();
+			let arc_in_commands = self.in_commands.clone();
+			let mut in_commands = arc_in_commands.lock().unwrap();
 			while let Some(command) = in_commands_from_protocol.pop_back() {
 				in_commands.push_front(command);
 			}
+			
+			drop(in_commands);
+			drop(arc_in_commands);
 			
 			let mut now = Instant::now();
 			if let Some(offset) = self.protocol_time_offset {
@@ -77,8 +83,9 @@ impl Client {
 			}
 			self.udp_client.cycle(&now);
 			
-			let state = self.state.clone();
-			*state.lock().unwrap() = self.udp_client.state.clone();
+			let arc_state = self.state.clone();
+			*arc_state.lock().unwrap() = self.udp_client.state.clone();
+			drop(arc_state);
 			
 			match self.receiver.try_recv() {
 				Ok(ClientRequest::Close) => {
