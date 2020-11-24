@@ -66,7 +66,7 @@ mod tests {
 	
 	#[test]
 	fn should_create() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
 		let mut command = CreateGameObjectCommand {
@@ -94,7 +94,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
 		let command = CreateGameObjectCommand {
@@ -114,7 +114,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0,false);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
 		let command = CreateGameObjectCommand {
@@ -134,7 +134,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_replace_exists_object() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let user_public_key = room.create_user(AccessGroups(0b11));
 		let object = room.create_object(&user_public_key);
 		object.template = 777;

@@ -43,7 +43,7 @@ mod tests {
 	
 	#[test]
 	pub fn test() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let groups_a = AccessGroups(0b100);
 		let user_a = room.create_user(groups_a);
 		let object_a_1 = room.create_object_with_access_groups(groups_a).id.clone();

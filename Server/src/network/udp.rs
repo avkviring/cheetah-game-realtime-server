@@ -67,9 +67,9 @@ impl UDPServer {
 			match self.sessions.get(user_public_key) {
 				None => {}
 				Some(session) => {
-					if !frame.commands.reliable.is_empty() {
-						log::info!("[udp] server -> user({:?}) {:?}", user_public_key, frame.commands.reliable);
-					}
+					//if !frame.commands.reliable.is_empty() {
+						log::info!("[udp] server -> user({:?}) {:?}", user_public_key, frame);
+					//}
 					let (commands, buffer_size) = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 					rooms.return_commands(&user_public_key, commands);
 					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
@@ -136,9 +136,9 @@ impl UDPServer {
 											session.max_receive_frame_id = frame.header.frame_id;
 										}
 										
-										if !frame.commands.reliable.is_empty() {
+										//if !frame.commands.reliable.is_empty() {
 											log::info!("[udp] user({:?}) -> server {:?}", public_key, frame);
-										}
+										//}
 										
 										rooms.on_frame_received(&public_key, frame, now);
 									}
@@ -185,8 +185,8 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
+		let mut rooms = Rooms::new(false);
 		let buffer = [0; 2048];
 		let usize = 100 as usize;
 		udp_server.process_in_frame(&mut rooms, &buffer, usize, SocketAddr::from_str("127.0.0.1:5002").unwrap(), &Instant::now());
@@ -194,8 +194,8 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_wrong_user() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
+		let mut rooms = Rooms::new(false);
 		let mut buffer = [0; 2048];
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::UserPublicKey(0));
@@ -205,8 +205,8 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
+		let mut rooms = Rooms::new(false);
 		let mut buffer = [0; 2048];
 		let frame = Frame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).1;
@@ -219,8 +219,8 @@ mod tests {
 	///
 	#[test]
 	fn should_keep_address_from_last_frame() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
+		let mut rooms = Rooms::new(false);
 		let mut buffer = [0; 2048];
 		
 		

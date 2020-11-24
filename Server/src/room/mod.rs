@@ -341,7 +341,7 @@ mod tests {
 	
 	#[test]
 	fn should_remove_objects_when_disconnect() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		
 		let user_a = room.create_user(AccessGroups(0b111));
 		let object_a_1 = room.create_object(&user_a).id.clone();
