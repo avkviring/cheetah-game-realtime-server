@@ -6,7 +6,7 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::controller::ClientController;
 use crate::ffi::command::create::MAX_SIZE_STRUCT;
-use crate::registry::Clients;
+use crate::registry::Registry;
 
 pub mod logs;
 pub mod command;
@@ -14,13 +14,13 @@ pub mod client;
 pub mod channel;
 
 lazy_static! {
-    static ref CLIENTS: Mutex<Clients> = Mutex::new(Default::default());
+    static ref REGISTRY: Mutex<Registry> = Mutex::new(Default::default());
 }
 
 
-pub fn execute<F, T>(body: F) -> T where F: FnOnce(&mut Clients) -> T
+pub fn execute<F, T>(body: F) -> T where F: FnOnce(&mut Registry) -> T
 {
-	let mut clients = CLIENTS.lock().unwrap();
+	let mut clients = REGISTRY.lock().unwrap();
 	let clients = &mut *clients;
 	body(clients)
 }

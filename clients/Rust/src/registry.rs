@@ -22,7 +22,7 @@ pub type ClientId = u16;
 /// - все методы Clients выполняются в главном потоке Unity
 ///
 ///
-pub struct Clients {
+pub struct Registry {
 	pub controllers: HashMap<ClientId, ClientController, FnvBuildHasher>,
 	client_generator_id: ClientId,
 	pub current_client: Option<u16>,
@@ -36,9 +36,9 @@ pub enum ClientRequest {
 }
 
 
-impl Default for Clients {
+impl Default for Registry {
 	fn default() -> Self {
-		Clients {
+		Registry {
 			controllers: Default::default(),
 			client_generator_id: Default::default(),
 			current_client: None,
@@ -47,7 +47,7 @@ impl Default for Clients {
 }
 
 
-impl Clients {
+impl Registry {
 	pub fn create_client(&mut self, server_address: String, user_public_key: UserPublicKey, user_private_key: UserPrivateKey) -> Result<ClientId, ()> {
 		let out_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let in_commands = Arc::new(Mutex::new(VecDeque::new()));
