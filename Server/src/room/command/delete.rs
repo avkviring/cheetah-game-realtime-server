@@ -49,7 +49,7 @@ mod tests {
 	
 	#[test]
 	fn should_delete() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let user_public_key = room.create_user(AccessGroups(55));
 		let object_id = room.create_object(&user_public_key).id.clone();
 		let command = DeleteGameObjectCommand {
@@ -64,7 +64,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_missing_object() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let user_public_key = room.create_user(AccessGroups(55));
 		let object_id = GameObjectId::new(100, ObjectOwner::User(user_public_key));
 		let command = DeleteGameObjectCommand {
@@ -75,7 +75,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_delete_if_not_owner() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let user_a = room.create_user(AccessGroups(55));
 		let user_b = room.create_user(AccessGroups(55));
 		let object_id = room.create_object(&user_a).id.clone();

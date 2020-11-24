@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
+use cheetah_relay_common::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -39,7 +39,7 @@ impl ServerCommandExecutor for SetLongCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
+	use cheetah_relay_common::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
@@ -49,7 +49,7 @@ mod tests {
 	
 	#[test]
 	fn should_set_long_command() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let object_id = room.create_object(&0).id.clone();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
@@ -65,7 +65,7 @@ mod tests {
 	
 	#[test]
 	fn should_increment_long_command() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
@@ -89,7 +89,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_set_long_command_not_panic_for_missing_object() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let command = SetLongCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
@@ -100,7 +100,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let command = IncrementLongC2SCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,

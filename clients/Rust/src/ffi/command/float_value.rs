@@ -1,5 +1,5 @@
 use cheetah_relay_common::commands::command::C2SCommand;
-use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+use cheetah_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::constants::FieldID;
 

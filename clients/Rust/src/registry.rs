@@ -22,7 +22,7 @@ pub type ClientId = u16;
 /// - все методы Clients выполняются в главном потоке Unity
 ///
 ///
-pub struct Clients {
+pub struct Registry {
 	pub controllers: HashMap<ClientId, ClientController, FnvBuildHasher>,
 	client_generator_id: ClientId,
 	pub current_client: Option<u16>,
@@ -36,9 +36,9 @@ pub enum ClientRequest {
 }
 
 
-impl Default for Clients {
+impl Default for Registry {
 	fn default() -> Self {
-		Clients {
+		Registry {
 			controllers: Default::default(),
 			client_generator_id: Default::default(),
 			current_client: None,
@@ -47,7 +47,7 @@ impl Default for Clients {
 }
 
 
-impl Clients {
+impl Registry {
 	pub fn create_client(&mut self, server_address: String, user_public_key: UserPublicKey, user_private_key: UserPrivateKey) -> Result<ClientId, ()> {
 		let out_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let in_commands = Arc::new(Mutex::new(VecDeque::new()));
@@ -85,11 +85,12 @@ impl Clients {
 				let client_id = self.client_generator_id;
 				self.controllers.insert(client_id, controller);
 				
-				log::info!("Clients::create connection with id {}", client_id);
+				log::info!("[registry] create client({})", client_id);
 				self.current_client = Some(client_id);
 				Result::Ok(client_id)
 			}
 			Err(_) => {
+				log::error!("[registry] error create client");
 				Result::Err(())
 			}
 		}
@@ -115,40 +116,6 @@ impl Clients {
 			}
 		}
 	}
-	
-	
-	// pub fn collect_s2c_commands<F>(
-	// 	&mut self,
-	// 	client_id: ClientId,
-	// 	mut collector: F,
-	// ) -> Result<(), ClientsErrors> where F: FnMut(&Command) {
-	// 	match self.clients.get(&client_id) {
-	// 		None => { Result::Err(ClientsErrors::ClientNotFound(client_id)) }
-	// 		Some(client) => {
-	// 			let commands = &mut client.in_commands.lock().unwrap();
-	// 			let cloned_commands: Vec<_> = commands.drain(..).collect();
-	// 			drop(commands); // снимаем lock, так как при вызове функции collector() возможна ситуация deadlock
-	// 			let command_ffi = &mut self.s2c_command_ffi;
-	// 			cloned_commands.into_iter().for_each(|command| {
-	// 				if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
-	// 					log::info!("receive command from server {:?}", command);
-	// 					match command.command {
-	// 						S2CCommandUnion::Create(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::SetLong(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::SetFloat64(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::SetStruct(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::Event(command) => { command.to_ffi(command_ffi) }
-	// 						S2CCommandUnion::Delete(command) => { command.to_ffi(command_ffi) }
-	// 					};
-	// 					command_ffi.meta_timestamp = command.meta.timestamp;
-	// 					command_ffi.meta_source_client = command.meta.user_public_key;
-	// 					collector(command_ffi);
-	// 				}
-	// 			});
-	// 			Result::Ok(())
-	// 		}
-	// 	}
-	// }
 }
 
 

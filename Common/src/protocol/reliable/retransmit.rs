@@ -178,6 +178,7 @@ impl RetransmitterImpl {
 impl Retransmitter for RetransmitterImpl {
 	fn set_ack_wait_duration(&mut self, duration: Duration) {
 		self.ack_wait_duration = duration;
+		log::info!("[retransmit] set_ack_wait_duration({:?})", duration);
 	}
 	
 	fn get_redundant_frames_percent(&mut self, now: &Instant) -> Option<f64> {

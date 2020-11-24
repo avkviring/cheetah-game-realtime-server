@@ -140,12 +140,11 @@ impl ClientController {
 		let commands_arc = self.in_commands.clone();
 		let commands_lock = commands_arc.lock();
 		let mut commands = commands_lock.unwrap();
-		let cloned_commands = commands.clone();
+		let mut cloned_commands = commands.clone();
 		commands.clear();
-		
 		drop(commands);
 		
-		for command in cloned_commands {
+		while let Some(command) = cloned_commands.pop_back() {
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
 				let meta = &command.meta;
 				match command.command {

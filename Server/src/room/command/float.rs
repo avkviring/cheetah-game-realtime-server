@@ -1,9 +1,9 @@
-use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+use cheetah_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
-use crate::room::Room;
 use crate::room::command::ServerCommandExecutor;
+use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
@@ -40,7 +40,7 @@ impl ServerCommandExecutor for SetFloat64Command {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+	use cheetah_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
@@ -50,7 +50,7 @@ mod tests {
 	
 	#[test]
 	fn should_set_float_command() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let object_id = room.create_object(&0).id.clone();
 		let command = SetFloat64Command {
 			object_id: object_id.clone(),
@@ -66,7 +66,7 @@ mod tests {
 	
 	#[test]
 	fn should_increment_float_command() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementFloat64C2SCommand {
 			object_id: object_id.clone(),
@@ -90,7 +90,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_set_float_command_not_panic_for_missing_object() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let command = SetFloat64Command {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
@@ -101,7 +101,7 @@ mod tests {
 	
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let mut room = Room::new(0);
+		let mut room = Room::new(0, false);
 		let command = IncrementFloat64C2SCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,

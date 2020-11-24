@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::event::EventCommand;
-use crate::commands::command::float_counter::{IncrementFloat64C2SCommand, SetFloat64Command};
+use crate::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use crate::commands::command::load::CreateGameObjectCommand;
-use crate::commands::command::long_counter::{IncrementLongC2SCommand, SetLongCommand};
+use crate::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
 use crate::commands::command::meta::s2c::S2CMetaCommandInformation;
 use crate::commands::command::structure::StructureCommand;
@@ -12,8 +12,8 @@ use crate::room::object::GameObjectId;
 
 pub mod event;
 pub mod unload;
-pub mod float_counter;
-pub mod long_counter;
+pub mod float;
+pub mod long;
 pub mod structure;
 pub mod load;
 pub mod meta;

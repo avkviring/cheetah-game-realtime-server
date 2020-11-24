@@ -47,7 +47,7 @@ impl Helper {
 		self.room_id_generator += 1;
 		let room_id = self.room_id_generator;
 		let binding = bind_to_free_socket().unwrap();
-		let mut server = Server::new(binding.0);
+		let mut server = Server::new(binding.0, false);
 		server.register_room(room_id).ok().unwrap();
 		(server, binding.1, room_id)
 	}
