@@ -9,7 +9,7 @@ use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformatio
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription, ApplicationCommands};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommands};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::{RoomId, UserPublicKey};
