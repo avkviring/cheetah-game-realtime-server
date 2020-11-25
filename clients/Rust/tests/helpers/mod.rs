@@ -7,11 +7,11 @@ use rand::rngs::OsRng;
 use stderrlog::Timestamp;
 
 use cheetah_relay::server::Server;
+use cheetah_relay_client::ffi::client::do_create_client;
 use cheetah_relay_client::registry::ClientId;
 use cheetah_relay_common::room::{RoomId, UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::udp::bind_to_free_socket;
-use cheetah_relay_client::ffi::client::{create_client, do_create_client};
 
 #[derive(Debug)]
 pub struct Helper {
@@ -64,11 +64,9 @@ impl Helper {
 	}
 	
 	pub fn create_client(&self, address: &str, keys: UserKeys) -> ClientId {
-		unsafe {
-			let mut client: ClientId = 0;
-			do_create_client(address.to_string(), keys.public, &keys.private, &mut client);
-			client
-		}
+		let mut client: ClientId = 0;
+		do_create_client(address.to_string(), keys.public, &keys.private, &mut client);
+		client
 	}
 	
 	pub fn setup_server_and_client(&mut self) -> (Server, ClientId) {

@@ -75,7 +75,7 @@ mod tests {
 			access_groups: AccessGroups(0b10),
 			fields: Default::default(),
 		};
-		command.fields.longs.insert(0, 100);
+		command.fields.longs.insert(0, 100).unwrap();
 		
 		command.clone().execute(&mut room, &user_public_key);
 		

@@ -92,7 +92,6 @@ impl Frame {
 		Result::Ok(commands)
 	}
 	
-	pub const MAX_FRAME_SIZE: usize = 1024;
 	
 	///
 	/// Преобразуем Frame в набор байт для отправки через сеть
@@ -148,7 +147,7 @@ impl Frame {
 		let mut commands_count = 0;
 		let mut remaining_commands = Vec::new();
 		for command in commands {
-			if frame_length + out.position() < Frame::MAX_FRAME_SIZE as u64 && commands_count < 255 {
+			if frame_length + out.position() < Frame::MAX_FRAME_SIZE as u64 && commands_count < Frame::MAX_COMMAND_COUNT {
 				to_vec(command, out);
 				commands_count += 1;
 			} else {
@@ -159,7 +158,7 @@ impl Frame {
 		
 		let position = out.position();
 		out.set_position(head_position);
-		out.write_u8(commands_count).unwrap();
+		out.write_u8(commands_count as u8).unwrap();
 		out.set_position(position);
 		
 		remaining_commands

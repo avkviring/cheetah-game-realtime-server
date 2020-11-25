@@ -17,7 +17,7 @@ lru = "0.6.0"
 derivative = "2.1.1"
 cheetah_relay_macro = { path = "../Macro/" }
 generic-array = "0.14.4"
-heapless = "0.5.6"
+heapless = { version = "0.5.6", features = ["serde"] }
 fnv = "1.0.7"
 
 [dev-dependencies]

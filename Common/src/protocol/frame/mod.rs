@@ -44,9 +44,11 @@ pub struct FrameHeader {
 	pub frame_id: FrameId,
 }
 
-
 impl Frame {
 	pub const PROTOCOL_VERSION: u8 = 0;
+	pub const MAX_FRAME_SIZE: usize = 1024;
+	pub const MAX_COMMAND_COUNT: usize = 64;
+	
 	pub fn new(frame_id: FrameId) -> Self {
 		Self {
 			header: FrameHeader { protocol_version: Frame::PROTOCOL_VERSION, frame_id },

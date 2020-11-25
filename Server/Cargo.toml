@@ -14,6 +14,7 @@ indexmap = "1.5.1"
 ctrlc = "3.1.6"
 cheetah_relay_common = { path = "../Common/" }
 fnv = "1.0.7"
+heapless = { version = "0.5.6", features = ["serde"] }
 
 [dev-dependencies]
 mockall = "0.8.0"

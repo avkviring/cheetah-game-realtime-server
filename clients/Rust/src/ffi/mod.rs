@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 
+use cheetah_relay_common::room::fields::HeaplessBuffer;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
@@ -85,14 +86,14 @@ pub struct BufferFFI {
 	pub buffer: [u8; MAX_SIZE_STRUCT],
 }
 
-impl From<&BufferFFI> for Vec<u8> {
+impl From<&BufferFFI> for HeaplessBuffer {
 	fn from(source: &BufferFFI) -> Self {
-		Vec::from(&source.buffer[0..source.len as usize])
+		HeaplessBuffer::from_slice(&source.buffer[0..source.len as usize]).unwrap()
 	}
 }
 
-impl From<&Vec<u8>> for BufferFFI {
-	fn from(source: &Vec<u8>) -> Self {
+impl From<&HeaplessBuffer> for BufferFFI {
+	fn from(source: &HeaplessBuffer) -> Self {
 		let mut result = BufferFFI {
 			len: source.len() as u8,
 			buffer: [0; MAX_SIZE_STRUCT],

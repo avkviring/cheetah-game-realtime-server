@@ -8,11 +8,19 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
-			let value = object.fields.floats
-				.entry(self.field_id)
-				.and_modify(|v| *v += self.increment)
-				.or_insert(self.increment)
-				.clone();
+			let value = if let Some(value) = object.fields.floats.get_mut(&self.field_id) {
+				*value += self.increment;
+				*value
+			} else {
+				match object.fields.floats.insert(self.field_id, self.increment) {
+					Ok(_) => {}
+					Err(_) => {
+						log::error!("[IncrementFloatCommand] overflow element count in object({:?})", object.id);
+						return;
+					}
+				}
+				self.increment
+			};
 			
 			let access_groups = object.access_groups.clone();
 			room.send_to_group(access_groups, S2CCommand::SetFloat64(
@@ -30,7 +38,13 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 impl ServerCommandExecutor for SetFloat64Command {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
-			object.fields.floats.insert(self.field_id, self.value);
+			match object.fields.floats.insert(self.field_id, self.value) {
+				Ok(_) => {}
+				Err(_) => {
+					log::error!("[SetFloatCommand] overflow element count in object({:?})", object.id);
+					return;
+				}
+			}
 			let access_groups = object.access_groups;
 			room.send_to_group(access_groups, S2CCommand::SetFloat64(self));
 		}

@@ -158,7 +158,7 @@ mod tests {
 					command: C2SCommand::Event(EventCommand {
 						object_id: Default::default(),
 						field_id: 0,
-						event: vec![],
+						event: Default::default(),
 					}),
 				}),
 			);
