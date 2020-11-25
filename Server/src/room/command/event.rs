@@ -23,6 +23,7 @@ mod tests {
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
+	use crate::room::tests::from_vec;
 	
 	#[test]
 	pub fn should_send_event() {
@@ -31,7 +32,7 @@ mod tests {
 		let command = EventCommand {
 			object_id: object_id.clone(),
 			field_id: 100,
-			event: vec![1, 2, 3, 4, 5],
+			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 		command.clone().execute(&mut room, &32);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
@@ -43,7 +44,7 @@ mod tests {
 		let command = EventCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 100,
-			event: vec![1, 2, 3, 4, 5],
+			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 		command.execute(&mut room, &32);
 	}

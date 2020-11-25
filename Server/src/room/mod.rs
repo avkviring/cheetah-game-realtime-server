@@ -169,7 +169,7 @@ impl Room {
 			}
 		}
 		
-		for application_command in commands {
+		for application_command in commands.into_iter() {
 			match application_command.command {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
@@ -364,5 +364,11 @@ mod tests {
 		
 		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1));
 		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2));
+	}
+	
+	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, heapless::consts::U256> {
+		let mut result = heapless::Vec::new();
+		result.extend_from_slice(vec.as_slice()).unwrap();
+		result
 	}
 }

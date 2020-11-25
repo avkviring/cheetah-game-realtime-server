@@ -8,11 +8,19 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementLongC2SCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
-			let value = object.fields.longs
-				.entry(self.field_id)
-				.and_modify(|v| *v += self.increment)
-				.or_insert(self.increment)
-				.clone();
+			let value = if let Some(value) = object.fields.longs.get_mut(&self.field_id) {
+				*value += self.increment;
+				*value
+			} else {
+				match object.fields.longs.insert(self.field_id, self.increment) {
+					Ok(_) => {}
+					Err(_) => {
+						log::error!("[IncrementLong] overflow element count in object({:?})", object.id);
+						return;
+					}
+				}
+				self.increment
+			};
 			
 			let access_groups = object.access_groups.clone();
 			room.send_to_group(access_groups, S2CCommand::SetLong(
@@ -30,9 +38,15 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 impl ServerCommandExecutor for SetLongCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
-			object.fields.longs.insert(self.field_id, self.value);
-			let access_groups = object.access_groups.clone();
-			room.send_to_group(access_groups, S2CCommand::SetLong(self));
+			match object.fields.longs.insert(self.field_id, self.value) {
+				Ok(_) => {
+					let access_groups = object.access_groups.clone();
+					room.send_to_group(access_groups, S2CCommand::SetLong(self));
+				}
+				Err(_) => {
+					log::error!("[SetLongCommand] overflow element count in object({:?})", object.id);
+				}
+			}
 		}
 	}
 }

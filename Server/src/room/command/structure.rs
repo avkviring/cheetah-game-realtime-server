@@ -26,6 +26,7 @@ mod tests {
 	
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
+	use crate::room::tests::from_vec;
 	
 	#[test]
 	pub fn should_set_structure() {
@@ -34,7 +35,7 @@ mod tests {
 		let command = StructureCommand {
 			object_id: object_id.clone(),
 			field_id: 100,
-			structure: vec![1, 2, 3, 4, 5],
+			structure: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 		
 		command.clone().execute(&mut room, &32);
@@ -50,7 +51,7 @@ mod tests {
 		let command = StructureCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 100,
-			structure: vec![1, 2, 3, 4, 5],
+			structure: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 		command.execute(&mut room, &32);
 	}
