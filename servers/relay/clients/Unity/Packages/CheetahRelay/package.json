@@ -1,0 +1,13 @@
+{
+  "name": "cheetah.relay.client",
+  "version": "0.0.1",
+  "displayName": "CheetahRelay",
+  "description": "CheetahRelay",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "dependencies": {
+    "cheetah.relay.messagepack": "0.0.1"
+  },
+  "hideInEditor": false,
+  "type": "library"
+}

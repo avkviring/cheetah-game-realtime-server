@@ -1,0 +1,14 @@
+[workspace]
+
+members = [
+    "Server",
+    "Common",
+    "Macro",
+    "Experiments",
+    "clients/Rust"
+]
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = 'abort'
