@@ -1,0 +1,20 @@
+[package]
+name = "cheetah_relay"
+version = "0.1.0"
+authors = ["kviring <alex@kviring.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = "0.7.3"
+log = "0.4"
+stderrlog = "0.4.3"
+indexmap = "1.5.1"
+ctrlc = "3.1.6"
+cheetah_relay_common = { path = "../Common/" }
+fnv = "1.0.7"
+heapless = { version = "0.5.6", features = ["serde"] }
+
+[dev-dependencies]
+mockall = "0.8.0"
