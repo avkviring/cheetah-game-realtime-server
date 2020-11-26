@@ -38,11 +38,16 @@ pub enum ConnectionStatus {
 impl UdpClient {
 	pub fn new(private_key: UserPrivateKey,
 			   public_key: UserPublicKey,
-			   server_address: SocketAddr) -> Result<UdpClient, ()> {
+			   server_address: SocketAddr,
+			   start_frame_id: u64,
+	) -> Result<UdpClient, ()> {
+		
 		let mut protocol = RelayProtocol::new(&Instant::now());
+		protocol.next_frame_id = start_frame_id;
+		
 		protocol.add_frame_builder(Box::new(UserPublicKeyFrameBuilder(public_key)));
 		let socket = bind_to_free_socket()?.0;
-		socket.set_nonblocking(true).map_err(|_|())?;
+		socket.set_nonblocking(true).map_err(|_| ())?;
 		
 		Result::Ok(UdpClient {
 			state: ConnectionStatus::Connecting,

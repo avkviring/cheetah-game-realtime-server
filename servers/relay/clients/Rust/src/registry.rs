@@ -2,6 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::AtomicU64;
 use std::thread;
 use std::time::Duration;
 
@@ -48,7 +49,13 @@ impl Default for Registry {
 
 
 impl Registry {
-	pub fn create_client(&mut self, server_address: String, user_public_key: UserPublicKey, user_private_key: UserPrivateKey) -> Result<ClientId, ()> {
+	pub fn create_client(&mut self,
+						 server_address: String,
+						 user_public_key: UserPublicKey,
+						 user_private_key: UserPrivateKey,
+						 start_frame_id: u64,
+	) -> Result<ClientId, ()> {
+		let start_frame_id = Arc::new(AtomicU64::new(start_frame_id));
 		let out_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let in_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
@@ -67,6 +74,7 @@ impl Registry {
 			in_commands,
 			state,
 			receiver,
+			start_frame_id.clone(),
 		) {
 			Ok(client) => {
 				let handler = thread::spawn(move || {
@@ -80,6 +88,7 @@ impl Registry {
 					in_commands_cloned,
 					out_commands_cloned,
 					sender,
+					start_frame_id,
 				);
 				self.client_generator_id += 1;
 				let client_id = self.client_generator_id;

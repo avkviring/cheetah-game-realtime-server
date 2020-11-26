@@ -23,6 +23,7 @@ use crate::ffi::{BufferFFI, GameObjectIdFFI};
 use crate::ffi::channel::Channel;
 use crate::ffi::command::create::GameObjectFieldsFFI;
 use crate::registry::ClientRequest;
+use std::sync::atomic::AtomicU64;
 
 ///
 /// Управление сетевым потоком клиента
@@ -37,6 +38,7 @@ pub struct ClientController {
 	create_time: Instant,
 	channel: ApplicationCommandChannelType,
 	game_object_id_generator: u32,
+	pub current_frame_id: Arc<AtomicU64>,
 	listener_long_value: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, i64)>,
 	listener_float_value: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, f64)>,
 	listener_event: Option<extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, &BufferFFI)>,
@@ -66,6 +68,7 @@ impl ClientController {
 		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 		out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 		sender: Sender<ClientRequest>,
+		current_frame_id: Arc<AtomicU64>,
 	) -> Self {
 		Self {
 			user_public_key,
@@ -77,6 +80,7 @@ impl ClientController {
 			create_time: Instant::now(),
 			channel: ApplicationCommandChannelType::ReliableSequenceByGroup(0),
 			game_object_id_generator: 0,
+			current_frame_id,
 			listener_long_value: None,
 			listener_float_value: None,
 			listener_event: None,

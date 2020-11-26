@@ -1,8 +1,5 @@
-using System.Collections;
 using System.Threading;
 using NUnit.Framework;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace CheetahRelay.Tests
 {
@@ -15,16 +12,15 @@ namespace CheetahRelay.Tests
         [SetUp]
         public void SetUp()
         {
-            
             UserKeys userA = TestUserGenerator.Generate();
             UserKeys userB = TestUserGenerator.Generate();
-            var resultA = ClientCommands.CreateClient("127.0.0.1:5000", userA.publicKey, ref userA.privateKey, out clientA);
-            var resultB = ClientCommands.CreateClient("127.0.0.1:5000", userB.publicKey, ref userB.privateKey, out clientB);
-            
+            var resultA = ClientCommands.CreateClient("127.0.0.1:5000", userA.publicKey, ref userA.privateKey, 0, out clientA);
+            var resultB = ClientCommands.CreateClient("127.0.0.1:5000", userB.publicKey, ref userB.privateKey, 0, out clientB);
+
             Assert.True(resultA);
             Assert.True(resultB);
             Thread.Sleep(100);
-            
+
 
             ClientCommands.SetCurrentClient(clientA);
             Assert.True(ClientCommands.GetConnectionStatus(out var statusA));
@@ -44,7 +40,7 @@ namespace CheetahRelay.Tests
             AttachToRoomCommand.AttachToRoom();
             Thread.Sleep(100);
         }
-        
+
         [TearDown]
         public void TearDown()
         {

@@ -23,8 +23,8 @@ namespace CheetahRelay.Tests
         {
             UserKeys userA = TestUserGenerator.Generate();
             UserKeys userB = TestUserGenerator.Generate();
-            Assert.True(ClientCommands.CreateClient("127.0.0.1:5000", userA.publicKey, ref userA.privateKey, out clientA));
-            Assert.True(ClientCommands.CreateClient("127.0.0.1:5000", userB.publicKey, ref userB.privateKey, out clientB));
+            Assert.True(ClientCommands.CreateClient("127.0.0.1:5000", userA.publicKey, ref userA.privateKey, 0, out clientA));
+            Assert.True(ClientCommands.CreateClient("127.0.0.1:5000", userB.publicKey, ref userB.privateKey,0,  out clientB));
             Thread.Sleep(100);
 
             ClientCommands.SetCurrentClient(clientA);

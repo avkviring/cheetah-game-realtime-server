@@ -11,6 +11,7 @@ namespace CheetahRelay
         /// <param name="serverAddress"></param>
         /// <param name="userPublicKey"></param>
         /// <param name="userPrivateKey"></param>
+        /// <param name="startFrameId">Начальный идентификатор фрейма, 0 - при первом входе в комнтау, N - при повторном входе в ту же самую комнату</param>
         /// <param name="clientId">Результат - локальный идентификатор клиента</param>
         /// <returns>false - ошибка создания сетевего сокета</returns>
         [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_client")]
@@ -18,6 +19,7 @@ namespace CheetahRelay
             [MarshalAs(UnmanagedType.LPStr)] string serverAddress,
             uint userPublicKey,
             ref RelayBuffer userPrivateKey,
+            ulong startFrameId,
             out ushort clientId
         );
 
@@ -45,7 +47,15 @@ namespace CheetahRelay
         /// <returns>true - успешно, false - клиента с таким идентификатором не найден</returns>
         [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_connection_status")]
         public static extern bool GetConnectionStatus(out ConnectionStatus status);
-        
+
+        /// <summary>
+        ///  Получить id текущего фрейма
+        /// </summary>
+        /// <param name="frameId"></param>
+        /// <returns>true - успешно, false - клиента с таким идентификатором не найден</returns>
+        [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_frame_id")]
+        public static extern bool GetFrameId(out ulong frameId);
+
 
         /// <summary>
         /// Обработать входящие команды

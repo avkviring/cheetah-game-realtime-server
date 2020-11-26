@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::Receiver;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -21,6 +22,7 @@ pub struct Client {
 	udp_client: UdpClient,
 	receiver: Receiver<ClientRequest>,
 	protocol_time_offset: Option<Duration>,
+	current_frame_id: Arc<AtomicU64>,
 }
 
 #[derive(Debug)]
@@ -39,21 +41,25 @@ impl Client {
 		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
+		current_frame_id: Arc<AtomicU64>,
 	) -> Result<Client, ()> {
 		Result::Ok(
 			Client {
 				state,
 				out_commands,
 				in_commands,
-				udp_client: UdpClient::new(user_private_key, user_public_key, server_address)?,
+				udp_client: UdpClient::new(user_private_key, user_public_key, server_address, current_frame_id.load(Ordering::Relaxed))?,
 				receiver,
 				protocol_time_offset: None,
+				current_frame_id,
 			})
 	}
 	
 	
 	pub fn run(mut self) {
 		loop {
+			self.current_frame_id.store(self.udp_client.protocol.next_frame_id, Ordering::Relaxed);
+			
 			let arc_out_commands = self.out_commands.clone();
 			let lock_for_out_commands = arc_out_commands.lock();
 			let mut out_commands = lock_for_out_commands.unwrap();

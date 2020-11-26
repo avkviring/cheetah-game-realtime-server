@@ -65,7 +65,7 @@ impl Helper {
 	
 	pub fn create_client(&self, address: &str, keys: UserKeys) -> ClientId {
 		let mut client: ClientId = 0;
-		do_create_client(address.to_string(), keys.public, &keys.private, &mut client);
+		do_create_client(address.to_string(), keys.public, &keys.private, 0, &mut client);
 		client
 	}
 	
