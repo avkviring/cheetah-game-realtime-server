@@ -1,31 +1,19 @@
-using System.Data.Common;
-
 namespace CheetahRelay
 {
-    public interface IRelayGameObjectBuilder
-    {
-        IRelayGameObjectBuilder SetAccessGroup(ulong accessGroup);
-        IRelayGameObjectBuilder SetStructure(ushort fieldId, in RelayBuffer data);
-        IRelayGameObjectBuilder SetLong(ushort fieldId, long value);
-        IRelayGameObjectBuilder SetDouble(ushort fieldId, double value);
-        IRelayGameObjectBuilder SetTemplate(ushort template);
-        RelayObjectId? BuildAndSendToServer();
-    }
-
-    public struct RelayGameObjectBuilder : IRelayGameObjectBuilder
+    public struct CheetahObjectBuilder
     {
         public ulong accessGroup;
-        public  ushort template;
-        public  GameObjectFields fields;
+        public ushort template;
+        public GameObjectFields fields;
 
 
-        public IRelayGameObjectBuilder SetAccessGroup(ulong accessGroup)
+        public CheetahObjectBuilder SetAccessGroup(ulong accessGroup)
         {
             this.accessGroup = accessGroup;
             return this;
         }
 
-        public IRelayGameObjectBuilder SetStructure(ushort fieldId, in RelayBuffer data)
+        public CheetahObjectBuilder SetStructure(ushort fieldId, in CheetahBuffer data)
         {
             unsafe
             {
@@ -46,7 +34,7 @@ namespace CheetahRelay
             return this;
         }
 
-        public IRelayGameObjectBuilder SetLong(ushort fieldId, long value)
+        public CheetahObjectBuilder SetLong(ushort fieldId, long value)
         {
             unsafe
             {
@@ -59,7 +47,7 @@ namespace CheetahRelay
             return this;
         }
 
-        public IRelayGameObjectBuilder SetDouble(ushort fieldId, double value)
+        public CheetahObjectBuilder SetDouble(ushort fieldId, double value)
         {
             unsafe
             {
@@ -72,15 +60,15 @@ namespace CheetahRelay
             return this;
         }
 
-        public IRelayGameObjectBuilder SetTemplate(ushort template)
+        public CheetahObjectBuilder SetTemplate(ushort template)
         {
             this.template = template;
             return this;
         }
 
-        public RelayObjectId? BuildAndSendToServer()
+        public CheetahObjectId? BuildAndSendToServer()
         {
-            CreateObjectCommand.Create(template, accessGroup, ref fields, out var objectId);
+            CheetahObject.Create(template, accessGroup, ref fields, out var objectId);
             return objectId;
         }
     }

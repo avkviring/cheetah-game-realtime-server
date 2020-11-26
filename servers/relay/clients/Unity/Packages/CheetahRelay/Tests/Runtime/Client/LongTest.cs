@@ -5,9 +5,9 @@ using NUnit.Framework;
 namespace CheetahRelay.Tests
 {
     [TestFixture]
-    public class StructureTest : AbstractTest
+    public class LongValueTest : AbstractTest
     {
-        private CheetahBuffer changedData;
+        private long changedValue;
         private CheetahObjectId changedObjectId;
         private ushort changedField;
 
@@ -15,24 +15,25 @@ namespace CheetahRelay.Tests
         public void Test()
         {
             CheetahClient.SetCurrentClient(clientB);
-            CheetahStructure.SetListener(Listener);
+            CheetahLong.SetListener(Listener);
 
             CheetahClient.SetCurrentClient(clientA);
-            var bytes = new CheetahBuffer().Add(1).Add(2).Add(3);
-            CheetahStructure.Set(ref objectId, 1, ref bytes);
+            CheetahLong.Set(ref objectId, 1, 500);
+            CheetahLong.Increment(ref objectId, 1, 100);
+            CheetahLong.Increment(ref objectId, 1, 200);
             Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(clientB);
             CheetahClient.Receive();
-            Assert.AreEqual(changedData, bytes);
+            Assert.AreEqual(changedValue, 800);
             Assert.AreEqual(changedField, 1);
             Assert.AreEqual(changedObjectId, objectId);
         }
 
-        [MonoPInvokeCallback(typeof(CheetahStructure.Listener))]
-        private void Listener(ref CheetahCommandMeta meta, ref CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
+        [MonoPInvokeCallback(typeof(CheetahLong.Listener))]
+        private void Listener(ref CheetahCommandMeta meta, ref CheetahObjectId objectId, ushort fieldId, long value)
         {
-            changedData = data;
+            changedValue = value;
             changedObjectId = objectId;
             changedField = fieldId;
         }

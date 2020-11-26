@@ -1,14 +1,16 @@
+using System;
+
 namespace CheetahRelay
 {
-    public static class TestUserGenerator
+    public static class CheetahTestUserGenerator
     {
-        private static uint nextUserPublicKey = (uint) System.DateTime.Now.Ticks;
+        private static uint nextUserPublicKey = (uint) DateTime.Now.Ticks;
 
         public static UserKeys Generate()
         {
             var keys = new UserKeys();
             keys.publicKey = nextUserPublicKey;
-            keys.privateKey = new RelayBuffer();
+            keys.privateKey = new CheetahBuffer();
             for (var i = 0; i < 32; i++)
             {
                 keys.privateKey.Add(5);
@@ -17,11 +19,11 @@ namespace CheetahRelay
             nextUserPublicKey++;
             return keys;
         }
-    }
 
-    public struct UserKeys
-    {
-        public uint publicKey;
-        public RelayBuffer privateKey;
+        public struct UserKeys
+        {
+            public uint publicKey;
+            public CheetahBuffer privateKey;
+        }
     }
 }

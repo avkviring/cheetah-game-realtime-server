@@ -15,7 +15,7 @@ namespace CheetahRelay.Tests
             var originalMessage = new SomeStructure {Age = 100500};
 
 
-            var buffer = new RelayBuffer();
+            var buffer = new CheetahBuffer();
             codecRegistry.EncodeStructure(FieldId, originalMessage, ref buffer);
             var message = (SomeStructure) codecRegistry.DecodeStructure(FieldId, ref buffer);
             

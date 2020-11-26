@@ -3,7 +3,7 @@ using NUnit.Framework;
 namespace CheetahRelay.Tests
 {
     [TestFixture]
-    public class ChannelTest : AbstractCommandTest
+    public class ChannelTest : AbstractTest
     {
         /**
          * Проверяем только процесс установки канала, тестирование собственно переключение делаем в rust
@@ -11,8 +11,8 @@ namespace CheetahRelay.Tests
         [Test]
         public void Test()
         {
-            ClientCommands.SetCurrentClient(clientA);
-            Assert.True(ChannelCommands.SetChannel(Channel.UnreliableUnordered, 0));
+            CheetahClient.SetCurrentClient(clientA);
+            Assert.True(CheetahClient.SetChannelType(CheetahClient.ChannelType.UnreliableUnordered, 0));
         }
     }
 }

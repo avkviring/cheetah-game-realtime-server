@@ -2,17 +2,17 @@ using System.Runtime.InteropServices;
 
 namespace CheetahRelay
 {
-    public static class LongValueCommands
+    public static class CheetahDouble
     {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void Listener(ref CommandMeta meta, ref RelayObjectId objectId, ushort fieldId, long value);
+        public delegate void Listener(ref CheetahCommandMeta meta, ref CheetahObjectId objectId, ushort fieldId, double value);
 
         /// <summary>
         /// Установить обработчик серверных команд для текущего клиента
         /// </summary>
         /// <param name="listener"></param>
         /// <returns>false - клиент не найден</returns>
-        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_long_value_listener")]
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_float_value_listener")]
         public static extern bool SetListener(Listener listener);
 
 
@@ -23,8 +23,8 @@ namespace CheetahRelay
         /// <param name="fieldId"></param>
         /// <param name="value"></param>
         /// <returns>false - клиент не найден</returns>
-        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_long_value")]
-        public static extern bool Set(ref RelayObjectId objectId, ushort fieldId, long value);
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_float_value")]
+        public static extern bool Set(ref CheetahObjectId objectId, ushort fieldId, double value);
 
         /// <summary>
         /// Инкрементация значения
@@ -33,7 +33,7 @@ namespace CheetahRelay
         /// <param name="fieldId"></param>
         /// <param name="value"></param>
         /// <returns>false - клиент не найден</returns>
-        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "inc_long_value")]
-        public static extern bool Increment(ref RelayObjectId objectId, ushort fieldId, long increment);
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "inc_float_value")]
+        public static extern bool Increment(ref CheetahObjectId objectId, ushort fieldId, double increment);
     }
 }

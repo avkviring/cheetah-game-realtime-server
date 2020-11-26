@@ -22,25 +22,25 @@ namespace CheetahRelay.Runtime.Client.Codec
             events[eventId] = codec;
         }
 
-        public object DecodeStructure(ushort structureId, ref RelayBuffer relayBuffer)
+        public object DecodeStructure(ushort structureId, ref CheetahBuffer cheetahBuffer)
         {
-            return getCodec(structureId, structures).Decode(ref relayBuffer);
+            return getCodec(structureId, structures).Decode(ref cheetahBuffer);
         }
 
-        public object DecodeEvent(ushort eventId, ref RelayBuffer relayBuffer)
+        public object DecodeEvent(ushort eventId, ref CheetahBuffer cheetahBuffer)
         {
-            return getCodec(eventId, events).Decode(ref relayBuffer);
+            return getCodec(eventId, events).Decode(ref cheetahBuffer);
         }
 
-        public void EncodeStructure(ushort structureId, object structure, ref RelayBuffer relayBuffer)
+        public void EncodeStructure(ushort structureId, object structure, ref CheetahBuffer cheetahBuffer)
         {
-            getCodec(structureId, structures).Encode(structure, ref relayBuffer);
+            getCodec(structureId, structures).Encode(structure, ref cheetahBuffer);
         }
 
 
-        public void EncodeEvent(ushort eventId, object structure, ref RelayBuffer relayBuffer)
+        public void EncodeEvent(ushort eventId, object structure, ref CheetahBuffer cheetahBuffer)
         {
-            getCodec(eventId, events).Encode(structure, ref relayBuffer);
+            getCodec(eventId, events).Encode(structure, ref cheetahBuffer);
         }
 
 
@@ -60,8 +60,8 @@ namespace CheetahRelay.Runtime.Client.Codec
 
     public interface Codec
     {
-        object Decode(ref RelayBuffer relayBuffer);
+        object Decode(ref CheetahBuffer cheetahBuffer);
 
-        void Encode(object value, ref RelayBuffer relayBuffer);
+        void Encode(object value, ref CheetahBuffer cheetahBuffer);
     }
 }

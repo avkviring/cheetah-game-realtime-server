@@ -13,17 +13,17 @@ namespace CheetahRelay
             LoggerExternals.InitLogger();
         }
 
-        private static void ShowLog(LogLevel level, string log)
+        private static void ShowLog(CheetahLogLevel level, string log)
         {
             switch (level)
             {
-                case LogLevel.Info:
+                case CheetahLogLevel.Info:
                     Debug.Log(log);
                     break;
-                case LogLevel.Warn:
+                case CheetahLogLevel.Warn:
                     Debug.LogWarning(log);
                     break;
-                case LogLevel.Error:
+                case CheetahLogLevel.Error:
                     Debug.LogError(log);
                     break;
                 default:

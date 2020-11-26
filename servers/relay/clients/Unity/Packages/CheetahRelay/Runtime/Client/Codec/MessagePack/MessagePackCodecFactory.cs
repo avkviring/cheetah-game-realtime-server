@@ -30,20 +30,20 @@ namespace CheetahRelay.Runtime.Client.Codec
             MessagePackSerializer.DefaultOptions.Resolver.GetFormatter<T>();
         }
 
-        public object Decode(ref RelayBuffer relayBuffer)
+        public object Decode(ref CheetahBuffer cheetahBuffer)
         {
             unsafe
             {
-                fixed (byte* values = relayBuffer.values)
+                fixed (byte* values = cheetahBuffer.values)
                 {
-                    var span = new Span<byte>(values, relayBuffer.size);
+                    var span = new Span<byte>(values, cheetahBuffer.size);
                     //TODO - избавиться от копирования
                     return MessagePackSerializer.Deserialize<T>(new ReadOnlyMemory<byte>(span.ToArray()), MessagePackSerializer.DefaultOptions);
                 }
             }
         }
 
-        public void Encode(object value, ref RelayBuffer buffer)
+        public void Encode(object value, ref CheetahBuffer buffer)
         {
             bufferForWrite.Clear();
 

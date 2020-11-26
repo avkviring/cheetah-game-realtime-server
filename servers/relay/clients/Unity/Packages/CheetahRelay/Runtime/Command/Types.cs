@@ -4,7 +4,7 @@ using System.Text;
 namespace CheetahRelay
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct RelayObjectId
+    public struct CheetahObjectId
     {
         public uint id;
         public uint user;
@@ -16,7 +16,7 @@ namespace CheetahRelay
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct CommandMeta
+    public struct CheetahCommandMeta
     {
         public ulong timestamp;
         public uint sourceUser;
@@ -29,14 +29,14 @@ namespace CheetahRelay
 
 
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct RelayBuffer
+    public unsafe struct CheetahBuffer
     {
         public byte size;
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = Const.MaxSizeStruct)]
         public fixed byte values[Const.MaxSizeStruct];
 
-        public RelayBuffer Add(byte value)
+        public CheetahBuffer Add(byte value)
         {
             values[size] = value;
             size++;
@@ -68,14 +68,14 @@ namespace CheetahRelay
         }
     }
 
-    public enum LogLevel
+    public enum CheetahLogLevel
     {
         Info,
         Warn,
         Error,
     }
 
-    public enum ConnectionStatus
+    public enum CheetahConnectionStatus
     {
         Connecting,
         Connected,
