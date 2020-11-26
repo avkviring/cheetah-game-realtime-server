@@ -9,7 +9,14 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let value = if let Some(value) = object.fields.longs.get_mut(&self.field_id) {
-				*value += self.increment;
+				match (*value).checked_add(self.increment) {
+					None => {
+						log::error!("[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})", value, self.increment);
+					}
+					Some(result) => {
+						*value = result;
+					}
+				}
 				*value
 			} else {
 				match object.fields.longs.insert(self.field_id, self.increment) {
@@ -120,6 +127,19 @@ mod tests {
 			field_id: 10,
 			increment: 100,
 		};
+		command.execute(&mut room, &12);
+	}
+	
+	#[test]
+	fn should_not_panic_if_overflow() {
+		let mut room = Room::new(0, false);
+		let object_id = room.create_object(&0).id.clone();
+		let command = IncrementLongC2SCommand {
+			object_id: object_id.clone(),
+			field_id: 10,
+			increment: i64::max_value(),
+		};
+		command.clone().execute(&mut room, &12);
 		command.execute(&mut room, &12);
 	}
 }
