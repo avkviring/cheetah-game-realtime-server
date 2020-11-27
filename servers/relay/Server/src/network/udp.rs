@@ -67,9 +67,7 @@ impl UDPServer {
 			match self.sessions.get(user_public_key) {
 				None => {}
 				Some(session) => {
-					//if !frame.commands.reliable.is_empty() {
-						log::info!("[udp] server -> user({:?}) {:?}", user_public_key, frame);
-					//}
+					log::trace!("[udp] server -> user({:?}) {:?}", user_public_key, frame);
 					let (commands, buffer_size) = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 					rooms.return_commands(&user_public_key, commands);
 					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
@@ -135,11 +133,7 @@ impl UDPServer {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.header.frame_id;
 										}
-										
-										//if !frame.commands.reliable.is_empty() {
-											log::info!("[udp] user({:?}) -> server {:?}", public_key, frame);
-										//}
-										
+										log::trace!("[udp] user({:?}) -> server {:?}", public_key, frame);
 										rooms.on_frame_received(&public_key, frame, now);
 									}
 									Err(e) => {
