@@ -26,8 +26,8 @@ namespace CheetahRelay
         /// <returns>false - клиент не найден</returns>
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_object")]
         public static extern bool Create(ushort template, ulong accessGroup, ref GameObjectFields fields, out CheetahObjectId objectId);
-        
-        
+
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void DeleteListener(ref CheetahCommandMeta meta, ref CheetahObjectId objectId);
 
@@ -83,6 +83,18 @@ namespace CheetahRelay
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = Const.AllStructuresSize)]
         public fixed byte values[Const.AllStructuresSize];
 
+
+        public void GetFieldData(byte index, ref CheetahBuffer outBuffer)
+        {
+            var offset = index * Const.MaxSizeStruct;
+            outBuffer.size = 0;
+            for (var i = 0; i < sizes[index]; i++)
+            {
+                outBuffer.Add(values[offset + i]);
+            }
+        }
+
+
         public override string ToString()
         {
             var result = new StringBuilder();
@@ -108,7 +120,7 @@ namespace CheetahRelay
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = Const.MaxFieldsInObject)]
         public fixed long values[Const.MaxFieldsInObject];
-        
+
         public override string ToString()
         {
             var result = new StringBuilder();
@@ -133,7 +145,7 @@ namespace CheetahRelay
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = Const.MaxFieldsInObject)]
         public fixed double values[Const.MaxFieldsInObject];
-        
+
         public override string ToString()
         {
             var result = new StringBuilder();
