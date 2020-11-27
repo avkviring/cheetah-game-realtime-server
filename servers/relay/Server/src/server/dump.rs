@@ -1,17 +1,18 @@
 use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
-use indexmap::map::IndexMap;
+use serde::{Deserialize, Serialize};
 
+use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::{RoomId, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::room::fields::{GameObjectFields, HeaplessBuffer, HeapLessFloatMap, HeaplessLongMap};
 use cheetah_relay_common::room::object::GameObjectId;
-use serde::{Deserialize, Serialize};
 
 use crate::room::{Room, User};
 use crate::room::object::GameObject;
 use crate::rooms::Rooms;
-use crate::server::{Server, ServerThread};
+use crate::server::ServerThread;
 
 ///
 /// Дамп внутреннего состояния сервера для отладки
@@ -29,8 +30,8 @@ pub struct RoomsDump {
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct RoomDump {
 	pub id: RoomId,
-	pub users: HashMap<UserPublicKey, UserDump, FnvBuildHasher>,
-	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
+	pub users: Vec<UserDump>,
+	pub objects: Vec<GameObjectDump>,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -39,6 +40,22 @@ pub struct UserDump {
 	pub access_groups: AccessGroups,
 	attached: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GameObjectDump {
+	pub id: GameObjectId,
+	pub template: u16,
+	pub access_groups: AccessGroups,
+	pub fields: GameObjectFieldsDump,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GameObjectFieldsDump {
+	longs: HeaplessLongMap,
+	floats: HeapLessFloatMap,
+	structures: HashMap<FieldID, BinaryDump, FnvBuildHasher>,
+}
+
 
 impl From<&ServerThread> for ServerDump {
 	fn from(server: &ServerThread) -> Self {
@@ -64,18 +81,68 @@ impl From<&Rooms> for RoomsDump {
 
 impl From<&Room> for RoomDump {
 	fn from(room: &Room) -> Self {
-		let mut result = Self {
-			id: room.id,
-			users: Default::default(),
-			objects: room.objects.clone(),
-		};
-		room.users.iter().for_each(|(id, user)| {
-			result.users.insert(*id, From::from(user));
+		let mut objects: Vec<GameObjectDump> = Default::default();
+		room.objects.iter().for_each(|(_, o)| {
+			objects.push(From::from(o));
 		});
 		
-		result
+		let mut users = Vec::new();
+		room.users.iter().for_each(|(id, user)| {
+			users.push(From::from(user));
+		});
+		Self {
+			id: room.id,
+			users,
+			objects,
+		}
 	}
 }
+
+impl From<&GameObject> for GameObjectDump {
+	fn from(source: &GameObject) -> Self {
+		Self {
+			id: source.id.clone(),
+			template: source.template,
+			access_groups: source.access_groups,
+			fields: From::from(&source.fields),
+		}
+	}
+}
+
+impl From<&GameObjectFields> for GameObjectFieldsDump {
+	fn from(fields: &GameObjectFields) -> Self {
+		let fields = fields.clone();
+		let mut structures: HashMap<FieldID, BinaryDump, FnvBuildHasher> = Default::default();
+		fields.structures.iter().for_each(|(field, structure)| {
+			structures.insert(*field, buffer_to_value(structure));
+		});
+		Self {
+			longs: fields.longs,
+			floats: fields.floats,
+			structures,
+		}
+	}
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum BinaryDump {
+	MessagePack(rmpv::Value),
+	Raw(HeaplessBuffer),
+}
+
+
+fn buffer_to_value(source: &HeaplessBuffer) -> BinaryDump {
+	match rmpv::decode::value::read_value(&mut source.to_vec().as_slice()) {
+		Ok(v) => {
+			BinaryDump::MessagePack(v)
+		}
+		Err(_) => {
+			BinaryDump::Raw((*source).clone())
+		}
+	}
+}
+
 
 impl From<&User> for UserDump {
 	fn from(user: &User) -> Self {
@@ -87,20 +154,95 @@ impl From<&User> for UserDump {
 	}
 }
 
+
+impl ServerDump {
+	pub fn to_json(&self) -> String {
+		match serde_json::to_string_pretty(self) {
+			Ok(v) => {
+				v
+			}
+			Err(e) => {
+				panic!("{:?}", e);
+			}
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
+	use rand::AsByteSliceMut;
+	use serde::{Deserialize, Serialize};
+	
+	use cheetah_relay_common::room::fields::HeaplessBuffer;
 	use cheetah_relay_common::udp::bind_to_free_socket;
 	
+	use crate::room::object::GameObject;
 	use crate::server::Server;
+	
+	#[derive(Serialize, Deserialize)]
+	pub struct TestStruct {
+		pub size: usize,
+		pub x: u16,
+	}
 	
 	#[test]
 	fn should_dump() {
 		let mut server = Server::new(bind_to_free_socket().unwrap().0, false);
 		server.register_room(1);
-		server.register_room(2);
+		let mut object = GameObject {
+			id: Default::default(),
+			template: 0,
+			access_groups: Default::default(),
+			fields: Default::default(),
+		};
+		
+		let mut data: HeaplessBuffer = Default::default();
+		let msg_pack_data = rmp_serde::to_vec_named(&TestStruct { size: 100, x: 200 }).unwrap();
+		for x in msg_pack_data {
+			data.push(x);
+		}
+		
+		object.fields.structures.insert(1, data);
+		
+		server.create_object(1, object);
 		let result = server.dump();
 		assert!(result.is_ok());
-		let dump = result.unwrap();
-		assert_eq!(dump.rooms.room_by_id.len(), 2);
+		
+		let correct_result = r#"{
+  "rooms": {
+    "room_by_id": {
+      "1": {
+        "id": 1,
+        "users": [],
+        "objects": [
+          {
+            "id": {
+              "owner": "Root",
+              "id": 0
+            },
+            "template": 0,
+            "access_groups": 0,
+            "fields": {
+              "longs": {},
+              "floats": {},
+              "structures": {
+                "1": {
+                  "MessagePack": {
+                    "size": 100,
+                    "x": 200
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}"#;
+		
+		
+		let dump = result.unwrap().to_json();
+		assert_eq!(dump, correct_result)
 	}
 }

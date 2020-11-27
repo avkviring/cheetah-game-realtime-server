@@ -1,5 +1,4 @@
 use std::cmp::max;
-use std::collections::HashMap;
 use std::net::UdpSocket;
 use std::ops::{Add, Sub};
 use std::sync::Arc;
@@ -13,12 +12,13 @@ use cheetah_relay_common::room::{RoomId, UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::network::udp::UDPServer;
-use crate::room::Room;
+use crate::room::object::GameObject;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
 use crate::server::dump::ServerDump;
 use crate::server::Request::TimeOffset;
 
 pub mod dump;
+pub mod rest;
 
 pub struct Server {
 	handler: Option<JoinHandle<()>>,
@@ -39,6 +39,11 @@ enum Request {
 	/// Скопировать состояние сервера для отладки
 	///
 	Dump(Sender<ServerDump>),
+	
+	///
+	/// Создать игровой объект в комнате
+	///
+	CreateObject(RoomId, GameObject),
 }
 
 
@@ -132,14 +137,18 @@ impl Server {
 	}
 	
 	
-	pub fn join(mut self) {
+	pub fn join(&mut self) {
 		self.handler.take().unwrap().join().unwrap();
 	}
 	
 	pub fn dump(&self) -> Result<ServerDump, ()> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(Request::Dump(sender));
-		receiver.recv().map_err(|e| ())
+		self.sender.send(Request::Dump(sender)).unwrap();
+		receiver.recv().map_err(|_| ())
+	}
+	
+	pub fn create_object(&self, room: RoomId, object: GameObject) -> Result<(), ()> {
+		self.sender.send(Request::CreateObject(room, object)).map_err(|_| ())
 	}
 }
 
@@ -204,7 +213,11 @@ impl ServerThread {
 					self.time_offset = Option::Some(time_offset);
 				}
 				Request::Dump(sender) => {
-					sender.send(ServerDump::from(&*self));
+					sender.send(ServerDump::from(&*self)).unwrap();
+				}
+				Request::CreateObject(room_id, object) => {
+					let room = self.rooms.room_by_id.get_mut(&room_id).unwrap();
+					room.borrow_mut().objects.insert(object.id.clone(), object);
 				}
 			}
 		}
