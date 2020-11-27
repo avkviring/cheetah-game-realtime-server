@@ -12,9 +12,10 @@ use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::Room;
 
+#[derive(Clone)]
 pub struct Rooms {
-	rooms: HashMap<RoomId, Rc<RefCell<Room>>, FnvBuildHasher>,
-	user_to_room: HashMap<UserPublicKey, Rc<RefCell<Room>>, FnvBuildHasher>,
+	pub room_by_id: HashMap<RoomId, Rc<RefCell<Room>>, FnvBuildHasher>,
+	pub user_to_room: HashMap<UserPublicKey, Rc<RefCell<Room>>, FnvBuildHasher>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	auto_create_user: bool,
 }
@@ -40,7 +41,7 @@ pub enum RegisterRoomError {
 impl Rooms {
 	pub fn new(auto_create_user: bool) -> Rooms {
 		Self {
-			rooms: Default::default(),
+			room_by_id: Default::default(),
 			user_to_room: Default::default(),
 			changed_rooms: Default::default(),
 			auto_create_user,
@@ -48,17 +49,17 @@ impl Rooms {
 	}
 	
 	pub fn create_room(&mut self, room_id: RoomId) -> Result<(), RegisterRoomError> {
-		if self.rooms.contains_key(&room_id) {
+		if self.room_by_id.contains_key(&room_id) {
 			Result::Err(RegisterRoomError::AlreadyRegistered)
 		} else {
 			let room = Room::new(room_id, self.auto_create_user);
-			self.rooms.insert(room_id, Rc::new(RefCell::new(room)));
+			self.room_by_id.insert(room_id, Rc::new(RefCell::new(room)));
 			Result::Ok(())
 		}
 	}
 	
 	pub fn register_user(&mut self, room_id: RoomId, public_key: UserPublicKey, access_group: AccessGroups) -> Result<(), RegisterUserError> {
-		match self.rooms.get(&room_id) {
+		match self.room_by_id.get(&room_id) {
 			None => {
 				Result::Err(RegisterUserError::RoomNotFound)
 			}
@@ -75,7 +76,7 @@ impl Rooms {
 	
 	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		self.changed_rooms.iter().for_each(|room_id| {
-			let room = self.rooms.get(&room_id).unwrap().clone();
+			let room = self.room_by_id.get(&room_id).unwrap().clone();
 			let mut room = room.borrow_mut();
 			room.collect_out_frame(out_frames, now);
 		});
@@ -102,18 +103,18 @@ impl Rooms {
 		}
 		
 		if self.user_to_room.get(user_public_key).is_none() {
-			if !self.rooms.contains_key(&0) {
+			if !self.room_by_id.contains_key(&0) {
 				self.create_room(0).unwrap();
 			}
 			
-			let room = self.rooms.get(&0).unwrap();
+			let room = self.room_by_id.get(&0).unwrap();
 			let room = room.clone();
 			self.user_to_room.insert(user_public_key.clone(), room);
 		}
 	}
 	
 	pub fn cycle(&mut self, now: &Instant) {
-		self.rooms.values().for_each(|r| r.clone().borrow_mut().cycle(now));
+		self.room_by_id.values().for_each(|r| r.clone().borrow_mut().cycle(now));
 	}
 }
 

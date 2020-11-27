@@ -27,8 +27,8 @@ pub mod object;
 #[derive(Debug)]
 pub struct Room {
 	pub id: RoomId,
-	users: HashMap<UserPublicKey, User, FnvBuildHasher>,
-	objects: IndexMap<GameObjectId, GameObject>,
+	pub users: HashMap<UserPublicKey, User, FnvBuildHasher>,
+	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserPublicKey>,
@@ -48,7 +48,7 @@ pub struct User {
 	pub public_key: UserPublicKey,
 	pub access_groups: AccessGroups,
 	protocol: Option<RelayProtocol>,
-	attached: bool,
+	pub attached: bool,
 }
 
 impl User {

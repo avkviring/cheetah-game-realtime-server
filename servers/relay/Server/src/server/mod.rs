@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::collections::HashMap;
 use std::net::UdpSocket;
 use std::ops::{Add, Sub};
 use std::sync::Arc;
@@ -12,14 +13,19 @@ use cheetah_relay_common::room::{RoomId, UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::network::udp::UDPServer;
+use crate::room::Room;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
+use crate::server::dump::ServerDump;
 use crate::server::Request::TimeOffset;
+
+pub mod dump;
 
 pub struct Server {
 	handler: Option<JoinHandle<()>>,
 	sender: Sender<Request>,
 	halt_signal: Arc<AtomicBool>,
 }
+
 
 enum Request {
 	RegisterRoom(RoomId, Sender<Result<(), RegisterRoomError>>),
@@ -28,6 +34,11 @@ enum Request {
 	/// Смещение текущего времени для тестирования
 	///
 	TimeOffset(Duration),
+	
+	///
+	/// Скопировать состояние сервера для отладки
+	///
+	Dump(Sender<ServerDump>),
 }
 
 
@@ -124,6 +135,12 @@ impl Server {
 	pub fn join(mut self) {
 		self.handler.take().unwrap().join().unwrap();
 	}
+	
+	pub fn dump(&self) -> Result<ServerDump, ()> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender.send(Request::Dump(sender));
+		receiver.recv().map_err(|e| ())
+	}
 }
 
 
@@ -185,6 +202,9 @@ impl ServerThread {
 				}
 				TimeOffset(time_offset) => {
 					self.time_offset = Option::Some(time_offset);
+				}
+				Request::Dump(sender) => {
+					sender.send(ServerDump::from(&*self));
 				}
 			}
 		}
