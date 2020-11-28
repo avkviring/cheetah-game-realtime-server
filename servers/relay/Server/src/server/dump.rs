@@ -87,7 +87,7 @@ impl From<&Room> for RoomDump {
 		});
 		
 		let mut users = Vec::new();
-		room.users.iter().for_each(|(id, user)| {
+		room.users.iter().for_each(|(_, user)| {
 			users.push(From::from(user));
 		});
 		Self {
@@ -170,7 +170,6 @@ impl ServerDump {
 
 #[cfg(test)]
 mod tests {
-	use rand::AsByteSliceMut;
 	use serde::{Deserialize, Serialize};
 	
 	use cheetah_relay_common::room::fields::HeaplessBuffer;
@@ -188,7 +187,7 @@ mod tests {
 	#[test]
 	fn should_dump() {
 		let mut server = Server::new(bind_to_free_socket().unwrap().0, false);
-		server.register_room(1);
+		server.register_room(1).ok().unwrap();
 		let mut object = GameObject {
 			id: Default::default(),
 			template: 0,
@@ -199,12 +198,12 @@ mod tests {
 		let mut data: HeaplessBuffer = Default::default();
 		let msg_pack_data = rmp_serde::to_vec_named(&TestStruct { size: 100, x: 200 }).unwrap();
 		for x in msg_pack_data {
-			data.push(x);
+			data.push(x).unwrap();
 		}
 		
 		object.fields.structures.insert(1, data);
 		
-		server.create_object(1, object);
+		server.create_object(1, object).unwrap();
 		let result = server.dump();
 		assert!(result.is_ok());
 		
