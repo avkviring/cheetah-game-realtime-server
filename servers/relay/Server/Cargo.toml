@@ -11,7 +11,6 @@ rand = "0.7.3"
 log = "0.4"
 stderrlog = "0.4.3"
 indexmap = { version = "1.6.0", features = ["serde-1"] }
-ctrlc = "3.1.6"
 cheetah_relay_common = { path = "../Common/" }
 fnv = "1.0.7"
 serde = { version = "1.0.116", features = ["derive", "rc"] }
