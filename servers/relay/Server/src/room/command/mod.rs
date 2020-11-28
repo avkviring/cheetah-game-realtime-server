@@ -40,7 +40,7 @@ pub fn error_c2s_command(command: &str, room: &Room, user_public_key: &UserPubli
 }
 
 pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPublicKey) {
-	log::info!("user({:?}) -> server command {:?}", user_public_key, command);
+	log::info!("[room({:?})] u({:?}) -> s {:?}", room.id, user_public_key, command);
 	match command {
 		C2SCommand::Create(command) => {
 			command.execute(room, user_public_key);

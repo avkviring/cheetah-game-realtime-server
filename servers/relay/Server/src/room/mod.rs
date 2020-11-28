@@ -96,8 +96,10 @@ impl Room {
 		let channel_type = self.current_channel.as_ref().unwrap();
 		let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
 			meta: S2CMetaCommandInformation::new(current_user_public_key.clone(), meta),
-			command,
+			command: command.clone(),
 		});
+		
+		let room_id = self.id.clone();
 		self.users.values_mut()
 			.filter(|user| user.public_key != *current_user_public_key)
 			.filter(|user| user.attached)
@@ -105,6 +107,7 @@ impl Room {
 			.filter(|user| user.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
 				let protocol = user.protocol.as_mut().unwrap();
+				log::info!("[room({:?})] s -> u({:?}) {:?}", room_id, user.public_key, command);
 				protocol.out_commands_collector.add_command(channel_type.clone(), application_command.clone())
 			});
 	}
@@ -123,6 +126,7 @@ impl Room {
 			Some(user) => {
 				if let Some(ref mut protocol) = user.protocol {
 					if user.attached {
+						log::info!("[room({:?})] s -> u({:?}) {:?}", self.id, user.public_key, command);
 						let meta = self.current_meta.as_ref().unwrap();
 						let channel = self.current_channel.as_ref().unwrap();
 						let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
@@ -154,7 +158,7 @@ impl Room {
 		let mut commands = Vec::new();
 		match user {
 			None => {
-				log::error!("[room ({:?})] user({:?}) not found for input frame", self.id, user_public_key);
+				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_public_key);
 			}
 			Some(user) => {
 				let protocol = &mut user.protocol;
@@ -178,7 +182,7 @@ impl Room {
 					execute(command_with_meta.command, self, &user_public_key);
 				}
 				_ => {
-					log::error!("[room ({:?})] receive unsupported command {:?}", self.id, application_command)
+					log::error!("[room({:?})] receive unsupported command {:?}", self.id, application_command)
 				}
 			}
 		}
@@ -231,7 +235,7 @@ impl Room {
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
 	pub fn disconnect_user(&mut self, user_public_key: &UserPublicKey) {
-		log::info!("[room ({:?})] disconnect user({:?})", self.id, user_public_key);
+		log::info!("[room({:?})] disconnect user({:?})", self.id, user_public_key);
 		match self.users.remove(user_public_key) {
 			None => {}
 			Some(user) => {

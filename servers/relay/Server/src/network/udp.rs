@@ -36,6 +36,7 @@ struct UserSession {
 impl UDPServer {
 	pub fn new(socket: UdpSocket, auto_create_user: bool) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
+		log::info!("Starting udp server on {:?}", socket);
 		Result::Ok(
 			Self {
 				sessions: FnvHashMap::default(),
