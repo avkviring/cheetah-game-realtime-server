@@ -1,0 +1,2 @@
+test bench_chiper   ... bench:         524 ns/iter (+/- 154)
+test bench_compress ... bench:         114 ns/iter (+/- 58)
