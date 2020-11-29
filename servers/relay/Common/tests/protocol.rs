@@ -3,7 +3,9 @@ use std::time::Instant;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 
-use crate::udp::stub::Channel;
+use crate::stub::Channel;
+
+pub mod stub;
 
 ///
 /// Тестирование отправки команд с клиента на сервер
