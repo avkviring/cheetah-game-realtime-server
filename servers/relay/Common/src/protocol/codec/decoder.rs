@@ -1,6 +1,6 @@
 use std::io::{Cursor, Write};
 
-use byteorder::{ReadBytesExt, WriteBytesExt};
+
 use heapless::consts::*;
 use heapless::Vec as HeaplessVec;
 use rmp_serde::Serializer;
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::frame::{Frame, FrameHeader};
-use crate::protocol::frame::applications::{ApplicationCommandDescription, ApplicationCommands};
+
 use crate::protocol::frame::headers::Headers;
 
 #[derive(Debug)]
@@ -46,7 +46,7 @@ impl Frame {
 	pub fn decode_frame(cursor: Cursor<&[u8]>,
 						mut cipher: Cipher,
 						header: FrameHeader,
-						additional_headers: Headers) -> Result<Frame, UdpFrameDecodeError> {
+						headers: Headers) -> Result<Frame, UdpFrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 		
@@ -55,51 +55,30 @@ impl Frame {
 		let nonce = header.frame_id.to_be_bytes() as [u8; 8];
 		let ad = &data[0..header_end as usize];
 		
-		let mut vec: HeaplessVec<u8, U2048> = HeaplessVec::new();
+		let mut vec: HeaplessVec<u8, U1024> = HeaplessVec::new();
 		vec.extend_from_slice(&data[header_end as usize..data.len()]).unwrap();
 		
 		cipher.decrypt(&mut vec, ad, nonce).map_err(|_| { UdpFrameDecodeError::DecryptedError })?;
 		
 		// commands - decompress
-		let mut decompressed_buffer = [0; 2048];
+		let mut decompressed_buffer = [0; Frame::MAX_FRAME_SIZE];
 		let decompressed_size = packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| { UdpFrameDecodeError::DecompressError })?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 		
-		
-		let mut cursor = Cursor::new(decompressed_buffer);
-		let unreliability = Frame::decode_commands(&mut cursor)?;
-		let reliability = Frame::decode_commands(&mut cursor)?;
+		let mut de = rmp_serde::Deserializer::new(decompressed_buffer);
+		let commands = Deserialize::deserialize(&mut de).map_err(|_| { UdpFrameDecodeError::CommandDeserializeError })?;
 		
 		Result::Ok(Frame {
 			header,
-			headers: additional_headers,
-			commands: ApplicationCommands
-			{
-				reliable: reliability,
-				unreliable: unreliability,
-			},
+			headers,
+			commands,
 		})
 	}
 	
-	fn decode_commands(cursor: &mut Cursor<&[u8]>) -> Result<Vec<ApplicationCommandDescription>, UdpFrameDecodeError> {
-		let mut commands = Vec::new();
-		let commands_count = cursor.read_u8().map_err(|_| { UdpFrameDecodeError::CommandCountReadError })?;
-		let mut deserializer = rmp_serde::Deserializer::new(cursor);
-		for _ in 0..commands_count {
-			let command = Deserialize::deserialize(&mut deserializer).map_err(|_| { UdpFrameDecodeError::CommandDeserializeError })?;
-			commands.push(command);
-		}
-		Result::Ok(commands)
-	}
-	
-	
 	///
 	/// Преобразуем Frame в набор байт для отправки через сеть
-	/// - так как есть ограничение на размер фрейма, то не все команды могут быть преобразованы
-	/// - остаток команд возвращается как результат функции
-	/// - данные команды также удаляются из исходного фрейма
 	///
-	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> (ApplicationCommands, usize) {
+	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> usize {
 		let mut frame_cursor = Cursor::new(out);
 		let mut serializer = Serializer::new(&mut frame_cursor);
 		self.header.serialize(&mut serializer).unwrap();
@@ -107,22 +86,12 @@ impl Frame {
 		drop(serializer);
 		
 		
-		let mut commands_buffer = [0 as u8; Frame::MAX_FRAME_SIZE * 2];
+		let mut commands_buffer = [0 as u8; Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-		let unreliability_remaining =
-			Frame::serialized_commands(
-				&self.commands.unreliable,
-				frame_cursor.position(),
-				&mut commands_cursor);
+		serialize(&self.commands, &mut commands_cursor);
 		
-		let reliability_remaining =
-			Frame::serialized_commands(
-				&self.commands.reliable,
-				frame_cursor.position(),
-				&mut commands_cursor);
-		
-		let mut vec: HeaplessVec<u8, U2048> = HeaplessVec::new();
-		unsafe { vec.set_len(2048); }
+		let mut vec: HeaplessVec<u8, U1024> = HeaplessVec::new();
+		unsafe { vec.set_len(Frame::MAX_FRAME_SIZE); }
 		
 		let commands_position = commands_cursor.position() as usize;
 		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
@@ -138,34 +107,11 @@ impl Frame {
 		
 		frame_cursor.write_all(&vec).unwrap();
 		
-		(ApplicationCommands { reliable: reliability_remaining, unreliable: unreliability_remaining }, frame_cursor.position() as usize)
-	}
-	
-	fn serialized_commands(commands: &Vec<ApplicationCommandDescription>, frame_length: u64, out: &mut Cursor<&mut [u8]>) -> Vec<ApplicationCommandDescription> {
-		let head_position = out.position();
-		out.write_u8(0).unwrap();
-		let mut commands_count = 0;
-		let mut remaining_commands = Vec::new();
-		for command in commands {
-			if frame_length + out.position() < Frame::MAX_FRAME_SIZE as u64 && commands_count < Frame::MAX_COMMAND_COUNT {
-				to_vec(command, out);
-				commands_count += 1;
-			} else {
-				remaining_commands.push(command.clone());
-			}
-		}
-		
-		
-		let position = out.position();
-		out.set_position(head_position);
-		out.write_u8(commands_count as u8).unwrap();
-		out.set_position(position);
-		
-		remaining_commands
+		frame_cursor.position() as usize
 	}
 }
 
-fn to_vec<T: Serialize>(item: T, out: &mut Cursor<&mut [u8]>) {
+fn serialize<T: Serialize>(item: T, out: &mut Cursor<&mut [u8]>) {
 	item.serialize(&mut Serializer::new(out)).unwrap();
 }
 
@@ -199,7 +145,7 @@ pub mod tests {
 				command: ApplicationCommand::TestSimple("test".to_string()),
 			});
 		let mut buffer = [0; 1024];
-		let (_, size) = frame.encode(&mut cipher, &mut buffer);
+		let size = frame.encode(&mut cipher, &mut buffer);
 		let buffer = &buffer[0..size];
 		
 		let mut cursor = Cursor::new(buffer);
@@ -207,27 +153,6 @@ pub mod tests {
 		let decoded_frame = Frame::decode_frame(cursor, cipher.clone(), header, additional_header).unwrap();
 		
 		assert_eq!(frame, decoded_frame);
-	}
-	
-	
-	#[test]
-	fn should_limit_buffer_size() {
-		let mut frame = Frame::new(0);
-		let mut cipher = Cipher::new(PRIVATE_KEY);
-		const COMMAND_COUNT: usize = 400;
-		for _ in 0..COMMAND_COUNT {
-			frame.commands.reliable.push(
-				ApplicationCommandDescription {
-					channel: ApplicationCommandChannel::ReliableUnordered,
-					command: ApplicationCommand::TestSimple("1234567890".to_string()),
-				}
-			);
-		}
-		let mut buffer = [0; 1024];
-		let (_, size) = frame.encode(&mut cipher, &mut buffer);
-		let buffer = &buffer[0..size];
-		
-		assert!(buffer.len() <= Frame::MAX_FRAME_SIZE);
 	}
 }
 

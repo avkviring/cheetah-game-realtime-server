@@ -69,8 +69,7 @@ impl UDPServer {
 				None => {}
 				Some(session) => {
 					log::trace!("[udp] server -> user({:?}) {:?}", user_public_key, frame);
-					let (commands, buffer_size) = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
-					rooms.return_commands(&user_public_key, commands);
+					let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
 						Ok(size) => {
 							if size == buffer_size {
@@ -91,7 +90,7 @@ impl UDPServer {
 	}
 	
 	fn receive(&mut self, rooms: &mut Rooms, now: &Instant) {
-		let mut buffer = [0; 2048];
+		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
 			match result {
@@ -110,7 +109,7 @@ impl UDPServer {
 		}
 	}
 	
-	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; 2048], size: usize, address: SocketAddr, now: &Instant) {
+	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; Frame::MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: &Instant) {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_header, headers)) => {
@@ -182,7 +181,7 @@ mod tests {
 	fn should_not_panic_when_wrong_in_data() {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
 		let mut rooms = Rooms::new(false);
-		let buffer = [0; 2048];
+		let buffer = [0; Frame::MAX_FRAME_SIZE];
 		let usize = 100 as usize;
 		udp_server.process_in_frame(&mut rooms, &buffer, usize, SocketAddr::from_str("127.0.0.1:5002").unwrap(), &Instant::now());
 	}
@@ -191,10 +190,10 @@ mod tests {
 	fn should_not_panic_when_wrong_user() {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
 		let mut rooms = Rooms::new(false);
-		let mut buffer = [0; 2048];
+		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::UserPublicKey(0));
-		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).1;
+		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
 		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), &Instant::now());
 	}
 	
@@ -202,9 +201,9 @@ mod tests {
 	fn should_not_panic_when_missing_user_header() {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
 		let mut rooms = Rooms::new(false);
-		let mut buffer = [0; 2048];
+		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
-		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).1;
+		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
 		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), &Instant::now());
 	}
 	
@@ -216,7 +215,7 @@ mod tests {
 	fn should_keep_address_from_last_frame() {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
 		let mut rooms = Rooms::new(false);
-		let mut buffer = [0; 2048];
+		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		
 		
 		let public_key = 0;
@@ -226,7 +225,7 @@ mod tests {
 		
 		let mut frame = Frame::new(100);
 		frame.headers.add(Header::UserPublicKey(public_key));
-		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer).1;
+		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
 		
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
@@ -236,7 +235,7 @@ mod tests {
 		
 		let mut frame = Frame::new(10);
 		frame.headers.add(Header::UserPublicKey(public_key));
-		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer).1;
+		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 		
 		assert_eq!(udp_server.sessions.get(&public_key).unwrap().peer_address.unwrap(), addr_1);

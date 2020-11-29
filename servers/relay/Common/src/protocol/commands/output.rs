@@ -22,10 +22,6 @@ pub struct OutCommandsCollector {
 }
 
 impl OutCommandsCollector {
-	pub fn add_unsent_commands(&mut self, commands: ApplicationCommands) {
-		self.commands.add_first(&commands);
-	}
-	
 	
 	pub fn add_command(&mut self,
 					   channel_type: ApplicationCommandChannelType,

@@ -9,7 +9,7 @@ use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformatio
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommands};
+use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::{RoomId, UserPublicKey};
@@ -194,20 +194,6 @@ impl Room {
 		}
 		if !self.users.contains_key(&user_public_key) {
 			self.register_user(user_public_key.clone(), AccessGroups(0b111111));
-		}
-	}
-	
-	pub fn send_to_user_first(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands) {
-		match self.users.get_mut(user_public_key) {
-			None => {}
-			Some(user) => {
-				match user.protocol {
-					None => {}
-					Some(ref mut protocol) => {
-						protocol.out_commands_collector.add_unsent_commands(commands);
-					}
-				}
-			}
 		}
 	}
 	

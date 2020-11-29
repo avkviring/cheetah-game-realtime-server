@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rustup default stable
+
 OUTPUT=Clients/Unity/Packages/CheetahRelay/
 
 cd ../../../

@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::protocol::frame::applications::ApplicationCommands;
+
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::room::{RoomId, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
@@ -81,10 +81,6 @@ impl Rooms {
 			room.collect_out_frame(out_frames, now);
 		});
 		self.changed_rooms.clear();
-	}
-	
-	pub fn return_commands(&mut self, user_public_key: &UserPublicKey, commands: ApplicationCommands) {
-		on_user_room(self, user_public_key, |_, room| room.send_to_user_first(user_public_key, commands));
 	}
 	
 	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {

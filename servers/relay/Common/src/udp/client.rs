@@ -41,7 +41,6 @@ impl UdpClient {
 			   server_address: SocketAddr,
 			   start_frame_id: u64,
 	) -> Result<UdpClient, ()> {
-		
 		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
 		
@@ -85,14 +84,13 @@ impl UdpClient {
 		
 		let mut buffer = [0; 2048];
 		while let Some(frame) = self.out_frames.back() {
-			let (unsent_commands, frame_buffer_size) = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer);
+			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer);
 			match self.socket.send_to(&buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
 					if size != frame_buffer_size {
 						log::error!("error send frame size mismatch send {:?}, frame {:?}", size, frame_buffer_size);
 					} else {
 						self.out_frames.pop_back();
-						self.protocol.out_commands_collector.add_unsent_commands(unsent_commands);
 					}
 				}
 				Err(e) => {

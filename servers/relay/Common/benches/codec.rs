@@ -23,7 +23,7 @@ const AD: [u8; 4] = [1, 2, 3, 4];
 fn bench_chiper(b: &mut Bencher) {
 	b.iter(|| {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut buffer: heapless::Vec<u8, heapless::consts::U2048> = heapless::Vec::new();
+		let mut buffer: heapless::Vec<u8, heapless::consts::U1024> = heapless::Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		cipher.decrypt(&mut buffer, &AD, NONCE).unwrap();

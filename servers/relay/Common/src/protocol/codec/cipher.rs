@@ -25,7 +25,7 @@ impl<'a> Cipher<'a> {
 	}
 	
 	
-	pub fn encrypt(&mut self, buffer: &mut Vec<u8, U2048>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
+	pub fn encrypt(&mut self, buffer: &mut Vec<u8, U1024>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
@@ -35,7 +35,7 @@ impl<'a> Cipher<'a> {
 		Result::Ok(())
 	}
 	
-	pub fn decrypt(&mut self, buffer: &mut Vec<u8, U2048>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
+	pub fn decrypt(&mut self, buffer: &mut Vec<u8, U1024>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
@@ -69,7 +69,7 @@ mod tests {
 	#[test]
 	fn should_cipher() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut buffer: Vec<u8, U2048> = Vec::new();
+		let mut buffer: Vec<u8, U1024> = Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		assert_ne!(&buffer, &ORIGINAL);
@@ -80,7 +80,7 @@ mod tests {
 	#[test]
 	fn should_fail_when_different_ad() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut buffer: Vec<u8, U2048> = Vec::new();
+		let mut buffer: Vec<u8, U1024> = Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(())));
@@ -89,7 +89,7 @@ mod tests {
 	#[test]
 	fn should_fail_when_broken_packet() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut buffer: Vec<u8, U2048> = Vec::new();
+		let mut buffer: Vec<u8, U1024> = Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		buffer[0] = 0;
