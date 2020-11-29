@@ -48,7 +48,6 @@ impl<'a> Cipher<'a> {
 
 #[cfg(test)]
 mod tests {
-	use easybench::bench;
 	use heapless::consts::*;
 	use heapless::Vec;
 	
@@ -65,20 +64,7 @@ mod tests {
 	const AD: [u8; 4] = [1, 2, 3, 4];
 	const OTHER_AD: [u8; 2] = [0, 1];
 	
-	///
-	/// 806 ns - libsodium
-	/// 825 ns - chacha20poly1305 = "0.6.0"
-	///
-	#[test]
-	fn bench_cipher() {
-		println!("{}", bench(|| {
-			let mut cipher = Cipher::new(PRIVATE_KEY);
-			let mut buffer: Vec<u8, U2048> = Vec::new();
-			buffer.extend_from_slice(&ORIGINAL).unwrap();
-			cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
-			cipher.decrypt(&mut buffer, &AD, NONCE).unwrap();
-		}))
-	}
+	
 	
 	#[test]
 	fn should_cipher() {
