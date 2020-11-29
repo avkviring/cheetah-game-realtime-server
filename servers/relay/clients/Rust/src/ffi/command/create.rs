@@ -11,26 +11,23 @@ use crate::ffi::{execute_with_client, GameObjectIdFFI};
 
 /// Зарегистрировать обработчик загрузки нового игрового объекта
 #[no_mangle]
-pub extern fn set_create_object_listener(
-	listener: extern fn(&S2CMetaCommandInformation, &GameObjectIdFFI, template: u16, fields: &GameObjectFieldsFFI)) -> bool {
+pub extern "C" fn set_create_object_listener(
+	listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, template: u16, fields: &GameObjectFieldsFFI),
+) -> bool {
 	execute_with_client(|client| {
 		client.register_create_object_listener(listener);
-	}).is_ok()
+	})
+	.is_ok()
 }
 
 #[no_mangle]
-pub extern "C" fn create_object(
-	template: u16,
-	access_group: u64,
-	fields: &GameObjectFieldsFFI,
-	result: &mut GameObjectIdFFI,
-) -> bool {
+pub extern "C" fn create_object(template: u16, access_group: u64, fields: &GameObjectFieldsFFI, result: &mut GameObjectIdFFI) -> bool {
 	execute_with_client(|client| {
 		let game_object_id = client.create_game_object(template, access_group, From::from(fields));
 		*result = game_object_id;
-	}).is_ok()
+	})
+	.is_ok()
 }
-
 
 pub const MAX_FIELDS_IN_OBJECT: usize = 255;
 pub const MAX_SIZE_STRUCT: usize = 255;
@@ -43,7 +40,6 @@ pub struct GameObjectFieldsFFI {
 	pub floats: ObjectValuesFFI<f64>,
 	pub longs: ObjectValuesFFI<i64>,
 }
-
 
 impl From<&GameObjectFieldsFFI> for GameObjectFields {
 	fn from(source: &GameObjectFieldsFFI) -> Self {
@@ -65,7 +61,6 @@ impl From<GameObjectFields> for GameObjectFieldsFFI {
 	}
 }
 
-
 #[repr(C)]
 pub struct ObjectStructuresFFI {
 	pub count: u8,
@@ -76,12 +71,14 @@ pub struct ObjectStructuresFFI {
 
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct ObjectValuesFFI<T> where T: Default {
+pub struct ObjectValuesFFI<T>
+where
+	T: Default,
+{
 	pub count: u8,
 	pub fields: [u16; MAX_FIELDS_IN_OBJECT],
 	pub values: [T; MAX_FIELDS_IN_OBJECT],
 }
-
 
 impl Default for ObjectStructuresFFI {
 	fn default() -> Self {
@@ -123,8 +120,10 @@ impl From<&ObjectStructuresFFI> for HashMap<FieldID, HeaplessBuffer, FnvBuildHas
 	}
 }
 
-
-impl<T> Default for ObjectValuesFFI<T> where T: Default + Copy {
+impl<T> Default for ObjectValuesFFI<T>
+where
+	T: Default + Copy,
+{
 	fn default() -> Self {
 		ObjectValuesFFI {
 			count: Default::default(),
@@ -141,7 +140,7 @@ impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&heapless::FnvIndexMap<Fiel
 		for (i, (key, value)) in value.iter().enumerate() {
 			result.fields[i] = *key;
 			result.values[i] = From::<IN>::from(value.clone())
-		};
+		}
 		result
 	}
 }
@@ -158,13 +157,12 @@ impl<IN: Default + Clone, OUT: From<IN>> From<&ObjectValuesFFI<IN>> for heapless
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::room::fields::{GameObjectFields, HeaplessBuffer};
-	
+
 	use crate::ffi::command::create::GameObjectFieldsFFI;
-	
+
 	#[test]
 	fn test_convert() {
 		let mut source = GameObjectFields::default();
@@ -173,7 +171,7 @@ mod tests {
 		let mut buffer = HeaplessBuffer::new();
 		buffer.push(1).unwrap();
 		source.structures.insert(3, buffer);
-		
+
 		let converted = GameObjectFieldsFFI::from(source.clone());
 		let dest = GameObjectFields::from(&converted);
 		assert_eq!(source, dest);

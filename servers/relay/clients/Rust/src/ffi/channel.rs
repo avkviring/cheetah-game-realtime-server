@@ -13,12 +13,12 @@ pub enum Channel {
 	ReliableOrderedByGroup,
 	UnreliableOrderedByGroup,
 	ReliableSequenceByGroup,
-	
 }
 
 #[no_mangle]
-pub extern fn set_channel(channel: Channel, group: ChannelGroupId) -> bool {
+pub extern "C" fn set_channel(channel: Channel, group: ChannelGroupId) -> bool {
 	execute_with_client(|client| {
 		client.set_current_channel(channel, group);
-	}).is_ok()
+	})
+	.is_ok()
 }

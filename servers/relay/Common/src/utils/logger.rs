@@ -1,10 +1,10 @@
+use lazy_static::lazy_static;
 use std::collections::VecDeque;
 use std::sync::Mutex;
-use lazy_static::lazy_static;
 
 #[derive(Debug)]
 pub struct LogCollector {
-	pub items: VecDeque<LogRecord>
+	pub items: VecDeque<LogRecord>,
 }
 
 #[derive(Debug)]
@@ -14,14 +14,12 @@ pub struct LogRecord {
 }
 
 lazy_static! {
-	pub static ref LOG_COLLECTOR:Mutex<LogCollector> = Mutex::new(LogCollector::new());
+	pub static ref LOG_COLLECTOR: Mutex<LogCollector> = Mutex::new(LogCollector::new());
 }
 
 impl LogCollector {
 	fn new() -> Self {
-		LogCollector {
-			items: Default::default()
-		}
+		LogCollector { items: Default::default() }
 	}
 }
 
@@ -33,7 +31,7 @@ impl log::Log for LogListener {
 	fn enabled(&self, _metadata: &log::Metadata) -> bool {
 		true
 	}
-	
+
 	fn log(&self, record: &log::Record) {
 		let mut collector = LOG_COLLECTOR.lock().unwrap();
 		let message = match record.level() {
@@ -53,7 +51,7 @@ impl log::Log for LogListener {
 			message,
 		});
 	}
-	
+
 	fn flush(&self) {}
 }
 

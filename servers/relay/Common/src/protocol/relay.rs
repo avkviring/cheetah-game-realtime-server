@@ -1,6 +1,5 @@
 use std::time::Instant;
 
-use crate::protocol::{DisconnectedStatus, FrameBuilder, FrameBuiltListener, FrameReceivedListener};
 use crate::protocol::commands::input::InCommandsCollector;
 use crate::protocol::commands::output::OutCommandsCollector;
 use crate::protocol::congestion::CongestionControl;
@@ -12,6 +11,7 @@ use crate::protocol::others::rtt::RoundTripTimeImpl;
 use crate::protocol::reliable::ack::AckSender;
 use crate::protocol::reliable::replay_protection::FrameReplayProtection;
 use crate::protocol::reliable::retransmit::RetransmitterImpl;
+use crate::protocol::{DisconnectedStatus, FrameBuilder, FrameBuiltListener, FrameReceivedListener};
 
 ///
 /// Реализация игрового протокола, поверх ненадежного канала доставки данных (например, через UDP)
@@ -37,7 +37,6 @@ pub struct RelayProtocol {
 	pub in_frame_counter: u64,
 }
 
-
 unsafe impl Send for RelayProtocol {}
 
 impl RelayProtocol {
@@ -58,15 +57,15 @@ impl RelayProtocol {
 			in_frame_counter: Default::default(),
 		}
 	}
-	
+
 	///
 	/// Данный метод необходимо периодически вызывать
 	/// для обработки внутренних данных
-	/// 
+	///
 	pub fn cycle(&mut self, now: &Instant) {
 		self.congestion_control.rebalance(now, &self.rtt, &mut self.retransmitter);
 	}
-	
+
 	///
 	/// Обработка входящего фрейма
 	///
@@ -86,7 +85,7 @@ impl RelayProtocol {
 			Err(_) => {}
 		}
 	}
-	
+
 	///
 	/// Создание фрейма для отправки
 	///
@@ -97,66 +96,53 @@ impl RelayProtocol {
 				return Option::Some(frame);
 			}
 		}
-		
-		
+
 		let mut builders: [&mut dyn FrameBuilder; 5] = [
 			&mut self.ack_sender,
 			&mut self.out_commands_collector,
 			&mut self.disconnect_handler,
 			&mut self.rtt,
-			&mut self.keep_alive
+			&mut self.keep_alive,
 		];
 		let contains_data =
-			builders
-				.iter()
-				.any(|h| h.contains_self_data(&now))
-				||
-				self.additional_frame_builders
-					.iter()
-					.any(|h| h.contains_self_data(&now));
-		
+			builders.iter().any(|h| h.contains_self_data(&now)) || self.additional_frame_builders.iter().any(|h| h.contains_self_data(&now));
+
 		if contains_data {
 			let mut frame = Frame::new(self.next_frame_id);
 			self.next_frame_id += 1;
-			builders
-				.iter_mut()
-				.for_each(|h| h.build_frame(&mut frame, now));
-			
-			self.additional_frame_builders
-				.iter_mut()
-				.for_each(|h| h.build_frame(&mut frame, now));
-			
+			builders.iter_mut().for_each(|h| h.build_frame(&mut frame, now));
+
+			self.additional_frame_builders.iter_mut().for_each(|h| h.build_frame(&mut frame, now));
+
 			self.retransmitter.on_frame_built(&frame, now);
 			Option::Some(frame)
 		} else {
 			Option::None
 		}
 	}
-	
+
 	///
 	/// Разорвана ли связь?
 	///
 	pub fn disconnected(&self, now: &Instant) -> bool {
-		self.retransmitter.disconnected(now)
-			|| self.disconnect_watcher.disconnected(now)
-			|| self.disconnect_handler.disconnected(now)
+		self.retransmitter.disconnected(now) || self.disconnect_watcher.disconnected(now) || self.disconnect_handler.disconnected(now)
 	}
-	
+
 	///
 	/// Установлено ли соединения?
 	///
 	pub fn connected(&self, now: &Instant) -> bool {
 		self.in_frame_counter > 0 && !self.disconnected(now)
 	}
-	
+
 	pub fn add_frame_builder(&mut self, builder: Box<dyn FrameBuilder>) {
 		self.additional_frame_builders.push(builder);
 	}
-	
+
 	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<Frame> {
 		let next_frame_id = self.next_frame_id + 1;
 		match self.retransmitter.get_retransmit_frame(&now, next_frame_id) {
-			None => { Option::None }
+			None => Option::None,
 			Some(frame) => {
 				self.next_frame_id = next_frame_id;
 				Option::Some(frame)

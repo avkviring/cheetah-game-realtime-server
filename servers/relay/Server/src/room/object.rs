@@ -14,5 +14,3 @@ pub struct GameObject {
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFields,
 }
-
-

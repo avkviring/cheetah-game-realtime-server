@@ -14,7 +14,7 @@ pub fn bind_to_free_socket() -> Result<(UdpSocket, SocketAddr), ()> {
 			Err(_) => {}
 		}
 	}
-	
+
 	log::error!("[bind_to_free_socket] cannot find free socket");
 	Result::Err(())
 }

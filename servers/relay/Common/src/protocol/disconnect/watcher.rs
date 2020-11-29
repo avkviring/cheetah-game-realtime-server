@@ -1,24 +1,21 @@
 use std::ops::Sub;
 use std::time::{Duration, Instant};
 
-use crate::protocol::{DisconnectedStatus, FrameReceivedListener};
 use crate::protocol::frame::Frame;
+use crate::protocol::{DisconnectedStatus, FrameReceivedListener};
 
 ///
 /// Если за определенное время не было входящих пакетов - считаем что связь разорвана
 ///
 #[derive(Debug)]
 pub struct DisconnectWatcher {
-	pub last_in_frame_time: Instant
+	pub last_in_frame_time: Instant,
 }
-
 
 impl DisconnectWatcher {
 	pub const TIMEOUT: Duration = Duration::from_secs(10);
 	pub fn new(now: &Instant) -> Self {
-		Self {
-			last_in_frame_time: *now
-		}
+		Self { last_in_frame_time: *now }
 	}
 }
 
@@ -38,11 +35,11 @@ impl DisconnectedStatus for DisconnectWatcher {
 mod tests {
 	use std::ops::Add;
 	use std::time::{Duration, Instant};
-	
-	use crate::protocol::{DisconnectedStatus, FrameReceivedListener};
+
 	use crate::protocol::disconnect::watcher::DisconnectWatcher;
 	use crate::protocol::frame::Frame;
-	
+	use crate::protocol::{DisconnectedStatus, FrameReceivedListener};
+
 	#[test]
 	///
 	/// После запуска - канал некоторые время считается открытым
@@ -52,7 +49,7 @@ mod tests {
 		let handler = DisconnectWatcher::new(&now);
 		assert_eq!(handler.disconnected(&now), false);
 	}
-	
+
 	///
 	/// Разрыв связи через timeout после старта, если не было ни одного фрейма
 	///
@@ -60,9 +57,12 @@ mod tests {
 	pub fn should_disconnect_after_timeout() {
 		let now = Instant::now();
 		let handler = DisconnectWatcher::new(&now);
-		assert_eq!(handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT).add(Duration::from_millis(1))), true);
+		assert_eq!(
+			handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT).add(Duration::from_millis(1))),
+			true
+		);
 	}
-	
+
 	///
 	/// Если был пакет - то канал не закрыт определенное время после этого
 	///
@@ -72,9 +72,12 @@ mod tests {
 		let mut handler = DisconnectWatcher::new(&now);
 		let frame = Frame::new(0);
 		handler.on_frame_received(&frame, &now);
-		assert_eq!(handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT - Duration::from_millis(1))), false);
+		assert_eq!(
+			handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT - Duration::from_millis(1))),
+			false
+		);
 	}
-	
+
 	///
 	/// Если был пакет - то канал закрыт после таймаута
 	///
@@ -84,7 +87,9 @@ mod tests {
 		let mut handler = DisconnectWatcher::new(&now);
 		let frame = Frame::new(0);
 		handler.on_frame_received(&frame, &now);
-		assert_eq!(handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT + Duration::from_millis(1))), true);
+		assert_eq!(
+			handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT + Duration::from_millis(1))),
+			true
+		);
 	}
 }
-

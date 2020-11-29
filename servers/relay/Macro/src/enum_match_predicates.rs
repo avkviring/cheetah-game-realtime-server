@@ -1,5 +1,5 @@
-use proc_macro::TokenStream;
 use inflector::Inflector;
+use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 use quote::{quote, ToTokens};
 use syn::{Data, DataEnum};
@@ -20,9 +20,7 @@ pub fn do_enum_match_predicates(input: TokenStream) -> TokenStream {
 		let name_field = Ident::new(&format!("predicate_{}", var_id).to_snake_case(), Span::call_site());
 		let fields = v.fields.clone().into_token_stream();
 		if fields.is_empty() {
-			quote! {
-			
-			}
+			quote! {}
 		} else {
 			let mut f = fields.into_iter().next().unwrap();
 			let f = match f {
@@ -34,21 +32,20 @@ pub fn do_enum_match_predicates(input: TokenStream) -> TokenStream {
 					panic!();
 				}
 			};
-			
+
 			quote! {
-			impl #name {
-				pub fn #name_field(header: &Self)->Option<&#f> {
-				match header {
-						Self::#var_id(value) => Option::Some(&value),
-						_ => Option::None
+				impl #name {
+					pub fn #name_field(header: &Self)->Option<&#f> {
+					match header {
+							Self::#var_id(value) => Option::Some(&value),
+							_ => Option::None
+						}
 					}
 				}
 			}
 		}
-		}
 	});
-	
-	
+
 	let gen = quote! {
 		#(#variant_structs)*
 	};

@@ -21,10 +21,11 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 				}
 				self.increment
 			};
-			
+
 			let access_groups = object.access_groups.clone();
-			room.send_to_group(access_groups, S2CCommand::SetFloat64(
-				SetFloat64Command {
+			room.send_to_group(
+				access_groups,
+				S2CCommand::SetFloat64(SetFloat64Command {
 					object_id: self.object_id,
 					field_id: self.field_id,
 					value,
@@ -33,7 +34,6 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 		}
 	}
 }
-
 
 impl ServerCommandExecutor for SetFloat64Command {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
@@ -51,17 +51,16 @@ impl ServerCommandExecutor for SetFloat64Command {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-	
+
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::Room;
-	
+
 	#[test]
 	fn should_set_float_command() {
 		let mut room = Room::new(0, false);
@@ -72,12 +71,12 @@ mod tests {
 			value: 100.100,
 		};
 		command.clone().execute(&mut room, &12);
-		
+
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.fields.floats.get(&10).unwrap() as u64, 100);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetFloat64(c))) if c==command));
 	}
-	
+
 	#[test]
 	fn should_increment_float_command() {
 		let mut room = Room::new(0, false);
@@ -89,10 +88,10 @@ mod tests {
 		};
 		command.clone().execute(&mut room, &12);
 		command.clone().execute(&mut room, &12);
-		
+
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.fields.floats.get(&10).unwrap() as u64, 200);
-		
+
 		let result = SetFloat64Command {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -101,7 +100,7 @@ mod tests {
 		room.out_commands.pop_back();
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetFloat64(c))) if c==result));
 	}
-	
+
 	#[test]
 	fn should_not_panic_when_set_float_command_not_panic_for_missing_object() {
 		let mut room = Room::new(0, false);
@@ -112,7 +111,7 @@ mod tests {
 		};
 		command.execute(&mut room, &12);
 	}
-	
+
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
 		let mut room = Room::new(0, false);

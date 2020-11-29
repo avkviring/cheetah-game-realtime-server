@@ -20,7 +20,6 @@ pub struct GameObjectFields {
 	pub structures: HashMap<FieldID, HeaplessBuffer, FnvBuildHasher>,
 }
 
-
 impl Clone for GameObjectFields {
 	fn clone(&self) -> Self {
 		let mut result = Self::default();
@@ -37,16 +36,19 @@ impl PartialEq for GameObjectFields {
 	fn eq(&self, other: &Self) -> bool {
 		self.structures.eq(&other.structures)
 			&& self.longs.eq(&other.longs)
-			&& self.floats.iter().find(|(key, value)| {
-			if let Some(other_value) = other.floats.get(key) {
-				(*other_value - **value).abs() > 0.0000001
-			} else {
-				true
-			}
-		}).is_none()
+			&& self
+				.floats
+				.iter()
+				.find(|(key, value)| {
+					if let Some(other_value) = other.floats.get(key) {
+						(*other_value - **value).abs() > 0.0000001
+					} else {
+						true
+					}
+				})
+				.is_none()
 	}
 }
-
 
 impl Default for GameObjectFields {
 	fn default() -> Self {
@@ -61,26 +63,25 @@ impl Default for GameObjectFields {
 #[cfg(test)]
 mod tests {
 	use crate::room::fields::GameObjectFields;
-	
+
 	#[test]
 	pub fn test_clone() {
 		let mut source = GameObjectFields::default();
 		source.longs.insert(1, 100).unwrap();
 		source.floats.insert(2, 200.200).unwrap();
 		source.structures.insert(3, create_structure());
-		
-		
+
 		let dest = source.clone();
 		assert_eq!(source, dest);
 	}
-	
+
 	#[test]
 	pub fn test_eq() {
 		let mut fields_a = GameObjectFields::default();
 		fields_a.longs.insert(1, 100).unwrap();
 		fields_a.floats.insert(2, 200.200).unwrap();
 		fields_a.structures.insert(3, create_structure());
-		
+
 		let mut fields_b = GameObjectFields::default();
 		fields_b.longs.insert(1, 100).unwrap();
 		assert_ne!(fields_a, fields_b);
@@ -89,7 +90,7 @@ mod tests {
 		fields_b.structures.insert(3, create_structure());
 		assert_eq!(fields_a, fields_b);
 	}
-	
+
 	fn create_structure() -> heapless::Vec<u8, heapless::consts::U256> {
 		let mut result = heapless::Vec::new();
 		result.extend_from_slice(vec![1, 2, 3].as_slice()).unwrap();

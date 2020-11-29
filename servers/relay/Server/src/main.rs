@@ -2,12 +2,12 @@ extern crate stderrlog;
 
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::Ordering;
+use std::sync::{Arc, Mutex};
 use stderrlog::Timestamp;
 
-use cheetah_relay::server::Server;
 use cheetah_relay::server::rest::DumpRestServer;
+use cheetah_relay::server::Server;
 
 fn main() {
 	init_logger();
@@ -22,7 +22,6 @@ fn start_server() {
 	DumpRestServer::run(server.clone()).join().unwrap().unwrap();
 	halt_signal.store(true, Ordering::Relaxed);
 }
-
 
 fn init_logger() {
 	stderrlog::new()

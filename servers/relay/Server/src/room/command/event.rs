@@ -20,11 +20,11 @@ mod tests {
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-	
+
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::Room;
 	use crate::room::tests::from_vec;
-	
+	use crate::room::Room;
+
 	#[test]
 	pub fn should_send_event() {
 		let mut room = Room::new(0, false);
@@ -37,7 +37,7 @@ mod tests {
 		command.clone().execute(&mut room, &32);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
-	
+
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
 		let mut room = Room::new(0, false);

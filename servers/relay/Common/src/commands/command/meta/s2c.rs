@@ -12,7 +12,7 @@ pub struct S2CMetaCommandInformation {
 	/// Идентификатор клиента
 	///
 	pub user_public_key: UserPublicKey,
-	
+
 	///
 	/// Условное время создание команды на клиенте
 	///

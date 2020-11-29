@@ -1,8 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::AtomicU64;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -29,13 +29,11 @@ pub struct Registry {
 	pub current_client: Option<u16>,
 }
 
-
 #[derive(Debug)]
 pub enum ClientRequest {
 	SetProtocolTimeOffset(Duration),
 	Close,
 }
-
 
 impl Default for Registry {
 	fn default() -> Self {
@@ -47,24 +45,23 @@ impl Default for Registry {
 	}
 }
 
-
 impl Registry {
-	pub fn create_client(&mut self,
-						 server_address: String,
-						 user_public_key: UserPublicKey,
-						 user_private_key: UserPrivateKey,
-						 start_frame_id: u64,
+	pub fn create_client(
+		&mut self,
+		server_address: String,
+		user_public_key: UserPublicKey,
+		user_private_key: UserPrivateKey,
+		start_frame_id: u64,
 	) -> Result<ClientId, ()> {
 		let start_frame_id = Arc::new(AtomicU64::new(start_frame_id));
 		let out_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let in_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
-		
+
 		let out_commands_cloned = out_commands.clone();
 		let in_commands_cloned = in_commands.clone();
 		let state_cloned = state.clone();
-		
-		
+
 		let (sender, receiver) = std::sync::mpsc::channel();
 		match Client::new(
 			SocketAddr::from_str(server_address.as_str()).unwrap(),
@@ -80,7 +77,7 @@ impl Registry {
 				let handler = thread::spawn(move || {
 					client.run();
 				});
-				
+
 				let controller = ClientController::new(
 					user_public_key,
 					handler,
@@ -93,7 +90,7 @@ impl Registry {
 				self.client_generator_id += 1;
 				let client_id = self.client_generator_id;
 				self.controllers.insert(client_id, controller);
-				
+
 				log::info!("[registry] create client({})", client_id);
 				self.current_client = Some(client_id);
 				Result::Ok(client_id)
@@ -104,27 +101,23 @@ impl Registry {
 			}
 		}
 	}
-	
+
 	pub fn destroy_client(&mut self) -> bool {
 		match self.current_client {
 			None => {
 				log::error!("[registry:destroy] current client not set");
 				false
 			}
-			Some(ref current_client) => {
-				match self.controllers.remove(current_client) {
-					None => {
-						log::error!("[registry:destroy] connection with id {} not found", current_client);
-						false
-					}
-					Some(_) => {
-						log::trace!("[registry:destroy] connection {}", current_client);
-						true
-					}
+			Some(ref current_client) => match self.controllers.remove(current_client) {
+				None => {
+					log::error!("[registry:destroy] connection with id {} not found", current_client);
+					false
 				}
-			}
+				Some(_) => {
+					log::trace!("[registry:destroy] connection {}", current_client);
+					true
+				}
+			},
 		}
 	}
 }
-
-

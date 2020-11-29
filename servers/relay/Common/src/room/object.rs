@@ -11,7 +11,7 @@ pub struct GameObjectId {
 	/// Создатель игрового объекта
 	///
 	pub owner: ObjectOwner,
-	
+
 	///
 	/// Идентификатор игрового объекта в рамках владельца
 	///
@@ -20,10 +20,7 @@ pub struct GameObjectId {
 
 impl GameObjectId {
 	pub fn new(id: u32, owner: ObjectOwner) -> Self {
-		GameObjectId {
-			owner,
-			id,
-		}
+		GameObjectId { owner, id }
 	}
 }
 

@@ -10,9 +10,9 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct IncrementFloat64C2SCommand {
-    pub object_id: GameObjectId,
-    pub field_id: FieldID,
-    pub increment: f64,
+	pub object_id: GameObjectId,
+	pub field_id: FieldID,
+	pub increment: f64,
 }
 
 ///
@@ -21,19 +21,19 @@ pub struct IncrementFloat64C2SCommand {
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetFloat64Command {
-    pub object_id: GameObjectId,
-    pub field_id: FieldID,
-    pub value: f64,
+	pub object_id: GameObjectId,
+	pub field_id: FieldID,
+	pub value: f64,
 }
 
 impl GameObjectCommand for IncrementFloat64C2SCommand {
-    fn get_object_id(&self) -> &GameObjectId {
-        &self.object_id
-    }
+	fn get_object_id(&self) -> &GameObjectId {
+		&self.object_id
+	}
 }
 
 impl GameObjectCommand for SetFloat64Command {
-    fn get_object_id(&self) -> &GameObjectId {
-        &self.object_id
-    }
+	fn get_object_id(&self) -> &GameObjectId {
+		&self.object_id
+	}
 }

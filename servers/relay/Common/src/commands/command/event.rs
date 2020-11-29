@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::commands::command::GameObjectCommand;
 use crate::constants::FieldID;
-use crate::room::object::GameObjectId;
 use crate::room::fields::HeaplessBuffer;
+use crate::room::object::GameObjectId;
 
 ///
 /// Событие по объекту
@@ -14,7 +14,6 @@ pub struct EventCommand {
 	pub field_id: FieldID,
 	pub event: HeaplessBuffer,
 }
-
 
 impl GameObjectCommand for EventCommand {
 	fn get_object_id(&self) -> &GameObjectId {

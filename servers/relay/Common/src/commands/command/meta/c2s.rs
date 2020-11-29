@@ -5,11 +5,8 @@ use serde::{Deserialize, Serialize};
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct C2SMetaCommandInformation {
-    ///
-    /// Условное время создания команды на клиенте
-    ///
-    pub timestamp: u64,
-
+	///
+	/// Условное время создания команды на клиенте
+	///
+	pub timestamp: u64,
 }
-
-

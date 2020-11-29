@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::room::UserPublicKey;
-
+use serde::{Deserialize, Serialize};
 
 ///
 /// владелец - клиент или root
@@ -10,4 +9,3 @@ pub enum ObjectOwner {
 	Root,
 	User(UserPublicKey),
 }
-

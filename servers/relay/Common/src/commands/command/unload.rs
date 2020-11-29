@@ -8,5 +8,5 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeleteGameObjectCommand {
-	pub object_id: GameObjectId
+	pub object_id: GameObjectId,
 }

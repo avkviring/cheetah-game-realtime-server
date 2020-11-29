@@ -15,7 +15,7 @@ pub struct AckFrameHeader {
 	/// id подтверждаемого пакета
 	///
 	pub start_frame_id: FrameId,
-	
+
 	///
 	/// Битовая маска для подтверждения следующих фреймов
 	/// - каждый бит - +1 к [acked_frame_id]
@@ -29,15 +29,14 @@ impl AckFrameHeader {
 	/// Если разница меньше - то структура может сохранить frame_id
 	///
 	pub const CAPACITY: usize = 8 * 8;
-	
+
 	pub fn new(acked_frame_id: FrameId) -> Self {
 		Self {
 			start_frame_id: acked_frame_id,
 			frames: [0; AckFrameHeader::CAPACITY / 8],
 		}
 	}
-	
-	
+
 	///
 	/// Сохранить frame_id
 	/// - false если сохранение фреймы не возможно [AskFrameHeader::CAPACITY]
@@ -50,14 +49,14 @@ impl AckFrameHeader {
 		if offset >= AckFrameHeader::CAPACITY {
 			return false;
 		}
-		
+
 		let byte_offset = offset / 8;
 		let bit_offset = offset - byte_offset * 8;
 		let byte = self.frames[byte_offset];
 		self.frames[byte_offset] = byte + 1.shl(bit_offset) as u8;
 		true
 	}
-	
+
 	pub fn get_frames(&self) -> Vec<u64> {
 		let mut result = Vec::new();
 		result.push(self.start_frame_id);
@@ -69,16 +68,15 @@ impl AckFrameHeader {
 				result.push(self.start_frame_id + i as u64 + 1);
 			}
 		}
-		
+
 		result
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
-	
+
 	#[test]
 	///
 	/// Проверяем сохранение списка frame_id
@@ -90,7 +88,7 @@ mod tests {
 		offset.iter().for_each(|i| {
 			header.store_frame_id(frame_first + i);
 		});
-		
+
 		let frames = header.get_frames();
 		assert_eq!(frames[0], 100);
 		let mut frame_index = 1;
@@ -99,7 +97,7 @@ mod tests {
 			frame_index += 1;
 		});
 	}
-	
+
 	#[test]
 	///
 	/// Проверяем сохранение большего количества фреймов чем емкость хранилища

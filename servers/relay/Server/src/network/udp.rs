@@ -6,8 +6,8 @@ use std::time::Instant;
 use fnv::{FnvBuildHasher, FnvHashMap};
 
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
-use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::protocol::frame::headers::Header;
+use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
 
 use crate::rooms::{OutFrame, Rooms};
@@ -18,13 +18,12 @@ pub struct UDPServer {
 	socket: UdpSocket,
 	halt: bool,
 	tmp_out_frames: VecDeque<OutFrame>,
-	
+
 	///
 	/// Автосоздание пользователей - используется для тестирования
 	///
 	auto_create_user: bool,
 }
-
 
 #[derive(Debug)]
 struct UserSession {
@@ -37,30 +36,31 @@ impl UDPServer {
 	pub fn new(socket: UdpSocket, auto_create_user: bool) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		log::info!("Starting udp server on {:?}", socket);
-		Result::Ok(
-			Self {
-				sessions: FnvHashMap::default(),
-				socket,
-				halt: false,
-				tmp_out_frames: VecDeque::with_capacity(50_000),
-				auto_create_user,
-			})
+		Result::Ok(Self {
+			sessions: FnvHashMap::default(),
+			socket,
+			halt: false,
+			tmp_out_frames: VecDeque::with_capacity(50_000),
+			auto_create_user,
+		})
 	}
-	
+
 	pub fn register_user(&mut self, public_key: UserPublicKey, private_key: UserPrivateKey) {
-		self.sessions.insert(public_key, UserSession {
-			peer_address: Default::default(),
-			private_key,
-			max_receive_frame_id: 0,
-		});
+		self.sessions.insert(
+			public_key,
+			UserSession {
+				peer_address: Default::default(),
+				private_key,
+				max_receive_frame_id: 0,
+			},
+		);
 	}
-	
+
 	pub fn cycle(&mut self, rooms: &mut Rooms, now: &Instant) {
 		self.receive(rooms, now);
 		self.send(rooms, now);
 	}
-	
-	
+
 	fn send(&mut self, rooms: &mut Rooms, now: &Instant) {
 		rooms.collect_out_frames(&mut self.tmp_out_frames, now);
 		let mut buffer = [0; 2048];
@@ -88,33 +88,31 @@ impl UDPServer {
 			}
 		}
 	}
-	
+
 	fn receive(&mut self, rooms: &mut Rooms, now: &Instant) {
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
 			match result {
 				Ok((size, address)) => self.process_in_frame(rooms, &mut buffer, size, address, now),
-				Err(e) => {
-					match e.kind() {
-						ErrorKind::WouldBlock => {
-							return;
-						}
-						_ => {
-							log::error!("[udp] error in socket.recv_from {:?}", e);
-						}
+				Err(e) => match e.kind() {
+					ErrorKind::WouldBlock => {
+						return;
 					}
-				}
+					_ => {
+						log::error!("[udp] error in socket.recv_from {:?}", e);
+					}
+				},
 			}
 		}
 	}
-	
+
 	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; Frame::MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: &Instant) {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_header, headers)) => {
 				let user_public_key_header: Option<UserPublicKey> = headers.first(Header::predicate_user_public_key).cloned();
-				
+
 				match user_public_key_header {
 					None => {
 						log::error!("[udp] user public key not found");
@@ -150,7 +148,7 @@ impl UDPServer {
 			}
 		}
 	}
-	
+
 	fn auto_create_user(&mut self, public_key: &u32) {
 		if !self.auto_create_user {
 			return;
@@ -162,30 +160,35 @@ impl UDPServer {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use std::net::SocketAddr;
 	use std::str::FromStr;
 	use std::time::Instant;
-	
+
 	use cheetah_relay_common::protocol::codec::cipher::Cipher;
-	use cheetah_relay_common::protocol::frame::Frame;
 	use cheetah_relay_common::protocol::frame::headers::Header;
+	use cheetah_relay_common::protocol::frame::Frame;
 	use cheetah_relay_common::udp::bind_to_free_socket;
-	
+
 	use crate::network::udp::UDPServer;
 	use crate::rooms::Rooms;
-	
+
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
 		let mut rooms = Rooms::new(false);
 		let buffer = [0; Frame::MAX_FRAME_SIZE];
 		let usize = 100 as usize;
-		udp_server.process_in_frame(&mut rooms, &buffer, usize, SocketAddr::from_str("127.0.0.1:5002").unwrap(), &Instant::now());
+		udp_server.process_in_frame(
+			&mut rooms,
+			&buffer,
+			usize,
+			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
+			&Instant::now(),
+		);
 	}
-	
+
 	#[test]
 	fn should_not_panic_when_wrong_user() {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
@@ -194,9 +197,15 @@ mod tests {
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::UserPublicKey(0));
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
-		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), &Instant::now());
+		udp_server.process_in_frame(
+			&mut rooms,
+			&buffer,
+			size,
+			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
+			&Instant::now(),
+		);
 	}
-	
+
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
@@ -204,10 +213,15 @@ mod tests {
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
-		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), &Instant::now());
+		udp_server.process_in_frame(
+			&mut rooms,
+			&buffer,
+			size,
+			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
+			&Instant::now(),
+		);
 	}
-	
-	
+
 	///
 	/// Проверяем что адрес пользователя не будет переписан фреймом из прошлого
 	///
@@ -216,28 +230,26 @@ mod tests {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
 		let mut rooms = Rooms::new(false);
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
-		
-		
+
 		let public_key = 0;
 		let private_key = [0; 32];
-		
+
 		udp_server.register_user(public_key, private_key);
-		
+
 		let mut frame = Frame::new(100);
 		frame.headers.add(Header::UserPublicKey(public_key));
 		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
-		
+
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
-		
+
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &Instant::now());
-		
-		
+
 		let mut frame = Frame::new(10);
 		frame.headers.add(Header::UserPublicKey(public_key));
 		let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
-		
+
 		assert_eq!(udp_server.sessions.get(&public_key).unwrap().peer_address.unwrap(), addr_1);
 	}
 }

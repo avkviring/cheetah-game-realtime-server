@@ -10,9 +10,9 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct IncrementLongC2SCommand {
-    pub object_id: GameObjectId,
-    pub field_id: FieldID,
-    pub increment: i64,
+	pub object_id: GameObjectId,
+	pub field_id: FieldID,
+	pub increment: i64,
 }
 
 ///
@@ -21,20 +21,19 @@ pub struct IncrementLongC2SCommand {
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetLongCommand {
-    pub object_id: GameObjectId,
-    pub field_id: FieldID,
-    pub value: i64,
+	pub object_id: GameObjectId,
+	pub field_id: FieldID,
+	pub value: i64,
 }
 
 impl GameObjectCommand for IncrementLongC2SCommand {
-    fn get_object_id(&self) -> &GameObjectId {
-        &self.object_id
-    }
+	fn get_object_id(&self) -> &GameObjectId {
+		&self.object_id
+	}
 }
 
 impl GameObjectCommand for SetLongCommand {
-    fn get_object_id(&self) -> &GameObjectId {
-        &self.object_id
-    }
+	fn get_object_id(&self) -> &GameObjectId {
+		&self.object_id
+	}
 }
-

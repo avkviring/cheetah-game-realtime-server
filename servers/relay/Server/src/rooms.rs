@@ -5,10 +5,9 @@ use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
-
 use cheetah_relay_common::protocol::frame::Frame;
-use cheetah_relay_common::room::{RoomId, UserPublicKey};
 use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::room::{RoomId, UserPublicKey};
 
 use crate::room::Room;
 
@@ -19,7 +18,6 @@ pub struct Rooms {
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	auto_create_user: bool,
 }
-
 
 #[derive(Debug)]
 pub struct OutFrame {
@@ -35,7 +33,7 @@ pub enum RegisterUserError {
 
 #[derive(Debug)]
 pub enum RegisterRoomError {
-	AlreadyRegistered
+	AlreadyRegistered,
 }
 
 impl Rooms {
@@ -47,7 +45,7 @@ impl Rooms {
 			auto_create_user,
 		}
 	}
-	
+
 	pub fn create_room(&mut self, room_id: RoomId) -> Result<(), RegisterRoomError> {
 		if self.room_by_id.contains_key(&room_id) {
 			Result::Err(RegisterRoomError::AlreadyRegistered)
@@ -57,23 +55,23 @@ impl Rooms {
 			Result::Ok(())
 		}
 	}
-	
+
 	pub fn register_user(&mut self, room_id: RoomId, public_key: UserPublicKey, access_group: AccessGroups) -> Result<(), RegisterUserError> {
 		match self.room_by_id.get(&room_id) {
-			None => {
-				Result::Err(RegisterUserError::RoomNotFound)
+			None => Result::Err(RegisterUserError::RoomNotFound),
+			Some(room) => {
+				if !(self.user_to_room.contains_key(&public_key)) {
+					let room = room.clone();
+					room.borrow_mut().register_user(public_key, access_group);
+					self.user_to_room.insert(public_key, room);
+					Result::Ok(())
+				} else {
+					Result::Err(RegisterUserError::AlreadyRegistered)
+				}
 			}
-			Some(room) => if !(self.user_to_room.contains_key(&public_key)) {
-				let room = room.clone();
-				room.borrow_mut().register_user(public_key, access_group);
-				self.user_to_room.insert(public_key, room);
-				Result::Ok(())
-			} else {
-				Result::Err(RegisterUserError::AlreadyRegistered)
-			},
 		}
 	}
-	
+
 	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		self.changed_rooms.iter().for_each(|room_id| {
 			let room = self.room_by_id.get(&room_id).unwrap().clone();
@@ -82,39 +80,41 @@ impl Rooms {
 		});
 		self.changed_rooms.clear();
 	}
-	
+
 	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
 		self.auto_create_user(user_public_key);
-		
-		on_user_room(self, user_public_key, |rooms, room|
-			{
-				room.process_in_frame(user_public_key, frame, now);
-				rooms.changed_rooms.insert(room.id.clone());
-			});
+
+		on_user_room(self, user_public_key, |rooms, room| {
+			room.process_in_frame(user_public_key, frame, now);
+			rooms.changed_rooms.insert(room.id.clone());
+		});
 	}
-	
+
 	fn auto_create_user(&mut self, user_public_key: &u32) {
 		if !self.auto_create_user {
 			return;
 		}
-		
+
 		if self.user_to_room.get(user_public_key).is_none() {
 			if !self.room_by_id.contains_key(&0) {
 				self.create_room(0).unwrap();
 			}
-			
+
 			let room = self.room_by_id.get(&0).unwrap();
 			let room = room.clone();
 			self.user_to_room.insert(user_public_key.clone(), room);
 		}
 	}
-	
+
 	pub fn cycle(&mut self, now: &Instant) {
 		self.room_by_id.values().for_each(|r| r.clone().borrow_mut().cycle(now));
 	}
 }
 
-fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, action: F) where F: FnOnce(&mut Rooms, &mut Room) {
+fn on_user_room<F>(rooms: &mut Rooms, user_public_key: &UserPublicKey, action: F)
+where
+	F: FnOnce(&mut Rooms, &mut Room),
+{
 	match rooms.user_to_room.get(user_public_key) {
 		None => {
 			log::error!("[rooms] user({:?} not found ", user_public_key);

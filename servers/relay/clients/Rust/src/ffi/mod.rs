@@ -9,46 +9,42 @@ use crate::controller::ClientController;
 use crate::ffi::command::create::MAX_SIZE_STRUCT;
 use crate::registry::Registry;
 
-pub mod logs;
-pub mod command;
-pub mod client;
 pub mod channel;
+pub mod client;
+pub mod command;
+pub mod logs;
 
 lazy_static! {
-    static ref REGISTRY: Mutex<Registry> = Mutex::new(Default::default());
+	static ref REGISTRY: Mutex<Registry> = Mutex::new(Default::default());
 }
 
-
-pub fn execute<F, T>(body: F) -> T where F: FnOnce(&mut Registry) -> T
+pub fn execute<F, T>(body: F) -> T
+where
+	F: FnOnce(&mut Registry) -> T,
 {
 	let mut clients = REGISTRY.lock().unwrap();
 	let clients = &mut *clients;
 	body(clients)
 }
 
-pub fn execute_with_client<F, T>(body: F) -> Result<T, ()> where F: FnOnce(&mut ClientController) -> T
+pub fn execute_with_client<F, T>(body: F) -> Result<T, ()>
+where
+	F: FnOnce(&mut ClientController) -> T,
 {
-	execute(|clients| {
-		match clients.current_client {
+	execute(|clients| match clients.current_client {
+		None => {
+			log::error!("current client not set");
+			Result::Err(())
+		}
+		Some(ref client_id) => match clients.controllers.get_mut(client_id) {
 			None => {
-				log::error!("current client not set");
+				log::error!("client not found {:?}", client_id);
 				Result::Err(())
 			}
-			Some(ref client_id) => {
-				match clients.controllers.get_mut(client_id) {
-					None => {
-						log::error!("client not found {:?}", client_id);
-						Result::Err(())
-					}
-					Some(client_api) => {
-						Result::Ok(body(client_api))
-					}
-				}
-			}
-		}
+			Some(client_api) => Result::Ok(body(client_api)),
+		},
 	})
 }
-
 
 #[repr(C)]
 pub struct GameObjectIdFFI {
@@ -58,15 +54,8 @@ pub struct GameObjectIdFFI {
 
 impl From<&GameObjectId> for GameObjectIdFFI {
 	fn from(from: &GameObjectId) -> Self {
-		let owner = if let ObjectOwner::User(public_key) = from.owner {
-			public_key
-		} else {
-			0
-		};
-		Self {
-			id: from.id,
-			owner,
-		}
+		let owner = if let ObjectOwner::User(public_key) = from.owner { public_key } else { 0 };
+		Self { id: from.id, owner }
 	}
 }
 
@@ -78,7 +67,6 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 		}
 	}
 }
-
 
 #[repr(C)]
 pub struct BufferFFI {
@@ -108,9 +96,9 @@ impl From<&HeaplessBuffer> for BufferFFI {
 mod tests {
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-	
+
 	use crate::ffi::GameObjectIdFFI;
-	
+
 	#[test]
 	fn should_convert_object_id() {
 		let object_id = GameObjectId {

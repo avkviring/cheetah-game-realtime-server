@@ -1,10 +1,9 @@
-use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
+use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
-
-use crate::room::Room;
 use crate::room::command::ServerCommandExecutor;
+use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
@@ -16,18 +15,17 @@ impl ServerCommandExecutor for StructureCommand {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::commands::command::structure::StructureCommand;
+	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-	
+
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::Room;
 	use crate::room::tests::from_vec;
-	
+	use crate::room::Room;
+
 	#[test]
 	pub fn should_set_structure() {
 		let mut room = Room::new(0, false);
@@ -37,14 +35,14 @@ mod tests {
 			field_id: 100,
 			structure: from_vec(vec![1, 2, 3, 4, 5]),
 		};
-		
+
 		command.clone().execute(&mut room, &32);
 		let object = room.get_object(&object_id).unwrap();
-		
+
 		assert_eq!(*object.fields.structures.get(&100).unwrap(), command.structure);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStruct(c))) if c==command));
 	}
-	
+
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
 		let mut room = Room::new(0, false);

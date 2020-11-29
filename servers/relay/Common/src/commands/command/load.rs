@@ -3,7 +3,6 @@ use crate::room::fields::GameObjectFields;
 use crate::room::object::GameObjectId;
 use serde::{Deserialize, Serialize};
 
-
 ///
 /// Создание игрового объекта
 /// - направления C->S, S->C

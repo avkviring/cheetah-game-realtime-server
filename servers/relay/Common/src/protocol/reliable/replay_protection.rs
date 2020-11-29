@@ -1,7 +1,7 @@
 use std::time::Instant;
 
-use crate::protocol::{MAX_FRAME_PER_SECONDS, NOT_EXIST_FRAME_ID};
 use crate::protocol::frame::{Frame, FrameId};
+use crate::protocol::{MAX_FRAME_PER_SECONDS, NOT_EXIST_FRAME_ID};
 
 ///
 /// Фильтрация уже принятых фреймов
@@ -16,7 +16,6 @@ pub struct FrameReplayProtection {
 	pub received_frames: [FrameId; FrameReplayProtection::BUFFER_SIZE],
 }
 
-
 impl Default for FrameReplayProtection {
 	fn default() -> Self {
 		Self {
@@ -28,30 +27,30 @@ impl Default for FrameReplayProtection {
 
 impl FrameReplayProtection {
 	pub const BUFFER_SIZE: usize = MAX_FRAME_PER_SECONDS * 120;
-	
+
 	///
 	/// Отметить фрейм как принятый и проверить его статус
 	///
 	pub fn set_and_check(&mut self, frame: &Frame, _: &Instant) -> Result<bool, ()> {
 		let frame_id = frame.get_original_frame_id();
-		
+
 		if frame_id > self.max_frame_id {
 			self.max_frame_id = frame_id;
 		}
-		
+
 		// нет возможности проверить статус
 		if (frame_id + FrameReplayProtection::BUFFER_SIZE as u64) < self.max_frame_id {
 			return Err(());
 		}
-		
+
 		let index = frame_id as usize % FrameReplayProtection::BUFFER_SIZE;
 		let stored_frame_id = self.received_frames[index];
-		
+
 		// такой фрейм уже был
 		if stored_frame_id == frame_id {
 			return Ok(true);
 		}
-		
+
 		// если в ячейке буфера сохранен id более старого фрейма - то перезаписываем его
 		// иначе - в ячейки уже более новый пакет и статус текущего пакета нельзя определить
 		if frame_id > stored_frame_id {
@@ -60,17 +59,16 @@ impl FrameReplayProtection {
 		} else {
 			Err(())
 		}
-		
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use std::time::Instant;
-	
+
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::replay_protection::FrameReplayProtection;
-	
+
 	#[test]
 	fn should_protection_replay() {
 		let mut protection = FrameReplayProtection::default();
@@ -79,7 +77,7 @@ mod tests {
 		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), false);
 		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), true);
 	}
-	
+
 	#[test]
 	fn should_disconnect_when_very_old_frame() {
 		let mut protection = FrameReplayProtection::default();
@@ -89,7 +87,7 @@ mod tests {
 		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), false);
 		assert_eq!(protection.set_and_check(&frame_b, &now).is_err(), true);
 	}
-	
+
 	#[test]
 	fn should_protection_replay_check_all() {
 		let mut protection = FrameReplayProtection::default();
@@ -100,7 +98,7 @@ mod tests {
 			assert_eq!(protection.set_and_check(&frame, &now).unwrap(), true);
 		}
 	}
-	
+
 	#[test]
 	fn should_protection_replay_check_prev_packets() {
 		let mut protection = FrameReplayProtection::default();

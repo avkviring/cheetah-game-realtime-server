@@ -11,12 +11,12 @@ use crate::commands::command::unload::DeleteGameObjectCommand;
 use crate::room::object::GameObjectId;
 
 pub mod event;
-pub mod unload;
 pub mod float;
-pub mod long;
-pub mod structure;
 pub mod load;
+pub mod long;
 pub mod meta;
+pub mod structure;
+pub mod unload;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum C2SCommand {
@@ -56,7 +56,6 @@ pub struct C2SCommandWithMeta {
 	pub meta: C2SMetaCommandInformation,
 	pub command: C2SCommand,
 }
-
 
 ///
 /// Метод получения идентификатора объекта, для команд выполняемых от имени объекта

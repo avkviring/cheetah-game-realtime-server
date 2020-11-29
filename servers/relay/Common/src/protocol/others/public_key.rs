@@ -1,7 +1,7 @@
 use std::time::Instant;
 
-use crate::protocol::frame::Frame;
 use crate::protocol::frame::headers::Header;
+use crate::protocol::frame::Frame;
 use crate::protocol::FrameBuilder;
 use crate::room::UserPublicKey;
 
@@ -11,7 +11,6 @@ use crate::room::UserPublicKey;
 ///
 #[derive(Debug)]
 pub struct UserPublicKeyFrameBuilder(pub UserPublicKey);
-
 
 impl FrameBuilder for UserPublicKeyFrameBuilder {
 	fn contains_self_data(&self, _: &Instant) -> bool {

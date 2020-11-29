@@ -8,4 +8,3 @@ mod enum_match_predicates;
 pub fn enum_match_predicates(input: TokenStream) -> TokenStream {
 	do_enum_match_predicates(input)
 }
-
