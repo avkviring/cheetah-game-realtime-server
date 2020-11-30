@@ -4,7 +4,6 @@ members = [
     "Server",
     "Common",
     "Macro",
-    "Experiments",
     "clients/Rust"
 ]
 
