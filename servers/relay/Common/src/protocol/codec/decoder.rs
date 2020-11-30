@@ -1,15 +1,13 @@
 use std::io::{Cursor, Write};
 
-use heapless::consts::*;
-use heapless::Vec as HeaplessVec;
 use rmp_serde::Serializer;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
-use crate::protocol::frame::{Frame, FrameHeader};
-
+use crate::protocol::codec::serializer::{deserialize, serialize};
 use crate::protocol::frame::headers::Headers;
+use crate::protocol::frame::{Frame, FrameHeader};
 
 #[derive(Debug)]
 pub enum UdpFrameDecodeError {
@@ -24,13 +22,11 @@ pub enum UdpFrameDecodeError {
 
 impl Frame {
 	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameHeader, Headers), UdpFrameDecodeError> {
-		let mut de = rmp_serde::Deserializer::new(cursor);
-		let header: FrameHeader = Deserialize::deserialize(&mut de).map_err(|_| UdpFrameDecodeError::HeaderDeserializeError)?;
+		let header: FrameHeader = deserialize(cursor).map_err(|_| UdpFrameDecodeError::HeaderDeserializeError)?;
 		if header.protocol_version != Frame::PROTOCOL_VERSION {
 			Result::Err(UdpFrameDecodeError::ProtocolVersionMismatch)
 		} else {
-			let additional_headers: Headers =
-				Deserialize::deserialize(&mut de).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
+			let additional_headers: Headers = deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
 			Result::Ok((header, additional_headers))
 		}
 	}
@@ -51,7 +47,7 @@ impl Frame {
 		let nonce = header.frame_id.to_be_bytes() as [u8; 8];
 		let ad = &data[0..header_end as usize];
 
-		let mut vec: HeaplessVec<u8, U1024> = HeaplessVec::new();
+		let mut vec: heapless::Vec<u8, heapless::consts::U1024> = heapless::Vec::new();
 		vec.extend_from_slice(&data[header_end as usize..data.len()]).unwrap();
 
 		cipher.decrypt(&mut vec, ad, nonce).map_err(|_| UdpFrameDecodeError::DecryptedError)?;
@@ -61,8 +57,7 @@ impl Frame {
 		let decompressed_size = packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| UdpFrameDecodeError::DecompressError)?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 
-		let mut de = rmp_serde::Deserializer::new(decompressed_buffer);
-		let commands = Deserialize::deserialize(&mut de).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
+		let commands = deserialize(&mut Cursor::new(decompressed_buffer)).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
 
 		Result::Ok(Frame { header, headers, commands })
 	}
@@ -81,7 +76,7 @@ impl Frame {
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		serialize(&self.commands, &mut commands_cursor);
 
-		let mut vec: HeaplessVec<u8, U1024> = HeaplessVec::new();
+		let mut vec: heapless::Vec<u8, heapless::consts::U1024> = heapless::Vec::new();
 		unsafe {
 			vec.set_len(Frame::MAX_FRAME_SIZE);
 		}
@@ -101,10 +96,6 @@ impl Frame {
 
 		frame_cursor.position() as usize
 	}
-}
-
-fn serialize<T: Serialize>(item: T, out: &mut Cursor<&mut [u8]>) {
-	item.serialize(&mut Serializer::new(out)).unwrap();
 }
 
 #[cfg(test)]
