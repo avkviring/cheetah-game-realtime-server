@@ -43,7 +43,8 @@ namespace CheetahRelay.Tests
             builder.SetAccessGroup(1);
             builder.SetDouble(1, 100.0);
             builder.SetLong(2, 200);
-            builder.SetStructure(3, new CheetahBuffer().Add(123));
+            var cheetahBuffer = new CheetahBuffer().Add(123);
+            builder.SetStructure(3, ref cheetahBuffer);
             var objectId = builder.BuildAndSendToServer();
             Assert.NotNull(objectId);
             Thread.Sleep(100);

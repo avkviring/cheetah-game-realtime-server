@@ -1,6 +1,6 @@
 namespace CheetahRelay
 {
-    public struct CheetahObjectBuilder
+    public class CheetahObjectBuilder
     {
         public ulong accessGroup;
         public ushort template;
@@ -13,7 +13,7 @@ namespace CheetahRelay
             return this;
         }
 
-        public CheetahObjectBuilder SetStructure(ushort fieldId, in CheetahBuffer data)
+        public CheetahObjectBuilder SetStructure(ushort fieldId, ref CheetahBuffer data)
         {
             unsafe
             {
