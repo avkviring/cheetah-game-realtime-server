@@ -130,7 +130,7 @@ impl FrameReceivedListener for AckSender {
 			self.ack_counts[frame_position] = 0;
 
 			self.next_frame_position += 1;
-			if self.next_frame_position > AckSender::BUFFER_SIZE {
+			if self.next_frame_position == AckSender::BUFFER_SIZE {
 				self.next_frame_position = 0;
 			}
 
@@ -158,6 +158,21 @@ mod tests {
 	fn should_ack_not_need_send() {
 		let reliable = AckSender::default();
 		assert_eq!(reliable.contains_self_data(&Instant::now()), false);
+	}
+
+	///
+	/// Проверяем переключение внутреннего буфера
+	///
+	#[test]
+	fn should_work_when_frame_count_more_buffer_size() {
+		let mut reliable = AckSender::default();
+
+		for i in 0..AckSender::BUFFER_SIZE + 10 {
+			let time = Instant::now();
+			let mut frame = Frame::new(i as u64);
+			frame.commands.reliable.push(create_command());
+			reliable.on_frame_received(&frame, &time);
+		}
 	}
 
 	///
