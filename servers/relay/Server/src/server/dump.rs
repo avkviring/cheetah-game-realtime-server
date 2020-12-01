@@ -176,7 +176,7 @@ mod tests {
 			access_groups: Default::default(),
 			fields: Default::default(),
 		};
-		
+
 		object_template.fields.structures.insert(
 			1,
 			rmpv::Value::Map(vec![(
