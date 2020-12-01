@@ -13,6 +13,20 @@ namespace CheetahRelay
         {
             return "RelayObjectId (id=" + id + ", user=" + user + ")";
         }
+
+        public bool Equals(CheetahObjectId other) {
+            return id == other.id && user == other.user;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is CheetahObjectId other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            unchecked {
+                return ((int)id * 397) ^ (int)user;
+            }
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
