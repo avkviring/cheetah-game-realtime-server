@@ -22,12 +22,13 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
+	use crate::room::template::RoomTemplate;
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
 
 	#[test]
 	pub fn should_send_event() {
-		let mut room = Room::new(0, false);
+		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
 		let command = EventCommand {
 			object_id: object_id.clone(),
@@ -40,7 +41,7 @@ mod tests {
 
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
-		let mut room = Room::new(0, false);
+		let mut room = Room::new(RoomTemplate::default());
 		let command = EventCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 100,

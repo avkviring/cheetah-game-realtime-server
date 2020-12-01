@@ -6,11 +6,13 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 use stderrlog::Timestamp;
 
+use cheetah_relay::room::template::{RoomTemplate, UserTemplate};
+use cheetah_relay::room::RoomId;
 use cheetah_relay::server::Server;
 use cheetah_relay_client::ffi::client::do_create_client;
 use cheetah_relay_client::registry::ClientId;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::{RoomId, UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
 use cheetah_relay_common::udp::bind_to_free_socket;
 
 #[derive(Debug)]
@@ -45,8 +47,10 @@ impl Helper {
 		self.room_id_generator += 1;
 		let room_id = self.room_id_generator;
 		let binding = bind_to_free_socket().unwrap();
-		let mut server = Server::new(binding.0, false);
-		server.register_room(room_id).ok().unwrap();
+		let mut server = Server::new(binding.0);
+		let mut template = RoomTemplate::default();
+		template.id = room_id;
+		server.register_room(template).ok().unwrap();
 		(server, binding.1, room_id)
 	}
 
@@ -69,10 +73,13 @@ impl Helper {
 	pub fn setup_server_and_client(&mut self) -> (Server, ClientId) {
 		let user_keys = self.create_user_keys();
 		let (mut server, server_address, room_id) = self.create_server_and_room();
-		server
-			.register_user(room_id, user_keys.public, user_keys.private, AccessGroups(0b111))
-			.ok()
-			.unwrap();
+		let user_template = UserTemplate {
+			public_key: user_keys.public,
+			private_key: user_keys.private,
+			access_groups: AccessGroups(0b111),
+			objects: Default::default(),
+		};
+		server.register_user(room_id, user_template).ok().unwrap();
 		let client = self.create_client(server_address.to_string().as_str(), user_keys);
 		(server, client)
 	}

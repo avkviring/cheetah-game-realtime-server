@@ -8,11 +8,9 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::{RoomId, UserPrivateKey, UserPublicKey};
-
 use crate::network::udp::UDPServer;
-use crate::room::object::GameObject;
+use crate::room::template::{RoomTemplate, UserTemplate};
+use crate::room::RoomId;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
 use crate::server::dump::ServerDump;
 use crate::server::Request::TimeOffset;
@@ -27,8 +25,8 @@ pub struct Server {
 }
 
 enum Request {
-	RegisterRoom(RoomId, Sender<Result<(), RegisterRoomError>>),
-	RegisterUser(RoomId, UserPublicKey, UserPrivateKey, AccessGroups, Sender<Result<(), RegisterUserError>>),
+	RegisterRoom(RoomTemplate, Sender<Result<(), RegisterRoomError>>),
+	RegisterUser(RoomId, UserTemplate, Sender<Result<(), RegisterUserError>>),
 	///
 	/// Смещение текущего времени для тестирования
 	///
@@ -38,11 +36,6 @@ enum Request {
 	/// Скопировать состояние сервера для отладки
 	///
 	Dump(Sender<ServerDump>),
-
-	///
-	/// Создать игровой объект в комнате
-	///
-	CreateObject(RoomId, GameObject),
 }
 
 pub enum RegisterRoomRequestError {
@@ -62,12 +55,12 @@ impl Drop for Server {
 }
 
 impl Server {
-	pub fn new(socket: UdpSocket, auto_create_user: bool) -> Self {
+	pub fn new(socket: UdpSocket) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
 		let handler = thread::spawn(move || {
-			ServerThread::new(socket, receiver, halt_signal, auto_create_user).run();
+			ServerThread::new(socket, receiver, halt_signal).run();
 		});
 		Self {
 			handler: Option::Some(handler),
@@ -80,9 +73,10 @@ impl Server {
 		self.halt_signal.clone()
 	}
 
-	pub fn register_room(&mut self, room_id: RoomId) -> Result<(), RegisterRoomRequestError> {
+	pub fn register_room(&mut self, template: RoomTemplate) -> Result<(), RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(Request::RegisterRoom(room_id, sender)).unwrap();
+		let room_id = template.id;
+		self.sender.send(Request::RegisterRoom(template, sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => match r {
 				Ok(_) => {
@@ -90,41 +84,43 @@ impl Server {
 					Result::Ok(())
 				}
 				Err(e) => {
-					log::error!("[server] fail create room({:?})", e);
+					log::error!("[server] fail create room({:?})", room_id);
 					Result::Err(RegisterRoomRequestError::Error(e))
 				}
 			},
 			Err(e) => {
-				log::error!("[server] fail create room({:?})", e);
+				log::error!("[server] fail create room({:?})", room_id);
 				Result::Err(RegisterRoomRequestError::ChannelError(e))
 			}
 		}
 	}
 
-	pub fn register_user(
-		&mut self,
-		room_id: RoomId,
-		public_key: UserPublicKey,
-		private_key: UserPrivateKey,
-		access_groups: AccessGroups,
-	) -> Result<(), RegisterUserRequestError> {
+	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<(), RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(Request::RegisterUser(room_id, public_key, private_key, access_groups, sender))
-			.unwrap();
+		self.sender.send(Request::RegisterUser(room_id, template.clone(), sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => match r {
 				Ok(_) => {
-					log::info!("[server] create user({:?}) in room ({:?})", public_key, room_id);
+					log::info!("[server] create user({:?}) in room ({:?})", template.public_key, room_id);
 					Result::Ok(())
 				}
 				Err(e) => {
-					log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", public_key, room_id, e);
+					log::error!(
+						"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
+						template.public_key,
+						room_id,
+						e
+					);
 					Result::Err(RegisterUserRequestError::Error(e))
 				}
 			},
 			Err(e) => {
-				log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", public_key, room_id, e);
+				log::error!(
+					"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
+					template.public_key,
+					room_id,
+					e
+				);
 				Result::Err(RegisterUserRequestError::ChannelError(e))
 			}
 		}
@@ -143,10 +139,6 @@ impl Server {
 		self.sender.send(Request::Dump(sender)).unwrap();
 		receiver.recv().map_err(|_| ())
 	}
-
-	pub fn create_object(&self, room: RoomId, object: GameObject) -> Result<(), ()> {
-		self.sender.send(Request::CreateObject(room, object)).map_err(|_| ())
-	}
 }
 
 struct ServerThread {
@@ -160,10 +152,10 @@ struct ServerThread {
 }
 
 impl ServerThread {
-	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>, auto_create_user: bool) -> Self {
+	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
-			udp_server: UDPServer::new(socket, auto_create_user).unwrap(),
-			rooms: Rooms::new(auto_create_user),
+			udp_server: UDPServer::new(socket).unwrap(),
+			rooms: Rooms::default(),
 			receiver,
 			max_duration: 0,
 			avg_duration: 0,
@@ -188,15 +180,24 @@ impl ServerThread {
 	fn do_request(&mut self) {
 		while let Ok(request) = self.receiver.try_recv() {
 			match request {
-				Request::RegisterRoom(room_id, sender) => match sender.send(self.rooms.create_room(room_id)) {
-					Ok(_) => {}
-					Err(e) => {
-						log::error!("[Request::RegisterRoom] error send response {:?}", e)
+				Request::RegisterRoom(template, sender) => {
+					let result = self.rooms.create_room(template.clone());
+					template
+						.users
+						.iter()
+						.for_each(|config| self.udp_server.register_user(config.public_key.clone(), config.private_key.clone()));
+
+					match sender.send(result) {
+						Ok(_) => {}
+						Err(e) => {
+							log::error!("[Request::RegisterRoom] error send response {:?}", e)
+						}
 					}
-				},
-				Request::RegisterUser(room_id, public_key, private_key, access_group, sender) => {
-					self.udp_server.register_user(public_key, private_key);
-					match sender.send(self.rooms.register_user(room_id, public_key, access_group)) {
+				}
+				Request::RegisterUser(room_id, config, sender) => {
+					self.udp_server.register_user(config.public_key.clone(), config.private_key.clone());
+					let register_user_result = self.rooms.register_user(room_id, config);
+					match sender.send(register_user_result) {
 						Ok(_) => {}
 						Err(e) => {
 							log::error!("[Request::RegisterUser] error send response {:?}", e)
@@ -208,10 +209,6 @@ impl ServerThread {
 				}
 				Request::Dump(sender) => {
 					sender.send(ServerDump::from(&*self)).unwrap();
-				}
-				Request::CreateObject(room_id, object) => {
-					let room = self.rooms.room_by_id.get_mut(&room_id).unwrap();
-					room.borrow_mut().objects.insert(object.id.clone(), object);
 				}
 			}
 		}

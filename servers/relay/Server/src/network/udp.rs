@@ -18,11 +18,6 @@ pub struct UDPServer {
 	socket: UdpSocket,
 	halt: bool,
 	tmp_out_frames: VecDeque<OutFrame>,
-
-	///
-	/// Автосоздание пользователей - используется для тестирования
-	///
-	auto_create_user: bool,
 }
 
 #[derive(Debug)]
@@ -33,7 +28,7 @@ struct UserSession {
 }
 
 impl UDPServer {
-	pub fn new(socket: UdpSocket, auto_create_user: bool) -> Result<Self, Error> {
+	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		log::info!("Starting udp server on {:?}", socket);
 		Result::Ok(Self {
@@ -41,7 +36,6 @@ impl UDPServer {
 			socket,
 			halt: false,
 			tmp_out_frames: VecDeque::with_capacity(50_000),
-			auto_create_user,
 		})
 	}
 
@@ -117,45 +111,32 @@ impl UDPServer {
 					None => {
 						log::error!("[udp] user public key not found");
 					}
-					Some(public_key) => {
-						self.auto_create_user(&public_key);
-						match self.sessions.get_mut(&public_key) {
-							None => {
-								log::error!("[udp] user session not found for key {:?}", public_key);
-							}
-							Some(session) => {
-								let private_key = &session.private_key;
-								match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
-									Ok(frame) => {
-										if frame.header.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
-											session.peer_address.replace(address);
-											session.max_receive_frame_id = frame.header.frame_id;
-										}
-										log::trace!("[udp] user({:?}) -> server {:?}", public_key, frame);
-										rooms.on_frame_received(&public_key, frame, now);
+					Some(public_key) => match self.sessions.get_mut(&public_key) {
+						None => {
+							log::error!("[udp] user session not found for key {:?}", public_key);
+						}
+						Some(session) => {
+							let private_key = &session.private_key;
+							match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
+								Ok(frame) => {
+									if frame.header.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
+										session.peer_address.replace(address);
+										session.max_receive_frame_id = frame.header.frame_id;
 									}
-									Err(e) => {
-										log::error!("[udp] error decode frame {:?}", e)
-									}
+									log::trace!("[udp] user({:?}) -> server {:?}", public_key, frame);
+									rooms.on_frame_received(&public_key, frame, now);
+								}
+								Err(e) => {
+									log::error!("[udp] error decode frame {:?}", e)
 								}
 							}
 						}
-					}
+					},
 				}
 			}
 			Err(e) => {
 				log::error!("decode headers error {:?}", e);
 			}
-		}
-	}
-
-	fn auto_create_user(&mut self, public_key: &u32) {
-		if !self.auto_create_user {
-			return;
-		}
-		if self.sessions.get_mut(&public_key).is_none() {
-			let private_key = [5; 32];
-			self.register_user(public_key.clone(), private_key);
 		}
 	}
 }
@@ -176,8 +157,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
-		let mut rooms = Rooms::new(false);
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::default();
 		let buffer = [0; Frame::MAX_FRAME_SIZE];
 		let usize = 100 as usize;
 		udp_server.process_in_frame(
@@ -191,8 +172,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_wrong_user() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
-		let mut rooms = Rooms::new(false);
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::UserPublicKey(0));
@@ -208,8 +189,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
-		let mut rooms = Rooms::new(false);
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
@@ -227,8 +208,8 @@ mod tests {
 	///
 	#[test]
 	fn should_keep_address_from_last_frame() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0, false).unwrap();
-		let mut rooms = Rooms::new(false);
+		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 
 		let public_key = 0;

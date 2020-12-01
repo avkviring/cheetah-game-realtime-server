@@ -16,7 +16,7 @@ fn main() {
 
 fn start_server() {
 	let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:5000").unwrap()).unwrap();
-	let server = Server::new(socket, true);
+	let server = Server::new(socket);
 	let halt_signal = server.get_halt_signal().clone();
 	let server = Arc::new(Mutex::new(server));
 	DumpRestServer::run(server.clone()).join().unwrap().unwrap();

@@ -13,7 +13,7 @@ pub fn attach_to_room(room: &mut Room, user_public_key: &UserPublicKey) {
 		Some(user) => {
 			user.attach_to_room();
 
-			let access_group = user.access_groups;
+			let access_group = user.template.access_groups;
 			room.process_objects(&mut |o| {
 				if o.access_groups.contains_any(&access_group) {
 					out.push(CreateGameObjectCommand {
@@ -38,18 +38,20 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::load_room::attach_to_room;
+	use crate::room::template::RoomTemplate;
 	use crate::room::Room;
 
 	#[test]
 	pub fn test() {
-		let mut room = Room::new(0, false);
+		let mut config = RoomTemplate::default();
 		let groups_a = AccessGroups(0b100);
-		let user_a = room.create_user(groups_a);
+		let user_a = config.create_user(1, groups_a);
+		let groups_b = AccessGroups(0b10);
+		config.create_user(2, groups_b);
+		let mut room = Room::new(config);
+
 		let object_a_1 = room.create_object_with_access_groups(groups_a).id.clone();
 		let object_a_2 = room.create_object_with_access_groups(groups_a).id.clone();
-
-		let groups_b = AccessGroups(0b10);
-		room.create_user(groups_b);
 		room.create_object_with_access_groups(groups_b);
 		room.create_object_with_access_groups(groups_b);
 

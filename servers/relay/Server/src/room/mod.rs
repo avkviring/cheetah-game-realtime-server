@@ -15,14 +15,18 @@ use cheetah_relay_common::protocol::relay::RelayProtocol;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::{RoomId, UserPublicKey};
+use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::execute;
 use crate::room::object::GameObject;
+use crate::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
 use crate::rooms::OutFrame;
 
 pub mod command;
 pub mod object;
+pub mod template;
+
+pub type RoomId = u64;
 
 #[derive(Debug)]
 pub struct Room {
@@ -32,11 +36,8 @@ pub struct Room {
 	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserPublicKey>,
-	auto_create_user: bool,
 	#[cfg(test)]
 	object_id_generator: u32,
-	#[cfg(test)]
-	user_public_key_generator: u32,
 	#[cfg(test)]
 	pub out_commands: VecDeque<(AccessGroups, S2CCommand)>,
 	#[cfg(test)]
@@ -45,10 +46,9 @@ pub struct Room {
 
 #[derive(Debug)]
 pub struct User {
-	pub public_key: UserPublicKey,
-	pub access_groups: AccessGroups,
 	protocol: Option<RelayProtocol>,
 	pub attached: bool,
+	pub template: UserTemplate,
 }
 
 impl User {
@@ -58,28 +58,32 @@ impl User {
 }
 
 impl Room {
-	pub fn new(id: RoomId, auto_create_user: bool) -> Self {
-		Room {
-			id,
+	pub fn new(template: RoomTemplate) -> Self {
+		let mut room = Room {
+			id: template.id,
 			users: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
 			current_meta: Default::default(),
 			current_user: Default::default(),
-			auto_create_user,
 			#[cfg(test)]
 			object_id_generator: 0,
-			#[cfg(test)]
-			user_public_key_generator: 0,
 			#[cfg(test)]
 			out_commands: Default::default(),
 			#[cfg(test)]
 			out_commands_by_users: Default::default(),
-		}
-	}
+		};
 
-	fn get_id(&self) -> RoomId {
-		self.id
+		template.objects.into_iter().for_each(|object| {
+			let game_object: GameObject = object.to_root_game_object();
+			room.insert_object(game_object);
+		});
+
+		template.users.into_iter().for_each(|config| {
+			room.register_user(config);
+		});
+
+		room
 	}
 
 	pub fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommand) {
@@ -99,16 +103,16 @@ impl Room {
 			command: command.clone(),
 		});
 
-		let room_id = self.id.clone();
+		let room_id = self.id;
 		self.users
 			.values_mut()
-			.filter(|user| user.public_key != *current_user_public_key)
+			.filter(|user| user.template.public_key != *current_user_public_key)
 			.filter(|user| user.attached)
 			.filter(|user| user.protocol.is_some())
-			.filter(|user| user.access_groups.contains_any(&access_groups))
+			.filter(|user| user.template.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
 				let protocol = user.protocol.as_mut().unwrap();
-				log::info!("[room({:?})] s -> u({:?}) {:?}", room_id, user.public_key, command);
+				log::info!("[room({:?})] s -> u({:?}) {:?}", room_id, user.template.public_key, command);
 				protocol
 					.out_commands_collector
 					.add_command(channel_type.clone(), application_command.clone())
@@ -129,7 +133,7 @@ impl Room {
 			Some(user) => {
 				if let Some(ref mut protocol) = user.protocol {
 					if user.attached {
-						log::info!("[room({:?})] s -> u({:?}) {:?}", self.id, user.public_key, command);
+						log::info!("[room({:?})] s -> u({:?}) {:?}", self.id, user.template.public_key, command);
 						let meta = self.current_meta.as_ref().unwrap();
 						let channel = self.current_channel.as_ref().unwrap();
 						let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
@@ -157,24 +161,29 @@ impl Room {
 	}
 
 	pub fn process_in_frame(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
-		self.auto_create_user(&user_public_key);
-
 		let user = self.users.get_mut(&user_public_key);
-
 		let mut commands = Vec::new();
 		match user {
 			None => {
 				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_public_key);
 			}
 			Some(user) => {
+				let mut new_user = false;
 				let protocol = &mut user.protocol;
 				if protocol.is_none() {
 					protocol.replace(RelayProtocol::new(now));
+					new_user = true;
 				}
 				let protocol = protocol.as_mut().unwrap();
 				protocol.on_frame_received(frame, now);
 				while let Some(application_command) = protocol.in_commands_collector.get_commands().pop_back() {
 					commands.push(application_command);
+				}
+
+				if new_user {
+					let public_key = user.template.public_key.clone();
+					let template_objects = user.template.objects.clone();
+					self.create_user_object(public_key, template_objects);
 				}
 			}
 		}
@@ -194,23 +203,13 @@ impl Room {
 		}
 	}
 
-	fn auto_create_user(&mut self, user_public_key: &UserPublicKey) {
-		if !self.auto_create_user {
-			return;
-		}
-		if !self.users.contains_key(&user_public_key) {
-			self.register_user(user_public_key.clone(), AccessGroups(0b111111));
-		}
-	}
-
-	pub fn register_user(&mut self, user_public_key: UserPublicKey, access_groups: AccessGroups) {
+	pub fn register_user(&mut self, template: UserTemplate) {
 		let user = User {
-			public_key: user_public_key,
-			access_groups,
 			protocol: None,
 			attached: false,
+			template,
 		};
-		self.users.insert(user_public_key, user);
+		self.users.insert(user.template.public_key, user);
 	}
 
 	pub fn get_user(&self, user_public_key: &UserPublicKey) -> Option<&User> {
@@ -233,7 +232,7 @@ impl Room {
 				let mut objects = Vec::new();
 				self.process_objects(&mut |o| {
 					if let ObjectOwner::User(owner) = o.id.owner {
-						if owner == user.public_key {
+						if owner == user.template.public_key {
 							objects.push((o.id.clone(), o.access_groups.clone()));
 						}
 					}
@@ -282,7 +281,7 @@ impl Room {
 		self.users.values_mut().for_each(|u| {
 			if let Some(ref mut protocol) = u.protocol {
 				if protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
-					disconnected_user[disconnected_users_count] = u.public_key.clone();
+					disconnected_user[disconnected_users_count] = u.template.public_key.clone();
 					disconnected_users_count += 1;
 				}
 			}
@@ -292,26 +291,29 @@ impl Room {
 			self.disconnect_user(&disconnected_user[i]);
 		}
 	}
+	fn create_user_object(&mut self, public_key: UserPublicKey, objects: Vec<GameObjectTemplate>) {
+		objects.iter().for_each(|object| {
+			self.insert_object(object.to_user_game_object(public_key));
+		});
+	}
 }
 
 #[cfg(test)]
 mod tests {
+	use std::time::Instant;
+
 	use cheetah_relay_common::commands::command::S2CCommand;
+	use cheetah_relay_common::protocol::frame::Frame;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
 	use cheetah_relay_common::room::UserPublicKey;
 
 	use crate::room::object::GameObject;
+	use crate::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
 	impl Room {
-		pub fn create_user(&mut self, access_groups: AccessGroups) -> UserPublicKey {
-			self.user_public_key_generator += 1;
-			self.register_user(self.user_public_key_generator, access_groups);
-			self.user_public_key_generator
-		}
-
 		pub fn create_object(&mut self, owner: &UserPublicKey) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
@@ -334,13 +336,13 @@ mod tests {
 
 	#[test]
 	fn should_remove_objects_when_disconnect() {
-		let mut room = Room::new(0, false);
+		let mut config = RoomTemplate::default();
+		let user_a = config.create_user(1, AccessGroups(0b111));
+		let user_b = config.create_user(2, AccessGroups(0b111));
 
-		let user_a = room.create_user(AccessGroups(0b111));
+		let mut room = Room::new(config);
 		let object_a_1 = room.create_object(&user_a).id.clone();
 		let object_a_2 = room.create_object(&user_a).id.clone();
-
-		let user_b = room.create_user(AccessGroups(0b111));
 		let object_b_1 = room.create_object(&user_b).id.clone();
 		let object_b_2 = room.create_object(&user_b).id.clone();
 
@@ -356,6 +358,45 @@ mod tests {
 
 		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1));
 		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2));
+	}
+
+	#[test]
+	fn should_create_object_from_config() {
+		let mut template = RoomTemplate::default();
+		let object_template = GameObjectTemplate {
+			id: 155,
+			template: 5,
+			access_groups: Default::default(),
+			fields: Default::default(),
+		};
+		template.objects.push(object_template.clone());
+
+		let room = Room::new(template);
+		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::Root)));
+	}
+
+	#[test]
+	fn should_create_object_from_config_for_user() {
+		let mut config = RoomTemplate::default();
+		let object_template = GameObjectTemplate {
+			id: 155,
+			template: 5,
+			access_groups: Default::default(),
+			fields: Default::default(),
+		};
+		let user_template = UserTemplate {
+			public_key: 100,
+			private_key: Default::default(),
+			access_groups: AccessGroups(55),
+			objects: vec![object_template.clone()],
+		};
+		config.users.push(user_template.clone());
+
+		let mut room = Room::new(config);
+		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
+		assert!(room
+			.objects
+			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_template.public_key))));
 	}
 
 	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, heapless::consts::U256> {

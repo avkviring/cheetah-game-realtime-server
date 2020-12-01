@@ -19,11 +19,11 @@ pub trait ServerCommandExecutor {
 }
 
 pub fn trace_c2s_command(command: &str, room: &Room, user_public_key: &UserPublicKey, message: String) {
-	log::trace!("C2S {:<10} : room {} : client {} : {}", command, room.get_id(), user_public_key, message);
+	log::trace!("C2S {:<10} : room {} : client {} : {}", command, room.id, user_public_key, message);
 }
 
 pub fn error_c2s_command(command: &str, room: &Room, user_public_key: &UserPublicKey, message: String) {
-	log::error!("C2S {:<10} : room {} : client {} : {}", command, room.get_id(), user_public_key, message);
+	log::error!("C2S {:<10} : room {} : client {} : {}", command, room.id, user_public_key, message);
 }
 
 pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPublicKey) {

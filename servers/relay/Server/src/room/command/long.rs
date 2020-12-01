@@ -66,11 +66,12 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
+	use crate::room::template::RoomTemplate;
 	use crate::room::Room;
 
 	#[test]
 	fn should_set_long_command() {
-		let mut room = Room::new(0, false);
+		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
@@ -86,7 +87,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_long_command() {
-		let mut room = Room::new(0, false);
+		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
@@ -110,7 +111,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_set_long_command_not_panic_for_missing_object() {
-		let mut room = Room::new(0, false);
+		let mut room = Room::new(RoomTemplate::default());
 		let command = SetLongCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
@@ -121,7 +122,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let mut room = Room::new(0, false);
+		let mut room = Room::new(RoomTemplate::default());
 		let command = IncrementLongC2SCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
@@ -132,7 +133,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_if_overflow() {
-		let mut room = Room::new(0, false);
+		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),

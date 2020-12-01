@@ -10,18 +10,18 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		let user = room.get_user(user_public_key).unwrap();
 		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
-			if object_id_user != user.public_key {
+			if object_id_user != user.template.public_key {
 				error_c2s_command(
 					"DeleteGameObjectCommand",
 					room,
-					&user.public_key,
+					&user.template.public_key,
 					format!("User not owner for game object {:?} for user {:?}", self.object_id, user),
 				);
 				return;
 			}
 		}
 
-		let user_public_key = user.public_key.clone();
+		let user_public_key = user.template.public_key.clone();
 		if let Some(object) = room.delete_object(&self.object_id) {
 			let access_groups = object.access_groups;
 			room.send_to_group(access_groups, S2CCommand::Delete(self));
@@ -45,12 +45,15 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
+	use crate::room::template::RoomTemplate;
 	use crate::room::Room;
 
 	#[test]
 	fn should_delete() {
-		let mut room = Room::new(0, false);
-		let user_public_key = room.create_user(AccessGroups(55));
+		let mut config = RoomTemplate::default();
+		let user_public_key = config.create_user(1, AccessGroups(0b11));
+		let mut room = Room::new(config);
+
 		let object_id = room.create_object(&user_public_key).id.clone();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
@@ -64,8 +67,10 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_missing_object() {
-		let mut room = Room::new(0, false);
-		let user_public_key = room.create_user(AccessGroups(55));
+		let mut config = RoomTemplate::default();
+		let user_public_key = config.create_user(1, AccessGroups(0b11));
+		let mut room = Room::new(config);
+
 		let object_id = GameObjectId::new(100, ObjectOwner::User(user_public_key));
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
@@ -75,9 +80,11 @@ mod tests {
 
 	#[test]
 	fn should_not_delete_if_not_owner() {
-		let mut room = Room::new(0, false);
-		let user_a = room.create_user(AccessGroups(55));
-		let user_b = room.create_user(AccessGroups(55));
+		let mut config = RoomTemplate::default();
+		let user_a = config.create_user(1, AccessGroups(55));
+		let user_b = config.create_user(2, AccessGroups(55));
+		let mut room = Room::new(config);
+
 		let object_id = room.create_object(&user_a).id.clone();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),

@@ -7,10 +7,10 @@ use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::{GameObjectFields, HeapLessFloatMap, HeaplessBuffer, HeaplessLongMap};
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::{RoomId, UserPublicKey};
+use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::object::GameObject;
-use crate::room::{Room, User};
+use crate::room::{Room, RoomId, User};
 use crate::rooms::Rooms;
 use crate::server::ServerThread;
 
@@ -134,8 +134,8 @@ fn buffer_to_value(source: &HeaplessBuffer) -> BinaryDump {
 impl From<&User> for UserDump {
 	fn from(user: &User) -> Self {
 		Self {
-			public_key: user.public_key,
-			access_groups: user.access_groups,
+			public_key: user.template.public_key,
+			access_groups: user.template.access_groups,
 			attached: user.attached,
 		}
 	}
@@ -156,10 +156,9 @@ impl ServerDump {
 mod tests {
 	use serde::{Deserialize, Serialize};
 
-	use cheetah_relay_common::room::fields::HeaplessBuffer;
 	use cheetah_relay_common::udp::bind_to_free_socket;
 
-	use crate::room::object::GameObject;
+	use crate::room::template::{GameObjectTemplate, RoomTemplate};
 	use crate::server::Server;
 
 	#[derive(Serialize, Deserialize)]
@@ -170,24 +169,31 @@ mod tests {
 
 	#[test]
 	fn should_dump() {
-		let mut server = Server::new(bind_to_free_socket().unwrap().0, false);
-		server.register_room(1).ok().unwrap();
-		let mut object = GameObject {
-			id: Default::default(),
+		let mut server = Server::new(bind_to_free_socket().unwrap().0);
+		let mut object_template = GameObjectTemplate {
+			id: 0,
 			template: 0,
 			access_groups: Default::default(),
 			fields: Default::default(),
 		};
+		
+		object_template.fields.structures.insert(
+			1,
+			rmpv::Value::Map(vec![(
+				rmpv::Value::String(rmpv::Utf8String::from("x")),
+				rmpv::Value::Integer(rmpv::Integer::from(200)),
+			)]),
+		);
 
-		let mut data: HeaplessBuffer = Default::default();
-		let msg_pack_data = rmp_serde::to_vec_named(&TestStruct { size: 100, x: 200 }).unwrap();
-		for x in msg_pack_data {
-			data.push(x).unwrap();
-		}
+		server
+			.register_room(RoomTemplate {
+				id: 1,
+				users: vec![],
+				objects: vec![object_template],
+			})
+			.ok()
+			.unwrap();
 
-		object.fields.structures.insert(1, data);
-
-		server.create_object(1, object).unwrap();
 		let result = server.dump();
 		assert!(result.is_ok());
 
@@ -211,7 +217,6 @@ mod tests {
               "structures": {
                 "1": {
                   "MessagePack": {
-                    "size": 100,
                     "x": 200
                   }
                 }
