@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test::Server" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+  <configuration default="false" name="Run server for Unity tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="channel" value="DEFAULT" />
-    <option name="command" value="test --package cheetah_relay -- --exact" />
-    <option name="allFeatures" value="true" />
-    <option name="emulateTerminal" value="true" />
+    <option name="command" value="run -- --room config/room-for-unity-test.yml" />
+    <option name="allFeatures" value="false" />
+    <option name="emulateTerminal" value="false" />
     <option name="backtrace" value="SHORT" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$/Server" />
     <envs />
