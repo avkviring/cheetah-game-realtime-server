@@ -74,7 +74,7 @@ impl Room {
 			out_commands_by_users: Default::default(),
 		};
 
-		template.objects.into_iter().for_each(|object| {
+		template.objects.unwrap_or_default().into_iter().for_each(|object| {
 			let game_object: GameObject = object.to_root_game_object();
 			room.insert_object(game_object);
 		});
@@ -183,7 +183,7 @@ impl Room {
 				if new_user {
 					let public_key = user.template.public_key.clone();
 					let template_objects = user.template.objects.clone();
-					self.create_user_object(public_key, template_objects);
+					self.create_user_object(public_key, template_objects.unwrap_or_default());
 				}
 			}
 		}

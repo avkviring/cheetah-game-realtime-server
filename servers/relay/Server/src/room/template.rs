@@ -20,7 +20,7 @@ use crate::room::RoomId;
 pub struct RoomTemplate {
 	pub id: RoomId,
 	pub users: Vec<UserTemplate>,
-	pub objects: Vec<GameObjectTemplate>,
+	pub objects: Option<Vec<GameObjectTemplate>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -28,7 +28,7 @@ pub struct UserTemplate {
 	pub public_key: UserPublicKey,
 	pub private_key: UserPrivateKey,
 	pub access_groups: AccessGroups,
-	pub objects: Vec<GameObjectTemplate>,
+	pub objects: Option<Vec<GameObjectTemplate>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -158,14 +158,14 @@ mod tests {
 				public_key: 54897,
 				private_key: [5; 32],
 				access_groups: AccessGroups(0b1111),
-				objects: vec![GameObjectTemplate {
+				objects: Option::Some(vec![GameObjectTemplate {
 					id: 100,
 					template: 0b100,
 					access_groups: AccessGroups(0b1111),
 					fields,
-				}],
+				}]),
 			}],
-			objects: vec![GameObjectTemplate {
+			objects: Option::Some(vec![GameObjectTemplate {
 				id: 5,
 				template: 5,
 				access_groups: Default::default(),
@@ -174,7 +174,7 @@ mod tests {
 					floats: Default::default(),
 					structures: Default::default(),
 				},
-			}],
+			}]),
 		};
 		println!("{:}", serde_yaml::to_string(&config).unwrap());
 	}
