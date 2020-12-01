@@ -1,3 +1,5 @@
+using System;
+
 namespace CheetahRelay
 {
     public class CheetahObjectBuilder
@@ -66,9 +68,11 @@ namespace CheetahRelay
             return this;
         }
 
-        public CheetahObjectId? BuildAndSendToServer()
+        public CheetahObjectId BuildAndSendToServer()
         {
-            CheetahObject.Create(template, accessGroup, ref fields, out var objectId);
+            if (!CheetahObject.Create(template, accessGroup, ref fields, out var objectId)) {
+                throw new Exception("Cannot create object");
+            }
             return objectId;
         }
     }
