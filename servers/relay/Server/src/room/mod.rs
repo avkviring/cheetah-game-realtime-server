@@ -369,7 +369,7 @@ mod tests {
 			access_groups: Default::default(),
 			fields: Default::default(),
 		};
-		template.objects.push(object_template.clone());
+		template.objects = Option::Some(vec![object_template.clone()]);
 
 		let room = Room::new(template);
 		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::Root)));
@@ -388,7 +388,7 @@ mod tests {
 			public_key: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
-			objects: vec![object_template.clone()],
+			objects: Option::Some(vec![object_template.clone()]),
 		};
 		config.users.push(user_template.clone());
 

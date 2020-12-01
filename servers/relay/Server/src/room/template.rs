@@ -92,7 +92,7 @@ mod tests {
 				public_key,
 				private_key: [5; 32],
 				access_groups: access_group,
-				objects: vec![],
+				objects: Option::None,
 			});
 			public_key
 		}

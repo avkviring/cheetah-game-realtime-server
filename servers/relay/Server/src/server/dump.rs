@@ -189,7 +189,7 @@ mod tests {
 			.register_room(RoomTemplate {
 				id: 1,
 				users: vec![],
-				objects: vec![object_template],
+				objects: Option::Some(vec![object_template]),
 			})
 			.ok()
 			.unwrap();
