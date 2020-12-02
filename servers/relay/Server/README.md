@@ -18,7 +18,7 @@ users:
     access_groups: 15
     # данные объекты будут созданы от имени пользователя при входе пользователя в комнату
     objects:
-      - id: 100
+      - id: 100 # допустимый диапазон - 0 .. 512 - GameObjectId::CLIENT_OBJECT_ID_OFFSET
         template: 4
         access_groups: 15
         fields:
