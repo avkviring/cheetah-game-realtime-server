@@ -192,6 +192,7 @@ mod tests {
 		server
 			.register_room(RoomTemplate {
 				id: 1,
+				auto_create_user: false,
 				users: vec![],
 				objects: Option::Some(vec![object_template]),
 			})

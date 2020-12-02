@@ -36,6 +36,7 @@ pub struct Room {
 	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserPublicKey>,
+	pub auto_create_user: bool,
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -61,6 +62,7 @@ impl Room {
 	pub fn new(template: RoomTemplate) -> Self {
 		let mut room = Room {
 			id: template.id,
+			auto_create_user: template.auto_create_user,
 			users: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
@@ -242,6 +244,10 @@ impl Room {
 					self.delete_object(&id);
 					self.send_to_group(access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
 				}
+
+				if self.auto_create_user {
+					self.register_user(user.template.clone());
+				}
 			}
 		};
 	}
@@ -397,6 +403,26 @@ mod tests {
 		assert!(room
 			.objects
 			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_template.public_key))));
+	}
+
+	///
+	/// Регистрация пользователя после разрыва соединения если выставлен флаг автосоздания
+	///
+	#[test]
+	fn should_register_user_after_disconnect_when_auto_create() {
+		let mut template = RoomTemplate::default();
+		template.auto_create_user = true;
+		let user_template = UserTemplate {
+			public_key: 100,
+			private_key: Default::default(),
+			access_groups: AccessGroups(55),
+			objects: Default::default(),
+		};
+		template.users.push(user_template.clone());
+
+		let mut room = Room::new(template);
+		room.disconnect_user(&user_template.public_key);
+		assert!(room.users.contains_key(&user_template.public_key));
 	}
 
 	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, heapless::consts::U256> {

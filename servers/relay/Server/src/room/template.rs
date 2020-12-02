@@ -19,6 +19,7 @@ use crate::room::RoomId;
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct RoomTemplate {
 	pub id: RoomId,
+	pub auto_create_user: bool,
 	pub users: Vec<UserTemplate>,
 	pub objects: Option<Vec<GameObjectTemplate>>,
 }
@@ -167,6 +168,7 @@ mod tests {
 
 		let config = RoomTemplate {
 			id: 0,
+			auto_create_user: false,
 			users: vec![UserTemplate {
 				public_key: 54897,
 				private_key: [5; 32],

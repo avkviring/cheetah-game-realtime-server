@@ -9,6 +9,8 @@ cargo run -- --room room1.yaml --room room2.yaml ...
 ### Формат файла конфигурации комнаты
 ```yaml
 id: 100
+# автосоздание пользователя после выхода
+auto_create_user: true 
 # список ожидаемых пользователей
 users:
   - public_key: 54897

@@ -2,6 +2,7 @@
 # Конфигурация комнаты для запуска unity тестов
 #
 id: 1
+auto_create_user: true
 # список ожидаемых пользователей
 users:
   - public_key: 1
