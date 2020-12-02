@@ -70,7 +70,7 @@ impl Rooms {
 
 	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		self.changed_rooms.iter().for_each(|room_id| {
-			let room = self.room_by_id.get(room_id).unwrap().clone();
+			let room = self.room_by_id.get(room_id).unwrap();
 			let mut room = room.borrow_mut();
 			room.collect_out_frame(out_frames, now);
 		});
@@ -85,7 +85,7 @@ impl Rooms {
 	}
 
 	pub fn cycle(&mut self, now: &Instant) {
-		self.room_by_id.values().for_each(|r| r.clone().borrow_mut().cycle(now));
+		self.room_by_id.values().for_each(|r| r.borrow_mut().cycle(now));
 	}
 }
 
