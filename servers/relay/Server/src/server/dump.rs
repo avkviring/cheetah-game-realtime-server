@@ -158,7 +158,7 @@ mod tests {
 
 	use cheetah_relay_common::udp::bind_to_free_socket;
 
-	use crate::room::template::{GameObjectTemplate, RoomTemplate};
+	use crate::room::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate};
 	use crate::server::Server;
 
 	#[derive(Serialize, Deserialize)]
@@ -174,10 +174,14 @@ mod tests {
 			id: 0,
 			template: 0,
 			access_groups: Default::default(),
-			fields: Default::default(),
+			fields: GameObjectFieldsTemplate {
+				longs: Option::Some(Default::default()),
+				floats: Option::Some(Default::default()),
+				structures: Option::Some(Default::default()),
+			},
 		};
 
-		object_template.fields.structures.insert(
+		object_template.fields.structures.as_mut().unwrap().insert(
 			1,
 			rmpv::Value::Map(vec![(
 				rmpv::Value::String(rmpv::Utf8String::from("x")),

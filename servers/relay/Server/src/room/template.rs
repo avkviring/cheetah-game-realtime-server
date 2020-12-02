@@ -41,9 +41,9 @@ pub struct GameObjectTemplate {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct GameObjectFieldsTemplate {
-	pub longs: HashMap<FieldID, i64, FnvBuildHasher>,
-	pub floats: HashMap<FieldID, f64, FnvBuildHasher>,
-	pub structures: HashMap<FieldID, rmpv::Value, FnvBuildHasher>,
+	pub longs: Option<HashMap<FieldID, i64, FnvBuildHasher>>,
+	pub floats: Option<HashMap<FieldID, f64, FnvBuildHasher>>,
+	pub structures: Option<HashMap<FieldID, rmpv::Value, FnvBuildHasher>>,
 }
 
 impl GameObjectTemplate {
@@ -55,20 +55,27 @@ impl GameObjectTemplate {
 	}
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {
 		let mut longs = HeaplessLongMap::new();
-		self.fields.longs.iter().for_each(|(k, v)| {
-			longs.insert(k.clone(), *v).unwrap();
-		});
+		if let Some(ref self_longs) = self.fields.longs {
+			self_longs.iter().for_each(|(k, v)| {
+				longs.insert(k.clone(), *v).unwrap();
+			});
+		}
 
 		let mut floats = HeapLessFloatMap::new();
-		self.fields.floats.iter().for_each(|(k, v)| {
-			floats.insert(k.clone(), *v).unwrap();
-		});
+		if let Some(ref self_floats) = self.fields.floats {
+			self_floats.iter().for_each(|(k, v)| {
+				floats.insert(k.clone(), *v).unwrap();
+			});
+		}
 
 		let mut structures = HashMap::<FieldID, HeaplessBuffer, FnvBuildHasher>::default();
-		self.fields.structures.iter().for_each(|(k, v)| {
-			let vec = rmp_serde::to_vec(v).unwrap();
-			structures.insert(k.clone(), HeaplessBuffer::from_slice(&vec.as_slice()).unwrap());
-		});
+		if let Some(ref self_structures) = self.fields.structures {
+			self_structures.iter().for_each(|(k, v)| {
+				let vec = rmp_serde::to_vec(v).unwrap();
+				structures.insert(k.clone(), HeaplessBuffer::from_slice(&vec.as_slice()).unwrap());
+			});
+		}
+
 		GameObject {
 			id,
 			template: self.template,
@@ -106,11 +113,17 @@ mod tests {
 			access_groups: Default::default(),
 			fields: Default::default(),
 		};
-		config_object.fields.longs.insert(0, 100);
-		config_object.fields.floats.insert(1, 105.105);
+		config_object.fields.longs = Option::Some(Default::default());
+		config_object.fields.floats = Option::Some(Default::default());
+		config_object.fields.structures = Option::Some(Default::default());
+
+		config_object.fields.longs.as_mut().unwrap().insert(0, 100);
+		config_object.fields.floats.as_mut().unwrap().insert(1, 105.105);
 		config_object
 			.fields
 			.structures
+			.as_mut()
+			.unwrap()
 			.insert(1, rmpv::Value::Integer(rmpv::Integer::from(100100)));
 
 		let object = config_object.clone().to_root_game_object();
@@ -118,11 +131,11 @@ mod tests {
 		assert!(matches!(object.id.owner, ObjectOwner::Root));
 		assert_eq!(config_object.template, object.template);
 		assert_eq!(config_object.access_groups, object.access_groups);
-		assert_eq!(config_object.fields.longs[&0], object.fields.longs[&0]);
-		assert_eq!(config_object.fields.floats[&1], object.fields.floats[&1]);
+		assert_eq!(config_object.fields.longs.as_ref().unwrap()[&0], object.fields.longs[&0]);
+		assert_eq!(config_object.fields.floats.as_ref().unwrap()[&1], object.fields.floats[&1]);
 
 		assert_eq!(
-			config_object.fields.structures[&1],
+			config_object.fields.structures.as_ref().unwrap()[&1],
 			rmp_serde::from_slice(&object.fields.structures[&1].to_vec().as_slice()).unwrap()
 		);
 	}
@@ -133,18 +146,18 @@ mod tests {
 	#[allow(dead_code)]
 	fn example() {
 		let mut fields = GameObjectFieldsTemplate {
-			longs: Default::default(),
-			floats: Default::default(),
-			structures: Default::default(),
+			longs: Option::Some(Default::default()),
+			floats: Option::Some(Default::default()),
+			structures: Option::Some(Default::default()),
 		};
 
-		fields.longs.insert(5, 100);
-		fields.longs.insert(15, 200);
+		fields.longs.as_mut().unwrap().insert(5, 100);
+		fields.longs.as_mut().unwrap().insert(15, 200);
 
-		fields.floats.insert(3, 5.5);
-		fields.floats.insert(7, 9.9);
+		fields.floats.as_mut().unwrap().insert(3, 5.5);
+		fields.floats.as_mut().unwrap().insert(7, 9.9);
 
-		fields.structures.insert(
+		fields.structures.as_mut().unwrap().insert(
 			10,
 			rmpv::Value::Map(vec![(
 				rmpv::Value::String(rmpv::Utf8String::from("name")),
