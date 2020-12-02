@@ -19,6 +19,11 @@ pub struct GameObjectId {
 }
 
 impl GameObjectId {
+	///
+	/// Идентификатор первого клиентского объекта (для исключения пересечений с объектами клиента из конфигурации)
+	///
+	pub const CLIENT_OBJECT_ID_OFFSET: u32 = 512;
+
 	pub fn new(id: u32, owner: ObjectOwner) -> Self {
 		GameObjectId { owner, id }
 	}

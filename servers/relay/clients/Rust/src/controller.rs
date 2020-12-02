@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::ops::Sub;
+use std::sync::atomic::AtomicU64;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
@@ -25,7 +26,6 @@ use crate::ffi::channel::Channel;
 use crate::ffi::command::create::GameObjectFieldsFFI;
 use crate::ffi::{BufferFFI, GameObjectIdFFI};
 use crate::registry::ClientRequest;
-use std::sync::atomic::AtomicU64;
 
 ///
 /// Управление сетевым потоком клиента
@@ -79,7 +79,7 @@ impl ClientController {
 			sender,
 			create_time: Instant::now(),
 			channel: ApplicationCommandChannelType::ReliableSequenceByGroup(0),
-			game_object_id_generator: 0,
+			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
 			current_frame_id,
 			listener_long_value: None,
 			listener_float_value: None,

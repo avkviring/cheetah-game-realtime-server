@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::Read;
 
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
@@ -86,13 +87,44 @@ impl GameObjectTemplate {
 	}
 }
 
+#[derive(Debug)]
+pub enum RoomTemplateError {
+	UserObjectHasWrongId(UserTemplate, u32),
+	YamlParserError(serde_yaml::Error),
+}
+
+impl RoomTemplate {
+	pub fn load_from_file(path: &str) -> Result<RoomTemplate, RoomTemplateError> {
+		let mut file = std::fs::File::open(path).unwrap();
+		let mut content = String::default();
+		file.read_to_string(&mut content).unwrap();
+		let template = serde_yaml::from_str::<RoomTemplate>(content.as_str());
+		match template {
+			Ok(template) => template.validate(),
+			Err(e) => Result::Err(RoomTemplateError::YamlParserError(e)),
+		}
+	}
+
+	pub fn validate(self) -> Result<RoomTemplate, RoomTemplateError> {
+		for user in &self.users {
+			for object in user.objects.as_ref().unwrap() {
+				if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
+					return Result::Err(RoomTemplateError::UserObjectHasWrongId(user.clone(), object.id));
+				}
+			}
+		}
+		Result::Ok(self)
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
+	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
 	use cheetah_relay_common::room::UserPublicKey;
 
-	use crate::room::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate, UserTemplate};
+	use crate::room::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
 
 	impl RoomTemplate {
 		pub fn create_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {
@@ -192,5 +224,26 @@ mod tests {
 			}]),
 		};
 		println!("{:}", serde_yaml::to_string(&config).unwrap());
+	}
+
+	#[test]
+	fn should_validate_fail_when_user_object_has_wrong_id() {
+		let template = RoomTemplate {
+			id: 0,
+			auto_create_user: false,
+			users: vec![UserTemplate {
+				public_key: 54897,
+				private_key: [5; 32],
+				access_groups: AccessGroups(0b1111),
+				objects: Option::Some(vec![GameObjectTemplate {
+					id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
+					template: 0b100,
+					access_groups: AccessGroups(0b1111),
+					fields: Default::default(),
+				}]),
+			}],
+			objects: None,
+		};
+		assert!(matches!(template.validate(), Result::Err(RoomTemplateError::UserObjectHasWrongId(_, _))))
 	}
 }

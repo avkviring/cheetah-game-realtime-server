@@ -1,6 +1,5 @@
 extern crate stderrlog;
 
-use std::io::Read;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::atomic::Ordering;
@@ -9,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use clap::{App, Arg, Clap};
 use stderrlog::Timestamp;
 
+use cheetah_relay::room::template::RoomTemplate;
 use cheetah_relay::server::rest::DumpRestServer;
 use cheetah_relay::server::Server;
 
@@ -48,10 +48,7 @@ fn start_server(room_templates_path: clap::Values) {
 	let mut server = Server::new(socket);
 
 	room_templates_path.for_each(|path| {
-		let mut file = std::fs::File::open(path).unwrap();
-		let mut content = String::default();
-		file.read_to_string(&mut content).unwrap();
-		let room_template = serde_yaml::from_str(content.as_str()).unwrap();
+		let room_template = RoomTemplate::load_from_file(path).unwrap();
 		server.register_room(room_template).ok().unwrap();
 	});
 

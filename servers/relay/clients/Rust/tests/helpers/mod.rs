@@ -29,14 +29,12 @@ pub struct UserKeys {
 
 impl Helper {
 	pub fn new() -> Self {
-		fn setup_logger() {
-			stderrlog::new()
-				.verbosity(0)
-				.quiet(false)
-				.show_level(true)
-				.timestamp(Timestamp::Millisecond)
-				.init();
-		}
+		stderrlog::new()
+			.verbosity(0)
+			.quiet(false)
+			.show_level(true)
+			.timestamp(Timestamp::Millisecond)
+			.init();
 		Self {
 			room_id_generator: 0,
 			user_public_key_generator: 0,
