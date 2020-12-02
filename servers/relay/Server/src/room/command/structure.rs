@@ -10,7 +10,7 @@ impl ServerCommandExecutor for StructureCommand {
 		if let Some(object) = room.get_object(&self.object_id) {
 			object.fields.structures.insert(self.field_id, self.structure.clone());
 			let groups = object.access_groups.clone();
-			room.send_to_group(groups, S2CCommand::SetStruct(self))
+			room.send_to_group(false, groups, S2CCommand::SetStruct(self))
 		}
 	}
 }
@@ -31,6 +31,7 @@ mod tests {
 	pub fn should_set_structure() {
 		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
+		room.out_commands.clear();
 		let command = StructureCommand {
 			object_id: object_id.clone(),
 			field_id: 100,

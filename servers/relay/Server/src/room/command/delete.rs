@@ -24,7 +24,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 		let user_public_key = user.template.public_key.clone();
 		if let Some(object) = room.delete_object(&self.object_id) {
 			let access_groups = object.access_groups;
-			room.send_to_group(access_groups, S2CCommand::Delete(self));
+			room.send_to_group(false, access_groups, S2CCommand::Delete(self));
 		} else {
 			error_c2s_command(
 				"DeleteGameObjectCommand",
@@ -55,6 +55,7 @@ mod tests {
 		let mut room = Room::new(config);
 
 		let object_id = room.create_object(&user_public_key).id.clone();
+		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
@@ -86,6 +87,7 @@ mod tests {
 		let mut room = Room::new(config);
 
 		let object_id = room.create_object(&user_a).id.clone();
+		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};

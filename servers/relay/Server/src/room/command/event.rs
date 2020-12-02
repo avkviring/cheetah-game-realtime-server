@@ -9,7 +9,7 @@ impl ServerCommandExecutor for EventCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object(&self.object_id) {
 			let groups = object.access_groups.clone();
-			room.send_to_group(groups, S2CCommand::Event(self))
+			room.send_to_group(false, groups, S2CCommand::Event(self))
 		}
 	}
 }
@@ -30,6 +30,8 @@ mod tests {
 	pub fn should_send_event() {
 		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
+		room.out_commands.clear();
+
 		let command = EventCommand {
 			object_id: object_id.clone(),
 			field_id: 100,

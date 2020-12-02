@@ -107,7 +107,7 @@ impl RoomTemplate {
 
 	pub fn validate(self) -> Result<RoomTemplate, RoomTemplateError> {
 		for user in &self.users {
-			for object in user.objects.as_ref().unwrap() {
+			for object in user.objects.as_ref().unwrap_or(&Default::default()) {
 				if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
 					return Result::Err(RoomTemplateError::UserObjectHasWrongId(user.clone(), object.id));
 				}

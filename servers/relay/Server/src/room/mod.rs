@@ -4,6 +4,7 @@ use std::time::Instant;
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 
+use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
@@ -88,11 +89,10 @@ impl Room {
 		room
 	}
 
-	pub fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommand) {
+	pub fn send_to_group(&mut self, include_self: bool, access_groups: AccessGroups, command: S2CCommand) {
 		#[cfg(test)]
 		self.out_commands.push_front((access_groups, command.clone()));
 
-		#[cfg(test)]
 		if self.current_user.is_none() {
 			return;
 		}
@@ -108,7 +108,7 @@ impl Room {
 		let room_id = self.id;
 		self.users
 			.values_mut()
-			.filter(|user| user.template.public_key != *current_user_public_key)
+			.filter(|user| include_self || user.template.public_key != *current_user_public_key)
 			.filter(|user| user.attached)
 			.filter(|user| user.protocol.is_some())
 			.filter(|user| user.template.access_groups.contains_any(&access_groups))
@@ -170,6 +170,8 @@ impl Room {
 				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_public_key);
 			}
 			Some(user) => {
+				self.current_user.replace(user_public_key.clone());
+
 				let mut new_user = false;
 				let protocol = &mut user.protocol;
 				if protocol.is_none() {
@@ -185,6 +187,8 @@ impl Room {
 				if new_user {
 					let public_key = user.template.public_key.clone();
 					let template_objects = user.template.objects.clone();
+					self.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+					self.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
 					self.create_user_object(public_key, template_objects.unwrap_or_default());
 				}
 			}
@@ -195,7 +199,6 @@ impl Room {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
-					self.current_user.replace(user_public_key.clone());
 					execute(command_with_meta.command, self, &user_public_key);
 				}
 				_ => {
@@ -203,6 +206,10 @@ impl Room {
 				}
 			}
 		}
+
+		self.current_user = None;
+		self.current_channel = None;
+		self.current_meta = None;
 	}
 
 	pub fn register_user(&mut self, template: UserTemplate) {
@@ -242,7 +249,7 @@ impl Room {
 
 				for (id, access_groups) in objects {
 					self.delete_object(&id);
-					self.send_to_group(access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
+					self.send_to_group(false, access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
 				}
 
 				if self.auto_create_user {
@@ -253,6 +260,16 @@ impl Room {
 	}
 
 	pub fn insert_object(&mut self, object: GameObject) {
+		self.send_to_group(
+			true,
+			object.access_groups,
+			S2CCommand::Create(CreateGameObjectCommand {
+				object_id: object.id.clone(),
+				template: object.template.clone(),
+				access_groups: object.access_groups.clone(),
+				fields: object.fields.clone(),
+			}),
+		);
 		self.objects.insert(object.id.clone(), object);
 	}
 
@@ -298,8 +315,9 @@ impl Room {
 		}
 	}
 	fn create_user_object(&mut self, public_key: UserPublicKey, objects: Vec<GameObjectTemplate>) {
-		objects.iter().for_each(|object| {
-			self.insert_object(object.to_user_game_object(public_key));
+		objects.iter().for_each(|template| {
+			let object = template.to_user_game_object(public_key);
+			self.insert_object(object);
 		});
 	}
 }
@@ -308,7 +326,9 @@ impl Room {
 mod tests {
 	use std::time::Instant;
 
-	use cheetah_relay_common::commands::command::S2CCommand;
+	use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
+	use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
+	use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use cheetah_relay_common::protocol::frame::Frame;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
@@ -387,7 +407,7 @@ mod tests {
 		let object_template = GameObjectTemplate {
 			id: 155,
 			template: 5,
-			access_groups: Default::default(),
+			access_groups: AccessGroups(55),
 			fields: Default::default(),
 		};
 		let user_template = UserTemplate {
@@ -403,6 +423,86 @@ mod tests {
 		assert!(room
 			.objects
 			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_template.public_key))));
+	}
+
+	///
+	/// Пользовательские объекты из шаблона должны загуржатся на первый клиент при входе второго
+	///
+	#[test]
+	fn should_load_user_object_when_connect_other_user() {
+		let mut config = RoomTemplate::default();
+		let object1_template = GameObjectTemplate {
+			id: 100,
+			template: 5,
+			access_groups: AccessGroups(55),
+			fields: Default::default(),
+		};
+		let user1_template = UserTemplate {
+			public_key: 1,
+			private_key: Default::default(),
+			access_groups: AccessGroups(55),
+			objects: Option::Some(vec![object1_template.clone()]),
+		};
+
+		let object2_template = GameObjectTemplate {
+			id: 200,
+			template: 5,
+			access_groups: AccessGroups(55),
+			fields: Default::default(),
+		};
+		let user2_template = UserTemplate {
+			public_key: 2,
+			private_key: Default::default(),
+			access_groups: AccessGroups(55),
+			objects: Option::Some(vec![object2_template.clone()]),
+		};
+
+		config.users.push(user1_template.clone());
+		config.users.push(user2_template.clone());
+
+		let mut room = Room::new(config);
+
+		room.process_in_frame(&user1_template.public_key, Frame::new(0), &Instant::now());
+		let mut frame_with_attach_to_room = Frame::new(1);
+		frame_with_attach_to_room.commands.reliable.push(ApplicationCommandDescription {
+			channel: ApplicationCommandChannel::ReliableUnordered,
+			command: ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
+				meta: C2SMetaCommandInformation { timestamp: 0 },
+				command: C2SCommand::AttachToRoom,
+			}),
+		});
+		room.process_in_frame(&user1_template.public_key, frame_with_attach_to_room, &Instant::now());
+
+		let user1 = room.get_user_mut(&user1_template.public_key).unwrap();
+		let protocol = user1.protocol.as_mut().unwrap();
+		assert_eq!(
+			protocol
+				.out_commands_collector
+				.commands
+				.reliable
+				.pop()
+				.unwrap()
+				.command
+				.get_object_id()
+				.unwrap(),
+			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_template.public_key))
+		);
+
+		room.process_in_frame(&user2_template.public_key, Frame::new(0), &Instant::now());
+		let user1 = room.get_user_mut(&user1_template.public_key).unwrap();
+		let protocol = user1.protocol.as_mut().unwrap();
+		assert_eq!(
+			protocol
+				.out_commands_collector
+				.commands
+				.reliable
+				.pop()
+				.unwrap()
+				.command
+				.get_object_id()
+				.unwrap(),
+			&GameObjectId::new(object2_template.id, ObjectOwner::User(user2_template.public_key))
+		);
 	}
 
 	///

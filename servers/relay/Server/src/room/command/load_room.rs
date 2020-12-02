@@ -12,7 +12,6 @@ pub fn attach_to_room(room: &mut Room, user_public_key: &UserPublicKey) {
 		}
 		Some(user) => {
 			user.attach_to_room();
-
 			let access_group = user.template.access_groups;
 			room.process_objects(&mut |o| {
 				if o.access_groups.contains_any(&access_group) {

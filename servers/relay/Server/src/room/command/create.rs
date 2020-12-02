@@ -1,5 +1,4 @@
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
-use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -52,7 +51,6 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			fields: self.fields.clone(),
 		};
 		room.insert_object(object);
-		room.send_to_group(self.access_groups, S2CCommand::Create(self));
 	}
 }
 
@@ -151,6 +149,8 @@ mod tests {
 		let object = room.create_object(&user_public_key);
 		object.template = 777;
 		let object_id = object.id.clone();
+
+		room.out_commands.clear();
 
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),

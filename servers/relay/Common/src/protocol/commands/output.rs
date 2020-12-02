@@ -19,7 +19,7 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Default, Debug)]
 pub struct OutCommandsCollector {
-	commands: ApplicationCommands,
+	pub commands: ApplicationCommands,
 	group_sequence: HashMap<ChannelGroupId, ChannelSequence, FnvBuildHasher>,
 	object_sequence: HashMap<GameObjectId, ChannelSequence, FnvBuildHasher>,
 }

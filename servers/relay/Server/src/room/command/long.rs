@@ -31,6 +31,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 
 			let access_groups = object.access_groups.clone();
 			room.send_to_group(
+				false,
 				access_groups,
 				S2CCommand::SetLong(SetLongCommand {
 					object_id: self.object_id,
@@ -48,7 +49,7 @@ impl ServerCommandExecutor for SetLongCommand {
 			match object.fields.longs.insert(self.field_id, self.value) {
 				Ok(_) => {
 					let access_groups = object.access_groups.clone();
-					room.send_to_group(access_groups, S2CCommand::SetLong(self));
+					room.send_to_group(false, access_groups, S2CCommand::SetLong(self));
 				}
 				Err(_) => {
 					log::error!("[SetLongCommand] overflow element count in object({:?})", object.id);
@@ -73,6 +74,7 @@ mod tests {
 	fn should_set_long_command() {
 		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
+		room.out_commands.clear();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -89,6 +91,7 @@ mod tests {
 	fn should_increment_long_command() {
 		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
+		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -135,6 +138,7 @@ mod tests {
 	fn should_not_panic_if_overflow() {
 		let mut room = Room::new(RoomTemplate::default());
 		let object_id = room.create_object(&0).id.clone();
+		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
