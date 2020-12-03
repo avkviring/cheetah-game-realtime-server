@@ -1,8 +1,13 @@
+use core::fmt;
+use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
+use std::fmt::Debug;
+use std::rc::Rc;
 use std::time::Instant;
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
+use serde::export::Formatter;
 
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
@@ -20,7 +25,7 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::execute;
 use crate::room::object::GameObject;
-use crate::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
+use crate::room::template::{RoomTemplate, UserTemplate};
 use crate::rooms::OutFrame;
 
 pub mod command;
@@ -37,6 +42,7 @@ pub struct Room {
 	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserPublicKey>,
+	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub auto_create_user: bool,
 	#[cfg(test)]
 	object_id_generator: u32,
@@ -46,11 +52,27 @@ pub struct Room {
 	pub out_commands_by_users: HashMap<UserPublicKey, VecDeque<S2CCommand>>,
 }
 
+pub trait RoomUserListener {
+	fn register_user(&mut self, room_id: RoomId, template: &UserTemplate);
+	fn connected_user(&mut self, room_id: RoomId, template: &UserTemplate);
+	fn disconnected_user(&mut self, room_id: RoomId, template: &UserTemplate);
+}
+impl Debug for dyn RoomUserListener {
+	fn fmt(&self, _: &mut Formatter<'_>) -> fmt::Result {
+		Result::Ok(())
+	}
+}
+
 #[derive(Debug)]
 pub struct User {
 	protocol: Option<RelayProtocol>,
 	pub attached: bool,
 	pub template: UserTemplate,
+}
+
+#[derive(Debug)]
+pub enum RoomRegisterUserError {
+	AlreadyRegistered,
 }
 
 impl User {
@@ -60,7 +82,7 @@ impl User {
 }
 
 impl Room {
-	pub fn new(template: RoomTemplate) -> Self {
+	pub fn new(template: RoomTemplate, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
 		let mut room = Room {
 			id: template.id,
 			auto_create_user: template.auto_create_user,
@@ -69,6 +91,7 @@ impl Room {
 			current_channel: Default::default(),
 			current_meta: Default::default(),
 			current_user: Default::default(),
+			user_listeners,
 			#[cfg(test)]
 			object_id_generator: 0,
 			#[cfg(test)]
@@ -82,10 +105,7 @@ impl Room {
 			room.insert_object(game_object);
 		});
 
-		template.users.into_iter().for_each(|config| {
-			room.register_user(config);
-		});
-
+		template.users.into_iter().for_each(|config| room.register_user(config).unwrap());
 		room
 	}
 
@@ -178,6 +198,7 @@ impl Room {
 					protocol.replace(RelayProtocol::new(now));
 					new_user = true;
 				}
+
 				let protocol = protocol.as_mut().unwrap();
 				protocol.on_frame_received(frame, now);
 				while let Some(application_command) = protocol.in_commands_collector.get_commands().pop_back() {
@@ -185,11 +206,10 @@ impl Room {
 				}
 
 				if new_user {
-					let public_key = user.template.public_key.clone();
-					let template_objects = user.template.objects.clone();
 					self.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 					self.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
-					self.create_user_object(public_key, template_objects.unwrap_or_default());
+					let template = user.template.clone();
+					self.user_connected(template);
 				}
 			}
 		}
@@ -212,13 +232,23 @@ impl Room {
 		self.current_meta = None;
 	}
 
-	pub fn register_user(&mut self, template: UserTemplate) {
+	pub fn register_user(&mut self, template: UserTemplate) -> Result<(), RoomRegisterUserError> {
+		if self.users.contains_key(&template.public_key) {
+			return Result::Err(RoomRegisterUserError::AlreadyRegistered);
+		}
+
+		self.user_listeners.iter().cloned().for_each(|listener| {
+			let mut listener = (*listener).borrow_mut();
+			listener.register_user(self.id.clone(), &template);
+		});
+
 		let user = User {
 			protocol: None,
 			attached: false,
 			template,
 		};
 		self.users.insert(user.template.public_key, user);
+		Result::Ok(())
 	}
 
 	pub fn get_user(&self, user_public_key: &UserPublicKey) -> Option<&User> {
@@ -252,8 +282,13 @@ impl Room {
 					self.send_to_group(false, access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
 				}
 
+				self.user_listeners.iter().cloned().for_each(|listener| {
+					let mut listener = (*listener).borrow_mut();
+					listener.disconnected_user(self.id.clone(), &user.template);
+				});
+
 				if self.auto_create_user {
-					self.register_user(user.template.clone());
+					self.register_user(user.template.clone()).unwrap();
 				}
 			}
 		};
@@ -314,16 +349,28 @@ impl Room {
 			self.disconnect_user(&disconnected_user[i]);
 		}
 	}
-	fn create_user_object(&mut self, public_key: UserPublicKey, objects: Vec<GameObjectTemplate>) {
-		objects.iter().for_each(|template| {
-			let object = template.to_user_game_object(public_key);
-			self.insert_object(object);
+	fn user_connected(&mut self, template: UserTemplate) {
+		self.user_listeners.iter().cloned().for_each(|listener| {
+			let mut listener = (*listener).borrow_mut();
+			listener.connected_user(self.id.clone(), &template);
 		});
+		let user_public_key = template.public_key;
+		match template.objects {
+			None => {}
+			Some(ref objects) => {
+				objects.iter().for_each(|object_template| {
+					let object = object_template.to_user_game_object(user_public_key);
+					self.insert_object(object);
+				});
+			}
+		}
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use std::cell::RefCell;
+	use std::rc::Rc;
 	use std::time::Instant;
 
 	use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
@@ -337,7 +384,7 @@ mod tests {
 
 	use crate::room::object::GameObject;
 	use crate::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
-	use crate::room::Room;
+	use crate::room::{Room, RoomUserListener};
 
 	impl Room {
 		pub fn create_object(&mut self, owner: &UserPublicKey) -> &mut GameObject {
@@ -362,11 +409,11 @@ mod tests {
 
 	#[test]
 	fn should_remove_objects_when_disconnect() {
-		let mut config = RoomTemplate::default();
-		let user_a = config.create_user(1, AccessGroups(0b111));
-		let user_b = config.create_user(2, AccessGroups(0b111));
+		let mut template = RoomTemplate::default();
+		let user_a = template.create_user(1, AccessGroups(0b111));
+		let user_b = template.create_user(2, AccessGroups(0b111));
 
-		let mut room = Room::new(config);
+		let mut room = Room::new(template, Default::default());
 		let object_a_1 = room.create_object(&user_a).id.clone();
 		let object_a_2 = room.create_object(&user_a).id.clone();
 		let object_b_1 = room.create_object(&user_b).id.clone();
@@ -397,13 +444,13 @@ mod tests {
 		};
 		template.objects = Option::Some(vec![object_template.clone()]);
 
-		let room = Room::new(template);
+		let room = Room::new(template, Default::default());
 		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::Root)));
 	}
 
 	#[test]
 	fn should_create_object_from_config_for_user() {
-		let mut config = RoomTemplate::default();
+		let mut template = RoomTemplate::default();
 		let object_template = GameObjectTemplate {
 			id: 155,
 			template: 5,
@@ -416,9 +463,9 @@ mod tests {
 			access_groups: AccessGroups(55),
 			objects: Option::Some(vec![object_template.clone()]),
 		};
-		config.users.push(user_template.clone());
+		template.users.push(user_template.clone());
 
-		let mut room = Room::new(config);
+		let mut room = Room::new(template, Default::default());
 		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
@@ -426,11 +473,11 @@ mod tests {
 	}
 
 	///
-	/// Пользовательские объекты из шаблона должны загуржатся на первый клиент при входе второго
+	/// Пользовательские объекты из шаблона должны загружаться на первый клиент при входе второго
 	///
 	#[test]
 	fn should_load_user_object_when_connect_other_user() {
-		let mut config = RoomTemplate::default();
+		let mut template = RoomTemplate::default();
 		let object1_template = GameObjectTemplate {
 			id: 100,
 			template: 5,
@@ -457,10 +504,10 @@ mod tests {
 			objects: Option::Some(vec![object2_template.clone()]),
 		};
 
-		config.users.push(user1_template.clone());
-		config.users.push(user2_template.clone());
+		template.users.push(user1_template.clone());
+		template.users.push(user2_template.clone());
 
-		let mut room = Room::new(config);
+		let mut room = Room::new(template, Default::default());
 
 		room.process_in_frame(&user1_template.public_key, Frame::new(0), &Instant::now());
 		let mut frame_with_attach_to_room = Frame::new(1);
@@ -520,7 +567,7 @@ mod tests {
 		};
 		template.users.push(user_template.clone());
 
-		let mut room = Room::new(template);
+		let mut room = Room::new(template, Default::default());
 		room.disconnect_user(&user_template.public_key);
 		assert!(room.users.contains_key(&user_template.public_key));
 	}
@@ -529,5 +576,42 @@ mod tests {
 		let mut result = heapless::Vec::new();
 		result.extend_from_slice(vec.as_slice()).unwrap();
 		result
+	}
+
+	#[test]
+	fn should_invoke_user_listeners() {
+		struct TestUserListener {
+			trace: String,
+		}
+
+		impl RoomUserListener for TestUserListener {
+			fn register_user(&mut self, _: u64, template: &UserTemplate) {
+				self.trace = format!("{}r{:?}", self.trace, template.public_key);
+			}
+
+			fn connected_user(&mut self, _: u64, template: &UserTemplate) {
+				self.trace = format!("{}c{:?}", self.trace, template.public_key);
+			}
+
+			fn disconnected_user(&mut self, _: u64, template: &UserTemplate) {
+				self.trace = format!("{}d{:?}", self.trace, template.public_key);
+			}
+		}
+
+		let mut template = RoomTemplate::default();
+		let user_template = UserTemplate {
+			public_key: 100,
+			private_key: Default::default(),
+			access_groups: AccessGroups(55),
+			objects: Default::default(),
+		};
+		template.users.push(user_template.clone());
+
+		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
+		let mut room = Room::new(template, vec![test_listener.clone()]);
+		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
+		room.disconnect_user(&user_template.public_key);
+
+		assert_eq!(test_listener.clone().borrow().trace, "r100c100d100".to_string());
 	}
 }

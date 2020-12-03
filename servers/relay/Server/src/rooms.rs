@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::rc::Rc;
 use std::time::Instant;
 
 use fnv::FnvBuildHasher;
@@ -7,13 +9,18 @@ use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::template::{RoomTemplate, UserTemplate};
-use crate::room::{Room, RoomId};
+use crate::room::{Room, RoomId, RoomRegisterUserError, RoomUserListener};
 
 #[derive(Default)]
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
-	pub user_to_room: HashMap<UserPublicKey, RoomId, FnvBuildHasher>,
+	pub users: Rc<RefCell<Users>>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
+}
+
+#[derive(Default)]
+pub struct Users {
+	pub users: HashMap<UserPublicKey, RoomId, FnvBuildHasher>,
 }
 
 #[derive(Debug)]
@@ -25,7 +32,7 @@ pub struct OutFrame {
 #[derive(Debug)]
 pub enum RegisterUserError {
 	RoomNotFound,
-	AlreadyRegistered,
+	RoomError(RoomRegisterUserError),
 }
 
 #[derive(Debug)]
@@ -34,16 +41,14 @@ pub enum RegisterRoomError {
 }
 
 impl Rooms {
-	pub fn create_room(&mut self, template: RoomTemplate) -> Result<(), RegisterRoomError> {
+	pub fn create_room(&mut self, template: RoomTemplate, mut listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Result<(), RegisterRoomError> {
 		let room_id = template.id.clone();
 		if self.room_by_id.contains_key(&room_id) {
 			Result::Err(RegisterRoomError::AlreadyRegistered)
 		} else {
-			let room = Room::new(template.clone(), Default::default());
+			listeners.push(self.users.clone());
+			let room = Room::new(template.clone(), listeners);
 			self.room_by_id.insert(room_id, room);
-			template.users.iter().for_each(|config| {
-				self.user_to_room.insert(config.public_key, room_id);
-			});
 			Result::Ok(())
 		}
 	}
@@ -52,14 +57,8 @@ impl Rooms {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Result::Err(RegisterUserError::RoomNotFound),
 			Some(room) => {
-				let public_key = template.public_key;
-				if !(self.user_to_room.contains_key(&public_key)) {
-					room.register_user(template);
-					self.user_to_room.insert(public_key, room.id);
-					Result::Ok(())
-				} else {
-					Result::Err(RegisterUserError::AlreadyRegistered)
-				}
+				room.register_user(template).map_err(|e| RegisterUserError::RoomError(e))?;
+				Result::Ok(())
 			}
 		}
 	}
@@ -84,11 +83,12 @@ impl Rooms {
 	}
 
 	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
-		match self.user_to_room.get(user_public_key) {
+		let room_id = (*self.users.clone()).borrow_mut().users.get(user_public_key).cloned();
+		match room_id {
 			None => {
 				log::error!("[rooms] user({:?} not found ", user_public_key);
 			}
-			Some(room_id) => match self.room_by_id.get_mut(room_id) {
+			Some(room_id) => match self.room_by_id.get_mut(&room_id) {
 				None => {}
 				Some(room) => {
 					room.process_in_frame(user_public_key, frame, now);
@@ -100,5 +100,17 @@ impl Rooms {
 
 	pub fn cycle(&mut self, now: &Instant) {
 		self.room_by_id.values_mut().for_each(|room| room.cycle(now));
+	}
+}
+
+impl RoomUserListener for Users {
+	fn register_user(&mut self, room_id: u64, template: &UserTemplate) {
+		self.users.insert(template.public_key.clone(), room_id.clone());
+	}
+
+	fn connected_user(&mut self, _: u64, _: &UserTemplate) {}
+
+	fn disconnected_user(&mut self, _: u64, template: &UserTemplate) {
+		self.users.remove(&template.public_key);
 	}
 }

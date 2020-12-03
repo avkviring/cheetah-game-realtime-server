@@ -181,12 +181,8 @@ impl ServerThread {
 		while let Ok(request) = self.receiver.try_recv() {
 			match request {
 				Request::RegisterRoom(template, sender) => {
-					let result = self.rooms.create_room(template.clone());
-					template
-						.users
-						.iter()
-						.for_each(|config| self.udp_server.register_user(config.public_key.clone(), config.private_key.clone()));
-
+					let listener = self.udp_server.get_room_user_listener();
+					let result = self.rooms.create_room(template.clone(), vec![listener]);
 					match sender.send(result) {
 						Ok(_) => {}
 						Err(e) => {
@@ -195,7 +191,6 @@ impl ServerThread {
 					}
 				}
 				Request::RegisterUser(room_id, config, sender) => {
-					self.udp_server.register_user(config.public_key.clone(), config.private_key.clone());
 					let register_user_result = self.rooms.register_user(room_id, config);
 					match sender.send(register_user_result) {
 						Ok(_) => {}
