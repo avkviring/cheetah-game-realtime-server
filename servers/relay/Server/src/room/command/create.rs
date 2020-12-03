@@ -68,9 +68,9 @@ mod tests {
 
 	#[test]
 	fn should_create() {
-		let mut config = RoomTemplate::default();
-		let user_public_key = config.create_user(1, AccessGroups(0b11));
-		let mut room = Room::new(config);
+		let mut template = RoomTemplate::default();
+		let user_public_key = template.create_user(1, AccessGroups(0b11));
+		let mut room = Room::new(template, Default::default());
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
 		let mut command = CreateGameObjectCommand {
@@ -98,9 +98,9 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
-		let mut config = RoomTemplate::default();
-		let user_public_key = config.create_user(1, AccessGroups(0b11));
-		let mut room = Room::new(config);
+		let mut template = RoomTemplate::default();
+		let user_public_key = template.create_user(1, AccessGroups(0b11));
+		let mut room = Room::new(template, Default::default());
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
 		let command = CreateGameObjectCommand {
@@ -120,9 +120,9 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
-		let mut config = RoomTemplate::default();
-		let user_public_key = config.create_user(1, AccessGroups(0b11));
-		let mut room = Room::new(config);
+		let mut template = RoomTemplate::default();
+		let user_public_key = template.create_user(1, AccessGroups(0b11));
+		let mut room = Room::new(template, Default::default());
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
 		let command = CreateGameObjectCommand {
@@ -142,9 +142,9 @@ mod tests {
 	///
 	#[test]
 	fn should_not_replace_exists_object() {
-		let mut config = RoomTemplate::default();
-		let user_public_key = config.create_user(1, AccessGroups(0b11));
-		let mut room = Room::new(config);
+		let mut template = RoomTemplate::default();
+		let user_public_key = template.create_user(1, AccessGroups(0b11));
+		let mut room = Room::new(template, Default::default());
 
 		let object = room.create_object(&user_public_key);
 		object.template = 777;

@@ -65,7 +65,7 @@ mod tests {
 
 	#[test]
 	fn should_set_float_command() {
-		let mut room = Room::new(RoomTemplate::default());
+		let mut room = Room::new(RoomTemplate::default(), Default::default());
 		let object_id = room.create_object(&0).id.clone();
 		room.out_commands.clear();
 		let command = SetFloat64Command {
@@ -82,7 +82,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_float_command() {
-		let mut room = Room::new(RoomTemplate::default());
+		let mut room = Room::new(RoomTemplate::default(), Default::default());
 		let object_id = room.create_object(&0).id.clone();
 		room.out_commands.clear();
 		let command = IncrementFloat64C2SCommand {
@@ -107,7 +107,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_set_float_command_not_panic_for_missing_object() {
-		let mut room = Room::new(RoomTemplate::default());
+		let mut room = Room::new(RoomTemplate::default(), Default::default());
 		let command = SetFloat64Command {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
@@ -118,7 +118,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let mut room = Room::new(RoomTemplate::default());
+		let mut room = Room::new(RoomTemplate::default(), Default::default());
 		let command = IncrementFloat64C2SCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,

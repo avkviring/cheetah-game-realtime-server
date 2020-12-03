@@ -34,14 +34,14 @@ pub enum RegisterRoomError {
 }
 
 impl Rooms {
-	pub fn create_room(&mut self, config: RoomTemplate) -> Result<(), RegisterRoomError> {
-		let room_id = config.id.clone();
+	pub fn create_room(&mut self, template: RoomTemplate) -> Result<(), RegisterRoomError> {
+		let room_id = template.id.clone();
 		if self.room_by_id.contains_key(&room_id) {
 			Result::Err(RegisterRoomError::AlreadyRegistered)
 		} else {
-			let room = Room::new(config.clone());
+			let room = Room::new(template.clone(), Default::default());
 			self.room_by_id.insert(room_id, room);
-			config.users.iter().for_each(|config| {
+			template.users.iter().for_each(|config| {
 				self.user_to_room.insert(config.public_key, room_id);
 			});
 			Result::Ok(())

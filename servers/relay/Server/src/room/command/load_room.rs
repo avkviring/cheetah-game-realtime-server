@@ -42,12 +42,12 @@ mod tests {
 
 	#[test]
 	pub fn test() {
-		let mut config = RoomTemplate::default();
+		let mut template = RoomTemplate::default();
 		let groups_a = AccessGroups(0b100);
-		let user_a = config.create_user(1, groups_a);
+		let user_a = template.create_user(1, groups_a);
 		let groups_b = AccessGroups(0b10);
-		config.create_user(2, groups_b);
-		let mut room = Room::new(config);
+		template.create_user(2, groups_b);
+		let mut room = Room::new(template, Default::default());
 
 		let object_a_1 = room.create_object_with_access_groups(groups_a).id.clone();
 		let object_a_2 = room.create_object_with_access_groups(groups_a).id.clone();

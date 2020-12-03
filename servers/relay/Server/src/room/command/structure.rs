@@ -29,7 +29,7 @@ mod tests {
 
 	#[test]
 	pub fn should_set_structure() {
-		let mut room = Room::new(RoomTemplate::default());
+		let mut room = Room::new(RoomTemplate::default(), Default::default());
 		let object_id = room.create_object(&0).id.clone();
 		room.out_commands.clear();
 		let command = StructureCommand {
@@ -47,7 +47,7 @@ mod tests {
 
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
-		let mut room = Room::new(RoomTemplate::default());
+		let mut room = Room::new(RoomTemplate::default(), Default::default());
 		let command = StructureCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 100,
