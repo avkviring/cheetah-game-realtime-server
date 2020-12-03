@@ -70,7 +70,6 @@ impl From<&Rooms> for RoomsDump {
 			room_by_id: Default::default(),
 		};
 		rooms.room_by_id.iter().for_each(|(id, room)| {
-			let room = &*room.borrow();
 			result.room_by_id.insert(*id, From::from(room));
 		});
 		result
