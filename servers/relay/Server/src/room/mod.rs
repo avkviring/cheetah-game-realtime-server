@@ -109,7 +109,7 @@ impl Room {
 		room
 	}
 
-	pub fn send_to_group(&mut self, include_self: bool, access_groups: AccessGroups, command: S2CCommand) {
+	pub fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommand) {
 		#[cfg(test)]
 		self.out_commands.push_front((access_groups, command.clone()));
 
@@ -128,7 +128,7 @@ impl Room {
 		let room_id = self.id;
 		self.users
 			.values_mut()
-			.filter(|user| include_self || user.template.public_key != *current_user_public_key)
+			.filter(|user| user.template.public_key != *current_user_public_key)
 			.filter(|user| user.attached)
 			.filter(|user| user.protocol.is_some())
 			.filter(|user| user.template.access_groups.contains_any(&access_groups))
@@ -279,7 +279,7 @@ impl Room {
 
 				for (id, access_groups) in objects {
 					self.delete_object(&id);
-					self.send_to_group(false, access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
+					self.send_to_group(access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
 				}
 
 				self.user_listeners.iter().cloned().for_each(|listener| {
@@ -296,7 +296,6 @@ impl Room {
 
 	pub fn insert_object(&mut self, object: GameObject) {
 		self.send_to_group(
-			true,
 			object.access_groups,
 			S2CCommand::Create(CreateGameObjectCommand {
 				object_id: object.id.clone(),
@@ -373,10 +372,14 @@ mod tests {
 	use std::rc::Rc;
 	use std::time::Instant;
 
+	use cheetah_relay_common::commands::command::event::EventCommand;
 	use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 	use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
-	use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+	use cheetah_relay_common::protocol::frame::applications::{
+		ApplicationCommand, ApplicationCommandChannel, ApplicationCommandChannelType, ApplicationCommandDescription,
+	};
 	use cheetah_relay_common::protocol::frame::Frame;
+	use cheetah_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
@@ -557,16 +560,8 @@ mod tests {
 	///
 	#[test]
 	fn should_register_user_after_disconnect_when_auto_create() {
-		let mut template = RoomTemplate::default();
+		let (mut template, user_template) = create_template();
 		template.auto_create_user = true;
-		let user_template = UserTemplate {
-			public_key: 100,
-			private_key: Default::default(),
-			access_groups: AccessGroups(55),
-			objects: Default::default(),
-		};
-		template.users.push(user_template.clone());
-
 		let mut room = Room::new(template, Default::default());
 		room.disconnect_user(&user_template.public_key);
 		assert!(room.users.contains_key(&user_template.public_key));
@@ -598,6 +593,69 @@ mod tests {
 			}
 		}
 
+		let (template, user_template) = create_template();
+
+		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
+		let mut room = Room::new(template, vec![test_listener.clone()]);
+		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
+		room.disconnect_user(&user_template.public_key);
+
+		assert_eq!(test_listener.clone().borrow().trace, "r100c100d100".to_string());
+	}
+
+	#[test]
+	fn should_dont_send_command_to_current_user() {
+		let (template, user_template) = create_template();
+		let mut room = Room::new(template, Default::default());
+		room.current_user.replace(user_template.public_key);
+		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
+		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+
+		let user = room.get_user_mut(&user_template.public_key).unwrap();
+		user.attached = true;
+		user.protocol.replace(RelayProtocol::new(&Instant::now()));
+
+		room.send_to_group(
+			user_template.access_groups.clone(),
+			S2CCommand::Event(EventCommand {
+				object_id: Default::default(),
+				field_id: 0,
+				event: Default::default(),
+			}),
+		);
+
+		let user = room.get_user(&user_template.public_key).unwrap();
+		let protocol = user.protocol.as_ref().unwrap();
+		assert!(protocol.out_commands_collector.commands.reliable.is_empty());
+	}
+
+	#[test]
+	fn should_send_command_to_other_user() {
+		let (template, user_template) = create_template();
+		let mut room = Room::new(template, Default::default());
+		room.current_user.replace(user_template.public_key + 1); // команда пришла от другого пользователя
+		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
+		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+
+		let user = room.get_user_mut(&user_template.public_key).unwrap();
+		user.attached = true;
+		user.protocol.replace(RelayProtocol::new(&Instant::now()));
+
+		room.send_to_group(
+			user_template.access_groups.clone(),
+			S2CCommand::Event(EventCommand {
+				object_id: Default::default(),
+				field_id: 0,
+				event: Default::default(),
+			}),
+		);
+
+		let user = room.get_user(&user_template.public_key).unwrap();
+		let protocol = user.protocol.as_ref().unwrap();
+		assert_eq!(protocol.out_commands_collector.commands.reliable.len(), 1);
+	}
+
+	fn create_template() -> (RoomTemplate, UserTemplate) {
 		let mut template = RoomTemplate::default();
 		let user_template = UserTemplate {
 			public_key: 100,
@@ -606,12 +664,6 @@ mod tests {
 			objects: Default::default(),
 		};
 		template.users.push(user_template.clone());
-
-		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
-		let mut room = Room::new(template, vec![test_listener.clone()]);
-		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
-		room.disconnect_user(&user_template.public_key);
-
-		assert_eq!(test_listener.clone().borrow().trace, "r100c100d100".to_string());
+		(template, user_template)
 	}
 }

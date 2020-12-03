@@ -31,7 +31,6 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 
 			let access_groups = object.access_groups.clone();
 			room.send_to_group(
-				false,
 				access_groups,
 				S2CCommand::SetLong(SetLongCommand {
 					object_id: self.object_id,
@@ -49,7 +48,7 @@ impl ServerCommandExecutor for SetLongCommand {
 			match object.fields.longs.insert(self.field_id, self.value) {
 				Ok(_) => {
 					let access_groups = object.access_groups.clone();
-					room.send_to_group(false, access_groups, S2CCommand::SetLong(self));
+					room.send_to_group(access_groups, S2CCommand::SetLong(self));
 				}
 				Err(_) => {
 					log::error!("[SetLongCommand] overflow element count in object({:?})", object.id);

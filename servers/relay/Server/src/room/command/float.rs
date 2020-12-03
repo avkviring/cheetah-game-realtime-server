@@ -24,7 +24,6 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 
 			let access_groups = object.access_groups.clone();
 			room.send_to_group(
-				false,
 				access_groups,
 				S2CCommand::SetFloat64(SetFloat64Command {
 					object_id: self.object_id,
@@ -47,7 +46,7 @@ impl ServerCommandExecutor for SetFloat64Command {
 				}
 			}
 			let access_groups = object.access_groups;
-			room.send_to_group(false, access_groups, S2CCommand::SetFloat64(self));
+			room.send_to_group(access_groups, S2CCommand::SetFloat64(self));
 		}
 	}
 }
