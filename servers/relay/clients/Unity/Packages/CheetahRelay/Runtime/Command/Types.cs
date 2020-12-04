@@ -7,24 +7,38 @@ namespace CheetahRelay
     public struct CheetahObjectId
     {
         public uint id;
-        public uint user;
+        /// <summary>
+        /// Владельцем объекта может быть или комната или пользователь
+        /// </summary>
+        public bool roomOwner;
+        /// <summary>
+        /// Публичный ключ пользователя - владельца объекта, применимо  если roomOwner = false
+        /// </summary>
+        public uint user_public_key;
 
         public override string ToString()
         {
-            return "RelayObjectId (id=" + id + ", user=" + user + ")";
+            return "RelayObjectId (id=" + id + ", user=" + user_public_key + ")";
         }
 
-        public bool Equals(CheetahObjectId other) {
-            return id == other.id && user == other.user;
-        }
-
+        
         public override bool Equals(object obj) {
             return obj is CheetahObjectId other && Equals(other);
         }
 
-        public override int GetHashCode() {
-            unchecked {
-                return ((int)id * 397) ^ (int)user;
+        public bool Equals(CheetahObjectId other)
+        {
+            return id == other.id && roomOwner == other.roomOwner && user_public_key == other.user_public_key;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (int) id;
+                hashCode = (hashCode * 397) ^ roomOwner.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int) user_public_key;
+                return hashCode;
             }
         }
     }

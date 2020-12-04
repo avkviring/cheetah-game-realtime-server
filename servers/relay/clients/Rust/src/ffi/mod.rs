@@ -49,20 +49,31 @@ where
 #[repr(C)]
 pub struct GameObjectIdFFI {
 	id: u32,
-	owner: UserPublicKey,
+	room_owner: bool,
+	user_public_key: UserPublicKey,
 }
 
 impl From<&GameObjectId> for GameObjectIdFFI {
 	fn from(from: &GameObjectId) -> Self {
-		let owner = if let ObjectOwner::User(public_key) = from.owner { public_key } else { 0 };
-		Self { id: from.id, owner }
+		match from.owner {
+			ObjectOwner::Root => GameObjectIdFFI {
+				id: from.id,
+				room_owner: true,
+				user_public_key: u32::max_value(),
+			},
+			ObjectOwner::User(public_key) => GameObjectIdFFI {
+				id: from.id,
+				room_owner: false,
+				user_public_key: public_key,
+			},
+		}
 	}
 }
 
 impl From<&GameObjectIdFFI> for GameObjectId {
 	fn from(from: &GameObjectIdFFI) -> Self {
 		Self {
-			owner: ObjectOwner::User(from.owner),
+			owner: ObjectOwner::User(from.user_public_key),
 			id: from.id,
 		}
 	}
