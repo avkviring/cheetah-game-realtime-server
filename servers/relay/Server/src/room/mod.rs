@@ -113,13 +113,13 @@ impl Room {
 		#[cfg(test)]
 		self.out_commands.push_front((access_groups, command.clone()));
 
-		if self.current_user.is_none() {
-			return;
-		}
+		let current_user_public_key = self.current_user.as_ref().unwrap_or(&u32::max_value());
+		let meta = self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation { timestamp: 0 });
+		let channel_type = self
+			.current_channel
+			.as_ref()
+			.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 
-		let current_user_public_key = self.current_user.as_ref().unwrap();
-		let meta = self.current_meta.as_ref().unwrap();
-		let channel_type = self.current_channel.as_ref().unwrap();
 		let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
 			meta: S2CMetaCommandInformation::new(current_user_public_key.clone(), meta),
 			command: command.clone(),
@@ -265,6 +265,7 @@ impl Room {
 	///
 	pub fn disconnect_user(&mut self, user_public_key: &UserPublicKey) {
 		log::info!("[room({:?})] disconnect user({:?})", self.id, user_public_key);
+		self.current_user.replace(user_public_key.clone());
 		match self.users.remove(user_public_key) {
 			None => {}
 			Some(user) => {
@@ -272,14 +273,13 @@ impl Room {
 				self.process_objects(&mut |o| {
 					if let ObjectOwner::User(owner) = o.id.owner {
 						if owner == user.template.public_key {
-							objects.push((o.id.clone(), o.access_groups.clone()));
+							objects.push(o.id.clone());
 						}
 					}
 				});
 
-				for (id, access_groups) in objects {
+				for id in objects {
 					self.delete_object(&id);
-					self.send_to_group(access_groups, S2CCommand::Delete(DeleteGameObjectCommand { object_id: id }));
 				}
 
 				self.user_listeners.iter().cloned().for_each(|listener| {
@@ -322,7 +322,21 @@ impl Room {
 	}
 
 	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
-		self.objects.shift_remove(object_id)
+		match self.objects.shift_remove(object_id) {
+			None => {
+				log::error!("[room({:?})] delete_object - object({:?}) not found", self.id, object_id);
+				Option::None
+			}
+			Some(object) => {
+				self.send_to_group(
+					object.access_groups,
+					S2CCommand::Delete(DeleteGameObjectCommand {
+						object_id: object.id.clone(),
+					}),
+				);
+				Option::Some(object)
+			}
+		}
 	}
 
 	pub fn process_objects(&self, f: &mut dyn FnMut(&GameObject) -> ()) {

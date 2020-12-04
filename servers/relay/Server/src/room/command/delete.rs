@@ -1,5 +1,4 @@
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -20,19 +19,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 				return;
 			}
 		}
-
-		let user_public_key = user.template.public_key.clone();
-		if let Some(object) = room.delete_object(&self.object_id) {
-			let access_groups = object.access_groups;
-			room.send_to_group(access_groups, S2CCommand::Delete(self));
-		} else {
-			error_c2s_command(
-				"DeleteGameObjectCommand",
-				room,
-				&user_public_key,
-				format!("game object not found {:?}", self.object_id),
-			);
-		}
+		room.delete_object(&self.object_id);
 	}
 }
 
