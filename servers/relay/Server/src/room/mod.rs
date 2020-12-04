@@ -322,7 +322,7 @@ impl Room {
 	}
 
 	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
-		self.objects.remove(object_id)
+		self.objects.shift_remove(object_id)
 	}
 
 	pub fn process_objects(&self, f: &mut dyn FnMut(&GameObject) -> ()) {
@@ -653,6 +653,46 @@ mod tests {
 		let user = room.get_user(&user_template.public_key).unwrap();
 		let protocol = user.protocol.as_ref().unwrap();
 		assert_eq!(protocol.out_commands_collector.commands.reliable.len(), 1);
+	}
+
+	#[test]
+	pub fn should_keep_order_object() {
+		let (template, _) = create_template();
+		let mut room = Room::new(template, Default::default());
+		room.insert_object(GameObject {
+			id: GameObjectId::new(100, ObjectOwner::Root),
+			template: 0,
+			access_groups: Default::default(),
+			fields: Default::default(),
+		});
+
+		room.insert_object(GameObject {
+			id: GameObjectId::new(5, ObjectOwner::Root),
+			template: 0,
+			access_groups: Default::default(),
+			fields: Default::default(),
+		});
+
+		room.insert_object(GameObject {
+			id: GameObjectId::new(200, ObjectOwner::Root),
+			template: 0,
+			access_groups: Default::default(),
+			fields: Default::default(),
+		});
+
+		let mut order = String::new();
+		room.objects.values().for_each(|o| {
+			order = format!("{}{}", order, o.id.id);
+		});
+		assert_eq!(order, "1005200");
+
+		room.delete_object(&GameObjectId::new(100, ObjectOwner::Root));
+
+		let mut order = String::new();
+		room.objects.values().for_each(|o| {
+			order = format!("{}{}", order, o.id.id);
+		});
+		assert_eq!(order, "5200");
 	}
 
 	fn create_template() -> (RoomTemplate, UserTemplate) {
