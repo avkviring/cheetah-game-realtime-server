@@ -7,10 +7,12 @@ namespace CheetahRelay
     public struct CheetahObjectId
     {
         public uint id;
+
         /// <summary>
         /// Владельцем объекта может быть или комната или пользователь
         /// </summary>
         public bool roomOwner;
+
         /// <summary>
         /// Публичный ключ пользователя - владельца объекта, применимо  если roomOwner = false
         /// </summary>
@@ -18,11 +20,12 @@ namespace CheetahRelay
 
         public override string ToString()
         {
-            return "RelayObjectId (id=" + id + ", user=" + user_public_key + ")";
+            return "CheetahObjectId (id=" + id + ", roomOwner=" + roomOwner + ", user_public_key=" + user_public_key + ")";
         }
 
-        
-        public override bool Equals(object obj) {
+
+        public override bool Equals(object obj)
+        {
             return obj is CheetahObjectId other && Equals(other);
         }
 
