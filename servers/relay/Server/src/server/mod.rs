@@ -59,9 +59,12 @@ impl Server {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
-		let handler = thread::spawn(move || {
-			ServerThread::new(socket, receiver, halt_signal).run();
-		});
+		let handler = thread::Builder::new()
+			.name("server".to_string())
+			.spawn(move || {
+				ServerThread::new(socket, receiver, halt_signal).run();
+			})
+			.unwrap();
 		Self {
 			handler: Option::Some(handler),
 			sender,
