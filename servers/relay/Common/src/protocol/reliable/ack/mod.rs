@@ -1,10 +1,8 @@
-use std::ops::Add;
-use std::time::{Duration, Instant};
-
-use crate::protocol::frame::headers::{Header, Headers};
+use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::reliable::ack::header::AckFrameHeader;
 use crate::protocol::{FrameBuilder, FrameReceivedListener, NOT_EXIST_FRAME_ID};
+use std::time::Instant;
 
 pub mod header;
 
@@ -68,11 +66,11 @@ impl AckSender {
 }
 
 impl FrameBuilder for AckSender {
-	fn contains_self_data(&self, now: &Instant) -> bool {
+	fn contains_self_data(&self, _now: &Instant) -> bool {
 		self.send_ack_counter > 0
 	}
 
-	fn build_frame(&mut self, frame: &mut Frame, now: &Instant) {
+	fn build_frame(&mut self, frame: &mut Frame, _now: &Instant) {
 		if self.send_ack_counter > 0 {
 			self.send_ack_counter = self.send_ack_counter - 1;
 		}
@@ -113,7 +111,7 @@ impl FrameBuilder for AckSender {
 }
 
 impl FrameReceivedListener for AckSender {
-	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
+	fn on_frame_received(&mut self, frame: &Frame, _now: &Instant) {
 		if frame.is_reliability() {
 			self.send_ack_counter = AckSender::SEND_ACK_COUNTER;
 			let mut frame_id = frame.header.frame_id;
@@ -144,7 +142,6 @@ impl FrameReceivedListener for AckSender {
 
 #[cfg(test)]
 mod tests {
-	use std::ops::Add;
 	use std::time::Instant;
 
 	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
@@ -197,7 +194,7 @@ mod tests {
 	#[test]
 	fn should_send_ack_header() {
 		let mut reliable = AckSender::default();
-		let mut time = Instant::now();
+		let time = Instant::now();
 
 		let mut in_frame = Frame::new(10);
 		in_frame.commands.reliable.push(create_command());
@@ -217,7 +214,7 @@ mod tests {
 	#[test]
 	fn should_send_ack_header_for_prev_frames() {
 		let mut reliable = AckSender::default();
-		let mut time = Instant::now();
+		let time = Instant::now();
 
 		for i in 0..AckSender::BUFFER_SIZE {
 			let mut in_frame = Frame::new(10 + i as u64);

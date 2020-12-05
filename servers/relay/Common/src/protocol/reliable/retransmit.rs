@@ -3,7 +3,6 @@ use std::collections::{HashSet, LinkedList};
 use std::ops::Sub;
 use std::time::{Duration, Instant};
 
-use lru::LruCache;
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 use serde::{Deserialize, Serialize};
@@ -181,13 +180,11 @@ impl FrameReceivedListener for RetransmitterImpl {
 	///
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		let ack_headers: Vec<&AckFrameHeader> = frame.headers.find(Header::predicate_ack_frame);
-		log::error!("receive ask count {:?} ", ack_headers.len());
 		ack_headers.iter().for_each(|ack_header| {
 			ack_header.get_frames().iter().for_each(|frame_id| {
 				self.unacked_frames.remove(&frame_id);
 				self.statistics.on_ack_received(*frame_id, now);
 			});
-			log::error!("receive ask for {:?} {:?}", ack_header.get_frames(), self.unacked_frames);
 		});
 	}
 }

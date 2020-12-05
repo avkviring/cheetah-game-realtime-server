@@ -72,7 +72,7 @@ impl UdpClient {
 	}
 
 	fn do_write(&mut self, now: &Instant) {
-		if let Some(frame) = self.protocol.build_next_frame(&now) {
+		while let Some(frame) = self.protocol.build_next_frame(&now) {
 			self.out_frames.push_front(frame);
 		}
 

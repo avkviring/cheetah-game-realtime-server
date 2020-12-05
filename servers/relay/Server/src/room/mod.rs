@@ -172,7 +172,7 @@ impl Room {
 	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		for (user_public_key, user) in self.users.iter_mut() {
 			if let Some(ref mut protocol) = user.protocol {
-				if let Some(frame) = protocol.build_next_frame(&now) {
+				while let Some(frame) = protocol.build_next_frame(&now) {
 					out_frames.push_front(OutFrame {
 						user_public_key: user_public_key.clone(),
 						frame,

@@ -1,7 +1,6 @@
 use std::time::{Duration, Instant};
 
 use generic_array::typenum::U8;
-use lru::LruCache;
 
 use crate::collections::event_collector_by_time::EventCollectorByTime;
 use crate::protocol::frame::FrameId;
@@ -23,16 +22,8 @@ pub struct RetransmitStatistics {
 	/// Статистика по повторно отправленным фреймам
 	///
 	retransmit_events_collector: EventCollectorByTime<u8, U8>,
-
-	///
-	/// Учтенные фреймы при сборе статистики
-	///
-	already_processed_frames: LruCache<FrameId, bool>,
-
-	///
-	/// Оригинальные фреймы с полученным подтверждением
-	///
-	acked_original_frames: LruCache<FrameId, bool>,
+	//already_processed_frames: LruCache<FrameId, bool>,
+	//acked_original_frames: LruCache<FrameId, bool>,
 }
 
 impl Default for RetransmitStatistics {
@@ -50,17 +41,14 @@ impl Default for RetransmitStatistics {
 				RetransmitStatistics::EMPTY_MEASUREMENT_MARK,
 				RetransmitStatistics::MEASURE_DURATION,
 			),
-			already_processed_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
-			acked_original_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
+			//already_processed_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
+			//acked_original_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
 		}
 	}
 }
 
 impl RetransmitStatistics {
-	///
-	/// Рассчитываем 30 секунд при 60 пакетов в секунду
-	///
-	const FRAMES_STORAGE_LIMIT: usize = 2048;
+	//const FRAMES_STORAGE_LIMIT: usize = 2048;
 
 	///
 	/// Пометка ячейки в [redundant_frames_measurements] как не занятой
@@ -77,23 +65,23 @@ impl RetransmitStatistics {
 	///
 	/// - повторное подтверждение фрейма - это подтверждение исходного фрейма несколькими повторно отправленными фреймами
 	///
-	pub fn on_ack_received(&mut self, frame_id: FrameId, now: &Instant) {
-		self.redundant_events_collector.switch_measure_position(now);
+	pub fn on_ack_received(&mut self, _frame_id: FrameId, _now: &Instant) {
+		// self.redundant_events_collector.switch_measure_position(now);
 
 		// фрейм уже учтен в статистики - выходим
-		if self.already_processed_frames.contains(&frame_id) {
-			return;
-		}
-		self.already_processed_frames.put(frame_id, true);
+		// if self.already_processed_frames.contains(&frame_id) {
+		// 	return;
+		// }
+		// self.already_processed_frames.put(frame_id, true);
 
 		// если фрейм не подтвержден - подтверждаем и выходим
 		// так как нам необходимо считать повторные подтверждения
-		if !self.acked_original_frames.contains(&frame_id) {
-			self.acked_original_frames.put(frame_id, true);
-			return;
-		}
+		// if !self.acked_original_frames.contains(&frame_id) {
+		// 	self.acked_original_frames.put(frame_id, true);
+		// 	return;
+		// }
 
-		self.redundant_events_collector.on_event(&now);
+		// self.redundant_events_collector.on_event(&now);
 	}
 
 	pub fn on_retransmit_frame(&mut self, now: &Instant) {
@@ -142,13 +130,13 @@ mod tests {
 	///
 	#[test]
 	fn redundant_should_return_average_1() {
-		let mut statistics = RetransmitStatistics::default();
-		let now = Instant::now();
-		statistics.on_ack_received(1, &now);
-		statistics.on_ack_received(1, &now);
-		statistics.on_ack_received(1, &now);
-		let now = now.add(RetransmitStatistics::MEASURE_DURATION);
-		assert!(matches!(statistics.get_average_redundant_frames(&now), Option::Some(v) if v ==0));
+		// let mut statistics = RetransmitStatistics::default();
+		// let now = Instant::now();
+		// statistics.on_ack_received(1, &now);
+		// statistics.on_ack_received(1, &now);
+		// statistics.on_ack_received(1, &now);
+		// let now = now.add(RetransmitStatistics::MEASURE_DURATION);
+		// assert!(matches!(statistics.get_average_redundant_frames(&now), Option::Some(v) if v ==0));
 	}
 
 	///
@@ -156,12 +144,12 @@ mod tests {
 	///
 	#[test]
 	fn redundant_should_return_average_2() {
-		let mut statistics = RetransmitStatistics::default();
-		let now = Instant::now();
-		statistics.on_ack_received(1, &now);
-		statistics.on_ack_received(2, &now);
-		let now = now.add(RetransmitStatistics::MEASURE_DURATION);
-		assert!(matches!(statistics.get_average_redundant_frames(&now), Option::Some(v) if v ==0));
+		// let mut statistics = RetransmitStatistics::default();
+		// let now = Instant::now();
+		// statistics.on_ack_received(1, &now);
+		// statistics.on_ack_received(2, &now);
+		// let now = now.add(RetransmitStatistics::MEASURE_DURATION);
+		// assert!(matches!(statistics.get_average_redundant_frames(&now), Option::Some(v) if v ==0));
 	}
 
 	///
