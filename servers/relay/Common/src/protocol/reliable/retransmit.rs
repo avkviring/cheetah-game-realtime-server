@@ -38,7 +38,7 @@ pub struct RetransmitterImpl {
 	frames: LinkedList<ScheduledFrame>,
 
 	///
-	/// Фреймы, для которых мы ожидаем ASK
+	/// Фреймы, для которых мы ожидаем ACK
 	///
 	unacked_frames: HashSet<FrameId>,
 
@@ -46,12 +46,6 @@ pub struct RetransmitterImpl {
 	/// Текущее максимальное количество повтора пакета
 	///
 	max_retransmit_count: u8,
-
-	///
-	/// Связь повторно отправленных фреймов с оригинальными (для обработки ASK ответов)
-	///
-	retransmit_to_original: LruCache<FrameId, FrameId>,
-
 	///
 	/// Время ожидания подтверждения на фрейм
 	///
@@ -92,7 +86,6 @@ impl Default for RetransmitterImpl {
 			frames: Default::default(),
 			unacked_frames: Default::default(),
 			max_retransmit_count: Default::default(),
-			retransmit_to_original: LruCache::new(RetransmitterImpl::RETRANSMIT_TO_ORIGINAL_MAX_LEN),
 			ack_wait_duration: RetransmitterImpl::DEFAULT_ACK_TIMEOUT,
 			statistics: Default::default(),
 		}
@@ -102,7 +95,7 @@ impl Default for RetransmitterImpl {
 impl RetransmitterImpl {
 	///
 	/// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
-	/// примерно 30 секунд без подтверждения при [DEFAULT_ASK_TIMEOUT]
+	/// примерно 30 секунд без подтверждения при [DEFAULT_ACK_TIMEOUT]
 	///
 	pub const RETRANSMIT_LIMIT: u8 = 100;
 
@@ -114,8 +107,8 @@ impl RetransmitterImpl {
 	///
 	/// Максимальная длина [self.retransmit_to_original]
 	///
-	/// - должно гарантированно хватить все фреймы, ожидающие ASK
-	/// - включая ASK на повторно отосланные фреймы
+	/// - должно гарантированно хватить все фреймы, ожидающие ACK
+	/// - включая ACK на повторно отосланные фреймы
 	///
 	pub const RETRANSMIT_TO_ORIGINAL_MAX_LEN: usize = 4096;
 
@@ -145,8 +138,6 @@ impl RetransmitterImpl {
 						retransmit_frame.header.frame_id = retransmit_frame_id;
 						let retransmit_header = Header::RetransmitFrame(RetransmitFrameHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
-
-						self.retransmit_to_original.put(retransmit_frame_id, original_frame_id);
 
 						self.frames.push_back(scheduled_frame);
 						self.statistics.on_retransmit_frame(now);
@@ -190,15 +181,13 @@ impl FrameReceivedListener for RetransmitterImpl {
 	///
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		let ack_headers: Vec<&AckFrameHeader> = frame.headers.find(Header::predicate_ack_frame);
+		log::error!("receive ask count {:?} ", ack_headers.len());
 		ack_headers.iter().for_each(|ack_header| {
 			ack_header.get_frames().iter().for_each(|frame_id| {
-				let original_frame_id = match self.retransmit_to_original.get(frame_id) {
-					None => *frame_id,
-					Some(original_frame_id) => *original_frame_id,
-				};
-				self.unacked_frames.remove(&original_frame_id);
-				self.statistics.on_ack_received(*frame_id, original_frame_id, now);
-			})
+				self.unacked_frames.remove(&frame_id);
+				self.statistics.on_ack_received(*frame_id, now);
+			});
+			log::error!("receive ask for {:?} {:?}", ack_header.get_frames(), self.unacked_frames);
 		});
 	}
 }
@@ -306,7 +295,7 @@ mod tests {
 	}
 
 	///
-	/// Если для фрейма получен ASK - то его не должно быть в повторных
+	/// Если для фрейма получен ACK - то его не должно быть в повторных
 	///
 	#[test]
 	fn should_return_none_then_ack() {
@@ -320,24 +309,7 @@ mod tests {
 	}
 
 	///
-	/// Если для фрейма получен ASK на повторно отправленный фрейм - то его не должно быть в повторных
-	///
-	#[test]
-	fn should_return_none_then_ack_retransmitted_frame() {
-		let mut handler = RetransmitterImpl::default();
-		let now = Instant::now();
-		let frame = create_reliability_frame(1);
-		handler.on_frame_built(&frame, &now);
-		let get_time = now.add(handler.ack_wait_duration);
-		let retransmit_frame = handler.get_retransmit_frame(&get_time, 2).unwrap();
-
-		handler.on_frame_received(&create_ack_frame(100, retransmit_frame.header.frame_id), &now);
-		let get_time = get_time.add(handler.ack_wait_duration);
-		assert!(matches!(handler.get_retransmit_frame(&get_time, 3), Option::None));
-	}
-
-	///
-	/// Если не было ASK после повторной отправки - то фрейм должен быть перепослан через Timeout
+	/// Если не было ACK после повторной отправки - то фрейм должен быть перепослан через Timeout
 	///
 	#[test]
 	fn should_retransmit_after_retransmit() {

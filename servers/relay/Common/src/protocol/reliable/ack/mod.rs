@@ -1,7 +1,7 @@
 use std::ops::Add;
 use std::time::{Duration, Instant};
 
-use crate::protocol::frame::headers::Header;
+use crate::protocol::frame::headers::{Header, Headers};
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::reliable::ack::header::AckFrameHeader;
 use crate::protocol::{FrameBuilder, FrameReceivedListener, NOT_EXIST_FRAME_ID};
@@ -33,7 +33,7 @@ pub struct AckSender {
 	///
 	/// Время следующей отправки ACK
 	///
-	pub schedule_send: Option<Instant>,
+	pub send_ack_counter: u8,
 
 	///
 	/// Количество фреймов для которых ACK отправлен недостаточное количество раз
@@ -47,7 +47,7 @@ impl Default for AckSender {
 			frames: [NOT_EXIST_FRAME_ID; AckSender::BUFFER_SIZE],
 			next_frame_position: 0,
 			ack_counts: [0; AckSender::BUFFER_SIZE],
-			schedule_send: Option::None,
+			send_ack_counter: 0,
 			low_count_ack_count: 0,
 		}
 	}
@@ -55,9 +55,9 @@ impl Default for AckSender {
 
 impl AckSender {
 	///
-	/// Время, с которого может быть запрошена отправка пакета с подтверждением
+	/// Минимальное количество отсылок подтверждения для одного пакета
 	///
-	pub const SCHEDULE_SEND_TIME: Duration = Duration::from_millis(1);
+	pub const SEND_ACK_COUNTER: u8 = 3;
 
 	///
 	/// Количество подтверждаемых фреймов для одного исходящего пакета
@@ -69,14 +69,13 @@ impl AckSender {
 
 impl FrameBuilder for AckSender {
 	fn contains_self_data(&self, now: &Instant) -> bool {
-		match self.schedule_send {
-			None => false,
-			Some(ref time_to_sent) => now >= time_to_sent,
-		}
+		self.send_ack_counter > 0
 	}
 
-	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
-		self.schedule_send = Option::None;
+	fn build_frame(&mut self, frame: &mut Frame, now: &Instant) {
+		if self.send_ack_counter > 0 {
+			self.send_ack_counter = self.send_ack_counter - 1;
+		}
 		let mut frames = self.frames.clone();
 		frames.sort();
 
@@ -115,9 +114,15 @@ impl FrameBuilder for AckSender {
 
 impl FrameReceivedListener for AckSender {
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
-		// если нет reliability команд - то подтверждать не надо
-		if !frame.commands.reliable.is_empty() {
-			let frame_id = frame.header.frame_id;
+		if frame.is_reliability() {
+			self.send_ack_counter = AckSender::SEND_ACK_COUNTER;
+			let mut frame_id = frame.header.frame_id;
+			match frame.headers.first(Header::predicate_retransmit_frame) {
+				None => {}
+				Some(header) => {
+					frame_id = header.original_frame_id;
+				}
+			}
 
 			// записываем frame_id в буфер
 			// так как буфер кольцевой - то мы перепишем старый frame_id
@@ -133,8 +138,6 @@ impl FrameReceivedListener for AckSender {
 			if self.next_frame_position == AckSender::BUFFER_SIZE {
 				self.next_frame_position = 0;
 			}
-
-			self.schedule_send = Option::Some(now.add(AckSender::SCHEDULE_SEND_TIME));
 		}
 	}
 }
@@ -185,8 +188,7 @@ mod tests {
 		let mut frame = Frame::new(10);
 		frame.commands.reliable.push(create_command());
 		reliable.on_frame_received(&frame, &time);
-		assert_eq!(reliable.contains_self_data(&time), false);
-		assert_eq!(reliable.contains_self_data(&time.add(AckSender::SCHEDULE_SEND_TIME)), true);
+		assert_eq!(reliable.contains_self_data(&time), true);
 	}
 
 	///
@@ -201,7 +203,6 @@ mod tests {
 		in_frame.commands.reliable.push(create_command());
 		reliable.on_frame_received(&in_frame, &time);
 
-		time = time.add(AckSender::SCHEDULE_SEND_TIME);
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 
@@ -224,7 +225,6 @@ mod tests {
 			reliable.on_frame_received(&in_frame, &time);
 		}
 
-		time = time.add(AckSender::SCHEDULE_SEND_TIME);
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 
