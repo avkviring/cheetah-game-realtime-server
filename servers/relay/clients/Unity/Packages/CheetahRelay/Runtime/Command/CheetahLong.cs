@@ -35,5 +35,18 @@ namespace CheetahRelay
         /// <returns>false - клиент не найден</returns>
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "inc_long_value")]
         public static extern bool Increment(ref CheetahObjectId objectId, ushort fieldId, long increment);
+
+
+        /// <summary>
+        ///  CompareAndSet  
+        /// </summary>
+        /// <param name="objectId"></param>
+        /// <param name="fieldId"></param>
+        /// <param name="currentValue">требуемое значение</param>
+        /// <param name="newValue">новое значение, устанавливается если текущее равное currentValue</param>
+        /// <param name="resetValue">значение, устанавливаемое если пользователь вышел, применимо если команда смогла установить newValue</param>
+        /// <returns>false - клиент не найден</returns>
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "compare_and_set_long_value")]
+        public static extern bool Increment(ref CheetahObjectId objectId, ushort fieldId, long currentValue, long newValue, long resetValue);
     }
 }

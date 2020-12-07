@@ -26,6 +26,19 @@ pub struct SetLongCommand {
 	pub value: i64,
 }
 
+///
+/// Установка значения new если текущее равно current
+/// reset - значение после выхода пользователя
+///  
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompareAndSetLongCommand {
+	pub object_id: GameObjectId,
+	pub field_id: FieldID,
+	pub current: i64,
+	pub new: i64,
+	pub reset: i64,
+}
+
 impl GameObjectCommand for IncrementLongC2SCommand {
 	fn get_object_id(&self) -> &GameObjectId {
 		&self.object_id
@@ -33,6 +46,12 @@ impl GameObjectCommand for IncrementLongC2SCommand {
 }
 
 impl GameObjectCommand for SetLongCommand {
+	fn get_object_id(&self) -> &GameObjectId {
+		&self.object_id
+	}
+}
+
+impl GameObjectCommand for CompareAndSetLongCommand {
 	fn get_object_id(&self) -> &GameObjectId {
 		&self.object_id
 	}

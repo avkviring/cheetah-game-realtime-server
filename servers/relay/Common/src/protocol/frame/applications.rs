@@ -164,6 +164,7 @@ impl ApplicationCommand {
 				C2SCommand::Event(c) => Option::Some(&c.object_id),
 				C2SCommand::Delete(c) => Option::Some(&c.object_id),
 				C2SCommand::AttachToRoom => Option::None,
+				C2SCommand::CompareAndSetLongValue(c) => Option::Some(&c.object_id),
 			},
 		}
 	}

@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
+use cheetah_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::C2SCommand;
 use cheetah_relay_common::constants::FieldID;
@@ -29,5 +29,16 @@ pub extern "C" fn inc_long_value(object_id: &GameObjectIdFFI, field_id: FieldID,
 		object_id: From::from(object_id),
 		field_id,
 		increment,
+	}))
+}
+
+#[no_mangle]
+pub extern "C" fn compare_and_set_long_value(object_id: &GameObjectIdFFI, field_id: FieldID, current: i64, new: i64, reset: i64) -> bool {
+	send_command(C2SCommand::CompareAndSetLongValue(CompareAndSetLongCommand {
+		object_id: From::from(object_id),
+		field_id,
+		current,
+		new,
+		reset,
 	}))
 }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::commands::command::event::EventCommand;
 use crate::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use crate::commands::command::load::CreateGameObjectCommand;
-use crate::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
+use crate::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
 use crate::commands::command::meta::s2c::S2CMetaCommandInformation;
 use crate::commands::command::structure::StructureCommand;
@@ -23,6 +23,7 @@ pub enum C2SCommand {
 	Create(CreateGameObjectCommand),
 	SetLongValue(SetLongCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
+	CompareAndSetLongValue(CompareAndSetLongCommand),
 	SetFloatValue(SetFloat64Command),
 	IncrementFloatCounter(IncrementFloat64C2SCommand),
 	Structure(StructureCommand),

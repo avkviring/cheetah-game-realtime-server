@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::long::{IncrementLongC2SCommand, SetLongCommand};
+use cheetah_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -55,6 +55,12 @@ impl ServerCommandExecutor for SetLongCommand {
 				}
 			}
 		}
+	}
+}
+
+impl ServerCommandExecutor for CompareAndSetLongCommand {
+	fn execute(self, room: &mut Room, user_public_key: &u32) {
+		unimplemented!()
 	}
 }
 
