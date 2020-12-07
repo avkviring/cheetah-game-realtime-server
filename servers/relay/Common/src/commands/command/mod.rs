@@ -28,7 +28,6 @@ pub enum C2SCommand {
 	Structure(StructureCommand),
 	Event(EventCommand),
 	Delete(DeleteGameObjectCommand),
-	Test(String),
 	///
 	/// Загрузить все объекты комнаты
 	///

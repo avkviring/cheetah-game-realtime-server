@@ -163,7 +163,6 @@ impl ApplicationCommand {
 				C2SCommand::Structure(c) => Option::Some(&c.object_id),
 				C2SCommand::Event(c) => Option::Some(&c.object_id),
 				C2SCommand::Delete(c) => Option::Some(&c.object_id),
-				C2SCommand::Test(_) => Option::None,
 				C2SCommand::AttachToRoom => Option::None,
 			},
 		}

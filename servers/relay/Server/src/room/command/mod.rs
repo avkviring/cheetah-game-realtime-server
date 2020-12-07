@@ -40,7 +40,6 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPubli
 		C2SCommand::Structure(command) => command.execute(room, user_public_key),
 		C2SCommand::Event(command) => command.execute(room, user_public_key),
 		C2SCommand::Delete(command) => command.execute(room, user_public_key),
-		C2SCommand::Test(_) => {}
 		C2SCommand::AttachToRoom => {
 			load_room::attach_to_room(room, user_public_key);
 		}
