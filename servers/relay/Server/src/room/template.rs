@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::fields::{GameObjectFields, HeapLessFloatMap, HeaplessBuffer, HeaplessLongMap};
+use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
@@ -56,25 +56,25 @@ impl GameObjectTemplate {
 		self.to_game_object(GameObjectId::new(self.id, ObjectOwner::User(user_public_key)))
 	}
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {
-		let mut longs = HeaplessLongMap::new();
+		let mut longs: HashMap<FieldID, i64, FnvBuildHasher> = Default::default();
 		if let Some(ref self_longs) = self.fields.longs {
 			self_longs.iter().for_each(|(k, v)| {
-				longs.insert(k.clone(), *v).unwrap();
+				longs.insert(k.clone(), *v);
 			});
 		}
 
-		let mut floats = HeapLessFloatMap::new();
+		let mut floats: HashMap<FieldID, f64, FnvBuildHasher> = Default::default();
 		if let Some(ref self_floats) = self.fields.floats {
 			self_floats.iter().for_each(|(k, v)| {
-				floats.insert(k.clone(), *v).unwrap();
+				floats.insert(k.clone(), *v);
 			});
 		}
 
-		let mut structures = HashMap::<FieldID, HeaplessBuffer, FnvBuildHasher>::default();
+		let mut structures: HashMap<FieldID, Vec<u8>, FnvBuildHasher> = Default::default();
 		if let Some(ref self_structures) = self.fields.structures {
 			self_structures.iter().for_each(|(k, v)| {
-				let vec = rmp_serde::to_vec(v).unwrap();
-				structures.insert(k.clone(), HeaplessBuffer::from_slice(&vec.as_slice()).unwrap());
+				let structure = rmp_serde::to_vec(v).unwrap();
+				structures.insert(k.clone(), structure);
 			});
 		}
 

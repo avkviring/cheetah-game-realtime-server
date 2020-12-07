@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use as_slice::AsSlice;
 use fnv::FnvBuildHasher;
 
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::constants::FieldID;
-use cheetah_relay_common::room::fields::{GameObjectFields, HeaplessBuffer};
+use cheetah_relay_common::room::fields::GameObjectFields;
 
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
 
@@ -91,8 +90,8 @@ impl Default for ObjectStructuresFFI {
 	}
 }
 
-impl From<&HashMap<FieldID, HeaplessBuffer, FnvBuildHasher>> for ObjectStructuresFFI {
-	fn from(from: &HashMap<u16, HeaplessBuffer, FnvBuildHasher>) -> Self {
+impl From<&HashMap<FieldID, Vec<u8>, FnvBuildHasher>> for ObjectStructuresFFI {
+	fn from(from: &HashMap<u16, Vec<u8>, FnvBuildHasher>) -> Self {
 		let mut structures: ObjectStructuresFFI = Default::default();
 		let mut index = 0;
 		for (field, value) in from {
@@ -107,13 +106,13 @@ impl From<&HashMap<FieldID, HeaplessBuffer, FnvBuildHasher>> for ObjectStructure
 	}
 }
 
-impl From<&ObjectStructuresFFI> for HashMap<FieldID, HeaplessBuffer, FnvBuildHasher> {
+impl From<&ObjectStructuresFFI> for HashMap<FieldID, Vec<u8>, FnvBuildHasher> {
 	fn from(from: &ObjectStructuresFFI) -> Self {
 		let mut result = HashMap::default();
 		for index in 0..from.count as usize {
 			let start_offset = index * MAX_SIZE_STRUCT;
 			let end_offset = start_offset + from.sizes[index] as usize;
-			let value = HeaplessBuffer::from_slice(&from.values[start_offset..end_offset]).unwrap();
+			let value = from.values[start_offset..end_offset].to_vec();
 			result.insert(from.fields[index], value);
 		}
 		result
@@ -133,8 +132,8 @@ where
 	}
 }
 
-impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&heapless::FnvIndexMap<FieldID, IN, heapless::consts::U256>> for ObjectValuesFFI<OUT> {
-	fn from(value: &heapless::FnvIndexMap<FieldID, IN, heapless::consts::U256>) -> Self {
+impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&HashMap<FieldID, IN, FnvBuildHasher>> for ObjectValuesFFI<OUT> {
+	fn from(value: &HashMap<FieldID, IN, FnvBuildHasher>) -> Self {
 		let mut result: ObjectValuesFFI<OUT> = Default::default();
 		result.count = value.len() as u8;
 		for (i, (key, value)) in value.iter().enumerate() {
@@ -145,13 +144,13 @@ impl<IN: Clone, OUT: Default + From<IN> + Copy> From<&heapless::FnvIndexMap<Fiel
 	}
 }
 
-impl<IN: Default + Clone, OUT: From<IN>> From<&ObjectValuesFFI<IN>> for heapless::FnvIndexMap<FieldID, OUT, heapless::consts::U256> {
+impl<IN: Default + Clone, OUT: From<IN>> From<&ObjectValuesFFI<IN>> for HashMap<FieldID, OUT, FnvBuildHasher> {
 	fn from(value: &ObjectValuesFFI<IN>) -> Self {
-		let mut result: heapless::FnvIndexMap<FieldID, OUT, heapless::consts::U256> = Default::default();
+		let mut result: HashMap<FieldID, OUT, FnvBuildHasher> = Default::default();
 		for i in 0..value.count as usize {
 			let field = value.fields[i];
 			let value = From::<IN>::from(value.values[i].clone());
-			result.insert(field, value).ok().unwrap();
+			result.insert(field, value);
 		}
 		result
 	}
@@ -159,17 +158,16 @@ impl<IN: Default + Clone, OUT: From<IN>> From<&ObjectValuesFFI<IN>> for heapless
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::room::fields::{GameObjectFields, HeaplessBuffer};
+	use cheetah_relay_common::room::fields::GameObjectFields;
 
 	use crate::ffi::command::create::GameObjectFieldsFFI;
 
 	#[test]
 	fn test_convert() {
 		let mut source = GameObjectFields::default();
-		source.floats.insert(5, 500.5).unwrap();
-		source.longs.insert(1, 100).unwrap();
-		let mut buffer = HeaplessBuffer::new();
-		buffer.push(1).unwrap();
+		source.floats.insert(5, 500.5);
+		source.longs.insert(1, 100);
+		let buffer = vec![1, 2, 3, 4, 5];
 		source.structures.insert(3, buffer);
 
 		let converted = GameObjectFieldsFFI::from(source.clone());

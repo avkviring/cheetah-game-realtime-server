@@ -12,13 +12,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 				*value += self.increment;
 				*value
 			} else {
-				match object.fields.floats.insert(self.field_id, self.increment) {
-					Ok(_) => {}
-					Err(_) => {
-						log::error!("[IncrementFloatCommand] overflow element count in object({:?})", object.id);
-						return;
-					}
-				}
+				object.fields.floats.insert(self.field_id, self.increment);
 				self.increment
 			};
 
@@ -38,13 +32,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 impl ServerCommandExecutor for SetFloat64Command {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object_mut(&self.object_id) {
-			match object.fields.floats.insert(self.field_id, self.value) {
-				Ok(_) => {}
-				Err(_) => {
-					log::error!("[SetFloatCommand] overflow element count in object({:?})", object.id);
-					return;
-				}
-			}
+			object.fields.floats.insert(self.field_id, self.value);
 			let access_groups = object.access_groups;
 			room.send_to_group(access_groups, S2CCommand::SetFloat64(self));
 		}

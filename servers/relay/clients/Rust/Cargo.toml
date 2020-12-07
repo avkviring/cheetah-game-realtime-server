@@ -16,7 +16,6 @@ widestring = "0.4.2"
 hex = "0.4.2"
 fnv = "1.0.7"
 heapless = { version = "0.5.6", features = ["serde"] }
-as-slice = "0.1.4"
 
 
 [dev-dependencies]

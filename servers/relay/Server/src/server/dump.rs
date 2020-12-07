@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::fields::{GameObjectFields, HeapLessFloatMap, HeaplessBuffer, HeaplessLongMap};
+use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -51,8 +51,8 @@ pub struct GameObjectDump {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameObjectFieldsDump {
-	longs: HeaplessLongMap,
-	floats: HeapLessFloatMap,
+	longs: HashMap<FieldID, i64, FnvBuildHasher>,
+	floats: HashMap<FieldID, f64, FnvBuildHasher>,
 	structures: HashMap<FieldID, BinaryDump, FnvBuildHasher>,
 }
 
@@ -120,10 +120,10 @@ impl From<&GameObjectFields> for GameObjectFieldsDump {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum BinaryDump {
 	MessagePack(rmpv::Value),
-	Raw(HeaplessBuffer),
+	Raw(Vec<u8>),
 }
 
-fn buffer_to_value(source: &HeaplessBuffer) -> BinaryDump {
+fn buffer_to_value(source: &Vec<u8>) -> BinaryDump {
 	match rmpv::decode::value::read_value(&mut source.to_vec().as_slice()) {
 		Ok(v) => BinaryDump::MessagePack(v),
 		Err(_) => BinaryDump::Raw((*source).clone()),

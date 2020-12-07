@@ -19,13 +19,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				}
 				*value
 			} else {
-				match object.fields.longs.insert(self.field_id, self.increment) {
-					Ok(_) => {}
-					Err(_) => {
-						log::error!("[IncrementLong] overflow element count in object({:?})", object.id);
-						return;
-					}
-				}
+				object.fields.longs.insert(self.field_id, self.increment);
 				self.increment
 			};
 
@@ -45,15 +39,9 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 impl ServerCommandExecutor for SetLongCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object_mut(&self.object_id) {
-			match object.fields.longs.insert(self.field_id, self.value) {
-				Ok(_) => {
-					let access_groups = object.access_groups.clone();
-					room.send_to_group(access_groups, S2CCommand::SetLong(self));
-				}
-				Err(_) => {
-					log::error!("[SetLongCommand] overflow element count in object({:?})", object.id);
-				}
-			}
+			object.fields.longs.insert(self.field_id, self.value);
+			let access_groups = object.access_groups.clone();
+			room.send_to_group(access_groups, S2CCommand::SetLong(self));
 		}
 	}
 }
