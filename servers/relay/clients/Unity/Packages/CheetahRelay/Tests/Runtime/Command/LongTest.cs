@@ -21,11 +21,12 @@ namespace CheetahRelay.Tests
             CheetahLong.Set(ref objectId, 1, 500);
             CheetahLong.Increment(ref objectId, 1, 100);
             CheetahLong.Increment(ref objectId, 1, 200);
+            CheetahLong.CompareAndSet(ref objectId, 1, 800, 900, 0);
             Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(clientB);
             CheetahClient.Receive();
-            Assert.AreEqual(changedValue, 800);
+            Assert.AreEqual(changedValue, 900);
             Assert.AreEqual(changedField, 1);
             Assert.AreEqual(changedObjectId, objectId);
         }

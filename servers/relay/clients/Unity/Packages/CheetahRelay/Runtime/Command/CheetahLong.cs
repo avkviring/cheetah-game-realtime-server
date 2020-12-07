@@ -47,6 +47,6 @@ namespace CheetahRelay
         /// <param name="resetValue">значение, устанавливаемое если пользователь вышел, применимо если команда смогла установить newValue</param>
         /// <returns>false - клиент не найден</returns>
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "compare_and_set_long_value")]
-        public static extern bool Increment(ref CheetahObjectId objectId, ushort fieldId, long currentValue, long newValue, long resetValue);
+        public static extern bool CompareAndSet(ref CheetahObjectId objectId, ushort fieldId, long currentValue, long newValue, long resetValue);
     }
 }
