@@ -15,6 +15,7 @@ use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformatio
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
+use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
@@ -24,6 +25,7 @@ use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::execute;
+use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::object::GameObject;
 use crate::room::template::{RoomTemplate, UserTemplate};
 use crate::rooms::OutFrame;
@@ -68,6 +70,7 @@ pub struct User {
 	protocol: Option<RelayProtocol>,
 	pub attached: bool,
 	pub template: UserTemplate,
+	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldID), i64, FnvBuildHasher>,
 }
 
 #[derive(Debug)]
@@ -246,6 +249,7 @@ impl Room {
 			protocol: None,
 			attached: false,
 			template,
+			compare_and_sets_cleaners: Default::default(),
 		};
 		self.users.insert(user.template.public_key, user);
 		Result::Ok(())
@@ -286,6 +290,8 @@ impl Room {
 					let mut listener = (*listener).borrow_mut();
 					listener.disconnected_user(self.id.clone(), &user.template);
 				});
+
+				reset_all_compare_and_set(self, user.template.public_key.clone(), user.compare_and_sets_cleaners);
 
 				if self.auto_create_user {
 					self.register_user(user.template.clone()).unwrap();
@@ -362,6 +368,7 @@ impl Room {
 			self.disconnect_user(&disconnected_user[i]);
 		}
 	}
+
 	fn user_connected(&mut self, template: UserTemplate) {
 		self.user_listeners.iter().cloned().for_each(|listener| {
 			let mut listener = (*listener).borrow_mut();
@@ -412,6 +419,7 @@ mod tests {
 				template: 0,
 				access_groups: Default::default(),
 				fields: Default::default(),
+				compare_and_set_owners: Default::default(),
 			};
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
@@ -678,6 +686,7 @@ mod tests {
 			template: 0,
 			access_groups: Default::default(),
 			fields: Default::default(),
+			compare_and_set_owners: Default::default(),
 		});
 
 		room.insert_object(GameObject {
@@ -685,6 +694,7 @@ mod tests {
 			template: 0,
 			access_groups: Default::default(),
 			fields: Default::default(),
+			compare_and_set_owners: Default::default(),
 		});
 
 		room.insert_object(GameObject {
@@ -692,6 +702,7 @@ mod tests {
 			template: 0,
 			access_groups: Default::default(),
 			fields: Default::default(),
+			compare_and_set_owners: Default::default(),
 		});
 
 		let mut order = String::new();

@@ -83,6 +83,7 @@ impl GameObjectTemplate {
 			template: self.template,
 			access_groups: self.access_groups,
 			fields: GameObjectFields { longs, floats, structures },
+			compare_and_set_owners: Default::default(),
 		}
 	}
 }

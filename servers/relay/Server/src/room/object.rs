@@ -1,8 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::GameObjectId;
+use cheetah_relay_common::room::UserPublicKey;
+use fnv::FnvBuildHasher;
+use std::collections::HashMap;
 
 ///
 /// Игровой объект - логическая группировка игровых данных
@@ -13,4 +17,6 @@ pub struct GameObject {
 	pub template: u16,
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFields,
+
+	pub compare_and_set_owners: HashMap<FieldID, UserPublicKey, FnvBuildHasher>,
 }
