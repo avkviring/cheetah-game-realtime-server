@@ -84,7 +84,7 @@ mod tests {
 		command.clone().execute(&mut room, &user_public_key);
 
 		assert!(matches!(
-			room.get_object(&object_id),
+			room.get_object_mut(&object_id),
 			Some(object)
 				if object.template == command.template
 					&& object.access_groups == command.access_groups
@@ -111,7 +111,7 @@ mod tests {
 		};
 
 		command.clone().execute(&mut room, &user_public_key);
-		assert!(matches!(room.get_object(&object_id), None));
+		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 
@@ -133,7 +133,7 @@ mod tests {
 		};
 
 		command.clone().execute(&mut room, &user_public_key);
-		assert!(matches!(room.get_object(&object_id), None));
+		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 
@@ -161,7 +161,7 @@ mod tests {
 
 		command.clone().execute(&mut room, &user_public_key);
 
-		assert!(matches!(room.get_object(&object_id), Some(object) if object.template == 777));
+		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template == 777));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }

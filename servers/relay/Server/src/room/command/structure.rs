@@ -7,7 +7,7 @@ use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object(&self.object_id) {
+		if let Some(object) = room.get_object_mut(&self.object_id) {
 			object.fields.structures.insert(self.field_id, self.structure.clone());
 			let groups = object.access_groups.clone();
 			room.send_to_group(groups, S2CCommand::SetStruct(self))
@@ -39,7 +39,7 @@ mod tests {
 		};
 
 		command.clone().execute(&mut room, &32);
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 
 		assert_eq!(*object.fields.structures.get(&100).unwrap(), command.structure);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStruct(c))) if c==command));

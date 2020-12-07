@@ -307,7 +307,7 @@ impl Room {
 		self.objects.insert(object.id.clone(), object);
 	}
 
-	pub fn get_object(&mut self, object_id: &GameObjectId) -> Option<&mut GameObject> {
+	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Option<&mut GameObject> {
 		match self.objects.get_mut(object_id) {
 			Some(object) => Option::Some(object),
 			None => {
@@ -414,7 +414,7 @@ mod tests {
 				fields: Default::default(),
 			};
 			self.insert_object(object);
-			self.get_object(&id).unwrap()
+			self.get_object_mut(&id).unwrap()
 		}
 
 		pub fn create_object_with_access_groups(&mut self, access_groups: AccessGroups) -> &mut GameObject {

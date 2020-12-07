@@ -49,7 +49,7 @@ mod tests {
 
 		command.clone().execute(&mut room, &user_public_key);
 
-		assert!(matches!(room.get_object(&object_id), None));
+		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Delete(c))) if c==command));
 	}
 
@@ -81,7 +81,7 @@ mod tests {
 
 		command.clone().execute(&mut room, &user_b);
 
-		assert!(matches!(room.get_object(&object_id), Some(_)));
+		assert!(matches!(room.get_object_mut(&object_id), Some(_)));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }

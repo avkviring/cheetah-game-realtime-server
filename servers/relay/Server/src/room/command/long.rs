@@ -7,7 +7,7 @@ use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object(&self.object_id) {
+		if let Some(object) = room.get_object_mut(&self.object_id) {
 			let value = if let Some(value) = object.fields.longs.get_mut(&self.field_id) {
 				match (*value).checked_add(self.increment) {
 					None => {
@@ -44,7 +44,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 
 impl ServerCommandExecutor for SetLongCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object(&self.object_id) {
+		if let Some(object) = room.get_object_mut(&self.object_id) {
 			match object.fields.longs.insert(self.field_id, self.value) {
 				Ok(_) => {
 					let access_groups = object.access_groups.clone();
@@ -87,7 +87,7 @@ mod tests {
 		};
 		command.clone().execute(&mut room, &12);
 
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.fields.longs.get(&10).unwrap(), 100);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==command));
 	}
@@ -105,7 +105,7 @@ mod tests {
 		command.clone().execute(&mut room, &12);
 		command.clone().execute(&mut room, &12);
 
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.fields.longs.get(&10).unwrap(), 200);
 
 		let result = SetLongCommand {
