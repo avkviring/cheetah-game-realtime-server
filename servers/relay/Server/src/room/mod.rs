@@ -311,7 +311,7 @@ impl Room {
 		match self.objects.get_mut(object_id) {
 			Some(object) => Option::Some(object),
 			None => {
-				log::error!("[room] game object not found {:?}", object_id);
+				log::error!("[room({:?})] get_object_mut - object({:?}) not found", self.id, object_id);
 				Option::None
 			}
 		}
