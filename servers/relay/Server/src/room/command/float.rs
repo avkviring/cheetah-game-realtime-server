@@ -8,11 +8,11 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object_mut(&self.object_id) {
-			let value = if let Some(value) = object.fields.floats.get_mut(&self.field_id) {
+			let value = if let Some(value) = object.floats.get_mut(&self.field_id) {
 				*value += self.increment;
 				*value
 			} else {
-				object.fields.floats.insert(self.field_id, self.increment);
+				object.floats.insert(self.field_id, self.increment);
 				self.increment
 			};
 
@@ -32,7 +32,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 impl ServerCommandExecutor for SetFloat64Command {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object_mut(&self.object_id) {
-			object.fields.floats.insert(self.field_id, self.value);
+			object.floats.insert(self.field_id, self.value);
 			let access_groups = object.access_groups;
 			room.send_to_group(access_groups, S2CCommand::SetFloat64(self));
 		}
@@ -63,7 +63,7 @@ mod tests {
 		command.clone().execute(&mut room, &12);
 
 		let object = room.get_object_mut(&object_id).unwrap();
-		assert_eq!(*object.fields.floats.get(&10).unwrap() as u64, 100);
+		assert_eq!(*object.floats.get(&10).unwrap() as u64, 100);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetFloat64(c))) if c==command));
 	}
 
@@ -81,7 +81,7 @@ mod tests {
 		command.clone().execute(&mut room, &12);
 
 		let object = room.get_object_mut(&object_id).unwrap();
-		assert_eq!(*object.fields.floats.get(&10).unwrap() as u64, 200);
+		assert_eq!(*object.floats.get(&10).unwrap() as u64, 200);
 
 		let result = SetFloat64Command {
 			object_id: object_id.clone(),

@@ -1,16 +1,24 @@
-use crate::room::access::AccessGroups;
-use crate::room::fields::GameObjectFields;
-use crate::room::object::GameObjectId;
 use serde::{Deserialize, Serialize};
 
+use crate::room::access::AccessGroups;
+use crate::room::object::GameObjectId;
+
 ///
-/// Создание игрового объекта
+/// Игровой объект создается
 /// - направления C->S, S->C
 ///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct CreateGameObjectCommand {
+pub struct CreatingGameObjectCommand {
 	pub object_id: GameObjectId,
 	pub template: u16,
 	pub access_groups: AccessGroups,
-	pub fields: GameObjectFields,
+}
+
+///
+/// Игровой объект создан
+/// - направления C->S, S->C
+///
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct CreatedGameObjectCommand {
+	pub object_id: GameObjectId,
 }

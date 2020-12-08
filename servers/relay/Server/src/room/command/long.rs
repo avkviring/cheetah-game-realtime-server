@@ -14,7 +14,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementLongC2SCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object_mut(&self.object_id) {
-			let value = if let Some(value) = object.fields.longs.get_mut(&self.field_id) {
+			let value = if let Some(value) = object.longs.get_mut(&self.field_id) {
 				match (*value).checked_add(self.increment) {
 					None => {
 						log::error!("[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})", value, self.increment);
@@ -25,7 +25,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				}
 				*value
 			} else {
-				object.fields.longs.insert(self.field_id, self.increment);
+				object.longs.insert(self.field_id, self.increment);
 				self.increment
 			};
 
@@ -45,7 +45,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 impl ServerCommandExecutor for SetLongCommand {
 	fn execute(self, room: &mut Room, _: &UserPublicKey) {
 		if let Some(object) = room.get_object_mut(&self.object_id) {
-			object.fields.longs.insert(self.field_id, self.value);
+			object.longs.insert(self.field_id, self.value);
 			let access_groups = object.access_groups.clone();
 			room.send_to_group(access_groups, S2CCommand::SetLong(self));
 		}
@@ -55,12 +55,12 @@ impl ServerCommandExecutor for SetLongCommand {
 impl ServerCommandExecutor for CompareAndSetLongCommand {
 	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		if let Some(object) = room.get_object_mut(&self.object_id) {
-			let allow = match object.fields.longs.get(&self.field_id) {
+			let allow = match object.longs.get(&self.field_id) {
 				None => true,
 				Some(value) => *value == self.current,
 			};
 			if allow {
-				object.fields.longs.insert(self.field_id, self.new);
+				object.longs.insert(self.field_id, self.new);
 				object.compare_and_set_owners.insert(self.field_id, user_public_key.clone());
 				let object_id = object.id.clone();
 
@@ -94,7 +94,7 @@ pub fn reset_all_compare_and_set(
 			Some(object) => {
 				if let Some(owner) = object.compare_and_set_owners.get(&field) {
 					if *owner == user_public_key {
-						object.fields.longs.insert(field, reset);
+						object.longs.insert(field, reset);
 					}
 				}
 			}
@@ -126,7 +126,7 @@ mod tests {
 		command.clone().execute(&mut room, &12);
 
 		let object = room.get_object_mut(&object_id).unwrap();
-		assert_eq!(*object.fields.longs.get(&10).unwrap(), 100);
+		assert_eq!(*object.longs.get(&10).unwrap(), 100);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==command));
 	}
 
@@ -144,7 +144,7 @@ mod tests {
 		command.clone().execute(&mut room, &12);
 
 		let object = room.get_object_mut(&object_id).unwrap();
-		assert_eq!(*object.fields.longs.get(&10).unwrap(), 200);
+		assert_eq!(*object.longs.get(&10).unwrap(), 200);
 
 		let result = SetLongCommand {
 			object_id: object_id.clone(),
@@ -206,7 +206,7 @@ mod tests {
 		};
 		command1.clone().execute(&mut room, &user_template.public_key);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().fields.longs.get(&command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -219,7 +219,7 @@ mod tests {
 		};
 		command2.clone().execute(&mut room, &user_template.public_key);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().fields.longs.get(&command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -232,7 +232,7 @@ mod tests {
 		};
 		command3.clone().execute(&mut room, &user_template.public_key);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().fields.longs.get(&command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command3.new
 		);
 	}
@@ -268,13 +268,13 @@ mod tests {
 		};
 		command.clone().execute(&mut room, &user_template.public_key);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().fields.longs.get(&command.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().longs.get(&command.field_id).unwrap(),
 			command.new
 		);
 
 		room.disconnect_user(&user_template.public_key);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().fields.longs.get(&command.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().longs.get(&command.field_id).unwrap(),
 			command.reset
 		);
 	}
@@ -305,7 +305,7 @@ mod tests {
 
 		room.disconnect_user(&user_template_1.public_key);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().fields.longs.get(&command_1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().longs.get(&command_1.field_id).unwrap(),
 			command_2.new
 		);
 	}

@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
+use cheetah_relay_common::commands::command::load::CreatingGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -15,11 +15,10 @@ pub fn attach_to_room(room: &mut Room, user_public_key: &UserPublicKey) {
 			let access_group = user.template.access_groups;
 			room.process_objects(&mut |o| {
 				if o.access_groups.contains_any(&access_group) {
-					out.push(CreateGameObjectCommand {
+					out.push(CreatingGameObjectCommand {
 						object_id: o.id.clone(),
 						template: o.template.clone(),
 						access_groups: o.access_groups,
-						fields: o.fields.clone(),
 					});
 				}
 			});

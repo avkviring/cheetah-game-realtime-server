@@ -44,5 +44,8 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPubli
 			load_room::attach_to_room(room, user_public_key);
 		}
 		C2SCommand::CompareAndSetLongValue(command) => command.execute(room, user_public_key),
+		C2SCommand::Created(_) => {
+			todo!();
+		}
 	}
 }

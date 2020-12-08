@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::commands::command::event::EventCommand;
 use crate::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
-use crate::commands::command::load::CreateGameObjectCommand;
+use crate::commands::command::load::{CreatedGameObjectCommand, CreatingGameObjectCommand};
 use crate::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
 use crate::commands::command::meta::s2c::S2CMetaCommandInformation;
@@ -18,9 +18,12 @@ pub mod meta;
 pub mod structure;
 pub mod unload;
 
+pub type HeaplessBuffer = heapless::Vec<u8, heapless::consts::U256>;
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum C2SCommand {
-	Create(CreateGameObjectCommand),
+	Create(CreatingGameObjectCommand),
+	Created(CreatedGameObjectCommand),
 	SetLongValue(SetLongCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
 	CompareAndSetLongValue(CompareAndSetLongCommand),
@@ -37,7 +40,8 @@ pub enum C2SCommand {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum S2CCommand {
-	Create(CreateGameObjectCommand),
+	Create(CreatingGameObjectCommand),
+	Created(CreatedGameObjectCommand),
 	SetLong(SetLongCommand),
 	SetFloat64(SetFloat64Command),
 	SetStruct(StructureCommand),

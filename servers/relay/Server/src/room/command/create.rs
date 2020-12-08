@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
+use cheetah_relay_common::commands::command::load::CreatingGameObjectCommand;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -6,7 +6,7 @@ use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;
 
-impl ServerCommandExecutor for CreateGameObjectCommand {
+impl ServerCommandExecutor for CreatingGameObjectCommand {
 	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		let user = room.get_user(user_public_key).unwrap();
 		if !self.access_groups.is_sub_groups(&user.template.access_groups) {
@@ -48,7 +48,9 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			id: self.object_id.clone(),
 			template: self.template,
 			access_groups: self.access_groups,
-			fields: self.fields.clone(),
+			longs: Default::default(),
+			floats: Default::default(),
+			structures: Default::default(),
 			compare_and_set_owners: Default::default(),
 		};
 		room.insert_object(object);
@@ -57,7 +59,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
+	use cheetah_relay_common::commands::command::load::CreatingGameObjectCommand;
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
@@ -74,22 +76,18 @@ mod tests {
 		let mut room = Room::new(template, Default::default());
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
-		let mut command = CreateGameObjectCommand {
+		let command = CreatingGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
-			fields: Default::default(),
 		};
-		command.fields.longs.insert(0, 100);
-
 		command.clone().execute(&mut room, &user_public_key);
 
 		assert!(matches!(
 			room.get_object_mut(&object_id),
 			Some(object)
 				if object.template == command.template
-					&& object.access_groups == command.access_groups
-					&& object.fields == command.fields
+				&& object.access_groups == command.access_groups
 		));
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Create(c))) if c==command));
 	}
@@ -104,11 +102,10 @@ mod tests {
 		let mut room = Room::new(template, Default::default());
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
-		let command = CreateGameObjectCommand {
+		let command = CreatingGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
-			fields: Default::default(),
 		};
 
 		command.clone().execute(&mut room, &user_public_key);
@@ -126,11 +123,10 @@ mod tests {
 		let mut room = Room::new(template, Default::default());
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
-		let command = CreateGameObjectCommand {
+		let command = CreatingGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
-			fields: Default::default(),
 		};
 
 		command.clone().execute(&mut room, &user_public_key);
@@ -153,11 +149,10 @@ mod tests {
 
 		room.out_commands.clear();
 
-		let command = CreateGameObjectCommand {
+		let command = CreatingGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
-			fields: Default::default(),
 		};
 
 		command.clone().execute(&mut room, &user_public_key);

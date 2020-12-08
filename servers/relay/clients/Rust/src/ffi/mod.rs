@@ -1,12 +1,11 @@
 use std::sync::Mutex;
 
-use cheetah_relay_common::room::fields::HeaplessBuffer;
+use cheetah_relay_common::commands::command::HeaplessBuffer;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::controller::ClientController;
-use crate::ffi::command::create::MAX_SIZE_STRUCT;
 use crate::registry::Registry;
 
 pub mod channel;
@@ -79,10 +78,12 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 	}
 }
 
+const BUFFER_MAX_SIZE: usize = 255;
+
 #[repr(C)]
 pub struct BufferFFI {
 	pub len: u8,
-	pub buffer: [u8; MAX_SIZE_STRUCT],
+	pub buffer: [u8; BUFFER_MAX_SIZE],
 }
 
 impl From<&BufferFFI> for HeaplessBuffer {
@@ -95,7 +96,7 @@ impl From<&HeaplessBuffer> for BufferFFI {
 	fn from(source: &HeaplessBuffer) -> Self {
 		let mut result = BufferFFI {
 			len: source.len() as u8,
-			buffer: [0; MAX_SIZE_STRUCT],
+			buffer: [0; BUFFER_MAX_SIZE],
 		};
 		let buffer = &mut result.buffer[0..source.len()];
 		buffer.copy_from_slice(source);

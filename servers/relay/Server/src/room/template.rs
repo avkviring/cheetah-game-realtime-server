@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::fields::GameObjectFields;
+
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
@@ -82,7 +82,9 @@ impl GameObjectTemplate {
 			id,
 			template: self.template,
 			access_groups: self.access_groups,
-			fields: GameObjectFields { longs, floats, structures },
+			longs,
+			floats,
+			structures,
 			compare_and_set_owners: Default::default(),
 		}
 	}
@@ -165,12 +167,12 @@ mod tests {
 		assert!(matches!(object.id.owner, ObjectOwner::Root));
 		assert_eq!(config_object.template, object.template);
 		assert_eq!(config_object.access_groups, object.access_groups);
-		assert_eq!(config_object.fields.longs.as_ref().unwrap()[&0], object.fields.longs[&0]);
-		assert_eq!(config_object.fields.floats.as_ref().unwrap()[&1], object.fields.floats[&1]);
+		assert_eq!(config_object.fields.longs.as_ref().unwrap()[&0], object.longs[&0]);
+		assert_eq!(config_object.fields.floats.as_ref().unwrap()[&1], object.floats[&1]);
 
 		assert_eq!(
 			config_object.fields.structures.as_ref().unwrap()[&1],
-			rmp_serde::from_slice(&object.fields.structures[&1].to_vec().as_slice()).unwrap()
+			rmp_serde::from_slice(&object.structures[&1].to_vec().as_slice()).unwrap()
 		);
 	}
 

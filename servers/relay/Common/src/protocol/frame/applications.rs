@@ -153,6 +153,7 @@ impl ApplicationCommand {
 				S2CCommand::SetStruct(c) => Option::Some(&c.object_id),
 				S2CCommand::Event(c) => Option::Some(&c.object_id),
 				S2CCommand::Delete(c) => Option::Some(&c.object_id),
+				S2CCommand::Created(c) => Option::Some(&c.object_id),
 			},
 			ApplicationCommand::C2SCommandWithMeta(command_with_meta) => match &command_with_meta.command {
 				C2SCommand::Create(c) => Option::Some(&c.object_id),
@@ -165,6 +166,7 @@ impl ApplicationCommand {
 				C2SCommand::Delete(c) => Option::Some(&c.object_id),
 				C2SCommand::AttachToRoom => Option::None,
 				C2SCommand::CompareAndSetLongValue(c) => Option::Some(&c.object_id),
+				C2SCommand::Created(c) => Option::Some(&c.object_id),
 			},
 		}
 	}

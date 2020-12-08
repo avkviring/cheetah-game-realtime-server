@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::fields::GameObjectFields;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -46,14 +45,10 @@ pub struct GameObjectDump {
 	pub id: GameObjectId,
 	pub template: u16,
 	pub access_groups: AccessGroups,
-	pub fields: GameObjectFieldsDump,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GameObjectFieldsDump {
-	longs: HashMap<FieldID, i64, FnvBuildHasher>,
-	floats: HashMap<FieldID, f64, FnvBuildHasher>,
-	structures: HashMap<FieldID, BinaryDump, FnvBuildHasher>,
+	pub longs: HashMap<FieldID, i64, FnvBuildHasher>,
+	pub floats: HashMap<FieldID, f64, FnvBuildHasher>,
+	pub compare_and_set_owners: HashMap<FieldID, UserPublicKey, FnvBuildHasher>,
+	pub structures: HashMap<FieldID, BinaryDump, FnvBuildHasher>,
 }
 
 impl From<&ServerThread> for ServerDump {
@@ -93,25 +88,17 @@ impl From<&Room> for RoomDump {
 
 impl From<&GameObject> for GameObjectDump {
 	fn from(source: &GameObject) -> Self {
+		let mut structures: HashMap<FieldID, BinaryDump, FnvBuildHasher> = Default::default();
+		source.structures.iter().for_each(|(field, structure)| {
+			structures.insert(*field, buffer_to_value(structure));
+		});
 		Self {
 			id: source.id.clone(),
 			template: source.template,
 			access_groups: source.access_groups,
-			fields: From::from(&source.fields),
-		}
-	}
-}
-
-impl From<&GameObjectFields> for GameObjectFieldsDump {
-	fn from(fields: &GameObjectFields) -> Self {
-		let fields = fields.clone();
-		let mut structures: HashMap<FieldID, BinaryDump, FnvBuildHasher> = Default::default();
-		fields.structures.iter().for_each(|(field, structure)| {
-			structures.insert(*field, buffer_to_value(structure));
-		});
-		Self {
-			longs: fields.longs,
-			floats: fields.floats,
+			longs: source.longs.clone(),
+			floats: source.floats.clone(),
+			compare_and_set_owners: source.compare_and_set_owners.clone(),
 			structures,
 		}
 	}

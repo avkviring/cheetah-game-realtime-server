@@ -9,7 +9,7 @@ use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 use serde::export::Formatter;
 
-use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
+use cheetah_relay_common::commands::command::load::CreatingGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
@@ -303,11 +303,10 @@ impl Room {
 	pub fn insert_object(&mut self, object: GameObject) {
 		self.send_to_group(
 			object.access_groups,
-			S2CCommand::Create(CreateGameObjectCommand {
+			S2CCommand::Create(CreatingGameObjectCommand {
 				object_id: object.id.clone(),
 				template: object.template.clone(),
 				access_groups: object.access_groups.clone(),
-				fields: object.fields.clone(),
 			}),
 		);
 		self.objects.insert(object.id.clone(), object);
@@ -418,8 +417,10 @@ mod tests {
 				id: id.clone(),
 				template: 0,
 				access_groups: Default::default(),
-				fields: Default::default(),
+				longs: Default::default(),
+				floats: Default::default(),
 				compare_and_set_owners: Default::default(),
+				structures: Default::default(),
 			};
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
@@ -685,24 +686,30 @@ mod tests {
 			id: GameObjectId::new(100, ObjectOwner::Root),
 			template: 0,
 			access_groups: Default::default(),
-			fields: Default::default(),
+			longs: Default::default(),
+			floats: Default::default(),
 			compare_and_set_owners: Default::default(),
+			structures: Default::default(),
 		});
 
 		room.insert_object(GameObject {
 			id: GameObjectId::new(5, ObjectOwner::Root),
 			template: 0,
 			access_groups: Default::default(),
-			fields: Default::default(),
+			longs: Default::default(),
+			floats: Default::default(),
 			compare_and_set_owners: Default::default(),
+			structures: Default::default(),
 		});
 
 		room.insert_object(GameObject {
 			id: GameObjectId::new(200, ObjectOwner::Root),
 			template: 0,
 			access_groups: Default::default(),
-			fields: Default::default(),
+			longs: Default::default(),
+			floats: Default::default(),
 			compare_and_set_owners: Default::default(),
+			structures: Default::default(),
 		});
 
 		let mut order = String::new();

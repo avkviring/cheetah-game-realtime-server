@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::commands::command::GameObjectCommand;
+use crate::commands::command::{GameObjectCommand, HeaplessBuffer};
 use crate::constants::FieldID;
-use crate::room::fields::HeaplessBuffer;
 use crate::room::object::GameObjectId;
 
 ///
