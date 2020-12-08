@@ -202,14 +202,13 @@ mod tests {
             },
             "template": 0,
             "access_groups": 0,
-            "fields": {
-              "longs": {},
-              "floats": {},
-              "structures": {
-                "1": {
-                  "MessagePack": {
-                    "x": 200
-                  }
+            "longs": {},
+            "floats": {},
+            "compare_and_set_owners": {},
+            "structures": {
+              "1": {
+                "MessagePack": {
+                  "x": 200
                 }
               }
             }
