@@ -1,28 +1,32 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using MessagePack;
 
 namespace CheetahRelay
 {
+    [MessagePackObject]
     [StructLayout(LayoutKind.Sequential)]
     public struct CheetahObjectId
     {
+        [Key(0)]
         public uint id;
 
         /// <summary>
         /// Владельцем объекта может быть или комната или пользователь
         /// </summary>
+        [Key(1)]
         public bool roomOwner;
 
         /// <summary>
         /// Публичный ключ пользователя - владельца объекта, применимо  если roomOwner = false
         /// </summary>
-        public uint user_public_key;
+        [Key(2)]
+        public uint userPublicKey;
 
         public override string ToString()
         {
-            return "CheetahObjectId (id=" + id + ", roomOwner=" + roomOwner + ", user_public_key=" + user_public_key + ")";
+            return $"{nameof(id)}: {id}, {nameof(roomOwner)}: {roomOwner}, {nameof(userPublicKey)}: {userPublicKey}";
         }
-
 
         public override bool Equals(object obj)
         {
@@ -31,7 +35,7 @@ namespace CheetahRelay
 
         public bool Equals(CheetahObjectId other)
         {
-            return id == other.id && roomOwner == other.roomOwner && user_public_key == other.user_public_key;
+            return id == other.id && roomOwner == other.roomOwner && userPublicKey == other.userPublicKey;
         }
 
         public override int GetHashCode()
@@ -40,7 +44,7 @@ namespace CheetahRelay
             {
                 var hashCode = (int) id;
                 hashCode = (hashCode * 397) ^ roomOwner.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int) user_public_key;
+                hashCode = (hashCode * 397) ^ (int) userPublicKey;
                 return hashCode;
             }
         }
