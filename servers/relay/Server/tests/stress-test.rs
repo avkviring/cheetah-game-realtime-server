@@ -1,119 +1,53 @@
-use std::io::Write;
-use std::thread;
-use std::time::{Duration, Instant};
-
-use log::LevelFilter;
-
-use cheetah_relay::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
-use cheetah_relay::server::Server;
 use cheetah_relay_common::commands::command::long::SetLongCommand;
-use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta};
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
-use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_relay_common::commands::command::C2SCommand;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::udp::bind_to_free_socket;
-use cheetah_relay_common::udp::client::UdpClient;
+use std::thread;
+
+use crate::helper::TestEnvBuilder;
+use std::time::Duration;
+
+pub mod helper;
 
 ///
 /// Тестируем работу сервера под большой нагрузкой
 ///
 #[test]
 pub fn stress_test() {
-	let socket = bind_to_free_socket().unwrap();
-	let addr = socket.1;
-	let mut server = Server::new(socket.0);
-	let object_template = GameObjectTemplate {
-		id: 0,
-		template: 0,
-		access_groups: AccessGroups(0b1),
-		fields: Default::default(),
-	};
-	let user1 = UserTemplate {
-		public_key: 1,
-		private_key: [0; 32],
-		access_groups: AccessGroups(0b1),
-		objects: Option::Some(vec![object_template.clone()]),
-	};
+	let mut builder = TestEnvBuilder::default();
+	let user_public_key_1 = 1;
+	let user_public_key_2 = 2;
+	builder.create_user(user_public_key_1);
+	builder.create_user(user_public_key_2);
 
-	let user2 = UserTemplate {
-		public_key: 2,
-		private_key: [0; 32],
-		access_groups: AccessGroups(0b1),
-		objects: None,
-	};
+	let game_object_id = 1;
+	builder.create_object(user_public_key_1, game_object_id);
+	let mut env = builder.build();
 
-	server
-		.register_room(RoomTemplate {
-			id: 0,
-			auto_create_user: false,
-			users: vec![user1.clone(), user2.clone()],
-			objects: None,
-		})
-		.ok()
-		.unwrap();
+	env.connect(user_public_key_1);
+	env.connect(user_public_key_2);
 
-	let mut client1 = UdpClient::new(user1.private_key.clone(), user1.public_key.clone(), addr.clone(), 100).unwrap();
-	let mut client2 = UdpClient::new(user2.private_key.clone(), user2.public_key.clone(), addr.clone(), 100).unwrap();
-
-	client2.protocol.out_commands_collector.add_command(
-		ApplicationCommandChannelType::ReliableSequenceByGroup(0),
-		ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-			meta: C2SMetaCommandInformation { timestamp: 0 },
-			command: C2SCommand::AttachToRoom,
-		}),
-	);
-	cycle(&mut client1, &mut client2);
+	env.send_to_server(user_public_key_2, C2SCommand::AttachToRoom);
+	env.cycle();
 	thread::sleep(Duration::from_millis(10));
 
 	let count = 2000;
 	for i in 0..count {
 		let command = SetLongCommand {
 			object_id: GameObjectId {
-				owner: ObjectOwner::User(user1.public_key),
-				id: object_template.id,
+				owner: ObjectOwner::User(user_public_key_1),
+				id: game_object_id,
 			},
 			field_id: 1,
 			value: i,
 		};
-		client1.protocol.out_commands_collector.add_command(
-			ApplicationCommandChannelType::ReliableSequenceByGroup(0),
-			ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-				meta: C2SMetaCommandInformation { timestamp: 0 },
-				command: C2SCommand::SetLongValue(command),
-			}),
-		);
-		cycle(&mut client1, &mut client2);
+		env.send_to_server(user_public_key_1, C2SCommand::SetLongValue(command));
+		env.cycle();
 	}
 
 	thread::sleep(Duration::from_millis(10));
-	cycle(&mut client1, &mut client2);
+	env.cycle();
 
-	let in_commands = client2.protocol.in_commands_collector.get_commands();
+	let in_commands = env.get_input_commands(user_public_key_2);
 	assert_eq!(in_commands.len(), count as usize + 2); // +2 - команда создания объекта
-}
-
-fn cycle(client1: &mut UdpClient, client2: &mut UdpClient) {
-	let now = Instant::now();
-	client1.cycle(&now);
-	client2.cycle(&now);
-	thread::sleep(Duration::from_millis(1));
-}
-
-#[allow(dead_code)]
-pub fn init_logger() {
-	env_logger::builder()
-		.format(|buf, record| {
-			writeln!(
-				buf,
-				"[{}] [{}] {:?}",
-				record.level(),
-				std::thread::current().name().unwrap_or(""),
-				record.args()
-			)
-		})
-		.filter_level(LevelFilter::Info)
-		.format_timestamp(None)
-		.init();
 }
