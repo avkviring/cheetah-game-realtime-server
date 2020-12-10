@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::commands::command::load::CreatingGameObjectCommand;
+use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
@@ -45,6 +45,7 @@ pub struct ClientController {
 	listener_structure: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, &BufferFFI)>,
 	listener_delete_object: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI)>,
 	listener_create_object: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, u16)>,
+	pub listener_created_object: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI)>,
 }
 
 impl Drop for ClientController {
@@ -85,6 +86,7 @@ impl ClientController {
 			listener_structure: None,
 			listener_delete_object: None,
 			listener_create_object: None,
+			listener_created_object: None,
 		}
 	}
 
@@ -129,6 +131,7 @@ impl ClientController {
 		drop(commands);
 
 		while let Some(command) = cloned_commands.pop_back() {
+			//log::info!("in command {:?}", command);
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
 				let meta = &command.meta;
 				match command.command {
@@ -136,6 +139,12 @@ impl ClientController {
 						if let Some(ref listener) = self.listener_create_object {
 							let object_id = From::from(&command.object_id);
 							listener(meta, &object_id, command.template);
+						}
+					}
+					S2CCommand::Created(command) => {
+						if let Some(ref listener) = self.listener_created_object {
+							let object_id = From::from(&command.object_id);
+							listener(meta, &object_id);
 						}
 					}
 					S2CCommand::SetLong(command) => {
@@ -158,7 +167,7 @@ impl ClientController {
 					}
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
-							let object_id = From::from(&command.object_id);
+							let object_id: GameObjectIdFFI = From::from(&command.object_id);
 							listener(meta, &object_id, command.field_id, &From::from(&command.event));
 						}
 					}
@@ -167,9 +176,6 @@ impl ClientController {
 							let object_id = From::from(&command.object_id);
 							listener(meta, &object_id);
 						}
-					}
-					S2CCommand::Created(_) => {
-						todo!();
 					}
 				}
 			}
@@ -199,7 +205,7 @@ impl ClientController {
 	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> GameObjectIdFFI {
 		self.game_object_id_generator += 1;
 		let game_object_id = GameObjectId::new(self.game_object_id_generator, ObjectOwner::User(self.user_public_key));
-		self.send(C2SCommand::Create(CreatingGameObjectCommand {
+		self.send(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,
 			access_groups: AccessGroups(access_group),
