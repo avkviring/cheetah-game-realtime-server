@@ -23,17 +23,21 @@ pub struct TestEnv {
 }
 
 impl TestEnv {
+	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(0b1);
+
 	pub fn connect(&mut self, user_public_key: UserPublicKey) {
 		let client = UdpClient::new(Default::default(), user_public_key, self.socket_addr, 100).unwrap();
 		self.clients.insert(user_public_key, client);
 	}
 
 	pub fn cycle(&mut self) {
-		let now = Instant::now();
-		self.clients.iter_mut().for_each(|(_user_public_key, client)| {
-			client.cycle(&now);
-		});
-		thread::sleep(Duration::from_millis(1));
+		for _ in 0..2 {
+			let now = Instant::now();
+			self.clients.iter_mut().for_each(|(_user_public_key, client)| {
+				client.cycle(&now);
+			});
+			thread::sleep(Duration::from_millis(10));
+		}
 	}
 
 	pub fn send_to_server(&mut self, user_public_key: UserPublicKey, command: C2SCommand) {
@@ -49,8 +53,9 @@ impl TestEnv {
 	pub fn get_input_commands(&mut self, user_public_key: UserPublicKey) -> Vec<S2CCommand> {
 		let client = self.clients.get_mut(&user_public_key).unwrap();
 		let commands = client.protocol.in_commands_collector.get_commands();
-		commands
+		let result = commands
 			.into_iter()
+			.rev()
 			.map(|c| c.command.clone())
 			.map(|c| match c {
 				ApplicationCommand::S2CCommandWithMeta(command) => Option::Some(command.command),
@@ -58,7 +63,9 @@ impl TestEnv {
 			})
 			.filter(|o| o.is_some())
 			.map(|o| o.unwrap())
-			.collect()
+			.collect();
+		commands.clear();
+		result
 	}
 }
 
@@ -72,7 +79,7 @@ impl TestEnvBuilder {
 		self.template.users.push(UserTemplate {
 			public_key,
 			private_key: Default::default(),
-			access_groups: AccessGroups(0b1),
+			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
 			objects: None,
 		});
 	}
@@ -81,7 +88,7 @@ impl TestEnvBuilder {
 		let object_template = GameObjectTemplate {
 			id: object_id,
 			template: 0,
-			access_groups: AccessGroups(0b1),
+			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
 			fields: Default::default(),
 		};
 
