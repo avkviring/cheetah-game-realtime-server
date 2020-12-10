@@ -61,7 +61,6 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
-	
 
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
