@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::commands::command::event::EventCommand;
 use crate::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
-use crate::commands::command::load::{CreatedGameObjectCommand, CreateGameObjectCommand};
+use crate::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
 use crate::commands::command::meta::s2c::S2CMetaCommandInformation;
