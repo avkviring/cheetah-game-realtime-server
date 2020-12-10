@@ -58,3 +58,56 @@ impl GameObject {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use serde_json::value::Value::Object;
+
+	use cheetah_relay_common::commands::command::S2CCommand;
+	use cheetah_relay_common::room::access::AccessGroups;
+	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_relay_common::room::owner::ObjectOwner;
+
+	use crate::room::object::GameObject;
+
+	///
+	/// Проверяем что все типы данных преобразованы в команды
+	///
+	#[test]
+	pub fn should_collect_command() {
+		let id = GameObjectId::new(1, ObjectOwner::Root);
+		let mut object = GameObject::new(id.clone());
+		object.template = 55;
+		object.access_groups = AccessGroups(63);
+		object.created = true;
+		object.longs.insert(1, 100);
+		object.floats.insert(2, 200.200);
+		object.structures.insert(1, vec![1, 2, 3]);
+
+		let mut commands = Vec::new();
+		object.collect_create_commands(&mut commands);
+
+		assert!(matches!(commands.remove(0),
+			S2CCommand::Create(c) if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
+		assert!(matches!(commands.remove(0), S2CCommand::SetStruct(c) if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
+		assert!(matches!(commands.remove(0), S2CCommand::SetLong(c) if c.object_id==id && c.field_id == 1 && c.value == 100));
+		assert!(matches!(commands.remove(0), S2CCommand::SetFloat64(c) if c.object_id==id && c.field_id == 2 && c.value == 200.200));
+		assert!(matches!(commands.remove(0), S2CCommand::Created(c) if c.object_id==id));
+	}
+
+	///
+	/// Для несозданного объекта не должно быть команды Created
+	///
+	#[test]
+	pub fn should_collect_command_for_not_created_object() {
+		let id = GameObjectId::new(1, ObjectOwner::Root);
+		let mut object = GameObject::new(id.clone());
+		object.longs.insert(1, 100);
+
+		let mut commands = Vec::new();
+		object.collect_create_commands(&mut commands);
+		assert!(matches!(commands.remove(0), S2CCommand::Create(_)));
+		assert!(matches!(commands.remove(0), S2CCommand::SetLong(c) if c.object_id==id && c.field_id == 1 && c.value == 100));
+		assert_eq!(commands.len(), 0)
+	}
+}
