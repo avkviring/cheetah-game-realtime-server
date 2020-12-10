@@ -33,7 +33,7 @@ pub fn test_create_object() {
 	env.send_to_server(user_public_key_1, C2SCommand::Create(create_command));
 	env.send_to_server(
 		user_public_key_1,
-		C2SCommand::SetLongValue(SetLongCommand {
+		C2SCommand::SetLong(SetLongCommand {
 			object_id: object_id.clone(),
 			field_id: 1,
 			value: 100,

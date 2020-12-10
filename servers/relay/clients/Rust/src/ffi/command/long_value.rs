@@ -16,7 +16,7 @@ pub extern "C" fn set_long_value_listener(listener: extern "C" fn(&S2CMetaComman
 
 #[no_mangle]
 pub extern "C" fn set_long_value(object_id: &GameObjectIdFFI, field_id: FieldID, value: i64) -> bool {
-	send_command(C2SCommand::SetLongValue(SetLongCommand {
+	send_command(C2SCommand::SetLong(SetLongCommand {
 		object_id: From::from(object_id),
 		field_id,
 		value,

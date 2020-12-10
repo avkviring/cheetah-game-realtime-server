@@ -31,12 +31,12 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPubli
 	log::info!("[room({:?})] u({:?}) -> s {:?}", room.id, user_public_key, command);
 	match command {
 		C2SCommand::Create(command) => command.execute(room, user_public_key),
-		C2SCommand::SetLongValue(command) => command.execute(room, user_public_key),
+		C2SCommand::SetLong(command) => command.execute(room, user_public_key),
 		C2SCommand::IncrementLongValue(command) => command.execute(room, user_public_key),
 		C2SCommand::CompareAndSetLongValue(command) => command.execute(room, user_public_key),
-		C2SCommand::SetFloatValue(command) => command.execute(room, user_public_key),
+		C2SCommand::SetFloat64(command) => command.execute(room, user_public_key),
 		C2SCommand::IncrementFloatCounter(command) => command.execute(room, user_public_key),
-		C2SCommand::Structure(command) => command.execute(room, user_public_key),
+		C2SCommand::SetStructure(command) => command.execute(room, user_public_key),
 		C2SCommand::Event(command) => command.execute(room, user_public_key),
 		C2SCommand::Delete(command) => command.execute(room, user_public_key),
 		C2SCommand::AttachToRoom => load_room::attach_to_room(room, user_public_key),

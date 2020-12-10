@@ -24,12 +24,12 @@ pub type HeaplessBuffer = heapless::Vec<u8, heapless::consts::U256>;
 pub enum C2SCommand {
 	Create(CreateGameObjectCommand),
 	Created(CreatedGameObjectCommand),
-	SetLongValue(SetLongCommand),
+	SetLong(SetLongCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
 	CompareAndSetLongValue(CompareAndSetLongCommand),
-	SetFloatValue(SetFloat64Command),
+	SetFloat64(SetFloat64Command),
 	IncrementFloatCounter(IncrementFloat64C2SCommand),
-	Structure(StructureCommand),
+	SetStructure(StructureCommand),
 	Event(EventCommand),
 	Delete(DeleteGameObjectCommand),
 	///

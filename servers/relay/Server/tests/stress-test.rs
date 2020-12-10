@@ -41,7 +41,7 @@ pub fn stress_test() {
 			field_id: 1,
 			value: i,
 		};
-		env.send_to_server(user_public_key_1, C2SCommand::SetLongValue(command));
+		env.send_to_server(user_public_key_1, C2SCommand::SetLong(command));
 		env.cycle();
 	}
 
