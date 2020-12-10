@@ -91,7 +91,7 @@ pub fn stress_test() {
 	cycle(&mut client1, &mut client2);
 
 	let in_commands = client2.protocol.in_commands_collector.get_commands();
-	assert_eq!(in_commands.len(), count as usize + 1); // +1 - команда создания объекта
+	assert_eq!(in_commands.len(), count as usize + 2); // +2 - команда создания объекта
 }
 
 fn cycle(client1: &mut UdpClient, client2: &mut UdpClient) {

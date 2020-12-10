@@ -82,6 +82,7 @@ impl GameObjectTemplate {
 			id,
 			template: self.template,
 			access_groups: self.access_groups,
+			created: true,
 			longs,
 			floats,
 			structures,
@@ -201,7 +202,7 @@ mod tests {
 			)]),
 		);
 
-		let config = RoomTemplate {
+		let _ = RoomTemplate {
 			id: 0,
 			auto_create_user: false,
 			users: vec![UserTemplate {
@@ -226,7 +227,6 @@ mod tests {
 				},
 			}]),
 		};
-		println!("{:}", serde_yaml::to_string(&config).unwrap());
 	}
 
 	#[test]

@@ -1,8 +1,9 @@
 use cheetah_relay_common::commands::command::structure::StructureCommand;
-use cheetah_relay_common::commands::command::S2CCommand;
+use cheetah_relay_common::commands::command::{HeaplessBuffer, S2CCommand};
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
+use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {
@@ -12,6 +13,19 @@ impl ServerCommandExecutor for StructureCommand {
 			let groups = object.access_groups.clone();
 			room.send_to_group(groups, S2CCommand::SetStruct(self))
 		}
+	}
+}
+
+impl GameObject {
+	pub fn structures_to_commands(&self, commands: &mut Vec<S2CCommand>) {
+		self.structures.iter().for_each(|(k, v)| {
+			let structure = HeaplessBuffer::from_slice(&v.as_slice()).unwrap();
+			commands.push(S2CCommand::SetStruct(StructureCommand {
+				object_id: self.id.clone(),
+				field_id: k.clone(),
+				structure,
+			}));
+		})
 	}
 }
 

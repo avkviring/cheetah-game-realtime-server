@@ -3,6 +3,7 @@ use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
+use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
@@ -36,6 +37,18 @@ impl ServerCommandExecutor for SetFloat64Command {
 			let access_groups = object.access_groups;
 			room.send_to_group(access_groups, S2CCommand::SetFloat64(self));
 		}
+	}
+}
+
+impl GameObject {
+	pub fn floats_to_commands(&self, commands: &mut Vec<S2CCommand>) {
+		self.floats.iter().for_each(|(k, v)| {
+			commands.push(S2CCommand::SetFloat64(SetFloat64Command {
+				object_id: self.id.clone(),
+				field_id: k.clone(),
+				value: *v,
+			}));
+		})
 	}
 }
 

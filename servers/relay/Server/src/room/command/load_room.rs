@@ -1,11 +1,8 @@
-use cheetah_relay_common::commands::command::load::CreatingGameObjectCommand;
-use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::Room;
 
 pub fn attach_to_room(room: &mut Room, user_public_key: &UserPublicKey) {
-	let mut out = Vec::new();
 	match room.get_user_mut(user_public_key) {
 		None => {
 			log::error!("[load_room] user not found {:?}", user_public_key);
@@ -13,19 +10,13 @@ pub fn attach_to_room(room: &mut Room, user_public_key: &UserPublicKey) {
 		Some(user) => {
 			user.attach_to_room();
 			let access_group = user.template.access_groups;
+			let mut commands = Vec::new();
 			room.process_objects(&mut |o| {
 				if o.access_groups.contains_any(&access_group) {
-					out.push(CreatingGameObjectCommand {
-						object_id: o.id.clone(),
-						template: o.template.clone(),
-						access_groups: o.access_groups,
-					});
+					o.collect_create_commands(&mut commands);
 				}
 			});
-
-			for command in out {
-				room.send_to_user(user_public_key, S2CCommand::Create(command));
-			}
+			room.send_to_user(user_public_key, commands);
 		}
 	}
 }

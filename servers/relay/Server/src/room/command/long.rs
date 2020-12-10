@@ -9,6 +9,7 @@ use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
+use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
@@ -99,6 +100,18 @@ pub fn reset_all_compare_and_set(
 				}
 			}
 		}
+	}
+}
+
+impl GameObject {
+	pub fn longs_to_commands(&self, commands: &mut Vec<S2CCommand>) {
+		self.longs.iter().for_each(|(k, v)| {
+			commands.push(S2CCommand::SetLong(SetLongCommand {
+				object_id: self.id.clone(),
+				field_id: k.clone(),
+				value: *v,
+			}));
+		})
 	}
 }
 

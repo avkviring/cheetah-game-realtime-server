@@ -9,7 +9,6 @@ use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 use serde::export::Formatter;
 
-use cheetah_relay_common::commands::command::load::CreatingGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
@@ -144,11 +143,13 @@ impl Room {
 			});
 	}
 
-	pub fn send_to_user(&mut self, user_public_key: &u32, command: S2CCommand) {
+	pub fn send_to_user(&mut self, user_public_key: &u32, commands: Vec<S2CCommand>) {
 		#[cfg(test)]
 		{
-			let commands = self.out_commands_by_users.entry(user_public_key.clone()).or_insert(VecDeque::new());
-			commands.push_front(command.clone());
+			let user_commands = self.out_commands_by_users.entry(user_public_key.clone()).or_insert(VecDeque::new());
+			for command in &commands {
+				user_commands.push_front(command.clone());
+			}
 		}
 
 		match self.users.get_mut(user_public_key) {
@@ -158,14 +159,16 @@ impl Room {
 			Some(user) => {
 				if let Some(ref mut protocol) = user.protocol {
 					if user.attached {
-						log::info!("[room({:?})] s -> u({:?}) {:?}", self.id, user.template.public_key, command);
-						let meta = self.current_meta.as_ref().unwrap();
-						let channel = self.current_channel.as_ref().unwrap();
-						let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-							meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
-							command,
-						});
-						protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+						for command in commands {
+							log::info!("[room({:?})] s -> u({:?}) {:?}", self.id, user.template.public_key, command);
+							let meta = self.current_meta.as_ref().unwrap();
+							let channel = self.current_channel.as_ref().unwrap();
+							let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+								meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
+								command,
+							});
+							protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+						}
 					}
 				}
 			}
@@ -301,14 +304,7 @@ impl Room {
 	}
 
 	pub fn insert_object(&mut self, object: GameObject) {
-		self.send_to_group(
-			object.access_groups,
-			S2CCommand::Create(CreatingGameObjectCommand {
-				object_id: object.id.clone(),
-				template: object.template.clone(),
-				access_groups: object.access_groups.clone(),
-			}),
-		);
+		self.send_object_to_group(&object);
 		self.objects.insert(object.id.clone(), object);
 	}
 
@@ -384,6 +380,14 @@ impl Room {
 			}
 		}
 	}
+
+	pub fn send_object_to_group(&mut self, object: &GameObject) {
+		let mut commands = Vec::new();
+		object.collect_create_commands(&mut commands);
+		commands.into_iter().for_each(|c| {
+			self.send_to_group(object.access_groups, c);
+		})
+	}
 }
 
 #[cfg(test)]
@@ -413,15 +417,7 @@ mod tests {
 		pub fn create_object(&mut self, owner: &UserPublicKey) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
-			let object = GameObject {
-				id: id.clone(),
-				template: 0,
-				access_groups: Default::default(),
-				longs: Default::default(),
-				floats: Default::default(),
-				compare_and_set_owners: Default::default(),
-				structures: Default::default(),
-			};
+			let object = GameObject::new(id.clone());
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
 		}
@@ -453,7 +449,6 @@ mod tests {
 
 		assert!(room.contains_object(&object_b_1));
 		assert!(room.contains_object(&object_b_2));
-		println!("{:?}", room.out_commands);
 
 		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1));
 		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2));
@@ -686,6 +681,7 @@ mod tests {
 			id: GameObjectId::new(100, ObjectOwner::Root),
 			template: 0,
 			access_groups: Default::default(),
+			created: false,
 			longs: Default::default(),
 			floats: Default::default(),
 			compare_and_set_owners: Default::default(),
@@ -696,21 +692,14 @@ mod tests {
 			id: GameObjectId::new(5, ObjectOwner::Root),
 			template: 0,
 			access_groups: Default::default(),
+			created: false,
 			longs: Default::default(),
 			floats: Default::default(),
 			compare_and_set_owners: Default::default(),
 			structures: Default::default(),
 		});
 
-		room.insert_object(GameObject {
-			id: GameObjectId::new(200, ObjectOwner::Root),
-			template: 0,
-			access_groups: Default::default(),
-			longs: Default::default(),
-			floats: Default::default(),
-			compare_and_set_owners: Default::default(),
-			structures: Default::default(),
-		});
+		room.insert_object(GameObject::new(GameObjectId::new(200, ObjectOwner::Root)));
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
