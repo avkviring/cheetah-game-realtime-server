@@ -7,6 +7,7 @@ use crate::room::UserPublicKey;
 /// Служебная информация для исходящей команды
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[repr(C)]
 pub struct S2CMetaCommandInformation {
 	///
 	/// Идентификатор клиента

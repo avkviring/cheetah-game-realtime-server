@@ -8,7 +8,7 @@ use crate::room::object::GameObjectId;
 /// - направления C->S, S->C
 ///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct CreatingGameObjectCommand {
+pub struct CreateGameObjectCommand {
 	pub object_id: GameObjectId,
 	pub template: u16,
 	pub access_groups: AccessGroups,
