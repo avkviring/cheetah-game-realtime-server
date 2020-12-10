@@ -22,6 +22,8 @@ namespace CheetahRelay
         /// </summary>
         [Key(2)]
         public uint userPublicKey;
+        
+        public static CheetahObjectId Empty;
 
         public override string ToString()
         {
