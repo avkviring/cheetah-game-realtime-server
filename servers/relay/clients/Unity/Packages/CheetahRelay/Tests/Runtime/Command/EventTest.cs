@@ -14,19 +14,20 @@ namespace CheetahRelay.Tests
         [Test]
         public void Test()
         {
-            CheetahClient.SetCurrentClient(clientB);
+            CheetahClient.SetCurrentClient(ClientB);
             CheetahEvent.SetListener(Listener);
 
-            CheetahClient.SetCurrentClient(clientA);
+            CheetahClient.SetCurrentClient(ClientA);
             var bytes = new CheetahBuffer().Add(1).Add(2).Add(3);
-            CheetahEvent.Send(ref objectId, 1, ref bytes);
+            CheetahEvent.Send(ref ObjectId, 1, ref bytes);
             Thread.Sleep(100);
 
-            CheetahClient.SetCurrentClient(clientB);
+            CheetahClient.SetCurrentClient(ClientB);
             CheetahClient.Receive();
+
             Assert.AreEqual(changedData, bytes);
             Assert.AreEqual(changedField, 1);
-            Assert.AreEqual(changedObjectId, objectId);
+            Assert.AreEqual(changedObjectId, ObjectId);
         }
 
         [MonoPInvokeCallback(typeof(CheetahEvent.Listener))]

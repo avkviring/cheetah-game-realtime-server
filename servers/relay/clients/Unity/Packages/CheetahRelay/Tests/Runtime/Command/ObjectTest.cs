@@ -1,7 +1,6 @@
 using System.Threading;
 using AOT;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace CheetahRelay.Tests
 {
@@ -10,9 +9,9 @@ namespace CheetahRelay.Tests
     {
         private ushort clientA;
         private ushort clientB;
+        private CheetahObjectId createObjectId;
         private CheetahObjectId createdObjectId;
-        private ushort createdObectTemplate;
-        private GameObjectFields createdObjectFields;
+        private ushort createdObjectTemplate;
         private CheetahObjectId deletedObjectId;
 
         [SetUp]
@@ -36,49 +35,50 @@ namespace CheetahRelay.Tests
         public void ShouldCreateObject()
         {
             CheetahClient.SetCurrentClient(clientA);
-            var builder = new CheetahObjectBuilder();
-            builder.SetTemplate(55);
-            builder.SetAccessGroup(1);
-            builder.SetDouble(1, 100.0);
-            builder.SetLong(2, 200);
-            var cheetahBuffer = new CheetahBuffer().Add(123);
-            builder.SetStructure(3, ref cheetahBuffer);
-            var objectId = builder.BuildAndSendToServer();
-            Assert.NotNull(objectId);
+            
+            CheetahObjectId objectId = new CheetahObjectId();
+            CheetahObject.Create(55, 1, ref objectId);
+            CheetahObject.Created(ref objectId);
+            
             Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(clientB);
-            CheetahObject.SetListener(OnCreate);
+            CheetahObject.SetCreateListener(OnCreate);
+            CheetahObject.SetCreatedListener(OnCreated);
             CheetahClient.AttachToRoom();
             Thread.Sleep(100);
             CheetahClient.Receive();
+            Assert.AreEqual(objectId, createObjectId);
             Assert.AreEqual(objectId, createdObjectId);
-            Assert.AreEqual(builder.template, createdObectTemplate);
-            Assert.AreEqual(builder.fields, createdObjectFields);
+            Assert.AreEqual(55, createdObjectTemplate);
         }
 
         [MonoPInvokeCallback(typeof(CheetahObject.CreateListener))]
-        private void OnCreate(ref CheetahCommandMeta meta, ref CheetahObjectId objectId, ushort template, ref GameObjectFields fields)
+        private void OnCreate(ref CheetahCommandMeta meta, ref CheetahObjectId objectId, ushort template)
         {
-            createdObjectId = objectId;
-            createdObectTemplate = template;
-            createdObjectFields = fields;
+            createObjectId = objectId;
+            createdObjectTemplate = template;
         }
+        
+        [MonoPInvokeCallback(typeof(CheetahObject.CreatedListener))]
+        private void OnCreated(ref CheetahCommandMeta meta, ref CheetahObjectId objectId)
+        {
+            createdObjectId = objectId; }
 
 
         [Test]
         public void ShouldDeleteObject()
         {
             CheetahClient.SetCurrentClient(clientA);
-            var builder = new CheetahObjectBuilder();
-            builder.SetAccessGroup(1);
-            var objectId = (CheetahObjectId) builder.BuildAndSendToServer();
-            Debug.Log("objectId "+objectId);
+            
+            CheetahObjectId objectId = new CheetahObjectId();
+            CheetahObject.Create(55, 1, ref objectId);
+            CheetahObject.Created(ref objectId);
             Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(clientB);
             CheetahClient.AttachToRoom();
-            CheetahObject.SetListener(OnDelete);
+            CheetahObject.SetDeleteListener(OnDelete);
             Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(clientA);

@@ -11,7 +11,7 @@ namespace CheetahRelay.Tests
         [Test]
         public void Test()
         {
-            CheetahClient.SetCurrentClient(clientA);
+            CheetahClient.SetCurrentClient(ClientA);
             Assert.True(CheetahClient.SetChannelType(CheetahClient.ChannelType.UnreliableUnordered, 0));
         }
     }

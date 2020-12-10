@@ -9,9 +9,7 @@ namespace CheetahRelay
         public const string Library = "libcheetah_relay_client";
 #endif
 
-
-        public const ushort MaxFieldsInObject = 255;
+        
         public const ushort MaxSizeStruct = 255;
-        public const ushort AllStructuresSize = MaxFieldsInObject * MaxSizeStruct;
     }
 }
