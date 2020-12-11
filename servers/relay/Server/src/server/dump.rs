@@ -159,7 +159,7 @@ mod tests {
 	fn should_dump() {
 		let mut server = Server::new(bind_to_free_socket().unwrap().0);
 		let mut object_template = GameObjectTemplate {
-			id: 0,
+			id: 1,
 			template: 0,
 			access_groups: Default::default(),
 			fields: GameObjectFieldsTemplate {
@@ -200,7 +200,7 @@ mod tests {
           {
             "id": {
               "owner": "Root",
-              "id": 0
+              "id": 1
             },
             "template": 0,
             "access_groups": 0,

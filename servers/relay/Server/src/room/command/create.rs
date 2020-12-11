@@ -9,6 +9,17 @@ use crate::room::Room;
 impl ServerCommandExecutor for CreateGameObjectCommand {
 	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		let user = room.get_user(user_public_key).unwrap();
+
+		if self.object_id.id == 0 {
+			error_c2s_command(
+				"CreateGameObjectCommand",
+				room,
+				&user.template.public_key,
+				format!("0 is forbidden for game object id"),
+			);
+			return;
+		}
+
 		if !self.access_groups.is_sub_groups(&user.template.access_groups) {
 			error_c2s_command(
 				"CreateGameObjectCommand",
@@ -128,6 +139,27 @@ mod tests {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
+		};
+
+		command.clone().execute(&mut room, &user_public_key);
+		assert!(matches!(room.get_object_mut(&object_id), None));
+		assert!(matches!(room.out_commands.pop_back(), None));
+	}
+
+	///
+	/// AccessGroup нового объекта не должна быть больше чем группа клиента
+	///
+	#[test]
+	fn should_not_create_when_id_is_zero() {
+		let mut template = RoomTemplate::default();
+		let user_public_key = template.create_user(1, AccessGroups(0b11));
+		let mut room = Room::new(template, Default::default());
+
+		let object_id = GameObjectId::new(0, ObjectOwner::User(user_public_key));
+		let command = CreateGameObjectCommand {
+			object_id: object_id.clone(),
+			template: 100,
+			access_groups: AccessGroups(0b11),
 		};
 
 		command.clone().execute(&mut room, &user_public_key);

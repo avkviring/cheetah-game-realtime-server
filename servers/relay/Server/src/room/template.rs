@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::access::AccessGroups;
-
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
@@ -56,6 +55,10 @@ impl GameObjectTemplate {
 		self.to_game_object(GameObjectId::new(self.id, ObjectOwner::User(user_public_key)))
 	}
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {
+		if id.id == 0 {
+			panic!("0 is forbidden for game object id");
+		}
+
 		let mut longs: HashMap<FieldID, i64, FnvBuildHasher> = Default::default();
 		if let Some(ref self_longs) = self.fields.longs {
 			self_longs.iter().for_each(|(k, v)| {
@@ -175,6 +178,18 @@ mod tests {
 			config_object.fields.structures.as_ref().unwrap()[&1],
 			rmp_serde::from_slice(&object.structures[&1].to_vec().as_slice()).unwrap()
 		);
+	}
+
+	#[test]
+	#[should_panic]
+	fn should_panic_if_object_id_is_0() {
+		let config_object = GameObjectTemplate {
+			id: 0,
+			template: 200,
+			access_groups: Default::default(),
+			fields: Default::default(),
+		};
+		config_object.to_root_game_object();
 	}
 
 	///
