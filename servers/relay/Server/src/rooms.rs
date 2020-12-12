@@ -9,13 +9,14 @@ use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::template::{RoomTemplate, UserTemplate};
+use crate::room::tracer::Tracer;
 use crate::room::{Room, RoomId, RoomRegisterUserError, RoomUserListener};
 
-#[derive(Default)]
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	pub users: Rc<RefCell<Users>>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
+	tracer: Rc<Tracer>,
 }
 
 #[derive(Default)]
@@ -41,13 +42,22 @@ pub enum RegisterRoomError {
 }
 
 impl Rooms {
+	pub fn new(tracer: Tracer) -> Self {
+		Self {
+			room_by_id: Default::default(),
+			users: Rc::new(RefCell::new(Default::default())),
+			changed_rooms: Default::default(),
+			tracer: Rc::new(tracer),
+		}
+	}
+
 	pub fn create_room(&mut self, template: RoomTemplate, mut listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Result<(), RegisterRoomError> {
 		let room_id = template.id.clone();
 		if self.room_by_id.contains_key(&room_id) {
 			Result::Err(RegisterRoomError::AlreadyRegistered)
 		} else {
 			listeners.push(self.users.clone());
-			let room = Room::new(template.clone(), listeners);
+			let room = Room::new(template.clone(), self.tracer.clone(), listeners);
 			self.room_by_id.insert(room_id, room);
 			Result::Ok(())
 		}
@@ -112,5 +122,17 @@ impl RoomUserListener for Users {
 
 	fn disconnected_user(&mut self, _: u64, template: &UserTemplate) {
 		self.users.remove(&template.public_key);
+	}
+}
+
+#[cfg(test)]
+impl Default for Rooms {
+	fn default() -> Self {
+		Self {
+			room_by_id: Default::default(),
+			users: Rc::new(RefCell::new(Default::default())),
+			changed_rooms: Default::default(),
+			tracer: Rc::new(Tracer::new_with_allow_all()),
+		}
 	}
 }

@@ -128,7 +128,7 @@ mod tests {
 
 	#[test]
 	fn should_set_long_command() {
-		let mut room = Room::new(RoomTemplate::default(), Default::default());
+		let mut room = Room::default();
 		let object_id = room.create_object(&0).id.clone();
 		room.out_commands.clear();
 		let command = SetLongCommand {
@@ -145,7 +145,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_long_command() {
-		let mut room = Room::new(RoomTemplate::default(), Default::default());
+		let mut room = Room::default();
 		let object_id = room.create_object(&0).id.clone();
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
@@ -170,7 +170,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_set_long_command_for_missing_object() {
-		let mut room = Room::new(RoomTemplate::default(), Default::default());
+		let mut room = Room::default();
 		let command = SetLongCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
@@ -181,7 +181,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_increment_command_for_missing_object() {
-		let mut room = Room::new(RoomTemplate::default(), Default::default());
+		let mut room = Room::default();
 		let command = IncrementLongC2SCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
 			field_id: 10,
@@ -192,7 +192,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_if_overflow() {
-		let mut room = Room::new(RoomTemplate::default(), Default::default());
+		let mut room = Room::default();
 		let object_id = room.create_object(&0).id.clone();
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
@@ -339,7 +339,7 @@ mod tests {
 		};
 		template.users.push(user_template_1.clone());
 		template.users.push(user_template_2.clone());
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		let object_id = room.create_object(&1).id.clone();
 		(room, user_template_1, user_template_2, object_id)
 	}

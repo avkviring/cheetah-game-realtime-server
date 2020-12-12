@@ -39,7 +39,7 @@ mod tests {
 	fn should_delete() {
 		let mut template = RoomTemplate::default();
 		let user_public_key = template.create_user(1, AccessGroups(0b11));
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 
 		let object_id = room.create_object(&user_public_key).id.clone();
 		room.out_commands.clear();
@@ -57,7 +57,7 @@ mod tests {
 	fn should_not_panic_when_missing_object() {
 		let mut template = RoomTemplate::default();
 		let user_public_key = template.create_user(1, AccessGroups(0b11));
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 
 		let object_id = GameObjectId::new(100, ObjectOwner::User(user_public_key));
 		let command = DeleteGameObjectCommand {
@@ -71,7 +71,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let user_a = template.create_user(1, AccessGroups(55));
 		let user_b = template.create_user(2, AccessGroups(55));
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 
 		let object_id = room.create_object(&user_a).id.clone();
 		room.out_commands.clear();

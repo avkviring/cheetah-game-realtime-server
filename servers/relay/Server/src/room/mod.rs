@@ -27,11 +27,13 @@ use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::object::GameObject;
 use crate::room::template::{RoomTemplate, UserTemplate};
+use crate::room::tracer::Tracer;
 use crate::rooms::OutFrame;
 
 pub mod command;
 pub mod object;
 pub mod template;
+pub mod tracer;
 
 pub type RoomId = u64;
 
@@ -45,6 +47,7 @@ pub struct Room {
 	current_user: Option<UserPublicKey>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub auto_create_user: bool,
+	pub tracer: Rc<Tracer>,
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -84,7 +87,7 @@ impl User {
 }
 
 impl Room {
-	pub fn new(template: RoomTemplate, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
+	pub fn new(template: RoomTemplate, tracer: Rc<Tracer>, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
 		let mut room = Room {
 			id: template.id,
 			auto_create_user: template.auto_create_user,
@@ -94,6 +97,7 @@ impl Room {
 			current_meta: Default::default(),
 			current_user: Default::default(),
 			user_listeners,
+			tracer,
 			#[cfg(test)]
 			object_id_generator: 0,
 			#[cfg(test)]
@@ -128,6 +132,7 @@ impl Room {
 		});
 
 		let room_id = self.id;
+		let tracer = self.tracer.clone();
 		self.users
 			.values_mut()
 			.filter(|user| user.template.public_key != *current_user_public_key)
@@ -136,7 +141,7 @@ impl Room {
 			.filter(|user| user.template.access_groups.contains_any(&access_groups))
 			.for_each(|user| {
 				let protocol = user.protocol.as_mut().unwrap();
-				log::info!("[room({:?})] s -> u({:?}) {:?}", room_id, user.template.public_key, command);
+				tracer.on_s2c_command(room_id, user.template.public_key.clone(), &command);
 				protocol
 					.out_commands_collector
 					.add_command(channel_type.clone(), application_command.clone())
@@ -160,7 +165,7 @@ impl Room {
 				if let Some(ref mut protocol) = user.protocol {
 					if user.attached {
 						for command in commands {
-							log::info!("[room({:?})] s -> u({:?}) {:?}", self.id, user.template.public_key, command);
+							self.tracer.on_s2c_command(self.id, user.template.public_key, &command);
 							let meta = self.current_meta.as_ref().unwrap();
 							let channel = self.current_channel.as_ref().unwrap();
 							let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
@@ -225,6 +230,7 @@ impl Room {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
+					self.tracer.on_c2s_command(self.id, user_public_key.clone(), &command_with_meta.command);
 					execute(command_with_meta.command, self, &user_public_key);
 				}
 				_ => {
@@ -411,9 +417,20 @@ mod tests {
 
 	use crate::room::object::GameObject;
 	use crate::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
+	use crate::room::tracer::Tracer;
 	use crate::room::{Room, RoomUserListener};
 
+	impl Default for Room {
+		fn default() -> Self {
+			Room::new(RoomTemplate::default(), Rc::new(Tracer::new_with_allow_all()), Default::default())
+		}
+	}
+
 	impl Room {
+		pub fn new_with_template(template: RoomTemplate) -> Self {
+			Room::new(template, Rc::new(Tracer::new_with_allow_all()), Default::default())
+		}
+
 		pub fn create_object(&mut self, owner: &UserPublicKey) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
@@ -435,7 +452,7 @@ mod tests {
 		let user_a = template.create_user(1, AccessGroups(0b111));
 		let user_b = template.create_user(2, AccessGroups(0b111));
 
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		let object_a_1 = room.create_object(&user_a).id.clone();
 		let object_a_2 = room.create_object(&user_a).id.clone();
 		let object_b_1 = room.create_object(&user_b).id.clone();
@@ -465,7 +482,7 @@ mod tests {
 		};
 		template.objects = Option::Some(vec![object_template.clone()]);
 
-		let room = Room::new(template, Default::default());
+		let room = Room::new_with_template(template);
 		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::Root)));
 	}
 
@@ -486,7 +503,7 @@ mod tests {
 		};
 		template.users.push(user_template.clone());
 
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
@@ -528,7 +545,7 @@ mod tests {
 		template.users.push(user1_template.clone());
 		template.users.push(user2_template.clone());
 
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 
 		room.process_in_frame(&user1_template.public_key, Frame::new(0), &Instant::now());
 		let mut frame_with_attach_to_room = Frame::new(1);
@@ -580,7 +597,7 @@ mod tests {
 	fn should_register_user_after_disconnect_when_auto_create() {
 		let (mut template, user_template) = create_template();
 		template.auto_create_user = true;
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		room.disconnect_user(&user_template.public_key);
 		assert!(room.users.contains_key(&user_template.public_key));
 	}
@@ -614,7 +631,7 @@ mod tests {
 		let (template, user_template) = create_template();
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
-		let mut room = Room::new(template, vec![test_listener.clone()]);
+		let mut room = Room::new(template, Rc::new(Tracer::new_with_allow_all()), vec![test_listener.clone()]);
 		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
 		room.disconnect_user(&user_template.public_key);
 
@@ -624,7 +641,7 @@ mod tests {
 	#[test]
 	fn should_dont_send_command_to_current_user() {
 		let (template, user_template) = create_template();
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		room.current_user.replace(user_template.public_key);
 		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
 		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
@@ -650,7 +667,7 @@ mod tests {
 	#[test]
 	fn should_send_command_to_other_user() {
 		let (template, user_template) = create_template();
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		room.current_user.replace(user_template.public_key + 1); // команда пришла от другого пользователя
 		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
 		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
@@ -676,7 +693,7 @@ mod tests {
 	#[test]
 	pub fn should_keep_order_object() {
 		let (template, _) = create_template();
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		room.insert_object(GameObject {
 			id: GameObjectId::new(100, ObjectOwner::Root),
 			template: 0,

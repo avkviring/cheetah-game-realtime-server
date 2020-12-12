@@ -28,7 +28,6 @@ pub fn error_c2s_command(command: &str, room: &Room, user_public_key: &UserPubli
 }
 
 pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPublicKey) {
-	log::info!("[room({:?})] u({:?}) -> s {:?}", room.id, user_public_key, command);
 	match command {
 		C2SCommand::Create(command) => command.execute(room, user_public_key),
 		C2SCommand::SetLong(command) => command.execute(room, user_public_key),
@@ -57,7 +56,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let user_1 = template.create_user(1, AccessGroups(0b11));
 		let user_2 = template.create_user(2, AccessGroups(0b11));
-		let mut room = Room::new(template, Default::default());
+		let mut room = Room::new_with_template(template);
 		let object_id = room.create_object(&user_1).id.clone();
 		(room, object_id, user_1, user_2)
 	}

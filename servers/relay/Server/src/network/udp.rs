@@ -124,7 +124,6 @@ impl UDPServer {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.header.frame_id;
 										}
-										log::trace!("[udp] user({:?}) -> server {:?}", user_public_key, frame);
 										readed_frame.replace(frame);
 									}
 									Err(e) => {

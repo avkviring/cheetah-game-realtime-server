@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 
 use crate::network::udp::UDPServer;
 use crate::room::template::{RoomTemplate, UserTemplate};
+use crate::room::tracer::Tracer;
 use crate::room::RoomId;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
 use crate::server::dump::ServerDump;
@@ -158,7 +159,7 @@ impl ServerThread {
 	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
 			udp_server: UDPServer::new(socket).unwrap(),
-			rooms: Rooms::default(),
+			rooms: Rooms::new(Tracer::new_with_allow_all()),
 			receiver,
 			max_duration: 0,
 			avg_duration: 0,
