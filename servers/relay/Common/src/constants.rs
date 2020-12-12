@@ -1,4 +1,5 @@
 pub type FieldID = u16;
+pub type ObjectTemplate = u16;
 pub type GroupType = u64;
 
 ///

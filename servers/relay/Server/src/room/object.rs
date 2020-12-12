@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::constants::FieldID;
+use cheetah_relay_common::constants::{FieldID, ObjectTemplate};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
@@ -16,7 +16,7 @@ use cheetah_relay_common::room::UserPublicKey;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameObject {
 	pub id: GameObjectId,
-	pub template: u16,
+	pub template: ObjectTemplate,
 	pub access_groups: AccessGroups,
 	///
 	/// Объект полностью создан
