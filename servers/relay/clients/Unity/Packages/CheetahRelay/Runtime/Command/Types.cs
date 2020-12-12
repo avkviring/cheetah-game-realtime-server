@@ -30,6 +30,12 @@ namespace CheetahRelay
             return $"{nameof(id)}: {id}, {nameof(roomOwner)}: {roomOwner}, {nameof(userPublicKey)}: {userPublicKey}";
         }
 
+        public static bool operator ==(CheetahObjectId a, CheetahObjectId b)
+            => a.Equals(b);
+
+        public static bool operator !=(CheetahObjectId a, CheetahObjectId b)
+            => !(a == b);
+
         public override bool Equals(object obj)
         {
             return obj is CheetahObjectId other && Equals(other);
