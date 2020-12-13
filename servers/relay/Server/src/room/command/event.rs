@@ -22,7 +22,7 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-	
+
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
 

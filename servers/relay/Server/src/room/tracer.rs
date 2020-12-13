@@ -1,8 +1,8 @@
-use log::{Level, LevelFilter};
+use log::{Level};
 use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::commands::command::{C2SCommand, S2CCommand};
-use cheetah_relay_common::constants::{FieldID, ObjectTemplate};
+use cheetah_relay_common::constants::{FieldID};
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::RoomId;
@@ -161,13 +161,13 @@ impl Tracer {
 		}
 
 		let info = match command {
-			S2CCommand::Create(c) => (Command::Create, Option::None, Option::None),
-			S2CCommand::Created(c) => (Command::Created, Option::None, Option::None),
+			S2CCommand::Create(_c) => (Command::Create, Option::None, Option::None),
+			S2CCommand::Created(_c) => (Command::Created, Option::None, Option::None),
 			S2CCommand::SetLong(c) => (Command::SetLong, Option::Some(FieldType::Long), Option::Some(c.field_id)),
 			S2CCommand::SetFloat(c) => (Command::SetFloat, Option::Some(FieldType::Float), Option::Some(c.field_id)),
 			S2CCommand::SetStruct(c) => (Command::SetStruct, Option::Some(FieldType::Structure), Option::Some(c.field_id)),
 			S2CCommand::Event(c) => (Command::Event, Option::Some(FieldType::Event), Option::Some(c.field_id)),
-			S2CCommand::Delete(c) => (Command::Delete, Option::None, Option::None),
+			S2CCommand::Delete(_c) => (Command::Delete, Option::None, Option::None),
 		};
 
 		if self.is_allow(user_public_key, Direction::SC, info.0, info.1, info.2) {
