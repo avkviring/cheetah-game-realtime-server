@@ -5,7 +5,7 @@ use std::str::FromStr;
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches, Values};
 use log::LevelFilter;
 use stderrlog::Timestamp;
 
@@ -14,7 +14,13 @@ use cheetah_relay::server::rest::DumpRestServer;
 use cheetah_relay::server::Server;
 
 fn main() {
-	let matches = App::new("Cheetah Relay Server")
+	let cli = get_cli();
+	configure_logger(cli.values_of("log-level"));
+	start_server(cli.values_of("room-template"));
+}
+
+fn get_cli() -> ArgMatches {
+	App::new("Cheetah Relay Server")
 		.version("0.0.1")
 		.about("Realtime multiplayer game server.")
 		.arg(
@@ -37,9 +43,11 @@ fn main() {
 				.about("level for log")
 				.takes_value(true),
 		)
-		.get_matches();
+		.get_matches()
+}
 
-	let level = match matches.values_of("log-level") {
+fn configure_logger(log_level: Option<clap::Values>) {
+	let level = match log_level {
 		None => LevelFilter::Error,
 		Some(log_level) => {
 			let level_opt = log_level.into_iter().next().unwrap();
@@ -53,25 +61,22 @@ fn main() {
 			}
 		}
 	};
-
 	init_logger(level);
-
-	match matches.values_of("room-template") {
-		None => {}
-		Some(room_templates_path) => {
-			start_server(room_templates_path);
-		}
-	}
 }
 
-fn start_server(room_templates_path: clap::Values) {
+fn start_server(room_templates_path: Option<clap::Values>) {
 	let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:5000").unwrap()).unwrap();
 	let mut server = Server::new(socket);
 
-	room_templates_path.for_each(|path| {
-		let room_template = RoomTemplate::load_from_file(path).unwrap();
-		server.register_room(room_template).ok().unwrap();
-	});
+	match room_templates_path {
+		None => {}
+		Some(room_templates_path) => {
+			room_templates_path.for_each(|path| {
+				let room_template = RoomTemplate::load_from_file(path).unwrap();
+				server.register_room(room_template).ok().unwrap();
+			});
+		}
+	}
 
 	let halt_signal = server.get_halt_signal().clone();
 	let server = Arc::new(Mutex::new(server));
