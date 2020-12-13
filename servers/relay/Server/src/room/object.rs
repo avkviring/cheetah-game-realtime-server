@@ -90,7 +90,7 @@ mod tests {
 			S2CCommand::Create(c) if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
 		assert!(matches!(commands.remove(0), S2CCommand::SetStruct(c) if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
 		assert!(matches!(commands.remove(0), S2CCommand::SetLong(c) if c.object_id==id && c.field_id == 1 && c.value == 100));
-		assert!(matches!(commands.remove(0), S2CCommand::SetFloat64(c) if c.object_id==id && c.field_id == 2 && c.value == 200.200));
+		assert!(matches!(commands.remove(0), S2CCommand::SetFloat(c) if c.object_id==id && c.field_id == 2 && c.value == 200.200));
 		assert!(matches!(commands.remove(0), S2CCommand::Created(c) if c.object_id==id));
 	}
 

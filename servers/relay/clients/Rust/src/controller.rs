@@ -153,7 +153,7 @@ impl ClientController {
 							listener(meta, &object_id, command.field_id, command.value);
 						}
 					}
-					S2CCommand::SetFloat64(command) => {
+					S2CCommand::SetFloat(command) => {
 						if let Some(ref listener) = self.listener_float_value {
 							let object_id = From::from(&command.object_id);
 							listener(meta, &object_id, command.field_id, command.value);

@@ -16,7 +16,7 @@ pub extern "C" fn set_float_value_listener(listener: extern "C" fn(&S2CMetaComma
 
 #[no_mangle]
 pub extern "C" fn set_float_value(object_id: &GameObjectIdFFI, field_id: FieldID, value: f64) -> bool {
-	send_command(C2SCommand::SetFloat64(SetFloat64Command {
+	send_command(C2SCommand::SetFloat(SetFloat64Command {
 		object_id: From::from(object_id),
 		field_id,
 		value,
