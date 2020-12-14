@@ -1,0 +1,6 @@
+default: deny
+rules:
+  - action: deny
+    field_id: 1
+  - action: allow
+    direction: sc

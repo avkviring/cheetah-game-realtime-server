@@ -27,7 +27,7 @@ use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::object::GameObject;
 use crate::room::template::{RoomTemplate, UserTemplate};
-use crate::room::tracer::Tracer;
+use crate::room::tracer::CommandTracer;
 use crate::rooms::OutFrame;
 
 pub mod command;
@@ -47,7 +47,7 @@ pub struct Room {
 	current_user: Option<UserPublicKey>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub auto_create_user: bool,
-	pub tracer: Rc<Tracer>,
+	pub tracer: Rc<CommandTracer>,
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -87,7 +87,7 @@ impl User {
 }
 
 impl Room {
-	pub fn new(template: RoomTemplate, tracer: Rc<Tracer>, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
+	pub fn new(template: RoomTemplate, tracer: Rc<CommandTracer>, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
 		let mut room = Room {
 			id: template.id,
 			auto_create_user: template.auto_create_user,
@@ -417,18 +417,18 @@ mod tests {
 
 	use crate::room::object::GameObject;
 	use crate::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
-	use crate::room::tracer::Tracer;
+	use crate::room::tracer::CommandTracer;
 	use crate::room::{Room, RoomUserListener};
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(RoomTemplate::default(), Rc::new(Tracer::new_with_allow_all()), Default::default())
+			Room::new(RoomTemplate::default(), Rc::new(CommandTracer::new_with_allow_all()), Default::default())
 		}
 	}
 
 	impl Room {
 		pub fn new_with_template(template: RoomTemplate) -> Self {
-			Room::new(template, Rc::new(Tracer::new_with_allow_all()), Default::default())
+			Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
 		}
 
 		pub fn create_object(&mut self, owner: &UserPublicKey) -> &mut GameObject {
@@ -631,7 +631,7 @@ mod tests {
 		let (template, user_template) = create_template();
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
-		let mut room = Room::new(template, Rc::new(Tracer::new_with_allow_all()), vec![test_listener.clone()]);
+		let mut room = Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
 		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
 		room.disconnect_user(&user_template.public_key);
 

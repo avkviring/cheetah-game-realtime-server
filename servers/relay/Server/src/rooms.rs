@@ -9,14 +9,14 @@ use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::template::{RoomTemplate, UserTemplate};
-use crate::room::tracer::Tracer;
+use crate::room::tracer::CommandTracer;
 use crate::room::{Room, RoomId, RoomRegisterUserError, RoomUserListener};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	pub users: Rc<RefCell<Users>>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
-	tracer: Rc<Tracer>,
+	tracer: Rc<CommandTracer>,
 }
 
 #[derive(Default)]
@@ -42,7 +42,7 @@ pub enum RegisterRoomError {
 }
 
 impl Rooms {
-	pub fn new(tracer: Tracer) -> Self {
+	pub fn new(tracer: CommandTracer) -> Self {
 		Self {
 			room_by_id: Default::default(),
 			users: Rc::new(RefCell::new(Default::default())),
@@ -132,7 +132,7 @@ impl Default for Rooms {
 			room_by_id: Default::default(),
 			users: Rc::new(RefCell::new(Default::default())),
 			changed_rooms: Default::default(),
-			tracer: Rc::new(Tracer::new_with_allow_all()),
+			tracer: Rc::new(CommandTracer::new_with_allow_all()),
 		}
 	}
 }

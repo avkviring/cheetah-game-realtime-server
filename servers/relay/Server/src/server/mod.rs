@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 
 use crate::network::udp::UDPServer;
 use crate::room::template::{RoomTemplate, UserTemplate};
-use crate::room::tracer::Tracer;
+use crate::room::tracer::CommandTracer;
 use crate::room::RoomId;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
 use crate::server::dump::ServerDump;
@@ -56,14 +56,14 @@ impl Drop for Server {
 }
 
 impl Server {
-	pub fn new(socket: UdpSocket) -> Self {
+	pub fn new(socket: UdpSocket, tracer: CommandTracer) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
 		let handler = thread::Builder::new()
 			.name("server".to_string())
 			.spawn(move || {
-				ServerThread::new(socket, receiver, halt_signal).run();
+				ServerThread::new(socket, receiver, halt_signal, tracer).run();
 			})
 			.unwrap();
 		Self {
@@ -156,10 +156,10 @@ struct ServerThread {
 }
 
 impl ServerThread {
-	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
+	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>, tracer: CommandTracer) -> Self {
 		Self {
 			udp_server: UDPServer::new(socket).unwrap(),
-			rooms: Rooms::new(Tracer::new_with_allow_all()),
+			rooms: Rooms::new(tracer),
 			receiver,
 			max_duration: 0,
 			avg_duration: 0,

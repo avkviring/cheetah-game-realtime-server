@@ -1,8 +1,10 @@
-use log::{Level};
+use std::io::Read;
+
+use log::Level;
 use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::commands::command::{C2SCommand, S2CCommand};
-use cheetah_relay_common::constants::{FieldID};
+use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::RoomId;
@@ -12,7 +14,7 @@ use crate::room::RoomId;
 /// Для отображения информации используется log::info
 ///
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Tracer {
+pub struct CommandTracer {
 	default: Action,
 	///
 	/// Правила применяются последовательно до первого срабатывания
@@ -25,9 +27,8 @@ pub struct Rule {
 	action: Action,
 	command: Option<Command>,
 	direction: Option<Direction>,
-	#[serde(rename = "type")]
 	field_type: Option<FieldType>,
-	field: Option<FieldID>,
+	field_id: Option<FieldID>,
 	user: Option<UserPublicKey>,
 }
 
@@ -87,7 +88,7 @@ impl Rule {
 		field: &Option<FieldID>,
 	) -> bool {
 		EqualResult::NotEqual != is_match_with_option(&self.field_type, field_type)
-			&& EqualResult::NotEqual != is_match_with_option(&self.field, field)
+			&& EqualResult::NotEqual != is_match_with_option(&self.field_id, field)
 			&& EqualResult::NotEqual != is_match(&self.user, &user_public_key)
 			&& EqualResult::NotEqual != is_match(&self.direction, direction)
 			&& EqualResult::NotEqual != is_match(&self.command, command)
@@ -136,13 +137,27 @@ fn is_match_with_option<T: PartialEq>(a: &Option<T>, b: &Option<T>) -> EqualResu
 	}
 }
 
-impl Tracer {
+impl CommandTracer {
+	pub fn load_from_file(path: String) -> Self {
+		let mut file = std::fs::File::open(path).unwrap();
+		let mut content = String::default();
+		file.read_to_string(&mut content).unwrap();
+		serde_yaml::from_str(content.as_str()).unwrap()
+	}
+
 	///
 	/// Создать трейсер для отображения всех событий
 	///
 	pub fn new_with_allow_all() -> Self {
 		Self {
 			default: Action::Allow,
+			rules: vec![],
+		}
+	}
+
+	pub fn new_with_deny_all() -> Self {
+		Self {
+			default: Action::Deny,
 			rules: vec![],
 		}
 	}
@@ -200,12 +215,12 @@ impl Tracer {
 
 #[cfg(test)]
 mod tests {
-	use crate::room::tracer::{Action, Command, Direction, FieldType, Rule, Tracer};
+	use crate::room::tracer::{Action, Command, CommandTracer, Direction, FieldType, Rule};
 
 	#[test]
 	#[allow(dead_code)]
 	pub fn export() {
-		let tracer = Tracer::new_with_allow_all();
+		let tracer = CommandTracer::new_with_allow_all();
 		let content = serde_yaml::to_string(&tracer).unwrap();
 		println!("{}", content);
 	}
@@ -217,7 +232,7 @@ mod tests {
 			command: None,
 			direction: None,
 			field_type: None,
-			field: None,
+			field_id: None,
 			user: None,
 		};
 
@@ -231,7 +246,7 @@ mod tests {
 			command: Option::Some(Command::Created),
 			direction: Option::Some(Direction::CS),
 			field_type: Option::Some(FieldType::Long),
-			field: Option::Some(55),
+			field_id: Option::Some(55),
 			user: Option::Some(1),
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::Created, &Option::Some(FieldType::Long), &Option::Some(55)))
@@ -244,7 +259,7 @@ mod tests {
 			command: Option::Some(Command::Created),
 			direction: None,
 			field_type: None,
-			field: None,
+			field_id: None,
 			user: None,
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::Created, &Option::None, &Option::None));
@@ -264,7 +279,7 @@ mod tests {
 			command: None,
 			direction: Some(Direction::SC),
 			field_type: None,
-			field: None,
+			field_id: None,
 			user: None,
 		};
 		assert!(rule.is_match(1, &Direction::SC, &Command::Created, &Option::None, &Option::None));
@@ -278,7 +293,7 @@ mod tests {
 			command: None,
 			direction: None,
 			field_type: Some(FieldType::Event),
-			field: None,
+			field_id: None,
 			user: None,
 		};
 		assert!(rule.is_match(1, &Direction::SC, &Command::Created, &Option::Some(FieldType::Event), &Option::None));
@@ -293,7 +308,7 @@ mod tests {
 			command: None,
 			direction: None,
 			field_type: None,
-			field: Some(55),
+			field_id: Some(55),
 			user: None,
 		};
 		assert!(rule.is_match(1, &Direction::SC, &Command::Created, &Option::None, &Option::Some(55)));
@@ -308,7 +323,7 @@ mod tests {
 			command: None,
 			direction: None,
 			field_type: None,
-			field: None,
+			field_id: None,
 			user: Some(1),
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::SetFloat, &Option::Some(FieldType::Long), &Option::Some(55)));
@@ -322,7 +337,7 @@ mod tests {
 			command: Option::Some(Command::Event),
 			direction: Option::Some(Direction::CS),
 			field_type: Option::Some(FieldType::Long),
-			field: Option::Some(55),
+			field_id: Option::Some(55),
 			user: Option::Some(1),
 		};
 		assert!(!rule.is_match(1, &Direction::CS, &Command::Created, &Option::Some(FieldType::Long), &Option::Some(55)))
@@ -335,7 +350,7 @@ mod tests {
 			command: Option::Some(Command::Created),
 			direction: None,
 			field_type: Option::Some(FieldType::Long),
-			field: Option::Some(55),
+			field_id: Option::Some(55),
 			user: Option::Some(1),
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::Created, &Option::Some(FieldType::Long), &Option::Some(55)))
@@ -348,7 +363,7 @@ mod tests {
 			command: Option::Some(Command::Created),
 			direction: None,
 			field_type: Option::Some(FieldType::Long),
-			field: Option::Some(55),
+			field_id: Option::Some(55),
 			user: Option::Some(1),
 		};
 		let rule_b = Rule {
@@ -356,10 +371,10 @@ mod tests {
 			command: Option::Some(Command::Event),
 			direction: None,
 			field_type: None,
-			field: None,
+			field_id: None,
 			user: None,
 		};
-		let tracer = Tracer {
+		let tracer = CommandTracer {
 			default: Action::Deny,
 			rules: vec![rule_a.clone(), rule_b.clone()],
 		};
@@ -368,7 +383,7 @@ mod tests {
 		assert!(tracer.is_allow(1, Direction::CS, Command::Event, Option::Some(FieldType::Long), Option::Some(55)));
 		assert!(!tracer.is_allow(1, Direction::CS, Command::SetFloat, Option::Some(FieldType::Long), Option::Some(55)));
 
-		let tracer = Tracer {
+		let tracer = CommandTracer {
 			default: Action::Allow,
 			rules: vec![rule_a, rule_b],
 		};
