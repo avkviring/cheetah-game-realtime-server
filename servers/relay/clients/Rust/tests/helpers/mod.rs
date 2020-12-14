@@ -7,6 +7,7 @@ use rand::RngCore;
 use stderrlog::Timestamp;
 
 use cheetah_relay::room::template::{RoomTemplate, UserTemplate};
+use cheetah_relay::room::tracer::CommandTracer;
 use cheetah_relay::room::RoomId;
 use cheetah_relay::server::Server;
 use cheetah_relay_client::ffi::client::do_create_client;
@@ -45,7 +46,7 @@ impl Helper {
 		self.room_id_generator += 1;
 		let room_id = self.room_id_generator;
 		let binding = bind_to_free_socket().unwrap();
-		let mut server = Server::new(binding.0);
+		let mut server = Server::new(binding.0, CommandTracer::new_with_deny_all());
 		let mut template = RoomTemplate::default();
 		template.id = room_id;
 		server.register_room(template).ok().unwrap();

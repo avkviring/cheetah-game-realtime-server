@@ -147,6 +147,7 @@ mod tests {
 	use cheetah_relay_common::udp::bind_to_free_socket;
 
 	use crate::room::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate};
+	use crate::room::tracer::CommandTracer;
 	use crate::server::Server;
 
 	#[derive(Serialize, Deserialize)]
@@ -157,7 +158,7 @@ mod tests {
 
 	#[test]
 	fn should_dump() {
-		let mut server = Server::new(bind_to_free_socket().unwrap().0);
+		let mut server = Server::new(bind_to_free_socket().unwrap().0, CommandTracer::new_with_deny_all());
 		let mut object_template = GameObjectTemplate {
 			id: 1,
 			template: 0,

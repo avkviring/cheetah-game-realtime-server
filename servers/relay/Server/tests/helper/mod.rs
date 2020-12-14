@@ -7,6 +7,7 @@ use std::time::{Duration, Instant};
 use log::LevelFilter;
 
 use cheetah_relay::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
+use cheetah_relay::room::tracer::CommandTracer;
 use cheetah_relay::server::Server;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
@@ -102,7 +103,7 @@ impl TestEnvBuilder {
 	pub fn build(self) -> TestEnv {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.1;
-		let mut server = Server::new(socket.0);
+		let mut server = Server::new(socket.0, CommandTracer::new_with_deny_all());
 		server.register_room(self.template).ok().unwrap();
 		TestEnv {
 			socket_addr: addr,
