@@ -5,7 +5,7 @@ rustup default stable
 OUTPUT=Clients/Unity/Packages/CheetahRelay/
 
 cd ../../../
-cargo clean
+
 
 # macos
 rm -f $OUTPUT/x86_64/libcheetah_relay_client.dylib
