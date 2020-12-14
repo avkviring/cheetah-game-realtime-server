@@ -548,8 +548,9 @@ mod tests {
 		let mut room = Room::new_with_template(template);
 
 		room.process_in_frame(&user1_template.public_key, Frame::new(0), &Instant::now());
+
 		let mut frame_with_attach_to_room = Frame::new(1);
-		frame_with_attach_to_room.commands.reliable.push(ApplicationCommandDescription {
+		frame_with_attach_to_room.commands.reliable.push_back(ApplicationCommandDescription {
 			channel: ApplicationCommandChannel::ReliableUnordered,
 			command: ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
 				meta: C2SMetaCommandInformation { timestamp: 0 },
@@ -565,14 +566,14 @@ mod tests {
 				.out_commands_collector
 				.commands
 				.reliable
-				.pop()
+				.pop_front()
 				.unwrap()
 				.command
 				.get_object_id()
 				.unwrap(),
 			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_template.public_key))
 		);
-
+		protocol.out_commands_collector.commands.reliable.clear();
 		room.process_in_frame(&user2_template.public_key, Frame::new(0), &Instant::now());
 		let user1 = room.get_user_mut(&user1_template.public_key).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
@@ -581,7 +582,7 @@ mod tests {
 				.out_commands_collector
 				.commands
 				.reliable
-				.pop()
+				.pop_front()
 				.unwrap()
 				.command
 				.get_object_id()

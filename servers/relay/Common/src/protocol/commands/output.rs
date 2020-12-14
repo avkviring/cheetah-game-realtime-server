@@ -25,6 +25,8 @@ pub struct OutCommandsCollector {
 }
 
 impl OutCommandsCollector {
+	const MAX_COMMAND_IN_FRAME: usize = 10;
+
 	pub fn add_command(&mut self, channel_type: ApplicationCommandChannelType, command: ApplicationCommand) {
 		match self.create_channel(&channel_type, &command) {
 			None => {
@@ -32,7 +34,6 @@ impl OutCommandsCollector {
 			}
 			Some(channel) => {
 				let description = ApplicationCommandDescription { channel, command };
-
 				let commands = match channel_type {
 					ApplicationCommandChannelType::ReliableUnordered
 					| ApplicationCommandChannelType::ReliableOrderedByObject
@@ -45,7 +46,7 @@ impl OutCommandsCollector {
 					| ApplicationCommandChannelType::UnreliableOrderedByGroup(_) => &mut self.commands.unreliable,
 				};
 
-				commands.push(description);
+				commands.push_back(description);
 			}
 		}
 	}
@@ -80,18 +81,40 @@ impl FrameBuilder for OutCommandsCollector {
 	}
 
 	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
-		frame.commands.add_first(&self.commands);
-		self.commands.clear();
+		let mut command_count = 0;
+		while let Some(command) = self.commands.reliable.pop_front() {
+			frame.commands.reliable.push_back(command);
+			command_count += 1;
+			if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+				break;
+			}
+		}
+		if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+			return;
+		}
+
+		while let Some(command) = self.commands.unreliable.pop_front() {
+			frame.commands.unreliable.push_back(command);
+			command_count += 1;
+			if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+				break;
+			}
+		}
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use std::time::Instant;
+
 	use crate::commands::command::event::EventCommand;
+	use crate::commands::command::long::SetLongCommand;
 	use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
 	use crate::commands::command::{C2SCommand, C2SCommandWithMeta};
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandChannelType};
+	use crate::protocol::frame::Frame;
+	use crate::protocol::FrameBuilder;
 
 	#[test]
 	pub fn test_group_sequence() {
@@ -108,6 +131,57 @@ mod tests {
 		assert!(matches!(output.commands.reliable[0].channel, ApplicationCommandChannel::ReliableSequenceByGroup(_,sequence) if sequence==0));
 		assert!(matches!(output.commands.reliable[1].channel, ApplicationCommandChannel::ReliableSequenceByGroup(_,sequence) if sequence==1));
 		assert!(matches!(output.commands.reliable[2].channel, ApplicationCommandChannel::ReliableSequenceByGroup(_,sequence) if sequence==2));
+	}
+
+	#[test]
+	pub fn should_split_commands() {
+		let mut output = OutCommandsCollector::default();
+		for i in 0..2 * OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+			output.add_command(
+				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
+				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
+					meta: C2SMetaCommandInformation { timestamp: 0 },
+					command: C2SCommand::SetLong(SetLongCommand {
+						object_id: Default::default(),
+						field_id: 1,
+						value: i as i64,
+					}),
+				}),
+			);
+		}
+
+		let mut frame = Frame::new(0);
+		output.build_frame(&mut frame, &Instant::now());
+
+		// в коллекторе первой должна быть команда с value равным размеру фрейма
+		assert!(matches!(
+			output.commands.reliable.pop_front().unwrap().command,
+			ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
+				meta: _,
+				command: C2SCommand::SetLong(SetLongCommand {
+					object_id: _,
+					field_id: _,
+					value,
+				}),
+			})
+			if value == OutCommandsCollector::MAX_COMMAND_IN_FRAME as i64
+		));
+
+		// проверяем как собран фрейм
+		for i in 0..OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+			assert!(matches!(
+				frame.commands.reliable.pop_front().unwrap().command,
+				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
+					meta: _,
+					command: C2SCommand::SetLong(SetLongCommand {
+						object_id: _,
+						field_id: _,
+						value,
+					}),
+				})
+				if value == i as i64
+			));
+		}
 	}
 
 	#[test]

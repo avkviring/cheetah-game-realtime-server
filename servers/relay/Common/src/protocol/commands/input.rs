@@ -354,7 +354,7 @@ mod tests {
 
 	impl Frame {
 		fn add_command(mut self, channel: ApplicationCommandChannel, content: String) -> Self {
-			self.commands.reliable.push(ApplicationCommandDescription {
+			self.commands.reliable.push_back(ApplicationCommandDescription {
 				channel,
 				command: ApplicationCommand::TestSimple(content),
 			});
@@ -366,7 +366,7 @@ mod tests {
 				channel,
 				command: ApplicationCommand::TestObject(GameObjectId::new(object_id, ObjectOwner::Root), content),
 			};
-			self.commands.reliable.push(command_description);
+			self.commands.reliable.push_back(command_description);
 			self
 		}
 	}

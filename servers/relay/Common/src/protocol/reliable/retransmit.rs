@@ -357,7 +357,7 @@ mod tests {
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
-		frame.commands.unreliable.push(ApplicationCommandDescription {
+		frame.commands.unreliable.push_back(ApplicationCommandDescription {
 			channel: ApplicationCommandChannel::ReliableUnordered,
 			command: ApplicationCommand::TestSimple("".to_string()),
 		});
@@ -370,7 +370,7 @@ mod tests {
 
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.commands.reliable.push(ApplicationCommandDescription {
+		frame.commands.reliable.push_back(ApplicationCommandDescription {
 			channel: ApplicationCommandChannel::ReliableUnordered,
 			command: ApplicationCommand::TestSimple("".to_string()),
 		});

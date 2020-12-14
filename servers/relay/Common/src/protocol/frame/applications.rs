@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
 use crate::room::object::GameObjectId;
+use std::collections::VecDeque;
 
 pub type ChannelGroupId = u16;
 pub type ChannelSequence = u32;
@@ -14,24 +15,12 @@ pub struct ApplicationCommands {
 	///
 	/// С гарантией доставки
 	///
-	pub reliable: Vec<ApplicationCommandDescription>,
+	pub reliable: VecDeque<ApplicationCommandDescription>,
 
 	///
 	/// Без гарантии доставки
 	///
-	pub unreliable: Vec<ApplicationCommandDescription>,
-}
-
-impl ApplicationCommands {
-	pub fn add_first(&mut self, command: &Self) {
-		self.reliable.extend_from_slice(&command.reliable);
-		self.unreliable.extend_from_slice(&command.unreliable);
-	}
-
-	pub fn clear(&mut self) {
-		self.reliable.clear();
-		self.unreliable.clear();
-	}
+	pub unreliable: VecDeque<ApplicationCommandDescription>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]

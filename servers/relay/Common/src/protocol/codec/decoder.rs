@@ -119,7 +119,7 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
-		frame.commands.reliable.push(ApplicationCommandDescription {
+		frame.commands.reliable.push_back(ApplicationCommandDescription {
 			channel: ApplicationCommandChannel::ReliableUnordered,
 			command: ApplicationCommand::TestSimple("test".to_string()),
 		});
