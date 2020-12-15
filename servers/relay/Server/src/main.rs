@@ -11,7 +11,7 @@ use stderrlog::Timestamp;
 
 use cheetah_relay::room::template::RoomTemplate;
 use cheetah_relay::room::tracer::CommandTracer;
-use cheetah_relay::server::rest::DumpRestServer;
+use cheetah_relay::server::rest::RestServer;
 use cheetah_relay::server::Server;
 
 fn main() {
@@ -116,7 +116,7 @@ fn start_server(room_templates_path: Option<Vec<String>>, trace_path: Option<Str
 
 	let halt_signal = server.get_halt_signal().clone();
 	let server = Arc::new(Mutex::new(server));
-	DumpRestServer::run(server.clone()).join().unwrap().unwrap();
+	RestServer::run(server.clone()).join().unwrap().unwrap();
 	halt_signal.store(true, Ordering::Relaxed);
 }
 

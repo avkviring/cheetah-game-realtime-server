@@ -34,6 +34,7 @@ pub mod command;
 pub mod object;
 pub mod template;
 pub mod tracer;
+pub mod user_selector;
 
 pub type RoomId = u64;
 

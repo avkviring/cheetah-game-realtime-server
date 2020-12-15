@@ -11,8 +11,9 @@ use std::time::{Duration, Instant};
 use crate::network::udp::UDPServer;
 use crate::room::template::{RoomTemplate, UserTemplate};
 use crate::room::tracer::CommandTracer;
+use crate::room::user_selector::SelectedUserForEntrance;
 use crate::room::RoomId;
-use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
+use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms, SelectUserForEntranceError};
 use crate::server::dump::ServerDump;
 use crate::server::Request::TimeOffset;
 
@@ -37,6 +38,12 @@ enum Request {
 	/// Скопировать состояние сервера для отладки
 	///
 	Dump(Sender<ServerDump>),
+
+	///
+	/// Получить данные пользователя для входа
+	/// используется только для работы с сервером без ММ
+	///
+	SelectUserForEntrance(RoomId, Sender<Result<Option<SelectedUserForEntrance>, SelectUserForEntranceError>>),
 }
 
 pub enum RegisterRoomRequestError {
@@ -143,6 +150,12 @@ impl Server {
 		self.sender.send(Request::Dump(sender)).unwrap();
 		receiver.recv().map_err(|_| ())
 	}
+
+	pub fn select_user_for_entrance(&self, room_id: RoomId) -> Result<Result<Option<SelectedUserForEntrance>, SelectUserForEntranceError>, ()> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender.send(Request::SelectUserForEntrance(room_id, sender)).unwrap();
+		receiver.recv().map_err(|_| ())
+	}
 }
 
 struct ServerThread {
@@ -208,6 +221,9 @@ impl ServerThread {
 				}
 				Request::Dump(sender) => {
 					sender.send(ServerDump::from(&*self)).unwrap();
+				}
+				Request::SelectUserForEntrance(room_id, sender) => {
+					sender.send(self.rooms.select_user_for_entrance(room_id)).unwrap();
 				}
 			}
 		}

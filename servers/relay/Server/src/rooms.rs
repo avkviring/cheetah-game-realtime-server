@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
@@ -10,10 +11,12 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::template::{RoomTemplate, UserTemplate};
 use crate::room::tracer::CommandTracer;
+use crate::room::user_selector::{SelectedUserForEntrance, UserForEntranceSelector};
 use crate::room::{Room, RoomId, RoomRegisterUserError, RoomUserListener};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
+	pub selectors_by_id: HashMap<RoomId, UserForEntranceSelector, FnvBuildHasher>,
 	pub users: Rc<RefCell<Users>>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	tracer: Rc<CommandTracer>,
@@ -45,6 +48,7 @@ impl Rooms {
 	pub fn new(tracer: CommandTracer) -> Self {
 		Self {
 			room_by_id: Default::default(),
+			selectors_by_id: Default::default(),
 			users: Rc::new(RefCell::new(Default::default())),
 			changed_rooms: Default::default(),
 			tracer: Rc::new(tracer),
@@ -111,6 +115,21 @@ impl Rooms {
 	pub fn cycle(&mut self, now: &Instant) {
 		self.room_by_id.values_mut().for_each(|room| room.cycle(now));
 	}
+
+	pub fn select_user_for_entrance(&mut self, room_id: RoomId) -> Result<Option<SelectedUserForEntrance>, SelectUserForEntranceError> {
+		match self.room_by_id.get(&room_id) {
+			None => Result::Err(SelectUserForEntranceError::RoomNotFound),
+			Some(room) => {
+				let selector = self.selectors_by_id.entry(room_id).or_insert_with(|| Default::default());
+				Result::Ok(selector.select(room))
+			}
+		}
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum SelectUserForEntranceError {
+	RoomNotFound,
 }
 
 impl RoomUserListener for Users {
@@ -130,6 +149,7 @@ impl Default for Rooms {
 	fn default() -> Self {
 		Self {
 			room_by_id: Default::default(),
+			selectors_by_id: Default::default(),
 			users: Rc::new(RefCell::new(Default::default())),
 			changed_rooms: Default::default(),
 			tracer: Rc::new(CommandTracer::new_with_allow_all()),
