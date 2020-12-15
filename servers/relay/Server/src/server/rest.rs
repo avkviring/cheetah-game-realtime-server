@@ -25,7 +25,7 @@ impl RestServer {
 					.app_data(server_data.clone())
 					.route("/", web::get().to(RestServer::index))
 					.route("/dump", web::get().to(RestServer::dump))
-					.route("/get-user-for-entrance/{room}", web::get().to(RestServer::get_user_for_entrance))
+					.route("/select-user/{room}", web::get().to(RestServer::get_user_for_entrance))
 			})
 			.workers(1)
 			.bind("0.0.0.0:8080")?
@@ -55,7 +55,7 @@ impl RestServer {
 	async fn index() -> HttpResponse {
 		let body = r#"
 			<a href="/dump">Dump all server state</a><br/>
-			<a href="/get-user-for-entrance">Get user public/private key for enter.</a><br/>
+			<a href="/select-user">Get user public/private key for enter.</a><br/>
 		"#;
 		HttpResponse::Ok().header(header::CONTENT_TYPE, "text/html").body(Body::from(body))
 	}
