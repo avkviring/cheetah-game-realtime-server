@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Read;
 
 use log::Level;
@@ -20,6 +21,9 @@ pub struct CommandTracer {
 	/// Правила применяются последовательно до первого срабатывания
 	///
 	rules: Vec<Rule>,
+
+	#[serde(flatten)]
+	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -30,6 +34,9 @@ pub struct Rule {
 	field_type: Option<FieldType>,
 	field_id: Option<FieldID>,
 	user: Option<UserPublicKey>,
+
+	#[serde(flatten)]
+	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -137,12 +144,32 @@ fn is_match_with_option<T: PartialEq>(a: &Option<T>, b: &Option<T>) -> EqualResu
 	}
 }
 
+#[derive(Debug)]
+pub enum CommandTraceError {
+	YamlParserError(serde_yaml::Error),
+	YamlContainsUnmappingFields(Vec<String>),
+}
+
 impl CommandTracer {
-	pub fn load_from_file(path: String) -> Self {
+	pub fn load_from_file(path: String) -> Result<Self, CommandTraceError> {
 		let mut file = std::fs::File::open(path).unwrap();
 		let mut content = String::default();
 		file.read_to_string(&mut content).unwrap();
-		serde_yaml::from_str(content.as_str()).unwrap()
+		let tracer: CommandTracer = serde_yaml::from_str(content.as_str()).map_err(|e| CommandTraceError::YamlParserError(e))?;
+		tracer.validate()
+	}
+
+	pub fn validate(self) -> Result<Self, CommandTraceError> {
+		let mut unmapping = Vec::new();
+		self.unmapping.iter().for_each(|(key, _value)| unmapping.push(key.clone()));
+		for rule in &self.rules {
+			rule.unmapping.iter().for_each(|(key, _value)| unmapping.push(format!("rule/{}", key)));
+		}
+		if unmapping.is_empty() {
+			Result::Ok(self)
+		} else {
+			Result::Err(CommandTraceError::YamlContainsUnmappingFields(unmapping))
+		}
 	}
 
 	///
@@ -152,6 +179,7 @@ impl CommandTracer {
 		Self {
 			default: Action::Allow,
 			rules: vec![],
+			unmapping: Default::default(),
 		}
 	}
 
@@ -159,6 +187,7 @@ impl CommandTracer {
 		Self {
 			default: Action::Deny,
 			rules: vec![],
+			unmapping: Default::default(),
 		}
 	}
 
@@ -215,7 +244,7 @@ impl CommandTracer {
 
 #[cfg(test)]
 mod tests {
-	use crate::room::tracer::{Action, Command, CommandTracer, Direction, FieldType, Rule};
+	use crate::room::tracer::{Action, Command, CommandTraceError, CommandTracer, Direction, FieldType, Rule};
 
 	#[test]
 	#[allow(dead_code)]
@@ -234,6 +263,7 @@ mod tests {
 			field_type: None,
 			field_id: None,
 			user: None,
+			unmapping: Default::default(),
 		};
 
 		assert!(rule.is_match(1, &Direction::CS, &Command::Created, &Option::None, &Option::None))
@@ -248,6 +278,7 @@ mod tests {
 			field_type: Option::Some(FieldType::Long),
 			field_id: Option::Some(55),
 			user: Option::Some(1),
+			unmapping: Default::default(),
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::Created, &Option::Some(FieldType::Long), &Option::Some(55)))
 	}
@@ -261,6 +292,7 @@ mod tests {
 			field_type: None,
 			field_id: None,
 			user: None,
+			unmapping: Default::default(),
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::Created, &Option::None, &Option::None));
 		assert!(!rule.is_match(
@@ -281,6 +313,7 @@ mod tests {
 			field_type: None,
 			field_id: None,
 			user: None,
+			unmapping: Default::default(),
 		};
 		assert!(rule.is_match(1, &Direction::SC, &Command::Created, &Option::None, &Option::None));
 		assert!(!rule.is_match(1, &Direction::CS, &Command::Created, &Option::None, &Option::None));
@@ -295,6 +328,7 @@ mod tests {
 			field_type: Some(FieldType::Event),
 			field_id: None,
 			user: None,
+			unmapping: Default::default(),
 		};
 		assert!(rule.is_match(1, &Direction::SC, &Command::Created, &Option::Some(FieldType::Event), &Option::None));
 		assert!(!rule.is_match(1, &Direction::SC, &Command::Created, &Option::None, &Option::None));
@@ -310,6 +344,7 @@ mod tests {
 			field_type: None,
 			field_id: Some(55),
 			user: None,
+			unmapping: Default::default(),
 		};
 		assert!(rule.is_match(1, &Direction::SC, &Command::Created, &Option::None, &Option::Some(55)));
 		assert!(!rule.is_match(1, &Direction::SC, &Command::Created, &Option::None, &Option::None));
@@ -325,6 +360,7 @@ mod tests {
 			field_type: None,
 			field_id: None,
 			user: Some(1),
+			unmapping: Default::default(),
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::SetFloat, &Option::Some(FieldType::Long), &Option::Some(55)));
 		assert!(!rule.is_match(2, &Direction::CS, &Command::SetFloat, &Option::Some(FieldType::Long), &Option::Some(55)))
@@ -339,6 +375,7 @@ mod tests {
 			field_type: Option::Some(FieldType::Long),
 			field_id: Option::Some(55),
 			user: Option::Some(1),
+			unmapping: Default::default(),
 		};
 		assert!(!rule.is_match(1, &Direction::CS, &Command::Created, &Option::Some(FieldType::Long), &Option::Some(55)))
 	}
@@ -352,6 +389,7 @@ mod tests {
 			field_type: Option::Some(FieldType::Long),
 			field_id: Option::Some(55),
 			user: Option::Some(1),
+			unmapping: Default::default(),
 		};
 		assert!(rule.is_match(1, &Direction::CS, &Command::Created, &Option::Some(FieldType::Long), &Option::Some(55)))
 	}
@@ -365,6 +403,7 @@ mod tests {
 			field_type: Option::Some(FieldType::Long),
 			field_id: Option::Some(55),
 			user: Option::Some(1),
+			unmapping: Default::default(),
 		};
 		let rule_b = Rule {
 			action: Action::Allow,
@@ -373,10 +412,12 @@ mod tests {
 			field_type: None,
 			field_id: None,
 			user: None,
+			unmapping: Default::default(),
 		};
 		let tracer = CommandTracer {
 			default: Action::Deny,
 			rules: vec![rule_a.clone(), rule_b.clone()],
+			unmapping: Default::default(),
 		};
 
 		assert!(tracer.is_allow(1, Direction::CS, Command::Created, Option::Some(FieldType::Long), Option::Some(55)));
@@ -386,8 +427,39 @@ mod tests {
 		let tracer = CommandTracer {
 			default: Action::Allow,
 			rules: vec![rule_a, rule_b],
+			unmapping: Default::default(),
 		};
 
 		assert!(tracer.is_allow(1, Direction::CS, Command::SetFloat, Option::Some(FieldType::Long), Option::Some(55)));
+	}
+
+	#[test]
+	pub fn should_validate() {
+		let mut rule = Rule {
+			action: Action::Allow,
+			command: Option::Some(Command::Created),
+			direction: None,
+			field_type: Option::Some(FieldType::Long),
+			field_id: Option::Some(55),
+			user: Option::Some(1),
+			unmapping: Default::default(),
+		};
+
+		rule.unmapping.insert("wrong_field".to_string(), serde_yaml::Value::default());
+
+		let mut tracer = CommandTracer {
+			default: Action::Deny,
+			rules: vec![rule],
+			unmapping: Default::default(),
+		};
+		tracer.unmapping.insert("wrong_field".to_string(), serde_yaml::Value::default());
+
+		assert!(matches!(
+			tracer.validate(),
+			Result::Err(CommandTraceError::YamlContainsUnmappingFields(fields))
+			if fields[0] == "wrong_field"
+			&& fields[1] == "rule/wrong_field"
+
+		))
 	}
 }

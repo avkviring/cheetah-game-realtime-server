@@ -98,7 +98,7 @@ fn start_server(room_templates_path: Option<Vec<String>>, trace_path: Option<Str
 		CommandTracer::new_with_allow_all()
 	} else {
 		trace_path
-			.map(|path| CommandTracer::load_from_file(path))
+			.map(|path| CommandTracer::load_from_file(path).unwrap())
 			.unwrap_or(CommandTracer::new_with_deny_all())
 	};
 

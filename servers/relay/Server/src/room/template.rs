@@ -154,7 +154,10 @@ impl RoomTemplate {
 			None => {}
 			Some(objects) => {
 				for object in objects {
-					object.unmapping.iter().for_each(|(key, _value)| unmapping.push(format!("object/{}", key)));
+					object
+						.unmapping
+						.iter()
+						.for_each(|(key, _value)| unmapping.push(format!("object/{}", key)));
 					object
 						.fields
 						.unmapping
