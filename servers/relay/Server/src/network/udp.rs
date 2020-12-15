@@ -246,6 +246,7 @@ mod tests {
 			private_key: Default::default(),
 			access_groups: Default::default(),
 			objects: None,
+			unmapping: Default::default(),
 		};
 		udp_server.sessions.clone().borrow_mut().register_user(0, &user_template);
 

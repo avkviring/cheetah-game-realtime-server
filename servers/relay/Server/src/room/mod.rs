@@ -480,6 +480,7 @@ mod tests {
 			template: 5,
 			access_groups: Default::default(),
 			fields: Default::default(),
+			unmapping: Default::default(),
 		};
 		template.objects = Option::Some(vec![object_template.clone()]);
 
@@ -495,12 +496,14 @@ mod tests {
 			template: 5,
 			access_groups: AccessGroups(55),
 			fields: Default::default(),
+			unmapping: Default::default(),
 		};
 		let user_template = UserTemplate {
 			public_key: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: Option::Some(vec![object_template.clone()]),
+			unmapping: Default::default(),
 		};
 		template.users.push(user_template.clone());
 
@@ -522,12 +525,14 @@ mod tests {
 			template: 5,
 			access_groups: AccessGroups(55),
 			fields: Default::default(),
+			unmapping: Default::default(),
 		};
 		let user1_template = UserTemplate {
 			public_key: 1,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: Option::Some(vec![object1_template.clone()]),
+			unmapping: Default::default(),
 		};
 
 		let object2_template = GameObjectTemplate {
@@ -535,12 +540,14 @@ mod tests {
 			template: 5,
 			access_groups: AccessGroups(55),
 			fields: Default::default(),
+			unmapping: Default::default(),
 		};
 		let user2_template = UserTemplate {
 			public_key: 2,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: Option::Some(vec![object2_template.clone()]),
+			unmapping: Default::default(),
 		};
 
 		template.users.push(user1_template.clone());
@@ -742,6 +749,7 @@ mod tests {
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: Default::default(),
+			unmapping: Default::default(),
 		};
 		template.users.push(user_template.clone());
 		(template, user_template)

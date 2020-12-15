@@ -77,6 +77,7 @@ impl Helper {
 			private_key: user_keys.private,
 			access_groups: AccessGroups(0b111),
 			objects: Default::default(),
+			unmapping: Default::default(),
 		};
 		server.register_user(room_id, user_template).ok().unwrap();
 		let client = self.create_client(server_address.to_string().as_str(), user_keys);

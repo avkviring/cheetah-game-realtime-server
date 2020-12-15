@@ -167,7 +167,9 @@ mod tests {
 				longs: Option::Some(Default::default()),
 				floats: Option::Some(Default::default()),
 				structures: Option::Some(Default::default()),
+				unmapping: Default::default(),
 			},
+			unmapping: Default::default(),
 		};
 
 		object_template.fields.structures.as_mut().unwrap().insert(
@@ -184,6 +186,7 @@ mod tests {
 				auto_create_user: false,
 				users: vec![],
 				objects: Option::Some(vec![object_template]),
+				unmapping: Default::default(),
 			})
 			.ok()
 			.unwrap();

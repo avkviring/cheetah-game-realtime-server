@@ -82,6 +82,7 @@ impl TestEnvBuilder {
 			private_key: Default::default(),
 			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
 			objects: None,
+			unmapping: Default::default(),
 		});
 	}
 
@@ -91,6 +92,7 @@ impl TestEnvBuilder {
 			template: 0,
 			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
 			fields: Default::default(),
+			unmapping: Default::default(),
 		};
 
 		let mut user = self.template.users.iter_mut().find(|u| u.public_key == user_public_key).unwrap();
