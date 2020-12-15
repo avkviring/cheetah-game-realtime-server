@@ -102,7 +102,7 @@ curl localhost:8080/select-user/1
 ```
 
 
-Комната не найден
+Комната не найдена
 ```yaml
 {"Err":"RoomNotFound"}     
 ```
