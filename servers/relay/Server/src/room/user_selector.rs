@@ -3,7 +3,7 @@ use std::ops::Add;
 use std::time::{Duration, Instant};
 
 use fnv::FnvBuildHasher;
-use futures::FutureExt;
+
 use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
@@ -33,13 +33,13 @@ impl UserForEntranceSelector {
 	}
 
 	fn do_select(&mut self, room: &Room, now: &Instant) -> Option<SelectedUserForEntrance> {
-		self.selected.retain(|key, time| *time > *now);
+		self.selected.retain(|_key, time| *time > *now);
 
 		let result = room
 			.users
 			.iter()
-			.filter(|(key, user)| user.protocol.is_none())
-			.filter(|(key, user)| !self.selected.contains_key(key))
+			.filter(|(_key, user)| user.protocol.is_none())
+			.filter(|(key, _user)| !self.selected.contains_key(key))
 			.find_map(|(key, user)| {
 				Option::Some(SelectedUserForEntrance {
 					public_key: key.clone(),

@@ -7,7 +7,6 @@ use actix_web::body::Body;
 use actix_web::http::header;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 
-use crate::room::user_selector::SelectedUserForEntrance;
 use crate::room::RoomId;
 use crate::server::Server;
 
