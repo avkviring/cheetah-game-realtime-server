@@ -177,12 +177,11 @@ impl RoomTemplate {
 
 #[cfg(test)]
 mod tests {
+	use crate::room::template::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
 	use cheetah_relay_common::room::UserPublicKey;
-
-	use crate::room::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
 
 	impl RoomTemplate {
 		pub fn create_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {

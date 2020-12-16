@@ -49,7 +49,7 @@ mod tests {
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::UserPublicKey;
 
-	use crate::room::template::RoomTemplate;
+	use crate::room::template::template::RoomTemplate;
 	use crate::room::Room;
 
 	pub fn setup() -> (Room, GameObjectId, UserPublicKey, UserPublicKey) {

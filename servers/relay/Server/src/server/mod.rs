@@ -9,9 +9,9 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use crate::network::udp::UDPServer;
-use crate::room::template::{RoomTemplate, UserTemplate};
-use crate::room::tracer::CommandTracer;
-use crate::room::user_selector::SelectedUserForEntrance;
+use crate::room::debug::tracer::CommandTracer;
+use crate::room::debug::user_selector::SelectedUserForEntrance;
+use crate::room::template::template::{RoomTemplate, UserTemplate};
 use crate::room::RoomId;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms, SelectUserForEntranceError};
 use crate::server::dump::ServerDump;

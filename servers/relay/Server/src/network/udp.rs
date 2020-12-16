@@ -12,7 +12,7 @@ use cheetah_relay_common::protocol::frame::headers::Header;
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
 
-use crate::room::template::UserTemplate;
+use crate::room::template::template::UserTemplate;
 use crate::room::{RoomId, RoomUserListener};
 use crate::rooms::{OutFrame, Rooms};
 
@@ -180,7 +180,7 @@ mod tests {
 	use cheetah_relay_common::udp::bind_to_free_socket;
 
 	use crate::network::udp::UDPServer;
-	use crate::room::template::UserTemplate;
+	use crate::room::template::template::UserTemplate;
 	use crate::room::RoomUserListener;
 	use crate::rooms::Rooms;
 

@@ -6,8 +6,8 @@ use std::time::{Duration, Instant};
 
 use log::LevelFilter;
 
-use cheetah_relay::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
-use cheetah_relay::room::tracer::CommandTracer;
+use cheetah_relay::room::debug::tracer::CommandTracer;
+use cheetah_relay::room::template::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
 use cheetah_relay::server::Server;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};

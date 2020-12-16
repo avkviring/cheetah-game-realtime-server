@@ -146,8 +146,8 @@ mod tests {
 
 	use cheetah_relay_common::udp::bind_to_free_socket;
 
-	use crate::room::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate};
-	use crate::room::tracer::CommandTracer;
+	use crate::room::debug::tracer::CommandTracer;
+	use crate::room::template::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate};
 	use crate::server::Server;
 
 	#[derive(Serialize, Deserialize)]

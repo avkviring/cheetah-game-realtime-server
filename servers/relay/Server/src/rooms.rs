@@ -9,9 +9,9 @@ use fnv::FnvBuildHasher;
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::room::UserPublicKey;
 
-use crate::room::template::{RoomTemplate, UserTemplate};
-use crate::room::tracer::CommandTracer;
-use crate::room::user_selector::{SelectedUserForEntrance, UserForEntranceSelector};
+use crate::room::debug::tracer::CommandTracer;
+use crate::room::debug::user_selector::{SelectedUserForEntrance, UserForEntranceSelector};
+use crate::room::template::template::{RoomTemplate, UserTemplate};
 use crate::room::{Room, RoomId, RoomRegisterUserError, RoomUserListener};
 
 pub struct Rooms {

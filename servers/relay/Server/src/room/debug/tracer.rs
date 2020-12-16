@@ -8,6 +8,7 @@ use cheetah_relay_common::commands::command::{C2SCommand, S2CCommand};
 use cheetah_relay_common::constants::FieldID;
 use cheetah_relay_common::room::UserPublicKey;
 
+use crate::room::types::FieldType;
 use crate::room::RoomId;
 
 ///
@@ -56,18 +57,6 @@ pub enum Direction {
 	SC,
 	#[serde(rename = "cs")]
 	CS,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub enum FieldType {
-	#[serde(rename = "long")]
-	Long,
-	#[serde(rename = "float")]
-	Float,
-	#[serde(rename = "structure")]
-	Structure,
-	#[serde(rename = "event")]
-	Event,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -244,7 +233,8 @@ impl CommandTracer {
 
 #[cfg(test)]
 mod tests {
-	use crate::room::tracer::{Action, Command, CommandTraceError, CommandTracer, Direction, FieldType, Rule};
+	use crate::room::debug::tracer::{Action, Command, CommandTraceError, CommandTracer, Direction, Rule};
+	use crate::room::types::FieldType;
 
 	#[test]
 	#[allow(dead_code)]

@@ -5,14 +5,13 @@ use std::str::FromStr;
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 
+use cheetah_relay::room::debug::tracer::CommandTracer;
+use cheetah_relay::room::template::template::RoomTemplate;
+use cheetah_relay::server::rest::RestServer;
+use cheetah_relay::server::Server;
 use clap::{App, Arg};
 use log::LevelFilter;
 use stderrlog::Timestamp;
-
-use cheetah_relay::room::template::RoomTemplate;
-use cheetah_relay::room::tracer::CommandTracer;
-use cheetah_relay::server::rest::RestServer;
-use cheetah_relay::server::Server;
 
 fn main() {
 	let (room_template_path, trace_path, log_level, show_all_trace) = get_cli();

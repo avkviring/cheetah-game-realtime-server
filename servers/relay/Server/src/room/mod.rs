@@ -25,16 +25,16 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
+use crate::room::debug::tracer::CommandTracer;
 use crate::room::object::GameObject;
-use crate::room::template::{RoomTemplate, UserTemplate};
-use crate::room::tracer::CommandTracer;
+use crate::room::template::template::{RoomTemplate, UserTemplate};
 use crate::rooms::OutFrame;
 
 pub mod command;
+pub mod debug;
 pub mod object;
 pub mod template;
-pub mod tracer;
-pub mod user_selector;
+pub mod types;
 
 pub type RoomId = u64;
 
@@ -416,9 +416,9 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 	use cheetah_relay_common::room::UserPublicKey;
 
+	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::object::GameObject;
-	use crate::room::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
-	use crate::room::tracer::CommandTracer;
+	use crate::room::template::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
 	use crate::room::{Room, RoomUserListener};
 
 	impl Default for Room {
