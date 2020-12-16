@@ -81,7 +81,7 @@ impl TestEnvBuilder {
 			public_key,
 			private_key: Default::default(),
 			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
-			objects: None,
+			objects: Default::default(),
 			unmapping: Default::default(),
 		});
 	}
@@ -95,11 +95,8 @@ impl TestEnvBuilder {
 			unmapping: Default::default(),
 		};
 
-		let mut user = self.template.users.iter_mut().find(|u| u.public_key == user_public_key).unwrap();
-		if user.objects.is_none() {
-			user.objects = Option::Some(Default::default());
-		}
-		user.objects.as_mut().unwrap().push(object_template);
+		let user = self.template.users.iter_mut().find(|u| u.public_key == user_public_key).unwrap();
+		user.objects.push(object_template);
 	}
 
 	pub fn build(self) -> TestEnv {

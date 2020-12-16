@@ -21,8 +21,8 @@ pub struct RoomTemplate {
 	pub id: RoomId,
 	pub auto_create_user: bool,
 	pub users: Vec<UserTemplate>,
-	pub objects: Option<Vec<GameObjectTemplate>>,
-
+	#[serde(default)]
+	pub objects: Vec<GameObjectTemplate>,
 	#[serde(flatten)]
 	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
@@ -32,7 +32,8 @@ pub struct UserTemplate {
 	pub public_key: UserPublicKey,
 	pub private_key: UserPrivateKey,
 	pub access_groups: AccessGroups,
-	pub objects: Option<Vec<GameObjectTemplate>>,
+	#[serde(default)]
+	pub objects: Vec<GameObjectTemplate>,
 	#[serde(flatten)]
 	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
@@ -49,9 +50,12 @@ pub struct GameObjectTemplate {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct GameObjectFieldsTemplate {
-	pub longs: Option<HashMap<FieldID, i64, FnvBuildHasher>>,
-	pub floats: Option<HashMap<FieldID, f64, FnvBuildHasher>>,
-	pub structures: Option<HashMap<FieldID, rmpv::Value, FnvBuildHasher>>,
+	#[serde(default)]
+	pub longs: HashMap<FieldID, i64, FnvBuildHasher>,
+	#[serde(default)]
+	pub floats: HashMap<FieldID, f64, FnvBuildHasher>,
+	#[serde(default)]
+	pub structures: HashMap<FieldID, rmpv::Value, FnvBuildHasher>,
 	#[serde(flatten)]
 	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
@@ -69,26 +73,20 @@ impl GameObjectTemplate {
 		}
 
 		let mut longs: HashMap<FieldID, i64, FnvBuildHasher> = Default::default();
-		if let Some(ref self_longs) = self.fields.longs {
-			self_longs.iter().for_each(|(k, v)| {
-				longs.insert(k.clone(), *v);
-			});
-		}
+		self.fields.longs.iter().for_each(|(k, v)| {
+			longs.insert(k.clone(), *v);
+		});
 
 		let mut floats: HashMap<FieldID, f64, FnvBuildHasher> = Default::default();
-		if let Some(ref self_floats) = self.fields.floats {
-			self_floats.iter().for_each(|(k, v)| {
-				floats.insert(k.clone(), *v);
-			});
-		}
+		self.fields.floats.iter().for_each(|(k, v)| {
+			floats.insert(k.clone(), *v);
+		});
 
 		let mut structures: HashMap<FieldID, Vec<u8>, FnvBuildHasher> = Default::default();
-		if let Some(ref self_structures) = self.fields.structures {
-			self_structures.iter().for_each(|(k, v)| {
-				let structure = rmp_serde::to_vec(v).unwrap();
-				structures.insert(k.clone(), structure);
-			});
-		}
+		self.fields.structures.iter().for_each(|(k, v)| {
+			let structure = rmp_serde::to_vec(v).unwrap();
+			structures.insert(k.clone(), structure);
+		});
 
 		GameObject {
 			id,
@@ -133,7 +131,7 @@ impl RoomTemplate {
 
 		for user in &self.users {
 			user.unmapping.iter().for_each(|(key, _value)| unmapping.push(format!("user/{}", key)));
-			for object in user.objects.as_ref().unwrap_or(&Default::default()) {
+			for object in &user.objects {
 				object
 					.unmapping
 					.iter()
@@ -150,21 +148,16 @@ impl RoomTemplate {
 			}
 		}
 
-		match &self.objects {
-			None => {}
-			Some(objects) => {
-				for object in objects {
-					object
-						.unmapping
-						.iter()
-						.for_each(|(key, _value)| unmapping.push(format!("object/{}", key)));
-					object
-						.fields
-						.unmapping
-						.iter()
-						.for_each(|(key, _value)| unmapping.push(format!("object/fields/{}", key)));
-				}
-			}
+		for object in &self.objects {
+			object
+				.unmapping
+				.iter()
+				.for_each(|(key, _value)| unmapping.push(format!("object/{}", key)));
+			object
+				.fields
+				.unmapping
+				.iter()
+				.for_each(|(key, _value)| unmapping.push(format!("object/fields/{}", key)));
 		}
 
 		if unmapping.is_empty() {
@@ -177,11 +170,12 @@ impl RoomTemplate {
 
 #[cfg(test)]
 mod tests {
-	use crate::room::template::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
 	use cheetah_relay_common::room::UserPublicKey;
+
+	use crate::room::template::template::{GameObjectFieldsTemplate, GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
 
 	impl RoomTemplate {
 		pub fn create_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {
@@ -189,7 +183,7 @@ mod tests {
 				public_key,
 				private_key: [5; 32],
 				access_groups: access_group,
-				objects: Option::None,
+				objects: Default::default(),
 				unmapping: Default::default(),
 			});
 			public_key
@@ -205,17 +199,15 @@ mod tests {
 			fields: Default::default(),
 			unmapping: Default::default(),
 		};
-		config_object.fields.longs = Option::Some(Default::default());
-		config_object.fields.floats = Option::Some(Default::default());
-		config_object.fields.structures = Option::Some(Default::default());
+		config_object.fields.longs = Default::default();
+		config_object.fields.floats = Default::default();
+		config_object.fields.structures = Default::default();
 
-		config_object.fields.longs.as_mut().unwrap().insert(0, 100);
-		config_object.fields.floats.as_mut().unwrap().insert(1, 105.105);
+		config_object.fields.longs.insert(0, 100);
+		config_object.fields.floats.insert(1, 105.105);
 		config_object
 			.fields
 			.structures
-			.as_mut()
-			.unwrap()
 			.insert(1, rmpv::Value::Integer(rmpv::Integer::from(100100)));
 
 		let object = config_object.clone().to_root_game_object();
@@ -223,11 +215,11 @@ mod tests {
 		assert!(matches!(object.id.owner, ObjectOwner::Root));
 		assert_eq!(config_object.template, object.template);
 		assert_eq!(config_object.access_groups, object.access_groups);
-		assert_eq!(config_object.fields.longs.as_ref().unwrap()[&0], object.longs[&0]);
-		assert_eq!(config_object.fields.floats.as_ref().unwrap()[&1], object.floats[&1]);
+		assert_eq!(config_object.fields.longs[&0], object.longs[&0]);
+		assert_eq!(config_object.fields.floats[&1], object.floats[&1]);
 
 		assert_eq!(
-			config_object.fields.structures.as_ref().unwrap()[&1],
+			config_object.fields.structures[&1],
 			rmp_serde::from_slice(&object.structures[&1].to_vec().as_slice()).unwrap()
 		);
 	}
@@ -250,20 +242,15 @@ mod tests {
 	///
 	#[allow(dead_code)]
 	fn example() {
-		let mut fields = GameObjectFieldsTemplate {
-			longs: Option::Some(Default::default()),
-			floats: Option::Some(Default::default()),
-			structures: Option::Some(Default::default()),
-			unmapping: Default::default(),
-		};
+		let mut fields = GameObjectFieldsTemplate::default();
 
-		fields.longs.as_mut().unwrap().insert(5, 100);
-		fields.longs.as_mut().unwrap().insert(15, 200);
+		fields.longs.insert(5, 100);
+		fields.longs.insert(15, 200);
 
-		fields.floats.as_mut().unwrap().insert(3, 5.5);
-		fields.floats.as_mut().unwrap().insert(7, 9.9);
+		fields.floats.insert(3, 5.5);
+		fields.floats.insert(7, 9.9);
 
-		fields.structures.as_mut().unwrap().insert(
+		fields.structures.insert(
 			10,
 			rmpv::Value::Map(vec![(
 				rmpv::Value::String(rmpv::Utf8String::from("name")),
@@ -278,16 +265,16 @@ mod tests {
 				public_key: 54897,
 				private_key: [5; 32],
 				access_groups: AccessGroups(0b1111),
-				objects: Option::Some(vec![GameObjectTemplate {
+				objects: vec![GameObjectTemplate {
 					id: 100,
 					template: 0b100,
 					access_groups: AccessGroups(0b1111),
 					fields,
 					unmapping: Default::default(),
-				}]),
+				}],
 				unmapping: Default::default(),
 			}],
-			objects: Option::Some(vec![GameObjectTemplate {
+			objects: vec![GameObjectTemplate {
 				id: 5,
 				template: 5,
 				access_groups: Default::default(),
@@ -298,7 +285,7 @@ mod tests {
 					unmapping: Default::default(),
 				},
 				unmapping: Default::default(),
-			}]),
+			}],
 			unmapping: Default::default(),
 		};
 	}
@@ -312,16 +299,16 @@ mod tests {
 				public_key: 54897,
 				private_key: [5; 32],
 				access_groups: AccessGroups(0b1111),
-				objects: Option::Some(vec![GameObjectTemplate {
+				objects: vec![GameObjectTemplate {
 					id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
 					template: 0b100,
 					access_groups: AccessGroups(0b1111),
 					fields: Default::default(),
 					unmapping: Default::default(),
-				}]),
+				}],
 				unmapping: Default::default(),
 			}],
-			objects: None,
+			objects: Default::default(),
 			unmapping: Default::default(),
 		};
 		assert!(matches!(template.validate(), Result::Err(RoomTemplateError::UserObjectHasWrongId(_, _))))
@@ -335,7 +322,7 @@ mod tests {
 			public_key: 0,
 			private_key: Default::default(),
 			access_groups: Default::default(),
-			objects: Option::Some(Default::default()),
+			objects: Default::default(),
 			unmapping: Default::default(),
 		};
 		user_template.unmapping.insert("wrong_field".to_string(), serde_yaml::Value::default());
@@ -352,12 +339,12 @@ mod tests {
 			.fields
 			.unmapping
 			.insert("wrong_field".to_string(), serde_yaml::Value::default());
-		user_template.objects.as_mut().unwrap().push(object_template.clone());
+		user_template.objects.push(object_template.clone());
 
 		template.users.push(user_template);
 
-		template.objects = Option::Some(Default::default());
-		template.objects.as_mut().unwrap().push(object_template);
+		template.objects = Default::default();
+		template.objects.push(object_template);
 
 		assert!(matches!(
 			template.validate(),

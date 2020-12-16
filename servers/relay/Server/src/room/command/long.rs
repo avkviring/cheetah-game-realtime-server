@@ -329,14 +329,14 @@ mod tests {
 			public_key: 55,
 			private_key: Default::default(),
 			access_groups: Default::default(),
-			objects: None,
+			objects: Default::default(),
 			unmapping: Default::default(),
 		};
 		let user_template_2 = UserTemplate {
 			public_key: 155,
 			private_key: Default::default(),
 			access_groups: Default::default(),
-			objects: None,
+			objects: Default::default(),
 			unmapping: Default::default(),
 		};
 		template.users.push(user_template_1.clone());

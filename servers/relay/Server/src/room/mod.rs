@@ -107,7 +107,7 @@ impl Room {
 			out_commands_by_users: Default::default(),
 		};
 
-		template.objects.unwrap_or_default().into_iter().for_each(|object| {
+		template.objects.into_iter().for_each(|object| {
 			let game_object: GameObject = object.to_root_game_object();
 			room.insert_object(game_object);
 		});
@@ -377,15 +377,10 @@ impl Room {
 			listener.connected_user(self.id.clone(), &template);
 		});
 		let user_public_key = template.public_key;
-		match template.objects {
-			None => {}
-			Some(ref objects) => {
-				objects.iter().for_each(|object_template| {
-					let object = object_template.to_user_game_object(user_public_key);
-					self.insert_object(object);
-				});
-			}
-		}
+		template.objects.iter().for_each(|object_template| {
+			let object = object_template.to_user_game_object(user_public_key);
+			self.insert_object(object);
+		});
 	}
 
 	pub fn send_object_to_group(&mut self, object: &GameObject) {
@@ -482,7 +477,7 @@ mod tests {
 			fields: Default::default(),
 			unmapping: Default::default(),
 		};
-		template.objects = Option::Some(vec![object_template.clone()]);
+		template.objects = vec![object_template.clone()];
 
 		let room = Room::new_with_template(template);
 		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::Root)));
@@ -502,7 +497,7 @@ mod tests {
 			public_key: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
-			objects: Option::Some(vec![object_template.clone()]),
+			objects: vec![object_template.clone()],
 			unmapping: Default::default(),
 		};
 		template.users.push(user_template.clone());
@@ -531,7 +526,7 @@ mod tests {
 			public_key: 1,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
-			objects: Option::Some(vec![object1_template.clone()]),
+			objects: vec![object1_template.clone()],
 			unmapping: Default::default(),
 		};
 
@@ -546,7 +541,7 @@ mod tests {
 			public_key: 2,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
-			objects: Option::Some(vec![object2_template.clone()]),
+			objects: vec![object2_template.clone()],
 			unmapping: Default::default(),
 		};
 
