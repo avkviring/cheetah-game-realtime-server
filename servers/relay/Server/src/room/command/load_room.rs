@@ -27,7 +27,7 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::load_room::attach_to_room;
-	use crate::room::template::template::RoomTemplate;
+	use crate::room::template::config::RoomTemplate;
 	use crate::room::Room;
 
 	#[test]

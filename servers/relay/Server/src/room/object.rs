@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::constants::{FieldID, ObjectTemplate};
+use cheetah_relay_common::constants::{FieldIDType, ObjectTemplateType};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
@@ -16,16 +16,16 @@ use cheetah_relay_common::room::UserPublicKey;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameObject {
 	pub id: GameObjectId,
-	pub template: ObjectTemplate,
+	pub template: ObjectTemplateType,
 	pub access_groups: AccessGroups,
 	///
 	/// Объект полностью создан
 	///
 	pub created: bool,
-	pub longs: HashMap<FieldID, i64, FnvBuildHasher>,
-	pub floats: HashMap<FieldID, f64, FnvBuildHasher>,
-	pub structures: HashMap<FieldID, Vec<u8>, FnvBuildHasher>,
-	pub compare_and_set_owners: HashMap<FieldID, UserPublicKey, FnvBuildHasher>,
+	pub longs: HashMap<FieldIDType, i64, FnvBuildHasher>,
+	pub floats: HashMap<FieldIDType, f64, FnvBuildHasher>,
+	pub structures: HashMap<FieldIDType, Vec<u8>, FnvBuildHasher>,
+	pub compare_and_set_owners: HashMap<FieldIDType, UserPublicKey, FnvBuildHasher>,
 }
 
 impl GameObject {

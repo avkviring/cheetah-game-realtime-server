@@ -14,7 +14,7 @@ use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformatio
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
-use cheetah_relay_common::constants::FieldID;
+use cheetah_relay_common::constants::FieldIDType;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
@@ -27,7 +27,7 @@ use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::object::GameObject;
-use crate::room::template::template::{RoomTemplate, UserTemplate};
+use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::rooms::OutFrame;
 
 pub mod command;
@@ -73,7 +73,7 @@ pub struct User {
 	protocol: Option<RelayProtocol>,
 	pub attached: bool,
 	pub template: UserTemplate,
-	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldID), i64, FnvBuildHasher>,
+	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldIDType), i64, FnvBuildHasher>,
 }
 
 #[derive(Debug)]
@@ -413,7 +413,7 @@ mod tests {
 
 	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::object::GameObject;
-	use crate::room::template::template::{GameObjectTemplate, RoomTemplate, UserTemplate};
+	use crate::room::template::config::{GameObjectTemplate, RoomTemplate, UserTemplate};
 	use crate::room::{Room, RoomUserListener};
 
 	impl Default for Room {

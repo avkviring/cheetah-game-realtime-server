@@ -1,5 +1,5 @@
-pub type FieldID = u16;
-pub type ObjectTemplate = u16;
+pub type FieldIDType = u16;
+pub type ObjectTemplateType = u16;
 pub type GroupType = u64;
 
 ///

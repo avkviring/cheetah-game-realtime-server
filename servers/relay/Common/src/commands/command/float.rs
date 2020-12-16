@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::GameObjectCommand;
-use crate::constants::FieldID;
+use crate::constants::FieldIDType;
 use crate::room::object::GameObjectId;
 
 ///
@@ -11,7 +11,7 @@ use crate::room::object::GameObjectId;
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct IncrementFloat64C2SCommand {
 	pub object_id: GameObjectId,
-	pub field_id: FieldID,
+	pub field_id: FieldIDType,
 	pub increment: f64,
 }
 
@@ -22,7 +22,7 @@ pub struct IncrementFloat64C2SCommand {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetFloat64Command {
 	pub object_id: GameObjectId,
-	pub field_id: FieldID,
+	pub field_id: FieldIDType,
 	pub value: f64,
 }
 

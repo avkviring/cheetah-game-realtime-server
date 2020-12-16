@@ -32,7 +32,7 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::template::RoomTemplate;
+	use crate::room::template::config::RoomTemplate;
 	use crate::room::Room;
 
 	#[test]

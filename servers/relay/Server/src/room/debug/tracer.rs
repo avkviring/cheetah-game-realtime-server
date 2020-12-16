@@ -5,7 +5,7 @@ use log::Level;
 use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::commands::command::{C2SCommand, S2CCommand};
-use cheetah_relay_common::constants::FieldID;
+use cheetah_relay_common::constants::FieldIDType;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::types::FieldType;
@@ -33,7 +33,7 @@ pub struct Rule {
 	command: Option<Command>,
 	direction: Option<Direction>,
 	field_type: Option<FieldType>,
-	field_id: Option<FieldID>,
+	field_id: Option<FieldIDType>,
 	user: Option<UserPublicKey>,
 
 	#[serde(flatten)]
@@ -81,7 +81,7 @@ impl Rule {
 		direction: &Direction,
 		command: &Command,
 		field_type: &Option<FieldType>,
-		field: &Option<FieldID>,
+		field: &Option<FieldIDType>,
 	) -> bool {
 		EqualResult::NotEqual != is_match_with_option(&self.field_type, field_type)
 			&& EqualResult::NotEqual != is_match_with_option(&self.field_id, field)
@@ -180,7 +180,14 @@ impl CommandTracer {
 		}
 	}
 
-	fn is_allow(&self, user: UserPublicKey, direction: Direction, command: Command, field_type: Option<FieldType>, field: Option<FieldID>) -> bool {
+	fn is_allow(
+		&self,
+		user: UserPublicKey,
+		direction: Direction,
+		command: Command,
+		field_type: Option<FieldType>,
+		field: Option<FieldIDType>,
+	) -> bool {
 		let action = match self.rules.iter().find(|p| p.is_match(user, &direction, &command, &field_type, &field)) {
 			None => &self.default,
 			Some(rule) => &rule.action,

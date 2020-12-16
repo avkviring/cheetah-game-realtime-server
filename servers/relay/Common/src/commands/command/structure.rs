@@ -1,5 +1,5 @@
 use crate::commands::command::GameObjectCommand;
-use crate::constants::FieldID;
+use crate::constants::FieldIDType;
 use crate::room::object::GameObjectId;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StructureCommand {
 	pub object_id: GameObjectId,
-	pub field_id: FieldID,
+	pub field_id: FieldIDType,
 	pub structure: heapless::Vec<u8, heapless::consts::U256>,
 }
 

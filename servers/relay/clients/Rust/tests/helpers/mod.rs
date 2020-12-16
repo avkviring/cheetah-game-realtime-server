@@ -7,7 +7,7 @@ use rand::RngCore;
 use stderrlog::Timestamp;
 
 use cheetah_relay::room::debug::tracer::CommandTracer;
-use cheetah_relay::room::template::template::{RoomTemplate, UserTemplate};
+use cheetah_relay::room::template::config::{RoomTemplate, UserTemplate};
 use cheetah_relay::room::RoomId;
 use cheetah_relay::server::Server;
 use cheetah_relay_client::ffi::client::do_create_client;

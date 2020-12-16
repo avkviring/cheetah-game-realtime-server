@@ -6,7 +6,7 @@ use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 
 use cheetah_relay::room::debug::tracer::CommandTracer;
-use cheetah_relay::room::template::template::RoomTemplate;
+use cheetah_relay::room::template::config::RoomTemplate;
 use cheetah_relay::server::rest::RestServer;
 use cheetah_relay::server::Server;
 use clap::{App, Arg};

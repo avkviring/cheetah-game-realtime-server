@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::constants::ObjectTemplate;
+use crate::constants::ObjectTemplateType;
 use crate::room::access::AccessGroups;
 use crate::room::object::GameObjectId;
 
@@ -11,7 +11,7 @@ use crate::room::object::GameObjectId;
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct CreateGameObjectCommand {
 	pub object_id: GameObjectId,
-	pub template: ObjectTemplate,
+	pub template: ObjectTemplateType,
 	pub access_groups: AccessGroups,
 }
 

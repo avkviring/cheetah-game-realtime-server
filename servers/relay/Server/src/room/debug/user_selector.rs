@@ -66,7 +66,7 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::debug::user_selector::UserForEntranceSelector;
-	use crate::room::template::template::RoomTemplate;
+	use crate::room::template::config::RoomTemplate;
 	use crate::room::Room;
 
 	#[test]

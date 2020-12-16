@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::{GameObjectCommand, HeaplessBuffer};
-use crate::constants::FieldID;
+use crate::constants::FieldIDType;
 use crate::room::object::GameObjectId;
 
 ///
@@ -10,7 +10,7 @@ use crate::room::object::GameObjectId;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EventCommand {
 	pub object_id: GameObjectId,
-	pub field_id: FieldID,
+	pub field_id: FieldIDType,
 	pub event: HeaplessBuffer,
 }
 

@@ -1,14 +1,14 @@
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::structure::StructureCommand;
 use cheetah_relay_common::commands::command::C2SCommand;
-use cheetah_relay_common::constants::FieldID;
+use cheetah_relay_common::constants::FieldIDType;
 
 use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 
 #[no_mangle]
 #[allow(unused_must_use)]
-pub extern "C" fn set_structure_listener(listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldID, &BufferFFI)) -> bool {
+pub extern "C" fn set_structure_listener(listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldIDType, &BufferFFI)) -> bool {
 	execute_with_client(|client| {
 		client.register_structure_listener(listener);
 	})
@@ -16,7 +16,7 @@ pub extern "C" fn set_structure_listener(listener: extern "C" fn(&S2CMetaCommand
 }
 
 #[no_mangle]
-pub extern "C" fn set_structure(object_id: &GameObjectIdFFI, field_id: FieldID, structure: &BufferFFI) -> bool {
+pub extern "C" fn set_structure(object_id: &GameObjectIdFFI, field_id: FieldIDType, structure: &BufferFFI) -> bool {
 	send_command(C2SCommand::SetStruct(StructureCommand {
 		object_id: From::from(object_id),
 		field_id,

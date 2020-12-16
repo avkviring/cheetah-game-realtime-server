@@ -11,7 +11,7 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::debug::user_selector::{SelectedUserForEntrance, UserForEntranceSelector};
-use crate::room::template::template::{RoomTemplate, UserTemplate};
+use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::{Room, RoomId, RoomRegisterUserError, RoomUserListener};
 
 pub struct Rooms {
