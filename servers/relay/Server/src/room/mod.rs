@@ -27,7 +27,8 @@ use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::object::GameObject;
-use crate::room::template::config::{RoomTemplate, UserTemplate};
+use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
+use crate::room::types::FieldType;
 use crate::rooms::OutFrame;
 
 pub mod command;
@@ -389,6 +390,29 @@ impl Room {
 		commands.into_iter().for_each(|c| {
 			self.send_to_group(object.access_groups, c);
 		})
+	}
+
+	pub fn check_permission_and_execute<T>(
+		&mut self,
+		game_object_id: &GameObjectId,
+		field_id: &FieldIdType,
+		field_type: FieldType,
+		user_public_key: &UserPublicKey,
+		permission: Permission,
+		mut action: T,
+	) where
+		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
+	{
+		match self.get_object_mut(&game_object_id) {
+			None => {}
+			Some(object) => {
+				let command = action(object);
+				let groups = object.access_groups.clone();
+				if let Some(command) = command {
+					self.send_to_group(groups, command);
+				}
+			}
+		};
 	}
 }
 

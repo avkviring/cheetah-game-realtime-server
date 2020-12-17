@@ -1,4 +1,6 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use fnv::FnvBuildHasher;
 
@@ -10,11 +12,13 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::GameObject;
+use crate::room::template::config::Permission;
+use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object_mut(&self.object_id) {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.longs.get_mut(&self.field_id) {
 				match (*value).checked_add(self.increment) {
 					None => {
@@ -29,33 +33,40 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				object.longs.insert(self.field_id, self.increment);
 				self.increment
 			};
-
-			let access_groups = object.access_groups.clone();
-			room.send_to_group(
-				access_groups,
-				S2CCommand::SetLong(SetLongCommand {
-					object_id: self.object_id,
-					field_id: self.field_id,
-					value,
-				}),
-			);
-		}
+			Option::Some(S2CCommand::SetLong(SetLongCommand {
+				object_id: self.object_id.clone(),
+				field_id: self.field_id,
+				value,
+			}))
+		};
+		room.check_permission_and_execute(&self.object_id, &self.field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 	}
 }
 
 impl ServerCommandExecutor for SetLongCommand {
-	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object_mut(&self.object_id) {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+		let field_id = self.field_id.clone();
+		let object_id = self.object_id.clone();
+
+		let action = |object: &mut GameObject| {
 			object.longs.insert(self.field_id, self.value);
-			let access_groups = object.access_groups.clone();
-			room.send_to_group(access_groups, S2CCommand::SetLong(self));
-		}
+			Option::Some(S2CCommand::SetLong(self))
+		};
+
+		room.check_permission_and_execute(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 	}
 }
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
 	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
-		if let Some(object) = room.get_object_mut(&self.object_id) {
+		let object_id = self.object_id.clone();
+		let field_id = self.field_id.clone();
+		let reset = self.reset.clone();
+
+		let is_set = Rc::new(RefCell::new(false));
+		let is_set_cloned = is_set.clone();
+
+		let action = |object: &mut GameObject| {
 			let allow = match object.longs.get(&self.field_id) {
 				None => true,
 				Some(value) => *value == self.current,
@@ -63,23 +74,24 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			if allow {
 				object.longs.insert(self.field_id, self.new);
 				object.compare_and_set_owners.insert(self.field_id, user_public_key.clone());
-				let object_id = object.id.clone();
-
-				let access_groups = object.access_groups.clone();
-				room.send_to_group(
-					access_groups,
-					S2CCommand::SetLong(SetLongCommand {
-						object_id: self.object_id,
-						field_id: self.field_id,
-						value: self.new,
-					}),
-				);
-
-				room.get_user_mut(user_public_key)
-					.unwrap()
-					.compare_and_sets_cleaners
-					.insert((object_id, self.field_id), self.reset);
+				*is_set_cloned.borrow_mut() = true;
+				Option::Some(S2CCommand::SetLong(SetLongCommand {
+					object_id: self.object_id,
+					field_id: self.field_id,
+					value: self.new,
+				}))
+			} else {
+				Option::None
 			}
+		};
+
+		room.check_permission_and_execute(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
+
+		if *(is_set.borrow()) {
+			room.get_user_mut(user_public_key)
+				.unwrap()
+				.compare_and_sets_cleaners
+				.insert((object_id, field_id), reset);
 		}
 	}
 }

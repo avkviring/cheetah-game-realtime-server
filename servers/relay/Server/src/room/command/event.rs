@@ -3,14 +3,17 @@ use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
+use crate::room::object::GameObject;
+use crate::room::template::config::Permission;
+use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object_mut(&self.object_id) {
-			let groups = object.access_groups.clone();
-			room.send_to_group(groups, S2CCommand::Event(self))
-		}
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+		let field_id = self.field_id;
+		let object_id = self.object_id.clone();
+		let action = |object: &mut GameObject| Option::Some(S2CCommand::Event(self));
+		room.check_permission_and_execute(&object_id, &field_id, FieldType::Event, user_public_key, Permission::Rw, action);
 	}
 }
 
@@ -22,7 +25,6 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
 

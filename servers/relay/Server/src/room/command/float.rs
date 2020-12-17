@@ -4,39 +4,44 @@ use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::GameObject;
+use crate::room::template::config::Permission;
+use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
-	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object_mut(&self.object_id) {
-			let value = if let Some(value) = object.floats.get_mut(&self.field_id) {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+		let field_id = self.field_id;
+		let object_id = self.object_id.clone();
+
+		let action = |object: &mut GameObject| {
+			let value = if let Some(value) = object.floats.get_mut(&field_id) {
 				*value += self.increment;
 				*value
 			} else {
-				object.floats.insert(self.field_id, self.increment);
+				object.floats.insert(field_id, self.increment);
 				self.increment
 			};
+			Option::Some(S2CCommand::SetFloat(SetFloat64Command {
+				object_id: self.object_id.clone(),
+				field_id,
+				value,
+			}))
+		};
 
-			let access_groups = object.access_groups.clone();
-			room.send_to_group(
-				access_groups,
-				S2CCommand::SetFloat(SetFloat64Command {
-					object_id: self.object_id,
-					field_id: self.field_id,
-					value,
-				}),
-			);
-		}
+		room.check_permission_and_execute(&object_id, &field_id, FieldType::Float, user_public_key, Permission::Rw, action);
 	}
 }
 
 impl ServerCommandExecutor for SetFloat64Command {
-	fn execute(self, room: &mut Room, _: &UserPublicKey) {
-		if let Some(object) = room.get_object_mut(&self.object_id) {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+		let field_id = self.field_id;
+		let object_id = self.object_id.clone();
+
+		let action = |object: &mut GameObject| {
 			object.floats.insert(self.field_id, self.value);
-			let access_groups = object.access_groups;
-			room.send_to_group(access_groups, S2CCommand::SetFloat(self));
-		}
+			Option::Some(S2CCommand::SetFloat(self))
+		};
+		room.check_permission_and_execute(&object_id, &field_id, FieldType::Float, user_public_key, Permission::Rw, action);
 	}
 }
 
@@ -60,7 +65,6 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-
 	use crate::room::Room;
 
 	#[test]
