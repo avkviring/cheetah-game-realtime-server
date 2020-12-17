@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::constants::FieldIDType;
+use cheetah_relay_common::constants::FieldIdType;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
@@ -25,17 +25,17 @@ impl GameObjectTemplate {
 			panic!("0 is forbidden for game object id");
 		}
 
-		let mut longs: HashMap<FieldIDType, i64, FnvBuildHasher> = Default::default();
+		let mut longs: HashMap<FieldIdType, i64, FnvBuildHasher> = Default::default();
 		self.fields.longs.iter().for_each(|(k, v)| {
 			longs.insert(k.clone(), *v);
 		});
 
-		let mut floats: HashMap<FieldIDType, f64, FnvBuildHasher> = Default::default();
+		let mut floats: HashMap<FieldIdType, f64, FnvBuildHasher> = Default::default();
 		self.fields.floats.iter().for_each(|(k, v)| {
 			floats.insert(k.clone(), *v);
 		});
 
-		let mut structures: HashMap<FieldIDType, Vec<u8>, FnvBuildHasher> = Default::default();
+		let mut structures: HashMap<FieldIdType, Vec<u8>, FnvBuildHasher> = Default::default();
 		self.fields.structures.iter().for_each(|(k, v)| {
 			let structure = rmp_serde::to_vec(v).unwrap();
 			structures.insert(k.clone(), structure);

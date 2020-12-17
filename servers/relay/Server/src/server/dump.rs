@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::constants::FieldIDType;
+use cheetah_relay_common::constants::FieldIdType;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
@@ -46,10 +46,10 @@ pub struct GameObjectDump {
 	pub template: u16,
 	pub access_groups: AccessGroups,
 	pub created: bool,
-	pub longs: HashMap<FieldIDType, i64, FnvBuildHasher>,
-	pub floats: HashMap<FieldIDType, f64, FnvBuildHasher>,
-	pub compare_and_set_owners: HashMap<FieldIDType, UserPublicKey, FnvBuildHasher>,
-	pub structures: HashMap<FieldIDType, BinaryDump, FnvBuildHasher>,
+	pub longs: HashMap<FieldIdType, i64, FnvBuildHasher>,
+	pub floats: HashMap<FieldIdType, f64, FnvBuildHasher>,
+	pub compare_and_set_owners: HashMap<FieldIdType, UserPublicKey, FnvBuildHasher>,
+	pub structures: HashMap<FieldIdType, BinaryDump, FnvBuildHasher>,
 }
 
 impl From<&ServerThread> for ServerDump {
@@ -89,7 +89,7 @@ impl From<&Room> for RoomDump {
 
 impl From<&GameObject> for GameObjectDump {
 	fn from(source: &GameObject) -> Self {
-		let mut structures: HashMap<FieldIDType, BinaryDump, FnvBuildHasher> = Default::default();
+		let mut structures: HashMap<FieldIdType, BinaryDump, FnvBuildHasher> = Default::default();
 		source.structures.iter().for_each(|(field, structure)| {
 			structures.insert(*field, buffer_to_value(structure));
 		});

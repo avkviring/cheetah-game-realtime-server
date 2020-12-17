@@ -14,7 +14,7 @@ use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformatio
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::commands::command::S2CCommandWithMeta;
-use cheetah_relay_common::constants::FieldIDType;
+use cheetah_relay_common::constants::FieldIdType;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
@@ -73,7 +73,7 @@ pub struct User {
 	protocol: Option<RelayProtocol>,
 	pub attached: bool,
 	pub template: UserTemplate,
-	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldIDType), i64, FnvBuildHasher>,
+	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldIdType), i64, FnvBuildHasher>,
 }
 
 #[derive(Debug)]

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Группа доступа
 ///
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default, Hash, Eq)]
 pub struct AccessGroups(pub u64);
 
 impl AccessGroups {

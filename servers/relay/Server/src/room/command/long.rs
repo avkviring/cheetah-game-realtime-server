@@ -4,7 +4,7 @@ use fnv::FnvBuildHasher;
 
 use cheetah_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::constants::FieldIDType;
+use cheetah_relay_common::constants::FieldIdType;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
 
@@ -87,7 +87,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 pub fn reset_all_compare_and_set(
 	room: &mut Room,
 	user_public_key: UserPublicKey,
-	compare_and_sets_cleaners: HashMap<(GameObjectId, FieldIDType), i64, FnvBuildHasher>,
+	compare_and_sets_cleaners: HashMap<(GameObjectId, FieldIdType), i64, FnvBuildHasher>,
 ) {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
 		match room.get_object_mut(&object_id) {

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::GameObjectCommand;
-use crate::constants::FieldIDType;
+use crate::constants::FieldIdType;
 use crate::room::object::GameObjectId;
 
 ///
@@ -11,7 +11,7 @@ use crate::room::object::GameObjectId;
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct IncrementLongC2SCommand {
 	pub object_id: GameObjectId,
-	pub field_id: FieldIDType,
+	pub field_id: FieldIdType,
 	pub increment: i64,
 }
 
@@ -22,7 +22,7 @@ pub struct IncrementLongC2SCommand {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SetLongCommand {
 	pub object_id: GameObjectId,
-	pub field_id: FieldIDType,
+	pub field_id: FieldIdType,
 	pub value: i64,
 }
 
@@ -33,7 +33,7 @@ pub struct SetLongCommand {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CompareAndSetLongCommand {
 	pub object_id: GameObjectId,
-	pub field_id: FieldIDType,
+	pub field_id: FieldIdType,
 	pub current: i64,
 	pub new: i64,
 	pub reset: i64,
