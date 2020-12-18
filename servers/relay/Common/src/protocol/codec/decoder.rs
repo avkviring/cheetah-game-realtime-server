@@ -47,7 +47,7 @@ impl Frame {
 		let nonce = header.frame_id.to_be_bytes() as [u8; 8];
 		let ad = &data[0..header_end as usize];
 
-		let mut vec: heapless::Vec<u8, heapless::consts::U1024> = heapless::Vec::new();
+		let mut vec: heapless::Vec<u8, heapless::consts::U4096> = heapless::Vec::new();
 		vec.extend_from_slice(&data[header_end as usize..data.len()]).unwrap();
 
 		cipher.decrypt(&mut vec, ad, nonce).map_err(|_| UdpFrameDecodeError::DecryptedError)?;
@@ -72,17 +72,23 @@ impl Frame {
 		self.headers.serialize(&mut serializer).unwrap();
 		drop(serializer);
 
-		let mut commands_buffer = [0 as u8; Frame::MAX_FRAME_SIZE];
+		let mut commands_buffer = [0 as u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		serialize(&self.commands, &mut commands_cursor);
+		if commands_cursor.position() > 1024 {
+			panic!("frame size({:?}) is more than 1024, frame  {:#?}", commands_cursor.position(), self)
+		}
 
-		let mut vec: heapless::Vec<u8, heapless::consts::U1024> = heapless::Vec::new();
+		let mut vec: heapless::Vec<u8, heapless::consts::U4096> = heapless::Vec::new();
 		unsafe {
-			vec.set_len(Frame::MAX_FRAME_SIZE);
+			vec.set_len(4096);
 		}
 
 		let commands_position = commands_cursor.position() as usize;
 		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
+		if compressed_size > 1024 {
+			panic!("frame size({:?}) after compress is more than 1024, frame  {:#?}", compressed_size, self)
+		}
 		unsafe {
 			vec.set_len(compressed_size);
 		}
