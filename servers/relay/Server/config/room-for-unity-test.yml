@@ -62,3 +62,15 @@ users:
   - public_key: 19
     private_key: [ 5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5 ]
     access_groups: 15
+
+#permissions:
+#  - templates:
+#      - template: 10
+#        groups:
+#         - group: 0b111
+#           mode: ro | rw | deny
+#        fields:
+#          - field_id: 100
+#            groups:
+#              - group: 0b111
+#                mode: ro | rw | deny

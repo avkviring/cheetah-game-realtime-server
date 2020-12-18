@@ -12,7 +12,7 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 			if !object.created {
 				let groups = object.access_groups.clone();
 				object.created = true;
-				room.send_to_group(groups, S2CCommand::Created(self))
+				room.send_to_group(groups, S2CCommand::Created(self), |_| true)
 			} else {
 				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);
 			}

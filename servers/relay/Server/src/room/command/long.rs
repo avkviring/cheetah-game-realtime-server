@@ -39,7 +39,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				value,
 			}))
 		};
-		room.check_permission_and_execute(&self.object_id, &self.field_id, FieldType::Long, user_public_key, Permission::Rw, action);
+		room.do_command(&self.object_id, &self.field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 	}
 }
 
@@ -53,7 +53,7 @@ impl ServerCommandExecutor for SetLongCommand {
 			Option::Some(S2CCommand::SetLong(self))
 		};
 
-		room.check_permission_and_execute(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
+		room.do_command(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 	}
 }
 
@@ -85,7 +85,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			}
 		};
 
-		room.check_permission_and_execute(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
+		room.do_command(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 
 		if *(is_set.borrow()) {
 			room.get_user_mut(user_public_key)

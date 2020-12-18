@@ -1,4 +1,5 @@
 use core::fmt;
+use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
@@ -28,12 +29,14 @@ use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::object::GameObject;
 use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
+use crate::room::template::permission::PermissionManager;
 use crate::room::types::FieldType;
 use crate::rooms::OutFrame;
 
 pub mod command;
 pub mod debug;
 pub mod object;
+pub mod sender;
 pub mod template;
 pub mod types;
 
@@ -42,6 +45,7 @@ pub type RoomId = u64;
 #[derive(Debug)]
 pub struct Room {
 	pub id: RoomId,
+	pub permission_manager: Rc<RefCell<PermissionManager>>,
 	pub users: HashMap<UserPublicKey, User, FnvBuildHasher>,
 	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ApplicationCommandChannelType>,
@@ -100,6 +104,7 @@ impl Room {
 			current_user: Default::default(),
 			user_listeners,
 			tracer,
+			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
 			#[cfg(test)]
 			object_id_generator: 0,
 			#[cfg(test)]
@@ -115,71 +120,6 @@ impl Room {
 
 		template.users.into_iter().for_each(|config| room.register_user(config).unwrap());
 		room
-	}
-
-	pub fn send_to_group(&mut self, access_groups: AccessGroups, command: S2CCommand) {
-		#[cfg(test)]
-		self.out_commands.push_front((access_groups, command.clone()));
-
-		let current_user_public_key = self.current_user.as_ref().unwrap_or(&u32::max_value());
-		let meta = self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation { timestamp: 0 });
-		let channel_type = self
-			.current_channel
-			.as_ref()
-			.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-
-		let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-			meta: S2CMetaCommandInformation::new(current_user_public_key.clone(), meta),
-			command: command.clone(),
-		});
-
-		let room_id = self.id;
-		let tracer = self.tracer.clone();
-		self.users
-			.values_mut()
-			.filter(|user| user.template.public_key != *current_user_public_key)
-			.filter(|user| user.attached)
-			.filter(|user| user.protocol.is_some())
-			.filter(|user| user.template.access_groups.contains_any(&access_groups))
-			.for_each(|user| {
-				let protocol = user.protocol.as_mut().unwrap();
-				tracer.on_s2c_command(room_id, user.template.public_key.clone(), &command);
-				protocol
-					.out_commands_collector
-					.add_command(channel_type.clone(), application_command.clone())
-			});
-	}
-
-	pub fn send_to_user(&mut self, user_public_key: &u32, commands: Vec<S2CCommand>) {
-		#[cfg(test)]
-		{
-			let user_commands = self.out_commands_by_users.entry(user_public_key.clone()).or_insert(VecDeque::new());
-			for command in &commands {
-				user_commands.push_front(command.clone());
-			}
-		}
-
-		match self.users.get_mut(user_public_key) {
-			None => {
-				log::error!("[room] send to unknown user {:?}", user_public_key)
-			}
-			Some(user) => {
-				if let Some(ref mut protocol) = user.protocol {
-					if user.attached {
-						for command in commands {
-							self.tracer.on_s2c_command(self.id, user.template.public_key, &command);
-							let meta = self.current_meta.as_ref().unwrap();
-							let channel = self.current_channel.as_ref().unwrap();
-							let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-								meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
-								command,
-							});
-							protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
-						}
-					}
-				}
-			}
-		}
 	}
 
 	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
@@ -342,6 +282,7 @@ impl Room {
 					S2CCommand::Delete(DeleteGameObjectCommand {
 						object_id: object.id.clone(),
 					}),
+					|_| true,
 				);
 				Option::Some(object)
 			}
@@ -382,37 +323,6 @@ impl Room {
 			let object = object_template.to_user_game_object(user_public_key);
 			self.insert_object(object);
 		});
-	}
-
-	pub fn send_object_to_group(&mut self, object: &GameObject) {
-		let mut commands = Vec::new();
-		object.collect_create_commands(&mut commands);
-		commands.into_iter().for_each(|c| {
-			self.send_to_group(object.access_groups, c);
-		})
-	}
-
-	pub fn check_permission_and_execute<T>(
-		&mut self,
-		game_object_id: &GameObjectId,
-		field_id: &FieldIdType,
-		field_type: FieldType,
-		user_public_key: &UserPublicKey,
-		permission: Permission,
-		mut action: T,
-	) where
-		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
-	{
-		match self.get_object_mut(&game_object_id) {
-			None => {}
-			Some(object) => {
-				let command = action(object);
-				let groups = object.access_groups.clone();
-				if let Some(command) = command {
-					self.send_to_group(groups, command);
-				}
-			}
-		};
 	}
 }
 
@@ -667,58 +577,6 @@ mod tests {
 	}
 
 	#[test]
-	fn should_dont_send_command_to_current_user() {
-		let (template, user_template) = create_template();
-		let mut room = Room::new_with_template(template);
-		room.current_user.replace(user_template.public_key);
-		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
-		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-
-		let user = room.get_user_mut(&user_template.public_key).unwrap();
-		user.attached = true;
-		user.protocol.replace(RelayProtocol::new(&Instant::now()));
-
-		room.send_to_group(
-			user_template.access_groups.clone(),
-			S2CCommand::Event(EventCommand {
-				object_id: Default::default(),
-				field_id: 0,
-				event: Default::default(),
-			}),
-		);
-
-		let user = room.get_user(&user_template.public_key).unwrap();
-		let protocol = user.protocol.as_ref().unwrap();
-		assert!(protocol.out_commands_collector.commands.reliable.is_empty());
-	}
-
-	#[test]
-	fn should_send_command_to_other_user() {
-		let (template, user_template) = create_template();
-		let mut room = Room::new_with_template(template);
-		room.current_user.replace(user_template.public_key + 1); // команда пришла от другого пользователя
-		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
-		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-
-		let user = room.get_user_mut(&user_template.public_key).unwrap();
-		user.attached = true;
-		user.protocol.replace(RelayProtocol::new(&Instant::now()));
-
-		room.send_to_group(
-			user_template.access_groups.clone(),
-			S2CCommand::Event(EventCommand {
-				object_id: Default::default(),
-				field_id: 0,
-				event: Default::default(),
-			}),
-		);
-
-		let user = room.get_user(&user_template.public_key).unwrap();
-		let protocol = user.protocol.as_ref().unwrap();
-		assert_eq!(protocol.out_commands_collector.commands.reliable.len(), 1);
-	}
-
-	#[test]
 	pub fn should_keep_order_object() {
 		let (template, _) = create_template();
 		let mut room = Room::new_with_template(template);
@@ -761,7 +619,7 @@ mod tests {
 		assert_eq!(order, "5200");
 	}
 
-	fn create_template() -> (RoomTemplate, UserTemplate) {
+	pub fn create_template() -> (RoomTemplate, UserTemplate) {
 		let mut template = RoomTemplate::default();
 		let user_template = UserTemplate {
 			public_key: 100,

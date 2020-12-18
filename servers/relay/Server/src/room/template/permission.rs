@@ -9,20 +9,21 @@ use cheetah_relay_common::room::access::AccessGroups;
 use crate::room::template::config::{GameObjectTemplate, Permission, PermissionGroup, Permissions, TemplatePermission};
 use crate::room::types::FieldType;
 
+#[derive(Debug)]
 pub struct PermissionManager {
 	templates: HashMap<GameObjectTemplateType, Vec<PermissionGroup>, FnvBuildHasher>,
 	fields: HashMap<PermissionFieldKey, Vec<PermissionGroup>, FnvBuildHasher>,
 	cache: HashMap<PermissionCachedFieldKey, Permission, FnvBuildHasher>,
 }
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 struct PermissionFieldKey {
 	template: GameObjectTemplateType,
 	field_id: FieldIdType,
 	field_type: FieldType,
 }
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 struct PermissionCachedFieldKey {
 	field_key: PermissionFieldKey,
 	group: AccessGroups,
@@ -49,6 +50,13 @@ impl PermissionManager {
 		}
 
 		result
+	}
+
+	///
+	/// Доступен ли объект на запись другим пользователем кроме создателя
+	///
+	pub fn has_write_access(&mut self, template: GameObjectTemplateType, field_id: FieldIdType, field_type: FieldType) -> bool {
+		unimplemented!()
 	}
 
 	pub fn get_permission(

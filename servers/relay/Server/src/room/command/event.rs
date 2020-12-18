@@ -13,7 +13,7 @@ impl ServerCommandExecutor for EventCommand {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| Option::Some(S2CCommand::Event(self));
-		room.check_permission_and_execute(&object_id, &field_id, FieldType::Event, user_public_key, Permission::Rw, action);
+		room.do_command(&object_id, &field_id, FieldType::Event, user_public_key, Permission::Rw, action);
 	}
 }
 

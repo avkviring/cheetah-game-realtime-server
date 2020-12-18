@@ -16,7 +16,7 @@ impl ServerCommandExecutor for StructureCommand {
 			object.structures.insert(self.field_id, self.structure.to_vec());
 			Option::Some(S2CCommand::SetStruct(self))
 		};
-		room.check_permission_and_execute(&object_id, &field_id, FieldType::Structure, user_public_key, Permission::Rw, action);
+		room.do_command(&object_id, &field_id, FieldType::Structure, user_public_key, Permission::Rw, action);
 	}
 }
 

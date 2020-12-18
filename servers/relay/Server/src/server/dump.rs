@@ -181,6 +181,7 @@ mod tests {
 				auto_create_user: false,
 				users: vec![],
 				objects: vec![object_template],
+				permissions: Default::default(),
 				unmapping: Default::default(),
 			})
 			.ok()

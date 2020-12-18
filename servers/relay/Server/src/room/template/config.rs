@@ -1,13 +1,16 @@
-use crate::room::types::FieldType;
-use crate::room::RoomId;
+use std::collections::HashMap;
+use std::io::Read;
+
+use fnv::FnvBuildHasher;
+use serde::{Deserialize, Serialize};
+
 use cheetah_relay_common::constants::{FieldIdType, GameObjectTemplateType};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
-use fnv::FnvBuildHasher;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::io::Read;
+
+use crate::room::types::FieldType;
+use crate::room::RoomId;
 
 ///
 /// Шаблон для создания комнаты
@@ -19,6 +22,8 @@ pub struct RoomTemplate {
 	pub users: Vec<UserTemplate>,
 	#[serde(default)]
 	pub objects: Vec<GameObjectTemplate>,
+	#[serde(default)]
+	pub permissions: Permissions,
 	#[serde(flatten)]
 	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
@@ -85,14 +90,15 @@ pub struct PermissionField {
 	pub groups: Vec<PermissionGroup>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
+#[repr(u8)]
 pub enum Permission {
+	#[serde(rename = "deny")]
+	Deny,
 	#[serde(rename = "ro")]
 	Ro,
 	#[serde(rename = "rw")]
 	Rw,
-	#[serde(rename = "deny")]
-	Deny,
 }
 
 #[derive(Debug)]
@@ -164,10 +170,11 @@ impl RoomTemplate {
 
 #[cfg(test)]
 mod tests {
-	use crate::room::template::config::{GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::UserPublicKey;
+
+	use crate::room::template::config::{GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
 
 	impl RoomTemplate {
 		pub fn create_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {
@@ -201,6 +208,7 @@ mod tests {
 				unmapping: Default::default(),
 			}],
 			objects: Default::default(),
+			permissions: Default::default(),
 			unmapping: Default::default(),
 		};
 		assert!(matches!(template.validate(), Result::Err(RoomTemplateError::UserObjectHasWrongId(_, _))))
