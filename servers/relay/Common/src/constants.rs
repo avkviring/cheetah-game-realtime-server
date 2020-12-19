@@ -1,7 +1,5 @@
-pub type FieldIdType = u16;
-pub type GameObjectTemplateType = u16;
-pub type GroupType = u64;
-
+pub type FieldId = u16;
+pub type GameObjectTemplateId = u16;
 ///
 /// Максимальное количество FieldId в игровом объекте (для каждого типа данных)
 ///

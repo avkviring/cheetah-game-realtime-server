@@ -4,7 +4,7 @@ use std::io::Read;
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::constants::{FieldIdType, GameObjectTemplateType};
+use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
@@ -42,7 +42,7 @@ pub struct UserTemplate {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct GameObjectTemplate {
 	pub id: u32,
-	pub template: GameObjectTemplateType,
+	pub template: GameObjectTemplateId,
 	pub access_groups: AccessGroups,
 	pub fields: GameObjectFieldsTemplate,
 	#[serde(flatten)]
@@ -52,11 +52,11 @@ pub struct GameObjectTemplate {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct GameObjectFieldsTemplate {
 	#[serde(default)]
-	pub longs: HashMap<FieldIdType, i64, FnvBuildHasher>,
+	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
 	#[serde(default)]
-	pub floats: HashMap<FieldIdType, f64, FnvBuildHasher>,
+	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
 	#[serde(default)]
-	pub structures: HashMap<FieldIdType, rmpv::Value, FnvBuildHasher>,
+	pub structures: HashMap<FieldId, rmpv::Value, FnvBuildHasher>,
 	#[serde(flatten)]
 	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
@@ -69,7 +69,7 @@ pub struct Permissions {
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct TemplatePermission {
-	pub template: GameObjectTemplateType,
+	pub template: GameObjectTemplateId,
 	#[serde(default)]
 	pub groups: Vec<PermissionGroup>,
 	#[serde(default)]
@@ -84,7 +84,7 @@ pub struct PermissionGroup {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PermissionField {
-	pub field_id: FieldIdType,
+	pub field_id: FieldId,
 	pub field_type: FieldType,
 	#[serde(default)]
 	pub groups: Vec<PermissionGroup>,

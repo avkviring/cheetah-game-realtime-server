@@ -1,7 +1,7 @@
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
-use cheetah_relay_common::constants::FieldIdType;
+use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
@@ -34,7 +34,7 @@ impl Room {
 	pub fn do_action<T>(
 		&mut self,
 		game_object_id: &GameObjectId,
-		field_id: &FieldIdType,
+		field_id: &FieldId,
 		field_type: FieldType,
 		command_owner_user: &UserPublicKey,
 		permission: Permission,

@@ -2,16 +2,14 @@ use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
 
-
-use cheetah_relay_common::constants::FieldIdType;
+use cheetah_relay_common::constants::FieldId;
 
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::{UserPublicKey};
+use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::object::GameObject;
 use crate::room::template::config::GameObjectTemplate;
-
 
 impl GameObjectTemplate {
 	pub fn to_root_game_object(&self) -> GameObject {
@@ -25,17 +23,17 @@ impl GameObjectTemplate {
 			panic!("0 is forbidden for game object id");
 		}
 
-		let mut longs: HashMap<FieldIdType, i64, FnvBuildHasher> = Default::default();
+		let mut longs: HashMap<FieldId, i64, FnvBuildHasher> = Default::default();
 		self.fields.longs.iter().for_each(|(k, v)| {
 			longs.insert(k.clone(), *v);
 		});
 
-		let mut floats: HashMap<FieldIdType, f64, FnvBuildHasher> = Default::default();
+		let mut floats: HashMap<FieldId, f64, FnvBuildHasher> = Default::default();
 		self.fields.floats.iter().for_each(|(k, v)| {
 			floats.insert(k.clone(), *v);
 		});
 
-		let mut structures: HashMap<FieldIdType, Vec<u8>, FnvBuildHasher> = Default::default();
+		let mut structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher> = Default::default();
 		self.fields.structures.iter().for_each(|(k, v)| {
 			let structure = rmp_serde::to_vec(v).unwrap();
 			structures.insert(k.clone(), structure);

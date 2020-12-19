@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::constants::{FieldIdType, GameObjectTemplateType};
+use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 
 use crate::room::template::config::{Permission, PermissionGroup, Permissions};
@@ -10,17 +10,17 @@ use crate::room::types::FieldType;
 
 #[derive(Debug)]
 pub struct PermissionManager {
-	templates: HashMap<GameObjectTemplateType, Vec<PermissionGroup>, FnvBuildHasher>,
+	templates: HashMap<GameObjectTemplateId, Vec<PermissionGroup>, FnvBuildHasher>,
 	fields: HashMap<PermissionFieldKey, Vec<PermissionGroup>, FnvBuildHasher>,
 	cache: HashMap<PermissionCachedFieldKey, Permission, FnvBuildHasher>,
-	write_access_template: HashSet<GameObjectTemplateType, FnvBuildHasher>,
+	write_access_template: HashSet<GameObjectTemplateId, FnvBuildHasher>,
 	write_access_fields: HashSet<PermissionFieldKey, FnvBuildHasher>,
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
 struct PermissionFieldKey {
-	template: GameObjectTemplateType,
-	field_id: FieldIdType,
+	template: GameObjectTemplateId,
+	field_id: FieldId,
 	field_type: FieldType,
 }
 
@@ -67,7 +67,7 @@ impl PermissionManager {
 	///
 	/// Доступен ли объект на запись другим пользователем кроме создателя
 	///
-	pub fn has_write_access(&mut self, template: GameObjectTemplateType, field_id: FieldIdType, field_type: FieldType) -> bool {
+	pub fn has_write_access(&mut self, template: GameObjectTemplateId, field_id: FieldId, field_type: FieldType) -> bool {
 		self.write_access_template.contains(&template)
 			|| self.write_access_fields.contains(&PermissionFieldKey {
 				template,
@@ -78,8 +78,8 @@ impl PermissionManager {
 
 	pub fn get_permission(
 		&mut self,
-		template: GameObjectTemplateType,
-		field_id: FieldIdType,
+		template: GameObjectTemplateId,
+		field_id: FieldId,
 		field_type: FieldType,
 		user_group: AccessGroups,
 	) -> Permission {
