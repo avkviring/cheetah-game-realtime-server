@@ -10,15 +10,14 @@ use indexmap::map::IndexMap;
 use serde::export::Formatter;
 
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
-
 use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
-
+#[cfg(test)]
+use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
@@ -29,11 +28,7 @@ use crate::room::debug::tracer::CommandTracer;
 use crate::room::object::GameObject;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
-
 use crate::rooms::OutFrame;
-
-#[cfg(test)]
-use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod command;
 pub mod debug;
@@ -59,9 +54,15 @@ pub struct Room {
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
+	///
+	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
+	///
 	pub out_commands: VecDeque<(AccessGroups, S2CCommand)>,
 	#[cfg(test)]
-	pub out_commands_by_users: HashMap<UserPublicKey, VecDeque<S2CCommand>>,
+	///
+	/// Команды поставленные в отправку конкретным пользователям, с проверкой прав доступа
+	///
+	pub out_commands_by_users: Rc<RefCell<HashMap<UserPublicKey, VecDeque<S2CCommand>>>>,
 }
 
 pub trait RoomUserListener {
@@ -338,7 +339,7 @@ mod tests {
 	use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
 	use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use cheetah_relay_common::protocol::frame::Frame;
-
+	use cheetah_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
@@ -368,10 +369,20 @@ mod tests {
 			self.get_object_mut(&id).unwrap()
 		}
 
-		pub fn create_object_with_access_groups(&mut self, access_groups: AccessGroups) -> &mut GameObject {
-			let object = self.create_object(&0);
+		pub fn create_object_with_access_groups(&mut self, owner: &UserPublicKey, access_groups: AccessGroups) -> &mut GameObject {
+			let object = self.create_object(owner);
 			object.access_groups = access_groups;
 			object
+		}
+
+		pub fn mark_as_connected(&mut self, user_public_key: &UserPublicKey) {
+			match self.get_user_mut(&user_public_key) {
+				None => {}
+				Some(user) => {
+					user.protocol = Option::Some(RelayProtocol::new(&Instant::now()));
+					user.attached = true;
+				}
+			}
 		}
 	}
 

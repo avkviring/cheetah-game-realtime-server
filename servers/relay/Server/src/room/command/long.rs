@@ -142,10 +142,8 @@ mod tests {
 
 	#[test]
 	fn should_set_long_command() {
-		let mut template = RoomTemplate::default();
-		let user = template.create_user(1, AccessGroups(10));
-		let mut room = Room::new_with_template(template);
-		let object_id = room.create_object(&user).id.clone();
+		let (user, mut room, object_id) = setup();
+
 		room.out_commands.clear();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
@@ -161,10 +159,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_long_command() {
-		let mut template = RoomTemplate::default();
-		let user = template.create_user(1, AccessGroups(10));
-		let mut room = Room::new_with_template(template);
-		let object_id = room.create_object(&user).id.clone();
+		let (user, mut room, object_id) = setup();
 
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
@@ -369,10 +364,19 @@ mod tests {
 			}],
 		});
 		let mut room = Room::new_with_template(template);
-		let object_id = room.create_object(&user_template_3.public_key).id.clone();
+		let object = room.create_object_with_access_groups(&user_template_3.public_key, access_group);
+		object.template = object_template;
 
-		room.get_object_mut(&object_id).unwrap().template = object_template;
-
+		let object_id = object.id.clone();
 		(room, user_template_1, user_template_2, object_id, object_field)
+	}
+
+	fn setup() -> (u32, Room, GameObjectId) {
+		let mut template = RoomTemplate::default();
+		let access_groups = AccessGroups(10);
+		let user = template.create_user(1, access_groups);
+		let mut room = Room::new_with_template(template);
+		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
+		(user, room, object_id)
 	}
 }

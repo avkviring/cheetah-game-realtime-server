@@ -36,17 +36,18 @@ mod tests {
 		let groups_a = AccessGroups(0b100);
 		let user_a = template.create_user(1, groups_a);
 		let groups_b = AccessGroups(0b10);
-		template.create_user(2, groups_b);
+		let user_b = template.create_user(3, groups_b);
 		let mut room = Room::new_with_template(template);
 
-		let object_a_1 = room.create_object_with_access_groups(groups_a).id.clone();
-		let object_a_2 = room.create_object_with_access_groups(groups_a).id.clone();
-		room.create_object_with_access_groups(groups_b);
-		room.create_object_with_access_groups(groups_b);
+		let object_a_1 = room.create_object_with_access_groups(&user_b, groups_a).id.clone();
+		let object_a_2 = room.create_object_with_access_groups(&user_b, groups_a).id.clone();
+		room.create_object_with_access_groups(&user_b, groups_b);
+		room.create_object_with_access_groups(&user_b, groups_b);
 
 		attach_to_room(&mut room, &user_a);
 
-		let commands = &mut room.out_commands_by_users.get_mut(&user_a).unwrap();
+		let mut commands = room.out_commands_by_users.borrow_mut();
+		let commands = &mut commands.get_mut(&user_a).unwrap();
 		assert!(matches!(commands.pop_back(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1));
 		assert!(matches!(commands.pop_back(), Some(S2CCommand::Create(c)) if c.object_id==object_a_2));
 		assert!(matches!(commands.pop_back(), None));

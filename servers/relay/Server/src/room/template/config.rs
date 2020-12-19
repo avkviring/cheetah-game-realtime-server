@@ -170,11 +170,16 @@ impl RoomTemplate {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::UserPublicKey;
 
-	use crate::room::template::config::{GameObjectTemplate, RoomTemplate, RoomTemplateError, UserTemplate};
+	use crate::room::template::config::{
+		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, RoomTemplate, RoomTemplateError, TemplatePermission,
+		UserTemplate,
+	};
+	use crate::room::types::FieldType;
 
 	impl RoomTemplate {
 		pub fn create_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {
@@ -186,6 +191,48 @@ mod tests {
 				unmapping: Default::default(),
 			});
 			public_key
+		}
+	}
+
+	impl Permissions {
+		pub fn set_permission(
+			&mut self,
+			template: GameObjectTemplateId,
+			field_id: &FieldId,
+			field_type: FieldType,
+			access_group: &AccessGroups,
+			permission: Permission,
+		) {
+			let template_permission = match self.templates.iter_mut().find(|t| t.template == template) {
+				None => {
+					let template_permission = TemplatePermission {
+						template,
+						groups: vec![],
+						fields: vec![],
+					};
+					self.templates.push(template_permission);
+					self.templates.iter_mut().find(|t| t.template == template).unwrap()
+				}
+				Some(template) => template,
+			};
+
+			let permission_field = match template_permission.fields.iter_mut().find(|f| f.field_id == *field_id) {
+				None => {
+					let permission_field = PermissionField {
+						field_id: field_id.clone(),
+						field_type,
+						groups: vec![],
+					};
+					template_permission.fields.push(permission_field);
+					template_permission.fields.iter_mut().find(|f| f.field_id == *field_id).unwrap()
+				}
+				Some(permission_field) => permission_field,
+			};
+
+			permission_field.groups.push(PermissionGroup {
+				group: access_group.clone(),
+				permission,
+			});
 		}
 	}
 

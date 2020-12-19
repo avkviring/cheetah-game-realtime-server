@@ -72,10 +72,11 @@ mod tests {
 	#[test]
 	fn should_set_float_command() {
 		let mut template = RoomTemplate::default();
-		let user = template.create_user(1, AccessGroups(10));
+		let access_groups = AccessGroups(10);
+		let user = template.create_user(1, access_groups);
 		let mut room = Room::new_with_template(template);
 
-		let object_id = room.create_object(&user).id.clone();
+		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = SetFloat64Command {
 			object_id: object_id.clone(),
@@ -92,10 +93,11 @@ mod tests {
 	#[test]
 	fn should_increment_float_command() {
 		let mut template = RoomTemplate::default();
-		let user = template.create_user(1, AccessGroups(10));
+		let access_groups = AccessGroups(10);
+		let user = template.create_user(1, access_groups);
 		let mut room = Room::new_with_template(template);
 
-		let object_id = room.create_object(&user).id.clone();
+		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = IncrementFloat64C2SCommand {
 			object_id: object_id.clone(),
