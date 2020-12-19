@@ -37,7 +37,7 @@ impl TestEnv {
 			self.clients.iter_mut().for_each(|(_user_public_key, client)| {
 				client.cycle(&now);
 			});
-			thread::sleep(Duration::from_millis(10));
+			thread::sleep(Duration::from_millis(3));
 		}
 	}
 

@@ -31,7 +31,7 @@ pub fn stress_test() {
 	env.cycle();
 	thread::sleep(Duration::from_millis(10));
 
-	let count = 2000;
+	let count = 500;
 	for i in 0..count {
 		let command = SetLongCommand {
 			object_id: GameObjectId {
