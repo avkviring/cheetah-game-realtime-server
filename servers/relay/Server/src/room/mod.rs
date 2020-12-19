@@ -357,7 +357,7 @@ mod tests {
 	}
 
 	impl Room {
-		pub fn new_with_template(template: RoomTemplate) -> Self {
+		pub fn from_template(template: RoomTemplate) -> Self {
 			Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
 		}
 
@@ -392,7 +392,7 @@ mod tests {
 		let user_a = template.create_user(1, AccessGroups(0b111));
 		let user_b = template.create_user(2, AccessGroups(0b111));
 
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let object_a_1 = room.create_object(&user_a).id.clone();
 		let object_a_2 = room.create_object(&user_a).id.clone();
 		let object_b_1 = room.create_object(&user_b).id.clone();
@@ -423,7 +423,7 @@ mod tests {
 		};
 		template.objects = vec![object_template.clone()];
 
-		let room = Room::new_with_template(template);
+		let room = Room::from_template(template);
 		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::Root)));
 	}
 
@@ -446,7 +446,7 @@ mod tests {
 		};
 		template.users.push(user_template.clone());
 
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
@@ -492,7 +492,7 @@ mod tests {
 		template.users.push(user1_template.clone());
 		template.users.push(user2_template.clone());
 
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 
 		room.process_in_frame(&user1_template.public_key, Frame::new(0), &Instant::now());
 
@@ -545,7 +545,7 @@ mod tests {
 	fn should_register_user_after_disconnect_when_auto_create() {
 		let (mut template, user_template) = create_template();
 		template.auto_create_user = true;
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		room.disconnect_user(&user_template.public_key);
 		assert!(room.users.contains_key(&user_template.public_key));
 	}
@@ -589,7 +589,7 @@ mod tests {
 	#[test]
 	pub fn should_keep_order_object() {
 		let (template, _) = create_template();
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		room.insert_object(GameObject {
 			id: GameObjectId::new(100, ObjectOwner::Root),
 			template: 0,

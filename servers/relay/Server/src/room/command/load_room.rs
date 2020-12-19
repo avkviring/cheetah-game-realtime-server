@@ -37,7 +37,7 @@ mod tests {
 		let user_a = template.create_user(1, groups_a);
 		let groups_b = AccessGroups(0b10);
 		let user_b = template.create_user(3, groups_b);
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 
 		let object_a_1 = room.create_object_with_access_groups(&user_b, groups_a).id.clone();
 		let object_a_2 = room.create_object_with_access_groups(&user_b, groups_a).id.clone();

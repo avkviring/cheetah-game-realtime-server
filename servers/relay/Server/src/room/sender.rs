@@ -219,7 +219,7 @@ mod tests {
 	#[test]
 	fn should_send_command_to_other_user() {
 		let (template, user_template) = create_template();
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		room.current_user.replace(user_template.public_key + 1); // команда пришла от другого пользователя
 		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
 		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
@@ -256,7 +256,7 @@ mod tests {
 			.permissions
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let object_id = room.create_object_with_access_groups(&user_1, access_groups).id.clone();
 
 		// владельцу разрешены любые операции
@@ -307,7 +307,7 @@ mod tests {
 			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
 		let user = template.create_user(1, access_groups);
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let object = room.create_object(&user);
 		object.access_groups = access_groups.clone();
 		let object_id = object.id.clone();
@@ -361,7 +361,7 @@ mod tests {
 			.permissions
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups_b, Permission::Deny);
 
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 
 		room.mark_as_connected(&user_1);
 		room.mark_as_connected(&user_2);
@@ -409,7 +409,7 @@ mod tests {
 		let user_1 = template.create_user(1, access_groups_a);
 		let user_2 = template.create_user(2, access_groups_b);
 
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let object_id = room.create_object_with_access_groups(&user_1, access_groups_a).id.clone();
 
 		let mut executed = false;

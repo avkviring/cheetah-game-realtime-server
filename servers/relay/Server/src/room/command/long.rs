@@ -186,7 +186,7 @@ mod tests {
 	fn should_not_panic_if_overflow() {
 		let mut template = RoomTemplate::default();
 		let user = template.create_user(1, AccessGroups(10));
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user).id.clone();
 
 		room.out_commands.clear();
@@ -363,7 +363,7 @@ mod tests {
 				}],
 			}],
 		});
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let object = room.create_object_with_access_groups(&user_template_3.public_key, access_group);
 		object.template = object_template;
 
@@ -375,7 +375,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let user = template.create_user(1, access_groups);
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
 		(user, room, object_id)
 	}

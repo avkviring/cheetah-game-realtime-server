@@ -74,7 +74,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		template.create_user(1, AccessGroups(1));
 		template.create_user(2, AccessGroups(1));
-		let room = Room::new_with_template(template);
+		let room = Room::from_template(template);
 
 		let mut selector = UserForEntranceSelector::default();
 
@@ -97,7 +97,7 @@ mod tests {
 		template.create_user(1, AccessGroups(1));
 		template.create_user(2, AccessGroups(1));
 
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 		let now = Instant::now();
 		room.users.get_mut(&2).unwrap().protocol = Option::Some(RelayProtocol::new(&now));
 		let mut selector = UserForEntranceSelector::default();

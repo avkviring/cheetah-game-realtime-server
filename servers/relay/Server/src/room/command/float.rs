@@ -74,7 +74,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let user = template.create_user(1, access_groups);
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 
 		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
 		room.out_commands.clear();
@@ -95,7 +95,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let user = template.create_user(1, access_groups);
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 
 		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
 		room.out_commands.clear();
@@ -123,7 +123,7 @@ mod tests {
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
 		let mut template = RoomTemplate::default();
 		let user = template.create_user(1, AccessGroups(10));
-		let mut room = Room::new_with_template(template);
+		let mut room = Room::from_template(template);
 
 		let command = IncrementFloat64C2SCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
