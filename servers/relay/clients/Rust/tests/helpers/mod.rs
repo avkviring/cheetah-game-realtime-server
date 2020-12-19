@@ -29,6 +29,7 @@ pub struct UserKeys {
 }
 
 impl Helper {
+	#[allow(unused_must_use)]
 	pub fn new() -> Self {
 		stderrlog::new()
 			.verbosity(0)

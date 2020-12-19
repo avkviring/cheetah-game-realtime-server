@@ -37,8 +37,6 @@ impl GameObject {
 mod tests {
 	use cheetah_relay_common::commands::command::structure::StructureCommand;
 	use cheetah_relay_common::commands::command::S2CCommand;
-	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::RoomTemplate;

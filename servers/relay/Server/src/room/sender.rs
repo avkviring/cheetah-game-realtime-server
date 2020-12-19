@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
@@ -14,6 +12,9 @@ use crate::room::object::GameObject;
 use crate::room::template::config::Permission;
 use crate::room::types::FieldType;
 use crate::room::{Room, User};
+
+#[cfg(test)]
+use std::collections::VecDeque;
 
 impl Room {
 	pub fn send_object_to_group(&mut self, object: &GameObject) {
@@ -48,6 +49,7 @@ impl Room {
 				log::error!("[room({})] user({}) not found", self.id, command_owner_user);
 				#[cfg(test)]
 				panic!("[room({})] user({}) not found", self.id, command_owner_user);
+				#[cfg(not(test))]
 				return;
 			}
 			Some(user) => user.template.access_groups.clone(),

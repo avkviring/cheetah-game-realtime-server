@@ -1,5 +1,4 @@
 use core::fmt;
-use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
@@ -11,15 +10,15 @@ use indexmap::map::IndexMap;
 use serde::export::Formatter;
 
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
+
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::commands::command::S2CCommandWithMeta;
+
 use cheetah_relay_common::constants::FieldIdType;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
-use cheetah_relay_common::room::access::AccessGroups;
+
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
@@ -28,10 +27,13 @@ use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::object::GameObject;
-use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
+use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
-use crate::room::types::FieldType;
+
 use crate::rooms::OutFrame;
+
+#[cfg(test)]
+use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod command;
 pub mod debug;
@@ -332,14 +334,11 @@ mod tests {
 	use std::rc::Rc;
 	use std::time::Instant;
 
-	use cheetah_relay_common::commands::command::event::EventCommand;
 	use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 	use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
-	use cheetah_relay_common::protocol::frame::applications::{
-		ApplicationCommand, ApplicationCommandChannel, ApplicationCommandChannelType, ApplicationCommandDescription,
-	};
+	use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use cheetah_relay_common::protocol::frame::Frame;
-	use cheetah_relay_common::protocol::relay::RelayProtocol;
+
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;

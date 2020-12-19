@@ -1,12 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
 use fnv::FnvBuildHasher;
-use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::constants::{FieldIdType, GameObjectTemplateType};
 use cheetah_relay_common::room::access::AccessGroups;
 
-use crate::room::template::config::{GameObjectTemplate, Permission, PermissionGroup, Permissions, TemplatePermission};
+use crate::room::template::config::{Permission, PermissionGroup, Permissions};
 use crate::room::types::FieldType;
 
 #[derive(Debug)]
@@ -245,7 +244,7 @@ mod tests {
 
 	#[test]
 	fn should_not_has_write_access_by_default() {
-		let mut permissions = Permissions::default();
+		let permissions = Permissions::default();
 		let mut permissions_manager = PermissionManager::new(&permissions);
 		assert!(!permissions_manager.has_write_access(10, 100, FieldType::Long));
 	}

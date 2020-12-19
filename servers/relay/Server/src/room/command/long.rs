@@ -131,15 +131,12 @@ impl GameObject {
 mod tests {
 	use cheetah_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_relay_common::commands::command::S2CCommand;
-	use cheetah_relay_common::constants::{FieldIdType, GameObjectTemplateType};
+	use cheetah_relay_common::constants::FieldIdType;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{
-		GameObjectTemplate, Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate,
-	};
+	use crate::room::template::config::{Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate};
 	use crate::room::types::FieldType;
 	use crate::room::Room;
 
