@@ -25,19 +25,19 @@ impl Room {
 	}
 
 	///
-	/// Проверить права доступа, выполнить команду, результат выполнения отправить клиентам
+	/// Проверить права доступа, выполнить действие, результат выполнения отправить клиентам
 	///
 	/// - владелец объекта получает обновления если только данные доступны на запись другим клиентам
 	/// - владелец объекта имеет полный доступ к полям объекта, информация о правах игнорируется
 	///
-	pub fn do_command<T>(
+	pub fn do_action<T>(
 		&mut self,
 		game_object_id: &GameObjectId,
 		field_id: &FieldIdType,
 		field_type: FieldType,
 		command_owner_user: &UserPublicKey,
 		permission: Permission,
-		mut action: T,
+		action: T,
 	) where
 		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
 	{
@@ -46,6 +46,8 @@ impl Room {
 		let current_user_access_group = match self.users.get(command_owner_user) {
 			None => {
 				log::error!("[room({})] user({}) not found", self.id, command_owner_user);
+				#[cfg(test)]
+				panic!("[room({})] user({}) not found", self.id, command_owner_user);
 				return;
 			}
 			Some(user) => user.template.access_groups.clone(),
@@ -182,33 +184,6 @@ mod tests {
 
 	use crate::room::tests::create_template;
 	use crate::room::Room;
-
-	#[test]
-	fn should_dont_send_command_to_current_user() {
-		let (template, user_template) = create_template();
-		let mut room = Room::new_with_template(template);
-		room.current_user.replace(user_template.public_key);
-		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
-		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-
-		let user = room.get_user_mut(&user_template.public_key).unwrap();
-		user.attached = true;
-		user.protocol.replace(RelayProtocol::new(&Instant::now()));
-
-		room.send_to_group(
-			user_template.access_groups.clone(),
-			S2CCommand::Event(EventCommand {
-				object_id: Default::default(),
-				field_id: 0,
-				event: Default::default(),
-			}),
-			|_| true,
-		);
-
-		let user = room.get_user(&user_template.public_key).unwrap();
-		let protocol = user.protocol.as_ref().unwrap();
-		assert!(protocol.out_commands_collector.commands.reliable.is_empty());
-	}
 
 	#[test]
 	fn should_send_command_to_other_user() {

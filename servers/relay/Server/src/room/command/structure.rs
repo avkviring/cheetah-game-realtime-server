@@ -16,7 +16,7 @@ impl ServerCommandExecutor for StructureCommand {
 			object.structures.insert(self.field_id, self.structure.to_vec());
 			Option::Some(S2CCommand::SetStruct(self))
 		};
-		room.do_command(&object_id, &field_id, FieldType::Structure, user_public_key, Permission::Rw, action);
+		room.do_action(&object_id, &field_id, FieldType::Structure, user_public_key, Permission::Rw, action);
 	}
 }
 
@@ -41,13 +41,18 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
+	use crate::room::template::config::RoomTemplate;
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
+	use cheetah_relay_common::room::access::AccessGroups;
 
 	#[test]
 	pub fn should_set_structure() {
-		let mut room = Room::default();
-		let object_id = room.create_object(&0).id.clone();
+		let mut template = RoomTemplate::default();
+		let user = template.create_user(1, AccessGroups(10));
+		let mut room = Room::new_with_template(template);
+		let object_id = room.create_object(&user).id.clone();
+
 		room.out_commands.clear();
 		let command = StructureCommand {
 			object_id: object_id.clone(),
@@ -55,21 +60,10 @@ mod tests {
 			structure: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 
-		command.clone().execute(&mut room, &32);
+		command.clone().execute(&mut room, &user);
 		let object = room.get_object_mut(&object_id).unwrap();
 
 		assert_eq!(*object.structures.get(&100).unwrap(), command.structure.to_vec());
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStruct(c))) if c==command));
-	}
-
-	#[test]
-	pub fn should_not_panic_when_missing_object() {
-		let mut room = Room::default();
-		let command = StructureCommand {
-			object_id: GameObjectId::new(10, ObjectOwner::Root),
-			field_id: 100,
-			structure: from_vec(vec![1, 2, 3, 4, 5]),
-		};
-		command.execute(&mut room, &32);
 	}
 }

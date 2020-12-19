@@ -39,7 +39,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				value,
 			}))
 		};
-		room.do_command(&self.object_id, &self.field_id, FieldType::Long, user_public_key, Permission::Rw, action);
+		room.do_action(&self.object_id, &self.field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 	}
 }
 
@@ -53,7 +53,7 @@ impl ServerCommandExecutor for SetLongCommand {
 			Option::Some(S2CCommand::SetLong(self))
 		};
 
-		room.do_command(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
+		room.do_action(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 	}
 }
 
@@ -85,7 +85,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			}
 		};
 
-		room.do_command(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
+		room.do_action(&object_id, &field_id, FieldType::Long, user_public_key, Permission::Rw, action);
 
 		if *(is_set.borrow()) {
 			room.get_user_mut(user_public_key)
@@ -131,24 +131,31 @@ impl GameObject {
 mod tests {
 	use cheetah_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_relay_common::commands::command::S2CCommand;
+	use cheetah_relay_common::constants::{FieldIdType, GameObjectTemplateType};
+	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{RoomTemplate, UserTemplate};
+	use crate::room::template::config::{
+		GameObjectTemplate, Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate,
+	};
+	use crate::room::types::FieldType;
 	use crate::room::Room;
 
 	#[test]
 	fn should_set_long_command() {
-		let mut room = Room::default();
-		let object_id = room.create_object(&0).id.clone();
+		let mut template = RoomTemplate::default();
+		let user = template.create_user(1, AccessGroups(10));
+		let mut room = Room::new_with_template(template);
+		let object_id = room.create_object(&user).id.clone();
 		room.out_commands.clear();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
 			value: 100,
 		};
-		command.clone().execute(&mut room, &12);
+		command.clone().execute(&mut room, &user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.longs.get(&10).unwrap(), 100);
@@ -157,16 +164,19 @@ mod tests {
 
 	#[test]
 	fn should_increment_long_command() {
-		let mut room = Room::default();
-		let object_id = room.create_object(&0).id.clone();
+		let mut template = RoomTemplate::default();
+		let user = template.create_user(1, AccessGroups(10));
+		let mut room = Room::new_with_template(template);
+		let object_id = room.create_object(&user).id.clone();
+
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
 			increment: 100,
 		};
-		command.clone().execute(&mut room, &12);
-		command.clone().execute(&mut room, &12);
+		command.clone().execute(&mut room, &user);
+		command.clone().execute(&mut room, &user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.longs.get(&10).unwrap(), 200);
@@ -181,39 +191,20 @@ mod tests {
 	}
 
 	#[test]
-	fn should_not_panic_when_set_long_command_for_missing_object() {
-		let mut room = Room::default();
-		let command = SetLongCommand {
-			object_id: GameObjectId::new(10, ObjectOwner::Root),
-			field_id: 10,
-			value: 100,
-		};
-		command.execute(&mut room, &12);
-	}
-
-	#[test]
-	fn should_not_panic_when_increment_command_for_missing_object() {
-		let mut room = Room::default();
-		let command = IncrementLongC2SCommand {
-			object_id: GameObjectId::new(10, ObjectOwner::Root),
-			field_id: 10,
-			increment: 100,
-		};
-		command.execute(&mut room, &12);
-	}
-
-	#[test]
 	fn should_not_panic_if_overflow() {
-		let mut room = Room::default();
-		let object_id = room.create_object(&0).id.clone();
+		let mut template = RoomTemplate::default();
+		let user = template.create_user(1, AccessGroups(10));
+		let mut room = Room::new_with_template(template);
+		let object_id = room.create_object(&user).id.clone();
+
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
 			increment: i64::max_value(),
 		};
-		command.clone().execute(&mut room, &12);
-		command.execute(&mut room, &12);
+		command.clone().execute(&mut room, &user);
+		command.execute(&mut room, &user);
 	}
 
 	///
@@ -221,10 +212,10 @@ mod tests {
 	///
 	#[test]
 	fn test_compare_and_set() {
-		let (mut room, user_template, _, object_id) = setup_for_compare_and_set();
+		let (mut room, user_template, _, object_id, field_id) = setup_for_compare_and_set();
 		let command1 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
-			field_id: 10,
+			field_id,
 			current: 0,
 			new: 100,
 			reset: 0,
@@ -261,14 +252,15 @@ mod tests {
 			command3.new
 		);
 	}
+
 	///
 	/// Проверяем что команда отсылает изменения другим клиентам
 	#[test]
 	fn test_compare_and_set_1() {
-		let (mut room, user_template, _, object_id) = setup_for_compare_and_set();
+		let (mut room, user_template, _, object_id, field_id) = setup_for_compare_and_set();
 		let command = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
-			field_id: 10,
+			field_id,
 			current: 0,
 			new: 100,
 			reset: 555,
@@ -283,10 +275,10 @@ mod tests {
 	///
 	#[test]
 	fn test_compare_and_set_2() {
-		let (mut room, user_template, _, object_id) = setup_for_compare_and_set();
+		let (mut room, user_template, _, object_id, field_id) = setup_for_compare_and_set();
 		let command = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
-			field_id: 10,
+			field_id,
 			current: 0,
 			new: 100,
 			reset: 555,
@@ -310,17 +302,17 @@ mod tests {
 	///
 	#[test]
 	fn test_compare_and_set_3() {
-		let (mut room, user_template_1, user_template_2, object_id) = setup_for_compare_and_set();
+		let (mut room, user_template_1, user_template_2, object_id, field_id) = setup_for_compare_and_set();
 		let command_1 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
-			field_id: 10,
+			field_id: field_id,
 			current: 0,
 			new: 100,
 			reset: 555,
 		};
 		let command_2 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
-			field_id: 10,
+			field_id: field_id,
 			current: 100,
 			new: 200,
 			reset: 1555,
@@ -335,26 +327,55 @@ mod tests {
 		);
 	}
 
-	fn setup_for_compare_and_set() -> (Room, UserTemplate, UserTemplate, GameObjectId) {
+	fn setup_for_compare_and_set() -> (Room, UserTemplate, UserTemplate, GameObjectId, FieldIdType) {
+		let access_group = AccessGroups(55);
 		let mut template = RoomTemplate::default();
 		let user_template_1 = UserTemplate {
 			public_key: 55,
 			private_key: Default::default(),
-			access_groups: Default::default(),
+			access_groups: access_group,
 			objects: Default::default(),
 			unmapping: Default::default(),
 		};
 		let user_template_2 = UserTemplate {
 			public_key: 155,
 			private_key: Default::default(),
-			access_groups: Default::default(),
+			access_groups: access_group,
 			objects: Default::default(),
 			unmapping: Default::default(),
 		};
+
+		let user_template_3 = UserTemplate {
+			public_key: 255,
+			private_key: Default::default(),
+			access_groups: access_group,
+			objects: Default::default(),
+			unmapping: Default::default(),
+		};
+
 		template.users.push(user_template_1.clone());
 		template.users.push(user_template_2.clone());
+		template.users.push(user_template_3.clone());
+
+		let object_template = 10;
+		let object_field = 50;
+		template.permissions.templates.push(TemplatePermission {
+			template: object_template,
+			groups: vec![],
+			fields: vec![PermissionField {
+				field_id: object_field,
+				field_type: FieldType::Long,
+				groups: vec![PermissionGroup {
+					group: access_group,
+					permission: Permission::Rw,
+				}],
+			}],
+		});
 		let mut room = Room::new_with_template(template);
-		let object_id = room.create_object(&1).id.clone();
-		(room, user_template_1, user_template_2, object_id)
+		let object_id = room.create_object(&user_template_3.public_key).id.clone();
+
+		room.get_object_mut(&object_id).unwrap().template = object_template;
+
+		(room, user_template_1, user_template_2, object_id, object_field)
 	}
 }
