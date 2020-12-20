@@ -38,17 +38,17 @@
 
 ```yaml
 permissions:
-  - templates:
-      - template: 10 # указываем шаблон объекта, для которого осуществляется настройка прав
-        groups: # можно изменить права для конкретных групп
-         - group: 7
-           mode: ro | rw | deny
+  templates:
+    - template: 10 # указываем шаблон объекта, для которого осуществляется настройка прав
+      groups: # можно изменить права для конкретных групп
+        - group: 7
+          permission: ro | rw | deny
         fields: # можно изменить права для конкретных полей (приоритет выше чем права групп) 
           - field_id: 55
             field_type: long | float | structure | event
             groups:
               - group: 9
-                mode: ro | rw | deny
+                permission: ro | rw | deny
 ```
 
 

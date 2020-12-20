@@ -63,14 +63,15 @@ users:
     private_key: [ 5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5 ]
     access_groups: 15
 
-#permissions:
-#  - templates:
-#      - template: 10
-#        groups:
-#         - group: 0b111
-#           mode: ro | rw | deny
-#        fields:
-#          - field_id: 100
-#            groups:
-#              - group: 0b111
-#                mode: ro | rw | deny
+permissions:
+  templates:
+      - template: 10
+        groups:
+          - group: 5
+            permission: ro
+        fields:
+          - field_id: 100
+            field_type: long
+            groups:
+              - group: 8
+                permission: ro
