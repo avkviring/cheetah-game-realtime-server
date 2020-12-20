@@ -1,7 +1,6 @@
-# Игровой сервер для реалтайм игр
+# Cheetah Relay Server
 
+Цель - сервер без прикладной логики. 
+Фокус - надежность, быстродействие, качественное сетевое взаимодействие.
 
-- [Объектная модель](docs/model/index.md)
-- [Сервер](Server/README.md)
-- [Unity клиент](clients/Unity/Packages/CheetahRelay/Readme.md)
-
+[Документация](docs/index.md)
