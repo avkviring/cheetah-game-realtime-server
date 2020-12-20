@@ -185,9 +185,10 @@ mod tests {
 	#[test]
 	fn should_not_panic_if_overflow() {
 		let mut template = RoomTemplate::default();
-		let user = template.create_user(1, AccessGroups(10));
+		let access_groups = AccessGroups(10);
+		let user = template.create_user(1, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(&user).id.clone();
+		let object_id = room.create_object(&user, access_groups).id.clone();
 
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
@@ -297,14 +298,14 @@ mod tests {
 		let (mut room, user_template_1, user_template_2, object_id, field_id) = setup_for_compare_and_set();
 		let command_1 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
-			field_id: field_id,
+			field_id,
 			current: 0,
 			new: 100,
 			reset: 555,
 		};
 		let command_2 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
-			field_id: field_id,
+			field_id,
 			current: 100,
 			new: 200,
 			reset: 1555,
@@ -364,7 +365,7 @@ mod tests {
 			}],
 		});
 		let mut room = Room::from_template(template);
-		let object = room.create_object_with_access_groups(&user_template_3.public_key, access_group);
+		let object = room.create_object(&user_template_3.public_key, access_group);
 		object.template = object_template;
 
 		let object_id = object.id.clone();
@@ -376,7 +377,7 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let user = template.create_user(1, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
+		let object_id = room.create_object(&user, access_groups).id.clone();
 		(user, room, object_id)
 	}
 }

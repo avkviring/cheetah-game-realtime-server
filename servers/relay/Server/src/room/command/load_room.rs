@@ -39,10 +39,10 @@ mod tests {
 		let user_b = template.create_user(3, groups_b);
 		let mut room = Room::from_template(template);
 
-		let object_a_1 = room.create_object_with_access_groups(&user_b, groups_a).id.clone();
-		let object_a_2 = room.create_object_with_access_groups(&user_b, groups_a).id.clone();
-		room.create_object_with_access_groups(&user_b, groups_b);
-		room.create_object_with_access_groups(&user_b, groups_b);
+		let object_a_1 = room.create_object(&user_b, groups_a).id.clone();
+		let object_a_2 = room.create_object(&user_b, groups_a).id.clone();
+		room.create_object(&user_b, groups_b);
+		room.create_object(&user_b, groups_b);
 
 		attach_to_room(&mut room, &user_a);
 

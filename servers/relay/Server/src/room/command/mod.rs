@@ -54,10 +54,11 @@ mod tests {
 
 	pub fn setup() -> (Room, GameObjectId, UserPublicKey, UserPublicKey) {
 		let mut template = RoomTemplate::default();
-		let user_1 = template.create_user(1, AccessGroups(0b11));
-		let user_2 = template.create_user(2, AccessGroups(0b11));
+		let access_groups = AccessGroups(0b11);
+		let user_1 = template.create_user(1, access_groups);
+		let user_2 = template.create_user(2, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(&user_1).id.clone();
+		let object_id = room.create_object(&user_1, access_groups).id.clone();
 		(room, object_id, user_1, user_2)
 	}
 }

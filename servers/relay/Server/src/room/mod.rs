@@ -361,18 +361,13 @@ mod tests {
 			Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
 		}
 
-		pub fn create_object(&mut self, owner: &UserPublicKey) -> &mut GameObject {
+		pub fn create_object(&mut self, owner: &UserPublicKey, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
-			let object = GameObject::new(id.clone());
+			let mut object = GameObject::new(id.clone());
+			object.access_groups = access_groups;
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
-		}
-
-		pub fn create_object_with_access_groups(&mut self, owner: &UserPublicKey, access_groups: AccessGroups) -> &mut GameObject {
-			let object = self.create_object(owner);
-			object.access_groups = access_groups;
-			object
 		}
 
 		pub fn mark_as_connected(&mut self, user_public_key: &UserPublicKey) {
@@ -389,14 +384,15 @@ mod tests {
 	#[test]
 	fn should_remove_objects_when_disconnect() {
 		let mut template = RoomTemplate::default();
-		let user_a = template.create_user(1, AccessGroups(0b111));
-		let user_b = template.create_user(2, AccessGroups(0b111));
+		let access_groups = AccessGroups(0b111);
+		let user_a = template.create_user(1, access_groups);
+		let user_b = template.create_user(2, access_groups);
 
 		let mut room = Room::from_template(template);
-		let object_a_1 = room.create_object(&user_a).id.clone();
-		let object_a_2 = room.create_object(&user_a).id.clone();
-		let object_b_1 = room.create_object(&user_b).id.clone();
-		let object_b_2 = room.create_object(&user_b).id.clone();
+		let object_a_1 = room.create_object(&user_a, access_groups).id.clone();
+		let object_a_2 = room.create_object(&user_a, access_groups).id.clone();
+		let object_b_1 = room.create_object(&user_b, access_groups).id.clone();
+		let object_b_2 = room.create_object(&user_b, access_groups).id.clone();
 
 		room.out_commands.clear();
 		room.disconnect_user(&user_a);

@@ -50,7 +50,7 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let user = template.create_user(1, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object_with_access_groups(&user, access_groups).id.clone();
+		let object_id = room.create_object(&user, access_groups).id.clone();
 
 		room.out_commands.clear();
 		let command = StructureCommand {

@@ -257,7 +257,7 @@ mod tests {
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object_with_access_groups(&user_1, access_groups).id.clone();
+		let object_id = room.create_object(&user_1, access_groups).id.clone();
 
 		// владельцу разрешены любые операции
 		let mut executed = false;
@@ -308,7 +308,7 @@ mod tests {
 
 		let user = template.create_user(1, access_groups);
 		let mut room = Room::from_template(template);
-		let object = room.create_object(&user);
+		let object = room.create_object(&user, access_groups);
 		object.access_groups = access_groups.clone();
 		let object_id = object.id.clone();
 		room.mark_as_connected(&user);
@@ -366,7 +366,7 @@ mod tests {
 		room.mark_as_connected(&user_1);
 		room.mark_as_connected(&user_2);
 
-		let object_id = room.create_object_with_access_groups(&user_1, access_groups_a).id.clone();
+		let object_id = room.create_object(&user_1, access_groups_a).id.clone();
 
 		// изменяем поле, доступное другому пользователю - он должен получить обновление
 		let mut executed = false;
@@ -378,11 +378,14 @@ mod tests {
 				value: 0,
 			}))
 		});
+
 		assert!(executed);
 		assert!(matches!(
 			room.out_commands_by_users.borrow().get(&user_2).unwrap().get(0),
 			Option::Some(S2CCommand::SetLong(_))
 		));
+
+		room.out_commands_by_users.borrow_mut().get_mut(&user_2).unwrap().clear();
 
 		// изменяем поле, не доступное другому пользователю - он не должен получить обновление
 		let mut executed = false;
@@ -391,11 +394,12 @@ mod tests {
 			Option::Some(S2CCommand::SetLong(SetLongCommand {
 				object_id: object_id.clone(),
 				field_id: field_id_2,
-				value: 0,
+				value: 155,
 			}))
 		});
+
 		assert!(executed);
-		assert!(matches!(room.out_commands_by_users.borrow().get(&user_2).unwrap().get(1), Option::None));
+		assert!(room.out_commands_by_users.borrow().get(&user_2).unwrap().is_empty());
 	}
 
 	///
@@ -410,7 +414,7 @@ mod tests {
 		let user_2 = template.create_user(2, access_groups_b);
 
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object_with_access_groups(&user_1, access_groups_a).id.clone();
+		let object_id = room.create_object(&user_1, access_groups_a).id.clone();
 
 		let mut executed = false;
 		room.do_action(&object_id, &0, FieldType::Long, &user_2, Permission::Ro, |_| {

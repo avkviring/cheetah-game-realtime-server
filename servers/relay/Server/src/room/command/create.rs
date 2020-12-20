@@ -173,10 +173,11 @@ mod tests {
 	#[test]
 	fn should_not_replace_exists_object() {
 		let mut template = RoomTemplate::default();
-		let user_public_key = template.create_user(1, AccessGroups(0b11));
+		let access_groups = AccessGroups(0b11);
+		let user_public_key = template.create_user(1, access_groups);
 		let mut room = Room::from_template(template);
 
-		let object = room.create_object(&user_public_key);
+		let object = room.create_object(&user_public_key, access_groups);
 		object.template = 777;
 		let object_id = object.id.clone();
 
