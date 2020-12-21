@@ -255,7 +255,6 @@ impl Room {
 	}
 
 	pub fn insert_object(&mut self, object: GameObject) {
-		self.send_object_to_group(&object);
 		self.objects.insert(object.id.clone(), object);
 	}
 
@@ -324,6 +323,7 @@ impl Room {
 		let user_public_key = template.public_key;
 		template.objects.iter().for_each(|object_template| {
 			let object = object_template.to_user_game_object(user_public_key);
+			self.send_object_to_group(&object, Option::None);
 			self.insert_object(object);
 		});
 	}
@@ -366,6 +366,7 @@ mod tests {
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
 			let mut object = GameObject::new(id.clone());
 			object.access_groups = access_groups;
+			self.send_object_to_group(&object, Option::Some(*owner));
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
 		}

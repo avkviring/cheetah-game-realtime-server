@@ -65,6 +65,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			structures: Default::default(),
 			compare_and_set_owners: Default::default(),
 		};
+		room.send_object_to_group(&object, Option::Some(*user_public_key));
 		room.insert_object(object);
 	}
 }

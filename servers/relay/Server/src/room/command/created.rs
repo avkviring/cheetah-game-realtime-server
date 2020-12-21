@@ -6,13 +6,13 @@ use crate::room::command::ServerCommandExecutor;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
-	fn execute(self, room: &mut Room, _user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
 		let room_id = room.id;
 		if let Some(object) = room.get_object_mut(&self.object_id) {
 			if !object.created {
 				let groups = object.access_groups.clone();
 				object.created = true;
-				room.send_to_group(groups, S2CCommand::Created(self), |_| true)
+				room.send_to_group(groups, S2CCommand::Created(self), |user| user.template.public_key != *user_public_key)
 			} else {
 				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);
 			}
@@ -23,24 +23,35 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::load::CreatedGameObjectCommand;
-	use cheetah_relay_common::commands::command::S2CCommand;
+	use cheetah_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
+	use cheetah_relay_common::protocol::frame::applications::ApplicationCommand;
 
 	use crate::room::command::tests::setup;
 	use crate::room::command::ServerCommandExecutor;
 
 	///
-	/// Команда должна приводить к рассылки оповещения для пользователей
+	/// - Команда должна приводить к рассылки оповещения для пользователей
+	/// - Команда не должна отсылаться обратно пользователю
 	///
 	#[test]
 	pub fn should_send_commands() {
-		let (mut room, object_id, user1, _) = setup();
+		let (mut room, object_id, user1, user2) = setup();
+		room.mark_as_connected(&user1);
+		room.mark_as_connected(&user2);
 		let command = CreatedGameObjectCommand {
 			object_id: object_id.clone(),
 		};
-		room.out_commands.clear();
 		command.execute(&mut room, &user1);
 
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Created(c))) if c.object_id==object_id));
+		let protocol = room.get_user(&user1).unwrap().protocol.as_ref().unwrap();
+		assert!(protocol.out_commands_collector.commands.reliable.is_empty());
+
+		let protocol = room.get_user(&user2).unwrap().protocol.as_ref().unwrap();
+
+		assert!(matches!(
+			protocol.out_commands_collector.commands.reliable.get(0).unwrap().command,
+			ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta { meta: _, command: S2CCommand::Created(ref c) }) if c.object_id == object_id
+		));
 	}
 
 	///

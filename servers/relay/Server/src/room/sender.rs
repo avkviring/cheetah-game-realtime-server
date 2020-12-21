@@ -17,11 +17,11 @@ use crate::room::types::FieldType;
 use crate::room::{Room, User};
 
 impl Room {
-	pub fn send_object_to_group(&mut self, object: &GameObject) {
+	pub fn send_object_to_group(&mut self, object: &GameObject, except_user: Option<UserPublicKey>) {
 		let mut commands = Vec::new();
 		object.collect_create_commands(&mut commands);
 		commands.into_iter().for_each(|c| {
-			self.send_to_group(object.access_groups, c, |_| true);
+			self.send_to_group(object.access_groups, c, |user| except_user != Option::Some(user.template.public_key));
 		})
 	}
 
@@ -223,11 +223,7 @@ mod tests {
 		room.current_user.replace(user_template.public_key + 1); // команда пришла от другого пользователя
 		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
 		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-
-		let user = room.get_user_mut(&user_template.public_key).unwrap();
-		user.attached = true;
-		user.protocol.replace(RelayProtocol::new(&Instant::now()));
-
+		room.mark_as_connected(&user_template.public_key);
 		room.send_to_group(
 			user_template.access_groups.clone(),
 			S2CCommand::Event(EventCommand {
