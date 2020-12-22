@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::Frame;
-use crate::protocol::others::public_key::UserPublicKeyFrameBuilder;
+use crate::protocol::others::user_id::UserIdFrameBuilder;
 use crate::protocol::relay::RelayProtocol;
 use crate::room::{UserId, UserPrivateKey};
 use crate::udp::bind_to_free_socket;
@@ -39,7 +39,7 @@ impl UdpClient {
 		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
 
-		protocol.add_frame_builder(Box::new(UserPublicKeyFrameBuilder(user_id)));
+		protocol.add_frame_builder(Box::new(UserIdFrameBuilder(user_id)));
 		let socket = bind_to_free_socket()?.0;
 		socket.set_nonblocking(true).map_err(|_| ())?;
 

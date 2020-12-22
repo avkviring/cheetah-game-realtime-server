@@ -60,10 +60,10 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 				room_owner: true,
 				user_id: u32::max_value(),
 			},
-			ObjectOwner::User(public_key) => GameObjectIdFFI {
+			ObjectOwner::User(user_id) => GameObjectIdFFI {
 				id: from.id,
 				room_owner: false,
-				user_id: public_key,
+				user_id,
 			},
 		}
 	}

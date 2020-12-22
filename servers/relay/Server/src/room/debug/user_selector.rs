@@ -21,7 +21,7 @@ pub struct UserForEntranceSelector {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SelectedUserForEntrance {
-	pub public_key: UserId,
+	pub id: UserId,
 	pub private_key: UserPrivateKey,
 }
 
@@ -42,7 +42,7 @@ impl UserForEntranceSelector {
 			.filter(|(key, _user)| !self.selected.contains_key(key))
 			.find_map(|(key, user)| {
 				Option::Some(SelectedUserForEntrance {
-					public_key: key.clone(),
+					id: key.clone(),
 					private_key: user.template.private_key.clone(),
 				})
 			});
@@ -50,7 +50,7 @@ impl UserForEntranceSelector {
 			None => {}
 			Some(user) => {
 				self.selected
-					.insert(user.public_key.clone(), now.clone().add(UserForEntranceSelector::SELECT_TIMEOUT));
+					.insert(user.id.clone(), now.clone().add(UserForEntranceSelector::SELECT_TIMEOUT));
 			}
 		}
 		result
@@ -82,12 +82,12 @@ mod tests {
 
 		let user_1 = selector.do_select(&room, &now).unwrap();
 		let user_2 = selector.do_select(&room, &now.add(Duration::from_secs(1))).unwrap();
-		assert_ne!(user_1.public_key, user_2.public_key);
+		assert_ne!(user_1.id, user_2.id);
 		assert!(selector.do_select(&room, &now).is_none());
 		// после паузы - только первый пользователь должен освободится
 		now = now.add(UserForEntranceSelector::SELECT_TIMEOUT);
 		let unselected_user_1 = selector.do_select(&room, &now).unwrap();
-		assert_eq!(user_1.public_key, unselected_user_1.public_key);
+		assert_eq!(user_1.id, unselected_user_1.id);
 		assert!(selector.do_select(&room, &now).is_none());
 	}
 
@@ -103,7 +103,7 @@ mod tests {
 		let mut selector = UserForEntranceSelector::default();
 		let user_1 = selector.do_select(&room, &now).unwrap();
 
-		assert_eq!(user_1.public_key, 1);
+		assert_eq!(user_1.id, 1);
 		assert!(selector.do_select(&room, &now).is_none());
 	}
 }

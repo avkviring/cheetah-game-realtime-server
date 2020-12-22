@@ -10,9 +10,9 @@ use crate::room::UserId;
 /// Используется только на клиенте, для передачи ключа на сервер
 ///
 #[derive(Debug)]
-pub struct UserPublicKeyFrameBuilder(pub UserId);
+pub struct UserIdFrameBuilder(pub UserId);
 
-impl FrameBuilder for UserPublicKeyFrameBuilder {
+impl FrameBuilder for UserIdFrameBuilder {
 	fn contains_self_data(&self, _: &Instant) -> bool {
 		false
 	}

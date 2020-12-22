@@ -35,7 +35,7 @@ pub struct RoomDump {
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct UserDump {
-	pub public_key: UserId,
+	pub id: UserId,
 	pub access_groups: AccessGroups,
 	attached: bool,
 }
@@ -122,7 +122,7 @@ fn buffer_to_value(source: &Vec<u8>) -> BinaryDump {
 impl From<&User> for UserDump {
 	fn from(user: &User) -> Self {
 		Self {
-			public_key: user.template.id,
+			id: user.template.id,
 			access_groups: user.template.access_groups,
 			attached: user.attached,
 		}

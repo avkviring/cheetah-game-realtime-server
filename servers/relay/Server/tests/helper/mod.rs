@@ -76,9 +76,9 @@ pub struct TestEnvBuilder {
 }
 
 impl TestEnvBuilder {
-	pub fn create_user(&mut self, public_key: UserId) {
+	pub fn create_user(&mut self, user_id: UserId) {
 		self.template.users.push(UserTemplate {
-			id: public_key,
+			id: user_id,
 			private_key: Default::default(),
 			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
