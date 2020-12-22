@@ -12,11 +12,11 @@ use serde::export::Formatter;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
-use cheetah_relay_common::room::access::AccessGroups;
+
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
@@ -28,6 +28,9 @@ use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::rooms::OutFrame;
+
+#[cfg(test)]
+use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod command;
 pub mod debug;
