@@ -43,14 +43,10 @@ mod tests {
 		};
 		command.execute(&mut room, &user1);
 
-		let protocol = room.get_user(&user1).unwrap().protocol.as_ref().unwrap();
-		assert!(protocol.out_commands_collector.commands.reliable.is_empty());
-
-		let protocol = room.get_user(&user2).unwrap().protocol.as_ref().unwrap();
-
+		assert!(room.get_user_out_commands(&user1).is_empty());
 		assert!(matches!(
-			protocol.out_commands_collector.commands.reliable.get(0).unwrap().command,
-			ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta { meta: _, command: S2CCommand::Created(ref c) }) if c.object_id == object_id
+			room.get_user_out_commands(&user2).get(0),
+			Some(S2CCommand::Created(c)) if c.object_id == object_id
 		));
 	}
 

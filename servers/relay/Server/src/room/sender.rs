@@ -1,30 +1,19 @@
-#[cfg(test)]
-use std::collections::VecDeque;
-
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
-use cheetah_relay_common::constants::FieldId;
+use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserPublicKey;
 
-use crate::room::object::GameObject;
+use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::types::FieldType;
 use crate::room::{Room, User};
 
 impl Room {
-	pub fn send_object_to_group(&mut self, object: &GameObject, except_user: Option<UserPublicKey>) {
-		let mut commands = Vec::new();
-		object.collect_create_commands(&mut commands);
-		commands.into_iter().for_each(|c| {
-			self.send_to_group(object.access_groups, c, |user| except_user != Option::Some(user.template.public_key));
-		})
-	}
-
 	///
 	/// Проверить права доступа, выполнить действие, результат выполнения отправить клиентам
 	///
@@ -138,9 +127,6 @@ impl Room {
 		let room_id = self.id;
 		let tracer = self.tracer.clone();
 
-		#[cfg(test)]
-		let test_commands_by_user = self.out_commands_by_users.clone();
-
 		self.users
 			.values_mut()
 			.filter(|user| user.attached)
@@ -153,28 +139,10 @@ impl Room {
 				protocol
 					.out_commands_collector
 					.add_command(channel_type.clone(), application_command.clone());
-
-				#[cfg(test)]
-				{
-					let user_public_key = user.template.public_key.clone();
-					let mut commands = test_commands_by_user.borrow_mut();
-					let user_commands = commands.entry(user_public_key).or_insert(VecDeque::new());
-					user_commands.push_front(command.clone());
-				}
 			});
 	}
 
-	pub fn send_to_user(&mut self, user_public_key: &u32, commands: Vec<S2CCommand>) {
-		#[cfg(test)]
-		{
-			let mut out_commands_by_user = self.out_commands_by_users.borrow_mut();
-			let entry = out_commands_by_user.entry(user_public_key.clone());
-			let user_commands = entry.or_insert(VecDeque::new());
-			for command in &commands {
-				user_commands.push_front(command.clone());
-			}
-		}
-
+	pub fn send_to_user(&mut self, user_public_key: &u32, object_template: GameObjectTemplateId, commands: Vec<S2CommandWithFieldInfo>) {
 		match self.users.get_mut(user_public_key) {
 			None => {
 				log::error!("[room] send to unknown user {:?}", user_public_key)
@@ -183,14 +151,31 @@ impl Room {
 				if let Some(ref mut protocol) = user.protocol {
 					if user.attached {
 						for command in commands {
-							self.tracer.on_s2c_command(self.id, user.template.public_key, &command);
-							let meta = self.current_meta.as_ref().unwrap();
-							let channel = self.current_channel.as_ref().unwrap();
-							let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-								meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
-								command,
-							});
-							protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+							let allow = match command.field {
+								None => true,
+								Some(FieldIdAndType { field_id, field_type }) => {
+									self.permission_manager.borrow_mut().get_permission(
+										object_template,
+										field_id,
+										field_type,
+										user.template.access_groups,
+									) > Permission::Deny
+								}
+							};
+
+							if allow {
+								self.tracer.on_s2c_command(self.id, user.template.public_key, &command.command);
+								let meta = self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation { timestamp: 0 });
+								let channel = self
+									.current_channel
+									.as_ref()
+									.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+								let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+									meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
+									command: command.command,
+								});
+								protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+							}
 						}
 					}
 				}
@@ -201,16 +186,14 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use std::time::Instant;
-
 	use cheetah_relay_common::commands::command::event::EventCommand;
 	use cheetah_relay_common::commands::command::long::SetLongCommand;
 	use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::protocol::frame::applications::ApplicationCommandChannelType;
-	use cheetah_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_relay_common::room::access::AccessGroups;
 
+	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 	use crate::room::template::config::{Permission, RoomTemplate};
 	use crate::room::tests::create_template;
 	use crate::room::types::FieldType;
@@ -243,8 +226,8 @@ mod tests {
 	fn should_do_action_check_execute_only_with_enough_permission() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
-		let user_1 = template.create_user(1, access_groups);
-		let user_2 = template.create_user(2, access_groups);
+		let user_1 = template.configure_user(1, access_groups);
+		let user_2 = template.configure_user(2, access_groups);
 
 		let field_id_1 = 10;
 		let field_id_2 = 11;
@@ -302,7 +285,7 @@ mod tests {
 			.permissions
 			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
-		let user = template.create_user(1, access_groups);
+		let user = template.configure_user(1, access_groups);
 		let mut room = Room::from_template(template);
 		let object = room.create_object(&user, access_groups);
 		object.access_groups = access_groups.clone();
@@ -320,7 +303,7 @@ mod tests {
 			}))
 		});
 		assert!(executed);
-		assert_eq!(room.out_commands_by_users.borrow().get(&user).is_none(), true);
+		assert!(room.get_user_out_commands(&user).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
 		let mut executed = false;
@@ -333,10 +316,7 @@ mod tests {
 			}))
 		});
 		assert!(executed);
-		assert!(matches!(
-			room.out_commands_by_users.borrow().get(&user).unwrap().get(0),
-			Option::Some(S2CCommand::SetLong(_))
-		));
+		assert!(matches!(room.get_user_out_commands(&user).get(0), Option::Some(S2CCommand::SetLong(_))));
 	}
 
 	///
@@ -347,8 +327,8 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups_a = AccessGroups(0b111);
 		let access_groups_b = AccessGroups(0b100);
-		let user_1 = template.create_user(1, access_groups_a);
-		let user_2 = template.create_user(2, access_groups_b);
+		let user_1 = template.configure_user(1, access_groups_a);
+		let user_2 = template.configure_user(2, access_groups_b);
 
 		let field_id_1 = 10;
 		let field_id_2 = 11;
@@ -376,12 +356,8 @@ mod tests {
 		});
 
 		assert!(executed);
-		assert!(matches!(
-			room.out_commands_by_users.borrow().get(&user_2).unwrap().get(0),
-			Option::Some(S2CCommand::SetLong(_))
-		));
-
-		room.out_commands_by_users.borrow_mut().get_mut(&user_2).unwrap().clear();
+		assert!(matches!(room.get_user_out_commands(&user_2).get(0), Option::Some(S2CCommand::SetLong(_))));
+		room.clear_user_out_commands(&user_2);
 
 		// изменяем поле, не доступное другому пользователю - он не должен получить обновление
 		let mut executed = false;
@@ -395,7 +371,7 @@ mod tests {
 		});
 
 		assert!(executed);
-		assert!(room.out_commands_by_users.borrow().get(&user_2).unwrap().is_empty());
+		assert!(room.get_user_out_commands(&user_2).is_empty());
 	}
 
 	///
@@ -406,8 +382,8 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
-		let user_1 = template.create_user(1, access_groups_a);
-		let user_2 = template.create_user(2, access_groups_b);
+		let user_1 = template.configure_user(1, access_groups_a);
+		let user_2 = template.configure_user(2, access_groups_b);
 
 		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user_1, access_groups_a).id.clone();
@@ -418,5 +394,55 @@ mod tests {
 			None
 		});
 		assert!(!executed);
+	}
+
+	#[test]
+	fn should_send_to_user() {
+		let user_id = 10;
+		let groups = AccessGroups(55);
+		let object_template = 5;
+		let deny_field_id = 50;
+		let allow_field_id = 70;
+
+		let mut template = RoomTemplate::default();
+		template.configure_user(user_id, groups);
+		template
+			.permissions
+			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
+
+		let mut room = Room::from_template(template);
+		room.mark_as_connected(&user_id);
+		let object = room.create_object(&user_id, groups);
+		object.template = object_template;
+		let object_id = object.id.clone();
+
+		let mut commands = Vec::new();
+		commands.push(S2CommandWithFieldInfo {
+			field: Some(FieldIdAndType {
+				field_id: deny_field_id,
+				field_type: FieldType::Long,
+			}),
+			command: S2CCommand::SetLong(SetLongCommand {
+				object_id: object_id.clone(),
+				field_id: deny_field_id,
+				value: 0,
+			}),
+		});
+		commands.push(S2CommandWithFieldInfo {
+			field: Some(FieldIdAndType {
+				field_id: allow_field_id,
+				field_type: FieldType::Long,
+			}),
+			command: S2CCommand::SetLong(SetLongCommand {
+				object_id: object_id.clone(),
+				field_id: allow_field_id,
+				value: 100,
+			}),
+		});
+		room.send_to_user(&user_id, object_template, commands);
+
+		let out_commands = room.get_user_out_commands(&user_id);
+		assert!(matches!(out_commands.get(0), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
+		assert_eq!(out_commands.len(), 1);
 	}
 }

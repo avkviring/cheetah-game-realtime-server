@@ -15,7 +15,7 @@ impl GameObjectTemplate {
 	pub fn to_root_game_object(&self) -> GameObject {
 		self.to_game_object(GameObjectId::new(self.id, ObjectOwner::Root))
 	}
-	pub fn to_user_game_object(&self, user_public_key: UserPublicKey) -> GameObject {
+	pub fn create_user_game_object(&self, user_public_key: UserPublicKey) -> GameObject {
 		self.to_game_object(GameObjectId::new(self.id, ObjectOwner::User(user_public_key)))
 	}
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {

@@ -3,7 +3,7 @@ use cheetah_relay_common::commands::command::{HeaplessBuffer, S2CCommand};
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::GameObject;
+use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::types::FieldType;
 use crate::room::Room;
@@ -21,14 +21,20 @@ impl ServerCommandExecutor for StructureCommand {
 }
 
 impl GameObject {
-	pub fn structures_to_commands(&self, commands: &mut Vec<S2CCommand>) {
-		self.structures.iter().for_each(|(k, v)| {
+	pub fn structures_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
+		self.structures.iter().for_each(|(field_id, v)| {
 			let structure = HeaplessBuffer::from_slice(&v.as_slice()).unwrap();
-			commands.push(S2CCommand::SetStruct(StructureCommand {
-				object_id: self.id.clone(),
-				field_id: k.clone(),
-				structure,
-			}));
+			commands.push(S2CommandWithFieldInfo {
+				field: Option::Some(FieldIdAndType {
+					field_id: field_id.clone(),
+					field_type: FieldType::Structure,
+				}),
+				command: S2CCommand::SetStruct(StructureCommand {
+					object_id: self.id.clone(),
+					field_id: field_id.clone(),
+					structure,
+				}),
+			});
 		})
 	}
 }
@@ -37,18 +43,18 @@ impl GameObject {
 mod tests {
 	use cheetah_relay_common::commands::command::structure::StructureCommand;
 	use cheetah_relay_common::commands::command::S2CCommand;
+	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::RoomTemplate;
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
-	use cheetah_relay_common::room::access::AccessGroups;
 
 	#[test]
 	pub fn should_set_structure() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user = template.create_user(1, access_groups);
+		let user = template.configure_user(1, access_groups);
 		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user, access_groups).id.clone();
 

@@ -12,11 +12,10 @@ use serde::export::Formatter;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::constants::FieldId;
+use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
-#[cfg(test)]
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
@@ -25,8 +24,8 @@ use cheetah_relay_common::room::UserPublicKey;
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::debug::tracer::CommandTracer;
-use crate::room::object::GameObject;
-use crate::room::template::config::{RoomTemplate, UserTemplate};
+use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::rooms::OutFrame;
 
@@ -58,11 +57,6 @@ pub struct Room {
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
 	pub out_commands: VecDeque<(AccessGroups, S2CCommand)>,
-	#[cfg(test)]
-	///
-	/// Команды поставленные в отправку конкретным пользователям, с проверкой прав доступа
-	///
-	pub out_commands_by_users: Rc<RefCell<HashMap<UserPublicKey, VecDeque<S2CCommand>>>>,
 }
 
 pub trait RoomUserListener {
@@ -112,8 +106,6 @@ impl Room {
 			object_id_generator: 0,
 			#[cfg(test)]
 			out_commands: Default::default(),
-			#[cfg(test)]
-			out_commands_by_users: Default::default(),
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -322,8 +314,24 @@ impl Room {
 		});
 		let user_public_key = template.public_key;
 		template.objects.iter().for_each(|object_template| {
-			let object = object_template.to_user_game_object(user_public_key);
-			self.send_object_to_group(&object, Option::None);
+			let object = object_template.create_user_game_object(user_public_key);
+
+			let mut commands = Vec::new();
+			object.collect_create_commands(&mut commands);
+			let permission_manager = self.permission_manager.clone();
+			let template = object.template;
+			commands.into_iter().for_each(|S2CommandWithFieldInfo { field, command }| {
+				self.send_to_group(object.access_groups, command, |user| match field {
+					None => true,
+					Some(FieldIdAndType { field_id, field_type }) => {
+						permission_manager
+							.borrow_mut()
+							.get_permission(template, field_id, field_type, user.template.access_groups)
+							> Permission::Deny
+					}
+				});
+			});
+
 			self.insert_object(object);
 		});
 	}
@@ -332,6 +340,7 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use std::cell::RefCell;
+	use std::collections::VecDeque;
 	use std::rc::Rc;
 	use std::time::Instant;
 
@@ -347,7 +356,8 @@ mod tests {
 
 	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::object::GameObject;
-	use crate::room::template::config::{GameObjectTemplate, RoomTemplate, UserTemplate};
+	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
+	use crate::room::types::FieldType;
 	use crate::room::{Room, RoomUserListener};
 
 	impl Default for Room {
@@ -366,7 +376,6 @@ mod tests {
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
 			let mut object = GameObject::new(id.clone());
 			object.access_groups = access_groups;
-			self.send_object_to_group(&object, Option::Some(*owner));
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
 		}
@@ -380,14 +389,48 @@ mod tests {
 				}
 			}
 		}
+
+		pub fn get_user_out_commands(&self, user_id: &UserPublicKey) -> VecDeque<S2CCommand> {
+			self.get_user(user_id)
+				.unwrap()
+				.protocol
+				.as_ref()
+				.unwrap()
+				.out_commands_collector
+				.commands
+				.reliable
+				.iter()
+				.map(|c| &c.command)
+				.map(|c| match c {
+					ApplicationCommand::TestSimple(_) => None,
+					ApplicationCommand::TestObject(_, _) => None,
+					ApplicationCommand::S2CCommandWithMeta(c) => Some(c.command.clone()),
+					ApplicationCommand::C2SCommandWithMeta(_) => None,
+				})
+				.filter(|c| c.is_some())
+				.map(|c| c.unwrap())
+				.collect()
+		}
+
+		pub fn clear_user_out_commands(&mut self, user_id: &UserPublicKey) {
+			self.get_user_mut(user_id)
+				.unwrap()
+				.protocol
+				.as_mut()
+				.unwrap()
+				.out_commands_collector
+				.commands
+				.reliable
+				.clear();
+		}
 	}
 
 	#[test]
 	fn should_remove_objects_when_disconnect() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b111);
-		let user_a = template.create_user(1, access_groups);
-		let user_b = template.create_user(2, access_groups);
+		let user_a = template.configure_user(1, access_groups);
+		let user_b = template.configure_user(2, access_groups);
 
 		let mut room = Room::from_template(template);
 		let object_a_1 = room.create_object(&user_a, access_groups).id.clone();
@@ -624,6 +667,38 @@ mod tests {
 			order = format!("{}{}", order, o.id.id);
 		});
 		assert_eq!(order, "5200");
+	}
+
+	///
+	/// При загрузки пользовательских предопределенных объектов должны быть учтены правила доступа
+	///
+	#[test]
+	pub fn should_apply_permissions_for_self_object() {
+		let mut template = RoomTemplate::default();
+		let groups = AccessGroups(55);
+		let user1 = template.configure_user(1, groups);
+		let user2 = template.configure_user(2, groups);
+
+		let object1_template = template.configure_user_object(1, &user1, 100, groups);
+		let allow_field_id = 5;
+		let deny_field_id = 10;
+		object1_template.fields.longs.insert(allow_field_id, 555);
+		object1_template.fields.longs.insert(deny_field_id, 111);
+		template
+			.permissions
+			.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
+
+		let user1_template = template.users.iter().find(|u| u.public_key == user1).unwrap().clone();
+
+		let mut room = Room::from_template(template);
+		room.mark_as_connected(&user2);
+		room.user_connected(user1_template);
+
+		let commands = room.get_user_out_commands(&user2);
+
+		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
+		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
+		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
 	}
 
 	pub fn create_template() -> (RoomTemplate, UserTemplate) {

@@ -8,8 +8,8 @@ pub mod created;
 pub mod delete;
 pub mod event;
 pub mod float;
-pub mod load_room;
 pub mod long;
+pub mod room;
 pub mod structure;
 
 ///
@@ -38,7 +38,7 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_public_key: &UserPubli
 		C2SCommand::SetStruct(command) => command.execute(room, user_public_key),
 		C2SCommand::Event(command) => command.execute(room, user_public_key),
 		C2SCommand::Delete(command) => command.execute(room, user_public_key),
-		C2SCommand::AttachToRoom => load_room::attach_to_room(room, user_public_key),
+		C2SCommand::AttachToRoom => room::attach_to_room(room, user_public_key),
 		C2SCommand::Created(command) => command.execute(room, user_public_key),
 	}
 }
@@ -55,8 +55,8 @@ mod tests {
 	pub fn setup() -> (Room, GameObjectId, UserPublicKey, UserPublicKey) {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
-		let user_1 = template.create_user(1, access_groups);
-		let user_2 = template.create_user(2, access_groups);
+		let user_1 = template.configure_user(1, access_groups);
+		let user_2 = template.configure_user(2, access_groups);
 		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user_1, access_groups).id.clone();
 		(room, object_id, user_1, user_2)

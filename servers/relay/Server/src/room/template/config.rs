@@ -173,8 +173,10 @@ mod tests {
 	use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_relay_common::room::owner::ObjectOwner;
 	use cheetah_relay_common::room::UserPublicKey;
 
+	use crate::room::object::GameObject;
 	use crate::room::template::config::{
 		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, RoomTemplate, RoomTemplateError, TemplatePermission,
 		UserTemplate,
@@ -182,7 +184,7 @@ mod tests {
 	use crate::room::types::FieldType;
 
 	impl RoomTemplate {
-		pub fn create_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {
+		pub fn configure_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {
 			self.users.push(UserTemplate {
 				public_key,
 				private_key: [5; 32],
@@ -191,6 +193,33 @@ mod tests {
 				unmapping: Default::default(),
 			});
 			public_key
+		}
+
+		pub fn configure_user_object(
+			&mut self,
+			id: u32,
+			user_id: &UserPublicKey,
+			template: GameObjectTemplateId,
+			access_groups: AccessGroups,
+		) -> &mut GameObjectTemplate {
+			match self.users.iter_mut().find(|t| t.public_key == *user_id) {
+				None => {
+					panic!("user({}) not found", user_id);
+				}
+				Some(user) => {
+					let objects = &mut user.objects;
+					objects.push(GameObjectTemplate {
+						id,
+						template,
+						access_groups,
+						fields: Default::default(),
+						unmapping: Default::default(),
+					});
+					let len = objects.len();
+					let option = objects.get_mut(len - 1);
+					option.unwrap()
+				}
+			}
 		}
 	}
 

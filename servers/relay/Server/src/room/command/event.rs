@@ -34,7 +34,7 @@ mod tests {
 	pub fn should_send_event() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user = template.create_user(1, access_groups);
+		let user = template.configure_user(1, access_groups);
 		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user, access_groups).id.clone();
 		room.out_commands.clear();
@@ -51,7 +51,7 @@ mod tests {
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
 		let mut template = RoomTemplate::default();
-		let user = template.create_user(1, AccessGroups(10));
+		let user = template.configure_user(1, AccessGroups(10));
 		let mut room = Room::from_template(template);
 
 		let command = EventCommand {

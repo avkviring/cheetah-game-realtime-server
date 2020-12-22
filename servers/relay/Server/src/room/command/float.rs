@@ -3,7 +3,7 @@ use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserPublicKey;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::GameObject;
+use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::types::FieldType;
 use crate::room::Room;
@@ -46,13 +46,19 @@ impl ServerCommandExecutor for SetFloat64Command {
 }
 
 impl GameObject {
-	pub fn floats_to_commands(&self, commands: &mut Vec<S2CCommand>) {
-		self.floats.iter().for_each(|(k, v)| {
-			commands.push(S2CCommand::SetFloat(SetFloat64Command {
-				object_id: self.id.clone(),
-				field_id: k.clone(),
-				value: *v,
-			}));
+	pub fn floats_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
+		self.floats.iter().for_each(|(field_id, v)| {
+			commands.push(S2CommandWithFieldInfo {
+				field: Option::Some(FieldIdAndType {
+					field_id: field_id.clone(),
+					field_type: FieldType::Float,
+				}),
+				command: S2CCommand::SetFloat(SetFloat64Command {
+					object_id: self.id.clone(),
+					field_id: field_id.clone(),
+					value: *v,
+				}),
+			});
 		})
 	}
 }
@@ -73,7 +79,7 @@ mod tests {
 	fn should_set_float_command() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user = template.create_user(1, access_groups);
+		let user = template.configure_user(1, access_groups);
 		let mut room = Room::from_template(template);
 
 		let object_id = room.create_object(&user, access_groups).id.clone();
@@ -94,7 +100,7 @@ mod tests {
 	fn should_increment_float_command() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user = template.create_user(1, access_groups);
+		let user = template.configure_user(1, access_groups);
 		let mut room = Room::from_template(template);
 
 		let object_id = room.create_object(&user, access_groups).id.clone();
@@ -122,7 +128,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
 		let mut template = RoomTemplate::default();
-		let user = template.create_user(1, AccessGroups(10));
+		let user = template.configure_user(1, AccessGroups(10));
 		let mut room = Room::from_template(template);
 
 		let command = IncrementFloat64C2SCommand {

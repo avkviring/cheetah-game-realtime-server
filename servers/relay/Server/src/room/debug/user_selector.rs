@@ -72,8 +72,8 @@ mod tests {
 	#[test]
 	pub fn should_select_users_with_timeout() {
 		let mut template = RoomTemplate::default();
-		template.create_user(1, AccessGroups(1));
-		template.create_user(2, AccessGroups(1));
+		template.configure_user(1, AccessGroups(1));
+		template.configure_user(2, AccessGroups(1));
 		let room = Room::from_template(template);
 
 		let mut selector = UserForEntranceSelector::default();
@@ -94,8 +94,8 @@ mod tests {
 	#[test]
 	pub fn should_dont_select_connected_users() {
 		let mut template = RoomTemplate::default();
-		template.create_user(1, AccessGroups(1));
-		template.create_user(2, AccessGroups(1));
+		template.configure_user(1, AccessGroups(1));
+		template.configure_user(2, AccessGroups(1));
 
 		let mut room = Room::from_template(template);
 		let now = Instant::now();

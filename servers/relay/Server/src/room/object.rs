@@ -3,12 +3,14 @@ use std::collections::HashMap;
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
+use cheetah_relay_common::commands::command::load::{CreatedGameObjectCommand, CreateGameObjectCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::UserPublicKey;
+
+use crate::room::types::FieldType;
 
 ///
 /// Игровой объект - логическая группировка игровых данных
@@ -42,33 +44,51 @@ impl GameObject {
 		}
 	}
 
-	pub fn collect_create_commands(&self, commands: &mut Vec<S2CCommand>) {
-		commands.push(S2CCommand::Create(CreateGameObjectCommand {
-			object_id: self.id.clone(),
-			template: self.template.clone(),
-			access_groups: self.access_groups.clone(),
-		}));
+	pub fn collect_create_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
+		commands.push(S2CommandWithFieldInfo {
+			field: Option::None,
+			command: S2CCommand::Create(CreateGameObjectCommand {
+				object_id: self.id.clone(),
+				template: self.template.clone(),
+				access_groups: self.access_groups.clone(),
+			}),
+		});
 
 		self.structures_to_commands(commands);
 		self.longs_to_commands(commands);
 		self.floats_to_commands(commands);
 
 		if self.created {
-			commands.push(S2CCommand::Created(CreatedGameObjectCommand { object_id: self.id.clone() }));
+			commands.push(S2CommandWithFieldInfo {
+				field: None,
+				command: S2CCommand::Created(CreatedGameObjectCommand { object_id: self.id.clone() }),
+			});
 		}
 	}
 }
 
+#[derive(Debug)]
+pub struct S2CommandWithFieldInfo {
+	pub field: Option<FieldIdAndType>,
+	pub command: S2CCommand,
+}
+
+#[derive(Debug)]
+pub struct FieldIdAndType {
+	pub field_id: FieldId,
+	pub field_type: FieldType,
+}
+
 #[cfg(test)]
 mod tests {
-
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-
-	use crate::room::object::GameObject;
-
+	
+	use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+	use crate::room::types::FieldType;
+	
 	///
 	/// Проверяем что все типы данных преобразованы в команды
 	///
@@ -87,11 +107,23 @@ mod tests {
 		object.collect_create_commands(&mut commands);
 
 		assert!(matches!(commands.remove(0),
-			S2CCommand::Create(c) if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
-		assert!(matches!(commands.remove(0), S2CCommand::SetStruct(c) if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
-		assert!(matches!(commands.remove(0), S2CCommand::SetLong(c) if c.object_id==id && c.field_id == 1 && c.value == 100));
-		assert!(matches!(commands.remove(0), S2CCommand::SetFloat(c) if c.object_id==id && c.field_id == 2 && c.value == 200.200));
-		assert!(matches!(commands.remove(0), S2CCommand::Created(c) if c.object_id==id));
+			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
+
+		
+		assert!(matches!(commands.remove(0),
+			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStruct(c) }
+			if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
+
+		assert!(matches!(commands.remove(0), 
+			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
+			if c.object_id==id && c.field_id == 1 && c.value == 100));
+
+		assert!(matches!(commands.remove(0),
+			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 2, field_type: FieldType::Float }),  command: S2CCommand::SetFloat(c)}
+			if c.object_id==id && c.field_id == 2 && c.value == 200.200));
+
+		assert!(matches!(commands.remove(0), 
+			S2CommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id));
 	}
 
 	///
@@ -105,8 +137,10 @@ mod tests {
 
 		let mut commands = Vec::new();
 		object.collect_create_commands(&mut commands);
-		assert!(matches!(commands.remove(0), S2CCommand::Create(_)));
-		assert!(matches!(commands.remove(0), S2CCommand::SetLong(c) if c.object_id==id && c.field_id == 1 && c.value == 100));
+		assert!(matches!(commands.remove(0), S2CommandWithFieldInfo { field: None, command: S2CCommand::Create(_)}));
+		assert!(matches!(commands.remove(0), 
+			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
+			if c.object_id==id && c.field_id== 1 && c.value == 100));
 		assert_eq!(commands.len(), 0)
 	}
 }
