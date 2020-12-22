@@ -9,7 +9,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -33,7 +33,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 }
 
 impl ServerCommandExecutor for SetFloat64Command {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -80,14 +80,14 @@ mod tests {
 	fn should_set_float_command() {
 		let (mut room, user, access_groups) = setup();
 
-		let object_id = room.create_object(&user, access_groups).id.clone();
+		let object_id = room.create_object(user, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = SetFloat64Command {
 			object_id: object_id.clone(),
 			field_id: 10,
 			value: 100.100,
 		};
-		command.clone().execute(&mut room, &user);
+		command.clone().execute(&mut room, user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.floats.get(&10).unwrap() as u64, 100);
@@ -98,15 +98,15 @@ mod tests {
 	fn should_increment_float_command() {
 		let (mut room, user, access_groups) = setup();
 
-		let object_id = room.create_object(&user, access_groups).id.clone();
+		let object_id = room.create_object(user, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = IncrementFloat64C2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
 			increment: 100.100,
 		};
-		command.clone().execute(&mut room, &user);
-		command.clone().execute(&mut room, &user);
+		command.clone().execute(&mut room, user);
+		command.clone().execute(&mut room, user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.floats.get(&10).unwrap() as u64, 200);
@@ -129,7 +129,7 @@ mod tests {
 			field_id: 10,
 			increment: 100.100,
 		};
-		command.execute(&mut room, &user);
+		command.execute(&mut room, user);
 	}
 
 	fn setup() -> (Room, UserId, AccessGroups) {

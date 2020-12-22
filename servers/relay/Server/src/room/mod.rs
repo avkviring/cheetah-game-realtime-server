@@ -131,7 +131,7 @@ impl Room {
 		}
 	}
 
-	pub fn process_in_frame(&mut self, user_id: &UserId, frame: Frame, now: &Instant) {
+	pub fn process_in_frame(&mut self, user_id: UserId, frame: Frame, now: &Instant) {
 		let user = self.users.get_mut(&user_id);
 		let mut commands = Vec::new();
 		match user {
@@ -169,7 +169,7 @@ impl Room {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
 					self.tracer.on_c2s_command(self.id, user_id.clone(), &command_with_meta.command);
-					execute(command_with_meta.command, self, &user_id);
+					execute(command_with_meta.command, self, user_id);
 				}
 				_ => {
 					log::error!("[room({:?})] receive unsupported command {:?}", self.id, application_command)
@@ -202,22 +202,22 @@ impl Room {
 		Result::Ok(())
 	}
 
-	pub fn get_user(&self, user_id: &UserId) -> Option<&User> {
-		self.users.get(user_id)
+	pub fn get_user(&self, user_id: UserId) -> Option<&User> {
+		self.users.get(&user_id)
 	}
 
-	pub fn get_user_mut(&mut self, user_id: &UserId) -> Option<&mut User> {
-		self.users.get_mut(user_id)
+	pub fn get_user_mut(&mut self, user_id: UserId) -> Option<&mut User> {
+		self.users.get_mut(&user_id)
 	}
 
 	///
 	/// Связь с пользователям разорвана
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
-	pub fn disconnect_user(&mut self, user_id: &UserId) {
+	pub fn disconnect_user(&mut self, user_id: UserId) {
 		log::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
 		self.current_user.replace(user_id.clone());
-		match self.users.remove(user_id) {
+		match self.users.remove(&user_id) {
 			None => {}
 			Some(user) => {
 				let mut objects = Vec::new();
@@ -304,7 +304,7 @@ impl Room {
 		});
 
 		for i in 0..disconnected_users_count {
-			self.disconnect_user(&disconnected_user[i]);
+			self.disconnect_user(disconnected_user[i]);
 		}
 	}
 
@@ -372,7 +372,7 @@ mod tests {
 			Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
 		}
 
-		pub fn create_object(&mut self, owner: &UserId, access_groups: AccessGroups) -> &mut GameObject {
+		pub fn create_object(&mut self, owner: UserId, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
 			let mut object = GameObject::new(id.clone());
@@ -381,8 +381,8 @@ mod tests {
 			self.get_object_mut(&id).unwrap()
 		}
 
-		pub fn mark_as_connected(&mut self, user_id: &UserId) {
-			match self.get_user_mut(&user_id) {
+		pub fn mark_as_connected(&mut self, user_id: UserId) {
+			match self.get_user_mut(user_id) {
 				None => {}
 				Some(user) => {
 					user.protocol = Option::Some(RelayProtocol::new(&Instant::now()));
@@ -391,7 +391,7 @@ mod tests {
 			}
 		}
 
-		pub fn get_user_out_commands(&self, user_id: &UserId) -> VecDeque<S2CCommand> {
+		pub fn get_user_out_commands(&self, user_id: UserId) -> VecDeque<S2CCommand> {
 			self.get_user(user_id)
 				.unwrap()
 				.protocol
@@ -413,7 +413,7 @@ mod tests {
 				.collect()
 		}
 
-		pub fn clear_user_out_commands(&mut self, user_id: &UserId) {
+		pub fn clear_user_out_commands(&mut self, user_id: UserId) {
 			self.get_user_mut(user_id)
 				.unwrap()
 				.protocol
@@ -436,13 +436,13 @@ mod tests {
 		template.configure_user(user_b, access_groups);
 
 		let mut room = Room::from_template(template);
-		let object_a_1 = room.create_object(&user_a, access_groups).id.clone();
-		let object_a_2 = room.create_object(&user_a, access_groups).id.clone();
-		let object_b_1 = room.create_object(&user_b, access_groups).id.clone();
-		let object_b_2 = room.create_object(&user_b, access_groups).id.clone();
+		let object_a_1 = room.create_object(user_a, access_groups).id.clone();
+		let object_a_2 = room.create_object(user_a, access_groups).id.clone();
+		let object_b_1 = room.create_object(user_b, access_groups).id.clone();
+		let object_b_2 = room.create_object(user_b, access_groups).id.clone();
 
 		room.out_commands.clear();
-		room.disconnect_user(&user_a);
+		room.disconnect_user(user_a);
 
 		assert!(!room.contains_object(&object_a_1));
 		assert!(!room.contains_object(&object_a_2));
@@ -490,7 +490,7 @@ mod tests {
 		template.users.push(user_template.clone());
 
 		let mut room = Room::from_template(template);
-		room.process_in_frame(&user_template.id, Frame::new(0), &Instant::now());
+		room.process_in_frame(user_template.id, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
 			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_template.id))));
@@ -537,7 +537,7 @@ mod tests {
 
 		let mut room = Room::from_template(template);
 
-		room.process_in_frame(&user1_template.id, Frame::new(0), &Instant::now());
+		room.process_in_frame(user1_template.id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
 		frame_with_attach_to_room.commands.reliable.push_back(ApplicationCommandDescription {
@@ -547,9 +547,9 @@ mod tests {
 				command: C2SCommand::AttachToRoom,
 			}),
 		});
-		room.process_in_frame(&user1_template.id, frame_with_attach_to_room, &Instant::now());
+		room.process_in_frame(user1_template.id, frame_with_attach_to_room, &Instant::now());
 
-		let user1 = room.get_user_mut(&user1_template.id).unwrap();
+		let user1 = room.get_user_mut(user1_template.id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
 			protocol
@@ -564,8 +564,8 @@ mod tests {
 			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_template.id))
 		);
 		protocol.out_commands_collector.commands.reliable.clear();
-		room.process_in_frame(&user2_template.id, Frame::new(0), &Instant::now());
-		let user1 = room.get_user_mut(&user1_template.id).unwrap();
+		room.process_in_frame(user2_template.id, Frame::new(0), &Instant::now());
+		let user1 = room.get_user_mut(user1_template.id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
 			protocol
@@ -589,7 +589,7 @@ mod tests {
 		let (mut template, user_template) = create_template();
 		template.auto_create_user = true;
 		let mut room = Room::from_template(template);
-		room.disconnect_user(&user_template.id);
+		room.disconnect_user(user_template.id);
 		assert!(room.users.contains_key(&user_template.id));
 	}
 
@@ -623,8 +623,8 @@ mod tests {
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
 		let mut room = Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
-		room.process_in_frame(&user_template.id, Frame::new(0), &Instant::now());
-		room.disconnect_user(&user_template.id);
+		room.process_in_frame(user_template.id, Frame::new(0), &Instant::now());
+		room.disconnect_user(user_template.id);
 
 		assert_eq!(test_listener.clone().borrow().trace, "r100c100d100".to_string());
 	}
@@ -696,10 +696,10 @@ mod tests {
 		let user1_template = template.users.iter().find(|u| u.id == user1).unwrap().clone();
 
 		let mut room = Room::from_template(template);
-		room.mark_as_connected(&user2);
+		room.mark_as_connected(user2);
 		room.user_connected(user1_template);
 
-		let commands = room.get_user_out_commands(&user2);
+		let commands = room.get_user_out_commands(user2);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));

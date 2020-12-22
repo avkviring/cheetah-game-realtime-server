@@ -6,14 +6,14 @@ use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let user = room.get_user(user_id).unwrap();
 		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
 			if object_id_user != user.template.id {
 				error_c2s_command(
 					"DeleteGameObjectCommand",
 					room,
-					&user.template.id,
+					user.template.id,
 					format!("User not owner for game object {:?} for user {:?}", self.object_id, user),
 				);
 				return;
@@ -43,13 +43,13 @@ mod tests {
 		template.configure_user(user_id, access_groups);
 		let mut room = Room::from_template(template);
 
-		let object_id = room.create_object(&user_id, access_groups).id.clone();
+		let object_id = room.create_object(user_id, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
 
-		command.clone().execute(&mut room, &user_id);
+		command.clone().execute(&mut room, user_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Delete(c))) if c==command));
@@ -66,7 +66,7 @@ mod tests {
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
-		command.clone().execute(&mut room, &user_id);
+		command.clone().execute(&mut room, user_id);
 	}
 
 	#[test]
@@ -79,13 +79,13 @@ mod tests {
 		template.configure_user(user_b, access_groups);
 		let mut room = Room::from_template(template);
 
-		let object_id = room.create_object(&user_a, access_groups).id.clone();
+		let object_id = room.create_object(user_a, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
 
-		command.clone().execute(&mut room, &user_b);
+		command.clone().execute(&mut room, user_b);
 
 		assert!(matches!(room.get_object_mut(&object_id), Some(_)));
 		assert!(matches!(room.out_commands.pop_back(), None));

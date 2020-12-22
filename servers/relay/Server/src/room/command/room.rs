@@ -4,7 +4,7 @@ use cheetah_relay_common::room::UserId;
 use crate::room::object::S2CommandWithFieldInfo;
 use crate::room::Room;
 
-pub fn attach_to_room(room: &mut Room, user_id: &UserId) {
+pub fn attach_to_room(room: &mut Room, user_id: UserId) {
 	match room.get_user_mut(user_id) {
 		None => {
 			log::error!("[load_room] user not found {:?}", user_id);
@@ -50,17 +50,17 @@ mod tests {
 		template.configure_user(user_b, groups_b);
 		let mut room = Room::from_template(template);
 
-		room.mark_as_connected(&user_a);
-		room.mark_as_connected(&user_b);
+		room.mark_as_connected(user_a);
+		room.mark_as_connected(user_b);
 
-		let object_a_1 = room.create_object(&user_b, groups_a).id.clone();
-		let object_a_2 = room.create_object(&user_b, groups_a).id.clone();
-		room.create_object(&user_b, groups_b);
-		room.create_object(&user_b, groups_b);
+		let object_a_1 = room.create_object(user_b, groups_a).id.clone();
+		let object_a_2 = room.create_object(user_b, groups_a).id.clone();
+		room.create_object(user_b, groups_b);
+		room.create_object(user_b, groups_b);
 
-		attach_to_room(&mut room, &user_a);
+		attach_to_room(&mut room, user_a);
 
-		let mut commands = room.get_user_out_commands(&user_a);
+		let mut commands = room.get_user_out_commands(user_a);
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1));
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_2));
 		assert!(matches!(commands.pop_front(), None));

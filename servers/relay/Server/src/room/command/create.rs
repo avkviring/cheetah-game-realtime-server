@@ -8,14 +8,14 @@ use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let user = room.get_user(user_id).unwrap();
 
 		if self.object_id.id == 0 {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				&user.template.id,
+				user.template.id,
 				format!("0 is forbidden for game object id"),
 			);
 			return;
@@ -27,7 +27,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				&user.template.id,
+				user.template.id,
 				format!("Incorrect access group {:?} with client groups {:?}", groups, user.template.access_groups),
 			);
 			return;
@@ -38,7 +38,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 				error_c2s_command(
 					"CreateGameObjectCommand",
 					room,
-					&user.template.id,
+					user.template.id,
 					format!("Incorrect object_id {:?} for user {:?}", self.object_id, user),
 				);
 				return;
@@ -49,7 +49,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				&user.template.id,
+				user.template.id,
 				format!("Object already exists with id {:?}", self.object_id),
 			);
 			return;
@@ -66,7 +66,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			compare_and_set_owners: Default::default(),
 		};
 
-		room.send_to_group(groups, S2CCommand::Create(self), |user| user.template.id != *user_id);
+		room.send_to_group(groups, S2CCommand::Create(self), |user| user.template.id != user_id);
 		room.insert_object(object);
 	}
 }
@@ -89,7 +89,7 @@ mod tests {
 		let user_id = 1;
 		template.configure_user(user_id, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
-		room.mark_as_connected(&user_id);
+		room.mark_as_connected(user_id);
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
@@ -97,7 +97,7 @@ mod tests {
 			template: 100,
 			access_groups: AccessGroups(0b10),
 		};
-		command.clone().execute(&mut room, &user_id);
+		command.clone().execute(&mut room, user_id);
 
 		assert!(matches!(
 			room.get_object_mut(&object_id),
@@ -108,7 +108,7 @@ mod tests {
 		// проверяем факт посылки команды
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Create(c))) if c==command));
 		// проверяем что команда не отсылается обратно текущему пользователю
-		assert!(room.get_user_out_commands(&user_id).is_empty());
+		assert!(room.get_user_out_commands(user_id).is_empty());
 	}
 
 	///
@@ -128,7 +128,7 @@ mod tests {
 			access_groups: AccessGroups(0b10),
 		};
 
-		command.clone().execute(&mut room, &user_id);
+		command.clone().execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
@@ -150,7 +150,7 @@ mod tests {
 			access_groups: AccessGroups(0b1000),
 		};
 
-		command.clone().execute(&mut room, &user_id);
+		command.clone().execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
@@ -172,7 +172,7 @@ mod tests {
 			access_groups: AccessGroups(0b11),
 		};
 
-		command.clone().execute(&mut room, &user_id);
+		command.clone().execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
@@ -188,7 +188,7 @@ mod tests {
 		template.configure_user(user_id, access_groups);
 		let mut room = Room::from_template(template);
 
-		let object = room.create_object(&user_id, access_groups);
+		let object = room.create_object(user_id, access_groups);
 		object.template = 777;
 		let object_id = object.id.clone();
 
@@ -200,7 +200,7 @@ mod tests {
 			access_groups: AccessGroups(0b1000),
 		};
 
-		command.clone().execute(&mut room, &user_id);
+		command.clone().execute(&mut room, user_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template == 777));
 		assert!(matches!(room.out_commands.pop_back(), None));

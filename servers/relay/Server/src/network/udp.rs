@@ -133,7 +133,7 @@ impl UDPServer {
 							}
 						};
 						if let Some(frame) = readed_frame {
-							rooms.on_frame_received(&user_id, frame, &now);
+							rooms.on_frame_received(user_id, frame, &now);
 						}
 					}
 				}

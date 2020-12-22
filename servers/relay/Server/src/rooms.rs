@@ -96,8 +96,8 @@ impl Rooms {
 		}
 	}
 
-	pub fn on_frame_received(&mut self, user_id: &UserId, frame: Frame, now: &Instant) {
-		let room_id = (*self.users.clone()).borrow_mut().users.get(user_id).cloned();
+	pub fn on_frame_received(&mut self, user_id: UserId, frame: Frame, now: &Instant) {
+		let room_id = (*self.users.clone()).borrow().users.get(&user_id).cloned();
 		match room_id {
 			None => {
 				log::error!("[rooms] user({:?} not found ", user_id);

@@ -17,7 +17,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.longs.get_mut(&self.field_id) {
 				match (*value).checked_add(self.increment) {
@@ -44,7 +44,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 }
 
 impl ServerCommandExecutor for SetLongCommand {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let field_id = self.field_id.clone();
 		let object_id = self.object_id.clone();
 
@@ -58,7 +58,7 @@ impl ServerCommandExecutor for SetLongCommand {
 }
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
-	fn execute(self, room: &mut Room, uesr_id: &UserId) {
+	fn execute(self, room: &mut Room, uesr_id: UserId) {
 		let object_id = self.object_id.clone();
 		let field_id = self.field_id.clone();
 		let reset = self.reset.clone();
@@ -153,7 +153,7 @@ mod tests {
 			field_id: 10,
 			value: 100,
 		};
-		command.clone().execute(&mut room, &user);
+		command.clone().execute(&mut room, user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.longs.get(&10).unwrap(), 100);
@@ -170,8 +170,8 @@ mod tests {
 			field_id: 10,
 			increment: 100,
 		};
-		command.clone().execute(&mut room, &user);
-		command.clone().execute(&mut room, &user);
+		command.clone().execute(&mut room, user);
+		command.clone().execute(&mut room, user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.longs.get(&10).unwrap(), 200);
@@ -194,8 +194,8 @@ mod tests {
 			field_id: 10,
 			increment: i64::max_value(),
 		};
-		command.clone().execute(&mut room, &user);
-		command.execute(&mut room, &user);
+		command.clone().execute(&mut room, user);
+		command.execute(&mut room, user);
 	}
 
 	///
@@ -211,7 +211,7 @@ mod tests {
 			new: 100,
 			reset: 0,
 		};
-		command1.clone().execute(&mut room, &user_template.id);
+		command1.clone().execute(&mut room, user_template.id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command1.new
@@ -224,7 +224,7 @@ mod tests {
 			new: 200,
 			reset: 0,
 		};
-		command2.clone().execute(&mut room, &user_template.id);
+		command2.clone().execute(&mut room, user_template.id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command1.new
@@ -237,7 +237,7 @@ mod tests {
 			new: 300,
 			reset: 0,
 		};
-		command3.clone().execute(&mut room, &user_template.id);
+		command3.clone().execute(&mut room, user_template.id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command3.new
@@ -257,7 +257,7 @@ mod tests {
 			reset: 555,
 		};
 		room.out_commands.clear();
-		command.clone().execute(&mut room, &user_template.id);
+		command.clone().execute(&mut room, user_template.id);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c.value==command.new));
 	}
 
@@ -274,13 +274,13 @@ mod tests {
 			new: 100,
 			reset: 555,
 		};
-		command.clone().execute(&mut room, &user_template.id);
+		command.clone().execute(&mut room, user_template.id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command.field_id).unwrap(),
 			command.new
 		);
 
-		room.disconnect_user(&user_template.id);
+		room.disconnect_user(user_template.id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command.field_id).unwrap(),
 			command.reset
@@ -308,10 +308,10 @@ mod tests {
 			new: 200,
 			reset: 1555,
 		};
-		command_1.clone().execute(&mut room, &user_template_1.id);
-		command_2.clone().execute(&mut room, &user_template_2.id);
+		command_1.clone().execute(&mut room, user_template_1.id);
+		command_2.clone().execute(&mut room, user_template_2.id);
 
-		room.disconnect_user(&user_template_1.id);
+		room.disconnect_user(user_template_1.id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command_1.field_id).unwrap(),
 			command_2.new
@@ -363,7 +363,7 @@ mod tests {
 			}],
 		});
 		let mut room = Room::from_template(template);
-		let object = room.create_object(&user_template_3.id, access_group);
+		let object = room.create_object(user_template_3.id, access_group);
 		object.template = object_template;
 
 		let object_id = object.id.clone();
@@ -376,7 +376,7 @@ mod tests {
 		let user = 1;
 		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(&user, access_groups).id.clone();
+		let object_id = room.create_object(user, access_groups).id.clone();
 		(room, user, object_id)
 	}
 }

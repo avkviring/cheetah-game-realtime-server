@@ -9,7 +9,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {
@@ -57,7 +57,7 @@ mod tests {
 		let user = 1;
 		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(&user, access_groups).id.clone();
+		let object_id = room.create_object(user, access_groups).id.clone();
 
 		room.out_commands.clear();
 		let command = StructureCommand {
@@ -66,7 +66,7 @@ mod tests {
 			structure: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 
-		command.clone().execute(&mut room, &user);
+		command.clone().execute(&mut room, user);
 		let object = room.get_object_mut(&object_id).unwrap();
 
 		assert_eq!(*object.structures.get(&100).unwrap(), command.structure.to_vec());

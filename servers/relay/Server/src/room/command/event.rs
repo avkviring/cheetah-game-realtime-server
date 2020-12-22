@@ -9,7 +9,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(self, room: &mut Room, user_id: &UserId) {
+	fn execute(self, room: &mut Room, user_id: UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self));
@@ -34,7 +34,7 @@ mod tests {
 	#[test]
 	pub fn should_send_event() {
 		let (mut room, user, access_groups) = setup();
-		let object_id = room.create_object(&user, access_groups).id.clone();
+		let object_id = room.create_object(user, access_groups).id.clone();
 		room.out_commands.clear();
 
 		let command = EventCommand {
@@ -42,7 +42,7 @@ mod tests {
 			field_id: 100,
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
-		command.clone().execute(&mut room, &user);
+		command.clone().execute(&mut room, user);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
 
@@ -55,7 +55,7 @@ mod tests {
 			field_id: 100,
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
-		command.execute(&mut room, &user);
+		command.execute(&mut room, user);
 	}
 
 	fn setup() -> (Room, UserId, AccessGroups) {
