@@ -46,12 +46,7 @@ impl Client {
 			state,
 			out_commands,
 			in_commands,
-			udp_client: UdpClient::new(
-				user_private_key,
-				user_id,
-				server_address,
-				current_frame_id.load(Ordering::Relaxed),
-			)?,
+			udp_client: UdpClient::new(user_private_key, user_id, server_address, current_frame_id.load(Ordering::Relaxed))?,
 			receiver,
 			protocol_time_offset: None,
 			current_frame_id,
