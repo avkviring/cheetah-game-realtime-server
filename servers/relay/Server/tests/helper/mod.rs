@@ -13,36 +13,36 @@ use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformatio
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 use cheetah_relay_common::udp::bind_to_free_socket;
 use cheetah_relay_common::udp::client::UdpClient;
 
 pub struct TestEnv {
 	socket_addr: SocketAddr,
-	clients: HashMap<UserPublicKey, UdpClient>,
+	clients: HashMap<UserId, UdpClient>,
 	pub server: Server,
 }
 
 impl TestEnv {
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(0b1);
 
-	pub fn connect(&mut self, user_public_key: UserPublicKey) {
-		let client = UdpClient::new(Default::default(), user_public_key, self.socket_addr, 100).unwrap();
-		self.clients.insert(user_public_key, client);
+	pub fn connect(&mut self, user_id: UserId) {
+		let client = UdpClient::new(Default::default(), user_id, self.socket_addr, 100).unwrap();
+		self.clients.insert(user_id, client);
 	}
 
 	pub fn cycle(&mut self) {
 		for _ in 0..2 {
 			let now = Instant::now();
-			self.clients.iter_mut().for_each(|(_user_public_key, client)| {
+			self.clients.iter_mut().for_each(|(_, client)| {
 				client.cycle(&now);
 			});
 			thread::sleep(Duration::from_millis(5));
 		}
 	}
 
-	pub fn send_to_server(&mut self, user_public_key: UserPublicKey, command: C2SCommand) {
-		let client = self.clients.get_mut(&user_public_key).unwrap();
+	pub fn send_to_server(&mut self, user_id: UserId, command: C2SCommand) {
+		let client = self.clients.get_mut(&user_id).unwrap();
 		client.protocol.out_commands_collector.add_command(
 			ApplicationCommandChannelType::ReliableSequenceByGroup(0),
 			ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
@@ -51,8 +51,8 @@ impl TestEnv {
 			}),
 		)
 	}
-	pub fn get_input_commands(&mut self, user_public_key: UserPublicKey) -> Vec<S2CCommand> {
-		let client = self.clients.get_mut(&user_public_key).unwrap();
+	pub fn get_input_commands(&mut self, user_id: UserId) -> Vec<S2CCommand> {
+		let client = self.clients.get_mut(&user_id).unwrap();
 		let commands = client.protocol.in_commands_collector.get_commands();
 		let result = commands
 			.into_iter()
@@ -76,9 +76,9 @@ pub struct TestEnvBuilder {
 }
 
 impl TestEnvBuilder {
-	pub fn create_user(&mut self, public_key: UserPublicKey) {
+	pub fn create_user(&mut self, public_key: UserId) {
 		self.template.users.push(UserTemplate {
-			public_key,
+			id: public_key,
 			private_key: Default::default(),
 			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
@@ -86,7 +86,7 @@ impl TestEnvBuilder {
 		});
 	}
 
-	pub fn create_object(&mut self, user_public_key: UserPublicKey, object_id: u32) {
+	pub fn create_object(&mut self, user_id: UserId, object_id: u32) {
 		let object_template = GameObjectTemplate {
 			id: object_id,
 			template: 0,
@@ -95,7 +95,7 @@ impl TestEnvBuilder {
 			unmapping: Default::default(),
 		};
 
-		let user = self.template.users.iter_mut().find(|u| u.public_key == user_public_key).unwrap();
+		let user = self.template.users.iter_mut().find(|u| u.id == user_id).unwrap();
 		user.objects.push(object_template);
 	}
 

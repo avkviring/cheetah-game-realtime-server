@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::structure::StructureCommand;
 use cheetah_relay_common::commands::command::{HeaplessBuffer, S2CCommand};
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
@@ -9,14 +9,14 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_id: &UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {
 			object.structures.insert(self.field_id, self.structure.to_vec());
 			Option::Some(S2CCommand::SetStruct(self))
 		};
-		room.do_action(&object_id, &field_id, FieldType::Structure, user_public_key, Permission::Rw, action);
+		room.do_action(&object_id, &field_id, FieldType::Structure, user_id, Permission::Rw, action);
 	}
 }
 

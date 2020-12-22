@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
-use crate::room::UserPublicKey;
+use crate::room::UserId;
 
 ///
 /// Служебная информация для исходящей команды
@@ -12,7 +12,7 @@ pub struct S2CMetaCommandInformation {
 	///
 	/// Идентификатор клиента
 	///
-	pub user_public_key: UserPublicKey,
+	pub user_id: UserId,
 
 	///
 	/// Условное время создание команды на клиенте
@@ -21,9 +21,9 @@ pub struct S2CMetaCommandInformation {
 }
 
 impl S2CMetaCommandInformation {
-	pub fn new(user_public_key: UserPublicKey, meta_from_client: &C2SMetaCommandInformation) -> Self {
+	pub fn new(user_id: UserId, meta_from_client: &C2SMetaCommandInformation) -> Self {
 		S2CMetaCommandInformation {
-			user_public_key,
+			user_id,
 			timestamp: meta_from_client.timestamp,
 		}
 	}

@@ -8,7 +8,7 @@ use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::types::FieldType;
 
@@ -27,7 +27,7 @@ pub struct GameObject {
 	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
 	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
 	pub structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher>,
-	pub compare_and_set_owners: HashMap<FieldId, UserPublicKey, FnvBuildHasher>,
+	pub compare_and_set_owners: HashMap<FieldId, UserId, FnvBuildHasher>,
 }
 
 impl GameObject {

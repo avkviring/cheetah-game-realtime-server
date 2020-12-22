@@ -7,7 +7,7 @@ use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::Frame;
 use crate::protocol::others::public_key::UserPublicKeyFrameBuilder;
 use crate::protocol::relay::RelayProtocol;
-use crate::room::{UserPrivateKey, UserPublicKey};
+use crate::room::{UserId, UserPrivateKey};
 use crate::udp::bind_to_free_socket;
 
 #[derive(Debug)]
@@ -35,11 +35,11 @@ pub enum ConnectionStatus {
 }
 
 impl UdpClient {
-	pub fn new(private_key: UserPrivateKey, public_key: UserPublicKey, server_address: SocketAddr, start_frame_id: u64) -> Result<UdpClient, ()> {
+	pub fn new(private_key: UserPrivateKey, user_id: UserId, server_address: SocketAddr, start_frame_id: u64) -> Result<UdpClient, ()> {
 		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
 
-		protocol.add_frame_builder(Box::new(UserPublicKeyFrameBuilder(public_key)));
+		protocol.add_frame_builder(Box::new(UserPublicKeyFrameBuilder(user_id)));
 		let socket = bind_to_free_socket()?.0;
 		socket.set_nonblocking(true).map_err(|_| ())?;
 

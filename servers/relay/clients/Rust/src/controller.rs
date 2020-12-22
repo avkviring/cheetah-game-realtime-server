@@ -17,7 +17,7 @@ use cheetah_relay_common::protocol::frame::applications::{
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::client::OutApplicationCommand;
@@ -29,7 +29,7 @@ use crate::registry::ClientRequest;
 /// Управление сетевым потоком клиента
 ///
 pub struct ClientController {
-	user_public_key: UserPublicKey,
+	user_id: UserId,
 	out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 	in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
 	handler: Option<JoinHandle<()>>,
@@ -61,7 +61,7 @@ impl Drop for ClientController {
 
 impl ClientController {
 	pub fn new(
-		user_public_key: UserPublicKey,
+		user_id: UserId,
 		handler: JoinHandle<()>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
@@ -70,7 +70,7 @@ impl ClientController {
 		current_frame_id: Arc<AtomicU64>,
 	) -> Self {
 		Self {
-			user_public_key,
+			user_id,
 			out_commands,
 			in_commands,
 			handler: Option::Some(handler),
@@ -204,7 +204,7 @@ impl ClientController {
 
 	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> GameObjectIdFFI {
 		self.game_object_id_generator += 1;
-		let game_object_id = GameObjectId::new(self.game_object_id_generator, ObjectOwner::User(self.user_public_key));
+		let game_object_id = GameObjectId::new(self.game_object_id_generator, ObjectOwner::User(self.user_id));
 		self.send(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,

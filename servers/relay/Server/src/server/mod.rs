@@ -112,26 +112,16 @@ impl Server {
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => match r {
 				Ok(_) => {
-					log::info!("[server] create user({:?}) in room ({:?})", template.public_key, room_id);
+					log::info!("[server] create user({:?}) in room ({:?})", template.id, room_id);
 					Result::Ok(())
 				}
 				Err(e) => {
-					log::error!(
-						"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
-						template.public_key,
-						room_id,
-						e
-					);
+					log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", template.id, room_id, e);
 					Result::Err(RegisterUserRequestError::Error(e))
 				}
 			},
 			Err(e) => {
-				log::error!(
-					"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
-					template.public_key,
-					room_id,
-					e
-				);
+				log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", template.id, room_id, e);
 				Result::Err(RegisterUserRequestError::ChannelError(e))
 			}
 		}

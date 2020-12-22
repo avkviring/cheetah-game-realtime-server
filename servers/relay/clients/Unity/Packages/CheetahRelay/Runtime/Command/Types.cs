@@ -21,13 +21,13 @@ namespace CheetahRelay
         /// Публичный ключ пользователя - владельца объекта, применимо  если roomOwner = false
         /// </summary>
         [Key(2)]
-        public uint userPublicKey;
+        public uint userId;
         
         public static CheetahObjectId Empty;
 
         public override string ToString()
         {
-            return $"{nameof(id)}: {id}, {nameof(roomOwner)}: {roomOwner}, {nameof(userPublicKey)}: {userPublicKey}";
+            return $"{nameof(id)}: {id}, {nameof(roomOwner)}: {roomOwner}, {nameof(userId)}: {userId}";
         }
 
         public static bool operator ==(CheetahObjectId a, CheetahObjectId b)
@@ -43,7 +43,7 @@ namespace CheetahRelay
 
         public bool Equals(CheetahObjectId other)
         {
-            return id == other.id && roomOwner == other.roomOwner && userPublicKey == other.userPublicKey;
+            return id == other.id && roomOwner == other.roomOwner && userId == other.userId;
         }
 
         public override int GetHashCode()
@@ -52,7 +52,7 @@ namespace CheetahRelay
             {
                 var hashCode = (int) id;
                 hashCode = (hashCode * 397) ^ roomOwner.GetHashCode();
-                hashCode = (hashCode * 397) ^ (int) userPublicKey;
+                hashCode = (hashCode * 397) ^ (int) userId;
                 return hashCode;
             }
         }

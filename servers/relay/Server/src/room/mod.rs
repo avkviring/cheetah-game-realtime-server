@@ -19,7 +19,7 @@ use cheetah_relay_common::protocol::relay::RelayProtocol;
 
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
@@ -45,11 +45,11 @@ pub type RoomId = u64;
 pub struct Room {
 	pub id: RoomId,
 	pub permission_manager: Rc<RefCell<PermissionManager>>,
-	pub users: HashMap<UserPublicKey, User, FnvBuildHasher>,
+	pub users: HashMap<UserId, User, FnvBuildHasher>,
 	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ApplicationCommandChannelType>,
 	current_meta: Option<C2SMetaCommandInformation>,
-	current_user: Option<UserPublicKey>,
+	current_user: Option<UserId>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub auto_create_user: bool,
 	pub tracer: Rc<CommandTracer>,
@@ -121,11 +121,11 @@ impl Room {
 	}
 
 	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
-		for (user_public_key, user) in self.users.iter_mut() {
+		for (user_id, user) in self.users.iter_mut() {
 			if let Some(ref mut protocol) = user.protocol {
 				while let Some(frame) = protocol.build_next_frame(&now) {
 					out_frames.push_front(OutFrame {
-						user_public_key: user_public_key.clone(),
+						user_id: user_id.clone(),
 						frame,
 					});
 				}
@@ -133,15 +133,15 @@ impl Room {
 		}
 	}
 
-	pub fn process_in_frame(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
-		let user = self.users.get_mut(&user_public_key);
+	pub fn process_in_frame(&mut self, user_id: &UserId, frame: Frame, now: &Instant) {
+		let user = self.users.get_mut(&user_id);
 		let mut commands = Vec::new();
 		match user {
 			None => {
-				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_public_key);
+				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
 			}
 			Some(user) => {
-				self.current_user.replace(user_public_key.clone());
+				self.current_user.replace(user_id.clone());
 
 				let mut new_user = false;
 				let protocol = &mut user.protocol;
@@ -170,8 +170,8 @@ impl Room {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
-					self.tracer.on_c2s_command(self.id, user_public_key.clone(), &command_with_meta.command);
-					execute(command_with_meta.command, self, &user_public_key);
+					self.tracer.on_c2s_command(self.id, user_id.clone(), &command_with_meta.command);
+					execute(command_with_meta.command, self, &user_id);
 				}
 				_ => {
 					log::error!("[room({:?})] receive unsupported command {:?}", self.id, application_command)
@@ -185,7 +185,7 @@ impl Room {
 	}
 
 	pub fn register_user(&mut self, template: UserTemplate) -> Result<(), RoomRegisterUserError> {
-		if self.users.contains_key(&template.public_key) {
+		if self.users.contains_key(&template.id) {
 			return Result::Err(RoomRegisterUserError::AlreadyRegistered);
 		}
 
@@ -200,32 +200,32 @@ impl Room {
 			template,
 			compare_and_sets_cleaners: Default::default(),
 		};
-		self.users.insert(user.template.public_key, user);
+		self.users.insert(user.template.id, user);
 		Result::Ok(())
 	}
 
-	pub fn get_user(&self, user_public_key: &UserPublicKey) -> Option<&User> {
-		self.users.get(user_public_key)
+	pub fn get_user(&self, user_id: &UserId) -> Option<&User> {
+		self.users.get(user_id)
 	}
 
-	pub fn get_user_mut(&mut self, user_public_key: &UserPublicKey) -> Option<&mut User> {
-		self.users.get_mut(user_public_key)
+	pub fn get_user_mut(&mut self, user_id: &UserId) -> Option<&mut User> {
+		self.users.get_mut(user_id)
 	}
 
 	///
 	/// Связь с пользователям разорвана
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
-	pub fn disconnect_user(&mut self, user_public_key: &UserPublicKey) {
-		log::info!("[room({:?})] disconnect user({:?})", self.id, user_public_key);
-		self.current_user.replace(user_public_key.clone());
-		match self.users.remove(user_public_key) {
+	pub fn disconnect_user(&mut self, user_id: &UserId) {
+		log::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
+		self.current_user.replace(user_id.clone());
+		match self.users.remove(user_id) {
 			None => {}
 			Some(user) => {
 				let mut objects = Vec::new();
 				self.process_objects(&mut |o| {
 					if let ObjectOwner::User(owner) = o.id.owner {
-						if owner == user.template.public_key {
+						if owner == user.template.id {
 							objects.push(o.id.clone());
 						}
 					}
@@ -240,7 +240,7 @@ impl Room {
 					listener.disconnected_user(self.id.clone(), &user.template);
 				});
 
-				reset_all_compare_and_set(self, user.template.public_key.clone(), user.compare_and_sets_cleaners);
+				reset_all_compare_and_set(self, user.template.id.clone(), user.compare_and_sets_cleaners);
 
 				if self.auto_create_user {
 					self.register_user(user.template.clone()).unwrap();
@@ -299,7 +299,7 @@ impl Room {
 		self.users.values_mut().for_each(|u| {
 			if let Some(ref mut protocol) = u.protocol {
 				if protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
-					disconnected_user[disconnected_users_count] = u.template.public_key.clone();
+					disconnected_user[disconnected_users_count] = u.template.id.clone();
 					disconnected_users_count += 1;
 				}
 			}
@@ -315,9 +315,9 @@ impl Room {
 			let mut listener = (*listener).borrow_mut();
 			listener.connected_user(self.id.clone(), &template);
 		});
-		let user_public_key = template.public_key;
+		let user_id = template.id;
 		template.objects.iter().for_each(|object_template| {
-			let object = object_template.create_user_game_object(user_public_key);
+			let object = object_template.create_user_game_object(user_id);
 
 			let mut commands = Vec::new();
 			object.collect_create_commands(&mut commands);
@@ -355,7 +355,7 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-	use cheetah_relay_common::room::UserPublicKey;
+	use cheetah_relay_common::room::UserId;
 
 	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::object::GameObject;
@@ -374,7 +374,7 @@ mod tests {
 			Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
 		}
 
-		pub fn create_object(&mut self, owner: &UserPublicKey, access_groups: AccessGroups) -> &mut GameObject {
+		pub fn create_object(&mut self, owner: &UserId, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
 			let mut object = GameObject::new(id.clone());
@@ -383,8 +383,8 @@ mod tests {
 			self.get_object_mut(&id).unwrap()
 		}
 
-		pub fn mark_as_connected(&mut self, user_public_key: &UserPublicKey) {
-			match self.get_user_mut(&user_public_key) {
+		pub fn mark_as_connected(&mut self, user_id: &UserId) {
+			match self.get_user_mut(&user_id) {
 				None => {}
 				Some(user) => {
 					user.protocol = Option::Some(RelayProtocol::new(&Instant::now()));
@@ -393,7 +393,7 @@ mod tests {
 			}
 		}
 
-		pub fn get_user_out_commands(&self, user_id: &UserPublicKey) -> VecDeque<S2CCommand> {
+		pub fn get_user_out_commands(&self, user_id: &UserId) -> VecDeque<S2CCommand> {
 			self.get_user(user_id)
 				.unwrap()
 				.protocol
@@ -415,7 +415,7 @@ mod tests {
 				.collect()
 		}
 
-		pub fn clear_user_out_commands(&mut self, user_id: &UserPublicKey) {
+		pub fn clear_user_out_commands(&mut self, user_id: &UserId) {
 			self.get_user_mut(user_id)
 				.unwrap()
 				.protocol
@@ -481,7 +481,7 @@ mod tests {
 			unmapping: Default::default(),
 		};
 		let user_template = UserTemplate {
-			public_key: 100,
+			id: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: vec![object_template.clone()],
@@ -490,10 +490,10 @@ mod tests {
 		template.users.push(user_template.clone());
 
 		let mut room = Room::from_template(template);
-		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
+		room.process_in_frame(&user_template.id, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
-			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_template.public_key))));
+			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_template.id))));
 	}
 
 	///
@@ -510,7 +510,7 @@ mod tests {
 			unmapping: Default::default(),
 		};
 		let user1_template = UserTemplate {
-			public_key: 1,
+			id: 1,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: vec![object1_template.clone()],
@@ -525,7 +525,7 @@ mod tests {
 			unmapping: Default::default(),
 		};
 		let user2_template = UserTemplate {
-			public_key: 2,
+			id: 2,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: vec![object2_template.clone()],
@@ -537,7 +537,7 @@ mod tests {
 
 		let mut room = Room::from_template(template);
 
-		room.process_in_frame(&user1_template.public_key, Frame::new(0), &Instant::now());
+		room.process_in_frame(&user1_template.id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
 		frame_with_attach_to_room.commands.reliable.push_back(ApplicationCommandDescription {
@@ -547,9 +547,9 @@ mod tests {
 				command: C2SCommand::AttachToRoom,
 			}),
 		});
-		room.process_in_frame(&user1_template.public_key, frame_with_attach_to_room, &Instant::now());
+		room.process_in_frame(&user1_template.id, frame_with_attach_to_room, &Instant::now());
 
-		let user1 = room.get_user_mut(&user1_template.public_key).unwrap();
+		let user1 = room.get_user_mut(&user1_template.id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
 			protocol
@@ -561,11 +561,11 @@ mod tests {
 				.command
 				.get_object_id()
 				.unwrap(),
-			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_template.public_key))
+			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_template.id))
 		);
 		protocol.out_commands_collector.commands.reliable.clear();
-		room.process_in_frame(&user2_template.public_key, Frame::new(0), &Instant::now());
-		let user1 = room.get_user_mut(&user1_template.public_key).unwrap();
+		room.process_in_frame(&user2_template.id, Frame::new(0), &Instant::now());
+		let user1 = room.get_user_mut(&user1_template.id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
 			protocol
@@ -577,7 +577,7 @@ mod tests {
 				.command
 				.get_object_id()
 				.unwrap(),
-			&GameObjectId::new(object2_template.id, ObjectOwner::User(user2_template.public_key))
+			&GameObjectId::new(object2_template.id, ObjectOwner::User(user2_template.id))
 		);
 	}
 
@@ -589,8 +589,8 @@ mod tests {
 		let (mut template, user_template) = create_template();
 		template.auto_create_user = true;
 		let mut room = Room::from_template(template);
-		room.disconnect_user(&user_template.public_key);
-		assert!(room.users.contains_key(&user_template.public_key));
+		room.disconnect_user(&user_template.id);
+		assert!(room.users.contains_key(&user_template.id));
 	}
 
 	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, heapless::consts::U256> {
@@ -607,15 +607,15 @@ mod tests {
 
 		impl RoomUserListener for TestUserListener {
 			fn register_user(&mut self, _: u64, template: &UserTemplate) {
-				self.trace = format!("{}r{:?}", self.trace, template.public_key);
+				self.trace = format!("{}r{:?}", self.trace, template.id);
 			}
 
 			fn connected_user(&mut self, _: u64, template: &UserTemplate) {
-				self.trace = format!("{}c{:?}", self.trace, template.public_key);
+				self.trace = format!("{}c{:?}", self.trace, template.id);
 			}
 
 			fn disconnected_user(&mut self, _: u64, template: &UserTemplate) {
-				self.trace = format!("{}d{:?}", self.trace, template.public_key);
+				self.trace = format!("{}d{:?}", self.trace, template.id);
 			}
 		}
 
@@ -623,8 +623,8 @@ mod tests {
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
 		let mut room = Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
-		room.process_in_frame(&user_template.public_key, Frame::new(0), &Instant::now());
-		room.disconnect_user(&user_template.public_key);
+		room.process_in_frame(&user_template.id, Frame::new(0), &Instant::now());
+		room.disconnect_user(&user_template.id);
 
 		assert_eq!(test_listener.clone().borrow().trace, "r100c100d100".to_string());
 	}
@@ -691,7 +691,7 @@ mod tests {
 			.permissions
 			.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
-		let user1_template = template.users.iter().find(|u| u.public_key == user1).unwrap().clone();
+		let user1_template = template.users.iter().find(|u| u.id == user1).unwrap().clone();
 
 		let mut room = Room::from_template(template);
 		room.mark_as_connected(&user2);
@@ -707,7 +707,7 @@ mod tests {
 	pub fn create_template() -> (RoomTemplate, UserTemplate) {
 		let mut template = RoomTemplate::default();
 		let user_template = UserTemplate {
-			public_key: 100,
+			id: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: Default::default(),

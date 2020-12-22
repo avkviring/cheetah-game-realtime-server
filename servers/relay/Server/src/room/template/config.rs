@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::room::{UserId, UserPrivateKey};
 
 use crate::room::types::FieldType;
 use crate::room::RoomId;
@@ -30,7 +30,7 @@ pub struct RoomTemplate {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct UserTemplate {
-	pub public_key: UserPublicKey,
+	pub id: UserId,
 	pub private_key: UserPrivateKey,
 	pub access_groups: AccessGroups,
 	#[serde(default)]
@@ -173,10 +173,9 @@ mod tests {
 	use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
-	
-	use cheetah_relay_common::room::UserPublicKey;
 
-	
+	use cheetah_relay_common::room::UserId;
+
 	use crate::room::template::config::{
 		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, RoomTemplate, RoomTemplateError, TemplatePermission,
 		UserTemplate,
@@ -184,9 +183,9 @@ mod tests {
 	use crate::room::types::FieldType;
 
 	impl RoomTemplate {
-		pub fn configure_user(&mut self, public_key: UserPublicKey, access_group: AccessGroups) -> UserPublicKey {
+		pub fn configure_user(&mut self, public_key: UserId, access_group: AccessGroups) -> UserId {
 			self.users.push(UserTemplate {
-				public_key,
+				id: public_key,
 				private_key: [5; 32],
 				access_groups: access_group,
 				objects: Default::default(),
@@ -198,11 +197,11 @@ mod tests {
 		pub fn configure_user_object(
 			&mut self,
 			id: u32,
-			user_id: &UserPublicKey,
+			user_id: &UserId,
 			template: GameObjectTemplateId,
 			access_groups: AccessGroups,
 		) -> &mut GameObjectTemplate {
-			match self.users.iter_mut().find(|t| t.public_key == *user_id) {
+			match self.users.iter_mut().find(|t| t.id == *user_id) {
 				None => {
 					panic!("user({}) not found", user_id);
 				}
@@ -271,7 +270,7 @@ mod tests {
 			id: 0,
 			auto_create_user: false,
 			users: vec![UserTemplate {
-				public_key: 54897,
+				id: 54897,
 				private_key: [5; 32],
 				access_groups: AccessGroups(0b1111),
 				objects: vec![GameObjectTemplate {
@@ -295,7 +294,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		template.unmapping.insert("wrong_field".to_string(), serde_yaml::Value::default());
 		let mut user_template = UserTemplate {
-			public_key: 0,
+			id: 0,
 			private_key: Default::default(),
 			access_groups: Default::default(),
 			objects: Default::default(),

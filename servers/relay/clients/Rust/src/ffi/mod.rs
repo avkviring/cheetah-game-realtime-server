@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use cheetah_relay_common::commands::command::HeaplessBuffer;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::controller::ClientController;
 use crate::registry::Registry;
@@ -49,7 +49,7 @@ where
 pub struct GameObjectIdFFI {
 	id: u32,
 	room_owner: bool,
-	user_public_key: UserPublicKey,
+	user_id: UserId,
 }
 
 impl From<&GameObjectId> for GameObjectIdFFI {
@@ -58,12 +58,12 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 			ObjectOwner::Root => GameObjectIdFFI {
 				id: from.id,
 				room_owner: true,
-				user_public_key: u32::max_value(),
+				user_id: u32::max_value(),
 			},
 			ObjectOwner::User(public_key) => GameObjectIdFFI {
 				id: from.id,
 				room_owner: false,
-				user_public_key: public_key,
+				user_id: public_key,
 			},
 		}
 	}
@@ -72,7 +72,7 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 impl From<&GameObjectIdFFI> for GameObjectId {
 	fn from(from: &GameObjectIdFFI) -> Self {
 		Self {
-			owner: ObjectOwner::User(from.user_public_key),
+			owner: ObjectOwner::User(from.user_id),
 			id: from.id,
 		}
 	}

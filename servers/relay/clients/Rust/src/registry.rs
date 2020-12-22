@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::room::{UserId, UserPrivateKey};
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::client::Client;
@@ -49,7 +49,7 @@ impl Registry {
 	pub fn create_client(
 		&mut self,
 		server_address: String,
-		user_public_key: UserPublicKey,
+		user_id: UserId,
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
 	) -> Result<ClientId, ()> {
@@ -65,7 +65,7 @@ impl Registry {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		match Client::new(
 			SocketAddr::from_str(server_address.as_str()).unwrap(),
-			user_public_key,
+			user_id,
 			user_private_key,
 			out_commands,
 			in_commands,
@@ -79,7 +79,7 @@ impl Registry {
 				});
 
 				let controller = ClientController::new(
-					user_public_key,
+					user_id,
 					handler,
 					state_cloned,
 					in_commands_cloned,

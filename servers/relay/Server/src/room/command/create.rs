@@ -1,21 +1,21 @@
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
-		let user = room.get_user(user_public_key).unwrap();
+	fn execute(self, room: &mut Room, user_id: &UserId) {
+		let user = room.get_user(user_id).unwrap();
 
 		if self.object_id.id == 0 {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				&user.template.public_key,
+				&user.template.id,
 				format!("0 is forbidden for game object id"),
 			);
 			return;
@@ -27,18 +27,18 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				&user.template.public_key,
+				&user.template.id,
 				format!("Incorrect access group {:?} with client groups {:?}", groups, user.template.access_groups),
 			);
 			return;
 		}
 
 		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
-			if object_id_user != user.template.public_key {
+			if object_id_user != user.template.id {
 				error_c2s_command(
 					"CreateGameObjectCommand",
 					room,
-					&user.template.public_key,
+					&user.template.id,
 					format!("Incorrect object_id {:?} for user {:?}", self.object_id, user),
 				);
 				return;
@@ -49,7 +49,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				&user.template.public_key,
+				&user.template.id,
 				format!("Object already exists with id {:?}", self.object_id),
 			);
 			return;
@@ -66,7 +66,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			compare_and_set_owners: Default::default(),
 		};
 
-		room.send_to_group(groups, S2CCommand::Create(self), |user| user.template.public_key != *user_public_key);
+		room.send_to_group(groups, S2CCommand::Create(self), |user| user.template.id != *user_id);
 		room.insert_object(object);
 	}
 }
@@ -86,17 +86,17 @@ mod tests {
 	#[test]
 	fn should_create() {
 		let mut template = RoomTemplate::default();
-		let user_public_key = template.configure_user(1, AccessGroups(0b11));
+		let user_id = template.configure_user(1, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
-		room.mark_as_connected(&user_public_key);
+		room.mark_as_connected(&user_id);
 
-		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
+		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
 		};
-		command.clone().execute(&mut room, &user_public_key);
+		command.clone().execute(&mut room, &user_id);
 
 		assert!(matches!(
 			room.get_object_mut(&object_id),
@@ -107,7 +107,7 @@ mod tests {
 		// проверяем факт посылки команды
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Create(c))) if c==command));
 		// проверяем что команда не отсылается обратно текущему пользователю
-		assert!(room.get_user_out_commands(&user_public_key).is_empty());
+		assert!(room.get_user_out_commands(&user_id).is_empty());
 	}
 
 	///
@@ -116,7 +116,7 @@ mod tests {
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
 		let mut template = RoomTemplate::default();
-		let user_public_key = template.configure_user(1, AccessGroups(0b11));
+		let user_id = template.configure_user(1, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
@@ -126,7 +126,7 @@ mod tests {
 			access_groups: AccessGroups(0b10),
 		};
 
-		command.clone().execute(&mut room, &user_public_key);
+		command.clone().execute(&mut room, &user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
@@ -137,17 +137,17 @@ mod tests {
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
 		let mut template = RoomTemplate::default();
-		let user_public_key = template.configure_user(1, AccessGroups(0b11));
+		let user_id = template.configure_user(1, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
-		let object_id = GameObjectId::new(1, ObjectOwner::User(user_public_key));
+		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
 
-		command.clone().execute(&mut room, &user_public_key);
+		command.clone().execute(&mut room, &user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
@@ -158,17 +158,17 @@ mod tests {
 	#[test]
 	fn should_not_create_when_id_is_zero() {
 		let mut template = RoomTemplate::default();
-		let user_public_key = template.configure_user(1, AccessGroups(0b11));
+		let user_id = template.configure_user(1, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
-		let object_id = GameObjectId::new(0, ObjectOwner::User(user_public_key));
+		let object_id = GameObjectId::new(0, ObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b11),
 		};
 
-		command.clone().execute(&mut room, &user_public_key);
+		command.clone().execute(&mut room, &user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
@@ -180,10 +180,10 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
-		let user_public_key = template.configure_user(1, access_groups);
+		let user_id = template.configure_user(1, access_groups);
 		let mut room = Room::from_template(template);
 
-		let object = room.create_object(&user_public_key, access_groups);
+		let object = room.create_object(&user_id, access_groups);
 		object.template = 777;
 		let object_id = object.id.clone();
 
@@ -195,7 +195,7 @@ mod tests {
 			access_groups: AccessGroups(0b1000),
 		};
 
-		command.clone().execute(&mut room, &user_public_key);
+		command.clone().execute(&mut room, &user_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template == 777));
 		assert!(matches!(room.out_commands.pop_back(), None));

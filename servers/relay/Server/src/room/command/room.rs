@@ -1,10 +1,10 @@
 use cheetah_relay_common::constants::GameObjectTemplateId;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::object::S2CommandWithFieldInfo;
 use crate::room::Room;
 
-pub fn attach_to_room(room: &mut Room, user_id: &UserPublicKey) {
+pub fn attach_to_room(room: &mut Room, user_id: &UserId) {
 	match room.get_user_mut(user_id) {
 		None => {
 			log::error!("[load_room] user not found {:?}", user_id);

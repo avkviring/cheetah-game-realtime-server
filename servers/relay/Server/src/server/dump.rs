@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::object::GameObject;
 use crate::room::{Room, RoomId, User};
@@ -35,7 +35,7 @@ pub struct RoomDump {
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct UserDump {
-	pub public_key: UserPublicKey,
+	pub public_key: UserId,
 	pub access_groups: AccessGroups,
 	attached: bool,
 }
@@ -48,7 +48,7 @@ pub struct GameObjectDump {
 	pub created: bool,
 	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
 	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
-	pub compare_and_set_owners: HashMap<FieldId, UserPublicKey, FnvBuildHasher>,
+	pub compare_and_set_owners: HashMap<FieldId, UserId, FnvBuildHasher>,
 	pub structures: HashMap<FieldId, BinaryDump, FnvBuildHasher>,
 }
 
@@ -122,7 +122,7 @@ fn buffer_to_value(source: &Vec<u8>) -> BinaryDump {
 impl From<&User> for UserDump {
 	fn from(user: &User) -> Self {
 		Self {
-			public_key: user.template.public_key,
+			public_key: user.template.id,
 			access_groups: user.template.access_groups,
 			attached: user.attached,
 		}

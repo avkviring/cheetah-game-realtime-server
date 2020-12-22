@@ -9,7 +9,7 @@ namespace CheetahRelay
         /// Вновь созданный клиент устанавливается в качестве клиента по-умолчанию.
         /// </summary>
         /// <param name="serverAddress"></param>
-        /// <param name="userPublicKey"></param>
+        /// <param name="userId"></param>
         /// <param name="userPrivateKey"></param>
         /// <param name="startFrameId">Начальный идентификатор фрейма, 0 - при первом входе в комнату, N - при повторном входе в ту же самую комнату</param>
         /// <param name="clientId">Результат - локальный идентификатор клиента</param>
@@ -17,7 +17,7 @@ namespace CheetahRelay
         [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_client")]
         public static extern bool CreateClient(
             [MarshalAs(UnmanagedType.LPStr)] string serverAddress,
-            uint userPublicKey,
+            uint userId,
             ref CheetahBuffer userPrivateKey,
             ulong startFrameId,
             out ushort clientId

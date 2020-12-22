@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::commands::command::{C2SCommand, S2CCommand};
 use cheetah_relay_common::constants::FieldId;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::types::FieldType;
 use crate::room::RoomId;
@@ -34,7 +34,7 @@ pub struct Rule {
 	direction: Option<Direction>,
 	field_type: Option<FieldType>,
 	field_id: Option<FieldId>,
-	user: Option<UserPublicKey>,
+	user: Option<UserId>,
 
 	#[serde(flatten)]
 	pub unmapping: HashMap<String, serde_yaml::Value>,
@@ -75,17 +75,10 @@ pub enum Command {
 }
 
 impl Rule {
-	fn is_match(
-		&self,
-		user_public_key: UserPublicKey,
-		direction: &Direction,
-		command: &Command,
-		field_type: &Option<FieldType>,
-		field: &Option<FieldId>,
-	) -> bool {
+	fn is_match(&self, user_id: UserId, direction: &Direction, command: &Command, field_type: &Option<FieldType>, field: &Option<FieldId>) -> bool {
 		EqualResult::NotEqual != is_match_with_option(&self.field_type, field_type)
 			&& EqualResult::NotEqual != is_match_with_option(&self.field_id, field)
-			&& EqualResult::NotEqual != is_match(&self.user, &user_public_key)
+			&& EqualResult::NotEqual != is_match(&self.user, &user_id)
 			&& EqualResult::NotEqual != is_match(&self.direction, direction)
 			&& EqualResult::NotEqual != is_match(&self.command, command)
 	}
@@ -180,7 +173,7 @@ impl CommandTracer {
 		}
 	}
 
-	fn is_allow(&self, user: UserPublicKey, direction: Direction, command: Command, field_type: Option<FieldType>, field: Option<FieldId>) -> bool {
+	fn is_allow(&self, user: UserId, direction: Direction, command: Command, field_type: Option<FieldType>, field: Option<FieldId>) -> bool {
 		let action = match self.rules.iter().find(|p| p.is_match(user, &direction, &command, &field_type, &field)) {
 			None => &self.default,
 			Some(rule) => &rule.action,
@@ -188,7 +181,7 @@ impl CommandTracer {
 		*action == Action::Allow
 	}
 
-	pub fn on_s2c_command(&self, room_id: RoomId, user_public_key: UserPublicKey, command: &S2CCommand) {
+	pub fn on_s2c_command(&self, room_id: RoomId, user_id: UserId, command: &S2CCommand) {
 		if !(log::log_enabled!(Level::Info)) {
 			return;
 		}
@@ -203,11 +196,11 @@ impl CommandTracer {
 			S2CCommand::Delete(_c) => (Command::Delete, Option::None, Option::None),
 		};
 
-		if self.is_allow(user_public_key, Direction::SC, info.0, info.1, info.2) {
-			log::info!("[room({:?})] s -> u({:?}) {:?}", room_id, user_public_key, command);
+		if self.is_allow(user_id, Direction::SC, info.0, info.1, info.2) {
+			log::info!("[room({:?})] s -> u({:?}) {:?}", room_id, user_id, command);
 		}
 	}
-	pub fn on_c2s_command(&self, room_id: RoomId, user_public_key: UserPublicKey, command: &C2SCommand) {
+	pub fn on_c2s_command(&self, room_id: RoomId, user_id: UserId, command: &C2SCommand) {
 		if !(log::log_enabled!(Level::Info)) {
 			return;
 		}
@@ -225,8 +218,8 @@ impl CommandTracer {
 			C2SCommand::IncrementFloatCounter(c) => (Command::IncrementFloatValue, Option::Some(FieldType::Float), Option::Some(c.field_id)),
 			C2SCommand::AttachToRoom => (Command::AttachToRoom, Option::None, Option::None),
 		};
-		if self.is_allow(user_public_key, Direction::CS, info.0, info.1, info.2) {
-			log::info!("[room({:?})] u({:?}) -> s {:?}", room_id, user_public_key, command);
+		if self.is_allow(user_id, Direction::CS, info.0, info.1, info.2) {
+			log::info!("[room({:?})] u({:?}) -> s {:?}", room_id, user_id, command);
 		}
 	}
 }

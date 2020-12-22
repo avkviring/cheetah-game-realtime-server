@@ -1,18 +1,18 @@
 use cheetah_relay_common::commands::command::load::CreatedGameObjectCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_id: &UserId) {
 		let room_id = room.id;
 		if let Some(object) = room.get_object_mut(&self.object_id) {
 			if !object.created {
 				let groups = object.access_groups.clone();
 				object.created = true;
-				room.send_to_group(groups, S2CCommand::Created(self), |user| user.template.public_key != *user_public_key)
+				room.send_to_group(groups, S2CCommand::Created(self), |user| user.template.id != *user_id)
 			} else {
 				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);
 			}
@@ -23,8 +23,7 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::load::CreatedGameObjectCommand;
-	use cheetah_relay_common::commands::command::{S2CCommand};
-	
+	use cheetah_relay_common::commands::command::S2CCommand;
 
 	use crate::room::command::tests::setup;
 	use crate::room::command::ServerCommandExecutor;

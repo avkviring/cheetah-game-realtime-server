@@ -13,18 +13,18 @@ use cheetah_relay::server::Server;
 use cheetah_relay_client::ffi::client::do_create_client;
 use cheetah_relay_client::registry::ClientId;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::room::{UserId, UserPrivateKey};
 use cheetah_relay_common::udp::bind_to_free_socket;
 
 #[derive(Debug)]
 pub struct Helper {
 	room_id_generator: RoomId,
-	user_public_key_generator: UserPublicKey,
+	user_id_generator: UserId,
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub struct UserKeys {
-	pub public: UserPublicKey,
+	pub public: UserId,
 	pub private: UserPrivateKey,
 }
 
@@ -39,7 +39,7 @@ impl Helper {
 			.init();
 		Self {
 			room_id_generator: 0,
-			user_public_key_generator: 0,
+			user_id_generator: 0,
 		}
 	}
 
@@ -55,11 +55,11 @@ impl Helper {
 	}
 
 	pub fn create_user_keys(&mut self) -> UserKeys {
-		self.user_public_key_generator += 1;
+		self.user_id_generator += 1;
 		let mut private_key = [0; 32];
 		OsRng.fill_bytes(&mut private_key);
 		UserKeys {
-			public: self.user_public_key_generator,
+			public: self.user_id_generator,
 			private: private_key,
 		}
 	}
@@ -74,7 +74,7 @@ impl Helper {
 		let user_keys = self.create_user_keys();
 		let (mut server, server_address, room_id) = self.create_server_and_room();
 		let user_template = UserTemplate {
-			public_key: user_keys.public,
+			id: user_keys.public,
 			private_key: user_keys.private,
 			access_groups: AccessGroups(0b111),
 			objects: Default::default(),

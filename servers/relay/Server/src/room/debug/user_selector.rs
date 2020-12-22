@@ -6,7 +6,7 @@ use fnv::FnvBuildHasher;
 
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::room::{UserId, UserPrivateKey};
 
 use crate::room::Room;
 
@@ -16,12 +16,12 @@ use crate::room::Room;
 ///
 #[derive(Debug, Default)]
 pub struct UserForEntranceSelector {
-	selected: HashMap<UserPublicKey, Instant, FnvBuildHasher>,
+	selected: HashMap<UserId, Instant, FnvBuildHasher>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SelectedUserForEntrance {
-	pub public_key: UserPublicKey,
+	pub public_key: UserId,
 	pub private_key: UserPrivateKey,
 }
 

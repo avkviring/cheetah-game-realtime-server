@@ -6,7 +6,7 @@ use crate::protocol::disconnect::handler::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
 use crate::protocol::reliable::ack::header::AckFrameHeader;
 use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
-use crate::room::UserPublicKey;
+use crate::room::UserId;
 
 ///
 /// Дополнительные UDP заголовки
@@ -31,7 +31,7 @@ pub enum Header {
 	/// - обязательно используется в командах с клиента на сервер
 	/// - необходим серверу для получения приватного ключа пользователя
 	///
-	UserPublicKey(UserPublicKey),
+	UserId(UserId),
 
 	///
 	/// Принудительный разрыв соединения

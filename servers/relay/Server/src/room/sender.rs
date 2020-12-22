@@ -6,7 +6,7 @@ use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, Ap
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
@@ -25,7 +25,7 @@ impl Room {
 		game_object_id: &GameObjectId,
 		field_id: &FieldId,
 		field_type: FieldType,
-		command_owner_user: &UserPublicKey,
+		command_owner_user: &UserId,
 		permission: Permission,
 		action: T,
 	) where
@@ -89,7 +89,7 @@ impl Room {
 			if let Some(command) = command {
 				self.send_to_group(groups, command, |user| {
 					let mut permission_manager = permission_manager.borrow_mut();
-					if object_owner == Option::Some(user.template.public_key) {
+					if object_owner == Option::Some(user.template.id) {
 						permission_manager.has_write_access(template, *field_id, field_type)
 					} else {
 						permission_manager.get_permission(template, *field_id, field_type, user.template.access_groups) > Permission::Deny
@@ -135,17 +135,17 @@ impl Room {
 			.filter(|user| filter(user))
 			.for_each(|user| {
 				let protocol = user.protocol.as_mut().unwrap();
-				tracer.on_s2c_command(room_id, user.template.public_key.clone(), &command);
+				tracer.on_s2c_command(room_id, user.template.id.clone(), &command);
 				protocol
 					.out_commands_collector
 					.add_command(channel_type.clone(), application_command.clone());
 			});
 	}
 
-	pub fn send_to_user(&mut self, user_public_key: &u32, object_template: GameObjectTemplateId, commands: Vec<S2CommandWithFieldInfo>) {
-		match self.users.get_mut(user_public_key) {
+	pub fn send_to_user(&mut self, user_id: &u32, object_template: GameObjectTemplateId, commands: Vec<S2CommandWithFieldInfo>) {
+		match self.users.get_mut(user_id) {
 			None => {
-				log::error!("[room] send to unknown user {:?}", user_public_key)
+				log::error!("[room] send to unknown user {:?}", user_id)
 			}
 			Some(user) => {
 				if let Some(ref mut protocol) = user.protocol {
@@ -164,14 +164,14 @@ impl Room {
 							};
 
 							if allow {
-								self.tracer.on_s2c_command(self.id, user.template.public_key, &command.command);
+								self.tracer.on_s2c_command(self.id, user.template.id, &command.command);
 								let meta = self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation { timestamp: 0 });
 								let channel = self
 									.current_channel
 									.as_ref()
 									.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 								let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-									meta: S2CMetaCommandInformation::new(user_public_key.clone(), meta),
+									meta: S2CMetaCommandInformation::new(user_id.clone(), meta),
 									command: command.command,
 								});
 								protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
@@ -203,10 +203,10 @@ mod tests {
 	fn should_send_command_to_other_user() {
 		let (template, user_template) = create_template();
 		let mut room = Room::from_template(template);
-		room.current_user.replace(user_template.public_key + 1); // команда пришла от другого пользователя
+		room.current_user.replace(user_template.id + 1); // команда пришла от другого пользователя
 		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
 		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-		room.mark_as_connected(&user_template.public_key);
+		room.mark_as_connected(&user_template.id);
 		room.send_to_group(
 			user_template.access_groups.clone(),
 			S2CCommand::Event(EventCommand {
@@ -217,7 +217,7 @@ mod tests {
 			|_| true,
 		);
 
-		let user = room.get_user(&user_template.public_key).unwrap();
+		let user = room.get_user(&user_template.id).unwrap();
 		let protocol = user.protocol.as_ref().unwrap();
 		assert_eq!(protocol.out_commands_collector.commands.reliable.len(), 1);
 	}

@@ -1,19 +1,19 @@
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
-		let user = room.get_user(user_public_key).unwrap();
+	fn execute(self, room: &mut Room, user_id: &UserId) {
+		let user = room.get_user(user_id).unwrap();
 		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
-			if object_id_user != user.template.public_key {
+			if object_id_user != user.template.id {
 				error_c2s_command(
 					"DeleteGameObjectCommand",
 					room,
-					&user.template.public_key,
+					&user.template.id,
 					format!("User not owner for game object {:?} for user {:?}", self.object_id, user),
 				);
 				return;
@@ -39,16 +39,16 @@ mod tests {
 	fn should_delete() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
-		let user_public_key = template.configure_user(1, access_groups);
+		let user_id = template.configure_user(1, access_groups);
 		let mut room = Room::from_template(template);
 
-		let object_id = room.create_object(&user_public_key, access_groups).id.clone();
+		let object_id = room.create_object(&user_id, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
 
-		command.clone().execute(&mut room, &user_public_key);
+		command.clone().execute(&mut room, &user_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Delete(c))) if c==command));
@@ -57,14 +57,14 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_missing_object() {
 		let mut template = RoomTemplate::default();
-		let user_public_key = template.configure_user(1, AccessGroups(0b11));
+		let user_id = template.configure_user(1, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
-		let object_id = GameObjectId::new(100, ObjectOwner::User(user_public_key));
+		let object_id = GameObjectId::new(100, ObjectOwner::User(user_id));
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
-		command.clone().execute(&mut room, &user_public_key);
+		command.clone().execute(&mut room, &user_id);
 	}
 
 	#[test]

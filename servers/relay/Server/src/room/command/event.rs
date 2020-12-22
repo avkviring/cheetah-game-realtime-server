@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::event::EventCommand;
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::GameObject;
@@ -9,11 +9,11 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_id: &UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self));
-		room.do_action(&object_id, &field_id, FieldType::Event, user_public_key, Permission::Rw, action);
+		room.do_action(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, action);
 	}
 }
 

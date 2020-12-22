@@ -7,7 +7,7 @@ use std::time::Instant;
 use fnv::FnvBuildHasher;
 
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::debug::user_selector::{SelectedUserForEntrance, UserForEntranceSelector};
@@ -24,12 +24,12 @@ pub struct Rooms {
 
 #[derive(Default)]
 pub struct Users {
-	pub users: HashMap<UserPublicKey, RoomId, FnvBuildHasher>,
+	pub users: HashMap<UserId, RoomId, FnvBuildHasher>,
 }
 
 #[derive(Debug)]
 pub struct OutFrame {
-	pub user_public_key: UserPublicKey,
+	pub user_id: UserId,
 	pub frame: Frame,
 }
 
@@ -96,16 +96,16 @@ impl Rooms {
 		}
 	}
 
-	pub fn on_frame_received(&mut self, user_public_key: &UserPublicKey, frame: Frame, now: &Instant) {
-		let room_id = (*self.users.clone()).borrow_mut().users.get(user_public_key).cloned();
+	pub fn on_frame_received(&mut self, user_id: &UserId, frame: Frame, now: &Instant) {
+		let room_id = (*self.users.clone()).borrow_mut().users.get(user_id).cloned();
 		match room_id {
 			None => {
-				log::error!("[rooms] user({:?} not found ", user_public_key);
+				log::error!("[rooms] user({:?} not found ", user_id);
 			}
 			Some(room_id) => match self.room_by_id.get_mut(&room_id) {
 				None => {}
 				Some(room) => {
-					room.process_in_frame(user_public_key, frame, now);
+					room.process_in_frame(user_id, frame, now);
 					self.changed_rooms.insert(room.id);
 				}
 			},
@@ -134,13 +134,13 @@ pub enum SelectUserForEntranceError {
 
 impl RoomUserListener for Users {
 	fn register_user(&mut self, room_id: u64, template: &UserTemplate) {
-		self.users.insert(template.public_key.clone(), room_id.clone());
+		self.users.insert(template.id.clone(), room_id.clone());
 	}
 
 	fn connected_user(&mut self, _: u64, _: &UserTemplate) {}
 
 	fn disconnected_user(&mut self, _: u64, template: &UserTemplate) {
-		self.users.remove(&template.public_key);
+		self.users.remove(&template.id);
 	}
 }
 

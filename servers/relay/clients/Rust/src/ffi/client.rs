@@ -2,7 +2,7 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 
-use cheetah_relay_common::room::{UserPrivateKey, UserPublicKey};
+use cheetah_relay_common::room::{UserId, UserPrivateKey};
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::ffi::{execute, execute_with_client, BufferFFI};
@@ -51,7 +51,7 @@ pub extern "C" fn get_frame_id(out_frame_id: &mut u64) -> bool {
 #[no_mangle]
 pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
-	user_public_key: UserPublicKey,
+	user_id: UserId,
 	user_private_key_buffer: &BufferFFI,
 	start_frame_id: u64,
 	out_client_id: &mut u16,
@@ -59,18 +59,18 @@ pub unsafe extern "C" fn create_client(
 	let server_address = CStr::from_ptr(addr).to_str().unwrap().to_string();
 	let mut user_private_key = [0; 32];
 	user_private_key.copy_from_slice(&user_private_key_buffer.buffer[0..32]);
-	do_create_client(server_address, user_public_key, &user_private_key, start_frame_id, out_client_id)
+	do_create_client(server_address, user_id, &user_private_key, start_frame_id, out_client_id)
 }
 
 pub fn do_create_client(
 	server_address: String,
-	user_public_key: UserPublicKey,
+	user_id: UserId,
 	user_private_key: &UserPrivateKey,
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> bool {
 	execute(
-		|api| match api.create_client(server_address, user_public_key, user_private_key.clone(), start_frame_id) {
+		|api| match api.create_client(server_address, user_id, user_private_key.clone(), start_frame_id) {
 			Ok(client_id) => {
 				*out_client_id = client_id;
 				true

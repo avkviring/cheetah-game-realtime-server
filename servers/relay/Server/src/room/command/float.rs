@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::room::UserPublicKey;
+use cheetah_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
@@ -9,7 +9,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_id: &UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -28,12 +28,12 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 			}))
 		};
 
-		room.do_action(&object_id, &field_id, FieldType::Float, user_public_key, Permission::Rw, action);
+		room.do_action(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, action);
 	}
 }
 
 impl ServerCommandExecutor for SetFloat64Command {
-	fn execute(self, room: &mut Room, user_public_key: &UserPublicKey) {
+	fn execute(self, room: &mut Room, user_id: &UserId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -41,7 +41,7 @@ impl ServerCommandExecutor for SetFloat64Command {
 			object.floats.insert(self.field_id, self.value);
 			Option::Some(S2CCommand::SetFloat(self))
 		};
-		room.do_action(&object_id, &field_id, FieldType::Float, user_public_key, Permission::Rw, action);
+		room.do_action(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, action);
 	}
 }
 

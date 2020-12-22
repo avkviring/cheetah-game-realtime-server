@@ -15,19 +15,19 @@ pub mod helper;
 #[test]
 pub fn stress_test() {
 	let mut builder = TestEnvBuilder::default();
-	let user_public_key_1 = 1;
-	let user_public_key_2 = 2;
-	builder.create_user(user_public_key_1);
-	builder.create_user(user_public_key_2);
+	let user_id_1 = 1;
+	let user_id_2 = 2;
+	builder.create_user(user_id_1);
+	builder.create_user(user_id_2);
 
 	let game_object_id = 1;
-	builder.create_object(user_public_key_1, game_object_id);
+	builder.create_object(user_id_1, game_object_id);
 	let mut env = builder.build();
 
-	env.connect(user_public_key_1);
-	env.connect(user_public_key_2);
+	env.connect(user_id_1);
+	env.connect(user_id_2);
 
-	env.send_to_server(user_public_key_2, C2SCommand::AttachToRoom);
+	env.send_to_server(user_id_2, C2SCommand::AttachToRoom);
 	env.cycle();
 	thread::sleep(Duration::from_millis(10));
 
@@ -35,19 +35,19 @@ pub fn stress_test() {
 	for i in 0..count {
 		let command = SetLongCommand {
 			object_id: GameObjectId {
-				owner: ObjectOwner::User(user_public_key_1),
+				owner: ObjectOwner::User(user_id_1),
 				id: game_object_id,
 			},
 			field_id: 1,
 			value: i,
 		};
-		env.send_to_server(user_public_key_1, C2SCommand::SetLong(command));
+		env.send_to_server(user_id_1, C2SCommand::SetLong(command));
 		env.cycle();
 	}
 
 	thread::sleep(Duration::from_millis(10));
 	env.cycle();
 
-	let in_commands = env.get_input_commands(user_public_key_2);
+	let in_commands = env.get_input_commands(user_id_2);
 	assert_eq!(in_commands.len(), count as usize + 2); // +2 - команда создания объекта
 }

@@ -1,4 +1,4 @@
-use crate::room::UserPublicKey;
+use crate::room::UserId;
 use serde::{Deserialize, Serialize};
 
 ///
@@ -7,5 +7,5 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub enum ObjectOwner {
 	Root,
-	User(UserPublicKey),
+	User(UserId),
 }
