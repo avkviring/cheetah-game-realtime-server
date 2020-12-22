@@ -39,7 +39,8 @@ mod tests {
 	fn should_delete() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
-		let user_id = template.configure_user(1, access_groups);
+		let user_id = 1;
+		template.configure_user(user_id, access_groups);
 		let mut room = Room::from_template(template);
 
 		let object_id = room.create_object(&user_id, access_groups).id.clone();
@@ -57,7 +58,8 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_missing_object() {
 		let mut template = RoomTemplate::default();
-		let user_id = template.configure_user(1, AccessGroups(0b11));
+		let user_id = 1;
+		template.configure_user(user_id, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
 		let object_id = GameObjectId::new(100, ObjectOwner::User(user_id));
@@ -71,8 +73,10 @@ mod tests {
 	fn should_not_delete_if_not_owner() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
-		let user_a = template.configure_user(1, access_groups);
-		let user_b = template.configure_user(2, access_groups);
+		let user_a = 1;
+		let user_b = 2;
+		template.configure_user(user_a, access_groups);
+		template.configure_user(user_b, access_groups);
 		let mut room = Room::from_template(template);
 
 		let object_id = room.create_object(&user_a, access_groups).id.clone();

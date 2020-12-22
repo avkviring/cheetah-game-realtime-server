@@ -24,6 +24,7 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
+	use cheetah_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::RoomTemplate;
@@ -32,10 +33,7 @@ mod tests {
 
 	#[test]
 	pub fn should_send_event() {
-		let mut template = RoomTemplate::default();
-		let access_groups = AccessGroups(10);
-		let user = template.configure_user(1, access_groups);
-		let mut room = Room::from_template(template);
+		let (mut room, user, access_groups) = setup();
 		let object_id = room.create_object(&user, access_groups).id.clone();
 		room.out_commands.clear();
 
@@ -50,9 +48,7 @@ mod tests {
 
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
-		let mut template = RoomTemplate::default();
-		let user = template.configure_user(1, AccessGroups(10));
-		let mut room = Room::from_template(template);
+		let (mut room, user, _) = setup();
 
 		let command = EventCommand {
 			object_id: GameObjectId::new(10, ObjectOwner::Root),
@@ -60,5 +56,14 @@ mod tests {
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 		command.execute(&mut room, &user);
+	}
+
+	fn setup() -> (Room, UserId, AccessGroups) {
+		let mut template = RoomTemplate::default();
+		let access_groups = AccessGroups(10);
+		let user = 1;
+		template.configure_user(user, access_groups);
+		let room = Room::from_template(template);
+		(room, user, access_groups)
 	}
 }

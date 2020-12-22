@@ -54,7 +54,8 @@ mod tests {
 	pub fn should_set_structure() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user = template.configure_user(1, access_groups);
+		let user = 1;
+		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user, access_groups).id.clone();
 

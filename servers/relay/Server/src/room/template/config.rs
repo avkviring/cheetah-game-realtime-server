@@ -173,7 +173,6 @@ mod tests {
 	use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
-
 	use cheetah_relay_common::room::UserId;
 
 	use crate::room::template::config::{
@@ -183,42 +182,32 @@ mod tests {
 	use crate::room::types::FieldType;
 
 	impl RoomTemplate {
-		pub fn configure_user(&mut self, public_key: UserId, access_group: AccessGroups) -> UserId {
+		pub fn configure_user(&mut self, user_id: UserId, access_group: AccessGroups) -> &mut UserTemplate {
 			self.users.push(UserTemplate {
-				id: public_key,
+				id: user_id,
 				private_key: [5; 32],
 				access_groups: access_group,
 				objects: Default::default(),
 				unmapping: Default::default(),
 			});
-			public_key
+			let len = self.users.len();
+			self.users.get_mut(len - 1).unwrap()
 		}
+	}
 
-		pub fn configure_user_object(
-			&mut self,
-			id: u32,
-			user_id: &UserId,
-			template: GameObjectTemplateId,
-			access_groups: AccessGroups,
-		) -> &mut GameObjectTemplate {
-			match self.users.iter_mut().find(|t| t.id == *user_id) {
-				None => {
-					panic!("user({}) not found", user_id);
-				}
-				Some(user) => {
-					let objects = &mut user.objects;
-					objects.push(GameObjectTemplate {
-						id,
-						template,
-						access_groups,
-						fields: Default::default(),
-						unmapping: Default::default(),
-					});
-					let len = objects.len();
-					let option = objects.get_mut(len - 1);
-					option.unwrap()
-				}
-			}
+	impl UserTemplate {
+		pub fn configure_object(&mut self, id: u32, template: GameObjectTemplateId, access_groups: AccessGroups) -> &mut GameObjectTemplate {
+			let objects = &mut self.objects;
+			objects.push(GameObjectTemplate {
+				id,
+				template,
+				access_groups,
+				fields: Default::default(),
+				unmapping: Default::default(),
+			});
+			let len = objects.len();
+			let option = objects.get_mut(len - 1);
+			option.unwrap()
 		}
 	}
 

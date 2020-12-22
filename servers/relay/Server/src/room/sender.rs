@@ -226,8 +226,11 @@ mod tests {
 	fn should_do_action_check_execute_only_with_enough_permission() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
-		let user_1 = template.configure_user(1, access_groups);
-		let user_2 = template.configure_user(2, access_groups);
+		let user_1 = 1;
+		let user_2 = 2;
+
+		template.configure_user(user_1, access_groups);
+		template.configure_user(user_2, access_groups);
 
 		let field_id_1 = 10;
 		let field_id_2 = 11;
@@ -285,7 +288,9 @@ mod tests {
 			.permissions
 			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
-		let user = template.configure_user(1, access_groups);
+		let user = 1;
+
+		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
 		let object = room.create_object(&user, access_groups);
 		object.access_groups = access_groups.clone();
@@ -327,8 +332,10 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups_a = AccessGroups(0b111);
 		let access_groups_b = AccessGroups(0b100);
-		let user_1 = template.configure_user(1, access_groups_a);
-		let user_2 = template.configure_user(2, access_groups_b);
+		let user_1 = 1;
+		let user_2 = 2;
+		template.configure_user(user_1, access_groups_a);
+		template.configure_user(user_2, access_groups_b);
 
 		let field_id_1 = 10;
 		let field_id_2 = 11;
@@ -382,8 +389,10 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
-		let user_1 = template.configure_user(1, access_groups_a);
-		let user_2 = template.configure_user(2, access_groups_b);
+		let user_1 = 1;
+		let user_2 = 2;
+		template.configure_user(user_1, access_groups_a);
+		template.configure_user(user_2, access_groups_b);
 
 		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user_1, access_groups_a).id.clone();

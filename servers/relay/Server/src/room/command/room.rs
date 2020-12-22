@@ -43,9 +43,11 @@ mod tests {
 	pub fn test() {
 		let mut template = RoomTemplate::default();
 		let groups_a = AccessGroups(0b100);
-		let user_a = template.configure_user(1, groups_a);
+		let user_a = 1;
+		template.configure_user(user_a, groups_a);
 		let groups_b = AccessGroups(0b10);
-		let user_b = template.configure_user(3, groups_b);
+		let user_b = 2;
+		template.configure_user(user_b, groups_b);
 		let mut room = Room::from_template(template);
 
 		room.mark_as_connected(&user_a);

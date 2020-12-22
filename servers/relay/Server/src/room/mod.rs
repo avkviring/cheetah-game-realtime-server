@@ -16,7 +16,8 @@ use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
-
+#[cfg(test)]
+use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserId;
@@ -28,9 +29,6 @@ use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::rooms::OutFrame;
-
-#[cfg(test)]
-use cheetah_relay_common::room::access::AccessGroups;
 
 pub mod command;
 pub mod debug;
@@ -432,8 +430,10 @@ mod tests {
 	fn should_remove_objects_when_disconnect() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b111);
-		let user_a = template.configure_user(1, access_groups);
-		let user_b = template.configure_user(2, access_groups);
+		let user_a = 1;
+		let user_b = 2;
+		template.configure_user(user_a, access_groups);
+		template.configure_user(user_b, access_groups);
 
 		let mut room = Room::from_template(template);
 		let object_a_1 = room.create_object(&user_a, access_groups).id.clone();
@@ -679,10 +679,12 @@ mod tests {
 	pub fn should_apply_permissions_for_self_object() {
 		let mut template = RoomTemplate::default();
 		let groups = AccessGroups(55);
-		let user1 = template.configure_user(1, groups);
-		let user2 = template.configure_user(2, groups);
+		let user1 = 1;
+		let user2 = 2;
+		template.configure_user(user2, groups);
+		let user_template_1 = template.configure_user(1, groups);
+		let object1_template = user_template_1.configure_object(1, 100, groups);
 
-		let object1_template = template.configure_user_object(1, &user1, 100, groups);
 		let allow_field_id = 5;
 		let deny_field_id = 10;
 		object1_template.fields.longs.insert(allow_field_id, 555);

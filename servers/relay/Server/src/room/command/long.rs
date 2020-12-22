@@ -136,6 +136,7 @@ mod tests {
 	use cheetah_relay_common::constants::FieldId;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate};
@@ -144,7 +145,7 @@ mod tests {
 
 	#[test]
 	fn should_set_long_command() {
-		let (user, mut room, object_id) = setup();
+		let (mut room, user, object_id) = setup();
 
 		room.out_commands.clear();
 		let command = SetLongCommand {
@@ -161,7 +162,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_long_command() {
-		let (user, mut room, object_id) = setup();
+		let (mut room, user, object_id) = setup();
 
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
@@ -186,12 +187,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_if_overflow() {
-		let mut template = RoomTemplate::default();
-		let access_groups = AccessGroups(10);
-		let user = template.configure_user(1, access_groups);
-		let mut room = Room::from_template(template);
-		let object_id = room.create_object(&user, access_groups).id.clone();
-
+		let (mut room, user, object_id) = setup();
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
@@ -374,12 +370,13 @@ mod tests {
 		(room, user_template_1, user_template_2, object_id, object_field)
 	}
 
-	fn setup() -> (u32, Room, GameObjectId) {
+	fn setup() -> (Room, UserId, GameObjectId) {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user = template.configure_user(1, access_groups);
+		let user = 1;
+		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
 		let object_id = room.create_object(&user, access_groups).id.clone();
-		(user, room, object_id)
+		(room, user, object_id)
 	}
 }

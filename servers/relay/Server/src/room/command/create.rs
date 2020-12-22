@@ -86,7 +86,8 @@ mod tests {
 	#[test]
 	fn should_create() {
 		let mut template = RoomTemplate::default();
-		let user_id = template.configure_user(1, AccessGroups(0b11));
+		let user_id = 1;
+		template.configure_user(user_id, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 		room.mark_as_connected(&user_id);
 
@@ -116,7 +117,8 @@ mod tests {
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
 		let mut template = RoomTemplate::default();
-		let user_id = template.configure_user(1, AccessGroups(0b11));
+		let user_id = 1;
+		template.configure_user(user_id, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
@@ -137,7 +139,8 @@ mod tests {
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
 		let mut template = RoomTemplate::default();
-		let user_id = template.configure_user(1, AccessGroups(0b11));
+		let user_id = 1;
+		template.configure_user(user_id, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
@@ -158,7 +161,8 @@ mod tests {
 	#[test]
 	fn should_not_create_when_id_is_zero() {
 		let mut template = RoomTemplate::default();
-		let user_id = template.configure_user(1, AccessGroups(0b11));
+		let user_id = 1;
+		template.configure_user(user_id, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
 
 		let object_id = GameObjectId::new(0, ObjectOwner::User(user_id));
@@ -180,7 +184,8 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
-		let user_id = template.configure_user(1, access_groups);
+		let user_id = 1;
+		template.configure_user(user_id, access_groups);
 		let mut room = Room::from_template(template);
 
 		let object = room.create_object(&user_id, access_groups);
