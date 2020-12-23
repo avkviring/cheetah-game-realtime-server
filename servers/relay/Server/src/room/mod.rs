@@ -272,11 +272,16 @@ impl Room {
 				Option::None
 			}
 			Some(object) => {
-				self.send_to_group(
+				self.send(
 					object.access_groups,
-					S2CCommand::Delete(DeleteGameObjectCommand {
-						object_id: object.id.clone(),
-					}),
+					object.template,
+					&[S2CommandWithFieldInfo {
+						field: None,
+						command: S2CCommand::Delete(DeleteGameObjectCommand {
+							object_id: object.id.clone(),
+						}),
+					}]
+					.iter(),
 					|_| true,
 				);
 				Option::Some(object)
@@ -316,23 +321,11 @@ impl Room {
 		let user_id = template.id;
 		template.objects.iter().for_each(|object_template| {
 			let object = object_template.create_user_game_object(user_id);
-
 			let mut commands = Vec::new();
 			object.collect_create_commands(&mut commands);
-			let permission_manager = self.permission_manager.clone();
 			let template = object.template;
-			commands.into_iter().for_each(|S2CommandWithFieldInfo { field, command }| {
-				self.send_to_group(object.access_groups, command, |user| match field {
-					None => true,
-					Some(FieldIdAndType { field_id, field_type }) => {
-						permission_manager
-							.borrow_mut()
-							.get_permission(template, field_id, field_type, user.template.access_groups)
-							> Permission::Deny
-					}
-				});
-			});
-
+			let access_groups = object.access_groups;
+			self.send(access_groups, template, &commands.iter(), |user| true);
 			self.insert_object(object);
 		});
 	}

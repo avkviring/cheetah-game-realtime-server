@@ -1,5 +1,4 @@
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
-use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::owner::ObjectOwner;
 use cheetah_relay_common::room::UserId;
 
@@ -66,7 +65,6 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			compare_and_set_owners: Default::default(),
 		};
 
-		room.send_to_group(groups, S2CCommand::Create(self), |user| user.template.id != user_id);
 		room.insert_object(object);
 	}
 }
@@ -105,10 +103,6 @@ mod tests {
 				if object.template == command.template
 				&& object.access_groups == command.access_groups
 		));
-		// проверяем факт посылки команды
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Create(c))) if c==command));
-		// проверяем что команда не отсылается обратно текущему пользователю
-		assert!(room.get_user_out_commands(user_id).is_empty());
 	}
 
 	///
@@ -130,7 +124,6 @@ mod tests {
 
 		command.clone().execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
-		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 
 	///
@@ -152,7 +145,6 @@ mod tests {
 
 		command.clone().execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
-		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 
 	///
@@ -174,7 +166,6 @@ mod tests {
 
 		command.clone().execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
-		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 
 	//
@@ -203,6 +194,5 @@ mod tests {
 		command.clone().execute(&mut room, user_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template == 777));
-		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }

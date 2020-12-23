@@ -79,8 +79,9 @@ mod tests {
 	#[test]
 	fn should_set_float_command() {
 		let (mut room, user, access_groups) = setup();
-
-		let object_id = room.create_object(user, access_groups).id.clone();
+		let object = room.create_object(user, access_groups);
+		let object_id = object.id.clone();
+		object.created = true;
 		room.out_commands.clear();
 		let command = SetFloat64Command {
 			object_id: object_id.clone(),
@@ -98,7 +99,9 @@ mod tests {
 	fn should_increment_float_command() {
 		let (mut room, user, access_groups) = setup();
 
-		let object_id = room.create_object(user, access_groups).id.clone();
+		let object = room.create_object(user, access_groups);
+		object.created = true;
+		let object_id = object.id.clone();
 		room.out_commands.clear();
 		let command = IncrementFloat64C2SCommand {
 			object_id: object_id.clone(),

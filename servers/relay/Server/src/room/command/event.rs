@@ -34,7 +34,9 @@ mod tests {
 	#[test]
 	pub fn should_send_event() {
 		let (mut room, user, access_groups) = setup();
-		let object_id = room.create_object(user, access_groups).id.clone();
+		let object = room.create_object(user, access_groups);
+		object.created = true;
+		let object_id = object.id.clone();
 		room.out_commands.clear();
 
 		let command = EventCommand {

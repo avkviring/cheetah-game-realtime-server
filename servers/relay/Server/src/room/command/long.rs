@@ -364,6 +364,7 @@ mod tests {
 		});
 		let mut room = Room::from_template(template);
 		let object = room.create_object(user_template_3.id, access_group);
+		object.created = true;
 		object.template = object_template;
 
 		let object_id = object.id.clone();
@@ -376,7 +377,9 @@ mod tests {
 		let user = 1;
 		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(user, access_groups).id.clone();
+		let object = room.create_object(user, access_groups);
+		object.created = true;
+		let object_id = object.id.clone();
 		(room, user, object_id)
 	}
 }

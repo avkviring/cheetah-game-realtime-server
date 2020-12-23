@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
@@ -86,25 +88,39 @@ impl Room {
 			let groups = object.access_groups.clone();
 			let template = object.template;
 
-			if let Some(command) = command {
-				self.send_to_group(groups, command, |user| {
-					let mut permission_manager = permission_manager.borrow_mut();
-					if object_owner == Option::Some(user.template.id) {
-						permission_manager.has_write_access(template, *field_id, field_type)
-					} else {
-						permission_manager.get_permission(template, *field_id, field_type, user.template.access_groups) > Permission::Deny
-					}
-				});
-			};
+			// отправляем команду только для созданного объекта
+			if object.created {
+				if let Some(command) = command {
+					let commands_with_field = S2CommandWithFieldInfo {
+						field: Some(FieldIdAndType {
+							field_id: *field_id,
+							field_type,
+						}),
+						command,
+					};
+					let commands = [commands_with_field];
+					let commands = &commands.iter();
+					self.send(groups, template, commands, |user| {
+						let mut permission_manager = permission_manager.borrow_mut();
+						if object_owner == Option::Some(user.template.id) {
+							permission_manager.has_write_access(template, *field_id, field_type)
+						} else {
+							true
+						}
+					});
+				};
+			}
 		};
 	}
 
-	pub fn send_to_group<T>(&mut self, access_groups: AccessGroups, command: S2CCommand, filter: T)
+	pub fn send<T>(&mut self, access_groups: AccessGroups, template: GameObjectTemplateId, commands: &Iter<S2CommandWithFieldInfo>, filter: T)
 	where
 		T: Fn(&User) -> bool,
 	{
 		#[cfg(test)]
-		self.out_commands.push_front((access_groups, command.clone()));
+		commands.clone().for_each(|command| {
+			self.out_commands.push_front((access_groups, command.command.clone()));
+		});
 
 		let channel_type = self
 			.current_channel
@@ -118,15 +134,10 @@ impl Room {
 				self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation { timestamp: 0 }),
 			),
 		};
-
-		let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
-			meta,
-			command: command.clone(),
-		});
-
 		let room_id = self.id;
 		let tracer = self.tracer.clone();
 
+		let permission_manager = self.permission_manager.clone();
 		self.users
 			.values_mut()
 			.filter(|user| user.attached)
@@ -135,10 +146,28 @@ impl Room {
 			.filter(|user| filter(user))
 			.for_each(|user| {
 				let protocol = user.protocol.as_mut().unwrap();
-				tracer.on_s2c_command(room_id, user.template.id.clone(), &command);
-				protocol
-					.out_commands_collector
-					.add_command(channel_type.clone(), application_command.clone());
+				for command in commands.clone() {
+					let allow = match &command.field {
+						None => true,
+						Some(FieldIdAndType { field_id, field_type }) => {
+							permission_manager
+								.borrow_mut()
+								.get_permission(template, *field_id, *field_type, user.template.access_groups)
+								> Permission::Deny
+						}
+					};
+
+					if allow {
+						let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+							meta: meta.clone(),
+							command: command.command.clone(),
+						});
+						tracer.on_s2c_command(room_id, user.template.id.clone(), &command.command);
+						protocol
+							.out_commands_collector
+							.add_command(channel_type.clone(), application_command.clone());
+					}
+				}
 			});
 	}
 
@@ -200,29 +229,6 @@ mod tests {
 	use crate::room::Room;
 
 	#[test]
-	fn should_send_command_to_other_user() {
-		let (template, user_template) = create_template();
-		let mut room = Room::from_template(template);
-		room.current_user.replace(user_template.id + 1); // команда пришла от другого пользователя
-		room.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
-		room.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-		room.mark_as_connected(user_template.id);
-		room.send_to_group(
-			user_template.access_groups.clone(),
-			S2CCommand::Event(EventCommand {
-				object_id: Default::default(),
-				field_id: 0,
-				event: Default::default(),
-			}),
-			|_| true,
-		);
-
-		let user = room.get_user(user_template.id).unwrap();
-		let protocol = user.protocol.as_ref().unwrap();
-		assert_eq!(protocol.out_commands_collector.commands.reliable.len(), 1);
-	}
-
-	#[test]
 	fn should_do_action_check_execute_only_with_enough_permission() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
@@ -239,7 +245,9 @@ mod tests {
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(user_1, access_groups).id.clone();
+		let object = room.create_object(user_1, access_groups);
+		object.created = true;
+		let object_id = object.id.clone();
 
 		// владельцу разрешены любые операции
 		let mut executed = false;
@@ -294,6 +302,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let object = room.create_object(user, access_groups);
 		object.access_groups = access_groups.clone();
+		object.created = true;
 		let object_id = object.id.clone();
 		room.mark_as_connected(user);
 
@@ -325,63 +334,6 @@ mod tests {
 	}
 
 	///
-	/// Не посылать обновление клиенту если это запрещено правами
-	///
-	#[test]
-	fn should_do_action_check_send_update() {
-		let mut template = RoomTemplate::default();
-		let access_groups_a = AccessGroups(0b111);
-		let access_groups_b = AccessGroups(0b100);
-		let user_1 = 1;
-		let user_2 = 2;
-		template.configure_user(user_1, access_groups_a);
-		template.configure_user(user_2, access_groups_b);
-
-		let field_id_1 = 10;
-		let field_id_2 = 11;
-		let field_type = FieldType::Long;
-		template
-			.permissions
-			.set_permission(0, &field_id_2, FieldType::Long, &access_groups_b, Permission::Deny);
-
-		let mut room = Room::from_template(template);
-
-		room.mark_as_connected(user_1);
-		room.mark_as_connected(user_2);
-
-		let object_id = room.create_object(user_1, access_groups_a).id.clone();
-
-		// изменяем поле, доступное другому пользователю - он должен получить обновление
-		let mut executed = false;
-		room.do_action(&object_id, &field_id_1, field_type, user_1, Permission::Rw, |_| {
-			executed = true;
-			Option::Some(S2CCommand::SetLong(SetLongCommand {
-				object_id: object_id.clone(),
-				field_id: field_id_2,
-				value: 0,
-			}))
-		});
-
-		assert!(executed);
-		assert!(matches!(room.get_user_out_commands(user_2).get(0), Option::Some(S2CCommand::SetLong(_))));
-		room.clear_user_out_commands(user_2);
-
-		// изменяем поле, не доступное другому пользователю - он не должен получить обновление
-		let mut executed = false;
-		room.do_action(&object_id, &field_id_2, field_type, user_1, Permission::Rw, |_| {
-			executed = true;
-			Option::Some(S2CCommand::SetLong(SetLongCommand {
-				object_id: object_id.clone(),
-				field_id: field_id_2,
-				value: 155,
-			}))
-		});
-
-		assert!(executed);
-		assert!(room.get_user_out_commands(user_2).is_empty());
-	}
-
-	///
 	/// Действие не должно выполнится если пользователь не входит в группу объекта
 	///
 	#[test]
@@ -395,7 +347,9 @@ mod tests {
 		template.configure_user(user_2, access_groups_b);
 
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(user_1, access_groups_a).id.clone();
+		let object = room.create_object(user_1, access_groups_a);
+		object.created = true;
+		let object_id = object.id.clone();
 
 		let mut executed = false;
 		room.do_action(&object_id, &0, FieldType::Long, user_2, Permission::Ro, |_| {
@@ -422,6 +376,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		room.mark_as_connected(user_id);
 		let object = room.create_object(user_id, groups);
+		object.created = true;
 		object.template = object_template;
 		let object_id = object.id.clone();
 
@@ -453,5 +408,97 @@ mod tests {
 		let out_commands = room.get_user_out_commands(user_id);
 		assert!(matches!(out_commands.get(0), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
 		assert_eq!(out_commands.len(), 1);
+	}
+
+	///
+	/// Не посылать обновление клиенту если это запрещено правами
+	///
+	#[test]
+	fn should_send_with_permission() {
+		let access_groups = AccessGroups(0b111);
+		let object_template = 100;
+		let user_1 = 1;
+		let user_2 = 2;
+
+		let allow_field_id = 10;
+		let deny_field_id = 11;
+		let field_type = FieldType::Long;
+
+		let mut template = RoomTemplate::default();
+		template.configure_user(user_1, access_groups);
+		template.configure_user(user_2, access_groups);
+		template
+			.permissions
+			.set_permission(object_template, &deny_field_id, FieldType::Long, &access_groups, Permission::Deny);
+
+		let mut room = Room::from_template(template);
+		room.mark_as_connected(user_1);
+		room.mark_as_connected(user_2);
+
+		let object = room.create_object(user_1, access_groups);
+		object.created = true;
+		object.template = object_template;
+		let object_id = object.id.clone();
+
+		let commands = [
+			S2CommandWithFieldInfo {
+				field: Some(FieldIdAndType {
+					field_id: allow_field_id,
+					field_type,
+				}),
+				command: S2CCommand::SetLong(SetLongCommand {
+					object_id: object_id.clone(),
+					field_id: allow_field_id,
+					value: 0,
+				}),
+			},
+			S2CommandWithFieldInfo {
+				field: Some(FieldIdAndType {
+					field_id: deny_field_id,
+					field_type,
+				}),
+				command: S2CCommand::SetLong(SetLongCommand {
+					object_id: object_id.clone(),
+					field_id: deny_field_id,
+					value: 155,
+				}),
+			},
+		];
+
+		room.send(access_groups, object_template, &commands.iter(), |_| true);
+
+		let commands = room.get_user_out_commands(user_2);
+		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetLong(c)) if c.field_id == allow_field_id));
+		assert_eq!(commands.len(), 1);
+	}
+
+	#[test]
+	fn should_do_action_not_send_if_object_not_created() {
+		let user_1 = 1;
+		let user_2 = 2;
+		let field_id = 10;
+
+		let mut template = RoomTemplate::default();
+		let access_groups = AccessGroups(55);
+		template.configure_user(user_1, access_groups);
+		template.configure_user(user_2, access_groups);
+
+		let mut room = Room::from_template(template);
+		let object = room.create_object(user_1, access_groups);
+		let object_id = object.id.clone();
+		room.mark_as_connected(user_1);
+		room.mark_as_connected(user_2);
+
+		// владельцу разрешены любые операции
+		room.do_action(&object_id.clone(), &field_id, FieldType::Long, user_1, Permission::Rw, |_| {
+			Option::Some(S2CCommand::SetLong(SetLongCommand {
+				object_id,
+				field_id: 100,
+				value: 200,
+			}))
+		});
+
+		let commands = room.get_user_out_commands(user_2);
+		assert!(commands.is_empty());
 	}
 }

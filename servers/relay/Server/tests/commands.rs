@@ -39,13 +39,11 @@ pub fn test_create_object() {
 			value: 100,
 		}),
 	);
-
 	env.cycle();
 
-	// проверяем что нам дошли команды создания объекта еще не созданного объекта
-	let mut commands = env.get_input_commands(user_id_2);
-	assert!(matches!(commands.remove(0), S2CCommand::Create(c) if c.object_id == object_id));
-	assert!(matches!(commands.remove(0), S2CCommand::SetLong(c) if c.object_id == object_id));
+	// проверяем что команд по объекту не пришло
+	let commands = env.get_input_commands(user_id_2);
+	assert!(commands.is_empty());
 
 	// проверяем что дошла команда подтверждения создания объекта
 	env.send_to_server(
@@ -57,6 +55,8 @@ pub fn test_create_object() {
 	env.cycle();
 
 	let mut commands = env.get_input_commands(user_id_2);
+	assert!(matches!(commands.remove(0), S2CCommand::Create(c) if c.object_id == object_id));
+	assert!(matches!(commands.remove(0), S2CCommand::SetLong(c) if c.object_id == object_id));
 	assert!(matches!(commands.remove(0), S2CCommand::Created(c) if c.object_id == object_id));
 
 	// проверяем загрузку уже созданного объекта

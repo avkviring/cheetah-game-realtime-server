@@ -73,7 +73,7 @@ pub struct S2CommandWithFieldInfo {
 	pub command: S2CCommand,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FieldIdAndType {
 	pub field_id: FieldId,
 	pub field_type: FieldType,

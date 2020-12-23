@@ -57,7 +57,9 @@ mod tests {
 		let user = 1;
 		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
-		let object_id = room.create_object(user, access_groups).id.clone();
+		let object = room.create_object(user, access_groups);
+		object.created = true;
+		let object_id = object.id.clone();
 
 		room.out_commands.clear();
 		let command = StructureCommand {

@@ -3,16 +3,23 @@ use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
+use crate::room::object::FieldIdAndType;
+use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
 	fn execute(self, room: &mut Room, user_id: UserId) {
 		let room_id = room.id;
+		let permission_manager = room.permission_manager.clone();
 		if let Some(object) = room.get_object_mut(&self.object_id) {
 			if !object.created {
 				let groups = object.access_groups.clone();
 				object.created = true;
-				room.send_to_group(groups, S2CCommand::Created(self), |user| user.template.id != user_id)
+				// объект полностью загружен - теперь его надо загрузить остальным клиентам
+				let mut commands = Vec::new();
+				object.collect_create_commands(&mut commands);
+				let template = object.template;
+				room.send(groups, template, &commands.iter(), |user| user.template.id != user_id)
 			} else {
 				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);
 			}
@@ -45,6 +52,11 @@ mod tests {
 		assert!(room.get_user_out_commands(user1).is_empty());
 		assert!(matches!(
 			room.get_user_out_commands(user2).get(0),
+			Some(S2CCommand::Create(c)) if c.object_id == object_id
+		));
+
+		assert!(matches!(
+			room.get_user_out_commands(user2).get(1),
 			Some(S2CCommand::Created(c)) if c.object_id == object_id
 		));
 	}
