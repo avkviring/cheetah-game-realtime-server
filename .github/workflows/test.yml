@@ -6,4 +6,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: test
-        run: cd servers/relay && cargo test
+        run: cd components/relay && cargo test
