@@ -43,7 +43,7 @@ namespace CheetahRelay
 
         public bool Equals(CheetahObjectId other)
         {
-            return id == other.id && roomOwner == other.roomOwner && userId == other.userId;
+            return id == other.id && userId == other.userId;
         }
 
         public override int GetHashCode()
@@ -51,7 +51,6 @@ namespace CheetahRelay
             unchecked
             {
                 var hashCode = (int) id;
-                hashCode = (hashCode * 397) ^ roomOwner.GetHashCode();
                 hashCode = (hashCode * 397) ^ (int) userId;
                 return hashCode;
             }
