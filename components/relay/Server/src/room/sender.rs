@@ -215,16 +215,16 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	
+
 	use cheetah_relay_common::commands::command::long::SetLongCommand;
-	
+
 	use cheetah_relay_common::commands::command::S2CCommand;
-	
+
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 	use crate::room::template::config::{Permission, RoomTemplate};
-	
+
 	use crate::room::types::FieldType;
 	use crate::room::Room;
 
@@ -489,7 +489,6 @@ mod tests {
 		room.mark_as_connected(user_1);
 		room.mark_as_connected(user_2);
 
-		// владельцу разрешены любые операции
 		room.do_action(&object_id.clone(), &field_id, FieldType::Long, user_1, Permission::Rw, |_| {
 			Option::Some(S2CCommand::SetLong(SetLongCommand {
 				object_id,
