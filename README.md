@@ -6,7 +6,7 @@
 
 Поддержка многопользовательских битв реального времени.
 
-[Документация](servers/relay/README.md)
+[Документация](components/relay/docs/index.md)
 
 
 
