@@ -1,16 +1,16 @@
 use cheetah_relay_common::commands::command::load::CreatedGameObjectCommand;
-use cheetah_relay_common::commands::command::S2CCommand;
+
 use cheetah_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::FieldIdAndType;
-use crate::room::template::config::Permission;
+
+
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
 	fn execute(self, room: &mut Room, user_id: UserId) {
 		let room_id = room.id;
-		let permission_manager = room.permission_manager.clone();
+		let _permission_manager = room.permission_manager.clone();
 		if let Some(object) = room.get_object_mut(&self.object_id) {
 			if !object.created {
 				let groups = object.access_groups.clone();

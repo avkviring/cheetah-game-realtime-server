@@ -25,8 +25,8 @@ use cheetah_relay_common::room::UserId;
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::debug::tracer::CommandTracer;
-use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
-use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
+use crate::room::object::{GameObject, S2CommandWithFieldInfo};
+use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::rooms::OutFrame;
 
@@ -325,7 +325,7 @@ impl Room {
 			object.collect_create_commands(&mut commands);
 			let template = object.template;
 			let access_groups = object.access_groups;
-			self.send(access_groups, template, &commands.iter(), |user| true);
+			self.send(access_groups, template, &commands.iter(), |_user| true);
 			self.insert_object(object);
 		});
 	}

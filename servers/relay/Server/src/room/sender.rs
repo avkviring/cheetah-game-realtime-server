@@ -215,16 +215,16 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::event::EventCommand;
+	
 	use cheetah_relay_common::commands::command::long::SetLongCommand;
-	use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
+	
 	use cheetah_relay_common::commands::command::S2CCommand;
-	use cheetah_relay_common::protocol::frame::applications::ApplicationCommandChannelType;
+	
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 	use crate::room::template::config::{Permission, RoomTemplate};
-	use crate::room::tests::create_template;
+	
 	use crate::room::types::FieldType;
 	use crate::room::Room;
 
