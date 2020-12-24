@@ -1,4 +1,5 @@
 using System;
+using AOT;
 using UnityEngine;
 
 namespace CheetahRelay
@@ -13,6 +14,7 @@ namespace CheetahRelay
             LoggerExternals.InitLogger();
         }
 
+        [MonoPInvokeCallback(typeof(LoggerExternals.LogCollector))]
         private static void ShowLog(CheetahLogLevel level, string log)
         {
             switch (level)
