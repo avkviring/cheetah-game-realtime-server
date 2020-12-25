@@ -8,12 +8,11 @@ use stderrlog::Timestamp;
 
 use cheetah_relay::room::debug::tracer::CommandTracer;
 use cheetah_relay::room::template::config::{RoomTemplate, UserTemplate};
-use cheetah_relay::room::RoomId;
 use cheetah_relay::server::Server;
 use cheetah_relay_client::ffi::client::do_create_client;
 use cheetah_relay_client::registry::ClientId;
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::{UserId, UserPrivateKey};
+use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 use cheetah_relay_common::udp::bind_to_free_socket;
 
 #[derive(Debug)]
@@ -64,9 +63,9 @@ impl Helper {
 		}
 	}
 
-	pub fn create_client(&self, address: &str, keys: UserKeys) -> ClientId {
+	pub fn create_client(&self, address: &str, room_id: RoomId, keys: UserKeys) -> ClientId {
 		let mut client: ClientId = 0;
-		do_create_client(address.to_string(), keys.public, &keys.private, 0, &mut client);
+		do_create_client(address.to_string(), keys.public, room_id, &keys.private, 0, &mut client);
 		client
 	}
 
@@ -81,7 +80,7 @@ impl Helper {
 			unmapping: Default::default(),
 		};
 		server.register_user(room_id, user_template).ok().unwrap();
-		let client = self.create_client(server_address.to_string().as_str(), user_keys);
+		let client = self.create_client(server_address.to_string().as_str(), room_id, user_keys);
 		(server, client)
 	}
 

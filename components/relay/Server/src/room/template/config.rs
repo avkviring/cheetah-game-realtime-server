@@ -7,10 +7,9 @@ use serde::{Deserialize, Serialize};
 use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::{UserId, UserPrivateKey};
+use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::room::types::FieldType;
-use crate::room::RoomId;
 
 ///
 /// Шаблон для создания комнаты

@@ -24,8 +24,8 @@ pub fn stress_test() {
 	builder.create_object(user_id_1, game_object_id);
 	let mut env = builder.build();
 
-	env.connect(user_id_1);
-	env.connect(user_id_2);
+	env.connect(user_id_1, TestEnvBuilder::ROOM_ID);
+	env.connect(user_id_2, TestEnvBuilder::ROOM_ID);
 
 	env.send_to_server(user_id_2, C2SCommand::AttachToRoom);
 	env.cycle();

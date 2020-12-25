@@ -12,10 +12,10 @@ use crate::network::udp::UDPServer;
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::debug::user_selector::SelectedUserForEntrance;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
-use crate::room::RoomId;
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms, SelectUserForEntranceError};
 use crate::server::dump::ServerDump;
 use crate::server::Request::TimeOffset;
+use cheetah_relay_common::room::RoomId;
 
 pub mod dump;
 pub mod rest;

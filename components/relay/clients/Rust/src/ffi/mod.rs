@@ -58,7 +58,7 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 			ObjectOwner::Root => GameObjectIdFFI {
 				id: from.id,
 				room_owner: true,
-				user_id: u32::max_value(),
+				user_id: UserId::max_value(),
 			},
 			ObjectOwner::User(user_id) => GameObjectIdFFI {
 				id: from.id,

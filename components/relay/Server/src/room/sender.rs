@@ -171,7 +171,7 @@ impl Room {
 			});
 	}
 
-	pub fn send_to_user(&mut self, user_id: &u32, object_template: GameObjectTemplateId, commands: Vec<S2CommandWithFieldInfo>) {
+	pub fn send_to_user(&mut self, user_id: &UserId, object_template: GameObjectTemplateId, commands: Vec<S2CommandWithFieldInfo>) {
 		match self.users.get_mut(user_id) {
 			None => {
 				log::error!("[room] send to unknown user {:?}", user_id)

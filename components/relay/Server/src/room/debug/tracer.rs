@@ -6,10 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::commands::command::{C2SCommand, S2CCommand};
 use cheetah_relay_common::constants::FieldId;
-use cheetah_relay_common::room::UserId;
+use cheetah_relay_common::room::{RoomId, UserId};
 
 use crate::room::types::FieldType;
-use crate::room::RoomId;
 
 ///
 /// Вывод отладочной информации по командам с клиента/сервера с учетом правил фильтрации.

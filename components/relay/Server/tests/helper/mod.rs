@@ -13,7 +13,7 @@ use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformatio
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::UserId;
+use cheetah_relay_common::room::{RoomId, UserId};
 use cheetah_relay_common::udp::bind_to_free_socket;
 use cheetah_relay_common::udp::client::UdpClient;
 
@@ -26,8 +26,8 @@ pub struct TestEnv {
 impl TestEnv {
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(0b1);
 
-	pub fn connect(&mut self, user_id: UserId) {
-		let client = UdpClient::new(Default::default(), user_id, self.socket_addr, 100).unwrap();
+	pub fn connect(&mut self, user_id: UserId, room_id: RoomId) {
+		let client = UdpClient::new(Default::default(), user_id, room_id, self.socket_addr, 100).unwrap();
 		self.clients.insert(user_id, client);
 	}
 
@@ -76,6 +76,8 @@ pub struct TestEnvBuilder {
 }
 
 impl TestEnvBuilder {
+	pub const ROOM_ID: RoomId = 0;
+
 	pub fn create_user(&mut self, user_id: UserId) {
 		self.template.users.push(UserTemplate {
 			id: user_id,

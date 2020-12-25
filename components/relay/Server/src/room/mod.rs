@@ -15,12 +15,13 @@ use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::protocol::frame::Frame;
+use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_relay_common::protocol::relay::RelayProtocol;
 #[cfg(test)]
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserId;
+use cheetah_relay_common::room::{RoomId, UserId};
 
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
@@ -36,8 +37,6 @@ pub mod object;
 pub mod sender;
 pub mod template;
 pub mod types;
-
-pub type RoomId = u64;
 
 #[derive(Debug)]
 pub struct Room {
@@ -123,7 +122,10 @@ impl Room {
 			if let Some(ref mut protocol) = user.protocol {
 				while let Some(frame) = protocol.build_next_frame(&now) {
 					out_frames.push_front(OutFrame {
-						user_id: user_id.clone(),
+						user_and_room_id: UserAndRoomId {
+							user_id: *user_id,
+							room_id: self.id,
+						},
 						frame,
 					});
 				}
@@ -297,7 +299,7 @@ impl Room {
 	/// Тактируем протоколы пользователей и определяем дисконнекты
 	///
 	pub fn cycle(&mut self, now: &Instant) {
-		let mut disconnected_user: [u32; 10] = [0; 10];
+		let mut disconnected_user: [UserId; 10] = [0; 10];
 		let mut disconnected_users_count = 0;
 		self.users.values_mut().for_each(|u| {
 			if let Some(ref mut protocol) = u.protocol {

@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::UserId;
+use cheetah_relay_common::room::{RoomId, UserId};
 
 use crate::room::object::GameObject;
-use crate::room::{Room, RoomId, User};
+use crate::room::{Room, User};
 use crate::rooms::Rooms;
 use crate::server::ServerThread;
 

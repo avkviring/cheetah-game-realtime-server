@@ -4,9 +4,9 @@ use cheetah_relay_macro::EnumMatchPredicates;
 
 use crate::protocol::disconnect::handler::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
+use crate::protocol::others::user_id::UserAndRoomId;
 use crate::protocol::reliable::ack::header::AckFrameHeader;
 use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
-use crate::room::UserId;
 
 ///
 /// Дополнительные UDP заголовки
@@ -22,16 +22,15 @@ pub struct Headers {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, EnumMatchPredicates)]
 pub enum Header {
 	///
+	/// Идентификатор комнаты и клиента
+	/// Посылается от клиента к серверу
+	///
+	UserAndRoomId(UserAndRoomId),
+
+	///
 	/// Подтверждение пакета
 	///
 	AckFrame(AckFrameHeader),
-
-	///
-	/// Клиентский публичный ключ
-	/// - обязательно используется в командах с клиента на сервер
-	/// - необходим серверу для получения приватного ключа пользователя
-	///
-	UserId(UserId),
 
 	///
 	/// Принудительный разрыв соединения

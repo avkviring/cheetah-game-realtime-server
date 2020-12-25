@@ -5,9 +5,9 @@ use std::time::Instant;
 
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::Frame;
-use crate::protocol::others::user_id::UserIdFrameBuilder;
+use crate::protocol::others::user_id::{UserAndRoomId, UserIdFrameBuilder};
 use crate::protocol::relay::RelayProtocol;
-use crate::room::{UserId, UserPrivateKey};
+use crate::room::{RoomId, UserId, UserPrivateKey};
 use crate::udp::bind_to_free_socket;
 
 #[derive(Debug)]
@@ -35,11 +35,17 @@ pub enum ConnectionStatus {
 }
 
 impl UdpClient {
-	pub fn new(private_key: UserPrivateKey, user_id: UserId, server_address: SocketAddr, start_frame_id: u64) -> Result<UdpClient, ()> {
+	pub fn new(
+		private_key: UserPrivateKey,
+		user_id: UserId,
+		room_id: RoomId,
+		server_address: SocketAddr,
+		start_frame_id: u64,
+	) -> Result<UdpClient, ()> {
 		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
 
-		protocol.add_frame_builder(Box::new(UserIdFrameBuilder(user_id)));
+		protocol.add_frame_builder(Box::new(UserIdFrameBuilder(UserAndRoomId { user_id, room_id })));
 		let socket = bind_to_free_socket()?.0;
 		socket.set_nonblocking(true).map_err(|_| ())?;
 

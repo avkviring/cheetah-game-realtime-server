@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::room::{UserId, UserPrivateKey};
+use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::client::Client;
@@ -50,6 +50,7 @@ impl Registry {
 		&mut self,
 		server_address: String,
 		user_id: UserId,
+		room_id: RoomId,
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
 	) -> Result<ClientId, ()> {
@@ -66,6 +67,7 @@ impl Registry {
 		match Client::new(
 			SocketAddr::from_str(server_address.as_str()).unwrap(),
 			user_id,
+			room_id,
 			user_private_key,
 			out_commands,
 			in_commands,

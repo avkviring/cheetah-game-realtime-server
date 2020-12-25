@@ -1,5 +1,4 @@
-﻿using System;
-using AOT;
+﻿using AOT;
 using CheetahRelay.Runtime.Client.Codec;
 using MessagePack;
 using UnityEngine;
@@ -46,8 +45,8 @@ namespace CheetahRelay.Application
 
             var privateKey = CreatePrivateKey();
             Debug.Log("Cheetah created private key");
-            CheetahClient.CreateClient("192.168.212.97:5000", 1, ref privateKey, 0, out ClientA);
-            CheetahClient.CreateClient("192.168.212.97:5000", 2, ref privateKey, 0, out ClientB);
+            CheetahClient.CreateClient("192.168.212.97:5000", 1, 1,ref privateKey, 0, out ClientA);
+            CheetahClient.CreateClient("192.168.212.97:5000", 2, 1,ref privateKey, 0, out ClientB);
             Debug.Log("Cheetah create clients");
 
             CheetahClient.SetCurrentClient(ClientA);

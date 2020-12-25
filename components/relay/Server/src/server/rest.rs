@@ -7,8 +7,8 @@ use actix_web::body::Body;
 use actix_web::http::header;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 
-use crate::room::RoomId;
 use crate::server::Server;
+use cheetah_relay_common::room::RoomId;
 
 #[derive(Default)]
 pub struct RestServer {}

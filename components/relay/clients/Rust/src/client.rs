@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 
 use cheetah_relay_common::commands::command::C2SCommandWithMeta;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription};
-use cheetah_relay_common::room::{UserId, UserPrivateKey};
+use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 use cheetah_relay_common::udp::client::{ConnectionStatus, UdpClient};
 
 use crate::registry::ClientRequest;
@@ -35,6 +35,7 @@ impl Client {
 	pub fn new(
 		server_address: SocketAddr,
 		user_id: UserId,
+		room_id: RoomId,
 		user_private_key: UserPrivateKey,
 		out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
@@ -46,7 +47,13 @@ impl Client {
 			state,
 			out_commands,
 			in_commands,
-			udp_client: UdpClient::new(user_private_key, user_id, server_address, current_frame_id.load(Ordering::Relaxed))?,
+			udp_client: UdpClient::new(
+				user_private_key,
+				user_id,
+				room_id,
+				server_address,
+				current_frame_id.load(Ordering::Relaxed),
+			)?,
 			receiver,
 			protocol_time_offset: None,
 			current_frame_id,

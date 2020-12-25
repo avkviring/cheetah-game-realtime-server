@@ -1,35 +1,30 @@
-use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 use std::time::Instant;
 
 use fnv::FnvBuildHasher;
+use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
-use cheetah_relay_common::room::UserId;
+use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
+use cheetah_relay_common::room::RoomId;
 
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::debug::user_selector::{SelectedUserForEntrance, UserForEntranceSelector};
 use crate::room::template::config::{RoomTemplate, UserTemplate};
-use crate::room::{Room, RoomId, RoomRegisterUserError, RoomUserListener};
+use crate::room::{Room, RoomRegisterUserError, RoomUserListener};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	pub selectors_by_id: HashMap<RoomId, UserForEntranceSelector, FnvBuildHasher>,
-	pub users: Rc<RefCell<Users>>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	tracer: Rc<CommandTracer>,
 }
 
-#[derive(Default)]
-pub struct Users {
-	pub users: HashMap<UserId, RoomId, FnvBuildHasher>,
-}
-
 #[derive(Debug)]
 pub struct OutFrame {
-	pub user_id: UserId,
+	pub user_and_room_id: UserAndRoomId,
 	pub frame: Frame,
 }
 
@@ -49,18 +44,16 @@ impl Rooms {
 		Self {
 			room_by_id: Default::default(),
 			selectors_by_id: Default::default(),
-			users: Rc::new(RefCell::new(Default::default())),
 			changed_rooms: Default::default(),
 			tracer: Rc::new(tracer),
 		}
 	}
 
-	pub fn create_room(&mut self, template: RoomTemplate, mut listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Result<(), RegisterRoomError> {
+	pub fn create_room(&mut self, template: RoomTemplate, listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Result<(), RegisterRoomError> {
 		let room_id = template.id.clone();
 		if self.room_by_id.contains_key(&room_id) {
 			Result::Err(RegisterRoomError::AlreadyRegistered)
 		} else {
-			listeners.push(self.users.clone());
 			let room = Room::new(template.clone(), self.tracer.clone(), listeners);
 			self.room_by_id.insert(room_id, room);
 			Result::Ok(())
@@ -96,19 +89,15 @@ impl Rooms {
 		}
 	}
 
-	pub fn on_frame_received(&mut self, user_id: UserId, frame: Frame, now: &Instant) {
-		let room_id = (*self.users.clone()).borrow().users.get(&user_id).cloned();
-		match room_id {
+	pub fn on_frame_received(&mut self, user_and_room_id: UserAndRoomId, frame: Frame, now: &Instant) {
+		match self.room_by_id.get_mut(&user_and_room_id.room_id) {
 			None => {
-				log::error!("[rooms] user({:?} not found ", user_id);
+				log::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
 			}
-			Some(room_id) => match self.room_by_id.get_mut(&room_id) {
-				None => {}
-				Some(room) => {
-					room.process_in_frame(user_id, frame, now);
-					self.changed_rooms.insert(room.id);
-				}
-			},
+			Some(room) => {
+				room.process_in_frame(user_and_room_id.user_id, frame, now);
+				self.changed_rooms.insert(room.id);
+			}
 		}
 	}
 
@@ -132,25 +121,12 @@ pub enum SelectUserForEntranceError {
 	RoomNotFound,
 }
 
-impl RoomUserListener for Users {
-	fn register_user(&mut self, room_id: u64, template: &UserTemplate) {
-		self.users.insert(template.id.clone(), room_id.clone());
-	}
-
-	fn connected_user(&mut self, _: u64, _: &UserTemplate) {}
-
-	fn disconnected_user(&mut self, _: u64, template: &UserTemplate) {
-		self.users.remove(&template.id);
-	}
-}
-
 #[cfg(test)]
 impl Default for Rooms {
 	fn default() -> Self {
 		Self {
 			room_by_id: Default::default(),
 			selectors_by_id: Default::default(),
-			users: Rc::new(RefCell::new(Default::default())),
 			changed_rooms: Default::default(),
 			tracer: Rc::new(CommandTracer::new_with_allow_all()),
 		}

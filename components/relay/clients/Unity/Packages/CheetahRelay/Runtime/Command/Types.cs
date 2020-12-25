@@ -22,7 +22,7 @@ namespace CheetahRelay
         /// Публичный ключ пользователя - владельца объекта, применимо  если roomOwner = false
         /// </summary>
         [Key(2)]
-        public uint userId;
+        public ushort userId;
         
         public static CheetahObjectId Empty;
 

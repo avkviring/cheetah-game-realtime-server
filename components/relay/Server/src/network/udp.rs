@@ -10,10 +10,11 @@ use fnv::FnvBuildHasher;
 use cheetah_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_relay_common::protocol::frame::headers::Header;
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
-use cheetah_relay_common::room::{UserId, UserPrivateKey};
+use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
+use cheetah_relay_common::room::{RoomId, UserPrivateKey};
 
 use crate::room::template::config::UserTemplate;
-use crate::room::{RoomId, RoomUserListener};
+use crate::room::RoomUserListener;
 use crate::rooms::{OutFrame, Rooms};
 
 #[derive(Debug)]
@@ -26,7 +27,7 @@ pub struct UDPServer {
 
 #[derive(Default, Debug)]
 struct UserSessions {
-	sessions: HashMap<UserId, UserSession, FnvBuildHasher>,
+	sessions: HashMap<UserAndRoomId, UserSession, FnvBuildHasher>,
 }
 
 #[derive(Debug)]
@@ -56,7 +57,11 @@ impl UDPServer {
 	fn send(&mut self, rooms: &mut Rooms, now: &Instant) {
 		rooms.collect_out_frames(&mut self.tmp_out_frames, now);
 		let mut buffer = [0; 2048];
-		while let Some(OutFrame { user_id, frame }) = self.tmp_out_frames.back() {
+		while let Some(OutFrame {
+			user_and_room_id: user_id,
+			frame,
+		}) = self.tmp_out_frames.back()
+		{
 			match self.sessions.clone().borrow().sessions.get(user_id) {
 				None => {}
 				Some(session) => {
@@ -103,18 +108,18 @@ impl UDPServer {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_header, headers)) => {
-				let user_id_header: Option<UserId> = headers.first(Header::predicate_user_id).cloned();
+				let ident_header: Option<UserAndRoomId> = headers.first(Header::predicate_user_and_room_id).cloned();
 
 				let sessions_cloned = self.sessions.clone();
-				match user_id_header {
+				match ident_header {
 					None => {
 						log::error!("[udp] user public key not found");
 					}
-					Some(user_id) => {
+					Some(user_and_room_id) => {
 						let mut readed_frame = Option::None;
-						match sessions_cloned.borrow_mut().sessions.get_mut(&user_id) {
+						match sessions_cloned.borrow_mut().sessions.get_mut(&user_and_room_id) {
 							None => {
-								log::error!("[udp] user session not found for key {:?}", user_id);
+								log::error!("[udp] user session not found for user {:?}", user_and_room_id);
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
@@ -133,7 +138,7 @@ impl UDPServer {
 							}
 						};
 						if let Some(frame) = readed_frame {
-							rooms.on_frame_received(user_id, frame, &now);
+							rooms.on_frame_received(user_and_room_id, frame, &now);
 						}
 					}
 				}
@@ -150,9 +155,12 @@ impl UDPServer {
 }
 
 impl RoomUserListener for UserSessions {
-	fn register_user(&mut self, _: RoomId, template: &UserTemplate) {
+	fn register_user(&mut self, room_id: RoomId, template: &UserTemplate) {
 		self.sessions.insert(
-			template.id,
+			UserAndRoomId {
+				user_id: template.id,
+				room_id,
+			},
 			UserSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
@@ -163,8 +171,11 @@ impl RoomUserListener for UserSessions {
 
 	fn connected_user(&mut self, _: RoomId, _: &UserTemplate) {}
 
-	fn disconnected_user(&mut self, _: RoomId, template: &UserTemplate) {
-		self.sessions.remove(&template.id);
+	fn disconnected_user(&mut self, room_id: RoomId, template: &UserTemplate) {
+		self.sessions.remove(&UserAndRoomId {
+			user_id: template.id,
+			room_id,
+		});
 	}
 }
 
@@ -177,6 +188,7 @@ mod tests {
 	use cheetah_relay_common::protocol::codec::cipher::Cipher;
 	use cheetah_relay_common::protocol::frame::headers::Header;
 	use cheetah_relay_common::protocol::frame::Frame;
+	use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
 	use cheetah_relay_common::udp::bind_to_free_socket;
 
 	use crate::network::udp::UDPServer;
@@ -205,7 +217,7 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
-		frame.headers.add(Header::UserId(0));
+		frame.headers.add(Header::UserAndRoomId(UserAndRoomId { user_id: 0, room_id: 0 }));
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -251,7 +263,11 @@ mod tests {
 		udp_server.sessions.clone().borrow_mut().register_user(0, &user_template);
 
 		let mut frame = Frame::new(100);
-		frame.headers.add(Header::UserId(user_template.id));
+		let user_and_room_id = UserAndRoomId {
+			user_id: user_template.id,
+			room_id: 0,
+		};
+		frame.headers.add(Header::UserAndRoomId(user_and_room_id.clone()));
 		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer);
 
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
@@ -260,7 +276,7 @@ mod tests {
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &Instant::now());
 
 		let mut frame = Frame::new(10);
-		frame.headers.add(Header::UserId(user_template.id));
+		frame.headers.add(Header::UserAndRoomId(user_and_room_id.clone()));
 		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer);
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 
@@ -270,7 +286,7 @@ mod tests {
 				.clone()
 				.borrow()
 				.sessions
-				.get(&user_template.id)
+				.get(&user_and_room_id)
 				.unwrap()
 				.peer_address
 				.unwrap(),

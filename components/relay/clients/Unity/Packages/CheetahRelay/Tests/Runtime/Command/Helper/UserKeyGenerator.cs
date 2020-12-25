@@ -3,7 +3,7 @@ namespace CheetahRelay.Tests
     public static class UserKeyGenerator
     {
         public static CheetahBuffer Private = GetPrivateKey();
-        private static uint nextPublic = 1;
+        private static ushort nextPublic = 1;
 
         private static CheetahBuffer GetPrivateKey()
         {
@@ -16,7 +16,7 @@ namespace CheetahRelay.Tests
             return key;
         }
 
-        public static uint NextPublic()
+        public static ushort NextPublic()
         {
             return nextPublic++;
         }
