@@ -25,7 +25,7 @@ pub struct OutCommandsCollector {
 }
 
 impl OutCommandsCollector {
-	const MAX_COMMAND_IN_FRAME: usize = 10;
+	const MAX_COMMAND_IN_FRAME: usize = 3;
 
 	pub fn add_command(&mut self, channel_type: ApplicationCommandChannelType, command: ApplicationCommand) {
 		match self.create_channel(&channel_type, &command) {
