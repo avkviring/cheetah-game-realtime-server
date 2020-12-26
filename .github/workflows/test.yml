@@ -1,9 +1,49 @@
-name: Rust
+name: Test
 on: [push]
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 jobs:
-  tests:
+  rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: test
+      - uses: actions/cache@v1.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            components/relay/target
+          key: cache-rust
+      - name: Test
         run: cd components/relay && cargo test
+  unity:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            components/relay/target
+            components/relay/clients/Unity/Library
+          key: cache-unity
+      - name: Build server
+        run: cargo build --manifest-path components/relay/Server/Cargo.toml
+      - name: Run server
+        run: nohup cargo run --manifest-path components/relay/Server/Cargo.toml -- --room components/relay/Server/config/room-for-unity-test.yml &
+      - name: Check server state
+        run: curl http://localhost:8080
+      - uses: webbertakken/unity-test-runner@v1.7
+        id: myTestStep
+        with:
+          projectPath: components/relay/clients/Unity/
+          unityVersion: 2019.4.5f1
+          useHostNetwork: true
+          testMode: playmode
+      - uses: actions/upload-artifact@v1
+        with:
+          name: Test results
+          path: ${{ steps.myTestStep.outputs.artifactsPath }}

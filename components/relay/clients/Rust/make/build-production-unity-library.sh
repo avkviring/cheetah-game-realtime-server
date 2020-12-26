@@ -19,7 +19,12 @@ mkdir -p $OUTPUT/Android/
 cross build --manifest-path clients/Rust/Cargo.toml --target armv7-linux-androideabi --release --message-format short
 cp target/armv7-linux-androideabi/release/libcheetah_relay_client.so $OUTPUT/Android/
 
-## windows
+# windows
 rm -f $OUTPUT/x86_64/libcheetah_relay_client.dll
 cross build --manifest-path clients/Rust/Cargo.toml --target x86_64-pc-windows-gnu --release --message-format short
 cp target/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll $OUTPUT/x86_64/libcheetah_relay_client.dll
+
+# linux
+rm -f $OUTPUT/x86_64/libcheetah_relay_client.so
+cross build --manifest-path clients/Rust/Cargo.toml --target x86_64-unknown-linux-gnu --release --message-format short
+cp target/x86_64-unknown-linux-gnu/release/libcheetah_relay_client.so $OUTPUT/x86_64/libcheetah_relay_client.so
