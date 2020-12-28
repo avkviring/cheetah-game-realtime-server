@@ -12,8 +12,8 @@ namespace CheetahRelay.Tests
         [SetUp]
         public void SetUp()
         {
-            var resultA = CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(),1, ref UserKeyGenerator.Private, 0, out ClientA);
-            var resultB = CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1, ref UserKeyGenerator.Private, 0, out ClientB);
+            var resultA = CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(),1, ref UserKeyGenerator.PrivateKey, 0, out ClientA);
+            var resultB = CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(), 1, ref UserKeyGenerator.PrivateKey, 0, out ClientB);
 
             Assert.True(resultA);
             Assert.True(resultB);

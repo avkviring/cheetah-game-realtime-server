@@ -1,6 +1,7 @@
 using System.Threading;
 using AOT;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace CheetahRelay.Tests
 {
@@ -17,8 +18,8 @@ namespace CheetahRelay.Tests
         [SetUp]
         public void SetUp()
         {
-            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1,ref UserKeyGenerator.Private, 0, out clientA));
-            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1,ref UserKeyGenerator.Private,0,  out clientB));
+            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(), 1,ref UserKeyGenerator.PrivateKey, 0, out clientA));
+            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(), 1,ref UserKeyGenerator.PrivateKey,0,  out clientB));
             Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(clientA);
@@ -63,32 +64,32 @@ namespace CheetahRelay.Tests
         [MonoPInvokeCallback(typeof(CheetahObject.CreatedListener))]
         private void OnCreated(ref CheetahCommandMeta meta, ref CheetahObjectId objectId)
         {
-            createdObjectId = objectId; }
+            createdObjectId = objectId; 
+        }
 
 
         [Test]
         public void ShouldDeleteObject()
         {
-            // CheetahClient.SetCurrentClient(clientA);
-            //
-            // CheetahObjectId objectId = new CheetahObjectId();
-            // CheetahObject.Create(55, 1, ref objectId);
-            // CheetahObject.Created(ref objectId);
-            // Thread.Sleep(100);
-            //
-            // CheetahClient.SetCurrentClient(clientB);
-            // CheetahClient.AttachToRoom();
-            // CheetahObject.SetDeleteListener(OnDelete);
-            // Thread.Sleep(100);
-            //
-            // CheetahClient.SetCurrentClient(clientA);
-            // CheetahObject.Delete(ref objectId);
-            // Thread.Sleep(100);
-            //
-            // CheetahClient.SetCurrentClient(clientB);
-            // CheetahClient.Receive();
-            //
-            // Assert.AreEqual(objectId, deletedObjectId);
+            CheetahClient.SetCurrentClient(clientA);
+            LoggerExternals.SetMaxLogLevel(CheetahLogLevel.Info);
+            CheetahObjectId objectId = new CheetahObjectId();
+            CheetahObject.Create(55, 1, ref objectId);
+            CheetahObject.Created(ref objectId);
+            Thread.Sleep(100);
+            
+            CheetahClient.SetCurrentClient(clientB);
+            CheetahClient.AttachToRoom();
+            CheetahObject.SetDeleteListener(OnDelete);
+            Thread.Sleep(100);
+            
+            CheetahClient.SetCurrentClient(clientA);
+            CheetahObject.Delete(ref objectId);
+            Thread.Sleep(500);
+            
+            CheetahClient.SetCurrentClient(clientB);
+            CheetahClient.Receive();
+            Assert.AreEqual(objectId, deletedObjectId);
         }
 
         [MonoPInvokeCallback(typeof(CheetahObject.DeleteListener))]
