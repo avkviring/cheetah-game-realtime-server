@@ -99,7 +99,9 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 pub fn reset_all_compare_and_set(room: &mut Room, user_id: UserId, compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>) {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
 		match room.get_object_mut(&object_id) {
-			None => {}
+			None => {
+				// нормальная ситуация для пользовательских объектов
+			}
 			Some(object) => {
 				if let Some(owner) = object.compare_and_set_owners.get(&field) {
 					if *owner == user_id {

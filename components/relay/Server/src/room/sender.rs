@@ -110,7 +110,9 @@ impl Room {
 					});
 				};
 			}
-		};
+		} else {
+			log::error!("room[({:?})] do_action object not found ({:?}) ", self.id, game_object_id);
+		}
 	}
 
 	pub fn send<T>(&mut self, access_groups: AccessGroups, template: GameObjectTemplateId, commands: &Iter<S2CommandWithFieldInfo>, filter: T)
@@ -215,16 +217,12 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-
 	use cheetah_relay_common::commands::command::long::SetLongCommand;
-
 	use cheetah_relay_common::commands::command::S2CCommand;
-
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 	use crate::room::template::config::{Permission, RoomTemplate};
-
 	use crate::room::types::FieldType;
 	use crate::room::Room;
 

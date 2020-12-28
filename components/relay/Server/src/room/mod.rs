@@ -254,13 +254,7 @@ impl Room {
 	}
 
 	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Option<&mut GameObject> {
-		match self.objects.get_mut(object_id) {
-			Some(object) => Option::Some(object),
-			None => {
-				log::error!("[room({:?})] get_object_mut - object({:?}) not found", self.id, object_id);
-				Option::None
-			}
-		}
+		self.objects.get_mut(object_id)
 	}
 
 	pub fn contains_object(&self, object_id: &GameObjectId) -> bool {
