@@ -4,7 +4,6 @@ use cheetah_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
 
-
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {

@@ -72,7 +72,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
-	
+
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
