@@ -41,11 +41,21 @@ pub extern "C" fn receive() -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn get_frame_id(out_frame_id: &mut u64) -> bool {
+pub extern "C" fn get_statistics(statistics: &mut Statistics) -> bool {
 	execute_with_client(|client| {
-		*out_frame_id = client.current_frame_id.load(Ordering::Relaxed);
+		statistics.last_frame_id = client.current_frame_id.load(Ordering::Relaxed);
+		statistics.rtt_in_ms = client.rtt_in_ms.load(Ordering::Relaxed);
+		statistics.average_retransmit_frames = client.average_retransmit_frames.load(Ordering::Relaxed);
 	})
 	.is_ok()
+}
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct Statistics {
+	pub last_frame_id: u64,
+	pub rtt_in_ms: u64,
+	pub average_retransmit_frames: u32,
 }
 
 #[no_mangle]

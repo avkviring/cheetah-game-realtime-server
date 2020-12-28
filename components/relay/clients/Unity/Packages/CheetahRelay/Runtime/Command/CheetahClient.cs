@@ -14,7 +14,7 @@ namespace CheetahRelay
         /// <param name="userPrivateKey"></param>
         /// <param name="startFrameId">Начальный идентификатор фрейма, 0 - при первом входе в комнату, N - при повторном входе в ту же самую комнату</param>
         /// <param name="clientId">Результат - локальный идентификатор клиента</param>
-        /// <returns>false - ошибка создания сетевего сокета</returns>
+        /// <returns>false - ошибка создания сетевого сокета</returns>
         [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_client")]
         public static extern bool CreateClient(
             [MarshalAs(UnmanagedType.LPStr)] string serverAddress,
@@ -24,7 +24,7 @@ namespace CheetahRelay
             ulong startFrameId,
             out ushort clientId
         );
-        
+
 
         /// <summary>
         /// Установить текущего клиента.
@@ -45,12 +45,11 @@ namespace CheetahRelay
         public static extern bool GetConnectionStatus(out CheetahConnectionStatus status);
 
         /// <summary>
-        ///  Получить id текущего фрейма
+        ///  Получить статистику текущего клиента
         /// </summary>
-        /// <param name="frameId"></param>
         /// <returns>true - успешно, false - клиента с таким идентификатором не найден</returns>
-        [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_frame_id")]
-        public static extern bool GetFrameId(out ulong frameId);
+        [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_statistics")]
+        public static extern bool GetStatistics(out CheetahStatistics statistics);
 
 
         /// <summary>
@@ -67,16 +66,16 @@ namespace CheetahRelay
         /// <returns>false - клиент не найден</returns>
         [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_client")]
         public static extern bool DestroyClient();
-        
-        
+
+
         /// <summary>
         /// Присоединиться к комнате
         /// </summary>
         /// <returns>false - клиент не найден</returns>
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "attach_to_room")]
         public static extern bool AttachToRoom();
-        
-         /// <summary>
+
+        /// <summary>
         /// Установить канал отправки все последующих команд
         /// </summary>
         /// <param name="channelType">тип канала</param>
@@ -85,7 +84,7 @@ namespace CheetahRelay
         /// TODO - подумать над group, так как он применим не для всех каналов
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_channel")]
         public static extern bool SetChannelType(ChannelType channelType, ushort group);
-        
+
 
         public enum ChannelType
         {

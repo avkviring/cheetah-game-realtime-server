@@ -1,7 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -63,6 +63,9 @@ impl Registry {
 		let in_commands_cloned = in_commands.clone();
 		let state_cloned = state.clone();
 
+		let rtt_in_ms = Arc::new(AtomicU64::new(0));
+		let average_retransmit_frames = Arc::new(AtomicU32::new(0));
+
 		let (sender, receiver) = std::sync::mpsc::channel();
 		match Client::new(
 			SocketAddr::from_str(server_address.as_str()).unwrap(),
@@ -74,6 +77,8 @@ impl Registry {
 			state,
 			receiver,
 			start_frame_id.clone(),
+			rtt_in_ms.clone(),
+			average_retransmit_frames.clone(),
 		) {
 			Ok(client) => {
 				let handler = thread::spawn(move || {
@@ -88,6 +93,8 @@ impl Registry {
 					out_commands_cloned,
 					sender,
 					start_frame_id,
+					rtt_in_ms.clone(),
+					average_retransmit_frames.clone(),
 				);
 				self.client_generator_id += 1;
 				let client_id = self.client_generator_id;

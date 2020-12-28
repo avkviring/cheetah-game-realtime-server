@@ -50,7 +50,7 @@ pub struct RetransmitterImpl {
 	///
 	ack_wait_duration: Duration,
 
-	statistics: RetransmitStatistics,
+	pub statistics: RetransmitStatistics,
 }
 
 #[derive(Debug)]

@@ -9,27 +9,31 @@ namespace CheetahRelay.Tests
         [Test]
         public void ShouldCreateClient()
         {
-            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000",UserKeyGenerator.NextPublic(), 1,ref UserKeyGenerator.Private, 0, out var clientId));
+            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1, ref UserKeyGenerator.Private, 0,
+                out var clientId));
             Assert.True(clientId > 0);
         }
 
         [Test]
         public void ShouldConnect()
         {
-            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1,ref UserKeyGenerator.Private, 0, out var clientId));
+            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1, ref UserKeyGenerator.Private, 0,
+                out var clientId));
             Thread.Sleep(100);
             Assert.True(CheetahClient.GetConnectionStatus(out var status));
             Assert.AreEqual(CheetahConnectionStatus.Connected, status);
         }
 
         [Test]
-        public void ShouldGetFrameId()
+        public void ShouldGetStatistics()
         {
-            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1,ref UserKeyGenerator.Private, 0, out var clientId));
+            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.NextPublic(), 1, ref UserKeyGenerator.Private, 0,
+                out var clientId));
             Thread.Sleep(100);
-            Assert.True(CheetahClient.GetConnectionStatus(out var status));
-            CheetahClient.GetFrameId(out var frameId);
-            Assert.True(frameId > 0);
+            CheetahClient.GetConnectionStatus(out var status);
+            Assert.AreEqual(status, CheetahConnectionStatus.Connected);
+            CheetahClient.GetStatistics(out var statistics);
+            Assert.True(statistics.LastFrameId > 0);
         }
 
 

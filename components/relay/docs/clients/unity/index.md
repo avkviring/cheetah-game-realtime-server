@@ -37,7 +37,7 @@
 Для получения frameId используется метод:
 
 ```c#
-ClientCommands.GetFrameId(out var frameId);
+ClientCommands.GetStatistics(out var statistics);
 ```
 
 Внимание - на данный момент сервер ждет клиента 10 секунд,  после этого восстановление

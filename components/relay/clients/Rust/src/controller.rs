@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 use std::ops::Sub;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
@@ -39,6 +39,8 @@ pub struct ClientController {
 	channel: ApplicationCommandChannelType,
 	game_object_id_generator: u32,
 	pub current_frame_id: Arc<AtomicU64>,
+	pub rtt_in_ms: Arc<AtomicU64>,
+	pub average_retransmit_frames: Arc<AtomicU32>,
 	listener_long_value: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, i64)>,
 	listener_float_value: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, f64)>,
 	listener_event: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, &BufferFFI)>,
@@ -68,6 +70,8 @@ impl ClientController {
 		out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 		sender: Sender<ClientRequest>,
 		current_frame_id: Arc<AtomicU64>,
+		rtt_in_ms: Arc<AtomicU64>,
+		average_retransmit_frames: Arc<AtomicU32>,
 	) -> Self {
 		Self {
 			user_id,
@@ -80,6 +84,8 @@ impl ClientController {
 			channel: ApplicationCommandChannelType::ReliableSequenceByGroup(0),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
 			current_frame_id,
+			rtt_in_ms,
+			average_retransmit_frames,
 			listener_long_value: None,
 			listener_float_value: None,
 			listener_event: None,
@@ -131,7 +137,6 @@ impl ClientController {
 		drop(commands);
 
 		while let Some(command) = cloned_commands.pop_back() {
-			//log::info!("in command {:?}", command);
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
 				let meta = &command.meta;
 				match command.command {

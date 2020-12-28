@@ -8,22 +8,18 @@ namespace CheetahRelay
     [StructLayout(LayoutKind.Sequential)]
     public struct CheetahObjectId
     {
-        [Key(0)]
-        public uint id;
+        [Key(0)] public uint id;
 
         /// <summary>
         /// Владельцем объекта может быть или комната или пользователь
         /// </summary>
-        [Key(1)]
-        [MarshalAs(UnmanagedType.I1)] 
-        public bool roomOwner;
+        [Key(1)] [MarshalAs(UnmanagedType.I1)] public bool roomOwner;
 
         /// <summary>
         /// Публичный ключ пользователя - владельца объекта, применимо  если roomOwner = false
         /// </summary>
-        [Key(2)]
-        public ushort userId;
-        
+        [Key(2)] public ushort userId;
+
         public static CheetahObjectId Empty;
 
         public override string ToString()
@@ -124,5 +120,23 @@ namespace CheetahRelay
         Connecting,
         Connected,
         Disconnected
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CheetahStatistics
+    {
+        /// <summary>
+        /// Идентификатор последнего отправленного фрейма
+        /// </summary>
+        public ulong LastFrameId;
+        /// <summary>
+        /// Время прохождения пакета от клиента к серверу и обратно
+        /// </summary>
+        public ulong RttInMs;
+        
+        /// <summary>
+        /// Среднее скользящее количество переотправленных фреймов за 5 секунд
+        /// </summary>
+        public uint AverageRetransitFrames;
     }
 }

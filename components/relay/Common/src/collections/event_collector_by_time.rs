@@ -11,7 +11,6 @@ use serde::export::fmt::Debug;
 /// - каждое измерение собирается определенное время, после этого сумма событий записывается в буфер и начинается следующее измерение
 ///
 ///
-///
 #[derive(Debug)]
 pub struct EventCollectorByTime<T: Debug, N: ArrayLength<T>> {
 	current_value: T,

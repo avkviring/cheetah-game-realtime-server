@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::net::SocketAddr;
 use std::ops::Add;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -9,6 +9,7 @@ use std::time::{Duration, Instant};
 
 use cheetah_relay_common::commands::command::C2SCommandWithMeta;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription};
+use cheetah_relay_common::protocol::others::rtt::RoundTripTime;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 use cheetah_relay_common::udp::client::{ConnectionStatus, UdpClient};
 
@@ -23,6 +24,8 @@ pub struct Client {
 	receiver: Receiver<ClientRequest>,
 	protocol_time_offset: Option<Duration>,
 	current_frame_id: Arc<AtomicU64>,
+	rtt_in_ms: Arc<AtomicU64>,
+	average_retransmit_frames: Arc<AtomicU32>,
 }
 
 #[derive(Debug)]
@@ -42,6 +45,8 @@ impl Client {
 		state: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
 		current_frame_id: Arc<AtomicU64>,
+		rtt_in_ms: Arc<AtomicU64>,
+		average_retransmit_frames: Arc<AtomicU32>,
 	) -> Result<Client, ()> {
 		Result::Ok(Client {
 			state,
@@ -57,12 +62,27 @@ impl Client {
 			receiver,
 			protocol_time_offset: None,
 			current_frame_id,
+			rtt_in_ms,
+			average_retransmit_frames,
 		})
 	}
 
 	pub fn run(mut self) {
 		loop {
 			self.current_frame_id.store(self.udp_client.protocol.next_frame_id, Ordering::Relaxed);
+			self.rtt_in_ms.store(
+				self.udp_client.protocol.rtt.get_rtt().unwrap_or(Duration::from_millis(0)).as_millis() as u64,
+				Ordering::Relaxed,
+			);
+			self.average_retransmit_frames.store(
+				self.udp_client
+					.protocol
+					.retransmitter
+					.statistics
+					.get_average_retransmit_frames(&Instant::now())
+					.unwrap_or(0) as u32,
+				Ordering::Relaxed,
+			);
 
 			let arc_out_commands = self.out_commands.clone();
 			let lock_for_out_commands = arc_out_commands.lock();
