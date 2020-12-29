@@ -35,6 +35,14 @@ namespace CheetahRelay
         [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_current_client")]
         public static extern bool SetCurrentClient(ushort client);
 
+        /// <summary>
+        /// Установить объект - источник команды в мета информацию
+        /// </summary>
+        /// <param name="objectId"></param>
+        /// <returns></returns>
+        [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_source_object_to_meta")]
+        public static extern bool SetSourceObjectToMeta(ref CheetahObjectId objectId);
+
 
         /// <summary>
         ///  Получить статус сетевого соединения с сервером

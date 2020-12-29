@@ -2,10 +2,11 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 
+use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 use cheetah_relay_common::udp::client::ConnectionStatus;
 
-use crate::ffi::{execute, execute_with_client, BufferFFI};
+use crate::ffi::{execute, execute_with_client, BufferFFI, GameObjectIdFFI};
 use crate::registry::ClientId;
 
 #[no_mangle]
@@ -38,6 +39,19 @@ pub extern "C" fn destroy_client() -> bool {
 #[no_mangle]
 pub extern "C" fn receive() -> bool {
 	execute_with_client(|client| client.receive()).is_ok()
+}
+
+#[no_mangle]
+pub extern "C" fn set_source_object_to_meta(source_object: &GameObjectIdFFI) -> bool {
+	execute_with_client(|client| {
+		let source_object = if source_object.id == 0 {
+			Option::None
+		} else {
+			Option::Some(GameObjectId::from(source_object))
+		};
+		client.source_object = source_object
+	})
+	.is_ok()
 }
 
 #[no_mangle]

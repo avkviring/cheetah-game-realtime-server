@@ -158,7 +158,7 @@ impl Room {
 
 				if new_user {
 					self.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-					self.current_meta.replace(C2SMetaCommandInformation { timestamp: 0 });
+					self.current_meta.replace(C2SMetaCommandInformation::default());
 					let template = user.template.clone();
 					self.user_connected(template);
 				}
@@ -170,6 +170,7 @@ impl Room {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
+					log::info!("meta {:?}", command_with_meta.meta);
 					self.tracer.on_c2s_command(self.id, user_id.clone(), &command_with_meta.command);
 					execute(command_with_meta.command, self, user_id);
 				}
@@ -532,7 +533,7 @@ mod tests {
 		frame_with_attach_to_room.commands.reliable.push_back(ApplicationCommandDescription {
 			channel: ApplicationCommandChannel::ReliableUnordered,
 			command: ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-				meta: C2SMetaCommandInformation { timestamp: 0 },
+				meta: C2SMetaCommandInformation::default(),
 				command: C2SCommand::AttachToRoom,
 			}),
 		});

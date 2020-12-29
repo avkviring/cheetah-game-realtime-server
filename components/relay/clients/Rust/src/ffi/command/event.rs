@@ -3,11 +3,11 @@ use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformatio
 use cheetah_relay_common::commands::command::C2SCommand;
 use cheetah_relay_common::constants::FieldId;
 
-use crate::ffi::command::send_command;
+use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 
 #[no_mangle]
-pub extern "C" fn set_event_listener(listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, &BufferFFI)) -> bool {
+pub extern "C" fn set_event_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)) -> bool {
 	execute_with_client(|client| {
 		client.register_event_listener(listener);
 	})

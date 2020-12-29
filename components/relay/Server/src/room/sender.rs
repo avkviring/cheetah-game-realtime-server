@@ -130,11 +130,8 @@ impl Room {
 			.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 
 		let meta = match &self.current_user {
-			None => S2CMetaCommandInformation::new(0, &C2SMetaCommandInformation { timestamp: 0 }),
-			Some(user) => S2CMetaCommandInformation::new(
-				user.clone(),
-				self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation { timestamp: 0 }),
-			),
+			None => S2CMetaCommandInformation::new(0, &C2SMetaCommandInformation::default()),
+			Some(user) => S2CMetaCommandInformation::new(user.clone(), self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation::default())),
 		};
 		let room_id = self.id;
 		let tracer = self.tracer.clone();
@@ -196,7 +193,8 @@ impl Room {
 
 							if allow {
 								self.tracer.on_s2c_command(self.id, user.template.id, &command.command);
-								let meta = self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation { timestamp: 0 });
+								let default = C2SMetaCommandInformation::default();
+								let meta = self.current_meta.as_ref().unwrap_or(&default);
 								let channel = self
 									.current_channel
 									.as_ref()

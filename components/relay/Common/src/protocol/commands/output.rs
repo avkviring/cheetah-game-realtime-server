@@ -123,7 +123,7 @@ mod tests {
 			output.add_command(
 				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
 				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: C2SMetaCommandInformation { timestamp: 0 },
+					meta: C2SMetaCommandInformation::default(),
 					command: C2SCommand::AttachToRoom,
 				}),
 			);
@@ -140,7 +140,7 @@ mod tests {
 			output.add_command(
 				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
 				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: C2SMetaCommandInformation { timestamp: 0 },
+					meta: C2SMetaCommandInformation::default(),
 					command: C2SCommand::SetLong(SetLongCommand {
 						object_id: Default::default(),
 						field_id: 1,
@@ -192,7 +192,7 @@ mod tests {
 			output.add_command(
 				ApplicationCommandChannelType::ReliableSequenceByObject,
 				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: C2SMetaCommandInformation { timestamp: 0 },
+					meta: C2SMetaCommandInformation::default(),
 					command: C2SCommand::Event(EventCommand {
 						object_id: Default::default(),
 						field_id: 0,

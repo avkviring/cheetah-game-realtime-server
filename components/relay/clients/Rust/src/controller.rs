@@ -22,6 +22,7 @@ use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::client::OutApplicationCommand;
 use crate::ffi::channel::Channel;
+use crate::ffi::command::S2CMetaCommandInformationFFI;
 use crate::ffi::{BufferFFI, GameObjectIdFFI};
 use crate::registry::ClientRequest;
 
@@ -38,16 +39,17 @@ pub struct ClientController {
 	create_time: Instant,
 	channel: ApplicationCommandChannelType,
 	game_object_id_generator: u32,
+	pub source_object: Option<GameObjectId>,
 	pub current_frame_id: Arc<AtomicU64>,
 	pub rtt_in_ms: Arc<AtomicU64>,
 	pub average_retransmit_frames: Arc<AtomicU32>,
-	listener_long_value: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, i64)>,
-	listener_float_value: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, f64)>,
-	listener_event: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	listener_structure: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	listener_delete_object: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI)>,
-	listener_create_object: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, u16)>,
-	pub listener_created_object: Option<extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI)>,
+	listener_long_value: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, i64)>,
+	listener_float_value: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64)>,
+	listener_event: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)>,
+	listener_structure: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)>,
+	listener_delete_object: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)>,
+	listener_create_object: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, u16)>,
+	pub listener_created_object: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)>,
 }
 
 impl Drop for ClientController {
@@ -83,6 +85,7 @@ impl ClientController {
 			create_time: Instant::now(),
 			channel: ApplicationCommandChannelType::ReliableSequenceByGroup(0),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
+			source_object: None,
 			current_frame_id,
 			rtt_in_ms,
 			average_retransmit_frames,
@@ -103,6 +106,7 @@ impl ClientController {
 	pub fn send(&mut self, command: C2SCommand) {
 		let meta = C2SMetaCommandInformation {
 			timestamp: Instant::now().sub(self.create_time).as_millis() as u64,
+			source_object: self.source_object.clone(),
 		};
 		let command = OutApplicationCommand {
 			channel_type: self.channel.clone(),
@@ -138,7 +142,7 @@ impl ClientController {
 
 		while let Some(command) = cloned_commands.pop_back() {
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
-				let meta = &command.meta;
+				let meta = &S2CMetaCommandInformationFFI::from(&command.meta);
 				match command.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {
@@ -187,23 +191,23 @@ impl ClientController {
 		}
 	}
 
-	pub fn register_long_value_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, i64)) {
+	pub fn register_long_value_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, i64)) {
 		self.listener_long_value = Option::Some(listener);
 	}
-	pub fn register_float_value_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, f64)) {
+	pub fn register_float_value_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64)) {
 		self.listener_float_value = Option::Some(listener);
 	}
-	pub fn register_event_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, &BufferFFI)) {
+	pub fn register_event_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)) {
 		self.listener_event = Option::Some(listener);
 	}
-	pub fn register_structure_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, FieldId, &BufferFFI)) {
+	pub fn register_structure_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)) {
 		self.listener_structure = Option::Some(listener);
 	}
-	pub fn register_delete_object_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI)) {
+	pub fn register_delete_object_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)) {
 		self.listener_delete_object = Option::Some(listener);
 	}
 
-	pub fn register_create_object_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, u16)) {
+	pub fn register_create_object_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, u16)) {
 		self.listener_create_object = Option::Some(listener);
 	}
 

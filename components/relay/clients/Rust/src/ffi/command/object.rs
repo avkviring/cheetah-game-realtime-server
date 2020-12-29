@@ -1,13 +1,12 @@
 use cheetah_relay_common::commands::command::load::CreatedGameObjectCommand;
-use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_relay_common::commands::command::C2SCommand;
 
-use crate::ffi::command::send_command;
+use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
 
 #[no_mangle]
-pub extern "C" fn set_create_object_listener(listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI, template: u16)) -> bool {
+pub extern "C" fn set_create_object_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, template: u16)) -> bool {
 	execute_with_client(|client| {
 		client.register_create_object_listener(listener);
 	})
@@ -15,7 +14,7 @@ pub extern "C" fn set_create_object_listener(listener: extern "C" fn(&S2CMetaCom
 }
 
 #[no_mangle]
-pub extern "C" fn set_created_object_listener(listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI)) -> bool {
+pub extern "C" fn set_created_object_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)) -> bool {
 	execute_with_client(|client| {
 		client.listener_created_object = Option::Some(listener);
 	})
@@ -39,7 +38,7 @@ pub extern "C" fn created_object(object_id: &GameObjectIdFFI) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn set_delete_object_listener(listener: extern "C" fn(&S2CMetaCommandInformation, &GameObjectIdFFI)) -> bool {
+pub extern "C" fn set_delete_object_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)) -> bool {
 	execute_with_client(|client| {
 		client.register_delete_object_listener(listener);
 	})

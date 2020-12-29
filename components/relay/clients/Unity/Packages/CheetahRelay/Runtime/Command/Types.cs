@@ -58,12 +58,13 @@ namespace CheetahRelay
     [StructLayout(LayoutKind.Sequential)]
     public struct CheetahCommandMeta
     {
+        public ushort sourceUser;
         public ulong timestamp;
-        public uint sourceUser;
+        public CheetahObjectId sourceObject;
 
         public override string ToString()
         {
-            return "CommandMeta (timestamp=" + timestamp + ", sourceUser=" + sourceUser + ")";
+            return "CommandMeta (timestamp=" + timestamp + ", sourceUser=" + sourceUser + ", sourceObject=" + sourceObject + ")";
         }
     }
 
@@ -129,11 +130,12 @@ namespace CheetahRelay
         /// Идентификатор последнего отправленного фрейма
         /// </summary>
         public ulong LastFrameId;
+
         /// <summary>
         /// Время прохождения пакета от клиента к серверу и обратно
         /// </summary>
         public ulong RttInMs;
-        
+
         /// <summary>
         /// Среднее скользящее количество переотправленных фреймов за 5 секунд
         /// </summary>

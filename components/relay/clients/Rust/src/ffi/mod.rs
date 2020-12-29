@@ -52,6 +52,16 @@ pub struct GameObjectIdFFI {
 	user_id: UserId,
 }
 
+impl GameObjectIdFFI {
+	pub fn empty() -> Self {
+		Self {
+			id: 0,
+			room_owner: false,
+			user_id: 0,
+		}
+	}
+}
+
 impl From<&GameObjectId> for GameObjectIdFFI {
 	fn from(from: &GameObjectId) -> Self {
 		match from.owner {
@@ -71,9 +81,15 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 
 impl From<&GameObjectIdFFI> for GameObjectId {
 	fn from(from: &GameObjectIdFFI) -> Self {
-		Self {
-			owner: ObjectOwner::User(from.user_id),
-			id: from.id,
+		match from.room_owner {
+			true => Self {
+				owner: ObjectOwner::Root,
+				id: from.id,
+			},
+			false => Self {
+				owner: ObjectOwner::User(from.user_id),
+				id: from.id,
+			},
 		}
 	}
 }
