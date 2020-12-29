@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
+
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
 use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::protocol::frame::applications::{

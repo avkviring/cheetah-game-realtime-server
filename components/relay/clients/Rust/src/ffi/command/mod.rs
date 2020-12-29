@@ -1,6 +1,6 @@
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::C2SCommand;
-use cheetah_relay_common::room::object::GameObjectId;
+
 use cheetah_relay_common::room::UserId;
 
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
