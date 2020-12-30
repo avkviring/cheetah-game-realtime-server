@@ -2,5 +2,6 @@
 
 - [Объект](object.md)
 - [Команды](commands.md)
+    - [Мета информация](meta.md)  
 - [Разграничение доступа](permissions.md)
 
