@@ -4,7 +4,7 @@ use std::io::Read;
 use log::Level;
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::commands::command::{C2SCommand, S2CCommand};
+use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
 use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::room::{RoomId, UserId};
 
@@ -180,12 +180,12 @@ impl CommandTracer {
 		*action == Action::Allow
 	}
 
-	pub fn on_s2c_command(&self, room_id: RoomId, user_id: UserId, command: &S2CCommand) {
+	pub fn on_s2c_command(&self, room_id: RoomId, user_id: UserId, command: &S2CCommandWithMeta) {
 		if !(log::log_enabled!(Level::Info)) {
 			return;
 		}
 
-		let info = match command {
+		let info = match &command.command {
 			S2CCommand::Create(_c) => (Command::Create, Option::None, Option::None),
 			S2CCommand::Created(_c) => (Command::Created, Option::None, Option::None),
 			S2CCommand::SetLong(c) => (Command::SetLong, Option::Some(FieldType::Long), Option::Some(c.field_id)),
@@ -196,15 +196,15 @@ impl CommandTracer {
 		};
 
 		if self.is_allow(user_id, Direction::SC, info.0, info.1, info.2) {
-			log::info!("[room({:?})] s -> u({:?}) {:?}", room_id, user_id, command);
+			log::info!("[room({:?})] s -> u({:?}) {:?} {:?}", room_id, user_id, command.command, command.meta);
 		}
 	}
-	pub fn on_c2s_command(&self, room_id: RoomId, user_id: UserId, command: &C2SCommand) {
+	pub fn on_c2s_command(&self, room_id: RoomId, user_id: UserId, command: &C2SCommandWithMeta) {
 		if !(log::log_enabled!(Level::Info)) {
 			return;
 		}
 
-		let info = match command {
+		let info = match &command.command {
 			C2SCommand::Create(_) => (Command::Create, Option::None, Option::None),
 			C2SCommand::Created(_) => (Command::Created, Option::None, Option::None),
 			C2SCommand::SetLong(c) => (Command::SetLong, Option::Some(FieldType::Long), Option::Some(c.field_id)),
@@ -218,7 +218,7 @@ impl CommandTracer {
 			C2SCommand::AttachToRoom => (Command::AttachToRoom, Option::None, Option::None),
 		};
 		if self.is_allow(user_id, Direction::CS, info.0, info.1, info.2) {
-			log::info!("[room({:?})] u({:?}) -> s {:?}", room_id, user_id, command);
+			log::info!("[room({:?})] u({:?}) -> s {:?} {:?}", room_id, user_id, command.command, command.meta);
 		}
 	}
 }

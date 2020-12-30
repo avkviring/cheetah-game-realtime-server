@@ -157,11 +157,12 @@ impl Room {
 					};
 
 					if allow {
-						let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+						let command_with_meta = S2CCommandWithMeta {
 							meta: meta.clone(),
 							command: command.command.clone(),
-						});
-						tracer.on_s2c_command(room_id, user.template.id.clone(), &command.command);
+						};
+						tracer.on_s2c_command(room_id, user.template.id.clone(), &command_with_meta);
+						let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 						protocol
 							.out_commands_collector
 							.add_command(channel_type.clone(), application_command.clone());
@@ -192,17 +193,19 @@ impl Room {
 							};
 
 							if allow {
-								self.tracer.on_s2c_command(self.id, user.template.id, &command.command);
 								let default = C2SMetaCommandInformation::default();
 								let meta = self.current_meta.as_ref().unwrap_or(&default);
 								let channel = self
 									.current_channel
 									.as_ref()
 									.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-								let application_command = ApplicationCommand::S2CCommandWithMeta(S2CCommandWithMeta {
+
+								let command_with_meta = S2CCommandWithMeta {
 									meta: S2CMetaCommandInformation::new(user_id.clone(), meta),
 									command: command.command,
-								});
+								};
+								self.tracer.on_s2c_command(self.id, user.template.id, &command_with_meta);
+								let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 								protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
 							}
 						}

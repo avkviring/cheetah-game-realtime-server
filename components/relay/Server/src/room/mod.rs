@@ -170,8 +170,7 @@ impl Room {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
-					log::info!("meta {:?}", command_with_meta.meta);
-					self.tracer.on_c2s_command(self.id, user_id.clone(), &command_with_meta.command);
+					self.tracer.on_c2s_command(self.id, user_id.clone(), &command_with_meta);
 					execute(command_with_meta.command, self, user_id);
 				}
 				_ => {
