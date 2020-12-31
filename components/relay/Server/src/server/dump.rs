@@ -144,7 +144,7 @@ impl ServerDump {
 mod tests {
 	use serde::{Deserialize, Serialize};
 
-	use cheetah_relay_common::udp::bind_to_free_socket;
+	use cheetah_relay_common::network::bind_to_free_socket;
 
 	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::template::config::{GameObjectTemplate, RoomTemplate};

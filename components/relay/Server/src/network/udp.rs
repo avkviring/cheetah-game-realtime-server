@@ -40,7 +40,7 @@ struct UserSession {
 impl UDPServer {
 	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
-		log::info!("Starting udp server on {:?}", socket);
+		log::info!("Starting network server on {:?}", socket);
 		Result::Ok(Self {
 			sessions: Default::default(),
 			socket,
@@ -65,14 +65,14 @@ impl UDPServer {
 			match self.sessions.clone().borrow().sessions.get(user_id) {
 				None => {}
 				Some(session) => {
-					log::trace!("[udp] server -> user({:?}) {:?}", user_id, frame);
+					log::trace!("[network] server -> user({:?}) {:?}", user_id, frame);
 					let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
 					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
 						Ok(size) => {
 							if size == buffer_size {
 								self.tmp_out_frames.pop_back();
 							} else {
-								log::error!("[udp] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
+								log::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
 							}
 						}
 						Err(e) => {
@@ -97,7 +97,7 @@ impl UDPServer {
 						return;
 					}
 					_ => {
-						log::error!("[udp] error in socket.recv_from {:?}", e);
+						log::error!("[network] error in socket.recv_from {:?}", e);
 					}
 				},
 			}
@@ -113,13 +113,13 @@ impl UDPServer {
 				let sessions_cloned = self.sessions.clone();
 				match ident_header {
 					None => {
-						log::error!("[udp] user public key not found");
+						log::error!("[network] user public key not found");
 					}
 					Some(user_and_room_id) => {
 						let mut readed_frame = Option::None;
 						match sessions_cloned.borrow_mut().sessions.get_mut(&user_and_room_id) {
 							None => {
-								log::error!("[udp] user session not found for user {:?}", user_and_room_id);
+								log::error!("[network] user session not found for user {:?}", user_and_room_id);
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
@@ -132,7 +132,7 @@ impl UDPServer {
 										readed_frame.replace(frame);
 									}
 									Err(e) => {
-										log::error!("[udp] error decode frame {:?}", e)
+										log::error!("[network] error decode frame {:?}", e)
 									}
 								}
 							}
@@ -185,11 +185,11 @@ mod tests {
 	use std::str::FromStr;
 	use std::time::Instant;
 
+	use cheetah_relay_common::network::bind_to_free_socket;
 	use cheetah_relay_common::protocol::codec::cipher::Cipher;
 	use cheetah_relay_common::protocol::frame::headers::Header;
 	use cheetah_relay_common::protocol::frame::Frame;
 	use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
-	use cheetah_relay_common::udp::bind_to_free_socket;
 
 	use crate::network::udp::UDPServer;
 	use crate::room::template::config::UserTemplate;

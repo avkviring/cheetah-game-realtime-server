@@ -11,9 +11,9 @@ use cheetah_relay::room::template::config::{RoomTemplate, UserTemplate};
 use cheetah_relay::server::Server;
 use cheetah_relay_client::ffi::client::do_create_client;
 use cheetah_relay_client::registry::ClientId;
+use cheetah_relay_common::network::bind_to_free_socket;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
-use cheetah_relay_common::udp::bind_to_free_socket;
 
 #[derive(Debug)]
 pub struct Helper {

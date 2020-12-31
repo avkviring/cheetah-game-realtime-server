@@ -11,15 +11,15 @@ use cheetah_relay::room::template::config::{GameObjectTemplate, RoomTemplate, Us
 use cheetah_relay::server::Server;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
+use cheetah_relay_common::network::bind_to_free_socket;
+use cheetah_relay_common::network::client::NetworkClient;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::{RoomId, UserId};
-use cheetah_relay_common::udp::bind_to_free_socket;
-use cheetah_relay_common::udp::client::UdpClient;
 
 pub struct TestEnv {
 	socket_addr: SocketAddr,
-	clients: HashMap<UserId, UdpClient>,
+	clients: HashMap<UserId, NetworkClient>,
 	pub server: Server,
 }
 
@@ -27,7 +27,7 @@ impl TestEnv {
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(0b1);
 
 	pub fn connect(&mut self, user_id: UserId, room_id: RoomId) {
-		let client = UdpClient::new(Default::default(), user_id, room_id, self.socket_addr, 100).unwrap();
+		let client = NetworkClient::new(Default::default(), user_id, room_id, self.socket_addr, 100).unwrap();
 		self.clients.insert(user_id, client);
 	}
 

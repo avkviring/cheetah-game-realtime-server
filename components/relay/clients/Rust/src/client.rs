@@ -8,10 +8,10 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use cheetah_relay_common::commands::command::C2SCommandWithMeta;
+use cheetah_relay_common::network::client::{ConnectionStatus, NetworkClient};
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription};
 use cheetah_relay_common::protocol::others::rtt::RoundTripTime;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
-use cheetah_relay_common::udp::client::{ConnectionStatus, UdpClient};
 
 use crate::registry::ClientRequest;
 
@@ -20,7 +20,7 @@ pub struct Client {
 	state: Arc<Mutex<ConnectionStatus>>,
 	out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
 	in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
-	udp_client: UdpClient,
+	udp_client: NetworkClient,
 	receiver: Receiver<ClientRequest>,
 	protocol_time_offset: Option<Duration>,
 	current_frame_id: Arc<AtomicU64>,
@@ -52,7 +52,7 @@ impl Client {
 			state,
 			out_commands,
 			in_commands,
-			udp_client: UdpClient::new(
+			udp_client: NetworkClient::new(
 				user_private_key,
 				user_id,
 				room_id,

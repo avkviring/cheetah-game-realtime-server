@@ -6,6 +6,6 @@ rsync -v target/x86_64-unknown-linux-gnu/release/cheetah_relay root@167.172.138.
 rsync -v target/x86_64-unknown-linux-gnu/release/cheetah_relay root@178.62.194.212:/relay/server
 ssh root@167.172.138.215 -C pkill -9 server
 ssh root@178.62.194.212 -C pkill -9 server
-sleep 2
-curl -Is http://167.172.138.215:8080/dump |head -n 1
-curl -Is http://167.172.138.212:8080/dump |head -n 1
+sleep 5
+curl http://167.172.138.215:8080/dump
+curl http://178.62.194.212:8080/dump

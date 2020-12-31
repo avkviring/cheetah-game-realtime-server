@@ -2,9 +2,9 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 
+use cheetah_relay_common::network::client::ConnectionStatus;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
-use cheetah_relay_common::udp::client::ConnectionStatus;
 
 use crate::ffi::{execute, execute_with_client, BufferFFI, GameObjectIdFFI};
 use crate::registry::ClientId;

@@ -3,15 +3,15 @@ use std::io::{Cursor, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 use std::time::Instant;
 
+use crate::network::bind_to_free_socket;
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::Frame;
 use crate::protocol::others::user_id::{UserAndRoomId, UserIdFrameBuilder};
 use crate::protocol::relay::RelayProtocol;
 use crate::room::{RoomId, UserId, UserPrivateKey};
-use crate::udp::bind_to_free_socket;
 
 #[derive(Debug)]
-pub struct UdpClient {
+pub struct NetworkClient {
 	pub state: ConnectionStatus,
 	pub protocol: RelayProtocol,
 	private_key: UserPrivateKey,
@@ -34,14 +34,14 @@ pub enum ConnectionStatus {
 	Disconnected,
 }
 
-impl UdpClient {
+impl NetworkClient {
 	pub fn new(
 		private_key: UserPrivateKey,
 		user_id: UserId,
 		room_id: RoomId,
 		server_address: SocketAddr,
 		start_frame_id: u64,
-	) -> Result<UdpClient, ()> {
+	) -> Result<NetworkClient, ()> {
 		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
 
@@ -49,7 +49,7 @@ impl UdpClient {
 		let socket = bind_to_free_socket()?.0;
 		socket.set_nonblocking(true).map_err(|_| ())?;
 
-		Result::Ok(UdpClient {
+		Result::Ok(NetworkClient {
 			state: ConnectionStatus::Connecting,
 			protocol,
 			private_key,
@@ -126,7 +126,7 @@ impl UdpClient {
 							let frame = Frame::decode_frame(cursor, Cipher::new(&self.private_key), header, additional_headers);
 							match frame {
 								Ok(frame) => {
-									self.protocol.on_frame_received(frame, &now);
+									self.on_frame_received(now, frame);
 								}
 								Err(e) => {
 									log::error!("error decode frame {:?}", e)
@@ -140,5 +140,9 @@ impl UdpClient {
 				}
 			}
 		}
+	}
+
+	fn on_frame_received(&mut self, now: &Instant, frame: Frame) {
+		self.protocol.on_frame_received(frame, now);
 	}
 }
