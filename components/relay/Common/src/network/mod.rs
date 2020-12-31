@@ -2,6 +2,7 @@ use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 
 pub mod client;
+pub mod channel;
 
 pub fn bind_to_free_socket() -> Result<(UdpSocket, SocketAddr), ()> {
 	for port in 2048..8912 {

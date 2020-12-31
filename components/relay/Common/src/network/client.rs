@@ -1,9 +1,9 @@
 use std::collections::VecDeque;
 use std::io::{Cursor, ErrorKind};
-use std::net::{SocketAddr, UdpSocket};
+use std::net::SocketAddr;
 use std::time::Instant;
 
-use crate::network::bind_to_free_socket;
+use crate::network::channel::NetworkChannel;
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::Frame;
 use crate::protocol::others::user_id::{UserAndRoomId, UserIdFrameBuilder};
@@ -16,7 +16,7 @@ pub struct NetworkClient {
 	pub protocol: RelayProtocol,
 	private_key: UserPrivateKey,
 	server_address: SocketAddr,
-	socket: UdpSocket,
+	channel: NetworkChannel,
 	out_frames: VecDeque<Frame>,
 }
 
@@ -46,15 +46,14 @@ impl NetworkClient {
 		protocol.next_frame_id = start_frame_id;
 
 		protocol.add_frame_builder(Box::new(UserIdFrameBuilder(UserAndRoomId { user_id, room_id })));
-		let socket = bind_to_free_socket()?.0;
-		socket.set_nonblocking(true).map_err(|_| ())?;
+		let channel = NetworkChannel::new()?;
 
 		Result::Ok(NetworkClient {
 			state: ConnectionStatus::Connecting,
 			protocol,
 			private_key,
 			server_address,
-			socket,
+			channel,
 			out_frames: Default::default(),
 		})
 	}
@@ -85,7 +84,7 @@ impl NetworkClient {
 		let mut buffer = [0; 2048];
 		while let Some(frame) = self.out_frames.back() {
 			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer);
-			match self.socket.send_to(&buffer[0..frame_buffer_size], self.server_address) {
+			match self.channel.send_to(&buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
 					if size != frame_buffer_size {
 						log::error!("error send frame size mismatch send {:?}, frame {:?}", size, frame_buffer_size);
@@ -107,7 +106,7 @@ impl NetworkClient {
 	fn do_read(&mut self, now: &Instant) {
 		let mut buffer = [0; 2048];
 		loop {
-			match self.socket.recv(&mut buffer) {
+			match self.channel.recv(&mut buffer) {
 				Err(e) => {
 					match e.kind() {
 						ErrorKind::WouldBlock => {}
