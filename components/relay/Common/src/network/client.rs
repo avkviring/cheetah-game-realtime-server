@@ -63,6 +63,7 @@ impl NetworkClient {
 			return;
 		}
 
+		self.channel.cycle(now);
 		self.protocol.cycle(now);
 		self.do_read(now);
 		self.do_write(now);
@@ -84,7 +85,7 @@ impl NetworkClient {
 		let mut buffer = [0; 2048];
 		while let Some(frame) = self.out_frames.back() {
 			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer);
-			match self.channel.send_to(&buffer[0..frame_buffer_size], self.server_address) {
+			match self.channel.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
 					if size != frame_buffer_size {
 						log::error!("error send frame size mismatch send {:?}, frame {:?}", size, frame_buffer_size);
@@ -106,7 +107,7 @@ impl NetworkClient {
 	fn do_read(&mut self, now: &Instant) {
 		let mut buffer = [0; 2048];
 		loop {
-			match self.channel.recv(&mut buffer) {
+			match self.channel.recv(now, &mut buffer) {
 				Err(e) => {
 					match e.kind() {
 						ErrorKind::WouldBlock => {}
