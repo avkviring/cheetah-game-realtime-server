@@ -1,8 +1,8 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 
-pub mod client;
 pub mod channel;
+pub mod client;
 pub mod emulator;
 
 pub fn bind_to_free_socket() -> Result<(UdpSocket, SocketAddr), ()> {
