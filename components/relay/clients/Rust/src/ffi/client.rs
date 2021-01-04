@@ -1,6 +1,7 @@
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
+use std::time::Duration;
 
 use cheetah_relay_common::network::client::ConnectionStatus;
 use cheetah_relay_common::room::object::GameObjectId;
@@ -39,6 +40,21 @@ pub extern "C" fn destroy_client() -> bool {
 #[no_mangle]
 pub extern "C" fn receive() -> bool {
 	execute_with_client(|client| client.receive()).is_ok()
+}
+
+#[no_mangle]
+pub extern "C" fn set_rtt_emulation(rtt_in_ms: u64, rtt_dispersion: f64) -> bool {
+	execute_with_client(|client| client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)).is_ok()
+}
+
+#[no_mangle]
+pub extern "C" fn set_drop_emulation(drop_probability: f64, drop_time_in_ms: u64) -> bool {
+	execute_with_client(|client| client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms))).is_ok()
+}
+
+#[no_mangle]
+pub extern "C" fn reset_emulation() -> bool {
+	execute_with_client(|client| client.reset_emulation()).is_ok()
 }
 
 #[no_mangle]

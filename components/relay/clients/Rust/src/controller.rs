@@ -8,7 +8,6 @@ use std::time::{Duration, Instant};
 
 use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
 use cheetah_relay_common::constants::FieldId;
 use cheetah_relay_common::network::client::ConnectionStatus;
@@ -221,5 +220,19 @@ impl ClientController {
 		}));
 
 		From::from(&game_object_id)
+	}
+
+	pub fn set_rtt_emulation(&self, rtt: Duration, rtt_dispersion: f64) {
+		self.sender.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion)).unwrap();
+	}
+
+	pub fn set_drop_emulation(&self, drop_probability: f64, drop_time: Duration) {
+		self.sender
+			.send(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time))
+			.unwrap();
+	}
+
+	pub fn reset_emulation(&self) {
+		self.sender.send(ClientRequest::ResetEmulation).unwrap();
 	}
 }

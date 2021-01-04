@@ -16,7 +16,7 @@ pub struct NetworkClient {
 	pub protocol: RelayProtocol,
 	private_key: UserPrivateKey,
 	server_address: SocketAddr,
-	channel: NetworkChannel,
+	pub channel: NetworkChannel,
 	out_frames: VecDeque<Frame>,
 }
 

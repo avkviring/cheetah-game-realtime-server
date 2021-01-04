@@ -32,6 +32,9 @@ pub struct Registry {
 #[derive(Debug)]
 pub enum ClientRequest {
 	SetProtocolTimeOffset(Duration),
+	ConfigureRttEmulation(Duration, f64),
+	ConfigureDropEmulation(f64, Duration),
+	ResetEmulation,
 	Close,
 }
 

@@ -93,6 +93,36 @@ namespace CheetahRelay
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_channel")]
         public static extern bool SetChannelType(ChannelType channelType, ushort group);
 
+        
+        /// <summary>
+        /// Задать параметры эмуляции RTT
+        /// Подробнее смотрите в документации проекта
+        /// </summary>
+        /// <param name="rttInMs"></param>
+        /// <param name="rttDispersion"></param>
+        /// <returns></returns>
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_rtt_emulation")]
+        public static extern bool SetRttEmulation(ulong rttInMs, double rttDispersion);
+
+
+        /// <summary>
+        /// Задать параметры эмуляции потери пакетов
+        /// Подробнее смотрите в документации проекта
+        /// </summary>
+        /// <param name="dropProbability"></param>
+        /// <param name="dropTimeInMs"></param>
+        /// <returns></returns>
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_drop_emulation")]
+        public static extern bool SetDropEmulation(double dropProbability, ulong dropTimeInMs);
+
+        /// <summary>
+        /// Сброс эмуляции параметров сети
+        /// </summary>
+        /// <returns></returns>
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "reset_emulation")]
+        public static extern bool ResetEmulation();
+        
+        
 
         public enum ChannelType
         {

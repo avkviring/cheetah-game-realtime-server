@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
-use std::sync::mpsc::Receiver;
+use std::sync::mpsc::{Receiver, TryRecvError};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -127,6 +127,15 @@ impl Client {
 					self.protocol_time_offset = Option::Some(duration);
 				}
 				Err(_) => {}
+				Ok(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion)) => self.udp_client.channel.config_emulator(|emulator| {
+					emulator.configure_rtt(rtt, rtt_dispersion);
+				}),
+				Ok(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time)) => self.udp_client.channel.config_emulator(|emulator| {
+					emulator.configure_drop(drop_probability, drop_time);
+				}),
+				Ok(ClientRequest::ResetEmulation) => {
+					self.udp_client.channel.reset_emulator();
+				}
 			}
 
 			thread::sleep(Duration::from_millis(7));

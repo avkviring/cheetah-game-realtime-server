@@ -134,17 +134,20 @@ impl NetworkLatencyEmulator {
 
 	fn is_drop_time(&mut self, now: &Instant) -> bool {
 		if let Some(drop_time) = &self.drop_start {
-			drop_time.add(self.drop_time.unwrap_or(Duration::from_millis(0))) > *now
-		} else {
-			match self.drop_probability {
-				None => false,
-				Some(drop_probability) => {
-					if drop_probability > rand::thread_rng().gen() {
-						self.drop_start = Option::Some(*now);
-						true
-					} else {
-						false
-					}
+			if drop_time.add(self.drop_time.unwrap_or(Duration::from_millis(0))) > *now {
+				return true;
+			}
+			self.drop_start = None;
+		};
+
+		match self.drop_probability {
+			None => false,
+			Some(drop_probability) => {
+				if drop_probability > rand::thread_rng().gen() {
+					self.drop_start = Option::Some(*now);
+					true
+				} else {
+					false
 				}
 			}
 		}
