@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
-use std::sync::mpsc::{Receiver, TryRecvError};
+use std::sync::mpsc::{Receiver};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
