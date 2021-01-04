@@ -17,7 +17,7 @@ namespace CheetahRelay.Tests
 
             Assert.True(resultA);
             Assert.True(resultB);
-            Thread.Sleep(200);
+            Thread.Sleep(500);
 
             CheetahClient.SetCurrentClient(ClientA);
             Assert.True(CheetahClient.GetConnectionStatus(out var statusA));
