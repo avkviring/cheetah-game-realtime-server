@@ -18,7 +18,6 @@ namespace CheetahRelay.Tests
 
             CheetahClient.SetCurrentClient(ClientA);
             CheetahClient.SetDropEmulation(0.3, 1);
-            Thread.Sleep(50);
             var count = 100;
             var increment = 100;
             for (var i = 0; i < count; i++)
