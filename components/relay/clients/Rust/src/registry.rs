@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, AtomicU64};
@@ -11,7 +11,7 @@ use fnv::FnvBuildHasher;
 use cheetah_relay_common::network::client::ConnectionStatus;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
-use crate::client::Client;
+use crate::client::{Client, OutApplicationCommand};
 use crate::controller::ClientController;
 
 pub type ClientId = u16;
@@ -34,6 +34,7 @@ pub enum ClientRequest {
 	SetProtocolTimeOffset(Duration),
 	ConfigureRttEmulation(Duration, f64),
 	ConfigureDropEmulation(f64, Duration),
+	SendCommandToServer(OutApplicationCommand),
 	ResetEmulation,
 	Close,
 }
@@ -58,25 +59,19 @@ impl Registry {
 		start_frame_id: u64,
 	) -> Result<ClientId, ()> {
 		let start_frame_id = Arc::new(AtomicU64::new(start_frame_id));
-		let out_commands = Arc::new(Mutex::new(VecDeque::new()));
-		let in_commands = Arc::new(Mutex::new(VecDeque::new()));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
-
-		let out_commands_cloned = out_commands.clone();
-		let in_commands_cloned = in_commands.clone();
 		let state_cloned = state.clone();
-
 		let rtt_in_ms = Arc::new(AtomicU64::new(0));
 		let average_retransmit_frames = Arc::new(AtomicU32::new(0));
 
 		let (sender, receiver) = std::sync::mpsc::channel();
+		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
 		match Client::new(
 			SocketAddr::from_str(server_address.as_str()).unwrap(),
 			user_id,
 			room_id,
 			user_private_key,
-			out_commands,
-			in_commands,
+			in_command_sender,
 			state,
 			receiver,
 			start_frame_id.clone(),
@@ -92,8 +87,7 @@ impl Registry {
 					user_id,
 					handler,
 					state_cloned,
-					in_commands_cloned,
-					out_commands_cloned,
+					in_command_receiver,
 					sender,
 					start_frame_id,
 					rtt_in_ms.clone(),

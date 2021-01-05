@@ -40,7 +40,14 @@ where
 				log::error!("client not found {:?}", client_id);
 				Result::Err(())
 			}
-			Some(client_api) => Result::Ok(body(client_api)),
+			Some(client_api) => {
+				if !client_api.error_in_client_thread {
+					Result::Ok(body(client_api))
+				} else {
+					clients.destroy_client();
+					Result::Err(())
+				}
+			}
 		},
 	})
 }

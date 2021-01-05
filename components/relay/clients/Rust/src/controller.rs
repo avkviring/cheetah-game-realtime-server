@@ -1,7 +1,6 @@
-use std::collections::VecDeque;
 use std::ops::Sub;
 use std::sync::atomic::{AtomicU32, AtomicU64};
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
@@ -30,11 +29,10 @@ use crate::registry::ClientRequest;
 ///
 pub struct ClientController {
 	user_id: UserId,
-	out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
-	in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
+	commands_from_server: Receiver<ApplicationCommandDescription>,
 	handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
-	sender: Sender<ClientRequest>,
+	request_to_client: Sender<ClientRequest>,
 	create_time: Instant,
 	channel: ApplicationCommandChannelType,
 	game_object_id_generator: u32,
@@ -49,11 +47,12 @@ pub struct ClientController {
 	listener_delete_object: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)>,
 	listener_create_object: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, u16)>,
 	pub listener_created_object: Option<extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)>,
+	pub error_in_client_thread: bool,
 }
 
 impl Drop for ClientController {
 	fn drop(&mut self) {
-		match self.sender.send(ClientRequest::Close) {
+		match self.request_to_client.send(ClientRequest::Close) {
 			Ok(_) => {
 				self.handler.take().unwrap().join().unwrap();
 			}
@@ -67,8 +66,7 @@ impl ClientController {
 		user_id: UserId,
 		handler: JoinHandle<()>,
 		state: Arc<Mutex<ConnectionStatus>>,
-		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
-		out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
+		in_commands: Receiver<ApplicationCommandDescription>,
 		sender: Sender<ClientRequest>,
 		current_frame_id: Arc<AtomicU64>,
 		rtt_in_ms: Arc<AtomicU64>,
@@ -76,11 +74,10 @@ impl ClientController {
 	) -> Self {
 		Self {
 			user_id,
-			out_commands,
-			in_commands,
+			commands_from_server: in_commands,
 			handler: Option::Some(handler),
 			state,
-			sender,
+			request_to_client: sender,
 			create_time: Instant::now(),
 			channel: ApplicationCommandChannelType::ReliableSequenceByGroup(0),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
@@ -95,11 +92,12 @@ impl ClientController {
 			listener_delete_object: None,
 			listener_create_object: None,
 			listener_created_object: None,
+			error_in_client_thread: false,
 		}
 	}
 
 	pub fn set_protocol_time_offset(&mut self, time_offset: Duration) {
-		self.sender.send(ClientRequest::SetProtocolTimeOffset(time_offset)).unwrap();
+		self.request_to_client.send(ClientRequest::SetProtocolTimeOffset(time_offset)).unwrap();
 	}
 
 	pub fn send(&mut self, command: C2SCommand) {
@@ -111,7 +109,13 @@ impl ClientController {
 			channel_type: self.channel.clone(),
 			command: C2SCommandWithMeta { meta, command },
 		};
-		self.out_commands.lock().unwrap().push_front(command);
+		match self.request_to_client.send(ClientRequest::SendCommandToServer(command)) {
+			Ok(_) => {}
+			Err(e) => {
+				log::error!("[controller] error send to channel {:?}", e);
+				self.error_in_client_thread = true;
+			}
+		}
 	}
 
 	pub fn get_connection_status(&self) -> ConnectionStatus {
@@ -132,14 +136,7 @@ impl ClientController {
 	}
 
 	pub fn receive(&mut self) {
-		let commands_arc = self.in_commands.clone();
-		let commands_lock = commands_arc.lock();
-		let mut commands = commands_lock.unwrap();
-		let mut cloned_commands = commands.clone();
-		commands.clear();
-		drop(commands);
-
-		while let Some(command) = cloned_commands.pop_back() {
+		while let Ok(command) = self.commands_from_server.try_recv() {
 			if let ApplicationCommand::S2CCommandWithMeta(command) = command.command {
 				let meta = &S2CMetaCommandInformationFFI::from(&command.meta);
 				match command.command {
@@ -222,17 +219,36 @@ impl ClientController {
 		From::from(&game_object_id)
 	}
 
-	pub fn set_rtt_emulation(&self, rtt: Duration, rtt_dispersion: f64) {
-		self.sender.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion)).unwrap();
+	pub fn set_rtt_emulation(&mut self, rtt: Duration, rtt_dispersion: f64) {
+		match self.request_to_client.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion)) {
+			Ok(_) => {}
+			Err(e) => {
+				log::error!("[controller] error send to channel {:?}", e);
+				self.error_in_client_thread = true;
+			}
+		}
 	}
 
-	pub fn set_drop_emulation(&self, drop_probability: f64, drop_time: Duration) {
-		self.sender
+	pub fn set_drop_emulation(&mut self, drop_probability: f64, drop_time: Duration) {
+		match self
+			.request_to_client
 			.send(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time))
-			.unwrap();
+		{
+			Ok(_) => {}
+			Err(e) => {
+				log::error!("[controller] error send to channel {:?}", e);
+				self.error_in_client_thread = true;
+			}
+		}
 	}
 
-	pub fn reset_emulation(&self) {
-		self.sender.send(ClientRequest::ResetEmulation).unwrap();
+	pub fn reset_emulation(&mut self) {
+		match self.request_to_client.send(ClientRequest::ResetEmulation) {
+			Ok(_) => {}
+			Err(e) => {
+				log::error!("[controller] error send to channel {:?}", e);
+				self.error_in_client_thread = true;
+			}
+		}
 	}
 }

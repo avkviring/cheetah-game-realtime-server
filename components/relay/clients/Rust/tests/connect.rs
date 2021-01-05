@@ -1,12 +1,11 @@
 use cheetah_relay_client::ffi::client::set_current_client;
-use cheetah_relay_client::ffi::{execute_with_client, GameObjectIdFFI};
+use cheetah_relay_client::ffi::execute_with_client;
 use cheetah_relay_common::network::client::ConnectionStatus;
 use cheetah_relay_common::protocol::disconnect::watcher::DisconnectWatcher;
 use std::thread;
 use std::time::Duration;
 
 use crate::helpers::Helper;
-use core::mem;
 
 pub mod helpers;
 
@@ -22,7 +21,6 @@ fn should_connect_to_server() {
 
 #[test]
 fn should_disconnect_when_server_closed() {
-	println!("{:?}", mem::size_of::<GameObjectIdFFI>());
 	let mut helper = Helper::new();
 	let (server, client) = helper.setup_server_and_client();
 	helper.wait_first_frame();

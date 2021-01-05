@@ -1,8 +1,7 @@
-use std::collections::VecDeque;
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
-use std::sync::mpsc::{Receiver};
+use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -18,14 +17,14 @@ use crate::registry::ClientRequest;
 #[derive(Debug)]
 pub struct Client {
 	state: Arc<Mutex<ConnectionStatus>>,
-	out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
-	in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
+	commands_from_server: Sender<ApplicationCommandDescription>,
 	udp_client: NetworkClient,
-	receiver: Receiver<ClientRequest>,
+	request_from_controller: Receiver<ClientRequest>,
 	protocol_time_offset: Option<Duration>,
 	current_frame_id: Arc<AtomicU64>,
 	rtt_in_ms: Arc<AtomicU64>,
 	average_retransmit_frames: Arc<AtomicU32>,
+	running: bool,
 }
 
 #[derive(Debug)]
@@ -40,8 +39,7 @@ impl Client {
 		user_id: UserId,
 		room_id: RoomId,
 		user_private_key: UserPrivateKey,
-		out_commands: Arc<Mutex<VecDeque<OutApplicationCommand>>>,
-		in_commands: Arc<Mutex<VecDeque<ApplicationCommandDescription>>>,
+		in_commands: Sender<ApplicationCommandDescription>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
 		current_frame_id: Arc<AtomicU64>,
@@ -50,8 +48,7 @@ impl Client {
 	) -> Result<Client, ()> {
 		Result::Ok(Client {
 			state,
-			out_commands,
-			in_commands,
+			commands_from_server: in_commands,
 			udp_client: NetworkClient::new(
 				user_private_key,
 				user_id,
@@ -59,86 +56,110 @@ impl Client {
 				server_address,
 				current_frame_id.load(Ordering::Relaxed),
 			)?,
-			receiver,
+			request_from_controller: receiver,
 			protocol_time_offset: None,
 			current_frame_id,
 			rtt_in_ms,
 			average_retransmit_frames,
+			running: false,
 		})
 	}
 
 	pub fn run(mut self) {
-		loop {
-			self.current_frame_id.store(self.udp_client.protocol.next_frame_id, Ordering::Relaxed);
-			self.rtt_in_ms.store(
-				self.udp_client.protocol.rtt.get_rtt().unwrap_or(Duration::from_millis(0)).as_millis() as u64,
-				Ordering::Relaxed,
-			);
-			self.average_retransmit_frames.store(
-				self.udp_client
-					.protocol
-					.retransmitter
-					.statistics
-					.get_average_retransmit_frames(&Instant::now())
-					.unwrap_or(0) as u32,
-				Ordering::Relaxed,
-			);
-
-			let arc_out_commands = self.out_commands.clone();
-			let lock_for_out_commands = arc_out_commands.lock();
-			let mut out_commands = lock_for_out_commands.unwrap();
-			while let Some(command) = out_commands.pop_back() {
-				self.udp_client
-					.protocol
-					.out_commands_collector
-					.add_command(command.channel_type, ApplicationCommand::C2SCommandWithMeta(command.command));
-			}
-			drop(out_commands);
-			drop(arc_out_commands);
-
-			let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_commands();
-			let arc_in_commands = self.in_commands.clone();
-			let mut in_commands = arc_in_commands.lock().unwrap();
-			while let Some(command) = in_commands_from_protocol.pop_back() {
-				in_commands.push_front(command);
-			}
-
-			drop(in_commands);
-			drop(arc_in_commands);
-
-			let mut now = Instant::now();
-			if let Some(offset) = self.protocol_time_offset {
-				now = now.add(offset);
-			}
+		self.running = true;
+		while self.running {
+			let now = self.get_now_time();
 			self.udp_client.cycle(&now);
+			self.commands_from_server();
+			self.request_from_controller();
+			self.update_state();
+			thread::sleep(Duration::from_millis(7));
+		}
+	}
 
-			let arc_state = self.state.clone();
-			*arc_state.lock().unwrap() = self.udp_client.state.clone();
-			drop(arc_state);
+	///
+	/// Текущее время, с учетом коррекции для тестов
+	///
+	fn get_now_time(&mut self) -> Instant {
+		let now = Instant::now();
+		if let Some(offset) = self.protocol_time_offset {
+			now.add(offset)
+		} else {
+			now
+		}
+	}
 
-			match self.receiver.try_recv() {
-				Ok(ClientRequest::Close) => {
+	///
+	/// Обработка команд с сервера
+	///
+	fn commands_from_server(&mut self) {
+		let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_commands();
+		while let Some(command) = in_commands_from_protocol.pop_back() {
+			match self.commands_from_server.send(command) {
+				Ok(_) => {}
+				Err(e) => {
+					self.running = false;
+					log::error!("[client] error send command from server {:?}", e)
+				}
+			}
+		}
+	}
+
+	///
+	/// Обработка команд из контроллера
+	///
+	fn request_from_controller(&mut self) {
+		while let Result::Ok(command) = self.request_from_controller.try_recv() {
+			match command {
+				ClientRequest::Close => {
 					self.udp_client.protocol.disconnect_handler.disconnect();
 					let now = Instant::now();
 					self.udp_client.cycle(&now);
-					return;
+					self.running = false;
 				}
-				Ok(ClientRequest::SetProtocolTimeOffset(duration)) => {
+				ClientRequest::SetProtocolTimeOffset(duration) => {
 					self.protocol_time_offset = Option::Some(duration);
 				}
-				Err(_) => {}
-				Ok(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion)) => self.udp_client.channel.config_emulator(|emulator| {
+				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => self.udp_client.channel.config_emulator(|emulator| {
 					emulator.configure_rtt(rtt, rtt_dispersion);
 				}),
-				Ok(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time)) => self.udp_client.channel.config_emulator(|emulator| {
+				ClientRequest::ConfigureDropEmulation(drop_probability, drop_time) => self.udp_client.channel.config_emulator(|emulator| {
 					emulator.configure_drop(drop_probability, drop_time);
 				}),
-				Ok(ClientRequest::ResetEmulation) => {
+				ClientRequest::ResetEmulation => {
 					self.udp_client.channel.reset_emulator();
 				}
+				ClientRequest::SendCommandToServer(command) => {
+					self.udp_client
+						.protocol
+						.out_commands_collector
+						.add_command(command.channel_type, ApplicationCommand::C2SCommandWithMeta(command.command));
+				}
 			}
-
-			thread::sleep(Duration::from_millis(7));
 		}
+	}
+
+	///
+	/// Обновление статистики для контроллера
+	///
+	fn update_state(&mut self) {
+		self.current_frame_id.store(self.udp_client.protocol.next_frame_id, Ordering::Relaxed);
+		self.rtt_in_ms.store(
+			self.udp_client.protocol.rtt.get_rtt().unwrap_or(Duration::from_millis(0)).as_millis() as u64,
+			Ordering::Relaxed,
+		);
+		self.average_retransmit_frames.store(
+			self.udp_client
+				.protocol
+				.retransmitter
+				.statistics
+				.get_average_retransmit_frames(&Instant::now())
+				.unwrap_or(0) as u32,
+			Ordering::Relaxed,
+		);
+
+		let arc_state = self.state.clone();
+		*arc_state.lock().unwrap() = self.udp_client.state.clone();
+		drop(arc_state);
 	}
 }
