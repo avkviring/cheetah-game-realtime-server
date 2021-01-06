@@ -1,7 +1,6 @@
 using System.Threading;
 using AOT;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace CheetahRelay.Tests
 {
@@ -14,12 +13,13 @@ namespace CheetahRelay.Tests
         private CheetahObjectId createdObjectId;
         private ushort createdObjectTemplate;
         private CheetahObjectId deletedObjectId;
-
+        
         [SetUp]
         public void SetUp()
         {
-            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(), 1,ref UserKeyGenerator.PrivateKey, 0, out clientA));
-            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(), 1,ref UserKeyGenerator.PrivateKey,0,  out clientB));
+            var helper = new AuthHelper();
+            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", helper.GetNextUserId(), helper.RoomId,ref helper.PrivateKey, 0, out clientA));
+            Assert.True(CheetahClient.CreateClient("127.0.0.1:5000", helper.GetNextUserId(), helper.RoomId,ref helper.PrivateKey,0,  out clientB));
             Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(clientA);

@@ -10,45 +10,45 @@ namespace CheetahRelay.Tests
     {
         private long changedValue;
 
-        // [Test]
-        // public void TestRttEmulation()
-        // {
-        //     
-        //
-        //     CheetahClient.SetCurrentClient(ClientA);
-        //     CheetahClient.SetRttEmulation(200, 0);
-        //     Thread.Sleep(50);
-        //     CheetahLong.Increment(ref ObjectId, 2, 100);
-        //
-        //     // пропускаем данные из комнаты
-        //     CheetahClient.SetCurrentClient(ClientB);
-        //     CheetahClient.Receive();
-        //     CheetahLong.SetListener(Listener);
-        //     // команда не должна прийти,так как RTT = 200
-        //     Debug.Log("changed value " + changedValue);
-        //     Thread.Sleep(10);
-        //     CheetahClient.SetCurrentClient(ClientB);
-        //     CheetahClient.Receive();
-        //     Assert.AreEqual(0, changedValue);
-        //
-        //     // теперь команда должна прийти, так как прошло времени больше чем RTT
-        //     Thread.Sleep(200);
-        //     CheetahClient.SetCurrentClient(ClientB);
-        //     CheetahClient.Receive();
-        //     Assert.AreEqual(100, changedValue);
-        //
-        //     // убираем задержки
-        //     CheetahClient.SetCurrentClient(ClientA);
-        //     CheetahClient.ResetEmulation();
-        //     Thread.Sleep(20);
-        //     CheetahLong.Increment(ref ObjectId, 2, 100);
-        //
-        //     // команда должна прийти сразу же
-        //     Thread.Sleep(50);
-        //     CheetahClient.SetCurrentClient(ClientB);
-        //     CheetahClient.Receive();
-        //     Assert.AreEqual(200, changedValue);
-        // }
+        [Test]
+        public void TestRttEmulation()
+        {
+            
+        
+            CheetahClient.SetCurrentClient(ClientA);
+            CheetahClient.SetRttEmulation(200, 0);
+            Thread.Sleep(50);
+            CheetahLong.Increment(ref ObjectId, 2, 100);
+        
+            // пропускаем данные из комнаты
+            CheetahClient.SetCurrentClient(ClientB);
+            CheetahClient.Receive();
+            CheetahLong.SetListener(Listener);
+            // команда не должна прийти,так как RTT = 200
+            Debug.Log("changed value " + changedValue);
+            Thread.Sleep(10);
+            CheetahClient.SetCurrentClient(ClientB);
+            CheetahClient.Receive();
+            Assert.AreEqual(0, changedValue);
+        
+            // теперь команда должна прийти, так как прошло времени больше чем RTT
+            Thread.Sleep(200);
+            CheetahClient.SetCurrentClient(ClientB);
+            CheetahClient.Receive();
+            Assert.AreEqual(100, changedValue);
+        
+            // убираем задержки
+            CheetahClient.SetCurrentClient(ClientA);
+            CheetahClient.ResetEmulation();
+            Thread.Sleep(20);
+            CheetahLong.Increment(ref ObjectId, 2, 100);
+        
+            // команда должна прийти сразу же
+            Thread.Sleep(50);
+            CheetahClient.SetCurrentClient(ClientB);
+            CheetahClient.Receive();
+            Assert.AreEqual(200, changedValue);
+        }
 
         
 

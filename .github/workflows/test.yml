@@ -33,7 +33,7 @@ jobs:
       - name: Build server
         run: cargo build --manifest-path components/relay/Server/Cargo.toml
       - name: Run server
-        run: nohup cargo run --manifest-path components/relay/Server/Cargo.toml -- --room components/relay/Server/config/room-for-unity-test.yml &
+        run: nohup cargo run --manifest-path components/relay/Server/Cargo.toml -- --templates-dir  components/relay/Server/config/rooms-for-unity-test/ &
       - name: Check server state
         run: curl http://localhost:8080
       - uses: webbertakken/unity-test-runner@v1.7

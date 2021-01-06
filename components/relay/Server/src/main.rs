@@ -1,29 +1,32 @@
 extern crate stderrlog;
 
+use std::fs;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 
-use cheetah_relay::room::debug::tracer::CommandTracer;
-use cheetah_relay::room::template::config::RoomTemplate;
-use cheetah_relay::server::rest::RestServer;
-use cheetah_relay::server::Server;
 use clap::{App, Arg};
 use log::LevelFilter;
 use stderrlog::Timestamp;
 
+use cheetah_relay::room::debug::tracer::CommandTracer;
+use cheetah_relay::room::template::config::RoomTemplate;
+use cheetah_relay::server::rest::RestServer;
+use cheetah_relay::server::Server;
+
 fn main() {
-	let (room_template_path, trace_path, log_level, show_all_trace) = get_cli();
+	let (rooms_templates_dir, room_template_path, trace_path, log_level, show_all_trace) = get_cli();
 	configure_logger(log_level);
-	start_server(room_template_path, trace_path, show_all_trace);
+	start_server(rooms_templates_dir, room_template_path, trace_path, show_all_trace);
 }
 
-fn get_cli() -> (Option<Vec<String>>, Option<String>, Option<String>, bool) {
+fn get_cli() -> (Option<Vec<String>>, Option<Vec<String>>, Option<String>, Option<String>, bool) {
 	const TRACE_ALL_NETWORK_COMMAND: &'static str = "trace-all-network-commands";
 	const ROOM_TEMPLATE: &'static str = "room-template";
 	const LOG_LEVEL: &'static str = "log-level";
 	const COMMAND_TRACE: &'static str = "command-trace";
+	const ROOM_TEMPLATES: &'static str = "templates-dir";
 
 	let cli = App::new("Cheetah Relay Server")
 		.version("0.0.1")
@@ -33,8 +36,17 @@ fn get_cli() -> (Option<Vec<String>>, Option<String>, Option<String>, bool) {
 				.long("room")
 				.multiple(true)
 				.short('r')
-				.required(true)
+				.required_unless_present(ROOM_TEMPLATES)
 				.about("Path to yaml file with config for room template.")
+				.takes_value(true),
+		)
+		.arg(
+			Arg::new(ROOM_TEMPLATES)
+				.long("templates-dir")
+				.multiple(true)
+				.short('s')
+				.about("Path to directory with yaml files with config for room template.")
+				.required_unless_present(ROOM_TEMPLATE)
 				.takes_value(true),
 		)
 		.arg(
@@ -69,6 +81,7 @@ fn get_cli() -> (Option<Vec<String>>, Option<String>, Option<String>, bool) {
 		.get_matches();
 
 	(
+		cli.values_of(ROOM_TEMPLATES).map(|v| v.map(|i| i.to_string()).collect()),
 		cli.values_of(ROOM_TEMPLATE).map(|v| v.map(|i| i.to_string()).collect()),
 		cli.value_of(COMMAND_TRACE).map(|s| s.to_string()),
 		cli.value_of(LOG_LEVEL).map(|s| s.to_string()),
@@ -91,7 +104,12 @@ fn configure_logger(log_level: Option<String>) {
 	init_logger(level);
 }
 
-fn start_server(room_templates_path: Option<Vec<String>>, trace_path: Option<String>, show_all_trace: bool) {
+fn start_server(
+	rooms_templates_dir: Option<Vec<String>>,
+	room_templates_path: Option<Vec<String>>,
+	trace_path: Option<String>,
+	show_all_trace: bool,
+) {
 	let socket = UdpSocket::bind(SocketAddr::from_str("0.0.0.0:5000").unwrap()).unwrap();
 	let tracer = if show_all_trace {
 		CommandTracer::new_with_allow_all()
@@ -109,6 +127,21 @@ fn start_server(room_templates_path: Option<Vec<String>>, trace_path: Option<Str
 			room_templates_path.iter().for_each(|path| {
 				let room_template = RoomTemplate::load_from_file(path).unwrap();
 				server.register_room(room_template).ok().unwrap();
+			});
+		}
+	}
+
+	match rooms_templates_dir {
+		None => {}
+		Some(rooms_templates_dir) => {
+			rooms_templates_dir.iter().for_each(|directory| {
+				println!("directory {:?}", directory);
+				let map = fs::read_dir(directory).unwrap();
+				let map = map.map(|e| e.unwrap().path());
+				map.for_each(|path| {
+					let room_template = RoomTemplate::load_from_file(path.as_path().to_str().unwrap()).unwrap();
+					server.register_room(room_template).ok().unwrap();
+				});
 			});
 		}
 	}

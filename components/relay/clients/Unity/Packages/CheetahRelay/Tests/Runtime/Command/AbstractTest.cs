@@ -12,12 +12,13 @@ namespace CheetahRelay.Tests
         [SetUp]
         public void SetUp()
         {
-            var resultA = CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(),1, ref UserKeyGenerator.PrivateKey, 0, out ClientA);
-            var resultB = CheetahClient.CreateClient("127.0.0.1:5000", UserKeyGenerator.GetNextUserId(), 1, ref UserKeyGenerator.PrivateKey, 0, out ClientB);
+            var helper = new AuthHelper();
+            var resultA = CheetahClient.CreateClient("127.0.0.1:5000", helper.GetNextUserId(), helper.RoomId, ref helper.PrivateKey, 0, out ClientA);
+            var resultB = CheetahClient.CreateClient("127.0.0.1:5000", helper.GetNextUserId(), helper.RoomId, ref helper.PrivateKey, 0, out ClientB);
 
             Assert.True(resultA);
             Assert.True(resultB);
-            Thread.Sleep(500);
+            Thread.Sleep(100);
 
             CheetahClient.SetCurrentClient(ClientA);
             Assert.True(CheetahClient.GetConnectionStatus(out var statusA));
@@ -34,7 +35,7 @@ namespace CheetahRelay.Tests
 
             CheetahClient.SetCurrentClient(ClientB);
             CheetahClient.AttachToRoom();
-            Thread.Sleep(100);
+            Thread.Sleep(50);
         }
 
         [TearDown]
