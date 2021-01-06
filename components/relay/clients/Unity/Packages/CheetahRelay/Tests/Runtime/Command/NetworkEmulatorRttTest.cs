@@ -11,12 +11,12 @@ namespace CheetahRelay.Tests
         private long changedValue;
 
         [Test]
-        public void TestRttEmulation()
+        public void Test()
         {
             
         
             CheetahClient.SetCurrentClient(ClientA);
-            CheetahClient.SetRttEmulation(200, 0);
+            CheetahClient.SetRttEmulation(500, 0);
             Thread.Sleep(50);
             CheetahLong.Increment(ref ObjectId, 2, 100);
         
@@ -32,7 +32,7 @@ namespace CheetahRelay.Tests
             Assert.AreEqual(0, changedValue);
         
             // теперь команда должна прийти, так как прошло времени больше чем RTT
-            Thread.Sleep(200);
+            Thread.Sleep(500);
             CheetahClient.SetCurrentClient(ClientB);
             CheetahClient.Receive();
             Assert.AreEqual(100, changedValue);
@@ -44,7 +44,7 @@ namespace CheetahRelay.Tests
             CheetahLong.Increment(ref ObjectId, 2, 100);
         
             // команда должна прийти сразу же
-            Thread.Sleep(50);
+            Thread.Sleep(100);
             CheetahClient.SetCurrentClient(ClientB);
             CheetahClient.Receive();
             Assert.AreEqual(200, changedValue);
