@@ -82,6 +82,13 @@ namespace CheetahRelay
         /// <returns>false - клиент не найден</returns>
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "attach_to_room")]
         public static extern bool AttachToRoom();
+        
+        /// <summary>
+        /// Отсоединиться от комнаты
+        /// </summary>
+        /// <returns>false - клиент не найден</returns>
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "detach_from_room")]
+        public static extern bool DetachFromRoom();
 
         /// <summary>
         /// Установить канал отправки все последующих команд

@@ -251,4 +251,10 @@ impl ClientController {
 			}
 		}
 	}
+
+	pub fn attach_to_room(&mut self) {
+		// удаляем все пришедшие команды (ситуация возникает при attach/detach)
+		while let Ok(_) = self.commands_from_server.try_recv() {}
+		self.send(C2SCommand::AttachToRoom);
+	}
 }

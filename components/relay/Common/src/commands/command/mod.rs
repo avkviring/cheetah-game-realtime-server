@@ -36,6 +36,7 @@ pub enum C2SCommand {
 	/// Загрузить все объекты комнаты
 	///
 	AttachToRoom,
+	DetachFromRoom,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]

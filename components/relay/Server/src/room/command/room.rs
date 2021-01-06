@@ -31,6 +31,17 @@ pub fn attach_to_room(room: &mut Room, user_id: UserId) {
 	}
 }
 
+pub fn detach_from_room(room: &mut Room, user_id: UserId) {
+	match room.get_user_mut(user_id) {
+		None => {
+			log::error!("[load_room] user not found {:?}", user_id);
+		}
+		Some(user) => {
+			user.detach_from_room();
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::S2CCommand;
@@ -41,7 +52,7 @@ mod tests {
 	use crate::room::Room;
 
 	#[test]
-	pub fn test() {
+	pub fn should_load_object_when_attach_to_room() {
 		let mut template = RoomTemplate::default();
 		let groups_a = AccessGroups(0b100);
 		let user_a = 1;

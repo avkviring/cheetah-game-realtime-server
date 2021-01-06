@@ -87,6 +87,9 @@ impl User {
 	pub fn attach_to_room(&mut self) {
 		self.attached = true;
 	}
+	pub fn detach_from_room(&mut self) {
+		self.attached = false;
+	}
 }
 
 impl Room {

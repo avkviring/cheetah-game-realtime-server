@@ -71,6 +71,7 @@ pub enum Command {
 	Event,
 	Delete,
 	AttachToRoom,
+	DetachFromRoom,
 }
 
 impl Rule {
@@ -216,6 +217,7 @@ impl CommandTracer {
 			C2SCommand::CompareAndSetLongValue(c) => (Command::CompareAndSetLongValue, Option::Some(FieldType::Long), Option::Some(c.field_id)),
 			C2SCommand::IncrementFloatCounter(c) => (Command::IncrementFloatValue, Option::Some(FieldType::Float), Option::Some(c.field_id)),
 			C2SCommand::AttachToRoom => (Command::AttachToRoom, Option::None, Option::None),
+			C2SCommand::DetachFromRoom => (Command::DetachFromRoom, Option::None, Option::None),
 		};
 		if self.is_allow(user_id, Direction::CS, info.0, info.1, info.2) {
 			log::info!("[room({:?})] u({:?}) -> s {:?} {:?}", room_id, user_id, command.command, command.meta);
