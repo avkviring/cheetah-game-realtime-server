@@ -53,6 +53,7 @@ where
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameObjectIdFFI {
 	id: u32,
 	room_owner: bool,
@@ -60,6 +61,13 @@ pub struct GameObjectIdFFI {
 }
 
 impl GameObjectIdFFI {
+	pub fn new() -> Self {
+		Self {
+			id: 0,
+			room_owner: false,
+			user_id: 0,
+		}
+	}
 	pub fn empty() -> Self {
 		Self {
 			id: 0,
