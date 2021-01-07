@@ -112,9 +112,19 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 const BUFFER_MAX_SIZE: usize = 255;
 
 #[repr(C)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct BufferFFI {
 	pub len: u8,
 	pub buffer: [u8; BUFFER_MAX_SIZE],
+}
+
+impl BufferFFI {
+	pub fn new() -> Self {
+		Self {
+			len: 0,
+			buffer: [0; BUFFER_MAX_SIZE],
+		}
+	}
 }
 
 impl From<&BufferFFI> for HeaplessBuffer {
