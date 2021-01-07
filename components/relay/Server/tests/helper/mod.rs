@@ -6,28 +6,36 @@ use std::time::{Duration, Instant};
 
 use log::LevelFilter;
 
-use cheetah_relay::room::debug::tracer::CommandTracer;
-use cheetah_relay::room::template::config::{GameObjectTemplate, RoomTemplate, UserTemplate};
 use cheetah_relay::server::Server;
+use cheetah_relay::test_env::IntegrationTestServerBuider;
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
-use cheetah_relay_common::network::bind_to_free_socket;
+
 use cheetah_relay_common::network::client::NetworkClient;
 use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::{RoomId, UserId};
+use cheetah_relay_common::room::{UserId, UserPrivateKey};
 
-pub struct TestEnv {
+pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
 	clients: HashMap<UserId, NetworkClient>,
 	pub server: Server,
 }
 
-impl TestEnv {
+impl IntegrationTestHelper {
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(0b1);
 
-	pub fn connect(&mut self, user_id: UserId, room_id: RoomId) {
-		let client = NetworkClient::new(Default::default(), user_id, room_id, self.socket_addr, 100).unwrap();
+	pub fn new(builder: IntegrationTestServerBuider) -> Self {
+		let (socket_addr, server) = builder.build();
+		Self {
+			socket_addr,
+			clients: Default::default(),
+			server,
+		}
+	}
+
+	pub fn connect(&mut self, user_id: UserId, user_key: UserPrivateKey) {
+		let client = NetworkClient::new(user_key, user_id, IntegrationTestServerBuider::ROOM_ID, self.socket_addr, 100).unwrap();
 		self.clients.insert(user_id, client);
 	}
 
@@ -67,50 +75,6 @@ impl TestEnv {
 			.collect();
 		commands.clear();
 		result
-	}
-}
-
-#[derive(Debug, Default)]
-pub struct TestEnvBuilder {
-	template: RoomTemplate,
-}
-
-impl TestEnvBuilder {
-	pub const ROOM_ID: RoomId = 0;
-
-	pub fn create_user(&mut self, user_id: UserId) {
-		self.template.users.push(UserTemplate {
-			id: user_id,
-			private_key: Default::default(),
-			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
-			objects: Default::default(),
-			unmapping: Default::default(),
-		});
-	}
-
-	pub fn create_object(&mut self, user_id: UserId, object_id: u32) {
-		let object_template = GameObjectTemplate {
-			id: object_id,
-			template: 0,
-			access_groups: TestEnv::DEFAULT_ACCESS_GROUP,
-			fields: Default::default(),
-			unmapping: Default::default(),
-		};
-
-		let user = self.template.users.iter_mut().find(|u| u.id == user_id).unwrap();
-		user.objects.push(object_template);
-	}
-
-	pub fn build(self) -> TestEnv {
-		let socket = bind_to_free_socket().unwrap();
-		let addr = socket.1;
-		let mut server = Server::new(socket.0, CommandTracer::new_with_deny_all());
-		server.register_room(self.template).ok().unwrap();
-		TestEnv {
-			socket_addr: addr,
-			clients: Default::default(),
-			server,
-		}
 	}
 }
 

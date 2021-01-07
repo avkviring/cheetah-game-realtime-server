@@ -136,7 +136,13 @@ mod tests {
 
 		let mut commands = Vec::new();
 		object.collect_create_commands(&mut commands);
-		assert!(matches!(commands.remove(0), S2CommandWithFieldInfo { field: None, command: S2CCommand::Create(_)}));
+		assert!(matches!(
+			commands.remove(0),
+			S2CommandWithFieldInfo {
+				field: None,
+				command: S2CCommand::Create(_)
+			}
+		));
 		assert!(matches!(commands.remove(0),
 			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id== 1 && c.value == 100));
