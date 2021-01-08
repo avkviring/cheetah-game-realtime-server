@@ -3,13 +3,13 @@ extern crate lazy_static;
 
 use std::sync::Mutex;
 
-use cheetah_relay::test_env::IntegrationTestServerBuider;
 use cheetah_relay_client::ffi;
 use cheetah_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
 use cheetah_relay_common::constants::FieldId;
 
-use crate::helpers::*;
+use crate::helpers::helper::*;
+use crate::helpers::server::*;
 
 pub mod helpers;
 
@@ -18,16 +18,16 @@ pub mod helpers;
 ///
 #[test]
 fn test() {
-	let (helper, client1, client2) = setup();
+	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
 	ffi::client::set_current_client(client2);
 	ffi::command::event::set_event_listener(on_event_listener);
 	ffi::command::room::attach_to_room();
-	helper.wait_first_frame();
+	helper.wait_udp();
 
 	ffi::client::set_current_client(client1);
 	let mut object_id = GameObjectIdFFI::new();
-	ffi::command::object::create_object(1, IntegrationTestServerBuider::DEFAULT_ACCESS_GROUP.0, &mut object_id);
+	ffi::command::object::create_object(1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
 	ffi::command::object::created_object(&object_id);
 
 	let mut event_buffer = BufferFFI::new();
@@ -36,7 +36,7 @@ fn test() {
 	let event_field_id = 10;
 	ffi::command::event::send_event(&object_id, event_field_id, &event_buffer);
 
-	helper.wait_first_frame();
+	helper.wait_udp();
 	ffi::client::set_current_client(client2);
 	ffi::client::receive();
 

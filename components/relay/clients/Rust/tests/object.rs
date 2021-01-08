@@ -3,12 +3,12 @@ extern crate lazy_static;
 
 use std::sync::Mutex;
 
-use cheetah_relay::test_env::IntegrationTestServerBuider;
 use cheetah_relay_client::ffi;
 use cheetah_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_relay_client::ffi::GameObjectIdFFI;
 
-use crate::helpers::*;
+use crate::helpers::helper::*;
+use crate::helpers::server::*;
 
 pub mod helpers;
 
@@ -16,23 +16,23 @@ pub mod helpers;
 /// Тест на создание/удаление объекта
 ///
 #[test]
-fn should_create_and_delete_object() {
-	let (helper, client1, client2) = setup();
+fn test() {
+	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
 	ffi::client::set_current_client(client2);
 	ffi::command::object::set_create_object_listener(on_object_create);
 	ffi::command::object::set_created_object_listener(on_object_created);
 	ffi::command::object::set_delete_object_listener(on_object_delete);
 	ffi::command::room::attach_to_room();
-	helper.wait_first_frame();
+	helper.wait_udp();
 
 	ffi::client::set_current_client(client1);
 	let mut object_id = GameObjectIdFFI::new();
-	ffi::command::object::create_object(1, IntegrationTestServerBuider::DEFAULT_ACCESS_GROUP.0, &mut object_id);
+	ffi::command::object::create_object(1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
 	ffi::command::object::created_object(&object_id);
 	ffi::command::object::delete_object(&object_id);
 
-	helper.wait_first_frame();
+	helper.wait_udp();
 	ffi::client::set_current_client(client2);
 	ffi::client::receive();
 
