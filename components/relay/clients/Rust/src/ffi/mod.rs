@@ -1,5 +1,3 @@
-use std::sync::Mutex;
-
 use cheetah_relay_common::commands::command::HeaplessBuffer;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
@@ -7,23 +5,25 @@ use cheetah_relay_common::room::UserId;
 
 use crate::controller::ClientController;
 use crate::registry::Registry;
+use std::cell::RefCell;
 
 pub mod channel;
 pub mod client;
 pub mod command;
 pub mod logs;
 
-lazy_static! {
-	static ref REGISTRY: Mutex<Registry> = Mutex::new(Default::default());
+thread_local! {
+	static REGISTRY: RefCell<Registry> = RefCell::new(Default::default());
 }
 
 pub fn execute<F, T>(body: F) -> T
 where
 	F: FnOnce(&mut Registry) -> T,
 {
-	let mut clients = REGISTRY.lock().unwrap();
-	let clients = &mut *clients;
-	body(clients)
+	REGISTRY.with(|f| {
+		let mut ref_mut = f.borrow_mut();
+		body(&mut ref_mut)
+	})
 }
 
 pub fn execute_with_client<F, T>(body: F) -> Result<T, ()>
@@ -124,6 +124,15 @@ impl BufferFFI {
 			len: 0,
 			buffer: [0; BUFFER_MAX_SIZE],
 		}
+	}
+}
+
+impl From<Vec<u8>> for BufferFFI {
+	fn from(source: Vec<u8>) -> Self {
+		let mut buffer = BufferFFI::new();
+		buffer.len = source.len() as u8;
+		buffer.buffer[0..source.len()].copy_from_slice(source.as_slice());
+		buffer
 	}
 }
 
