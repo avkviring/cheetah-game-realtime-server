@@ -8,6 +8,8 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
+use cheetah_relay_common::room::RoomId;
+
 use crate::network::udp::UDPServer;
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::debug::user_selector::SelectedUserForEntrance;
@@ -15,7 +17,6 @@ use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms, SelectUserForEntranceError};
 use crate::server::dump::ServerDump;
 use crate::server::Request::TimeOffset;
-use cheetah_relay_common::room::RoomId;
 
 pub mod dump;
 pub mod rest;
@@ -68,7 +69,7 @@ impl Server {
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
 		let handler = thread::Builder::new()
-			.name("server".to_string())
+			.name(format!("server({:?})", socket.local_addr().unwrap()))
 			.spawn(move || {
 				ServerThread::new(socket, receiver, halt_signal, tracer).run();
 			})
