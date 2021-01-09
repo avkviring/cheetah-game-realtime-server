@@ -37,18 +37,21 @@ impl IntegrationTestHelper {
 		thread::sleep(Duration::from_millis(100));
 	}
 
-	pub fn create_object(&self, client: ClientId) -> GameObjectIdFFI {
-		ffi::client::set_current_client(client);
+	pub fn create_user_object(&self) -> GameObjectIdFFI {
 		let mut object_id = GameObjectIdFFI::new();
-		ffi::command::object::create_object(1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
+		ffi::command::object::create_object(
+			IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
+			IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
+			&mut object_id,
+		);
 		ffi::command::object::created_object(&object_id);
 		object_id
 	}
 }
 
 pub fn setup(mut builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, u16, u16) {
-	let (user1_id, user1_key) = builder.create_user();
-	let (user2_id, user2_key) = builder.create_user();
+	let (user1_id, user1_key) = builder.make_user_key();
+	let (user2_id, user2_key) = builder.make_user_key();
 	let helper = IntegrationTestHelper::new(builder);
 
 	let client1 = helper.create_client(user1_id, user1_key);

@@ -1,13 +1,17 @@
-use log::LevelFilter;
-use rand::rngs::OsRng;
-use rand::RngCore;
 use std::io::Write;
 use std::net::SocketAddr;
 
+use log::LevelFilter;
+use rand::rngs::OsRng;
+use rand::RngCore;
+
 use cheetah_relay::room::debug::tracer::CommandTracer;
-use cheetah_relay::room::template::config::{GameObjectTemplate, RoomTemplate, UserTemplate};
+use cheetah_relay::room::template::config::{
+	GameObjectTemplate, Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate,
+};
+use cheetah_relay::room::types::FieldType;
 use cheetah_relay::server::Server;
-use cheetah_relay_common::constants::GameObjectTemplateId;
+use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::network::bind_to_free_socket;
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
@@ -29,8 +33,9 @@ impl IntegrationTestServerBuilder {
 	pub const ROOM_ID: RoomId = 0;
 
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(55);
+	pub const DEFAULT_TEMPLATE: GameObjectTemplateId = 1;
 
-	pub fn create_user(&mut self) -> (UserId, UserPrivateKey) {
+	pub fn make_user_key(&mut self) -> (UserId, UserPrivateKey) {
 		self.user_id_generator += 1;
 		let mut private_key = [0; 32];
 		OsRng.fill_bytes(&mut private_key);
@@ -59,6 +64,31 @@ impl IntegrationTestServerBuilder {
 		GameObjectId {
 			owner: ObjectOwner::User(user_id),
 			id: self.object_id_generator,
+		}
+	}
+
+	pub fn set_permission(
+		&mut self,
+		template: GameObjectTemplateId,
+		field_id: FieldId,
+		field_type: FieldType,
+		group: AccessGroups,
+		permission: Permission,
+	) {
+		let field = PermissionField {
+			field_id,
+			field_type,
+			groups: vec![PermissionGroup { group, permission }],
+		};
+		match self.template.permissions.templates.iter_mut().find(|tp| tp.template == template) {
+			None => self.template.permissions.templates.push(TemplatePermission {
+				template,
+				groups: Default::default(),
+				fields: vec![field],
+			}),
+			Some(template) => {
+				template.fields.push(field);
+			}
 		}
 	}
 

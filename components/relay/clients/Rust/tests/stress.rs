@@ -19,7 +19,8 @@ pub mod helpers;
 #[test]
 pub fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
-	let object_id = helper.create_object(client1);
+	ffi::client::set_current_client(client1);
+	let object_id = helper.create_user_object();
 
 	ffi::client::set_current_client(client2);
 	ffi::command::room::attach_to_room();

@@ -13,9 +13,6 @@ use crate::helpers::server::*;
 
 pub mod helpers;
 
-///
-/// Тест на создание/удаление объекта
-///
 #[test]
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
@@ -26,14 +23,10 @@ fn test() {
 	helper.wait_udp();
 
 	ffi::client::set_current_client(client1);
-	let mut object_id = GameObjectIdFFI::new();
-	ffi::command::object::create_object(1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
-	let mut structure_buffer = BufferFFI::new();
-	structure_buffer.len = 1;
-	structure_buffer.buffer[0] = 100;
+	let object_id = helper.create_user_object();
+	let structure_buffer = BufferFFI::from(vec![100]);
 	let structure_field_id = 10;
 	ffi::command::structure::set_structure(&object_id, structure_field_id, &structure_buffer);
-	ffi::command::object::created_object(&object_id);
 
 	helper.wait_udp();
 	ffi::client::set_current_client(client2);
