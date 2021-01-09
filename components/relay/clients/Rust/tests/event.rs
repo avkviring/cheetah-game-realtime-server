@@ -13,9 +13,6 @@ use crate::helpers::server::*;
 
 pub mod helpers;
 
-///
-/// Тест на создание/удаление объекта
-///
 #[test]
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
