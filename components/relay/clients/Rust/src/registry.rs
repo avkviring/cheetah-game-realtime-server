@@ -79,9 +79,12 @@ impl Registry {
 			average_retransmit_frames.clone(),
 		) {
 			Ok(client) => {
-				let handler = thread::spawn(move || {
-					client.run();
-				});
+				let handler = thread::Builder::new()
+					.name(format!("user({:?})", user_id))
+					.spawn(move || {
+						client.run();
+					})
+					.unwrap();
 
 				let controller = ClientController::new(
 					user_id,
