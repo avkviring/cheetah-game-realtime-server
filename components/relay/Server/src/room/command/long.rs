@@ -106,6 +106,20 @@ pub fn reset_all_compare_and_set(room: &mut Room, user_id: UserId, compare_and_s
 				if let Some(owner) = object.compare_and_set_owners.get(&field) {
 					if *owner == user_id {
 						object.longs.insert(field, reset);
+						let command = [S2CommandWithFieldInfo {
+							field: Some(FieldIdAndType {
+								field_id: field,
+								field_type: FieldType::Long,
+							}),
+							command: S2CCommand::SetLong(SetLongCommand {
+								object_id,
+								field_id: field,
+								value: reset,
+							}),
+						}];
+						let groups = object.access_groups.clone();
+						let template = object.template;
+						room.send(groups, template, &command.iter(), |_| true)
 					}
 				}
 			}

@@ -294,8 +294,9 @@ impl Room {
 
 	///
 	/// Тактируем протоколы пользователей и определяем дисконнекты
+	/// true - если room была изменена и требуется отправка команды
 	///
-	pub fn cycle(&mut self, now: &Instant) {
+	pub fn cycle(&mut self, now: &Instant) -> bool {
 		let mut disconnected_user: [UserId; 10] = [0; 10];
 		let mut disconnected_users_count = 0;
 		self.users.values_mut().for_each(|u| {
@@ -310,6 +311,8 @@ impl Room {
 		for i in 0..disconnected_users_count {
 			self.disconnect_user(disconnected_user[i]);
 		}
+
+		disconnected_users_count > 0
 	}
 
 	fn user_connected(&mut self, template: UserTemplate) {

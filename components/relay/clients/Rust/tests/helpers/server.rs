@@ -112,6 +112,7 @@ impl IntegrationTestServerBuilder {
 	}
 }
 
+#[allow(unused)]
 fn init_logger() {
 	env_logger::builder()
 		.format(|buf, record| {
@@ -125,5 +126,6 @@ fn init_logger() {
 		})
 		.filter_level(LevelFilter::Info)
 		.format_timestamp(None)
-		.init();
+		.is_test(true)
+		.try_init();
 }

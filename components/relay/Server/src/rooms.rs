@@ -102,7 +102,17 @@ impl Rooms {
 	}
 
 	pub fn cycle(&mut self, now: &Instant) {
-		self.room_by_id.values_mut().for_each(|room| room.cycle(now));
+		let mut changed = [0; 30_000];
+		let mut index = 0;
+		self.room_by_id.values_mut().for_each(|room| {
+			if room.cycle(now) {
+				changed[index] = room.id;
+				index += 1;
+			}
+		});
+		for i in 0..index {
+			self.changed_rooms.insert(changed[i]);
+		}
 	}
 
 	pub fn select_user_for_entrance(&mut self, room_id: RoomId) -> Result<Option<SelectedUserForEntrance>, SelectUserForEntranceError> {
