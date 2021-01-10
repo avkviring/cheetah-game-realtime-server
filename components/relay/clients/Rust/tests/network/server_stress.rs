@@ -1,17 +1,10 @@
-#[macro_use]
-extern crate lazy_static;
-
-use std::sync::Mutex;
-
+use crate::helpers::helper::*;
+use crate::helpers::server::*;
 use cheetah_relay_client::ffi;
 use cheetah_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_relay_client::ffi::GameObjectIdFFI;
 use cheetah_relay_common::constants::FieldId;
-
-use crate::helpers::helper::*;
-use crate::helpers::server::*;
-
-pub mod helpers;
+use std::sync::Mutex;
 
 ///
 /// Тестируем работу сервера под большой нагрузкой

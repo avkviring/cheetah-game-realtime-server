@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
 use std::sync::Mutex;
 
 use cheetah_relay::room::template::config::Permission;
@@ -11,8 +9,6 @@ use cheetah_relay_common::constants::FieldId;
 
 use crate::helpers::helper::*;
 use crate::helpers::server::*;
-
-pub mod helpers;
 
 #[test]
 fn should_inc() {

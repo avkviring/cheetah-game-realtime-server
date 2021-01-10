@@ -9,8 +9,6 @@ use cheetah_relay_common::protocol::disconnect::watcher::DisconnectWatcher;
 use crate::helpers::helper::*;
 use crate::helpers::server::*;
 
-pub mod helpers;
-
 #[test]
 fn should_connect_to_server() {
 	let mut builder = IntegrationTestServerBuilder::default();
