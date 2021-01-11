@@ -2,7 +2,7 @@ use cheetah_relay_common::protocol::frame::applications::ChannelGroupId;
 
 use crate::ffi::execute_with_client;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(C)]
 pub enum Channel {
 	ReliableUnordered,
@@ -17,8 +17,15 @@ pub enum Channel {
 
 #[no_mangle]
 pub extern "C" fn set_channel(channel: Channel, group: ChannelGroupId) -> bool {
-	execute_with_client(|client| {
-		client.set_current_channel(channel, group);
+	execute_with_client(|client, trace| {
+		(
+			client.set_current_channel(channel.clone(), group),
+			if trace {
+				Some(format!("set_channel {:?} {:?}", channel, group))
+			} else {
+				None
+			},
+		)
 	})
 	.is_ok()
 }

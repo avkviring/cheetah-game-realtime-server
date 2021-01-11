@@ -8,8 +8,18 @@ use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 #[no_mangle]
 #[allow(unused_must_use)]
 pub extern "C" fn set_structure_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)) -> bool {
-	execute_with_client(|client| {
-		client.register_structure_listener(listener);
+	execute_with_client(|client, trace| {
+		(
+			{
+				client.register_structure_listener(listener);
+			},
+			if trace {
+				listener(&S2CMetaCommandInformationFFI::stub(), &GameObjectIdFFI::stub(), 77, &BufferFFI::stub());
+				Some(format!("set_structure_listener"))
+			} else {
+				None
+			},
+		)
 	})
 	.is_ok()
 }

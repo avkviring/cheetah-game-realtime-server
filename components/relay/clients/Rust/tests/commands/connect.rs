@@ -16,7 +16,11 @@ fn should_connect_to_server() {
 	let helper = IntegrationTestHelper::new(builder);
 	let _ = helper.create_client(user_id, user_key);
 	helper.wait_udp();
-	execute_with_client(|api| assert_eq!(api.get_connection_status(), ConnectionStatus::Connected)).unwrap();
+	execute_with_client(|api, trace| {
+		assert_eq!(api.get_connection_status(), ConnectionStatus::Connected);
+		((), None)
+	})
+	.unwrap();
 }
 
 #[test]
@@ -29,16 +33,25 @@ fn should_disconnect_when_server_closed() {
 	helper.wait_udp();
 
 	set_current_client(client);
-	execute_with_client(|api| assert_eq!(api.get_connection_status(), ConnectionStatus::Connected)).unwrap();
+	execute_with_client(|api, trace| {
+		assert_eq!(api.get_connection_status(), ConnectionStatus::Connected);
+		((), None)
+	})
+	.unwrap();
 
 	drop(helper);
 
 	set_current_client(client);
-	execute_with_client(|api| {
+	execute_with_client(|api, trace| {
 		api.set_protocol_time_offset(DisconnectWatcher::TIMEOUT);
+		((), None)
 	})
 	.unwrap();
 	thread::sleep(Duration::from_millis(100));
 
-	execute_with_client(|api| assert_eq!(api.get_connection_status(), ConnectionStatus::Disconnected)).unwrap();
+	execute_with_client(|api, trace| {
+		assert_eq!(api.get_connection_status(), ConnectionStatus::Disconnected);
+		((), None)
+	})
+	.unwrap();
 }

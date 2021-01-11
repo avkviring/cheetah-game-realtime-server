@@ -50,6 +50,7 @@ pub struct ClientController {
 	pub error_in_client_thread: bool,
 }
 
+
 impl Drop for ClientController {
 	fn drop(&mut self) {
 		match self.request_to_client.send(ClientRequest::Close) {

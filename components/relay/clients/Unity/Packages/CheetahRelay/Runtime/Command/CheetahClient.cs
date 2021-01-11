@@ -82,7 +82,7 @@ namespace CheetahRelay
         /// <returns>false - клиент не найден</returns>
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "attach_to_room")]
         public static extern bool AttachToRoom();
-        
+
         /// <summary>
         /// Отсоединиться от комнаты
         /// </summary>
@@ -100,7 +100,7 @@ namespace CheetahRelay
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_channel")]
         public static extern bool SetChannelType(ChannelType channelType, ushort group);
 
-        
+
         /// <summary>
         /// Задать параметры эмуляции RTT
         /// Подробнее смотрите в документации проекта
@@ -128,8 +128,21 @@ namespace CheetahRelay
         /// <returns></returns>
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "reset_emulation")]
         public static extern bool ResetEmulation();
-        
-        
+
+        /// <summary>
+        /// Включить эмуляцию тестового режима,
+        /// в этом режиме команды не выполняются,
+        /// а вызывающей стороне возвращается строка,
+        /// описывающая параметры команды
+        /// </summary>
+        /// <returns></returns>
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "enable_test_mode")]
+        public static extern bool EnableTestMode(TestModeListener listener);
+
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void TestModeListener([MarshalAs(UnmanagedType.LPWStr)] string trace);
+
 
         public enum ChannelType
         {

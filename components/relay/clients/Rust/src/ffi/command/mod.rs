@@ -1,6 +1,5 @@
 use cheetah_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 use cheetah_relay_common::commands::command::C2SCommand;
-
 use cheetah_relay_common::room::UserId;
 
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
@@ -13,8 +12,18 @@ pub mod room;
 pub mod structure;
 
 fn send_command(command: C2SCommand) -> bool {
-	execute_with_client(|client| {
-		client.send(command);
+	let command_clone = command.clone();
+	execute_with_client(|client, trace| {
+		(
+			{
+				client.send(command);
+			},
+			if trace {
+				Some(format!("send_command {:?}", command_clone))
+			} else {
+				None
+			},
+		)
 	})
 	.is_ok()
 }
@@ -35,6 +44,20 @@ pub struct S2CMetaCommandInformationFFI {
 	/// Объект - источник команды
 	///
 	pub source_object: GameObjectIdFFI,
+}
+
+impl S2CMetaCommandInformationFFI {
+	pub fn stub() -> Self {
+		Self {
+			user_id: 15,
+			timestamp: 25,
+			source_object: GameObjectIdFFI {
+				id: 3,
+				room_owner: false,
+				user_id: 5,
+			},
+		}
+	}
 }
 
 impl From<&S2CMetaCommandInformation> for S2CMetaCommandInformationFFI {

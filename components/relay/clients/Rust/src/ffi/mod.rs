@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use cheetah_relay_common::commands::command::HeaplessBuffer;
 use cheetah_relay_common::room::object::GameObjectId;
 use cheetah_relay_common::room::owner::ObjectOwner;
@@ -5,7 +7,6 @@ use cheetah_relay_common::room::UserId;
 
 use crate::controller::ClientController;
 use crate::registry::Registry;
-use std::cell::RefCell;
 
 pub mod channel;
 pub mod client;
@@ -26,25 +27,29 @@ where
 	})
 }
 
-pub fn execute_with_client<F, T>(body: F) -> Result<T, ()>
+pub fn execute_with_client<F, R>(action: F) -> Result<R, ()>
 where
-	F: FnOnce(&mut ClientController) -> T,
+	F: FnOnce(&mut ClientController, bool) -> (R, Option<String>),
 {
-	execute(|clients| match clients.current_client {
+	execute(|registry| match registry.current_client {
 		None => {
 			log::error!("current client not set");
 			Result::Err(())
 		}
-		Some(ref client_id) => match clients.controllers.get_mut(client_id) {
+		Some(ref client_id) => match registry.controllers.get_mut(client_id) {
 			None => {
 				log::error!("client not found {:?}", client_id);
 				Result::Err(())
 			}
 			Some(client_api) => {
 				if !client_api.error_in_client_thread {
-					Result::Ok(body(client_api))
+					let (result, trace) = action(client_api, registry.trace_mode_callback.is_some());
+					if let Some(trace) = trace {
+						registry.trace(trace);
+					}
+					Result::Ok(result)
 				} else {
-					clients.destroy_client();
+					registry.destroy_client();
 					Result::Err(())
 				}
 			}
@@ -73,6 +78,14 @@ impl GameObjectIdFFI {
 			id: 0,
 			room_owner: false,
 			user_id: 0,
+		}
+	}
+
+	pub fn stub() -> Self {
+		Self {
+			id: 5,
+			room_owner: false,
+			user_id: 77,
 		}
 	}
 }
@@ -123,6 +136,13 @@ impl BufferFFI {
 		Self {
 			len: 0,
 			buffer: [0; BUFFER_MAX_SIZE],
+		}
+	}
+
+	pub fn stub() -> Self {
+		Self {
+			len: 3,
+			buffer: [99; BUFFER_MAX_SIZE],
 		}
 	}
 }

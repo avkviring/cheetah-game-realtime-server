@@ -7,6 +7,7 @@ use std::thread;
 use std::time::Duration;
 
 use fnv::FnvBuildHasher;
+use widestring::U16CString;
 
 use cheetah_relay_common::network::client::ConnectionStatus;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
@@ -27,6 +28,7 @@ pub struct Registry {
 	pub controllers: HashMap<ClientId, ClientController, FnvBuildHasher>,
 	client_generator_id: ClientId,
 	pub current_client: Option<u16>,
+	pub trace_mode_callback: Option<extern "C" fn(*const u16)>,
 }
 
 #[derive(Debug)]
@@ -45,6 +47,7 @@ impl Default for Registry {
 			controllers: Default::default(),
 			client_generator_id: Default::default(),
 			current_client: None,
+			trace_mode_callback: None,
 		}
 	}
 }
@@ -58,6 +61,13 @@ impl Registry {
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
 	) -> Result<ClientId, ()> {
+		if self.trace_mode_callback.is_some() {
+			self.trace(format!(
+				"create_client {:?} {:?} {:?} {:?} {:?}",
+				server_address, user_id, room_id, start_frame_id, user_private_key
+			));
+		}
+
 		let start_frame_id = Arc::new(AtomicU64::new(start_frame_id));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
 		let state_cloned = state.clone();
@@ -127,6 +137,17 @@ impl Registry {
 					true
 				}
 			},
+		}
+	}
+
+	pub fn enable_test_mode(&mut self, trace_mode_callback: extern "C" fn(*const u16)) {
+		self.trace_mode_callback = Some(trace_mode_callback);
+	}
+
+	pub fn trace(&self, trace: String) {
+		if let Some(trace_callback) = self.trace_mode_callback {
+			let trace = U16CString::from_str(trace).unwrap();
+			trace_callback(trace.as_ptr());
 		}
 	}
 }
