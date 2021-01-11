@@ -5,6 +5,8 @@ use cheetah_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_relay_client::ffi::GameObjectIdFFI;
 use cheetah_relay_common::constants::FieldId;
 use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
 
 ///
 /// Тестируем работу сервера под большой нагрузкой
@@ -25,7 +27,7 @@ pub fn test() {
 		ffi::command::long_value::inc_long_value(&object_id, 1, 1);
 	}
 	ffi::client::set_current_client(client2);
-	helper.wait_udp();
+	thread::sleep(Duration::from_millis(500));
 	ffi::client::receive();
 
 	assert!(matches!(LONG_VALUE.lock().unwrap().as_ref(), Option::Some((id, field_id, value)) if *id == object_id  && *field_id == 1 && *value==500));
