@@ -1,4 +1,13 @@
 {
+  "scopedRegistries": [
+    {
+      "name": "cheetah",
+      "url": "https://registry.cheetah.games/",
+      "scopes": [
+        "games.cheetah.unity"
+      ]
+    }
+  ],
   "dependencies": {
     "com.unity.collab-proxy": "1.2.16",
     "com.unity.ide.rider": "1.1.4",
@@ -7,6 +16,8 @@
     "com.unity.textmeshpro": "2.0.1",
     "com.unity.timeline": "1.2.14",
     "com.unity.ugui": "1.0.0",
+    "games.cheetah.unity.messagepack": "1.0.0",
+    "games.cheetah.unity.system-libraries": "1.1.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",

@@ -6,7 +6,7 @@
   "unity": "2019.1",
   "unityRelease": "0b5",
   "dependencies": {
-    "cheetah.relay.messagepack": "0.0.1"
+    "games.cheetah.unity.messagepack": "1.0.0"
   },
   "hideInEditor": false,
   "type": "library"
