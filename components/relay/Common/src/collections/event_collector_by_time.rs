@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 
 use generic_array::sequence::GenericSequence;
 use generic_array::{ArrayLength, GenericArray};
-use serde::export::fmt::Debug;
+use std::fmt::Debug;
 
 ///
 ///  Сохраняет количество событий по времени

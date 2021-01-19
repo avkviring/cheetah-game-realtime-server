@@ -1,13 +1,12 @@
 use core::fmt;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 use std::time::Instant;
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
-use serde::export::Formatter;
 
 use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_relay_common::commands::command::unload::DeleteGameObjectCommand;
