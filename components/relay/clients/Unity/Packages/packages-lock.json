@@ -1,13 +1,5 @@
 {
   "dependencies": {
-    "cheetah.relay.client": {
-      "version": "file:CheetahRelay",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "games.cheetah.unity.messagepack": "1.0.0"
-      }
-    },
     "com.unity.collab-proxy": {
       "version": "1.2.16",
       "depth": 0,
@@ -74,17 +66,25 @@
       }
     },
     "games.cheetah.unity.messagepack": {
-      "version": "1.0.0",
-      "depth": 0,
+      "version": "1.2.2",
+      "depth": 1,
       "source": "registry",
       "dependencies": {
-        "games.cheetah.unity.system-libraries": "1.1.0"
+        "games.cheetah.unity.system-libraries": "1.2.2"
       },
       "url": "https://registry.cheetah.games"
     },
-    "games.cheetah.unity.system-libraries": {
-      "version": "1.1.0",
+    "games.cheetah.unity.relay": {
+      "version": "file:Cheetah Relay",
       "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "games.cheetah.unity.messagepack": "1.2.2"
+      }
+    },
+    "games.cheetah.unity.system-libraries": {
+      "version": "1.2.2",
+      "depth": 2,
       "source": "registry",
       "dependencies": {},
       "url": "https://registry.cheetah.games"

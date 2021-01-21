@@ -10,7 +10,7 @@ https://registry.cheetah.games/
 "scopedRegistries": [
   {
     "name": "cheetah",
-    "url": "https://registry.cheetah.games/",
+    "url": "https://npm.registry.cheetah.games/",
     "scopes": [
       "games.cheetah.unity"
       ]

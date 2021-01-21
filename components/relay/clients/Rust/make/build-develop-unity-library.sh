@@ -1,7 +1,7 @@
 #!/bin/bash
 rustup default stable
 
-OUTPUT=Clients/Unity/Packages/CheetahRelay/
+OUTPUT=Clients/Unity/Packages/Cheetah\ Relay/
 
 cd ../../../
 
