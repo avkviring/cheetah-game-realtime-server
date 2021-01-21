@@ -4,3 +4,4 @@ target
 .DS_Store
 Library
 examples/UnityPackages/Temp/
+examples/UnityPackages/Logs/
