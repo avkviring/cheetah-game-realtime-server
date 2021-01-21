@@ -1,0 +1,57 @@
+name: Test
+on: [push]
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            components/relay/target
+          key: cache-rust
+      - name: Test
+        run: cd components/relay && cargo test
+#  unity:
+#    runs-on: ubuntu-latest
+#    strategy:
+#      fail-fast: false
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.cargo/registry
+#            ~/.cargo/git
+#            components/relay/target
+#            components/relay/clients/Unity/Library
+#          key: cargo-test-${{ hashFiles('**/Cargo.lock') }}
+#      - name: Build server & Client
+#        run: cargo build --manifest-path components/relay/Cargo.toml
+#      - name: Run server
+#        run: nohup cargo run --manifest-path components/relay/Server/Cargo.toml -- --templates-dir  components/relay/Server/config/rooms-for-unity-test/ &
+#      - name: Check server state
+#        run: curl http://localhost:8080
+#      - name: Copy client
+#        run: cp components/relay/target/debug/libcheetah_relay_client.so components/relay/clients/Unity/Packages/Cheetah\ Relay/x86_64/libcheetah_relay_client.so
+#      - name: Create upm config
+#        run: |
+#          echo '[npmAuth."https://npm.registry.cheetah.games"]' > upmconfig.toml
+#          echo 'token = "${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}"' >> upmconfig.toml
+#          echo 'alwaysAuth = true' >> upmconfig.toml
+#      - uses: cheetah-game/unity-test-runner@upmconfig
+#        id: myTestStep
+#        with:
+#          projectPath: components/relay/clients/Unity/
+#          unityVersion: 2019.4.18f1
+#          useHostNetwork: true
+#          testMode: playmode
+#          upmconfig: upmconfig.toml
+#      - uses: actions/upload-artifact@v1
+#        with:
+#          name: Test results
+#          path: ${{ steps.myTestStep.outputs.artifactsPath }}
