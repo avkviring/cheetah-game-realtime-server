@@ -7,14 +7,15 @@ use actix_web::body::Body;
 use actix_web::http::header;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 
-use crate::server::Server;
 use cheetah_relay_common::room::RoomId;
+
+use crate::server::Server;
 
 #[derive(Default)]
 pub struct RestServer {}
 
 impl RestServer {
-	pub fn run(server: Arc<Mutex<Server>>) -> JoinHandle<io::Result<()>> {
+	pub fn run(server: Arc<Mutex<Server>>, port: u16) -> JoinHandle<io::Result<()>> {
 		thread::spawn(move || {
 			let sys = System::new("rest");
 			let server_data = web::Data::new(server);
@@ -27,7 +28,8 @@ impl RestServer {
 					.route("/select-user/{room}", web::get().to(RestServer::get_user_for_entrance))
 			})
 			.workers(1)
-			.bind("0.0.0.0:8080")?
+			.bind(format!("0.0.0.0:{}", port).as_str())
+			.expect("Can not bind port for rest server, use --rest-port for other port")
 			.shutdown_timeout(1)
 			.run();
 
