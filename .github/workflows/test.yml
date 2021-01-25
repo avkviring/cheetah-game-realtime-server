@@ -13,9 +13,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             components/relay/target
-          key: cache-rust
+          key: cargo-linux-${{ hashFiles('**/Cargo.lock') }}
       - name: Test
-        run: cd components/relay && cargo test
+        run: cargo test --manifest-path components/relay/Cargo.toml
 #  unity:
 #    runs-on: ubuntu-latest
 #    strategy:

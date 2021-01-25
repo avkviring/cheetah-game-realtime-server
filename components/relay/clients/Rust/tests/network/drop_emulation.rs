@@ -24,15 +24,16 @@ fn test() {
 
 	ffi::client::set_current_client(client1);
 	ffi::channel::set_channel(Channel::UnreliableUnordered, 0);
-	for _ in 0..500 {
+	for _ in 0..1000 {
 		ffi::command::long_value::inc_long_value(&object_id, 1, 1);
 	}
 
 	helper.wait_udp();
+	helper.wait_udp();
 	ffi::client::set_current_client(client2);
 	ffi::client::receive();
-	println!("{:?}", SET.lock().unwrap().as_ref());
-	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value<500 ));
+	println!("value {:?}", SET.lock().unwrap().as_ref());
+	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value<1000));
 	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value>0 ));
 }
 
