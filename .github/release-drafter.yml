@@ -12,8 +12,7 @@ tag-template: 'v$RESOLVED_VERSION'
 categories:
   - title: 'Features'
     labels:
-      - 'feat'
-      - 'chore'
+      - 'feat'      
       - 'BREAKING CHANGE'
   - title: 'Maintenance'
     labels:
@@ -21,6 +20,7 @@ categories:
       - 'style'
       - 'refactor'
       - 'test'
+      - 'chore'
   - title: 'Bug Fixes'
     labels:
       - 'fix'
