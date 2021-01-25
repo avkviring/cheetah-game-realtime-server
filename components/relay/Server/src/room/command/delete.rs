@@ -39,20 +39,28 @@ mod tests {
 	fn should_delete() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
-		let user_id = 1;
-		template.configure_user(user_id, access_groups);
-		let mut room = Room::from_template(template);
 
-		let object_id = room.create_object(user_id, access_groups).id.clone();
+		let user_a_id = 1;
+		let user_b_id = 2;
+		template.configure_user(user_a_id, access_groups);
+		template.configure_user(user_b_id, access_groups);
+
+		let mut room = Room::from_template(template);
+		room.mark_as_connected(user_a_id);
+		room.mark_as_connected(user_b_id);
+
+		let object_id = room.create_object(user_a_id, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
 
-		command.clone().execute(&mut room, user_id);
+		room.current_user = Option::Some(user_a_id);
+		command.clone().execute(&mut room, user_a_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), None));
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Delete(c))) if c==command));
+		assert!(matches!(room.get_user_out_commands(user_a_id).pop_back(), None));
+		assert!(matches!(room.get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
 	}
 
 	#[test]

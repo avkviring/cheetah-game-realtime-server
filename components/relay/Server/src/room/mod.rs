@@ -264,6 +264,7 @@ impl Room {
 	}
 
 	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
+		let current_user = self.current_user.clone();
 		match self.objects.shift_remove(object_id) {
 			None => {
 				log::error!("[room({:?})] delete_object - object({:?}) not found", self.id, object_id);
@@ -280,7 +281,13 @@ impl Room {
 						}),
 					}]
 					.iter(),
-					|_| true,
+					|user| {
+						if let Some(user_id) = current_user {
+							user.template.id != user_id
+						} else {
+							true
+						}
+					},
 				);
 				Option::Some(object)
 			}
