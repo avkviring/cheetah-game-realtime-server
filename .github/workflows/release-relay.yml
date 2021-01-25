@@ -2,8 +2,7 @@ name: Release Relay
 
 on:
   release:
-    types: [created]
-#  push:
+    types: [published]
 
 jobs:
   build-mac:
