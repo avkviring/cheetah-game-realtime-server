@@ -1,4 +1,4 @@
-use cheetah_relay_common::commands::command::event::EventCommand;
+use cheetah_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
 use cheetah_relay_common::commands::command::S2CCommand;
 use cheetah_relay_common::room::UserId;
 
@@ -13,13 +13,23 @@ impl ServerCommandExecutor for EventCommand {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self));
-		room.do_action(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, action);
+		room.build_command_and_send(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, action);
+	}
+}
+
+impl ServerCommandExecutor for TargetEventCommand {
+	fn execute(self, room: &mut Room, user_id: u16) {
+		let field_id = self.event.field_id;
+		let object_id = self.event.object_id.clone();
+		let target = self.target;
+		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.event));
+		room.build_command_and_send_to_user(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, action, target);
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::event::EventCommand;
+	use cheetah_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
 	use cheetah_relay_common::commands::command::S2CCommand;
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
@@ -46,6 +56,44 @@ mod tests {
 		};
 		command.clone().execute(&mut room, user);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
+	}
+
+	#[test]
+	pub fn should_send_event_to_user() {
+		let mut template = RoomTemplate::default();
+		let access_groups = AccessGroups(10);
+		let user1 = 1;
+		template.configure_user(user1, access_groups);
+		let user2 = 2;
+		template.configure_user(user2, access_groups);
+		let user3 = 3;
+		template.configure_user(user3, access_groups);
+		let mut room = Room::from_template(template);
+
+		room.mark_as_connected(user1);
+		room.mark_as_connected(user2);
+		room.mark_as_connected(user3);
+
+		let object = room.create_object(user1, access_groups);
+		object.created = true;
+		let object_id = object.id.clone();
+		room.get_user_out_commands(user1).clear();
+		room.get_user_out_commands(user2).clear();
+		room.get_user_out_commands(user3).clear();
+
+		let command = TargetEventCommand {
+			target: user2,
+			event: EventCommand {
+				object_id: object_id.clone(),
+				field_id: 100,
+				event: from_vec(vec![1, 2, 3, 4, 5]),
+			},
+		};
+
+		command.clone().execute(&mut room, user1);
+		assert!(matches!(room.get_user_out_commands(user1).pop_back(), None));
+		assert!(matches!(room.get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id));
+		assert!(matches!(room.get_user_out_commands(user3).pop_back(), None));
 	}
 
 	#[test]

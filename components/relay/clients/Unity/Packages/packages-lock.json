@@ -74,11 +74,11 @@
       }
     },
     "games.cheetah.unity.messagepack": {
-      "version": "1.2.3",
+      "version": "1.2.5",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "games.cheetah.unity.system-libraries": "1.2.3"
+        "games.cheetah.unity.system-libraries": "1.2.5"
       },
       "url": "https://npm.registry.cheetah.games"
     },
@@ -91,7 +91,7 @@
       }
     },
     "games.cheetah.unity.system-libraries": {
-      "version": "1.2.3",
+      "version": "1.2.5",
       "depth": 0,
       "source": "registry",
       "dependencies": {},

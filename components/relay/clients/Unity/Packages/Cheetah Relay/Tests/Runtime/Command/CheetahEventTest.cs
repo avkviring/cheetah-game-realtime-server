@@ -23,7 +23,12 @@ namespace CheetahRelay.Tests
             objectId.id = 100;
 
             CheetahEvent.Send(ref objectId, 10, ref buffer);
-            Assert.AreEqual(trace, "send_command Event(EventCommand { object_id: GameObjectId { owner: User(0), id: 100 }, field_id: 10, event: [3, 5] })");
+            Assert.AreEqual(trace,
+                "send_command Event(EventCommand { object_id: GameObjectId { owner: User(0), id: 100 }, field_id: 10, event: [3, 5] })");
+
+            CheetahEvent.Send(1, ref objectId, 10, ref buffer);
+            Assert.AreEqual(trace,
+                "send_command TargetEvent(TargetEventCommand { target: 1, event: EventCommand { object_id: GameObjectId { owner: User(0), id: 100 }, field_id: 10, event: [3, 5] } })");
 
             CheetahEvent.SetListener(Listener);
             Assert.AreEqual(trace, "set_event_listener");

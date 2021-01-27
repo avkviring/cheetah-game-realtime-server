@@ -274,7 +274,7 @@ impl Room {
 				self.send(
 					object.access_groups,
 					object.template,
-					&[S2CommandWithFieldInfo {
+					[S2CommandWithFieldInfo {
 						field: None,
 						command: S2CCommand::Delete(DeleteGameObjectCommand {
 							object_id: object.id.clone(),
@@ -333,7 +333,7 @@ impl Room {
 			object.collect_create_commands(&mut commands);
 			let template = object.template;
 			let access_groups = object.access_groups;
-			self.send(access_groups, template, &commands.iter(), |_user| true);
+			self.send(access_groups, template, commands.iter(), |_user| true);
 			self.insert_object(object);
 		});
 	}

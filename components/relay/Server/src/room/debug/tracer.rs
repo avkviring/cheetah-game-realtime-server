@@ -218,6 +218,7 @@ impl CommandTracer {
 			C2SCommand::IncrementFloatCounter(c) => (Command::IncrementFloatValue, Option::Some(FieldType::Float), Option::Some(c.field_id)),
 			C2SCommand::AttachToRoom => (Command::AttachToRoom, Option::None, Option::None),
 			C2SCommand::DetachFromRoom => (Command::DetachFromRoom, Option::None, Option::None),
+			C2SCommand::TargetEvent(c) => (Command::Event, Option::Some(FieldType::Event), Option::Some(c.event.field_id)),
 		};
 		if self.is_allow(user_id, Direction::CS, info.0, info.1, info.2) {
 			log::info!("[room({:?})] u({:?}) -> s {:?} {:?}", room_id, user_id, command.command, command.meta);

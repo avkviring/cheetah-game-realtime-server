@@ -1,8 +1,9 @@
+use std::collections::VecDeque;
+
 use serde::{Deserialize, Serialize};
 
 use crate::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
 use crate::room::object::GameObjectId;
-use std::collections::VecDeque;
 
 pub type ChannelGroupId = u16;
 pub type ChannelSequence = u32;
@@ -157,6 +158,7 @@ impl ApplicationCommand {
 				C2SCommand::DetachFromRoom => Option::None,
 				C2SCommand::CompareAndSetLongValue(c) => Option::Some(&c.object_id),
 				C2SCommand::Created(c) => Option::Some(&c.object_id),
+				C2SCommand::TargetEvent(c) => Option::Some(&c.event.object_id),
 			},
 		}
 	}

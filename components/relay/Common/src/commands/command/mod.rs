@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::commands::command::event::EventCommand;
+use crate::commands::command::event::{EventCommand, TargetEventCommand};
 use crate::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use crate::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
@@ -31,6 +31,7 @@ pub enum C2SCommand {
 	IncrementFloatCounter(IncrementFloat64C2SCommand),
 	SetStruct(StructureCommand),
 	Event(EventCommand),
+	TargetEvent(TargetEventCommand),
 	Delete(DeleteGameObjectCommand),
 	///
 	/// Загрузить все объекты комнаты
