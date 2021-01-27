@@ -41,6 +41,7 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_id: UserId) {
 		C2SCommand::AttachToRoom => room::attach_to_room(room, user_id),
 		C2SCommand::DetachFromRoom => room::detach_from_room(room, user_id),
 		C2SCommand::Created(command) => command.execute(room, user_id),
+		C2SCommand::TargetEvent(command) => command.execute(room, user_id),
 	}
 }
 

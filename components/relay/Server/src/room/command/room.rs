@@ -25,7 +25,7 @@ pub fn attach_to_room(room: &mut Room, user_id: UserId) {
 				.collect();
 
 			for (template, commands) in commands_by_object {
-				room.send_to_user(&user_id, template, commands);
+				room.send_to_user(&user_id, template, commands.iter());
 			}
 		}
 	}
