@@ -347,7 +347,7 @@ mod tests {
 	use std::time::Instant;
 
 	use cheetah_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-	use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand};
+	use cheetah_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
 	use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use cheetah_relay_common::protocol::frame::Frame;
 	use cheetah_relay_common::protocol::relay::RelayProtocol;
@@ -407,6 +407,28 @@ mod tests {
 					ApplicationCommand::TestSimple(_) => None,
 					ApplicationCommand::TestObject(_, _) => None,
 					ApplicationCommand::S2CCommandWithMeta(c) => Some(c.command.clone()),
+					ApplicationCommand::C2SCommandWithMeta(_) => None,
+				})
+				.filter(|c| c.is_some())
+				.map(|c| c.unwrap())
+				.collect()
+		}
+
+		pub fn get_user_out_commands_with_meta(&self, user_id: UserId) -> VecDeque<S2CCommandWithMeta> {
+			self.get_user(user_id)
+				.unwrap()
+				.protocol
+				.as_ref()
+				.unwrap()
+				.out_commands_collector
+				.commands
+				.reliable
+				.iter()
+				.map(|c| &c.command)
+				.map(|c| match c {
+					ApplicationCommand::TestSimple(_) => None,
+					ApplicationCommand::TestObject(_, _) => None,
+					ApplicationCommand::S2CCommandWithMeta(c) => Some(c.clone()),
 					ApplicationCommand::C2SCommandWithMeta(_) => None,
 				})
 				.filter(|c| c.is_some())

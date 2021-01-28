@@ -256,7 +256,7 @@ impl Room {
 									.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 
 								let command_with_meta = S2CCommandWithMeta {
-									meta: S2CMetaCommandInformation::new(user_id.clone(), meta),
+									meta: S2CMetaCommandInformation::new(self.current_user.unwrap_or(0), meta),
 									command: command.command.clone(),
 								};
 								self.tracer.on_s2c_command(self.id, user.template.id, &command_with_meta);
@@ -274,7 +274,7 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::long::SetLongCommand;
-	use cheetah_relay_common::commands::command::S2CCommand;
+	use cheetah_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
@@ -418,21 +418,23 @@ mod tests {
 
 	#[test]
 	fn should_send_to_user() {
-		let user_id = 10;
+		let user_source_id = 9;
+		let user_target_id = 10;
 		let groups = AccessGroups(55);
 		let object_template = 5;
 		let deny_field_id = 50;
 		let allow_field_id = 70;
 
 		let mut template = RoomTemplate::default();
-		template.configure_user(user_id, groups);
+		template.configure_user(user_target_id, groups);
+		template.configure_user(user_source_id, groups);
 		template
 			.permissions
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		room.mark_as_connected(user_id);
-		let object = room.create_object(user_id, groups);
+		room.mark_as_connected(user_target_id);
+		let object = room.create_object(user_target_id, groups);
 		object.created = true;
 		object.template = object_template;
 		let object_id = object.id.clone();
@@ -460,10 +462,15 @@ mod tests {
 				value: 100,
 			}),
 		});
-		room.send_to_user(&user_id, object_template, commands.iter());
+		room.current_user = Some(user_source_id);
+		room.send_to_user(&user_target_id, object_template, commands.iter());
 
-		let out_commands = room.get_user_out_commands(user_id);
-		assert!(matches!(out_commands.get(0), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
+		let out_commands = room.get_user_out_commands_with_meta(user_target_id);
+		let command = out_commands.get(0);
+
+		assert!(
+			matches!(command, Some(S2CCommandWithMeta{meta, command: S2CCommand::SetLong(command)}) if command.field_id == allow_field_id && meta.user_id == user_source_id)
+		);
 		assert_eq!(out_commands.len(), 1);
 	}
 
