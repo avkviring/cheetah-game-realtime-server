@@ -222,8 +222,8 @@ impl ServerThread {
 
 	fn statistics(&mut self, start_instant: Instant) {
 		let end_instant = Instant::now();
-		let duration = end_instant.sub(start_instant).as_micros();
-		if duration < 10 {
+		let duration = end_instant.sub(start_instant).as_millis();
+		if duration < 2 {
 			thread::sleep(Duration::from_millis(1));
 		}
 		if self.avg_duration == 0 {
