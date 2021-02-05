@@ -1,13 +1,18 @@
 use chrono::Utc;
-use games_cheetah_cerberus_library::cerberus::SessionTokenClaims;
-use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use jsonwebtoken::errors::ErrorKind;
+use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+
+use games_cheetah_cerberus_library::{JWTTokenParser, SessionTokenClaims};
+
+use crate::storage::Storage;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RefreshTokenClaims {
     exp: usize,
     user_id: String,
     device_id: String,
+    version: u64,
 }
 
 #[derive(Debug)]
@@ -15,40 +20,82 @@ pub struct Tokens {
     pub session: String,
     pub refresh: String,
 }
-pub struct JWTTokensService {
-    pub session_exp_in_sec: i64,
-    pub refresh_exp_in_sec: i64,
-    pub private_key: String,
-    pub public_key: String,
+
+#[derive(Debug)]
+pub enum RefreshTokenError {
+    InvalidSignature,
+    Expired,
+    InvalidId,
 }
 
-impl JWTTokensService {
-    pub fn new(private_key: String, public_key: String) -> Self {
+pub struct JWTTokensService<S>
+where
+    S: Storage,
+{
+    session_exp_in_sec: i64,
+    refresh_exp_in_sec: i64,
+    private_key: String,
+    public_key: String,
+    storage: S,
+}
+
+impl<S> JWTTokensService<S>
+where
+    S: Storage,
+{
+    pub fn new(
+        private_key: String,
+        public_key: String,
+        session_exp_in_sec: i64,
+        refresh_exp_in_sec: i64,
+        storage: S,
+    ) -> Self {
         Self {
-            session_exp_in_sec: 5 * 60 * 60,       // 5 часов
-            refresh_exp_in_sec: 30 * 24 * 60 * 60, // 1 месяц
+            session_exp_in_sec,
+            refresh_exp_in_sec,
             private_key,
             public_key,
+            storage,
         }
     }
 
-    pub fn create_tokens(&self, user_id: String, device_id: String) -> Tokens {
-        let session_claims = SessionTokenClaims {
-            exp: (Utc::now().timestamp() + self.session_exp_in_sec) as usize,
-            user_id,
-        };
+    pub fn create_tokens(&mut self, user_id: String, device_id: String) -> Tokens {
+        Tokens {
+            session: self.create_session_token(user_id.clone()),
+            refresh: self.create_refresh_token(user_id, device_id),
+        }
+    }
 
-        let session_token = encode(
+    fn create_refresh_token(&mut self, user_id: String, device_id: String) -> String {
+        let version = self.storage.new_version(&user_id, &device_id);
+        let claims = RefreshTokenClaims {
+            exp: (Utc::now().timestamp() + self.refresh_exp_in_sec) as usize,
+            user_id,
+            device_id,
+            version,
+        };
+        let token = encode(
             &Header::new(Algorithm::ES256),
-            &session_claims,
+            &claims,
             &EncodingKey::from_ec_pem(&self.private_key.as_bytes()).unwrap(),
         )
         .unwrap();
+        JWTTokensService::<S>::remove_head(token)
+    }
 
-        Tokens {
-            session: JWTTokensService::remove_head(session_token),
-            refresh: "".to_string(),
-        }
+    fn create_session_token(&self, user_id: String) -> String {
+        let claims = SessionTokenClaims {
+            exp: (Utc::now().timestamp() + self.session_exp_in_sec) as usize,
+            user_id: user_id.clone(),
+        };
+
+        let token = encode(
+            &Header::new(Algorithm::ES256),
+            &claims,
+            &EncodingKey::from_ec_pem(&self.private_key.as_bytes()).unwrap(),
+        )
+        .unwrap();
+        JWTTokensService::<S>::remove_head(token)
     }
 
     fn remove_head(token: String) -> String {
@@ -56,10 +103,32 @@ impl JWTTokensService {
         format!("{}.{}", collect[1], collect[2])
     }
 
-    pub fn refresh_token(refresh_token: String) -> Tokens {
-        Tokens {
-            session: "".to_string(),
-            refresh: "".to_string(),
+    pub fn refresh(&mut self, refresh_token: String) -> Result<Tokens, RefreshTokenError> {
+        let token = JWTTokenParser::add_head(refresh_token);
+        match jsonwebtoken::decode::<RefreshTokenClaims>(
+            token.as_str(),
+            &DecodingKey::from_ec_pem(self.public_key.as_bytes()).unwrap(),
+            &Validation::new(Algorithm::ES256),
+        ) {
+            Ok(token) => {
+                if self
+                    .storage
+                    .get_version(&token.claims.user_id, &token.claims.device_id)
+                    == token.claims.version
+                {
+                    Result::Ok(Tokens {
+                        session: self.create_session_token(token.claims.user_id.clone()),
+                        refresh: self
+                            .create_refresh_token(token.claims.user_id, token.claims.device_id),
+                    })
+                } else {
+                    Result::Err(RefreshTokenError::InvalidId)
+                }
+            }
+            Err(error) => match error.kind() {
+                ErrorKind::ExpiredSignature => Result::Err(RefreshTokenError::Expired),
+                _ => Result::Err(RefreshTokenError::InvalidSignature),
+            },
         }
     }
 }
