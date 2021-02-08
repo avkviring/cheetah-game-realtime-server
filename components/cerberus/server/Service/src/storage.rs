@@ -1,21 +1,4 @@
-use std::time::Duration;
-
-use redis::{Client, Commands, ConnectionLike, RedisResult};
-
-///
-/// Хранение refresh токенов в persistent хранилище
-///
-pub trait Storage {
-    ///
-    /// Новая версия refresh токена
-    ///
-    fn new_version(&mut self, user_id: &String, device_id: &String) -> u64;
-
-    ///
-    /// Получить текущую версию refresh токена
-    ///
-    fn get_version(&mut self, user_id: &String, device_id: &String) -> u64;
-}
+pub use redis::{AsyncCommands, Commands, ConnectionLike, ErrorKind, RedisError, RedisResult};
 
 ///
 /// Хранение данных по токенам обновления в Redis
@@ -24,11 +7,12 @@ pub trait Storage {
 /// hmap[user_id][device_id] = token_seq
 ///
 pub struct RedisRefreshTokenStorage {
-    client: Client,
+    host: String,
+    port: u16,
     ///
     /// Время жизни данных для пользователя
     ///
-    time_of_life_in_sec: usize,
+    time_of_life_in_sec: i64,
 }
 
 impl RedisRefreshTokenStorage {
@@ -42,18 +26,12 @@ impl RedisRefreshTokenStorage {
     ///
     const COUNT_DEVICES_PER_USER: usize = 32;
 
-    pub fn new(host: String, port: u16, time_of_life_in_sec: usize) -> Result<Self, String> {
-        let client = redis::Client::open(format!("redis://{}:{}", host, port))
-            .map_err(|e| format!("{:?}", e))?;
+    pub fn new(host: String, port: u16, time_of_life_in_sec: i64) -> Result<Self, String> {
         Result::Ok(Self {
-            client,
+            host,
+            port,
             time_of_life_in_sec,
         })
-    }
-    fn set_expire(&mut self, key: &String) {
-        self.client
-            .expire::<&String, usize>(key, self.time_of_life_in_sec)
-            .unwrap();
     }
 
     fn make_key(user_id: &String) -> String {
@@ -67,36 +45,47 @@ impl RedisRefreshTokenStorage {
             device_id.to_owned()
         }
     }
-}
 
-impl Storage for RedisRefreshTokenStorage {
-    fn new_version(&mut self, user_id: &String, device_id: &String) -> u64 {
+    pub(crate) async fn new_version(
+        &self,
+        user_id: &String,
+        device_id: &String,
+    ) -> Result<u64, RedisError> {
         let key = RedisRefreshTokenStorage::make_key(user_id);
+        let device_id = RedisRefreshTokenStorage::normalize_device_id(device_id);
 
-        let len: usize = self.client.hlen(&key).unwrap();
+        let client = redis::Client::open(format!("redis://{}:{}", self.host, self.port))?;
+        let mut connection = client.get_async_connection().await?;
+
+        let len: usize = connection.hlen(&key).await?;
+
         if len > RedisRefreshTokenStorage::COUNT_DEVICES_PER_USER {
-            self.client.del::<&String, usize>(&key).unwrap();
+            connection.del::<&String, usize>(&key).await?;
         }
 
-        let result: RedisResult<u64> = self.client.hincr(
-            &key,
-            RedisRefreshTokenStorage::normalize_device_id(device_id),
-            1,
-        );
+        let result = connection.hincr(&key, device_id, 1 as u64).await?;
 
-        self.set_expire(&key);
+        connection
+            .expire(&key, self.time_of_life_in_sec as usize)
+            .await?;
 
-        result.unwrap()
+        Result::Ok(result)
     }
 
-    fn get_version(&mut self, user_id: &String, device_id: &String) -> u64 {
+    pub(crate) async fn get_version(
+        &self,
+        user_id: &String,
+        device_id: &String,
+    ) -> Result<u64, RedisError> {
         let key = RedisRefreshTokenStorage::make_key(user_id);
-        self.set_expire(&key);
-        let t: RedisResult<u64> = self.client.hget(
-            key,
-            RedisRefreshTokenStorage::normalize_device_id(device_id),
-        );
-        t.unwrap_or(0)
+        let device_id = RedisRefreshTokenStorage::normalize_device_id(device_id);
+        let client = redis::Client::open(format!("redis://{}:{}", self.host, self.port))?;
+        let mut connection = client.get_async_connection().await?;
+        connection
+            .expire(&key, self.time_of_life_in_sec as usize)
+            .await?;
+        let result: Result<Option<u64>, RedisError> = connection.hget(key, device_id).await;
+        result.map(|v| v.unwrap_or(0))
     }
 }
 
@@ -105,110 +94,95 @@ pub mod tests {
     use std::thread;
     use std::time::Duration;
 
+    use testcontainers::clients::Cli;
+    use testcontainers::images::redis::Redis;
     use testcontainers::{clients, images, Container, Docker};
 
-    use crate::storage::{RedisRefreshTokenStorage, Storage};
+    use crate::storage::RedisRefreshTokenStorage;
 
-    #[test]
-    fn should_increment_version() {
-        let cli = clients::Cli::default();
-        let node = cli.run(images::redis::Redis::default());
-        let mut storage = RedisRefreshTokenStorage::new(
-            "127.0.0.1".to_owned(),
-            node.get_host_port(6379).unwrap(),
-            1,
-        )
-        .unwrap();
+    #[tokio::test]
+    async fn should_increment_version() {
+        let (_node, storage) = stub_storage();
 
-        let version_1 = storage.new_version(&"user-a".to_owned(), &"device-a".to_owned());
-        let version_2 = storage.new_version(&"user-a".to_owned(), &"device-a".to_owned());
-        assert_ne!(version_1, version_2)
+        let user = "user".to_owned();
+        let device = "device".to_owned();
+        let version_1 = storage.new_version(&user, &device);
+        let version_2 = storage.new_version(&user, &device);
+        let (version_1, version_2) = futures::join!(version_1, version_2);
+        assert_ne!(version_1.unwrap(), version_2.unwrap());
     }
 
-    #[test]
-    fn should_get_version() {
-        let cli = clients::Cli::default();
-        let node = cli.run(images::redis::Redis::default());
-        let mut storage = RedisRefreshTokenStorage::new(
-            "127.0.0.1".to_owned(),
-            node.get_host_port(6379).unwrap(),
-            1,
-        )
-        .unwrap();
+    #[tokio::test]
+    async fn should_get_version() {
+        let (_node, storage) = stub_storage();
 
-        let version_1 = storage.new_version(&"user-a".to_owned(), &"device-a".to_owned());
-        let version_2 = storage.get_version(&"user-a".to_owned(), &"device-a".to_owned());
-        assert_eq!(version_1, version_2)
+        let user = "user".to_owned();
+        let device = "device".to_owned();
+        let version_1 = storage.new_version(&user, &device).await;
+        let version_2 = storage.get_version(&user, &device).await;
+        assert_eq!(version_1.unwrap(), version_2.unwrap())
     }
 
-    #[test]
-    fn should_get_unset_version() {
-        let cli = clients::Cli::default();
-        let node = cli.run(images::redis::Redis::default());
-        let mut storage = RedisRefreshTokenStorage::new(
-            "127.0.0.1".to_owned(),
-            node.get_host_port(6379).unwrap(),
-            1,
-        )
-        .unwrap();
-
-        let version = storage.get_version(&"user-a".to_owned(), &"device-a".to_owned());
-        assert_eq!(version, 0)
+    #[tokio::test]
+    async fn should_get_unset_version() {
+        let (_node, storage) = stub_storage();
+        let user = "user".to_owned();
+        let device = "device".to_owned();
+        let version = storage.get_version(&user, &device).await;
+        assert_eq!(version.unwrap(), 0)
     }
 
-    #[test]
-    fn should_clear_after_timeout() {
-        let cli = clients::Cli::default();
-        let node = cli.run(images::redis::Redis::default());
-        let mut storage = RedisRefreshTokenStorage::new(
-            "127.0.0.1".to_owned(),
-            node.get_host_port(6379).unwrap(),
-            1,
-        )
-        .unwrap();
-
-        storage.new_version(&"user-a".to_owned(), &"device-a".to_owned());
+    #[tokio::test]
+    async fn should_clear_after_timeout() {
+        let (_node, storage) = stub_storage();
+        let user = "user".to_owned();
+        let device = "device".to_owned();
+        storage.new_version(&user, &device).await.unwrap();
         thread::sleep(Duration::from_secs(2));
-        let version = storage.get_version(&"user-a".to_owned(), &"device-a".to_owned());
-        assert_eq!(version, 0)
+        let version = storage.get_version(&user, &device).await;
+        assert_eq!(version.unwrap(), 0)
     }
 
-    #[test]
-    fn should_clear_if_so_much_user_id() {
-        let cli = clients::Cli::default();
-        let node = cli.run(images::redis::Redis::default());
-        let mut storage = RedisRefreshTokenStorage::new(
-            "127.0.0.1".to_owned(),
-            node.get_host_port(6379).unwrap(),
-            1,
-        )
-        .unwrap();
+    #[tokio::test]
+    async fn should_clear_if_so_much_user_id() {
+        let (_node, storage) = stub_storage();
+        let user = "user".to_owned();
+        let device = "device".to_owned();
 
-        storage.new_version(&"user-a".to_owned(), &"device-a".to_owned());
+        storage.new_version(&user, &device).await.unwrap();
         for i in 0..RedisRefreshTokenStorage::COUNT_DEVICES_PER_USER + 1 {
-            storage.new_version(&"user-a".to_owned(), &format!("device-{}", i));
+            let device_i = format!("device-{}", i);
+            storage.new_version(&user, &device_i).await.unwrap();
         }
 
-        let version = storage.get_version(&"user-a".to_owned(), &"device-a".to_owned());
-        assert_eq!(version, 0)
+        let version = storage.get_version(&user, &device).await;
+        assert_eq!(version.unwrap(), 0)
     }
 
-    #[test]
-    fn should_truncate_device_id() {
-        let cli = clients::Cli::default();
-        let node = cli.run(images::redis::Redis::default());
-        let mut storage = RedisRefreshTokenStorage::new(
-            "127.0.0.1".to_owned(),
-            node.get_host_port(6379).unwrap(),
-            1,
-        )
-        .unwrap();
+    #[tokio::test]
+    async fn should_truncate_device_id() {
+        let (_node, storage) = stub_storage();
+        let user = "user".to_owned();
+        let device_long_name = "012345678901234567890123456789".to_owned();
+        let device_short_name =
+            device_long_name[0..RedisRefreshTokenStorage::DEVICE_ID_MAX_LEN].to_owned();
 
-        storage.new_version(
-            &"user-a".to_owned(),
-            &"012345678901234567890123456789".to_owned(),
-        );
-        let version = storage.get_version(&"user-a".to_owned(), &"01234567890123456789".to_owned());
-        assert_eq!(version, 1)
+        storage.new_version(&user, &device_long_name).await.unwrap();
+
+        let version = storage.get_version(&user, &device_short_name).await;
+        assert_eq!(version.unwrap(), 1)
+    }
+
+    lazy_static::lazy_static! {
+        static ref CLI: clients::Cli = Default::default();
+    }
+
+    pub fn stub_storage<'a>() -> (Container<'a, Cli, Redis>, RedisRefreshTokenStorage) {
+        let node = (*CLI).run(images::redis::Redis::default());
+        let port = node.get_host_port(6379).unwrap();
+        (
+            node,
+            RedisRefreshTokenStorage::new("127.0.0.1".to_owned(), port, 1).unwrap(),
+        )
     }
 }

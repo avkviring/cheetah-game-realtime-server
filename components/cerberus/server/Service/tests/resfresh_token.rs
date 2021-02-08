@@ -3,29 +3,36 @@ use std::time::Duration;
 
 use testcontainers::*;
 
-use crate::helper::new_service_with_redis_storage;
 use games_cheetah_cerberus_library::{JWTTokenParser, SessionTokenError};
 use games_cheetah_cerberus_service::token::*;
-use helper::{new_service_with_stub_storage, PUBLIC_KEY};
+use helper::{stub_token_service, PUBLIC_KEY};
 
 pub mod helper;
 
-#[test]
-fn should_refresh_token_different_for_users() {
-    let mut service = new_service_with_stub_storage(1, 100);
-    let tokens_for_user_a =
-        service.create_tokens("some-usera-id".to_owned(), "some-devicea-id".to_string());
-    let tokens_for_user_b =
-        service.create_tokens("some-userb-id".to_owned(), "some-deviceb-id".to_string());
-
+#[tokio::test]
+async fn should_refresh_token_different_for_users() {
+    let (_node, service) = stub_token_service(1, 100);
+    let tokens_for_user_a = service
+        .create("some-usera-id".to_owned(), "some-devicea-id".to_string())
+        .await
+        .unwrap();
+    let tokens_for_user_b = service
+        .create("some-userb-id".to_owned(), "some-deviceb-id".to_string())
+        .await
+        .unwrap();
     assert_ne!(tokens_for_user_a.refresh, tokens_for_user_b.refresh)
 }
 
-#[test]
-fn should_refresh_token() {
-    let mut service = new_service_with_stub_storage(1, 100);
-    let tokens = service.create_tokens("some-user-id".to_owned(), "some-device-id".to_string());
-    let new_tokens = service.refresh(tokens.refresh.clone()).unwrap();
+#[tokio::test]
+async fn should_refresh_token() {
+    let (_node, service) = stub_token_service(1, 100);
+
+    let tokens = service
+        .create("some-user-id".to_owned(), "some-device-id".to_owned())
+        .await
+        .unwrap();
+
+    let new_tokens = service.refresh(tokens.refresh.clone()).await.unwrap();
     // проверяем что это действительно новые токены
     assert_ne!(tokens.session, new_tokens.session);
     assert_ne!(tokens.refresh, new_tokens.refresh);
@@ -34,68 +41,80 @@ fn should_refresh_token() {
         JWTTokenParser::new(helper::PUBLIC_KEY.to_owned()).get_user_id(new_tokens.session);
     assert!(matches!(get_user_id_result, Result::Ok(user_id) if user_id=="some-user-id"));
 
-    // првоверяем что новый refresh токен валидный
-    service.refresh(tokens.refresh.clone()).unwrap();
+    // проверяем что новый refresh токен валидный
+    service.refresh(new_tokens.refresh.clone()).await.unwrap();
 }
 
 ///
 /// Проверяем время жизни refresh токена
 ///
-#[test]
-fn should_refresh_token_exp() {
-    let mut service = new_service_with_stub_storage(1, 1);
-    let tokens = service.create_tokens("some-user-id".to_owned(), "some-device-id".to_string());
+#[tokio::test]
+async fn should_refresh_token_exp() {
+    let (_node, service) = stub_token_service(1, 1);
+    let tokens = service
+        .create("some-user-id".to_owned(), "some-device-id".to_string())
+        .await
+        .unwrap();
     thread::sleep(Duration::from_secs(2));
+    let result = service.refresh(tokens.refresh).await;
     assert!(matches!(
-        service.refresh(tokens.refresh),
-        Result::Err(RefreshTokenError::Expired)
+        result,
+        Result::Err(JWTTokensServiceError::Expired)
     ));
 }
 
 ///
 /// Проверяем реакцию на нарушение подписи
 ///
-#[test]
-fn should_refresh_token_fail() {
-    let mut service = new_service_with_stub_storage(1, 1);
-    let tokens = service.create_tokens("some-user-id".to_owned(), "some-device-id".to_string());
+#[tokio::test]
+async fn should_refresh_token_fail() {
+    let (_node, service) = stub_token_service(1, 1);
+    let tokens = service
+        .create("some-user-id".to_owned(), "some-device-id".to_string())
+        .await
+        .unwrap();
     assert!(matches!(
-        service.refresh(tokens.refresh.replace("eyJleHA", "eyJleHB")),
-        Result::Err(RefreshTokenError::InvalidSignature)
+        service
+            .refresh(tokens.refresh.replace("eyJleHA", "eyJleHB"))
+            .await,
+        Result::Err(JWTTokensServiceError::InvalidSignature)
     ));
 }
 
 ///
 /// Проверяем что refresh токен может быть использован один раз
 ///
-#[test]
-fn should_refresh_token_can_use_once() {
-    let cli = clients::Cli::default();
-    let node = cli.run(images::redis::Redis::default());
-    let port = node.get_host_port(6379).unwrap();
-    let mut service = new_service_with_redis_storage(1, 100, port);
-    let tokens = service.create_tokens("some-user-id".to_owned(), "some-device-id".to_string());
-    service.refresh(tokens.refresh.clone()).unwrap();
+#[tokio::test]
+async fn should_refresh_token_can_use_once() {
+    let (_node, service) = stub_token_service(1, 1);
+    let tokens = service
+        .create("some-user-id".to_owned(), "some-device-id".to_string())
+        .await
+        .unwrap();
+    service.refresh(tokens.refresh.clone()).await.unwrap();
     assert!(matches!(
-        service.refresh(tokens.refresh),
-        Result::Err(RefreshTokenError::InvalidId)
+        service.refresh(tokens.refresh).await,
+        Result::Err(JWTTokensServiceError::InvalidId)
     ));
 }
 
 ///
 /// Проверяем что выдача нового refresh токена инвалидирует старые
 ///
-#[test]
-fn should_refresh_token_can_invalidate_tokens() {
-    let cli = clients::Cli::default();
-    let node = cli.run(images::redis::Redis::default());
-    let port = node.get_host_port(6379).unwrap();
-    let mut service = new_service_with_redis_storage(1, 100, port);
-    let tokens_a = service.create_tokens("some-user-id".to_owned(), "some-device-id".to_string());
-    let tokens_b = service.create_tokens("some-user-id".to_owned(), "some-device-id".to_string());
-    service.refresh(tokens_b.refresh.clone()).unwrap();
+#[tokio::test]
+async fn should_refresh_token_can_invalidate_tokens() {
+    let (_node, service) = stub_token_service(1, 1);
+    let tokens_a = service
+        .create("some-user-id".to_owned(), "some-device-id".to_string())
+        .await
+        .unwrap();
+    let tokens_b = service
+        .create("some-user-id".to_owned(), "some-device-id".to_string())
+        .await
+        .unwrap();
+    service.refresh(tokens_b.refresh.clone()).await.unwrap();
     assert!(matches!(
-        service.refresh(tokens_a.refresh),
-        Result::Err(RefreshTokenError::InvalidId)
+        service.refresh(tokens_a.refresh).await,
+        Result::Err(JWTTokensServiceError::InvalidId)
     ));
 }

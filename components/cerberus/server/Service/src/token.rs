@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use games_cheetah_cerberus_library::{JWTTokenParser, SessionTokenClaims};
 
-use crate::storage::Storage;
+use crate::storage::RedisRefreshTokenStorage;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RefreshTokenClaims {
@@ -22,33 +22,28 @@ pub struct Tokens {
 }
 
 #[derive(Debug)]
-pub enum RefreshTokenError {
+pub enum JWTTokensServiceError {
     InvalidSignature,
     Expired,
     InvalidId,
+    StorageError(String),
 }
 
-pub struct JWTTokensService<S>
-where
-    S: Storage,
-{
+pub struct JWTTokensService {
     session_exp_in_sec: i64,
     refresh_exp_in_sec: i64,
     private_key: String,
     public_key: String,
-    storage: S,
+    storage: RedisRefreshTokenStorage,
 }
 
-impl<S> JWTTokensService<S>
-where
-    S: Storage,
-{
+impl JWTTokensService {
     pub fn new(
         private_key: String,
         public_key: String,
         session_exp_in_sec: i64,
         refresh_exp_in_sec: i64,
-        storage: S,
+        storage: RedisRefreshTokenStorage,
     ) -> Self {
         Self {
             session_exp_in_sec,
@@ -59,15 +54,28 @@ where
         }
     }
 
-    pub fn create_tokens(&mut self, user_id: String, device_id: String) -> Tokens {
-        Tokens {
+    pub async fn create(
+        &self,
+        user_id: String,
+        device_id: String,
+    ) -> Result<Tokens, JWTTokensServiceError> {
+        Result::Ok(Tokens {
             session: self.create_session_token(user_id.clone()),
-            refresh: self.create_refresh_token(user_id, device_id),
-        }
+            refresh: self.create_refresh_token(user_id, device_id).await?,
+        })
     }
 
-    fn create_refresh_token(&mut self, user_id: String, device_id: String) -> String {
-        let version = self.storage.new_version(&user_id, &device_id);
+    async fn create_refresh_token(
+        &self,
+        user_id: String,
+        device_id: String,
+    ) -> Result<String, JWTTokensServiceError> {
+        let version = self
+            .storage
+            .new_version(&user_id, &device_id)
+            .await
+            .map_err(|e| JWTTokensServiceError::StorageError(format!("{:?}", e)))?;
+
         let claims = RefreshTokenClaims {
             exp: (Utc::now().timestamp() + self.refresh_exp_in_sec) as usize,
             user_id,
@@ -80,7 +88,7 @@ where
             &EncodingKey::from_ec_pem(&self.private_key.as_bytes()).unwrap(),
         )
         .unwrap();
-        JWTTokensService::<S>::remove_head(token)
+        Result::Ok(JWTTokensService::remove_head(token))
     }
 
     fn create_session_token(&self, user_id: String) -> String {
@@ -95,7 +103,7 @@ where
             &EncodingKey::from_ec_pem(&self.private_key.as_bytes()).unwrap(),
         )
         .unwrap();
-        JWTTokensService::<S>::remove_head(token)
+        JWTTokensService::remove_head(token)
     }
 
     fn remove_head(token: String) -> String {
@@ -103,7 +111,7 @@ where
         format!("{}.{}", collect[1], collect[2])
     }
 
-    pub fn refresh(&mut self, refresh_token: String) -> Result<Tokens, RefreshTokenError> {
+    pub async fn refresh(&self, refresh_token: String) -> Result<Tokens, JWTTokensServiceError> {
         let token = JWTTokenParser::add_head(refresh_token);
         match jsonwebtoken::decode::<RefreshTokenClaims>(
             token.as_str(),
@@ -111,23 +119,26 @@ where
             &Validation::new(Algorithm::ES256),
         ) {
             Ok(token) => {
+                let user_id = token.claims.user_id;
+                let device_id = token.claims.device_id;
                 if self
                     .storage
-                    .get_version(&token.claims.user_id, &token.claims.device_id)
+                    .get_version(&user_id, &device_id)
+                    .await
+                    .unwrap()
                     == token.claims.version
                 {
                     Result::Ok(Tokens {
-                        session: self.create_session_token(token.claims.user_id.clone()),
-                        refresh: self
-                            .create_refresh_token(token.claims.user_id, token.claims.device_id),
+                        session: self.create_session_token(user_id.clone()),
+                        refresh: self.create_refresh_token(user_id, device_id).await?,
                     })
                 } else {
-                    Result::Err(RefreshTokenError::InvalidId)
+                    Result::Err(JWTTokensServiceError::InvalidId)
                 }
             }
             Err(error) => match error.kind() {
-                ErrorKind::ExpiredSignature => Result::Err(RefreshTokenError::Expired),
-                _ => Result::Err(RefreshTokenError::InvalidSignature),
+                ErrorKind::ExpiredSignature => Result::Err(JWTTokensServiceError::Expired),
+                _ => Result::Err(JWTTokensServiceError::InvalidSignature),
             },
         }
     }
