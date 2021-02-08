@@ -1,11 +1,9 @@
 use std::thread;
 use std::time::Duration;
 
-use testcontainers::*;
-
-use games_cheetah_cerberus_library::{JWTTokenParser, SessionTokenError};
+use games_cheetah_cerberus_library::JWTTokenParser;
 use games_cheetah_cerberus_service::token::*;
-use helper::{stub_token_service, PUBLIC_KEY};
+use helper::stub_token_service;
 
 pub mod helper;
 

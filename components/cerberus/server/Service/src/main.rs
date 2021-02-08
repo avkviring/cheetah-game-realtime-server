@@ -1,6 +1,5 @@
 use futures::Future;
-use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
+
 use tonic::transport::{Error, Server};
 
 use crate::grpc::Cerberus;

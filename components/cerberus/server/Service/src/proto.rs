@@ -1,10 +1,3 @@
-use tonic::Request;
-
-use types::TokensReply;
-
-use crate::storage::RedisRefreshTokenStorage;
-use crate::token::JWTTokensService;
-
 pub mod types {
     tonic::include_proto!("games.cheetah.cerberus.types");
 }
