@@ -1,0 +1,17 @@
+// API для создания токенов
+// Для внутреннего использования
+
+syntax = "proto3";
+package games.cheetah.cerberus.internal;
+
+import public "types.proto";
+
+
+message CreateTokenRequest {
+  string user_id = 1;
+  string device_id = 2;
+}
+service Cerberus {
+  rpc create (CreateTokenRequest) returns (games.cheetah.cerberus.types.TokensReply);
+}
+

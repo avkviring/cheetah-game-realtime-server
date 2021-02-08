@@ -1,0 +1,15 @@
+// API для обновления токенов - используется игровыми клиентами
+syntax = "proto3";
+import "types.proto";
+package games.cheetah.cerberus.external;
+
+
+message RefreshTokenRequest {
+  string token = 1;
+}
+
+
+service Cerberus {
+  rpc refresh (RefreshTokenRequest) returns (games.cheetah.cerberus.types.TokensReply);
+}
+

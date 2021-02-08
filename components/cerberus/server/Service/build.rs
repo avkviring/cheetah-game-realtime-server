@@ -6,8 +6,8 @@ fn main() -> Result<(), Error> {
         .build_client(false)
         .compile(
             &[
-                "../../proto/service.internal.proto",
                 "../../proto/service.external.proto",
+                "../../proto/service.internal.proto",
             ],
             &["../../proto/"],
         )?;

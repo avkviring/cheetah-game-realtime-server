@@ -1,0 +1,11 @@
+syntax = "proto3";
+package games.cheetah.cerberus.types;
+
+message Token {
+  string token = 1;
+}
+
+message TokensReply {
+  string session = 1;
+  string refresh = 2;
+}
