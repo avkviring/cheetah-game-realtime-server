@@ -34,7 +34,7 @@ pub async fn test() {
         start_server(tx);
     });
     rx.recv().unwrap();
-    std::thread::sleep(Duration::from_millis(100));
+    std::thread::sleep(Duration::from_millis(1000));
 
     let user_id = "some-user-id".to_owned();
     let device_id = "iphone se".to_owned();
