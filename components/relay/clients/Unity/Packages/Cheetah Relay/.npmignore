@@ -1,2 +1,2 @@
-# файл нужен для игнорирования npm .gitignore
-package.jso	n.back
+# файл нужен в том числе для игнорирования .gitignore при сборке пакета
+package.json.bak

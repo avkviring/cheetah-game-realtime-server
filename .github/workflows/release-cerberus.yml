@@ -1,0 +1,19 @@
+name: Release Сerberus
+
+on:
+  release:
+    types: [ published ]
+
+jobs:
+  publish-unity-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+          registry-url: 'https://npm.registry.cheetah.games'
+      - run: sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' components/cerberus/clients/Unity/Packages/games.cheetah.unity.cerberus/package.json
+      - run: npm publish components/cerberus/clients/Unity/Packages/games.cheetah.unity.cerberus --access private
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}
