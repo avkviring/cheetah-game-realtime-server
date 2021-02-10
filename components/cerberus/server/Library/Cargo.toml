@@ -1,0 +1,8 @@
+[package]
+name = "games-cheetah-cerberus-library"
+version = "999.999.999"
+edition = "2018"
+
+[dependencies]
+jsonwebtoken = "7.2.0"
+serde = { version = "1.0", features = ["derive"] }
