@@ -1,7 +1,6 @@
 use std::sync::mpsc::Sender;
 use std::time::Duration;
 
-use futures::executor::block_on;
 use testcontainers::clients::Cli;
 use testcontainers::{images, Docker};
 use tonic::Response;
@@ -17,7 +16,7 @@ pub async fn start_server(tx: Sender<()>) {
     let cli = Cli::default();
     let node = cli.run(images::redis::Redis::default());
     let port = node.get_host_port(6379).unwrap();
-    tx.send(());
+    tx.send(()).unwrap();
     run_grpc_server(
         helper::PUBLIC_KEY.to_owned(),
         helper::PRIVATE_KEY.to_owned(),
@@ -30,7 +29,7 @@ pub async fn start_server(tx: Sender<()>) {
 #[tokio::test]
 pub async fn test() {
     let (tx, rx) = std::sync::mpsc::channel();
-    let handler = std::thread::spawn(|| {
+    let _handler = std::thread::spawn(|| {
         start_server(tx);
     });
     rx.recv().unwrap();
@@ -67,7 +66,5 @@ pub async fn test() {
     let result: Response<types::TokensReply> = external_client.refresh(request).await.unwrap();
     let tokens = result.into_inner();
     let parser = JWTTokenParser::new(helper::PUBLIC_KEY.to_owned());
-    assert!(
-        matches!(parser.get_user_id(tokens.session.to_owned()), Result::Ok(value) if value==user_id)
-    );
+    assert!(matches!(parser.get_user_id(tokens.session), Result::Ok(value) if value==user_id));
 }
