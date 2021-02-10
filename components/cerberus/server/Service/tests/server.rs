@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::sync::mpsc::Sender;
 use std::time::Duration;
 
@@ -12,28 +13,27 @@ use games_cheetah_cerberus_service::server::*;
 pub mod helper;
 
 #[tokio::main]
-pub async fn start_server(tx: Sender<()>) {
-    let cli = Cli::default();
-    let node = cli.run(images::redis::Redis::default());
-    let port = node.get_host_port(6379).unwrap();
-    tx.send(()).unwrap();
+pub async fn start_server(port: u16) {
     run_grpc_server(
         helper::PUBLIC_KEY.to_owned(),
         helper::PRIVATE_KEY.to_owned(),
-        "localhost".to_owned(),
+        "127.0.0.1".to_owned(),
         port,
     )
     .await;
 }
 
 #[tokio::test]
-pub async fn test() {
-    let (tx, rx) = std::sync::mpsc::channel();
-    let _handler = std::thread::spawn(|| {
-        start_server(tx);
+pub async fn test_server() {
+    let cli = Cli::default();
+    let node = cli.run(images::redis::Redis::default());
+    let port = node.get_host_port(6379).unwrap();
+
+    let _handler = std::thread::spawn(move || {
+        start_server(port);
     });
-    rx.recv().unwrap();
-    std::thread::sleep(Duration::from_millis(1000));
+
+    std::thread::sleep(Duration::from_millis(500));
 
     let user_id = "some-user-id".to_owned();
     let device_id = "iphone se".to_owned();
