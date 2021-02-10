@@ -12,6 +12,7 @@ pub mod token;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    pretty_env_logger::init();
     let jwt_public_key = get_key_from_env("JWT_PUBLIC_KEY");
     let jwt_private_key = get_key_from_env("JWT_PRIVATE_KEY");
     let redis_host = std::env::var("REDIS_HOST").expect("Env REDIS_HOST not set");

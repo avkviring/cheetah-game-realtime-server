@@ -1,7 +1,8 @@
+use tonic::Request;
+
 use crate::proto;
 use crate::storage::RedisRefreshTokenStorage;
 use crate::token::JWTTokensService;
-use tonic::Request;
 
 pub struct Cerberus {
     service: JWTTokensService,
@@ -44,7 +45,10 @@ impl proto::internal::cerberus_server::Cerberus for Cerberus {
                 session: tokens.session,
                 refresh: tokens.refresh,
             })),
-            Err(e) => Result::Err(tonic::Status::failed_precondition(format!("{:?}", e))),
+            Err(e) => {
+                log::error!("{:?}", e);
+                Result::Err(tonic::Status::failed_precondition(format!("{:?}", e)))
+            }
         }
     }
 }
@@ -62,7 +66,10 @@ impl proto::external::cerberus_server::Cerberus for Cerberus {
                 session: tokens.session,
                 refresh: tokens.refresh,
             })),
-            Err(e) => Result::Err(tonic::Status::failed_precondition(format!("{:?}", e))),
+            Err(e) => {
+                log::error!("{:?}", e);
+                Result::Err(tonic::Status::failed_precondition(format!("{:?}", e)))
+            }
         }
     }
 }

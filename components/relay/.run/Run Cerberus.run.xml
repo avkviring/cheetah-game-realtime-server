@@ -11,7 +11,8 @@
       <env name="JWT_PRIVATE_KEY" value="LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2NnN2RzSldTejhmNDBjRXYKQlRlR1N6QU5YR2xFenV0ZDlJSW02L2lubDBhaFJBTkNBQVJWVWMxY3JHaFEyU2hmMkdjNG1sTFBvcllvTitLRApGcEplNzRVaWsvZmFxOXdPQms5blRXMk9jYU03S3pJL0ZHaGxveTc5MzJzZUxlNlZ0eDZoakJMNQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tIgo=" />
       <env name="JWT_PUBLIC_KEY" value="LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==" />
       <env name="REDIS_HOST" value="localhost" />
-      <env name="REDIS_PORT" value="6378" />
+      <env name="REDIS_PORT" value="6379" />
+      <env name="RUST_LOG" value="error" />
     </envs>
     <option name="isRedirectInput" value="false" />
     <option name="redirectInputPath" value="" />

@@ -1,0 +1,16 @@
+{
+    "name": "games.cheetah.unity.cerberus",
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "tvOS"
+    ],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        ""
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
