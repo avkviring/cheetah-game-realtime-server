@@ -17,3 +17,11 @@ jobs:
       - run: npm publish components/cerberus/clients/Unity/Packages/games.cheetah.unity.cerberus --access private
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}
+  publish-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: cd components/cerberus && docker build . -t cheetah.games/cerberus:${{ github.event.release.tag_name }}
+      - run: docker image tag cheetah.games/cerberus:${{ github.event.release.tag_name }} docker.registry.cheetah.games/cheetah.games/cerberus:${{ github.event.release.tag_name }}
+      - run: docker login docker.registry.cheetah.games --username ${{ secrets.DOCKER_REGISTRY_USER }} --password ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      - run: docker image push docker.registry.cheetah.games/cheetah.games/cerberus:${{ github.event.release.tag_name }}
