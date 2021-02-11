@@ -1,4 +1,4 @@
-pub mod grpc;
+pub mod cerberus;
 pub mod proto;
 pub mod server;
 pub mod storage;

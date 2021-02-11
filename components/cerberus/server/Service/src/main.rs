@@ -1,10 +1,6 @@
-
-
-
-
 use crate::server::run_grpc_server;
 
-pub mod grpc;
+pub mod cerberus;
 pub mod proto;
 pub mod server;
 pub mod storage;

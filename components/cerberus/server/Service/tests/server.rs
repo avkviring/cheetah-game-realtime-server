@@ -1,5 +1,3 @@
-use std::io::Read;
-use std::sync::mpsc::Sender;
 use std::time::Duration;
 
 use testcontainers::clients::Cli;

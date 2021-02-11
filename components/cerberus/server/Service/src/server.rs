@@ -1,4 +1,4 @@
-use crate::grpc::Cerberus;
+use crate::cerberus::Cerberus;
 use crate::proto;
 use std::future::Future;
 use tonic::transport::{Error, Server};
