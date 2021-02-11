@@ -10,6 +10,11 @@ message RefreshTokenRequest {
 
 
 service Cerberus {
+  /*
+    Обновить токены
+    - после обновления refresh токен становиться не валидным
+    - refresh токен связан с device_id
+   */
   rpc refresh (RefreshTokenRequest) returns (games.cheetah.cerberus.types.TokensReply);
 }
 

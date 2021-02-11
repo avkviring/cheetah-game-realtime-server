@@ -12,6 +12,10 @@ message CreateTokenRequest {
   string device_id = 2;
 }
 service Cerberus {
+  /**
+    * Создать пару токенов session/refresh
+    * Вызывается из других микросервисов
+   */
   rpc create (CreateTokenRequest) returns (games.cheetah.cerberus.types.TokensReply);
 }
 
