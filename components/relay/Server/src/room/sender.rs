@@ -137,9 +137,9 @@ impl Room {
 				return;
 			}
 
+			let command = out_command_builder(object);
 			// отправляем команду только для созданного объекта
 			if object.created {
-				let command = out_command_builder(object);
 				let groups = object.access_groups.clone();
 				let template = object.template;
 
