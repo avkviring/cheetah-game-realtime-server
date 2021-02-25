@@ -34,11 +34,11 @@ impl RedisRefreshTokenStorage {
         })
     }
 
-    fn make_key(user_id: &String) -> String {
-        format!("r:{}", user_id)
+    fn make_key(player: u64) -> String {
+        format!("r:{}", player)
     }
 
-    fn normalize_device_id(device_id: &String) -> String {
+    fn normalize_device_id(device_id: &str) -> String {
         if device_id.len() > RedisRefreshTokenStorage::DEVICE_ID_MAX_LEN {
             device_id[0..RedisRefreshTokenStorage::DEVICE_ID_MAX_LEN].to_string()
         } else {
@@ -48,10 +48,10 @@ impl RedisRefreshTokenStorage {
 
     pub(crate) async fn new_version(
         &self,
-        user_id: &String,
-        device_id: &String,
+        player: u64,
+        device_id: &str,
     ) -> Result<u64, RedisError> {
-        let key = RedisRefreshTokenStorage::make_key(user_id);
+        let key = RedisRefreshTokenStorage::make_key(player);
         let device_id = RedisRefreshTokenStorage::normalize_device_id(device_id);
 
         let client = redis::Client::open(format!("redis://{}:{}", self.host, self.port))?;
@@ -74,10 +74,10 @@ impl RedisRefreshTokenStorage {
 
     pub(crate) async fn get_version(
         &self,
-        user_id: &String,
-        device_id: &String,
+        player: u64,
+        device_id: &str,
     ) -> Result<u64, RedisError> {
-        let key = RedisRefreshTokenStorage::make_key(user_id);
+        let key = RedisRefreshTokenStorage::make_key(player);
         let device_id = RedisRefreshTokenStorage::normalize_device_id(device_id);
         let client = redis::Client::open(format!("redis://{}:{}", self.host, self.port))?;
         let mut connection = client.get_async_connection().await?;
@@ -104,10 +104,10 @@ pub mod tests {
     async fn should_increment_version() {
         let (_node, storage) = stub_storage();
 
-        let user = "user".to_owned();
-        let device = "device".to_owned();
-        let version_1 = storage.new_version(&user, &device);
-        let version_2 = storage.new_version(&user, &device);
+        let player = 123;
+        let device = "device";
+        let version_1 = storage.new_version(player, &device);
+        let version_2 = storage.new_version(player, &device);
         let (version_1, version_2) = futures::join!(version_1, version_2);
         assert_ne!(version_1.unwrap(), version_2.unwrap());
     }
@@ -116,60 +116,63 @@ pub mod tests {
     async fn should_get_version() {
         let (_node, storage) = stub_storage();
 
-        let user = "user".to_owned();
+        let player = 123;
         let device = "device".to_owned();
-        let version_1 = storage.new_version(&user, &device).await;
-        let version_2 = storage.get_version(&user, &device).await;
+        let version_1 = storage.new_version(player, &device).await;
+        let version_2 = storage.get_version(player, &device).await;
         assert_eq!(version_1.unwrap(), version_2.unwrap())
     }
 
     #[tokio::test]
     async fn should_get_unset_version() {
         let (_node, storage) = stub_storage();
-        let user = "user".to_owned();
+        let player = 123;
         let device = "device".to_owned();
-        let version = storage.get_version(&user, &device).await;
+        let version = storage.get_version(player, &device).await;
         assert_eq!(version.unwrap(), 0)
     }
 
     #[tokio::test]
     async fn should_clear_after_timeout() {
         let (_node, storage) = stub_storage();
-        let user = "user".to_owned();
+        let player = 123;
         let device = "device".to_owned();
-        storage.new_version(&user, &device).await.unwrap();
+        storage.new_version(player, &device).await.unwrap();
         thread::sleep(Duration::from_secs(2));
-        let version = storage.get_version(&user, &device).await;
+        let version = storage.get_version(player, &device).await;
         assert_eq!(version.unwrap(), 0)
     }
 
     #[tokio::test]
     async fn should_clear_if_so_much_user_id() {
         let (_node, storage) = stub_storage();
-        let user = "user".to_owned();
+        let player = 123;
         let device = "device".to_owned();
 
-        storage.new_version(&user, &device).await.unwrap();
+        storage.new_version(player, &device).await.unwrap();
         for i in 0..RedisRefreshTokenStorage::COUNT_DEVICES_PER_USER + 1 {
             let device_i = format!("device-{}", i);
-            storage.new_version(&user, &device_i).await.unwrap();
+            storage.new_version(player, &device_i).await.unwrap();
         }
 
-        let version = storage.get_version(&user, &device).await;
+        let version = storage.get_version(player, &device).await;
         assert_eq!(version.unwrap(), 0)
     }
 
     #[tokio::test]
     async fn should_truncate_device_id() {
         let (_node, storage) = stub_storage();
-        let user = "user".to_owned();
+        let player = 123.to_owned();
         let device_long_name = "012345678901234567890123456789".to_owned();
         let device_short_name =
             device_long_name[0..RedisRefreshTokenStorage::DEVICE_ID_MAX_LEN].to_owned();
 
-        storage.new_version(&user, &device_long_name).await.unwrap();
+        storage
+            .new_version(player, &device_long_name)
+            .await
+            .unwrap();
 
-        let version = storage.get_version(&user, &device_short_name).await;
+        let version = storage.get_version(player, &device_short_name).await;
         assert_eq!(version.unwrap(), 1)
     }
 

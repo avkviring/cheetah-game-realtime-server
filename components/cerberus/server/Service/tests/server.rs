@@ -4,7 +4,7 @@ use testcontainers::clients::Cli;
 use testcontainers::{images, Docker};
 use tonic::Response;
 
-use games_cheetah_cerberus_library::JWTTokenParser;
+use games_cheetah_cerberus_library::token::JWTTokenParser;
 use games_cheetah_cerberus_service::proto::*;
 use games_cheetah_cerberus_service::server::*;
 
@@ -33,7 +33,7 @@ pub async fn test_server() {
 
     std::thread::sleep(Duration::from_millis(500));
 
-    let user_id = "some-user-id".to_owned();
+    let player = 123;
     let device_id = "iphone se".to_owned();
 
     // проверяем создание токена
@@ -42,14 +42,14 @@ pub async fn test_server() {
             .await
             .unwrap();
     let request = tonic::Request::new(internal::CreateTokenRequest {
-        user_id: user_id.clone(),
+        player,
         device_id: device_id.clone(),
     });
     let result: Response<types::TokensReply> = internal_client.create(request).await.unwrap();
     let tokens = result.into_inner();
     let parser = JWTTokenParser::new(helper::PUBLIC_KEY.to_owned());
     assert!(
-        matches!(parser.get_user_id(tokens.session.to_owned()), Result::Ok(value) if value==user_id)
+        matches!(parser.get_player_id(tokens.session.to_owned()), Result::Ok(value) if value==player)
     );
 
     // проверяем обновление токена
@@ -64,5 +64,5 @@ pub async fn test_server() {
     let result: Response<types::TokensReply> = external_client.refresh(request).await.unwrap();
     let tokens = result.into_inner();
     let parser = JWTTokenParser::new(helper::PUBLIC_KEY.to_owned());
-    assert!(matches!(parser.get_user_id(tokens.session), Result::Ok(value) if value==user_id));
+    assert!(matches!(parser.get_player_id(tokens.session), Result::Ok(value) if value==player));
 }

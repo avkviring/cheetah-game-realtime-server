@@ -313,7 +313,10 @@ name = "games-cheetah-cerberus-library"
 version = "999.999.999"
 dependencies = [
  "jsonwebtoken",
+ "prost",
  "serde",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]

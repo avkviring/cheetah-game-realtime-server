@@ -43,7 +43,7 @@ impl proto::internal::cerberus_server::Cerberus for Cerberus {
         let request = request.get_ref();
         match self
             .service
-            .create(request.user_id.clone(), request.device_id.clone())
+            .create(request.player, request.device_id.clone())
             .await
         {
             Ok(tokens) => Result::Ok(tonic::Response::new(proto::types::TokensReply {

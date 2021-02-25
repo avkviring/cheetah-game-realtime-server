@@ -3,14 +3,14 @@ use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use games_cheetah_cerberus_library::{JWTTokenParser, SessionTokenClaims};
+use games_cheetah_cerberus_library::token::{JWTTokenParser, SessionTokenClaims};
 
 use crate::storage::RedisRefreshTokenStorage;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RefreshTokenClaims {
     exp: usize,
-    user_id: String,
+    player: u64,
     device_id: String,
     version: u64,
 }
@@ -56,29 +56,29 @@ impl JWTTokensService {
 
     pub async fn create(
         &self,
-        user_id: String,
+        player: u64,
         device_id: String,
     ) -> Result<Tokens, JWTTokensServiceError> {
         Result::Ok(Tokens {
-            session: self.create_session_token(user_id.clone()),
-            refresh: self.create_refresh_token(user_id, device_id).await?,
+            session: self.create_session_token(player),
+            refresh: self.create_refresh_token(player, device_id).await?,
         })
     }
 
     async fn create_refresh_token(
         &self,
-        user_id: String,
+        player: u64,
         device_id: String,
     ) -> Result<String, JWTTokensServiceError> {
         let version = self
             .storage
-            .new_version(&user_id, &device_id)
+            .new_version(player, &device_id)
             .await
             .map_err(|e| JWTTokensServiceError::StorageError(format!("{:?}", e)))?;
 
         let claims = RefreshTokenClaims {
             exp: (Utc::now().timestamp() + self.refresh_exp_in_sec) as usize,
-            user_id,
+            player,
             device_id,
             version,
         };
@@ -91,10 +91,10 @@ impl JWTTokensService {
         Result::Ok(JWTTokensService::remove_head(token))
     }
 
-    fn create_session_token(&self, user_id: String) -> String {
+    fn create_session_token(&self, player: u64) -> String {
         let claims = SessionTokenClaims {
             exp: (Utc::now().timestamp() + self.session_exp_in_sec) as usize,
-            user_id: user_id.clone(),
+            player,
         };
 
         let token = encode(
@@ -119,18 +119,14 @@ impl JWTTokensService {
             &Validation::new(Algorithm::ES256),
         ) {
             Ok(token) => {
-                let user_id = token.claims.user_id;
+                let player = token.claims.player;
                 let device_id = token.claims.device_id;
-                if self
-                    .storage
-                    .get_version(&user_id, &device_id)
-                    .await
-                    .unwrap()
+                if self.storage.get_version(player, &device_id).await.unwrap()
                     == token.claims.version
                 {
                     Result::Ok(Tokens {
-                        session: self.create_session_token(user_id.clone()),
-                        refresh: self.create_refresh_token(user_id, device_id).await?,
+                        session: self.create_session_token(player),
+                        refresh: self.create_refresh_token(player, device_id).await?,
                     })
                 } else {
                     Result::Err(JWTTokensServiceError::InvalidId)
