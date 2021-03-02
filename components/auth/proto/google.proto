@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package games.cheetah.auth.external.google;
+import public "cerberus.types.proto";
+
+service Google {
+  rpc RegistryOrLogin(RegistryOrLoginRequest) returns (games.cheetah.cerberus.types.Tokens);
+
+  rpc Attach(AttachRequest) returns (AttachResponse);
+}
+message RegistryOrLoginRequest {
+  string google_token = 1;
+  string device_id = 2;
+}
+
+
+message AttachRequest {
+  string device_id = 1;
+  string google_token = 2;
+}
+
+message AttachResponse {
+
+}
+
+

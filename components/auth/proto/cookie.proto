@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package games.cheetah.auth.external.cookie;
+import public "cerberus.types.proto";
+
+service Cookie {
+  /*
+    Регистрация пользователя по cookie
+   */
+  rpc RegistryByCookie(RegistryRequest) returns (RegistryResponse);
+  /*
+    Вход пользователя по cookie
+   */
+  rpc LoginByCookie(LoginRequest) returns (LoginResponse);
+}
+
+message RegistryRequest {
+  string device_id = 1;
+}
+
+message RegistryResponse {
+  games.cheetah.cerberus.types.Tokens tokens = 1;
+  string cookie = 2;
+}
+
+message LoginRequest {
+  string cookie = 1;
+  string device_id = 2;
+}
+message LoginResponse {
+  games.cheetah.cerberus.types.Tokens tokens = 1;
+  Status status = 2;
+  enum Status {
+    OK = 0;
+    COOKIE_NOT_FOUND = 1;
+  }
+}
+
+
