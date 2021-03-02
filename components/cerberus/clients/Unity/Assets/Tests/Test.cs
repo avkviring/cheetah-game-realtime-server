@@ -13,11 +13,9 @@ namespace games.cheetah.unity.cerberus.Tests
         [Test]
         public async void CheckService()
         {
-            var channel = new Channel("127.0.0.1:5001", ChannelCredentials.Insecure);
+            var channel = new Channel("127.0.0.1:5000", ChannelCredentials.Insecure);
             var client = new Cerberus.CerberusClient(channel);
-            var request = new CreateTokenRequest();
-            request.DeviceId = "device-id";
-            request.UserId = "user-id";
+            var request = new CreateTokenRequest {DeviceId = "device-id", Player = 100};
             var result = await client.createAsync(request);
             Assert.True(result.Session.Length > 20);
         }

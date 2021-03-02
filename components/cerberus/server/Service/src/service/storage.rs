@@ -1,8 +1,7 @@
 pub use redis::{AsyncCommands, Commands, ConnectionLike, ErrorKind, RedisError, RedisResult};
 
 ///
-/// Хранение данных по токенам обновления в Redis
-/// для пары user + device_id хранится номер выданного токена
+/// Хранение данных по токенам обновления в Redis.
 ///
 /// hmap[user_id][device_id] = token_seq
 ///
@@ -98,7 +97,7 @@ pub mod tests {
     use testcontainers::images::redis::Redis;
     use testcontainers::{clients, images, Container, Docker};
 
-    use crate::storage::RedisRefreshTokenStorage;
+    use crate::service::storage::RedisRefreshTokenStorage;
 
     #[tokio::test]
     async fn should_increment_version() {

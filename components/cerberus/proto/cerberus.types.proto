@@ -5,7 +5,7 @@ message Token {
   string token = 1;
 }
 
-message TokensReply {
+message Tokens {
   string session = 1;
   string refresh = 2;
 }

@@ -1,10 +1,8 @@
 use crate::server::run_grpc_server;
 
-pub mod cerberus;
 pub mod proto;
 pub mod server;
-pub mod storage;
-pub mod token;
+pub mod service;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,7 +15,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parse()
         .unwrap();
 
-    run_grpc_server(jwt_public_key, jwt_private_key, redis_host, redis_port).await;
+    run_grpc_server(
+        jwt_public_key,
+        jwt_private_key,
+        redis_host,
+        redis_port,
+        5000,
+        5001,
+    )
+    .await;
     Ok(())
 }
 fn get_key_from_env(name: &str) -> String {

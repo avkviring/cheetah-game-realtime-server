@@ -1,8 +1,8 @@
 use tonic::Request;
 
+use super::storage::RedisRefreshTokenStorage;
+use super::token::JWTTokensService;
 use crate::proto;
-use crate::storage::RedisRefreshTokenStorage;
-use crate::token::JWTTokensService;
 
 const HOUR_IN_SEC: i64 = 60 * 60;
 const SESSION_EXP_IN_SEC: i64 = 5 * HOUR_IN_SEC;
@@ -39,14 +39,14 @@ impl proto::internal::cerberus_server::Cerberus for Cerberus {
     async fn create(
         &self,
         request: Request<proto::internal::CreateTokenRequest>,
-    ) -> Result<tonic::Response<proto::types::TokensReply>, tonic::Status> {
+    ) -> Result<tonic::Response<proto::types::Tokens>, tonic::Status> {
         let request = request.get_ref();
         match self
             .service
             .create(request.player, request.device_id.clone())
             .await
         {
-            Ok(tokens) => Result::Ok(tonic::Response::new(proto::types::TokensReply {
+            Ok(tokens) => Result::Ok(tonic::Response::new(proto::types::Tokens {
                 session: tokens.session,
                 refresh: tokens.refresh,
             })),
@@ -63,11 +63,11 @@ impl proto::external::cerberus_server::Cerberus for Cerberus {
     async fn refresh(
         &self,
         request: tonic::Request<proto::external::RefreshTokenRequest>,
-    ) -> Result<tonic::Response<proto::types::TokensReply>, tonic::Status> {
+    ) -> Result<tonic::Response<proto::types::Tokens>, tonic::Status> {
         let request = request.get_ref();
 
         match self.service.refresh(request.token.clone()).await {
-            Ok(tokens) => Result::Ok(tonic::Response::new(proto::types::TokensReply {
+            Ok(tokens) => Result::Ok(tonic::Response::new(proto::types::Tokens {
                 session: tokens.session,
                 refresh: tokens.refresh,
             })),

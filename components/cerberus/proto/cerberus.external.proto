@@ -1,6 +1,6 @@
 // API для обновления токенов - используется игровыми клиентами
 syntax = "proto3";
-import "types.proto";
+import public "cerberus.types.proto";
 package games.cheetah.cerberus.external;
 
 
@@ -15,6 +15,6 @@ service Cerberus {
     - после обновления refresh токен становиться не валидным
     - refresh токен связан с device_id
    */
-  rpc refresh (RefreshTokenRequest) returns (games.cheetah.cerberus.types.TokensReply);
+  rpc refresh (RefreshTokenRequest) returns (games.cheetah.cerberus.types.Tokens);
 }
 

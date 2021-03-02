@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use games_cheetah_cerberus_library::token::{JWTTokenParser, SessionTokenClaims};
 
-use crate::storage::RedisRefreshTokenStorage;
+use super::storage::RedisRefreshTokenStorage;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RefreshTokenClaims {
