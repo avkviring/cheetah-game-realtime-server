@@ -1,28 +1,41 @@
+use std::str::FromStr;
+
+use ipnetwork::IpNetwork;
+use tonic::metadata::MetadataMap;
+use tonic::{Request, Response};
+
+use cerberus::internal::cerberus_client::CerberusClient;
+use cerberus::internal::CreateTokenRequest;
+use cerberus::types::Tokens;
+
+use crate::proto::cerberus;
+
 pub mod cookie;
 pub mod google;
-pub mod players;
-pub mod storage;
 
-#[cfg(test)]
-pub mod test {
-    use std::collections::HashMap;
+async fn create_cerberus_token(
+    cerberus_internal_url: String,
+    player: u64,
+    device_id: String,
+) -> Result<Response<Tokens>, tonic::Status> {
+    CerberusClient::connect(cerberus_internal_url)
+        .await
+        .unwrap()
+        .create(Request::new(CreateTokenRequest { player, device_id }))
+        .await
+}
 
-    use testcontainers::clients::Cli;
-    use testcontainers::images::postgres::Postgres;
-    use testcontainers::{images, Container, Docker};
+fn get_client_ip(metadata: &MetadataMap) -> IpNetwork {
+    let peer_ip = match metadata.get("X-Forwarded-For") {
+        None => None,
+        Some(x_forwarder_for) => match x_forwarder_for.to_str() {
+            Ok(value) => match ipnetwork::IpNetwork::from_str(value) {
+                Ok(value) => Some(value),
+                Err(_) => None,
+            },
+            Err(_) => None,
+        },
+    };
 
-    use crate::service::storage::Storage;
-
-    pub async fn setup<'a>(cli: &'a Cli) -> (Storage, Container<'a, Cli, Postgres>) {
-        let mut env = HashMap::default();
-        env.insert("POSTGRES_USER".to_owned(), "auth".to_owned());
-        env.insert("POSTGRES_PASSWORD".to_owned(), "auth".to_owned());
-        let image = images::postgres::Postgres::default()
-            .with_version(12)
-            .with_env_vars(env);
-        let node = cli.run(image);
-        let port = node.get_host_port(5432).unwrap();
-        let storage = Storage::new("auth", "auth", "127.0.0.1", port).await;
-        (storage, node)
-    }
+    peer_ip.unwrap_or(IpNetwork::from_str("127.0.0.1").unwrap())
 }

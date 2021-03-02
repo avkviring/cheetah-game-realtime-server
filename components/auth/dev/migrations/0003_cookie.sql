@@ -4,7 +4,6 @@
 create table cookie_players
 (
 	player bigint not null primary key,
-	ip     inet not null,
 	cookie char(128) not null
 );
 

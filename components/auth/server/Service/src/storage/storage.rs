@@ -29,11 +29,4 @@ impl Storage {
             .unwrap();
         Self { pool }
     }
-
-    // pub async fn login_or_register_android_user(
-    //     &self,
-    //     token: String,
-    // ) -> Result<games_cheetah_cerberus_library::proto::types::TokensReply, ()> {
-    //     unimplemented!()
-    // }
 }
