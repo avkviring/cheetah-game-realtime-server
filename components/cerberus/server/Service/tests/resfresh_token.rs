@@ -2,14 +2,14 @@ use std::thread;
 use std::time::Duration;
 
 use games_cheetah_cerberus_library::token::JWTTokenParser;
-use games_cheetah_cerberus_service::token::*;
-use helper::stub_token_service;
+use games_cheetah_cerberus_service::service::token::*;
 
-pub mod helper;
+#[path = "../src/test_helper/mod.rs"]
+pub mod test_helper;
 
 #[tokio::test]
 async fn should_refresh_token_different_for_players() {
-    let (_node, service) = stub_token_service(1, 100);
+    let (_node, service) = test_helper::stub_token_service(1, 100);
     let tokens_for_player_a = service
         .create(123, "some-devicea-id".to_string())
         .await
@@ -23,7 +23,7 @@ async fn should_refresh_token_different_for_players() {
 
 #[tokio::test]
 async fn should_refresh_token() {
-    let (_node, service) = stub_token_service(1, 100);
+    let (_node, service) = test_helper::stub_token_service(1, 100);
 
     let tokens = service
         .create(123, "some-device-id".to_owned())
@@ -36,7 +36,7 @@ async fn should_refresh_token() {
     assert_ne!(tokens.refresh, new_tokens.refresh);
     // проверяем работоспособность новых токенов
     let get_player_id_result =
-        JWTTokenParser::new(helper::PUBLIC_KEY.to_owned()).get_player_id(new_tokens.session);
+        JWTTokenParser::new(test_helper::PUBLIC_KEY.to_owned()).get_player_id(new_tokens.session);
     assert!(matches!(get_player_id_result, Result::Ok(player) if player==123));
 
     // проверяем что новый refresh токен валидный
@@ -48,7 +48,7 @@ async fn should_refresh_token() {
 ///
 #[tokio::test]
 async fn should_refresh_token_exp() {
-    let (_node, service) = stub_token_service(1, 1);
+    let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
         .create(123, "some-device-id".to_string())
         .await
@@ -66,7 +66,7 @@ async fn should_refresh_token_exp() {
 ///
 #[tokio::test]
 async fn should_refresh_token_fail() {
-    let (_node, service) = stub_token_service(1, 1);
+    let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
         .create(123, "some-device-id".to_string())
         .await
@@ -84,7 +84,7 @@ async fn should_refresh_token_fail() {
 ///
 #[tokio::test]
 async fn should_refresh_token_can_use_once() {
-    let (_node, service) = stub_token_service(1, 1);
+    let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
         .create(123, "some-device-id".to_string())
         .await
@@ -101,7 +101,7 @@ async fn should_refresh_token_can_use_once() {
 ///
 #[tokio::test]
 async fn should_refresh_token_can_invalidate_tokens() {
-    let (_node, service) = stub_token_service(1, 1);
+    let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens_a = service
         .create(123, "some-device-id".to_string())
         .await

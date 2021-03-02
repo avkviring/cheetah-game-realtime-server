@@ -8,8 +8,8 @@
 
 ### server/Service
 Состоит из двух gRPC серверов:
-- internal (порт 5002) - генерация пары session/refresh и привязка его к пользователю 
-- external (порт 5002) - обновление пары session/refresh по refresh токену
+- internal (порт 5000) - генерация пары session/refresh и привязка его к пользователю 
+- external (порт 5001) - обновление пары session/refresh по refresh токену
 
 ### server/Library
 Библиотека для валидации токена. Используется в других микросервисах для получения идентификатора
