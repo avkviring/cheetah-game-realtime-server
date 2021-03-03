@@ -29,6 +29,7 @@ pub async fn setup<'a>(
     external_cerberus_port: u16,
     service_port: u16,
     public_google_key_url: String,
+    public_jwt_key: String,
 ) -> (
     Container<'a, Cli, Redis>,
     Container<'a, Cli, Postgres>,
@@ -48,11 +49,12 @@ pub async fn setup<'a>(
                 jsonwebtoken_google::test_helper::CLIENT_ID,
                 public_google_key_url.as_str(),
             ),
+            public_jwt_key,
         )
         .await;
     });
 
-    tokio::time::sleep(Duration::from_secs(1)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
     (
         redis_container,
         postgres_container,

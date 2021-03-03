@@ -8,19 +8,21 @@ use games_cheetah_auth_service::proto::auth::external::cookie::*;
 use games_cheetah_auth_service::service::cookie::CookieService;
 
 use crate::helper::setup;
+use games_cheetah_cerberus_service::test_helper;
 
 pub mod helper;
 
 #[tokio::test]
 pub async fn should_registry_and_login_by_cookie() {
     let cli = Cli::default();
-    let service_port = 5002;
+    let service_port = 5202;
     let (_container_redis, _container_postgresql, _cerberus_handler, _auth_handler) = setup(
         &cli,
-        5000,
-        5001,
+        5200,
+        5201,
         service_port,
         jsonwebtoken_google::Parser::GOOGLE_CERT_URL.to_owned(),
+        test_helper::PUBLIC_KEY.to_string(),
     )
     .await;
 
@@ -30,7 +32,7 @@ pub async fn should_registry_and_login_by_cookie() {
             .await
             .unwrap();
 
-    // регистрируем нового пользователя
+    // регистрируем нового игрока
     let registry_response: tonic::Response<RegistryResponse> = cookie_client
         .registry_by_cookie(Request::new(cookie::RegistryRequest {
             device_id: "some-device-id".to_owned(),
@@ -79,6 +81,7 @@ pub async fn should_not_login_by_wrong_cookie() {
         5101,
         service_port,
         jsonwebtoken_google::Parser::GOOGLE_CERT_URL.to_owned(),
+        test_helper::PUBLIC_KEY.to_string(),
     )
     .await;
 

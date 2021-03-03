@@ -3,6 +3,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use tonic::{Request, Response, Status};
 
+use games_cheetah_cerberus_library::grpc::AuthorizationError;
+
 pub use crate::proto::auth::external::google::*;
 use crate::proto::cerberus::types::Tokens;
 use crate::service::{create_cerberus_token, get_client_ip};
@@ -13,6 +15,7 @@ pub struct GoogleService {
     storage: Storage,
     cerberus_internal_url: String,
     google_token_parser: jsonwebtoken_google::Parser,
+    public_jwt_key: String,
 }
 #[derive(Deserialize, Serialize)]
 struct GoogleTokenClaim {
@@ -23,11 +26,13 @@ impl GoogleService {
         storage: Storage,
         cerberus_internal_url: &str,
         google_token_parser: jsonwebtoken_google::Parser,
+        public_jwt_key: String,
     ) -> Self {
         Self {
             storage,
             cerberus_internal_url: cerberus_internal_url.to_owned(),
             google_token_parser,
+            public_jwt_key,
         }
     }
 }
@@ -81,15 +86,22 @@ impl google_server::Google for GoogleService {
             .await
         {
             Ok(token) => {
-                let player = 0;
-                google::attach(
-                    &self.storage,
-                    player,
-                    token.email.as_str(),
-                    &get_client_ip(request.metadata()),
-                )
-                .await;
-                Result::Ok(tonic::Response::new(AttachResponse {}))
+                match games_cheetah_cerberus_library::grpc::get_player_id(
+                    request.metadata(),
+                    self.public_jwt_key.to_owned(),
+                ) {
+                    Ok(player) => {
+                        google::attach(
+                            &self.storage,
+                            player,
+                            token.email.as_str(),
+                            &get_client_ip(request.metadata()),
+                        )
+                        .await;
+                        Result::Ok(tonic::Response::new(AttachResponse {}))
+                    }
+                    Err(_) => Result::Err(tonic::Status::unauthenticated("error")),
+                }
             }
             Err(e) => {
                 log::error!("{:?}", e);

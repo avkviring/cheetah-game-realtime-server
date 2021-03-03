@@ -11,6 +11,7 @@ pub async fn run_grpc_server(
     service_port: u16,
     cerberus_url: &str,
     parser: jsonwebtoken_google::Parser,
+    public_jwt_key: String,
 ) {
     let addr = format!("0.0.0.0:{}", service_port).parse().unwrap();
 
@@ -19,7 +20,7 @@ pub async fn run_grpc_server(
     );
 
     let google = crate::proto::auth::external::google::google_server::GoogleServer::new(
-        GoogleService::new(storage, cerberus_url, parser),
+        GoogleService::new(storage, cerberus_url, parser, public_jwt_key),
     );
     Server::builder()
         .add_service(cookie)
