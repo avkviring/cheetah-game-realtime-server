@@ -30,12 +30,6 @@ impl JWTTokenParser {
         Self { public_key }
     }
 
-    pub fn new_from_env() -> Self {
-        Self {
-            public_key: std::env::var("JWT_PUBLIC_KEY").unwrap(),
-        }
-    }
-
     pub fn get_player_id(&self, token: String) -> Result<u64, SessionTokenError> {
         let token = JWTTokenParser::add_head(token);
         match jsonwebtoken::decode::<SessionTokenClaims>(

@@ -316,7 +316,6 @@ dependencies = [
  "prost",
  "serde",
  "tonic",
- "tonic-build",
 ]
 
 [[package]]
