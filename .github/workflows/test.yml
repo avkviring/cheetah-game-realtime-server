@@ -11,8 +11,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             components/relay/target
-          key: cargo-relay-${{ hashFiles('**/Cargo.lock') }}
-      - name: test
+          key: cargo-relay
+      - name: Test
         run: cargo test --manifest-path components/relay/Cargo.toml
   components:
     runs-on: ubuntu-latest
@@ -27,6 +27,6 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             components/${{ matrix.component }}/server/target
-          key: cargo-${{ matrix.component }}-${{ hashFiles('**/Cargo.lock') }}
-      - name: test
+          key: cargo-${{ matrix.component }}
+      - name: Test
         run: cargo test --manifest-path components/${{ matrix.component }}/server/Cargo.toml
