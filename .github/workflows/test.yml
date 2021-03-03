@@ -14,8 +14,11 @@ jobs:
           key: cargo-relay-${{ hashFiles('**/Cargo.lock') }}
       - name: test
         run: cargo test --manifest-path components/relay/Cargo.toml
-  cerberus-test:
+  components:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [ cerberus, auth ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -23,7 +26,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            components/cerberus/server/target
-          key: cargo-cerberus-${{ hashFiles('**/Cargo.lock') }}
+            components/${{ matrix.component }}/server/target
+          key: cargo-${{ matrix.component }}-${{ hashFiles('**/Cargo.lock') }}
       - name: test
-        run: cargo test --manifest-path components/cerberus/server/Cargo.toml
+        run: cargo test --manifest-path components/${{ matrix.component }}/server/Cargo.toml
