@@ -37,20 +37,30 @@ pub async fn should_register_and_login() {
         .await
         .unwrap();
 
-    let request = tonic::Request::new(google::RegistryOrLoginRequest {
-        google_token: token,
-        device_id: "some-device-id".to_owned(),
-    });
+    let result: tonic::Response<Tokens> = client
+        .registry_or_login(tonic::Request::new(google::RegistryOrLoginRequest {
+            google_token: token.clone(),
+            device_id: "some-device-id".to_owned(),
+        }))
+        .await
+        .unwrap();
+    let register_result = result.into_inner();
 
-    let result: tonic::Response<Tokens> = client.registry_or_login(request).await.unwrap();
-    let tokens = result.into_inner();
+    let result: tonic::Response<Tokens> = client
+        .registry_or_login(tonic::Request::new(google::RegistryOrLoginRequest {
+            google_token: token,
+            device_id: "some-device-id".to_owned(),
+        }))
+        .await
+        .unwrap();
+    let login_result = result.into_inner();
 
     let token_parser = JWTTokenParser::new(test_helper::PUBLIC_KEY.to_owned());
 
-    assert!(matches!(
-        token_parser.get_player_id(tokens.session),
-        Result::Ok(_)
-    ));
+    assert_eq!(
+        token_parser.get_player_id(register_result.session).unwrap(),
+        token_parser.get_player_id(login_result.session).unwrap(),
+    );
 }
 
 #[tokio::test]

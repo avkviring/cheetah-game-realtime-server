@@ -19,7 +19,7 @@ pub struct GoogleService {
 }
 #[derive(Deserialize, Serialize)]
 struct GoogleTokenClaim {
-    email: String,
+    sub: String,
 }
 impl GoogleService {
     pub fn new(
@@ -51,8 +51,8 @@ impl google_server::Google for GoogleService {
             .await
         {
             Ok(token) => {
-                let email = token.email.as_str();
-                let player = self.get_or_create_player(&request, email).await;
+                let google_user_id = token.sub.as_str();
+                let player = self.get_or_create_player(&request, google_user_id).await;
                 let token = create_cerberus_token(
                     self.cerberus_internal_url.to_owned(),
                     player,
@@ -94,7 +94,7 @@ impl google_server::Google for GoogleService {
                         google::attach(
                             &self.storage,
                             player,
-                            token.email.as_str(),
+                            token.sub.as_str(),
                             &get_client_ip(request.metadata()),
                         )
                         .await;
@@ -115,12 +115,14 @@ impl GoogleService {
     async fn get_or_create_player(
         &self,
         request: &Request<RegistryOrLoginRequest>,
-        email: &str,
+        google_user_id: &str,
     ) -> u64 {
-        let player = match google::find(&self.storage, email).await {
+        let player = match google::find(&self.storage, google_user_id).await {
             None => {
                 let ip = get_client_ip(request.metadata());
-                players::create_player(&self.storage, &ip).await
+                let player = players::create_player(&self.storage, &ip).await;
+                google::attach(&self.storage, player, google_user_id, &ip).await;
+                player
             }
             Some(player) => player,
         };
