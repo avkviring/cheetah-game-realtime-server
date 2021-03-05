@@ -1,0 +1,36 @@
+name: Release unity package & docker images for components
+on:
+  release:
+    types: [ published ]
+jobs:
+  publish-unity-package:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - components/cerberus/clients/Unity/Packages/games.cheetah.unity.cerberus
+          - components/auth/clients/Unity/Packages/games.cheetah.unity.auth.android
+          - components/auth/clients/Unity/Packages/games.cheetah.unity.auth.cookie
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+          registry-url: 'https://npm.registry.cheetah.games'
+      - run: sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' ${{ matrix.package}}/package.json
+      - run: npm publish ${{ matrix.package}} --access private
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}
+  publish-docker-image:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component:
+          - cerberus
+          - auth
+    steps:
+      - uses: actions/checkout@v2
+      - run: cd components/ && docker build . -f ${{ matrix.component }}/Dockerfile -t cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
+      - run: docker image tag cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }} docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
+      - run: docker login docker.registry.cheetah.games --username ${{ secrets.DOCKER_REGISTRY_USER }} --password ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      - run: docker image push docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
