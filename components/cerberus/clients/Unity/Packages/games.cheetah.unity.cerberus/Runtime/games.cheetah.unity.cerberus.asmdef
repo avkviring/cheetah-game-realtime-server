@@ -1,5 +1,9 @@
 {
     "name": "games.cheetah.unity.cerberus",
+    "rootNamespace": "Games.Cheetah.Cerberus",
+    "references": [
+        "games.cheetah.unity.grpc"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [
         "tvOS"
