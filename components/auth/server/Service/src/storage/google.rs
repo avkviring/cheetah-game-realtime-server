@@ -1,6 +1,11 @@
 use crate::storage::storage::Storage;
 
-pub async fn attach(storage: &Storage, player: u64, email: &str, ip: &ipnetwork::IpNetwork) {
+pub async fn attach(
+    storage: &Storage,
+    player: u64,
+    google_user_id: &str,
+    ip: &ipnetwork::IpNetwork,
+) {
     let mut tx = storage.pool.begin().await.unwrap();
 
     sqlx::query("delete from cookie_players where player=$1")
@@ -9,9 +14,9 @@ pub async fn attach(storage: &Storage, player: u64, email: &str, ip: &ipnetwork:
         .await
         .unwrap();
 
-    sqlx::query("delete from google_players where player=$1 or email=$2")
+    sqlx::query("delete from google_players where player=$1 or google_id=$2")
         .bind(player as i64)
-        .bind(email)
+        .bind(google_user_id)
         .execute(&mut tx)
         .await
         .unwrap();
@@ -19,15 +24,15 @@ pub async fn attach(storage: &Storage, player: u64, email: &str, ip: &ipnetwork:
     sqlx::query("insert into google_players values($1,$2, $3)")
         .bind(player as i64)
         .bind(ip)
-        .bind(email)
+        .bind(google_user_id)
         .execute(&mut tx)
         .await
         .unwrap();
 
-    sqlx::query("insert into google_players_history (ip, player,email) values($1,$2, $3)")
+    sqlx::query("insert into google_players_history (ip, player,google_id) values($1,$2, $3)")
         .bind(ip)
         .bind(player as i64)
-        .bind(email)
+        .bind(google_user_id)
         .execute(&mut tx)
         .await
         .unwrap();
@@ -35,10 +40,10 @@ pub async fn attach(storage: &Storage, player: u64, email: &str, ip: &ipnetwork:
     tx.commit().await.unwrap();
 }
 
-pub async fn find(storage: &Storage, email: &str) -> Option<u64> {
+pub async fn find(storage: &Storage, google_id: &str) -> Option<u64> {
     let result: Result<Option<(i64,)>, sqlx::Error> =
-        sqlx::query_as("select player from google_players where email=$1")
-            .bind(email)
+        sqlx::query_as("select player from google_players where google_id=$1")
+            .bind(google_id)
             .fetch_optional(&storage.pool)
             .await;
     result.map(|r| r.map(|v| v.0 as u64)).unwrap()
@@ -106,11 +111,12 @@ pub mod tests {
         attach(&storage, player, "a@kviring.com", &ip).await;
         attach(&storage, player, "b@kviring.com", &ip).await;
 
-        let result: Vec<(NaiveDateTime, i64, String)> =
-            sqlx::query_as("select time, player,email from google_players_history order by time")
-                .fetch_all(&storage.pool)
-                .await
-                .unwrap();
+        let result: Vec<(NaiveDateTime, i64, String)> = sqlx::query_as(
+            "select time, player,google_id from google_players_history order by time",
+        )
+        .fetch_all(&storage.pool)
+        .await
+        .unwrap();
 
         let i1 = result.get(0).unwrap();
         assert_eq!(i1.1 as u64, player);
@@ -122,7 +128,7 @@ pub mod tests {
     }
 
     ///
-    /// Перепривязка email от одного пользователя к другому
+    /// Перепривязка google_id от одного пользователя к другому
     ///
     #[tokio::test]
     pub async fn should_reattach_1() {
@@ -142,7 +148,7 @@ pub mod tests {
     }
 
     ///
-    /// Перепривязка email для пользователя
+    /// Перепривязка google_id для пользователя
     ///
     #[tokio::test]
     pub async fn should_reattach_2() {
