@@ -8,6 +8,7 @@ use games_cheetah_auth_service::storage::storage::Storage;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
+    println!("±± cheetah game auth component ±±");
 
     let pg_user = get_env("AUTH_POSTGRES_USER");
     let pg_passwd = get_env("AUTH_POSTGRES_PASSWORD");

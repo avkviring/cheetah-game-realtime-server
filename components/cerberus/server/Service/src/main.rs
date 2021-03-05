@@ -7,6 +7,8 @@ pub mod service;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
+    println!("±± cheetah game cerberus component ±±");
+
     let jwt_public_key = get_key_from_env("JWT_PUBLIC_KEY");
     let jwt_private_key = get_key_from_env("JWT_PRIVATE_KEY");
     let redis_host = get_env("CERBERUS_REDIS_HOST");
