@@ -9,9 +9,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
     let jwt_public_key = get_key_from_env("JWT_PUBLIC_KEY");
     let jwt_private_key = get_key_from_env("JWT_PRIVATE_KEY");
-    let redis_host = std::env::var("REDIS_HOST").expect("Env REDIS_HOST not set");
-    let redis_port = std::env::var("REDIS_PORT")
-        .expect("Env REDIS_PORT not set")
+    let redis_host = get_env("CERBERUS_REDIS_HOST");
+    let redis_port = get_env("CERBERUS_REDIS_PORT").parse().unwrap();
+
+    let internal_service_port = get_env("CERBERUS_INTERNAL_GRPC_SERVICE_PORT")
+        .parse()
+        .unwrap();
+    let external_service_port = get_env("CERBERUS_EXTERNAL_GRPC_SERVICE_PORT")
         .parse()
         .unwrap();
 
@@ -20,13 +24,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         jwt_private_key,
         redis_host,
         redis_port,
-        5000,
-        5001,
+        internal_service_port,
+        external_service_port,
     )
     .await;
     Ok(())
 }
 fn get_key_from_env(name: &str) -> String {
-    let value = std::env::var(name).expect(format!("Env {} not set", name).as_str());
+    let value = get_env(name);
     String::from_utf8(base64::decode(value).unwrap()).unwrap()
+}
+
+fn get_env(name: &str) -> String {
+    std::env::var(name).expect(format!("Env {}", name).as_str())
 }
