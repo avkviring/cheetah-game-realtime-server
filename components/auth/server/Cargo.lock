@@ -1306,13 +1306,15 @@ dependencies = [
 [[package]]
 name = "jsonwebtoken-google"
 version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05717fa409fee993240f3298dae3a1da807fa7bce24974ad3f6d9c258bb8d448"
 dependencies = [
  "base64 0.13.0",
  "headers",
  "httpmock",
  "jsonwebtoken",
  "openssl",
- "rand 0.7.3",
+ "rand 0.8.3",
  "reqwest",
  "serde",
  "tokio",
