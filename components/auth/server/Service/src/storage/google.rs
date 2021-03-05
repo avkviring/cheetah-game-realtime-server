@@ -1,7 +1,7 @@
-use crate::storage::storage::Storage;
+use crate::storage::pg::PgStorage;
 
 pub async fn attach(
-    storage: &Storage,
+    storage: &PgStorage,
     player: u64,
     google_user_id: &str,
     ip: &ipnetwork::IpNetwork,
@@ -40,7 +40,7 @@ pub async fn attach(
     tx.commit().await.unwrap();
 }
 
-pub async fn find(storage: &Storage, google_id: &str) -> Option<u64> {
+pub async fn find(storage: &PgStorage, google_id: &str) -> Option<u64> {
     let result: Result<Option<(i64,)>, sqlx::Error> =
         sqlx::query_as("select player from google_players where google_id=$1")
             .bind(google_id)
@@ -56,7 +56,6 @@ pub mod tests {
     use chrono::NaiveDateTime;
     use ipnetwork::IpNetwork;
     use testcontainers::clients::Cli;
-    use testcontainers::{images, Container, Docker};
 
     use crate::storage::google::{attach, find};
     use crate::storage::players::create_player;

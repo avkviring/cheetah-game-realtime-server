@@ -1,13 +1,11 @@
-use std::borrow::Cow;
-
 use rand::distributions::Alphanumeric;
 use rand::rngs::OsRng;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use sqlx::Error;
 
-use crate::storage::storage::Storage;
+use crate::storage::pg::PgStorage;
 
-pub async fn attach(storage: &Storage, player: u64) -> String {
+pub async fn attach(storage: &PgStorage, player: u64) -> String {
     loop {
         let cookie: String = OsRng
             .sample_iter(&Alphanumeric)
@@ -30,7 +28,7 @@ enum AttachError {
     OtherError,
 }
 
-async fn do_attach(storage: &Storage, player: u64, cookie: &str) -> Result<(), AttachError> {
+async fn do_attach(storage: &PgStorage, player: u64, cookie: &str) -> Result<(), AttachError> {
     let mut tx = storage.pool.begin().await.unwrap();
     let result: Result<_, sqlx::Error> =
         sqlx::query("insert into cookie_players (player,cookie) values($1,$2)")
@@ -61,7 +59,7 @@ async fn do_attach(storage: &Storage, player: u64, cookie: &str) -> Result<(), A
     result
 }
 
-pub async fn find(storage: &Storage, cookie: &str) -> Option<u64> {
+pub async fn find(storage: &PgStorage, cookie: &str) -> Option<u64> {
     let result: Result<Option<(i64,)>, sqlx::Error> =
         sqlx::query_as("select player from cookie_players where cookie=$1")
             .bind(cookie)

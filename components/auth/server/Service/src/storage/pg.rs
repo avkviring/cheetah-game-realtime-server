@@ -4,11 +4,11 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 
 #[derive(Clone)]
-pub struct Storage {
+pub struct PgStorage {
     pub pool: Pool<Postgres>,
 }
 
-impl Storage {
+impl PgStorage {
     pub async fn new(pg_user: &str, pg_passwd: &str, pg_host: &str, pg_port: u16) -> Self {
         let pool = PgPoolOptions::new()
             .max_connections(5)

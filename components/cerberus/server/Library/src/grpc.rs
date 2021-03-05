@@ -18,7 +18,7 @@ pub fn get_player_id(
         None => Result::Err(MissingHeader),
         Some(value) => {
             let value = value.to_str().unwrap().to_string();
-            let splitted: Vec<_> = value.split(" ").collect();
+            let splitted: Vec<_> = value.split(' ').collect();
             if splitted.len() != 2 {
                 Result::Err(WrongHeader)
             } else {

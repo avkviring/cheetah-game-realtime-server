@@ -1,9 +1,5 @@
-use std::time::Duration;
-
-use sqlx::postgres::PgPoolOptions;
-
 use games_cheetah_auth_service::server::run_grpc_server;
-use games_cheetah_auth_service::storage::storage::Storage;
+use games_cheetah_auth_service::storage::pg::PgStorage;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let google_client_id = get_env("AUTH_GOOGLE_CLIENT_ID");
     let jwt_public_key = get_env("JWT_PUBLIC_KEY");
 
-    let storage = Storage::new(
+    let storage = PgStorage::new(
         pg_user.as_str(),
         pg_passwd.as_str(),
         pg_host.as_str(),

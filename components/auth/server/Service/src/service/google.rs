@@ -1,18 +1,15 @@
-use jsonwebtoken_google::ParserError;
 use serde::Deserialize;
 use serde::Serialize;
-use tonic::{Request, Response, Status};
-
-use games_cheetah_cerberus_library::grpc::AuthorizationError;
+use tonic::{Request, Response};
 
 pub use crate::proto::auth::external::google::*;
 use crate::proto::cerberus::types::Tokens;
 use crate::service::{create_cerberus_token, get_client_ip};
-use crate::storage::storage::Storage;
+use crate::storage::pg::PgStorage;
 use crate::storage::{google, players};
 
 pub struct GoogleService {
-    storage: Storage,
+    storage: PgStorage,
     cerberus_internal_url: String,
     google_token_parser: jsonwebtoken_google::Parser,
     public_jwt_key: String,
@@ -23,7 +20,7 @@ struct GoogleTokenClaim {
 }
 impl GoogleService {
     pub fn new(
-        storage: Storage,
+        storage: PgStorage,
         cerberus_internal_url: &str,
         google_token_parser: jsonwebtoken_google::Parser,
         public_jwt_key: String,

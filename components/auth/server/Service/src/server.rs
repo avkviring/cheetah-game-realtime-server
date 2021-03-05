@@ -1,13 +1,11 @@
-use std::future::Future;
-
-use tonic::transport::{Error, Server};
+use tonic::transport::Server;
 
 use crate::service::cookie::CookieService;
 use crate::service::google::GoogleService;
-use crate::storage::storage::Storage;
+use crate::storage::pg::PgStorage;
 
 pub async fn run_grpc_server(
-    storage: Storage,
+    storage: PgStorage,
     service_port: u16,
     cerberus_url: &str,
     parser: jsonwebtoken_google::Parser,
@@ -26,5 +24,6 @@ pub async fn run_grpc_server(
         .add_service(cookie)
         .add_service(google)
         .serve(addr)
-        .await;
+        .await
+        .unwrap();
 }

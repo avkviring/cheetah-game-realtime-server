@@ -7,10 +7,10 @@ use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
 
-use games_cheetah_auth_service::storage::storage::Storage;
+use games_cheetah_auth_service::storage::pg::PgStorage;
 use games_cheetah_cerberus_service::test_helper;
 
-async fn setup_postgresql_storage<'a>(cli: &'a Cli) -> (Storage, Container<'a, Cli, Postgres>) {
+async fn setup_postgresql_storage<'a>(cli: &'a Cli) -> (PgStorage, Container<'a, Cli, Postgres>) {
     let mut env = HashMap::default();
     env.insert("POSTGRES_USER".to_owned(), "auth".to_owned());
     env.insert("POSTGRES_PASSWORD".to_owned(), "passwd".to_owned());
@@ -19,7 +19,7 @@ async fn setup_postgresql_storage<'a>(cli: &'a Cli) -> (Storage, Container<'a, C
         .with_env_vars(env);
     let node = cli.run(image);
     let port = node.get_host_port(5432).unwrap();
-    let storage = Storage::new("auth", "passwd", "127.0.0.1", port).await;
+    let storage = PgStorage::new("auth", "passwd", "127.0.0.1", port).await;
     (storage, node)
 }
 

@@ -5,16 +5,16 @@ use auth::external::cookie::*;
 use crate::proto::auth;
 use crate::proto::cerberus::types::Tokens;
 use crate::service::{create_cerberus_token, get_client_ip};
-use crate::storage::storage::Storage;
+use crate::storage::pg::PgStorage;
 use crate::storage::{cookie, players};
 
 pub struct CookieService {
-    storage: Storage,
+    storage: PgStorage,
     cerberus_internal_url: String,
 }
 
 impl CookieService {
-    pub fn new(storage: Storage, cerberus_internal_url: &str) -> Self {
+    pub fn new(storage: PgStorage, cerberus_internal_url: &str) -> Self {
         Self {
             storage,
             cerberus_internal_url: cerberus_internal_url.to_owned(),

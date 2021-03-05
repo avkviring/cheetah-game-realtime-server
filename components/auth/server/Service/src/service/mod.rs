@@ -37,5 +37,5 @@ fn get_client_ip(metadata: &MetadataMap) -> IpNetwork {
         },
     };
 
-    peer_ip.unwrap_or(IpNetwork::from_str("127.0.0.1").unwrap())
+    peer_ip.unwrap_or_else(|| IpNetwork::from_str("127.0.0.1").unwrap())
 }

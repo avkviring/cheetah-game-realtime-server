@@ -1,12 +1,12 @@
 use ipnetwork::IpNetwork;
 
-use crate::storage::storage::Storage;
+use crate::storage::pg::PgStorage;
 
 ///
 /// Создать игрока, для каждого игры создается запись вида id, create_date
 /// Все остальное храниться в отдельных таблицах
 ///
-pub async fn create_player(storage: &Storage, ip: &IpNetwork) -> u64 {
+pub async fn create_player(storage: &PgStorage, ip: &IpNetwork) -> u64 {
     let result: Result<(i64,), sqlx::Error> =
         sqlx::query_as("insert into players (ip) values ($1) returning id")
             .bind(ip)
