@@ -1,0 +1,54 @@
+theme:
+  name: material
+  language: ru
+  features:
+    - navigation.instant
+    - navigation.sections
+  palette:
+    primary: blue grey
+site_name: Cheetah Game Platform
+docs_dir: content
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.details
+  - pymdownx.tabbed
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink:
+plugins:
+  - search:
+      lang: ru
+nav:
+  - "Введение": "index.md"
+  - "Настройка":
+      - "Unity": "setup/unity.md"
+  - "Компоненты":
+      - "Аутентификация":
+          - "Введение": "components/authentication/index.md"
+          - "Временная регистрация": "components/authentication/cookie.md"
+          - "Google": "components/authentication/google.md"
+      - "Битва реального времени":
+          - "Введение": "components/relay/index.md"
+          - "Базовые понятия":
+              - "Соединение": "components/relay/basics/connection.md"
+              - "Канал": "components/relay/basics/channel.md"
+              - "Комната": "components/relay/basics/room.md"
+              - "Объект": "components/relay/basics/object.md"
+          - "Команды":
+              - "Общие принципы": "components/relay/commands/index.md"
+              - "Сериализация": "components/relay/commands/serialization.md"
+              - "События": "components/relay/commands/event.md"
+              - "Структуры": "components/relay/commands/structure.md"
+              - "Целые числа": "components/relay/commands/long.md"
+              - "Вещественные числа": "components/relay/commands/double.md"
+          - "Конфигурация":
+              - "Комната": "components/relay/configuration/room.md"
+              - "Права доступа": "components/relay/configuration/permissions.md"
+              - "Трассировка команд": "components/relay/configuration/trace.md"
+          - "Локальная разработка":
+              - "Запуск сервера": "components/relay/develop/run.md"
+              - "Эмуляция параметров сети": "components/relay/develop/network.md"
+              - "Логирование": "components/relay/develop/logger.md"
+              - "Состояние сервера": "components/relay/develop/server-dump.md"
+
