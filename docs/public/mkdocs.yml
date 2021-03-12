@@ -1,5 +1,6 @@
 theme:
   name: material
+  custom_dir: overrides
   language: ru
   features:
     - navigation.instant
@@ -19,6 +20,8 @@ markdown_extensions:
 plugins:
   - search:
       lang: ru
+extra:
+  disqus: remark42
 nav:
   - "Введение": "index.md"
   - "Настройка":
@@ -51,4 +54,3 @@ nav:
               - "Эмуляция параметров сети": "components/relay/develop/network.md"
               - "Логирование": "components/relay/develop/logger.md"
               - "Состояние сервера": "components/relay/develop/server-dump.md"
-
