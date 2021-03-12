@@ -1,0 +1,12 @@
+name: Release documentation site
+on:
+  release:
+    types: [ published ]
+jobs:
+  user-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: cd docs/public && docker run --rm -v "${PWD}":/docs squidfunk/mkdocs-material build
+      - run: cd docs/public && echo "${{ secrets.DOCS_CHEETAH_GAMES_SSH_KEY}}" > key && chmod 700 key
+      - run: cd docs/public && rsync -e "ssh -i key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" -var site/ docs_cheetah_games@docs.cheetah.games:/var/www/docs.cheetah.games/html/
