@@ -517,7 +517,7 @@ dependencies = [
  "heapless",
  "indexmap",
  "log",
- "rand 0.8.2",
+ "rand 0.8.3",
  "rmp-serde",
  "rmpv",
  "serde",
@@ -539,7 +539,7 @@ dependencies = [
  "hex",
  "lazy_static",
  "log",
- "rand 0.8.2",
+ "rand 0.8.3",
  "stderrlog",
  "widestring",
 ]
@@ -558,7 +558,7 @@ dependencies = [
  "lazy_static",
  "log",
  "mockall",
- "rand 0.8.2",
+ "rand 0.8.3",
  "rmp-serde",
  "serde",
  "snap",
@@ -1599,9 +1599,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.8.2"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18519b42a40024d661e1714153e9ad0c3de27cd495760ceb09710920f1098b1e"
+checksum = "0ef9e7e66b4468674bfcb0c81af8b7fa0bb154fa9f28eb840da5c447baeb8d7e"
 dependencies = [
  "libc",
  "rand_chacha 0.3.0",
