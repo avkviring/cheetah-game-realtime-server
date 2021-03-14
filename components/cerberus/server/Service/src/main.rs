@@ -9,11 +9,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
     println!("±± cheetah game cerberus component ±±");
 
+    // ключи для генерации токенов
     let jwt_public_key = get_key_from_env("JWT_PUBLIC_KEY");
     let jwt_private_key = get_key_from_env("JWT_PRIVATE_KEY");
+
+    // параметры redis
     let redis_host = get_env("CERBERUS_REDIS_HOST");
     let redis_port = get_env("CERBERUS_REDIS_PORT").parse().unwrap();
 
+    // порты grpc сервисов
     let internal_service_port = get_env("CERBERUS_INTERNAL_GRPC_SERVICE_PORT")
         .parse()
         .unwrap();
