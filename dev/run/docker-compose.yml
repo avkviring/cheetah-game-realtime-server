@@ -2,14 +2,43 @@ version: "3.1"
 services:
   auth_postgres:
     image: postgres:13.1-alpine
-    container_name: auth_postgres
-    ports:
-      - "${AUTH_POSTGRES_HOST}:${AUTH_POSTGRES_PORT}:5432"
     environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      - POSTGRES_USER=auth
+      - POSTGRES_PASSWORD=auth
   cerberus_redis:
     image: redis:6.2.1
-    container_name: cerberus_redis
+#  component_relay_service:
+#    build:
+#      context: ../../components/
+#      dockerfile: ../components/relay/Dockerfile
+  component_cerberus_service:
+    build:
+      context: ../../components/
+      dockerfile: ../components/cerberus/Dockerfile
+    depends_on:
+      - cerberus_redis
+    environment:
+      - JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+      - JWT_PRIVATE_KEY=LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2NnN2RzSldTejhmNDBjRXYKQlRlR1N6QU5YR2xFenV0ZDlJSW02L2lubDBhaFJBTkNBQVJWVWMxY3JHaFEyU2hmMkdjNG1sTFBvcllvTitLRApGcEplNzRVaWsvZmFxOXdPQms5blRXMk9jYU03S3pJL0ZHaGxveTc5MzJzZUxlNlZ0eDZoakJMNQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0t
+  component_auth_service:
+    build:
+      context: ../../components/
+      dockerfile: ../components/auth/Dockerfile
+    depends_on:
+      - component_cerberus_service
+      - auth_postgres
+    environment:
+      - JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+      - POSTGRES_USER=auth
+      - POSTGRES_PASSWORD=auth
+      - AUTH_GOOGLE_CLIENT_ID=663521173650-gkgrl7aouifjag0j5do14pul1hdqvosm.apps.googleusercontent.com
+  grpc_proxy:
+    image: nginx:1.19.8
+    depends_on:
+      - component_cerberus_service
+      - component_auth_service
     ports:
-      - "${CERBERUS_REDIS_HOST}:${CERBERUS_REDIS_PORT}:6379"
+      - "0.0.0.0:7777:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    command: [ nginx-debug, '-g', 'daemon off;' ]

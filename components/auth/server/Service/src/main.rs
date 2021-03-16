@@ -1,3 +1,5 @@
+use std::env;
+
 use games_cheetah_auth_service::server::run_grpc_server;
 use games_cheetah_auth_service::storage::pg::PgStorage;
 
@@ -6,12 +8,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
     println!("±± cheetah game auth component ±±");
 
-    let pg_user = get_env("AUTH_POSTGRES_USER");
-    let pg_passwd = get_env("AUTH_POSTGRES_PASSWORD");
-    let pg_host = get_env("AUTH_POSTGRES_HOST");
-    let pg_port = get_env("AUTH_POSTGRES_PORT");
-    let service_port = get_env("AUTH_GRPC_SERVICE_PORT");
-    let cerberus_url = get_env("AUTH_CERBERUS_URL");
+    let pg_user = get_env("POSTGRES_USER");
+    let pg_passwd = get_env("POSTGRES_PASSWORD");
+
+    let pg_host = env::var("POSTGRES_HOST").unwrap_or("auth_postgres".to_owned());
+    let pg_port = env::var("POSTGRES_PORT").unwrap_or("5432".to_owned());
+
+    let service_port = env::var("INTERNAL_GRPC_SERVICE_PORT").unwrap_or("5000".to_owned());
+    let cerberus_url = env::var("COMPONENT_CERBERUS_GRPC")
+        .unwrap_or("http://component_cerberus_service:5000".to_owned());
+
     let google_client_id = get_env("AUTH_GOOGLE_CLIENT_ID");
     let jwt_public_key = get_env("JWT_PUBLIC_KEY");
 
@@ -38,5 +44,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn get_env(name: &str) -> String {
-    std::env::var(name).expect(format!("Env {}", name).as_str())
+    env::var(name).expect(format!("Env {}", name).as_str())
 }

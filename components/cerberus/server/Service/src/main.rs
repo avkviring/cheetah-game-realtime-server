@@ -7,21 +7,27 @@ pub mod service;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
-    println!("±± cheetah game cerberus component ±±");
+    println!("±± cheetah game cerberus component ±±±±");
 
     // ключи для генерации токенов
     let jwt_public_key = get_key_from_env("JWT_PUBLIC_KEY");
     let jwt_private_key = get_key_from_env("JWT_PRIVATE_KEY");
 
     // параметры redis
-    let redis_host = get_env("CERBERUS_REDIS_HOST");
-    let redis_port = get_env("CERBERUS_REDIS_PORT").parse().unwrap();
-
-    // порты grpc сервисов
-    let internal_service_port = get_env("CERBERUS_INTERNAL_GRPC_SERVICE_PORT")
+    let redis_host = std::env::var("REDIS_HOST").unwrap_or("cerberus_redis".to_owned());
+    let redis_port = std::env::var("REDIS_PORT")
+        .unwrap_or("6379".to_owned())
         .parse()
         .unwrap();
-    let external_service_port = get_env("CERBERUS_EXTERNAL_GRPC_SERVICE_PORT")
+
+    // порты grpc сервисов
+    let internal_service_port = std::env::var("INTERNAL_GRPC_SERVICE_PORT")
+        .unwrap_or("5000".to_owned())
+        .parse()
+        .unwrap();
+
+    let external_service_port = std::env::var("EXTERNAL_GRPC_SERVICE_PORT")
+        .unwrap_or("5001".to_owned())
         .parse()
         .unwrap();
 

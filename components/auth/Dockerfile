@@ -1,43 +1,40 @@
-# 1: Build the exe
-FROM rust:1.50 as builder
-WORKDIR /usr/src
+# определяем зависимости для кеширования
+FROM rust:1.50 as planner
+RUN cargo install cargo-chef
+WORKDIR app
+COPY cerberus/server/ cerberus/server/
+COPY cerberus/proto/ cerberus/proto/
+COPY auth auth
+RUN cd auth/server/ && cargo chef prepare --recipe-path recipe.json
 
-# 1a: Prepare for static linking
+# кешируем зависимости
+FROM rust:1.50 as cacher
+RUN cargo install cargo-chef
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get install -y musl-tools && \
-    apt-get install libssl-dev && \
-    apt-get install musl-tools && \
     rustup target add x86_64-unknown-linux-musl
+WORKDIR app
+COPY cerberus/server/ /cerberus/server/
+COPY --from=planner /app/auth/server/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
+
+
+# компиляция приложения
+FROM rust:1.50 as builder
+WORKDIR app
+RUN rustup target add x86_64-unknown-linux-musl
 RUN rustup component add rustfmt
+COPY --from=cacher $CARGO_HOME $CARGO_HOME
+COPY --from=cacher /app/target auth/server/target/
+COPY cerberus/proto/ cerberus/proto/
+COPY cerberus/server/ cerberus/server/
+COPY auth auth
+RUN cargo build --release --offline --manifest-path auth/server/Service/Cargo.toml
 
-# build openssl
-RUN ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/x86_64-linux-musl/asm && \
-    ln -s /usr/include/asm-generic /usr/include/x86_64-linux-musl/asm-generic && \
-    ln -s /usr/include/linux /usr/include/x86_64-linux-musl/linux &&\
-    mkdir /musl &&\
-    wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1f.tar.gz &&\
-    tar zxvf OpenSSL_1_1_1f.tar.gz &&\
-    cd openssl-OpenSSL_1_1_1f/ &&\
-    CC="musl-gcc -fPIE -pie" ./Configure no-shared no-async --prefix=/musl --openssldir=/musl/ssl linux-x86_64 &&\
-    make depend &&\
-    make -j$(nproc) &&\
-    make install
-
-# 1b: Download and compile Rust dependencies (and store as a separate Docker layer)
-RUN mkdir /usr/src/service/
-WORKDIR /usr/src/service/
-COPY . .
-RUN export PKG_CONFIG_ALLOW_CROSS=1 &&\
-    export OPENSSL_STATIC=true &&\
-    export OPENSSL_DIR=/musl &&\
-    cargo install --path auth/server/Service/ --target x86_64-unknown-linux-musl
-
-
-
-# 2: Copy the exe and extra files ("static") to an empty Docker image
-FROM scratch
-EXPOSE 5001/tcp
-COPY --from=builder /usr/local/cargo/bin/games-cheetah-auth-service /service
+# образ для запуска
+FROM rust:1.50
+EXPOSE 5001/tcp 5002/tcp
+COPY --from=builder /app/auth/server/target/release/games-cheetah-auth-service /service
 CMD ["/service"]
