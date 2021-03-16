@@ -8,7 +8,7 @@ edition = "2018"
 lazy_static = "1.4.0"
 log = "0.4"
 serde = { version = "1.0.124", features = ["derive", "rc"] }
-rmp-serde = "0.15.0"
+rmp-serde = "0.15.4"
 rand = "0.8.3"
 snap = "1.0.4"
 byteorder = "1.4.3"
