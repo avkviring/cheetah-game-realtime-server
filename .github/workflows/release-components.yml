@@ -30,7 +30,7 @@ jobs:
           - auth
     steps:
       - uses: actions/checkout@v2
-      - run: cd components/ && docker build . -f ${{ matrix.component }}/Dockerfile -t cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
+      - run: cd components/ && DOCKER_BUILDKIT=1 docker build . -f ${{ matrix.component }}/Dockerfile -t cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
       - run: docker image tag cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }} docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
       - run: docker login docker.registry.cheetah.games --username ${{ secrets.DOCKER_REGISTRY_USER }} --password ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
       - run: docker image push docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
