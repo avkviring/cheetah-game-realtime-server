@@ -26,7 +26,7 @@ fn test() {
 	ffi::command::long_value::set_long_value(&object_id, 1, 555);
 
 	ffi::client::set_current_client(client2);
-	std::thread::sleep(Duration::from_millis(100));
+	std::thread::sleep(Duration::from_millis(200));
 	ffi::client::receive();
 	assert!(matches!(SET.lock().unwrap().as_ref(), Option::None));
 

@@ -34,7 +34,7 @@ impl IntegrationTestHelper {
 	}
 
 	pub fn wait_udp(&self) {
-		thread::sleep(Duration::from_millis(100));
+		thread::sleep(Duration::from_millis(500));
 	}
 
 	pub fn create_user_object(&self) -> GameObjectIdFFI {
