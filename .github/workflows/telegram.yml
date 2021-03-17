@@ -1,7 +1,7 @@
 name: Send push notification to Telegram
 on:
   push:
-    branches: [ _master ]  
+    branches: [ master ]  
   release:    
     types:
       - published     
