@@ -1,8 +1,8 @@
 {
   "name": "games.cheetah.unity.auth.cookie",
   "version": "999.999.999",
-  "displayName": "Cheetah Cookie Auth Service",
-  "description": "Internal authentication player system",
+  "displayName": "Cheetah Cookie Authentication",
+  "description": "Cheetah Cookie Authentication",
   "unity": "2019.1",
   "unityRelease": "0b5",
   "dependencies": {

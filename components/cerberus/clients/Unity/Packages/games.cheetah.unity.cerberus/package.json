@@ -1,8 +1,8 @@
 {
   "name": "games.cheetah.unity.cerberus",
   "version": "999.999.999",
-  "displayName": "Cheetah Cerberus Service",
-  "description": "Support JWT token.",
+  "displayName": "Cheetah Cerberus",
+  "description": "JWT token for platform",
   "unity": "2019.1",
   "unityRelease": "0b5",
   "dependencies": {
