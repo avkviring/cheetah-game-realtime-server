@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "cargo"
-    directory: "/components/auth/"
+    directory: "/components/auth/server/"
     schedule:
       interval: "daily"
   - package-ecosystem: "cargo"
@@ -9,7 +9,7 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "cargo"
-    directory: "/components/cerberus/"
+    directory: "/components/cerberus/server/"
     schedule:
      interval: "daily"
   - package-ecosystem: "github-actions"
