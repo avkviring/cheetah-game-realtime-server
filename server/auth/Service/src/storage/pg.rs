@@ -23,10 +23,7 @@ impl PgStorage {
             .await
             .unwrap();
 
-        sqlx::migrate!("../../dev/migrations/")
-            .run(&pool)
-            .await
-            .unwrap();
+        sqlx::migrate!().run(&pool).await.unwrap();
         Self { pool }
     }
 }

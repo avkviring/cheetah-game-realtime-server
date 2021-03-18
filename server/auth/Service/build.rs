@@ -5,16 +5,19 @@ fn main() -> Result<(), Error> {
         .build_server(true)
         .build_client(true)
         .compile(
-            &["../../proto/cookie.proto", "../../proto/google.proto"],
-            &["../../../cerberus/proto/", "../../proto/"],
+            &[
+                "../../../proto/auth/cookie.proto",
+                "../../../proto/auth/google.proto",
+            ],
+            &["../../../proto/cerberus/", "../../../proto/auth/"],
         )?;
 
     tonic_build::configure()
         .build_server(false)
         .build_client(true)
         .compile(
-            &["../../../cerberus/proto/cerberus.internal.proto"],
-            &["../../../cerberus/proto/", "../../proto/"],
+            &["../../../proto/cerberus/cerberus.internal.proto"],
+            &["../../../proto/cerberus/"],
         )?;
 
     Result::Ok(())
