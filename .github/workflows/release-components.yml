@@ -8,17 +8,19 @@ jobs:
     strategy:
       matrix:
         package:
-          - components/cerberus/clients/Unity/Packages/games.cheetah.unity.cerberus
-          - components/auth/clients/Unity/Packages/games.cheetah.unity.auth.android
-          - components/auth/clients/Unity/Packages/games.cheetah.unity.auth.cookie
+          - games.cheetah.android
+          - games.cheetah.auth
+          - games.cheetah.auth.cookie
+          - games.cheetah.cerberus
+          - games.cheetah.platfrom
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2.1.5
         with:
           node-version: '12.x'
           registry-url: 'https://npm.registry.cheetah.games'
-      - run: sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' ${{ matrix.package}}/package.json
-      - run: npm publish ${{ matrix.package}} --access private
+      - run: cd clients/Unity/Packages/ && sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' ${{ matrix.package}}/package.json
+      - run: cd clients/Unity/Packages/ && npm publish ${{ matrix.package}} --access private
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}
   publish-docker-image:
@@ -28,9 +30,35 @@ jobs:
         component:
           - cerberus
           - auth
+          - relay
     steps:
       - uses: actions/checkout@v2
-      - run: cd components/ && DOCKER_BUILDKIT=1 docker build . -f ${{ matrix.component }}/Dockerfile -t cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
-      - run: docker image tag cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }} docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
-      - run: docker login docker.registry.cheetah.games --username ${{ secrets.DOCKER_REGISTRY_USER }} --password ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-      - run: docker image push docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
+      - uses: actions/cache@v2.1.4
+        with:
+          path: |
+            /tmp/.buildx-cache
+          key: publish-docker-image-${{ matrix.component }}
+      - name: Setup buildkit
+        uses: docker/setup-buildx-action@v1
+        id: buildx
+        with:
+          install: true
+      - name: Login to docker.registry.cheetah.games
+        uses: docker/login-action@v1
+        with:
+          registry: docker.registry.cheetah.games
+          username: ${{ secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      - name: Build docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: false
+          file: server/${{ matrix.component }}/Dockerfile
+          tags: docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+      - name: Move buildkit cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
