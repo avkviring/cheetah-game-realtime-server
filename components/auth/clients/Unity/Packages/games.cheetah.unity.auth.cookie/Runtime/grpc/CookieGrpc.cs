@@ -12,40 +12,10 @@ namespace Games.Cheetah.Auth.External.Cookie {
   {
     static readonly string __ServiceName = "games.cheetah.auth.external.cookie.Cookie";
 
-    static void __Helper_SerializeMessage(global::Google.Protobuf.IMessage message, grpc::SerializationContext context)
-    {
-      #if !GRPC_DISABLE_PROTOBUF_BUFFER_SERIALIZATION
-      if (message is global::Google.Protobuf.IBufferMessage)
-      {
-        context.SetPayloadLength(message.CalculateSize());
-        global::Google.Protobuf.MessageExtensions.WriteTo(message, context.GetBufferWriter());
-        context.Complete();
-        return;
-      }
-      #endif
-      context.Complete(global::Google.Protobuf.MessageExtensions.ToByteArray(message));
-    }
-
-    static class __Helper_MessageCache<T>
-    {
-      public static readonly bool IsBufferMessage = global::System.Reflection.IntrospectionExtensions.GetTypeInfo(typeof(global::Google.Protobuf.IBufferMessage)).IsAssignableFrom(typeof(T));
-    }
-
-    static T __Helper_DeserializeMessage<T>(grpc::DeserializationContext context, global::Google.Protobuf.MessageParser<T> parser) where T : global::Google.Protobuf.IMessage<T>
-    {
-      #if !GRPC_DISABLE_PROTOBUF_BUFFER_SERIALIZATION
-      if (__Helper_MessageCache<T>.IsBufferMessage)
-      {
-        return parser.ParseFrom(context.PayloadAsReadOnlySequence());
-      }
-      #endif
-      return parser.ParseFrom(context.PayloadAsNewBuffer());
-    }
-
-    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.RegistryRequest> __Marshaller_games_cheetah_auth_external_cookie_RegistryRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Games.Cheetah.Auth.External.Cookie.RegistryRequest.Parser));
-    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.RegistryResponse> __Marshaller_games_cheetah_auth_external_cookie_RegistryResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Games.Cheetah.Auth.External.Cookie.RegistryResponse.Parser));
-    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.LoginRequest> __Marshaller_games_cheetah_auth_external_cookie_LoginRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Games.Cheetah.Auth.External.Cookie.LoginRequest.Parser));
-    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.LoginResponse> __Marshaller_games_cheetah_auth_external_cookie_LoginResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Games.Cheetah.Auth.External.Cookie.LoginResponse.Parser));
+    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.RegistryRequest> __Marshaller_games_cheetah_auth_external_cookie_RegistryRequest = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Auth.External.Cookie.RegistryRequest.Parser.ParseFrom);
+    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.RegistryResponse> __Marshaller_games_cheetah_auth_external_cookie_RegistryResponse = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Auth.External.Cookie.RegistryResponse.Parser.ParseFrom);
+    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.LoginRequest> __Marshaller_games_cheetah_auth_external_cookie_LoginRequest = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Auth.External.Cookie.LoginRequest.Parser.ParseFrom);
+    static readonly grpc::Marshaller<global::Games.Cheetah.Auth.External.Cookie.LoginResponse> __Marshaller_games_cheetah_auth_external_cookie_LoginResponse = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Auth.External.Cookie.LoginResponse.Parser.ParseFrom);
 
     static readonly grpc::Method<global::Games.Cheetah.Auth.External.Cookie.RegistryRequest, global::Games.Cheetah.Auth.External.Cookie.RegistryResponse> __Method_RegistryByCookie = new grpc::Method<global::Games.Cheetah.Auth.External.Cookie.RegistryRequest, global::Games.Cheetah.Auth.External.Cookie.RegistryResponse>(
         grpc::MethodType.Unary,

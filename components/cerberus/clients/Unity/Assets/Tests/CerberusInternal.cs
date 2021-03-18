@@ -40,11 +40,7 @@ namespace Games.Cheetah.Cerberus.Internal {
 
   }
   #region Messages
-  public sealed partial class CreateTokenRequest : pb::IMessage<CreateTokenRequest>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
+  public sealed partial class CreateTokenRequest : pb::IMessage<CreateTokenRequest> {
     private static readonly pb::MessageParser<CreateTokenRequest> _parser = new pb::MessageParser<CreateTokenRequest>(() => new CreateTokenRequest());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -137,9 +133,6 @@ namespace Games.Cheetah.Cerberus.Internal {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
       if (Player != 0UL) {
         output.WriteRawTag(8);
         output.WriteUInt64(Player);
@@ -151,25 +144,7 @@ namespace Games.Cheetah.Cerberus.Internal {
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
-    #endif
     }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Player != 0UL) {
-        output.WriteRawTag(8);
-        output.WriteUInt64(Player);
-      }
-      if (DeviceId.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteString(DeviceId);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public int CalculateSize() {
@@ -202,9 +177,6 @@ namespace Games.Cheetah.Cerberus.Internal {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
@@ -221,30 +193,7 @@ namespace Games.Cheetah.Cerberus.Internal {
           }
         }
       }
-    #endif
     }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 8: {
-            Player = input.ReadUInt64();
-            break;
-          }
-          case 18: {
-            DeviceId = input.ReadString();
-            break;
-          }
-        }
-      }
-    }
-    #endif
 
   }
 

@@ -16,38 +16,8 @@ namespace Games.Cheetah.Cerberus.Internal {
   {
     static readonly string __ServiceName = "games.cheetah.cerberus.internal.Cerberus";
 
-    static void __Helper_SerializeMessage(global::Google.Protobuf.IMessage message, grpc::SerializationContext context)
-    {
-      #if !GRPC_DISABLE_PROTOBUF_BUFFER_SERIALIZATION
-      if (message is global::Google.Protobuf.IBufferMessage)
-      {
-        context.SetPayloadLength(message.CalculateSize());
-        global::Google.Protobuf.MessageExtensions.WriteTo(message, context.GetBufferWriter());
-        context.Complete();
-        return;
-      }
-      #endif
-      context.Complete(global::Google.Protobuf.MessageExtensions.ToByteArray(message));
-    }
-
-    static class __Helper_MessageCache<T>
-    {
-      public static readonly bool IsBufferMessage = global::System.Reflection.IntrospectionExtensions.GetTypeInfo(typeof(global::Google.Protobuf.IBufferMessage)).IsAssignableFrom(typeof(T));
-    }
-
-    static T __Helper_DeserializeMessage<T>(grpc::DeserializationContext context, global::Google.Protobuf.MessageParser<T> parser) where T : global::Google.Protobuf.IMessage<T>
-    {
-      #if !GRPC_DISABLE_PROTOBUF_BUFFER_SERIALIZATION
-      if (__Helper_MessageCache<T>.IsBufferMessage)
-      {
-        return parser.ParseFrom(context.PayloadAsReadOnlySequence());
-      }
-      #endif
-      return parser.ParseFrom(context.PayloadAsNewBuffer());
-    }
-
-    static readonly grpc::Marshaller<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest> __Marshaller_games_cheetah_cerberus_internal_CreateTokenRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest.Parser));
-    static readonly grpc::Marshaller<global::Games.Cheetah.Cerberus.Types.Tokens> __Marshaller_games_cheetah_cerberus_types_Tokens = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::Games.Cheetah.Cerberus.Types.Tokens.Parser));
+    static readonly grpc::Marshaller<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest> __Marshaller_games_cheetah_cerberus_internal_CreateTokenRequest = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest.Parser.ParseFrom);
+    static readonly grpc::Marshaller<global::Games.Cheetah.Cerberus.Types.Tokens> __Marshaller_games_cheetah_cerberus_types_Tokens = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Cerberus.Types.Tokens.Parser.ParseFrom);
 
     static readonly grpc::Method<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Games.Cheetah.Cerberus.Types.Tokens> __Method_create = new grpc::Method<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Games.Cheetah.Cerberus.Types.Tokens>(
         grpc::MethodType.Unary,
