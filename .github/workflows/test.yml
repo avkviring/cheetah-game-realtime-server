@@ -1,24 +1,11 @@
 name: Test
 on: [ push ]
 jobs:
-  relay-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2.1.4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            components/relay/target
-          key: cargo-relay
-      - name: Test
-        run: cargo test --manifest-path components/relay/Cargo.toml
-  components:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [ cerberus, auth ]
+        component: [ cerberus, auth, relay ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.4
@@ -26,34 +13,22 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            components/${{ matrix.component }}/server/target
+            server/${{ matrix.component }}/target
+            /tmp/.buildx-cache
           key: cargo-${{ matrix.component }}
-      - name: Test
-        run: cargo test --manifest-path components/${{ matrix.component }}/server/Cargo.toml
-  docker-images:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        component:
-          - cerberus
-          - auth
-    steps:
-      - uses: docker/setup-buildx-action@v1
+      - name: Rust test
+        run: cargo test --manifest-path server/${{ matrix.component }}/Cargo.toml
+      - name: Setup buildkit
+        uses: docker/setup-buildx-action@v1
         id: buildx
         with:
           install: true
-      - uses: actions/cache@v2.1.4
+      - name: Build docker image
+        uses: docker/build-push-action@v2
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.component }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.component }}
-      - uses: actions/checkout@v2
-      - uses: docker/build-push-action@v2
-        with:
-          context: components
+          context: .
           push: false
-          file: components/${{ matrix.component }}/Dockerfile
+          file: server/${{ matrix.component }}/Dockerfile
           tags: user/app:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
