@@ -14,7 +14,7 @@ services:
   component_cerberus_service:
     build:
       context: ../../components/
-      dockerfile: ../components/cerberus/Dockerfile
+      dockerfile: ../../server/cerberus/Dockerfile
     depends_on:
       - cerberus_redis
     environment:
@@ -23,7 +23,7 @@ services:
   component_auth_service:
     build:
       context: ../../components/
-      dockerfile: ../components/auth/Dockerfile
+      dockerfile: ../../server/auth/Dockerfile
     depends_on:
       - component_cerberus_service
       - auth_postgres

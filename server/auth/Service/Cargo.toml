@@ -1,0 +1,31 @@
+[package]
+name = "games-cheetah-auth-service"
+version = "999.999.999"
+edition = "2018"
+
+
+[dependencies]
+chrono = "0.4"
+tonic = "0.4.0"
+prost = "0.7"
+tokio = { version = "1.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+tower = { version = "0.4" }
+serde = { version = "1.0", features = ["derive"] }
+sqlx = { version = "0.5", features = ["runtime-tokio-rustls", "postgres", "migrate", "ipnetwork", "chrono"] }
+async-trait = "0.1.13"
+log = "0.4"
+pretty_env_logger = "0.4.0"
+ipnetwork = "0.17.0"
+rand = "0.8"
+games-cheetah-cerberus-library = { path = "../../cerberus/Library" }
+jsonwebtoken-google = { version = "0.1.1" }
+
+[dev-dependencies]
+testcontainers = "0.12.0"
+lazy_static = "1.4.0"
+games-cheetah-cerberus-service = { path = "../../cerberus/Service", features = ["test-helper"] }
+jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
+
+[build-dependencies]
+tonic-build = "0.4.0"
