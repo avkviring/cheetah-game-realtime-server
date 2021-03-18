@@ -1,18 +1,18 @@
 version: 2
 updates:
   - package-ecosystem: "cargo"
-    directory: "/components/auth/server/"
+    directory: "/server/auth/"
     schedule:
       interval: "daily"
   - package-ecosystem: "cargo"
-    directory: "/components/relay/"
+    directory: "/server/relay/"
     schedule:
       interval: "daily"
   - package-ecosystem: "cargo"
-    directory: "/components/cerberus/server/"
+    directory: "/server/cerberus/"
     schedule:
-     interval: "daily"
+      interval: "daily"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-     interval: "daily"
+      interval: "daily"
