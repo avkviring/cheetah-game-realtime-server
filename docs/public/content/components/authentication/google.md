@@ -4,7 +4,7 @@
 
 
 ### Настройка среды разработки
-Установить пакет **games.cheetah.unity.auth.android** в Package Manager.
+Установить пакет **games.cheetah.auth.android** в Package Manager.
 
 Получить из google console - id приложения и WebId клиента. Прописать их в настройки проекта.
 

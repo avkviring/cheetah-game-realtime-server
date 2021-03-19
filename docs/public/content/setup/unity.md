@@ -11,7 +11,7 @@
     "name": "cheetah",
     "url": "https://npm.registry.cheetah.games/",
     "scopes": [
-      "games.cheetah.unity"
+      "games.cheetah"
       ]
   }
 ]

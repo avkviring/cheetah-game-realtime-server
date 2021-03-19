@@ -10,4 +10,4 @@
 После привязки код авторизации удаляется с сервера.
 
 ### Настройка среды разработки
-Установить пакет **games.cheetah.unity.auth.cookie** в Package Manager.
+Установить пакет **games.cheetah.auth.cookie** в Package Manager.

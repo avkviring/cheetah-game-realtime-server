@@ -4,7 +4,7 @@
 
 ### Настройка среды разработки
 
-Установить пакет **games.cheetah.unity.relay** в Package Manager.
+Установить пакет **games.cheetah.relay** в Package Manager.
 
 Данный пакет представляет low level интерфейс для доступа к серверу.
 
