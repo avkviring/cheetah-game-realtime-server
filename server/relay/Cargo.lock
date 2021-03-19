@@ -1713,9 +1713,9 @@ dependencies = [
 
 [[package]]
 name = "rmpv"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "601e306fb529fadf3faa482684fba756e1b93897864ef2ab2080b12775c04235"
+checksum = "7c760afe11955e16121e36485b6b828326c3f0eaff1c31758d96dbeb5cf09fd5"
 dependencies = [
  "num-traits",
  "rmp",
