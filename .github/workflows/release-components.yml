@@ -8,9 +8,9 @@ jobs:
     strategy:
       matrix:
         package:
-          - games.cheetah.android
           - games.cheetah.auth
           - games.cheetah.auth.cookie
+          - games.cheetah.auth.android
           - games.cheetah.cerberus
           - games.cheetah.platfrom
     steps:

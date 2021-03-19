@@ -1,19 +1,13 @@
-using Games.Cheetah.Auth.External.Google;
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
-using Grpc.Core;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace games.cheetah.auth
 {
     public class AndroidAuth : MonoBehaviour
     {
-        
         public Text googleToken;
         public Text cerberusToken;
-        
+
         private static bool first = true;
 
 
