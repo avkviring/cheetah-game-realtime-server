@@ -28,4 +28,4 @@ games-cheetah-cerberus-service = { path = "../../cerberus/Service", features = [
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
 
 [build-dependencies]
-tonic-build = "0.4.0"
+tonic-build = "0.4.1"
