@@ -31,7 +31,7 @@ testcontainers = "0.12.0"
 lazy_static = "1.4.0"
 
 [build-dependencies]
-tonic-build = "0.4.0"
+tonic-build = "0.4.1"
 
 [features]
 test-helper = ["testcontainers", "lazy_static"]
