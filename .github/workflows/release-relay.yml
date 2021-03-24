@@ -60,8 +60,10 @@ jobs:
         run: cargo install --version 0.1.16 cross
       - name: Build windows (client & server)
         run: cd server/relay/ && cross build --target x86_64-pc-windows-gnu --release --message-format short
-      - name: Build android (client)
+      - name: Build android armv7-linux-androideabi
         run: cd server/relay/ && cross build --manifest-path Client/Cargo.toml --target armv7-linux-androideabi --release --message-format short
+      - name: Build android aarch64-linux-android
+        run: cd server/relay/ && cross build --manifest-path Client/Cargo.toml --target aarch64-linux-android --release --message-format short
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
@@ -70,6 +72,8 @@ jobs:
             server/relay/target/x86_64-pc-windows-gnu/release/cheetah_relay.exe
             server/relay/target/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll
             server/relay/target/armv7-linux-androideabi/release/libcheetah_relay_client.so
+            server/relay/target/aarch64-linux-android/release/libcheetah_relay_client.so
+
 
   publish-unity-package:
     runs-on: ubuntu-latest
@@ -94,7 +98,8 @@ jobs:
       - run: cp macos-build/libcheetah_relay_client.dylib clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.bundle
       - run: cp linux-build/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.so
       - run: cp android-windows-build/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.dll
-      - run: cp android-windows-build/armv7-linux-androideabi/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.relay/Android/libcheetah_relay_client.so
+      - run: cp android-windows-build/armv7-linux-androideabi/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.relay/Android/armv7/libcheetah_relay_client.so
+      - run: cp android-windows-build/aarch64-linux-android/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.relay/Android/aarch64/libcheetah_relay_client.so
       - uses: actions/setup-node@v2.1.5
         with:
           node-version: '12.x'
