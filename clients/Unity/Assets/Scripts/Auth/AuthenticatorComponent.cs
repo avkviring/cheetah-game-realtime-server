@@ -46,7 +46,7 @@ namespace Example.Auth
                         var androidAuthenticator = new AndroidAuthenticator(androidWebClientId);
                         var result = await androidAuthenticator.LoginOrRegister(connector);
                         player = result.Player;
-                        storedAuthenticator.StoreToken(player);
+                        storedAuthenticator.Store(player);
                         resultText.text = "Login with AndroidPlayerAuthenticator";
                     }
                     catch (AndroidAuthenticateException e)
