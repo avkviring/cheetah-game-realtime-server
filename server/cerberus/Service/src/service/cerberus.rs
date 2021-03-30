@@ -73,7 +73,7 @@ impl proto::external::cerberus_server::Cerberus for Cerberus {
             })),
             Err(e) => {
                 log::error!("{:?}", e);
-                Result::Err(tonic::Status::failed_precondition(format!("{:?}", e)))
+                Result::Err(tonic::Status::unauthenticated(format!("{:?}", e)))
             }
         }
     }

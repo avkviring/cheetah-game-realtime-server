@@ -15,8 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pg_port = env::var("POSTGRES_PORT").unwrap_or("5432".to_owned());
 
     let service_port = env::var("INTERNAL_GRPC_SERVICE_PORT").unwrap_or("5000".to_owned());
-    let cerberus_url = env::var("COMPONENT_CERBERUS_GRPC")
-        .unwrap_or("http://component_cerberus_service:5000".to_owned());
+    let cerberus_url = env::var("INTERNAL_CERBERUS_GRPC")
+        .unwrap_or("http://component_cerberus_service:5001".to_owned());
 
     let google_client_id = get_env("AUTH_GOOGLE_CLIENT_ID");
     let jwt_public_key = get_env("JWT_PUBLIC_KEY");

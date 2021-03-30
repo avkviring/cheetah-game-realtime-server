@@ -16,10 +16,10 @@ services:
     environment:
       - JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
       - JWT_PRIVATE_KEY=LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2NnN2RzSldTejhmNDBjRXYKQlRlR1N6QU5YR2xFenV0ZDlJSW02L2lubDBhaFJBTkNBQVJWVWMxY3JHaFEyU2hmMkdjNG1sTFBvcllvTitLRApGcEplNzRVaWsvZmFxOXdPQms5blRXMk9jYU03S3pJL0ZHaGxveTc5MzJzZUxlNlZ0eDZoakJMNQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0t
-  component_relay_service:
-    build:
-      context: ../../
-      dockerfile: server/relay/Dockerfile
+#  component_relay_service:
+#    build:
+#      context: ../../
+#      dockerfile: server/relay/Dockerfile
   component_auth_service:
     build:
       context: ../../

@@ -22,12 +22,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // порты grpc сервисов
     let internal_service_port = std::env::var("INTERNAL_GRPC_SERVICE_PORT")
-        .unwrap_or("5000".to_owned())
+        .unwrap_or("5001".to_owned())
         .parse()
         .unwrap();
 
     let external_service_port = std::env::var("EXTERNAL_GRPC_SERVICE_PORT")
-        .unwrap_or("5001".to_owned())
+        .unwrap_or("5000".to_owned())
         .parse()
         .unwrap();
 

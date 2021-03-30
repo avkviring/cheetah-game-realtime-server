@@ -35,8 +35,8 @@ pub async fn should_register_and_login() {
         .await
         .unwrap();
 
-    let result: tonic::Response<Tokens> = client
-        .registry_or_login(tonic::Request::new(google::RegistryOrLoginRequest {
+    let result: tonic::Response<google::RegisterOrLoginResponse> = client
+        .register_or_login(tonic::Request::new(google::RegisterOrLoginRequest {
             google_token: token.clone(),
             device_id: "some-device-id".to_owned(),
         }))
@@ -44,8 +44,8 @@ pub async fn should_register_and_login() {
         .unwrap();
     let register_result = result.into_inner();
 
-    let result: tonic::Response<Tokens> = client
-        .registry_or_login(tonic::Request::new(google::RegistryOrLoginRequest {
+    let result: tonic::Response<google::RegisterOrLoginResponse> = client
+        .register_or_login(tonic::Request::new(google::RegisterOrLoginRequest {
             google_token: token,
             device_id: "some-device-id".to_owned(),
         }))
@@ -55,9 +55,15 @@ pub async fn should_register_and_login() {
 
     let token_parser = JWTTokenParser::new(test_helper::PUBLIC_KEY.to_owned());
 
+    assert!(register_result.registered_player);
+    assert!(!login_result.registered_player);
     assert_eq!(
-        token_parser.get_player_id(register_result.session).unwrap(),
-        token_parser.get_player_id(login_result.session).unwrap(),
+        token_parser
+            .get_player_id(register_result.tokens.unwrap().session)
+            .unwrap(),
+        token_parser
+            .get_player_id(login_result.tokens.unwrap().session)
+            .unwrap(),
     );
 }
 
@@ -99,12 +105,14 @@ pub async fn should_attach() {
     google_client.attach(request).await.unwrap();
 
     // входим через google
-    let request = tonic::Request::new(google::RegistryOrLoginRequest {
+    let request = tonic::Request::new(google::RegisterOrLoginRequest {
         google_token,
         device_id: "some-device-id".to_owned(),
     });
-    let result: tonic::Response<Tokens> = google_client.registry_or_login(request).await.unwrap();
-    let google_tokens = result.into_inner();
+    let result: tonic::Response<google::RegisterOrLoginResponse> =
+        google_client.register_or_login(request).await.unwrap();
+
+    let google_tokens = result.into_inner().tokens.unwrap();
 
     let token_parser = JWTTokenParser::new(test_helper::PUBLIC_KEY.to_owned());
     // идентификаторы пользователей должны совпадать

@@ -3,7 +3,6 @@ use serde::Serialize;
 use tonic::{Request, Response};
 
 pub use crate::proto::auth::external::google::*;
-use crate::proto::cerberus::types::Tokens;
 use crate::service::{create_cerberus_token, get_client_ip};
 use crate::storage::pg::PgStorage;
 use crate::storage::{google, players};
@@ -36,10 +35,10 @@ impl GoogleService {
 
 #[tonic::async_trait]
 impl google_server::Google for GoogleService {
-    async fn registry_or_login(
+    async fn register_or_login(
         &self,
-        request: Request<RegistryOrLoginRequest>,
-    ) -> Result<Response<Tokens>, tonic::Status> {
+        request: Request<RegisterOrLoginRequest>,
+    ) -> Result<Response<RegisterOrLoginResponse>, tonic::Status> {
         let registry_or_login_request = request.get_ref();
         let google_token = registry_or_login_request.google_token.as_str();
         match self
@@ -49,7 +48,8 @@ impl google_server::Google for GoogleService {
         {
             Ok(token) => {
                 let google_user_id = token.sub.as_str();
-                let player = self.get_or_create_player(&request, google_user_id).await;
+                let (player, registered_player) =
+                    self.get_or_create_player(&request, google_user_id).await;
                 let token = create_cerberus_token(
                     self.cerberus_internal_url.to_owned(),
                     player,
@@ -57,7 +57,10 @@ impl google_server::Google for GoogleService {
                 )
                 .await;
                 match token {
-                    Ok(token) => Result::Ok(Response::new(token.into_inner())),
+                    Ok(token) => Result::Ok(Response::new(RegisterOrLoginResponse {
+                        registered_player,
+                        tokens: Option::Some(token.into_inner()),
+                    })),
                     Err(e) => {
                         log::error!("{:?}", e);
                         Result::Err(tonic::Status::internal("error"))
@@ -111,17 +114,17 @@ impl google_server::Google for GoogleService {
 impl GoogleService {
     async fn get_or_create_player(
         &self,
-        request: &Request<RegistryOrLoginRequest>,
+        request: &Request<RegisterOrLoginRequest>,
         google_user_id: &str,
-    ) -> u64 {
+    ) -> (u64, bool) {
         let player = match google::find(&self.storage, google_user_id).await {
             None => {
                 let ip = get_client_ip(request.metadata());
                 let player = players::create_player(&self.storage, &ip).await;
                 google::attach(&self.storage, player, google_user_id, &ip).await;
-                player
+                (player, true)
             }
-            Some(player) => player,
+            Some(player) => (player, false),
         };
         player
     }
