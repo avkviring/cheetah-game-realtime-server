@@ -34,7 +34,7 @@ impl CookieService {
 
 #[tonic::async_trait]
 impl cookie_server::Cookie for CookieService {
-    async fn registry_by_cookie(
+    async fn register(
         &self,
         request: Request<RegistryRequest>,
     ) -> Result<tonic::Response<RegistryResponse>, tonic::Status> {
@@ -51,7 +51,7 @@ impl cookie_server::Cookie for CookieService {
             })
     }
 
-    async fn login_by_cookie(
+    async fn login(
         &self,
         request: Request<LoginRequest>,
     ) -> Result<Response<LoginResponse>, tonic::Status> {

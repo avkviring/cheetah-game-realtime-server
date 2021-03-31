@@ -7,11 +7,11 @@ service Cookie {
   /*
     Регистрация пользователя по cookie
    */
-  rpc RegistryByCookie(RegistryRequest) returns (RegistryResponse);
+  rpc Register(RegistryRequest) returns (RegistryResponse);
   /*
     Вход пользователя по cookie
    */
-  rpc LoginByCookie(LoginRequest) returns (LoginResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
 }
 
 message RegistryRequest {

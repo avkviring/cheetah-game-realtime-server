@@ -1,5 +1,3 @@
-use sqlx::{Postgres, Transaction};
-
 use crate::storage::cookie::mark_cookie_as_linked;
 use crate::storage::pg::PgStorage;
 

@@ -130,7 +130,7 @@ async fn register_player_by_cookie(service_url: String) -> Tokens {
         .unwrap();
 
     let registry_response: tonic::Response<cookie::RegistryResponse> = cookie_client
-        .registry_by_cookie(Request::new(cookie::RegistryRequest {
+        .register(Request::new(cookie::RegistryRequest {
             device_id: "some-device-id".to_owned(),
         }))
         .await

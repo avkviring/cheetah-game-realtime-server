@@ -31,7 +31,7 @@ pub async fn should_registry_and_login_by_cookie() {
 
     // регистрируем нового игрока
     let registry_response: tonic::Response<RegistryResponse> = cookie_client
-        .registry_by_cookie(Request::new(cookie::RegistryRequest {
+        .register(Request::new(cookie::RegistryRequest {
             device_id: "some-device-id".to_owned(),
         }))
         .await
@@ -42,7 +42,7 @@ pub async fn should_registry_and_login_by_cookie() {
     //входим с использованием cookie
     let cookie = registry_response.cookie.to_owned();
     let login_response: tonic::Response<LoginResponse> = cookie_client
-        .login_by_cookie(Request::new(cookie::LoginRequest {
+        .login(Request::new(cookie::LoginRequest {
             cookie,
             device_id: "some-device-id".to_owned(),
         }))
@@ -88,7 +88,7 @@ pub async fn should_not_login_by_wrong_cookie() {
             .await
             .unwrap();
     let login_response: tonic::Response<LoginResponse> = cookie_client
-        .login_by_cookie(Request::new(cookie::LoginRequest {
+        .login(Request::new(cookie::LoginRequest {
             cookie: "some-wrong-cookie".to_owned(),
             device_id: "some-device-id".to_owned(),
         }))

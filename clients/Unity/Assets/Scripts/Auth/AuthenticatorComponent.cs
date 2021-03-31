@@ -1,12 +1,7 @@
-using Cheetah.Platform.Authenticator;
-using UnityEngine;
-using UnityEngine.UI;
-#if UNITY_ANDROID
 using Cheetah.Authenticator;
 using Cheetah.Platform;
-using Grpc.Core;
-
-#endif
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Example.Auth
 {
@@ -15,15 +10,24 @@ namespace Example.Auth
         private const string androidWebClientId = "663521173650-gkgrl7aouifjag0j5do14pul1hdqvosm.apps.googleusercontent.com";
 
         [SerializeField] private Text resultText;
-        [SerializeField] private Button loginButton;
+        [SerializeField] private Button androidLoginButton;
+        [SerializeField] private Button cookieLoginButton;
         private Connector connector = new Connector("192.168.212.97:7777");
 
         private void Start()
         {
-            loginButton.onClick.AddListener(OnLogin);
+            androidLoginButton.onClick.AddListener(OnAndroidLogin);
+            cookieLoginButton.onClick.AddListener(OnCookieLogin);
         }
 
-        private async void OnLogin()
+        private async void OnCookieLogin()
+        {
+            var cookieAuthenticator = new CookieAuthenticator(connector);
+            var result = await cookieAuthenticator.LoginOrRegister();
+            resultText.text = "Login with CookieAuthenticator, register =" + result.RegisteredPlayer + ", player = " + result.Player;
+        }
+
+        private async void OnAndroidLogin()
         {
 #if UNITY_ANDROID
             try
