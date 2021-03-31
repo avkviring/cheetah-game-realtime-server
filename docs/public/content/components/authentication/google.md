@@ -6,15 +6,17 @@
 
 Установить пакет **games.cheetah.auth.android** в Package Manager.
 
-Получить из google console - id приложения и WebId клиента. Прописать их в настройки проекта.
+Получить из google console - id приложения и WebId клиента. 
+ID приложения прописать в настройки Unity проекта - Cheetah/Google PlayGames.
 
-### Пример кода для авторизации
+### Пример кода
 
 ```csharp
 #if UNITY_ANDROID
+    var connector = new Connector("192.168.212.97:7777");
     string androidWebClientId = "some_code.apps.googleusercontent.com";
     var androidAuthenticator = new AndroidAuthenticator(androidWebClientId);
     var result = await androidAuthenticator.LoginOrRegister(connector);
-    player = result.Player;
+    var player = result.Player;
 #endif    
 ```
