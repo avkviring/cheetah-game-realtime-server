@@ -1,3 +1,6 @@
+use sqlx::{Postgres, Transaction};
+
+use crate::storage::cookie::mark_cookie_as_linked;
 use crate::storage::pg::PgStorage;
 
 pub async fn attach(
@@ -8,11 +11,7 @@ pub async fn attach(
 ) {
     let mut tx = storage.pool.begin().await.unwrap();
 
-    sqlx::query("delete from cookie_players where player=$1")
-        .bind(player as i64)
-        .execute(&mut tx)
-        .await
-        .unwrap();
+    mark_cookie_as_linked(player, &mut tx).await;
 
     sqlx::query("delete from google_players where player=$1 or google_id=$2")
         .bind(player as i64)
@@ -57,6 +56,7 @@ pub mod tests {
     use ipnetwork::IpNetwork;
     use testcontainers::clients::Cli;
 
+    use crate::storage::cookie::FindResult;
     use crate::storage::google::{attach, find};
     use crate::storage::players::create_player;
     use crate::storage::test::setup_postgresql_storage;
@@ -77,7 +77,7 @@ pub mod tests {
     }
 
     #[tokio::test]
-    pub async fn should_delete_cookie_when_attach() {
+    pub async fn should_mark_cookie_as_linked_when_attach() {
         let cli = Cli::default();
         let (storage, _node) = setup_postgresql_storage(&cli).await;
         let ip = IpNetwork::from_str("127.0.0.1").unwrap();
@@ -90,15 +90,14 @@ pub mod tests {
 
         attach(&storage, player_a, "a@kviring.com", &ip).await;
 
-        assert!(crate::storage::cookie::find(&storage, &cookie_a)
-            .await
-            .is_none());
-        assert_eq!(
-            crate::storage::cookie::find(&storage, &cookie_b)
-                .await
-                .unwrap(),
-            player_b
-        );
+        assert!(matches!(
+            crate::storage::cookie::find(&storage, &cookie_a).await,
+            FindResult::Linked
+        ));
+        assert!(matches!(
+            crate::storage::cookie::find(&storage, &cookie_b).await,
+            FindResult::Player(player) if player==player_b
+        ));
     }
 
     #[tokio::test]

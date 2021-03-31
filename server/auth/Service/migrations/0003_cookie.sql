@@ -4,7 +4,8 @@
 create table cookie_players
 (
 	player bigint not null primary key,
-	cookie char(128) not null
+	cookie char(128) not null,
+	linked bool default false
 );
 
 create unique index cookie_players_cookie_uindex on cookie_players (cookie);

@@ -5,6 +5,7 @@ use auth::external::cookie::*;
 use crate::proto::auth;
 use crate::proto::cerberus::types::Tokens;
 use crate::service::{create_cerberus_token, get_client_ip};
+use crate::storage::cookie::FindResult;
 use crate::storage::pg::PgStorage;
 use crate::storage::{cookie, players};
 
@@ -55,13 +56,17 @@ impl cookie_server::Cookie for CookieService {
         request: Request<LoginRequest>,
     ) -> Result<Response<LoginResponse>, tonic::Status> {
         let request = request.get_ref();
-        let player = cookie::find(&self.storage, request.cookie.as_str()).await;
-        match player {
-            None => Result::Ok(Response::new(LoginResponse {
+        let result = cookie::find(&self.storage, request.cookie.as_str()).await;
+        match result {
+            FindResult::NotFound => Result::Ok(Response::new(LoginResponse {
                 tokens: None,
-                status: login_response::Status::CookieNotFound as i32,
+                status: login_response::Status::NotFound as i32,
             })),
-            Some(player) => self
+            FindResult::Linked => Result::Ok(Response::new(LoginResponse {
+                tokens: None,
+                status: login_response::Status::Linked as i32,
+            })),
+            FindResult::Player(player) => self
                 .create_token(request.device_id.to_owned(), player)
                 .await
                 .map(|r| {

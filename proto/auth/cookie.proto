@@ -32,7 +32,8 @@ message LoginResponse {
   Status status = 2;
   enum Status {
     OK = 0;
-    COOKIE_NOT_FOUND = 1;
+    NOT_FOUND = 1;
+    LINKED = 2;
   }
 }
 

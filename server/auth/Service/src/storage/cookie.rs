@@ -1,7 +1,7 @@
 use rand::distributions::Alphanumeric;
 use rand::rngs::OsRng;
 use rand::Rng;
-use sqlx::Error;
+use sqlx::{Error, Postgres, Transaction};
 
 use crate::storage::pg::PgStorage;
 
@@ -59,13 +59,36 @@ async fn do_attach(storage: &PgStorage, player: u64, cookie: &str) -> Result<(),
     result
 }
 
-pub async fn find(storage: &PgStorage, cookie: &str) -> Option<u64> {
-    let result: Result<Option<(i64,)>, sqlx::Error> =
-        sqlx::query_as("select player from cookie_players where cookie=$1")
+pub enum FindResult {
+    NotFound,
+    Player(u64),
+    Linked,
+}
+pub async fn find(storage: &PgStorage, cookie: &str) -> FindResult {
+    let result: Result<Option<(i64, bool)>, sqlx::Error> =
+        sqlx::query_as("select player, linked from cookie_players where cookie=$1")
             .bind(cookie)
             .fetch_optional(&storage.pool)
             .await;
-    result.map(|r| r.map(|v| v.0 as u64)).unwrap()
+
+    match result.unwrap() {
+        None => FindResult::NotFound,
+        Some((player, linked)) => {
+            if linked {
+                FindResult::Linked
+            } else {
+                FindResult::Player(player as u64)
+            }
+        }
+    }
+}
+
+pub async fn mark_cookie_as_linked(player: u64, tx: &mut Transaction<'_, Postgres>) {
+    sqlx::query("update cookie_players set linked=true where player=$1")
+        .bind(player as i64)
+        .execute(tx)
+        .await
+        .unwrap();
 }
 
 #[cfg(test)]
@@ -75,7 +98,9 @@ pub mod tests {
     use ipnetwork::IpNetwork;
     use testcontainers::clients::Cli;
 
-    use crate::storage::cookie::{attach, do_attach, find, AttachError};
+    use crate::storage::cookie::{
+        attach, do_attach, find, mark_cookie_as_linked, AttachError, FindResult,
+    };
     use crate::storage::players::create_player;
     use crate::storage::test::setup_postgresql_storage;
 
@@ -89,9 +114,28 @@ pub mod tests {
 
         let cookie_a = attach(&storage, player_a).await;
         let cookie_b = attach(&storage, player_b).await;
+        assert!(matches!(find(&storage, cookie_a.as_str()).await,
+                FindResult::Player(player) if player == player_a));
+        assert!(matches!(find(&storage, cookie_b.as_str()).await,
+            FindResult::Player(player) if player == player_b));
+    }
 
-        assert_eq!(find(&storage, cookie_a.as_str()).await.unwrap(), player_a);
-        assert_eq!(find(&storage, cookie_b.as_str()).await.unwrap(), player_b);
+    #[tokio::test]
+    pub async fn should_linked() {
+        let cli = Cli::default();
+        let (storage, _node) = setup_postgresql_storage(&cli).await;
+        let ip = IpNetwork::from_str("127.0.0.1").unwrap();
+        let player = create_player(&storage, &ip).await;
+        let cookie = attach(&storage, player).await;
+
+        let mut tx = storage.pool.begin().await.unwrap();
+        mark_cookie_as_linked(player, &mut tx).await;
+        tx.commit().await.unwrap();
+
+        assert!(matches!(
+            find(&storage, cookie.as_str()).await,
+            FindResult::Linked
+        ));
     }
 
     #[tokio::test]

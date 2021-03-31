@@ -97,7 +97,7 @@ pub async fn should_not_login_by_wrong_cookie() {
     let login_response = login_response.into_inner();
     assert_eq!(
         login_response.status,
-        cookie::login_response::Status::CookieNotFound as i32
+        cookie::login_response::Status::NotFound as i32
     );
     assert!(matches!(login_response.tokens, None));
 }
