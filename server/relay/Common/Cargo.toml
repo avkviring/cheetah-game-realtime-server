@@ -10,7 +10,7 @@ log = "0.4"
 serde = { version = "1.0.124", features = ["derive", "rc"] }
 rmp-serde = "0.15.4"
 rand = "0.8.3"
-snap = "1.0.4"
+snap = "1.0.5"
 byteorder = "1.4.3"
 chacha20poly1305 = { version = "0.7.1", features = ["heapless"] }
 derivative = "2.2.0"
