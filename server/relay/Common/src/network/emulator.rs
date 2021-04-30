@@ -45,13 +45,13 @@ pub struct BinaryFrame {
 
 impl Ord for BinaryFrame {
 	fn cmp(&self, other: &Self) -> Ordering {
-		self.time.cmp(&other.time)
+		other.time.cmp(&self.time)
 	}
 }
 
 impl PartialOrd for BinaryFrame {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		self.time.partial_cmp(&other.time)
+		other.time.partial_cmp(&self.time)
 	}
 }
 
@@ -304,6 +304,10 @@ mod tests {
 	#[test]
 	fn should_keep_frame_order() {
 		let mut emulator = NetworkLatencyEmulator::default();
+		let rtt = Duration::from_millis(100);
+		let half_rtt = rtt.div(2);
+		emulator.configure_rtt(rtt, 0.0);
+
 		let frame_1 = vec![1];
 		let frame_2 = vec![2];
 		let now = Instant::now();
@@ -313,10 +317,15 @@ mod tests {
 		emulator.schedule_out(&now, &frame_1.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 		emulator.schedule_out(&now, &frame_2.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
+		let now = now.add(half_rtt.sub(Duration::from_millis(1)));
+		assert!(matches!(emulator.get_in(&now), None));
+		assert!(matches!(emulator.get_out(&now), None));
+
+		let now = now.add(Duration::from_millis(1));
 		assert!(matches!(emulator.get_in(&now),Some(frame) if frame==frame_1 ));
 		assert!(matches!(emulator.get_in(&now),Some(frame) if frame==frame_2 ));
 
-		assert!(matches!(emulator.get_out(&now),Some((frame,_)) if frame==frame_1 ));
-		assert!(matches!(emulator.get_out(&now),Some((frame,_)) if frame==frame_2 ));
+		assert!(matches!(emulator.get_out(&now),Some((frame,_)) if frame==frame_1));
+		assert!(matches!(emulator.get_out(&now),Some((frame,_)) if frame==frame_2));
 	}
 }
