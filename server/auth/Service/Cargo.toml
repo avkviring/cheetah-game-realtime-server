@@ -13,7 +13,7 @@ tokio-stream = { version = "0.1", features = ["net"] }
 tower = { version = "0.4" }
 serde = { version = "1.0", features = ["derive"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-rustls", "postgres", "migrate", "ipnetwork", "chrono"] }
-async-trait = "0.1.13"
+async-trait = "0.1.50"
 log = "0.4"
 pretty_env_logger = "0.4.0"
 ipnetwork = "0.17.0"
