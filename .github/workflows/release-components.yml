@@ -32,7 +32,7 @@ jobs:
           - relay
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2.1.4
+      - uses: actions/cache@v2.1.5
         with:
           path: |
             /tmp/.buildx-cache
