@@ -16,7 +16,7 @@ fnv = "1.0.7"
 serde = { version = "1.0.125", features = ["derive", "rc"] }
 heapless = { version = "0.5.6", features = ["serde"] }
 actix-web = "3"
-futures = "0.3.13"
+futures = "0.3.14"
 actix-rt = "1.1.1"
 rmpv = { version = "0.4.7", features = ["with-serde"] }
 serde_json = "1.0.64"
