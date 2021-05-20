@@ -31,7 +31,7 @@ namespace Games.Cheetah.Cerberus.Internal {
             "ZXJ1cy5pbnRlcm5hbC5DcmVhdGVUb2tlblJlcXVlc3QaJC5nYW1lcy5jaGVl",
             "dGFoLmNlcmJlcnVzLnR5cGVzLlRva2Vuc1AAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Games.Cheetah.Cerberus.Types.CerberusTypesReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Cheetah.Cerberus.GRPC.CerberusTypesReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest), global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest.Parser, new[]{ "Player", "DeviceId" }, null, null, null, null)
           }));

@@ -17,9 +17,9 @@ namespace Games.Cheetah.Cerberus.Internal {
     static readonly string __ServiceName = "games.cheetah.cerberus.internal.Cerberus";
 
     static readonly grpc::Marshaller<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest> __Marshaller_games_cheetah_cerberus_internal_CreateTokenRequest = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest.Parser.ParseFrom);
-    static readonly grpc::Marshaller<global::Games.Cheetah.Cerberus.Types.Tokens> __Marshaller_games_cheetah_cerberus_types_Tokens = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Games.Cheetah.Cerberus.Types.Tokens.Parser.ParseFrom);
+    static readonly grpc::Marshaller<global::Cheetah.Cerberus.GRPC.Tokens> __Marshaller_games_cheetah_cerberus_types_Tokens = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Cheetah.Cerberus.GRPC.Tokens.Parser.ParseFrom);
 
-    static readonly grpc::Method<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Games.Cheetah.Cerberus.Types.Tokens> __Method_create = new grpc::Method<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Games.Cheetah.Cerberus.Types.Tokens>(
+    static readonly grpc::Method<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Cheetah.Cerberus.GRPC.Tokens> __Method_create = new grpc::Method<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Cheetah.Cerberus.GRPC.Tokens>(
         grpc::MethodType.Unary,
         __ServiceName,
         "create",
@@ -44,7 +44,7 @@ namespace Games.Cheetah.Cerberus.Internal {
       /// <param name="request">The request received from the client.</param>
       /// <param name="context">The context of the server-side call handler being invoked.</param>
       /// <returns>The response to send back to the client (wrapped by a task).</returns>
-      public virtual global::System.Threading.Tasks.Task<global::Games.Cheetah.Cerberus.Types.Tokens> create(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::ServerCallContext context)
+      public virtual global::System.Threading.Tasks.Task<global::Cheetah.Cerberus.GRPC.Tokens> create(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::ServerCallContext context)
       {
         throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
       }
@@ -84,7 +84,7 @@ namespace Games.Cheetah.Cerberus.Internal {
       /// <param name="deadline">An optional deadline for the call. The call will be cancelled if deadline is hit.</param>
       /// <param name="cancellationToken">An optional token for canceling the call.</param>
       /// <returns>The response received from the server.</returns>
-      public virtual global::Games.Cheetah.Cerberus.Types.Tokens create(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
+      public virtual global::Cheetah.Cerberus.GRPC.Tokens create(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
       {
         return create(request, new grpc::CallOptions(headers, deadline, cancellationToken));
       }
@@ -96,7 +96,7 @@ namespace Games.Cheetah.Cerberus.Internal {
       /// <param name="request">The request to send to the server.</param>
       /// <param name="options">The options for the call.</param>
       /// <returns>The response received from the server.</returns>
-      public virtual global::Games.Cheetah.Cerberus.Types.Tokens create(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::CallOptions options)
+      public virtual global::Cheetah.Cerberus.GRPC.Tokens create(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::CallOptions options)
       {
         return CallInvoker.BlockingUnaryCall(__Method_create, null, options, request);
       }
@@ -110,7 +110,7 @@ namespace Games.Cheetah.Cerberus.Internal {
       /// <param name="deadline">An optional deadline for the call. The call will be cancelled if deadline is hit.</param>
       /// <param name="cancellationToken">An optional token for canceling the call.</param>
       /// <returns>The call object.</returns>
-      public virtual grpc::AsyncUnaryCall<global::Games.Cheetah.Cerberus.Types.Tokens> createAsync(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
+      public virtual grpc::AsyncUnaryCall<global::Cheetah.Cerberus.GRPC.Tokens> createAsync(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::Metadata headers = null, global::System.DateTime? deadline = null, global::System.Threading.CancellationToken cancellationToken = default(global::System.Threading.CancellationToken))
       {
         return createAsync(request, new grpc::CallOptions(headers, deadline, cancellationToken));
       }
@@ -122,7 +122,7 @@ namespace Games.Cheetah.Cerberus.Internal {
       /// <param name="request">The request to send to the server.</param>
       /// <param name="options">The options for the call.</param>
       /// <returns>The call object.</returns>
-      public virtual grpc::AsyncUnaryCall<global::Games.Cheetah.Cerberus.Types.Tokens> createAsync(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::CallOptions options)
+      public virtual grpc::AsyncUnaryCall<global::Cheetah.Cerberus.GRPC.Tokens> createAsync(global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest request, grpc::CallOptions options)
       {
         return CallInvoker.AsyncUnaryCall(__Method_create, null, options, request);
       }
@@ -147,7 +147,7 @@ namespace Games.Cheetah.Cerberus.Internal {
     /// <param name="serviceImpl">An object implementing the server-side handling logic.</param>
     public static void BindService(grpc::ServiceBinderBase serviceBinder, CerberusBase serviceImpl)
     {
-      serviceBinder.AddMethod(__Method_create, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Games.Cheetah.Cerberus.Types.Tokens>(serviceImpl.create));
+      serviceBinder.AddMethod(__Method_create, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::Games.Cheetah.Cerberus.Internal.CreateTokenRequest, global::Cheetah.Cerberus.GRPC.Tokens>(serviceImpl.create));
     }
 
   }
