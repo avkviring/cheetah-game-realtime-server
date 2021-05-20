@@ -1,10 +1,10 @@
 pub mod auth {
     pub mod external {
         pub mod cookie {
-            tonic::include_proto!("games.cheetah.auth.external.cookie");
+            tonic::include_proto!("games.cheetah.authentication.external.cookie");
         }
         pub mod google {
-            tonic::include_proto!("games.cheetah.auth.external.google");
+            tonic::include_proto!("games.cheetah.authentication.external.google");
         }
     }
 }

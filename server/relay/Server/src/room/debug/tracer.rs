@@ -20,6 +20,7 @@ pub struct CommandTracer {
 	///
 	/// Правила применяются последовательно до первого срабатывания
 	///
+	#[serde(default)]
 	rules: Vec<Rule>,
 
 	#[serde(flatten)]

@@ -1,8 +1,8 @@
 use testcontainers::clients::Cli;
 use tonic::Request;
 
-use games_cheetah_auth_service::proto::auth::external::cookie;
-use games_cheetah_auth_service::proto::auth::external::cookie::*;
+use games_cheetah_authentication_service::proto::auth::external::cookie;
+use games_cheetah_authentication_service::proto::auth::external::cookie::*;
 
 use crate::helper::setup;
 use games_cheetah_cerberus_service::test_helper;

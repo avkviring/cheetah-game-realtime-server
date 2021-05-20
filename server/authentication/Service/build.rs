@@ -6,10 +6,10 @@ fn main() -> Result<(), Error> {
         .build_client(true)
         .compile(
             &[
-                "../../../proto/auth/cookie.proto",
-                "../../../proto/auth/google.proto",
+                "../../../proto/authentication/cookie.proto",
+                "../../../proto/authentication/google.proto",
             ],
-            &["../../../proto/cerberus/", "../../../proto/auth/"],
+            &["../../../proto/cerberus/", "../../../proto/authentication/"],
         )?;
 
     tonic_build::configure()

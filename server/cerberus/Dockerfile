@@ -29,7 +29,7 @@ COPY proto/cerberus proto/cerberus
 RUN cargo build --release --offline --manifest-path server/cerberus/Service/Cargo.toml
 
 # образ для запуска
-FROM rust:1.50
+FROM debian:buster-slim
 EXPOSE 5001/tcp 5002/tcp
 COPY --from=builder /app/server/cerberus/target/release/games-cheetah-cerberus-service /service
 CMD ["/service"]

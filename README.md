@@ -22,7 +22,7 @@
 
 Преобразование внешней авторизации в JWT токены платформы.
 
-- [Сервер](server/auth/README.md)
+- [Сервер](server/authentication/README.md)
 
 #### JWT токены
 

@@ -1,6 +1,8 @@
 syntax = "proto3";
 
-package games.cheetah.auth.external.google;
+package games.cheetah.authentication.external.google;
+option csharp_namespace = "Cheetah.Authentication.Android.GRPC";
+
 import public "cerberus.types.proto";
 
 service Google {

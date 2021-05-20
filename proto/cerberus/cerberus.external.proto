@@ -2,7 +2,7 @@
 syntax = "proto3";
 import public "cerberus.types.proto";
 package games.cheetah.cerberus.external;
-
+option csharp_namespace = "Cheetah.Cerberus.GRPC";
 
 message RefreshTokenRequest {
   string token = 1;

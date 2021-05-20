@@ -3,9 +3,9 @@ use testcontainers::clients::Cli;
 use tonic::metadata::MetadataValue;
 use tonic::Request;
 
-use games_cheetah_auth_service::proto::auth::external::cookie;
-use games_cheetah_auth_service::proto::auth::external::google;
-use games_cheetah_auth_service::proto::cerberus::types::Tokens;
+use games_cheetah_authentication_service::proto::auth::external::cookie;
+use games_cheetah_authentication_service::proto::auth::external::google;
+use games_cheetah_authentication_service::proto::cerberus::types::Tokens;
 use games_cheetah_cerberus_library::token::JWTTokenParser;
 use games_cheetah_cerberus_service::test_helper;
 

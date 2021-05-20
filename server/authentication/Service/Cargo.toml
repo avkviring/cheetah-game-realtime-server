@@ -1,5 +1,5 @@
 [package]
-name = "games-cheetah-auth-service"
+name = "games-cheetah-authentication-service"
 version = "999.999.999"
 edition = "2018"
 

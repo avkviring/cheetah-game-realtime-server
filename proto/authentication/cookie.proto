@@ -1,6 +1,8 @@
 syntax = "proto3";
 
-package games.cheetah.auth.external.cookie;
+package games.cheetah.authentication.external.cookie;
+option csharp_namespace = "Cheetah.Authentication.Cookie.GRPC";
+
 import public "cerberus.types.proto";
 
 service Cookie {

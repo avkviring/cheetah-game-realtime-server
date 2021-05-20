@@ -17,7 +17,6 @@ RUN apt-get update && \
 WORKDIR app
 COPY server/relay/Macro server/relay/Macro
 COPY server/relay/Common server/relay/Common
-COPY server/relay/Server server/relay/Server
 COPY --from=planner /app/server/relay/Server/recipe.json server/relay/Server/recipe.json
 RUN cd server/relay/Server && cargo chef cook --release --recipe-path recipe.json
 
@@ -34,7 +33,7 @@ COPY server/relay/Server server/relay/Server
 RUN cargo build --release --offline --manifest-path server/relay/Server/Cargo.toml
 
 # образ для запуска
-FROM rust:1.50
-EXPOSE 5001/tcp 5002/tcp
+FROM debian:buster-slim
+EXPOSE 5001/tcp 5002/tcp 5555/udp 8080/tcp
 COPY --from=builder /app/server/relay/Server/target/release/cheetah_relay /service
 CMD ["/service"]

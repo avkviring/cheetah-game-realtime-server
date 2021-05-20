@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [ cerberus, auth, relay ]
+        component: [ cerberus, authentication, relay ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.5

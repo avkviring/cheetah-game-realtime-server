@@ -43,6 +43,7 @@ pub struct GameObjectTemplate {
 	pub id: u32,
 	pub template: GameObjectTemplateId,
 	pub access_groups: AccessGroups,
+	#[serde(default)]
 	pub fields: GameObjectFieldsTemplate,
 	#[serde(flatten)]
 	pub unmapping: HashMap<String, serde_yaml::Value>,

@@ -7,19 +7,19 @@ use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
 
-use games_cheetah_auth_service::storage::pg::PgStorage;
+use games_cheetah_authentication_service::storage::pg::PgStorage;
 use games_cheetah_cerberus_service::test_helper;
 
 async fn setup_postgresql_storage<'a>(cli: &'a Cli) -> (PgStorage, Container<'a, Cli, Postgres>) {
     let mut env = HashMap::default();
-    env.insert("POSTGRES_USER".to_owned(), "auth".to_owned());
+    env.insert("POSTGRES_USER".to_owned(), "authentication".to_owned());
     env.insert("POSTGRES_PASSWORD".to_owned(), "passwd".to_owned());
     let image = images::postgres::Postgres::default()
         .with_version(12)
         .with_env_vars(env);
     let node = cli.run(image);
     let port = node.get_host_port(5432).unwrap();
-    let storage = PgStorage::new("auth", "passwd", "127.0.0.1", port).await;
+    let storage = PgStorage::new("authentication", "passwd", "127.0.0.1", port).await;
     (storage, node)
 }
 
@@ -41,15 +41,16 @@ pub async fn setup<'a>(
 
     let (storage, postgres_container) = setup_postgresql_storage(cli).await;
     let handler_auth = tokio::spawn(async move {
-        games_cheetah_auth_service::server::run_grpc_server(
+        games_cheetah_authentication_service::server::run_grpc_server(
             storage,
-            service_port,
+            public_jwt_key,
             format!("http://127.0.0.1:{}", internal_cerberus_port).as_str(),
-            jsonwebtoken_google::Parser::new_with_custom_cert_url(
+            service_port,
+            true,
+            Some(jsonwebtoken_google::Parser::new_with_custom_cert_url(
                 jsonwebtoken_google::test_helper::CLIENT_ID,
                 public_google_key_url.as_str(),
-            ),
-            public_jwt_key,
+            )),
         )
         .await;
     });

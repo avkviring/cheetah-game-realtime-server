@@ -8,8 +8,9 @@ jobs:
     strategy:
       matrix:
         package:
-          - games.cheetah.auth.cookie
-          - games.cheetah.auth.android
+          - games.cheetah.authentication
+          - games.cheetah.authentication.android
+          - games.cheetah.authentication.cookie
           - games.cheetah.cerberus
           - games.cheetah.platfrom
     steps:
@@ -28,7 +29,7 @@ jobs:
       matrix:
         component:
           - cerberus
-          - auth
+          - authentication
           - relay
     steps:
       - uses: actions/checkout@v2
@@ -54,7 +55,7 @@ jobs:
           context: .
           push: false
           file: server/${{ matrix.component }}/Dockerfile
-          tags: docker.registry.cheetah.games/cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
+          tags: docker.registry.cheetah.games/${{ matrix.component }}:${{ github.event.release.tag_name }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
       - name: Move buildkit cache

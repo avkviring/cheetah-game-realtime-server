@@ -87,7 +87,7 @@ fn get_cli() -> (Option<Vec<String>>, Option<Vec<String>>, Option<String>, Optio
 				.multiple(false)
 				.required(false)
 				.takes_value(false)
-				.default_value("5000")
+				.default_value("5555")
 				.about("Listen port for game connections."),
 		)
 		.arg(
@@ -137,6 +137,7 @@ fn start_server(
 	game_port: u16,
 	rest_port: u16,
 ) {
+	log::info!("start relay");
 	let socket = UdpSocket::bind(SocketAddr::from_str(format!("0.0.0.0:{}", game_port).as_str()).unwrap())
 		.expect("Can not bind port for game server, use --game-port for other port");
 	let tracer = if show_all_trace {
@@ -183,7 +184,7 @@ fn init_logger(verbosity: LevelFilter) {
 	stderrlog::new()
 		.verbosity(verbosity as usize)
 		.show_level(true)
-		.timestamp(Timestamp::Second)
+		.timestamp(Timestamp::Off)
 		.init()
 		.unwrap();
 }

@@ -8,11 +8,11 @@ docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/cerberus/ akvir
 docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/cerberus akviring/protoc:latest \
   protoc \
   --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-  --grpc_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/grpc/ \
-  --csharp_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/grpc/ cerberus.external.proto
+  --grpc_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ \
+  --csharp_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ cerberus.external.proto
 
 docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/cerberus akviring/protoc:latest \
   protoc \
   --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-  --grpc_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/grpc/ \
-  --csharp_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/grpc/ cerberus.types.proto
+  --grpc_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ \
+  --csharp_out=../../clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ cerberus.types.proto

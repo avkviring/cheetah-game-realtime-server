@@ -7,7 +7,7 @@ pub mod service;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::init();
-    println!("±± cheetah game cerberus component ±±±±");
+    log::info!("start cerberus");
 
     // ключи для генерации токенов
     let jwt_public_key = get_key_from_env("JWT_PUBLIC_KEY");
