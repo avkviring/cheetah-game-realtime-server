@@ -1,13 +1,14 @@
 version: "3.1"
 services:
-  auth_postgres:
+  authentication_postgres:
     image: postgres:13.1-alpine
     environment:
-      - POSTGRES_USER=auth
-      - POSTGRES_PASSWORD=auth
+      - POSTGRES_USER=authentication
+      - POSTGRES_PASSWORD=authentication
   cerberus_redis:
     image: redis:6.2.1
-  component_cerberus_service:
+  cerberus:
+    image: docker.registry.cheetah.games/cerberus:999.999.999
     build:
       context: ../../
       dockerfile: server/cerberus/Dockerfile
@@ -16,27 +17,41 @@ services:
     environment:
       - JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
       - JWT_PRIVATE_KEY=LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2NnN2RzSldTejhmNDBjRXYKQlRlR1N6QU5YR2xFenV0ZDlJSW02L2lubDBhaFJBTkNBQVJWVWMxY3JHaFEyU2hmMkdjNG1sTFBvcllvTitLRApGcEplNzRVaWsvZmFxOXdPQms5blRXMk9jYU03S3pJL0ZHaGxveTc5MzJzZUxlNlZ0eDZoakJMNQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0t
-#  component_relay_service:
-#    build:
-#      context: ../../
-#      dockerfile: server/relay/Dockerfile
-  component_auth_service:
+  relay:
+    image: docker.registry.cheetah.games/relay:999.999.999
     build:
       context: ../../
-      dockerfile: server/auth/Dockerfile
+      dockerfile: server/relay/Dockerfile
+    ports:
+      - "0.0.0.0:5555:5555/udp"
+      - "0.0.0.0:8080:8080/tcp"
+    command:
+      - "/service"
+      - "--room=/tmp/room.yml"
+      - "--log-level=INFO"
+      - "--command-trace=/tmp/trace.yml"
+    volumes:
+      - ./relay/room.yml:/tmp/room.yml
+      - ./relay/trace.yml:/tmp/trace.yml
+  authentication:
+    image: docker.registry.cheetah.games/authentication:999.999.999
+    build:
+      context: ../../
+      dockerfile: server/authentication/Dockerfile
     depends_on:
-      - component_cerberus_service
-      - auth_postgres
+      - cerberus
+      - authentication_postgres
     environment:
       - JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
-      - POSTGRES_USER=auth
-      - POSTGRES_PASSWORD=auth
+      - POSTGRES_USER=authentication
+      - POSTGRES_PASSWORD=authentication
       - AUTH_GOOGLE_CLIENT_ID=663521173650-gkgrl7aouifjag0j5do14pul1hdqvosm.apps.googleusercontent.com
+      - COOKIE
   grpc_proxy:
     image: nginx:1.19.8
     depends_on:
-      - component_cerberus_service
-      - component_auth_service
+      - cerberus
+      - authentication
     ports:
       - "0.0.0.0:7777:80"
     volumes:
