@@ -24,8 +24,9 @@ extra:
   disqus: remark42
 nav:
   - "Введение": "index.md"
-  - "Настройка":
-      - "Unity": "setup/unity.md"
+  - "Unity":
+      - "Установка платформы": "unity/setup.md"
+      - "Запуск локального сервера": "unity/local-server.md"
   - "Компоненты":
       - "Аутентификация":
           - "Введение": "components/authentication/index.md"
@@ -50,7 +51,6 @@ nav:
               - "Права доступа": "components/relay/configuration/permissions.md"
               - "Трассировка команд": "components/relay/configuration/trace.md"
           - "Локальная разработка":
-              - "Запуск сервера": "components/relay/develop/run.md"
+              - "Выбор пользователя": "components/relay/develop/select-user.md"
               - "Эмуляция параметров сети": "components/relay/develop/network.md"
               - "Логирование": "components/relay/develop/logger.md"
-              - "Состояние сервера": "components/relay/develop/server-dump.md"

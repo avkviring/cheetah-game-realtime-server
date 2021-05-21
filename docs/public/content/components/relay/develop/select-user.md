@@ -1,19 +1,3 @@
-Сервер для локальной разработки поставляется в Unity пакете **games.cheetah.unity.relay**.
-
-=== "windows"
-    ```shell
-    games.cheetah.unity.relay/Tests/Server/relay.exe
-    ```
-=== "linux"
-    ```shell
-    games.cheetah.unity.relay/Tests/Server/linux_relay
-    ```
-=== "macos"
-    ```shell
-    games.cheetah.unity.relay/Tests/Server/macos_relay
-    ```
-Для запуска сервера необходимо задать конфигурацию [комнаты](/components/relay/configuration/room/).
-
 ### Выбор пользователя для соединения с сервером
 
 Выбор осуществляется среди пользователей заданных в конфигурации комнаты.
