@@ -9,7 +9,8 @@
 
 #### Шаблон комнаты
 Каталог - Assets/Editor/Cheetah/Relay/Templates
-Формат имени файла - *.yml
+
+Формат имени файла - \*.yml
 
 ``` yaml
 # объекты комнаты
@@ -25,12 +26,12 @@ objects:
 
 #### Комната
 Каталог - Assets/Editor/Cheetah/Relay/Local/Rooms/
-Формат имени файла - *.yml
+
+Формат имени файла - \*.yml
 
 ``` yaml
-#  Имя файла без расширения с шаблоном комнаты
-template: default 
-id: 100
+template: default #  Имя файла без расширения с шаблоном комнаты 
+id: 100 # идентификатор комнаты
 # автосоздание пользователя после выхода
 auto_create_user: true
 # список ожидаемых пользователей
@@ -44,13 +45,13 @@ users:
       template: 4
       access_groups: 15
       fields:
-      longs:
-      5: 100
-      15: 200
-      floats:
-      3: 5.5
-      7: 9.9
-      structures:
-      10:
-      name: alex
-``` yaml
+        longs:
+          5: 100
+          15: 200 
+        floats:
+          3: 5.5
+          7: 9.9
+        structures:
+          10:
+            name: alex
+```
