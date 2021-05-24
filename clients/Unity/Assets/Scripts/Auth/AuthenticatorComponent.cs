@@ -1,4 +1,6 @@
+#if UNITY_ANDROID
 using Cheetah.Authentication.Android;
+#endif
 using Cheetah.Authentication.Cookie;
 using Cheetah.Cerberus;
 using Cheetah.Platform;
@@ -32,7 +34,7 @@ namespace Example.Auth
 
         private async void OnAndroidLogin()
         {
-#if UNITY_ANDROID
+#if UNITY_ANDROID_T
             try
             {
                 // вначале используем сохраненый токен для авторизации
