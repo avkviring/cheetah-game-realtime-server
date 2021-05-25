@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:
+    {{.Release.Name}}-{{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      imagePullSecrets:
+        - name: cheetahdockerregistry
+      containers:
+        - name:
+            {{.Release.Name}}-{{ .Chart.Name }}
+          image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Chart.AppVersion}}"
+          imagePullPolicy: Always
+          env:
+            - name: "JWT_PUBLIC_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt
+                  key: public
+            - name: "JWT_PRIVATE_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt
+                  key: private
+            - name: "REDIS_HOST"
+              value: "$({{.Release.Name | upper}}_CERBERUS_REDIS_MASTER_SERVICE_HOST)"
+            - name: "REDIS_PORT"
+              value: "$({{.Release.Name | upper}}_CERBERUS_REDIS_MASTER_SERVICE_PORT)"
+            - name: "REDIS_AUTH"
+              valueFrom:
+                secretKeyRef:
+                  name: cerberus-redis-password
+                  key: password
+

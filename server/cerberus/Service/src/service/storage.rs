@@ -1,3 +1,4 @@
+use redis::aio::Connection;
 pub use redis::{AsyncCommands, Commands, ConnectionLike, ErrorKind, RedisError, RedisResult};
 
 ///
@@ -8,6 +9,7 @@ pub use redis::{AsyncCommands, Commands, ConnectionLike, ErrorKind, RedisError, 
 pub struct RedisRefreshTokenStorage {
     host: String,
     port: u16,
+    auth: Option<String>,
     ///
     /// Время жизни данных для пользователя
     ///
@@ -25,12 +27,25 @@ impl RedisRefreshTokenStorage {
     ///
     const COUNT_DEVICES_PER_USER: usize = 32;
 
-    pub fn new(host: String, port: u16, time_of_life_in_sec: i64) -> Result<Self, String> {
-        Result::Ok(Self {
+    pub fn new(
+        host: String,
+        port: u16,
+        auth: Option<String>,
+        time_of_life_in_sec: i64,
+    ) -> Result<Self, String> {
+        let storage = Self {
             host,
             port,
+            auth,
             time_of_life_in_sec,
-        })
+        };
+
+        let client = redis::Client::open(storage.make_url()).unwrap();
+        let mut connection = client.get_connection().unwrap();
+        connection
+            .set::<String, String, ()>("test".to_string(), "value".to_string())
+            .unwrap();
+        return Result::Ok(storage);
     }
 
     fn make_key(player: u64) -> String {
@@ -52,16 +67,11 @@ impl RedisRefreshTokenStorage {
     ) -> Result<u64, RedisError> {
         let key = RedisRefreshTokenStorage::make_key(player);
         let device_id = RedisRefreshTokenStorage::normalize_device_id(device_id);
-
-        let client = redis::Client::open(format!("redis://{}:{}", self.host, self.port))?;
-        let mut connection = client.get_async_connection().await?;
-
+        let mut connection = self.open_connection().await?;
         let len: usize = connection.hlen(&key).await?;
-
         if len > RedisRefreshTokenStorage::COUNT_DEVICES_PER_USER {
             connection.del::<&String, usize>(&key).await?;
         }
-
         let result = connection.hincr(&key, device_id, 1 as u64).await?;
 
         connection
@@ -78,13 +88,29 @@ impl RedisRefreshTokenStorage {
     ) -> Result<u64, RedisError> {
         let key = RedisRefreshTokenStorage::make_key(player);
         let device_id = RedisRefreshTokenStorage::normalize_device_id(device_id);
-        let client = redis::Client::open(format!("redis://{}:{}", self.host, self.port))?;
-        let mut connection = client.get_async_connection().await?;
+        let mut connection = self.open_connection().await?;
         connection
             .expire(&key, self.time_of_life_in_sec as usize)
             .await?;
         let result: Result<Option<u64>, RedisError> = connection.hget(key, device_id).await;
         result.map(|v| v.unwrap_or(0))
+    }
+
+    fn make_url(&self) -> String {
+        match &self.auth {
+            Option::Some(ref password) => {
+                format!("redis://:{}@{}:{}", password, self.host, self.port)
+            }
+            Option::None => {
+                format!("redis://{}:{}", self.host, self.port)
+            }
+        }
+    }
+
+    async fn open_connection(&self) -> Result<Connection, RedisError> {
+        let client = redis::Client::open(self.make_url())?;
+        let connection = client.get_async_connection().await?;
+        Result::Ok(connection)
     }
 }
 
@@ -184,7 +210,7 @@ pub mod tests {
         let port = node.get_host_port(6379).unwrap();
         (
             node,
-            RedisRefreshTokenStorage::new("127.0.0.1".to_owned(), port, 1).unwrap(),
+            RedisRefreshTokenStorage::new("127.0.0.1".to_owned(), port, Option::None, 1).unwrap(),
         )
     }
 }

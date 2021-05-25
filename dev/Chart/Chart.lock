@@ -1,0 +1,6 @@
+dependencies:
+- name: cerberus
+  repository: file://../../server/cerberus/Chart/
+  version: 999.999.999
+digest: sha256:355b17855d5283b247cc505b07e494eb2c35d9a890ca6a384a900895e264368c
+generated: "2021-06-03T07:57:33.354332+05:00"

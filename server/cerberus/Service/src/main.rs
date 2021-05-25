@@ -15,6 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // параметры redis
     let redis_host = std::env::var("REDIS_HOST").unwrap_or("cerberus_redis".to_owned());
+    let redis_auth = std::env::var("REDIS_AUTH").ok();
     let redis_port = std::env::var("REDIS_PORT")
         .unwrap_or("6379".to_owned())
         .parse()
@@ -36,6 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         jwt_private_key,
         redis_host,
         redis_port,
+        redis_auth,
         internal_service_port,
         external_service_port,
     )

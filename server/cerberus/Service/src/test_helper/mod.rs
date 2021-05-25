@@ -1,6 +1,7 @@
 use testcontainers::clients::*;
 use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
+use tokio::task::JoinHandle;
 use tokio::time::Duration;
 
 #[cfg(not(feature = "test-helper"))]
@@ -12,7 +13,6 @@ use games_cheetah_cerberus_service::{
 use crate::{
     server::*, service::storage::RedisRefreshTokenStorage, service::token::JWTTokensService,
 };
-use tokio::task::JoinHandle;
 
 pub const PUBLIC_KEY: &str = "-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVVHNXKxoUNkoX9hnOJpSz6K2KDfi
@@ -52,7 +52,13 @@ fn stub_storage<'a>(
     let port = node.get_host_port(6379).unwrap();
     (
         node,
-        RedisRefreshTokenStorage::new("127.0.0.1".to_owned(), port, time_of_life_in_sec).unwrap(),
+        RedisRefreshTokenStorage::new(
+            "127.0.0.1".to_owned(),
+            port,
+            Option::None,
+            time_of_life_in_sec,
+        )
+        .unwrap(),
     )
 }
 
@@ -68,6 +74,7 @@ pub async fn stub_grpc_server<'a>(
             PRIVATE_KEY.to_owned(),
             "127.0.0.1".to_owned(),
             port,
+            Option::None,
             internal_port,
             external_port,
         )

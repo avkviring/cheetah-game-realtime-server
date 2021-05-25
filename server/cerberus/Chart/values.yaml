@@ -1,0 +1,15 @@
+replicaCount: 1
+redis:
+  nameOverride: cerberus-redis
+  existingSecret: cerberus-redis-password
+  existingSecretPasswordKey: password
+  cluster:
+    enabled: false
+  persistence:
+    existingClaim: cerberus-redis-claim
+  volumePermissions:
+    enabled: true
+  securityContext:
+    enabled: true
+    fsGroup: 1001
+    runAsUser: 1001

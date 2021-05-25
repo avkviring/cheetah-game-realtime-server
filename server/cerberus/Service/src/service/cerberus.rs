@@ -1,8 +1,9 @@
 use tonic::Request;
 
+use crate::proto;
+
 use super::storage::RedisRefreshTokenStorage;
 use super::token::JWTTokensService;
-use crate::proto;
 
 const HOUR_IN_SEC: i64 = 60 * 60;
 const SESSION_EXP_IN_SEC: i64 = 5 * HOUR_IN_SEC;
@@ -18,10 +19,15 @@ impl Cerberus {
         public_key: String,
         redis_host: String,
         redis_port: u16,
+        redis_auth: Option<String>,
     ) -> Self {
-        let storage =
-            RedisRefreshTokenStorage::new(redis_host, redis_port, REFRESH_EXP_IN_SEC + HOUR_IN_SEC)
-                .unwrap();
+        let storage = RedisRefreshTokenStorage::new(
+            redis_host,
+            redis_port,
+            redis_auth,
+            REFRESH_EXP_IN_SEC + HOUR_IN_SEC,
+        )
+        .unwrap();
         Self {
             service: JWTTokensService::new(
                 private_key,

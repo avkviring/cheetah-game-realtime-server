@@ -1,0 +1,12 @@
+apiVersion: v2
+name: cerberus
+description: Cerberus
+type: application
+version: "999.999.999"
+appVersion: "999.999.999"
+
+dependencies:
+  - name: redis
+    version: "12.10.1"
+    repository: "https://charts.bitnami.com/bitnami"
+

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: platform
+description: Platform
+type: application
+version: 999.999.999
+appVersion: "999.999.999"
+
+dependencies:
+  - name: cerberus
+    version: 999.999.999
+    repository: "file://../../server/cerberus/Chart/"
