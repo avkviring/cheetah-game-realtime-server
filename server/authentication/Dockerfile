@@ -16,8 +16,6 @@ RUN apt-get update && \
 WORKDIR app
 COPY server/cerberus /cerberus
 COPY proto/cerberus proto/cerberus
-COPY server/authentication server/authentication
-COPY proto/authentication proto/authentication
 COPY --from=planner /app/server/authentication/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
