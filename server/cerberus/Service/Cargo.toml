@@ -3,6 +3,9 @@ name = "games-cheetah-cerberus-service"
 version = "999.999.999"
 edition = "2018"
 
+[[bin]]
+name = "service"
+path = "src/main.rs"
 
 [dependencies]
 base64 = "0.13.0"

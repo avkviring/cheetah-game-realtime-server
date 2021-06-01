@@ -3,6 +3,9 @@ name = "games-cheetah-authentication-service"
 version = "999.999.999"
 edition = "2018"
 
+[[bin]]
+name = "service"
+path = "src/main.rs"
 
 [dependencies]
 chrono = "0.4"
