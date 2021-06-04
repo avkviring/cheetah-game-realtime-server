@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use jsonwebtoken_google::test_helper::TokenClaims;
 use testcontainers::clients::Cli;
 use tonic::metadata::MetadataValue;
@@ -16,8 +18,9 @@ pub async fn should_register_and_login() {
     let cli = Cli::default();
     let service_port = 6004;
 
-    let (token, public_key_server) =
-        jsonwebtoken_google::test_helper::setup_public_key_server(&TokenClaims::new());
+    let (token, public_key_server) = jsonwebtoken_google::test_helper::setup_public_key_server(
+        &TokenClaims::new_with_expire(Duration::from_secs(100)),
+    );
 
     let (_container_redis, _container_postgresql, _cerberus_handler, _auth_handler) =
         helper::setup(
@@ -73,7 +76,9 @@ pub async fn should_attach() {
     let service_port = 6104;
 
     let (google_token, public_key_server) =
-        jsonwebtoken_google::test_helper::setup_public_key_server(&TokenClaims::new());
+        jsonwebtoken_google::test_helper::setup_public_key_server(&TokenClaims::new_with_expire(
+            Duration::from_secs(100),
+        ));
     let (_container_redis, _container_postgresql, _cerberus_handler, _auth_handler) =
         helper::setup(
             &cli,
