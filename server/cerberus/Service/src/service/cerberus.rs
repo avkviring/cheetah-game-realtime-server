@@ -5,9 +5,9 @@ use crate::proto;
 use super::storage::RedisRefreshTokenStorage;
 use super::token::JWTTokensService;
 
-const HOUR_IN_SEC: i64 = 60 * 60;
-const SESSION_EXP_IN_SEC: i64 = 5 * HOUR_IN_SEC;
-const REFRESH_EXP_IN_SEC: i64 = 30 * 24 * HOUR_IN_SEC;
+const HOUR_IN_SEC: u64 = 60 * 60;
+const SESSION_EXP_IN_SEC: u64 = 10 * HOUR_IN_SEC;
+const REFRESH_EXP_IN_SEC: u64 = 30 * 24 * HOUR_IN_SEC;
 
 pub struct Cerberus {
     service: JWTTokensService,
@@ -52,10 +52,13 @@ impl proto::internal::cerberus_server::Cerberus for Cerberus {
             .create(request.player, request.device_id.clone())
             .await
         {
-            Ok(tokens) => Result::Ok(tonic::Response::new(proto::types::Tokens {
-                session: tokens.session,
-                refresh: tokens.refresh,
-            })),
+            Ok(tokens) => {
+                println!("session token {}", tokens.session);
+                Result::Ok(tonic::Response::new(proto::types::Tokens {
+                    session: tokens.session,
+                    refresh: tokens.refresh,
+                }))
+            }
             Err(e) => {
                 log::error!("{:?}", e);
                 Result::Err(tonic::Status::failed_precondition(format!("{:?}", e)))

@@ -8,7 +8,7 @@ pub mod test_helper;
 
 #[tokio::test]
 pub async fn test_server() {
-    let (_handler, _redis) = test_helper::stub_grpc_server(7001, 7002).await;
+    let (_handler, _redis) = test_helper::stub_cerberus_grpc_server(7001, 7002).await;
 
     let player = 123;
     let device_id = "iphone se".to_owned();

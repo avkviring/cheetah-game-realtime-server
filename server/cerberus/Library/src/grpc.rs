@@ -9,7 +9,9 @@ pub enum AuthorizationError {
     WrongHeader,
     Token(SessionTokenError),
 }
-
+///
+/// Получить id пользователя из jwt токена в заголовке grpc запроса
+///
 pub fn get_player_id(
     metadata: &MetadataMap,
     public_key: String,

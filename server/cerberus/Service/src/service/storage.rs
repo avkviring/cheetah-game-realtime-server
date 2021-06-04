@@ -13,7 +13,7 @@ pub struct RedisRefreshTokenStorage {
     ///
     /// Время жизни данных для пользователя
     ///
-    time_of_life_in_sec: i64,
+    time_of_life_in_sec: u64,
 }
 
 impl RedisRefreshTokenStorage {
@@ -31,7 +31,7 @@ impl RedisRefreshTokenStorage {
         host: String,
         port: u16,
         auth: Option<String>,
-        time_of_life_in_sec: i64,
+        time_of_life_in_sec: u64,
     ) -> Result<Self, String> {
         let storage = Self {
             host,

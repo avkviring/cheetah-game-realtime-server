@@ -26,8 +26,8 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 -----END PRIVATE KEY-----";
 
 pub fn stub_token_service<'a>(
-    session_exp: i64,
-    refresh_exp: i64,
+    session_exp: u64,
+    refresh_exp: u64,
 ) -> (Container<'a, Cli, Redis>, JWTTokensService) {
     let (node, storage) = stub_storage(refresh_exp + 1);
 
@@ -46,7 +46,7 @@ lazy_static::lazy_static! {
 }
 
 fn stub_storage<'a>(
-    time_of_life_in_sec: i64,
+    time_of_life_in_sec: u64,
 ) -> (Container<'a, Cli, Redis>, RedisRefreshTokenStorage) {
     let node = (*CLI).run(images::redis::Redis::default());
     let port = node.get_host_port(6379).unwrap();
@@ -62,7 +62,7 @@ fn stub_storage<'a>(
     )
 }
 
-pub async fn stub_grpc_server<'a>(
+pub async fn stub_cerberus_grpc_server<'a>(
     internal_port: u16,
     external_port: u16,
 ) -> (JoinHandle<()>, Container<'a, Cli, Redis>) {

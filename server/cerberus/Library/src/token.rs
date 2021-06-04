@@ -45,6 +45,10 @@ impl JWTTokenParser {
         }
     }
 
+    ///
+    ///  "typ": "JWT",
+    //   "alg": "ES256"
+    //
     pub fn add_head(token: String) -> String {
         format!("eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.{}", token)
     }

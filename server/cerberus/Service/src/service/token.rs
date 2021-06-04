@@ -1,11 +1,10 @@
-use chrono::Utc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use super::storage::RedisRefreshTokenStorage;
+use games_cheetah_cerberus_library::token::{JWTTokenParser, SessionTokenClaims};
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-
-use games_cheetah_cerberus_library::token::{JWTTokenParser, SessionTokenClaims};
-
-use super::storage::RedisRefreshTokenStorage;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RefreshTokenClaims {
@@ -30,8 +29,8 @@ pub enum JWTTokensServiceError {
 }
 
 pub struct JWTTokensService {
-    session_exp_in_sec: i64,
-    refresh_exp_in_sec: i64,
+    session_exp_in_sec: u64,
+    refresh_exp_in_sec: u64,
     private_key: String,
     public_key: String,
     storage: RedisRefreshTokenStorage,
@@ -41,8 +40,8 @@ impl JWTTokensService {
     pub fn new(
         private_key: String,
         public_key: String,
-        session_exp_in_sec: i64,
-        refresh_exp_in_sec: i64,
+        session_exp_in_sec: u64,
+        refresh_exp_in_sec: u64,
         storage: RedisRefreshTokenStorage,
     ) -> Self {
         Self {
@@ -76,8 +75,9 @@ impl JWTTokensService {
             .await
             .map_err(|e| JWTTokensServiceError::StorageError(format!("{:?}", e)))?;
 
+        let timestamp = JWTTokensService::get_time_stamp();
         let claims = RefreshTokenClaims {
-            exp: (Utc::now().timestamp() + self.refresh_exp_in_sec) as usize,
+            exp: (timestamp + self.refresh_exp_in_sec) as usize,
             player,
             device_id,
             version,
@@ -92,8 +92,9 @@ impl JWTTokensService {
     }
 
     fn create_session_token(&self, player: u64) -> String {
+        let timestamp = JWTTokensService::get_time_stamp();
         let claims = SessionTokenClaims {
-            exp: (Utc::now().timestamp() + self.session_exp_in_sec) as usize,
+            exp: (timestamp + self.session_exp_in_sec) as usize,
             player,
         };
 
@@ -104,6 +105,13 @@ impl JWTTokensService {
         )
         .unwrap();
         JWTTokensService::remove_head(token)
+    }
+
+    fn get_time_stamp() -> u64 {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs()
     }
 
     fn remove_head(token: String) -> String {
