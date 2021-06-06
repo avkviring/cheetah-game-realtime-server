@@ -9,3 +9,6 @@ dependencies:
   - name: cerberus
     version: 999.999.999
     repository: "file://../../server/cerberus/Chart/"
+  - name: authentication
+    version: 999.999.999
+    repository: "file://../../server/authentication/Chart/"

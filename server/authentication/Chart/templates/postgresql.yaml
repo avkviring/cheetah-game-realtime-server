@@ -1,0 +1,79 @@
+{{ $secret := (lookup "v1" "Secret" .Release.Namespace "{{ .Chart.Name }}-postgresql") }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{ .Chart.Name }}-postgresql"
+type: Opaque
+  {{ if $secret}}
+data:
+  user: {{ $secret.data.user }}
+  password: {{ $secret.data.password }}
+  {{ else }}
+stringData:
+  user: authentication
+  password: {{ uuidv4 | quote }}
+  {{ end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Chart.Name }}-postgresql"
+spec:
+  selector:
+    app: "{{ .Chart.Name }}-postgresql"
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: "{{ .Chart.Name }}-postgresql"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "{{ .Chart.Name }}-postgresql"
+spec:
+  selector:
+    matchLabels:
+      app: "{{ .Chart.Name }}-postgresql"
+  replicas: 1
+  serviceName: "{{ .Chart.Name }}-postgresql"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Chart.Name }}-postgresql"
+    spec:
+      containers:
+        - name: "{{ .Chart.Name }}-postgresql"
+          image: postgres:13.1-alpine
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: password
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: "{{ .Chart.Name }}-postgresql"
+  volumeClaimTemplates:
+    - metadata:
+        name: "{{ .Chart.Name }}-postgresql"
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 50Mi

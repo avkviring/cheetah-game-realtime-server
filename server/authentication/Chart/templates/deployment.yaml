@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      imagePullSecrets:
+        - name: cheetahdockerregistry
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Chart.AppVersion}}"
+          imagePullPolicy: Always
+          env:
+            - name: "JWT_PUBLIC_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt
+                  key: public
+            - name: "JWT_PRIVATE_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt
+                  key: private
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: user
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: password
+            - name: POSTGRES_HOST
+              value: "$(AUTHENTICATION_POSTGRESQL_SERVICE_HOST)"
+            - name: POSTGRES_PORT
+              value: "$(AUTHENTICATION_POSTGRESQL_SERVICE_PORT)"

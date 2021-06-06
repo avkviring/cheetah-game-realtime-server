@@ -2,5 +2,8 @@ dependencies:
 - name: cerberus
   repository: file://../../server/cerberus/Chart/
   version: 999.999.999
-digest: sha256:355b17855d5283b247cc505b07e494eb2c35d9a890ca6a384a900895e264368c
-generated: "2021-06-03T07:57:33.354332+05:00"
+- name: authentication
+  repository: file://../../server/authentication/Chart/
+  version: 999.999.999
+digest: sha256:9d04accfea5b74d944ead87a56aef142f9f824ebe84aad1a03e461305fe6e87b
+generated: "2021-06-06T08:12:53.43309+05:00"

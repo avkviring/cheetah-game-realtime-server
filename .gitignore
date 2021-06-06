@@ -2,3 +2,4 @@
 .DS_Store
 examples/UnityPackages/Temp/
 examples/UnityPackages/Logs/
+*.tgz
