@@ -20,11 +20,18 @@ pub mod test {
         env.insert("POSTGRES_USER".to_owned(), "authentication".to_owned());
         env.insert("POSTGRES_PASSWORD".to_owned(), "passwd".to_owned());
         let image = images::postgres::Postgres::default()
-            .with_version(12)
+            .with_version(13)
             .with_env_vars(env);
         let node = cli.run(image);
         let port = node.get_host_port(5432).unwrap();
-        let storage = PgStorage::new("authentication", "passwd", "127.0.0.1", port).await;
+        let storage = PgStorage::new(
+            "authentication",
+            "authentication",
+            "passwd",
+            "127.0.0.1",
+            port,
+        )
+        .await;
         (storage, node)
     }
 }

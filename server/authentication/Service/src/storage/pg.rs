@@ -9,7 +9,13 @@ pub struct PgStorage {
 }
 
 impl PgStorage {
-    pub async fn new(pg_user: &str, pg_passwd: &str, pg_host: &str, pg_port: u16) -> Self {
+    pub async fn new(
+        pg_db: &str,
+        pg_user: &str,
+        pg_passwd: &str,
+        pg_host: &str,
+        pg_port: u16,
+    ) -> Self {
         let pool = PgPoolOptions::new()
             .max_connections(5)
             .connect_timeout(Duration::from_secs(5))

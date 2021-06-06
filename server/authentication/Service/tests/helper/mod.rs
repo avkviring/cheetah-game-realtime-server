@@ -15,11 +15,18 @@ async fn setup_postgresql_storage<'a>(cli: &'a Cli) -> (PgStorage, Container<'a,
     env.insert("POSTGRES_USER".to_owned(), "authentication".to_owned());
     env.insert("POSTGRES_PASSWORD".to_owned(), "passwd".to_owned());
     let image = images::postgres::Postgres::default()
-        .with_version(12)
+        .with_version(13)
         .with_env_vars(env);
     let node = cli.run(image);
     let port = node.get_host_port(5432).unwrap();
-    let storage = PgStorage::new("authentication", "passwd", "127.0.0.1", port).await;
+    let storage = PgStorage::new(
+        "authentication",
+        "authentication",
+        "passwd",
+        "127.0.0.1",
+        port,
+    )
+    .await;
     (storage, node)
 }
 
@@ -37,7 +44,8 @@ pub async fn setup<'a>(
     JoinHandle<()>,
 ) {
     let (handler_cerberus, redis_container) =
-        test_helper::stub_grpc_server(internal_cerberus_port, external_cerberus_port).await;
+        test_helper::stub_cerberus_grpc_server(internal_cerberus_port, external_cerberus_port)
+            .await;
 
     let (storage, postgres_container) = setup_postgresql_storage(cli).await;
     let handler_auth = tokio::spawn(async move {

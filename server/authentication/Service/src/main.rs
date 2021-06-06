@@ -10,9 +10,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pg_user = get_env("POSTGRES_USER");
     let pg_passwd = get_env("POSTGRES_PASSWORD");
-
-    let pg_host = "authentication_postgres".to_owned();
-    let pg_port = "5432".to_owned();
+    let pg_db = env::var("POSTGRES_DB").unwrap_or(pg_user.clone());
+    let pg_host = env::var("POSTGRES_HOST").unwrap_or("authentication_postgres".to_owned());
+    let pg_port = env::var("POSTGRES_PORT").unwrap_or("5432".to_owned());
 
     let cerberus_url = "http://cerberus:5001".to_owned();
 
@@ -22,6 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let jwt_public_key = get_env("JWT_PUBLIC_KEY");
 
     let storage = PgStorage::new(
+        pg_db.as_str(),
         pg_user.as_str(),
         pg_passwd.as_str(),
         pg_host.as_str(),
