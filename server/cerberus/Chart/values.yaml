@@ -1,12 +1,13 @@
 replicaCount: 1
 redis:
-  nameOverride: cerberus-redis
+  master:
+    persistence:
+      size: 50Mi
+  fullnameOverride: cerberus-redis
   existingSecret: cerberus-redis-password
   existingSecretPasswordKey: password
   cluster:
     enabled: false
-  persistence:
-    existingClaim: cerberus-redis-claim
   volumePermissions:
     enabled: true
   securityContext:

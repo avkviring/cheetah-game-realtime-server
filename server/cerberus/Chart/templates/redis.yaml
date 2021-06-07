@@ -1,4 +1,4 @@
-{{ $secret := (lookup "v1" "Secret" .Release.Namespace "cerberus-redis-password") }}
+  {{ $secret := (lookup "v1" "Secret" .Release.Namespace "cerberus-redis-password") }}
 apiVersion: v1
 kind: Secret
 metadata:

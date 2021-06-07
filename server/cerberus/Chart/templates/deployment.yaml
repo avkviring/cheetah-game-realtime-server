@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name:
-    {{.Release.Name}}-{{ .Chart.Name }}
+    {{ .Chart.Name }}
 spec:
   selector:
     matchLabels:
@@ -17,7 +17,7 @@ spec:
         - name: cheetahdockerregistry
       containers:
         - name:
-            {{.Release.Name}}-{{ .Chart.Name }}
+            {{ .Chart.Name }}
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Chart.AppVersion}}"
           imagePullPolicy: Always
           env:
@@ -32,9 +32,9 @@ spec:
                   name: jwt
                   key: private
             - name: "REDIS_HOST"
-              value: "$({{.Release.Name | upper}}_CERBERUS_REDIS_MASTER_SERVICE_HOST)"
+              value: "$(CERBERUS_REDIS_MASTER_SERVICE_HOST)"
             - name: "REDIS_PORT"
-              value: "$({{.Release.Name | upper}}_CERBERUS_REDIS_MASTER_SERVICE_PORT)"
+              value: "$(CERBERUS_REDIS_MASTER_SERVICE_PORT)"
             - name: "REDIS_AUTH"
               valueFrom:
                 secretKeyRef:
