@@ -12,3 +12,6 @@ dependencies:
   - name: authentication
     version: 999.999.999
     repository: "file://../../server/authentication/Chart/"
+  - name: relay
+    version: 999.999.999
+    repository: "file://../../server/relay/Chart/"
