@@ -1,10 +1,11 @@
-{{ $secret := (lookup "v1" "Secret" .Release.Namespace "{{ .Chart.Name }}-postgresql") }}
+{{ $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-postgresql" .Chart.Name)) }}
 apiVersion: v1
 kind: Secret
 metadata:
   name: "{{ .Chart.Name }}-postgresql"
 type: Opaque
   {{ if $secret}}
+immutable: true
 data:
   user: {{ $secret.data.user }}
   password: {{ $secret.data.password }}
@@ -25,17 +26,6 @@ spec:
     - protocol: TCP
       port: 5432
       targetPort: 5432
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: "{{ .Chart.Name }}-postgresql"
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 50Mi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
