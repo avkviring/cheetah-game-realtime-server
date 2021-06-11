@@ -1,0 +1,15 @@
+[package]
+name = "cheetah-integration-test"
+version = "0.1.0"
+authors = ["kviring <alex@kviring.com>"]
+edition = "2018"
+
+[dependencies]
+tokio = { version = "1.6", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
+tonic = { version = "0.4.3", features = ["tls", "tls-roots"] }
+prost = "0.7"
+webpki = "0.21"
+
+[build-dependencies]
+tonic-build = "0.4.2"
+
