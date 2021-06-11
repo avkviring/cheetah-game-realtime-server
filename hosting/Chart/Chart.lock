@@ -1,0 +1,12 @@
+dependencies:
+- name: cerberus
+  repository: file://../../server/cerberus/Chart/
+  version: 999.999.999
+- name: authentication
+  repository: file://../../server/authentication/Chart/
+  version: 999.999.999
+- name: relay
+  repository: file://../../server/relay/Chart/
+  version: 999.999.999
+digest: sha256:1a71e95e86a0ade0976fede48dbb5128f1de97d1a10798fdd69edda8b9d0a18e
+generated: "2021-06-07T08:38:23.748744+05:00"
