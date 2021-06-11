@@ -1,8 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:
-    {{ .Chart.Name }}
+  name: {{ .Chart.Name }}
 spec:
   selector:
     matchLabels:
@@ -16,8 +15,7 @@ spec:
       imagePullSecrets:
         - name: cheetahdockerregistry
       containers:
-        - name:
-            {{ .Chart.Name }}
+        - name: {{ .Chart.Name }}
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Chart.AppVersion}}"
           imagePullPolicy: Always
           env:
@@ -40,4 +38,15 @@ spec:
                 secretKeyRef:
                   name: cerberus-redis-password
                   key: password
-
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Chart.Name }}-external"
+spec:
+  selector:
+    app: "{{ .Chart.Name }}"
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

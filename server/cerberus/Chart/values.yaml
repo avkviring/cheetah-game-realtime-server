@@ -2,7 +2,7 @@ replicaCount: 1
 redis:
   master:
     persistence:
-      size: 50Mi
+      size: 1Gi
   fullnameOverride: cerberus-redis
   existingSecret: cerberus-redis-password
   existingSecretPasswordKey: password

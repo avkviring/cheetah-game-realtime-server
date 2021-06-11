@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /games.cheetah.{{ .Chart.Name }}
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Chart.Name }}-external"
+                port:
+                  number: 5000
