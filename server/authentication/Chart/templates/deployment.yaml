@@ -19,6 +19,8 @@ spec:
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Chart.AppVersion}}"
           imagePullPolicy: Always
           env:
+            - name: COOKIE
+              value: "true"
             - name: "JWT_PUBLIC_KEY"
               valueFrom:
                 secretKeyRef:
@@ -48,3 +50,16 @@ spec:
               value: "$(AUTHENTICATION_POSTGRESQL_SERVICE_HOST)"
             - name: POSTGRES_PORT
               value: "$(AUTHENTICATION_POSTGRESQL_SERVICE_PORT)"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Chart.Name }}-external"
+spec:
+  selector:
+    app: "{{ .Chart.Name }}"
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+
