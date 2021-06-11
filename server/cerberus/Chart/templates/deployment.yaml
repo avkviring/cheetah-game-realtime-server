@@ -9,6 +9,8 @@ spec:
   replicas: {{ .Values.replicaCount }}
   template:
     metadata:
+      annotations:
+        linkerd.io/inject: enabled
       labels:
         app: {{ .Chart.Name }}
     spec:

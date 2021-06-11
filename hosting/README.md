@@ -20,6 +20,8 @@ helm repo add jetstack https://charts.jetstack.io
 helm repo update
 helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.3.1 --set installCRDs=true   
 ```
+### Linkerd
+Установить, по-инструкции - https://linkerd.io/2.10/getting-started/
 
 ### Секреты для платформы
 

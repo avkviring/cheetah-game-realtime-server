@@ -9,6 +9,8 @@ spec:
   replicas: {{ .Values.replicaCount }}
   template:
     metadata:
+      annotations:
+        linkerd.io/inject: enabled
       labels:
         app: {{ .Chart.Name }}
     spec:
@@ -26,11 +28,6 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: public
-            - name: "JWT_PRIVATE_KEY"
-              valueFrom:
-                secretKeyRef:
-                  name: jwt
-                  key: private
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
@@ -46,10 +43,7 @@ spec:
                 secretKeyRef:
                   name: "{{ .Chart.Name }}-postgresql"
                   key: password
-            - name: POSTGRES_HOST
-              value: "$(AUTHENTICATION_POSTGRESQL_SERVICE_HOST)"
-            - name: POSTGRES_PORT
-              value: "$(AUTHENTICATION_POSTGRESQL_SERVICE_PORT)"
+
 ---
 apiVersion: v1
 kind: Service
