@@ -10,11 +10,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pg_user = get_env("POSTGRES_USER");
     let pg_passwd = get_env("POSTGRES_PASSWORD");
-    let pg_db = env::var("POSTGRES_DB").unwrap_or(pg_user.clone());
-    let pg_host = env::var("POSTGRES_HOST").unwrap_or("authentication_postgres".to_owned());
-    let pg_port = env::var("POSTGRES_PORT").unwrap_or("5432".to_owned());
-
-    let cerberus_url = "http://cerberus:5001".to_owned();
+    let pg_db = get_env("POSTGRES_DB");
+    let pg_host = get_env("AUTHENTICATION_POSTGRESQL_SERVICE_HOST");
+    let pg_port = get_env("AUTHENTICATION_POSTGRESQL_SERVICE_PORT");
+    let cerberus_host = get_env("CERBERUS_INTERNAL_SERVICE_HOST");
+    let cerberus_port = get_env("CERBERUS_INTERNAL_SERVICE_PORT");
+    let cerberus_url = format!("http://{}:{}", cerberus_host, cerberus_port);
 
     let google_token_parser = env::var("AUTH_GOOGLE_CLIENT_ID")
         .ok()
