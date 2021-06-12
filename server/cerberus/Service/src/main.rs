@@ -14,10 +14,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let jwt_private_key = get_key_from_env("JWT_PRIVATE_KEY");
 
     // параметры redis
-    let redis_host = get_env("CERBERUS_REDIS_MASTER_SERVICE_HOST");
-    let redis_port = get_env("CERBERUS_REDIS_MASTER_SERVICE_PORT")
-        .parse()
-        .unwrap();
+    let redis_host = get_env("REDIS_HOST");
+    let redis_port = get_env("REDIS_PORT").parse().unwrap();
     let redis_auth = std::env::var("REDIS_AUTH").ok();
 
     // порты grpc сервисов
@@ -42,5 +40,9 @@ fn get_key_from_env(name: &str) -> String {
 }
 
 fn get_env(name: &str) -> String {
-    std::env::var(name).expect(format!("Env {}", name).as_str())
+    let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {}", name));
+    if value.trim().is_empty() {
+        panic!("Env {} is empty", name);
+    }
+    value
 }

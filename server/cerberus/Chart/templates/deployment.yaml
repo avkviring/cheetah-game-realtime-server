@@ -31,20 +31,12 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: private
+            - name: "REDIS_HOST"
+              value: "$(CERBERUS_REDIS_MASTER_SERVICE_HOST)"
+            - name: "REDIS_PORT"
+              value: "$(CERBERUS_REDIS_MASTER_SERVICE_PORT)"
             - name: "REDIS_AUTH"
               valueFrom:
                 secretKeyRef:
                   name: cerberus-redis-password
                   key: password
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: "{{ .Chart.Name }}-external"
-spec:
-  selector:
-    app: "{{ .Chart.Name }}"
-  ports:
-    - protocol: TCP
-      port: 5000
-      targetPort: 5000

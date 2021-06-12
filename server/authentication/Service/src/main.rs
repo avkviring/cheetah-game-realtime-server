@@ -11,10 +11,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pg_user = get_env("POSTGRES_USER");
     let pg_passwd = get_env("POSTGRES_PASSWORD");
     let pg_db = get_env("POSTGRES_DB");
-    let pg_host = get_env("AUTHENTICATION_POSTGRESQL_SERVICE_HOST");
-    let pg_port = get_env("AUTHENTICATION_POSTGRESQL_SERVICE_PORT");
-    let cerberus_host = get_env("CERBERUS_INTERNAL_SERVICE_HOST");
-    let cerberus_port = get_env("CERBERUS_INTERNAL_SERVICE_PORT");
+    let pg_host = get_env("POSTGRES_HOST");
+    let pg_port = get_env("POSTGRES_PORT");
+    let cerberus_host = get_env("CERBERUS_INTERNAL_HOST");
+    let cerberus_port = get_env("CERBERUS_INTERNAL_PORT");
 
     let cerberus_url = format!("http://{}:{}", cerberus_host, cerberus_port);
 
@@ -46,5 +46,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn get_env(name: &str) -> String {
-    env::var(name).unwrap_or_else(|_| panic!("Env {}", name))
+    let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {}", name));
+    if value.trim().is_empty() {
+        panic!("Env {} is empty", name);
+    }
+    value
 }
