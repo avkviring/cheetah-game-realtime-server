@@ -31,10 +31,6 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: private
-            - name: "REDIS_HOST"
-              value: "$(CERBERUS_REDIS_MASTER_SERVICE_HOST)"
-            - name: "REDIS_PORT"
-              value: "$(CERBERUS_REDIS_MASTER_SERVICE_PORT)"
             - name: "REDIS_AUTH"
               valueFrom:
                 secretKeyRef:
