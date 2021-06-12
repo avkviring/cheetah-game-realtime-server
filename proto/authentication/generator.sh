@@ -1,5 +1,5 @@
 #!/bin/bash
-docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/auth/ akviring/protoc:latest \
+docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/authentication/ akviring/protoc:latest \
   protoc \
   --proto_path=../cerberus/ \
   --proto_path=. \
@@ -7,7 +7,7 @@ docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/auth/ akviring/
   --grpc_out=../../clients/Unity/Packages/games.cheetah.authentication.cookie/Runtime/grpc/  \
   --csharp_out=../../clients/Unity/Packages/games.cheetah.authentication.cookie/Runtime/grpc/ cookie.proto \
 
-docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/auth akviring/protoc:latest \
+docker run --rm -v$(pwd)/../../:/tmp/source -w /tmp/source/proto/authentication akviring/protoc:latest \
   protoc \
   --proto_path=../cerberus/ \
   --proto_path=. \

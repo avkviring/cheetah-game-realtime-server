@@ -2,9 +2,7 @@
 using Cheetah.Authentication.Android;
 #endif
 using Cheetah.Authentication.Cookie;
-using Cheetah.Cerberus;
 using Cheetah.Platform;
-using Grpc.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,7 +15,7 @@ namespace Example.Auth
         [SerializeField] private Text resultText;
         [SerializeField] private Button androidLoginButton;
         [SerializeField] private Button cookieLoginButton;
-        private Connector connector = new Connector("192.168.212.97:7777");
+        private Connector connector = new Connector("test.dev.cheetah.games", 443, true);
 
         private void Start()
         {
@@ -28,6 +26,7 @@ namespace Example.Auth
         private async void OnCookieLogin()
         {
             var cookieAuthenticator = new CookieAuthenticator(connector);
+            //cookieAuthenticator.RemoveLocalCookie();
             var result = await cookieAuthenticator.LoginOrRegister();
             resultText.text = "Login with CookieAuthenticator, register =" + result.RegisteredPlayer + ", player = " + result.Player;
         }
