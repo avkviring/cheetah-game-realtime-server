@@ -15,6 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pg_port = get_env("AUTHENTICATION_POSTGRESQL_SERVICE_PORT");
     let cerberus_host = get_env("CERBERUS_INTERNAL_SERVICE_HOST");
     let cerberus_port = get_env("CERBERUS_INTERNAL_SERVICE_PORT");
+
     let cerberus_url = format!("http://{}:{}", cerberus_host, cerberus_port);
 
     let google_token_parser = env::var("AUTH_GOOGLE_CLIENT_ID")
@@ -45,5 +46,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn get_env(name: &str) -> String {
-    env::var(name).expect(format!("Env {}", name).as_str())
+    env::var(name).unwrap_or_else(|_| panic!("Env {}", name))
 }

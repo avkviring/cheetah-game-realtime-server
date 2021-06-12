@@ -43,17 +43,3 @@ spec:
                 secretKeyRef:
                   name: "{{ .Chart.Name }}-postgresql"
                   key: password
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: "{{ .Chart.Name }}-external"
-spec:
-  selector:
-    app: "{{ .Chart.Name }}"
-  ports:
-    - protocol: TCP
-      port: 5000
-      targetPort: 5000
-
