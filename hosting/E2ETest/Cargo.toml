@@ -1,5 +1,5 @@
 [package]
-name = "cheetah-integration-test"
+name = "cheetah-e2e-hosting-test"
 version = "0.1.0"
 authors = ["kviring <alex@kviring.com>"]
 edition = "2018"

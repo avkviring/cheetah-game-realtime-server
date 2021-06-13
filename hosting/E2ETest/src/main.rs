@@ -10,7 +10,8 @@ pub mod proto;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let url = "https://test.dev.cheetah.games";
+    //let url = "https://test.dev.cheetah.games";
+    let url = "http://localhost:7777";
     let channel = Channel::from_static(url).connect().await?;
     let tokens = test_authentication_service(channel.clone()).await;
     test_cerberus_service(channel.clone(), tokens).await;
