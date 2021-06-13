@@ -5,6 +5,11 @@ services:
     environment:
       - POSTGRES_USER=authentication
       - POSTGRES_PASSWORD=authentication
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U authentication" ]
+      interval: 2s
+      timeout: 5s
+      retries: 5
   cerberus_redis:
     image: redis:6.2.1
   cerberus:
@@ -17,6 +22,13 @@ services:
     environment:
       - JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
       - JWT_PRIVATE_KEY=LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JR0hBZ0VBTUJNR0J5cUdTTTQ5QWdFR0NDcUdTTTQ5QXdFSEJHMHdhd0lCQVFRZ2NnN2RzSldTejhmNDBjRXYKQlRlR1N6QU5YR2xFenV0ZDlJSW02L2lubDBhaFJBTkNBQVJWVWMxY3JHaFEyU2hmMkdjNG1sTFBvcllvTitLRApGcEplNzRVaWsvZmFxOXdPQms5blRXMk9jYU03S3pJL0ZHaGxveTc5MzJzZUxlNlZ0eDZoakJMNQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0t
+      - REDIS_HOST=cerberus_redis
+      - REDIS_PORT=6379
+    healthcheck:
+      test: [ "CMD-SHELL", "netstat -ltn | grep -c 5000" ]
+      interval: 2s
+      timeout: 5s
+      retries: 5
   relay:
     image: docker.registry.cheetah.games/relay:999.999.999
     build:
@@ -39,14 +51,21 @@ services:
       context: ../../
       dockerfile: server/authentication/Dockerfile
     depends_on:
-      - cerberus
-      - authentication_postgres
+      cerberus:
+        condition: service_started
+      authentication_postgres:
+        condition: service_healthy
     environment:
       - JWT_PUBLIC_KEY=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVlZITlhLeG9VTmtvWDlobk9KcFN6NksyS0RmaQpneGFTWHUrRklwUDMycXZjRGdaUFowMXRqbkdqT3lzeVB4Um9aYU11L2Q5ckhpM3VsYmNlb1l3UytRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t
+      - POSTGRES_HOST=authentication_postgres
+      - POSTGRES_PORT=5432
       - POSTGRES_USER=authentication
       - POSTGRES_PASSWORD=authentication
+      - POSTGRES_DB=authentication
+      - CERBERUS_INTERNAL_HOST=cerberus
+      - CERBERUS_INTERNAL_PORT=5001
       - AUTH_GOOGLE_CLIENT_ID=663521173650-gkgrl7aouifjag0j5do14pul1hdqvosm.apps.googleusercontent.com
-      - COOKIE
+      - COOKIE=true
   grpc_proxy:
     image: nginx:1.19.8
     depends_on:
