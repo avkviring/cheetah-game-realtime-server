@@ -8,7 +8,7 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
-    - host: test.dev.cheetah.games
+    - host: {{ .Values.global.grpcDomain }}
       http:
         paths:
           - path: /games.cheetah.{{ .Chart.Name }}.*

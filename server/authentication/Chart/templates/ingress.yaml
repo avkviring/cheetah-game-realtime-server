@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - test.dev.cheetah.games
+        - {{ .Values.global.grpcDomain }}
       secretName: test-cert
   rules:
-    - host: test.dev.cheetah.games
+    - host: {{ .Values.global.grpcDomain }}
       http:
         paths:
           - pathType: Prefix
