@@ -64,3 +64,20 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  publish-helm-chart:
+    needs: publish-docker-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish
+        run: |
+          find . -name Chart.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' {}
+          find . -name values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' {}
+          cd hosting/charts/Platform
+          helm dependency update .
+          export HELM_EXPERIMENTAL_OCI=1
+          helm registry login docker.registry.cheetah.games -u ${{ secrets.DOCKER_REGISTRY_USER }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+          helm chart save . docker.registry.cheetah.games/platform:${{ github.event.release.tag_name }}
+          helm chart push  docker.registry.cheetah.games/platform:${{ github.event.release.tag_name }}
+
