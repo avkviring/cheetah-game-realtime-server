@@ -1,3 +1,5 @@
+use std::env;
+
 use tonic::transport::*;
 use tonic::Request;
 
@@ -5,14 +7,18 @@ use cerberus_client::CerberusClient;
 use proto::authentication::external::cookie;
 use proto::cerberus::external::{cerberus_client, RefreshTokenRequest};
 use proto::cerberus::types::Tokens;
+use std::str::FromStr;
 
 pub mod proto;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    //let url = "https://test.dev.cheetah.games";
-    let url = "http://localhost:7777";
-    let channel = Channel::from_static(url).connect().await?;
+    let args: Vec<String> = env::args().collect();
+    let url = args.get(1).unwrap().to_owned();
+    println!("run test on cluster {}", &url);
+    let channel = Channel::builder(Uri::from_str(url.as_str()).unwrap())
+        .connect()
+        .await?;
     let tokens = test_authentication_service(channel.clone()).await;
     test_cerberus_service(channel.clone(), tokens).await;
     Result::Ok(())
