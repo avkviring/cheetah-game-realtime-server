@@ -22,11 +22,14 @@
 #### Авторизация
 
 Преобразование внешней авторизации в JWT токены платформы.
+
 - Клиент - clients/Unity/Packages/games.cheetah.cerberus
 - [Сервер](server/authentication/README.md)
 
 #### JWT токены
+
 Создание и обновление JWT токенов для авторизации внутри платформы.
+
 - Клиент
     - clients/Unity/Packages/games.cheetah.authentication
     - clients/Unity/Packages/games.cheetah.authentication.android
@@ -34,7 +37,26 @@
 - [Сервер](server/cerberus/README.md)
 
 #### Битвы реального времени
+
 - Клиент - clients/Unity/Packages/games.cheetah.relay
 - [Сервер](server/relay/README.md)
 
+### Создание нового компонента
+
+#### Список мест в которые необходимо добавить информацию о новом компоненте
+
+##### Github Action
+
+- .github/workflows/test.helm.yml
+    - добавить в список для построения docker образа
+    - добавить версию в параметры helm
+- .github/workflows/test.server.yml
+- .github/workflows/release.components.yml
+
+##### Хостинг
+
+- зависимость в hosting/charts/Platform/Chart.yaml
+- тест запущенного компонента hosting/E2ETest
+
+ 
 
