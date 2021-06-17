@@ -1,0 +1,23 @@
+#
+# Unit тесты серверных компонентов
+#
+name: Server tests
+on: [ push ]
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [ cerberus, authentication, relay ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            server/${{ matrix.component }}/target
+          key: cargo-unit-test-${{ matrix.component }}-${{ github.sha }}
+          restore-keys: |
+            cargo-unit-test-${{ matrix.component }}-
+      - run: cargo test --manifest-path server/${{ matrix.component }}/Cargo.toml

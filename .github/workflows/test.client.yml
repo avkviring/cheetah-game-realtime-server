@@ -1,0 +1,19 @@
+#
+# Unit тесты серверных компонентов
+#
+name: Client tests
+on: [ push ]
+jobs:
+  check-meta-files-in-relay-client:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        file:
+          - clients/Unity/Packages/games.cheetah.relay/Android/armv7/libcheetah_relay_client.so.meta
+          - clients/Unity/Packages/games.cheetah.relay/Android/aarch64/libcheetah_relay_client.so.meta
+          - clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.bundle.meta
+          - clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.dll.meta
+          - clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.so.meta
+    steps:
+      - uses: actions/checkout@v2
+      - run: test -f "${{ matrix.file}}" || exit -1
