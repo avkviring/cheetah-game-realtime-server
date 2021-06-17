@@ -2,7 +2,10 @@
 FROM rust:1.50 as planner
 RUN cargo install cargo-chef
 WORKDIR planner
-COPY server/cerberus/ server/cerberus/
+COPY server/cerberus/Library server/cerberus/Library
+COPY server/cerberus/Service server/cerberus/Service
+COPY server/cerberus/Cargo.toml server/cerberus/Cargo.toml
+COPY server/cerberus/Cargo.lock server/cerberus/Cargo.lock
 RUN cd server/cerberus/ && cargo chef prepare --recipe-path recipe.json
 
 # кешируем зависимости
@@ -23,7 +26,10 @@ RUN apt-get update && \
     rustup target add x86_64-unknown-linux-musl && \
     rustup component add rustfmt
 WORKDIR build
-COPY server/cerberus server/cerberus
+COPY server/cerberus/Library server/cerberus/Library
+COPY server/cerberus/Service server/cerberus/Service
+COPY server/cerberus/Cargo.toml server/cerberus/Cargo.toml
+COPY server/cerberus/Cargo.lock server/cerberus/Cargo.lock
 COPY proto/cerberus proto/cerberus
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/cerberus/target/ server/cerberus/target/

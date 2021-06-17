@@ -28,8 +28,13 @@ RUN apt-get update && \
 WORKDIR build
 COPY proto/cerberus proto/cerberus
 COPY proto/authentication proto/authentication
-COPY server/cerberus/ server/cerberus/
-COPY server/authentication/ server/authentication/
+COPY server/cerberus/Library server/cerberus/Library
+COPY server/cerberus/Service server/cerberus/Service
+COPY server/cerberus/Cargo.toml server/cerberus/Cargo.toml
+COPY server/cerberus/Cargo.lock server/cerberus/Cargo.lock
+COPY server/authentication/Service server/authentication/Service
+COPY server/authentication/Cargo.toml server/authentication/Cargo.toml
+COPY server/authentication/Cargo.lock server/authentication/Cargo.lock
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/authentication/target/ server/authentication/target/
 RUN touch server/authentication/Service/build.rs
