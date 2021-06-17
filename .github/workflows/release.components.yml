@@ -37,7 +37,9 @@ jobs:
         with:
           path: |
             /tmp/.buildx-cache
-          key: publish-docker-image-${{ matrix.component }}
+          key: ${{ matrix.component }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ matrix.component }}-buildx-
       - name: Setup buildkit
         uses: docker/setup-buildx-action@v1
         id: buildx
