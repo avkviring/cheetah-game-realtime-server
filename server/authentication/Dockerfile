@@ -1,18 +1,12 @@
 # определяем зависимости для кеширования
-FROM rust:1.50 as planner
-RUN cargo install cargo-chef
+FROM akviring/rust-builder:1.52.1-01 as planner
 WORKDIR planner
 COPY server/cerberus/ server/cerberus/
 COPY server/authentication/ server/authentication/
 RUN cd server/authentication/ && cargo chef prepare --recipe-path recipe.json
 
 # собираем зависимости
-FROM rust:1.50 as cacher
-RUN cargo install cargo-chef
-RUN apt-get update && \
-    apt-get install -y musl-tools && \
-    rustup target add x86_64-unknown-linux-musl && \
-    rustup component add rustfmt
+FROM akviring/rust-builder:1.52.1-01 as cacher
 WORKDIR cache
 COPY server/cerberus/Library server/cerberus/Library
 COPY server/cerberus/Service server/cerberus/Service
@@ -20,11 +14,7 @@ COPY --from=planner /planner/server/authentication/recipe.json server/authentica
 RUN cd server/authentication/ && cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-linux-musl
 
 # компиляция приложения
-FROM rust:1.50 as builder
-RUN apt-get update && \
-    apt-get install -y musl-tools && \
-    rustup target add x86_64-unknown-linux-musl && \
-    rustup component add rustfmt
+FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
 COPY proto/cerberus proto/cerberus
 COPY proto/authentication proto/authentication
