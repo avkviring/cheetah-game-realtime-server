@@ -1,0 +1,106 @@
+#
+# Тестирование развертывания kubernetes кластера
+#
+# - собираем необходимые docker image
+# - развертыванием кластер на тестовом хостинге в DigitalOcean
+# - запускаем приложение для тестирования развернутых сервисов
+#
+#
+#
+name: Helm test
+on: [ push ]
+jobs:
+  build_images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [ cerberus, authentication, relay ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2.1.6
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ matrix.component }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ matrix.component }}-buildx-
+      - name: Setup buildkit
+        uses: docker/setup-buildx-action@v1
+        id: buildx
+        with:
+          install: true
+      - name: Login to docker.registry.cheetah.games
+        uses: docker/login-action@v1
+        with:
+          registry: docker.registry.cheetah.games
+          username: ${{ secrets.DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+      - name: Build docker image
+        uses: docker/build-push-action@v2.5.0
+        with:
+          context: .
+          push: true
+          file: server/${{ matrix.component }}/Dockerfile
+          tags: docker.registry.cheetah.games/${{ matrix.component }}:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+      - name: Move buildkit cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+  deploy_release:
+    runs-on: ubuntu-latest
+    needs:
+      - build_images
+    # так как получение SSL сертификата для домена операция не быстрая
+    # то тестирование для разных pull request осуществляется на одном домене
+    # поэтому одновременный запуск данного action не возможен
+    concurrency: ci.cluster.dev.cheetah.games
+    # на всякий случай, иногда что-то в хостинге может пойти не по-плану
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            hosting/E2ETest/target/
+          key: cargo-hosting-E2ETest-${{ github.sha }}
+          restore-keys: |
+            cargo-hosting-E2ETest-
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Save DigitalOcean kubeconfig
+        run: |
+          doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_CLUSTER_ID }}
+          sleep 10
+      - name: Prepare namespace
+        run: |
+          helm uninstall ci-test -n ci-test || true
+          kubectl delete --namespace ci-test --all deployments,statefulsets,services,pods,pvc,pv
+      - name: Deploy Release
+        run: |
+          cd hosting/charts/
+          helm dependency update Platform
+          helm upgrade --debug --install ci-test \
+            --namespace=ci-test Platform \
+            --set global.grpcDomain=ci.cluster.dev.cheetah.games \
+            --set authentication.imageVersion=${{ github.sha }} \
+            --set cerberus.imageVersion=${{ github.sha }} \
+            --wait=true
+          sleep 10
+      - name: Run test on Release
+        run: |
+          cd hosting/E2ETest
+          cargo run https://ci.cluster.dev.cheetah.games
+      - name: Cleanup namespace
+        # удалять namespace нельзя, так как там есть сертификаты let encrypt
+        # поэтому удаляем релиз и все не нужные ресурсы
+        # также удаляем volume в Digital Ocean
+        # иначе они будут создаваться в каждом тесте - а это платно
+        run: |
+          helm uninstall ci-test -n ci-test
+          kubectl delete --namespace ci-test --all deployments,statefulsets,services,pods,pvc,pv
+          doctl compute volume list --format ID,Tags --no-header | grep  ${{ secrets.DIGITALOCEAN_CLUSTER_ID }} | awk '{ print $1 }' | xargs -I {} doctl compute volume delete -f {}
