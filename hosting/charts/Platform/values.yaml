@@ -1,2 +1,6 @@
 global:
   grpcDomain: test.dev.cheetah.games
+authentication:
+  imageVersion: 999.999.999
+cerberus:
+  imageVersion: 999.999.999

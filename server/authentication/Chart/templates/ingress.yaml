@@ -8,10 +8,6 @@ metadata:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
-  tls:
-    - hosts:
-        - {{ .Values.global.grpcDomain }}
-      secretName: test-cert
   rules:
     - host: {{ .Values.global.grpcDomain }}
       http:
