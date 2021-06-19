@@ -1,0 +1,20 @@
+{
+    "name": "games.cheetah.mm.editor",
+    "rootNamespace": "Cheetah.Matchmaking",
+    "references": [
+        "games.cheetah.docker-remote-api"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        ""
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

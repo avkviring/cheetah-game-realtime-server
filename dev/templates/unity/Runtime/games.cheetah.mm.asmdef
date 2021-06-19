@@ -1,0 +1,13 @@
+{
+  "name": "games.cheetah.mm",
+  "rootNamespace": "Cheetah.Matchmaking",
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
