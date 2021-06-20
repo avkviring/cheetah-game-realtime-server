@@ -1,0 +1,63 @@
+syntax = "proto3";
+package games.cheetah.relay.types;
+option csharp_namespace = "Cheetah.Relay.Types";
+
+
+message RoomTemplate {
+  string uid = 1;
+  repeated GameObject objects = 2;
+  repeated TemplatePermission template_permissions = 3;
+}
+
+message TemplatePermission {
+  uint32 template = 1;
+  repeated PermissionGroup groups = 2;
+  repeated PermissionField fields = 3;
+}
+
+
+message PermissionField {
+  uint32 field_id = 1;
+  FieldType field_type = 2;
+  repeated PermissionGroup groups = 3;
+}
+enum FieldType {
+  Long = 0;
+  Float = 1;
+  Structure = 2;
+  Event = 3;
+}
+
+message PermissionGroup {
+  uint32 access_group = 1;
+  Permission permission = 2;
+}
+
+enum Permission {
+  Deny = 0;
+  Ro = 1;
+  Rw = 2;
+}
+
+message UserTemplate {
+  uint32 id = 1;
+  uint64 access_group = 3;
+  repeated GameObject objects = 4;
+}
+
+message GameObject {
+  uint32 id = 1;
+  uint32 template = 2;
+  uint64 access_group = 3;
+  repeated Field fields = 4;
+}
+
+message Field {
+  map<int32, int64> longs = 1;
+  map<int32, double> floats = 2;
+  map<int32, ByteArray> structures = 3;
+}
+
+message ByteArray {
+  repeated bytes byte = 1;
+}

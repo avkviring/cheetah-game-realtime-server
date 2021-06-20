@@ -1,0 +1,28 @@
+syntax = "proto3";
+package games.cheetah.relay.internal;
+
+import public "external.types.proto";
+
+service Relay {
+  /**
+    Создать комнату
+   */
+  rpc CreateRoom(games.cheetah.relay.types.RoomTemplate) returns(CreateRoomResponse);
+  /**
+    Присоединить пользователя к комнате, после этого комната будет ожидать udp соединения
+   */
+  rpc AttachUser(AttachUserRequest) returns(AttachUserResponse);
+}
+
+message CreateRoomResponse {
+  int64 id = 1;
+}
+
+message AttachUserRequest {
+  int64 room_id = 1;
+  games.cheetah.relay.types.UserTemplate user = 2;
+}
+
+message  AttachUserResponse {
+  games.cheetah.relay.types.ByteArray private_key = 1;
+}
