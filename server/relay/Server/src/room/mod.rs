@@ -47,7 +47,6 @@ pub struct Room {
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserId>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
-	pub auto_create_user: bool,
 	pub tracer: Rc<CommandTracer>,
 	#[cfg(test)]
 	object_id_generator: u32,
@@ -95,7 +94,6 @@ impl Room {
 	pub fn new(template: RoomTemplate, tracer: Rc<CommandTracer>, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
 		let mut room = Room {
 			id: template.id,
-			auto_create_user: template.auto_create_user,
 			users: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
@@ -243,10 +241,6 @@ impl Room {
 				});
 
 				reset_all_compare_and_set(self, user.template.id.clone(), user.compare_and_sets_cleaners);
-
-				if self.auto_create_user {
-					self.register_user(user.template.clone()).unwrap();
-				}
 			}
 		};
 	}
@@ -602,18 +596,6 @@ mod tests {
 				.unwrap(),
 			&GameObjectId::new(object2_template.id, ObjectOwner::User(user2_template.id))
 		);
-	}
-
-	///
-	/// Регистрация пользователя после разрыва соединения если выставлен флаг автосоздания
-	///
-	#[test]
-	fn should_register_user_after_disconnect_when_auto_create() {
-		let (mut template, user_template) = create_template();
-		template.auto_create_user = true;
-		let mut room = Room::from_template(template);
-		room.disconnect_user(user_template.id);
-		assert!(room.users.contains_key(&user_template.id));
 	}
 
 	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, heapless::consts::U256> {

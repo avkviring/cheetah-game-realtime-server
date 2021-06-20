@@ -178,7 +178,6 @@ mod tests {
 		server
 			.register_room(RoomTemplate {
 				id: 1,
-				auto_create_user: false,
 				users: vec![],
 				objects: vec![object_template],
 				permissions: Default::default(),

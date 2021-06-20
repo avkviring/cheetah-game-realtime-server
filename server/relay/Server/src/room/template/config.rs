@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::io::Read;
 
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
@@ -17,7 +16,6 @@ use crate::room::types::FieldType;
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct RoomTemplate {
 	pub id: RoomId,
-	pub auto_create_user: bool,
 	pub users: Vec<UserTemplate>,
 	#[serde(default)]
 	pub objects: Vec<GameObjectTemplate>,
@@ -208,7 +206,6 @@ mod tests {
 	fn should_validate_fail_when_user_object_has_wrong_id() {
 		let template = RoomTemplate {
 			id: 0,
-			auto_create_user: false,
 			users: vec![UserTemplate {
 				id: 54897,
 				private_key: [5; 32],
