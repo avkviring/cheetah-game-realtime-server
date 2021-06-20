@@ -104,67 +104,18 @@ pub enum Permission {
 #[derive(Debug)]
 pub enum RoomTemplateError {
 	UserObjectHasWrongId(UserTemplate, u32),
-	YamlParserError(serde_yaml::Error),
-	YamlContainsUnmappingFields(Vec<String>),
 }
 
 impl RoomTemplate {
-	pub fn load_from_file(path: &str) -> Result<RoomTemplate, RoomTemplateError> {
-		let mut file = std::fs::File::open(path).unwrap();
-		let mut content = String::default();
-		file.read_to_string(&mut content).unwrap();
-		RoomTemplate::new_from_yaml(content.as_str())
-	}
-
-	fn new_from_yaml(content: &str) -> Result<RoomTemplate, RoomTemplateError> {
-		let template = serde_yaml::from_str::<RoomTemplate>(content);
-		match template {
-			Ok(template) => template.validate(),
-			Err(e) => Result::Err(RoomTemplateError::YamlParserError(e)),
-		}
-	}
-
 	pub fn validate(self) -> Result<RoomTemplate, RoomTemplateError> {
-		let mut unmapping = Vec::new();
-
-		self.unmapping.iter().for_each(|(key, _value)| unmapping.push(key.clone()));
-
 		for user in &self.users {
-			user.unmapping.iter().for_each(|(key, _value)| unmapping.push(format!("user/{}", key)));
 			for object in &user.objects {
-				object
-					.unmapping
-					.iter()
-					.for_each(|(key, _value)| unmapping.push(format!("user/object/{}", key)));
-
-				object
-					.fields
-					.unmapping
-					.iter()
-					.for_each(|(key, _value)| unmapping.push(format!("user/object/fields/{}", key)));
 				if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
 					return Result::Err(RoomTemplateError::UserObjectHasWrongId(user.clone(), object.id));
 				}
 			}
 		}
-
-		for object in &self.objects {
-			object
-				.unmapping
-				.iter()
-				.for_each(|(key, _value)| unmapping.push(format!("object/{}", key)));
-			object
-				.fields
-				.unmapping
-				.iter()
-				.for_each(|(key, _value)| unmapping.push(format!("object/fields/{}", key)));
-		}
-
-		if unmapping.is_empty() {
-			Result::Ok(self)
-		} else {
-			Result::Err(RoomTemplateError::YamlContainsUnmappingFields(unmapping))
-		}
+		Result::Ok(self)
 	}
 }
 
@@ -276,49 +227,5 @@ mod tests {
 			unmapping: Default::default(),
 		};
 		assert!(matches!(template.validate(), Result::Err(RoomTemplateError::UserObjectHasWrongId(_, _))))
-	}
-
-	#[test]
-	fn should_fail_if_unmapping_field() {
-		let mut template = RoomTemplate::default();
-		template.unmapping.insert("wrong_field".to_string(), serde_yaml::Value::default());
-		let mut user_template = UserTemplate {
-			id: 0,
-			private_key: Default::default(),
-			access_groups: Default::default(),
-			objects: Default::default(),
-			unmapping: Default::default(),
-		};
-		user_template.unmapping.insert("wrong_field".to_string(), serde_yaml::Value::default());
-
-		let mut object_template = GameObjectTemplate {
-			id: 0,
-			template: 0,
-			access_groups: Default::default(),
-			fields: Default::default(),
-			unmapping: Default::default(),
-		};
-		object_template.unmapping.insert("wrong_field".to_string(), serde_yaml::Value::default());
-		object_template
-			.fields
-			.unmapping
-			.insert("wrong_field".to_string(), serde_yaml::Value::default());
-		user_template.objects.push(object_template.clone());
-
-		template.users.push(user_template);
-
-		template.objects = Default::default();
-		template.objects.push(object_template);
-
-		assert!(matches!(
-			template.validate(),
-			Result::Err(RoomTemplateError::YamlContainsUnmappingFields(fields))
-			if fields[0] == "wrong_field"
-			&& fields[1] == "user/wrong_field"
-			&& fields[2] == "user/object/wrong_field"
-			&& fields[3] == "user/object/fields/wrong_field"
-			&& fields[4] == "object/wrong_field"
-			&& fields[5] == "object/fields/wrong_field"
-		))
 	}
 }

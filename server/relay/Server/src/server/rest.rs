@@ -25,7 +25,6 @@ impl RestServer {
 					.app_data(server_data.clone())
 					.route("/", web::get().to(RestServer::index))
 					.route("/dump", web::get().to(RestServer::dump))
-					.route("/select-user/{room}", web::get().to(RestServer::get_user_for_entrance))
 			})
 			.workers(1)
 			.bind(format!("0.0.0.0:{}", port).as_str())
@@ -44,19 +43,9 @@ impl RestServer {
 			.body(Body::from(server.dump().unwrap().to_json()))
 	}
 
-	async fn get_user_for_entrance(room: web::Path<RoomId>, data: web::Data<Arc<Mutex<Server>>>) -> HttpResponse {
-		let server = data.get_ref().lock().unwrap();
-
-		let result = server.select_user_for_entrance(room.0).unwrap();
-		HttpResponse::Ok()
-			.header(header::CONTENT_TYPE, "application/json")
-			.body(Body::from(serde_json::to_string(&result).unwrap()))
-	}
-
 	async fn index() -> HttpResponse {
 		let body = r#"
-			<a href="/dump">Dump all server state</a><br/>
-			<a href="/select-user">Get user public/private key for enter.</a><br/>
+			<a href="/dump">Dump all server state</a><br/>	
 		"#;
 		HttpResponse::Ok().header(header::CONTENT_TYPE, "text/html").body(Body::from(body))
 	}

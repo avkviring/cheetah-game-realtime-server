@@ -11,13 +11,11 @@ use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_relay_common::room::RoomId;
 
 use crate::room::debug::tracer::CommandTracer;
-use crate::room::debug::user_selector::{SelectedUserForEntrance, UserForEntranceSelector};
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::{Room, RoomRegisterUserError, RoomUserListener};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
-	pub selectors_by_id: HashMap<RoomId, UserForEntranceSelector, FnvBuildHasher>,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	tracer: Rc<CommandTracer>,
 }
@@ -43,7 +41,6 @@ impl Rooms {
 	pub fn new(tracer: CommandTracer) -> Self {
 		Self {
 			room_by_id: Default::default(),
-			selectors_by_id: Default::default(),
 			changed_rooms: Default::default(),
 			tracer: Rc::new(tracer),
 		}
@@ -114,21 +111,6 @@ impl Rooms {
 			self.changed_rooms.insert(changed[i]);
 		}
 	}
-
-	pub fn select_user_for_entrance(&mut self, room_id: RoomId) -> Result<Option<SelectedUserForEntrance>, SelectUserForEntranceError> {
-		match self.room_by_id.get(&room_id) {
-			None => Result::Err(SelectUserForEntranceError::RoomNotFound),
-			Some(room) => {
-				let selector = self.selectors_by_id.entry(room_id).or_insert_with(|| Default::default());
-				Result::Ok(selector.select(room))
-			}
-		}
-	}
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum SelectUserForEntranceError {
-	RoomNotFound,
 }
 
 #[cfg(test)]
@@ -136,7 +118,6 @@ impl Default for Rooms {
 	fn default() -> Self {
 		Self {
 			room_by_id: Default::default(),
-			selectors_by_id: Default::default(),
 			changed_rooms: Default::default(),
 			tracer: Rc::new(CommandTracer::new_with_allow_all()),
 		}
