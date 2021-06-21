@@ -1,0 +1,23 @@
+syntax = "proto3";
+package games.cheetah.matchmaking.external;
+option csharp_namespace = "Cheetah.Matchmaking.";
+
+import public "games.cheetah.relay.types";
+
+service Matchmaking {
+  /**
+    Создать билет на вход в матч для пользователя
+   */
+  rpc CreateTicket(TicketRequest) returns (TicketResponse);
+}
+
+message TicketRequest {
+  games.cheetah.relay.types.User user = 1;
+  string room_template_uid = 2;
+}
+
+message TicketResponse {
+  games.cheetah.relay.types.ByteArray private_key = 1;
+  string host = 2;
+  int32 port = 3;
+}
