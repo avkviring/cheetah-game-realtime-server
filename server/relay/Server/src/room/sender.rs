@@ -158,7 +158,7 @@ impl Room {
 					} else {
 						self.send(groups, template, commands.iter(), |user| {
 							let mut permission_manager = permission_manager.borrow_mut();
-							if object_owner == Option::Some(user.template.id) {
+							if object_owner == Option::Some(user.id) {
 								permission_manager.has_write_access(template, *field_id, field_type)
 							} else {
 								true
@@ -218,7 +218,7 @@ impl Room {
 							meta: meta.clone(),
 							command: command.command.clone(),
 						};
-						tracer.on_s2c_command(room_id, user.template.id.clone(), &command_with_meta);
+						tracer.on_s2c_command(room_id, user.id.clone(), &command_with_meta);
 						let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 						protocol
 							.out_commands_collector
@@ -259,7 +259,7 @@ impl Room {
 									meta: S2CMetaCommandInformation::new(self.current_user.unwrap_or(0), meta),
 									command: command.command.clone(),
 								};
-								self.tracer.on_s2c_command(self.id, user.template.id, &command_with_meta);
+								self.tracer.on_s2c_command(self.id, user.id, &command_with_meta);
 								let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 								protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
 							}
@@ -296,10 +296,8 @@ mod tests {
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let user_1 = 1;
-		let user_2 = 2;
-		room.register_user(UserTemplate::stub(user_1, access_groups));
-		room.register_user(UserTemplate::stub(user_2, access_groups));
+		let user_1 = room.register_user(UserTemplate::stub(access_groups));
+		let user_2 = room.register_user(UserTemplate::stub(access_groups));
 		let object = room.create_object(user_1, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
@@ -352,17 +350,16 @@ mod tests {
 			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let user = 1;
-		room.register_user(UserTemplate::stub(user, access_groups));
-		let object = room.create_object(user, access_groups);
+		let user_id = room.register_user(UserTemplate::stub(access_groups));
+		let object = room.create_object(user_id, access_groups);
 		object.access_groups = access_groups.clone();
 		object.created = true;
 		let object_id = object.id.clone();
-		room.mark_as_connected(user);
+		room.mark_as_connected(user_id);
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		let mut executed = false;
-		room.build_command_and_send(&object_id, &field_id_1, field_type, user, Permission::Rw, |_| {
+		room.build_command_and_send(&object_id, &field_id_1, field_type, user_id, Permission::Rw, |_| {
 			executed = true;
 			Option::Some(S2CCommand::SetLong(SetLongCommand {
 				object_id: object_id.clone(),
@@ -371,11 +368,11 @@ mod tests {
 			}))
 		});
 		assert!(executed);
-		assert!(room.get_user_out_commands(user).is_empty());
+		assert!(room.get_user_out_commands(user_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
 		let mut executed = false;
-		room.build_command_and_send(&object_id, &field_id_2, field_type, user, Permission::Rw, |_| {
+		room.build_command_and_send(&object_id, &field_id_2, field_type, user_id, Permission::Rw, |_| {
 			executed = true;
 			Option::Some(S2CCommand::SetLong(SetLongCommand {
 				object_id: object_id.clone(),
@@ -384,7 +381,7 @@ mod tests {
 			}))
 		});
 		assert!(executed);
-		assert!(matches!(room.get_user_out_commands(user).get(0), Option::Some(S2CCommand::SetLong(_))));
+		assert!(matches!(room.get_user_out_commands(user_id).get(0), Option::Some(S2CCommand::SetLong(_))));
 	}
 
 	///
@@ -396,10 +393,8 @@ mod tests {
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
 		let mut room = Room::from_template(template);
-		let user_1 = 1;
-		let user_2 = 2;
-		room.register_user(UserTemplate::stub(user_1, access_groups_a));
-		room.register_user(UserTemplate::stub(user_2, access_groups_b));
+		let user_1 = room.register_user(UserTemplate::stub(access_groups_a));
+		let user_2 = room.register_user(UserTemplate::stub(access_groups_b));
 		let object = room.create_object(user_1, access_groups_a);
 		object.created = true;
 		let object_id = object.id.clone();
@@ -414,8 +409,6 @@ mod tests {
 
 	#[test]
 	fn should_send_to_user() {
-		let user_source_id = 9;
-		let user_target_id = 10;
 		let groups = AccessGroups(55);
 		let object_template = 5;
 		let deny_field_id = 50;
@@ -427,8 +420,8 @@ mod tests {
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		room.register_user(UserTemplate::stub(user_target_id, groups));
-		room.register_user(UserTemplate::stub(user_source_id, groups));
+		let user_source_id = room.register_user(UserTemplate::stub(groups));
+		let user_target_id = room.register_user(UserTemplate::stub(groups));
 
 		room.mark_as_connected(user_target_id);
 		let object = room.create_object(user_target_id, groups);
@@ -478,9 +471,6 @@ mod tests {
 	fn should_send_with_permission() {
 		let access_groups = AccessGroups(0b111);
 		let object_template = 100;
-		let user_1 = 1;
-		let user_2 = 2;
-
 		let allow_field_id = 10;
 		let deny_field_id = 11;
 		let field_type = FieldType::Long;
@@ -491,8 +481,9 @@ mod tests {
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &access_groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		room.register_user(UserTemplate::stub(user_1, access_groups));
-		room.register_user(UserTemplate::stub(user_2, access_groups));
+
+		let user_1 = room.register_user(UserTemplate::stub(access_groups));
+		let user_2 = room.register_user(UserTemplate::stub(access_groups));
 		room.mark_as_connected(user_1);
 		room.mark_as_connected(user_2);
 
@@ -535,17 +526,12 @@ mod tests {
 
 	#[test]
 	fn should_do_action_not_send_if_object_not_created() {
-		let user_1 = 1;
-		let user_2 = 2;
 		let field_id = 10;
-
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
-
 		let mut room = Room::from_template(template);
-		room.register_user(UserTemplate::stub(user_1, access_groups));
-		room.register_user(UserTemplate::stub(user_2, access_groups));
-
+		let user_1 = room.register_user(UserTemplate::stub(access_groups));
+		let user_2 = room.register_user(UserTemplate::stub(access_groups));
 		let object = room.create_object(user_1, access_groups);
 		let object_id = object.id.clone();
 		room.mark_as_connected(user_1);

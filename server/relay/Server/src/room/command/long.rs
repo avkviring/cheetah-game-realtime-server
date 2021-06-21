@@ -219,7 +219,7 @@ mod tests {
 	///
 	#[test]
 	fn test_compare_and_set() {
-		let (mut room, user_template, _, object_id, field_id) = setup_for_compare_and_set();
+		let (mut room, user1_id, _, object_id, field_id) = setup_for_compare_and_set();
 		let command1 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
 			field_id,
@@ -227,7 +227,7 @@ mod tests {
 			new: 100,
 			reset: 0,
 		};
-		command1.clone().execute(&mut room, user_template.id);
+		command1.clone().execute(&mut room, user1_id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command1.new
@@ -240,7 +240,7 @@ mod tests {
 			new: 200,
 			reset: 0,
 		};
-		command2.clone().execute(&mut room, user_template.id);
+		command2.clone().execute(&mut room, user1_id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command1.new
@@ -253,7 +253,7 @@ mod tests {
 			new: 300,
 			reset: 0,
 		};
-		command3.clone().execute(&mut room, user_template.id);
+		command3.clone().execute(&mut room, user1_id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
 			command3.new
@@ -264,7 +264,7 @@ mod tests {
 	/// Проверяем что команда отсылает изменения другим клиентам
 	#[test]
 	fn test_compare_and_set_1() {
-		let (mut room, user_template, _, object_id, field_id) = setup_for_compare_and_set();
+		let (mut room, user1_id, _, object_id, field_id) = setup_for_compare_and_set();
 		let command = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
 			field_id,
@@ -273,7 +273,7 @@ mod tests {
 			reset: 555,
 		};
 		room.out_commands.clear();
-		command.clone().execute(&mut room, user_template.id);
+		command.clone().execute(&mut room, user1_id);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c.value==command.new));
 	}
 
@@ -282,7 +282,7 @@ mod tests {
 	///
 	#[test]
 	fn test_compare_and_set_2() {
-		let (mut room, user_template, _, object_id, field_id) = setup_for_compare_and_set();
+		let (mut room, user1_id, _, object_id, field_id) = setup_for_compare_and_set();
 		let command = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
 			field_id,
@@ -290,13 +290,13 @@ mod tests {
 			new: 100,
 			reset: 555,
 		};
-		command.clone().execute(&mut room, user_template.id);
+		command.clone().execute(&mut room, user1_id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command.field_id).unwrap(),
 			command.new
 		);
 
-		room.disconnect_user(user_template.id);
+		room.disconnect_user(user1_id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command.field_id).unwrap(),
 			command.reset
@@ -309,7 +309,7 @@ mod tests {
 	///
 	#[test]
 	fn test_compare_and_set_3() {
-		let (mut room, user_template_1, user_template_2, object_id, field_id) = setup_for_compare_and_set();
+		let (mut room, user1_id, user2_id, object_id, field_id) = setup_for_compare_and_set();
 		let command_1 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
 			field_id,
@@ -324,34 +324,31 @@ mod tests {
 			new: 200,
 			reset: 1555,
 		};
-		command_1.clone().execute(&mut room, user_template_1.id);
-		command_2.clone().execute(&mut room, user_template_2.id);
+		command_1.clone().execute(&mut room, user1_id);
+		command_2.clone().execute(&mut room, user2_id);
 
-		room.disconnect_user(user_template_1.id);
+		room.disconnect_user(user1_id);
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().longs.get(&command_1.field_id).unwrap(),
 			command_2.new
 		);
 	}
 
-	fn setup_for_compare_and_set() -> (Room, UserTemplate, UserTemplate, GameObjectId, FieldId) {
+	fn setup_for_compare_and_set() -> (Room, UserId, UserId, GameObjectId, FieldId) {
 		let access_group = AccessGroups(55);
 		let mut template = RoomTemplate::default();
 		let user_template_1 = UserTemplate {
-			id: 55,
 			private_key: Default::default(),
 			access_groups: access_group,
 			objects: Default::default(),
 		};
 		let user_template_2 = UserTemplate {
-			id: 155,
 			private_key: Default::default(),
 			access_groups: access_group,
 			objects: Default::default(),
 		};
 
 		let user_template_3 = UserTemplate {
-			id: 255,
 			private_key: Default::default(),
 			access_groups: access_group,
 			objects: Default::default(),
@@ -372,26 +369,25 @@ mod tests {
 			}],
 		});
 		let mut room = Room::from_template(template);
-		room.register_user(user_template_1.clone());
-		room.register_user(user_template_2.clone());
-		room.register_user(user_template_3.clone());
-		let object = room.create_object(user_template_3.id, access_group);
+		let user1_id = room.register_user(user_template_1.clone());
+		let user2_id = room.register_user(user_template_2.clone());
+		let user3_id = room.register_user(user_template_3.clone());
+		let object = room.create_object(user3_id, access_group);
 		object.created = true;
 		object.template = object_template;
 
 		let object_id = object.id.clone();
-		(room, user_template_1, user_template_2, object_id, object_field)
+		(room, user1_id, user2_id, object_id, object_field)
 	}
 
 	fn setup() -> (Room, UserId, GameObjectId) {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let user = 1;
-		room.register_user(UserTemplate::stub(user, access_groups));
-		let object = room.create_object(user, access_groups);
+		let user_id = room.register_user(UserTemplate::stub(access_groups));
+		let object = room.create_object(user_id, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
-		(room, user, object_id)
+		(room, user_id, object_id)
 	}
 }

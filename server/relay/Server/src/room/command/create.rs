@@ -11,12 +11,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 		let user = room.get_user(user_id).unwrap();
 
 		if self.object_id.id == 0 {
-			error_c2s_command(
-				"CreateGameObjectCommand",
-				room,
-				user.template.id,
-				format!("0 is forbidden for game object id"),
-			);
+			error_c2s_command("CreateGameObjectCommand", room, user.id, format!("0 is forbidden for game object id"));
 			return;
 		}
 
@@ -26,18 +21,18 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				user.template.id,
+				user.id,
 				format!("Incorrect access group {:?} with client groups {:?}", groups, user.template.access_groups),
 			);
 			return;
 		}
 
 		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
-			if object_id_user != user.template.id {
+			if object_id_user != user.id {
 				error_c2s_command(
 					"CreateGameObjectCommand",
 					room,
-					user.template.id,
+					user.id,
 					format!("Incorrect object_id {:?} for user {:?}", self.object_id, user),
 				);
 				return;
@@ -48,7 +43,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
-				user.template.id,
+				user.id,
 				format!("Object already exists with id {:?}", self.object_id),
 			);
 			return;
@@ -178,8 +173,7 @@ mod tests {
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {
 		let mut template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
-		let user_id = 1;
-		room.register_user(UserTemplate::stub(user_id, access_groups));
+		let user_id = room.register_user(UserTemplate::stub(access_groups));
 		(room, user_id)
 	}
 }

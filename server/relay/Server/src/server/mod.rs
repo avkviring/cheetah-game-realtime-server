@@ -8,7 +8,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::room::RoomId;
+use cheetah_relay_common::room::{RoomId, UserId};
 
 use crate::network::udp::UDPServer;
 use crate::room::debug::tracer::CommandTracer;
@@ -28,7 +28,7 @@ pub struct Server {
 
 enum Request {
 	RegisterRoom(RoomTemplate, Sender<RoomId>),
-	RegisterUser(RoomId, UserTemplate, Sender<Result<(), RegisterUserError>>),
+	RegisterUser(RoomId, UserTemplate, Sender<Result<UserId, RegisterUserError>>),
 	///
 	/// Смещение текущего времени для тестирования
 	///
@@ -93,22 +93,32 @@ impl Server {
 		}
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<(), RegisterUserRequestError> {
+	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<UserId, RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(Request::RegisterUser(room_id, template.clone(), sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => match r {
-				Ok(_) => {
-					log::info!("[server] create user({:?}) in room ({:?})", template.id, room_id);
-					Result::Ok(())
+				Ok(userId) => {
+					log::info!("[server] create user({:?}) in room ({:?})", userId, room_id);
+					Result::Ok(userId)
 				}
 				Err(e) => {
-					log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", template.id, room_id, e);
+					log::error!(
+						"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
+						template.private_key,
+						room_id,
+						e
+					);
 					Result::Err(RegisterUserRequestError::Error(e))
 				}
 			},
 			Err(e) => {
-				log::error!("[server] fail create user ({:?}) in room ({:?}) with error {:?}", template.id, room_id, e);
+				log::error!(
+					"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
+					template.private_key,
+					room_id,
+					e
+				);
 				Result::Err(RegisterUserRequestError::ChannelError(e))
 			}
 		}

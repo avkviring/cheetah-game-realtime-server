@@ -11,10 +11,10 @@ use cheetah_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_relay_common::protocol::frame::headers::Header;
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
-use cheetah_relay_common::room::{RoomId, UserPrivateKey};
+use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::room::template::config::UserTemplate;
-use crate::room::RoomUserListener;
+use crate::room::{RoomUserListener, User};
 use crate::rooms::{OutFrame, Rooms};
 
 #[derive(Debug)]
@@ -155,12 +155,9 @@ impl UDPServer {
 }
 
 impl RoomUserListener for UserSessions {
-	fn register_user(&mut self, room_id: RoomId, template: &UserTemplate) {
+	fn register_user(&mut self, room_id: RoomId, user_id: UserId, template: UserTemplate) {
 		self.sessions.insert(
-			UserAndRoomId {
-				user_id: template.id,
-				room_id,
-			},
+			UserAndRoomId { user_id: user_id, room_id },
 			UserSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
@@ -169,13 +166,8 @@ impl RoomUserListener for UserSessions {
 		);
 	}
 
-	fn connected_user(&mut self, _: RoomId, _: &UserTemplate) {}
-
-	fn disconnected_user(&mut self, room_id: RoomId, template: &UserTemplate) {
-		self.sessions.remove(&UserAndRoomId {
-			user_id: template.id,
-			room_id,
-		});
+	fn disconnected_user(&mut self, room_id: RoomId, user_id: UserId) {
+		self.sessions.remove(&UserAndRoomId { user_id: user_id, room_id });
 	}
 }
 
@@ -193,7 +185,7 @@ mod tests {
 
 	use crate::network::udp::UDPServer;
 	use crate::room::template::config::UserTemplate;
-	use crate::room::RoomUserListener;
+	use crate::room::{RoomUserListener, User};
 	use crate::rooms::Rooms;
 
 	#[test]
@@ -254,16 +246,22 @@ mod tests {
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 
 		let user_template = UserTemplate {
-			id: Default::default(),
 			private_key: Default::default(),
 			access_groups: Default::default(),
 			objects: Default::default(),
 		};
-		udp_server.sessions.clone().borrow_mut().register_user(0, &user_template);
+		let user = User {
+			id: 100,
+			protocol: None,
+			attached: false,
+			template: user_template.clone(),
+			compare_and_sets_cleaners: Default::default(),
+		};
+		udp_server.sessions.clone().borrow_mut().register_user(0, user.id, user.template.clone());
 
 		let mut frame = Frame::new(100);
 		let user_and_room_id = UserAndRoomId {
-			user_id: user_template.id,
+			user_id: user.id,
 			room_id: 0,
 		};
 		frame.headers.add(Header::UserAndRoomId(user_and_room_id.clone()));

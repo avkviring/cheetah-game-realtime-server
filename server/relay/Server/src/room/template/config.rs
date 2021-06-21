@@ -5,7 +5,7 @@ use fnv::FnvBuildHasher;
 use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::{UserId, UserPrivateKey};
+use cheetah_relay_common::room::UserPrivateKey;
 
 use crate::room::types::FieldType;
 
@@ -21,7 +21,6 @@ pub struct RoomTemplate {
 
 #[derive(Debug, Default, Clone)]
 pub struct UserTemplate {
-	pub id: UserId,
 	pub private_key: UserPrivateKey,
 	pub access_groups: AccessGroups,
 	pub objects: Vec<GameObjectTemplate>,
@@ -76,14 +75,14 @@ pub enum Permission {
 
 #[derive(Debug)]
 pub enum UserTemplateError {
-	UserObjectHasWrongId(UserId, u32),
+	UserObjectHasWrongId(UserPrivateKey, u32),
 }
 
 impl UserTemplate {
 	pub fn validate(self) -> Result<UserTemplate, UserTemplateError> {
 		for object in &self.objects {
 			if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
-				return Result::Err(UserTemplateError::UserObjectHasWrongId(self.id, object.id));
+				return Result::Err(UserTemplateError::UserObjectHasWrongId(self.private_key, object.id));
 			}
 		}
 		Result::Ok(self)
@@ -92,20 +91,17 @@ impl UserTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
-	use cheetah_relay_common::room::access::AccessGroups;
-	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::UserId;
-
 	use crate::room::template::config::{
 		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, TemplatePermission, UserTemplate, UserTemplateError,
 	};
 	use crate::room::types::FieldType;
+	use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
+	use cheetah_relay_common::room::access::AccessGroups;
+	use cheetah_relay_common::room::object::GameObjectId;
 
 	impl UserTemplate {
-		pub fn stub(user_id: UserId, access_group: AccessGroups) -> Self {
+		pub fn stub(access_group: AccessGroups) -> Self {
 			return UserTemplate {
-				id: user_id,
 				private_key: [5; 32],
 				access_groups: access_group,
 				objects: Default::default(),
@@ -171,7 +167,6 @@ mod tests {
 	#[test]
 	fn should_validate_fail_when_user_object_has_wrong_id() {
 		let template = UserTemplate {
-			id: 54897,
 			private_key: [5; 32],
 			access_groups: AccessGroups(0b1111),
 			objects: vec![GameObjectTemplate {

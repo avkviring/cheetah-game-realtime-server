@@ -139,8 +139,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let user_id = 1;
-		room.register_user(UserTemplate::stub(user_id, access_groups));
+		let user_id = room.register_user(UserTemplate::stub(access_groups));
 		(room, user_id, access_groups)
 	}
 }

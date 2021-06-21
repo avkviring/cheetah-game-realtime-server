@@ -55,8 +55,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
-		let user = 1;
-		room.register_user(UserTemplate::stub(user, access_groups));
+		let user = room.register_user(UserTemplate::stub(access_groups));
 		let object = room.create_object(user, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();

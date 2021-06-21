@@ -7,11 +7,11 @@ use fnv::FnvBuildHasher;
 
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
-use cheetah_relay_common::room::RoomId;
+use cheetah_relay_common::room::{RoomId, UserId};
 
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
-use crate::room::{Room, RoomRegisterUserError, RoomUserListener};
+use crate::room::{Room, RoomUserListener};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
@@ -29,7 +29,6 @@ pub struct OutFrame {
 #[derive(Debug)]
 pub enum RegisterUserError {
 	RoomNotFound,
-	RoomError(RoomRegisterUserError),
 }
 
 impl Rooms {
@@ -50,13 +49,10 @@ impl Rooms {
 		room_id
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<(), RegisterUserError> {
+	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<UserId, RegisterUserError> {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Result::Err(RegisterUserError::RoomNotFound),
-			Some(room) => {
-				room.register_user(template).map_err(|e| RegisterUserError::RoomError(e))?;
-				Result::Ok(())
-			}
+			Some(room) => Result::Ok(room.register_user(template)),
 		}
 	}
 

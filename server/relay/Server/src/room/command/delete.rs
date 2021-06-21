@@ -9,11 +9,11 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(self, room: &mut Room, user_id: UserId) {
 		let user = room.get_user(user_id).unwrap();
 		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
-			if object_id_user != user.template.id {
+			if object_id_user != user.id {
 				error_c2s_command(
 					"DeleteGameObjectCommand",
 					room,
-					user.template.id,
+					user.id,
 					format!("User not owner for game object {:?} for user {:?}", self.object_id, user),
 				);
 				return;
@@ -41,10 +41,8 @@ mod tests {
 		let access_groups = AccessGroups(0b11);
 
 		let mut room = Room::from_template(template);
-		let user_a_id = 1;
-		let user_b_id = 2;
-		room.register_user(UserTemplate::stub(user_a_id, access_groups));
-		room.register_user(UserTemplate::stub(user_b_id, access_groups));
+		let user_a_id = room.register_user(UserTemplate::stub(access_groups));
+		let user_b_id = room.register_user(UserTemplate::stub(access_groups));
 		room.mark_as_connected(user_a_id);
 		room.mark_as_connected(user_b_id);
 
@@ -66,8 +64,7 @@ mod tests {
 	fn should_not_panic_when_missing_object() {
 		let mut template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
-		let user_id = 1;
-		room.register_user(UserTemplate::stub(user_id, AccessGroups(0b11)));
+		let user_id = room.register_user(UserTemplate::stub(AccessGroups(0b11)));
 
 		let object_id = GameObjectId::new(100, ObjectOwner::User(user_id));
 		let command = DeleteGameObjectCommand {
@@ -80,11 +77,9 @@ mod tests {
 	fn should_not_delete_if_not_owner() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
-		let user_a = 1;
-		let user_b = 2;
 		let mut room = Room::from_template(template);
-		room.register_user(UserTemplate::stub(user_a, access_groups));
-		room.register_user(UserTemplate::stub(user_b, access_groups));
+		let user_a = room.register_user(UserTemplate::stub(access_groups));
+		let user_b = room.register_user(UserTemplate::stub(access_groups));
 
 		let object_id = room.create_object(user_a, access_groups).id.clone();
 		room.out_commands.clear();

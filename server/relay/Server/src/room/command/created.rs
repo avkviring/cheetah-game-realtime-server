@@ -18,7 +18,7 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 				let mut commands = Vec::new();
 				object.collect_create_commands(&mut commands);
 				let template = object.template;
-				room.send(groups, template, commands.iter(), |user| user.template.id != user_id)
+				room.send(groups, template, commands.iter(), |user| user.id != user_id)
 			} else {
 				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);
 			}

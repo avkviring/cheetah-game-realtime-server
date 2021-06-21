@@ -122,7 +122,7 @@ fn buffer_to_value(source: &Vec<u8>) -> BinaryDump {
 impl From<&User> for UserDump {
 	fn from(user: &User) -> Self {
 		Self {
-			id: user.template.id,
+			id: user.id,
 			access_groups: user.template.access_groups,
 			attached: user.attached,
 		}

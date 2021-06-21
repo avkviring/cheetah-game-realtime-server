@@ -48,6 +48,7 @@ pub struct Room {
 	current_user: Option<UserId>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub tracer: Rc<CommandTracer>,
+	pub user_id_generator: UserId,
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -58,9 +59,8 @@ pub struct Room {
 }
 
 pub trait RoomUserListener {
-	fn register_user(&mut self, room_id: RoomId, template: &UserTemplate);
-	fn connected_user(&mut self, room_id: RoomId, template: &UserTemplate);
-	fn disconnected_user(&mut self, room_id: RoomId, template: &UserTemplate);
+	fn register_user(&mut self, room_id: RoomId, user_id: UserId, template: UserTemplate);
+	fn disconnected_user(&mut self, room_id: RoomId, user_id: UserId);
 }
 impl Debug for dyn RoomUserListener {
 	fn fmt(&self, _: &mut Formatter<'_>) -> fmt::Result {
@@ -70,15 +70,11 @@ impl Debug for dyn RoomUserListener {
 
 #[derive(Debug)]
 pub struct User {
-	protocol: Option<RelayProtocol>,
+	pub id: UserId,
+	pub(crate) protocol: Option<RelayProtocol>,
 	pub attached: bool,
 	pub template: UserTemplate,
 	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
-}
-
-#[derive(Debug)]
-pub enum RoomRegisterUserError {
-	AlreadyRegistered,
 }
 
 impl User {
@@ -106,6 +102,7 @@ impl Room {
 			object_id_generator: 0,
 			#[cfg(test)]
 			out_commands: Default::default(),
+			user_id_generator: 0,
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -157,8 +154,9 @@ impl Room {
 				if new_user {
 					self.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 					self.current_meta.replace(C2SMetaCommandInformation::default());
+					let user_id = user.id;
 					let template = user.template.clone();
-					self.user_connected(template);
+					self.on_user_connect(user_id, template);
 				}
 			}
 		}
@@ -182,24 +180,24 @@ impl Room {
 		self.current_meta = None;
 	}
 
-	pub fn register_user(&mut self, template: UserTemplate) -> Result<(), RoomRegisterUserError> {
-		if self.users.contains_key(&template.id) {
-			return Result::Err(RoomRegisterUserError::AlreadyRegistered);
-		}
-
-		self.user_listeners.iter().cloned().for_each(|listener| {
-			let mut listener = (*listener).borrow_mut();
-			listener.register_user(self.id.clone(), &template);
-		});
-
+	pub fn register_user(&mut self, template: UserTemplate) -> UserId {
+		self.user_id_generator += 1;
+		let user_id = self.user_id_generator;
 		let user = User {
+			id: user_id,
 			protocol: None,
 			attached: false,
 			template,
 			compare_and_sets_cleaners: Default::default(),
 		};
-		self.users.insert(user.template.id, user);
-		Result::Ok(())
+
+		self.user_listeners.iter().cloned().for_each(|listener| {
+			let mut listener = (*listener).borrow_mut();
+			listener.register_user(self.id.clone(), user.id, user.template.clone());
+		});
+
+		self.users.insert(user_id, user);
+		user_id
 	}
 
 	pub fn get_user(&self, user_id: UserId) -> Option<&User> {
@@ -223,7 +221,7 @@ impl Room {
 				let mut objects = Vec::new();
 				self.process_objects(&mut |o| {
 					if let ObjectOwner::User(owner) = o.id.owner {
-						if owner == user.template.id {
+						if owner == user.id {
 							objects.push(o.id.clone());
 						}
 					}
@@ -235,10 +233,10 @@ impl Room {
 
 				self.user_listeners.iter().cloned().for_each(|listener| {
 					let mut listener = (*listener).borrow_mut();
-					listener.disconnected_user(self.id.clone(), &user.template);
+					listener.disconnected_user(self.id.clone(), user.id);
 				});
 
-				reset_all_compare_and_set(self, user.template.id.clone(), user.compare_and_sets_cleaners);
+				reset_all_compare_and_set(self, user.id.clone(), user.compare_and_sets_cleaners);
 			}
 		};
 	}
@@ -275,7 +273,7 @@ impl Room {
 					.iter(),
 					|user| {
 						if let Some(user_id) = current_user {
-							user.template.id != user_id
+							user.id != user_id
 						} else {
 							true
 						}
@@ -300,7 +298,7 @@ impl Room {
 		self.users.values_mut().for_each(|u| {
 			if let Some(ref mut protocol) = u.protocol {
 				if protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
-					disconnected_user[disconnected_users_count] = u.template.id.clone();
+					disconnected_user[disconnected_users_count] = u.id.clone();
 					disconnected_users_count += 1;
 				}
 			}
@@ -313,12 +311,7 @@ impl Room {
 		disconnected_users_count > 0
 	}
 
-	fn user_connected(&mut self, template: UserTemplate) {
-		self.user_listeners.iter().cloned().for_each(|listener| {
-			let mut listener = (*listener).borrow_mut();
-			listener.connected_user(self.id.clone(), &template);
-		});
-		let user_id = template.id;
+	fn on_user_connect(&mut self, user_id: UserId, template: UserTemplate) {
 		template.objects.iter().for_each(|object_template| {
 			let object = object_template.create_user_game_object(user_id);
 			let mut commands = Vec::new();
@@ -352,7 +345,7 @@ mod tests {
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
 	use crate::room::types::FieldType;
-	use crate::room::{Room, RoomUserListener};
+	use crate::room::{Room, RoomUserListener, User};
 
 	impl Default for Room {
 		fn default() -> Self {
@@ -450,12 +443,9 @@ mod tests {
 	fn should_remove_objects_when_disconnect() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b111);
-		let user_a = 1;
-		let user_b = 2;
-
 		let mut room = Room::from_template(template);
-		room.register_user(UserTemplate::stub(user_a, access_groups));
-		room.register_user(UserTemplate::stub(user_b, access_groups));
+		let user_a = room.register_user(UserTemplate::stub(access_groups));
+		let user_b = room.register_user(UserTemplate::stub(access_groups));
 		let object_a_1 = room.create_object(user_a, access_groups).id.clone();
 		let object_a_2 = room.create_object(user_a, access_groups).id.clone();
 		let object_b_1 = room.create_object(user_b, access_groups).id.clone();
@@ -499,17 +489,16 @@ mod tests {
 			fields: Default::default(),
 		};
 		let user_template = UserTemplate {
-			id: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: vec![object_template.clone()],
 		};
 		let mut room = Room::from_template(template);
-		room.register_user(user_template.clone());
-		room.process_in_frame(user_template.id, Frame::new(0), &Instant::now());
+		let user_id = room.register_user(user_template.clone());
+		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
-			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_template.id))));
+			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_id))));
 	}
 
 	///
@@ -525,7 +514,6 @@ mod tests {
 			fields: Default::default(),
 		};
 		let user1_template = UserTemplate {
-			id: 1,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: vec![object1_template.clone()],
@@ -538,16 +526,15 @@ mod tests {
 			fields: Default::default(),
 		};
 		let user2_template = UserTemplate {
-			id: 2,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: vec![object2_template.clone()],
 		};
 
 		let mut room = Room::from_template(template);
-		room.register_user(user1_template.clone());
-		room.register_user(user2_template.clone());
-		room.process_in_frame(user1_template.id, Frame::new(0), &Instant::now());
+		let user1_id = room.register_user(user1_template.clone());
+		let user2_id = room.register_user(user2_template.clone());
+		room.process_in_frame(user1_id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
 		frame_with_attach_to_room.commands.reliable.push_back(ApplicationCommandDescription {
@@ -557,9 +544,9 @@ mod tests {
 				command: C2SCommand::AttachToRoom,
 			}),
 		});
-		room.process_in_frame(user1_template.id, frame_with_attach_to_room, &Instant::now());
+		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
 
-		let user1 = room.get_user_mut(user1_template.id).unwrap();
+		let user1 = room.get_user_mut(user1_id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
 			protocol
@@ -571,11 +558,11 @@ mod tests {
 				.command
 				.get_object_id()
 				.unwrap(),
-			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_template.id))
+			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_id))
 		);
 		protocol.out_commands_collector.commands.reliable.clear();
-		room.process_in_frame(user2_template.id, Frame::new(0), &Instant::now());
-		let user1 = room.get_user_mut(user1_template.id).unwrap();
+		room.process_in_frame(user2_id, Frame::new(0), &Instant::now());
+		let user1 = room.get_user_mut(user1_id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
 			protocol
@@ -587,7 +574,7 @@ mod tests {
 				.command
 				.get_object_id()
 				.unwrap(),
-			&GameObjectId::new(object2_template.id, ObjectOwner::User(user2_template.id))
+			&GameObjectId::new(object2_template.id, ObjectOwner::User(user2_id))
 		);
 	}
 
@@ -604,16 +591,12 @@ mod tests {
 		}
 
 		impl RoomUserListener for TestUserListener {
-			fn register_user(&mut self, _: u64, template: &UserTemplate) {
-				self.trace = format!("{}r{:?}", self.trace, template.id);
+			fn register_user(&mut self, room_id: u64, user_id: u16, _: UserTemplate) {
+				self.trace = format!("{}r{}", self.trace, user_id);
 			}
 
-			fn connected_user(&mut self, _: u64, template: &UserTemplate) {
-				self.trace = format!("{}c{:?}", self.trace, template.id);
-			}
-
-			fn disconnected_user(&mut self, _: u64, template: &UserTemplate) {
-				self.trace = format!("{}d{:?}", self.trace, template.id);
+			fn disconnected_user(&mut self, room_id: u64, user_id: u16) {
+				self.trace = format!("{}d{}", self.trace, user_id);
 			}
 		}
 
@@ -621,11 +604,11 @@ mod tests {
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
 		let mut room = Room::new(0, template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
-		room.register_user(user_template.clone());
-		room.process_in_frame(user_template.id, Frame::new(0), &Instant::now());
-		room.disconnect_user(user_template.id);
+		let user_id = room.register_user(user_template.clone());
+		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
+		room.disconnect_user(user_id);
 
-		assert_eq!(test_listener.clone().borrow().trace, "r100c100d100".to_string());
+		assert_eq!(test_listener.clone().borrow().trace, format!("r{}d{}", user_id, user_id).to_string());
 	}
 
 	#[test]
@@ -680,8 +663,8 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let groups = AccessGroups(55);
 
-		let mut user1 = UserTemplate::stub(1, groups);
-		let object1_template = user1.configure_object(1, 100, groups);
+		let mut user1_template = UserTemplate::stub(groups);
+		let object1_template = user1_template.configure_object(1, 100, groups);
 		let allow_field_id = 5;
 		let deny_field_id = 10;
 		object1_template.fields.longs.insert(allow_field_id, 555);
@@ -691,13 +674,13 @@ mod tests {
 			.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		room.register_user(user1.clone()).unwrap();
-		let user2 = UserTemplate::stub(2, groups);
-		room.register_user(user2.clone()).unwrap();
-		room.mark_as_connected(user2.id);
-		room.user_connected(user1.clone());
+		let user1_id = room.register_user(user1_template.clone());
+		let user2 = UserTemplate::stub(groups);
+		let user2_id = room.register_user(user2.clone());
+		room.mark_as_connected(user2_id);
+		room.on_user_connect(user1_id, user1_template.clone());
 
-		let commands = room.get_user_out_commands(user2.id);
+		let commands = room.get_user_out_commands(user2_id);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
@@ -707,7 +690,6 @@ mod tests {
 	pub fn create_template() -> (RoomTemplate, UserTemplate) {
 		let template = RoomTemplate::default();
 		let user_template = UserTemplate {
-			id: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: Default::default(),
