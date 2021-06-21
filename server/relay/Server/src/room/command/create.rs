@@ -72,21 +72,17 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 #[cfg(test)]
 mod tests {
 	use cheetah_relay_common::commands::command::load::CreateGameObjectCommand;
-
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
 	#[test]
 	fn should_create() {
-		let mut template = RoomTemplate::default();
-		let user_id = 1;
-		template.configure_user(user_id, AccessGroups(0b11));
-		let mut room = Room::from_template(template);
+		let (mut room, user_id) = setup(AccessGroups(0b11));
 		room.mark_as_connected(user_id);
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
@@ -110,10 +106,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
-		let mut template = RoomTemplate::default();
-		let user_id = 1;
-		template.configure_user(user_id, AccessGroups(0b11));
-		let mut room = Room::from_template(template);
+		let (mut room, user_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
 		let command = CreateGameObjectCommand {
@@ -131,18 +124,13 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
-		let mut template = RoomTemplate::default();
-		let user_id = 1;
-		template.configure_user(user_id, AccessGroups(0b11));
-		let mut room = Room::from_template(template);
-
+		let (mut room, user_id) = setup(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
-
 		command.clone().execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 	}
@@ -152,10 +140,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_id_is_zero() {
-		let mut template = RoomTemplate::default();
-		let user_id = 1;
-		template.configure_user(user_id, AccessGroups(0b11));
-		let mut room = Room::from_template(template);
+		let (mut room, user_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(0, ObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
@@ -173,18 +158,12 @@ mod tests {
 	///
 	#[test]
 	fn should_not_replace_exists_object() {
-		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
-		let user_id = 1;
-		template.configure_user(user_id, access_groups);
-		let mut room = Room::from_template(template);
-
+		let (mut room, user_id) = setup(access_groups.clone());
 		let object = room.create_object(user_id, access_groups);
 		object.template = 777;
 		let object_id = object.id.clone();
-
 		room.out_commands.clear();
-
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
@@ -194,5 +173,13 @@ mod tests {
 		command.clone().execute(&mut room, user_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template == 777));
+	}
+
+	fn setup(access_groups: AccessGroups) -> (Room, u16) {
+		let mut template = RoomTemplate::default();
+		let mut room = Room::from_template(template);
+		let user_id = 1;
+		room.register_user(UserTemplate::stub(user_id, access_groups));
+		(room, user_id)
 	}
 }

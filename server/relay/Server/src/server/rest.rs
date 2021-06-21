@@ -2,14 +2,11 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::{io, thread};
 
+use crate::server::Server;
 use actix_rt::System;
 use actix_web::body::Body;
 use actix_web::http::header;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
-
-use cheetah_relay_common::room::RoomId;
-
-use crate::server::Server;
 
 #[derive(Default)]
 pub struct RestServer {}

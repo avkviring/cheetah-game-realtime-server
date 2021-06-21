@@ -278,7 +278,7 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
-	use crate::room::template::config::{Permission, RoomTemplate};
+	use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
 	use crate::room::types::FieldType;
 	use crate::room::Room;
 
@@ -289,12 +289,6 @@ mod tests {
 	fn test_build_command_and_send_1() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
-		let user_1 = 1;
-		let user_2 = 2;
-
-		template.configure_user(user_1, access_groups);
-		template.configure_user(user_2, access_groups);
-
 		let field_id_1 = 10;
 		let field_id_2 = 11;
 		template
@@ -302,6 +296,10 @@ mod tests {
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
+		let user_1 = 1;
+		let user_2 = 2;
+		room.register_user(UserTemplate::stub(user_1, access_groups));
+		room.register_user(UserTemplate::stub(user_2, access_groups));
 		let object = room.create_object(user_1, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
@@ -353,10 +351,9 @@ mod tests {
 			.permissions
 			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
-		let user = 1;
-
-		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
+		let user = 1;
+		room.register_user(UserTemplate::stub(user, access_groups));
 		let object = room.create_object(user, access_groups);
 		object.access_groups = access_groups.clone();
 		object.created = true;
@@ -398,12 +395,11 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
+		let mut room = Room::from_template(template);
 		let user_1 = 1;
 		let user_2 = 2;
-		template.configure_user(user_1, access_groups_a);
-		template.configure_user(user_2, access_groups_b);
-
-		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_1, access_groups_a));
+		room.register_user(UserTemplate::stub(user_2, access_groups_b));
 		let object = room.create_object(user_1, access_groups_a);
 		object.created = true;
 		let object_id = object.id.clone();
@@ -426,13 +422,14 @@ mod tests {
 		let allow_field_id = 70;
 
 		let mut template = RoomTemplate::default();
-		template.configure_user(user_target_id, groups);
-		template.configure_user(user_source_id, groups);
 		template
 			.permissions
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_target_id, groups));
+		room.register_user(UserTemplate::stub(user_source_id, groups));
+
 		room.mark_as_connected(user_target_id);
 		let object = room.create_object(user_target_id, groups);
 		object.created = true;
@@ -489,13 +486,13 @@ mod tests {
 		let field_type = FieldType::Long;
 
 		let mut template = RoomTemplate::default();
-		template.configure_user(user_1, access_groups);
-		template.configure_user(user_2, access_groups);
 		template
 			.permissions
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &access_groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_1, access_groups));
+		room.register_user(UserTemplate::stub(user_2, access_groups));
 		room.mark_as_connected(user_1);
 		room.mark_as_connected(user_2);
 
@@ -544,10 +541,11 @@ mod tests {
 
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
-		template.configure_user(user_1, access_groups);
-		template.configure_user(user_2, access_groups);
 
 		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_1, access_groups));
+		room.register_user(UserTemplate::stub(user_2, access_groups));
+
 		let object = room.create_object(user_1, access_groups);
 		let object_id = object.id.clone();
 		room.mark_as_connected(user_1);

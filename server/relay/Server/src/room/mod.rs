@@ -112,8 +112,6 @@ impl Room {
 			let game_object: GameObject = object.to_root_game_object();
 			room.insert_object(game_object);
 		});
-
-		template.users.into_iter().for_each(|config| room.register_user(config).unwrap());
 		room
 	}
 
@@ -348,7 +346,7 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-	use cheetah_relay_common::room::{RoomId, UserId};
+	use cheetah_relay_common::room::UserId;
 
 	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::object::GameObject;
@@ -454,10 +452,10 @@ mod tests {
 		let access_groups = AccessGroups(0b111);
 		let user_a = 1;
 		let user_b = 2;
-		template.configure_user(user_a, access_groups);
-		template.configure_user(user_b, access_groups);
 
 		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_a, access_groups));
+		room.register_user(UserTemplate::stub(user_b, access_groups));
 		let object_a_1 = room.create_object(user_a, access_groups).id.clone();
 		let object_a_2 = room.create_object(user_a, access_groups).id.clone();
 		let object_b_1 = room.create_object(user_b, access_groups).id.clone();
@@ -506,9 +504,8 @@ mod tests {
 			access_groups: AccessGroups(55),
 			objects: vec![object_template.clone()],
 		};
-		template.users.push(user_template.clone());
-
 		let mut room = Room::from_template(template);
+		room.register_user(user_template.clone());
 		room.process_in_frame(user_template.id, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
@@ -547,11 +544,9 @@ mod tests {
 			objects: vec![object2_template.clone()],
 		};
 
-		template.users.push(user1_template.clone());
-		template.users.push(user2_template.clone());
-
 		let mut room = Room::from_template(template);
-
+		room.register_user(user1_template.clone());
+		room.register_user(user2_template.clone());
 		room.process_in_frame(user1_template.id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
@@ -626,6 +621,7 @@ mod tests {
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
 		let mut room = Room::new(0, template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
+		room.register_user(user_template.clone());
 		room.process_in_frame(user_template.id, Frame::new(0), &Instant::now());
 		room.disconnect_user(user_template.id);
 
@@ -634,8 +630,9 @@ mod tests {
 
 	#[test]
 	pub fn should_keep_order_object() {
-		let (template, _) = create_template();
+		let (template, user_template) = create_template();
 		let mut room = Room::from_template(template);
+		room.register_user(user_template);
 		room.insert_object(GameObject {
 			id: GameObjectId::new(100, ObjectOwner::Root),
 			template: 0,
@@ -682,12 +679,9 @@ mod tests {
 	pub fn should_apply_permissions_for_self_object() {
 		let mut template = RoomTemplate::default();
 		let groups = AccessGroups(55);
-		let user1 = 1;
-		let user2 = 2;
-		template.configure_user(user2, groups);
-		let user_template_1 = template.configure_user(1, groups);
-		let object1_template = user_template_1.configure_object(1, 100, groups);
 
+		let mut user1 = UserTemplate::stub(1, groups);
+		let object1_template = user1.configure_object(1, 100, groups);
 		let allow_field_id = 5;
 		let deny_field_id = 10;
 		object1_template.fields.longs.insert(allow_field_id, 555);
@@ -696,13 +690,14 @@ mod tests {
 			.permissions
 			.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
-		let user1_template = template.users.iter().find(|u| u.id == user1).unwrap().clone();
-
 		let mut room = Room::from_template(template);
-		room.mark_as_connected(user2);
-		room.user_connected(user1_template);
+		room.register_user(user1.clone()).unwrap();
+		let user2 = UserTemplate::stub(2, groups);
+		room.register_user(user2.clone()).unwrap();
+		room.mark_as_connected(user2.id);
+		room.user_connected(user1.clone());
 
-		let commands = room.get_user_out_commands(user2);
+		let commands = room.get_user_out_commands(user2.id);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
@@ -710,14 +705,13 @@ mod tests {
 	}
 
 	pub fn create_template() -> (RoomTemplate, UserTemplate) {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let user_template = UserTemplate {
 			id: 100,
 			private_key: Default::default(),
 			access_groups: AccessGroups(55),
 			objects: Default::default(),
 		};
-		template.users.push(user_template.clone());
 		(template, user_template)
 	}
 }

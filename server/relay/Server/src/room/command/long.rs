@@ -357,10 +357,6 @@ mod tests {
 			objects: Default::default(),
 		};
 
-		template.users.push(user_template_1.clone());
-		template.users.push(user_template_2.clone());
-		template.users.push(user_template_3.clone());
-
 		let object_template = 10;
 		let object_field = 50;
 		template.permissions.templates.push(TemplatePermission {
@@ -376,6 +372,9 @@ mod tests {
 			}],
 		});
 		let mut room = Room::from_template(template);
+		room.register_user(user_template_1.clone());
+		room.register_user(user_template_2.clone());
+		room.register_user(user_template_3.clone());
 		let object = room.create_object(user_template_3.id, access_group);
 		object.created = true;
 		object.template = object_template;
@@ -387,9 +386,9 @@ mod tests {
 	fn setup() -> (Room, UserId, GameObjectId) {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user = 1;
-		template.configure_user(user, access_groups);
 		let mut room = Room::from_template(template);
+		let user = 1;
+		room.register_user(UserTemplate::stub(user, access_groups));
 		let object = room.create_object(user, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();

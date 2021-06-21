@@ -73,7 +73,7 @@ mod tests {
 	use cheetah_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
 	#[test]
@@ -138,9 +138,9 @@ mod tests {
 	fn setup() -> (Room, UserId, AccessGroups) {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
+		let mut room = Room::from_template(template);
 		let user_id = 1;
-		template.configure_user(user_id, access_groups);
-		let room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_id, access_groups));
 		(room, user_id, access_groups)
 	}
 }

@@ -4,7 +4,6 @@ use std::rc::Rc;
 use std::time::Instant;
 
 use fnv::FnvBuildHasher;
-use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;

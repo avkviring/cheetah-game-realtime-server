@@ -178,8 +178,8 @@ impl ServerThread {
 						}
 					}
 				}
-				Request::RegisterUser(room_id, config, sender) => {
-					let register_user_result = self.rooms.register_user(room_id, config);
+				Request::RegisterUser(room_id, user_template, sender) => {
+					let register_user_result = self.rooms.register_user(room_id, user_template);
 					match sender.send(register_user_result) {
 						Ok(_) => {}
 						Err(e) => {

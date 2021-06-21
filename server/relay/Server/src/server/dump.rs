@@ -177,7 +177,6 @@ mod tests {
 		server
 			.register_room(RoomTemplate {
 				uid: "".to_string(),
-				users: vec![],
 				objects: vec![object_template],
 				permissions: Default::default(),
 			})

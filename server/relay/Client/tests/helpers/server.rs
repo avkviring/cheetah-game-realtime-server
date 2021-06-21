@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::Write;
 use std::net::SocketAddr;
 
@@ -26,26 +27,27 @@ pub struct IntegrationTestServerBuilder {
 	user_id_generator: UserId,
 	object_id_generator: u32,
 	template: RoomTemplate,
+	users: HashMap<UserId, UserTemplate>,
 	enable_trace: bool,
 }
 
 impl IntegrationTestServerBuilder {
-	pub const ROOM_ID: RoomId = 0;
-
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(55);
 	pub const DEFAULT_TEMPLATE: GameObjectTemplateId = 1;
 
-	pub fn make_user_key(&mut self) -> (UserId, UserPrivateKey) {
+	pub fn create_user(&mut self) -> (UserId, UserPrivateKey) {
 		self.user_id_generator += 1;
 		let mut private_key = [0; 32];
 		OsRng.fill_bytes(&mut private_key);
-		self.template.users.push(UserTemplate {
-			id: self.user_id_generator,
-			private_key: private_key.clone(),
-			access_groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
-			objects: Default::default(),
-			unmapping: Default::default(),
-		});
+		self.users.insert(
+			self.user_id_generator,
+			UserTemplate {
+				id: self.user_id_generator,
+				private_key,
+				access_groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
+				objects: Default::default(),
+			},
+		);
 		(self.user_id_generator, private_key)
 	}
 
@@ -56,10 +58,9 @@ impl IntegrationTestServerBuilder {
 			template,
 			access_groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			fields: Default::default(),
-			unmapping: Default::default(),
 		};
 
-		let user = self.template.users.iter_mut().find(|u| u.id == user_id).unwrap();
+		let user = self.users.get_mut(&user_id).unwrap();
 		user.objects.push(object_template);
 		GameObjectId {
 			owner: ObjectOwner::User(user_id),
@@ -96,7 +97,7 @@ impl IntegrationTestServerBuilder {
 		self.enable_trace = true;
 	}
 
-	pub fn build(self) -> (SocketAddr, Server) {
+	pub fn build(self) -> (SocketAddr, Server, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.1;
 		let tracer = if self.enable_trace {
@@ -107,8 +108,11 @@ impl IntegrationTestServerBuilder {
 		};
 
 		let mut server = Server::new(socket.0, tracer);
-		server.register_room(self.template).ok().unwrap();
-		(addr, server)
+		let room_id = server.register_room(self.template).ok().unwrap();
+		for (_, user) in self.users {
+			server.register_user(room_id, user).ok().unwrap();
+		}
+		(addr, server, room_id)
 	}
 }
 

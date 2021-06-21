@@ -32,7 +32,7 @@ mod tests {
 	use cheetah_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
 	#[test]
@@ -40,12 +40,11 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 
+		let mut room = Room::from_template(template);
 		let user_a_id = 1;
 		let user_b_id = 2;
-		template.configure_user(user_a_id, access_groups);
-		template.configure_user(user_b_id, access_groups);
-
-		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_a_id, access_groups));
+		room.register_user(UserTemplate::stub(user_b_id, access_groups));
 		room.mark_as_connected(user_a_id);
 		room.mark_as_connected(user_b_id);
 
@@ -66,9 +65,9 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_missing_object() {
 		let mut template = RoomTemplate::default();
-		let user_id = 1;
-		template.configure_user(user_id, AccessGroups(0b11));
 		let mut room = Room::from_template(template);
+		let user_id = 1;
+		room.register_user(UserTemplate::stub(user_id, AccessGroups(0b11)));
 
 		let object_id = GameObjectId::new(100, ObjectOwner::User(user_id));
 		let command = DeleteGameObjectCommand {
@@ -83,9 +82,9 @@ mod tests {
 		let access_groups = AccessGroups(55);
 		let user_a = 1;
 		let user_b = 2;
-		template.configure_user(user_a, access_groups);
-		template.configure_user(user_b, access_groups);
 		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_a, access_groups));
+		room.register_user(UserTemplate::stub(user_b, access_groups));
 
 		let object_id = room.create_object(user_a, access_groups).id.clone();
 		room.out_commands.clear();

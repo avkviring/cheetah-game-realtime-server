@@ -48,19 +48,19 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::room::attach_to_room;
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
 	#[test]
 	pub fn should_load_object_when_attach_to_room() {
 		let mut template = RoomTemplate::default();
+		let mut room = Room::from_template(template);
 		let groups_a = AccessGroups(0b100);
 		let user_a = 1;
-		template.configure_user(user_a, groups_a);
+		room.register_user(UserTemplate::stub(user_a, groups_a));
 		let groups_b = AccessGroups(0b10);
 		let user_b = 2;
-		template.configure_user(user_b, groups_b);
-		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_b, groups_b));
 
 		room.mark_as_connected(user_a);
 		room.mark_as_connected(user_b);

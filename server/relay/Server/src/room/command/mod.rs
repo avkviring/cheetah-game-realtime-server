@@ -51,7 +51,7 @@ mod tests {
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::UserId;
 
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
 	pub fn setup() -> (Room, GameObjectId, UserId, UserId) {
@@ -59,9 +59,9 @@ mod tests {
 		let access_groups = AccessGroups(0b11);
 		let user_1 = 1;
 		let user_2 = 2;
-		template.configure_user(user_1, access_groups);
-		template.configure_user(user_2, access_groups);
 		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user_1, access_groups));
+		room.register_user(UserTemplate::stub(user_2, access_groups));
 		let object_id = room.create_object(user_1, access_groups).id.clone();
 		(room, object_id, user_1, user_2)
 	}

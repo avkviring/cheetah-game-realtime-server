@@ -46,17 +46,17 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
 
 	#[test]
 	pub fn should_set_structure() {
 		let mut template = RoomTemplate::default();
+		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
 		let user = 1;
-		template.configure_user(user, access_groups);
-		let mut room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user, access_groups));
 		let object = room.create_object(user, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();

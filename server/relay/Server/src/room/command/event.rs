@@ -37,7 +37,7 @@ mod tests {
 	use cheetah_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
 
@@ -62,13 +62,14 @@ mod tests {
 	pub fn should_send_event_to_user() {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
-		let user1 = 1;
-		template.configure_user(user1, access_groups);
-		let user2 = 2;
-		template.configure_user(user2, access_groups);
-		let user3 = 3;
-		template.configure_user(user3, access_groups);
+
 		let mut room = Room::from_template(template);
+		let user1 = 1;
+		room.register_user(UserTemplate::stub(user1, access_groups));
+		let user2 = 2;
+		room.register_user(UserTemplate::stub(user2, access_groups));
+		let user3 = 3;
+		room.register_user(UserTemplate::stub(user3, access_groups));
 
 		room.mark_as_connected(user1);
 		room.mark_as_connected(user2);
@@ -111,9 +112,9 @@ mod tests {
 	fn setup() -> (Room, UserId, AccessGroups) {
 		let mut template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
+		let mut room = Room::from_template(template);
 		let user = 1;
-		template.configure_user(user, access_groups);
-		let room = Room::from_template(template);
+		room.register_user(UserTemplate::stub(user, access_groups));
 		(room, user, access_groups)
 	}
 }

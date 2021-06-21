@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
-use serde::{Deserialize, Serialize};
 
 use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::room::access::AccessGroups;
 use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_relay_common::room::{UserId, UserPrivateKey};
 
 use crate::room::types::FieldType;
 
@@ -16,7 +15,6 @@ use crate::room::types::FieldType;
 #[derive(Debug, Default, Clone)]
 pub struct RoomTemplate {
 	pub uid: String,
-	pub users: Vec<UserTemplate>,
 	pub objects: Vec<GameObjectTemplate>,
 	pub permissions: Permissions,
 }
@@ -77,17 +75,15 @@ pub enum Permission {
 }
 
 #[derive(Debug)]
-pub enum RoomTemplateError {
-	UserObjectHasWrongId(UserTemplate, u32),
+pub enum UserTemplateError {
+	UserObjectHasWrongId(UserId, u32),
 }
 
-impl RoomTemplate {
-	pub fn validate(self) -> Result<RoomTemplate, RoomTemplateError> {
-		for user in &self.users {
-			for object in &user.objects {
-				if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
-					return Result::Err(RoomTemplateError::UserObjectHasWrongId(user.clone(), object.id));
-				}
+impl UserTemplate {
+	pub fn validate(self) -> Result<UserTemplate, UserTemplateError> {
+		for object in &self.objects {
+			if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
+				return Result::Err(UserTemplateError::UserObjectHasWrongId(self.id, object.id));
 			}
 		}
 		Result::Ok(self)
@@ -102,25 +98,20 @@ mod tests {
 	use cheetah_relay_common::room::UserId;
 
 	use crate::room::template::config::{
-		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, RoomTemplate, RoomTemplateError, TemplatePermission,
-		UserTemplate,
+		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, TemplatePermission, UserTemplate, UserTemplateError,
 	};
 	use crate::room::types::FieldType;
 
-	impl RoomTemplate {
-		pub fn configure_user(&mut self, user_id: UserId, access_group: AccessGroups) -> &mut UserTemplate {
-			self.users.push(UserTemplate {
+	impl UserTemplate {
+		pub fn stub(user_id: UserId, access_group: AccessGroups) -> Self {
+			return UserTemplate {
 				id: user_id,
 				private_key: [5; 32],
 				access_groups: access_group,
 				objects: Default::default(),
-			});
-			let len = self.users.len();
-			self.users.get_mut(len - 1).unwrap()
+			};
 		}
-	}
 
-	impl UserTemplate {
 		pub fn configure_object(&mut self, id: u32, template: GameObjectTemplateId, access_groups: AccessGroups) -> &mut GameObjectTemplate {
 			let objects = &mut self.objects;
 			objects.push(GameObjectTemplate {
@@ -179,22 +170,18 @@ mod tests {
 
 	#[test]
 	fn should_validate_fail_when_user_object_has_wrong_id() {
-		let template = RoomTemplate {
-			uid: "".to_string(),
-			users: vec![UserTemplate {
-				id: 54897,
-				private_key: [5; 32],
+		let template = UserTemplate {
+			id: 54897,
+			private_key: [5; 32],
+			access_groups: AccessGroups(0b1111),
+			objects: vec![GameObjectTemplate {
+				id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
+				template: 0b100,
 				access_groups: AccessGroups(0b1111),
-				objects: vec![GameObjectTemplate {
-					id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
-					template: 0b100,
-					access_groups: AccessGroups(0b1111),
-					fields: Default::default(),
-				}],
+				fields: Default::default(),
 			}],
-			objects: Default::default(),
-			permissions: Default::default(),
 		};
-		assert!(matches!(template.validate(), Result::Err(RoomTemplateError::UserObjectHasWrongId(_, _))))
+
+		assert!(matches!(template.validate(), Result::Err(UserTemplateError::UserObjectHasWrongId(_, _))))
 	}
 }
