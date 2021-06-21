@@ -342,14 +342,12 @@ mod tests {
 			private_key: Default::default(),
 			access_groups: access_group,
 			objects: Default::default(),
-			unmapping: Default::default(),
 		};
 		let user_template_2 = UserTemplate {
 			id: 155,
 			private_key: Default::default(),
 			access_groups: access_group,
 			objects: Default::default(),
-			unmapping: Default::default(),
 		};
 
 		let user_template_3 = UserTemplate {
@@ -357,7 +355,6 @@ mod tests {
 			private_key: Default::default(),
 			access_groups: access_group,
 			objects: Default::default(),
-			unmapping: Default::default(),
 		};
 
 		template.users.push(user_template_1.clone());

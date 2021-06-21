@@ -21,8 +21,6 @@ pub struct RoomTemplate {
 	pub objects: Vec<GameObjectTemplate>,
 	#[serde(default)]
 	pub permissions: Permissions,
-	#[serde(flatten)]
-	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -32,8 +30,6 @@ pub struct UserTemplate {
 	pub access_groups: AccessGroups,
 	#[serde(default)]
 	pub objects: Vec<GameObjectTemplate>,
-	#[serde(flatten)]
-	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -43,8 +39,6 @@ pub struct GameObjectTemplate {
 	pub access_groups: AccessGroups,
 	#[serde(default)]
 	pub fields: GameObjectFieldsTemplate,
-	#[serde(flatten)]
-	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -55,8 +49,6 @@ pub struct GameObjectFieldsTemplate {
 	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
 	#[serde(default)]
 	pub structures: HashMap<FieldId, rmpv::Value, FnvBuildHasher>,
-	#[serde(flatten)]
-	pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -137,7 +129,6 @@ mod tests {
 				private_key: [5; 32],
 				access_groups: access_group,
 				objects: Default::default(),
-				unmapping: Default::default(),
 			});
 			let len = self.users.len();
 			self.users.get_mut(len - 1).unwrap()
@@ -152,7 +143,6 @@ mod tests {
 				template,
 				access_groups,
 				fields: Default::default(),
-				unmapping: Default::default(),
 			});
 			let len = objects.len();
 			let option = objects.get_mut(len - 1);
@@ -215,13 +205,10 @@ mod tests {
 					template: 0b100,
 					access_groups: AccessGroups(0b1111),
 					fields: Default::default(),
-					unmapping: Default::default(),
 				}],
-				unmapping: Default::default(),
 			}],
 			objects: Default::default(),
 			permissions: Default::default(),
-			unmapping: Default::default(),
 		};
 		assert!(matches!(template.validate(), Result::Err(RoomTemplateError::UserObjectHasWrongId(_, _))))
 	}

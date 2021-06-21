@@ -65,7 +65,6 @@ mod tests {
 			template: 200,
 			access_groups: Default::default(),
 			fields: Default::default(),
-			unmapping: Default::default(),
 		};
 		config_object.to_root_game_object();
 	}
@@ -77,7 +76,6 @@ mod tests {
 			template: 200,
 			access_groups: Default::default(),
 			fields: Default::default(),
-			unmapping: Default::default(),
 		};
 		config_object.fields.longs = Default::default();
 		config_object.fields.floats = Default::default();

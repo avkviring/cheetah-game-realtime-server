@@ -164,7 +164,6 @@ mod tests {
 			template: 0,
 			access_groups: Default::default(),
 			fields: Default::default(),
-			unmapping: Default::default(),
 		};
 
 		object_template.fields.structures.insert(
@@ -181,7 +180,6 @@ mod tests {
 				users: vec![],
 				objects: vec![object_template],
 				permissions: Default::default(),
-				unmapping: Default::default(),
 			})
 			.ok()
 			.unwrap();
