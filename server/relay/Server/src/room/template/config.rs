@@ -13,81 +13,66 @@ use crate::room::types::FieldType;
 ///
 /// Шаблон для создания комнаты
 ///
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct RoomTemplate {
 	pub uid: String,
 	pub users: Vec<UserTemplate>,
-	#[serde(default)]
 	pub objects: Vec<GameObjectTemplate>,
-	#[serde(default)]
 	pub permissions: Permissions,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct UserTemplate {
 	pub id: UserId,
 	pub private_key: UserPrivateKey,
 	pub access_groups: AccessGroups,
-	#[serde(default)]
 	pub objects: Vec<GameObjectTemplate>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct GameObjectTemplate {
 	pub id: u32,
 	pub template: GameObjectTemplateId,
 	pub access_groups: AccessGroups,
-	#[serde(default)]
 	pub fields: GameObjectFieldsTemplate,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct GameObjectFieldsTemplate {
-	#[serde(default)]
 	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
-	#[serde(default)]
 	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
-	#[serde(default)]
 	pub structures: HashMap<FieldId, rmpv::Value, FnvBuildHasher>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Permissions {
-	#[serde(default)]
 	pub templates: Vec<TemplatePermission>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct TemplatePermission {
 	pub template: GameObjectTemplateId,
-	#[serde(default)]
 	pub groups: Vec<PermissionGroup>,
-	#[serde(default)]
 	pub fields: Vec<PermissionField>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct PermissionGroup {
 	pub group: AccessGroups,
 	pub permission: Permission,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct PermissionField {
 	pub field_id: FieldId,
 	pub field_type: FieldType,
-	#[serde(default)]
 	pub groups: Vec<PermissionGroup>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
-#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
 pub enum Permission {
-	#[serde(rename = "deny")]
 	Deny,
-	#[serde(rename = "ro")]
 	Ro,
-	#[serde(rename = "rw")]
 	Rw,
 }
 
