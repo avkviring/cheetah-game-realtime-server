@@ -16,6 +16,7 @@ use crate::room::{Room, RoomRegisterUserError, RoomUserListener};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
+	room_id_generator: RoomId,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	tracer: Rc<CommandTracer>,
 }
@@ -32,29 +33,22 @@ pub enum RegisterUserError {
 	RoomError(RoomRegisterUserError),
 }
 
-#[derive(Debug)]
-pub enum RegisterRoomError {
-	AlreadyRegistered,
-}
-
 impl Rooms {
 	pub fn new(tracer: CommandTracer) -> Self {
 		Self {
 			room_by_id: Default::default(),
+			room_id_generator: 0,
 			changed_rooms: Default::default(),
 			tracer: Rc::new(tracer),
 		}
 	}
 
-	pub fn create_room(&mut self, template: RoomTemplate, listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Result<(), RegisterRoomError> {
-		let room_id = template.id.clone();
-		if self.room_by_id.contains_key(&room_id) {
-			Result::Err(RegisterRoomError::AlreadyRegistered)
-		} else {
-			let room = Room::new(template.clone(), self.tracer.clone(), listeners);
-			self.room_by_id.insert(room_id, room);
-			Result::Ok(())
-		}
+	pub fn create_room(&mut self, template: RoomTemplate, listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> RoomId {
+		self.room_id_generator += 1;
+		let room_id = self.room_id_generator;
+		let room = Room::new(room_id, template, self.tracer.clone(), listeners);
+		self.room_by_id.insert(room_id, room);
+		room_id
 	}
 
 	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<(), RegisterUserError> {
@@ -118,6 +112,7 @@ impl Default for Rooms {
 	fn default() -> Self {
 		Self {
 			room_by_id: Default::default(),
+			room_id_generator: 0,
 			changed_rooms: Default::default(),
 			tracer: Rc::new(CommandTracer::new_with_allow_all()),
 		}

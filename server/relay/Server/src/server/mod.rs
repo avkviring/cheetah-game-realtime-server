@@ -13,7 +13,7 @@ use cheetah_relay_common::room::RoomId;
 use crate::network::udp::UDPServer;
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
-use crate::rooms::{RegisterRoomError, RegisterUserError, Rooms};
+use crate::rooms::{RegisterUserError, Rooms};
 use crate::server::dump::ServerDump;
 use crate::server::Request::TimeOffset;
 
@@ -27,7 +27,7 @@ pub struct Server {
 }
 
 enum Request {
-	RegisterRoom(RoomTemplate, Sender<Result<(), RegisterRoomError>>),
+	RegisterRoom(RoomTemplate, Sender<RoomId>),
 	RegisterUser(RoomId, UserTemplate, Sender<Result<(), RegisterUserError>>),
 	///
 	/// Смещение текущего времени для тестирования
@@ -42,7 +42,6 @@ enum Request {
 
 pub enum RegisterRoomRequestError {
 	ChannelError(RecvTimeoutError),
-	Error(RegisterRoomError),
 }
 
 pub enum RegisterUserRequestError {
@@ -78,23 +77,17 @@ impl Server {
 		self.halt_signal.clone()
 	}
 
-	pub fn register_room(&mut self, template: RoomTemplate) -> Result<(), RegisterRoomRequestError> {
+	pub fn register_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		let room_id = template.id;
+		let template_uid = template.uid.clone();
 		self.sender.send(Request::RegisterRoom(template, sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
-			Ok(r) => match r {
-				Ok(_) => {
-					log::info!("[server] create room({:?})", room_id);
-					Result::Ok(())
-				}
-				Err(e) => {
-					log::error!("[server] fail create room({:?})", room_id);
-					Result::Err(RegisterRoomRequestError::Error(e))
-				}
-			},
+			Ok(room_id) => {
+				log::info!("[server] create room({:?})", room_id);
+				Result::Ok(room_id)
+			}
 			Err(e) => {
-				log::error!("[server] fail create room({:?})", room_id);
+				log::error!("[server] fail create room by template ({:?})", template_uid);
 				Result::Err(RegisterRoomRequestError::ChannelError(e))
 			}
 		}

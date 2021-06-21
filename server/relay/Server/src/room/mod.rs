@@ -91,9 +91,9 @@ impl User {
 }
 
 impl Room {
-	pub fn new(template: RoomTemplate, tracer: Rc<CommandTracer>, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate, tracer: Rc<CommandTracer>, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
 		let mut room = Room {
-			id: template.id,
+			id,
 			users: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
@@ -348,7 +348,7 @@ mod tests {
 	use cheetah_relay_common::room::access::AccessGroups;
 	use cheetah_relay_common::room::object::GameObjectId;
 	use cheetah_relay_common::room::owner::ObjectOwner;
-	use cheetah_relay_common::room::UserId;
+	use cheetah_relay_common::room::{RoomId, UserId};
 
 	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::object::GameObject;
@@ -358,13 +358,18 @@ mod tests {
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(RoomTemplate::default(), Rc::new(CommandTracer::new_with_allow_all()), Default::default())
+			Room::new(
+				0,
+				RoomTemplate::default(),
+				Rc::new(CommandTracer::new_with_allow_all()),
+				Default::default(),
+			)
 		}
 	}
 
 	impl Room {
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
+			Room::new(0, template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
 		}
 
 		pub fn create_object(&mut self, owner: UserId, access_groups: AccessGroups) -> &mut GameObject {
@@ -627,7 +632,7 @@ mod tests {
 		let (template, user_template) = create_template();
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
-		let mut room = Room::new(template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
+		let mut room = Room::new(0, template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
 		room.process_in_frame(user_template.id, Frame::new(0), &Instant::now());
 		room.disconnect_user(user_template.id);
 
