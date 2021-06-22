@@ -5,7 +5,7 @@ option csharp_namespace = "Cheetah.Relay.Types";
 
 message RoomTemplate {
   string uid = 1;
-  repeated GameObject objects = 2;
+  repeated GameObjectTemplate objects = 2;
   repeated TemplatePermission template_permissions = 3;
 }
 
@@ -29,7 +29,7 @@ enum FieldType {
 }
 
 message PermissionGroup {
-  uint32 access_group = 1;
+  uint64 access_group = 1;
   Permission permission = 2;
 }
 
@@ -42,22 +42,19 @@ enum Permission {
 message UserTemplate {
   uint32 id = 1;
   uint64 access_group = 3;
-  repeated GameObject objects = 4;
+  repeated GameObjectTemplate objects = 4;
 }
 
-message GameObject {
+message GameObjectTemplate {
   uint32 id = 1;
   uint32 template = 2;
   uint64 access_group = 3;
-  repeated Field fields = 4;
+  FieldsTemplate fields = 4;
 }
 
-message Field {
+message FieldsTemplate {
   map<int32, int64> longs = 1;
   map<int32, double> floats = 2;
-  map<int32, ByteArray> structures = 3;
+  map<int32, bytes> structures = 3;
 }
 
-message ByteArray {
-  repeated bytes byte = 1;
-}
