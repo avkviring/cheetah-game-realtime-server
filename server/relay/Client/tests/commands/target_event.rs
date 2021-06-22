@@ -11,10 +11,10 @@ use crate::helpers::server::*;
 #[test]
 fn test() {
 	let mut builder = IntegrationTestServerBuilder::default();
-	let (user1_id, user1_key) = builder.create_user();
-	let (user2_id, user2_key) = builder.create_user();
-	let (user3_id, user3_key) = builder.create_user();
-	let helper = IntegrationTestHelper::new(builder);
+	let mut helper = IntegrationTestHelper::new(builder);
+	let (user1_id, user1_key) = helper.create_user();
+	let (user2_id, user2_key) = helper.create_user();
+	let (user3_id, user3_key) = helper.create_user();
 
 	let client1 = helper.create_client(user1_id, user1_key);
 	let client2 = helper.create_client(user2_id, user2_key);
