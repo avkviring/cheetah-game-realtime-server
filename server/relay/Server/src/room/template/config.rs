@@ -38,7 +38,7 @@ pub struct GameObjectTemplate {
 pub struct GameObjectFieldsTemplate {
 	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
 	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
-	pub structures: HashMap<FieldId, rmpv::Value, FnvBuildHasher>,
+	pub structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher>,
 }
 
 #[derive(Debug, Default, Clone)]
