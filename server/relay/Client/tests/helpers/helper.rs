@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 use std::thread;
 use std::time::Duration;
 
-use cheetah_relay::server::Server;
+use cheetah_relay::server::RelayServer;
 use cheetah_relay_client::ffi;
 use cheetah_relay_client::ffi::client::do_create_client;
 use cheetah_relay_client::ffi::GameObjectIdFFI;
@@ -14,7 +14,7 @@ use crate::helpers::server::IntegrationTestServerBuilder;
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
 	room_id: RoomId,
-	pub server: Server,
+	pub server: RelayServer,
 }
 
 impl IntegrationTestHelper {

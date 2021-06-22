@@ -11,7 +11,7 @@ use cheetah_relay::room::template::config::{
 	GameObjectTemplate, Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate,
 };
 use cheetah_relay::room::types::FieldType;
-use cheetah_relay::server::Server;
+use cheetah_relay::server::RelayServer;
 use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_relay_common::network::bind_to_free_socket;
 use cheetah_relay_common::room::access::AccessGroups;
@@ -97,7 +97,7 @@ impl IntegrationTestServerBuilder {
 		self.enable_trace = true;
 	}
 
-	pub fn build(self) -> (SocketAddr, Server, RoomId) {
+	pub fn build(self) -> (SocketAddr, RelayServer, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.1;
 		let tracer = if self.enable_trace {
@@ -107,7 +107,7 @@ impl IntegrationTestServerBuilder {
 			CommandTracer::new_with_deny_all()
 		};
 
-		let mut server = Server::new(socket.0, tracer);
+		let mut server = RelayServer::new(socket.0, tracer);
 		let room_id = server.register_room(self.template).ok().unwrap();
 		for (_, user) in self.users {
 			server.register_user(room_id, user).ok().unwrap();

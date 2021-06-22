@@ -1,49 +1,17 @@
+use std::future::Future;
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::{io, thread};
 
-use crate::server::Server;
-use actix_rt::System;
-use actix_web::body::Body;
-use actix_web::http::header;
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use futures::FutureExt;
+use warp::Filter;
 
-#[derive(Default)]
-pub struct RestServer {}
+use crate::server::RelayServer;
 
-impl RestServer {
-	pub fn run(server: Arc<Mutex<Server>>, port: u16) -> JoinHandle<io::Result<()>> {
-		thread::spawn(move || {
-			let sys = System::new("rest");
-			let server_data = web::Data::new(server);
-			HttpServer::new(move || {
-				App::new()
-					.wrap(middleware::Compress::default())
-					.app_data(server_data.clone())
-					.route("/", web::get().to(RestServer::index))
-					.route("/dump", web::get().to(RestServer::dump))
-			})
-			.workers(1)
-			.bind(format!("0.0.0.0:{}", port).as_str())
-			.expect("Can not bind port for rest server, use --rest-port for other port")
-			.shutdown_timeout(1)
-			.run();
-
-			sys.run()
-		})
-	}
-
-	async fn dump(data: web::Data<Arc<Mutex<Server>>>) -> HttpResponse {
-		let server = data.get_ref().lock().unwrap();
-		HttpResponse::Ok()
-			.header(header::CONTENT_TYPE, "application/json")
-			.body(Body::from(server.dump().unwrap().to_json()))
-	}
-
-	async fn index() -> HttpResponse {
-		let body = r#"
-			<a href="/dump">Dump all server state</a><br/>	
-		"#;
-		HttpResponse::Ok().header(header::CONTENT_TYPE, "text/html").body(Body::from(body))
-	}
+pub fn run_rest_server(server: Arc<Mutex<RelayServer>>) -> impl Future<Output = ()> {
+	let dump = warp::path("dump").map(move || {
+		let server = server.lock().unwrap();
+		server.dump().unwrap().to_json()
+	});
+	warp::serve(dump).run(([127, 0, 0, 1], 8080))
 }

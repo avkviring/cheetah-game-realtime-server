@@ -148,7 +148,7 @@ mod tests {
 
 	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::template::config::{GameObjectTemplate, RoomTemplate};
-	use crate::server::Server;
+	use crate::server::RelayServer;
 
 	#[derive(Serialize, Deserialize)]
 	pub struct TestStruct {
@@ -158,7 +158,7 @@ mod tests {
 
 	#[test]
 	fn should_dump() {
-		let mut server = Server::new(bind_to_free_socket().unwrap().0, CommandTracer::new_with_deny_all());
+		let mut server = RelayServer::new(bind_to_free_socket().unwrap().0, CommandTracer::new_with_deny_all());
 		let mut object_template = GameObjectTemplate {
 			id: 1,
 			template: 0,

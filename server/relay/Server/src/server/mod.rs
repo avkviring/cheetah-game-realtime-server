@@ -20,7 +20,7 @@ use crate::server::Request::TimeOffset;
 pub mod dump;
 pub mod rest;
 
-pub struct Server {
+pub struct RelayServer {
 	handler: Option<JoinHandle<()>>,
 	sender: Sender<Request>,
 	halt_signal: Arc<AtomicBool>,
@@ -40,22 +40,24 @@ enum Request {
 	Dump(Sender<ServerDump>),
 }
 
+#[derive(Debug)]
 pub enum RegisterRoomRequestError {
 	ChannelError(RecvTimeoutError),
 }
 
+#[derive(Debug)]
 pub enum RegisterUserRequestError {
 	ChannelError(RecvTimeoutError),
 	Error(RegisterUserError),
 }
 
-impl Drop for Server {
+impl Drop for RelayServer {
 	fn drop(&mut self) {
 		self.halt_signal.store(true, Ordering::Relaxed);
 	}
 }
 
-impl Server {
+impl RelayServer {
 	pub fn new(socket: UdpSocket, tracer: CommandTracer) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
@@ -98,9 +100,9 @@ impl Server {
 		self.sender.send(Request::RegisterUser(room_id, template.clone(), sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(r) => match r {
-				Ok(userId) => {
-					log::info!("[server] create user({:?}) in room ({:?})", userId, room_id);
-					Result::Ok(userId)
+				Ok(user_id) => {
+					log::info!("[server] create user({:?}) in room ({:?})", user_id, room_id);
+					Result::Ok(user_id)
 				}
 				Err(e) => {
 					log::error!(

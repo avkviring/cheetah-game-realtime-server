@@ -19,18 +19,16 @@ cheetah_relay_common = { path = "../Common/" }
 fnv = "1.0.7"
 serde = { version = "1.0.126", features = ["derive", "rc"] }
 heapless = { version = "0.5.6", features = ["serde"] }
-actix-web = "3"
 futures = "0.3.15"
-actix-rt = "1.1.1"
 rmpv = { version = "0.4.7", features = ["with-serde"] }
 serde_json = "1.0.64"
 rmp-serde = "0.15.5"
 serde_yaml = "0.8.17"
-clap = "3.0.0-beta.2"
 tokio = { version = "1.7", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tokio-stream = { version = "0.1", features = ["net"] }
 tonic = "0.4.3"
 prost = "0.7"
+warp = "0.3"
 
 [build-dependencies]
 tonic-build = "0.4.2"

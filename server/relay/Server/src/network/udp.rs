@@ -14,7 +14,7 @@ use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::room::template::config::UserTemplate;
-use crate::room::{RoomUserListener, User};
+use crate::room::RoomUserListener;
 use crate::rooms::{OutFrame, Rooms};
 
 #[derive(Debug)]
