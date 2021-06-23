@@ -14,12 +14,17 @@ RUN cd server/match/Relay/ && cargo chef cook --release --recipe-path recipe.jso
 FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
 COPY proto/match/Relay/ proto/match/Relay/
-COPY server/match/Relay/ server/match/Relay/
+COPY server/match/Relay/Common/ server/match/Relay/Common/
+COPY server/match/Relay/Macro/ server/match/Relay/Macro/
+COPY server/match/Relay/Client/ server/match/Relay/Client/
+COPY server/match/Relay/Server/ server/match/Relay/Server/
+COPY server/match/Relay/Cargo.toml server/match/Relay/Cargo.toml
+COPY server/match/Relay/Cargo.lock server/match/Relay/Cargo.lock
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/match/Relay/target server/match/Relay/target/
 RUN touch server/match/Relay/Macro/src/lib.rs
 RUN touch server/match/Relay/Server/build.rs
-RUN cd server/match/Relay/Server && cargo build --release --offline --target=x86_64-unknown-linux-musl
+RUN cd server/match/Relay/Server/ && cargo build --release --offline --target=x86_64-unknown-linux-musl
 
 
 # образ для запуска
