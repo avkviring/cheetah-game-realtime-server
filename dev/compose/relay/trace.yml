@@ -1,4 +1,0 @@
-default: allow
-rules:
-  - action: deny
-    field_id: 2
