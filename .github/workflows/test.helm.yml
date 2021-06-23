@@ -14,15 +14,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [ cerberus, authentication, relay ]
+        include:
+          - directory: cerberus
+            image: cerberus
+          - directory: authentication
+            image: authentication
+          - directory: match/Relay
+            image: match-relay
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.6
         with:
           path: /tmp/.buildx-cache
-          key: ${{ matrix.component }}-buildx-${{ github.sha }}
+          key: ${{ matrix.image }}-buildx-${{ github.sha }}
           restore-keys: |
-            ${{ matrix.component }}-buildx-
+            ${{ matrix.image }}-buildx-
       - name: Setup buildkit
         uses: docker/setup-buildx-action@v1
         id: buildx
@@ -39,8 +45,8 @@ jobs:
         with:
           context: .
           push: true
-          file: server/${{ matrix.component }}/Dockerfile
-          tags: docker.registry.cheetah.games/${{ matrix.component }}:${{ github.sha }}
+          file: server/${{ matrix.directory }}/Dockerfile
+          tags: docker.registry.cheetah.games/${{ matrix.image }}:${{ github.sha }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
       - name: Move buildkit cache
