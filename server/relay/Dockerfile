@@ -18,6 +18,7 @@ COPY server/relay/ server/relay/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/relay/target server/relay/target/
 RUN touch server/relay/Macro/src/lib.rs
+RUN touch server/relay/Server/build.rs
 RUN cd server/relay/Server && cargo build --release --offline --target=x86_64-unknown-linux-musl
 
 
