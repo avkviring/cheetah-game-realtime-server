@@ -1,0 +1,25 @@
+# docker compose
+#
+# - используется только для создания образов для всех сервисов платформы
+# - нельзя использовать для запуска, вместо этого используется запуск из Unity
+#
+# сборка:
+#  docker compose -f build-compose.yaml build
+#
+version: "3.1"
+services:
+  cerberus:
+    image: docker.registry.cheetah.games/cerberus:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/cerberus/Dockerfile
+  mach-relay:
+    image: docker.registry.cheetah.games/match-relay:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/match/Relay/Dockerfile
+  authentication:
+    image: docker.registry.cheetah.games/authentication:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/authentication/Dockerfile
