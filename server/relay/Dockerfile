@@ -13,6 +13,7 @@ RUN cd server/relay/ && cargo chef cook --release --recipe-path recipe.json --ta
 # компиляция приложения
 FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
+COPY proto/relay/ proto/relay/
 COPY server/relay/ server/relay/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/relay/target server/relay/target/
