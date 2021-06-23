@@ -4,7 +4,7 @@
 #
 set -e
 export DOCKER_BUILDKIT=1
-COMPONENTS=(authentication cerberus)
+COMPONENTS=(authentication cerberus relay)
 for component in "${COMPONENTS[@]}"; do
   docker build ../. -f $component/Dockerfile -t docker.registry.cheetah.games/$component:999.999.999
 done
