@@ -1,9 +1,14 @@
 # Авторизация/регистрация
 
-
 - регистрация аккаунта игрока;
 - связывание аккаунта с внешними системами авторизации (google, android, ...);
 - выдача клиенту [JWT](../cerberus/README.md) токена для дальнейшей работы с сервисами;
+- вся информация сохраняется в PostgreSQL.
+
+## Клиент
+- [общий проект](/clients/Unity/Packages/games.cheetah.authentication.cookie)
+- [cookie](/clients/Unity/Packages/games.cheetah.authentication.cookie)
+- [android](/clients/Unity/Packages/games.cheetah.authentication.android)
 
 ## Обработка ошибок
 

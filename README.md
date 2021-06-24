@@ -19,27 +19,11 @@
 
 ### Сервисы
 
-#### Авторизация
-
-Преобразование внешней авторизации в JWT токены платформы.
-
-- Клиент - clients/Unity/Packages/games.cheetah.cerberus
-- [Сервер](server/authentication/README.md)
-
-#### JWT токены
-
-Создание и обновление JWT токенов для авторизации внутри платформы.
-
-- Клиент
-    - clients/Unity/Packages/games.cheetah.authentication
-    - clients/Unity/Packages/games.cheetah.authentication.android
-    - clients/Unity/Packages/games.cheetah.authentication.cookie
-- [Сервер](server/cerberus/README.md)
-
-#### Битвы реального времени
-
-- Клиент - clients/Unity/Packages/games.cheetah.relay
-- [Сервер](server/relay/README.md)
+- [Авторизация](server/authentication/README.md)
+- [JWT токены](server/cerberus/README.md)
+- Матчи реального времени
+  - [Сервер для обмена данными между пользователями](server/match/Relay/README.md)
+  - [Простой Matchmaking для тестирования](server/match/StubMatchmaking/README.md)
 
 ### Создание нового компонента
 
