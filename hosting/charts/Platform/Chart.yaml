@@ -21,3 +21,6 @@ dependencies:
   - name: match-stub-making
     version: 999.999.999
     repository: "file://../../../server/match/StubMaking/Chart/"
+  - name: match-factory
+    version: 999.999.999
+    repository: "file://../../../server/match/Factory/Chart/"

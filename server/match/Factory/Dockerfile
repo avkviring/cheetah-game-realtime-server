@@ -2,7 +2,7 @@
 FROM akviring/rust-builder:1.52.1-01 as planner
 WORKDIR planner
 COPY server/cerberus/ server/cerberus/
-COPY server/match/StubMaking/ server/source_for_build/
+COPY server/match/Factory/ server/source_for_build/
 RUN cd server/source_for_build/ && cargo chef prepare --recipe-path recipe.json
 
 # собираем зависимости
@@ -14,14 +14,9 @@ RUN cd server/source_for_build/ && cargo chef cook --release --recipe-path recip
 # компиляция приложения
 FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
-COPY proto/cerberus proto/cerberus
-COPY server/cerberus/Library server/cerberus/Library
-COPY server/cerberus/Service server/cerberus/Service
-COPY server/cerberus/Cargo.toml server/cerberus/Cargo.toml
-COPY server/cerberus/Cargo.lock server/cerberus/Cargo.lock
-COPY server/match/StubMaking/Service server/source_for_build/Service
-COPY server/match/StubMaking/Cargo.toml server/source_for_build/Cargo.toml
-COPY server/match/StubMaking/Cargo.lock server/source_for_build/Cargo.lock
+COPY server/match/Factory/Service server/source_for_build/Service
+COPY server/match/Factory/Cargo.toml server/source_for_build/Cargo.toml
+COPY server/match/Factory/Cargo.lock server/source_for_build/Cargo.lock
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/source_for_build/target/ server/source_for_build/target/
 RUN touch server/source_for_build/Service/build.rs

@@ -38,6 +38,8 @@ jobs:
             image: match-stub-making
           - directory: match/StubRegistry
             image: match-stub-registry
+          - directory: match/Factory
+            image: match-factory
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.6
