@@ -24,6 +24,11 @@ rand = "0.8"
 games-cheetah-cerberus-library = { path = "../../cerberus/Library" }
 jsonwebtoken-google = { version = "0.1.1" }
 
+# обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
+# это зависимость sqlx, как только они включат новую зависимость lexical-core
+# то эту строчку надо удалить
+lexical-core = "0.7.6"
+
 [dev-dependencies]
 testcontainers = "0.12.0"
 lazy_static = "1.4.0"
