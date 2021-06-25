@@ -15,3 +15,9 @@ dependencies:
   - name: match-relay
     version: 999.999.999
     repository: "file://../../../server/match/Relay/Chart/"
+  - name: match-stub-registry
+    version: 999.999.999
+    repository: "file://../../../server/match/StubRegistry/Chart/"
+  - name: match-stub-making
+    version: 999.999.999
+    repository: "file://../../../server/match/StubMaking/Chart/"

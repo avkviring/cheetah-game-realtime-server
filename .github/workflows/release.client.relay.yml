@@ -16,7 +16,7 @@ jobs:
             ~/.cargo/git
             server/relay/target
           key: cargo-macos-${{ hashFiles('**/Cargo.lock') }}
-      - name: Build client & server
+      - name: Build client
         run: cd server/relay/ && cargo build --manifest-path Client/Cargo.toml --release
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -35,7 +35,7 @@ jobs:
             ~/.cargo/git
             server/relay/target
           key: cargo-linux-${{ hashFiles('**/Cargo.lock') }}
-      - name: Build client & server
+      - name: Build client
         run: cd server/relay/ && cargo build --manifest-path Client/Cargo.toml --release
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -70,8 +70,6 @@ jobs:
             server/relay/target/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll
             server/relay/target/armv7-linux-androideabi/release/libcheetah_relay_client.so
             server/relay/target/aarch64-linux-android/release/libcheetah_relay_client.so
-
-
   publish-unity-package:
     runs-on: ubuntu-latest
     needs: [ build-mac, build-linux, build-android-windows ]
