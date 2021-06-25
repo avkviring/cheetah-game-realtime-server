@@ -1,6 +1,6 @@
 apiVersion: v2
-name: match-relay
-description: match-relay
+name: match-stub-registry
+description: match-stub-registry
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"

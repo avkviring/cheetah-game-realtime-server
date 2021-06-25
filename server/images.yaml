@@ -13,13 +13,23 @@ services:
     build:
       context: ../
       dockerfile: server/cerberus/Dockerfile
-  mach-relay:
-    image: docker.registry.cheetah.games/match-relay:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/match/Relay/Dockerfile
   authentication:
     image: docker.registry.cheetah.games/authentication:${PLATFORM_VERSION}
     build:
       context: ../
       dockerfile: server/authentication/Dockerfile
+  mach-relay:
+    image: docker.registry.cheetah.games/match-relay:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/match/Relay/Dockerfile
+  match-stub-making:
+    image: docker.registry.cheetah.games/match-stub-making:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/match/StubMaking/Dockerfile
+  match-stub-registry:
+    image: docker.registry.cheetah.games/match-stub-registry:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/match/StubRegistry/Dockerfile

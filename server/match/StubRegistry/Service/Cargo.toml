@@ -1,10 +1,10 @@
 [package]
-name = "mmstub"
+name = "cheetah_match_stub_registry"
 version = "999.999.999"
 edition = "2018"
 
 [[bin]]
-name = "mmstub"
+name = "service"
 path = "src/main.rs"
 
 [dependencies]
