@@ -1,0 +1,31 @@
+# Матчи реального времени
+
+## Сервисы
+- MatchFactory - читает yaml файл с конфигурацией шаблона матча,
+  преобразует его в grpc вызовы для Relay
+- MatchRegistry - хранит список запущенных матчей и relay серверов,
+  обеспечивает создание новых экземпляров по-необходимости.
+- Relay - сервер для проведения матча между пользователями.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant B as Matchmaking
+    participant MF as MatchFactory
+    participant MR as MatchRegistry <br/> (agones?)
+    participant R as Relay 
+    C -->> +B: Запрос на вход в матч   
+    Note over B: Поиск подходящего матча 
+    B -->> +MF: Создание матча по шаблону         
+    MF -->> +MR: Поиск Relay сервера для создания матча
+    Note over MR: Поиск свободного Relay сервера или создание нового
+    MR -->> -MF: Адрес Relay сервера
+    Note over MF: Чтение шаблона из файла, <br/> преобразование yaml в grpc структуру
+    MF -->> +R: Создание матча
+    R -->> -MF: id матча   
+    MF -->> -B: Матч создан (id матча, адрес сервера)    
+    B -->> +R: Создание пользователя
+    R -->> -B: Приватный ключ пользователя
+    B -->> -C: Адрес матча для входа          
+```
+
