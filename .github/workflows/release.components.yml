@@ -34,8 +34,8 @@ jobs:
             image: authentication
           - directory: match/Relay
             image: match-relay
-          - directory: match/StubMaking
-            image: match-stub-making
+          - directory: match/StubMatchmaking
+            image: match-stub-matchmaking
           - directory: match/StubRegistry
             image: match-stub-registry
           - directory: match/Factory

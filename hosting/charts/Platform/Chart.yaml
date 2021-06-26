@@ -18,9 +18,9 @@ dependencies:
   - name: match-stub-registry
     version: 999.999.999
     repository: "file://../../../server/match/StubRegistry/Chart/"
-  - name: match-stub-making
+  - name: match-stub-matchmaking
     version: 999.999.999
-    repository: "file://../../../server/match/StubMaking/Chart/"
+    repository: "file://../../../server/match/StubMatchmaking/Chart/"
   - name: match-factory
     version: 999.999.999
     repository: "file://../../../server/match/Factory/Chart/"
