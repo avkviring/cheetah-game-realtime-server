@@ -1,0 +1,22 @@
+syntax = "proto3";
+package games.cheetah.match.registry.internal;
+
+service Registry {
+
+  /**
+    Поиск Relay сервера для нового матча
+   */
+  rpc FindFreeRelay(FindFreeRelayRequest) returns(FindFreeRelayResponse);
+
+}
+
+message FindFreeRelayRequest {
+
+}
+
+message FindFreeRelayResponse {
+  string relay_grpc_host = 1;
+  uint32 relay_grpc_port = 2;
+  string relay_game_host = 3;
+  uint32 relay_game_port = 4;
+}
