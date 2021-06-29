@@ -1,6 +1,6 @@
 syntax = "proto3";
-package games.cheetah.relay.types;
-option csharp_namespace = "Cheetah.Relay.Types";
+package games.cheetah.matches.relay.types;
+option csharp_namespace = "Cheetah.Matches.Relay.Types";
 
 
 message RoomTemplate {
