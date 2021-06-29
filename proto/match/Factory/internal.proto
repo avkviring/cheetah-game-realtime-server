@@ -1,0 +1,23 @@
+syntax = "proto3";
+package games.cheetah.match.factory.internal;
+
+service Factory {
+
+  /**
+    Создание матча на свободном Relay сервере
+   */
+  rpc CreateMatch(CreateMatchRequest) returns(CreateMatchResponse);
+
+}
+
+message CreateMatchRequest {
+  string template = 1;
+}
+
+message CreateMatchResponse {
+  string relay_grpc_host = 1;
+  uint32 relay_grpc_port = 2;
+  string relay_game_host = 3;
+  uint32 relay_game_port = 4;
+  uint64 id = 5;
+}
