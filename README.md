@@ -21,9 +21,10 @@
 
 - [Авторизация](server/authentication/README.md)
 - [JWT токены](server/cerberus/README.md)
-- Матчи реального времени
+- [Матчи реального времени](server/match/README.md)
   - [Сервер для обмена данными между пользователями](server/match/Relay/README.md)
-  - [Простой Matchmaking для тестирования](server/match/StubMatchmaking/README.md)
+  - Matchmaking для тестирования
+  - MatchRegistry для тестирования
 
 ### Создание нового компонента
 
