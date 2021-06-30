@@ -6,9 +6,9 @@ version: 999.999.999
 appVersion: "999.999.999"
 
 dependencies:
-  - name: cerberus
+  - name:  cheetah-auth-cerberus
     version: 999.999.999
-    repository: "file://../../../server/cerberus/Chart/"
+    repository: "file://../../../server/auth/cerberus/Chart/"
   - name: authentication
     version: 999.999.999
     repository: "file://../../../server/authentication/Chart/"

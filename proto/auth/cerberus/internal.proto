@@ -2,9 +2,9 @@
 // Для внутреннего использования
 
 syntax = "proto3";
-package games.cheetah.cerberus.internal;
+package cheetah.auth.cerberus.internal;
 
-import public "cerberus.types.proto";
+import public "types.proto";
 
 
 message CreateTokenRequest {
@@ -16,6 +16,6 @@ service Cerberus {
     * Создать пару токенов session/refresh
     * Вызывается из других микросервисов
    */
-  rpc create (CreateTokenRequest) returns (games.cheetah.cerberus.types.Tokens);
+  rpc create (CreateTokenRequest) returns (cheetah.auth.cerberus.types.Tokens);
 }
 

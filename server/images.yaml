@@ -9,32 +9,32 @@
 version: "3.1"
 services:
   cerberus:
-    image: docker.registry.cheetah.games/cerberus:${PLATFORM_VERSION}
+    image: docker.registry.cheetah.games/cheetah-auth-cerberus:${PLATFORM_VERSION}
     build:
       context: ../
-      dockerfile: server/cerberus/Dockerfile
-  authentication:
-    image: docker.registry.cheetah.games/authentication:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/authentication/Dockerfile
-  match-relay:
-    image: docker.registry.cheetah.games/match-relay:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/match/Relay/Dockerfile
-  match-factory:
-    image: docker.registry.cheetah.games/match-factory:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/match/Factory/Dockerfile
-  match-stub-making:
-    image: docker.registry.cheetah.games/match-stub-matchmaking:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/match/StubMatchmaking/Dockerfile
-  match-stub-registry:
-    image: docker.registry.cheetah.games/match-stub-registry:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/match/StubRegistry/Dockerfile
+      dockerfile: server/auth/cerberus/Dockerfile
+#  authentication:
+#    image: docker.registry.cheetah.games/authentication:${PLATFORM_VERSION}
+#    build:
+#      context: ../
+#      dockerfile: auth/authentication/Dockerfile
+#  match-relay:
+#    image: docker.registry.cheetah.games/match-relay:${PLATFORM_VERSION}
+#    build:
+#      context: ../
+#      dockerfile: server/match/Relay/Dockerfile
+##  match-factory:
+##    image: docker.registry.cheetah.games/match-factory:${PLATFORM_VERSION}
+##    build:
+##      context: ../
+##      dockerfile: server/match/Factory/Dockerfile
+#  match-stub-making:
+#    image: docker.registry.cheetah.games/match-stub-matchmaking:${PLATFORM_VERSION}
+#    build:
+#      context: ../
+#      dockerfile: server/match/StubMatchmaking/Dockerfile
+#  match-stub-registry:
+#    image: docker.registry.cheetah.games/match-stub-registry:${PLATFORM_VERSION}
+#    build:
+#      context: ../
+#      dockerfile: server/match/StubRegistry/Dockerfile

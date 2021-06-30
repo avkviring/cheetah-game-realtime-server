@@ -5,7 +5,7 @@ use tokio::task::JoinHandle;
 use tokio::time::Duration;
 
 #[cfg(not(feature = "test-helper"))]
-use games_cheetah_cerberus_service::{
+use cheetah_auth_cerberus::{
     server::*, service::storage::RedisRefreshTokenStorage, service::token::JWTTokensService,
 };
 

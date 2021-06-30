@@ -1,6 +1,6 @@
 syntax = "proto3";
-package games.cheetah.cerberus.types;
-option csharp_namespace = "Cheetah.Cerberus.GRPC";
+package cheetah.auth.cerberus.types;
+option csharp_namespace = "Cheetah.Auth.Cerberus.Types";
 
 message Token {
   string token = 1;

@@ -1,5 +1,5 @@
 [package]
-name = "games-cheetah-cerberus-service"
+name = "cheetah-auth-cerberus"
 version = "999.999.999"
 edition = "2018"
 

@@ -1,6 +1,6 @@
 apiVersion: v2
-name: cerberus
-description: Cerberus
+name: cheetah-auth-cerberus
+description: JWT token for cluster
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"

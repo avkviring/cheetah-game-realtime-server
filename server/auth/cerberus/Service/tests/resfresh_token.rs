@@ -1,8 +1,8 @@
 use std::thread;
 use std::time::Duration;
 
+use cheetah_auth_cerberus::service::token::*;
 use games_cheetah_cerberus_library::token::JWTTokenParser;
-use games_cheetah_cerberus_service::service::token::*;
 
 #[path = "../src/test_helper/mod.rs"]
 pub mod test_helper;
