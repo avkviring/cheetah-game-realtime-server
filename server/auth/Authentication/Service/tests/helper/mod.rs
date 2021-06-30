@@ -7,8 +7,8 @@ use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
 
-use games_cheetah_authentication_service::storage::pg::PgStorage;
-use games_cheetah_cerberus_service::test_helper;
+use cheetah_auth_authentication::storage::pg::PgStorage;
+use cheetah_auth_cerberus::test_helper;
 
 async fn setup_postgresql_storage<'a>(cli: &'a Cli) -> (PgStorage, Container<'a, Cli, Postgres>) {
     let mut env = HashMap::default();
@@ -49,7 +49,7 @@ pub async fn setup<'a>(
 
     let (storage, postgres_container) = setup_postgresql_storage(cli).await;
     let handler_auth = tokio::spawn(async move {
-        games_cheetah_authentication_service::server::run_grpc_server(
+        cheetah_auth_authentication::server::run_grpc_server(
             storage,
             public_jwt_key,
             format!("http://127.0.0.1:{}", internal_cerberus_port).as_str(),

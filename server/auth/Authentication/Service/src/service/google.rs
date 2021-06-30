@@ -2,7 +2,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use tonic::{Request, Response};
 
-pub use crate::proto::auth::external::google::*;
+pub use crate::proto::auth::google::external::*;
 use crate::service::{create_cerberus_token, get_client_ip};
 use crate::storage::pg::PgStorage;
 use crate::storage::{google, players};
@@ -86,7 +86,7 @@ impl google_server::Google for GoogleService {
             .await
         {
             Ok(token) => {
-                match games_cheetah_cerberus_library::grpc::get_player_id(
+                match cheetah_microservice::jwt::grpc::get_player_id(
                     request.metadata(),
                     self.public_jwt_key.to_owned(),
                 ) {

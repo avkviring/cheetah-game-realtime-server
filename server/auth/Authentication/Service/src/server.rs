@@ -1,9 +1,9 @@
+use jsonwebtoken_google::Parser;
 use tonic::transport::Server;
 
 use crate::service::cookie::CookieService;
 use crate::service::google::GoogleService;
 use crate::storage::pg::PgStorage;
-use jsonwebtoken_google::Parser;
 
 pub async fn run_grpc_server(
     storage: PgStorage,
@@ -18,7 +18,7 @@ pub async fn run_grpc_server(
 
     let builder = builder.add_optional_service(if enable_cookie {
         Some(
-            crate::proto::auth::external::cookie::cookie_server::CookieServer::new(
+            crate::proto::auth::cookie::external::cookie_server::CookieServer::new(
                 CookieService::new(storage.clone(), cerberus_url),
             ),
         )
@@ -27,7 +27,7 @@ pub async fn run_grpc_server(
     });
     let builder =
         builder.add_optional_service(google_token_parser.map(|parser| {
-            crate::proto::auth::external::google::google_server::GoogleServer::new(
+            crate::proto::auth::google::external::google_server::GoogleServer::new(
                 GoogleService::new(storage, cerberus_url, parser, public_jwt_key),
             )
         }));

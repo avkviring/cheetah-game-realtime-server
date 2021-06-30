@@ -1,11 +1,10 @@
 use testcontainers::clients::Cli;
 use tonic::Request;
 
-use games_cheetah_authentication_service::proto::auth::external::cookie;
-use games_cheetah_authentication_service::proto::auth::external::cookie::*;
+use cheetah_auth_authentication::proto::auth::cookie::external::*;
+use cheetah_auth_cerberus::test_helper;
 
 use crate::helper::setup;
-use games_cheetah_cerberus_service::test_helper;
 
 pub mod helper;
 
@@ -31,7 +30,7 @@ pub async fn should_registry_and_login_by_cookie() {
 
     // регистрируем нового игрока
     let registry_response: tonic::Response<RegistryResponse> = cookie_client
-        .register(Request::new(cookie::RegistryRequest {
+        .register(Request::new(RegistryRequest {
             device_id: "some-device-id".to_owned(),
         }))
         .await
@@ -42,21 +41,18 @@ pub async fn should_registry_and_login_by_cookie() {
     //входим с использованием cookie
     let cookie = registry_response.cookie.to_owned();
     let login_response: tonic::Response<LoginResponse> = cookie_client
-        .login(Request::new(cookie::LoginRequest {
+        .login(Request::new(LoginRequest {
             cookie,
             device_id: "some-device-id".to_owned(),
         }))
         .await
         .unwrap();
     let login_response = login_response.into_inner();
-    assert_eq!(
-        login_response.status,
-        cookie::login_response::Status::Ok as i32
-    );
+    assert_eq!(login_response.status, login_response::Status::Ok as i32);
 
     // проверяем что новый пользователь и вошедший по cookie пользователь - один и тот же
-    let token_parser = games_cheetah_cerberus_library::token::JWTTokenParser::new(
-        games_cheetah_cerberus_service::test_helper::PUBLIC_KEY.to_owned(),
+    let token_parser = cheetah_microservice::jwt::JWTTokenParser::new(
+        cheetah_auth_cerberus::test_helper::PUBLIC_KEY.to_owned(),
     );
     let registered_player = token_parser
         .get_player_id(token.session.to_owned())
@@ -88,7 +84,7 @@ pub async fn should_not_login_by_wrong_cookie() {
             .await
             .unwrap();
     let login_response: tonic::Response<LoginResponse> = cookie_client
-        .login(Request::new(cookie::LoginRequest {
+        .login(Request::new(LoginRequest {
             cookie: "some-wrong-cookie".to_owned(),
             device_id: "some-device-id".to_owned(),
         }))
@@ -97,7 +93,7 @@ pub async fn should_not_login_by_wrong_cookie() {
     let login_response = login_response.into_inner();
     assert_eq!(
         login_response.status,
-        cookie::login_response::Status::NotFound as i32
+        login_response::Status::NotFound as i32
     );
     assert!(matches!(login_response.tokens, None));
 }

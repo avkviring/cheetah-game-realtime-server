@@ -1,9 +1,7 @@
 use tonic::{Request, Response};
 
-use auth::external::cookie::*;
-
-use crate::proto::auth;
-use crate::proto::cerberus::types::Tokens;
+use crate::proto::auth::cerberus::types::Tokens;
+use crate::proto::auth::cookie::external::*;
 use crate::service::{create_cerberus_token, get_client_ip};
 use crate::storage::cookie::FindResult;
 use crate::storage::pg::PgStorage;
@@ -33,11 +31,14 @@ impl CookieService {
 }
 
 #[tonic::async_trait]
-impl cookie_server::Cookie for CookieService {
+impl crate::proto::auth::cookie::external::cookie_server::Cookie for CookieService {
     async fn register(
         &self,
         request: Request<RegistryRequest>,
-    ) -> Result<tonic::Response<RegistryResponse>, tonic::Status> {
+    ) -> Result<
+        tonic::Response<crate::proto::auth::cookie::external::RegistryResponse>,
+        tonic::Status,
+    > {
         let ip = get_client_ip(&request.metadata());
         let player = players::create_player(&self.storage, &ip).await;
         let cookie = cookie::attach(&self.storage, player).await;

@@ -1,5 +1,5 @@
 apiVersion: v2
-name: authentication
+name: cheetah-auth-authentication
 description: Authentication
 type: application
 version: "999.999.999"

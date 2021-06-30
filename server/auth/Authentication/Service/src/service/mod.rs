@@ -4,11 +4,9 @@ use ipnetwork::IpNetwork;
 use tonic::metadata::MetadataMap;
 use tonic::{Request, Response};
 
-use cerberus::internal::cerberus_client::CerberusClient;
-use cerberus::internal::CreateTokenRequest;
-use cerberus::types::Tokens;
-
-use crate::proto::cerberus;
+use crate::proto::auth::cerberus::internal::cerberus_client::CerberusClient;
+use crate::proto::auth::cerberus::internal::*;
+use crate::proto::auth::cerberus::types::*;
 
 pub mod cookie;
 pub mod google;

@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package games.cheetah.authentication.external.cookie;
-option csharp_namespace = "Cheetah.Authentication.Cookie.GRPC";
+package cheetah.auth.cookie.external;
+option csharp_namespace = "Cheetah.Auth.Cookie.External";
 
-import public "cerberus.types.proto";
+import public "auth.cerberus.types.proto";
 
 service Cookie {
   /*
@@ -21,7 +21,7 @@ message RegistryRequest {
 }
 
 message RegistryResponse {
-  games.cheetah.cerberus.types.Tokens tokens = 1;
+  cheetah.auth.cerberus.types.Tokens tokens = 1;
   string cookie = 2;
 }
 
@@ -30,7 +30,7 @@ message LoginRequest {
   string device_id = 2;
 }
 message LoginResponse {
-  games.cheetah.cerberus.types.Tokens tokens = 1;
+  cheetah.auth.cerberus.types.Tokens tokens = 1;
   Status status = 2;
   enum Status {
     OK = 0;

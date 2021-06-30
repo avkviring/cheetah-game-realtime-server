@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package games.cheetah.authentication.external.google;
-option csharp_namespace = "Cheetah.Authentication.Android.GRPC";
+package cheetah.auth.google.external;
+option csharp_namespace = "Cheetah.Auth.Google.External";
 
-import public "cerberus.types.proto";
+import public "auth.cerberus.types.proto";
 
 service Google {
   rpc RegisterOrLogin(RegisterOrLoginRequest) returns (RegisterOrLoginResponse);
@@ -21,7 +21,7 @@ message RegisterOrLoginResponse {
   /**
     токен для доступа к платформе
    */
-  games.cheetah.cerberus.types.Tokens tokens = 1;
+  cheetah.auth.cerberus.types.Tokens tokens = 1;
   /**
     true - зарегистрирован новый игрок
    */

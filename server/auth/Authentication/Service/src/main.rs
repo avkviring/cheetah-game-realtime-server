@@ -1,7 +1,7 @@
 use std::env;
 
-use games_cheetah_authentication_service::server::run_grpc_server;
-use games_cheetah_authentication_service::storage::pg::PgStorage;
+use cheetah_auth_authentication::server::run_grpc_server;
+use cheetah_auth_authentication::storage::pg::PgStorage;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

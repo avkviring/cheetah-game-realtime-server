@@ -428,6 +428,69 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "cheetah-auth-authentication"
+version = "999.999.999"
+dependencies = [
+ "async-trait",
+ "cheetah-auth-cerberus",
+ "cheetah-microservice",
+ "chrono",
+ "ipnetwork",
+ "jsonwebtoken-google",
+ "lazy_static",
+ "lexical-core",
+ "log",
+ "pretty_env_logger",
+ "prost",
+ "rand",
+ "serde",
+ "sqlx",
+ "testcontainers",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-build",
+ "tower",
+]
+
+[[package]]
+name = "cheetah-auth-cerberus"
+version = "999.999.999"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "base64 0.13.0",
+ "cheetah-microservice",
+ "chrono",
+ "futures",
+ "jsonwebtoken",
+ "lazy_static",
+ "log",
+ "pretty_env_logger",
+ "prost",
+ "redis",
+ "serde",
+ "testcontainers",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-build",
+ "tower",
+]
+
+[[package]]
+name = "cheetah-microservice"
+version = "999.999.999"
+dependencies = [
+ "jsonwebtoken",
+ "log",
+ "pretty_env_logger",
+ "prost",
+ "serde",
+ "tonic",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -893,67 +956,6 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro-nested",
  "slab",
-]
-
-[[package]]
-name = "games-cheetah-authentication-service"
-version = "999.999.999"
-dependencies = [
- "async-trait",
- "chrono",
- "games-cheetah-cerberus-library",
- "games-cheetah-cerberus-service",
- "ipnetwork",
- "jsonwebtoken-google",
- "lazy_static",
- "lexical-core",
- "log",
- "pretty_env_logger",
- "prost",
- "rand",
- "serde",
- "sqlx",
- "testcontainers",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-build",
- "tower",
-]
-
-[[package]]
-name = "games-cheetah-cerberus-library"
-version = "999.999.999"
-dependencies = [
- "jsonwebtoken",
- "prost",
- "serde",
- "tonic",
-]
-
-[[package]]
-name = "games-cheetah-cerberus-service"
-version = "999.999.999"
-dependencies = [
- "async-stream",
- "async-trait",
- "base64 0.13.0",
- "chrono",
- "futures",
- "games-cheetah-cerberus-library",
- "jsonwebtoken",
- "lazy_static",
- "log",
- "pretty_env_logger",
- "prost",
- "redis",
- "serde",
- "testcontainers",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-build",
- "tower",
 ]
 
 [[package]]
