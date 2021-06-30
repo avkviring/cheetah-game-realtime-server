@@ -1,7 +1,7 @@
 use tonic::Response;
 
 use cheetah_auth_cerberus::proto::*;
-use games_cheetah_cerberus_library::token::JWTTokenParser;
+use cheetah_microservice::jwt::JWTTokenParser;
 
 #[path = "../src/test_helper/mod.rs"]
 pub mod test_helper;

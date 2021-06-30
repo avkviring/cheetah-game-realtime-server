@@ -2,7 +2,7 @@ use std::thread;
 use std::time::Duration;
 
 use cheetah_auth_cerberus::service::token::*;
-use games_cheetah_cerberus_library::token::JWTTokenParser;
+use cheetah_microservice::jwt::JWTTokenParser;
 
 #[path = "../src/test_helper/mod.rs"]
 pub mod test_helper;

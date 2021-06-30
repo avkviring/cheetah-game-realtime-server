@@ -124,9 +124,9 @@ dependencies = [
  "async-stream",
  "async-trait",
  "base64 0.13.0",
+ "cheetah-microservice",
  "chrono",
  "futures",
- "games-cheetah-cerberus-library",
  "jsonwebtoken",
  "lazy_static",
  "log",
@@ -140,6 +140,18 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tower",
+]
+
+[[package]]
+name = "cheetah-microservice"
+version = "999.999.999"
+dependencies = [
+ "jsonwebtoken",
+ "log",
+ "pretty_env_logger",
+ "prost",
+ "serde",
+ "tonic",
 ]
 
 [[package]]
@@ -332,16 +344,6 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro-nested",
  "slab",
-]
-
-[[package]]
-name = "games-cheetah-cerberus-library"
-version = "999.999.999"
-dependencies = [
- "jsonwebtoken",
- "prost",
- "serde",
- "tonic",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 # определяем зависимости для кеширования
 FROM akviring/rust-builder:1.52.1-01 as planner
 WORKDIR planner
-COPY server/auth/cerberus/Library server/auth/cerberus/Library
+COPY server/Microservice/ server/Microservice/
 COPY server/auth/cerberus/Service server/auth/cerberus/Service
 COPY server/auth/cerberus/Cargo.toml server/auth/cerberus/Cargo.toml
 COPY server/auth/cerberus/Cargo.lock server/auth/cerberus/Cargo.lock
@@ -10,13 +10,14 @@ RUN cd server/auth/cerberus/ && cargo chef prepare --recipe-path recipe.json
 # кешируем зависимости
 FROM akviring/rust-builder:1.52.1-01 as cacher
 WORKDIR cache
+COPY server/Microservice/ server/Microservice/
 COPY --from=planner /planner/server/auth/cerberus/recipe.json server/auth/cerberus/recipe.json
 RUN cd server/auth/cerberus/ && cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-linux-musl
 
 # компиляция приложения
 FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
-COPY server/auth/cerberus/Library server/auth/cerberus/Library
+COPY server/Microservice/ server/Microservice/
 COPY server/auth/cerberus/Service server/auth/cerberus/Service
 COPY server/auth/cerberus/Cargo.toml server/auth/cerberus/Cargo.toml
 COPY server/auth/cerberus/Cargo.lock server/auth/cerberus/Cargo.lock

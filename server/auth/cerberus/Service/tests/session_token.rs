@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-use games_cheetah_cerberus_library::token::{JWTTokenParser, SessionTokenError};
+use cheetah_microservice::jwt::{JWTTokenParser, SessionTokenError};
 
 #[path = "../src/test_helper/mod.rs"]
 pub mod test_helper;

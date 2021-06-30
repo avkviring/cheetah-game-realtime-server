@@ -1,7 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::storage::RedisRefreshTokenStorage;
-use games_cheetah_cerberus_library::token::{JWTTokenParser, SessionTokenClaims};
+use cheetah_microservice::jwt::{JWTTokenParser, SessionTokenClaims};
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};

@@ -1,7 +1,7 @@
 use tonic::metadata::MetadataMap;
 
-use crate::grpc::AuthorizationError::*;
-use crate::token::SessionTokenError;
+use crate::jwt::grpc::AuthorizationError::*;
+use crate::jwt::SessionTokenError;
 
 #[derive(Debug)]
 pub enum AuthorizationError {
@@ -25,7 +25,7 @@ pub fn get_player_id(
                 Result::Err(WrongHeader)
             } else {
                 let token = splitted.get(1).unwrap().to_string();
-                let result = crate::token::JWTTokenParser::new(public_key).get_player_id(token);
+                let result = crate::jwt::JWTTokenParser::new(public_key).get_player_id(token);
                 result.map_err(AuthorizationError::Token)
             }
         }
@@ -39,8 +39,8 @@ mod tests {
     use serde::Serialize;
     use tonic::metadata::{MetadataMap, MetadataValue};
 
-    use crate::grpc::{get_player_id, AuthorizationError};
-    use crate::token::SessionTokenError;
+    use crate::jwt::grpc::{get_player_id, AuthorizationError};
+    use crate::jwt::SessionTokenError;
 
     pub const PUBLIC_KEY: &str = "-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVVHNXKxoUNkoX9hnOJpSz6K2KDfi

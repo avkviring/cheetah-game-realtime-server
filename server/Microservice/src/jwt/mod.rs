@@ -2,6 +2,8 @@ use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 
+pub mod grpc;
+
 ///
 /// Валидация и получение идентификатора пользователя из сессионного токена
 ///
