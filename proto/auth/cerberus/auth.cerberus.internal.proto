@@ -4,7 +4,7 @@
 syntax = "proto3";
 package cheetah.auth.cerberus.internal;
 
-import public "types.proto";
+import public "auth.cerberus.types.proto";
 
 
 message CreateTokenRequest {

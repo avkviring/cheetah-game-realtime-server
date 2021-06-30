@@ -1,6 +1,6 @@
 // API для обновления токенов - используется игровыми клиентами
 syntax = "proto3";
-import public "types.proto";
+import public "auth.cerberus.types.proto";
 package cheetah.auth.cerberus.external;
 option csharp_namespace = "Cheetah.Auth.Cerberus.External";
 
