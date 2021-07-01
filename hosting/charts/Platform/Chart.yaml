@@ -12,6 +12,9 @@ dependencies:
   - name: cheetah-auth-authentication
     version: 999.999.999
     repository: "file://../../../server/auth/Authentication/Chart/"
+  - name: cheetah-matches-factory
+    version: 999.999.999
+    repository: "file://../../../server/matches/Factory/Chart/"
   - name: match-relay
     version: 999.999.999
     repository: "file://../../../server/match/Relay/Chart/"
@@ -21,6 +24,3 @@ dependencies:
   - name: match-stub-matchmaking
     version: 999.999.999
     repository: "file://../../../server/match/StubMatchmaking/Chart/"
-  - name: match-factory
-    version: 999.999.999
-    repository: "file://../../../server/match/Factory/Chart/"

@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use crate::proto::matches::relay::types as relay_types;
 
 pub mod grpc;
 
 pub struct FactoryService {
-    templates: HashMap<String, crate::proto::relay::RoomTemplate>,
+    templates: HashMap<String, relay_types::RoomTemplate>,
 }
 
 impl FactoryService {
@@ -15,7 +16,7 @@ impl FactoryService {
     }
 }
 
-fn load_templates(path: &Path) -> HashMap<String, crate::proto::relay::RoomTemplate> {
+fn load_templates(path: &Path) -> HashMap<String, relay_types::RoomTemplate> {
     let mut result = HashMap::default();
     let r: Vec<()> = fs::read_dir(path)
         .unwrap()
@@ -33,9 +34,9 @@ fn load_templates(path: &Path) -> HashMap<String, crate::proto::relay::RoomTempl
 mod test {
     use std::fs::File;
     use std::io::Write;
+    use std::time::Duration;
 
     use crate::service::load_templates;
-    use std::time::Duration;
 
     #[test]
     pub fn load_templates_test() {

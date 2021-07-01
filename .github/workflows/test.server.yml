@@ -8,7 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [ cerberus, authentication, match/Relay, match/StubMatchmaking, match/StubRegistry, match/Factory ]
+        component:
+          - auth/Cerberus
+          - auth/Authentication
+          - matches/Relay
+          - matches/StubMatchmaking
+          - matches/StubRegistry
+          - matches/Factory
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.6

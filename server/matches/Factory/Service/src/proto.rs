@@ -1,7 +1,13 @@
-pub mod internal {
-    tonic::include_proto!("games.cheetah.r#match.factory.internal");
-}
+pub mod matches {
+    pub mod factory {
+        pub mod internal {
+            tonic::include_proto!("cheetah.matches.factory.internal");
+        }
+    }
 
-pub mod relay {
-    tonic::include_proto!("games.cheetah.r#match.relay.types");
+    pub mod relay {
+        pub mod types {
+            tonic::include_proto!("cheetah.matches.relay.types");
+        }
+    }
 }

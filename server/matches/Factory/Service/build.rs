@@ -6,12 +6,12 @@ fn main() -> Result<(), Error> {
         .build_client(false)
         .compile(
             &[
-                "../../../../proto/match/Factory/internal.proto",
-                "../../../../proto/match/Relay/types.proto",
+                "../../../../proto/matches/Factory/matches.factory.internal.proto",
+                "../../../../proto/matches/Relay/matches.relay.types.proto",
             ],
             &[
-                "../../../../proto/match/Factory/",
-                "../../../../proto/match/Relay/",
+                "../../../../proto/matches/Factory/",
+                "../../../../proto/matches/Relay/",
             ],
         )?;
     Result::Ok(())

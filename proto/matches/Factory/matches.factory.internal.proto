@@ -1,8 +1,7 @@
 syntax = "proto3";
-package games.cheetah.match.factory.internal;
+package cheetah.matches.factory.internal;
 
 service Factory {
-
   /**
     Создание матча на свободном Relay сервере
    */

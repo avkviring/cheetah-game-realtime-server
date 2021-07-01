@@ -1,12 +1,14 @@
-use crate::service::FactoryService;
 use tonic::{Request, Response, Status};
 
+use crate::proto::matches::factory::internal as factory_internal;
+use crate::service::FactoryService;
+
 #[tonic::async_trait]
-impl crate::proto::internal::factory_server::Factory for FactoryService {
+impl factory_internal::factory_server::Factory for FactoryService {
     async fn create_match(
         &self,
-        request: Request<crate::proto::internal::CreateMatchRequest>,
-    ) -> Result<Response<crate::proto::internal::CreateMatchResponse>, Status> {
+        request: Request<factory_internal::CreateMatchRequest>,
+    ) -> Result<Response<factory_internal::CreateMatchResponse>, Status> {
         todo!()
     }
 }

@@ -15,18 +15,18 @@ jobs:
     strategy:3
       matrix:
         include:
-          - directory: cerberus
-            image: cerberus
-          - directory: authentication
-            image: authentication
-          - directory: match/Relay
-            image: match-relay
-          - directory: match/StubMatchmaking
-            image: match-stub-matchmaking
-          - directory: match/StubRegistry
-            image: match-stub-registry
-          - directory: match/Factory
-            image: match-factory
+          - directory: auth/Cerberus
+            image: cheetah-auth-cerberus
+          - directory: auth/Authentication
+            image: cheetah-auth-authentication
+          - directory: matches/Relay
+            image: cheetah-matches-relay
+          - directory: matches/StubMatchmaking
+            image: cheetah-matches-stub-matchmaking
+          - directory: matches/StubRegistry
+            image: cheetah-matches-stub-registry
+          - directory: matches/Factory
+            image: cheetah-matches-factory
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.6
