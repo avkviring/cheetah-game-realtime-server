@@ -2,7 +2,7 @@ syntax = "proto3";
 package cheetah.matches.matchmaking.external;
 option csharp_namespace = "Cheetah.Matches.Matchmaking";
 
-import public "cheetah.matches.relay.types";
+import public "matches.relay.types.proto";
 
 service Matchmaking {
   /**

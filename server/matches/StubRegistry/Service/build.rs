@@ -5,8 +5,8 @@ fn main() -> Result<(), Error> {
         .build_server(true)
         .build_client(false)
         .compile(
-            &["../../../../proto/match/Registry/internal.proto"],
-            &["../../../../proto/match/Registry/"],
+            &["../../../../proto/matches/Registry/matches.registry.internal.proto"],
+            &["../../../../proto/matches/Registry/"],
         )?;
     Result::Ok(())
 }

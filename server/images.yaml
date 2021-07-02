@@ -18,12 +18,12 @@ services:
     build:
       context: ../
       dockerfile: server/auth/Authentication/Dockerfile
-  match-relay:
+  cheetah-match-relay:
     image: docker.registry.cheetah.games/cheetah-matches-relay:${PLATFORM_VERSION}
     build:
       context: ../
       dockerfile: server/matches/Relay/Dockerfile
-  match-factory:
+  cheetah-match-factory:
     image: docker.registry.cheetah.games/cheetah-matches-factory:${PLATFORM_VERSION}
     build:
       context: ../
@@ -33,8 +33,8 @@ services:
 #    build:
 #      context: ../
 #      dockerfile: server/match/StubMatchmaking/Dockerfile
-#  match-stub-registry:
-#    image: docker.registry.cheetah.games/match-stub-registry:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/match/StubRegistry/Dockerfile
+  cheetah-match-stub-registry:
+    image: docker.registry.cheetah.games/cheetah-matches-stub-registry:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/StubRegistry/Dockerfile

@@ -1,5 +1,5 @@
 [package]
-name = "cheetah_match_stub_registry"
+name = "cheetah-matches-stub-registry"
 version = "999.999.999"
 edition = "2018"
 
