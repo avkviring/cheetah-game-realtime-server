@@ -3,9 +3,9 @@ use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use cheetah_relay_common::network::client::ConnectionStatus;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::network::client::ConnectionStatus;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::ffi::{execute, execute_with_client, BufferFFI, GameObjectIdFFI};
 use crate::registry::ClientId;

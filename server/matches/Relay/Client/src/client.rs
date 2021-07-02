@@ -6,11 +6,11 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::commands::command::C2SCommandWithMeta;
-use cheetah_relay_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription};
-use cheetah_relay_common::protocol::others::rtt::RoundTripTime;
-use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::commands::command::C2SCommandWithMeta;
+use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
+use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription};
+use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
+use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::registry::ClientRequest;
 

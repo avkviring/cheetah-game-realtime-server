@@ -15,12 +15,12 @@ dependencies:
   - name: cheetah-matches-factory
     version: 999.999.999
     repository: "file://../../../server/matches/Factory/Chart/"
-  - name: match-relay
+  - name: cheetah-matches-relay
     version: 999.999.999
-    repository: "file://../../../server/match/Relay/Chart/"
-  - name: match-stub-registry
+    repository: "file://../../../server/matches/Relay/Chart/"
+  - name: cheetah-matches-stub-registry
     version: 999.999.999
-    repository: "file://../../../server/match/StubRegistry/Chart/"
-  - name: match-stub-matchmaking
+    repository: "file://../../../server/matches/StubRegistry/Chart/"
+  - name: cheetah-matches-stub-matchmaking
     version: 999.999.999
-    repository: "file://../../../server/match/StubMatchmaking/Chart/"
+    repository: "file://../../../server/matches/StubMatchmaking/Chart/"

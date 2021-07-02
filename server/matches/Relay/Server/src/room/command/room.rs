@@ -1,5 +1,5 @@
-use cheetah_relay_common::constants::GameObjectTemplateId;
-use cheetah_relay_common::room::UserId;
+use cheetah_matches_relay_common::constants::GameObjectTemplateId;
+use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::object::S2CommandWithFieldInfo;
 use crate::room::Room;
@@ -44,8 +44,8 @@ pub fn detach_from_room(room: &mut Room, user_id: UserId) {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::S2CCommand;
-	use cheetah_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::room::attach_to_room;
 	use crate::room::template::config::{RoomTemplate, UserTemplate};

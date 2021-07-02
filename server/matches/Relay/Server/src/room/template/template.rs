@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::constants::FieldId;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::UserId;
+use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::object::GameObject;
 use crate::room::template::config::GameObjectTemplate;
@@ -52,7 +52,7 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::template::config::GameObjectTemplate;
 

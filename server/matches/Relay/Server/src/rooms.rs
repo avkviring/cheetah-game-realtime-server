@@ -5,9 +5,9 @@ use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::protocol::frame::{Frame, FrameId};
-use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
-use cheetah_relay_common::room::{RoomId, UserId};
+use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
+use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
+use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::room::debug::tracer::CommandTracer;
 use crate::room::template::config::{RoomTemplate, UserTemplate};

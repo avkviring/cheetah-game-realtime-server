@@ -8,7 +8,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use cheetah_relay_common::room::{RoomId, UserId};
+use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::network::udp::UDPServer;
 use crate::room::debug::tracer::CommandTracer;

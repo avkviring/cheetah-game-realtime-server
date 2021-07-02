@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_matches_relay_common::room::access::AccessGroups;
 
 use crate::proto::types as proto;
 use crate::room::template::config;

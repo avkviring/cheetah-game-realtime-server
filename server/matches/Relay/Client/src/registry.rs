@@ -9,8 +9,8 @@ use std::time::Duration;
 use fnv::FnvBuildHasher;
 use widestring::U16CString;
 
-use cheetah_relay_common::network::client::ConnectionStatus;
-use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::network::client::ConnectionStatus;
+use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::client::{Client, OutApplicationCommand};
 use crate::controller::ClientController;

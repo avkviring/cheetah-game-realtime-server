@@ -7,11 +7,11 @@ use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::protocol::codec::cipher::Cipher;
-use cheetah_relay_common::protocol::frame::headers::Header;
-use cheetah_relay_common::protocol::frame::{Frame, FrameId};
-use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
-use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
+use cheetah_matches_relay_common::protocol::frame::headers::Header;
+use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
+use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
+use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::room::template::config::UserTemplate;
 use crate::room::RoomUserListener;
@@ -177,11 +177,11 @@ mod tests {
 	use std::str::FromStr;
 	use std::time::Instant;
 
-	use cheetah_relay_common::network::bind_to_free_socket;
-	use cheetah_relay_common::protocol::codec::cipher::Cipher;
-	use cheetah_relay_common::protocol::frame::headers::Header;
-	use cheetah_relay_common::protocol::frame::Frame;
-	use cheetah_relay_common::protocol::others::user_id::UserAndRoomId;
+	use cheetah_matches_relay_common::network::bind_to_free_socket;
+	use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
+	use cheetah_matches_relay_common::protocol::frame::headers::Header;
+	use cheetah_matches_relay_common::protocol::frame::Frame;
+	use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
 
 	use crate::network::udp::UDPServer;
 	use crate::room::template::config::UserTemplate;

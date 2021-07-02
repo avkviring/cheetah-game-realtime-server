@@ -1,5 +1,5 @@
-use cheetah_relay_common::commands::command::C2SCommand;
-use cheetah_relay_common::room::UserId;
+use cheetah_matches_relay_common::commands::command::C2SCommand;
+use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::Room;
 
@@ -47,9 +47,9 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_id: UserId) {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::room::access::AccessGroups;
-	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::UserId;
+	use cheetah_matches_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;

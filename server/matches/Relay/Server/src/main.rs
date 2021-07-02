@@ -11,10 +11,10 @@ use log::LevelFilter;
 use stderrlog::Timestamp;
 use tonic::transport::Server;
 
-use cheetah_relay::grpc::RelayGRPCService;
-use cheetah_relay::room::debug::tracer::CommandTracer;
-use cheetah_relay::server::rest::run_rest_server;
-use cheetah_relay::server::RelayServer;
+use cheetah_matches_relay::grpc::RelayGRPCService;
+use cheetah_matches_relay::room::debug::tracer::CommandTracer;
+use cheetah_matches_relay::server::rest::run_rest_server;
+use cheetah_matches_relay::server::RelayServer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn create_grpc_server(internal_grpc_port: u16, relay_server: Arc<Mutex<RelayServer>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
-	let service = cheetah_relay::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
+	let service = cheetah_matches_relay::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
 	let address = SocketAddr::from_str("0.0.0.0:5001").unwrap();
 	Server::builder().add_service(service).serve(address)
 }

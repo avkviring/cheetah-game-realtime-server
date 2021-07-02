@@ -1,5 +1,5 @@
 [package]
-name = "cheetah_relay"
+name = "cheetah-matches-relay"
 version = "0.1.0"
 authors = ["kviring <alex@kviring.com>"]
 edition = "2018"
@@ -15,7 +15,7 @@ rand = "0.8.3"
 log = "0.4"
 stderrlog = "0.5.0"
 indexmap = { version = "1.6.2", features = ["serde-1"] }
-cheetah_relay_common = { path = "../Common/" }
+cheetah-matches-relay-common = { path = "../Common/" }
 fnv = "1.0.7"
 serde = { version = "1.0.126", features = ["derive", "rc"] }
 heapless = { version = "0.5.6", features = ["serde"] }

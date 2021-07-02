@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
-use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
-use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::UserId;
+use cheetah_matches_relay_common::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
+use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_relay_common::room::access::AccessGroups;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::types::FieldType;
 
@@ -81,10 +81,10 @@ pub struct FieldIdAndType {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::S2CCommand;
-	use cheetah_relay_common::room::access::AccessGroups;
-	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 
 	use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 	use crate::room::types::FieldType;

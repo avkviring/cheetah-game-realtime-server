@@ -4,11 +4,11 @@ use std::rc::Rc;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-use cheetah_relay_common::commands::command::S2CCommand;
-use cheetah_relay_common::constants::FieldId;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::UserId;
+use cheetah_matches_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
+use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
@@ -147,12 +147,12 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-	use cheetah_relay_common::commands::command::S2CCommand;
-	use cheetah_relay_common::constants::FieldId;
-	use cheetah_relay_common::room::access::AccessGroups;
-	use cheetah_relay_common::room::object::GameObjectId;
-	use cheetah_relay_common::room::UserId;
+	use cheetah_matches_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
+	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::constants::FieldId;
+	use cheetah_matches_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate};

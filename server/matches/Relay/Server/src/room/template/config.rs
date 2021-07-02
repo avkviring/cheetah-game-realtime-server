@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
-use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::UserPrivateKey;
+use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_relay_common::room::access::AccessGroups;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::UserPrivateKey;
 
 use crate::room::types::FieldType;
 
@@ -95,9 +95,9 @@ mod tests {
 		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, TemplatePermission, UserTemplate, UserTemplateError,
 	};
 	use crate::room::types::FieldType;
-	use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
-	use cheetah_relay_common::room::access::AccessGroups;
-	use cheetah_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+	use cheetah_matches_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::object::GameObjectId;
 
 	impl UserTemplate {
 		pub fn stub(access_group: AccessGroups) -> Self {

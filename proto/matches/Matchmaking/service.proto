@@ -1,8 +1,8 @@
 syntax = "proto3";
-package games.cheetah.match.making.external;
-option csharp_namespace = "Cheetah.Matchmaking.";
+package cheetah.matches.matchmaking.external;
+option csharp_namespace = "Cheetah.Matches.Matchmaking";
 
-import public "games.cheetah.relay.types";
+import public "cheetah.matches.relay.types";
 
 service Matchmaking {
   /**
@@ -12,12 +12,12 @@ service Matchmaking {
 }
 
 message TicketRequest {
-  games.cheetah.relay.types.User user = 1;
+  cheetah.matches.relay.types.User user = 1;
   string room_template_uid = 2;
 }
 
 message TicketResponse {
-  games.cheetah.relay.types.ByteArray private_key = 1;
+  cheetah.matches.relay.types.ByteArray private_key = 1;
   string host = 2;
   int32 port = 3;
 }

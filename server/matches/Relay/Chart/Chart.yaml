@@ -1,6 +1,6 @@
 apiVersion: v2
-name: match-relay
-description: match-relay
+name: cheetah-matches-relay
+description: cheetah-matches-relay
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"

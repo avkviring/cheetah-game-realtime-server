@@ -12,22 +12,22 @@ services:
     image: docker.registry.cheetah.games/cheetah-auth-cerberus:${PLATFORM_VERSION}
     build:
       context: ../
-      dockerfile: server/auth/cerberus/Dockerfile
-#  authentication:
-#    image: docker.registry.cheetah.games/authentication:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: auth/authentication/Dockerfile
-#  match-relay:
-#    image: docker.registry.cheetah.games/match-relay:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/match/Relay/Dockerfile
-##  match-factory:
-##    image: docker.registry.cheetah.games/match-factory:${PLATFORM_VERSION}
-##    build:
-##      context: ../
-##      dockerfile: server/match/Factory/Dockerfile
+      dockerfile: server/auth/Cerberus/Dockerfile
+  authentication:
+    image: docker.registry.cheetah.games/cheetah-auth-authentication:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/auth/Authentication/Dockerfile
+  match-relay:
+    image: docker.registry.cheetah.games/cheetah-matches-relay:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/Relay/Dockerfile
+  match-factory:
+    image: docker.registry.cheetah.games/cheetah-matches-factory:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/Factory/Dockerfile
 #  match-stub-making:
 #    image: docker.registry.cheetah.games/match-stub-matchmaking:${PLATFORM_VERSION}
 #    build:

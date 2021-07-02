@@ -4,16 +4,16 @@ use std::net::SocketAddr;
 
 use log::LevelFilter;
 
-use cheetah_relay::room::debug::tracer::CommandTracer;
-use cheetah_relay::room::template::config::{Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate};
-use cheetah_relay::room::types::FieldType;
-use cheetah_relay::server::RelayServer;
-use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
-use cheetah_relay_common::network::bind_to_free_socket;
-use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay::room::debug::tracer::CommandTracer;
+use cheetah_matches_relay::room::template::config::{Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate};
+use cheetah_matches_relay::room::types::FieldType;
+use cheetah_matches_relay::server::RelayServer;
+use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_relay_common::network::bind_to_free_socket;
+use cheetah_matches_relay_common::room::access::AccessGroups;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 ///
 /// Конфигурируем и создаем сервер для интеграционного тестирования

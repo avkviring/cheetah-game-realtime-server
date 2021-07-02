@@ -1,9 +1,9 @@
 use crate::helpers::helper::*;
 use crate::helpers::server::*;
-use cheetah_relay_client::ffi;
-use cheetah_relay_client::ffi::command::S2CMetaCommandInformationFFI;
-use cheetah_relay_client::ffi::GameObjectIdFFI;
-use cheetah_relay_common::constants::FieldId;
+use cheetah_matches_relay_client::ffi;
+use cheetah_matches_relay_client::ffi::command::S2CMetaCommandInformationFFI;
+use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
+use cheetah_matches_relay_common::constants::FieldId;
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;

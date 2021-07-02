@@ -1,7 +1,7 @@
-use cheetah_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
-use cheetah_relay_common::commands::command::C2SCommand;
-use cheetah_relay_common::constants::FieldId;
-use cheetah_relay_common::room::UserId;
+use cheetah_matches_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
+use cheetah_matches_relay_common::commands::command::C2SCommand;
+use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::UserId;
 
 use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};

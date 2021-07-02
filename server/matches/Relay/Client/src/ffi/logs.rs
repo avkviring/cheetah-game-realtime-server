@@ -1,7 +1,7 @@
 use log::Level;
 use widestring::U16CString;
 
-use cheetah_relay_common::utils::logger::LogListener;
+use cheetah_matches_relay_common::utils::logger::LogListener;
 
 #[repr(C)]
 pub enum LogLevel {
@@ -27,7 +27,7 @@ pub extern "C" fn set_max_log_level(log_level: LogLevel) {
 
 #[no_mangle]
 pub extern "C" fn collect_logs(on_log_message: extern "C" fn(LogLevel, *const u16)) {
-	let collector = &mut cheetah_relay_common::utils::logger::LOG_COLLECTOR.lock().unwrap();
+	let collector = &mut cheetah_matches_relay_common::utils::logger::LOG_COLLECTOR.lock().unwrap();
 	loop {
 		match collector.items.pop_front() {
 			None => {

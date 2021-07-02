@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use fnv::FnvBuildHasher;
 
-use cheetah_relay_common::constants::{FieldId, GameObjectTemplateId};
-use cheetah_relay_common::room::access::AccessGroups;
+use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_relay_common::room::access::AccessGroups;
 
 use crate::room::template::config::{Permission, PermissionGroup, Permissions};
 use crate::room::types::FieldType;
@@ -120,7 +120,7 @@ impl PermissionManager {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::template::config::{Permission, PermissionField, PermissionGroup, Permissions, TemplatePermission};
 	use crate::room::template::permission::PermissionManager;

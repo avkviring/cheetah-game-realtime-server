@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
 
-use cheetah_relay_common::constants::FieldId;
-use cheetah_relay_common::room::access::AccessGroups;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::{RoomId, UserId};
+use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::access::AccessGroups;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::room::object::GameObject;
 use crate::room::{Room, User};

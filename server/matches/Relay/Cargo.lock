@@ -171,10 +171,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah_relay"
+name = "cheetah-matches-relay"
 version = "0.1.0"
 dependencies = [
- "cheetah_relay_common",
+ "cheetah-matches-relay-common",
  "fnv",
  "futures",
  "heapless",
@@ -196,11 +196,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah_relay_client"
+name = "cheetah-matches-relay-client"
 version = "0.0.1"
 dependencies = [
- "cheetah_relay",
- "cheetah_relay_common",
+ "cheetah-matches-relay",
+ "cheetah-matches-relay-common",
  "easybench",
  "env_logger",
  "fnv",
@@ -214,12 +214,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah_relay_common"
+name = "cheetah-matches-relay-common"
 version = "0.1.0"
 dependencies = [
  "byteorder",
  "chacha20poly1305",
- "cheetah_relay_macro",
+ "cheetah-matches-relay-macro",
  "derivative",
  "fnv",
  "generic-array 0.14.4",
@@ -234,7 +234,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah_relay_macro"
+name = "cheetah-matches-relay-macro"
 version = "0.1.0"
 dependencies = [
  "Inflector",

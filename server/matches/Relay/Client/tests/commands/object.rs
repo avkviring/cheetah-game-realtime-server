@@ -1,12 +1,12 @@
 use std::sync::Mutex;
 
-use cheetah_relay_client::ffi;
-use cheetah_relay_client::ffi::command::S2CMetaCommandInformationFFI;
-use cheetah_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_matches_relay_client::ffi;
+use cheetah_matches_relay_client::ffi::command::S2CMetaCommandInformationFFI;
+use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
 
 use crate::helpers::helper::*;
 use crate::helpers::server::*;
-use cheetah_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::constants::FieldId;
 
 ///
 /// Тест на создание/удаление объекта

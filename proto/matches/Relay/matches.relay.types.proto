@@ -1,5 +1,5 @@
 syntax = "proto3";
-package games.cheetah.matches.relay.types;
+package cheetah.matches.relay.types;
 option csharp_namespace = "Cheetah.Matches.Relay.Types";
 
 

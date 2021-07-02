@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use rand::rngs::OsRng;
 use rand::Rng;
 
-use cheetah_relay_common::protocol::relay::RelayProtocol;
+use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 
 #[derive(Default)]
 pub struct Channel {

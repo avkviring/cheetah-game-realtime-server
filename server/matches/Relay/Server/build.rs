@@ -4,7 +4,7 @@ fn main() -> Result<(), Error> {
     tonic_build::configure()
         .build_server(true)
         .build_client(true)
-        .compile(&["../../../../proto/match/Relay/internal.proto"],
-                 &["../../../../proto/match/Relay/"])?;
+        .compile(&["../../../../proto/matches/Relay/matches.relay.internal.proto"],
+                 &["../../../../proto/matches/Relay/"])?;
     Result::Ok(())
 }

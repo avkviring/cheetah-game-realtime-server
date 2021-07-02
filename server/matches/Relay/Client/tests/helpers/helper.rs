@@ -5,18 +5,18 @@ use std::time::Duration;
 use rand::rngs::OsRng;
 use rand::RngCore;
 
-use cheetah_relay::room::template::config::{GameObjectTemplate, UserTemplate};
-use cheetah_relay::server::RelayServer;
-use cheetah_relay_client::ffi;
-use cheetah_relay_client::ffi::client::do_create_client;
-use cheetah_relay_client::ffi::GameObjectIdFFI;
-use cheetah_relay_client::registry::ClientId;
-use cheetah_relay_common::constants::GameObjectTemplateId;
-use cheetah_relay_common::room::object::GameObjectId;
-use cheetah_relay_common::room::owner::ObjectOwner;
-use cheetah_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay::room::template::config::{GameObjectTemplate, UserTemplate};
+use cheetah_matches_relay::server::RelayServer;
+use cheetah_matches_relay_common::constants::GameObjectTemplateId;
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::helpers::server::IntegrationTestServerBuilder;
+use cheetah_matches_relay_client::ffi;
+use cheetah_matches_relay_client::registry::ClientId;
+use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
+use cheetah_matches_relay_client::ffi::client::do_create_client;
 
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,

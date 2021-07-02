@@ -1,6 +1,6 @@
-use cheetah_relay_common::commands::command::structure::StructureCommand;
-use cheetah_relay_common::commands::command::C2SCommand;
-use cheetah_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::commands::command::structure::StructureCommand;
+use cheetah_matches_relay_common::commands::command::C2SCommand;
+use cheetah_matches_relay_common::constants::FieldId;
 
 use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
