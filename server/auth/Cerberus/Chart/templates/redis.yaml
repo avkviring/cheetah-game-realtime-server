@@ -1,8 +1,8 @@
-  {{ $secret := (lookup "v1" "Secret" .Release.Namespace "cerberus-redis-password") }}
+  {{ $secret := (lookup "v1" "Secret" .Release.Namespace "cheetah-auth-cerberus-redis-password") }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cerberus-redis-password
+  name: cheetah-auth-cerberus-redis-password
 type: Opaque
   {{ if $secret}}
 data:

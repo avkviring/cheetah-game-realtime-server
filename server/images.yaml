@@ -8,12 +8,12 @@
 #
 version: "3.1"
 services:
-  cerberus:
+  cheetah-auth-cerberus:
     image: docker.registry.cheetah.games/cheetah-auth-cerberus:${PLATFORM_VERSION}
     build:
       context: ../
       dockerfile: server/auth/Cerberus/Dockerfile
-  authentication:
+  cheetah-auth-authentication:
     image: docker.registry.cheetah.games/cheetah-auth-authentication:${PLATFORM_VERSION}
     build:
       context: ../

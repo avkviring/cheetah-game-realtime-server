@@ -4,8 +4,8 @@ redis:
   master:
     persistence:
       size: 1Gi
-  fullnameOverride: cerberus-redis
-  existingSecret: cerberus-redis-password
+  fullnameOverride: cheetah-auth-cerberus-redis
+  existingSecret: cheetah-auth-cerberus-redis-password
   existingSecretPasswordKey: password
   cluster:
     enabled: false

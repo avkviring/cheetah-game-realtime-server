@@ -13,7 +13,14 @@ spec:
       http:
         paths:
           - pathType: Prefix
-            path: /games.cheetah.authentication.*
+            path: /cheetah.auth.cookie.external.*
+            backend:
+              service:
+                name: "{{ .Chart.Name }}-external"
+                port:
+                  number: 5000
+          - pathType: Prefix
+            path: /cheetah.auth.google.external.*
             backend:
               service:
                 name: "{{ .Chart.Name }}-external"

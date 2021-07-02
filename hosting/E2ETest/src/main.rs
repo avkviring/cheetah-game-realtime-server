@@ -1,13 +1,10 @@
 use std::env;
-
-use tonic::transport::*;
-use tonic::Request;
-
-use cerberus_client::CerberusClient;
-use proto::authentication::external::cookie;
-use proto::cerberus::external::{cerberus_client, RefreshTokenRequest};
-use proto::cerberus::types::Tokens;
 use std::str::FromStr;
+
+use tonic::Request;
+use tonic::transport::*;
+
+use proto::auth::cerberus::types::*;
 
 pub mod proto;
 
@@ -25,8 +22,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn test_cerberus_service(channel: Channel, tokens: Tokens) {
-    let mut client = CerberusClient::new(channel);
-    let request = Request::new(RefreshTokenRequest {
+    let mut client = proto::auth::cerberus::external::cerberus_client::CerberusClient::new(channel);
+    let request = Request::new(proto::auth::cerberus::external::RefreshTokenRequest {
         token: tokens.refresh,
     });
     let response = client.refresh(request).await;
@@ -35,8 +32,8 @@ async fn test_cerberus_service(channel: Channel, tokens: Tokens) {
 }
 
 async fn test_authentication_service(channel: Channel) -> Tokens {
-    let mut client = cookie::cookie_client::CookieClient::new(channel);
-    let request = Request::new(cookie::RegistryRequest {
+    let mut client = proto::auth::cookie::external::cookie_client::CookieClient::new(channel);
+    let request = Request::new(proto::auth::cookie::external::RegistryRequest {
         device_id: "device-id".to_owned(),
     });
     let response = client.register(request).await;

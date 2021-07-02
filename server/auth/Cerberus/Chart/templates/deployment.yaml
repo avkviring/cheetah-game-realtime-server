@@ -32,11 +32,11 @@ spec:
                   name: jwt
                   key: private
             - name: "REDIS_HOST"
-              value: "$(CERBERUS_REDIS_MASTER_SERVICE_HOST)"
+              value: "$(CHEETAH_AUTH_CERBERUS_REDIS_MASTER_SERVICE_HOST)"
             - name: "REDIS_PORT"
-              value: "$(CERBERUS_REDIS_MASTER_SERVICE_PORT)"
+              value: "$(CHEETAH_AUTH_CERBERUS_REDIS_MASTER_SERVICE_PORT)"
             - name: "REDIS_AUTH"
               valueFrom:
                 secretKeyRef:
-                  name: cerberus-redis-password
+                  name: cheetah-auth-cerberus-redis-password
                   key: password

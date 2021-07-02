@@ -11,7 +11,7 @@ spec:
     - host: {{ .Values.global.grpcDomain }}
       http:
         paths:
-          - path: /games.cheetah.{{ .Chart.Name }}.*
+          - path: /cheetah.auth.cerberus.external.*
             pathType: Prefix
             backend:
               service:

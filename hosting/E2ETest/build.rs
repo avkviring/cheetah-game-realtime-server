@@ -6,10 +6,10 @@ fn main() -> Result<(), Error> {
         .build_server(false)
         .compile(
             &[
-                "../../proto/cerberus/cerberus.external.proto",
-                "../../proto/authentication/cookie.proto",
+                "../../proto/auth/Cerberus/auth.cerberus.external.proto",
+                "../../proto/auth/Cookie/auth.cookie.external.proto",
             ],
-            &["../../proto/cerberus/", "../../proto/authentication/"],
+            &["../../proto/auth/Cerberus/", "../../proto/auth/Cookie/"],
         )?;
 
     Result::Ok(())
