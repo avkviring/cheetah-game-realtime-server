@@ -28,11 +28,11 @@ services:
     build:
       context: ../
       dockerfile: server/matches/Factory/Dockerfile
-#  match-stub-making:
-#    image: docker.registry.cheetah.games/match-stub-matchmaking:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/match/StubMatchmaking/Dockerfile
+  cheetah-match-stub-making:
+    image: docker.registry.cheetah.games/cheetah-match-stub-matchmaking:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/StubMatchmaking/Dockerfile
   cheetah-match-stub-registry:
     image: docker.registry.cheetah.games/cheetah-matches-stub-registry:${PLATFORM_VERSION}
     build:

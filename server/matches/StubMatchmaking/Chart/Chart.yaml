@@ -1,6 +1,6 @@
 apiVersion: v2
-name: match-stub-matchmaking
-description: match-stub-matchmaking
+name: matches-stub-matchmaking
+description: matches-stub-matchmaking
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"
