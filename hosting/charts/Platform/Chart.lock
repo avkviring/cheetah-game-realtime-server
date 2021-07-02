@@ -1,12 +1,21 @@
 dependencies:
-- name: cerberus
-  repository: file://../../../server/cerberus/Chart/
+- name: cheetah-auth-cerberus
+  repository: file://../../../server/auth/Cerberus/Chart/
   version: 999.999.999
-- name: authentication
-  repository: file://../../../server/authentication/Chart/
+- name: cheetah-auth-authentication
+  repository: file://../../../server/auth/Authentication/Chart/
   version: 999.999.999
-- name: relay
-  repository: file://../../../server/relay/Chart/
+- name: cheetah-matches-factory
+  repository: file://../../../server/matches/Factory/Chart/
   version: 999.999.999
-digest: sha256:45762ea3b29f806f1509d328dbaaf5af65a9e28e68a772ad6f0e4a0dfd65a965
-generated: "2021-06-15T08:43:46.709951+05:00"
+- name: cheetah-matches-relay
+  repository: file://../../../server/matches/Relay/Chart/
+  version: 999.999.999
+- name: cheetah-matches-stub-registry
+  repository: file://../../../server/matches/StubRegistry/Chart/
+  version: 999.999.999
+- name: cheetah-matches-stub-matchmaking
+  repository: file://../../../server/matches/StubMatchmaking/Chart/
+  version: 999.999.999
+digest: sha256:2891adda48cfa4399f316be829766c0169f269617d747965f415c9350e7cf21c
+generated: "2021-07-02T12:10:13.83758+05:00"
