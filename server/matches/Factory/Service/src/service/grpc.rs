@@ -1,4 +1,3 @@
-use tonic::transport::Channel;
 use tonic::{Request, Response, Status};
 
 use crate::proto::matches::factory::internal as factory_internal;

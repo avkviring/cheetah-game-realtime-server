@@ -14,6 +14,9 @@ pretty_env_logger = "0.4.0"
 tonic = "0.4.2"
 prost = "0.7"
 cheetah-microservice = { path = "../../../Microservice/" }
+serde = { version = "1.0.126", features = ["derive", "rc"] }
+serde_yaml = "0.8.17"
+rmpv = { version = "0.4.7", features = ["with-serde"] }
 
 
 [dev-dependencies]

@@ -5,6 +5,7 @@ use std::path::Path;
 use crate::proto::matches::relay::types as relay_types;
 
 pub mod grpc;
+pub mod template_yaml;
 
 pub struct FactoryService {
     pub registry_grpc_service_address: String,
