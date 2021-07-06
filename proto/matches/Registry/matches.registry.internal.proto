@@ -1,5 +1,5 @@
 syntax = "proto3";
-package games.cheetah.match.registry.internal;
+package cheetah.matches.registry.internal;
 
 service Registry {
 
