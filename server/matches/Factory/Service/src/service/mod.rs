@@ -1,18 +1,26 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+
 use crate::proto::matches::relay::types as relay_types;
 
 pub mod grpc;
 
 pub struct FactoryService {
+    pub registry_grpc_service_address: String,
     templates: HashMap<String, relay_types::RoomTemplate>,
 }
 
 impl FactoryService {
-    pub fn new(path: &Path) -> Self {
+    pub fn new(registry_grpc_service: String, path: &Path) -> Self {
         let templates = load_templates(path);
-        FactoryService { templates }
+        FactoryService {
+            registry_grpc_service_address: registry_grpc_service,
+            templates,
+        }
+    }
+    pub fn get_template(&self, template: &String) -> Option<relay_types::RoomTemplate> {
+        self.templates.get(template).cloned()
     }
 }
 
