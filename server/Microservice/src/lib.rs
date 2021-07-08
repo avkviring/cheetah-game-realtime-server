@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 pub mod jwt;
 
 pub fn get_env(name: &str) -> String {
-    let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {}", name));
+    let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {} dont set", name));
     if value.trim().is_empty() {
         panic!("Env {} is empty", name);
     }
