@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 use std::fs;
+use std::io::Read;
 use std::path::Path;
 
 use crate::proto::matches::relay::types as relay_types;
+use crate::service::yaml::RoomTemplate;
 
+pub mod converter;
 pub mod grpc;
-pub mod template_yaml;
+pub mod yaml;
 
 pub struct FactoryService {
     pub registry_grpc_service_address: String,
@@ -26,17 +29,20 @@ impl FactoryService {
 }
 
 fn load_templates(path: &Path) -> HashMap<String, relay_types::RoomTemplate> {
-    let mut result = HashMap::default();
-    let r: Vec<()> = fs::read_dir(path)
+    fs::read_dir(path)
         .unwrap()
         .map(|res| {
             let res = res.unwrap();
-            println!("{:?}", res);
-            ()
+            let mut file = std::fs::File::open(res.path()).unwrap();
+            let mut content = String::default();
+            file.read_to_string(&mut content).unwrap();
+            let yaml_room_template = RoomTemplate::new_from_yaml(content.as_str()).unwrap();
+            (
+                res.file_name().to_str().unwrap().to_owned(),
+                yaml_room_template.into(),
+            )
         })
-        .collect();
-
-    result
+        .collect()
 }
 
 #[cfg(test)]
@@ -47,7 +53,7 @@ mod test {
 
     use crate::service::load_templates;
 
-    #[test]
+    //#[test]
     pub fn load_templates_test() {
         let templates_directory = tempfile::TempDir::new().unwrap();
         let room_template = r#"
@@ -64,6 +70,7 @@ mod test {
             room_file.write_all(room_template.as_bytes()).unwrap();
             room_file.sync_all().unwrap();
         }
-        load_templates(templates_directory.path());
+        let templates = load_templates(templates_directory.path());
+        let template = templates.get("room").unwrap();
     }
 }

@@ -3,17 +3,23 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 ///
-/// Шаблон для матча
+/// Структуры для чтения шаблона комнаты из yaml файла
+/// Специально разделен с grpc типами, так как yaml представление может иметь другую структуру
+/// для большего удобства
 ///
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct RoomTemplate {
-    pub id: u64,
     #[serde(default)]
     pub objects: Vec<GameObjectTemplate>,
     #[serde(default)]
-    pub permissions: Vec<TemplatePermission>,
+    pub permissions: Permissions,
     #[serde(flatten)]
     pub unmapping: HashMap<String, serde_yaml::Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct Permissions {
+    pub objects: Vec<GameObjectTemplatePermission>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -22,13 +28,13 @@ pub struct GameObjectTemplate {
     pub template: u16,
     pub access_groups: u64,
     #[serde(default)]
-    pub fields: FieldsTemplate,
+    pub fields: GameObjectFieldsTemplate,
     #[serde(flatten)]
     pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct FieldsTemplate {
+pub struct GameObjectFieldsTemplate {
     #[serde(default)]
     pub longs: HashMap<u16, i64>,
     #[serde(default)]
@@ -40,18 +46,18 @@ pub struct FieldsTemplate {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
-pub struct TemplatePermission {
+pub struct GameObjectTemplatePermission {
     pub template: u16,
     #[serde(default)]
-    pub groups: Vec<PermissionGroup>,
+    pub groups: Vec<AccessGroupPermissionLevel>,
     #[serde(default)]
     pub fields: Vec<PermissionField>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
-pub struct PermissionGroup {
-    pub group: u64,
-    pub permission: Permission,
+pub struct AccessGroupPermissionLevel {
+    pub access_group: u64,
+    pub permission: PermissionLevel,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -59,11 +65,11 @@ pub struct PermissionField {
     pub field_id: u16,
     pub field_type: FieldType,
     #[serde(default)]
-    pub groups: Vec<PermissionGroup>,
+    pub groups: Vec<AccessGroupPermissionLevel>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
-pub enum Permission {
+pub enum PermissionLevel {
     #[serde(rename = "deny")]
     Deny,
     #[serde(rename = "ro")]
@@ -101,7 +107,7 @@ impl RoomTemplate {
         }
     }
 
-    pub fn validate(self) -> Result<RoomTemplate, RoomTemplateError> {
+    fn validate(self) -> Result<RoomTemplate, RoomTemplateError> {
         let mut unmapping = Vec::new();
 
         self.unmapping
