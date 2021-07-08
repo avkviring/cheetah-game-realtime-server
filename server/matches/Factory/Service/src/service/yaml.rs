@@ -11,7 +11,7 @@ pub struct RoomTemplate {
     #[serde(default)]
     pub objects: Vec<GameObjectTemplate>,
     #[serde(default)]
-    pub permissions: Permissions,
+    pub permissions: Vec<TemplatePermission>,
     #[serde(flatten)]
     pub unmapping: HashMap<String, serde_yaml::Value>,
 }
@@ -22,13 +22,13 @@ pub struct GameObjectTemplate {
     pub template: u16,
     pub access_groups: u64,
     #[serde(default)]
-    pub fields: GameObjectFieldsTemplate,
+    pub fields: FieldsTemplate,
     #[serde(flatten)]
     pub unmapping: HashMap<String, serde_yaml::Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct GameObjectFieldsTemplate {
+pub struct FieldsTemplate {
     #[serde(default)]
     pub longs: HashMap<u16, i64>,
     #[serde(default)]
@@ -37,12 +37,6 @@ pub struct GameObjectFieldsTemplate {
     pub structures: HashMap<u16, rmpv::Value>,
     #[serde(flatten)]
     pub unmapping: HashMap<String, serde_yaml::Value>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
-pub struct Permissions {
-    #[serde(default)]
-    pub templates: Vec<TemplatePermission>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -63,13 +57,12 @@ pub struct PermissionGroup {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PermissionField {
     pub field_id: u16,
-    pub field_type: u16,
+    pub field_type: FieldType,
     #[serde(default)]
     pub groups: Vec<PermissionGroup>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
-#[repr(u8)]
 pub enum Permission {
     #[serde(rename = "deny")]
     Deny,
@@ -77,6 +70,18 @@ pub enum Permission {
     Ro,
     #[serde(rename = "rw")]
     Rw,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
+pub enum FieldType {
+    #[serde(rename = "long")]
+    Long,
+    #[serde(rename = "float")]
+    Float,
+    #[serde(rename = "structure")]
+    Structure,
+    #[serde(rename = "event")]
+    Event,
 }
 
 #[derive(Debug)]
@@ -88,7 +93,7 @@ pub enum RoomTemplateError {
 impl RoomTemplate {
     const CLIENT_OBJECT_ID_OFFSET: u32 = 512;
 
-    fn new_from_yaml(content: &str) -> Result<RoomTemplate, RoomTemplateError> {
+    pub fn new_from_yaml(content: &str) -> Result<RoomTemplate, RoomTemplateError> {
         let template = serde_yaml::from_str::<RoomTemplate>(content);
         match template {
             Ok(template) => template.validate(),
@@ -125,7 +130,7 @@ impl RoomTemplate {
 
 #[cfg(test)]
 mod tests {
-    use crate::service::template_yaml::{GameObjectTemplate, RoomTemplate, RoomTemplateError};
+    use crate::service::yaml::{GameObjectTemplate, RoomTemplate, RoomTemplateError};
 
     #[test]
     fn should_fail_if_unmapping_field() {

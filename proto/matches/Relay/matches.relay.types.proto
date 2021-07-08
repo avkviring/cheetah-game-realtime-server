@@ -52,8 +52,8 @@ message GameObjectTemplate {
 }
 
 message FieldsTemplate {
-  map<int32, int64> longs = 1;
-  map<int32, double> floats = 2;
-  map<int32, bytes> structures = 3;
+  map<uint32, int64> longs = 1;
+  map<uint32, double> floats = 2;
+  map<uint32, bytes> structures = 3;
 }
 
