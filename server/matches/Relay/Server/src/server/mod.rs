@@ -81,7 +81,6 @@ impl RelayServer {
 
 	pub fn register_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		let template_uid = template.uid.clone();
 		self.sender.send(Request::RegisterRoom(template, sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(room_id) => {
@@ -89,7 +88,7 @@ impl RelayServer {
 				Result::Ok(room_id)
 			}
 			Err(e) => {
-				log::error!("[server] fail create room by template ({:?})", template_uid);
+				log::error!("[server] fail create room");
 				Result::Err(RegisterRoomRequestError::ChannelError(e))
 			}
 		}

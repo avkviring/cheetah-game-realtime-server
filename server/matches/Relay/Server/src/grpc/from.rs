@@ -54,7 +54,6 @@ impl From<Option<proto::FieldsTemplate>> for config::GameObjectFieldsTemplate {
 impl From<proto::RoomTemplate> for config::RoomTemplate {
 	fn from(source: proto::RoomTemplate) -> config::RoomTemplate {
 		config::RoomTemplate {
-			uid: source.uid,
 			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
 			permissions: config::Permissions::from(source.template_permissions),
 		}

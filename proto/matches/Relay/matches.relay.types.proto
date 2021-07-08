@@ -4,7 +4,6 @@ option csharp_namespace = "Cheetah.Matches.Relay.Types";
 
 
 message RoomTemplate {
-  string uid = 1;
   repeated GameObjectTemplate objects = 2;
   repeated TemplatePermission template_permissions = 3;
 }
