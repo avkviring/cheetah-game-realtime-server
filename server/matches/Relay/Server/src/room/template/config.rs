@@ -42,11 +42,11 @@ pub struct GameObjectFieldsTemplate {
 
 #[derive(Debug, Default, Clone)]
 pub struct Permissions {
-	pub templates: Vec<TemplatePermission>,
+	pub templates: Vec<GameObjectTemplatePermission>,
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct TemplatePermission {
+pub struct GameObjectTemplatePermission {
 	pub template: GameObjectTemplateId,
 	pub groups: Vec<PermissionGroup>,
 	pub fields: Vec<PermissionField>,
@@ -91,7 +91,7 @@ impl UserTemplate {
 #[cfg(test)]
 mod tests {
 	use crate::room::template::config::{
-		GameObjectTemplate, Permission, PermissionField, PermissionGroup, Permissions, TemplatePermission, UserTemplate, UserTemplateError,
+		GameObjectTemplate, GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, Permissions, UserTemplate, UserTemplateError,
 	};
 	use crate::room::types::FieldType;
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
@@ -132,7 +132,7 @@ mod tests {
 		) {
 			let template_permission = match self.templates.iter_mut().find(|t| t.template == template) {
 				None => {
-					let template_permission = TemplatePermission {
+					let template_permission = GameObjectTemplatePermission {
 						template,
 						groups: vec![],
 						fields: vec![],

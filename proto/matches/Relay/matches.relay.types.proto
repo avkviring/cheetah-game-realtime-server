@@ -3,23 +3,69 @@ package cheetah.matches.relay.types;
 option csharp_namespace = "Cheetah.Matches.Relay.Types";
 
 
+/**
+  Шаблон для описания комнаты
+ */
 message RoomTemplate {
-  repeated GameObjectTemplate objects = 2;
-  repeated TemplatePermission template_permissions = 3;
+  /**
+    Начальные игровые объекты комнаты
+   */
+  repeated GameObjectTemplate objects = 1;
+  /**
+    Права доступа для комнаты
+   */
+  Permissions permissions = 2;
 }
 
-message TemplatePermission {
+
+/**
+  Описание прав доступа для комнаты
+ */
+message Permissions {
+  /**
+    Права доступа для объектов комнаты
+   */
+  repeated GameObjectTemplatePermission objects = 1;
+}
+
+/**
+  Права доступа для объектов
+ */
+message GameObjectTemplatePermission {
+  /**
+    Шаблон игрового объекта, к которому применимы данные права
+   */
   uint32 template = 1;
-  repeated PermissionGroup groups = 2;
+  /**
+    Права доступа к полям для групп
+   */
+  repeated AccessGroupPermissionLevel groups = 2;
+
+  /**
+    Права доступа к конкретным полям
+   */
   repeated PermissionField fields = 3;
 }
 
 
+/**
+  Права доступа для группы
+ */
+message AccessGroupPermissionLevel {
+  uint64 access_group = 1;
+  PermissionLevel permission = 2;
+}
+
+
+/**
+  Права доступа для поля
+ */
 message PermissionField {
   uint32 field_id = 1;
   FieldType field_type = 2;
-  repeated PermissionGroup groups = 3;
+  repeated AccessGroupPermissionLevel groups = 3;
 }
+
 enum FieldType {
   Long = 0;
   Float = 1;
@@ -27,12 +73,7 @@ enum FieldType {
   Event = 3;
 }
 
-message PermissionGroup {
-  uint64 access_group = 1;
-  Permission permission = 2;
-}
-
-enum Permission {
+enum PermissionLevel {
   Deny = 0;
   Ro = 1;
   Rw = 2;
@@ -48,10 +89,10 @@ message GameObjectTemplate {
   uint32 id = 1;
   uint32 template = 2;
   uint64 access_group = 3;
-  FieldsTemplate fields = 4;
+  GameObjectFieldsTemplate fields = 4;
 }
 
-message FieldsTemplate {
+message GameObjectFieldsTemplate {
   map<uint32, int64> longs = 1;
   map<uint32, double> floats = 2;
   map<uint32, bytes> structures = 3;

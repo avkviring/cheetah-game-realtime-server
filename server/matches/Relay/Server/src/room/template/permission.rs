@@ -122,7 +122,7 @@ impl PermissionManager {
 mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
-	use crate::room::template::config::{Permission, PermissionField, PermissionGroup, Permissions, TemplatePermission};
+	use crate::room::template::config::{GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, Permissions};
 	use crate::room::template::permission::PermissionManager;
 	use crate::room::types::FieldType;
 
@@ -138,7 +138,7 @@ mod tests {
 	#[test]
 	fn should_permission_for_template_by_group() {
 		let mut permissions = Permissions::default();
-		let mut template_permission = TemplatePermission {
+		let mut template_permission = GameObjectTemplatePermission {
 			template: 10,
 			groups: Default::default(),
 			fields: Default::default(),
@@ -169,7 +169,7 @@ mod tests {
 	#[test]
 	fn should_permission_for_fields() {
 		let mut permissions = Permissions::default();
-		let mut template_permission = TemplatePermission {
+		let mut template_permission = GameObjectTemplatePermission {
 			template: 10,
 			groups: Default::default(),
 			fields: Default::default(),
@@ -204,7 +204,7 @@ mod tests {
 	#[test]
 	fn should_cache_permission_for_fields() {
 		let mut permissions = Permissions::default();
-		let mut template_permission = TemplatePermission {
+		let mut template_permission = GameObjectTemplatePermission {
 			template: 10,
 			groups: Default::default(),
 			fields: Default::default(),
@@ -252,7 +252,7 @@ mod tests {
 	#[test]
 	fn should_has_write_access_if_object_has_write_permission() {
 		let mut permissions = Permissions::default();
-		permissions.templates.push(TemplatePermission {
+		permissions.templates.push(GameObjectTemplatePermission {
 			template: 10,
 			groups: vec![PermissionGroup {
 				group: Default::default(),
@@ -267,7 +267,7 @@ mod tests {
 	#[test]
 	fn should_not_has_write_access_if_object_has_read_permission() {
 		let mut permissions = Permissions::default();
-		permissions.templates.push(TemplatePermission {
+		permissions.templates.push(GameObjectTemplatePermission {
 			template: 10,
 			groups: vec![PermissionGroup {
 				group: Default::default(),
@@ -282,7 +282,7 @@ mod tests {
 	#[test]
 	fn should_has_write_access_if_object_has_field_with_write_permission() {
 		let mut permissions = Permissions::default();
-		permissions.templates.push(TemplatePermission {
+		permissions.templates.push(GameObjectTemplatePermission {
 			template: 10,
 			groups: vec![],
 			fields: vec![PermissionField {

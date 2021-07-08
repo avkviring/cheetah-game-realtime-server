@@ -29,6 +29,7 @@ fn test() {
 	}
 	helper.wait_udp();
 	helper.wait_udp();
+	helper.wait_udp();
 	ffi::client::set_current_client(client2);
 	ffi::client::receive();
 	println!("value {:?}", SET.lock().unwrap().as_ref());

@@ -5,6 +5,15 @@ use cheetah_matches_relay_common::room::access::AccessGroups;
 use crate::proto::types as proto;
 use crate::room::template::config;
 
+impl From<proto::RoomTemplate> for config::RoomTemplate {
+	fn from(source: proto::RoomTemplate) -> config::RoomTemplate {
+		config::RoomTemplate {
+			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
+			permissions: config::Permissions::from(source.permissions.unwrap_or(proto::Permissions::default())),
+		}
+	}
+}
+
 impl From<proto::UserTemplate> for config::UserTemplate {
 	fn from(source: proto::UserTemplate) -> Self {
 		config::UserTemplate {
@@ -21,56 +30,32 @@ impl From<proto::GameObjectTemplate> for config::GameObjectTemplate {
 			id: source.id,
 			template: source.template as u16,
 			access_groups: AccessGroups(source.access_group),
-			fields: config::GameObjectFieldsTemplate::from(source.fields),
+			fields: config::GameObjectFieldsTemplate::from(source.fields.unwrap_or(proto::GameObjectFieldsTemplate::default())),
 		}
 	}
 }
 
-impl From<Option<proto::FieldsTemplate>> for config::GameObjectFieldsTemplate {
-	fn from(source: Option<proto::FieldsTemplate>) -> Self {
-		let mut result = config::GameObjectFieldsTemplate {
-			longs: Default::default(),
-			floats: Default::default(),
-			structures: Default::default(),
-		};
-		match source {
-			Some(field) => {
-				for (id, value) in field.longs {
-					result.longs.insert(id as u16, value);
-				}
-				for (id, value) in field.floats {
-					result.floats.insert(id as u16, value);
-				}
-				for (id, value) in field.structures {
-					result.structures.insert(id as u16, value);
-				}
-			}
-			None => {}
-		}
-		return result;
-	}
-}
-
-impl From<proto::RoomTemplate> for config::RoomTemplate {
-	fn from(source: proto::RoomTemplate) -> config::RoomTemplate {
-		config::RoomTemplate {
-			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
-			permissions: config::Permissions::from(source.template_permissions),
+impl From<proto::GameObjectFieldsTemplate> for config::GameObjectFieldsTemplate {
+	fn from(source: proto::GameObjectFieldsTemplate) -> Self {
+		config::GameObjectFieldsTemplate {
+			longs: source.longs.into_iter().map(|(k, v)| (k as u16, v)).collect(),
+			floats: source.floats.into_iter().map(|(k, v)| (k as u16, v)).collect(),
+			structures: source.structures.into_iter().map(|(k, v)| (k as u16, v)).collect(),
 		}
 	}
 }
 
-impl From<Vec<proto::TemplatePermission>> for config::Permissions {
-	fn from(source: Vec<proto::TemplatePermission>) -> Self {
+impl From<proto::Permissions> for config::Permissions {
+	fn from(source: proto::Permissions) -> Self {
 		config::Permissions {
-			templates: source.into_iter().map(config::TemplatePermission::from).collect(),
+			templates: source.objects.into_iter().map(config::GameObjectTemplatePermission::from).collect(),
 		}
 	}
 }
 
-impl From<proto::TemplatePermission> for config::TemplatePermission {
-	fn from(source: proto::TemplatePermission) -> Self {
-		config::TemplatePermission {
+impl From<proto::GameObjectTemplatePermission> for config::GameObjectTemplatePermission {
+	fn from(source: proto::GameObjectTemplatePermission) -> Self {
+		config::GameObjectTemplatePermission {
 			template: source.template as u16,
 			groups: source.groups.into_iter().map(config::PermissionGroup::from).collect(),
 			fields: source.fields.into_iter().map(config::PermissionField::from).collect(),
@@ -78,11 +63,11 @@ impl From<proto::TemplatePermission> for config::TemplatePermission {
 	}
 }
 
-impl From<proto::PermissionGroup> for config::PermissionGroup {
-	fn from(source: proto::PermissionGroup) -> Self {
-		let deny = proto::Permission::Deny as i32;
-		let ro = proto::Permission::Ro as i32;
-		let rw = proto::Permission::Rw as i32;
+impl From<proto::AccessGroupPermissionLevel> for config::PermissionGroup {
+	fn from(source: proto::AccessGroupPermissionLevel) -> Self {
+		let deny = proto::PermissionLevel::Deny as i32;
+		let ro = proto::PermissionLevel::Ro as i32;
+		let rw = proto::PermissionLevel::Rw as i32;
 
 		let permission = match source.permission {
 			x if x == deny => config::Permission::Deny,

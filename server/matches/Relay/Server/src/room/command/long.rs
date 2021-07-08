@@ -155,7 +155,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{Permission, PermissionField, PermissionGroup, RoomTemplate, TemplatePermission, UserTemplate};
+	use crate::room::template::config::{GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, RoomTemplate, UserTemplate};
 	use crate::room::types::FieldType;
 	use crate::room::Room;
 
@@ -356,7 +356,7 @@ mod tests {
 
 		let object_template = 10;
 		let object_field = 50;
-		template.permissions.templates.push(TemplatePermission {
+		template.permissions.templates.push(GameObjectTemplatePermission {
 			template: object_template,
 			groups: vec![],
 			fields: vec![PermissionField {
