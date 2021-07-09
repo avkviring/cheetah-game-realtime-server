@@ -381,7 +381,7 @@ mod tests {
 	}
 
 	fn setup() -> (Room, UserId, GameObjectId) {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(UserTemplate::stub(access_groups));

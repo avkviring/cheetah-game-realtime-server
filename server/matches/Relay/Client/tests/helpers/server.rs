@@ -1,21 +1,17 @@
-use std::collections::HashMap;
 use std::io::Write;
 use std::net::SocketAddr;
 
 use log::LevelFilter;
 
 use cheetah_matches_relay::room::debug::tracer::CommandTracer;
-use cheetah_matches_relay::room::template::config::{
-	GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, RoomTemplate, UserTemplate,
-};
+use cheetah_matches_relay::room::template::config::{GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, RoomTemplate};
 use cheetah_matches_relay::room::types::FieldType;
 use cheetah_matches_relay::server::RelayServer;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::network::bind_to_free_socket;
 use cheetah_matches_relay_common::room::access::AccessGroups;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
-use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
+
+use cheetah_matches_relay_common::room::RoomId;
 
 ///
 /// Конфигурируем и создаем сервер для интеграционного тестирования

@@ -389,7 +389,7 @@ mod tests {
 	///
 	#[test]
 	fn test_build_command_and_send_3() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
 		let mut room = Room::from_template(template);
@@ -527,7 +527,7 @@ mod tests {
 	#[test]
 	fn should_do_action_not_send_if_object_not_created() {
 		let field_id = 10;
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_user(UserTemplate::stub(access_groups));

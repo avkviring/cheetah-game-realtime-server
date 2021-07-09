@@ -171,7 +171,7 @@ mod tests {
 	}
 
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(UserTemplate::stub(access_groups));
 		(room, user_id)

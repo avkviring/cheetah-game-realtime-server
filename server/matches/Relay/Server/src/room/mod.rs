@@ -345,7 +345,7 @@ mod tests {
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
 	use crate::room::types::FieldType;
-	use crate::room::{Room, RoomUserListener, User};
+	use crate::room::{Room, RoomUserListener};
 
 	impl Default for Room {
 		fn default() -> Self {
@@ -441,7 +441,7 @@ mod tests {
 
 	#[test]
 	fn should_remove_objects_when_disconnect() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b111);
 		let mut room = Room::from_template(template);
 		let user_a = room.register_user(UserTemplate::stub(access_groups));
@@ -481,7 +481,7 @@ mod tests {
 
 	#[test]
 	fn should_create_object_from_config_for_user() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let object_template = GameObjectTemplate {
 			id: 155,
 			template: 5,
@@ -506,7 +506,7 @@ mod tests {
 	///
 	#[test]
 	fn should_load_user_object_when_connect_other_user() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let object1_template = GameObjectTemplate {
 			id: 100,
 			template: 5,
@@ -591,11 +591,11 @@ mod tests {
 		}
 
 		impl RoomUserListener for TestUserListener {
-			fn register_user(&mut self, room_id: u64, user_id: u16, _: UserTemplate) {
+			fn register_user(&mut self, _room_id: u64, user_id: u16, _: UserTemplate) {
 				self.trace = format!("{}r{}", self.trace, user_id);
 			}
 
-			fn disconnected_user(&mut self, room_id: u64, user_id: u16) {
+			fn disconnected_user(&mut self, _room_id: u64, user_id: u16) {
 				self.trace = format!("{}d{}", self.trace, user_id);
 			}
 		}

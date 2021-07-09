@@ -5,18 +5,16 @@ use std::time::Duration;
 use rand::rngs::OsRng;
 use rand::RngCore;
 
-use cheetah_matches_relay::room::template::config::{GameObjectTemplate, UserTemplate};
+use cheetah_matches_relay::room::template::config::UserTemplate;
 use cheetah_matches_relay::server::RelayServer;
-use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+
 use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
 use crate::helpers::server::IntegrationTestServerBuilder;
 use cheetah_matches_relay_client::ffi;
-use cheetah_matches_relay_client::registry::ClientId;
-use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
 use cheetah_matches_relay_client::ffi::client::do_create_client;
+use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
+use cheetah_matches_relay_client::registry::ClientId;
 
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
@@ -68,7 +66,7 @@ impl IntegrationTestHelper {
 	}
 }
 
-pub fn setup(mut builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, u16, u16) {
+pub fn setup(builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, u16, u16) {
 	let mut helper = IntegrationTestHelper::new(builder);
 	let (user1_id, user1_key) = helper.create_user();
 	let (user2_id, user2_key) = helper.create_user();

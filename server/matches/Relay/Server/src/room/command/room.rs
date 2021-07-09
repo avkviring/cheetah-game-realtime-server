@@ -53,7 +53,7 @@ mod tests {
 
 	#[test]
 	pub fn should_load_object_when_attach_to_room() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let groups_a = AccessGroups(0b100);
 		let user_a = room.register_user(UserTemplate::stub(groups_a));

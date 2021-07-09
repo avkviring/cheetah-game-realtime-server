@@ -55,7 +55,7 @@ mod tests {
 	use crate::room::Room;
 
 	pub fn setup() -> (Room, GameObjectId, UserId, UserId) {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_user(UserTemplate::stub(access_groups));

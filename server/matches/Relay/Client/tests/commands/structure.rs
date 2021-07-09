@@ -1,6 +1,5 @@
 use std::sync::Mutex;
 
-
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};

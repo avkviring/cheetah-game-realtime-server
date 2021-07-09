@@ -37,7 +37,7 @@ mod tests {
 
 	#[test]
 	fn should_delete() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 
 		let mut room = Room::from_template(template);
@@ -62,7 +62,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_missing_object() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(UserTemplate::stub(AccessGroups(0b11)));
 
@@ -75,7 +75,7 @@ mod tests {
 
 	#[test]
 	fn should_not_delete_if_not_owner() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
 		let mut room = Room::from_template(template);
 		let user_a = room.register_user(UserTemplate::stub(access_groups));

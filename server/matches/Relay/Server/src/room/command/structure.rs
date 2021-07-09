@@ -52,7 +52,7 @@ mod tests {
 
 	#[test]
 	pub fn should_set_structure() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
 		let user = room.register_user(UserTemplate::stub(access_groups));

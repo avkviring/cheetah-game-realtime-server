@@ -60,7 +60,7 @@ mod tests {
 
 	#[test]
 	pub fn should_send_event_to_user() {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 
 		let mut room = Room::from_template(template);
@@ -107,7 +107,7 @@ mod tests {
 	}
 
 	fn setup() -> (Room, UserId, AccessGroups) {
-		let mut template = RoomTemplate::default();
+		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(UserTemplate::stub(access_groups));

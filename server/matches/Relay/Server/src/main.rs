@@ -4,7 +4,6 @@ use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::thread::JoinHandle;
 
 use futures::Future;
 use log::LevelFilter;
@@ -30,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	Result::Ok(())
 }
 
-fn create_grpc_server(internal_grpc_port: u16, relay_server: Arc<Mutex<RelayServer>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+fn create_grpc_server(_internal_grpc_port: u16, relay_server: Arc<Mutex<RelayServer>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let service = cheetah_matches_relay::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
 	let address = SocketAddr::from_str("0.0.0.0:5001").unwrap();
 	Server::builder().add_service(service).serve(address)

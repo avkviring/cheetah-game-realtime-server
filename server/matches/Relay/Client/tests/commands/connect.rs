@@ -11,7 +11,7 @@ use crate::helpers::server::*;
 
 #[test]
 fn should_connect_to_server() {
-	let mut builder = IntegrationTestServerBuilder::default();
+	let builder = IntegrationTestServerBuilder::default();
 	let mut helper = IntegrationTestHelper::new(builder);
 	let (user_id, user_key) = helper.create_user();
 	let _ = helper.create_client(user_id, user_key);
@@ -25,7 +25,7 @@ fn should_connect_to_server() {
 
 #[test]
 fn should_disconnect_when_server_closed() {
-	let mut builder = IntegrationTestServerBuilder::default();
+	let builder = IntegrationTestServerBuilder::default();
 
 	let mut helper = IntegrationTestHelper::new(builder);
 	let (user_id, user_key) = helper.create_user();

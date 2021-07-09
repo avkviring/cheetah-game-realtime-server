@@ -1,9 +1,5 @@
 use std::future::Future;
 use std::sync::{Arc, Mutex};
-use std::thread::JoinHandle;
-use std::{io, thread};
-
-use futures::FutureExt;
 use warp::Filter;
 
 use crate::server::RelayServer;
