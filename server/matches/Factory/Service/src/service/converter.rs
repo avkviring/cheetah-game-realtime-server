@@ -1,29 +1,29 @@
-use crate::proto::matches::relay::types as grpc;
+use crate::proto::matches::relay::types as relay;
 use crate::service::yaml;
 
 ///
 /// Конвертация yaml представления шаблона комнаты в grpc представление
 ///
-impl Into<grpc::RoomTemplate> for yaml::RoomTemplate {
-    fn into(self) -> grpc::RoomTemplate {
-        grpc::RoomTemplate {
+impl Into<relay::RoomTemplate> for yaml::RoomTemplate {
+    fn into(self) -> relay::RoomTemplate {
+        relay::RoomTemplate {
             objects: self.objects.into_iter().map(Into::into).collect(),
             permissions: Option::Some(self.permissions.into()),
         }
     }
 }
 
-impl Into<grpc::Permissions> for yaml::Permissions {
-    fn into(self) -> grpc::Permissions {
-        grpc::Permissions {
+impl Into<relay::Permissions> for yaml::Permissions {
+    fn into(self) -> relay::Permissions {
+        relay::Permissions {
             objects: self.objects.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl Into<grpc::GameObjectTemplate> for yaml::GameObjectTemplate {
-    fn into(self) -> grpc::GameObjectTemplate {
-        grpc::GameObjectTemplate {
+impl Into<relay::GameObjectTemplate> for yaml::GameObjectTemplate {
+    fn into(self) -> relay::GameObjectTemplate {
+        relay::GameObjectTemplate {
             id: self.id,
             template: self.template as u32,
             access_group: self.access_groups,
@@ -32,9 +32,9 @@ impl Into<grpc::GameObjectTemplate> for yaml::GameObjectTemplate {
     }
 }
 
-impl Into<grpc::GameObjectFieldsTemplate> for yaml::GameObjectFieldsTemplate {
-    fn into(self) -> grpc::GameObjectFieldsTemplate {
-        grpc::GameObjectFieldsTemplate {
+impl Into<relay::GameObjectFieldsTemplate> for yaml::GameObjectFieldsTemplate {
+    fn into(self) -> relay::GameObjectFieldsTemplate {
+        relay::GameObjectFieldsTemplate {
             longs: self.longs.into_iter().map(|(k, v)| (k as u32, v)).collect(),
             floats: self
                 .floats
@@ -49,9 +49,9 @@ impl Into<grpc::GameObjectFieldsTemplate> for yaml::GameObjectFieldsTemplate {
         }
     }
 }
-impl Into<grpc::GameObjectTemplatePermission> for yaml::GameObjectTemplatePermission {
-    fn into(self) -> grpc::GameObjectTemplatePermission {
-        grpc::GameObjectTemplatePermission {
+impl Into<relay::GameObjectTemplatePermission> for yaml::GameObjectTemplatePermission {
+    fn into(self) -> relay::GameObjectTemplatePermission {
+        relay::GameObjectTemplatePermission {
             template: self.template as u32,
             groups: self.groups.into_iter().map(Into::into).collect(),
             fields: self.fields.into_iter().map(Into::into).collect(),
@@ -59,9 +59,9 @@ impl Into<grpc::GameObjectTemplatePermission> for yaml::GameObjectTemplatePermis
     }
 }
 
-impl Into<grpc::PermissionField> for yaml::PermissionField {
-    fn into(self) -> grpc::PermissionField {
-        grpc::PermissionField {
+impl Into<relay::PermissionField> for yaml::PermissionField {
+    fn into(self) -> relay::PermissionField {
+        relay::PermissionField {
             field_id: self.field_id as u32,
             field_type: self.field_type.into(),
             groups: self.groups.into_iter().map(Into::into).collect(),
@@ -72,17 +72,17 @@ impl Into<grpc::PermissionField> for yaml::PermissionField {
 impl Into<i32> for yaml::FieldType {
     fn into(self) -> i32 {
         match self {
-            yaml::FieldType::Long => grpc::FieldType::Long as i32,
-            yaml::FieldType::Float => grpc::FieldType::Float as i32,
-            yaml::FieldType::Structure => grpc::FieldType::Structure as i32,
-            yaml::FieldType::Event => grpc::FieldType::Event as i32,
+            yaml::FieldType::Long => relay::FieldType::Long as i32,
+            yaml::FieldType::Float => relay::FieldType::Float as i32,
+            yaml::FieldType::Structure => relay::FieldType::Structure as i32,
+            yaml::FieldType::Event => relay::FieldType::Event as i32,
         }
     }
 }
 
-impl Into<grpc::AccessGroupPermissionLevel> for yaml::AccessGroupPermissionLevel {
-    fn into(self) -> grpc::AccessGroupPermissionLevel {
-        grpc::AccessGroupPermissionLevel {
+impl Into<relay::AccessGroupPermissionLevel> for yaml::AccessGroupPermissionLevel {
+    fn into(self) -> relay::AccessGroupPermissionLevel {
+        relay::AccessGroupPermissionLevel {
             access_group: self.access_group,
             permission: self.permission.into(),
         }
@@ -91,19 +91,20 @@ impl Into<grpc::AccessGroupPermissionLevel> for yaml::AccessGroupPermissionLevel
 impl Into<i32> for yaml::PermissionLevel {
     fn into(self) -> i32 {
         match self {
-            yaml::PermissionLevel::Deny => grpc::PermissionLevel::Deny as i32,
-            yaml::PermissionLevel::Ro => grpc::PermissionLevel::Ro as i32,
-            yaml::PermissionLevel::Rw => grpc::PermissionLevel::Rw as i32,
+            yaml::PermissionLevel::Deny => relay::PermissionLevel::Deny as i32,
+            yaml::PermissionLevel::Ro => relay::PermissionLevel::Ro as i32,
+            yaml::PermissionLevel::Rw => relay::PermissionLevel::Rw as i32,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::proto::matches::relay::types as grpc;
+    use std::collections::HashMap;
+
+    use crate::proto::matches::relay::types as relay;
     use crate::service::yaml;
     use crate::service::yaml::{GameObjectFieldsTemplate, Permissions};
-    use std::collections::HashMap;
 
     #[test]
     fn should_convert_room_template() {
@@ -114,7 +115,7 @@ mod tests {
             },
             unmapping: Default::default(),
         };
-        let grpc: grpc::RoomTemplate = yaml.into();
+        let grpc: relay::RoomTemplate = yaml.into();
         assert_eq!(grpc.objects.len(), 1);
         assert_eq!(grpc.permissions.as_ref().unwrap().objects.len(), 1);
     }
@@ -127,7 +128,7 @@ mod tests {
             fields: yaml::GameObjectFieldsTemplate::default(),
             unmapping: Default::default(),
         };
-        let grpc_object_template: grpc::GameObjectTemplate = yaml_object_template.clone().into();
+        let grpc_object_template: relay::GameObjectTemplate = yaml_object_template.clone().into();
         assert_eq!(grpc_object_template.id, yaml_object_template.id);
         assert_eq!(
             grpc_object_template.template as u16,
@@ -150,7 +151,7 @@ mod tests {
                 .collect(),
             unmapping: Default::default(),
         };
-        let grpc_item: grpc::GameObjectFieldsTemplate = yaml_item.clone().into();
+        let grpc_item: relay::GameObjectFieldsTemplate = yaml_item.clone().into();
         let grpc_longs: HashMap<u16, i64> = grpc_item
             .longs
             .clone()
@@ -185,7 +186,7 @@ mod tests {
             objects: vec![yaml::GameObjectTemplatePermission::default()],
         };
 
-        let grpc_item: grpc::Permissions = yaml_item.into();
+        let grpc_item: relay::Permissions = yaml_item.into();
         assert_eq!(grpc_item.objects.len(), 1);
     }
 
@@ -204,7 +205,7 @@ mod tests {
             }],
         };
 
-        let grpc_item: grpc::GameObjectTemplatePermission = yaml_item.clone().into();
+        let grpc_item: relay::GameObjectTemplatePermission = yaml_item.clone().into();
         assert_eq!(grpc_item.template as u16, yaml_item.template);
         assert_eq!(grpc_item.groups.len(), 1);
         assert_eq!(grpc_item.fields.len(), 1);
@@ -216,9 +217,9 @@ mod tests {
             access_group: 10,
             permission: yaml::PermissionLevel::Deny,
         };
-        let grpc_item: grpc::AccessGroupPermissionLevel = yaml_item.clone().into();
+        let grpc_item: relay::AccessGroupPermissionLevel = yaml_item.clone().into();
         assert_eq!(grpc_item.access_group, yaml_item.access_group);
-        assert_eq!(grpc_item.permission, grpc::PermissionLevel::Deny as i32);
+        assert_eq!(grpc_item.permission, relay::PermissionLevel::Deny as i32);
     }
 
     #[test]
@@ -231,9 +232,9 @@ mod tests {
                 permission: yaml::PermissionLevel::Deny,
             }],
         };
-        let grpc_item: grpc::PermissionField = yaml_item.clone().into();
+        let grpc_item: relay::PermissionField = yaml_item.clone().into();
         assert_eq!(grpc_item.field_id as u16, yaml_item.field_id);
-        assert_eq!(grpc_item.field_type, grpc::FieldType::Long as i32);
+        assert_eq!(grpc_item.field_type, relay::FieldType::Long as i32);
         assert_eq!(grpc_item.groups.len(), 1);
     }
 }
