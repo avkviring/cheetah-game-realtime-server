@@ -56,15 +56,12 @@ fn load_templates(root: &Path, prefix: &str) -> HashMap<String, relay_types::Roo
 
 #[cfg(test)]
 mod test {
-    use std::fs::{DirEntry, File};
+    use std::fs::File;
     use std::io::Write;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
-    use tempfile::TempDir;
-
-    use crate::proto::matches::relay::types as grpc;
     use crate::service::yaml;
-    use crate::service::{load_templates, FactoryService};
+    use crate::service::FactoryService;
 
     #[test]
     pub fn should_factory_service_load_templates() {
@@ -93,7 +90,7 @@ mod test {
     }
 
     fn write_file(out: PathBuf, content: &String) {
-        std::fs::create_dir_all(out.parent().unwrap());
+        std::fs::create_dir_all(out.parent().unwrap()).unwrap();
         let mut room_file = File::create(&out).unwrap();
         room_file.write_all(content.as_bytes()).unwrap();
         room_file.sync_all().unwrap();

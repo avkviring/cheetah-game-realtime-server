@@ -104,7 +104,7 @@ mod tests {
 
     use crate::proto::matches::relay::types as relay;
     use crate::service::yaml;
-    use crate::service::yaml::{GameObjectFieldsTemplate, Permissions};
+    use crate::service::yaml::GameObjectFieldsTemplate;
 
     #[test]
     fn should_convert_room_template() {

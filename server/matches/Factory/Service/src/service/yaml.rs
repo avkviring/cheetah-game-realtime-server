@@ -97,8 +97,6 @@ pub enum RoomTemplateError {
 }
 
 impl RoomTemplate {
-    const CLIENT_OBJECT_ID_OFFSET: u32 = 512;
-
     pub fn new_from_yaml(content: &str) -> Result<RoomTemplate, RoomTemplateError> {
         let template = serde_yaml::from_str::<RoomTemplate>(content);
         match template {

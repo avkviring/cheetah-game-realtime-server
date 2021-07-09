@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cheetah_microservice::get_env("REGISTRY_GRPC_SERVICE_HOST"),
         cheetah_microservice::get_env("REGISTRY_GRPC_SERVICE_PORT")
     );
-    let service = FactoryService::new(registry_grpc_service, Path::new(&templates_path));
+    let service = FactoryService::new(registry_grpc_service.as_str(), Path::new(&templates_path));
     Server::builder()
         .add_service(FactoryServer::new(service))
         .serve(cheetah_microservice::get_internal_grpc_address())
