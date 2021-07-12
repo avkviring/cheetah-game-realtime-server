@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use tonic::{Request, Response, Status};
 
 use crate::proto::matches::factory::internal as factory;
@@ -68,15 +66,12 @@ impl factory::factory_server::Factory for FactoryService {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use std::sync::atomic::{AtomicBool, Ordering};
 
     use tempfile::TempDir;
     use tokio::net::TcpListener;
     use tonic::transport::{Server, Uri};
     use tonic::{Request, Response, Status};
 
-    use crate::proto::matches::factory::internal as factory;
-    use crate::proto::matches::factory::internal::factory_server::FactoryServer;
     use crate::proto::matches::registry::internal as registry;
     use crate::proto::matches::relay;
     use crate::service::test::write_file;
@@ -111,7 +106,7 @@ mod tests {
     impl relay::internal::relay_server::Relay for StubRelay {
         async fn create_room(
             &self,
-            request: Request<relay::types::RoomTemplate>,
+            _request: Request<relay::types::RoomTemplate>,
         ) -> Result<tonic::Response<relay::internal::CreateRoomResponse>, tonic::Status> {
             Result::Ok(tonic::Response::new(relay::internal::CreateRoomResponse {
                 id: StubRelay::ROOM_ID,
@@ -120,7 +115,7 @@ mod tests {
 
         async fn attach_user(
             &self,
-            request: tonic::Request<relay::internal::AttachUserRequest>,
+            _request: tonic::Request<relay::internal::AttachUserRequest>,
         ) -> Result<tonic::Response<relay::internal::AttachUserResponse>, tonic::Status> {
             todo!()
         }
