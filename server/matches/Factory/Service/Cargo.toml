@@ -18,6 +18,7 @@ serde = { version = "1.0.126", features = ["derive", "rc"] }
 serde_yaml = "0.8.17"
 rmp-serde = "0.15.5"
 rmpv = { version = "0.4.7", features = ["with-serde"] }
+tokio-stream = { version = "0.1.7", features = ["net"] }
 
 
 [dev-dependencies]

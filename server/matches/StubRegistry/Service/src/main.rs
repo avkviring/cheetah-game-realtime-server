@@ -42,7 +42,7 @@ impl Registry for RegistryService {
     ) -> Result<Response<FindFreeRelayResponse>, Status> {
         Result::Ok(Response::new(FindFreeRelayResponse {
             relay_grpc_host: self.relay_grpc_host.clone(),
-            relay_grpc_port: self.relay_game_port as u32,
+            relay_grpc_port: self.relay_grpc_port as u32,
             relay_game_host: self.relay_game_host.clone(),
             relay_game_port: self.relay_game_port as u32,
         }))

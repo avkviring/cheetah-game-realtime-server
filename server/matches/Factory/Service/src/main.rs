@@ -1,6 +1,7 @@
 use std::path::Path;
+use std::str::FromStr;
 
-use tonic::transport::Server;
+use tonic::transport::{Server, Uri};
 
 use cheetah_matches_factory::proto::matches::factory::internal::factory_server::FactoryServer;
 use cheetah_matches_factory::service::FactoryService;
@@ -14,7 +15,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cheetah_microservice::get_env("REGISTRY_GRPC_SERVICE_HOST"),
         cheetah_microservice::get_env("REGISTRY_GRPC_SERVICE_PORT")
     );
-    let service = FactoryService::new(registry_grpc_service.as_str(), Path::new(&templates_path));
+    let service = FactoryService::new(
+        Uri::from_str(registry_grpc_service.as_str()).unwrap(),
+        Path::new(&templates_path),
+    );
     Server::builder()
         .add_service(FactoryServer::new(service))
         .serve(cheetah_microservice::get_internal_grpc_address())

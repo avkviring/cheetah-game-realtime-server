@@ -3,6 +3,8 @@ use std::fs;
 use std::io::Read;
 use std::path::Path;
 
+use tonic::transport::Uri;
+
 use crate::proto::matches::relay::types as relay_types;
 use crate::service::yaml::RoomTemplate;
 
@@ -11,15 +13,15 @@ pub mod grpc;
 pub mod yaml;
 
 pub struct FactoryService {
-    pub registry_grpc_service_address: String,
+    registry_service: Uri,
     templates: HashMap<String, relay_types::RoomTemplate>,
 }
 
 impl FactoryService {
-    pub fn new(registry_grpc_service: &str, path: &Path) -> Self {
+    pub fn new(registry_service: Uri, path: &Path) -> Self {
         let templates = load_templates(path, "");
         FactoryService {
-            registry_grpc_service_address: registry_grpc_service.to_owned(),
+            registry_service,
             templates,
         }
     }
@@ -59,6 +61,9 @@ mod test {
     use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;
+    use std::str::FromStr;
+
+    use tonic::transport::Uri;
 
     use crate::service::yaml;
     use crate::service::FactoryService;
@@ -84,12 +89,15 @@ mod test {
             &room_template_as_string,
         );
 
-        let service = FactoryService::new("not-used", templates_directory.path());
+        let service = FactoryService::new(
+            Uri::from_str("not-used").unwrap(),
+            templates_directory.path(),
+        );
         assert_eq!(service.templates.get("/kungur").is_some(), true);
         assert_eq!(service.templates.get("/ctf/gubaha").is_some(), true);
     }
 
-    fn write_file(out: PathBuf, content: &String) {
+    pub fn write_file(out: PathBuf, content: &String) {
         std::fs::create_dir_all(out.parent().unwrap()).unwrap();
         let mut room_file = File::create(&out).unwrap();
         room_file.write_all(content.as_bytes()).unwrap();
