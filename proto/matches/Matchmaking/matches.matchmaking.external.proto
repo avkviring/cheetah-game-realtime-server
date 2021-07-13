@@ -8,16 +8,18 @@ service Matchmaking {
   /**
     Создать билет на вход в матч для пользователя
    */
-  rpc CreateTicket(TicketRequest) returns (TicketResponse);
+  rpc Matchmaking(TicketRequest) returns (TicketResponse);
 }
 
 message TicketRequest {
-  cheetah.matches.relay.types.User user = 1;
-  string room_template_uid = 2;
+  cheetah.matches.relay.types.UserTemplate user = 1;
+  string match_template = 2;
 }
 
 message TicketResponse {
-  cheetah.matches.relay.types.ByteArray private_key = 1;
-  string host = 2;
-  int32 port = 3;
+  bytes private_key = 1;
+  uint32 user_id = 2;
+  uint64 room_id = 3;
+  string relay_game_host = 4;
+  uint32 relay_game_port = 5;
 }
