@@ -22,9 +22,9 @@ impl FactoryService {
             .into_inner();
 
         // создаем матч на relay сервере
-        let mut relay = RelayClient::connect(format!(
-            "http://{}:{}",
-            free_relay.relay_grpc_host, free_relay.relay_grpc_port
+        let mut relay = RelayClient::connect(cheetah_microservice::make_internal_grpc_uri(
+            free_relay.relay_grpc_host.as_str(),
+            free_relay.relay_grpc_port as u16,
         ))
         .await
         .unwrap();
@@ -65,8 +65,6 @@ impl factory::factory_server::Factory for FactoryService {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use tempfile::TempDir;
     use tokio::net::TcpListener;
     use tonic::transport::{Server, Uri};
@@ -124,11 +122,8 @@ mod tests {
     #[tokio::test]
     async fn should_create_relay_room() {
         let templates_directory = prepare_templates();
-        let url = stub_grpc_services().await;
-        let factory = FactoryService::new(
-            Uri::from_str(url.as_str()).unwrap(),
-            templates_directory.path(),
-        );
+        let uri = stub_grpc_services().await;
+        let factory = FactoryService::new(uri, templates_directory.path());
         let result = factory
             .do_create_match("/gubaha".to_string())
             .await
@@ -136,7 +131,7 @@ mod tests {
         assert_eq!(result.id, StubRelay::ROOM_ID)
     }
 
-    async fn stub_grpc_services() -> String {
+    async fn stub_grpc_services() -> Uri {
         let stub_grpc_service_tcp = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let stub_grpc_service_addr = stub_grpc_service_tcp.local_addr().unwrap();
 
@@ -160,12 +155,10 @@ mod tests {
                 .await
         });
 
-        let url = format!(
-            "http://{}:{}",
-            stub_grpc_service_addr.ip().to_string(),
-            stub_grpc_service_addr.port()
-        );
-        url
+        cheetah_microservice::make_internal_grpc_uri(
+            stub_grpc_service_addr.ip().to_string().as_str(),
+            stub_grpc_service_addr.port(),
+        )
     }
 
     ///

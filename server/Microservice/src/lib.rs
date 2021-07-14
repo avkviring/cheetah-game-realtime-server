@@ -1,4 +1,6 @@
 use std::net::SocketAddr;
+use std::str::FromStr;
+use tonic::transport::Uri;
 
 pub mod jwt;
 
@@ -15,6 +17,10 @@ pub fn init(name: &str) {
     println!("start service {} ", name);
 }
 
-pub fn get_internal_grpc_address() -> SocketAddr {
+pub fn get_self_service_internal_grpc_address() -> SocketAddr {
     "0.0.0.0:5001".parse().unwrap()
+}
+
+pub fn make_internal_grpc_uri(host: &str, port: u16) -> Uri {
+    Uri::from_str(format!("http://{}:{}", host, port).as_str()).unwrap()
 }

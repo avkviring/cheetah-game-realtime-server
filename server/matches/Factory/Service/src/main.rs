@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     Server::builder()
         .add_service(FactoryServer::new(service))
-        .serve(cheetah_microservice::get_internal_grpc_address())
+        .serve(cheetah_microservice::get_self_service_internal_grpc_address())
         .await
         .unwrap();
     Result::Ok(())

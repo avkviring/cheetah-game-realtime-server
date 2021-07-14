@@ -62,10 +62,12 @@ impl StubMatchmakingService {
         ticket: &matchmaking::external::TicketRequest,
         match_info: &MatchInfo,
     ) -> Result<relay::internal::AttachUserResponse, ()> {
-        let mut relay = relay::internal::relay_client::RelayClient::connect(format!(
-            "http://{}:{}",
-            match_info.relay_grpc_host, match_info.relay_grpc_port
-        ))
+        let mut relay = relay::internal::relay_client::RelayClient::connect(
+            cheetah_microservice::make_internal_grpc_uri(
+                match_info.relay_grpc_host.as_str(),
+                match_info.relay_grpc_port,
+            ),
+        )
         .await
         .unwrap();
 
@@ -268,7 +270,7 @@ pub mod tests {
     impl Factory for StubFactory {
         async fn create_match(
             &self,
-            request: Request<CreateMatchRequest>,
+            _request: Request<CreateMatchRequest>,
         ) -> Result<tonic::Response<CreateMatchResponse>, tonic::Status> {
             let mut sequence = self.room_sequence.write().await;
             let current_seq = *sequence;
