@@ -17,6 +17,7 @@ FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
 COPY proto/matches/Factory/ proto/matches/Factory/
 COPY proto/matches/Relay/ proto/matches/Relay/
+COPY proto/matches/Registry/ proto/matches/Registry/
 COPY server/Microservice/ server/Microservice/
 COPY server/matches/Factory/Service server/matches/Factory/Service
 COPY server/matches/Factory/Cargo.toml server/matches/Factory/Cargo.toml
