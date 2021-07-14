@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         StubMatchmakingService::new(Uri::from_str(factory_grpc_service.as_str()).unwrap());
     Server::builder()
         .add_service(matchmaking::external::matchmaking_server::MatchmakingServer::new(service))
-        .serve(cheetah_microservice::get_internal_grpc_address())
+        .serve(cheetah_microservice::get_self_service_internal_grpc_address())
         .await
         .unwrap();
     Result::Ok(())

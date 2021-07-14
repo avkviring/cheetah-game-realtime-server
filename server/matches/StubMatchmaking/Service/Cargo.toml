@@ -11,9 +11,11 @@ path = "src/main.rs"
 tokio = { version = "1.7", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 log = "0.4"
 pretty_env_logger = "0.4.0"
-tonic = "0.4.3"
+tonic = "0.4.2"
 prost = "0.7"
 cheetah-microservice = { path = "../../../Microservice/" }
+async-recursion = "0.3.2"
+tokio-stream = { version = "0.1.7", features = ["net"] }
 
 
 [build-dependencies]
