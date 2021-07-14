@@ -25,7 +25,7 @@ impl crate::proto::internal::relay_server::Relay for RelayGRPCService {
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
 		match server.register_room(template) {
 			Ok(id) => Result::Ok(Response::new(CreateRoomResponse { id })),
-			Err(e) => Result::Err(Status::internal(format!("{:?}", e))),
+			Err(e) => Result::Err(Status::not_found(format!("{:?}", e))),
 		}
 	}
 
