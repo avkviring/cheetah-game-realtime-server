@@ -1,3 +1,4 @@
+use log::LevelFilter;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use tonic::transport::Uri;
@@ -13,7 +14,10 @@ pub fn get_env(name: &str) -> String {
 }
 
 pub fn init(name: &str) {
-    pretty_env_logger::init();
+    pretty_env_logger::formatted_timed_builder()
+        .filter_level(LevelFilter::Info)
+        .init();
+
     println!("start service {} ", name);
 }
 
