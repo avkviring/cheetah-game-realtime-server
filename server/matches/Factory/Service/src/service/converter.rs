@@ -101,10 +101,16 @@ impl Into<i32> for yaml::PermissionLevel {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use std::iter::FromIterator;
+
+    use rmpv::{Integer, Utf8String};
 
     use crate::proto::matches::relay::types as relay;
     use crate::service::yaml;
-    use crate::service::yaml::GameObjectFieldsTemplate;
+    use crate::service::yaml::{
+        AccessGroupPermissionLevel, FieldType, GameObjectFieldsTemplate, PermissionField,
+        PermissionLevel,
+    };
 
     #[test]
     fn should_convert_room_template() {
@@ -236,5 +242,66 @@ mod tests {
         assert_eq!(grpc_item.field_id as u16, yaml_item.field_id);
         assert_eq!(grpc_item.field_type, relay::FieldType::Long as i32);
         assert_eq!(grpc_item.groups.len(), 1);
+    }
+
+    #[test]
+    fn dump_yaml_for_docs() {
+        let yaml = yaml::RoomTemplate {
+            objects: vec![yaml::GameObjectTemplate {
+                id: 555,
+                template: 1,
+                access_groups: 4857,
+                fields: yaml::GameObjectFieldsTemplate {
+                    longs: HashMap::from_iter(vec![(10, 100100)].into_iter()),
+                    floats: HashMap::from_iter(vec![(5, 3.14), (10, 2.68)].into_iter()),
+                    structures: HashMap::from_iter(
+                        vec![
+                            (
+                                5,
+                                rmpv::Value::Map(vec![
+                                    (
+                                        rmpv::Value::String(Utf8String::from("uid".to_owned())),
+                                        rmpv::Value::String(Utf8String::from("arts80").to_owned()),
+                                    ),
+                                    (
+                                        rmpv::Value::String(Utf8String::from("rank".to_owned())),
+                                        rmpv::Value::Integer(Integer::from(100)),
+                                    ),
+                                ]),
+                            ),
+                            (
+                                10,
+                                rmpv::Value::Array(vec![
+                                    rmpv::Value::Integer(Integer::from(15)),
+                                    rmpv::Value::Integer(Integer::from(26)),
+                                ]),
+                            ),
+                        ]
+                        .into_iter(),
+                    ),
+                    unmapping: Default::default(),
+                },
+                unmapping: Default::default(),
+            }],
+            permissions: yaml::Permissions {
+                objects: vec![yaml::GameObjectTemplatePermission {
+                    template: 1,
+                    groups: vec![AccessGroupPermissionLevel {
+                        access_group: 12495,
+                        permission: PermissionLevel::Deny,
+                    }],
+                    fields: vec![PermissionField {
+                        field_id: 100,
+                        field_type: FieldType::Long,
+                        groups: vec![AccessGroupPermissionLevel {
+                            access_group: 5677,
+                            permission: PermissionLevel::Ro,
+                        }],
+                    }],
+                }],
+            },
+            unmapping: Default::default(),
+        };
+        println!("{}", serde_yaml::to_string(&yaml).unwrap());
     }
 }

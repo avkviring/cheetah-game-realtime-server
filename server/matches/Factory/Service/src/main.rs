@@ -10,15 +10,13 @@ use cheetah_matches_factory::service::FactoryService;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     cheetah_microservice::init("match.factory");
     let templates_path = cheetah_microservice::get_env("TEMPLATES_PATH");
-    let registry_grpc_service = format!(
-        "{}:{}",
-        cheetah_microservice::get_env("REGISTRY_GRPC_SERVICE_HOST"),
-        cheetah_microservice::get_env("REGISTRY_GRPC_SERVICE_PORT")
+    let registry_grpc_service = cheetah_microservice::make_internal_grpc_uri(
+        cheetah_microservice::get_env("REGISTRY_GRPC_INTERNAL_SERVICE_HOST").as_str(),
+        cheetah_microservice::get_env("REGISTRY_GRPC_INTERNAL_SERVICE_PORT")
+            .parse()
+            .unwrap(),
     );
-    let service = FactoryService::new(
-        Uri::from_str(registry_grpc_service.as_str()).unwrap(),
-        Path::new(&templates_path),
-    );
+    let service = FactoryService::new(registry_grpc_service, Path::new(&templates_path));
     Server::builder()
         .add_service(FactoryServer::new(service))
         .serve(cheetah_microservice::get_self_service_internal_grpc_address())

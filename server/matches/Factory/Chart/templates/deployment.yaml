@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  annotations:
+    configmap.reloader.stakater.com/reload: "{{ .Values.global.roomTemplates}}"
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      imagePullSecrets:
+        - name: cheetahdockerregistry
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
+          imagePullPolicy: Always
+          env:
+            - name: TEMPLATES_PATH
+              value: /var/lib/room-templates/
+            - name: REGISTRY_GRPC_INTERNAL_SERVICE_HOST
+              value: "$(CHEETAH_MATCHES_STUB_REGISTRY_INTERNAL_SERVICE_HOST)"
+            - name: REGISTRY_GRPC_INTERNAL_SERVICE_PORT
+              value: "$(CHEETAH_MATCHES_STUB_REGISTRY_INTERNAL_SERVICE_PORT)"
+          volumeMounts:
+            - mountPath: /var/lib/room-templates/
+              readOnly: true
+              name: room-templates
+      volumes:
+        - name: room-templates
+          configMap:
+            name: {{ .Values.global.roomTemplates}}

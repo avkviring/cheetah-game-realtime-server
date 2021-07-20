@@ -1,0 +1,37 @@
+# пример конфигурации шаблонов комнат для фабрики
+# в реальном проекте должна использоваться другая config-map
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "rooms-template-example"
+data:
+  gubaha.yaml: |
+    objects:
+    - id: 555
+      template: 1
+      access_groups: 4857
+      fields:
+        longs:
+          10: 100100
+        floats:
+          5: 3.14
+          10: 2.68
+        structures:
+          5:
+            uid: arts80
+            rank: 100
+          10:
+            - 15
+            - 26
+    permissions:
+      objects:
+        - template: 1
+          groups:
+            - access_group: 12495
+              permission: deny
+          fields:
+            - field_id: 100
+              field_type: long
+              groups:
+                - access_group: 5677
+                  permission: ro

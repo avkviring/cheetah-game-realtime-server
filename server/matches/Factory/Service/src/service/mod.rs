@@ -35,6 +35,10 @@ fn load_templates(root: &Path, prefix: &str) -> HashMap<String, relay_types::Roo
 
     for entry in fs::read_dir(root).unwrap() {
         let path = entry.unwrap().path();
+        // пропускаем служебные каталоги при монтировании ConfigMap в kubernetes
+        if path.to_str().unwrap().contains("..") {
+            continue;
+        }
         let file_name = path.file_name().unwrap().to_str().unwrap();
         if path.is_dir() {
             result.extend(load_templates(
@@ -44,6 +48,7 @@ fn load_templates(root: &Path, prefix: &str) -> HashMap<String, relay_types::Roo
         } else {
             if file_name.ends_with("yaml") || file_name.ends_with("yml") {
                 let mut file = std::fs::File::open(&path).unwrap();
+                log::info!("load room {:?}", path);
                 let mut content = String::default();
                 file.read_to_string(&mut content).unwrap();
                 let template = RoomTemplate::new_from_yaml(content.as_str()).unwrap();
