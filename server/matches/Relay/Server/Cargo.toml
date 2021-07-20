@@ -29,6 +29,7 @@ tokio-stream = { version = "0.1", features = ["net"] }
 tonic = "0.4.3"
 prost = "0.7"
 warp = "0.3"
+cheetah-microservice = { path = "../../../Microservice" }
 
 [build-dependencies]
 tonic-build = "0.4.2"

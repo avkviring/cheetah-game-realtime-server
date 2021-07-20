@@ -22,16 +22,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	configure_logger(log_level);
 
 	let (halt_signal, relay_server) = create_relay_server();
-	let grpc_await = create_grpc_server(5000, relay_server.clone());
+	let grpc_await = create_grpc_server(relay_server.clone());
 	let rest_await = run_rest_server(relay_server);
 	futures::join!(grpc_await, rest_await);
 	halt_signal.store(true, Ordering::Relaxed);
 	Result::Ok(())
 }
 
-fn create_grpc_server(_internal_grpc_port: u16, relay_server: Arc<Mutex<RelayServer>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+fn create_grpc_server(relay_server: Arc<Mutex<RelayServer>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let service = cheetah_matches_relay::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
-	let address = SocketAddr::from_str("0.0.0.0:5001").unwrap();
+	let address = cheetah_microservice::get_self_service_internal_grpc_address();
 	Server::builder().add_service(service).serve(address)
 }
 

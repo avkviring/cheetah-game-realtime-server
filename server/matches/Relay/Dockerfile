@@ -1,18 +1,21 @@
 # определяем зависимости для кеширования
 FROM akviring/rust-builder:1.52.1-01 as planner
 WORKDIR planner
+COPY server/Microservice/ server/Microservice/
 COPY server/matches/Relay/ server/matches/Relay/
 RUN cd server/matches/Relay/ && cargo chef prepare --recipe-path recipe.json
 
 # кешируем зависимости
 FROM akviring/rust-builder:1.52.1-01 as cacher
 WORKDIR cache
+COPY server/Microservice/ server/Microservice/
 COPY --from=planner /planner/server/matches/Relay/recipe.json server/matches/Relay/recipe.json
 RUN cd server/matches/Relay/ && cargo chef cook --release --recipe-path recipe.json --target=x86_64-unknown-linux-musl
 
 # компиляция приложения
 FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
+COPY server/Microservice/ server/Microservice/
 COPY proto/matches/Relay/ proto/matches/Relay/
 COPY server/matches/Relay/Common/ server/matches/Relay/Common/
 COPY server/matches/Relay/Macro/ server/matches/Relay/Macro/
