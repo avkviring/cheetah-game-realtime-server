@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .parse()
             .unwrap(),
     );
-    let service = FactoryService::new(registry_grpc_service, Path::new(&templates_path));
+    let service = FactoryService::new(registry_grpc_service, Path::new(&templates_path)).unwrap();
     Server::builder()
         .add_service(FactoryServer::new(service))
         .serve(cheetah_microservice::get_self_service_internal_grpc_address())

@@ -123,7 +123,7 @@ mod tests {
     async fn should_create_relay_room() {
         let templates_directory = prepare_templates();
         let uri = stub_grpc_services().await;
-        let factory = FactoryService::new(uri, templates_directory.path());
+        let factory = FactoryService::new(uri, templates_directory.path()).unwrap();
         let result = factory
             .do_create_match("/gubaha".to_string())
             .await
