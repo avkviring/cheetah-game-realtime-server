@@ -1,4 +1,7 @@
 dependencies:
+- name: reloader
+  repository: https://stakater.github.io/stakater-charts
+  version: v0.0.97
 - name: cheetah-auth-cerberus
   repository: file://../../../server/auth/Cerberus/Chart/
   version: 999.999.999
@@ -17,5 +20,5 @@ dependencies:
 - name: cheetah-matches-stub-matchmaking
   repository: file://../../../server/matches/StubMatchmaking/Chart/
   version: 999.999.999
-digest: sha256:2891adda48cfa4399f316be829766c0169f269617d747965f415c9350e7cf21c
-generated: "2021-07-02T12:10:13.83758+05:00"
+digest: sha256:e285f40952ebe1630e1a2ceda0a21cdefb359080de3903cd8e003d8e845b870f
+generated: "2021-07-20T10:33:36.934682+05:00"

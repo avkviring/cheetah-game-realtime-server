@@ -6,6 +6,9 @@ version: 999.999.999
 appVersion: "999.999.999"
 
 dependencies:
+  - name: reloader
+    version: "0.0.97"
+    repository: "https://stakater.github.io/stakater-charts"
   - name:  cheetah-auth-cerberus
     version: 999.999.999
     repository: "file://../../../server/auth/Cerberus/Chart/"
