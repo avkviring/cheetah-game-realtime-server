@@ -13,6 +13,8 @@ jobs:
           - games.cheetah.authentication.cookie
           - games.cheetah.cerberus
           - games.cheetah.platfrom
+          - games.cheetah.matches.matchmaking
+          - games.cheetah.matches.factory
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2.3.0
