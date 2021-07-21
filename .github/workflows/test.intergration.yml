@@ -1,13 +1,14 @@
 #
-# Тестирование развертывания kubernetes кластера
+# Интеграционный тест
 #
-# - собираем необходимые docker image
-# - развертыванием кластер на тестовом хостинге в DigitalOcean
-# - запускаем приложение для тестирования развернутых сервисов
+# 1. Развертывание кластера в kubernetes
+#   - собираем необходимые docker image
+#   - развертыванием кластер на тестовом хостинге в DigitalOcean
+#   - запускаем приложение для тестирования развернутых сервисов
 #
 #
 #
-name: Helm test
+name: Integration test
 on: [ push ]
 jobs:
   build_images:
@@ -59,7 +60,7 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-  test-cluster:
+  test:
     runs-on: ubuntu-latest
     needs:
       - build_images
@@ -103,10 +104,6 @@ jobs:
             --set cerberus.imageVersion=${{ github.sha }} \
             --wait=true
           sleep 10
-      - name: Run test on Release
-        run: |
-          cd hosting/E2ETest
-          cargo run https://ci.cluster.dev.cheetah.games
       - name: Cleanup namespace
         # удалять namespace нельзя, так как там есть сертификаты let encrypt
         # поэтому удаляем релиз и все не нужные ресурсы
