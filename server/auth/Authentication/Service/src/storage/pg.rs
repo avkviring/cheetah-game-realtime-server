@@ -21,8 +21,8 @@ impl PgStorage {
             .connect_timeout(Duration::from_secs(5))
             .connect(
                 format!(
-                    "postgres://{}:{}@{}:{}/authentication",
-                    pg_user, pg_passwd, pg_host, pg_port
+                    "postgres://{}:{}@{}:{}/{}",
+                    pg_user, pg_passwd, pg_host, pg_port, pg_db
                 )
                 .as_str(),
             )
