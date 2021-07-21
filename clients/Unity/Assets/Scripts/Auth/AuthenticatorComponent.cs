@@ -1,7 +1,7 @@
 #if UNITY_ANDROID
 using Cheetah.Authentication.Android;
 #endif
-using Cheetah.Authentication.Cookie;
+using Cheetah.Auth.Cookie;
 using Cheetah.Platform;
 using UnityEngine;
 using UnityEngine.UI;

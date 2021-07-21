@@ -10,11 +10,11 @@ docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/auth/Cerberus/ a
 docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/auth/Cerberus akviring/protoc:latest \
   protoc \
   --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-  --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ \
-  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ auth.cerberus.external.proto
+  --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.auth.cerberus/Runtime/GRPC/ \
+  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.auth.cerberus/Runtime/GRPC/ auth.cerberus.external.proto
 
 docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/auth/Cerberus akviring/protoc:latest \
   protoc \
   --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-  --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ \
-  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.cerberus/Runtime/GRPC/ auth.cerberus.types.proto
+  --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.auth.cerberus/Runtime/GRPC/ \
+  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.auth.cerberus/Runtime/GRPC/ auth.cerberus.types.proto

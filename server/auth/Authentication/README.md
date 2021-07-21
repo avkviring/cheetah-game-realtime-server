@@ -8,7 +8,7 @@
 ## Клиент
 - [общий проект](/clients/Unity/Packages/games.cheetah.authentication.cookie)
 - [cookie](/clients/Unity/Packages/games.cheetah.authentication.cookie)
-- [android](/clients/Unity/Packages/games.cheetah.authentication.android)
+- [android](/clients/Unity/Packages/games.cheetah.auth.authentication.android)
 
 ## Обработка ошибок
 
