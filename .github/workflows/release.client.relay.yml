@@ -87,16 +87,16 @@ jobs:
         with:
           name: android-windows-build
           path: android-windows-build
-      - run: cp macos-build/libcheetah_relay_client.dylib clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.bundle
-      - run: cp linux-build/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.so
-      - run: cp android-windows-build/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll clients/Unity/Packages/games.cheetah.relay/x86_64/libcheetah_relay_client.dll
-      - run: cp android-windows-build/armv7-linux-androideabi/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.relay/Android/armv7/libcheetah_relay_client.so
-      - run: cp android-windows-build/aarch64-linux-android/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.relay/Android/aarch64/libcheetah_relay_client.so
+      - run: cp macos-build/libcheetah_relay_client.dylib clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.bundle
+      - run: cp linux-build/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.so
+      - run: cp android-windows-build/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.dll
+      - run: cp android-windows-build/armv7-linux-androideabi/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/armv7/libcheetah_relay_client.so
+      - run: cp android-windows-build/aarch64-linux-android/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/aarch64/libcheetah_relay_client.so
       - uses: actions/setup-node@v2.3.0
         with:
           node-version: '12.x'
           registry-url: 'https://npm.registry.cheetah.games'
-      - run: sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' clients/Unity/Packages/games.cheetah.relay/package.json
-      - run: npm publish clients/Unity/Packages/games.cheetah.relay/ --access private
+      - run: sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' clients/Unity/Packages/games.cheetah.matches.relay/package.json
+      - run: npm publish clients/Unity/Packages/games.cheetah.matches.relay/ --access private
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}
