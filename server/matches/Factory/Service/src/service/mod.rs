@@ -1,10 +1,9 @@
 use std::collections::HashMap;
-use std::error::Error;
+
 use std::fs;
 use std::io::Read;
 use std::path::Path;
 
-use serde_yaml::Location;
 use tonic::transport::Uri;
 
 use crate::proto::matches::relay::types as relay_types;

@@ -101,9 +101,6 @@ impl Into<i32> for yaml::PermissionLevel {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::iter::FromIterator;
-
-    use rmpv::{Integer, Utf8String};
 
     use crate::proto::matches::relay::types as relay;
     use crate::service::yaml;

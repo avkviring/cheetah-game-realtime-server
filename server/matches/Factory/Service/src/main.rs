@@ -1,7 +1,6 @@
 use std::path::Path;
-use std::str::FromStr;
 
-use tonic::transport::{Server, Uri};
+use tonic::transport::Server;
 
 use cheetah_matches_factory::proto::matches::factory::internal::factory_server::FactoryServer;
 use cheetah_matches_factory::service::FactoryService;
