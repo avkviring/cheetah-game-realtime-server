@@ -19,14 +19,14 @@ pub struct RoomTemplate {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Permissions {
-    pub objects: Vec<GameObjectTemplatePermission>,
+    pub templates: Vec<GameObjectTemplatePermission>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct GameObjectTemplate {
     pub id: u32,
     pub template: u16,
-    pub access_groups: u64,
+    pub groups: u64,
     #[serde(default)]
     pub fields: GameObjectFieldsTemplate,
     #[serde(flatten)]
@@ -49,23 +49,24 @@ pub struct GameObjectFieldsTemplate {
 pub struct GameObjectTemplatePermission {
     pub template: u16,
     #[serde(default)]
-    pub groups: Vec<AccessGroupPermissionLevel>,
+    pub rules: Vec<GroupsPermissionRule>,
     #[serde(default)]
     pub fields: Vec<PermissionField>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
-pub struct AccessGroupPermissionLevel {
-    pub access_group: u64,
+pub struct GroupsPermissionRule {
+    pub groups: u64,
     pub permission: PermissionLevel,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PermissionField {
-    pub field_id: u16,
+    pub id: u16,
+    #[serde(rename = "type")]
     pub field_type: FieldType,
     #[serde(default)]
-    pub groups: Vec<AccessGroupPermissionLevel>,
+    pub rules: Vec<GroupsPermissionRule>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
@@ -134,7 +135,15 @@ impl RoomTemplate {
 
 #[cfg(test)]
 mod tests {
-    use crate::service::yaml::{GameObjectTemplate, RoomTemplate, RoomTemplateError};
+    use crate::service::yaml::{
+        FieldType, GameObjectFieldsTemplate, GameObjectTemplate, GameObjectTemplatePermission,
+        GroupsPermissionRule, PermissionField, PermissionLevel, Permissions, RoomTemplate,
+        RoomTemplateError,
+    };
+    use rmpv::Integer;
+    use rmpv::Utf8String;
+    use std::collections::HashMap;
+    use std::iter::FromIterator;
 
     #[test]
     fn should_fail_if_unmapping_field() {
@@ -146,7 +155,7 @@ mod tests {
         let mut object_template = GameObjectTemplate {
             id: 0,
             template: 0,
-            access_groups: Default::default(),
+            groups: Default::default(),
             fields: Default::default(),
             unmapping: Default::default(),
         };
@@ -168,5 +177,66 @@ mod tests {
             && fields[1] == "object/wrong_field"
             && fields[2] == "object/fields/wrong_field"
         ))
+    }
+
+    #[test]
+    fn dump_yaml_for_docs() {
+        let yaml = RoomTemplate {
+            objects: vec![GameObjectTemplate {
+                id: 555,
+                template: 1,
+                groups: 4857,
+                fields: GameObjectFieldsTemplate {
+                    longs: HashMap::from_iter(vec![(10, 100100)].into_iter()),
+                    floats: HashMap::from_iter(vec![(5, 3.14), (10, 2.68)].into_iter()),
+                    structures: HashMap::from_iter(
+                        vec![
+                            (
+                                5,
+                                rmpv::Value::Map(vec![
+                                    (
+                                        rmpv::Value::String(Utf8String::from("uid".to_owned())),
+                                        rmpv::Value::String(Utf8String::from("arts80").to_owned()),
+                                    ),
+                                    (
+                                        rmpv::Value::String(Utf8String::from("rank".to_owned())),
+                                        rmpv::Value::Integer(Integer::from(100)),
+                                    ),
+                                ]),
+                            ),
+                            (
+                                10,
+                                rmpv::Value::Array(vec![
+                                    rmpv::Value::Integer(Integer::from(15)),
+                                    rmpv::Value::Integer(Integer::from(26)),
+                                ]),
+                            ),
+                        ]
+                        .into_iter(),
+                    ),
+                    unmapping: Default::default(),
+                },
+                unmapping: Default::default(),
+            }],
+            permissions: Permissions {
+                templates: vec![GameObjectTemplatePermission {
+                    template: 1,
+                    rules: vec![GroupsPermissionRule {
+                        groups: 12495,
+                        permission: PermissionLevel::Deny,
+                    }],
+                    fields: vec![PermissionField {
+                        id: 100,
+                        field_type: FieldType::Long,
+                        rules: vec![GroupsPermissionRule {
+                            groups: 5677,
+                            permission: PermissionLevel::Ro,
+                        }],
+                    }],
+                }],
+            },
+            unmapping: Default::default(),
+        };
+        println!("{}", serde_yaml::to_string(&yaml).unwrap());
     }
 }

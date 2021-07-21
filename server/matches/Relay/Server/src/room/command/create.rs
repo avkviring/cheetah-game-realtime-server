@@ -17,12 +17,12 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 		let groups = self.access_groups;
 
-		if !groups.is_sub_groups(&user.template.access_groups) {
+		if !groups.is_sub_groups(&user.template.groups) {
 			error_c2s_command(
 				"CreateGameObjectCommand",
 				room,
 				user.id,
-				format!("Incorrect access group {:?} with client groups {:?}", groups, user.template.access_groups),
+				format!("Incorrect access group {:?} with client groups {:?}", groups, user.template.groups),
 			);
 			return;
 		}

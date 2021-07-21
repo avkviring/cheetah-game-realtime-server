@@ -123,7 +123,7 @@ impl From<&User> for UserDump {
 	fn from(user: &User) -> Self {
 		Self {
 			id: user.id,
-			access_groups: user.template.access_groups,
+			access_groups: user.template.groups,
 			attached: user.attached,
 		}
 	}

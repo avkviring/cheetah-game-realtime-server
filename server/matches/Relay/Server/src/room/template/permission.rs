@@ -5,13 +5,13 @@ use fnv::FnvBuildHasher;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
-use crate::room::template::config::{Permission, PermissionGroup, Permissions};
+use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
 use crate::room::types::FieldType;
 
 #[derive(Debug)]
 pub struct PermissionManager {
-	templates: HashMap<GameObjectTemplateId, Vec<PermissionGroup>, FnvBuildHasher>,
-	fields: HashMap<PermissionFieldKey, Vec<PermissionGroup>, FnvBuildHasher>,
+	templates: HashMap<GameObjectTemplateId, Vec<GroupsPermissionRule>, FnvBuildHasher>,
+	fields: HashMap<PermissionFieldKey, Vec<GroupsPermissionRule>, FnvBuildHasher>,
 	cache: HashMap<PermissionCachedFieldKey, Permission, FnvBuildHasher>,
 	write_access_template: HashSet<GameObjectTemplateId, FnvBuildHasher>,
 	write_access_fields: HashSet<PermissionFieldKey, FnvBuildHasher>,
@@ -41,23 +41,23 @@ impl PermissionManager {
 		};
 
 		for template in &permission.templates {
-			if template.groups.iter().find(|t| t.permission > Permission::Ro).is_some() {
+			if template.rules.iter().find(|t| t.permission > Permission::Ro).is_some() {
 				result.write_access_template.insert(template.template);
 			}
-			result.templates.insert(template.template.clone(), template.groups.clone());
+			result.templates.insert(template.template.clone(), template.rules.clone());
 
 			for field in &template.fields {
 				let key = PermissionFieldKey {
 					template: template.template,
-					field_id: field.field_id,
+					field_id: field.id,
 					field_type: field.field_type.clone(),
 				};
 
-				if field.groups.iter().find(|t| t.permission > Permission::Ro).is_some() {
+				if field.rules.iter().find(|t| t.permission > Permission::Ro).is_some() {
 					result.write_access_fields.insert(key.clone());
 				}
 
-				result.fields.insert(key, field.groups.clone());
+				result.fields.insert(key, field.rules.clone());
 			}
 		}
 
@@ -110,10 +110,10 @@ impl PermissionManager {
 		}
 	}
 
-	fn get_permission_by_group(user_group: AccessGroups, groups: &Vec<PermissionGroup>) -> &Permission {
+	fn get_permission_by_group(user_group: AccessGroups, groups: &Vec<GroupsPermissionRule>) -> &Permission {
 		groups
 			.iter()
-			.find(|p| p.group.contains_any(&user_group))
+			.find(|p| p.groups.contains_any(&user_group))
 			.map_or(&Permission::Ro, |p| &p.permission)
 	}
 }
@@ -122,7 +122,7 @@ impl PermissionManager {
 mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
-	use crate::room::template::config::{GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, Permissions};
+	use crate::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions};
 	use crate::room::template::permission::PermissionManager;
 	use crate::room::types::FieldType;
 
@@ -140,16 +140,16 @@ mod tests {
 		let mut permissions = Permissions::default();
 		let mut template_permission = GameObjectTemplatePermission {
 			template: 10,
-			groups: Default::default(),
+			rules: Default::default(),
 			fields: Default::default(),
 		};
-		template_permission.groups.push(PermissionGroup {
-			group: AccessGroups(0b11),
+		template_permission.rules.push(GroupsPermissionRule {
+			groups: AccessGroups(0b11),
 			permission: Permission::Rw,
 		});
 
-		template_permission.groups.push(PermissionGroup {
-			group: AccessGroups(0b1000),
+		template_permission.rules.push(GroupsPermissionRule {
+			groups: AccessGroups(0b1000),
 			permission: Permission::Deny,
 		});
 		permissions.templates.push(template_permission);
@@ -171,19 +171,19 @@ mod tests {
 		let mut permissions = Permissions::default();
 		let mut template_permission = GameObjectTemplatePermission {
 			template: 10,
-			groups: Default::default(),
+			rules: Default::default(),
 			fields: Default::default(),
 		};
-		template_permission.groups.push(PermissionGroup {
-			group: AccessGroups(0b11),
+		template_permission.rules.push(GroupsPermissionRule {
+			groups: AccessGroups(0b11),
 			permission: Permission::Deny,
 		});
 
 		template_permission.fields.push(PermissionField {
-			field_id: 15,
+			id: 15,
 			field_type: FieldType::Long,
-			groups: vec![PermissionGroup {
-				group: AccessGroups(0b11),
+			rules: vec![GroupsPermissionRule {
+				groups: AccessGroups(0b11),
 				permission: Permission::Rw,
 			}],
 		});
@@ -206,19 +206,19 @@ mod tests {
 		let mut permissions = Permissions::default();
 		let mut template_permission = GameObjectTemplatePermission {
 			template: 10,
-			groups: Default::default(),
+			rules: Default::default(),
 			fields: Default::default(),
 		};
-		template_permission.groups.push(PermissionGroup {
-			group: AccessGroups(0b11),
+		template_permission.rules.push(GroupsPermissionRule {
+			groups: AccessGroups(0b11),
 			permission: Permission::Deny,
 		});
 
 		template_permission.fields.push(PermissionField {
-			field_id: 15,
+			id: 15,
 			field_type: FieldType::Long,
-			groups: vec![PermissionGroup {
-				group: AccessGroups(0b11),
+			rules: vec![GroupsPermissionRule {
+				groups: AccessGroups(0b11),
 				permission: Permission::Rw,
 			}],
 		});
@@ -254,8 +254,8 @@ mod tests {
 		let mut permissions = Permissions::default();
 		permissions.templates.push(GameObjectTemplatePermission {
 			template: 10,
-			groups: vec![PermissionGroup {
-				group: Default::default(),
+			rules: vec![GroupsPermissionRule {
+				groups: Default::default(),
 				permission: Permission::Rw,
 			}],
 			fields: vec![],
@@ -269,8 +269,8 @@ mod tests {
 		let mut permissions = Permissions::default();
 		permissions.templates.push(GameObjectTemplatePermission {
 			template: 10,
-			groups: vec![PermissionGroup {
-				group: Default::default(),
+			rules: vec![GroupsPermissionRule {
+				groups: Default::default(),
 				permission: Permission::Ro,
 			}],
 			fields: vec![],
@@ -284,12 +284,12 @@ mod tests {
 		let mut permissions = Permissions::default();
 		permissions.templates.push(GameObjectTemplatePermission {
 			template: 10,
-			groups: vec![],
+			rules: vec![],
 			fields: vec![PermissionField {
-				field_id: 100,
+				id: 100,
 				field_type: FieldType::Long,
-				groups: vec![PermissionGroup {
-					group: Default::default(),
+				rules: vec![GroupsPermissionRule {
+					groups: Default::default(),
 					permission: Permission::Rw,
 				}],
 			}],

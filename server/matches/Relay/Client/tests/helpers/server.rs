@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 use log::LevelFilter;
 
 use cheetah_matches_relay::room::debug::tracer::CommandTracer;
-use cheetah_matches_relay::room::template::config::{GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, RoomTemplate};
+use cheetah_matches_relay::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate};
 use cheetah_matches_relay::room::types::FieldType;
 use cheetah_matches_relay::server::RelayServer;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
@@ -36,14 +36,14 @@ impl IntegrationTestServerBuilder {
 		permission: Permission,
 	) {
 		let field = PermissionField {
-			field_id,
+			id: field_id,
 			field_type,
-			groups: vec![PermissionGroup { group, permission }],
+			rules: vec![GroupsPermissionRule { groups: group, permission }],
 		};
 		match self.template.permissions.templates.iter_mut().find(|tp| tp.template == template) {
 			None => self.template.permissions.templates.push(GameObjectTemplatePermission {
 				template,
-				groups: Default::default(),
+				rules: Default::default(),
 				fields: vec![field],
 			}),
 			Some(template) => {

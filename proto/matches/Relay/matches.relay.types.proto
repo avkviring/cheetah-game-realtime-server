@@ -39,7 +39,7 @@ message GameObjectTemplatePermission {
   /**
     Права доступа к полям для групп
    */
-  repeated AccessGroupPermissionLevel groups = 2;
+  repeated GroupsPermissionRule rules = 2;
 
   /**
     Права доступа к конкретным полям
@@ -51,8 +51,8 @@ message GameObjectTemplatePermission {
 /**
   Права доступа для группы
  */
-message AccessGroupPermissionLevel {
-  uint64 access_group = 1;
+message GroupsPermissionRule {
+  uint64 groups = 1;
   PermissionLevel permission = 2;
 }
 
@@ -61,9 +61,9 @@ message AccessGroupPermissionLevel {
   Права доступа для поля
  */
 message PermissionField {
-  uint32 field_id = 1;
-  FieldType field_type = 2;
-  repeated AccessGroupPermissionLevel groups = 3;
+  uint32 id = 1;
+  FieldType type = 2;
+  repeated GroupsPermissionRule rules = 3;
 }
 
 enum FieldType {
@@ -81,14 +81,14 @@ enum PermissionLevel {
 
 message UserTemplate {
   uint32 id = 1;
-  uint64 access_group = 3;
+  uint64 groups = 3;
   repeated GameObjectTemplate objects = 4;
 }
 
 message GameObjectTemplate {
   uint32 id = 1;
   uint32 template = 2;
-  uint64 access_group = 3;
+  uint64 groups = 3;
   GameObjectFieldsTemplate fields = 4;
 }
 

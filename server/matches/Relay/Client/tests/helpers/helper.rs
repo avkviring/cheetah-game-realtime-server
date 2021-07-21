@@ -58,7 +58,7 @@ impl IntegrationTestHelper {
 		OsRng.fill_bytes(&mut private_key);
 		let user_template = UserTemplate {
 			private_key,
-			access_groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
+			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
 		};
 		let user_id = self.server.register_user(self.room_id, user_template).ok().unwrap();

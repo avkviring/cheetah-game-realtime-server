@@ -470,7 +470,7 @@ mod tests {
 		let object_template = GameObjectTemplate {
 			id: 155,
 			template: 5,
-			access_groups: Default::default(),
+			groups: Default::default(),
 			fields: Default::default(),
 		};
 		template.objects = vec![object_template.clone()];
@@ -485,12 +485,12 @@ mod tests {
 		let object_template = GameObjectTemplate {
 			id: 155,
 			template: 5,
-			access_groups: AccessGroups(55),
+			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
 		let user_template = UserTemplate {
 			private_key: Default::default(),
-			access_groups: AccessGroups(55),
+			groups: AccessGroups(55),
 			objects: vec![object_template.clone()],
 		};
 		let mut room = Room::from_template(template);
@@ -510,24 +510,24 @@ mod tests {
 		let object1_template = GameObjectTemplate {
 			id: 100,
 			template: 5,
-			access_groups: AccessGroups(55),
+			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
 		let user1_template = UserTemplate {
 			private_key: Default::default(),
-			access_groups: AccessGroups(55),
+			groups: AccessGroups(55),
 			objects: vec![object1_template.clone()],
 		};
 
 		let object2_template = GameObjectTemplate {
 			id: 200,
 			template: 5,
-			access_groups: AccessGroups(55),
+			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
 		let user2_template = UserTemplate {
 			private_key: Default::default(),
-			access_groups: AccessGroups(55),
+			groups: AccessGroups(55),
 			objects: vec![object2_template.clone()],
 		};
 
@@ -691,7 +691,7 @@ mod tests {
 		let template = RoomTemplate::default();
 		let user_template = UserTemplate {
 			private_key: Default::default(),
-			access_groups: AccessGroups(55),
+			groups: AccessGroups(55),
 			objects: Default::default(),
 		};
 		(template, user_template)

@@ -41,14 +41,14 @@
 permissions:
   templates:
     - template: 10 # указываем шаблон объекта, для которого осуществляется настройка прав
-      groups: # можно изменить права для конкретных групп
-        - group: 7
+      rules: # можно изменить права для конкретных групп
+        - groups: 7
           permission: ro | rw | deny
         fields: # можно изменить права для конкретных полей (приоритет выше чем права групп) 
-          - field_id: 55
-            field_type: long | float | structure | event
-            groups:
-              - group: 9
+          - id: 55
+            type: long | float | structure | event
+            rules:
+              - groups: 9
                 permission: ro | rw | deny
 ```
 

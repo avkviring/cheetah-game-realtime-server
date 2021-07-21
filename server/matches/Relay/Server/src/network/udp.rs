@@ -247,7 +247,7 @@ mod tests {
 
 		let user_template = UserTemplate {
 			private_key: Default::default(),
-			access_groups: Default::default(),
+			groups: Default::default(),
 			objects: Default::default(),
 		};
 		let user = User {

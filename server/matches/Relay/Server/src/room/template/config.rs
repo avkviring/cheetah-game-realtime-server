@@ -21,7 +21,7 @@ pub struct RoomTemplate {
 #[derive(Debug, Default, Clone)]
 pub struct UserTemplate {
 	pub private_key: UserPrivateKey,
-	pub access_groups: AccessGroups,
+	pub groups: AccessGroups,
 	pub objects: Vec<GameObjectTemplate>,
 }
 
@@ -29,7 +29,7 @@ pub struct UserTemplate {
 pub struct GameObjectTemplate {
 	pub id: u32,
 	pub template: GameObjectTemplateId,
-	pub access_groups: AccessGroups,
+	pub groups: AccessGroups,
 	pub fields: GameObjectFieldsTemplate,
 }
 
@@ -48,21 +48,21 @@ pub struct Permissions {
 #[derive(Debug, Default, Clone)]
 pub struct GameObjectTemplatePermission {
 	pub template: GameObjectTemplateId,
-	pub groups: Vec<PermissionGroup>,
+	pub rules: Vec<GroupsPermissionRule>,
 	pub fields: Vec<PermissionField>,
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct PermissionGroup {
-	pub group: AccessGroups,
+pub struct GroupsPermissionRule {
+	pub groups: AccessGroups,
 	pub permission: Permission,
 }
 
 #[derive(Debug, Clone)]
 pub struct PermissionField {
-	pub field_id: FieldId,
+	pub id: FieldId,
 	pub field_type: FieldType,
-	pub groups: Vec<PermissionGroup>,
+	pub rules: Vec<GroupsPermissionRule>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
@@ -91,7 +91,8 @@ impl UserTemplate {
 #[cfg(test)]
 mod tests {
 	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, Permissions, UserTemplate, UserTemplateError,
+		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions, UserTemplate,
+		UserTemplateError,
 	};
 	use crate::room::types::FieldType;
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
@@ -102,7 +103,7 @@ mod tests {
 		pub fn stub(access_group: AccessGroups) -> Self {
 			return UserTemplate {
 				private_key: [5; 32],
-				access_groups: access_group,
+				groups: access_group,
 				objects: Default::default(),
 			};
 		}
@@ -112,7 +113,7 @@ mod tests {
 			objects.push(GameObjectTemplate {
 				id,
 				template,
-				access_groups,
+				groups: access_groups,
 				fields: Default::default(),
 			});
 			let len = objects.len();
@@ -134,7 +135,7 @@ mod tests {
 				None => {
 					let template_permission = GameObjectTemplatePermission {
 						template,
-						groups: vec![],
+						rules: vec![],
 						fields: vec![],
 					};
 					self.templates.push(template_permission);
@@ -143,21 +144,21 @@ mod tests {
 				Some(template) => template,
 			};
 
-			let permission_field = match template_permission.fields.iter_mut().find(|f| f.field_id == *field_id) {
+			let permission_field = match template_permission.fields.iter_mut().find(|f| f.id == *field_id) {
 				None => {
 					let permission_field = PermissionField {
-						field_id: field_id.clone(),
+						id: field_id.clone(),
 						field_type,
-						groups: vec![],
+						rules: vec![],
 					};
 					template_permission.fields.push(permission_field);
-					template_permission.fields.iter_mut().find(|f| f.field_id == *field_id).unwrap()
+					template_permission.fields.iter_mut().find(|f| f.id == *field_id).unwrap()
 				}
 				Some(permission_field) => permission_field,
 			};
 
-			permission_field.groups.push(PermissionGroup {
-				group: access_group.clone(),
+			permission_field.rules.push(GroupsPermissionRule {
+				groups: access_group.clone(),
 				permission,
 			});
 		}
@@ -167,11 +168,11 @@ mod tests {
 	fn should_validate_fail_when_user_object_has_wrong_id() {
 		let template = UserTemplate {
 			private_key: [5; 32],
-			access_groups: AccessGroups(0b1111),
+			groups: AccessGroups(0b1111),
 			objects: vec![GameObjectTemplate {
 				id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
 				template: 0b100,
-				access_groups: AccessGroups(0b1111),
+				groups: AccessGroups(0b1111),
 				fields: Default::default(),
 			}],
 		};

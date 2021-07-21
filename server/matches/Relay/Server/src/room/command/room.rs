@@ -11,7 +11,7 @@ pub fn attach_to_room(room: &mut Room, user_id: UserId) {
 		}
 		Some(user) => {
 			user.attach_to_room();
-			let access_group = user.template.access_groups;
+			let access_group = user.template.groups;
 			let commands_by_object: Vec<(GameObjectTemplateId, Vec<S2CommandWithFieldInfo>)> = room
 				.objects
 				.iter()

@@ -95,7 +95,7 @@ impl Room {
 				log::error!("[room({})] user({}) not found", self.id, command_owner_user);
 				return;
 			}
-			Some(user) => user.template.access_groups.clone(),
+			Some(user) => user.template.groups.clone(),
 		};
 
 		if let Some(object) = self.get_object_mut(&game_object_id) {
@@ -198,7 +198,7 @@ impl Room {
 			.values_mut()
 			.filter(|user| user.attached)
 			.filter(|user| user.protocol.is_some())
-			.filter(|user| user.template.access_groups.contains_any(&access_groups))
+			.filter(|user| user.template.groups.contains_any(&access_groups))
 			.filter(|user| filter(user))
 			.for_each(|user| {
 				let protocol = user.protocol.as_mut().unwrap();
@@ -208,7 +208,7 @@ impl Room {
 						Some(FieldIdAndType { field_id, field_type }) => {
 							permission_manager
 								.borrow_mut()
-								.get_permission(template, *field_id, *field_type, user.template.access_groups)
+								.get_permission(template, *field_id, *field_type, user.template.groups)
 								> Permission::Deny
 						}
 					};
@@ -236,7 +236,7 @@ impl Room {
 			Some(user) => {
 				if let Some(ref mut protocol) = user.protocol {
 					if user.attached {
-						let groups = user.template.access_groups;
+						let groups = user.template.groups;
 						for command in commands {
 							let allow = match command.field {
 								None => true,

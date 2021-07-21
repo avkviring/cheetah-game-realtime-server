@@ -40,7 +40,7 @@ impl GameObjectTemplate {
 		GameObject {
 			id,
 			template: self.template,
-			access_groups: self.access_groups,
+			access_groups: self.groups,
 			created: true,
 			longs,
 			floats,
@@ -62,7 +62,7 @@ mod tests {
 		let config_object = GameObjectTemplate {
 			id: 0,
 			template: 200,
-			access_groups: Default::default(),
+			groups: Default::default(),
 			fields: Default::default(),
 		};
 		config_object.to_root_game_object();
@@ -73,7 +73,7 @@ mod tests {
 		let mut config_object = GameObjectTemplate {
 			id: 100,
 			template: 200,
-			access_groups: Default::default(),
+			groups: Default::default(),
 			fields: Default::default(),
 		};
 		config_object.fields.longs = Default::default();
@@ -88,7 +88,7 @@ mod tests {
 		assert_eq!(config_object.id, object.id.id);
 		assert!(matches!(object.id.owner, ObjectOwner::Root));
 		assert_eq!(config_object.template, object.template);
-		assert_eq!(config_object.access_groups, object.access_groups);
+		assert_eq!(config_object.groups, object.access_groups);
 		assert_eq!(config_object.fields.longs[&0], object.longs[&0]);
 		assert_eq!(config_object.fields.floats[&1], object.floats[&1]);
 		assert_eq!(config_object.fields.structures[&1], object.structures[&1]);

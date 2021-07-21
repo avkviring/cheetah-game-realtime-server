@@ -155,7 +155,9 @@ mod tests {
 	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{GameObjectTemplatePermission, Permission, PermissionField, PermissionGroup, RoomTemplate, UserTemplate};
+	use crate::room::template::config::{
+		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate, UserTemplate,
+	};
 	use crate::room::types::FieldType;
 	use crate::room::Room;
 
@@ -339,18 +341,18 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let user_template_1 = UserTemplate {
 			private_key: Default::default(),
-			access_groups: access_group,
+			groups: access_group,
 			objects: Default::default(),
 		};
 		let user_template_2 = UserTemplate {
 			private_key: Default::default(),
-			access_groups: access_group,
+			groups: access_group,
 			objects: Default::default(),
 		};
 
 		let user_template_3 = UserTemplate {
 			private_key: Default::default(),
-			access_groups: access_group,
+			groups: access_group,
 			objects: Default::default(),
 		};
 
@@ -358,12 +360,12 @@ mod tests {
 		let object_field = 50;
 		template.permissions.templates.push(GameObjectTemplatePermission {
 			template: object_template,
-			groups: vec![],
+			rules: vec![],
 			fields: vec![PermissionField {
-				field_id: object_field,
+				id: object_field,
 				field_type: FieldType::Long,
-				groups: vec![PermissionGroup {
-					group: access_group,
+				rules: vec![GroupsPermissionRule {
+					groups: access_group,
 					permission: Permission::Rw,
 				}],
 			}],
