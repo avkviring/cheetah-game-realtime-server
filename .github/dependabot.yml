@@ -1,18 +1,36 @@
 version: 2
 updates:
-  - package-ecosystem: "cargo"
-    directory: "/server/authentication/"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "cargo"
-    directory: "/server/relay/"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "cargo"
-    directory: "/server/cerberus/"
-    schedule:
-      interval: "daily"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+  - package-ecosystem: "cargo"
+    directory: "/server/auth/Authentication"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+  - package-ecosystem: "cargo"
+    directory: "/server/auth/Cerberus"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+  - package-ecosystem: "cargo"
+    directory: "/server/matches/Factory"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+  - package-ecosystem: "cargo"
+    directory: "/server/matches/Relay"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+  - package-ecosystem: "cargo"
+    directory: "/server/matches/StubMatchmaking"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+  - package-ecosystem: "cargo"
+    directory: "/server/matches/StubRegistry"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
