@@ -17,9 +17,8 @@
 - [ ] Helm Chart
   - [ ] Имя cheetah-auth-cerberus
   - [ ] Подключен как зависимость в hosting/charts/Platform/Chart.yaml
-- [ ] Интеграционный тест в Kubernetes
 - [ ] CI
-  - [ ] Серверные тесты
-  - [ ] Helm тесты
-  - [ ] Релиз docker image
-  - [ ] Релиз Helm Chart
+  - [ ] Серверные тесты - .github/workflows/test.server.yml
+  - [ ] Интеграционные тесты - .github/workflows/test.intergration.yml
+  - [ ] Релиз компонента - .github/workflows/release.components.yml
+  - [ ] Обновление зависимостей - .github/dependabot.yml
