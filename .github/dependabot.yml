@@ -41,3 +41,9 @@ updates:
       interval: "weekly"
     rebase-strategy: "disabled"
     target-branch: dependabot
+  - package-ecosystem: "cargo"
+    directory: "/server/Microservice"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+    target-branch: dependabot
