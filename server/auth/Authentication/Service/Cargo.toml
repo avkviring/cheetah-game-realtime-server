@@ -9,8 +9,8 @@ path = "src/main.rs"
 
 [dependencies]
 chrono = "0.4"
-tonic = "0.4.3"
-prost = "0.7"
+tonic = "0.5.0"
+prost = "0.8.0"
 tokio = { version = "1.7", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tokio-stream = { version = "0.1.7", features = ["net"] }
 tower = { version = "0.4" }
@@ -19,7 +19,7 @@ sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "m
 async-trait = "0.1.50"
 log = "0.4"
 pretty_env_logger = "0.4.0"
-ipnetwork = "0.17.0"
+ipnetwork = "0.18.0"
 rand = "0.8"
 cheetah-microservice = { path = "../../../Microservice" }
 jsonwebtoken-google = { version = "0.1.1" }
@@ -36,4 +36,4 @@ cheetah-auth-cerberus = { path = "../../Cerberus/Service", features = ["test-hel
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
 
 [build-dependencies]
-tonic-build = "0.4.2"
+tonic-build = "0.5.1"
