@@ -4,33 +4,40 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    target-branch: dependabot
   - package-ecosystem: "cargo"
     directory: "/server/auth/Authentication"
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    target-branch: dependabot
   - package-ecosystem: "cargo"
     directory: "/server/auth/Cerberus"
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    target-branch: dependabot
   - package-ecosystem: "cargo"
     directory: "/server/matches/Factory"
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    target-branch: dependabot
   - package-ecosystem: "cargo"
     directory: "/server/matches/Relay"
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    target-branch: dependabot
   - package-ecosystem: "cargo"
     directory: "/server/matches/StubMatchmaking"
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    target-branch: dependabot
   - package-ecosystem: "cargo"
     directory: "/server/matches/StubRegistry"
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
+    target-branch: dependabot
