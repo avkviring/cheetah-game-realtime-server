@@ -6,10 +6,13 @@
 #   - развертыванием кластер на тестовом хостинге в DigitalOcean
 #   - запускаем приложение для тестирования развернутых сервисов
 #
-#
-#
 name: Integration test
-on: [ push ]
+on:
+  push:
+    branches:
+      - master
+      - lain-dono
+      - kviring
 jobs:
   build_images:
     runs-on: ubuntu-latest
@@ -89,17 +92,20 @@ jobs:
         run: |
           doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_CLUSTER_ID }}
           sleep 10
+      - name: Set branch name
+        id: vars
+        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
       - name: Prepare namespace
         run: |
-          helm uninstall ci-test -n ci-test || true
-          kubectl delete --namespace ci-test --all deployments,statefulsets,services,pods,pvc,pv
+          helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ steps.vars.outputs.short_ref }} || true
+          kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
       - name: Deploy Release
         run: |
           cd hosting/charts/
           helm dependency update Platform
-          helm upgrade --debug --install ci-test \
-            --namespace=ci-test Platform \
-            --set global.grpcDomain=ci.cluster.dev.cheetah.games \
+          helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
+            --namespace=${{ steps.vars.outputs.short_ref }} Platform \
+            --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
             --set authentication.imageVersion=${{ github.sha }} \
             --set cerberus.imageVersion=${{ github.sha }} \
             --wait=true
@@ -110,6 +116,6 @@ jobs:
         # также удаляем volume в Digital Ocean
         # иначе они будут создаваться в каждом тесте - а это платно
         run: |
-          helm uninstall ci-test -n ci-test
-          kubectl delete --namespace ci-test --all deployments,statefulsets,services,pods,pvc,pv
+          helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ github.head_ref }}
+          kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
           doctl compute volume list --format ID,Tags --no-header | grep  ${{ secrets.DIGITALOCEAN_CLUSTER_ID }} | awk '{ print $1 }' | xargs -I {} doctl compute volume delete -f {}

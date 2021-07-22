@@ -2,7 +2,12 @@
 # Unit тесты серверных компонентов
 #
 name: Client tests
-on: [ push ]
+on:
+  push:
+    branches:
+      - master
+      - lain-dono
+      - kviring
 jobs:
   check-meta-files-in-relay-client:
     runs-on: ubuntu-latest

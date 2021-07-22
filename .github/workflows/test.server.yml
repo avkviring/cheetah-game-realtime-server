@@ -2,7 +2,12 @@
 # Unit тесты серверных компонентов
 #
 name: Server tests
-on: [ push ]
+on:
+  push:
+    branches:
+      - master
+      - lain-dono
+      - kviring
 jobs:
   unit-test:
     runs-on: ubuntu-latest
