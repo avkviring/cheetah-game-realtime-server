@@ -578,7 +578,7 @@ mod tests {
 		);
 	}
 
-	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, heapless::consts::U256> {
+	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, 256> {
 		let mut result = heapless::Vec::new();
 		result.extend_from_slice(vec.as_slice()).unwrap();
 		result

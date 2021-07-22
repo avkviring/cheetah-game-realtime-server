@@ -1,7 +1,6 @@
 use crate::room::UserPrivateKey;
 use chacha20poly1305::aead::{AeadInPlace, NewAead};
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
-use heapless::consts::*;
 use heapless::Vec;
 
 ///
@@ -21,7 +20,7 @@ impl<'a> Cipher<'a> {
 		Self { private_key }
 	}
 
-	pub fn encrypt(&mut self, buffer: &mut Vec<u8, U4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
+	pub fn encrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
@@ -31,7 +30,7 @@ impl<'a> Cipher<'a> {
 		Result::Ok(())
 	}
 
-	pub fn decrypt(&mut self, buffer: &mut Vec<u8, U4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
+	pub fn decrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
@@ -44,7 +43,6 @@ impl<'a> Cipher<'a> {
 
 #[cfg(test)]
 mod tests {
-	use heapless::consts::*;
 	use heapless::Vec;
 
 	use crate::protocol::codec::cipher::Cipher;
@@ -61,7 +59,7 @@ mod tests {
 	#[test]
 	fn should_cipher() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut buffer: Vec<u8, U4096> = Vec::new();
+		let mut buffer: Vec<u8, 4096> = Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		assert_ne!(&buffer, &ORIGINAL);
@@ -72,7 +70,7 @@ mod tests {
 	#[test]
 	fn should_fail_when_different_ad() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut buffer: Vec<u8, U4096> = Vec::new();
+		let mut buffer: Vec<u8, 4096> = Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(())));
@@ -81,7 +79,7 @@ mod tests {
 	#[test]
 	fn should_fail_when_broken_packet() {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		let mut buffer: Vec<u8, U4096> = Vec::new();
+		let mut buffer: Vec<u8, 4096> = Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		buffer[0] = 0;

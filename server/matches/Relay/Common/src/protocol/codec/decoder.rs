@@ -47,7 +47,7 @@ impl Frame {
 		let nonce = header.frame_id.to_be_bytes() as [u8; 8];
 		let ad = &data[0..header_end as usize];
 
-		let mut vec: heapless::Vec<u8, heapless::consts::U4096> = heapless::Vec::new();
+		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
 		vec.extend_from_slice(&data[header_end as usize..data.len()]).unwrap();
 
 		cipher.decrypt(&mut vec, ad, nonce).map_err(|_| UdpFrameDecodeError::DecryptedError)?;
@@ -79,7 +79,7 @@ impl Frame {
 			panic!("frame size({:?}) is more than 1024, frame  {:#?}", commands_cursor.position(), self)
 		}
 
-		let mut vec: heapless::Vec<u8, heapless::consts::U4096> = heapless::Vec::new();
+		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
 		unsafe {
 			vec.set_len(4096);
 		}

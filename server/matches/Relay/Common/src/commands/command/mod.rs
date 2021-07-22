@@ -18,7 +18,7 @@ pub mod meta;
 pub mod structure;
 pub mod unload;
 
-pub type HeaplessBuffer = heapless::Vec<u8, heapless::consts::U256>;
+pub type HeaplessBuffer = heapless::Vec<u8, 256>;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum C2SCommand {

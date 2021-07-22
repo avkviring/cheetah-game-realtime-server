@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 pub struct StructureCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
-	pub structure: heapless::Vec<u8, heapless::consts::U256>,
+	pub structure: heapless::Vec<u8, 256>,
 }
 
 impl GameObjectCommand for StructureCommand {
