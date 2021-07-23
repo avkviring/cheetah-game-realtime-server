@@ -9,7 +9,7 @@ data:
     objects:
     - id: 555
       template: 1
-      access_groups: 4857
+      groups: 4857
       fields:
         longs:
           10: 100100
@@ -24,14 +24,14 @@ data:
             - 15
             - 26
     permissions:
-      objects:
+      templates:
         - template: 1
-          groups:
-            - access_group: 12495
+          rules:
+            - groups: 12495
               permission: deny
           fields:
-            - field_id: 100
-              field_type: long
-              groups:
-                - access_group: 5677
+            - id: 100
+              type: long
+              rules:
+                - groups: 5677
                   permission: ro
