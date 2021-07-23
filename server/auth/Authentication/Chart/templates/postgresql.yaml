@@ -61,6 +61,14 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: "{{ .Chart.Name }}-postgresql"
+      {{if not .Values.persistence.enabled}}
+      volumes:
+        - name: "{{ .Chart.Name }}-postgresql"
+          emptyDir:
+            sizeLimit: 10Mi
+            medium: Memory
+  {{end}}
+  {{if .Values.persistence.enabled}}
   volumeClaimTemplates:
     - metadata:
         name: "{{ .Chart.Name }}-postgresql"
@@ -69,3 +77,5 @@ spec:
         resources:
           requests:
             storage: 1Gi
+  {{end}}
+

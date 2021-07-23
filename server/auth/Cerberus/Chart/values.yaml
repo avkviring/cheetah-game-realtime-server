@@ -3,6 +3,7 @@ imageVersion: 999.999.999
 redis:
   master:
     persistence:
+      enabled: true
       size: 1Gi
   fullnameOverride: cheetah-auth-cerberus-redis
   existingSecret: cheetah-auth-cerberus-redis-password

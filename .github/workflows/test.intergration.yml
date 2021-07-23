@@ -103,20 +103,18 @@ jobs:
       - name: Deploy Release
         run: |
           cd hosting/charts/
+          find . -name Platform/values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.sha }}/' {}
           helm dependency update Platform
           helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
-            --namespace=${{ steps.vars.outputs.short_ref }} Platform \
+            --namespace=${{ steps.vars.outputs.short_ref }} \
+            Platform \
+            -f Platform/values-dev.yaml \
             --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
-            --set authentication.imageVersion=${{ github.sha }} \
-            --set cerberus.imageVersion=${{ github.sha }} \
             --wait=true
           sleep 10
       - name: Cleanup namespace
         # удалять namespace нельзя, так как там есть сертификаты let encrypt
         # поэтому удаляем релиз и все не нужные ресурсы
-        # также удаляем volume в Digital Ocean
-        # иначе они будут создаваться в каждом тесте - а это платно
         run: |
           helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ github.head_ref }}
           kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
-          doctl compute volume list --format ID,Tags --no-header | grep  ${{ secrets.DIGITALOCEAN_CLUSTER_ID }} | awk '{ print $1 }' | xargs -I {} doctl compute volume delete -f {}

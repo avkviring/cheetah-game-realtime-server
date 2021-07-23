@@ -10,8 +10,5 @@ cheetah-matches-relay:
   imageVersion: 999.999.999
 cheetah-matches-stub-registry:
   imageVersion: 999.999.999
-  relay:
-    host: 188.166.98.151
-    port: 30555
 cheetah-matches-stub-matchmaking:
   imageVersion: 999.999.999

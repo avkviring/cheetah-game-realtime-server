@@ -1,1 +1,3 @@
 replicaCount: 1
+persistence:
+  enabled: true
