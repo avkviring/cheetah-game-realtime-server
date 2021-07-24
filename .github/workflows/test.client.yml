@@ -5,7 +5,6 @@ name: Client tests
 on:
   push:
     branches:
-      - master
       - lain-dono
       - kviring
       - dependabot
