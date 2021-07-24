@@ -4,8 +4,7 @@
 name: Server tests
 on:
   push:
-    branches:
-      - master
+    branches:    
       - lain-dono
       - kviring
       - dependabot
