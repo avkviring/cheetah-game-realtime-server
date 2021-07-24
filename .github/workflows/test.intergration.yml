@@ -10,7 +10,6 @@ name: Integration test
 on:
   push:
     branches:
-      - master
       - lain-dono
       - kviring
       - dependabot
