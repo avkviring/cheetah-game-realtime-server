@@ -25,9 +25,9 @@ spec:
           env:
             - name: TEMPLATES_PATH
               value: /var/lib/room-templates/
-            - name: REGISTRY_GRPC_INTERNAL_SERVICE_HOST
+            - name: MATCHES_REGISTRY_INTERNAL_GRPC_HOST
               value: "$(CHEETAH_MATCHES_STUB_REGISTRY_INTERNAL_SERVICE_HOST)"
-            - name: REGISTRY_GRPC_INTERNAL_SERVICE_PORT
+            - name: MATCHES_REGISTRY_INTERNAL_GRPC_PORT
               value: "$(CHEETAH_MATCHES_STUB_REGISTRY_INTERNAL_SERVICE_PORT)"
           volumeMounts:
             - mountPath: /var/lib/room-templates/

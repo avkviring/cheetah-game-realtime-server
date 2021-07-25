@@ -10,8 +10,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     cheetah_microservice::init("match.factory");
     let templates_path = cheetah_microservice::get_env("TEMPLATES_PATH");
     let registry_grpc_service = cheetah_microservice::make_internal_grpc_uri(
-        cheetah_microservice::get_env("REGISTRY_GRPC_INTERNAL_SERVICE_HOST").as_str(),
-        cheetah_microservice::get_env("REGISTRY_GRPC_INTERNAL_SERVICE_PORT")
+        cheetah_microservice::get_env("MATCHES_REGISTRY_INTERNAL_GRPC_HOST").as_str(),
+        cheetah_microservice::get_env("MATCHES_REGISTRY_INTERNAL_GRPC_PORT")
             .parse()
             .unwrap(),
     );

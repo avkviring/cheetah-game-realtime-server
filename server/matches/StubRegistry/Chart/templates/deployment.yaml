@@ -21,11 +21,11 @@ spec:
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
           imagePullPolicy: Always
           env:
-            - name: RELAY_GRPC_HOST
+            - name: MATCHES_RELAY_INTERNAL_GRPC_HOST
               value: "$(CHEETAH_MATCHES_RELAY_INTERNAL_SERVICE_HOST)"
-            - name: RELAY_GRPC_PORT
+            - name: MATCHES_RELAY_INTERNAL_GRPC_PORT
               value: "$(CHEETAH_MATCHES_RELAY_INTERNAL_SERVICE_PORT)"
-            - name: RELAY_GAME_HOST
+            - name: MATCHES_RELAY_EXTERNAL_GAME_HOST
               value: "{{ .Values.relay.host}}"
-            - name: RELAY_GAME_PORT
-              value:  "{{ .Values.relay.port}}"
+            - name: MATCHES_RELAY_EXTERNAL_GAME_PORT
+              value: "{{ .Values.relay.port}}"

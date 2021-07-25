@@ -10,8 +10,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     cheetah_microservice::init("matches.stubmatchmaking");
     let factory_grpc_service = format!(
         "{}:{}",
-        cheetah_microservice::get_env("MATCHES_FACTORY_GRPC_SERVICE_HOST"),
-        cheetah_microservice::get_env("MATCHES_FACTORY_GRPC_SERVICE_PORT")
+        cheetah_microservice::get_env("MATCHES_FACTORY_INTERNAL_GRPC_HOST"),
+        cheetah_microservice::get_env("MATCHES_FACTORY_INTERNAL_GRPC_PORT")
     );
     let service =
         StubMatchmakingService::new(Uri::from_str(factory_grpc_service.as_str()).unwrap());

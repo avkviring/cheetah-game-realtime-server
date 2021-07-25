@@ -12,10 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("±± cheetah match stub registry component ±±");
 
     let registry_service = RegistryService {
-        relay_grpc_host: get_env("RELAY_GRPC_HOST"),
-        relay_grpc_port: get_env("RELAY_GRPC_PORT").parse().unwrap(),
-        relay_game_host: get_env("RELAY_GAME_HOST"),
-        relay_game_port: get_env("RELAY_GAME_PORT").parse().unwrap(),
+        relay_grpc_host: get_env("MATCHES_RELAY_INTERNAL_GRPC_HOST"),
+        relay_grpc_port: get_env("MATCHES_RELAY_INTERNAL_GRPC_PORT").parse().unwrap(),
+        relay_game_host: get_env("MATCHES_RELAY_EXTERNAL_GAME_HOST"),
+        relay_game_port: get_env("MATCHES_RELAY_EXTERNAL_GAME_PORT").parse().unwrap(),
     };
 
     let grpc_service = proto::internal::registry_server::RegistryServer::new(registry_service);

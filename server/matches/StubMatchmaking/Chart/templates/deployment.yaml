@@ -21,7 +21,7 @@ spec:
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
           imagePullPolicy: Always
           env:
-            - name: MATCHES_FACTORY_GRPC_SERVICE_HOST
+            - name: MATCHES_FACTORY_INTERNAL_GRPC_HOST
               value: "$(CHEETAH_MATCHES_FACTORY_INTERNAL_SERVICE_HOST)"
-            - name: MATCHES_FACTORY_GRPC_SERVICE_PORT
+            - name: MATCHES_FACTORY_INTERNAL_GRPC_PORT
               value: "$(CHEETAH_MATCHES_FACTORY_INTERNAL_SERVICE_PORT)"
