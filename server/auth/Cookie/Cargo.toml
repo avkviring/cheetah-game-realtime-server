@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-tonic = "0.5.0"
-prost = "0.8"
+tonic = "0.4.3"
+prost = "0.7"
 tokio = { version = "1.7", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 serde = { version = "1.0", features = ["derive"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "migrate", "ipnetwork", "chrono"] }
@@ -26,4 +26,4 @@ cheetah-auth-user = { path = "../User" }
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
 
 [build-dependencies]
-tonic-build = "0.5.1"
+tonic-build = "0.4.2"
