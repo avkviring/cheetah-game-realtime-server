@@ -32,6 +32,22 @@ pub fn get_player_id(
     }
 }
 
+impl super::JWTTokenParser {
+    /// Получить id пользователя из jwt токена из заголовков gRPC запроса
+    pub fn parse_player_id(&self, metadata: &MetadataMap) -> Result<u64, AuthorizationError> {
+        let value = metadata.get("authorization").ok_or(MissingHeader)?;
+        let value = value.to_str().unwrap().to_string();
+        let splitted: Vec<_> = value.split(' ').collect();
+        if splitted.len() != 2 {
+            Err(WrongHeader)
+        } else {
+            let token = splitted.get(1).unwrap().to_string();
+            let result = self.get_player_id(token);
+            result.map_err(AuthorizationError::Token)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use jsonwebtoken::{Algorithm, EncodingKey, Header};

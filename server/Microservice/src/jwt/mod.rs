@@ -7,7 +7,7 @@ pub mod grpc;
 ///
 /// Валидация и получение идентификатора пользователя из сессионного токена
 ///
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JWTTokenParser {
     public_key: String,
 }
