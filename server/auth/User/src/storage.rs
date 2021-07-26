@@ -1,4 +1,4 @@
-use sqlx::{postgres::PgPoolOptions, PgPool, types::ipnetwork::IpNetwork};
+use sqlx::{postgres::PgPoolOptions, types::ipnetwork::IpNetwork, PgPool};
 
 pub async fn create_postgres_pool(
     db: &str,
@@ -63,10 +63,30 @@ impl Storage {
 #[cfg(test)]
 pub mod tests {
     use super::{Id, Storage};
-    use crate::test::setup_postgresql_storage;
     use chrono::NaiveDateTime;
-    use sqlx::ipnetwork::types::IpNetwork;
-    use testcontainers::clients::Cli;
+    use sqlx::types::ipnetwork::IpNetwork;
+    use sqlx::PgPool;
+    use std::collections::HashMap;
+    use testcontainers::images::postgres::Postgres;
+    use testcontainers::{clients::Cli, Container, Docker as _};
+
+    pub async fn setup_postgresql_storage(cli: &Cli) -> (PgPool, Container<'_, Cli, Postgres>) {
+        let mut env = HashMap::default();
+        env.insert("POSTGRES_USER".to_owned(), "authentication".to_owned());
+        env.insert("POSTGRES_PASSWORD".to_owned(), "passwd".to_owned());
+        let image = Postgres::default().with_version(13).with_env_vars(env);
+        let node = cli.run(image);
+        let port = node.get_host_port(5432).unwrap();
+        let storage = crate::storage::create_postgres_pool(
+            "authentication",
+            "authentication",
+            "passwd",
+            "127.0.0.1",
+            port,
+        )
+        .await;
+        (storage, node)
+    }
 
     #[tokio::test]
     pub async fn should_create() {

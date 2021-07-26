@@ -40,29 +40,3 @@ impl user_server::User for Service {
         Ok(Response::new(CreateResponse { id }))
     }
 }
-
-#[cfg(test)]
-pub mod test {
-    use sqlx::PgPool;
-    use std::collections::HashMap;
-    use testcontainers::images::postgres::Postgres;
-    use testcontainers::{clients::Cli, Container, Docker as _};
-
-    pub async fn setup_postgresql_storage(cli: &Cli) -> (PgPool, Container<'_, Cli, Postgres>) {
-        let mut env = HashMap::default();
-        env.insert("POSTGRES_USER".to_owned(), "authentication".to_owned());
-        env.insert("POSTGRES_PASSWORD".to_owned(), "passwd".to_owned());
-        let image = Postgres::default().with_version(13).with_env_vars(env);
-        let node = cli.run(image);
-        let port = node.get_host_port(5432).unwrap();
-        let storage = crate::storage::create_postgres_pool(
-            "authentication",
-            "authentication",
-            "passwd",
-            "127.0.0.1",
-            port,
-        )
-        .await;
-        (storage, node)
-    }
-}
