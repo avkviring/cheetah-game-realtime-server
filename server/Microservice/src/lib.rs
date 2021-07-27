@@ -1,9 +1,13 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 use log::LevelFilter;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use tonic::transport::Uri;
 
 pub mod jwt;
+pub mod proto;
+pub use tonic;
 
 pub fn get_env(name: &str) -> String {
     let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {} dont set", name));
