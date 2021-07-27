@@ -1,16 +1,17 @@
 pub mod api;
-pub mod proto;
 pub mod storage;
 
 use crate::api::{cerberus, user};
-use crate::proto::auth::cookie::external::{
-    cookie_server,
-    {login_response::Status as LoginStatus, LoginRequest, LoginResponse},
-    {RegistryRequest, RegistryResponse},
-};
 use crate::storage::{FindResult, Storage};
+use cheetah_microservice::{
+    proto::auth::cookie::external::{
+        cookie_server,
+        {login_response::Status as LoginStatus, LoginRequest, LoginResponse},
+        {RegistryRequest, RegistryResponse},
+    },
+    tonic::{self, transport::Server, Request, Response},
+};
 use sqlx::types::ipnetwork::IpNetwork;
-use tonic::{transport::Server, Request, Response};
 
 pub fn get_client_ip(metadata: &tonic::metadata::MetadataMap) -> IpNetwork {
     metadata

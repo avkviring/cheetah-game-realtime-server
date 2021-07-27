@@ -1,5 +1,6 @@
 use cheetah_auth_cerberus::test_helper;
-use cheetah_auth_cookie::proto::auth::cookie::external::*;
+use cheetah_microservice::proto::auth::cookie::external::*;
+use cheetah_microservice::tonic::{transport::Channel, Request, Response};
 use std::collections::HashMap;
 use std::time::Duration;
 use testcontainers::clients::Cli;
@@ -7,7 +8,6 @@ use testcontainers::images::postgres::Postgres;
 use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
-use tonic::Request;
 
 async fn setup_postgresql_storage(cli: &Cli) -> (sqlx::PgPool, Container<'_, Cli, Postgres>) {
     let mut env = HashMap::default();
@@ -101,13 +101,13 @@ pub async fn should_registry_and_login_by_cookie() {
     ) = setup(&cli, 5200, 5201, 5202, service_port).await;
 
     let cookie_addr = format!("http://127.0.0.1:{}", service_port);
-    let mut cookie_client: cookie_client::CookieClient<tonic::transport::Channel> =
+    let mut cookie_client: cookie_client::CookieClient<Channel> =
         cookie_client::CookieClient::connect(cookie_addr)
             .await
             .unwrap();
 
     // регистрируем нового игрока
-    let registry_response: tonic::Response<RegistryResponse> = cookie_client
+    let registry_response: Response<RegistryResponse> = cookie_client
         .register(Request::new(RegistryRequest {
             device_id: "some-device-id".to_string(),
         }))
@@ -118,7 +118,7 @@ pub async fn should_registry_and_login_by_cookie() {
 
     //входим с использованием cookie
     let cookie = registry_response.cookie.clone();
-    let login_response: tonic::Response<LoginResponse> = cookie_client
+    let login_response: Response<LoginResponse> = cookie_client
         .login(Request::new(LoginRequest {
             cookie,
             device_id: "some-device-id".to_string(),
@@ -153,11 +153,11 @@ pub async fn should_not_login_by_wrong_cookie() {
     ) = setup(&cli, 5100, 5101, 5102, service_port).await;
 
     let cookie_addr = format!("http://127.0.0.1:{}", service_port);
-    let mut cookie_client: cookie_client::CookieClient<tonic::transport::Channel> =
+    let mut cookie_client: cookie_client::CookieClient<Channel> =
         cookie_client::CookieClient::connect(cookie_addr)
             .await
             .unwrap();
-    let login_response: tonic::Response<LoginResponse> = cookie_client
+    let login_response: Response<LoginResponse> = cookie_client
         .login(Request::new(LoginRequest {
             cookie: "some-wrong-cookie".to_owned(),
             device_id: "some-device-id".to_owned(),
