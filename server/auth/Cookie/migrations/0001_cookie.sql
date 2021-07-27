@@ -6,7 +6,3 @@ create table cookie_users (
 );
 
 create unique index cookie_users_cookie_uindex on cookie_users (cookie);
-
-alter table cookie_users
-	add constraint cookie_users_id_fk foreign key (user_id) references users (id);
-
