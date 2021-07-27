@@ -3,7 +3,7 @@ use cheetah_microservice::get_env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    cheetah_microservice::init("auth::Google");
+    cheetah_microservice::init("auth::Cookie");
 
     let pg_user = get_env("POSTGRES_USER");
     let pg_passwd = get_env("POSTGRES_PASSWORD");
