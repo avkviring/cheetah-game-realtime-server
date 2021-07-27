@@ -1,0 +1,5 @@
+
+#
+# правила фильтрации команд - https://docs.cheetah.games/components/relay/configuration/trace/
+#
+default: allow
