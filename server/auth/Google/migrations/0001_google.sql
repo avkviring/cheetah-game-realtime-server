@@ -7,10 +7,6 @@ create table google_users (
 
 create unique index google_users_googleid_uindex on google_users (google_id);
 
--- FIXME(lain-dono): паразитная зависимость от сервиса User
-alter table google_users
-	add constraint google_users_id_fk foreign key (user_id) references users (id);
-
 -- история привязки пользователей
 -- для разбора ситуаций угона
 create table google_users_history (
