@@ -1,9 +1,10 @@
-pub mod proto;
 pub mod storage;
 
-use crate::proto::auth::user::internal::{user_server, CreateRequest, CreateResponse};
 use crate::storage::Storage;
-use tonic::{transport::Server, Request, Response};
+use cheetah_microservice::proto::auth::user::internal::{
+    user_server, CreateRequest, CreateResponse,
+};
+use cheetah_microservice::tonic::{self, transport::Server, Request, Response, Status};
 
 pub async fn run_grpc_server(pool: sqlx::PgPool, service_port: u16) {
     Server::builder()
@@ -33,9 +34,9 @@ impl user_server::User for Service {
     async fn create(
         &self,
         request: Request<CreateRequest>,
-    ) -> Result<Response<CreateResponse>, tonic::Status> {
+    ) -> Result<Response<CreateResponse>, Status> {
         let ip = request.get_ref().ip.parse();
-        let ip = ip.map_err(|_| tonic::Status::invalid_argument("ip address can't parsed"))?;
+        let ip = ip.map_err(|_| Status::invalid_argument("ip address can't parsed"))?;
         let id = self.storage.create(ip).await.into();
         Ok(Response::new(CreateResponse { id }))
     }

@@ -4,13 +4,12 @@ version = "0.0.0"
 edition = "2018"
 
 [dependencies]
-tonic = "0.4.3"
-prost = "0.7"
+cheetah-microservice = { path = "../../Microservice", features = ["auth"] }
+
 tokio = { version = "1.7", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 serde = { version = "1.0", features = ["derive"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "migrate", "ipnetwork", "chrono"] }
 log = "0.4"
-cheetah-microservice = { path = "../../Microservice" }
 
 # обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
 # это зависимость sqlx, как только они включат новую зависимость lexical-core
@@ -20,6 +19,3 @@ lexical-core = "0.7.6"
 [dev-dependencies]
 testcontainers = "0.12.0"
 chrono = "0.4"
-
-[build-dependencies]
-tonic-build = "0.4.2"
