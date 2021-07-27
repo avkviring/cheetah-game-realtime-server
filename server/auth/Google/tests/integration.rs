@@ -1,8 +1,9 @@
 use cheetah_auth_cerberus::test_helper;
-use cheetah_auth_cookie::proto::auth::cerberus::types::Tokens;
-use cheetah_auth_cookie::proto::auth::cookie::external as cookie;
-use cheetah_auth_google::proto::auth::google::external as google;
 use cheetah_microservice::jwt::JWTTokenParser;
+use cheetah_microservice::proto::auth::cerberus::types::Tokens;
+use cheetah_microservice::proto::auth::cookie::external as cookie;
+use cheetah_microservice::proto::auth::google::external as google;
+use cheetah_microservice::tonic::{self, metadata::MetadataValue, Request};
 use jsonwebtoken_google::test_helper::TokenClaims;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -11,8 +12,6 @@ use testcontainers::images::postgres::Postgres;
 use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
-use tonic::metadata::MetadataValue;
-use tonic::Request;
 
 async fn setup_postgresql_storage(cli: &Cli) -> (sqlx::PgPool, Container<'_, Cli, Postgres>) {
     let mut env = HashMap::default();

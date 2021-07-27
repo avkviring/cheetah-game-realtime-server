@@ -1,6 +1,8 @@
-use crate::proto::auth::user::internal::{user_client, CreateRequest, CreateResponse};
+use cheetah_microservice::proto::auth::user::internal::{
+    user_client, CreateRequest, CreateResponse,
+};
+use cheetah_microservice::tonic::{Request, Response, Status};
 use sqlx::types::ipnetwork::IpNetwork;
-use tonic::{Request, Response};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, sqlx::FromRow, sqlx::Type)]
 #[sqlx(transparent)]
@@ -28,7 +30,7 @@ impl Client {
         Self { addr: addr.into() }
     }
 
-    pub async fn create(&self, ip: IpNetwork) -> Result<Id, tonic::Status> {
+    pub async fn create(&self, ip: IpNetwork) -> Result<Id, Status> {
         let ip = ip.to_string();
         user_client::UserClient::connect(self.addr.clone())
             .await

@@ -1,19 +1,20 @@
 pub mod api;
-pub mod proto;
 pub mod storage;
 
 use crate::api::{cerberus, user};
-use crate::proto::auth::google::external::{
+use crate::storage::Storage;
+use cheetah_microservice::jwt::JWTTokenParser;
+use cheetah_microservice::proto::auth::google::external::{
     google_server, {AttachRequest, AttachResponse},
     {RegisterOrLoginRequest, RegisterOrLoginResponse},
 };
-use crate::storage::Storage;
-use cheetah_microservice::jwt::JWTTokenParser;
+use cheetah_microservice::tonic::{
+    self, metadata::MetadataMap, transport::Server, Request, Response, Status,
+};
 use jsonwebtoken_google::Parser as GoogleTokenParser;
 use sqlx::types::ipnetwork::IpNetwork;
-use tonic::{transport::Server, Request, Response};
 
-pub fn get_client_ip(metadata: &tonic::metadata::MetadataMap) -> IpNetwork {
+pub fn get_client_ip(metadata: &MetadataMap) -> IpNetwork {
     metadata
         .get("X-Forwarded-For")
         .and_then(|x_forwarder_for| x_forwarder_for.to_str().ok())
@@ -78,7 +79,7 @@ impl Service {
         &self,
         ip: IpNetwork,
         google_id: &str,
-    ) -> Result<(user::Id, bool), tonic::Status> {
+    ) -> Result<(user::Id, bool), Status> {
         if let Some(user) = self.storage.find(google_id).await {
             Ok((user, false))
         } else {
@@ -94,13 +95,13 @@ impl google_server::Google for Service {
     async fn register_or_login(
         &self,
         request: Request<RegisterOrLoginRequest>,
-    ) -> Result<Response<RegisterOrLoginResponse>, tonic::Status> {
+    ) -> Result<Response<RegisterOrLoginResponse>, Status> {
         let registry_or_login_request = request.get_ref();
         let token = &registry_or_login_request.google_token;
         let token = self.parser.parse(token).await;
         let GoogleTokenClaim { sub: google_id } = token.map_err(|err| {
             log::error!("{:?}", err);
-            tonic::Status::unauthenticated(format!("{:?}", err))
+            Status::unauthenticated(format!("{:?}", err))
         })?;
 
         let ip = get_client_ip(request.metadata());
@@ -110,7 +111,7 @@ impl google_server::Google for Service {
         let tokens = self.cerberus.create_token(device_id, user).await;
         let tokens = tokens.map_err(|err| {
             log::error!("{:?}", err);
-            tonic::Status::internal("error")
+            Status::internal("error")
         })?;
 
         Ok(Response::new(RegisterOrLoginResponse {
@@ -122,13 +123,13 @@ impl google_server::Google for Service {
     async fn attach(
         &self,
         request: Request<AttachRequest>,
-    ) -> Result<Response<AttachResponse>, tonic::Status> {
+    ) -> Result<Response<AttachResponse>, Status> {
         let attach_request = request.get_ref();
         let token = &attach_request.google_token;
         let token = self.parser.parse(token).await;
         let GoogleTokenClaim { sub: google_id } = token.map_err(|err| {
             log::error!("{:?}", err);
-            tonic::Status::internal("error")
+            Status::internal("error")
         })?;
 
         let user = self
@@ -137,12 +138,12 @@ impl google_server::Google for Service {
             .map(user::Id::from)
             .map_err(|err| {
                 log::error!("{:?}", err);
-                tonic::Status::unauthenticated(format!("{:?}", err))
+                Status::unauthenticated(format!("{:?}", err))
             })?;
 
         let ip = get_client_ip(request.metadata());
         self.storage.attach(user, &google_id, ip).await;
 
-        Ok(tonic::Response::new(AttachResponse {}))
+        Ok(Response::new(AttachResponse {}))
     }
 }

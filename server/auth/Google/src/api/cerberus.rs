@@ -1,7 +1,7 @@
 use crate::api::user;
-use crate::proto::auth::cerberus::internal::{cerberus_client, CreateTokenRequest};
-pub use crate::proto::auth::cerberus::types::Tokens;
-use tonic::{Request, Response};
+use cheetah_microservice::proto::auth::cerberus::internal::{cerberus_client, CreateTokenRequest};
+pub use cheetah_microservice::proto::auth::cerberus::types::Tokens;
+use cheetah_microservice::tonic::{Request, Response, Status};
 
 #[derive(Clone)]
 pub struct Client {
@@ -17,7 +17,7 @@ impl Client {
         &self,
         device_id: impl Into<String>,
         player: user::Id,
-    ) -> Result<Tokens, tonic::Status> {
+    ) -> Result<Tokens, Status> {
         let player = player.into();
         let device_id = device_id.into();
         cerberus_client::CerberusClient::connect(self.addr.clone())

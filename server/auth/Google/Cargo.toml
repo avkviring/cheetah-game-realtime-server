@@ -4,9 +4,9 @@ version = "0.0.0"
 edition = "2018"
 
 [dependencies]
+cheetah-microservice = { path = "../../Microservice", features = ["auth"] }
+
 chrono = "0.4"
-tonic = "0.4.3"
-prost = "0.7"
 tokio = { version = "1.7", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tokio-stream = { version = "0.1", features = ["net"] }
 tower = { version = "0.4" }
@@ -14,9 +14,7 @@ serde = { version = "1.0", features = ["derive"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "migrate", "ipnetwork", "chrono"] }
 async-trait = "0.1.50"
 log = "0.4"
-pretty_env_logger = "0.4.0"
 rand = "0.8"
-cheetah-microservice = { path = "../../Microservice" }
 jsonwebtoken-google = { version = "0.1.1" }
 
 # обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
