@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use std::fs;
 use std::io::Read;
 use std::path::Path;
@@ -18,80 +17,95 @@ pub struct FactoryService {
     templates: HashMap<String, relay_types::RoomTemplate>,
 }
 
-impl FactoryService {
-    pub fn new(registry_service: Uri, path: &Path) -> Result<Self, LoadRoomTemplateError> {
-        let templates = load_templates(path, "")?;
-        Result::Ok(FactoryService {
-            registry_service,
-            templates,
-        })
-    }
-    pub fn get_template(&self, template: &String) -> Option<relay_types::RoomTemplate> {
-        self.templates.get(template).cloned()
-    }
-}
-
 #[derive(Debug)]
 pub struct LoadRoomTemplateError {
     pub name: String,
     pub message: String,
 }
 
-fn load_templates(
-    root: &Path,
-    prefix: &str,
-) -> Result<HashMap<String, relay_types::RoomTemplate>, LoadRoomTemplateError> {
-    let mut result = HashMap::new();
-
-    for entry in fs::read_dir(root).unwrap() {
-        let path = entry.unwrap().path();
-        // пропускаем служебные каталоги при монтировании ConfigMap в kubernetes
-        if path.to_str().unwrap().contains("..") {
-            continue;
-        }
-        let file_name = path.file_name().unwrap().to_str().unwrap();
-        if path.is_dir() {
-            let child_templates =
-                load_templates(&path, format!("{}/{}", prefix, file_name).as_str())?;
-            result.extend(child_templates);
-        } else {
-            if file_name.ends_with("yaml") || file_name.ends_with("yml") {
-                let mut file = std::fs::File::open(&path).unwrap();
-                log::info!("load room {:?}", path);
-                let mut content = String::default();
-                file.read_to_string(&mut content).unwrap();
-                let template = RoomTemplate::new_from_yaml(content.as_str()).map_err(|e| {
-                    let message = match e {
-                        RoomTemplateError::YamlParserError(e) => match e.location() {
-                            None => {
-                                format!("Wrong file format")
-                            }
-                            Some(location) => {
-                                format!(
-                                    "Wrong file format in position {:?}:{:?}",
-                                    location.line(),
-                                    location.column()
-                                )
-                            }
-                        },
-                        RoomTemplateError::YamlContainsUnmappingFields(e) => {
-                            format!("{:?}", e)
-                        }
-                    };
-                    LoadRoomTemplateError {
-                        name: format!("{}/{}", prefix, file_name),
-                        message,
-                    }
-                })?;
-                let template_name = file_name.replace(".yml", "").replace(".yaml", "");
-                result.insert(format!("{}/{}", prefix, template_name), template.into());
+impl LoadRoomTemplateError {
+    fn convert(source: RoomTemplateError, template_name: &str) -> Self {
+        let message = match source {
+            RoomTemplateError::YamlParserError(e) => match e.location() {
+                None => "Wrong file format".to_string(),
+                Some(location) => {
+                    format!(
+                        "Wrong file format in position {:?}:{:?}",
+                        location.line(),
+                        location.column()
+                    )
+                }
+            },
+            RoomTemplateError::YamlContainsUnmappingFields(e) => {
+                format!("{:?}", e)
             }
+        };
+        LoadRoomTemplateError {
+            name: template_name.to_owned(),
+            message,
         }
     }
-
-    Result::Ok(result)
 }
 
+impl FactoryService {
+    pub fn new(registry_service: Uri, path: &Path) -> Result<Self, LoadRoomTemplateError> {
+        let templates = FactoryService::load_templates(path, "")?;
+        Result::Ok(FactoryService {
+            registry_service,
+            templates,
+        })
+    }
+    pub fn get_template(&self, template: &str) -> Option<relay_types::RoomTemplate> {
+        self.templates.get(template).cloned()
+    }
+
+    fn load_templates(
+        root: &Path,
+        prefix: &str,
+    ) -> Result<HashMap<String, relay_types::RoomTemplate>, LoadRoomTemplateError> {
+        let mut result = HashMap::new();
+
+        for entry in fs::read_dir(root).unwrap() {
+            let path = entry.unwrap().path();
+            // пропускаем служебные каталоги при монтировании ConfigMap в kubernetes
+            if path.to_str().unwrap().contains("..") {
+                continue;
+            }
+            let file_name = path.file_name().unwrap().to_str().unwrap();
+            if path.is_dir() {
+                let child_prefix = format!("{}/{}", prefix, file_name);
+                result.extend(FactoryService::load_templates(
+                    &path,
+                    child_prefix.as_str(),
+                )?);
+            } else if file_name.ends_with("yaml") || file_name.ends_with("yml") {
+                let template_name = format!(
+                    "{}/{}",
+                    prefix,
+                    file_name.replace(".yml", "").replace(".yaml", "")
+                );
+                let template = FactoryService::load_template(&path, template_name.as_str())?;
+                result.insert(template_name, template.into());
+            }
+        }
+
+        Result::Ok(result)
+    }
+
+    fn load_template(
+        path: &Path,
+        template_name: &str,
+    ) -> Result<RoomTemplate, LoadRoomTemplateError> {
+        log::info!("load room {:?}", template_name);
+        let mut file = std::fs::File::open(&path).unwrap();
+        let mut content = String::default();
+        file.read_to_string(&mut content).unwrap();
+        let template = RoomTemplate::new_from_yaml(content.as_str())
+            .map_err(|e| LoadRoomTemplateError::convert(e, template_name))?;
+
+        Result::Ok(template)
+    }
+}
 #[cfg(test)]
 mod test {
     use std::fs::File;
@@ -130,8 +144,9 @@ mod test {
             templates_directory.path(),
         )
         .unwrap();
-        assert_eq!(service.templates.get("/kungur").is_some(), true);
-        assert_eq!(service.templates.get("/ctf/gubaha").is_some(), true);
+        println!("{:?}", service.templates.keys());
+        assert!(service.templates.get("/kungur").is_some());
+        assert!(service.templates.get("/ctf/gubaha").is_some());
     }
 
     #[test]
@@ -148,7 +163,7 @@ mod test {
         .is_err());
     }
 
-    pub fn write_file(out: PathBuf, content: &String) {
+    pub fn write_file(out: PathBuf, content: &str) {
         std::fs::create_dir_all(out.parent().unwrap()).unwrap();
         let mut room_file = File::create(&out).unwrap();
         room_file.write_all(content.as_bytes()).unwrap();
