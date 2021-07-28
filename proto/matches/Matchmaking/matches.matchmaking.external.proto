@@ -1,6 +1,6 @@
 syntax = "proto3";
 package cheetah.matches.matchmaking.external;
-option csharp_namespace = "Cheetah.Matches.Matchmaking";
+option csharp_namespace = "Cheetah.Matches.Matchmaking.GRPC";
 
 import public "matches.relay.types.proto";
 
