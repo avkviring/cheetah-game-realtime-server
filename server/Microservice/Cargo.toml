@@ -4,7 +4,7 @@ version = "999.999.999"
 edition = "2018"
 
 [features]
-default = []
+default = ["tonic"]
 auth = ["tonic", "prost"]
 matches = ["tonic", "prost"]
 
