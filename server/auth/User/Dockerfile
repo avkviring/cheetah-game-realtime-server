@@ -9,6 +9,7 @@ RUN cd server/auth/User/ && cargo chef prepare --recipe-path recipe.json
 # собираем зависимости
 FROM akviring/rust-builder:1.52.1-01 as cacher
 WORKDIR cache
+COPY proto/auth/ proto/auth/
 COPY server/Microservice server/Microservice
 COPY server/auth/Cerberus/Service server/auth/Cerberus/Service
 COPY --from=planner /planner/server/auth/User/recipe.json server/auth/User/recipe.json
@@ -17,8 +18,7 @@ RUN cd server/auth/User/ && cargo chef cook --release --recipe-path recipe.json 
 # компиляция приложения
 FROM akviring/rust-builder:1.52.1-01 as builder
 WORKDIR build
-COPY proto/auth/Cerberus proto/auth/Cerberus
-COPY proto/auth/User proto/auth/User
+COPY proto/auth/ proto/auth/
 COPY server/Microservice server/Microservice
 COPY server/auth/Cerberus/Service server/auth/Cerberus/Service
 COPY server/auth/Cerberus/Cargo.toml server/auth/Cerberus/Cargo.toml
@@ -27,13 +27,11 @@ COPY server/auth/Cerberus/Cargo.lock server/auth/Cerberus/Cargo.lock
 # копируем исходники
 COPY server/auth/User/migrations server/auth/User/migrations
 COPY server/auth/User/src server/auth/User/src
-COPY server/auth/User/build.rs server/auth/User/build.rs
 COPY server/auth/User/Cargo.toml server/auth/User/Cargo.toml
 COPY server/auth/User/Cargo.lock server/auth/User/Cargo.lock
 
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/auth/User/target/ server/auth/User/target/
-RUN touch server/auth/User/build.rs
 RUN cd server/auth/User/ && cargo build --offline --release --target x86_64-unknown-linux-musl
 
 # образ для запуска

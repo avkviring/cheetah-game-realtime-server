@@ -19,3 +19,5 @@ lexical-core = "0.7.6"
 [dev-dependencies]
 testcontainers = "0.12.0"
 chrono = "0.4"
+cheetah-auth-cerberus = { path = "../Cerberus/Service", features = ["test-helper"] }
+jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
