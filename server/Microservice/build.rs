@@ -17,7 +17,7 @@ fn proto_matches() -> Result<(), Error> {
     Ok(())
 }
 
-#[cfg(any(feature = "auth", doc))]
+#[cfg(any(feature = "auth"))]
 fn proto_auth() -> Result<(), Error> {
     tonic_build::configure()
         .build_server(true)
@@ -40,7 +40,7 @@ fn proto_auth() -> Result<(), Error> {
         )
 }
 
-#[cfg(any(feature = "matches", doc))]
+#[cfg(any(feature = "matches"))]
 fn proto_matches() -> Result<(), Error> {
     tonic_build::configure()
         .build_server(true)

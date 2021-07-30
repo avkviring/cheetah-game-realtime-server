@@ -1,4 +1,4 @@
-#[cfg(any(feature = "auth", doc))]
+#[cfg(any(feature = "auth"))]
 #[cfg_attr(docsrs, doc(cfg(feature = "auth")))]
 pub mod auth {
     pub mod cerberus {
@@ -29,7 +29,7 @@ pub mod auth {
     }
 }
 
-#[cfg(any(feature = "matches", doc))]
+#[cfg(any(feature = "matches"))]
 #[cfg_attr(docsrs, doc(cfg(feature = "matches")))]
 pub mod matches {
     pub mod factory {
