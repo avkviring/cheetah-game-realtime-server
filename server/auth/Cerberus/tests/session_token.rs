@@ -1,10 +1,8 @@
 use std::thread;
 use std::time::Duration;
 
+use cheetah_auth_cerberus::test_helper;
 use cheetah_microservice::jwt::{JWTTokenParser, SessionTokenError};
-
-#[path = "../src/test_helper/mod.rs"]
-pub mod test_helper;
 
 #[tokio::test]
 async fn session_token_should_correct() {
@@ -25,7 +23,7 @@ async fn session_token_should_correct() {
 async fn session_token_should_exp() {
     let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
-        .create(123, "some-device-id".to_string())
+        .create(123 as u64, "some-device-id".to_string())
         .await
         .unwrap();
     thread::sleep(Duration::from_secs(2));
@@ -41,7 +39,7 @@ async fn session_token_should_exp() {
 async fn session_token_should_fail_if_not_correct() {
     let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
-        .create(123, "some-device-id".to_string())
+        .create(123 as u64, "some-device-id".to_string())
         .await
         .unwrap();
     let parser = JWTTokenParser::new(test_helper::PUBLIC_KEY.to_owned());

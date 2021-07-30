@@ -4,15 +4,9 @@ use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
 
-#[cfg(not(feature = "test-helper"))]
-use cheetah_auth_cerberus::{
-    server::*, service::storage::RedisRefreshTokenStorage, service::token::JWTTokensService,
-};
-
-#[cfg(feature = "test-helper")]
-use crate::{
-    server::*, service::storage::RedisRefreshTokenStorage, service::token::JWTTokensService,
-};
+use crate::server::run_grpc_server;
+use crate::service::storage::RedisRefreshTokenStorage;
+use crate::service::token::JWTTokensService;
 
 pub const PUBLIC_KEY: &str = "-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVVHNXKxoUNkoX9hnOJpSz6K2KDfi

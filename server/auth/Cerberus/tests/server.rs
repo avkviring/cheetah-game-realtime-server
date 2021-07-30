@@ -1,10 +1,8 @@
 use tonic::Response;
 
 use cheetah_auth_cerberus::proto::*;
+use cheetah_auth_cerberus::test_helper;
 use cheetah_microservice::jwt::JWTTokenParser;
-
-#[path = "../src/test_helper/mod.rs"]
-pub mod test_helper;
 
 #[tokio::test]
 pub async fn test_server() {

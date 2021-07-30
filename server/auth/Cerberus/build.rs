@@ -6,10 +6,10 @@ fn main() -> Result<(), Error> {
         .build_client(true)
         .compile(
             &[
-                "../../../../proto/auth/Cerberus/auth.cerberus.internal.proto",
-                "../../../../proto/auth/Cerberus/auth.cerberus.external.proto",
+                "../../../proto/auth/Cerberus/auth.cerberus.internal.proto",
+                "../../../proto/auth/Cerberus/auth.cerberus.external.proto",
             ],
-            &["../../../../proto/auth/Cerberus/"],
+            &["../../../proto/auth/Cerberus/"],
         )?;
 
     Result::Ok(())
