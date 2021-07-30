@@ -1,5 +1,6 @@
-use crate::api::user;
 use sqlx::{postgres::PgPoolOptions, PgPool};
+
+use crate::api::user;
 
 pub async fn create_postgres_pool(
     db: &str,
@@ -122,15 +123,19 @@ impl Storage {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{AttachError, FindResult, Storage};
-    use crate::api::user::Id as UserId;
-    use cheetah_auth_user::storage::Storage as UserStorage;
-    use sqlx::types::ipnetwork::IpNetwork;
-    use sqlx::PgPool;
     use std::collections::HashMap;
     use std::str::FromStr;
+
+    use sqlx::types::ipnetwork::IpNetwork;
+    use sqlx::PgPool;
     use testcontainers::images::postgres::Postgres;
     use testcontainers::{clients::Cli, Container, Docker as _};
+
+    use cheetah_auth_user::storage::Storage as UserStorage;
+
+    use crate::api::user::Id as UserId;
+
+    use super::{AttachError, FindResult, Storage};
 
     impl From<cheetah_auth_user::storage::Id> for UserId {
         fn from(id: cheetah_auth_user::storage::Id) -> Self {

@@ -425,7 +425,6 @@ version = "0.0.0"
 dependencies = [
  "async-trait",
  "cheetah-auth-cerberus",
- "cheetah-auth-cookie",
  "cheetah-auth-user",
  "cheetah-microservice",
  "chrono",
