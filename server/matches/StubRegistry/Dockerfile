@@ -1,17 +1,17 @@
 # определяем зависимости для кеширования
-FROM akviring/rust-builder:1.52.1-01 as planner
+FROM akviring/rust-builder:1.54.0-01 as planner
 WORKDIR planner
 COPY server/matches/StubRegistry/ server/matches/StubRegistry/
 RUN cd server/matches/StubRegistry/ && cargo chef prepare --recipe-path recipe.json
 
 # собираем зависимости
-FROM akviring/rust-builder:1.52.1-01 as cacher
+FROM akviring/rust-builder:1.54.0-01 as cacher
 WORKDIR cache
 COPY --from=planner /planner/server/matches/StubRegistry/recipe.json server/matches/StubRegistry/recipe.json
 RUN cd server/matches/StubRegistry/ && cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-linux-musl
 
 # компиляция приложения
-FROM akviring/rust-builder:1.52.1-01 as builder
+FROM akviring/rust-builder:1.54.0-01 as builder
 WORKDIR build
 COPY server/matches/StubRegistry/Service server/matches/StubRegistry/Service
 COPY server/matches/StubRegistry/Cargo.toml server/matches/StubRegistry/Cargo.toml
