@@ -67,57 +67,57 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-  test:
-    runs-on: ubuntu-latest
-    needs:
-      - build_images
-    # так как получение SSL сертификата для домена операция не быстрая
-    # то тестирование для разных pull request осуществляется на одном домене
-    # поэтому одновременный запуск данного action не возможен
-    concurrency: ci.cluster.dev.cheetah.games
-    # на всякий случай, иногда что-то в хостинге может пойти не по-плану
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2.1.6
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            hosting/E2ETest/target/
-          key: cargo-hosting-E2ETest-${{ github.sha }}
-          restore-keys: |
-            cargo-hosting-E2ETest-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      - name: Save DigitalOcean kubeconfig
-        run: |
-          doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_CLUSTER_ID }}
-          sleep 10
-      - name: Set branch name
-        id: vars
-        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
-      - name: Prepare namespace
-        run: |
-          helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ steps.vars.outputs.short_ref }} || true
-          kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
-      - name: Deploy Release
-        run: |
-          cd hosting/charts/
-          find . -name Platform/values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.sha }}/' {}
-          helm dependency update Platform
-          helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
-            --namespace=${{ steps.vars.outputs.short_ref }} \
-            Platform \
-            -f Platform/values-dev.yaml \
-            --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
-            --wait=true
-          sleep 10
-      - name: Cleanup namespace
-        # удалять namespace нельзя, так как там есть сертификаты let encrypt
-        # поэтому удаляем релиз и все не нужные ресурсы
-        run: |
-          helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ steps.vars.outputs.short_ref }}
-          kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
+#  test:
+#    runs-on: ubuntu-latest
+#    needs:
+#      - build_images
+#    # так как получение SSL сертификата для домена операция не быстрая
+#    # то тестирование для разных pull request осуществляется на одном домене
+#    # поэтому одновременный запуск данного action не возможен
+#    concurrency: ci.cluster.dev.cheetah.games
+#    # на всякий случай, иногда что-то в хостинге может пойти не по-плану
+#    timeout-minutes: 10
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/cache@v2.1.6
+#        with:
+#          path: |
+#            ~/.cargo/registry
+#            ~/.cargo/git
+#            hosting/E2ETest/target/
+#          key: cargo-hosting-E2ETest-${{ github.sha }}
+#          restore-keys: |
+#            cargo-hosting-E2ETest-
+#      - name: Install doctl
+#        uses: digitalocean/action-doctl@v2
+#        with:
+#          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+#      - name: Save DigitalOcean kubeconfig
+#        run: |
+#          doctl kubernetes cluster kubeconfig save ${{ secrets.DIGITALOCEAN_CLUSTER_ID }}
+#          sleep 10
+#      - name: Set branch name
+#        id: vars
+#        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+#      - name: Prepare namespace
+#        run: |
+#          helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ steps.vars.outputs.short_ref }} || true
+#          kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
+#      - name: Deploy Release
+#        run: |
+#          cd hosting/charts/
+#          find . -name Platform/values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.sha }}/' {}
+#          helm dependency update Platform
+#          helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
+#            --namespace=${{ steps.vars.outputs.short_ref }} \
+#            Platform \
+#            -f Platform/values-dev.yaml \
+#            --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
+#            --wait=true
+#          sleep 10
+#      - name: Cleanup namespace
+#        # удалять namespace нельзя, так как там есть сертификаты let encrypt
+#        # поэтому удаляем релиз и все не нужные ресурсы
+#        run: |
+#          helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ steps.vars.outputs.short_ref }}
+#          kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
