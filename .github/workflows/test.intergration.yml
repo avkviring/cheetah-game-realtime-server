@@ -21,8 +21,12 @@ jobs:
         include:
           - directory: auth/Cerberus
             image: cheetah-auth-cerberus
-          - directory: auth/Authentication
-            image: cheetah-auth-authentication
+          - directory: auth/User
+            image: cheetah-auth-user
+          - directory: auth/Cookie
+            image: cheetah-auth-cookie
+          - directory: auth/Google
+            image: cheetah-auth-google
           - directory: matches/Relay
             image: cheetah-matches-relay
           - directory: matches/StubMatchmaking
