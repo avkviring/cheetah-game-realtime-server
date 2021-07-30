@@ -15,7 +15,9 @@ jobs:
       matrix:
         component:
           - auth/Cerberus
-          - auth/Authentication
+          - auth/User
+          - auth/Cookie
+          - auth/Google
           - matches/Relay
           - matches/StubMatchmaking
           - matches/StubRegistry
