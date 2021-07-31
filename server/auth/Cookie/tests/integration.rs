@@ -1,13 +1,15 @@
-use cheetah_auth_cerberus::test_helper;
-use cheetah_microservice::proto::auth::cookie::external::*;
-use cheetah_microservice::tonic::{transport::Channel, Request, Response};
 use std::collections::HashMap;
 use std::time::Duration;
+
 use testcontainers::clients::Cli;
 use testcontainers::images::postgres::Postgres;
 use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
+
+use cheetah_auth_cerberus::test_helper;
+use cheetah_microservice::proto::auth::cookie::external::*;
+use cheetah_microservice::tonic::{transport::Channel, Request, Response};
 
 async fn setup_postgresql_storage(cli: &Cli) -> (sqlx::PgPool, Container<'_, Cli, Postgres>) {
     let mut env = HashMap::default();
@@ -51,7 +53,6 @@ pub async fn setup(
     let (pool, postgres_container) = setup_postgresql_storage(cli).await;
 
     let user_pool = pool.clone();
-    cheetah_auth_user::storage::migrate_db(&pool).await;
 
     let handler_user = tokio::spawn(async move {
         cheetah_auth_user::run_grpc_server(user_pool, user_port).await;
