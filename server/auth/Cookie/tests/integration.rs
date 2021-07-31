@@ -33,50 +33,50 @@ async fn setup_postgresql_storage(cli: &Cli) -> (sqlx::PgPool, Container<'_, Cli
     (pool, node)
 }
 
-pub async fn setup(
-    cli: &Cli,
-    internal_cerberus_port: u16,
-    external_cerberus_port: u16,
-    user_port: u16,
-    service_port: u16,
-) -> (
-    Container<'_, Cli, Redis>,
-    Container<'_, Cli, Postgres>,
-    JoinHandle<()>,
-    JoinHandle<()>,
-    JoinHandle<()>,
-) {
-    let (handler_cerberus, redis_container) =
-        test_helper::stub_cerberus_grpc_server(internal_cerberus_port, external_cerberus_port)
-            .await;
-
-    let (pool, postgres_container) = setup_postgresql_storage(cli).await;
-
-    let user_pool = pool.clone();
-
-    let handler_user = tokio::spawn(async move {
-        cheetah_auth_user::run_grpc_server(user_pool, user_port).await;
-    });
-
-    let handler_cookie = tokio::spawn(async move {
-        cheetah_auth_cookie::run_grpc_server(
-            pool,
-            &format!("http://127.0.0.1:{}", internal_cerberus_port),
-            &format!("http://127.0.0.1:{}", user_port),
-            service_port,
-        )
-        .await;
-    });
-
-    tokio::time::sleep(Duration::from_secs(2)).await;
-    (
-        redis_container,
-        postgres_container,
-        handler_cerberus,
-        handler_user,
-        handler_cookie,
-    )
-}
+// pub async fn setup(
+//     cli: &Cli,
+//     internal_cerberus_port: u16,
+//     external_cerberus_port: u16,
+//     user_port: u16,
+//     service_port: u16,
+// ) -> (
+//     Container<'_, Cli, Redis>,
+//     Container<'_, Cli, Postgres>,
+//     JoinHandle<()>,
+//     JoinHandle<()>,
+//     JoinHandle<()>,
+// ) {
+//     let (handler_cerberus, redis_container) =
+//         test_helper::stub_cerberus_grpc_server(internal_cerberus_port, external_cerberus_port)
+//             .await;
+//
+//     let (pool, postgres_container) = setup_postgresql_storage(cli).await;
+//
+//     let user_pool = pool.clone();
+//
+//     let handler_user = tokio::spawn(async move {
+//         cheetah_auth_user::run_grpc_server(user_pool, user_port).await;
+//     });
+//
+//     let handler_cookie = tokio::spawn(async move {
+//         cheetah_auth_cookie::run_grpc_server(
+//             pool,
+//             &format!("http://127.0.0.1:{}", internal_cerberus_port),
+//             &format!("http://127.0.0.1:{}", user_port),
+//             service_port,
+//         )
+//         .await;
+//     });
+//
+//     tokio::time::sleep(Duration::from_secs(2)).await;
+//     (
+//         redis_container,
+//         postgres_container,
+//         handler_cerberus,
+//         handler_user,
+//         handler_cookie,
+//     )
+// }
 
 // #[tokio::test]
 // pub async fn should_registry_and_login_by_cookie() {

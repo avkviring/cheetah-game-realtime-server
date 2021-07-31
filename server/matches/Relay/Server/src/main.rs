@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn create_grpc_server(relay_server: Arc<Mutex<RelayServer>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let service = cheetah_matches_relay::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
-	let address = cheetah_microservice::get_self_service_internal_grpc_address();
+	let address = cheetah_microservice::get_internal_service_binding_addr();
 	Server::builder().add_service(service).serve(address)
 }
 

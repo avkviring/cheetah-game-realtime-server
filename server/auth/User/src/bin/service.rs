@@ -13,7 +13,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = create_postgres_pool(&pg_db, &pg_user, &pg_passwd, &pg_host, pg_port).await;
 
-    run_grpc_server(pool, 5000).await;
+    run_grpc_server(
+        pool,
+        cheetah_microservice::get_internal_service_binding_addr(),
+    )
+    .await;
 
     Ok(())
 }

@@ -22,7 +22,7 @@ impl FactoryService {
             .into_inner();
 
         // создаем матч на relay сервере
-        let mut relay = RelayClient::connect(cheetah_microservice::make_internal_grpc_uri(
+        let mut relay = RelayClient::connect(cheetah_microservice::make_internal_srv_uri(
             free_relay.relay_grpc_host.as_str(),
             free_relay.relay_grpc_port as u16,
         ))
@@ -155,7 +155,7 @@ mod tests {
                 .await
         });
 
-        cheetah_microservice::make_internal_grpc_uri(
+        cheetah_microservice::make_internal_srv_uri(
             stub_grpc_service_addr.ip().to_string().as_str(),
             stub_grpc_service_addr.port(),
         )

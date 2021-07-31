@@ -1,8 +1,6 @@
-pub mod api;
-pub mod storage;
+use sqlx::types::ipnetwork::IpNetwork;
+use tonic::codegen::http::Uri;
 
-use crate::api::{cerberus, user};
-use crate::storage::{FindResult, Storage};
 use cheetah_microservice::{
     proto::auth::cookie::external::{
         cookie_server,
@@ -11,7 +9,13 @@ use cheetah_microservice::{
     },
     tonic::{self, transport::Server, Request, Response},
 };
-use sqlx::types::ipnetwork::IpNetwork;
+
+use crate::api::{cerberus, user};
+use crate::storage::{FindResult, Storage};
+use std::net::SocketAddr;
+
+pub mod api;
+pub mod storage;
 
 pub fn get_client_ip(metadata: &tonic::metadata::MetadataMap) -> IpNetwork {
     metadata
@@ -23,18 +27,16 @@ pub fn get_client_ip(metadata: &tonic::metadata::MetadataMap) -> IpNetwork {
 
 pub async fn run_grpc_server(
     pool: sqlx::PgPool,
-    cerberus_url: &str,
-    user_url: &str,
-    service_port: u16,
+    cerberus_internal_service: impl Into<tonic::transport::Endpoint>,
+    user_internal_service: impl Into<tonic::transport::Endpoint>,
+    binding_address: SocketAddr,
 ) {
-    let addr = format!("0.0.0.0:{}", service_port).parse().unwrap();
-
-    let cerberus = cerberus::Client::new(cerberus_url);
-    let user_client = user::Client::new(user_url);
+    let cerberus = cerberus::Client::new(cerberus_internal_service);
+    let user_client = user::Client::new(user_internal_service);
 
     Server::builder()
         .add_service(Service::new(pool.clone(), cerberus.clone(), user_client.clone()).server())
-        .serve(addr)
+        .serve(binding_address)
         .await
         .unwrap();
 }

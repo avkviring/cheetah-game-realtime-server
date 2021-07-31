@@ -1,15 +1,18 @@
-pub mod storage;
+use std::net::SocketAddr;
 
-use crate::storage::Storage;
 use cheetah_microservice::proto::auth::user::internal::{
     user_server, CreateRequest, CreateResponse,
 };
 use cheetah_microservice::tonic::{self, transport::Server, Request, Response, Status};
 
-pub async fn run_grpc_server(pool: sqlx::PgPool, service_port: u16) {
+use crate::storage::Storage;
+
+pub mod storage;
+
+pub async fn run_grpc_server(pool: sqlx::PgPool, binding_addr: SocketAddr) {
     Server::builder()
         .add_service(Service::new(pool).server())
-        .serve(format!("0.0.0.0:{}", service_port).parse().unwrap())
+        .serve(binding_addr)
         .await
         .unwrap();
 }

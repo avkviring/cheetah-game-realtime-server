@@ -11,18 +11,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pg_host = get_env("POSTGRES_HOST");
     let pg_port: u16 = get_env("POSTGRES_PORT").parse().unwrap();
 
-    let cerberus_host = get_env("CERBERUS_INTERNAL_HOST");
-    let cerberus_port = get_env("CERBERUS_INTERNAL_PORT");
-    let user_host = get_env("USER_INTERNAL_HOST");
-    let user_port = get_env("USER_INTERNAL_PORT");
-
-    let cerberus_url = format!("http://{}:{}", cerberus_host, cerberus_port);
-    let user_url = format!("http://{}:{}", user_host, user_port);
+    let cerberus_internal_service_uri =
+        cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_AUTH_CERBERUS");
+    let user_internal_service_uri =
+        cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_AUTH_USER");
 
     let pool = storage::create_postgres_pool(&pg_db, &pg_user, &pg_passwd, &pg_host, pg_port).await;
     storage::migrate_db(&pool).await;
 
-    run_grpc_server(pool, &cerberus_url, &user_url, 5000).await;
+    run_grpc_server(
+        pool,
+        cerberus_internal_service_uri,
+        user_internal_service_uri,
+        cheetah_microservice::get_external_service_binding_addr(),
+    )
+    .await;
 
     Ok(())
 }

@@ -1,8 +1,10 @@
+use sqlx::types::ipnetwork::IpNetwork;
+
 use cheetah_microservice::proto::auth::user::internal::{
     user_client, CreateRequest, CreateResponse,
 };
 use cheetah_microservice::tonic::{Request, Response, Status};
-use sqlx::types::ipnetwork::IpNetwork;
+use cheetah_microservice::tonic;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, sqlx::FromRow, sqlx::Type)]
 #[sqlx(transparent)]
@@ -22,11 +24,11 @@ impl From<u64> for Id {
 
 #[derive(Clone)]
 pub struct Client {
-    addr: String,
+    addr: tonic::transport::Endpoint,
 }
 
 impl Client {
-    pub fn new(addr: impl Into<String>) -> Self {
+    pub fn new(addr: impl Into<tonic::transport::Endpoint>) -> Self {
         Self { addr: addr.into() }
     }
 

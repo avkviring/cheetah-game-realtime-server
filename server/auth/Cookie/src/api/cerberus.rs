@@ -2,14 +2,15 @@ use crate::api::user;
 use cheetah_microservice::proto::auth::cerberus::internal::{cerberus_client, CreateTokenRequest};
 pub use cheetah_microservice::proto::auth::cerberus::types::Tokens;
 use cheetah_microservice::tonic::{Request, Response, Status};
+use cheetah_microservice::tonic;
 
 #[derive(Clone)]
 pub struct Client {
-    addr: String,
+    addr: tonic::transport::Endpoint,
 }
 
 impl Client {
-    pub fn new(addr: impl Into<String>) -> Self {
+    pub fn new(addr: impl Into<tonic::transport::Endpoint>) -> Self {
         Self { addr: addr.into() }
     }
 

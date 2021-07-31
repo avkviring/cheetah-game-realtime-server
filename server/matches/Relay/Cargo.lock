@@ -283,9 +283,9 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "pretty_env_logger",
- "prost",
  "serde",
  "tonic",
+ "tonic-build",
 ]
 
 [[package]]

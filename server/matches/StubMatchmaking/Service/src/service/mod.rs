@@ -63,7 +63,7 @@ impl StubMatchmakingService {
         match_info: &MatchInfo,
     ) -> Result<relay::internal::AttachUserResponse, ()> {
         let mut relay = relay::internal::relay_client::RelayClient::connect(
-            cheetah_microservice::make_internal_grpc_uri(
+            cheetah_microservice::make_internal_srv_uri(
                 match_info.relay_grpc_host.as_str(),
                 match_info.relay_grpc_port,
             ),
@@ -250,7 +250,7 @@ pub mod tests {
         });
 
         let matchmaking =
-            StubMatchmakingService::new(cheetah_microservice::make_internal_grpc_uri(
+            StubMatchmakingService::new(cheetah_microservice::make_internal_srv_uri(
                 stub_grpc_service_addr.ip().to_string().as_str(),
                 stub_grpc_service_addr.port(),
             ));

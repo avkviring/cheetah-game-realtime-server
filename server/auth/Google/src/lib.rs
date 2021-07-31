@@ -25,8 +25,8 @@ pub fn get_client_ip(metadata: &MetadataMap) -> IpNetwork {
 pub async fn run_grpc_server(
     pool: sqlx::PgPool,
     service_port: u16,
-    cerberus_url: impl Into<String>,
-    user_url: impl Into<String>,
+    cerberus_url: impl Into<tonic::transport::Endpoint>,
+    user_url: impl Into<tonic::transport::Endpoint>,
     public_jwt_key: impl Into<String>,
     parser: GoogleTokenParser,
 ) {

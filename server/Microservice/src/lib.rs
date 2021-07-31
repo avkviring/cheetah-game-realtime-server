@@ -1,12 +1,13 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-use log::LevelFilter;
 use std::net::SocketAddr;
+
+use log::LevelFilter;
+pub use tonic;
 use tonic::transport::Uri;
 
 pub mod jwt;
 pub mod proto;
-pub use tonic;
 
 pub fn get_env(name: &str) -> String {
     let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {} dont set", name));
@@ -24,10 +25,34 @@ pub fn init(name: &str) {
     println!("start service {} ", name);
 }
 
-pub fn get_self_service_internal_grpc_address() -> SocketAddr {
-    "0.0.0.0:5001".parse().unwrap()
+pub fn get_internal_service_binding_addr() -> SocketAddr {
+    format!("0.0.0.0:{}", get_internal_service_port())
+        .parse()
+        .unwrap()
 }
 
-pub fn make_internal_grpc_uri(host: &str, port: u16) -> Uri {
+pub fn get_external_service_binding_addr() -> SocketAddr {
+    format!("0.0.0.0:{}", get_external_service_port())
+        .parse()
+        .unwrap()
+}
+
+pub fn get_external_service_port() -> u16 {
+    5000
+}
+
+pub fn get_internal_service_port() -> u16 {
+    5001
+}
+
+pub fn make_internal_srv_uri(host: &str, port: u16) -> Uri {
     format!("http://{}:{}", host, port).parse().unwrap()
+}
+
+pub fn get_internal_srv_uri_from_env(service: &str) -> Uri {
+    let host = get_env(format!("{}_INTERNAL_SERVICE_HOST", service).as_str());
+    let port = get_env(format!("{}_INTERNAL_SERVICE_PORT", service).as_str())
+        .parse()
+        .unwrap();
+    make_internal_srv_uri(&host, port)
 }
