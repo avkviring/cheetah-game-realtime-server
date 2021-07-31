@@ -1,7 +1,6 @@
 #
 # В режиме разработчика данные не сохраняются на диск
 #
-
 cheetah-matches-stub-registry:
   relay:
     host: 188.166.98.151
@@ -11,6 +10,12 @@ cheetah-auth-cerberus:
     master:
       persistence:
         enabled: false
-cheetah-auth-authentication:
+cheetah-auth-user:
+  persistence:
+    enabled: false
+cheetah-auth-cookie:
+  persistence:
+    enabled: false
+cheetah-auth-google:
   persistence:
     enabled: false

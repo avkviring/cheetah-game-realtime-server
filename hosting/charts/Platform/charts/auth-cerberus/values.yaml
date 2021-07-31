@@ -3,11 +3,13 @@ imageVersion: 999.999.999
 redis:
   master:
     persistence:
-      enabled: true
+      enabled: false
       size: 1Gi
+  architecture: standalone
   fullnameOverride: cheetah-auth-cerberus-redis
-  existingSecret: cheetah-auth-cerberus-redis-password
-  existingSecretPasswordKey: password
+  auth:
+    existingSecret: cheetah-auth-cerberus-redis-password
+    existingSecretPasswordKey: password
   cluster:
     enabled: false
   volumePermissions:

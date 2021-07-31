@@ -1,6 +1,10 @@
 global:
   grpcDomain: test.dev.cheetah.games
-cheetah-auth-authentication:
+cheetah-auth-user:
+  imageVersion: 999.999.999
+cheetah-auth-google:
+  imageVersion: 999.999.999
+cheetah-auth-cookie:
   imageVersion: 999.999.999
 cheetah-auth-cerberus:
   imageVersion: 999.999.999

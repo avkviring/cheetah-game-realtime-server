@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      imagePullSecrets:
+        - name: cheetahdockerregistry
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
+          imagePullPolicy: Always
+          env:
+            - name: "JWT_PUBLIC_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt
+                  key: public
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: user
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-postgresql"
+                  key: password
+            - name: POSTGRES_HOST
+              value: "$(CHEETAH_AUTH_USER_POSTGRESQL_SERVICE_HOST)"
+            - name: POSTGRES_PORT
+              value: "$(CHEETAH_AUTH_USER_POSTGRESQL_SERVICE_PORT)"
+
