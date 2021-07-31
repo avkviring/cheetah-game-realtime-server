@@ -7,6 +7,23 @@ edition = "2018"
 name = "cheetah-auth-cerberus"
 path = "src/main.rs"
 
+[[test]]
+name="server"
+path = "tests/server.rs"
+required-features = ["test-helper"]
+
+[[test]]
+name="resfresh_token"
+path = "tests/resfresh_token.rs"
+required-features = ["test-helper"]
+
+[[test]]
+name="session_token"
+path = "tests/session_token.rs"
+required-features = ["test-helper"]
+
+
+
 [dependencies]
 base64 = "0.13.0"
 chrono = "0.4"
