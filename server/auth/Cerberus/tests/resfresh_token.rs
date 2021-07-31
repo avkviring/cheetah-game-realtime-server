@@ -9,7 +9,7 @@ use cheetah_microservice::jwt::JWTTokenParser;
 async fn should_refresh_token_different_for_players() {
     let (_node, service) = test_helper::stub_token_service(1, 100);
     let tokens_for_player_a = service
-        .create(123 as u64, "some-devicea-id".to_string())
+        .create(123u64, "some-devicea-id".to_string())
         .await
         .unwrap();
     let tokens_for_player_b = service
@@ -24,7 +24,7 @@ async fn should_refresh_token() {
     let (_node, service) = test_helper::stub_token_service(1, 100);
 
     let tokens = service
-        .create(123 as u64, "some-device-id".to_owned())
+        .create(123u64, "some-device-id".to_owned())
         .await
         .unwrap();
 
@@ -48,7 +48,7 @@ async fn should_refresh_token() {
 async fn should_refresh_token_exp() {
     let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
-        .create(123 as u64, "some-device-id".to_string())
+        .create(123u64, "some-device-id".to_string())
         .await
         .unwrap();
     thread::sleep(Duration::from_secs(2));
@@ -66,7 +66,7 @@ async fn should_refresh_token_exp() {
 async fn should_refresh_token_fail() {
     let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
-        .create(123 as u64, "some-device-id".to_string())
+        .create(123u64, "some-device-id".to_string())
         .await
         .unwrap();
     assert!(matches!(
@@ -84,7 +84,7 @@ async fn should_refresh_token_fail() {
 async fn should_refresh_token_can_use_once() {
     let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens = service
-        .create(123 as u64, "some-device-id".to_string())
+        .create(123u64, "some-device-id".to_string())
         .await
         .unwrap();
     service.refresh(tokens.refresh.clone()).await.unwrap();
@@ -101,11 +101,11 @@ async fn should_refresh_token_can_use_once() {
 async fn should_refresh_token_can_invalidate_tokens() {
     let (_node, service) = test_helper::stub_token_service(1, 1);
     let tokens_a = service
-        .create(123 as u64, "some-device-id".to_string())
+        .create(123u64, "some-device-id".to_string())
         .await
         .unwrap();
     let tokens_b = service
-        .create(123 as u64, "some-device-id".to_string())
+        .create(123u64, "some-device-id".to_string())
         .await
         .unwrap();
     service.refresh(tokens_b.refresh.clone()).await.unwrap();
