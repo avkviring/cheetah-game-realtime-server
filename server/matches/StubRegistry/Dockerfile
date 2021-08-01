@@ -13,19 +13,17 @@ RUN cd server/matches/StubRegistry/ && cargo chef cook --release --recipe-path r
 # компиляция приложения
 FROM akviring/rust-builder:1.54.0-01 as builder
 WORKDIR build
-COPY server/matches/StubRegistry/Service server/matches/StubRegistry/Service
-COPY server/matches/StubRegistry/Cargo.toml server/matches/StubRegistry/Cargo.toml
-COPY server/matches/StubRegistry/Cargo.lock server/matches/StubRegistry/Cargo.lock
+COPY server/matches/StubRegistry server/matches/StubRegistry
 COPY proto/matches/Registry/ proto/matches/Registry/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/matches/StubRegistry/target/ server/matches/StubRegistry/target/
-RUN touch server/matches/StubRegistry/Service/build.rs
+RUN touch server/matches/StubRegistry/build.rs
 RUN cd server/matches/StubRegistry/ && cargo build --offline --release --target x86_64-unknown-linux-musl
 
 # образ для запуска
 FROM alpine:3.13.5
 EXPOSE 5001/tcp 5002/tcp
-COPY --chmod=555 --from=builder /build/server/matches/StubRegistry/target/x86_64-unknown-linux-musl/release/service /service
+COPY --chmod=555 --from=builder /build/server/matches/StubRegistry/target/x86_64-unknown-linux-musl/release/cheetah-matches-stub-registry /service
 RUN adduser -D service
 USER service
-CMD ["/service"]
+CMD [""]

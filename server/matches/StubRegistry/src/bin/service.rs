@@ -1,10 +1,8 @@
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
 
-use proto::internal::registry_server::Registry;
-use proto::internal::FindFreeRelayResponse;
-
-pub mod proto;
+use cheetah_matches_stub_registry::proto::internal::registry_server::Registry;
+use cheetah_matches_stub_registry::proto::internal::FindFreeRelayResponse;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,7 +16,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         relay_game_port: get_env("MATCHES_RELAY_EXTERNAL_GAME_PORT").parse().unwrap(),
     };
 
-    let grpc_service = proto::internal::registry_server::RegistryServer::new(registry_service);
+    let grpc_service =
+        cheetah_matches_stub_registry::proto::internal::registry_server::RegistryServer::new(
+            registry_service,
+        );
     Server::builder()
         .add_service(grpc_service)
         .serve("0.0.0.0:5001".parse().unwrap())
@@ -38,7 +39,7 @@ pub struct RegistryService {
 impl Registry for RegistryService {
     async fn find_free_relay(
         &self,
-        _request: Request<proto::internal::FindFreeRelayRequest>,
+        _request: Request<cheetah_matches_stub_registry::proto::internal::FindFreeRelayRequest>,
     ) -> Result<Response<FindFreeRelayResponse>, Status> {
         Result::Ok(Response::new(FindFreeRelayResponse {
             relay_grpc_host: self.relay_grpc_host.clone(),
