@@ -1,4 +1,3 @@
-use std::net::SocketAddr;
 use std::time::Duration;
 
 use jsonwebtoken_google::test_helper::TokenClaims;
@@ -12,10 +11,10 @@ use cheetah_auth_cerberus::test_helper;
 use cheetah_auth_google::api::user::Id;
 use cheetah_microservice::jwt::JWTTokenParser;
 use cheetah_microservice::proto::auth::cerberus::types::Tokens;
-use cheetah_microservice::proto::auth::cookie::external as cookie;
+
 use cheetah_microservice::proto::auth::google::external as google;
 use cheetah_microservice::tonic::transport::Uri;
-use cheetah_microservice::tonic::{self, metadata::MetadataValue, Request};
+use cheetah_microservice::tonic::{self, metadata::MetadataValue};
 
 pub async fn setup(
     cli: &Cli,
@@ -166,9 +165,10 @@ pub async fn should_attach() {
     )
     .await;
 
-    let user_internal_service_uri: Uri = format!("http://127.0.0.1:{}", user_internal_service_port)
-        .parse()
-        .unwrap();
+    let _user_internal_service_uri: Uri =
+        format!("http://127.0.0.1:{}", user_internal_service_port)
+            .parse()
+            .unwrap();
     let google_internal_service_uri = format!("http://127.0.0.1:{}", google_internal_service_port);
     let cerberus_internal_service_uri: Uri =
         format!("http://127.0.0.1:{}", cerberus_internal_service_port)

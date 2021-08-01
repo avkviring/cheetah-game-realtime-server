@@ -249,11 +249,10 @@ pub mod tests {
                 .await
         });
 
-        let matchmaking =
-            StubMatchmakingService::new(cheetah_microservice::make_internal_srv_uri(
-                stub_grpc_service_addr.ip().to_string().as_str(),
-                stub_grpc_service_addr.port(),
-            ));
+        let matchmaking = StubMatchmakingService::new(cheetah_microservice::make_internal_srv_uri(
+            stub_grpc_service_addr.ip().to_string().as_str(),
+            stub_grpc_service_addr.port(),
+        ));
         matchmaking
     }
 

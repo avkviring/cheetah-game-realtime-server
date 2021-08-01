@@ -1,5 +1,4 @@
 use sqlx::types::ipnetwork::IpNetwork;
-use tonic::codegen::http::Uri;
 
 use cheetah_microservice::{
     proto::auth::cookie::external::{
