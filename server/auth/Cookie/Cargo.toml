@@ -22,8 +22,10 @@ rand = "0.8"
 lexical-core = "0.7.6"
 
 [dev-dependencies]
-testcontainers = "0.12.0"
-lazy_static = "1.4.0"
+cheetah-microservice = { path = "../../Microservice", features = ["auth","postgresql_test_helper"] }
 cheetah-auth-cerberus = { path = "../Cerberus/", features = ["test-helper"] }
 cheetah-auth-user = { path = "../User" }
+
+testcontainers = "0.12.0"
+lazy_static = "1.4.0"
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }

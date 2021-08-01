@@ -16,9 +16,13 @@ pub async fn create_postgres_pool(
         .await
         .unwrap();
 
-    sqlx::migrate!().run(&pool).await.unwrap();
+    migrate_db(&pool).await;
 
     pool
+}
+
+pub async fn migrate_db(pool: &PgPool) {
+    sqlx::migrate!().run(pool).await.unwrap();
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, sqlx::FromRow, sqlx::Type)]
