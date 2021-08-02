@@ -1,189 +1,153 @@
 use crate::proto::matches::relay::types as relay;
-use crate::service::yaml;
+use crate::service::room;
+use std::collections::HashMap;
 
-///
 /// Конвертация yaml представления шаблона комнаты в grpc представление
-///
-impl Into<relay::RoomTemplate> for yaml::RoomTemplate {
-    fn into(self) -> relay::RoomTemplate {
+impl From<room::Room> for relay::RoomTemplate {
+    fn from(room::Room { objects, templates }: room::Room) -> Self {
         relay::RoomTemplate {
-            objects: self.objects.into_iter().map(Into::into).collect(),
-            permissions: Option::Some(self.permissions.into()),
+            objects: objects.into_iter().map(Into::into).collect(),
+            permissions: Some(templates.into()),
         }
     }
 }
 
-impl Into<relay::Permissions> for yaml::Permissions {
-    fn into(self) -> relay::Permissions {
+impl From<HashMap<u32, room::Permissions>> for relay::Permissions {
+    fn from(val: HashMap<u32, room::Permissions>) -> Self {
         relay::Permissions {
-            objects: self.templates.into_iter().map(Into::into).collect(),
+            objects: val.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl Into<relay::GameObjectTemplate> for yaml::GameObjectTemplate {
-    fn into(self) -> relay::GameObjectTemplate {
+impl From<(u32, room::GameObject)> for relay::GameObjectTemplate {
+    fn from((id, val): (u32, room::GameObject)) -> Self {
         relay::GameObjectTemplate {
-            id: self.id,
-            template: self.template as u32,
-            groups: self.groups,
-            fields: Option::Some(self.fields.into()),
+            id,
+            template: val.template,
+            groups: val.groups,
+            fields: Some(val.fields.into()),
         }
     }
 }
 
-impl Into<relay::GameObjectFieldsTemplate> for yaml::GameObjectFieldsTemplate {
-    fn into(self) -> relay::GameObjectFieldsTemplate {
-        relay::GameObjectFieldsTemplate {
-            longs: self.longs.into_iter().map(|(k, v)| (k as u32, v)).collect(),
-            floats: self
-                .floats
-                .into_iter()
-                .map(|(k, v)| (k as u32, v))
-                .collect(),
-            structures: self
-                .structures
-                .into_iter()
-                .map(|(k, v)| (k as u32, rmp_serde::to_vec(&v).unwrap()))
-                .collect(),
+impl From<HashMap<u32, room::ObjectField>> for relay::GameObjectFieldsTemplate {
+    fn from(val: HashMap<u32, room::ObjectField>) -> Self {
+        let longs = val.iter().filter_map(|(&key, value)| match value {
+            room::ObjectField::I64 { value } => Some((key, *value)),
+            _ => None,
+        });
+
+        let floats = val.iter().filter_map(|(&key, value)| match value {
+            room::ObjectField::F64 { value } => Some((key, *value)),
+            _ => None,
+        });
+
+        let structures = val.iter().filter_map(|(&key, value)| match value {
+            room::ObjectField::Struct { value } => Some((key, rmp_serde::to_vec(value).unwrap())),
+            _ => None,
+        });
+
+        Self {
+            longs: longs.collect(),
+            floats: floats.collect(),
+            structures: structures.collect(),
         }
     }
 }
-impl Into<relay::GameObjectTemplatePermission> for yaml::GameObjectTemplatePermission {
-    fn into(self) -> relay::GameObjectTemplatePermission {
+
+impl From<(u32, room::Permissions)> for relay::GameObjectTemplatePermission {
+    fn from((template, room::Permissions { rules, fields }): (u32, room::Permissions)) -> Self {
         relay::GameObjectTemplatePermission {
-            template: self.template as u32,
-            rules: self.rules.into_iter().map(Into::into).collect(),
-            fields: self.fields.into_iter().map(Into::into).collect(),
+            template,
+            rules: rules.into_iter().map(Into::into).collect(),
+            fields: fields.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl Into<relay::PermissionField> for yaml::PermissionField {
-    fn into(self) -> relay::PermissionField {
-        relay::PermissionField {
-            id: self.id as u32,
-            r#type: self.field_type.into(),
-            rules: self.rules.into_iter().map(Into::into).collect(),
+impl From<(u32, room::PermissionField)> for relay::PermissionField {
+    fn from((id, field): (u32, room::PermissionField)) -> Self {
+        let (r#type, rules) = match field {
+            room::PermissionField::I64 { rules } => (relay::FieldType::Long, rules),
+            room::PermissionField::F64 { rules } => (relay::FieldType::Float, rules),
+            room::PermissionField::Struct { rules } => (relay::FieldType::Structure, rules),
+            room::PermissionField::Event { rules } => (relay::FieldType::Event, rules),
+        };
+        Self {
+            id,
+            r#type: r#type as i32,
+            rules: rules.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl Into<i32> for yaml::FieldType {
-    fn into(self) -> i32 {
-        match self {
-            yaml::FieldType::Long => relay::FieldType::Long as i32,
-            yaml::FieldType::Float => relay::FieldType::Float as i32,
-            yaml::FieldType::Structure => relay::FieldType::Structure as i32,
-            yaml::FieldType::Event => relay::FieldType::Event as i32,
-        }
-    }
-}
-
-impl Into<relay::GroupsPermissionRule> for yaml::GroupsPermissionRule {
-    fn into(self) -> relay::GroupsPermissionRule {
-        relay::GroupsPermissionRule {
-            groups: self.groups,
-            permission: self.permission.into(),
-        }
-    }
-}
-impl Into<i32> for yaml::PermissionLevel {
-    fn into(self) -> i32 {
-        match self {
-            yaml::PermissionLevel::Deny => relay::PermissionLevel::Deny as i32,
-            yaml::PermissionLevel::Ro => relay::PermissionLevel::Ro as i32,
-            yaml::PermissionLevel::Rw => relay::PermissionLevel::Rw as i32,
-        }
+impl From<room::Rule> for relay::GroupsPermissionRule {
+    fn from(val: room::Rule) -> Self {
+        let (groups, permission) = match val {
+            room::Rule::Deny { groups } => (groups, relay::PermissionLevel::Deny as i32),
+            room::Rule::ReadOnly { groups } => (groups, relay::PermissionLevel::Ro as i32),
+            room::Rule::ReadWrite { groups } => (groups, relay::PermissionLevel::Rw as i32),
+        };
+        Self { groups, permission }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use crate::proto::matches::relay::types as relay;
-    use crate::service::yaml;
-    use crate::service::yaml::{
-        FieldType, GameObjectFieldsTemplate, GroupsPermissionRule, PermissionField, PermissionLevel,
-    };
+    use crate::service::room;
+    use std::collections::HashMap;
 
     #[test]
     fn should_convert_room_template() {
-        let yaml = yaml::RoomTemplate {
-            objects: vec![yaml::GameObjectTemplate::default()],
-            permissions: yaml::Permissions {
-                templates: vec![yaml::GameObjectTemplatePermission::default()],
-            },
-            unmapping: Default::default(),
+        let yaml = room::Room {
+            objects: std::iter::once((0, room::GameObject::default())).collect(),
+            templates: std::iter::once((0, room::Permissions::default())).collect(),
         };
         let grpc: relay::RoomTemplate = yaml.into();
         assert_eq!(grpc.objects.len(), 1);
         assert_eq!(grpc.permissions.as_ref().unwrap().objects.len(), 1);
     }
+
     #[test]
     fn should_convert_game_object_template() {
-        let yaml_object_template = yaml::GameObjectTemplate {
-            id: 100,
+        let object = room::GameObject {
             template: 200,
             groups: 300,
-            fields: yaml::GameObjectFieldsTemplate::default(),
-            unmapping: Default::default(),
+            fields: HashMap::default(),
         };
-        let grpc_object_template: relay::GameObjectTemplate = yaml_object_template.clone().into();
-        assert_eq!(grpc_object_template.id, yaml_object_template.id);
-        assert_eq!(
-            grpc_object_template.template as u16,
-            yaml_object_template.template
-        );
-        assert_eq!(grpc_object_template.groups, yaml_object_template.groups);
-        assert_eq!(grpc_object_template.fields.is_some(), true);
+        let grpc: relay::GameObjectTemplate = (100, object.clone()).into();
+        assert_eq!(grpc.id, 100);
+        assert_eq!(grpc.template, object.template);
+        assert_eq!(grpc.groups, object.groups);
+        assert!(matches!(grpc.fields, Some(_)));
     }
 
     #[test]
     fn should_convert_fields() {
-        let yaml_item = GameObjectFieldsTemplate {
-            longs: vec![(10, 20)].into_iter().collect(),
-            floats: vec![(15, 30.30)].into_iter().collect(),
-            structures: vec![(15, rmpv::Value::Binary(vec![10, 20, 30]))]
-                .into_iter()
-                .collect(),
-            unmapping: Default::default(),
+        let long_item = room::ObjectField::I64 { value: 20 };
+        let float_item = room::ObjectField::F64 { value: 30.30 };
+        let struct_value = rmpv::Value::Binary(vec![10, 20, 30]);
+        let struct_item = room::ObjectField::Struct {
+            value: struct_value.clone(),
         };
-        let grpc_item: relay::GameObjectFieldsTemplate = yaml_item.clone().into();
-        let grpc_longs: HashMap<u16, i64> = grpc_item
-            .longs
-            .clone()
-            .into_iter()
-            .map(|(k, v)| (k as u16, v))
-            .collect();
-        let yaml_longs = yaml_item.longs.clone();
-        assert_eq!(grpc_longs, yaml_longs);
 
-        let grpc_floats: HashMap<_, _> = grpc_item
-            .floats
-            .clone()
-            .into_iter()
-            .map(|(k, v)| (k as u16, v))
-            .collect();
-        let yaml_floats = yaml_item.floats.clone();
-        assert_eq!(grpc_floats, yaml_floats);
+        let items: HashMap<_, _> =
+            IntoIterator::into_iter([(1, long_item), (2, float_item), (3, struct_item)]).collect();
 
-        let grpc_structures: HashMap<_, _> = grpc_item
-            .structures
-            .clone()
-            .into_iter()
-            .map(|(k, v)| (k as u16, rmp_serde::from_read(v.as_slice()).unwrap()))
-            .collect();
-        let yaml_structures = yaml_item.structures.clone();
-        assert_eq!(grpc_structures, yaml_structures);
+        let grpc: relay::GameObjectFieldsTemplate = items.into();
+        assert_eq!(grpc.longs[&1], 20);
+        assert_eq!(grpc.floats[&2], 30.30);
+        assert_eq!(
+            rmp_serde::from_read::<_, rmpv::Value>(grpc.structures[&3].as_slice()).unwrap(),
+            struct_value
+        );
     }
 
     #[test]
     fn should_convert_permissions() {
-        let yaml_item = yaml::Permissions {
-            templates: vec![yaml::GameObjectTemplatePermission::default()],
-        };
+        let yaml_item: HashMap<_, _> = std::iter::once((0, room::Permissions::default())).collect();
 
         let grpc_item: relay::Permissions = yaml_item.into();
         assert_eq!(grpc_item.objects.len(), 1);
@@ -191,49 +155,23 @@ mod tests {
 
     #[test]
     fn should_convert_game_object_template_permission() {
-        let yaml_item = yaml::GameObjectTemplatePermission {
-            template: 10,
-            rules: vec![yaml::GroupsPermissionRule {
-                groups: 0,
-                permission: yaml::PermissionLevel::Deny,
-            }],
-            fields: vec![yaml::PermissionField {
-                id: 0,
-                field_type: yaml::FieldType::Long,
-                rules: vec![],
-            }],
+        let yaml_item = room::Permissions {
+            rules: vec![room::Rule::Deny { groups: 0 }],
+            fields: std::iter::once((0, room::PermissionField::I64 { rules: vec![] })).collect(),
         };
 
-        let grpc_item: relay::GameObjectTemplatePermission = yaml_item.clone().into();
-        assert_eq!(grpc_item.template as u16, yaml_item.template);
+        let grpc_item: relay::GameObjectTemplatePermission = (10, yaml_item).into();
+        assert_eq!(grpc_item.template, 10);
         assert_eq!(grpc_item.rules.len(), 1);
         assert_eq!(grpc_item.fields.len(), 1);
     }
 
     #[test]
     fn should_convert_access_group_permission_level() {
-        let yaml_item = yaml::GroupsPermissionRule {
-            groups: 10,
-            permission: yaml::PermissionLevel::Deny,
-        };
-        let grpc_item: relay::GroupsPermissionRule = yaml_item.clone().into();
-        assert_eq!(grpc_item.groups, yaml_item.groups);
+        let groups = 10;
+        let yaml_item = room::Rule::Deny { groups };
+        let grpc_item: relay::GroupsPermissionRule = yaml_item.into();
+        assert_eq!(grpc_item.groups, groups);
         assert_eq!(grpc_item.permission, relay::PermissionLevel::Deny as i32);
-    }
-
-    #[test]
-    fn should_convert_permission_field() {
-        let yaml_item = yaml::PermissionField {
-            id: 55,
-            field_type: yaml::FieldType::Long,
-            rules: vec![yaml::GroupsPermissionRule {
-                groups: 0,
-                permission: yaml::PermissionLevel::Deny,
-            }],
-        };
-        let grpc_item: relay::PermissionField = yaml_item.clone().into();
-        assert_eq!(grpc_item.id as u16, yaml_item.id);
-        assert_eq!(grpc_item.r#type, relay::FieldType::Long as i32);
-        assert_eq!(grpc_item.rules.len(), 1);
     }
 }
