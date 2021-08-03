@@ -80,12 +80,7 @@ impl Room {
             .unwrap()
             .filter_map(Result::ok)
             // пропускаем служебные каталоги при монтировании ConfigMap в kubernetes
-            .filter(|entry| {
-                entry
-                    .path()
-                    .components()
-                    .all(|c| !matches!(c, std::path::Component::ParentDir))
-            })
+            .filter(|entry| entry.path().to_str().map_or(false, |p| !p.contains("..")))
             .try_fold(HashMap::new(), |mut result, entry| {
                 let name = entry.file_name().into_string().unwrap();
 
