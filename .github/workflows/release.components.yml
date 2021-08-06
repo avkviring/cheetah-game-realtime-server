@@ -8,8 +8,8 @@ jobs:
     strategy:
       matrix:
         package:
-          - games.cheetah.auth.authentication
-          - games.cheetah.auth.android
+          - games.cheetah.auth.user
+          - games.cheetah.auth.google
           - games.cheetah.auth.cookie
           - games.cheetah.auth.cerberus
           - games.cheetah.platfrom
