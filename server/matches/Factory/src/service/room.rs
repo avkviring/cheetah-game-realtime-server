@@ -57,6 +57,7 @@ pub struct Room {
     /// Шаблоны для создания объектов
     pub prefabs: HashMap<String, PathBuf>,
     /// Объекты комнаты
+    #[serde(with = "keyvalue")]
     pub objects: HashMap<String, Object>,
 }
 
@@ -103,6 +104,7 @@ pub struct Object {
     /// Имя группы
     pub group: String,
     /// Поля объекта
+    #[serde(default, with = "keyvalue")]
     pub fields: Fields,
 }
 
@@ -169,6 +171,13 @@ pub struct Groups {
 pub struct Group {
     pub id: String,
     pub mask: u64,
+}
+
+impl keyvalue::KeyValue<'_> for ObjectField {
+    type Key = String;
+    fn key(&self) -> Self::Key {
+        self.id.clone()
+    }
 }
 
 impl keyvalue::KeyValue<'_> for PrefabField {
