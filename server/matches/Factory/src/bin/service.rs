@@ -9,13 +9,8 @@ use cheetah_matches_factory::service::{grpc::RegistryClient, Service};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     cheetah_microservice::init("match.factory");
     let templates_path = cheetah_microservice::get_env("TEMPLATES_PATH");
-    let registry = cheetah_microservice::make_internal_srv_uri(
-        cheetah_microservice::get_env("MATCHES_REGISTRY_INTERNAL_GRPC_HOST").as_str(),
-        cheetah_microservice::get_env("MATCHES_REGISTRY_INTERNAL_GRPC_PORT")
-            .parse()
-            .unwrap(),
-    );
 
+    let registry = cheetah_microservice::get_internal_srv_uri_from_env("MATCHES_REGISTRY");
     let registry = RegistryClient::new(registry).unwrap();
     let service = Service::new(registry, Path::new(&templates_path)).unwrap();
     Server::builder()
