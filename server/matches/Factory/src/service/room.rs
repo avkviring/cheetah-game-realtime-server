@@ -4,20 +4,23 @@ use crate::proto::matches::relay::types as relay;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    io,
     path::{Path, PathBuf},
 };
 
+pub type GroupAlias = String;
+pub type FieldAlias = String;
+pub type PrefabAlias = PathBuf;
+
 #[derive(Debug)]
 pub enum Error {
-    PrefabNotFound(PathBuf, String),
+    PrefabNotFound(PathBuf, PrefabAlias),
     GroupNotFound(PathBuf, String),
-    Io(io::Error),
+    Io(std::io::Error),
     Yaml(serde_yaml::Error),
 }
 
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
         Self::Io(err)
     }
 }
@@ -28,19 +31,24 @@ impl From<serde_yaml::Error> for Error {
     }
 }
 
-impl Error {
-    pub fn stringify(self, name: &str) -> String {
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::PrefabNotFound(path, name) => {
-                format!("Prefab {} not found in {}", name, path.display())
+            Error::PrefabNotFound(path, prefab) => {
+                write!(
+                    f,
+                    "{}: Prefab {} not found",
+                    path.display(),
+                    prefab.display(),
+                )
             }
-            Error::GroupNotFound(path, name) => {
-                format!("Group {} not found in {}", name, path.display())
+            Error::GroupNotFound(path, group) => {
+                write!(f, "{}: Group {} not found", path.display(), group)
             }
-            Error::Io(err) => format!("{:?} IO: {:?}", name, err),
-            Error::Yaml(err) => format!(
-                "{:?} Wrong file format {:?}: {:?}",
-                name,
+            Error::Io(err) => write!(f, "IO: {:?}", err),
+            Error::Yaml(err) => write!(
+                f,
+                "Wrong file format {:?}: {:?}",
                 err.location().map(|loc| (loc.line(), loc.column())),
                 err
             ),
@@ -48,28 +56,50 @@ impl Error {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub enum Config {
+    #[serde(rename = "room")]
+    Room(Room),
+    #[serde(rename = "prefab")]
+    Prefab(Prefab),
+    #[serde(rename = "groups")]
+    Groups {
+        #[serde(flatten)]
+        groups: HashMap<GroupAlias, u64>,
+    },
+}
+
+fn skip_path(path: &Path) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// Описание комнаты
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(deny_unknown_fields)]
 pub struct Room {
     /// Путь до файла со всеми группами
+    #[serde(skip_serializing_if = "skip_path")]
     pub groups: PathBuf,
     /// Шаблоны для создания объектов
-    pub prefabs: HashMap<String, PathBuf>,
+    pub prefabs: HashMap<PrefabAlias, PathBuf>,
     /// Объекты комнаты
-    #[serde(with = "keyvalue")]
-    pub objects: HashMap<String, Object>,
+    pub objects: Vec<Object>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Prefab {
+    pub template: u32,
+    /// Путь до файла со всеми группами
+    #[serde(skip_serializing_if = "skip_path")]
+    pub groups: PathBuf,
     /// Права доступа для всего объекта
     #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub access: HashMap<String, Rule>,
+    pub access: HashMap<GroupAlias, Rule>,
     /// Права доступа и настройки по умолчанию для объектов
     #[serde(with = "keyvalue")]
-    pub fields: HashMap<String, PrefabField>,
+    pub fields: HashMap<FieldAlias, PrefabField>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
@@ -85,36 +115,33 @@ pub enum Rule {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct PrefabField {
-    pub id: String,
+    pub id: FieldAlias,
     #[serde(flatten)]
     pub field: OptionValue,
     #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub access: HashMap<String, Rule>,
+    pub access: HashMap<GroupAlias, Rule>,
 }
 
 /// Описание объекта в комнате
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(deny_unknown_fields)]
 pub struct Object {
-    /// Короткое имя объекта (для keyvalue)
-    pub id: String,
-
     /// Имя префаба
-    pub prefab: String,
+    pub prefab: PrefabAlias,
     /// Имя группы
-    pub group: String,
+    pub group: GroupAlias,
     /// Поля объекта
-    #[serde(default, with = "keyvalue")]
+    #[serde(default, with = "keyvalue", skip_serializing_if = "HashMap::is_empty")]
     pub fields: Fields,
 }
 
-type Fields = HashMap<String, ObjectField>;
+type Fields = HashMap<FieldAlias, ObjectField>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct ObjectField {
     /// Имя поля в объекте
-    pub id: String,
+    pub field: FieldAlias,
     /// Значение поля (может быть загружено из префаба)
     #[serde(flatten)]
     pub value: FieldValue,
@@ -148,7 +175,7 @@ pub enum OptionValue {
 }
 
 impl OptionValue {
-    fn into_field(self) -> Option<FieldValue> {
+    fn into_value(self) -> Option<FieldValue> {
         Some(match self {
             OptionValue::Struct { value: Some(value) } => FieldValue::Struct { value },
             OptionValue::I64 { value: Some(value) } => FieldValue::I64 { value },
@@ -159,159 +186,159 @@ impl OptionValue {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[serde(deny_unknown_fields)]
-pub struct Groups {
-    #[serde(with = "keyvalue")]
-    pub groups: HashMap<String, Group>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
-pub struct Group {
-    pub id: String,
-    pub mask: u64,
-}
-
 impl keyvalue::KeyValue<'_> for ObjectField {
-    type Key = String;
+    type Key = FieldAlias;
     fn key(&self) -> Self::Key {
-        self.id.clone()
+        self.field.clone()
     }
 }
 
 impl keyvalue::KeyValue<'_> for PrefabField {
-    type Key = String;
+    type Key = FieldAlias;
     fn key(&self) -> Self::Key {
         self.id.clone()
     }
 }
 
-impl keyvalue::KeyValue<'_> for Object {
-    type Key = String;
-    fn key(&self) -> Self::Key {
-        self.id.clone()
+#[derive(Default)]
+pub struct Loader {
+    groups: HashMap<PathBuf, HashMap<GroupAlias, u64>>,
+    prefabs: HashMap<PathBuf, Prefab>,
+    rooms: HashMap<PathBuf, Room>,
+}
+
+impl Loader {
+    pub fn load(dir: impl AsRef<Path>) -> Result<Self, Error> {
+        Self::default().load_impl(dir.as_ref(), Path::new("/"))
     }
-}
 
-impl keyvalue::KeyValue<'_> for Group {
-    type Key = String;
-    fn key(&self) -> Self::Key {
-        self.id.clone()
-    }
-}
+    fn load_impl(mut self, dir: &Path, prefix: &Path) -> Result<Self, Error> {
+        let entries = dir
+            .read_dir()?
+            .filter_map(Result::ok)
+            // пропускаем служебные каталоги при монтировании ConfigMap в kubernetes
+            .filter(|entry| entry.path().to_str().map_or(false, |p| !p.contains("..")));
 
-pub fn load_dir(dir: &Path) -> Result<HashMap<String, relay::RoomTemplate>, String> {
-    load_room_dir(dir, Path::new("/"))
-}
+        for entry in entries {
+            let (name, entry_type) = match (entry.file_name().into_string(), entry.file_type()) {
+                (Ok(name), Ok(entry_type)) => (name, entry_type),
+                _ => continue,
+            };
 
-fn load_room_dir(
-    dir: &Path,
-    prefix: &Path,
-) -> Result<HashMap<String, relay::RoomTemplate>, String> {
-    dir.read_dir()
-        .unwrap()
-        .filter_map(Result::ok)
-        // пропускаем служебные каталоги при монтировании ConfigMap в kubernetes
-        .filter(|entry| entry.path().to_str().map_or(false, |p| !p.contains("..")))
-        .try_fold(HashMap::new(), |mut result, entry| {
-            let name = entry.file_name().into_string().unwrap();
-
-            if entry.file_type().unwrap().is_dir() {
+            if entry_type.is_dir() {
                 let prefix = prefix.join(name);
-                result.extend(load_room_dir(&entry.path(), &prefix)?);
+                self = self.load_impl(&entry.path(), &prefix)?;
             } else if let Some(name) = name
                 .strip_suffix(".yaml")
                 .or_else(|| name.strip_suffix(".yml"))
             {
-                let name = prefix.join(name).display().to_string();
-                if let Some(room) =
-                    load_room(entry.path(), dir).map_err(|err| err.stringify(&name))?
-                {
-                    result.insert(name, room);
-                }
+                let name = prefix.join(name);
+                let file = std::fs::File::open(entry.path())?;
+                assert!(match serde_yaml::from_reader::<_, Config>(file)? {
+                    Config::Room(room) => self.rooms.insert(name, room).is_none(),
+                    Config::Prefab(prefab) => self.prefabs.insert(name, prefab).is_none(),
+                    Config::Groups { groups } => self.groups.insert(name, groups).is_none(),
+                });
             }
+        }
 
-            Ok(result)
-        })
-}
-
-fn load_room(path: impl AsRef<Path>, dir: &Path) -> Result<Option<relay::RoomTemplate>, Error> {
-    let path = &dir.join(path);
-
-    let file = std::fs::File::open(path)?;
-    let room: Room = match serde_yaml::from_reader(file) {
-        Ok(room) => room,
-        Err(_) => return Ok(None),
-    };
-
-    let groups = GroupResolver::load(&dir.join(room.groups))?;
-
-    let mut prefabs = HashMap::new();
-    for (id, (name, path)) in room.prefabs.into_iter().enumerate() {
-        let path = dir.join(path);
-        let prefab = PrefabResolver::load(id as u32, &groups, &path)?;
-        prefabs.insert(name, prefab);
+        Ok(self)
     }
 
-    let templates: HashMap<&str, u32> = prefabs
-        .iter()
-        .map(|(name, prefab)| (name.as_str(), prefab.template.template))
-        .collect();
+    pub fn resolve(self) -> Result<HashMap<String, relay::RoomTemplate>, Error> {
+        let Self {
+            groups,
+            prefabs,
+            rooms,
+        } = self;
 
-    let objects = room
-        .objects
-        .into_iter()
-        .enumerate()
-        .map(|(id, (_, object))| -> Result<_, Error> {
-            let prefab = prefabs
-                .get(object.prefab.as_str())
-                .ok_or_else(|| Error::PrefabNotFound(path.into(), object.prefab.clone()))?;
+        // парсим все группы
+        let (local_groups, global_groups) = {
+            let mut last_id = 1_u32;
+            let mut global = HashMap::new();
+            let local: HashMap<_, _> = groups
+                .into_iter()
+                .map(|(path, raw)| {
+                    let mut groups = HashMap::default();
+                    for (name, mask) in raw {
+                        let id = last_id;
+                        last_id += 1;
+                        groups.insert(name, (id, mask));
+                    }
+                    global.extend(groups.clone());
+                    (path, GroupResolver { groups })
+                })
+                .collect();
+            (local, GroupResolver { groups: global })
+        };
 
-            let groups = groups
-                .resolve_mask(&object.group)
-                .ok_or_else(|| Error::GroupNotFound(path.into(), object.group.clone()))?;
-
-            Ok(relay::GameObjectTemplate {
-                id: id as u32,
-                template: templates[object.prefab.as_str()],
-                groups,
-                fields: Some(prefab.resolve(&object.fields)),
+        let all_prefabs: HashMap<PathBuf, PrefabResolver> = prefabs
+            .into_iter()
+            .map(|(path, prefab)| {
+                let groups = local_groups.get(&prefab.groups).unwrap_or(&global_groups);
+                PrefabResolver::new(prefab, groups, &path).map(|prefab| (path, prefab))
             })
-        })
-        .collect::<Result<_, Error>>()?;
+            .collect::<Result<_, Error>>()?;
 
-    let permissions = prefabs
-        .values()
-        .map(|prefab| prefab.template.clone())
-        .collect();
+        rooms
+            .into_iter()
+            .map(|(path, room)| {
+                let Room {
+                    groups,
+                    prefabs,
+                    objects,
+                } = room;
 
-    Ok(Some(relay::RoomTemplate {
-        objects,
-        permissions: Some(relay::Permissions {
-            objects: permissions,
-        }),
-    }))
+                let groups = local_groups.get(&groups).unwrap_or(&global_groups);
+
+                let objects: Vec<_> = objects
+                    .into_iter()
+                    .enumerate()
+                    .map(|(id, object)| -> Result<_, Error> {
+                        let prefab = prefabs
+                            .get(&object.prefab)
+                            .and_then(|prefab| all_prefabs.get(prefab))
+                            .or_else(|| all_prefabs.get(&object.prefab))
+                            .ok_or_else(|| {
+                                Error::PrefabNotFound(path.clone(), object.prefab.clone())
+                            })?;
+
+                        let groups = groups.resolve_mask(&object.group).ok_or_else(|| {
+                            Error::GroupNotFound(path.clone(), object.group.clone())
+                        })?;
+
+                        Ok(relay::GameObjectTemplate {
+                            id: id as u32,
+                            template: prefab.template.template,
+                            groups,
+                            fields: Some(prefab.resolve(&object.fields)),
+                        })
+                    })
+                    .collect::<Result<_, Error>>()?;
+
+                let permissions = all_prefabs
+                    .values()
+                    .map(|prefab| prefab.template.clone())
+                    .collect();
+
+                let room = relay::RoomTemplate {
+                    objects,
+                    permissions: Some(relay::Permissions {
+                        objects: permissions,
+                    }),
+                };
+
+                Ok((path.display().to_string(), room))
+            })
+            .collect::<Result<_, Error>>()
+    }
 }
-
+#[derive(Default)]
 struct GroupResolver {
     groups: HashMap<String, (u32, u64)>,
 }
 
 impl GroupResolver {
-    fn load(path: &Path) -> Result<Self, Error> {
-        let file = std::fs::File::open(path)?;
-        let Groups { groups } = serde_yaml::from_reader(file)?;
-
-        let groups = groups
-            .into_iter()
-            .enumerate()
-            .map(|(id, (name, group))| (name, (id as u32, group.mask)))
-            .collect();
-
-        Ok(Self { groups })
-    }
-
     fn resolve_mask(&self, group: &str) -> Option<u64> {
         self.groups.get(group).map(|(_, mask)| *mask)
     }
@@ -343,10 +370,7 @@ struct PrefabResolver {
 }
 
 impl PrefabResolver {
-    fn load(template: u32, groups: &GroupResolver, path: &Path) -> Result<Self, Error> {
-        let file = std::fs::File::open(path)?;
-        let prefab: Prefab = serde_yaml::from_reader(file)?;
-
+    fn new(prefab: Prefab, groups: &GroupResolver, path: &Path) -> Result<Self, Error> {
         let rules = prefab
             .access
             .into_iter()
@@ -367,7 +391,7 @@ impl PrefabResolver {
                 field
                     .field
                     .clone()
-                    .into_field()
+                    .into_value()
                     .map(|field| (field_names[name], field))
             })
             .collect();
@@ -396,7 +420,7 @@ impl PrefabResolver {
             .collect::<Result<_, Error>>()?;
 
         let template = relay::GameObjectTemplatePermission {
-            template,
+            template: prefab.template,
             rules,
             fields,
         };
@@ -429,7 +453,7 @@ impl PrefabResolver {
             _ => None,
         });
         let structures = fields.iter().filter_map(|(&key, field)| match field {
-            FieldValue::Struct { value } => Some((key, rmp_serde::to_vec(&value).unwrap())),
+            FieldValue::Struct { value } => Some((key, rmp_serde::to_vec(&value).ok()?)),
             _ => None,
         });
 
@@ -447,93 +471,98 @@ fn doc() {
     use rmpv::{Integer, Utf8String, Value};
 
     let test_group = "test_group".to_string();
-    let mut groups = Groups::default();
+    {
+        let mut groups = HashMap::default();
+        groups.insert(test_group.clone(), 1234);
 
-    groups.groups.insert(
-        test_group.clone(),
-        Group {
-            id: test_group.clone(),
-            mask: 1234,
-        },
-    );
+        let config = Config::Groups { groups };
+        println!("{}", serde_yaml::to_string(&config).unwrap());
+    }
 
-    println!("{}", serde_yaml::to_string(&groups).unwrap());
+    {
+        let mut fields = HashMap::new();
 
-    let mut fields = HashMap::new();
+        let mut access = HashMap::default();
+        access.insert(test_group, Rule::Deny);
 
-    let mut access = HashMap::default();
-    access.insert(test_group, Rule::Deny);
+        let value = Value::Map(vec![
+            (
+                Value::String(Utf8String::from("uid")),
+                Value::String(Utf8String::from("arts80")),
+            ),
+            (
+                Value::String(Utf8String::from("rank")),
+                Value::Integer(Integer::from(100)),
+            ),
+        ]);
 
-    let value = Value::Map(vec![
-        (
-            Value::String(Utf8String::from("uid")),
-            Value::String(Utf8String::from("arts80")),
-        ),
-        (
-            Value::String(Utf8String::from("rank")),
-            Value::Integer(Integer::from(100)),
-        ),
-    ]);
+        fields.insert(
+            "a".to_string(),
+            PrefabField {
+                id: "a".to_string(),
+                access: access.clone(),
+                field: OptionValue::Struct { value: Some(value) },
+            },
+        );
 
-    fields.insert(
-        "a".to_string(),
-        PrefabField {
-            id: "a".to_string(),
+        fields.insert(
+            "b".to_string(),
+            PrefabField {
+                id: "b".to_string(),
+                access: access.clone(),
+                field: OptionValue::I64 { value: Some(4) },
+            },
+        );
+
+        fields.insert(
+            "c".to_string(),
+            PrefabField {
+                id: "c".to_string(),
+                access: HashMap::default(),
+                field: OptionValue::F64 { value: None },
+            },
+        );
+
+        let prefab = Prefab {
+            template: 1234,
+            groups: PathBuf::new(),
             access: access.clone(),
-            field: OptionValue::Struct { value: Some(value) },
-        },
-    );
+            fields,
+        };
 
-    fields.insert(
-        "b".to_string(),
-        PrefabField {
-            id: "b".to_string(),
-            access: access.clone(),
-            field: OptionValue::I64 { value: Some(4) },
-        },
-    );
+        let config = Config::Prefab(prefab);
+        println!("{}", serde_yaml::to_string(&config).unwrap());
+    }
 
-    fields.insert(
-        "c".to_string(),
-        PrefabField {
-            id: "c".to_string(),
-            access: HashMap::default(),
-            field: OptionValue::F64 { value: None },
-        },
-    );
+    {
+        let mut fields = HashMap::default();
 
-    let prefab = Prefab {
-        access: access.clone(),
-        fields,
-    };
+        fields.insert(
+            "test".into(),
+            ObjectField {
+                field: "test".into(),
+                value: FieldValue::I64 { value: 12345 },
+            },
+        );
 
-    println!("{}", serde_yaml::to_string(&prefab).unwrap());
-
-    let mut fields = HashMap::default();
-
-    fields.insert(
-        "test".into(),
-        ObjectField {
-            id: "test".into(),
-            value: FieldValue::I64 { value: 12345 },
-        },
-    );
-
-    let mut room = Room {
-        groups: "groups.yaml".into(),
-        ..Room::default()
-    };
-    room.prefabs.insert("foo".into(), "prefab/foo.yaml".into());
-    room.prefabs.insert("bar".into(), "prefab/bar.yaml".into());
-    room.objects.insert(
-        "xyz".into(),
-        Object {
-            id: "xyz".into(),
+        let mut room = Room {
+            groups: "/dir/some_group_list".into(),
+            ..Room::default()
+        };
+        room.prefabs.insert("foo".into(), "/prefab/foo".into());
+        room.prefabs.insert("bar".into(), "/prefab/bar".into());
+        room.objects.push(Object {
+            prefab: "/dir/prefab".into(),
+            group: "test_group".into(),
+            fields: Default::default(),
+        });
+        room.objects.push(Object {
             prefab: "foo".into(),
             group: "test_group".into(),
             fields,
-        },
-    );
+        });
 
-    println!("{}", serde_yaml::to_string(&room).unwrap());
+        let config = Config::Room(room);
+        println!("{}", serde_yaml::to_string(&config).unwrap());
+    }
 }

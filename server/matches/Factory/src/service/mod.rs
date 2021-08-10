@@ -5,20 +5,14 @@ use std::path::Path;
 pub mod grpc;
 pub mod room;
 
-//pub mod converter;
-//pub mod old_room;
-
 pub struct Service {
     registry: grpc::RegistryClient,
     templates: HashMap<String, relay::RoomTemplate>,
 }
 
 impl Service {
-    pub fn new(registry: grpc::RegistryClient, path: &Path) -> Result<Self, String> {
-        let templates = room::load_dir(path)?;
-        if templates.is_empty() {
-            return Err("no templates".to_string());
-        }
+    pub fn new(registry: grpc::RegistryClient, path: &Path) -> Result<Self, room::Error> {
+        let templates = room::Loader::load(path)?.resolve()?;
         Ok(Self {
             registry,
             templates,
@@ -39,20 +33,18 @@ mod test {
     pub fn should_factory_service_load_templates() {
         let tmp = tempfile::TempDir::new().unwrap();
 
-        let groups_path = Path::new("groups.yaml");
-        let groups = room::Groups::default();
-        let contents = serde_yaml::to_string(&groups).unwrap();
-        write_file(tmp.path().join(&groups_path), &contents);
-        write_file(tmp.path().join("ctf").join(&groups_path), &contents);
-
-        let room = room::Room {
-            groups: groups_path.into(),
-            ..room::Room::default()
+        let groups = room::Config::Groups {
+            groups: Default::default(),
         };
-        let room_str = serde_yaml::to_string(&room).unwrap();
+        write_file(tmp.path().join(&"groups.yaml"), &groups);
 
-        write_file(tmp.path().join("kungur.yaml"), &room_str);
-        write_file(tmp.path().join("ctf/gubaha.yaml"), &room_str);
+        let room = room::Config::Room(room::Room {
+            groups: "/groups".into(),
+            ..room::Room::default()
+        });
+
+        write_file(tmp.path().join("kungur.yaml"), &room);
+        write_file(tmp.path().join("ctf/gubaha.yaml"), &room);
 
         let registry = grpc::RegistryClient::new("not-used").unwrap();
         let service = Service::new(registry, tmp.path()).unwrap();
@@ -66,12 +58,15 @@ mod test {
     pub fn should_fail_if_wrong_file() {
         let tmp = tempfile::TempDir::new().unwrap();
         let registry = grpc::RegistryClient::new("not-used").unwrap();
-        write_file(tmp.path().join("kungur.yaml"), &"not-yaml-file".to_string());
+        write_file_str(&tmp.path().join("kungur.yaml"), "not-yaml-file");
         assert!(Service::new(registry, tmp.path()).is_err());
     }
 
-    pub fn write_file(path: impl AsRef<Path>, contents: &str) {
-        let path = path.as_ref();
+    pub fn write_file(path: impl AsRef<Path>, contents: &room::Config) {
+        write_file_str(path.as_ref(), &serde_yaml::to_string(contents).unwrap())
+    }
+
+    fn write_file_str(path: &Path, contents: &str) {
         println!("write_file: {:?}", path.display());
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(path, contents).unwrap();

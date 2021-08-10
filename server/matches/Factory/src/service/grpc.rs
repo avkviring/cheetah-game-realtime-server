@@ -71,7 +71,6 @@ impl factory::factory_server::Factory for Service {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
     use tempfile::TempDir;
     use tokio::net::TcpListener;
     use tonic::transport::{Server, Uri};
@@ -175,17 +174,16 @@ mod tests {
     fn prepare_templates() -> TempDir {
         let tmp = tempfile::TempDir::new().unwrap();
 
-        let groups_path = Path::new("groups.yaml");
-        let groups = room::Groups::default();
-        let contents = serde_yaml::to_string(&groups).unwrap();
-        write_file(tmp.path().join(&groups_path), &contents);
-
-        let room = room::Room {
-            groups: groups_path.into(),
-            ..room::Room::default()
+        let groups = room::Config::Groups {
+            groups: Default::default(),
         };
-        let contents = serde_yaml::to_string(&room).unwrap();
-        write_file(tmp.path().join("gubaha.yaml"), &contents);
+        write_file(tmp.path().join("groups.yaml"), &groups);
+
+        let room = room::Config::Room(room::Room {
+            groups: "/groups".into(),
+            ..room::Room::default()
+        });
+        write_file(tmp.path().join("gubaha.yaml"), &room);
 
         tmp
     }
