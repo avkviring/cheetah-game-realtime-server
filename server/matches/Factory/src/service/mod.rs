@@ -63,10 +63,11 @@ mod test {
     }
 
     pub fn write_file(path: impl AsRef<Path>, contents: &room::Config) {
-        write_file_str(path.as_ref(), &serde_yaml::to_string(contents).unwrap())
+        write_file_str(path, &serde_yaml::to_string(contents).unwrap())
     }
 
-    fn write_file_str(path: &Path, contents: &str) {
+    pub fn write_file_str(path: impl AsRef<Path>, contents: &str) {
+        let path = path.as_ref();
         println!("write_file: {:?}", path.display());
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(path, contents).unwrap();

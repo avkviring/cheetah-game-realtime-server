@@ -1,5 +1,8 @@
-mod keyvalue;
+mod group;
+mod prefab;
 
+use self::group::{GroupAlias, GroupResolver};
+use self::prefab::PrefabResolver;
 use crate::proto::matches::relay::types as relay;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -7,14 +10,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub type GroupAlias = String;
 pub type FieldAlias = String;
 pub type PrefabAlias = PathBuf;
 
 #[derive(Debug)]
 pub enum Error {
     PrefabNotFound(PathBuf, PrefabAlias),
-    GroupNotFound(PathBuf, String),
+    GroupNotFound(PathBuf, GroupAlias),
+
+    PrefabFieldNotExists(PathBuf, String),
+    ObjectFieldExists(PathBuf, u32),
+
     Io(std::io::Error),
     Yaml(serde_yaml::Error),
 }
@@ -45,6 +51,12 @@ impl std::fmt::Display for Error {
             Error::GroupNotFound(path, group) => {
                 write!(f, "{}: Group {} not found", path.display(), group)
             }
+            Error::ObjectFieldExists(path, id) => {
+                write!(f, "{}: Field {} exists", path.display(), id)
+            }
+            Error::PrefabFieldNotExists(path, name) => {
+                write!(f, "{}: Field {} not found in prefab", path.display(), name)
+            }
             Error::Io(err) => write!(f, "IO: {:?}", err),
             Error::Yaml(err) => write!(
                 f,
@@ -57,7 +69,6 @@ impl std::fmt::Display for Error {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
 pub enum Config {
     #[serde(rename = "room")]
     Room(Room),
@@ -79,7 +90,7 @@ fn skip_path(path: &Path) -> bool {
 #[serde(deny_unknown_fields)]
 pub struct Room {
     /// Путь до файла со всеми группами
-    #[serde(skip_serializing_if = "skip_path")]
+    #[serde(default, skip_serializing_if = "skip_path")]
     pub groups: PathBuf,
     /// Шаблоны для создания объектов
     pub prefabs: HashMap<PrefabAlias, PathBuf>,
@@ -92,14 +103,13 @@ pub struct Room {
 pub struct Prefab {
     pub template: u32,
     /// Путь до файла со всеми группами
-    #[serde(skip_serializing_if = "skip_path")]
+    #[serde(default, skip_serializing_if = "skip_path")]
     pub groups: PathBuf,
     /// Права доступа для всего объекта
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub access: HashMap<GroupAlias, Rule>,
     /// Права доступа и настройки по умолчанию для объектов
-    #[serde(with = "keyvalue")]
-    pub fields: HashMap<FieldAlias, PrefabField>,
+    pub fields: Vec<PrefabField>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
@@ -113,12 +123,13 @@ pub enum Rule {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
 pub struct PrefabField {
-    pub id: FieldAlias,
+    pub name: FieldAlias,
+    pub id: u32,
+
     #[serde(flatten)]
     pub field: OptionValue,
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub access: HashMap<GroupAlias, Rule>,
 }
 
@@ -130,19 +141,26 @@ pub struct Object {
     pub prefab: PrefabAlias,
     /// Имя группы
     pub group: GroupAlias,
+
     /// Поля объекта
-    #[serde(default, with = "keyvalue", skip_serializing_if = "HashMap::is_empty")]
-    pub fields: Fields,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fields: Vec<ObjectField>,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub extend: Vec<ExtendField>,
 }
 
-type Fields = HashMap<FieldAlias, ObjectField>;
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ObjectField {
+    /// Имя поля из префаба
+    pub name: FieldAlias,
+    #[serde(flatten)]
+    pub value: FieldValue,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(deny_unknown_fields)]
-pub struct ObjectField {
-    /// Имя поля в объекте
-    pub field: FieldAlias,
-    /// Значение поля (может быть загружено из префаба)
+pub struct ExtendField {
+    pub id: u32,
     #[serde(flatten)]
     pub value: FieldValue,
 }
@@ -186,21 +204,7 @@ impl OptionValue {
     }
 }
 
-impl keyvalue::KeyValue<'_> for ObjectField {
-    type Key = FieldAlias;
-    fn key(&self) -> Self::Key {
-        self.field.clone()
-    }
-}
-
-impl keyvalue::KeyValue<'_> for PrefabField {
-    type Key = FieldAlias;
-    fn key(&self) -> Self::Key {
-        self.id.clone()
-    }
-}
-
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Loader {
     groups: HashMap<PathBuf, HashMap<GroupAlias, u64>>,
     prefabs: HashMap<PathBuf, Prefab>,
@@ -253,24 +257,7 @@ impl Loader {
         } = self;
 
         // парсим все группы
-        let (local_groups, global_groups) = {
-            let mut last_id = 1_u32;
-            let mut global = HashMap::new();
-            let local: HashMap<_, _> = groups
-                .into_iter()
-                .map(|(path, raw)| {
-                    let mut groups = HashMap::default();
-                    for (name, mask) in raw {
-                        let id = last_id;
-                        last_id += 1;
-                        groups.insert(name, (id, mask));
-                    }
-                    global.extend(groups.clone());
-                    (path, GroupResolver { groups })
-                })
-                .collect();
-            (local, GroupResolver { groups: global })
-        };
+        let (local_groups, global_groups) = GroupResolver::build(groups);
 
         let all_prefabs: HashMap<PathBuf, PrefabResolver> = prefabs
             .into_iter()
@@ -309,16 +296,16 @@ impl Loader {
 
                         Ok(relay::GameObjectTemplate {
                             id: id as u32,
-                            template: prefab.template.template,
+                            template: prefab.template_id(),
                             groups,
-                            fields: Some(prefab.resolve(&object.fields)),
+                            fields: Some(prefab.resolve(object.fields, object.extend, &path)?),
                         })
                     })
                     .collect::<Result<_, Error>>()?;
 
                 let permissions = all_prefabs
                     .values()
-                    .map(|prefab| prefab.template.clone())
+                    .map(|prefab| prefab.template())
                     .collect();
 
                 let room = relay::RoomTemplate {
@@ -333,236 +320,125 @@ impl Loader {
             .collect::<Result<_, Error>>()
     }
 }
-#[derive(Default)]
-struct GroupResolver {
-    groups: HashMap<String, (u32, u64)>,
-}
-
-impl GroupResolver {
-    fn resolve_mask(&self, group: &str) -> Option<u64> {
-        self.groups.get(group).map(|(_, mask)| *mask)
-    }
-
-    fn resolve(
-        &self,
-        group: &str,
-        rule: Rule,
-        path: &Path,
-    ) -> Result<relay::GroupsPermissionRule, Error> {
-        let permission = match rule {
-            Rule::Deny => relay::PermissionLevel::Deny as i32,
-            Rule::ReadOnly => relay::PermissionLevel::Ro as i32,
-            Rule::ReadWrite => relay::PermissionLevel::Rw as i32,
-        };
-
-        self.groups
-            .get(group)
-            .copied()
-            .map(|(_, groups)| relay::GroupsPermissionRule { groups, permission })
-            .ok_or_else(|| Error::GroupNotFound(path.into(), group.into()))
-    }
-}
-
-struct PrefabResolver {
-    template: relay::GameObjectTemplatePermission,
-    defaults: HashMap<u32, FieldValue>,
-    field_names: HashMap<String, u32>,
-}
-
-impl PrefabResolver {
-    fn new(prefab: Prefab, groups: &GroupResolver, path: &Path) -> Result<Self, Error> {
-        let rules = prefab
-            .access
-            .into_iter()
-            .map(|(name, rule)| groups.resolve(&name, rule, path))
-            .collect::<Result<_, Error>>()?;
-
-        let field_names: HashMap<String, u32> = prefab
-            .fields
-            .keys()
-            .enumerate()
-            .map(|(id, name)| (name.clone(), id as u32))
-            .collect();
-
-        let defaults = prefab
-            .fields
-            .iter()
-            .filter_map(|(name, field)| {
-                field
-                    .field
-                    .clone()
-                    .into_value()
-                    .map(|field| (field_names[name], field))
-            })
-            .collect();
-
-        let fields = prefab
-            .fields
-            .into_iter()
-            .map(|(name, field)| {
-                let id = field_names[&name];
-
-                let r#type = match field.field {
-                    OptionValue::I64 { .. } => relay::FieldType::Long as i32,
-                    OptionValue::F64 { .. } => relay::FieldType::Float as i32,
-                    OptionValue::Struct { .. } => relay::FieldType::Structure as i32,
-                    OptionValue::Event { .. } => relay::FieldType::Event as i32,
-                };
-
-                let rules = field
-                    .access
-                    .into_iter()
-                    .map(|(name, rule)| groups.resolve(&name, rule, path))
-                    .collect::<Result<_, Error>>()?;
-
-                Ok(relay::PermissionField { id, r#type, rules })
-            })
-            .collect::<Result<_, Error>>()?;
-
-        let template = relay::GameObjectTemplatePermission {
-            template: prefab.template,
-            rules,
-            fields,
-        };
-
-        Ok(Self {
-            template,
-            defaults,
-            field_names,
-        })
-    }
-
-    fn resolve(&self, object: &HashMap<String, ObjectField>) -> relay::GameObjectFieldsTemplate {
-        let mut fields = self.defaults.clone();
-        let mut last_id = fields.keys().copied().max().unwrap_or_default();
-
-        for (name, field) in object {
-            let id = self.field_names.get(name).copied().unwrap_or_else(|| {
-                last_id += 1;
-                last_id as u32
-            });
-            fields.insert(id, field.value.clone());
-        }
-
-        let longs = fields.iter().filter_map(|(&key, field)| match field {
-            FieldValue::I64 { value } => Some((key, *value)),
-            _ => None,
-        });
-        let floats = fields.iter().filter_map(|(&key, field)| match field {
-            FieldValue::F64 { value } => Some((key, *value)),
-            _ => None,
-        });
-        let structures = fields.iter().filter_map(|(&key, field)| match field {
-            FieldValue::Struct { value } => Some((key, rmp_serde::to_vec(&value).ok()?)),
-            _ => None,
-        });
-
-        relay::GameObjectFieldsTemplate {
-            longs: longs.collect(),
-            floats: floats.collect(),
-            structures: structures.collect(),
-        }
-    }
-}
 
 #[cfg(test)]
 #[test]
-fn doc() {
+fn loader() {
     use rmpv::{Integer, Utf8String, Value};
 
-    let test_group = "test_group".to_string();
-    {
+    let test_group = "test_group";
+    let groups = {
         let mut groups = HashMap::default();
-        groups.insert(test_group.clone(), 1234);
+        groups.insert(test_group.to_string(), 4444);
 
-        let config = Config::Groups { groups };
-        println!("{}", serde_yaml::to_string(&config).unwrap());
-    }
+        let file = serde_yaml::to_string(&Config::Groups { groups }).unwrap();
+        println!("{}", file);
+        file
+    };
 
-    {
-        let mut fields = HashMap::new();
-
+    let prefab = {
         let mut access = HashMap::default();
-        access.insert(test_group, Rule::Deny);
-
-        let value = Value::Map(vec![
-            (
-                Value::String(Utf8String::from("uid")),
-                Value::String(Utf8String::from("arts80")),
-            ),
-            (
-                Value::String(Utf8String::from("rank")),
-                Value::Integer(Integer::from(100)),
-            ),
-        ]);
-
-        fields.insert(
-            "a".to_string(),
-            PrefabField {
-                id: "a".to_string(),
-                access: access.clone(),
-                field: OptionValue::Struct { value: Some(value) },
-            },
-        );
-
-        fields.insert(
-            "b".to_string(),
-            PrefabField {
-                id: "b".to_string(),
-                access: access.clone(),
-                field: OptionValue::I64 { value: Some(4) },
-            },
-        );
-
-        fields.insert(
-            "c".to_string(),
-            PrefabField {
-                id: "c".to_string(),
-                access: HashMap::default(),
-                field: OptionValue::F64 { value: None },
-            },
-        );
+        access.insert(test_group.to_string(), Rule::Deny);
 
         let prefab = Prefab {
             template: 1234,
             groups: PathBuf::new(),
             access: access.clone(),
-            fields,
+            fields: vec![
+                PrefabField {
+                    name: "a".to_string(),
+                    id: 1,
+                    access: access.clone(),
+                    field: OptionValue::Struct {
+                        value: Some(Value::Map(vec![
+                            (
+                                Value::String(Utf8String::from("uid")),
+                                Value::String(Utf8String::from("arts80")),
+                            ),
+                            (
+                                Value::String(Utf8String::from("rank")),
+                                Value::Integer(Integer::from(100)),
+                            ),
+                        ])),
+                    },
+                },
+                PrefabField {
+                    name: "b".to_string(),
+                    id: 2,
+                    access: access.clone(),
+                    field: OptionValue::I64 { value: Some(4) },
+                },
+                PrefabField {
+                    name: "c".to_string(),
+                    id: 3,
+                    access: HashMap::default(),
+                    field: OptionValue::F64 { value: None },
+                },
+            ],
         };
 
-        let config = Config::Prefab(prefab);
-        println!("{}", serde_yaml::to_string(&config).unwrap());
-    }
+        let file = serde_yaml::to_string(&Config::Prefab(prefab)).unwrap();
+        println!("{}", file);
+        file
+    };
 
-    {
-        let mut fields = HashMap::default();
+    let room = {
+        let fields = vec![ObjectField {
+            name: "a".into(),
+            value: FieldValue::I64 { value: 12345 },
+        }];
 
-        fields.insert(
-            "test".into(),
-            ObjectField {
-                field: "test".into(),
-                value: FieldValue::I64 { value: 12345 },
-            },
-        );
+        let extend = vec![ExtendField {
+            id: 4321,
+            value: FieldValue::I64 { value: 12345 },
+        }];
 
         let mut room = Room {
-            groups: "/dir/some_group_list".into(),
+            groups: "/dir/group_list".into(),
             ..Room::default()
         };
-        room.prefabs.insert("foo".into(), "/prefab/foo".into());
-        room.prefabs.insert("bar".into(), "/prefab/bar".into());
+        room.prefabs.insert("foo".into(), "/dir/prefab".into());
         room.objects.push(Object {
             prefab: "/dir/prefab".into(),
-            group: "test_group".into(),
+            group: test_group.into(),
             fields: Default::default(),
+            extend: Default::default(),
         });
         room.objects.push(Object {
             prefab: "foo".into(),
             group: "test_group".into(),
             fields,
+            extend,
         });
 
-        let config = Config::Room(room);
-        println!("{}", serde_yaml::to_string(&config).unwrap());
+        let file = serde_yaml::to_string(&Config::Room(room)).unwrap();
+        println!("{}", file);
+        file
+    };
+
+    let dir = tempfile::TempDir::new().unwrap();
+    let dir = {
+        super::test::write_file_str(dir.path().join("dir/group_list.yaml"), &groups);
+        super::test::write_file_str(dir.path().join("dir/prefab.yaml"), &prefab);
+        super::test::write_file_str(dir.path().join("room.yaml"), &room);
+        dir.path()
+    };
+
+    let loader = dbg!(Loader::load(dir).unwrap());
+
+    let rooms = dbg!(loader.resolve().unwrap());
+
+    {
+        let room = &rooms[&"/room".to_string()];
+
+        assert_eq!(room.objects[0].template, 1234);
+        assert_eq!(room.objects[0].groups, 4444);
+        assert_eq!(room.objects[0].fields.as_ref().unwrap().longs[&2], 4);
+
+        assert_eq!(room.objects[1].fields.as_ref().unwrap().longs[&4321], 12345);
+
+        let perm = &room.permissions.as_ref().unwrap().objects;
+        assert_eq!(perm[0].template, 1234);
+        assert_eq!(perm[0].rules[0].groups, 4444);
     }
 }
