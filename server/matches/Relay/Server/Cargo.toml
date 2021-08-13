@@ -17,7 +17,7 @@ stderrlog = "0.5.0"
 indexmap = { version = "1.7.0", features = ["serde-1"] }
 cheetah-matches-relay-common = { path = "../Common/" }
 fnv = "1.0.7"
-serde = { version = "1.0.126", features = ["derive", "rc"] }
+serde = { version = "1.0.127", features = ["derive", "rc"] }
 heapless = { version = "0.7.3", features = ["serde"] }
 futures = "0.3.15"
 rmpv = { version = "0.4.7", features = ["with-serde"] }
