@@ -19,4 +19,4 @@ tokio-stream = { version = "0.1.7", features = ["net"] }
 
 
 [build-dependencies]
-tonic-build = "0.5.1"
+tonic-build = "0.5.2"

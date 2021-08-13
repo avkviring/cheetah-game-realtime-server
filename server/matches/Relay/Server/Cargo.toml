@@ -32,4 +32,4 @@ warp = "0.3"
 cheetah-microservice = { path = "../../../Microservice" }
 
 [build-dependencies]
-tonic-build = {version="0.5.1", features=["rustfmt"]}
+tonic-build = {version="0.5.2", features=["rustfmt"]}

@@ -25,4 +25,4 @@ tokio-stream = { version = "0.1.7", features = ["net"] }
 tempfile = "3.2.0"
 
 [build-dependencies]
-tonic-build = "0.5.1"
+tonic-build = "0.5.2"

@@ -23,7 +23,7 @@ sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "m
 
 
 [build-dependencies]
-tonic-build = "0.5.1"
+tonic-build = "0.5.2"
 
 # view localy (requires nightly rust toolchain):
 # RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --open

@@ -36,4 +36,4 @@ lazy_static = "1.4.0"
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
 
 [build-dependencies]
-tonic-build = "0.4.2"
+tonic-build = "0.5.2"
