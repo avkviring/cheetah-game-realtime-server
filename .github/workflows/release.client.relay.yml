@@ -92,7 +92,7 @@ jobs:
       - run: cp android-windows-build/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.dll
       - run: cp android-windows-build/armv7-linux-androideabi/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/armv7/libcheetah_relay_client.so
       - run: cp android-windows-build/aarch64-linux-android/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/aarch64/libcheetah_relay_client.so
-      - uses: actions/setup-node@v2.3.0
+      - uses: actions/setup-node@v2.4.0
         with:
           node-version: '12.x'
           registry-url: 'https://npm.registry.cheetah.games'
