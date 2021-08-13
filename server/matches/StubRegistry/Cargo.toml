@@ -11,7 +11,7 @@ path = "src/bin/service.rs"
 tokio = { version = "1.8.2", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 log = "0.4"
 pretty_env_logger = "0.4.0"
-tonic = "0.5.0"
+tonic = "0.5.2"
 prost = "0.8.0"
 
 
