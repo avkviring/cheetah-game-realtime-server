@@ -3,7 +3,7 @@
   "references": [
     "games.cheetah.platform",
     "games.cheetah.auth.cookie",
-    "games.cheetah.auth.authentication",
+    "games.cheetah.auth.user",
     "games.cheetah.matches.matchmaking"
   ],
   "optionalUnityReferences": [

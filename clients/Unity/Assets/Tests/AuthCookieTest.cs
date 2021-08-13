@@ -1,21 +1,18 @@
+using System.Collections;
 using Cheetah.Auth.Cookie;
-using Cheetah.Platform;
-using NUnit.Framework;
-using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Tests
 {
     public class AuthCookieTest
     {
-        [Test]
-        public async void ShouldCreateUser()
+        [UnityTest]
+        public IEnumerator ShouldCreateUser()
         {
-            Connector connector = ConnectorFactory.Create();
+            var connector = ConnectorFactory.Create();
             var cookieAuthenticator = new CookieAuthenticator(connector);
             cookieAuthenticator.RemoveLocalCookie();
-            var result = await cookieAuthenticator.LoginOrRegister();
-            Debug.Log(result.Player.SessionToken);
-            Assert.IsTrue(true);
+            yield return Enumerators.Await(cookieAuthenticator.LoginOrRegister());
         }
     }
 }
