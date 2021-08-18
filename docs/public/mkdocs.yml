@@ -48,7 +48,7 @@ nav:
               - "Вещественные числа": "components/relay/commands/double.md"
           - "Конфигурация":
               - "Комната": "components/relay/configuration/room.md"
-              - "Права доступа": "components/relay/configuration/permissions.md"
+              - "Префабы и управление доступом": "components/relay/configuration/prefab.md"
               - "Трассировка команд": "components/relay/configuration/trace.md"
           - "Локальная разработка":
               - "Выбор пользователя": "components/relay/develop/select-user.md"
