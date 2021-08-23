@@ -3,7 +3,7 @@ using System.Text;
 using Cheetah.Platform;
 using UnityEngine;
 
-namespace Tests
+namespace Tests.Helpers
 {
     /// <summary>
     /// Создает connector к кластеру для тестов

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
-namespace Tests
+namespace Tests.Helpers
 {
     public static class Enumerators
     {

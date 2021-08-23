@@ -1,5 +1,6 @@
 using System.Collections;
 using Cheetah.Auth.Cookie;
+using Tests.Helpers;
 using UnityEngine.TestTools;
 
 namespace Tests
