@@ -74,9 +74,9 @@ jobs:
     # так как получение SSL сертификата для домена операция не быстрая
     # то тестирование для разных pull request осуществляется на одном домене
     # поэтому одновременный запуск данного action не возможен
-    concurrency: ci.cluster.dev.cheetah.games
+    concurrency: ${{ github.ref }}
     # на всякий случай, иногда что-то в хостинге может пойти не по-плану
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.6
@@ -85,6 +85,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             hosting/E2ETest/target/
+            clients/Unity/Library
           key: cargo-hosting-E2ETest-${{ github.sha }}
           restore-keys: |
             cargo-hosting-E2ETest-
@@ -114,12 +115,22 @@ jobs:
             --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
             --wait=true
           sleep 10
+      - name: Install cross
+        run: cargo install --version 0.1.16 cross
+      - name: Compile relay client
+        run: |
+          cd server
+          cross build --manifest-path matches/Relay/Client/Cargo.toml --release --target x86_64-unknown-linux-gnu
+          cp target/x86_64-unknown-linux-gnu/release/libcheetah_matches_relay_client.so ../clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.so
+      - name: Configure cheetah-unity-test-settings.json
+        run: echo '{"ServerHost":"${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games","ServerPort":443,"UseSSL":true}' > /tmp/cheetah-unity-test-settings.json
       - uses: game-ci/unity-test-runner@v2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           projectPath: clients/Unity/
           githubToken: ${{ secrets.GITHUB_TOKEN }}
+          testMode: PlayMode
       - name: Cleanup namespace
         # удалять namespace нельзя, так как там есть сертификаты let encrypt
         # поэтому удаляем релиз и все не нужные ресурсы
