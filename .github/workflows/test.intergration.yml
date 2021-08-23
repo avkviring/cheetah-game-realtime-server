@@ -114,6 +114,12 @@ jobs:
             --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
             --wait=true
           sleep 10
+      - uses: game-ci/unity-test-runner@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: clients/Unity/
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
       - name: Cleanup namespace
         # удалять namespace нельзя, так как там есть сертификаты let encrypt
         # поэтому удаляем релиз и все не нужные ресурсы
