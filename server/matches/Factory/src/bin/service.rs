@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     cheetah_microservice::init("match.factory");
     let templates_path = cheetah_microservice::get_env("TEMPLATES_PATH");
 
-    let registry = cheetah_microservice::get_internal_srv_uri_from_env("MATCHES_REGISTRY");
+    let registry = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
     let registry = RegistryClient::new(registry).unwrap();
     let service = Service::new(registry, Path::new(&templates_path)).unwrap();
     Server::builder()

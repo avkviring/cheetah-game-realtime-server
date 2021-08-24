@@ -1,14 +1,17 @@
-mod group;
-mod prefab;
-
-use self::group::{GroupAlias, GroupResolver};
-use self::prefab::PrefabResolver;
-use crate::proto::matches::relay::types as relay;
-use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
+
+use serde::{Deserialize, Serialize};
+
+use crate::proto::matches::relay::types as relay;
+
+use self::group::{GroupAlias, GroupResolver};
+use self::prefab::PrefabResolver;
+
+mod group;
+mod prefab;
 
 pub type FieldAlias = String;
 pub type PrefabAlias = PathBuf;
@@ -93,6 +96,7 @@ pub struct Room {
     #[serde(default, skip_serializing_if = "skip_path")]
     pub groups: PathBuf,
     /// Шаблоны для создания объектов
+    #[serde(default)]
     pub prefabs: HashMap<PrefabAlias, PathBuf>,
     /// Объекты комнаты
     pub objects: Vec<Object>,
@@ -270,6 +274,7 @@ impl Loader {
         rooms
             .into_iter()
             .map(|(path, room)| {
+                log::info!("load room {:?}", path.file_name().unwrap());
                 let Room {
                     groups,
                     prefabs,

@@ -31,4 +31,4 @@ EXPOSE 5001/tcp 5002/tcp
 COPY --chmod=555 --from=builder /build/server/matches/StubMatchmaking/target/x86_64-unknown-linux-musl/release/cheetah-matches-stub-matchmaking /service
 RUN adduser -D service
 USER service
-CMD [""]
+CMD ["/service"]

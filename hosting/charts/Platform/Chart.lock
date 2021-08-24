@@ -2,5 +2,17 @@ dependencies:
 - name: reloader
   repository: https://stakater.github.io/stakater-charts
   version: v0.0.97
-digest: sha256:05b1cdf99c2503bc378a84129fe6b88a859c9a7cfcd9d5ce0f730a8473fb4eef
-generated: "2021-07-31T15:48:02.333286+05:00"
+- name: cheetah-matches-factory
+  repository: file://../../../server/matches/Factory/Chart/
+  version: 999.999.999
+- name: cheetah-matches-relay
+  repository: file://../../../server/matches/Relay/Chart/
+  version: 999.999.999
+- name: cheetah-matches-stub-registry
+  repository: file://../../../server/matches/StubRegistry/Chart/
+  version: 999.999.999
+- name: cheetah-matches-stub-matchmaking
+  repository: file://../../../server/matches/StubMatchmaking/Chart/
+  version: 999.999.999
+digest: sha256:8a4d1fd2936dd94a383db3670fab2064faffe1d24ccfd8c88296cbc88bae2f24
+generated: "2021-08-24T14:23:47.900601+05:00"

@@ -7,11 +7,6 @@ spec:
     app:  {{ .Chart.Name }}
   type: NodePort
   ports:
-    - name: rest
-      port: 8080
-      protocol: TCP
-      nodePort: 30080
     - name: game
       port: 5555
       protocol: UDP
-      nodePort: 30555
