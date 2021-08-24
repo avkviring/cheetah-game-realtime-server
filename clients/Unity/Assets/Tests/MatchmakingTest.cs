@@ -2,6 +2,7 @@ using System.Collections;
 using Cheetah.Auth.Cookie;
 using Cheetah.Matches.Matchmaking;
 using Cheetah.Matches.Relay.Types;
+using Cheetah.Platform;
 using NUnit.Framework;
 using Tests.Helpers;
 using UnityEngine;
@@ -11,10 +12,17 @@ namespace Tests
 {
     public class MatchmakingTest
     {
+        private Connector connector;
+
+        [SetUp]
+        public void SetUp()
+        {
+            connector = ConnectorFactory.Create();
+        }
+
         [UnityTest]
         public IEnumerator ShouldMatch()
         {
-            var connector = ConnectorFactory.Create();
             var cookieAuthenticator = new CookieAuthenticator(connector);
             cookieAuthenticator.RemoveLocalCookie();
 
@@ -28,6 +36,12 @@ namespace Tests
             var matchmakingResult = scheduleUserToMatchTask.Result;
             Debug.Log(matchmakingResult.RelayGameHost);
             Assert.IsTrue(true);
+        }
+
+        [TearDown]
+        public async void TearDown()
+        {
+            await connector.Shutdown();
         }
     }
 }

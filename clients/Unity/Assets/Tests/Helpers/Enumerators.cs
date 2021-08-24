@@ -20,5 +20,20 @@ namespace Tests.Helpers
 
             yield return null;
         }
+        
+        public static IEnumerator Await(Task task)
+        {
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+
+            if (task.IsFaulted)
+            {
+                ExceptionDispatchInfo.Capture(task.Exception).Throw();
+            }
+
+            yield return null;
+        }
     }
 }
