@@ -1,0 +1,24 @@
+# 
+prefab:
+  template: 1234
+  access:
+    test_group: deny
+  fields:
+    - name: a
+      id: 1
+      type: struct
+      value:
+        uid: arts80
+        rank: 100
+      access:
+        test_group: deny
+    - name: b
+      id: 2
+      type: i64
+      value: 4
+      access:
+        test_group: deny
+    - name: c
+      id: 3
+      type: f64
+
