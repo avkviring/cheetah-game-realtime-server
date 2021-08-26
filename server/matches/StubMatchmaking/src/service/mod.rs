@@ -15,7 +15,7 @@ use crate::proto::matches::matchmaking;
 use crate::proto::matches::relay;
 
 pub struct StubMatchmakingService {
-    pub factory_service: Uri,
+    pub factory_service_uri: Uri,
     pub matches: RwLock<HashMap<String, MatchInfo>>,
 }
 
@@ -31,7 +31,7 @@ pub struct MatchInfo {
 impl StubMatchmakingService {
     pub fn new(factory_service: Uri) -> Self {
         StubMatchmakingService {
-            factory_service,
+            factory_service_uri: factory_service,
             matches: RwLock::new(HashMap::new()),
         }
     }
@@ -92,7 +92,7 @@ impl StubMatchmakingService {
         let mut matches = self.matches.write().await;
         match matches.get(template) {
             None => {
-                let mut factory = FactoryClient::connect(self.factory_service.clone())
+                let mut factory = FactoryClient::connect(self.factory_service_uri.clone())
                     .await
                     .unwrap();
 
