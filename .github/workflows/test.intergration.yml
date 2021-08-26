@@ -124,7 +124,7 @@ jobs:
           cross build --manifest-path matches/Relay/Client/Cargo.toml --release --target x86_64-unknown-linux-gnu
           cp target/x86_64-unknown-linux-gnu/release/libcheetah_matches_relay_client.so ../clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.so
       - name: Configure cheetah-unity-test-settings.json
-        run: echo '{"ServerHost":"${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games","ServerPort":443,"UseSSL":true}' > /tmp/cheetah-unity-test-settings.json
+        run: echo '{"ServerHost":"${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games","ServerPort":443,"UseSSL":true}' > cheetah-unity-test-settings.json
       - uses: game-ci/unity-test-runner@v2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text;
 using Cheetah.Platform;
+using UnityEditor;
 using UnityEngine;
 
 namespace Tests.Helpers
@@ -22,7 +23,7 @@ namespace Tests.Helpers
 
         public static Connector Create()
         {
-            var fileName = "/tmp/cheetah-unity-test-settings.json";
+            var fileName = Path.GetFullPath(Application.dataPath+"/../../../cheetah-unity-test-settings.json");
             var testConfiguration = File.Exists(fileName)
                 ? JsonUtility.FromJson<ConnectorConfiguration>(Encoding.Default.GetString(File.ReadAllBytes(fileName)))
                 : new ConnectorConfiguration
