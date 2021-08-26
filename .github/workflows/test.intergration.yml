@@ -84,11 +84,10 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            hosting/E2ETest/target/
             clients/Unity/Library
-          key: cargo-hosting-E2ETest-${{ github.sha }}
+          key: integration-test-${{ github.sha }}
           restore-keys: |
-            cargo-hosting-E2ETest-
+            integration-test-
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
