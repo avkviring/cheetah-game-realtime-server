@@ -107,6 +107,7 @@ jobs:
       - name: Deploy Release
         run: |
           cd hosting/charts/
+          helm dependency update Platform
           find . -name Platform/values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.sha }}/' {}
           helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
             --namespace=${{ steps.vars.outputs.short_ref }} \
