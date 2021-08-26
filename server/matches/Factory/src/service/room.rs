@@ -300,7 +300,7 @@ impl Loader {
                         })?;
 
                         Ok(relay::GameObjectTemplate {
-                            id: id as u32,
+                            id: id as u32 + 1,
                             template: prefab.template_id(),
                             groups,
                             fields: Some(prefab.resolve(object.fields, object.extend, &path)?),
