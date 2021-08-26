@@ -65,7 +65,7 @@ spec:
       volumes:
         - name: "{{ .Chart.Name }}-postgresql"
           emptyDir:
-            sizeLimit: 10Mi
+            sizeLimit: 100Mi
             medium: Memory
   {{end}}
   {{if .Values.persistence.enabled}}
