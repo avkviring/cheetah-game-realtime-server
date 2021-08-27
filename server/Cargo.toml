@@ -1,3 +1,10 @@
 [workspace]
-members = ["auth/*/", "matches/*", "Microservice"]
-exclude = ["matches/Relay/", "matches/Registry"]
+members = [
+    "Microservice",
+    "auth/*/",
+    "matches/*",
+    "matches/Relay/Macro",
+    "matches/Relay/Common",
+    "matches/Relay/Client",
+    "matches/Relay/Server"]
+exclude = ["matches/Relay/.", "matches/Registry"]

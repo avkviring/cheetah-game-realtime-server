@@ -4,24 +4,13 @@
 name: Server tests
 on:
   push:
-    branches:    
+    branches:
       - lain-dono
       - kviring
       - dependabot
 jobs:
-  unit-test:
+  server-unit-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        component:
-          - auth/Cerberus
-          - auth/User
-          - auth/Cookie
-          - auth/Google
-          - matches/Relay
-          - matches/StubMatchmaking
-          - matches/StubRegistry
-          - matches/Factory
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.6
@@ -29,8 +18,10 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            server/${{ matrix.component }}/target
-          key: cargo-unit-test-${{ matrix.component }}-${{ github.sha }}
+            server/target
+          key: server-unit-test-${{ github.sha }}
           restore-keys: |
-            cargo-unit-test-${{ matrix.component }}-
-      - run: cargo test --manifest-path server/${{ matrix.component }}/Cargo.toml
+            server-unit-test-
+      - run: |
+          cd server
+          cargo test
