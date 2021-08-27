@@ -1,10 +1,8 @@
 #
 # Интеграционный тест
 #
-# 1. Развертывание кластера в kubernetes
-#   - собираем необходимые docker image
-#   - развертыванием кластер на тестовом хостинге в DigitalOcean
-#   - запускаем приложение для тестирования развернутых сервисов
+# 1. Собираем docker image для всех компонентов кластера
+# 2. Запускаем сервер в kubernetes на digital ocean и запускаем e2e тесты из Unity
 #
 name: Integration test
 on:
@@ -14,7 +12,7 @@ on:
       - kviring
       - dependabot
 jobs:
-  build_images:
+  build-docker-images:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,7 +68,7 @@ jobs:
   integration-kuberenetes-test:
     runs-on: ubuntu-latest
     needs:
-      - build_images
+      - build-docker-images
     # так как получение SSL сертификата для домена операция не быстрая
     # то тестирование для разных pull request осуществляется на одном домене
     # поэтому одновременный запуск данного action не возможен

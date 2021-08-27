@@ -1,47 +1,20 @@
 # Cheetah Server Platform
 
-Серверная платформа для создания многопользовательских игр.
+Серверная платформа для разработки многопользовательских игр в основном с pvp матчами реального времени.
 
-## Структура проекта
+## Структура
 
-- clients - клиентская часть
-- [docs](docs/README.md) - публичная документация проекта
-- [dev](dev/README.md) - утилиты/шаблоны/etc для разработчика
-- [hosting](hosting/README.md) - настройка хостинга, helm чарты
-- proto - grpc proto файлы
-- server - серверная часть
+- [Автоматическая сборка](.github/README.md)
+- [GRPC](proto/)
+- [Клиентские компоненты](clients/README.md)
+- [Серверные компоненты](server/README.md)
+- [Хостинг](hosting/README.md)
+- [Публичная документация](docs/public/README.md)
 
-## Документация
+## Принципы разработки
 
-- [Правила документирования](docs/README.md)
-- [CI система](.github/index.md)
-- [Инструменты разработки](dev/README.md)
-
-### Сервисы
-
-- [Авторизация](server/authentication/README.md)
-- [JWT токены](server/cerberus/README.md)
-- [Матчи реального времени](server/matches/README.md)
-  - [Сервер для обмена данными между пользователями](server/match/Relay/README.md)
-  - Matchmaking для тестирования
-  - MatchRegistry для тестирования
-
-### Создание нового компонента
-
-#### Список мест в которые необходимо добавить информацию о новом компоненте
-
-##### Github Action
-
-- .github/workflows/test.helm.yml
-    - добавить в список для построения docker образа
-    - добавить версию в параметры helm
-- .github/workflows/test.server.yml
-- .github/workflows/release.components.yml
-
-##### Хостинг
-
-- зависимость в hosting/charts/Platform/Chart.yaml
-- тест запущенного компонента hosting/E2ETest
-
- 
+- [Тестирование](docs/private/test.md)
+- [Документирование](docs/README.md)
+- [Проверочные листы для разных ситуаций](docs/private/checklists/README.md)
+- [Наименование commit](CONTRIBUTING.md)
 
