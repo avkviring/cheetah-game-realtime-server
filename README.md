@@ -4,7 +4,7 @@
 
 ## Структура
 
-- [Автоматическая сборка](.github/README.md)
+- [Автоматическая сборка](.github/index.md)
 - [GRPC](proto/)
 - [Клиентские компоненты](clients/README.md)
 - [Серверные компоненты](server/README.md)
