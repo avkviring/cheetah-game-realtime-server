@@ -1,38 +1,58 @@
-using System.IO;
-using System.Text;
+using System.Threading.Tasks;
 using Cheetah.Platform;
-using UnityEditor;
+using Cheetah.Platform.Editor.LocalServer.Applications;
+using Cheetah.Platform.Editor.LocalServer.CheetahRegistry;
+using Cheetah.Platform.Editor.LocalServer.Runner;
 using UnityEngine;
 
 namespace Tests.Helpers
 {
     /// <summary>
-    /// Создает connector к кластеру для тестов
-    /// - если есть файл "/tmp/cheetah-unity-test-settings.json" - то адрес кластера читается из него
-    /// - иначе используется параметры для подключения к локальному кластеру
-    /// - файл с параметрами подключения в основном используется в CI для подключенния к внешнему кластеру
+    /// Создание соединение к кластеру с поддержкой интеграционных тестов из CI
+    /// - если в интеграционных тестах не задан адрес сервера - то запускаем локальный сервер
+    /// - обязательно вызывать connector.Shutdown() в конце теста, иначе Unity не сможет выйти после теста
     /// </summary>
-    public static class ConnectorFactory
+    public class ConnectorFactory : IDockerProgressListener
     {
-        private class ConnectorConfiguration
+        public Connector Connector { get; private set; }
+
+        public void SetProgressTitle(string title)
         {
-            public string ServerHost;
-            public int ServerPort;
-            public bool UseSSL;
+            Debug.Log("Docker progress set title " + title);
         }
 
-        public static Connector Create()
+        public void SetProgress(int percent)
         {
-            var fileName = Path.GetFullPath(Application.dataPath+"/../../../cheetah-unity-test-settings.json");
-            var testConfiguration = File.Exists(fileName)
-                ? JsonUtility.FromJson<ConnectorConfiguration>(Encoding.Default.GetString(File.ReadAllBytes(fileName)))
-                : new ConnectorConfiguration
+            Debug.Log("Docker progress percent " + percent);
+        }
+
+        public async Task Connect()
+        {
+            var testConfiguration = IntegrationTestConfigurator.Load();
+            if (testConfiguration == null)
+            {
+                PlatformApplication.ImageVersion = null;
+                Connector = CreateLocalConnector();
+            }
+            else
+            {
+                if (testConfiguration.ServerHost != null)
                 {
-                    ServerHost = "localhost",
-                    ServerPort = 7777,
-                    UseSSL = false
-                };
-            return new Connector(testConfiguration.ServerHost, testConfiguration.ServerPort, testConfiguration.UseSSL);
+                    Connector = new Connector(testConfiguration.ServerHost, 443, true);
+                }
+                else
+                {
+                    PlatformApplication.ImageVersion = testConfiguration.ServerImageVersion;
+                    var dockerRunner = new DockerServerRunner(CheetahRegistrySettingsFromConfig.Load());
+                    await dockerRunner.Restart(this);
+                    Connector = CreateLocalConnector();
+                }
+            }
+        }
+
+        private static Connector CreateLocalConnector()
+        {
+            return new Connector("127.0.0.1", 7777, false);
         }
     }
 }

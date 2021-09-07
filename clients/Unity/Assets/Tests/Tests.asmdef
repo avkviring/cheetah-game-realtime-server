@@ -2,6 +2,7 @@
   "name": "Tests",
   "references": [
     "games.cheetah.platform",
+    "games.cheetah.platform.editor",
     "games.cheetah.auth.cookie",
     "games.cheetah.auth.user",
     "games.cheetah.matches.matchmaking"
