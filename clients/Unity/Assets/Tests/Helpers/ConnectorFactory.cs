@@ -44,7 +44,11 @@ namespace Tests.Helpers
                 {
                     PlatformApplication.ImageVersion = testConfiguration.ServerImageVersion;
                     var dockerRunner = new DockerServerRunner(CheetahRegistrySettingsFromConfig.Load());
-                    await dockerRunner.Restart(this);
+                    await dockerRunner.DeterminationState();
+                    if (dockerRunner.Status != Status.Started)
+                    {
+                        await dockerRunner.Restart(this);
+                    }
                     Connector = CreateLocalConnector();
                 }
             }
