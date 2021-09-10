@@ -1,0 +1,14 @@
+# описание пользователя
+id: 1
+# общие права доступа для групп
+access:
+  # права по-умолчанию (перекрывают права полей)
+  groups:
+    allies: ro
+    bot: deny
+    enemies: deny
+  fields:
+    - field: user/score
+      access:
+        # права для группы (высший приоритет)
+        bot: rw

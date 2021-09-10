@@ -1,0 +1,6 @@
+# имя и пол пользователя
+id: 1
+type: struct
+access:
+  groups:
+    bot: deny

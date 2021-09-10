@@ -1,0 +1,6 @@
+# мощность урона
+id: 10
+type: float
+access:
+  groups:
+    bot: deny

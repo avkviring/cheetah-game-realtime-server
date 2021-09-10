@@ -1,0 +1,6 @@
+# очки пользователя
+id: 2
+type: long
+access:
+  groups:
+    bot: ro
