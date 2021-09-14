@@ -43,8 +43,8 @@ impl PrefabResolver {
 				let id = field_names[&field.name];
 
 				let r#type = match field.field {
-					OptionValue::I64 { .. } => relay::FieldType::Long as i32,
-					OptionValue::F64 { .. } => relay::FieldType::Float as i32,
+					OptionValue::Long { .. } => relay::FieldType::Long as i32,
+					OptionValue::Double { .. } => relay::FieldType::Float as i32,
 					OptionValue::Struct { .. } => relay::FieldType::Structure as i32,
 					OptionValue::Event { .. } => relay::FieldType::Event as i32,
 				};
@@ -92,11 +92,11 @@ impl PrefabResolver {
 		}
 
 		let longs = fields.iter().filter_map(|(&key, field)| match field {
-			FieldValue::I64 { value } => Some((key, *value)),
+			FieldValue::Long { value } => Some((key, *value)),
 			_ => None,
 		});
 		let floats = fields.iter().filter_map(|(&key, field)| match field {
-			FieldValue::F64 { value } => Some((key, *value)),
+			FieldValue::Double { value } => Some((key, *value)),
 			_ => None,
 		});
 		let structures = fields.iter().filter_map(|(&key, field)| match field {
@@ -139,19 +139,19 @@ fn resolver() {
 				name: "a".to_string(),
 				id: 1,
 				access: access.clone(),
-				field: OptionValue::I64 { value: Some(7) },
+				field: OptionValue::Long { value: Some(7) },
 			},
 			PrefabField {
 				name: "b".to_string(),
 				id: 2,
 				access: access.clone(),
-				field: OptionValue::I64 { value: None },
+				field: OptionValue::Long { value: None },
 			},
 			PrefabField {
 				name: "default".to_string(),
 				id: 3,
 				access: access.clone(),
-				field: OptionValue::I64 { value: Some(22222) },
+				field: OptionValue::Long { value: Some(22222) },
 			},
 		],
 	};
@@ -164,17 +164,17 @@ fn resolver() {
 		let base = vec![
 			ObjectField {
 				name: "a".into(),
-				value: FieldValue::I64 { value: 12345 },
+				value: FieldValue::Long { value: 12345 },
 			},
 			ObjectField {
 				name: "b".into(),
-				value: FieldValue::I64 { value: 77777 },
+				value: FieldValue::Long { value: 77777 },
 			},
 		];
 
 		let extend = vec![ExtendField {
 			id: 4321,
-			value: FieldValue::I64 { value: 99999 },
+			value: FieldValue::Long { value: 99999 },
 		}];
 
 		let obj = resolver.resolve(base, extend, Path::new("")).unwrap();

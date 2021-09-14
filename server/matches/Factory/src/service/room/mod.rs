@@ -121,8 +121,8 @@ pub struct ExtendField {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields, tag = "type", rename_all = "lowercase")]
 pub enum FieldValue {
-	I64 { value: i64 },
-	F64 { value: f64 },
+	Long { value: i64 },
+	Double { value: f64 },
 	Struct { value: rmpv::Value },
 	Event,
 }
@@ -130,11 +130,11 @@ pub enum FieldValue {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields, tag = "type", rename_all = "lowercase")]
 pub enum OptionValue {
-	I64 {
+	Long {
 		#[serde(skip_serializing_if = "Option::is_none")]
 		value: Option<i64>,
 	},
-	F64 {
+	Double {
 		#[serde(skip_serializing_if = "Option::is_none")]
 		value: Option<f64>,
 	},
@@ -149,8 +149,8 @@ impl OptionValue {
 	fn into_value(self) -> Option<FieldValue> {
 		Some(match self {
 			OptionValue::Struct { value: Some(value) } => FieldValue::Struct { value },
-			OptionValue::I64 { value: Some(value) } => FieldValue::I64 { value },
-			OptionValue::F64 { value: Some(value) } => FieldValue::F64 { value },
+			OptionValue::Long { value: Some(value) } => FieldValue::Long { value },
+			OptionValue::Double { value: Some(value) } => FieldValue::Double { value },
 			OptionValue::Event => FieldValue::Event,
 			_ => return None,
 		})

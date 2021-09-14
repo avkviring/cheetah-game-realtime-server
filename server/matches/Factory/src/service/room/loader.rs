@@ -147,13 +147,13 @@ fn loader() {
 					name: "b".to_string(),
 					id: 2,
 					access: access.clone(),
-					field: OptionValue::I64 { value: Some(4) },
+					field: OptionValue::Long { value: Some(4) },
 				},
 				PrefabField {
 					name: "c".to_string(),
 					id: 3,
 					access: HashMap::default(),
-					field: OptionValue::F64 { value: None },
+					field: OptionValue::Double { value: None },
 				},
 			],
 		};
@@ -166,12 +166,12 @@ fn loader() {
 	let room = {
 		let fields = vec![ObjectField {
 			name: "a".into(),
-			value: FieldValue::I64 { value: 12345 },
+			value: FieldValue::Long { value: 12345 },
 		}];
 
 		let extend = vec![ExtendField {
 			id: 4321,
-			value: FieldValue::I64 { value: 12345 },
+			value: FieldValue::Long { value: 12345 },
 		}];
 
 		let mut room = Room {

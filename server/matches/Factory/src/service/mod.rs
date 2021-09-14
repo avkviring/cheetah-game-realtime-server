@@ -33,6 +33,7 @@ mod test {
 
 	#[test]
 	pub fn should_factory_service_load_templates() {
+		
 		let tmp = tempfile::TempDir::new().unwrap();
 
 		let groups = room::Config::Groups { groups: Default::default() };
