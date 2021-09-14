@@ -33,26 +33,26 @@ mod test {
 
 	#[test]
 	pub fn should_factory_service_load_templates() {
-		
-		let tmp = tempfile::TempDir::new().unwrap();
-
-		let groups = room::Config::Groups { groups: Default::default() };
-		write_file(tmp.path().join(&"groups.yaml"), &groups);
-
-		let room = room::Config::Room(room::Room {
-			groups: "/groups".into(),
-			..room::Room::default()
-		});
-
-		write_file(tmp.path().join("kungur.yaml"), &room);
-		write_file(tmp.path().join("ctf/gubaha.yaml"), &room);
-
-		let registry = grpc::RegistryClient::new("not-used").unwrap();
-		let service = Service::new(registry, tmp.path()).unwrap();
-		println!("{:?}", service.templates.keys());
-
-		assert!(service.templates.get("/kungur").is_some());
-		assert!(service.templates.get("/ctf/gubaha").is_some());
+		todo!()
+		// let tmp = tempfile::TempDir::new().unwrap();
+		//
+		// let groups = room::Config::Groups { groups: Default::default() };
+		// write_file(tmp.path().join(&"groups.yaml"), &groups);
+		//
+		// let room = room::Config::Room(room::Room {
+		// 	groups: "/groups".into(),
+		// 	..room::Room::default()
+		// });
+		//
+		// write_file(tmp.path().join("kungur.yaml"), &room);
+		// write_file(tmp.path().join("ctf/gubaha.yaml"), &room);
+		//
+		// let registry = grpc::RegistryClient::new("not-used").unwrap();
+		// let service = Service::new(registry, tmp.path()).unwrap();
+		// println!("{:?}", service.templates.keys());
+		//
+		// assert!(service.templates.get("/kungur").is_some());
+		// assert!(service.templates.get("/ctf/gubaha").is_some());
 	}
 
 	#[test]

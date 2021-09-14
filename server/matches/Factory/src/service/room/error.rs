@@ -1,3 +1,4 @@
+use std::fmt::Formatter;
 use std::path::PathBuf;
 
 use crate::service::room::group::GroupAlias;
@@ -6,13 +7,13 @@ use crate::service::room::PrefabAlias;
 #[derive(Debug)]
 pub enum Error {
 	PrefabNotFound(PathBuf, PrefabAlias),
-	GroupNotFound(PathBuf, GroupAlias),
-
+	GroupNotFound(GroupAlias),
+	GroupParseError(serde_yaml::Error),
 	PrefabFieldNotExists(PathBuf, String),
 	ObjectFieldExists(PathBuf, u32),
-
 	Io(std::io::Error),
 	Yaml(serde_yaml::Error),
+	GroupFileNotFound(),
 }
 
 impl From<std::io::Error> for Error {
@@ -33,8 +34,8 @@ impl std::fmt::Display for Error {
 			Error::PrefabNotFound(path, prefab) => {
 				write!(f, "{}: Prefab {} not found", path.display(), prefab.display(),)
 			}
-			Error::GroupNotFound(path, group) => {
-				write!(f, "{}: Group {} not found", path.display(), group)
+			Error::GroupNotFound(group) => {
+				write!(f, "Group {} not found", group)
 			}
 			Error::ObjectFieldExists(path, id) => {
 				write!(f, "{}: Field {} exists", path.display(), id)
@@ -43,12 +44,20 @@ impl std::fmt::Display for Error {
 				write!(f, "{}: Field {} not found in prefab", path.display(), name)
 			}
 			Error::Io(err) => write!(f, "IO: {:?}", err),
-			Error::Yaml(err) => write!(
-				f,
-				"Wrong file format {:?}: {:?}",
-				err.location().map(|loc| (loc.line(), loc.column())),
-				err
-			),
+			Error::Yaml(err) => write_yaml_error(f, err),
+			Error::GroupParseError(err) => write_yaml_error(f, err),
+			Error::GroupFileNotFound() => {
+				write!(f, "File groups.yaml not found")
+			}
 		}
 	}
+}
+
+fn write_yaml_error(f: &mut Formatter, err: &serde_yaml::Error) -> std::fmt::Result {
+	write!(
+		f,
+		"Wrong file format {:?}: {:?}",
+		err.location().map(|loc| (loc.line(), loc.column())),
+		err
+	)
 }

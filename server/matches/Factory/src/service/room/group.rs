@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+
+use serde::Deserialize;
 
 use crate::proto::matches::relay::types as relay;
 use crate::service::room::error::Error;
@@ -7,37 +8,22 @@ use crate::service::room::Rule;
 
 pub type GroupAlias = String;
 
-#[derive(Default)]
-pub struct GroupResolver {
-	groups: HashMap<GroupAlias, (u32, u64)>,
+#[derive(Default, Debug, Deserialize)]
+pub struct Groups {
+	#[serde(flatten)]
+	groups: HashMap<String, u64>,
 }
 
-impl GroupResolver {
-	pub fn build(groups: HashMap<PathBuf, HashMap<GroupAlias, u64>>) -> (HashMap<PathBuf, Self>, Self) {
-		let mut last_id = 1_u32;
-		let mut global = HashMap::new();
-		let local: HashMap<_, _> = groups
-			.into_iter()
-			.map(|(path, raw)| {
-				let mut groups = HashMap::default();
-				for (name, mask) in raw {
-					let id = last_id;
-					last_id += 1;
-					groups.insert(name, (id, mask));
-				}
-				global.extend(groups.clone());
-				(path, GroupResolver { groups })
-			})
-			.collect();
-
-		(local, GroupResolver { groups: global })
+impl Groups {
+	pub fn load(self, content: impl AsRef<str>) -> Result<Self, Error> {
+		serde_yaml::from_str::<Groups>(content.as_ref()).map_err(Error::GroupParseError)
 	}
 
-	pub fn resolve_mask(&self, group: &str) -> Option<u64> {
-		self.groups.get(group).map(|(_, mask)| *mask)
+	pub(crate) fn get_mask(&self, alias: &str) -> Result<u64, Error> {
+		self.groups.get(alias).ok_or_else(|| Error::GroupNotFound(alias.to_string())).map(|g| *g)
 	}
 
-	pub fn resolve(&self, group: &str, rule: Rule, path: &Path) -> Result<relay::GroupsPermissionRule, Error> {
+	pub fn resolve(&self, group: &str, rule: Rule) -> Result<relay::GroupsPermissionRule, Error> {
 		let permission = match rule {
 			Rule::Deny => relay::PermissionLevel::Deny as i32,
 			Rule::ReadOnly => relay::PermissionLevel::Ro as i32,
@@ -47,66 +33,29 @@ impl GroupResolver {
 		self.groups
 			.get(group)
 			.copied()
-			.map(|(_, groups)| relay::GroupsPermissionRule { groups, permission })
-			.ok_or_else(|| Error::GroupNotFound(path.into(), group.into()))
+			.map(|groups| relay::GroupsPermissionRule { groups, permission })
+			.ok_or_else(|| Error::GroupNotFound(group.to_string()))
 	}
 }
 
 #[cfg(test)]
 #[test]
-fn resolver() {
-	struct Test<'a> {
-		path: PathBuf,
-		group: &'a str,
-		mask: u64,
-	}
+fn should_resolver() {
+	let mut groups = Groups::default();
+	groups.groups.insert("groupA".to_string(), 12345);
 
-	let a = Test {
-		path: "/dir/groups".into(),
-		group: "test",
-		mask: 12345,
-	};
-	let b = Test {
-		path: "/dir/xxxx".into(),
-		group: "test2",
-		mask: 4321,
-	};
+	let rule = groups.resolve("groupA", Rule::Deny).unwrap();
+	assert_eq!(rule.groups, 12345);
+	assert_eq!(rule.permission, relay::PermissionLevel::Deny as i32);
+}
 
-	let mut groups = HashMap::new();
-	groups.insert(a.path.clone(), {
-		let mut file = HashMap::default();
-		file.insert(a.group.into(), a.mask);
-		file
-	});
-	groups.insert(b.path.clone(), {
-		let mut file = HashMap::default();
-		file.insert(b.group.into(), b.mask);
-		file
-	});
-
-	let (locals, globals) = GroupResolver::build(groups);
-
-	// локальные группы
-	{
-		assert_eq!(locals[&a.path].resolve_mask(b.group), None);
-		assert!(locals[&a.path].resolve(b.group, Rule::Deny, Path::new("")).is_err());
-
-		assert_eq!(locals[&a.path].resolve_mask(a.group), Some(a.mask));
-		let rule = locals[&a.path].resolve(a.group, Rule::Deny, Path::new("")).unwrap();
-		assert_eq!(rule.groups, a.mask);
-		assert_eq!(rule.permission, relay::PermissionLevel::Deny as i32);
-	}
-
-	// глобальные группы
-	{
-		assert_eq!(globals.resolve_mask(a.group), Some(a.mask));
-		let rule = globals.resolve(a.group, Rule::Deny, Path::new("")).unwrap();
-		assert_eq!(rule.groups, a.mask);
-		assert_eq!(rule.permission, relay::PermissionLevel::Deny as i32);
-
-		assert_eq!(globals.resolve_mask(b.group), Some(b.mask));
-		let rule = globals.resolve(b.group, Rule::Deny, Path::new("")).unwrap();
-		assert_eq!(rule.groups, b.mask);
-		assert_eq!(rule.permission, relay::PermissionLevel::Deny as i32);
-	}
+#[cfg(test)]
+#[test]
+fn should_load() {
+	let content = include_str!("../../../example/groups.yaml");
+	let groups = Groups::default().load(content).unwrap();
+	assert_eq!(groups.get_mask("red").unwrap(), 1);
+	assert_eq!(groups.get_mask("blue").unwrap(), 2);
+	assert_eq!(groups.get_mask("bot").unwrap(), 4);
+	assert!(groups.get_mask("none").is_err());
 }

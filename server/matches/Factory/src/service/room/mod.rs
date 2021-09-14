@@ -5,11 +5,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use cheetah_microservice::tonic::codegen::http::Error;
 
 use crate::proto::matches::relay::types as relay;
 
-use self::group::{GroupAlias, GroupResolver};
+use self::group::{GroupAlias, Groups};
 use self::prefab::PrefabResolver;
 
 pub mod error;
@@ -26,11 +25,6 @@ pub enum Config {
 	Room(Room),
 	#[serde(rename = "prefab")]
 	Prefab(Prefab),
-	#[serde(rename = "groups")]
-	Groups {
-		#[serde(flatten)]
-		groups: HashMap<GroupAlias, u64>,
-	},
 }
 
 fn skip_path(path: &Path) -> bool {
@@ -41,9 +35,6 @@ fn skip_path(path: &Path) -> bool {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(deny_unknown_fields)]
 pub struct Room {
-	/// Путь до файла со всеми группами
-	#[serde(default, skip_serializing_if = "skip_path")]
-	pub groups: PathBuf,
 	/// Шаблоны для создания объектов
 	#[serde(default)]
 	pub prefabs: HashMap<PrefabAlias, PathBuf>,
@@ -55,9 +46,6 @@ pub struct Room {
 #[serde(deny_unknown_fields)]
 pub struct Prefab {
 	pub template: u32,
-	/// Путь до файла со всеми группами
-	#[serde(default, skip_serializing_if = "skip_path")]
-	pub groups: PathBuf,
 	/// Права доступа для всего объекта
 	#[serde(default, skip_serializing_if = "HashMap::is_empty")]
 	pub access: HashMap<GroupAlias, Rule>,
