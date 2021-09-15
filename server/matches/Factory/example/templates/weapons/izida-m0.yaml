@@ -1,7 +1,7 @@
 # пушка - изида
 id: 100
 # переопределение прав для конкретных полей (если в этом есть необходимость)
-access:
+permissions:
   - field: characteristic/damage
     groups:
       bot: deny

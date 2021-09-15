@@ -1,32 +1,32 @@
 # Список объектов комнаты
 # Для объекта - указываем префаб, группу объекта и значение полей (по-необходимости)
 objects:
-  - prefab: user
+  - template: user
     # id можно не указывать, но иногда это необходимо для ссылок
     id: 100
     group: red
-    fields:
+    values:
       - field: user/score
         value: 100
       - field: user/info
         value:
           name: alex
-  - prefab: weapons/izida
+  - template: weapons/izida
       group: red
-      fields:
+      values:
         - field: owner
           value: 100
-  - prefab: user
+  - template: user
     id: 200
     group: blue
-    fields:
+    values:
       - field: user/score
         value: 100
       - field: user/info
         value:
           name: peter
-  - prefab: weapons/izida
+  - template: weapons/izida
     group: blue
-    fields:
+    values:
       - field: owner
         value: 200
