@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
@@ -5,7 +6,7 @@ use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 
 use crate::service::configurations::error::Error;
-use crate::service::configurations::structures::{Field, FieldName, GroupName, Room, RoomName, Template, TemplateName};
+use crate::service::configurations::structures::{Field, FieldName, FieldType, GroupName, Room, RoomName, Template, TemplateName};
 
 pub mod error;
 pub mod structures;
@@ -28,12 +29,50 @@ impl Configurations {
 		let fields = Self::load_items::<_>(root.clone(), root.join("fields").as_path(), Path::new(""))?;
 		let templates = Self::load_items::<_>(root.clone(), root.join("templates").as_path(), Path::new(""))?;
 		let rooms = Self::load_items::<_>(root.clone(), root.join("rooms").as_path(), Path::new(""))?;
-		Result::Ok(Configurations {
+		Configurations {
 			groups,
 			fields,
 			templates,
 			rooms,
-		})
+		}
+		.validate()
+	}
+
+	fn validate(self) -> Result<Self, Error> {
+		self.validate_templates()?.validate_fields()
+	}
+
+	fn validate_fields(self) -> Result<Configurations, Error> {
+		let mut exist_fields: HashMap<(FieldType, u16), String> = HashMap::default();
+		for (name, field) in self.fields.iter() {
+			let key = (field.r#type.clone(), field.id);
+			if let Vacant(e) = exist_fields.entry(key.clone()) {
+				e.insert(name.clone());
+			} else {
+				return Err(Error::FieldWithSameIdAlreadyExists {
+					id: field.id,
+					exist: exist_fields.get(&key).unwrap().clone(),
+					current: name.clone(),
+				});
+			}
+		}
+		Result::Ok(self)
+	}
+
+	fn validate_templates(self) -> Result<Configurations, Error> {
+		let mut exist_templates: HashMap<u32, String> = HashMap::default();
+		for (name, template) in self.templates.iter() {
+			if let Vacant(e) = exist_templates.entry(template.id) {
+				e.insert(name.clone());
+			} else {
+				return Err(Error::TemplateWithSameIdAlreadyExists {
+					id: template.id,
+					exist: exist_templates.get(&template.id).unwrap().clone(),
+					current: name.clone(),
+				});
+			}
+		}
+		Result::Ok(self)
 	}
 
 	fn load_group(root: PathBuf) -> Result<HashMap<GroupName, u64>, Error> {
@@ -92,6 +131,7 @@ pub mod test {
 	use include_dir::{include_dir, Dir};
 	use rmpv::{Integer, Utf8String};
 
+	use crate::service::configurations::error::Error;
 	use crate::service::configurations::structures::{
 		Field, FieldType, FieldValue, Permission, PermissionField, Room, RoomObject, Template, TemplatePermissions,
 	};
@@ -232,11 +272,117 @@ pub mod test {
 		)
 	}
 
+	#[test]
+	pub fn validate_unique_template_id() {
+		let configurations = Configurations {
+			groups: Default::default(),
+			fields: Default::default(),
+			templates: vec![
+				(
+					"templateA".to_string(),
+					Template {
+						id: 100,
+						permissions: Default::default(),
+					},
+				),
+				(
+					"templateB".to_string(),
+					Template {
+						id: 100,
+						permissions: Default::default(),
+					},
+				),
+			]
+			.into_iter()
+			.collect(),
+			rooms: Default::default(),
+		};
+		let result = configurations.validate();
+		assert!(matches!(
+			result,
+			Result::Err(Error::TemplateWithSameIdAlreadyExists {
+				id,
+				exist,
+				current
+			}) if id==100
+			&& exist!=current
+			&& ["templateA", "templateB"].contains(&exist.as_str())
+			&& ["templateA", "templateB"].contains(&current.as_str())
+		));
+	}
+
+	#[test]
+	pub fn validate_unique_field_id() {
+		let configurations = Configurations {
+			groups: Default::default(),
+			fields: vec![
+				(
+					"fieldA".to_string(),
+					Field {
+						id: 100,
+						r#type: FieldType::Long,
+					},
+				),
+				(
+					"fieldB".to_string(),
+					Field {
+						id: 100,
+						r#type: FieldType::Long,
+					},
+				),
+			]
+			.into_iter()
+			.collect(),
+			templates: Default::default(),
+			rooms: Default::default(),
+		};
+		let result = configurations.validate();
+		assert!(matches!(
+			result,
+			Result::Err(Error::FieldWithSameIdAlreadyExists {
+				id,
+				exist,
+				current
+			}) if id==100
+			&& exist!=current
+			&& ["fieldA", "fieldB"].contains(&exist.as_str())
+			&& ["fieldA", "fieldB"].contains(&current.as_str())
+		));
+	}
+
+	#[test]
+	pub fn validate_unique_field_id_for_different_types() {
+		let configurations = Configurations {
+			groups: Default::default(),
+			fields: vec![
+				(
+					"fieldA".to_string(),
+					Field {
+						id: 100,
+						r#type: FieldType::Long,
+					},
+				),
+				(
+					"fieldB".to_string(),
+					Field {
+						id: 100,
+						r#type: FieldType::Struct,
+					},
+				),
+			]
+			.into_iter()
+			.collect(),
+			templates: Default::default(),
+			rooms: Default::default(),
+		};
+
+		assert!(configurations.validate().is_ok())
+	}
+
 	fn setup() -> Configurations {
 		let temp_dir = tempfile::tempdir().unwrap();
 		let path = temp_dir.into_path();
 		EXAMPLE_DIR.extract(path.clone()).unwrap();
-		let configuration = Configurations::load(path).unwrap();
-		configuration
+		Configurations::load(path).unwrap()
 	}
 }

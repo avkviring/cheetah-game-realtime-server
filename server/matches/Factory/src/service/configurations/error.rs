@@ -1,6 +1,8 @@
 use std::fmt::Formatter;
 use std::path::PathBuf;
 
+use crate::service::configurations::structures::{FieldName, TemplateName};
+
 pub enum Error {
 	Io(std::io::Error),
 	Yaml {
@@ -9,6 +11,16 @@ pub enum Error {
 		e: serde_yaml::Error,
 	},
 	GroupFileNotFound,
+	TemplateWithSameIdAlreadyExists {
+		id: u32,
+		exist: TemplateName,
+		current: TemplateName,
+	},
+	FieldWithSameIdAlreadyExists {
+		id: u16,
+		exist: FieldName,
+		current: FieldName,
+	},
 }
 
 impl std::error::Error for Error {}
@@ -33,6 +45,12 @@ impl std::fmt::Display for Error {
 			Error::Yaml { global_root, file, e } => {
 				let local_file = file.clone().strip_prefix(global_root.as_path()).unwrap().to_path_buf();
 				write_yaml_error(f, &local_file, e)
+			}
+			Error::TemplateWithSameIdAlreadyExists { id, exist, current } => {
+				write!(f, "Templates {} and {} has same id {} ", exist, current, id)
+			}
+			Error::FieldWithSameIdAlreadyExists { id, exist, current } => {
+				write!(f, "Fields {} and {} has same id {} ", exist, current, id)
 			}
 		}
 	}

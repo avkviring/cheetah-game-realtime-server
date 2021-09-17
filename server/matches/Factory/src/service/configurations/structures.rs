@@ -83,7 +83,7 @@ pub struct FieldValue {
 	pub value: rmpv::Value,
 }
 
-#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Clone, Eq, PartialEq, Hash)]
 #[serde(deny_unknown_fields, rename_all = "lowercase")]
 pub enum FieldType {
 	Long,
