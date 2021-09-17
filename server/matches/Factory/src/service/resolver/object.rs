@@ -30,30 +30,30 @@ pub fn create_relay_object(
 	};
 	for value in &room_object.values {
 		let field = name_to_field
-			.get(&value.name)
-			.ok_or_else(|| Error::FieldNotExistForObject(room_name.clone(), value.name.clone()))?;
+			.get(&value.field)
+			.ok_or_else(|| Error::FieldNotExistForObject(room_name.clone(), value.field.clone()))?;
 		match field.r#type {
 			FieldType::Long => {
 				let value = value
 					.value
 					.as_i64()
-					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.name.clone(), value.value.to_string()))?;
+					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
 				relay_fields.longs.insert(field.id as u32, value);
 			}
 			FieldType::Double => {
 				let value = value
 					.value
 					.as_f64()
-					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.name.clone(), value.value.to_string()))?;
+					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
 				relay_fields.floats.insert(field.id as u32, value);
 			}
 			FieldType::Struct => {
 				let value = rmp_serde::to_vec(&value.value)
-					.map_err(|_| Error::WrongFormatForFieldValue(room_name.clone(), value.name.clone(), value.value.to_string()))?;
+					.map_err(|_| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
 				relay_fields.structures.insert(field.id as u32, value);
 			}
 			FieldType::Event => {
-				Result::Err(Error::EventValueNotSupported(room_name.clone(), value.name.clone()))?;
+				Result::Err(Error::EventValueNotSupported(room_name.clone(), value.field.clone()))?;
 			}
 		}
 	}

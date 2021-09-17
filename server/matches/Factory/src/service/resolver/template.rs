@@ -46,8 +46,8 @@ fn create_permissions_field(
 		.collect::<Result<_, Error>>()?;
 
 	let field = name_to_field
-		.get(&permission_field.name)
-		.ok_or_else(|| Error::FieldNotExistsForTemplate(template_name.clone(), permission_field.name.clone()))?;
+		.get(&permission_field.field)
+		.ok_or_else(|| Error::FieldNotExistsForTemplate(template_name.clone(), permission_field.field.clone()))?;
 
 	Result::Ok(relay::PermissionField {
 		id: field.id as u32,
