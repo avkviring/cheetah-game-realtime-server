@@ -2,6 +2,7 @@
 id: 100
 # переопределение прав для конкретных полей (если в этом есть необходимость)
 permissions:
-  - field: characteristic/damage
-    groups:
-      bot: deny
+  fields:
+    - field: characteristic/damage
+      groups:
+        bot: deny

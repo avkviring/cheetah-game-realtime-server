@@ -4,11 +4,9 @@ id: 1
 permissions:
   # права по-умолчанию (перекрывают права полей)
   groups:
-    allies: ro
     bot: deny
-    enemies: deny
   fields:
     - field: user/score
-      access:
+      groups:
         # права для группы (высший приоритет)
         bot: rw

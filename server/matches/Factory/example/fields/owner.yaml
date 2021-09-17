@@ -1,6 +1,0 @@
-# имя и пол пользователя
-id: 5
-type: long
-permissions:
-  groups:
-    bot: deny

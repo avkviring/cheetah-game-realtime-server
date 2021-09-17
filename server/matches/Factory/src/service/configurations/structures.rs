@@ -8,30 +8,30 @@ pub type RoomName = String;
 pub type GroupName = String;
 
 /// Описание комнаты
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Clone, Default, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Room {
 	/// Объекты комнаты
 	pub objects: Vec<RoomObject>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Field {
 	pub id: u16,
 	pub r#type: FieldType,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Template {
 	pub id: u32,
-
 	#[serde(default)]
 	pub permissions: TemplatePermissions,
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Clone, Default, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct TemplatePermissions {
 	/// Права доступа для всего объекта
 	#[serde(default)]
@@ -41,14 +41,15 @@ pub struct TemplatePermissions {
 	pub fields: Vec<PermissionField>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct PermissionField {
-	pub name: FieldName,
+	pub field: FieldName,
 	#[serde(default)]
 	pub groups: HashMap<GroupName, Permission>,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Clone, Copy, Eq, PartialEq)]
 pub enum Permission {
 	#[serde(rename = "deny")]
 	Deny,
@@ -59,7 +60,7 @@ pub enum Permission {
 }
 
 /// Описание объекта в комнате
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Deserialize, Clone, Default, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct RoomObject {
 	/// опциональный идентификатор объекта
@@ -75,13 +76,14 @@ pub struct RoomObject {
 	pub values: Vec<FieldValue>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct FieldValue {
-	pub name: FieldName,
+	pub field: FieldName,
 	pub value: rmpv::Value,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
 #[serde(deny_unknown_fields, rename_all = "lowercase")]
 pub enum FieldType {
 	Long,

@@ -11,22 +11,8 @@ objects:
       - field: user/info
         value:
           name: alex
-  - template: weapons/izida
-      group: red
-      values:
-        - field: owner
-          value: 100
-  - template: user
-    id: 200
+  - template: weapons/turret
     group: blue
     values:
-      - field: user/score
-        value: 100
-      - field: user/info
-        value:
-          name: peter
-  - template: weapons/izida
-    group: blue
-    values:
-      - field: owner
+      - field: characteristic/damage
         value: 200
