@@ -133,11 +133,11 @@ pub mod test {
 
 	use crate::service::configurations::error::Error;
 	use crate::service::configurations::structures::{
-		Field, FieldType, FieldValue, Permission, PermissionField, Room, RoomObject, Template, TemplatePermissions,
+		Field, FieldType, FieldValue, PermissionField, PermissionLevel, Room, RoomObject, Template, TemplatePermissions,
 	};
 	use crate::service::configurations::Configurations;
 
-	const EXAMPLE_DIR: Dir = include_dir!("example/");
+	pub const EXAMPLE_DIR: Dir = include_dir!("example/");
 
 	#[test]
 	pub fn should_load_groups() {
@@ -204,7 +204,7 @@ pub mod test {
 							groups: Default::default(),
 							fields: vec![PermissionField {
 								field: "characteristic/damage".to_string(),
-								groups: vec![("bot".to_string(), Permission::Deny)].into_iter().collect()
+								groups: vec![("bot".to_string(), PermissionLevel::Deny)].into_iter().collect()
 							}]
 						}
 					}
@@ -214,10 +214,10 @@ pub mod test {
 					Template {
 						id: 1,
 						permissions: TemplatePermissions {
-							groups: vec![("bot".to_string(), Permission::Deny)].into_iter().collect(),
+							groups: vec![("bot".to_string(), PermissionLevel::Deny)].into_iter().collect(),
 							fields: vec![PermissionField {
 								field: "user/score".to_string(),
-								groups: vec![("bot".to_string(), Permission::ReadWrite)].into_iter().collect(),
+								groups: vec![("bot".to_string(), PermissionLevel::ReadWrite)].into_iter().collect(),
 							}]
 						}
 					}

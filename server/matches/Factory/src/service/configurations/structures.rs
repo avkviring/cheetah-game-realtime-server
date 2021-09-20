@@ -8,21 +8,21 @@ pub type RoomName = String;
 pub type GroupName = String;
 
 /// Описание комнаты
-#[derive(Debug, Deserialize, Clone, Default, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Room {
 	/// Объекты комнаты
 	pub objects: Vec<RoomObject>,
 }
 
-#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Field {
 	pub id: u16,
 	pub r#type: FieldType,
 }
 
-#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Template {
 	pub id: u32,
@@ -30,27 +30,27 @@ pub struct Template {
 	pub permissions: TemplatePermissions,
 }
 
-#[derive(Debug, Deserialize, Clone, Default, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Default, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct TemplatePermissions {
 	/// Права доступа для всего объекта
 	#[serde(default)]
-	pub groups: HashMap<GroupName, Permission>,
+	pub groups: HashMap<GroupName, PermissionLevel>,
 	/// Права доступа и настройки по умолчанию для объектов
 	#[serde(default)]
 	pub fields: Vec<PermissionField>,
 }
 
-#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct PermissionField {
 	pub field: FieldName,
 	#[serde(default)]
-	pub groups: HashMap<GroupName, Permission>,
+	pub groups: HashMap<GroupName, PermissionLevel>,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy, Eq, PartialEq)]
-pub enum Permission {
+#[derive(Debug, Deserialize, Eq, PartialEq)]
+pub enum PermissionLevel {
 	#[serde(rename = "deny")]
 	Deny,
 	#[serde(rename = "ro")]
@@ -60,7 +60,7 @@ pub enum Permission {
 }
 
 /// Описание объекта в комнате
-#[derive(Debug, Deserialize, Clone, Default, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct RoomObject {
 	/// опциональный идентификатор объекта
@@ -76,7 +76,7 @@ pub struct RoomObject {
 	pub values: Vec<FieldValue>,
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct FieldValue {
 	pub field: FieldName,

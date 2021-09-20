@@ -56,14 +56,3 @@ impl TryFrom<&Configurations> for HashMap<String, relay::RoomTemplate> {
 			.collect()
 	}
 }
-
-impl From<&FieldType> for relay::FieldType {
-	fn from(field_type: &FieldType) -> Self {
-		match field_type {
-			FieldType::Long => relay::FieldType::Long,
-			FieldType::Double => relay::FieldType::Float,
-			FieldType::Struct => relay::FieldType::Structure,
-			FieldType::Event => relay::FieldType::Event,
-		}
-	}
-}

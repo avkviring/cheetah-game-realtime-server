@@ -7,6 +7,9 @@ edition = "2018"
 name = "cheetah-matches-factory"
 path = "src/bin/service.rs"
 
+[lib]
+doctest = false
+
 [dependencies]
 tokio = { version = "1.10.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 log = "0.4"

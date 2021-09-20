@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::proto::matches::relay::types as relay;
-use crate::service::configurations::structures::{Field, FieldName, GroupName, Permission, PermissionField, Template, TemplateName};
+use crate::service::configurations::structures::{Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template, TemplateName};
 use crate::service::resolver::error::Error;
 
 ///
@@ -60,95 +60,238 @@ fn create_permission_rule(
 	template_name: &TemplateName,
 	name_to_groups: &HashMap<GroupName, u64>,
 	group: &GroupName,
-	permission: &Permission,
+	permission: &PermissionLevel,
 ) -> Result<relay::GroupsPermissionRule, Error> {
-	let relay_permission = match permission {
-		Permission::Deny => relay::PermissionLevel::Deny as i32,
-		Permission::ReadOnly => relay::PermissionLevel::Ro as i32,
-		Permission::ReadWrite => relay::PermissionLevel::Rw as i32,
-	};
+	let relay_permission = relay::PermissionLevel::from(permission);
 
 	name_to_groups
 		.get(group)
 		.copied()
 		.map(|groups| relay::GroupsPermissionRule {
 			groups,
-			permission: relay_permission,
+			permission: relay_permission as i32,
 		})
 		.ok_or_else(|| Error::GroupNotFoundInTemplate(template_name.clone(), group.clone()))
 }
 
+impl From<&PermissionLevel> for relay::PermissionLevel {
+	fn from(permission: &PermissionLevel) -> Self {
+		match permission {
+			PermissionLevel::Deny => relay::PermissionLevel::Deny,
+			PermissionLevel::ReadOnly => relay::PermissionLevel::Ro,
+			PermissionLevel::ReadWrite => relay::PermissionLevel::Rw,
+		}
+	}
+}
+
+impl From<&FieldType> for relay::FieldType {
+	fn from(field_type: &FieldType) -> Self {
+		match field_type {
+			FieldType::Long => relay::FieldType::Long,
+			FieldType::Double => relay::FieldType::Float,
+			FieldType::Struct => relay::FieldType::Structure,
+			FieldType::Event => relay::FieldType::Event,
+		}
+	}
+}
+
 #[cfg(test)]
-#[test]
-fn resolver() {
-	todo!()
-	// use super::{PrefabField, Rule};
-	//
-	// let groups = {
-	// 	let mut groups = HashMap::new();
-	// 	groups.insert(Path::new("/dir/groups").into(), {
-	// 		let mut file = HashMap::default();
-	// 		file.insert("test".into(), 12345);
-	// 		file
-	// 	});
-	// 	Groups::build(groups).1
-	// };
-	//
-	// let mut access = HashMap::default();
-	// access.insert("test".into(), Rule::Deny);
-	//
-	// let prefab = Prefab {
-	// 	template: 4444,
-	// 	groups: "/dir/groups".into(),
-	// 	access: access.clone(),
-	// 	fields: vec![
-	// 		PrefabField {
-	// 			name: "a".to_string(),
-	// 			id: 1,
-	// 			access: access.clone(),
-	// 			field: OptionValue::Long { value: Some(7) },
-	// 		},
-	// 		PrefabField {
-	// 			name: "b".to_string(),
-	// 			id: 2,
-	// 			access: access.clone(),
-	// 			field: OptionValue::Long { value: None },
-	// 		},
-	// 		PrefabField {
-	// 			name: "default".to_string(),
-	// 			id: 3,
-	// 			access: access.clone(),
-	// 			field: OptionValue::Long { value: Some(22222) },
-	// 		},
-	// 	],
-	// };
-	//
-	// let resolver = PrefabResolver::new(prefab, &groups, Path::new("")).unwrap();
-	//
-	// assert_eq!(resolver.template_id(), 4444);
-	//
-	// {
-	// 	let base = vec![
-	// 		ObjectField {
-	// 			name: "a".into(),
-	// 			value: FieldValue::Long { value: 12345 },
-	// 		},
-	// 		ObjectField {
-	// 			name: "b".into(),
-	// 			value: FieldValue::Long { value: 77777 },
-	// 		},
-	// 	];
-	//
-	// 	let extend = vec![ExtendField {
-	// 		id: 4321,
-	// 		value: FieldValue::Long { value: 99999 },
-	// 	}];
-	//
-	// 	let obj = resolver.resolve(base, extend, Path::new("")).unwrap();
-	//
-	// 	assert_eq!(obj.longs[&1], 12345); // перезаписано
-	// 	assert_eq!(obj.longs[&2], 77777); // установлено значение
-	// 	assert_eq!(obj.longs[&3], 22222); // взято из префаба
-	// 	assert_eq!(obj.longs[&4321], 99999); // добавлено из объекта
-	// }
+pub mod test {
+	use crate::proto::matches::relay::types as relay;
+	use crate::service::configurations::structures::{Field, FieldType, PermissionField, PermissionLevel, Template, TemplatePermissions};
+	use crate::service::resolver::error::Error;
+	use crate::service::resolver::template::{create_permission_rule, create_permissions_field, create_template_permission};
+
+	#[test]
+	fn should_create_template_permission() {
+		let result = create_template_permission(
+			&"template".to_string(),
+			&Template {
+				id: 155,
+				permissions: TemplatePermissions {
+					groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+					fields: vec![PermissionField {
+						field: "score".to_string(),
+						groups: vec![("groupA".to_string(), PermissionLevel::ReadWrite)].into_iter().collect(),
+					}],
+				},
+			},
+			&vec![("groupA".to_string(), 5)].into_iter().collect(),
+			&vec![(
+				"score".to_string(),
+				Field {
+					id: 77,
+					r#type: FieldType::Long,
+				},
+			)]
+			.into_iter()
+			.collect(),
+		)
+		.unwrap();
+
+		assert_eq!(result.template, 155);
+		assert_eq!(
+			result.rules,
+			vec![relay::GroupsPermissionRule {
+				groups: 5,
+				permission: relay::PermissionLevel::Ro as i32
+			}]
+		);
+		assert_eq!(
+			result.fields,
+			vec![relay::PermissionField {
+				id: 77,
+				r#type: relay::FieldType::Long as i32,
+				rules: vec![relay::GroupsPermissionRule {
+					groups: 5,
+					permission: relay::PermissionLevel::Rw as i32
+				}]
+			}]
+		)
+	}
+
+	#[test]
+	fn should_error_group_not_found_when_create_template_permission() {
+		let result = create_template_permission(
+			&"template".to_string(),
+			&Template {
+				id: 155,
+				permissions: TemplatePermissions {
+					groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+					fields: Default::default(),
+				},
+			},
+			&Default::default(),
+			&Default::default(),
+		);
+		assert!(matches!(result, 
+			Result::Err(Error::GroupNotFoundInTemplate(template_name,group_name )) 
+			if template_name==*"template" && group_name==*"groupA"));
+	}
+
+	#[test]
+	fn should_error_field_not_found_when_create_template_permission() {
+		let result = create_template_permission(
+			&"template".to_string(),
+			&Template {
+				id: 155,
+				permissions: TemplatePermissions {
+					groups: Default::default(),
+					fields: vec![PermissionField {
+						field: "score".to_string(),
+						groups: Default::default(),
+					}],
+				},
+			},
+			&Default::default(),
+			&Default::default(),
+		);
+		assert!(matches!(result, 
+			Result::Err(Error::FieldNotExistsForTemplate(template_name,group_name ))
+			if template_name==*"template" && group_name==*"score"));
+	}
+
+	#[test]
+	fn should_convert_field_type() {
+		assert_eq!(relay::FieldType::from(&FieldType::Long), relay::FieldType::Long);
+		assert_eq!(relay::FieldType::from(&FieldType::Struct), relay::FieldType::Structure);
+		assert_eq!(relay::FieldType::from(&FieldType::Double), relay::FieldType::Float);
+		assert_eq!(relay::FieldType::from(&FieldType::Event), relay::FieldType::Event);
+	}
+
+	#[test]
+	fn should_convert_permission_level() {
+		assert_eq!(relay::PermissionLevel::from(&PermissionLevel::ReadOnly), relay::PermissionLevel::Ro);
+		assert_eq!(relay::PermissionLevel::from(&PermissionLevel::ReadWrite), relay::PermissionLevel::Rw);
+		assert_eq!(relay::PermissionLevel::from(&PermissionLevel::Deny), relay::PermissionLevel::Deny);
+	}
+
+	#[test]
+	pub fn should_create_permissions_field() {
+		let result = create_permissions_field(
+			&"template".to_string(),
+			&vec![("groupA".to_string(), 64)].into_iter().collect(),
+			&vec![(
+				"score".to_string(),
+				Field {
+					id: 128,
+					r#type: FieldType::Long,
+				},
+			)]
+			.into_iter()
+			.collect(),
+			&PermissionField {
+				field: "score".to_string(),
+				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+			},
+		);
+		let result = result.unwrap();
+		assert_eq!(result.id, 128);
+		assert_eq!(result.r#type, relay::FieldType::Long as i32);
+		assert_eq!(
+			result.rules,
+			vec![relay::GroupsPermissionRule {
+				groups: 64,
+				permission: relay::PermissionLevel::Ro as i32
+			}]
+		)
+	}
+
+	#[test]
+	pub fn should_error_field_not_found_when_create_permissions_field() {
+		let result = create_permissions_field(
+			&"template".to_string(),
+			&vec![("groupA".to_string(), 64)].into_iter().collect(),
+			&Default::default(),
+			&PermissionField {
+				field: "score".to_string(),
+				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+			},
+		);
+		assert!(matches!(result,
+			Result::Err(Error::FieldNotExistsForTemplate(template_name,field_name))
+			if template_name=="template" && field_name=="score"));
+	}
+
+	#[test]
+	pub fn should_error_group_not_found_when_create_permissions_field() {
+		let result = create_permissions_field(
+			&"template".to_string(),
+			&Default::default(),
+			&Default::default(),
+			&PermissionField {
+				field: "score".to_string(),
+				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+			},
+		);
+		assert!(matches!(result,
+			Result::Err(Error::GroupNotFoundInTemplate(template_name,group_name))
+			if template_name=="template" && group_name=="groupA"));
+	}
+
+	#[test]
+	pub fn should_create_permission_rule() {
+		let result = create_permission_rule(
+			&"template".to_string(),
+			&vec![("group".to_string(), 64)].into_iter().collect(),
+			&"group".to_string(),
+			&PermissionLevel::ReadWrite,
+		);
+
+		let result = result.unwrap();
+		assert_eq!(result.groups, 64);
+		assert_eq!(result.permission, relay::PermissionLevel::Rw as i32)
+	}
+	#[test]
+	pub fn should_group_not_found_when_create_permission_rule() {
+		let result = create_permission_rule(
+			&"template".to_string(),
+			&Default::default(),
+			&"group".to_string(),
+			&PermissionLevel::ReadOnly,
+		);
+		assert!(matches!(result,
+			Result::Err(Error::GroupNotFoundInTemplate(template_name,group_name))
+				if template_name=="template" && group_name=="group"));
+	}
 }

@@ -81,58 +81,47 @@ pub mod test {
 
 	#[test]
 	pub fn should_create_relay_object() {
-		let result = create_relay_object(
-			&"room".to_string(),
-			&RoomObject {
-				id: 100,
-				template: "template".to_string(),
-				group: "red".to_string(),
-				values: vec![
-					FieldValue {
-						field: "score".to_string(),
-						value: rmpv::Value::Integer(rmpv::Integer::from(100)),
-					},
-					FieldValue {
-						field: "healing".to_string(),
-						value: rmpv::Value::F64(3.1),
-					},
-					FieldValue {
-						field: "profile".to_string(),
-						value: rmpv::Value::Map(vec![(
-							rmpv::Value::String(Utf8String::from("f")),
-							rmpv::Value::String(Utf8String::from("a")),
-						)]),
-					},
-				],
-			},
-			&setup_templates(),
-			&setup_groups(),
-			&vec![
+		let result = setup(
+			vec![
+				FieldValue {
+					field: "score".to_string(),
+					value: rmpv::Value::Integer(rmpv::Integer::from(100)),
+				},
+				FieldValue {
+					field: "healing".to_string(),
+					value: rmpv::Value::F64(3.1),
+				},
+				FieldValue {
+					field: "profile".to_string(),
+					value: rmpv::Value::Map(vec![(
+						rmpv::Value::String(Utf8String::from("f")),
+						rmpv::Value::String(Utf8String::from("a")),
+					)]),
+				},
+			],
+			vec![
 				(
-					"score".to_string(),
+					"score",
 					Field {
 						id: 55,
 						r#type: FieldType::Long,
 					},
 				),
 				(
-					"healing".to_string(),
+					"healing",
 					Field {
 						id: 57,
 						r#type: FieldType::Double,
 					},
 				),
 				(
-					"profile".to_string(),
+					"profile",
 					Field {
 						id: 59,
 						r#type: FieldType::Struct,
 					},
 				),
-			]
-			.into_iter()
-			.collect(),
-			0,
+			],
 		);
 		let object = result.unwrap();
 
@@ -147,6 +136,76 @@ pub mod test {
 				structures: vec![(59, vec![129, 161, 102, 161, 97])].into_iter().collect()
 			}
 		);
+	}
+
+	#[test]
+	pub fn should_error_wrong_format_for_long_when_create_relay_object() {
+		let result = setup(
+			vec![FieldValue {
+				field: "score".to_string(),
+				value: rmpv::Value::F64(3.1),
+			}],
+			vec![(
+				"score",
+				Field {
+					id: 55,
+					r#type: FieldType::Long,
+				},
+			)],
+		);
+		assert!(matches!(
+			result,
+			Result::Err(Error::WrongFormatForFieldValue(room_name, field_name, value))
+			if room_name==*"room" && field_name==*"score" && value==*"3.1"
+		))
+	}
+
+	#[test]
+	pub fn should_error_for_event_when_create_relay_object() {
+		let result = setup(
+			vec![FieldValue {
+				field: "score".to_string(),
+				value: rmpv::Value::Nil,
+			}],
+			vec![(
+				"score",
+				Field {
+					id: 0,
+					r#type: FieldType::Event,
+				},
+			)],
+		);
+		assert!(matches!(
+			result,
+			Result::Err(Error::EventValueNotSupported(room_name, field_name))
+			if room_name==*"room" && field_name==*"score"
+		))
+	}
+
+	#[test]
+	pub fn should_create_relay_object_when_float_set_as_int() {
+		let result = setup(
+			vec![FieldValue {
+				field: "score".to_string(),
+				value: rmpv::Value::Integer(rmpv::Integer::from(123)),
+			}],
+			vec![(
+				"score",
+				Field {
+					id: 55,
+					r#type: FieldType::Double,
+				},
+			)],
+		);
+		let result = result.unwrap();
+		assert_eq!(
+			result.fields.unwrap(),
+			relay::GameObjectFieldsTemplate {
+				longs: Default::default(),
+				floats: vec![(55, 123.0)].into_iter().collect(),
+				structures: Default::default()
+			}
+		)
 	}
 
 	#[test]
@@ -170,21 +229,12 @@ pub mod test {
 
 	#[test]
 	pub fn should_error_field_not_found() {
-		let result = create_relay_object(
-			&"room".to_string(),
-			&RoomObject {
-				id: 100,
-				template: "template".to_string(),
-				group: "red".to_string(),
-				values: vec![FieldValue {
-					field: "score".to_string(),
-					value: rmpv::Value::Integer(rmpv::Integer::from(100)),
-				}],
-			},
-			&setup_templates(),
-			&setup_groups(),
-			&Default::default(),
-			0,
+		let result = setup(
+			vec![FieldValue {
+				field: "score".to_string(),
+				value: rmpv::Value::Integer(rmpv::Integer::from(100)),
+			}],
+			vec![],
 		);
 		assert!(matches!(
 				result,
@@ -234,6 +284,22 @@ pub mod test {
 			Result::Err(Error::ObjectGroupNotFound(room_name, group_name))
 			if room_name=="room" && group_name=="red"
 		));
+	}
+
+	fn setup(field_values: Vec<FieldValue>, fields: Vec<(&str, Field)>) -> Result<relay::GameObjectTemplate, Error> {
+		create_relay_object(
+			&"room".to_string(),
+			&RoomObject {
+				id: 100,
+				template: "template".to_string(),
+				group: "red".to_string(),
+				values: field_values,
+			},
+			&setup_templates(),
+			&setup_groups(),
+			&fields.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
+			0,
+		)
 	}
 
 	fn setup_groups() -> HashMap<GroupName, u64> {
