@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 
 use crate::proto::matches::relay::types as relay;
-use crate::service::configurations::structures::{FieldType, Room};
+use crate::service::configurations::structures::Room;
 use crate::service::configurations::Configurations;
 use crate::service::resolver::error::Error;
 use crate::service::resolver::object::create_relay_object;

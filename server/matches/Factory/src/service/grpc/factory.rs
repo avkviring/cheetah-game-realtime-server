@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use cheetah_microservice::tonic::{Request, Response, Status};
 
 use crate::proto::matches::factory::internal as factory;
@@ -43,7 +41,6 @@ impl factory::factory_server::Factory for FactoryService {
 mod tests {
 	use std::path::PathBuf;
 
-	use tempfile::TempDir;
 	use tokio::net::TcpListener;
 	use tonic::transport::{Server, Uri};
 	use tonic::{Request, Response, Status};
