@@ -131,6 +131,7 @@ jobs:
       - name: Deploy Release
         run: |
           cd hosting/charts/
+          tar -czf Platform/charts/matches-factory/rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
           find . -name Platform/values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.sha }}/' {}
           helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
             --namespace=${{ steps.vars.outputs.short_ref }} \

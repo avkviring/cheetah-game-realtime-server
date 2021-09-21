@@ -24,7 +24,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: TEMPLATES_PATH
-              value: /var/lib/room-templates/
+              value: /tmp/config/
             - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST
               value: "$(CHEETAH_MATCHES_STUB_REGISTRY_INTERNAL_SERVICE_HOST)"
             - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_PORT
@@ -33,6 +33,10 @@ spec:
             - mountPath: /var/lib/room-templates/
               readOnly: true
               name: room-templates
+          command:
+            - 'sh'
+            - '-c'
+            - 'mkdir -p /tmp/config && tar -xzf /var/lib/room-templates/configs.tgz -C /tmp/config && /service'
       volumes:
         - name: room-templates
           configMap:
