@@ -29,7 +29,7 @@ namespace Tests
             yield return Enumerators.Await(loginOrRegisterTask);
 
             var createPlayerResult = loginOrRegisterTask.Result;
-            var scheduleUserToMatchTask = MatchmakingScheduler.ScheduleUserToMatch(createPlayerResult.Player, "/gubaha", new UserTemplate());
+            var scheduleUserToMatchTask = MatchmakingScheduler.ScheduleUserToMatch(createPlayerResult.Player, "gubaha", new UserTemplate());
             yield return Enumerators.Await(scheduleUserToMatchTask);
 
             var matchmakingResult = scheduleUserToMatchTask.Result;
