@@ -22,6 +22,21 @@ jobs:
           key: server-unit-test-${{ github.sha }}
           restore-keys: |
             server-unit-test-
-      - run: |
-          cd server
-          cargo test
+      - name: Install Rust
+        run: rustup toolchain install nightly --component llvm-tools-preview
+      - name: Install rustfmt
+        run: rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
+      - name: Install cargo-llvm-cov
+        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
+      - name: Generate code coverage
+        run: cd server/ && cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: server/lcov.info
+          flags: unittests
+          name: rust-coverage
+          fail_ci_if_error: true
+          verbose: true
+
