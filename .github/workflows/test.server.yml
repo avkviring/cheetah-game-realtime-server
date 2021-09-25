@@ -20,13 +20,15 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             server/target
-          key: server-unit-test-${{ github.sha }}
+          key: server-unit-rust-test-${{ github.sha }}
           restore-keys: |
-            server-unit-test-
-      - name: Install Rust
-        run: rustup toolchain install nightly --component llvm-tools-preview
-      - name: Install rustfmt
-        run: rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
+            server-unit-rust-test-
+      - name: Install minimal nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt, llvm-tools-preview
       - name: Install cargo-llvm-cov
         run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
       - name: Generate code coverage
