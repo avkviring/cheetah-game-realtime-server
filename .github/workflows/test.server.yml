@@ -8,6 +8,7 @@ on:
       - lain-dono
       - kviring
       - dependabot
+      - master
 jobs:
   server-unit-test:
     runs-on: ubuntu-latest
