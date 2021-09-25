@@ -10,6 +10,7 @@ use log::LevelFilter;
 use stderrlog::Timestamp;
 use tonic::transport::Server;
 
+use cheetah_matches_relay::agones::run_agones_cycle;
 use cheetah_matches_relay::grpc::RelayGRPCService;
 use cheetah_matches_relay::room::debug::tracer::CommandTracer;
 use cheetah_matches_relay::server::rest::run_rest_server;
@@ -18,13 +19,15 @@ use cheetah_matches_relay::server::RelayServer;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	println!("±± cheetah game relay component ±±");
+
 	let log_level = std::env::var("LOG_LEVEL").ok();
 	configure_logger(log_level);
 
 	let (halt_signal, relay_server) = create_relay_server();
 	let grpc_await = create_grpc_server(relay_server.clone());
-	let rest_await = run_rest_server(relay_server);
-	futures::join!(grpc_await, rest_await);
+	let rest_await = run_rest_server(relay_server.clone());
+	let agones = run_agones_cycle(halt_signal.clone(), relay_server.clone());
+	futures::join!(grpc_await, rest_await, agones);
 	halt_signal.store(true, Ordering::Relaxed);
 	Result::Ok(())
 }

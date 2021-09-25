@@ -24,6 +24,7 @@ pub struct RelayServer {
 	handler: Option<JoinHandle<()>>,
 	sender: Sender<Request>,
 	halt_signal: Arc<AtomicBool>,
+	pub created_room_counter: usize,
 }
 
 enum Request {
@@ -72,6 +73,7 @@ impl RelayServer {
 			handler: Option::Some(handler),
 			sender,
 			halt_signal: cloned_halt_signal,
+			created_room_counter: 0,
 		}
 	}
 
@@ -82,6 +84,7 @@ impl RelayServer {
 	pub fn register_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(Request::RegisterRoom(template, sender)).unwrap();
+		self.created_room_counter += 1;
 		match receiver.recv_timeout(Duration::from_millis(100)) {
 			Ok(room_id) => {
 				log::info!("[server] create room({:?})", room_id);
@@ -220,5 +223,23 @@ impl ServerThread {
 			self.avg_duration = (self.avg_duration + duration) / 2;
 		}
 		self.max_duration = max(self.max_duration, duration);
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use std::net::UdpSocket;
+
+	use cheetah_matches_relay_common::network::bind_to_free_socket;
+
+	use crate::room::debug::tracer::CommandTracer;
+	use crate::room::template::config::RoomTemplate;
+	use crate::server::RelayServer;
+
+	#[test]
+	fn should_increment_created_room_count() {
+		let mut server = RelayServer::new(bind_to_free_socket().unwrap().0, CommandTracer::new_with_allow_all());
+		server.register_room(RoomTemplate::default()).unwrap();
+		assert_eq!(server.created_room_counter, 1);
 	}
 }
