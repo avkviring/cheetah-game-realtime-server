@@ -1,7 +1,11 @@
 Каталог архитектурных решений (ADR)
 
+### Правила наименования
+
+NNNN-short-description.md
+
 ### Ссылки
-- 
-- https://adr.github.io
-- https://habr.com/ru/company/dododev/blog/578052/
+
+- [Основной сайт](https://adr.github.io)
+- [Статья на хабре](https://habr.com/ru/company/dododev/blog/578052/)
 
