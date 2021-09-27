@@ -80,7 +80,6 @@ enum PermissionLevel {
 }
 
 message UserTemplate {
-  uint32 id = 1;
   uint64 groups = 3;
   repeated GameObjectTemplate objects = 4;
 }

@@ -20,3 +20,9 @@ spec:
         - name: {{ .Chart.Name }}
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
           imagePullPolicy: Always
+          env:
+            - name: "JWT_PUBLIC_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: jwt
+                  key: public

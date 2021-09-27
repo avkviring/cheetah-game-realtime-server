@@ -9,10 +9,3 @@ docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/matches/Matchmak
   --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.matchmaking/Runtime/GRPC/ \
   --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.matchmaking/Runtime/GRPC/ \
   matches.matchmaking.external.proto
-
-docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/matches/Relay akviring/protoc:latest \
-  protoc \
-  --proto_path=. \
-  --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.matchmaking/Runtime/GRPC/ \
-  matches.relay.types.proto

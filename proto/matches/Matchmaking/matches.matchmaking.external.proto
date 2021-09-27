@@ -2,8 +2,6 @@ syntax = "proto3";
 package cheetah.matches.matchmaking.external;
 option csharp_namespace = "Cheetah.Matches.Matchmaking.GRPC";
 
-import public "matches.relay.types.proto";
-
 service Matchmaking {
   /**
     Создать билет на вход в матч для пользователя
@@ -12,7 +10,7 @@ service Matchmaking {
 }
 
 message TicketRequest {
-  cheetah.matches.relay.types.UserTemplate user = 1;
+  uint64 user_groups = 1;
   string match_template = 2;
 }
 

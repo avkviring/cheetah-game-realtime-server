@@ -1,7 +1,6 @@
 using System.Collections;
 using Cheetah.Auth.Cookie;
 using Cheetah.Matches.Matchmaking;
-using Cheetah.Matches.Relay.Types;
 using Cheetah.Platform;
 using NUnit.Framework;
 using Tests.Helpers;
@@ -29,7 +28,7 @@ namespace Tests
             yield return Enumerators.Await(loginOrRegisterTask);
 
             var createPlayerResult = loginOrRegisterTask.Result;
-            var scheduleUserToMatchTask = MatchmakingScheduler.ScheduleUserToMatch(createPlayerResult.Player, "gubaha", new UserTemplate());
+            var scheduleUserToMatchTask = MatchmakingScheduler.ScheduleUserToMatch(createPlayerResult.Player, "gubaha", 256);
             yield return Enumerators.Await(scheduleUserToMatchTask);
 
             var matchmakingResult = scheduleUserToMatchTask.Result;
