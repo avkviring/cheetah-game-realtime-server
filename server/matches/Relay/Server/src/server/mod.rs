@@ -10,14 +10,15 @@ use std::time::{Duration, Instant};
 
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
-use crate::network::udp::UDPServer;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::rooms::{RegisterUserError, Rooms};
 use crate::server::dump::ServerDump;
+use crate::server::udp::UDPServer;
 use crate::server::Request::TimeOffset;
 
 pub mod dump;
 pub mod rest;
+pub mod udp;
 
 pub struct RelayServer {
 	handler: Option<JoinHandle<()>>,
@@ -146,8 +147,8 @@ struct ServerThread {
 	udp_server: UDPServer,
 	rooms: Rooms,
 	receiver: Receiver<Request>,
-	max_duration: u128,
-	avg_duration: u128,
+	max_cycle_time: u128,
+	avg_cycle_time: u128,
 	halt_signal: Arc<AtomicBool>,
 	time_offset: Option<Duration>,
 }
@@ -158,8 +159,8 @@ impl ServerThread {
 			udp_server: UDPServer::new(socket).unwrap(),
 			rooms: Rooms::new(),
 			receiver,
-			max_duration: 0,
-			avg_duration: 0,
+			max_cycle_time: 0,
+			avg_cycle_time: 0,
 			halt_signal,
 			time_offset: None,
 		}
@@ -216,12 +217,12 @@ impl ServerThread {
 		if duration < 2 {
 			thread::sleep(Duration::from_millis(1));
 		}
-		if self.avg_duration == 0 {
-			self.avg_duration = duration;
+		if self.avg_cycle_time == 0 {
+			self.avg_cycle_time = duration;
 		} else {
-			self.avg_duration = (self.avg_duration + duration) / 2;
+			self.avg_cycle_time = (self.avg_cycle_time + duration) / 2;
 		}
-		self.max_duration = max(self.max_duration, duration);
+		self.max_cycle_time = max(self.max_cycle_time, duration);
 	}
 }
 

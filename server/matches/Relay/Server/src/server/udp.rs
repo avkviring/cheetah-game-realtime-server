@@ -183,10 +183,11 @@ mod tests {
 	use cheetah_matches_relay_common::protocol::frame::Frame;
 	use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
 
-	use crate::network::udp::UDPServer;
 	use crate::room::template::config::UserTemplate;
-	use crate::room::{RoomUserListener, User};
+	use crate::room::RoomUserListener;
+	use crate::room::User;
 	use crate::rooms::Rooms;
+	use crate::server::udp::UDPServer;
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
