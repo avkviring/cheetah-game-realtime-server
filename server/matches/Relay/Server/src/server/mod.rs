@@ -17,7 +17,6 @@ use crate::server::udp::UDPServer;
 use crate::server::Request::TimeOffset;
 
 pub mod dump;
-pub mod rest;
 pub mod udp;
 
 pub struct RelayServer {
