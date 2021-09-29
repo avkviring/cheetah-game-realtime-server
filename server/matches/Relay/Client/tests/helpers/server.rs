@@ -3,14 +3,12 @@ use std::net::SocketAddr;
 
 use log::LevelFilter;
 
-use cheetah_matches_relay::room::debug::tracer::CommandTracer;
 use cheetah_matches_relay::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate};
 use cheetah_matches_relay::room::types::FieldType;
 use cheetah_matches_relay::server::RelayServer;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::network::bind_to_free_socket;
 use cheetah_matches_relay_common::room::access::AccessGroups;
-
 use cheetah_matches_relay_common::room::RoomId;
 
 ///
@@ -20,7 +18,6 @@ use cheetah_matches_relay_common::room::RoomId;
 pub struct IntegrationTestServerBuilder {
 	object_id_generator: u32,
 	template: RoomTemplate,
-	enable_trace: bool,
 }
 
 impl IntegrationTestServerBuilder {
@@ -52,21 +49,10 @@ impl IntegrationTestServerBuilder {
 		}
 	}
 
-	pub fn enable_trace(&mut self) {
-		self.enable_trace = true;
-	}
-
 	pub fn build(self) -> (SocketAddr, RelayServer, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.1;
-		let tracer = if self.enable_trace {
-			init_logger();
-			CommandTracer::new_with_allow_all()
-		} else {
-			CommandTracer::new_with_deny_all()
-		};
-
-		let mut server = RelayServer::new(socket.0, tracer);
+		let mut server = RelayServer::new(socket.0);
 		let room_id = server.register_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}
