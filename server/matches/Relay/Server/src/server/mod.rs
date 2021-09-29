@@ -11,7 +11,6 @@ use std::time::{Duration, Instant};
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::network::udp::UDPServer;
-use crate::room::debug::tracer::CommandTracer;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::rooms::{RegisterUserError, Rooms};
 use crate::server::dump::ServerDump;
@@ -59,14 +58,14 @@ impl Drop for RelayServer {
 }
 
 impl RelayServer {
-	pub fn new(socket: UdpSocket, tracer: CommandTracer) -> Self {
+	pub fn new(socket: UdpSocket) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
 		let handler = thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr().unwrap()))
 			.spawn(move || {
-				ServerThread::new(socket, receiver, halt_signal, tracer).run();
+				ServerThread::new(socket, receiver, halt_signal).run();
 			})
 			.unwrap();
 		Self {
@@ -154,10 +153,10 @@ struct ServerThread {
 }
 
 impl ServerThread {
-	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>, tracer: CommandTracer) -> Self {
+	pub fn new(socket: UdpSocket, receiver: Receiver<Request>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
 			udp_server: UDPServer::new(socket).unwrap(),
-			rooms: Rooms::new(tracer),
+			rooms: Rooms::new(),
 			receiver,
 			max_duration: 0,
 			avg_duration: 0,
@@ -228,17 +227,14 @@ impl ServerThread {
 
 #[cfg(test)]
 mod test {
-	use std::net::UdpSocket;
-
 	use cheetah_matches_relay_common::network::bind_to_free_socket;
 
-	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::template::config::RoomTemplate;
 	use crate::server::RelayServer;
 
 	#[test]
 	fn should_increment_created_room_count() {
-		let mut server = RelayServer::new(bind_to_free_socket().unwrap().0, CommandTracer::new_with_allow_all());
+		let mut server = RelayServer::new(bind_to_free_socket().unwrap().0);
 		server.register_room(RoomTemplate::default()).unwrap();
 		assert_eq!(server.created_room_counter, 1);
 	}

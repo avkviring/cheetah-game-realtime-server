@@ -24,7 +24,6 @@ use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
-use crate::room::debug::tracer::CommandTracer;
 use crate::room::object::{GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
@@ -47,7 +46,6 @@ pub struct Room {
 	current_meta: Option<C2SMetaCommandInformation>,
 	current_user: Option<UserId>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
-	pub tracer: Rc<CommandTracer>,
 	pub user_id_generator: UserId,
 	#[cfg(test)]
 	object_id_generator: u32,
@@ -87,7 +85,7 @@ impl User {
 }
 
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate, tracer: Rc<CommandTracer>, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
 		let mut room = Room {
 			id,
 			users: FnvHashMap::default(),
@@ -96,7 +94,6 @@ impl Room {
 			current_meta: Default::default(),
 			current_user: Default::default(),
 			user_listeners,
-			tracer,
 			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
 			#[cfg(test)]
 			object_id_generator: 0,
@@ -166,7 +163,6 @@ impl Room {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
-					self.tracer.on_c2s_command(self.id, user_id.clone(), &command_with_meta);
 					execute(command_with_meta.command, self, user_id);
 				}
 				_ => {
@@ -341,7 +337,6 @@ mod tests {
 	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 	use cheetah_matches_relay_common::room::UserId;
 
-	use crate::room::debug::tracer::CommandTracer;
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
 	use crate::room::types::FieldType;
@@ -349,18 +344,13 @@ mod tests {
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(
-				0,
-				RoomTemplate::default(),
-				Rc::new(CommandTracer::new_with_allow_all()),
-				Default::default(),
-			)
+			Room::new(0, RoomTemplate::default(), Default::default())
 		}
 	}
 
 	impl Room {
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template, Rc::new(CommandTracer::new_with_allow_all()), Default::default())
+			Room::new(0, template, Default::default())
 		}
 
 		pub fn create_object(&mut self, owner: UserId, access_groups: AccessGroups) -> &mut GameObject {
@@ -603,7 +593,7 @@ mod tests {
 		let (template, user_template) = create_template();
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
-		let mut room = Room::new(0, template, Rc::new(CommandTracer::new_with_allow_all()), vec![test_listener.clone()]);
+		let mut room = Room::new(0, template, vec![test_listener.clone()]);
 		let user_id = room.register_user(user_template.clone());
 		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		room.disconnect_user(user_id);

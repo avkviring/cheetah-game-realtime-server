@@ -191,7 +191,6 @@ impl Room {
 			Some(user) => S2CMetaCommandInformation::new(user.clone(), self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation::default())),
 		};
 		let room_id = self.id;
-		let tracer = self.tracer.clone();
 
 		let permission_manager = self.permission_manager.clone();
 		self.users
@@ -218,7 +217,6 @@ impl Room {
 							meta: meta.clone(),
 							command: command.command.clone(),
 						};
-						tracer.on_s2c_command(room_id, user.id.clone(), &command_with_meta);
 						let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 						protocol
 							.out_commands_collector
@@ -259,7 +257,6 @@ impl Room {
 									meta: S2CMetaCommandInformation::new(self.current_user.unwrap_or(0), meta),
 									command: command.command.clone(),
 								};
-								self.tracer.on_s2c_command(self.id, user.id, &command_with_meta);
 								let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 								protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
 							}

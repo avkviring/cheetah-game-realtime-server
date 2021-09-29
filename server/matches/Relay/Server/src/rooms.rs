@@ -9,7 +9,6 @@ use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
-use crate::room::debug::tracer::CommandTracer;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::{Room, RoomUserListener};
 
@@ -17,7 +16,6 @@ pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
 	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
-	tracer: Rc<CommandTracer>,
 }
 
 #[derive(Debug)]
@@ -32,19 +30,18 @@ pub enum RegisterUserError {
 }
 
 impl Rooms {
-	pub fn new(tracer: CommandTracer) -> Self {
+	pub fn new() -> Self {
 		Self {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
 			changed_rooms: Default::default(),
-			tracer: Rc::new(tracer),
 		}
 	}
 
 	pub fn create_room(&mut self, template: RoomTemplate, listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> RoomId {
 		self.room_id_generator += 1;
 		let room_id = self.room_id_generator;
-		let room = Room::new(room_id, template, self.tracer.clone(), listeners);
+		let room = Room::new(room_id, template, listeners);
 		self.room_by_id.insert(room_id, room);
 		room_id
 	}
@@ -109,7 +106,6 @@ impl Default for Rooms {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
 			changed_rooms: Default::default(),
-			tracer: Rc::new(CommandTracer::new_with_allow_all()),
 		}
 	}
 }

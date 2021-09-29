@@ -12,7 +12,6 @@ use tonic::transport::Server;
 
 use cheetah_matches_relay::agones::run_agones_cycle;
 use cheetah_matches_relay::grpc::RelayGRPCService;
-use cheetah_matches_relay::room::debug::tracer::CommandTracer;
 use cheetah_matches_relay::server::rest::run_rest_server;
 use cheetah_matches_relay::server::RelayServer;
 
@@ -39,18 +38,9 @@ fn create_grpc_server(relay_server: Arc<Mutex<RelayServer>>) -> impl Future<Outp
 }
 
 fn create_relay_server() -> (Arc<AtomicBool>, Arc<Mutex<RelayServer>>) {
-	let trace_path = std::env::var("TRACE_CONFIG_FILE").ok();
-	let show_all_trace = bool::from_str(std::env::var("SHOW_ALL_TRACE").unwrap_or("false".to_owned()).as_str()).unwrap();
-	let tracer = if show_all_trace {
-		CommandTracer::new_with_allow_all()
-	} else {
-		trace_path
-			.map(|path| CommandTracer::load_from_file(path).unwrap())
-			.unwrap_or(CommandTracer::new_with_deny_all())
-	};
 	let relay_server_binding_address = SocketAddr::from_str("0.0.0.0:5555").unwrap();
 	let relay_server_socket = UdpSocket::bind(relay_server_binding_address).unwrap();
-	let relay_server = RelayServer::new(relay_server_socket, tracer);
+	let relay_server = RelayServer::new(relay_server_socket);
 	let halt_signal = relay_server.get_halt_signal().clone();
 	let server = Arc::new(Mutex::new(relay_server));
 	(halt_signal, server)
