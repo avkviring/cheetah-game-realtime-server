@@ -35,17 +35,18 @@ fn id<'a>() -> Parser<'a, u8, u64> {
 		.map(|v| std::str::from_utf8(&v).unwrap().parse().unwrap())
 }
 
+enum Op {
+	EQUALS,
+	NOT,
+}
+
 ///
 /// поле вида name=id
 ///
-fn field<'a>(name: &'a str) -> Parser<'a, u8, u64> {
-	space() * seq(name.as_bytes()) * space() * seq(b"=") * space() * id()
-}
-///
-/// поле вида name!=id
-///
-fn not_field<'a>(name: &'a str) -> Parser<'a, u8, u64> {
-	space() * seq(name.as_bytes()) * space() * seq(b"!=") * space() * id()
+fn field<'a>(name: &'a str) -> Parser<'a, u8, (u64, Op)> {
+	let name = space() * (seq(name.as_bytes()).discard() | sym(name.as_bytes()[0]).discard()) * space();
+	let op = seq(b"=").map(|_| Op::EQUALS) | seq(b"!=").map(|_| Op::NOT);
+	(name + op - space() + id()).map(|v| (v.1, v.0 .1))
 }
 
 ///
@@ -61,10 +62,18 @@ fn rules_with_not<'a>() -> Parser<'a, u8, Rule> {
 fn rules<'a>() -> Parser<'a, u8, Rule> {
 	seq(b"s2c").map(|_| Rule::Direction(RuleCommandDirection::S2C))
 		| seq(b"c2s").map(|_| Rule::Direction(RuleCommandDirection::C2S))
-		| field("user").map(|id| Rule::User(id as u16))
-		| field("template").map(|id| Rule::Template(id as u16))
-		| not_field("user").map(|id| Rule::Not(Box::new(Rule::User(id as u16))))
-		| not_field("template").map(|id| Rule::Not(Box::new(Rule::Template(id as u16))))
+		| field("user").map(|(id, op)| apply_op(op, Rule::User(id as u16)))
+		| field("template").map(|(id, op)| apply_op(op, Rule::Template(id as u16)))
+}
+
+///
+/// Применить операцию для условия
+///
+fn apply_op(op: Op, rule: Rule) -> Rule {
+	match op {
+		Op::EQUALS => rule,
+		Op::NOT => Rule::Not(Box::new(rule)),
+	}
 }
 
 #[cfg(test)]
@@ -141,6 +150,13 @@ mod test {
 	#[test]
 	fn should_ignore_space() {
 		let query = "( user = 55 , template   =    100)";
+		let result = parser().parse(query.as_ref()).unwrap();
+		assert_eq!(result, vec![vec![Rule::User(55), Rule::Template(100)]])
+	}
+
+	#[test]
+	fn should_alias() {
+		let query = "(u=55,t=100)";
 		let result = parser().parse(query.as_ref()).unwrap();
 		assert_eq!(result, vec![vec![Rule::User(55), Rule::Template(100)]])
 	}
