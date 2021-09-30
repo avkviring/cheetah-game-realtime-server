@@ -1,7 +1,7 @@
 use pom::parser::Parser;
 use pom::parser::*;
 
-use crate::room::debug::tracer::{Rule, RuleCommandDirection};
+use crate::room::debug::tracer::filter::{Rule, RuleCommandDirection};
 
 ///
 /// Парсер текстового фильтра в структуру Rule
