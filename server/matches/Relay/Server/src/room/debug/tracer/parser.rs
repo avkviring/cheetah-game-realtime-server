@@ -64,6 +64,7 @@ fn rules<'a>() -> Parser<'a, u8, Rule> {
 		| seq(b"c2s").map(|_| Rule::Direction(RuleCommandDirection::C2S))
 		| field("user").map(|(id, op)| apply_op(op, Rule::User(id as u16)))
 		| field("template").map(|(id, op)| apply_op(op, Rule::Template(id as u16)))
+		| field("field").map(|(id, op)| apply_op(op, Rule::Field(id as u16)))
 }
 
 ///
@@ -124,6 +125,13 @@ mod test {
 		let query = "(user=55)";
 		let result = parser().parse(query.as_ref()).unwrap();
 		assert_eq!(result, vec![vec![Rule::User(55)]])
+	}
+
+	#[test]
+	fn should_parse_field() {
+		let query = "(field=55)";
+		let result = parser().parse(query.as_ref()).unwrap();
+		assert_eq!(result, vec![vec![Rule::Field(55)]])
 	}
 
 	#[test]
