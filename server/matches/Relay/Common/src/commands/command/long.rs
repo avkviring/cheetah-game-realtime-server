@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::commands::command::GameObjectCommand;
 use crate::constants::FieldId;
 use crate::room::object::GameObjectId;
 
@@ -37,22 +36,4 @@ pub struct CompareAndSetLongCommand {
 	pub current: i64,
 	pub new: i64,
 	pub reset: i64,
-}
-
-impl GameObjectCommand for IncrementLongC2SCommand {
-	fn get_object_id(&self) -> &GameObjectId {
-		&self.object_id
-	}
-}
-
-impl GameObjectCommand for SetLongCommand {
-	fn get_object_id(&self) -> &GameObjectId {
-		&self.object_id
-	}
-}
-
-impl GameObjectCommand for CompareAndSetLongCommand {
-	fn get_object_id(&self) -> &GameObjectId {
-		&self.object_id
-	}
 }
