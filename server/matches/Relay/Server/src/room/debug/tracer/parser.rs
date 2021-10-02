@@ -1,6 +1,9 @@
 use pom::parser::Parser;
 use pom::parser::*;
 
+use cheetah_matches_relay_common::room::object::GameObjectId;
+use cheetah_matches_relay_common::room::owner::ObjectOwner;
+
 use crate::room::debug::tracer::filter::{Rule, RuleCommandDirection};
 
 ///
@@ -30,9 +33,7 @@ fn space<'a>() -> Parser<'a, u8, ()> {
 ///
 /// Идентификатор (u64)
 fn id<'a>() -> Parser<'a, u8, u64> {
-	one_of(b"0123456789")
-		.repeat(0..)
-		.map(|v| std::str::from_utf8(&v).unwrap().parse().unwrap())
+	(space() + one_of(b"0123456789").repeat(0..) - space()).map(|v| std::str::from_utf8(&v.1).unwrap().parse().unwrap())
 }
 
 enum Op {
@@ -43,10 +44,10 @@ enum Op {
 ///
 /// поле вида name=id
 ///
-fn field<'a>(name: &'a str) -> Parser<'a, u8, (u64, Op)> {
+fn field<'a>(name: &'a str) -> Parser<'a, u8, Op> {
 	let name = space() * (seq(name.as_bytes()).discard() | sym(name.as_bytes()[0]).discard()) * space();
 	let op = seq(b"=").map(|_| Op::EQUALS) | seq(b"!=").map(|_| Op::NOT);
-	(name + op - space() + id()).map(|v| (v.1, v.0 .1))
+	(name + op).map(|v| v.1)
 }
 
 ///
@@ -62,9 +63,13 @@ fn rules_with_not<'a>() -> Parser<'a, u8, Rule> {
 fn rules<'a>() -> Parser<'a, u8, Rule> {
 	seq(b"s2c").map(|_| Rule::Direction(RuleCommandDirection::S2C))
 		| seq(b"c2s").map(|_| Rule::Direction(RuleCommandDirection::C2S))
-		| field("user").map(|(id, op)| apply_op(op, Rule::User(id as u16)))
-		| field("template").map(|(id, op)| apply_op(op, Rule::Template(id as u16)))
-		| field("field").map(|(id, op)| apply_op(op, Rule::Field(id as u16)))
+		| (field("user") + id()).map(|(op, id)| apply_op(op, Rule::User(id as u16)))
+		| (field("template") + id()).map(|(op, id)| apply_op(op, Rule::Template(id as u16)))
+		| (field("field") + id()).map(|(op, id)| apply_op(op, Rule::Field(id as u16)))
+		| (field("object") - seq(b"root(") + id() - seq(b")"))
+			.map(|(op, id)| apply_op(op, Rule::Object(GameObjectId::new(id as u32, ObjectOwner::Root))))
+		| (field("object") - seq(b"user(") + id() - one_of(b",") + id() - seq(b")"))
+			.map(|((op, user), id)| apply_op(op, Rule::Object(GameObjectId::new(id as u32, ObjectOwner::User(user as u16)))))
 }
 
 ///
@@ -79,6 +84,9 @@ fn apply_op(op: Op, rule: Rule) -> Rule {
 
 #[cfg(test)]
 mod test {
+	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+
 	use crate::room::debug::tracer::parser::{parser, Rule, RuleCommandDirection};
 
 	#[test]
@@ -167,5 +175,31 @@ mod test {
 		let query = "(u=55,t=100)";
 		let result = parser().parse(query.as_ref()).unwrap();
 		assert_eq!(result, vec![vec![Rule::User(55), Rule::Template(100)]])
+	}
+
+	#[test]
+	fn should_root_object_id() {
+		let query = "(object=root(100),o!=root(55))";
+		let result = parser().parse(query.as_ref()).unwrap();
+		assert_eq!(
+			result,
+			vec![vec![
+				Rule::Object(GameObjectId::new(100, ObjectOwner::Root)),
+				Rule::Not(Box::new(Rule::Object(GameObjectId::new(55, ObjectOwner::Root))))
+			]]
+		)
+	}
+
+	#[test]
+	fn should_user_object_id() {
+		let query = "(object=user(5, 100),object!=user(5 ,100))";
+		let result = parser().parse(query.as_ref()).unwrap();
+		assert_eq!(
+			result,
+			vec![vec![
+				Rule::Object(GameObjectId::new(100, ObjectOwner::User(5))),
+				Rule::Not(Box::new(Rule::Object(GameObjectId::new(100, ObjectOwner::User(5)))))
+			]]
+		);
 	}
 }
