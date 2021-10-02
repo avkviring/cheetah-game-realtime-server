@@ -11,3 +11,7 @@ spec:
     - name: {{ .Chart.Name }}
       image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
       imagePullPolicy: Always
+      ports:
+        - name: game
+          containerPort: 5555
+          protocol: UDP

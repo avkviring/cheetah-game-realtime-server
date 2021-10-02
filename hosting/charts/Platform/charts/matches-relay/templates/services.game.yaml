@@ -9,4 +9,5 @@ spec:
   ports:
     - name: game
       port: 5555
+      targetPort: game
       protocol: UDP
