@@ -34,7 +34,6 @@ RUN cd server/matches/Relay/Server/ && cargo build --release --offline --target=
 
 # образ для запуска
 FROM alpine:3.13.5
-EXPOSE 5001/tcp 5002/tcp 8080/tcp
 # публичный игровой порт к которому подключаются клиенты
 EXPOSE 5555/udp
 COPY --chmod=555 --from=builder /build/server/matches/Relay/Server/target/x86_64-unknown-linux-musl/release/service /service

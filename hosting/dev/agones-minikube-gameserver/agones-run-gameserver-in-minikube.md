@@ -7,7 +7,7 @@
 
 1. В локальном docker должен быть образ `docker.registry.cheetah.games/cheetah-matches-relay:999.999.999`.
     Образ можно собрать по [инструкции](../gameserver-docker-build.md).
-2. Загрузить docker j,hfp в minikube
+2. Загрузить docker образ в minikube
     ```bash
     minikube image load docker.registry.cheetah.games/cheetah-matches-relay:999.999.999
     ```
