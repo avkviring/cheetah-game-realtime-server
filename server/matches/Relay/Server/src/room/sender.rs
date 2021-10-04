@@ -190,7 +190,7 @@ impl Room {
 			None => S2CMetaCommandInformation::new(0, &C2SMetaCommandInformation::default()),
 			Some(user) => S2CMetaCommandInformation::new(user.clone(), self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation::default())),
 		};
-		let room_id = self.id;
+		let _room_id = self.id;
 
 		let permission_manager = self.permission_manager.clone();
 		self.users

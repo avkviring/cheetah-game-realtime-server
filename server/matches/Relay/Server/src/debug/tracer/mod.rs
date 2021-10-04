@@ -19,15 +19,15 @@ pub mod parser;
 pub struct CommandTracerSessions {}
 
 impl CommandTracerSessions {
-	pub(crate) fn on_c2s(&self, room_id: &RoomId, objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>, user: &UserId, command: &C2SCommand) {
+	pub(crate) fn on_c2s(&self, _room_id: &RoomId, _objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>, _user: &UserId, _command: &C2SCommand) {
 		//todo!()
 	}
 	pub(crate) fn on_s2c(
 		&self,
-		room_id: &RoomId,
-		objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
-		user: &UserId,
-		commands: &ApplicationCommands,
+		_room_id: &RoomId,
+		_objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
+		_user: &UserId,
+		_commands: &ApplicationCommands,
 	) {
 		//todo!()
 	}
