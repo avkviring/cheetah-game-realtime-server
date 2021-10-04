@@ -5,7 +5,8 @@ use log::LevelFilter;
 
 use cheetah_matches_relay::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate};
 use cheetah_matches_relay::room::types::FieldType;
-use cheetah_matches_relay::server::RelayServer;
+use cheetah_matches_relay::server::manager::RelayManager;
+use cheetah_matches_relay::server::RelayManager;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::network::bind_to_free_socket;
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -49,10 +50,10 @@ impl IntegrationTestServerBuilder {
 		}
 	}
 
-	pub fn build(self) -> (SocketAddr, RelayServer, RoomId) {
+	pub fn build(self) -> (SocketAddr, RelayManager, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.1;
-		let mut server = RelayServer::new(socket.0);
+		let mut server = RelayManager::new(socket.0);
 		let room_id = server.register_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}

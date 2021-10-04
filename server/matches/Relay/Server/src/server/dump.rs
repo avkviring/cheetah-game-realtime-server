@@ -11,7 +11,7 @@ use cheetah_matches_relay_common::room::{RoomId, UserId};
 use crate::room::object::GameObject;
 use crate::room::{Room, User};
 use crate::rooms::Rooms;
-use crate::server::ServerThread;
+use crate::server::server::Relay;
 
 ///
 /// Дамп внутреннего состояния сервера для отладки
@@ -52,8 +52,8 @@ pub struct GameObjectDump {
 	pub structures: HashMap<FieldId, BinaryDump, FnvBuildHasher>,
 }
 
-impl From<&ServerThread> for ServerDump {
-	fn from(server: &ServerThread) -> Self {
+impl From<&Relay> for ServerDump {
+	fn from(server: &Relay) -> Self {
 		Self {
 			rooms: From::from(&server.rooms),
 		}

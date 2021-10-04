@@ -6,7 +6,8 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 
 use cheetah_matches_relay::room::template::config::UserTemplate;
-use cheetah_matches_relay::server::RelayServer;
+use cheetah_matches_relay::server::manager::RelayManager;
+use cheetah_matches_relay::server::RelayManager;
 
 use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
@@ -19,7 +20,7 @@ use cheetah_matches_relay_client::registry::ClientId;
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
 	room_id: RoomId,
-	pub server: RelayServer,
+	pub server: RelayManager,
 }
 
 impl IntegrationTestHelper {

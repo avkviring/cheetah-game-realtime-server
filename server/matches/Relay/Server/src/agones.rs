@@ -6,13 +6,13 @@ use tokio::sync::mpsc::error::SendError;
 
 use cheetah_microservice::tonic::codegen::Arc;
 
-use crate::server::RelayServer;
+use crate::server::manager::RelayManager;
 
 ///
 /// Взаимодействие с AGONES SDK
 /// Если Agones  не запущен - то relay будет остановлен
 ///
-pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mutex<RelayServer>>) {
+pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mutex<RelayManager>>) {
 	if std::env::var("ENABLE_AGONES").is_err() {
 		return;
 	}

@@ -4,16 +4,16 @@ use tonic::{Request, Response, Status};
 
 use crate::proto::internal::*;
 use crate::proto::types::*;
-use crate::server::RelayServer;
+use crate::server::manager::RelayManager;
 
 mod from;
 
 pub struct RelayGRPCService {
-	pub relay_server: Arc<Mutex<RelayServer>>,
+	pub relay_server: Arc<Mutex<RelayManager>>,
 }
 
 impl RelayGRPCService {
-	pub fn new(relay_server: Arc<Mutex<RelayServer>>) -> Self {
+	pub fn new(relay_server: Arc<Mutex<RelayManager>>) -> Self {
 		RelayGRPCService { relay_server }
 	}
 }
