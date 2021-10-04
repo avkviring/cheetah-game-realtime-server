@@ -7,7 +7,6 @@ use rand::RngCore;
 
 use cheetah_matches_relay::room::template::config::UserTemplate;
 use cheetah_matches_relay::server::manager::RelayManager;
-use cheetah_matches_relay::server::RelayManager;
 
 use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 

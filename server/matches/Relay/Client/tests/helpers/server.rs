@@ -6,7 +6,6 @@ use log::LevelFilter;
 use cheetah_matches_relay::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate};
 use cheetah_matches_relay::room::types::FieldType;
 use cheetah_matches_relay::server::manager::RelayManager;
-use cheetah_matches_relay::server::RelayManager;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::network::bind_to_free_socket;
 use cheetah_matches_relay_common::room::access::AccessGroups;
