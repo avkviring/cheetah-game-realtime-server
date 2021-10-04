@@ -2,8 +2,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
 
-use tokio::sync::mpsc::error::SendError;
-
 use cheetah_microservice::tonic::codegen::Arc;
 
 use crate::server::manager::RelayManager;

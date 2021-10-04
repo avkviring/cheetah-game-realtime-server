@@ -9,10 +9,10 @@ use std::time::Duration;
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::room::template::config::{RoomTemplate, UserTemplate};
-use crate::rooms::RegisterUserError;
 use crate::server::dump::ServerDump;
 use crate::server::manager::ManagementTask::TimeOffset;
-use crate::server::server::Relay;
+use crate::server::relay::Relay;
+use crate::server::rooms::RegisterUserError;
 
 ///
 /// Управление сервером

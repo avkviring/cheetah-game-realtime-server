@@ -2,11 +2,12 @@ use std::sync::{Arc, Mutex};
 
 use tonic::{Request, Response, Status};
 
-use crate::proto::internal::*;
-use crate::proto::types::*;
+use crate::factory::proto::internal::*;
+use crate::factory::proto::types::RoomTemplate;
 use crate::server::manager::RelayManager;
 
 mod from;
+pub mod proto;
 
 pub struct RelayGRPCService {
 	pub relay_server: Arc<Mutex<RelayManager>>,
@@ -19,8 +20,8 @@ impl RelayGRPCService {
 }
 
 #[tonic::async_trait]
-impl crate::proto::internal::relay_server::Relay for RelayGRPCService {
-	async fn create_room(&self, request: Request<RoomTemplate>) -> Result<Response<CreateRoomResponse>, Status> {
+impl crate::factory::proto::internal::relay_server::Relay for RelayGRPCService {
+	async fn create_room(&self, request: tonic::Request<RoomTemplate>) -> Result<Response<CreateRoomResponse>, Status> {
 		let mut server = self.relay_server.lock().unwrap();
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
 		match server.register_room(template) {

@@ -9,7 +9,7 @@ use futures::Future;
 use tonic::transport::Server;
 
 use cheetah_matches_relay::agones::run_agones_cycle;
-use cheetah_matches_relay::grpc::RelayGRPCService;
+use cheetah_matches_relay::factory::RelayGRPCService;
 use cheetah_matches_relay::server::manager::RelayManager;
 
 #[tokio::main]
@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn create_grpc_server(relay_server: Arc<Mutex<RelayManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
-	let service = cheetah_matches_relay::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
+	let service = cheetah_matches_relay::factory::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
 	let address = cheetah_microservice::get_internal_service_binding_addr();
 	Server::builder().add_service(service).serve(address)
 }

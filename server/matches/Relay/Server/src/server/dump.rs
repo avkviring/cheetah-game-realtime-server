@@ -10,8 +10,8 @@ use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::room::object::GameObject;
 use crate::room::{Room, User};
-use crate::rooms::Rooms;
-use crate::server::server::Relay;
+use crate::server::relay::Relay;
+use crate::server::rooms::Rooms;
 
 ///
 /// Дамп внутреннего состояния сервера для отладки

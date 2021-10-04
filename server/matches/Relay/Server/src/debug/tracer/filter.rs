@@ -179,9 +179,10 @@ mod tests {
 	use cheetah_matches_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
 	use cheetah_matches_relay_common::constants::FieldId;
+	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 
-	use crate::room::debug::tracer::filter::*;
+	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection};
 
 	#[test]
 	fn should_filter_by_direction() {

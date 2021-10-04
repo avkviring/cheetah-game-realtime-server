@@ -2,7 +2,7 @@ use rand::Rng;
 
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
-use crate::proto::types as proto;
+use crate::factory::proto::types as proto;
 use crate::room::template::config;
 
 impl From<proto::RoomTemplate> for config::RoomTemplate {

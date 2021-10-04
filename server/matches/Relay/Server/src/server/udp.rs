@@ -7,16 +7,16 @@ use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
+use crate::debug::tracer::CommandTracerSessions;
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::headers::Header;
 use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
-use crate::room::debug::tracer::CommandTracerSessions;
 use crate::room::template::config::UserTemplate;
 use crate::room::RoomUserListener;
-use crate::rooms::{OutFrame, Rooms};
+use crate::server::rooms::{OutFrame, Rooms};
 
 #[derive(Debug)]
 pub struct UDPServer {
@@ -198,7 +198,7 @@ mod tests {
 	use crate::room::template::config::UserTemplate;
 	use crate::room::RoomUserListener;
 	use crate::room::User;
-	use crate::rooms::Rooms;
+	use crate::server::rooms::Rooms;
 	use crate::server::udp::UDPServer;
 
 	#[test]

@@ -1,10 +1,9 @@
 use pom::parser::Parser;
 use pom::parser::*;
 
+use crate::debug::tracer::filter::{Rule, RuleCommandDirection};
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::ObjectOwner;
-
-use crate::room::debug::tracer::filter::{Rule, RuleCommandDirection};
 
 ///
 /// Парсер текстового фильтра в структуру Rule
@@ -84,10 +83,10 @@ fn apply_op(op: Op, rule: Rule) -> Rule {
 
 #[cfg(test)]
 mod test {
+	use crate::debug::tracer::filter::{Rule, RuleCommandDirection};
+	use crate::debug::tracer::parser::parser;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::ObjectOwner;
-
-	use crate::room::debug::tracer::parser::{parser, Rule, RuleCommandDirection};
 
 	#[test]
 	fn should_parse_single_group() {
