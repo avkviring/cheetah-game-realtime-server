@@ -5,7 +5,7 @@ name: Client tests
 on:
   push:
     branches:
-      - lain-dono
+      - zakharovvi
       - kviring
       - dependabot
 jobs:

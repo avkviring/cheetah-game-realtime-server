@@ -9,7 +9,7 @@ name: Integration test
 on:
   push:
     branches:
-      - lain-dono
+      - zakharovvi
       - kviring
       - dependabot
 jobs:
