@@ -7,13 +7,13 @@ use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
-use crate::debug::tracer::CommandTracerSessions;
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::headers::Header;
 use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
+use crate::debug::tracer::CommandTracerSessions;
 use crate::room::template::config::UserTemplate;
 use crate::room::RoomUserListener;
 use crate::server::rooms::{OutFrame, Rooms};
@@ -50,16 +50,16 @@ impl UDPServer {
 		})
 	}
 
-	pub fn cycle(&mut self, rooms: &mut Rooms, command_tracer_sessions: &mut CommandTracerSessions, now: &Instant) {
-		self.receive(rooms, command_tracer_sessions, now);
-		self.send(rooms, command_tracer_sessions, now);
+	pub fn cycle(&mut self, rooms: &mut Rooms, now: &Instant) {
+		self.receive(rooms, now);
+		self.send(rooms, now);
 	}
 
 	///
 	/// Отправить команды клиентам
 	///
-	fn send(&mut self, rooms: &mut Rooms, command_tracer_sessions: &mut CommandTracerSessions, now: &Instant) {
-		rooms.collect_out_frames(&mut self.tmp_out_frames, command_tracer_sessions, now);
+	fn send(&mut self, rooms: &mut Rooms, now: &Instant) {
+		rooms.collect_out_frames(&mut self.tmp_out_frames, now);
 		let mut buffer = [0; 2048];
 		while let Some(OutFrame {
 			user_and_room_id: user_id,
@@ -90,12 +90,12 @@ impl UDPServer {
 		}
 	}
 
-	fn receive(&mut self, rooms: &mut Rooms, command_tracer_sessions: &mut CommandTracerSessions, now: &Instant) {
+	fn receive(&mut self, rooms: &mut Rooms, now: &Instant) {
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
 			match result {
-				Ok((size, address)) => self.process_in_frame(rooms, &mut buffer, size, address, command_tracer_sessions, now),
+				Ok((size, address)) => self.process_in_frame(rooms, &mut buffer, size, address, now),
 				Err(e) => match e.kind() {
 					ErrorKind::WouldBlock => {
 						return;
@@ -108,15 +108,7 @@ impl UDPServer {
 		}
 	}
 
-	fn process_in_frame(
-		&mut self,
-		rooms: &mut Rooms,
-		buffer: &[u8; Frame::MAX_FRAME_SIZE],
-		size: usize,
-		address: SocketAddr,
-		command_trace_session: &mut CommandTracerSessions,
-		now: &Instant,
-	) {
+	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; Frame::MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: &Instant) {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_header, headers)) => {
@@ -150,7 +142,7 @@ impl UDPServer {
 							}
 						};
 						if let Some(frame) = readed_frame {
-							rooms.on_frame_received(user_and_room_id, frame, command_trace_session, &now);
+							rooms.on_frame_received(user_and_room_id, frame, &now);
 						}
 					}
 				}
@@ -212,7 +204,6 @@ mod tests {
 			&buffer,
 			usize,
 			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
-			&mut Default::default(),
 			&Instant::now(),
 		);
 	}
@@ -230,7 +221,6 @@ mod tests {
 			&buffer,
 			size,
 			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
-			&mut Default::default(),
 			&Instant::now(),
 		);
 	}
@@ -247,7 +237,6 @@ mod tests {
 			&buffer,
 			size,
 			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
-			&mut Default::default(),
 			&Instant::now(),
 		);
 	}
@@ -286,12 +275,12 @@ mod tests {
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
 
-		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &mut Default::default(), &Instant::now());
+		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &Instant::now());
 
 		let mut frame = Frame::new(10);
 		frame.headers.add(Header::UserAndRoomId(user_and_room_id.clone()));
 		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer);
-		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &mut Default::default(), &Instant::now());
+		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 
 		assert_eq!(
 			udp_server

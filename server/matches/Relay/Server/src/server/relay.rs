@@ -21,7 +21,6 @@ use crate::server::udp::UDPServer;
 pub struct Relay {
 	udp_server: UDPServer,
 	pub rooms: Rooms,
-	command_tracer_sessions: CommandTracerSessions,
 	receiver: Receiver<ManagementTask>,
 	max_cycle_time: u128,
 	avg_cycle_time: u128,
@@ -34,7 +33,6 @@ impl Relay {
 		Self {
 			udp_server: UDPServer::new(socket).unwrap(),
 			rooms: Rooms::new(),
-			command_tracer_sessions: Default::default(),
 			receiver,
 			max_cycle_time: 0,
 			avg_cycle_time: 0,
@@ -49,7 +47,7 @@ impl Relay {
 			if let Some(time_offset) = self.time_offset {
 				now = now.add(time_offset);
 			}
-			self.udp_server.cycle(&mut self.rooms, &mut self.command_tracer_sessions, &now);
+			self.udp_server.cycle(&mut self.rooms, &now);
 			self.rooms.cycle(&now);
 			self.execute_management_tasks();
 			self.statistics(now);

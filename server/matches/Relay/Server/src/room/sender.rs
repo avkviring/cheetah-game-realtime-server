@@ -15,165 +15,18 @@ use crate::room::template::config::Permission;
 use crate::room::types::FieldType;
 use crate::room::{Room, User};
 
+///
+/// Методы для отправки команд пользователям
+///
+///
 impl Room {
-	///
-	/// Проверить права доступа на изменения объекта, если права достаточные - создать команду и отправить всем пользователям,
-	/// с проверкой прав доступа при отправке
-	///
-	pub fn build_command_and_send<T>(
+	pub fn send_to_users<T>(
 		&mut self,
-		game_object_id: &GameObjectId,
-		field_id: &FieldId,
-		field_type: FieldType,
-		command_owner_user: UserId,
-		permission: Permission,
-		out_command_builder: T,
+		access_groups: AccessGroups,
+		object_template: GameObjectTemplateId,
+		commands: Iter<S2CommandWithFieldInfo>,
+		filter: T,
 	) where
-		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
-	{
-		self.do_build_command_and_send(
-			game_object_id,
-			field_id,
-			field_type,
-			command_owner_user,
-			permission,
-			None,
-			out_command_builder,
-		);
-	}
-
-	///
-	/// Проверить права доступа на изменение объекта, если прав достаточно - создать команду и отправить заданному пользователю
-	///
-	pub fn build_command_and_send_to_user<T>(
-		&mut self,
-		game_object_id: &GameObjectId,
-		field_id: &FieldId,
-		field_type: FieldType,
-		command_owner_user: UserId,
-		permission: Permission,
-		out_command_builder: T,
-		target_user: UserId,
-	) where
-		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
-	{
-		self.do_build_command_and_send(
-			game_object_id,
-			field_id,
-			field_type,
-			command_owner_user,
-			permission,
-			Some(target_user),
-			out_command_builder,
-		);
-	}
-
-	///
-	/// Проверить права доступа, выполнить действие, результат выполнения отправить клиентам (клиенту)
-	///
-	/// - владелец объекта получает обновления если только данные доступны на запись другим клиентам
-	/// - владелец объекта имеет полный доступ к полям объекта, информация о правах игнорируется
-	///
-	fn do_build_command_and_send<T>(
-		&mut self,
-		game_object_id: &GameObjectId,
-		field_id: &FieldId,
-		field_type: FieldType,
-		command_owner_user: UserId,
-		permission: Permission,
-		target_user: Option<UserId>,
-		out_command_builder: T,
-	) where
-		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
-	{
-		let room_id = self.id;
-
-		let permission_manager = self.permission_manager.clone();
-
-		let current_user_access_group = match self.users.get(&command_owner_user) {
-			None => {
-				log::error!("[room({})] user({}) not found", self.id, command_owner_user);
-				return;
-			}
-			Some(user) => user.template.groups.clone(),
-		};
-
-		if let Some(object) = self.get_object_mut(&game_object_id) {
-			// проверяем группу доступа
-			if !object.access_groups.contains_any(&current_user_access_group) {
-				log::error!(
-					"[room({})] user({}) group({:?}) don't allow access to object ({:?})",
-					room_id,
-					command_owner_user,
-					current_user_access_group,
-					object.access_groups
-				);
-				return;
-			}
-
-			let object_owner = if let ObjectOwner::User(owner) = object.id.owner {
-				Option::Some(owner)
-			} else {
-				Option::None
-			};
-
-			let current_user_is_object_owner = object_owner == Option::Some(command_owner_user);
-			let allow = current_user_is_object_owner
-				|| permission_manager
-					.borrow_mut()
-					.get_permission(object.template, *field_id, field_type, current_user_access_group)
-					>= permission;
-
-			if !allow {
-				log::error!(
-					"[room({:?})] user({:?}) has not permissions({:?}) for action with object({:?}), field({:?}), field_type({:?})",
-					self.id,
-					command_owner_user,
-					permission,
-					game_object_id,
-					field_id,
-					field_type
-				);
-				return;
-			}
-
-			let command = out_command_builder(object);
-			// отправляем команду только для созданного объекта
-			if object.created {
-				let groups = object.access_groups.clone();
-				let template = object.template;
-
-				if let Some(command) = command {
-					let commands_with_field = S2CommandWithFieldInfo {
-						field: Some(FieldIdAndType {
-							field_id: *field_id,
-							field_type,
-						}),
-						command,
-					};
-					let commands = [commands_with_field];
-
-					if let Some(target_user) = target_user {
-						self.send_to_user(&target_user, template, commands.iter());
-					} else {
-						self.send(groups, template, commands.iter(), |user| {
-							let mut permission_manager = permission_manager.borrow_mut();
-							if object_owner == Option::Some(user.id) {
-								permission_manager.has_write_access(template, *field_id, field_type)
-							} else {
-								true
-							}
-						});
-					}
-				};
-			}
-		} else {
-			log::error!("room[({:?})] do_action object not found ({:?}) ", self.id, game_object_id);
-		}
-	}
-
-	pub fn send<T>(&mut self, access_groups: AccessGroups, template: GameObjectTemplateId, commands: Iter<S2CommandWithFieldInfo>, filter: T)
-	where
 		T: Fn(&User) -> bool,
 	{
 		#[cfg(test)]
@@ -190,9 +43,9 @@ impl Room {
 			None => S2CMetaCommandInformation::new(0, &C2SMetaCommandInformation::default()),
 			Some(user) => S2CMetaCommandInformation::new(user.clone(), self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation::default())),
 		};
-		let _room_id = self.id;
 
 		let permission_manager = self.permission_manager.clone();
+		let command_trace_session = self.command_trace_session.clone();
 		self.users
 			.values_mut()
 			.filter(|user| user.attached)
@@ -207,16 +60,19 @@ impl Room {
 						Some(FieldIdAndType { field_id, field_type }) => {
 							permission_manager
 								.borrow_mut()
-								.get_permission(template, *field_id, *field_type, user.template.groups)
+								.get_permission(object_template, *field_id, *field_type, user.template.groups)
 								> Permission::Deny
 						}
 					};
 
 					if allow {
+						command_trace_session.borrow_mut().collect_s2c(object_template, 100, &command.command);
+
 						let command_with_meta = S2CCommandWithMeta {
 							meta: meta.clone(),
 							command: command.command.clone(),
 						};
+
 						let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 						protocol
 							.out_commands_collector
@@ -227,6 +83,7 @@ impl Room {
 	}
 
 	pub fn send_to_user(&mut self, user_id: &UserId, object_template: GameObjectTemplateId, commands: Iter<S2CommandWithFieldInfo>) {
+		let command_trace_session = self.command_trace_session.clone();
 		match self.users.get_mut(user_id) {
 			None => {
 				log::error!("[room] send to unknown user {:?}", user_id)
@@ -257,8 +114,10 @@ impl Room {
 									meta: S2CMetaCommandInformation::new(self.current_user.unwrap_or(0), meta),
 									command: command.command.clone(),
 								};
+								command_trace_session.borrow_mut().collect_s2c(object_template, 100, &command.command);
+
 								let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
-								protocol.out_commands_collector.add_command(channel.clone(), application_command.clone());
+								protocol.out_commands_collector.add_command(channel.clone(), application_command);
 							}
 						}
 					}
@@ -301,7 +160,7 @@ mod tests {
 
 		// владельцу разрешены любые операции
 		let mut executed = false;
-		room.do_build_command_and_send(&object_id, &field_id_1, FieldType::Long, user_1, Permission::Rw, None, |_| {
+		room.change_data_and_send(&object_id, &field_id_1, FieldType::Long, user_1, Permission::Rw, None, |_| {
 			executed = true;
 			None
 		});
@@ -309,7 +168,7 @@ mod tests {
 
 		// RO - по-умолчанию для всех полей
 		let mut executed = false;
-		room.do_build_command_and_send(&object_id, &field_id_1, FieldType::Long, user_2, Permission::Ro, None, |_| {
+		room.change_data_and_send(&object_id, &field_id_1, FieldType::Long, user_2, Permission::Ro, None, |_| {
 			executed = true;
 			None
 		});
@@ -317,7 +176,7 @@ mod tests {
 
 		// RW - по-умолчанию запрещен
 		let mut executed = false;
-		room.do_build_command_and_send(&object_id, &field_id_1, FieldType::Long, user_2, Permission::Rw, None, |_| {
+		room.change_data_and_send(&object_id, &field_id_1, FieldType::Long, user_2, Permission::Rw, None, |_| {
 			executed = true;
 			None
 		});
@@ -325,7 +184,7 @@ mod tests {
 
 		// RW - разрешен для второго поля
 		let mut executed = false;
-		room.do_build_command_and_send(&object_id, &field_id_2, FieldType::Long, user_2, Permission::Rw, None, |_| {
+		room.change_data_and_send(&object_id, &field_id_2, FieldType::Long, user_2, Permission::Rw, None, |_| {
 			executed = true;
 			None
 		});
@@ -356,7 +215,7 @@ mod tests {
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		let mut executed = false;
-		room.build_command_and_send(&object_id, &field_id_1, field_type, user_id, Permission::Rw, |_| {
+		room.change_data_and_send(&object_id, &field_id_1, field_type, user_id, Permission::Rw, Option::None, |_| {
 			executed = true;
 			Option::Some(S2CCommand::SetLong(SetLongCommand {
 				object_id: object_id.clone(),
@@ -369,7 +228,7 @@ mod tests {
 
 		// изменяем поле, которое могут изменять другие пользователи
 		let mut executed = false;
-		room.build_command_and_send(&object_id, &field_id_2, field_type, user_id, Permission::Rw, |_| {
+		room.change_data_and_send(&object_id, &field_id_2, field_type, user_id, Permission::Rw, Option::None, |_| {
 			executed = true;
 			Option::Some(S2CCommand::SetLong(SetLongCommand {
 				object_id: object_id.clone(),
@@ -397,7 +256,7 @@ mod tests {
 		let object_id = object.id.clone();
 
 		let mut executed = false;
-		room.do_build_command_and_send(&object_id, &0, FieldType::Long, user_2, Permission::Ro, None, |_| {
+		room.change_data_and_send(&object_id, &0, FieldType::Long, user_2, Permission::Ro, None, |_| {
 			executed = true;
 			None
 		});
@@ -514,7 +373,7 @@ mod tests {
 			},
 		];
 
-		room.send(access_groups, object_template, commands.iter(), |_| true);
+		room.send_to_users(access_groups, object_template, commands.iter(), |_| true);
 
 		let commands = room.get_user_out_commands(user_2);
 		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetLong(c)) if c.field_id == allow_field_id));
@@ -534,13 +393,21 @@ mod tests {
 		room.mark_as_connected(user_1);
 		room.mark_as_connected(user_2);
 
-		room.build_command_and_send(&object_id.clone(), &field_id, FieldType::Long, user_1, Permission::Rw, |_| {
-			Option::Some(S2CCommand::SetLong(SetLongCommand {
-				object_id,
-				field_id: 100,
-				value: 200,
-			}))
-		});
+		room.change_data_and_send(
+			&object_id.clone(),
+			&field_id,
+			FieldType::Long,
+			user_1,
+			Permission::Rw,
+			Option::None,
+			|_| {
+				Option::Some(S2CCommand::SetLong(SetLongCommand {
+					object_id,
+					field_id: 100,
+					value: 200,
+				}))
+			},
+		);
 
 		let commands = room.get_user_out_commands(user_2);
 		assert!(commands.is_empty());

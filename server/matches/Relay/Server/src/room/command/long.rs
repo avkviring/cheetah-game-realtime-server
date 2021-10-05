@@ -39,7 +39,15 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				value,
 			}))
 		};
-		room.build_command_and_send(&self.object_id, &self.field_id, FieldType::Long, user_id, Permission::Rw, action);
+		room.change_data_and_send(
+			&self.object_id,
+			&self.field_id,
+			FieldType::Long,
+			user_id,
+			Permission::Rw,
+			Option::None,
+			action,
+		);
 	}
 }
 
@@ -53,7 +61,7 @@ impl ServerCommandExecutor for SetLongCommand {
 			Option::Some(S2CCommand::SetLong(self))
 		};
 
-		room.build_command_and_send(&object_id, &field_id, FieldType::Long, user_id, Permission::Rw, action);
+		room.change_data_and_send(&object_id, &field_id, FieldType::Long, user_id, Permission::Rw, Option::None, action);
 	}
 }
 
@@ -85,7 +93,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			}
 		};
 
-		room.build_command_and_send(&object_id, &field_id, FieldType::Long, uesr_id, Permission::Rw, action);
+		room.change_data_and_send(&object_id, &field_id, FieldType::Long, uesr_id, Permission::Rw, Option::None, action);
 
 		if *(is_set.borrow()) {
 			room.get_user_mut(uesr_id)
@@ -119,7 +127,7 @@ pub fn reset_all_compare_and_set(room: &mut Room, user_id: UserId, compare_and_s
 						}];
 						let groups = object.access_groups.clone();
 						let template = object.template;
-						room.send(groups, template, command.iter(), |_| true)
+						room.send_to_users(groups, template, command.iter(), |_| true)
 					}
 				}
 			}

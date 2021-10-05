@@ -13,7 +13,7 @@ impl ServerCommandExecutor for EventCommand {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self));
-		room.build_command_and_send(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, action);
+		room.change_data_and_send(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, Option::None, action);
 	}
 }
 
@@ -23,7 +23,15 @@ impl ServerCommandExecutor for TargetEventCommand {
 		let object_id = self.event.object_id.clone();
 		let target = self.target;
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.event));
-		room.build_command_and_send_to_user(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, action, target);
+		room.change_data_and_send(
+			&object_id,
+			&field_id,
+			FieldType::Event,
+			user_id,
+			Permission::Rw,
+			Option::Some(target),
+			action,
+		);
 	}
 }
 

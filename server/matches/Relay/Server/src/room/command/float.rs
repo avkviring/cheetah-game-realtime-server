@@ -28,7 +28,7 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 			}))
 		};
 
-		room.build_command_and_send(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, action);
+		room.change_data_and_send(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, Option::None, action);
 	}
 }
 
@@ -41,7 +41,7 @@ impl ServerCommandExecutor for SetFloat64Command {
 			object.floats.insert(self.field_id, self.value);
 			Option::Some(S2CCommand::SetFloat(self))
 		};
-		room.build_command_and_send(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, action);
+		room.change_data_and_send(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, Option::None, action);
 	}
 }
 

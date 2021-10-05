@@ -8,7 +8,6 @@ use std::time::Instant;
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 
-use crate::debug::tracer::CommandTracerSessions;
 use cheetah_matches_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::commands::command::S2CCommand;
@@ -23,6 +22,7 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::ObjectOwner;
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
+use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::object::{GameObject, S2CommandWithFieldInfo};
@@ -30,6 +30,7 @@ use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::server::rooms::OutFrame;
 
+pub mod action;
 pub mod command;
 pub mod object;
 pub mod sender;
@@ -47,6 +48,7 @@ pub struct Room {
 	current_user: Option<UserId>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub user_id_generator: UserId,
+	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -69,7 +71,10 @@ impl Debug for dyn RoomUserListener {
 #[derive(Debug)]
 pub struct User {
 	pub id: UserId,
-	pub(crate) protocol: Option<RelayProtocol>,
+	///
+	/// None - нет сетевого коннекта с пользователем
+	///
+	pub protocol: Option<RelayProtocol>,
 	pub attached: bool,
 	pub template: UserTemplate,
 	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
@@ -100,6 +105,7 @@ impl Room {
 			#[cfg(test)]
 			out_commands: Default::default(),
 			user_id_generator: 0,
+			command_trace_session: Default::default(),
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -109,11 +115,13 @@ impl Room {
 		room
 	}
 
-	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, command_trace_session: &mut CommandTracerSessions, now: &Instant) {
+	///
+	/// Собрать фреймы для отправки в сеть
+	///
+	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		for (user_id, user) in self.users.iter_mut() {
 			if let Some(ref mut protocol) = user.protocol {
 				while let Some(frame) = protocol.build_next_frame(&now) {
-					command_trace_session.on_s2c(&self.id, &self.objects, user_id, &frame.commands);
 					out_frames.push_front(OutFrame {
 						user_and_room_id: UserAndRoomId {
 							user_id: *user_id,
@@ -126,7 +134,10 @@ impl Room {
 		}
 	}
 
-	pub fn process_in_frame(&mut self, user_id: UserId, frame: Frame, command_trace_session: &mut CommandTracerSessions, now: &Instant) {
+	///
+	/// Обработать входящий фрейм для пользователя
+	///
+	pub fn process_in_frame(&mut self, user_id: UserId, frame: Frame, now: &Instant) {
 		let user = self.users.get_mut(&user_id);
 		let mut commands = Vec::new();
 		match user {
@@ -159,12 +170,13 @@ impl Room {
 			}
 		}
 
+		let tracer = self.command_trace_session.clone();
 		for application_command in commands.into_iter() {
 			match application_command.command {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
-					command_trace_session.on_c2s(&self.id, &self.objects, &user_id, &command_with_meta.command);
+					tracer.borrow_mut().collect_c2s(&self.objects, user_id, &command_with_meta.command);
 					execute(command_with_meta.command, self, user_id);
 				}
 				_ => {
@@ -259,7 +271,7 @@ impl Room {
 				Option::None
 			}
 			Some(object) => {
-				self.send(
+				self.send_to_users(
 					object.access_groups,
 					object.template,
 					[S2CommandWithFieldInfo {
@@ -316,7 +328,7 @@ impl Room {
 			object.collect_create_commands(&mut commands);
 			let template = object.template;
 			let access_groups = object.access_groups;
-			self.send(access_groups, template, commands.iter(), |_user| true);
+			self.send_to_users(access_groups, template, commands.iter(), |_user| true);
 			self.insert_object(object);
 		});
 	}
@@ -487,7 +499,7 @@ mod tests {
 		};
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(user_template.clone());
-		room.process_in_frame(user_id, Frame::new(0), &mut Default::default(), &Instant::now());
+		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
 			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_id))));
@@ -526,7 +538,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user1_id = room.register_user(user1_template.clone());
 		let user2_id = room.register_user(user2_template.clone());
-		room.process_in_frame(user1_id, Frame::new(0), &mut Default::default(), &Instant::now());
+		room.process_in_frame(user1_id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
 		frame_with_attach_to_room.commands.reliable.push_back(ApplicationCommandDescription {
@@ -536,7 +548,7 @@ mod tests {
 				command: C2SCommand::AttachToRoom,
 			}),
 		});
-		room.process_in_frame(user1_id, frame_with_attach_to_room, &mut Default::default(), &Instant::now());
+		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
 
 		let user1 = room.get_user_mut(user1_id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
@@ -553,7 +565,7 @@ mod tests {
 			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_id))
 		);
 		protocol.out_commands_collector.commands.reliable.clear();
-		room.process_in_frame(user2_id, Frame::new(0), &mut Default::default(), &Instant::now());
+		room.process_in_frame(user2_id, Frame::new(0), &Instant::now());
 		let user1 = room.get_user_mut(user1_id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
@@ -597,7 +609,7 @@ mod tests {
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
 		let mut room = Room::new(0, template, vec![test_listener.clone()]);
 		let user_id = room.register_user(user_template.clone());
-		room.process_in_frame(user_id, Frame::new(0), &mut Default::default(), &Instant::now());
+		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		room.disconnect_user(user_id);
 
 		assert_eq!(test_listener.clone().borrow().trace, format!("r{}d{}", user_id, user_id).to_string());

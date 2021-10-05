@@ -5,11 +5,11 @@ use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
-use crate::debug::tracer::CommandTracerSessions;
 use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
+use crate::debug::tracer::CommandTracerSessions;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::{Room, RoomUserListener};
 
@@ -54,7 +54,7 @@ impl Rooms {
 		}
 	}
 
-	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>, command_trace_session: &mut CommandTracerSessions, now: &Instant) {
+	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		let mut data: [FrameId; 30_000] = [0; 30_000];
 		let mut index = 0;
 		self.changed_rooms.iter().for_each(|room_id| {
@@ -67,25 +67,19 @@ impl Rooms {
 			match self.room_by_id.get_mut(&data[i]) {
 				None => {}
 				Some(room) => {
-					room.collect_out_frame(out_frames, command_trace_session, now);
+					room.collect_out_frame(out_frames, now);
 				}
 			}
 		}
 	}
 
-	pub fn on_frame_received(
-		&mut self,
-		user_and_room_id: UserAndRoomId,
-		frame: Frame,
-		command_trace_session: &mut CommandTracerSessions,
-		now: &Instant,
-	) {
+	pub fn on_frame_received(&mut self, user_and_room_id: UserAndRoomId, frame: Frame, now: &Instant) {
 		match self.room_by_id.get_mut(&user_and_room_id.room_id) {
 			None => {
 				log::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
 			}
 			Some(room) => {
-				room.process_in_frame(user_and_room_id.user_id, frame, command_trace_session, now);
+				room.process_in_frame(user_and_room_id.user_id, frame, now);
 				self.changed_rooms.insert(room.id);
 			}
 		}
