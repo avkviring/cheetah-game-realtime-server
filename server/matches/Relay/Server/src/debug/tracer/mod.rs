@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::sync::mpsc::Sender;
 
 use fnv::FnvBuildHasher;
 use indexmap::IndexMap;
@@ -68,9 +69,17 @@ enum UniDirectionCommand {
 /// Ошибка установки фильтра
 ///
 #[derive(Debug)]
-pub enum Error {
+pub enum CommandTracerSessionsError {
 	QueryError(String),
 	SessionNotFound,
+}
+
+///
+/// Команды к потоку relay сервера
+///
+pub enum CommandTracerSessionsTask {
+	CreateSession(Sender<SessionId>),
+	SetFilter(SessionId, String, Sender<Result<(), CommandTracerSessionsError>>),
 }
 
 impl Session {
@@ -127,19 +136,19 @@ impl CommandTracerSessions {
 	///
 	/// Установить фильтр для сессии
 	///
-	pub fn set_filter(&mut self, session_id: SessionId, query: String) -> Result<(), Error> {
+	pub fn set_filter(&mut self, session_id: SessionId, query: String) -> Result<(), CommandTracerSessionsError> {
 		match parser::parser().parse(query.as_ref()) {
 			Ok(rules) => {
 				let filter = Filter::from(rules);
 				match self.sessions.get_mut(&session_id) {
-					None => Result::Err(Error::SessionNotFound),
+					None => Result::Err(CommandTracerSessionsError::SessionNotFound),
 					Some(session) => {
 						session.apply_filter(filter);
 						Result::Ok(())
 					}
 				}
 			}
-			Err(e) => Result::Err(Error::QueryError(format!("{:?}", e).to_string())),
+			Err(e) => Result::Err(CommandTracerSessionsError::QueryError(format!("{:?}", e).to_string())),
 		}
 	}
 
@@ -166,10 +175,24 @@ impl CommandTracerSessions {
 	///
 	/// Получить команды из сессии, полученные команды удаляются их отфильтрованных команд
 	///
-	pub fn drain_filtered_commands(&mut self, session: SessionId) -> Result<Vec<CollectedCommand>, Error> {
+	pub fn drain_filtered_commands(&mut self, session: SessionId) -> Result<Vec<CollectedCommand>, CommandTracerSessionsError> {
 		match self.sessions.get_mut(&session) {
-			None => Result::Err(Error::SessionNotFound),
+			None => Result::Err(CommandTracerSessionsError::SessionNotFound),
 			Some(session) => Result::Ok(session.filtered_commands.drain(0..).collect()),
+		}
+	}
+
+	pub fn do_task(&mut self, task: CommandTracerSessionsTask) {
+		match task {
+			CommandTracerSessionsTask::CreateSession(sender) => {
+				let session_id = self.create_session();
+				sender.send(session_id).unwrap();
+			}
+			CommandTracerSessionsTask::SetFilter(session_id, query, sender) => {
+				let result = self.set_filter(session_id, query);
+				println!("result {:?}", result);
+				sender.send(result).unwrap();
+			}
 		}
 	}
 }
@@ -180,7 +203,9 @@ pub mod tests {
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
 	use cheetah_matches_relay_common::room::UserId;
 
-	use crate::debug::tracer::{CollectedCommand, CommandTracerSessions, Session, UniDirectionCommand};
+	use crate::debug::tracer::{
+		CollectedCommand, CommandTracerSessions, CommandTracerSessionsError, CommandTracerSessionsTask, Session, SessionId, UniDirectionCommand,
+	};
 
 	#[test]
 	fn should_collect_command_without_filter() {
@@ -296,5 +321,50 @@ pub mod tests {
 				network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 			}
 		)
+	}
+
+	#[test]
+	fn should_do_task_create_session() {
+		let mut tracer = CommandTracerSessions::default();
+		let (sender, receiver) = std::sync::mpsc::channel();
+		tracer.do_task(CommandTracerSessionsTask::CreateSession(sender));
+		match receiver.try_recv() {
+			Ok(session_id) => {
+				assert!(tracer.sessions.contains_key(&session_id))
+			}
+			Err(_) => {
+				assert!(false)
+			}
+		}
+	}
+
+	#[test]
+	fn should_do_task_set_filter() {
+		let mut tracer = CommandTracerSessions::default();
+		let session_id = tracer.create_session();
+		let (sender, receiver) = std::sync::mpsc::channel();
+		tracer.do_task(CommandTracerSessionsTask::SetFilter(session_id, "(user=55)".to_string(), sender));
+		match receiver.try_recv() {
+			Ok(result) => match result {
+				Ok(_) => assert!(true),
+				Err(_) => assert!(false),
+			},
+			Err(_) => assert!(false),
+		}
+	}
+
+	#[test]
+	fn should_do_task_set_wrong_filter() {
+		let mut tracer = CommandTracerSessions::default();
+		let session_id = tracer.create_session();
+		let (sender, receiver) = std::sync::mpsc::channel();
+		tracer.do_task(CommandTracerSessionsTask::SetFilter(session_id, "(8=55)".to_string(), sender));
+		match receiver.try_recv() {
+			Ok(result) => match result {
+				Ok(_) => assert!(false),
+				Err(_) => assert!(true),
+			},
+			Err(_) => assert!(false),
+		}
 	}
 }

@@ -10,7 +10,7 @@ use cheetah_matches_relay_common::room::owner::ObjectOwner;
 /// todo - неплохо бы сделать понятные сообщения об ошибках
 ///
 pub fn parser<'a>() -> Parser<'a, u8, Vec<Vec<Rule>>> {
-	let list = list(seq(b"(") * rules_group() - seq(b")"), space());
+	let list = list(seq(b"(") * rules_group() - seq(b")"), space()) - end();
 	let single = (rules_group() - end()).map(|v| vec![v]);
 	single | list
 }
@@ -200,5 +200,18 @@ mod test {
 				Rule::Not(Box::new(Rule::Object(GameObjectId::new(100, ObjectOwner::User(5)))))
 			]]
 		);
+	}
+
+	#[test]
+	fn should_fail_when_wrong_filter() {
+		let query = "(tttt=555)";
+		match parser().parse(query.as_ref()) {
+			Ok(_) => {
+				assert!(false)
+			}
+			Err(_) => {
+				assert!(true)
+			}
+		}
 	}
 }
