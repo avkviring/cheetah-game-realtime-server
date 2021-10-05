@@ -9,7 +9,7 @@ use cheetah_matches_relay_common::room::owner::ObjectOwner;
 /// Парсер текстового фильтра в структуру Rule
 /// todo - неплохо бы сделать понятные сообщения об ошибках
 ///
-fn parser<'a>() -> Parser<'a, u8, Vec<Vec<Rule>>> {
+pub fn parser<'a>() -> Parser<'a, u8, Vec<Vec<Rule>>> {
 	let list = list(seq(b"(") * rules_group() - seq(b")"), space());
 	let single = (rules_group() - end()).map(|v| vec![v]);
 	single | list
