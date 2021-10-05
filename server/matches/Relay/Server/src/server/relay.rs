@@ -1,4 +1,3 @@
-
 use std::cmp::max;
 use std::net::UdpSocket;
 use std::ops::{Add, Sub};
@@ -8,9 +7,10 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
+use crate::room::Room;
 use crate::server::dump::ServerDump;
-use crate::server::manager::ManagementTask;
 use crate::server::manager::ManagementTask::TimeOffset;
+use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
 use crate::server::rooms::Rooms;
 use crate::server::udp::UDPServer;
 
@@ -82,6 +82,16 @@ impl Relay {
 				ManagementTask::Dump(sender) => {
 					sender.send(ServerDump::from(&*self)).unwrap();
 				}
+				ManagementTask::GetRooms(sender) => {
+					sender.send(self.rooms.room_by_id.keys().cloned().collect()).unwrap();
+				}
+				ManagementTask::CommandTracerSessionTask(roomId, task, sender) => match self.rooms.room_by_id.get_mut(&roomId) {
+					None => sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound)).unwrap(),
+					Some(room) => {
+						room.command_trace_session.clone().borrow_mut().do_task(task);
+						sender.send(Result::Ok(())).unwrap();
+					}
+				},
 			}
 		}
 	}

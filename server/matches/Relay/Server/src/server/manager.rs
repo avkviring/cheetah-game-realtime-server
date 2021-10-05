@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{RecvTimeoutError, Sender};
+use std::sync::mpsc::{RecvTimeoutError, SendError, Sender};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
+use crate::debug::tracer::CommandTracerSessionsTask;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::server::dump::ServerDump;
 use crate::server::manager::ManagementTask::TimeOffset;
@@ -38,6 +39,19 @@ pub enum ManagementTask {
 	/// Скопировать состояние сервера для отладки
 	///
 	Dump(Sender<ServerDump>),
+	///
+	/// Запросить список комнат
+	///
+	GetRooms(Sender<Vec<RoomId>>),
+	///
+	/// Выполнить задачу для трассировщика команд
+	CommandTracerSessionTask(RoomId, CommandTracerSessionsTask, Sender<Result<(), CommandTracerSessionTaskError>>),
+}
+
+#[derive(Debug)]
+pub enum CommandTracerSessionTaskError {
+	RoomNotFound,
+	RecvTimeoutError,
 }
 
 #[derive(Debug)]
@@ -73,6 +87,35 @@ impl RelayManager {
 			sender,
 			halt_signal: cloned_halt_signal,
 			created_room_counter: 0,
+		}
+	}
+
+	pub fn get_rooms(&self) -> Result<Vec<RoomId>, String> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender.send(ManagementTask::GetRooms(sender)).unwrap();
+		match receiver.recv_timeout(Duration::from_millis(100)) {
+			Ok(rooms) => Result::Ok(rooms),
+			Err(e) => Result::Err(format!("{:?}", e).to_string()),
+		}
+	}
+
+	///
+	/// Выполнить задачу в CommandTracerSessions конкретной комнаты
+	/// Подход с вложенным enum для отдельного класса задач применяется для изолирования функционала
+	///
+	pub fn execute_command_trace_sessions_task(
+		&self,
+		room_id: RoomId,
+		task: CommandTracerSessionsTask,
+	) -> Result<(), CommandTracerSessionTaskError> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender)).unwrap();
+		match receiver.recv_timeout(Duration::from_millis(100)) {
+			Ok(r) => match r {
+				Ok(_) => Result::Ok(()),
+				Err(e) => Result::Err(e),
+			},
+			Err(e) => Result::Err(CommandTracerSessionTaskError::RecvTimeoutError),
 		}
 	}
 
@@ -154,5 +197,13 @@ mod test {
 		let mut server = RelayManager::new(bind_to_free_socket().unwrap().0);
 		server.register_room(RoomTemplate::default()).unwrap();
 		assert_eq!(server.created_room_counter, 1);
+	}
+
+	#[test]
+	fn should_get_rooms() {
+		let mut server = RelayManager::new(bind_to_free_socket().unwrap().0);
+		let room_id = server.register_room(RoomTemplate::default()).unwrap();
+		let rooms = server.get_rooms().unwrap();
+		assert_eq!(rooms, vec![room_id]);
 	}
 }
