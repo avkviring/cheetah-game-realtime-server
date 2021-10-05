@@ -1,6 +1,6 @@
-use std::str::FromStr;
 
-use tonic::transport::{Server, Uri};
+
+use tonic::transport::{Server};
 
 use cheetah_matches_stub_matchmaking::proto::matches::matchmaking;
 use cheetah_matches_stub_matchmaking::service::StubMatchmakingService;

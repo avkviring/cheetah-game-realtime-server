@@ -13,7 +13,7 @@ use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
-use crate::debug::tracer::CommandTracerSessions;
+
 use crate::room::template::config::UserTemplate;
 use crate::room::RoomUserListener;
 use crate::server::rooms::{OutFrame, Rooms};

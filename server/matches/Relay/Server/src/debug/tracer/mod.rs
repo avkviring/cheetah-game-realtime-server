@@ -5,9 +5,9 @@ use indexmap::IndexMap;
 
 use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommands;
+
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::{RoomId, UserId};
+use cheetah_matches_relay_common::room::{UserId};
 
 use crate::debug::tracer::filter::Filter;
 use crate::room::object::GameObject;
@@ -278,7 +278,7 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		tracer.collect_c2s(&Default::default(), 50, &C2SCommand::AttachToRoom);
-		for i in 0..Session::BUFFER_LIMIT {
+		for _i in 0..Session::BUFFER_LIMIT {
 			tracer.collect_c2s(&Default::default(), 1000 as UserId, &C2SCommand::AttachToRoom);
 		}
 		tracer.collect_c2s(&Default::default(), 55, &C2SCommand::AttachToRoom);

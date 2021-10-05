@@ -2,17 +2,17 @@ use std::slice::Iter;
 
 use cheetah_matches_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_matches_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
-use cheetah_matches_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
-use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_relay_common::commands::command::{S2CCommandWithMeta};
+use cheetah_matches_relay_common::constants::{GameObjectTemplateId};
 use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_matches_relay_common::room::access::AccessGroups;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+
+
 use cheetah_matches_relay_common::room::UserId;
 
-use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
-use crate::room::types::FieldType;
+
 use crate::room::{Room, User};
 
 ///
