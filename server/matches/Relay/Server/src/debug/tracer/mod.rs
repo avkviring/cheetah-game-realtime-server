@@ -5,9 +5,8 @@ use indexmap::IndexMap;
 
 use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::{UserId};
+use cheetah_matches_relay_common::room::UserId;
 
 use crate::debug::tracer::filter::Filter;
 use crate::room::object::GameObject;
@@ -18,7 +17,9 @@ use crate::room::object::GameObject;
 ///
 ///
 pub mod filter;
+pub mod grpc;
 pub mod parser;
+pub mod proto;
 
 type SessionId = u16;
 

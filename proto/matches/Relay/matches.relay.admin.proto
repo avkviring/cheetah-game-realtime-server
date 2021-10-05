@@ -1,0 +1,84 @@
+syntax = "proto3";
+package cheetah.matches.relay.admin;
+
+
+
+service CommandTracer {
+
+  /**
+    Получить список комнат
+   */
+  rpc GetRooms(GetRoomsRequest) returns(GetRoomsResponse);
+
+  /**
+    Создать сессию
+   */
+  rpc CreateSession(CreateSessionRequest) returns(CreateSessionResponse);
+
+  /**
+    Установить фильтр для фильтрации команд
+   */
+  rpc SetFilter(SetFilterRequest) returns(SetFilterResponse);
+
+  /**
+    Получить отфильтрованные команды
+   */
+  rpc GetCommands(GetCommandsRequest) returns(GetCommandsResponse);
+
+  rpc CloseSession(CloseSessionRequest) returns(CloseSessionResponse);
+
+}
+
+message GetRoomsRequest {
+
+}
+
+message GetRoomsResponse {
+  repeated uint64 rooms = 1;
+}
+
+message CreateSessionRequest {
+  uint64 room = 1;
+}
+message CreateSessionResponse {
+  uint32 id = 1;
+}
+
+message SetFilterRequest {
+  uint64 room = 1;
+  uint32 session = 2;
+  string filter = 3;
+}
+
+message SetFilterResponse {
+
+}
+
+message GetCommandsRequest {
+  uint64 room = 1;
+  uint32 session = 2;
+}
+
+message GetCommandsResponse {
+  repeated Command commands = 1;
+}
+
+
+message Command {
+  string direction = 1;
+  string command = 2;
+  string object_id = 3;
+  uint32 user_id = 4;
+  uint32 template = 5;
+  string value = 6;
+}
+
+
+message CloseSessionRequest {
+  uint64 room = 1;
+  uint32 session = 2;
+}
+
+message CloseSessionResponse {
+
+}
