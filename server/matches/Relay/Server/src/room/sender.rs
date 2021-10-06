@@ -2,11 +2,10 @@ use std::slice::Iter;
 
 use cheetah_matches_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_matches_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
-use cheetah_matches_relay_common::commands::command::{S2CCommandWithMeta};
-use cheetah_matches_relay_common::constants::{GameObjectTemplateId};
+use cheetah_matches_relay_common::commands::command::S2CCommandWithMeta;
+use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_matches_relay_common::room::access::AccessGroups;
-
 
 use cheetah_matches_relay_common::room::UserId;
 

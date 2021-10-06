@@ -7,7 +7,6 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::room::Room;
 use crate::server::dump::ServerDump;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};

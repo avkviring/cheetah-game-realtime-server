@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{RecvTimeoutError, SendError, Sender};
+use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
@@ -103,11 +103,7 @@ impl RelayManager {
 	/// Выполнить задачу в CommandTracerSessions конкретной комнаты
 	/// Подход с вложенным enum для отдельного класса задач применяется для изолирования функционала
 	///
-	pub fn execute_command_trace_sessions_task(
-		&self,
-		room_id: RoomId,
-		task: CommandTracerSessionsTask,
-	) -> Result<(), CommandTracerSessionTaskError> {
+	pub fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: CommandTracerSessionsTask) -> Result<(), CommandTracerSessionTaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_millis(100)) {
@@ -115,7 +111,7 @@ impl RelayManager {
 				Ok(_) => Result::Ok(()),
 				Err(e) => Result::Err(e),
 			},
-			Err(e) => Result::Err(CommandTracerSessionTaskError::RecvTimeoutError),
+			Err(_e) => Result::Err(CommandTracerSessionTaskError::RecvTimeoutError),
 		}
 	}
 

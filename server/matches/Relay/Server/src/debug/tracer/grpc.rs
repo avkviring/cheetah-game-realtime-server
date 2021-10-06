@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
-use cheetah_matches_relay_common::constants::GameObjectTemplateId;
+
 use cheetah_matches_relay_common::room::owner::ObjectOwner;
 use cheetah_matches_relay_common::room::RoomId;
 use cheetah_microservice::tonic::{Request, Response};
@@ -41,7 +41,7 @@ impl CommandTracerGRPCServer {
 
 #[tonic::async_trait]
 impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCServer {
-	async fn get_rooms(&self, request: Request<admin::GetRoomsRequest>) -> Result<Response<admin::GetRoomsResponse>, tonic::Status> {
+	async fn get_rooms(&self, _request: Request<admin::GetRoomsRequest>) -> Result<Response<admin::GetRoomsResponse>, tonic::Status> {
 		let manager = self.manager.lock().unwrap();
 		match manager.get_rooms() {
 			Ok(rooms) => Result::Ok(Response::new(admin::GetRoomsResponse { rooms })),
@@ -182,7 +182,7 @@ impl From<CollectedCommand> for admin::Command {
 #[cfg(test)]
 pub mod test {
 	use cheetah_matches_relay_common::commands::command::event::EventCommand;
-	use cheetah_matches_relay_common::commands::command::{C2SCommand, HeaplessBuffer, S2CCommand};
+	use cheetah_matches_relay_common::commands::command::{C2SCommand, HeaplessBuffer};
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 
