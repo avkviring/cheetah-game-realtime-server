@@ -80,6 +80,8 @@ pub enum CommandTracerSessionsError {
 pub enum CommandTracerSessionsTask {
 	CreateSession(Sender<SessionId>),
 	SetFilter(SessionId, String, Sender<Result<(), CommandTracerSessionsError>>),
+	GetCommands(SessionId, Sender<Result<Vec<CollectedCommand>, CommandTracerSessionsError>>),
+	CloseSession(SessionId, Sender<Result<(), CommandTracerSessionsError>>),
 }
 
 impl Session {
@@ -190,10 +192,21 @@ impl CommandTracerSessions {
 			}
 			CommandTracerSessionsTask::SetFilter(session_id, query, sender) => {
 				let result = self.set_filter(session_id, query);
-				println!("result {:?}", result);
 				sender.send(result).unwrap();
 			}
+			CommandTracerSessionsTask::GetCommands(session, sender) => {
+				sender.send(self.drain_filtered_commands(session)).unwrap();
+			}
+			CommandTracerSessionsTask::CloseSession(session, sender) => {
+				sender.send(self.close_session(session)).unwrap();
+			}
 		}
+	}
+	fn close_session(&mut self, session: SessionId) -> Result<(), CommandTracerSessionsError> {
+		self.sessions
+			.remove(&session)
+			.map(|_| ())
+			.ok_or(CommandTracerSessionsError::SessionNotFound)
 	}
 }
 
@@ -324,6 +337,14 @@ pub mod tests {
 	}
 
 	#[test]
+	fn should_close_session() {
+		let mut tracer = CommandTracerSessions::default();
+		let session_id = tracer.create_session();
+		tracer.close_session(session_id).unwrap();
+		assert!(tracer.sessions.is_empty())
+	}
+
+	#[test]
 	fn should_do_task_create_session() {
 		let mut tracer = CommandTracerSessions::default();
 		let (sender, receiver) = std::sync::mpsc::channel();
@@ -363,6 +384,37 @@ pub mod tests {
 			Ok(result) => match result {
 				Ok(_) => assert!(false),
 				Err(_) => assert!(true),
+			},
+			Err(_) => assert!(false),
+		}
+	}
+
+	#[test]
+	fn should_do_task_get_commands() {
+		let mut tracer = CommandTracerSessions::default();
+		let session_id = tracer.create_session();
+		tracer.collect_c2s(&Default::default(), 100, &C2SCommand::AttachToRoom);
+		let (sender, receiver) = std::sync::mpsc::channel();
+		tracer.do_task(CommandTracerSessionsTask::GetCommands(session_id, sender));
+		match receiver.try_recv() {
+			Ok(result) => match result {
+				Ok(result) => assert_eq!(result.len(), 1),
+				Err(_) => assert!(false),
+			},
+			Err(_) => assert!(false),
+		}
+	}
+
+	#[test]
+	fn should_do_task_close_session() {
+		let mut tracer = CommandTracerSessions::default();
+		let session_id = tracer.create_session();
+		let (sender, receiver) = std::sync::mpsc::channel();
+		tracer.do_task(CommandTracerSessionsTask::CloseSession(session_id, sender));
+		match receiver.try_recv() {
+			Ok(result) => match result {
+				Ok(_) => assert!(tracer.sessions.is_empty()),
+				Err(_) => assert!(false),
 			},
 			Err(_) => assert!(false),
 		}

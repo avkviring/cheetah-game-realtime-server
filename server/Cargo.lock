@@ -579,6 +579,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "stderrlog",
+ "strum_macros",
  "tokio",
  "tokio-stream",
  "tonic",
@@ -621,6 +622,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "snap",
+ "strum_macros",
 ]
 
 [[package]]
@@ -2900,6 +2902,18 @@ checksum = "8ee348cb74b87454fff4b551cbf727025810a004f88aeacae7f85b87f4e9a1c1"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.21.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d06aaeeee809dbc59eb4556183dd927df67db1540de5be8d3ec0b6636358a5ec"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

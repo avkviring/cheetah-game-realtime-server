@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use strum_macros::AsRefStr;
 
 use crate::commands::command::event::{EventCommand, TargetEventCommand};
 use crate::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
@@ -19,7 +20,7 @@ pub mod unload;
 
 pub type HeaplessBuffer = heapless::Vec<u8, 256>;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, AsRefStr)]
 pub enum C2SCommand {
 	Create(CreateGameObjectCommand),
 	Created(CreatedGameObjectCommand),
@@ -39,7 +40,7 @@ pub enum C2SCommand {
 	DetachFromRoom,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, AsRefStr)]
 pub enum S2CCommand {
 	Create(CreateGameObjectCommand),
 	Created(CreatedGameObjectCommand),

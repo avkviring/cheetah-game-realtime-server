@@ -52,7 +52,7 @@ impl UniDirectionCommand {
 			UniDirectionCommand::S2C(_) => RuleCommandDirection::S2C,
 		}
 	}
-	fn get_field_id(&self) -> Option<FieldId> {
+	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
 			UniDirectionCommand::C2S(command) => match command {
 				C2SCommand::Create(_) => Option::None,
