@@ -31,6 +31,9 @@ pub fn get_internal_service_binding_addr() -> SocketAddr {
 pub fn get_external_service_binding_addr() -> SocketAddr {
 	format!("0.0.0.0:{}", get_external_service_port()).parse().unwrap()
 }
+pub fn get_admin_service_binding_addr() -> SocketAddr {
+	format!("0.0.0.0:{}", get_admin_service_port()).parse().unwrap()
+}
 
 pub fn get_external_service_port() -> u16 {
 	5000
@@ -38,6 +41,10 @@ pub fn get_external_service_port() -> u16 {
 
 pub fn get_internal_service_port() -> u16 {
 	5001
+}
+
+pub fn get_admin_service_port() -> u16 {
+	5002
 }
 
 pub fn make_internal_srv_uri(host: &str, port: u16) -> Uri {

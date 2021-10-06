@@ -3,7 +3,7 @@ use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::UserId;
 
-use crate::debug::tracer::{CollectedCommand, UniDirectionCommand};
+use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
 
 ///
 /// Фильтрация сетевых команд на основе правил
@@ -34,7 +34,7 @@ pub enum RuleCommandDirection {
 }
 
 impl Filter {
-	pub fn filter(&self, command: &CollectedCommand) -> bool {
+	pub fn filter(&self, command: &TracedCommand) -> bool {
 		self.rules.iter().any(|group| !group.iter().any(|r| !r.filter(command)))
 	}
 }
@@ -112,7 +112,7 @@ impl UniDirectionCommand {
 }
 
 impl Rule {
-	pub fn filter(&self, command: &CollectedCommand) -> bool {
+	pub fn filter(&self, command: &TracedCommand) -> bool {
 		match self {
 			Rule::Direction(direction) => *direction == command.network_command.get_direction(),
 			Rule::Not(rule) => !rule.filter(command),
@@ -142,9 +142,9 @@ mod tests {
 	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 	use cheetah_matches_relay_common::room::UserId;
 
-	use crate::debug::tracer::filter::{CollectedCommand, Filter, Rule, RuleCommandDirection, UniDirectionCommand};
+	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedCommand, UniDirectionCommand};
 
-	impl CollectedCommand {
+	impl TracedCommand {
 		pub fn c2s() -> Self {
 			Self {
 				template: Option::None,
@@ -219,64 +219,64 @@ mod tests {
 	#[test]
 	fn should_filter_by_direction() {
 		let filter_c2s = Filter::from(vec![vec![Rule::Direction(RuleCommandDirection::C2S)]]);
-		assert!(filter_c2s.filter(&CollectedCommand::c2s()));
-		assert!(!filter_c2s.filter(&CollectedCommand::s2c()));
+		assert!(filter_c2s.filter(&TracedCommand::c2s()));
+		assert!(!filter_c2s.filter(&TracedCommand::s2c()));
 
 		let filter_s2c = Filter::from(vec![vec![Rule::Direction(RuleCommandDirection::S2C)]]);
-		assert!(filter_s2c.filter(&CollectedCommand::s2c()));
-		assert!(!filter_s2c.filter(&CollectedCommand::c2s()));
+		assert!(filter_s2c.filter(&TracedCommand::s2c()));
+		assert!(!filter_s2c.filter(&TracedCommand::c2s()));
 	}
 
 	#[test]
 	fn should_filter_by_user() {
 		let filter = Filter::from(vec![vec![Rule::User(55)]]);
-		assert!(filter.filter(&CollectedCommand::c2s().with_user(55)));
-		assert!(!filter.filter(&CollectedCommand::c2s().with_user(155)));
+		assert!(filter.filter(&TracedCommand::c2s().with_user(55)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_user(155)));
 	}
 
 	#[test]
 	fn should_filter_by_template() {
 		let filter = Filter::from(vec![vec![Rule::Template(100)]]);
-		assert!(filter.filter(&CollectedCommand::c2s().with_template(100)));
-		assert!(!filter.filter(&CollectedCommand::c2s().with_template(200)));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(100)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_template(200)));
 	}
 
 	#[test]
 	fn should_filter_by_not() {
 		let filter = Filter::from(vec![vec![Rule::Not(Box::new(Rule::Template(100)))]]);
-		assert!(filter.filter(&CollectedCommand::c2s().with_template(10)));
-		assert!(!filter.filter(&CollectedCommand::c2s().with_template(100)));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(10)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_template(100)));
 	}
 	//
 	#[test]
 	fn should_filter_by_group() {
 		let filter = Filter::from(vec![vec![Rule::User(55), Rule::Template(100)]]);
-		assert!(filter.filter(&CollectedCommand::c2s().with_template(100).with_user(55)));
-		assert!(!filter.filter(&CollectedCommand::c2s().with_user(55)));
-		assert!(!filter.filter(&CollectedCommand::c2s().with_template(100)));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(100).with_user(55)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_user(55)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_template(100)));
 	}
 
 	#[test]
 	fn should_filter_by_groups() {
 		let filter = Filter::from(vec![vec![Rule::User(55), Rule::Template(100)], vec![Rule::User(100), Rule::Template(55)]]);
-		assert!(filter.filter(&CollectedCommand::c2s().with_template(100).with_user(55)));
-		assert!(filter.filter(&CollectedCommand::c2s().with_template(55).with_user(100)));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(100).with_user(55)));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(55).with_user(100)));
 	}
 
 	#[test]
 	fn should_filter_by_field() {
 		let filter = Filter::from(vec![vec![Rule::Field(10)]]);
-		assert!(filter.filter(&CollectedCommand::c2s().with_field_id(10)));
-		assert!(filter.filter(&CollectedCommand::s2c().with_field_id(10)));
-		assert!(!filter.filter(&CollectedCommand::c2s().with_field_id(100)));
-		assert!(!filter.filter(&CollectedCommand::s2c().with_field_id(100)));
+		assert!(filter.filter(&TracedCommand::c2s().with_field_id(10)));
+		assert!(filter.filter(&TracedCommand::s2c().with_field_id(10)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_field_id(100)));
+		assert!(!filter.filter(&TracedCommand::s2c().with_field_id(100)));
 	}
 
 	#[test]
 	fn should_filter_by_object_id() {
 		let filter = Filter::from(vec![vec![Rule::Object(GameObjectId::new(100, ObjectOwner::Root))]]);
-		assert!(filter.filter(&CollectedCommand::c2s().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
-		assert!(filter.filter(&CollectedCommand::s2c().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
-		assert!(!filter.filter(&CollectedCommand::c2s().with_object_id(GameObjectId::new(0, ObjectOwner::Root))));
+		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
+		assert!(filter.filter(&TracedCommand::s2c().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
+		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(0, ObjectOwner::Root))));
 	}
 }

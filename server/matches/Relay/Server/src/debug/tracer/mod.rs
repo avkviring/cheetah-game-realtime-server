@@ -22,8 +22,6 @@ pub mod grpc;
 pub mod parser;
 pub mod proto;
 
-type SessionId = u16;
-
 ///
 /// Список сессий для сбора команд
 /// Каждая сессия собирает команды в свой буфер и может применять к этому буферу фильтр
@@ -36,22 +34,35 @@ pub struct CommandTracerSessions {
 	sessions: HashMap<SessionId, Session>,
 }
 
+type SessionId = u16;
+
 ///
 /// Сохраняет все команды с момента создания, также при установке фильтра сохраняет
 /// отфильтрованные команды
 ///
 #[derive(Debug, Default)]
 struct Session {
+	///
+	/// Фильтр, если не установлен то commands == filtered_commands
+	///
 	filter: Option<Filter>,
-	commands: VecDeque<CollectedCommand>,
-	filtered_commands: VecDeque<CollectedCommand>,
+
+	///
+	/// Все команды с создания сессии (с учетом ограничения общего размера буфера)
+	///
+	commands: VecDeque<TracedCommand>,
+
+	///
+	/// Отфильтрованные команды
+	///
+	filtered_commands: VecDeque<TracedCommand>,
 }
 
 ///
 /// Структура для хранения собранной команды
 ///
 #[derive(Debug, Clone, PartialEq)]
-pub struct CollectedCommand {
+pub struct TracedCommand {
 	template: Option<GameObjectTemplateId>,
 	user: UserId,
 	network_command: UniDirectionCommand,
@@ -80,11 +91,14 @@ pub enum CommandTracerSessionsError {
 pub enum CommandTracerSessionsTask {
 	CreateSession(Sender<SessionId>),
 	SetFilter(SessionId, String, Sender<Result<(), CommandTracerSessionsError>>),
-	GetCommands(SessionId, Sender<Result<Vec<CollectedCommand>, CommandTracerSessionsError>>),
+	GetCommands(SessionId, Sender<Result<Vec<TracedCommand>, CommandTracerSessionsError>>),
 	CloseSession(SessionId, Sender<Result<(), CommandTracerSessionsError>>),
 }
 
 impl Session {
+	///
+	/// Максимальное число сохраненных команд в сессии
+	///
 	pub const BUFFER_LIMIT: usize = 65000;
 
 	///
@@ -92,12 +106,17 @@ impl Session {
 	/// - учитывается ограничение на размер буфера команд
 	///
 	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, user: UserId, network_command: UniDirectionCommand) {
-		let collected_command = CollectedCommand {
+		let collected_command = TracedCommand {
 			template,
 			user,
 			network_command,
 		};
+		self.push_filtered_command(&collected_command);
+		self.commands.push_back(collected_command);
+		self.apply_buffer_limit();
+	}
 
+	fn push_filtered_command(&mut self, collected_command: &TracedCommand) {
 		match &self.filter {
 			None => self.filtered_commands.push_back(collected_command.clone()),
 			Some(filter) => {
@@ -106,7 +125,9 @@ impl Session {
 				}
 			}
 		}
-		self.commands.push_back(collected_command);
+	}
+
+	fn apply_buffer_limit(&mut self) {
 		if self.commands.len() >= Session::BUFFER_LIMIT {
 			self.commands.pop_front();
 		}
@@ -117,6 +138,7 @@ impl Session {
 
 	///
 	/// Сохранить фильтр в сессии и применить его для уже собранных команд
+	///
 	pub fn apply_filter(&mut self, filter: Filter) {
 		let filter = filter;
 		self.filtered_commands = self.commands.iter().filter(|c| filter.filter(c)).cloned().collect();
@@ -154,6 +176,9 @@ impl CommandTracerSessions {
 		}
 	}
 
+	///
+	/// Сохранить c2s команду в сессии
+	///
 	pub fn collect_c2s(&mut self, objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>, user: UserId, command: &C2SCommand) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = UniDirectionCommand::C2S(command.clone());
@@ -167,6 +192,10 @@ impl CommandTracerSessions {
 			s.collect(template, user, network_command);
 		})
 	}
+
+	///
+	/// Сохранить s2c команду в сессии
+	///
 	pub fn collect_s2c(&mut self, template: GameObjectTemplateId, user: UserId, command: &S2CCommand) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = UniDirectionCommand::S2C(command.clone());
@@ -177,14 +206,17 @@ impl CommandTracerSessions {
 	///
 	/// Получить команды из сессии, полученные команды удаляются их отфильтрованных команд
 	///
-	pub fn drain_filtered_commands(&mut self, session: SessionId) -> Result<Vec<CollectedCommand>, CommandTracerSessionsError> {
+	pub fn drain_filtered_commands(&mut self, session: SessionId) -> Result<Vec<TracedCommand>, CommandTracerSessionsError> {
 		match self.sessions.get_mut(&session) {
 			None => Result::Err(CommandTracerSessionsError::SessionNotFound),
 			Some(session) => Result::Ok(session.filtered_commands.drain(0..).collect()),
 		}
 	}
 
-	pub fn do_task(&mut self, task: CommandTracerSessionsTask) {
+	///
+	/// Выполнить задачу из другого потока
+	///
+	pub fn execute_task(&mut self, task: CommandTracerSessionsTask) {
 		match task {
 			CommandTracerSessionsTask::CreateSession(sender) => {
 				let session_id = self.create_session();
@@ -202,6 +234,7 @@ impl CommandTracerSessions {
 			}
 		}
 	}
+
 	fn close_session(&mut self, session: SessionId) -> Result<(), CommandTracerSessionsError> {
 		self.sessions
 			.remove(&session)
@@ -217,7 +250,7 @@ pub mod tests {
 	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::debug::tracer::{
-		CollectedCommand, CommandTracerSessions, CommandTracerSessionsError, CommandTracerSessionsTask, Session, SessionId, UniDirectionCommand,
+		CommandTracerSessions, CommandTracerSessionsError, CommandTracerSessionsTask, Session, SessionId, TracedCommand, UniDirectionCommand,
 	};
 
 	#[test]
@@ -240,22 +273,22 @@ pub mod tests {
 		assert_eq!(
 			commands,
 			vec![
-				CollectedCommand {
+				TracedCommand {
 					template: None,
 					user: 100,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
-				CollectedCommand {
+				TracedCommand {
 					template: None,
 					user: 101,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
-				CollectedCommand {
+				TracedCommand {
 					template: None,
 					user: 102,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
-				CollectedCommand {
+				TracedCommand {
 					template: Some(200),
 					user: 100,
 					network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {
@@ -292,12 +325,12 @@ pub mod tests {
 		assert_eq!(
 			commands,
 			vec![
-				CollectedCommand {
+				TracedCommand {
 					template: None,
 					user: 100,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
-				CollectedCommand {
+				TracedCommand {
 					template: Some(200),
 					user: 100,
 					network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {
@@ -328,7 +361,7 @@ pub mod tests {
 		let last_command = session.commands.pop_back().unwrap();
 		assert_eq!(
 			last_command,
-			CollectedCommand {
+			TracedCommand {
 				template: None,
 				user: 55,
 				network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
@@ -348,7 +381,7 @@ pub mod tests {
 	fn should_do_task_create_session() {
 		let mut tracer = CommandTracerSessions::default();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.do_task(CommandTracerSessionsTask::CreateSession(sender));
+		tracer.execute_task(CommandTracerSessionsTask::CreateSession(sender));
 		match receiver.try_recv() {
 			Ok(session_id) => {
 				assert!(tracer.sessions.contains_key(&session_id))
@@ -364,7 +397,7 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.do_task(CommandTracerSessionsTask::SetFilter(session_id, "(user=55)".to_string(), sender));
+		tracer.execute_task(CommandTracerSessionsTask::SetFilter(session_id, "(user=55)".to_string(), sender));
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => assert!(true),
@@ -379,7 +412,7 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.do_task(CommandTracerSessionsTask::SetFilter(session_id, "(8=55)".to_string(), sender));
+		tracer.execute_task(CommandTracerSessionsTask::SetFilter(session_id, "(8=55)".to_string(), sender));
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => assert!(false),
@@ -395,7 +428,7 @@ pub mod tests {
 		let session_id = tracer.create_session();
 		tracer.collect_c2s(&Default::default(), 100, &C2SCommand::AttachToRoom);
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.do_task(CommandTracerSessionsTask::GetCommands(session_id, sender));
+		tracer.execute_task(CommandTracerSessionsTask::GetCommands(session_id, sender));
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(result) => assert_eq!(result.len(), 1),
@@ -410,7 +443,7 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.do_task(CommandTracerSessionsTask::CloseSession(session_id, sender));
+		tracer.execute_task(CommandTracerSessionsTask::CloseSession(session_id, sender));
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => assert!(tracer.sessions.is_empty()),

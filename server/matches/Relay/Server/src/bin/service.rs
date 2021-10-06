@@ -9,28 +9,36 @@ use futures::Future;
 use tonic::transport::Server;
 
 use cheetah_matches_relay::agones::run_agones_cycle;
+use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCServer;
 use cheetah_matches_relay::factory::RelayGRPCService;
 use cheetah_matches_relay::server::manager::RelayManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	cheetah_microservice::init("relay");
-
-	let (halt_signal, relay_server) = create_relay_server();
-	let grpc_await = create_grpc_server(relay_server.clone());
-	let agones = run_agones_cycle(halt_signal.clone(), relay_server.clone());
-	futures::join!(grpc_await, agones);
+	let (halt_signal, manager) = create_manager();
+	let internal_grpc_service = create_internal_grpc_server(manager.clone());
+	let admin_grpc_service = create_admin_grpc_server(manager.clone());
+	let agones = run_agones_cycle(halt_signal.clone(), manager.clone());
+	futures::join!(internal_grpc_service, admin_grpc_service, agones);
 	halt_signal.store(true, Ordering::Relaxed);
 	Result::Ok(())
 }
 
-fn create_grpc_server(relay_server: Arc<Mutex<RelayManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
-	let service = cheetah_matches_relay::factory::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(relay_server));
+fn create_internal_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+	let service = cheetah_matches_relay::factory::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(manager));
 	let address = cheetah_microservice::get_internal_service_binding_addr();
 	Server::builder().add_service(service).serve(address)
 }
 
-fn create_relay_server() -> (Arc<AtomicBool>, Arc<Mutex<RelayManager>>) {
+fn create_admin_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+	let service =
+		cheetah_matches_relay::debug::tracer::proto::admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCServer::new(manager));
+	let address = cheetah_microservice::get_admin_service_binding_addr();
+	Server::builder().add_service(service).serve(address)
+}
+
+fn create_manager() -> (Arc<AtomicBool>, Arc<Mutex<RelayManager>>) {
 	let relay_server_binding_address = SocketAddr::from_str("0.0.0.0:5555").unwrap();
 	let relay_server_socket = UdpSocket::bind(relay_server_binding_address).unwrap();
 	let relay_server = RelayManager::new(relay_server_socket);

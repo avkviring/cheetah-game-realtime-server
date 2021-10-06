@@ -3,13 +3,12 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
-
 use cheetah_matches_relay_common::room::owner::ObjectOwner;
 use cheetah_matches_relay_common::room::RoomId;
 use cheetah_microservice::tonic::{Request, Response};
 
 use crate::debug::tracer::proto::admin;
-use crate::debug::tracer::{CollectedCommand, CommandTracerSessionsTask, SessionId, UniDirectionCommand};
+use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, UniDirectionCommand};
 use crate::server::manager::RelayManager;
 
 pub struct CommandTracerGRPCServer {
@@ -21,6 +20,10 @@ impl CommandTracerGRPCServer {
 		Self { manager: relay_server }
 	}
 
+	///
+	/// Выполнить задачу в relay сервере (в другом потоке), дождаться результата и преобразовать
+	/// его в нужный для grpc формат
+	///
 	pub fn execute_task<T, V>(
 		&self,
 		room_id: RoomId,
@@ -90,8 +93,8 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCServer {
 	}
 }
 
-impl From<CollectedCommand> for admin::Command {
-	fn from(command: CollectedCommand) -> Self {
+impl From<TracedCommand> for admin::Command {
+	fn from(command: TracedCommand) -> Self {
 		let direction = match command.network_command {
 			UniDirectionCommand::C2S(_) => "c2s",
 			UniDirectionCommand::S2C(_) => "s2c",
@@ -122,50 +125,7 @@ impl From<CollectedCommand> for admin::Command {
 			Some(field_id) => field_id as u32,
 		};
 
-		let value = match &command.network_command {
-			UniDirectionCommand::C2S(command) => match command {
-				C2SCommand::Create(command) => {
-					format!("access_groups = {:?} ", command.access_groups)
-				}
-				C2SCommand::Created(_) => "".to_string(),
-				C2SCommand::SetLong(command) => {
-					format!("{:?}", command.value)
-				}
-				C2SCommand::IncrementLongValue(command) => {
-					format!("{:?}", command.increment)
-				}
-				C2SCommand::CompareAndSetLongValue(command) => {
-					format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
-				}
-				C2SCommand::SetFloat(command) => {
-					format!("{:?}", command.value)
-				}
-				C2SCommand::IncrementFloatCounter(command) => {
-					format!("{:?}", command.increment)
-				}
-				C2SCommand::SetStruct(command) => {
-					format!("{:?}", command.structure)
-				}
-				C2SCommand::Event(command) => {
-					format!("{:?}", command.event)
-				}
-				C2SCommand::TargetEvent(command) => {
-					format!("target_user = {:?}, value = {:?}", command.target, command.event.event)
-				}
-				C2SCommand::Delete(_) => "".to_string(),
-				C2SCommand::AttachToRoom => "".to_string(),
-				C2SCommand::DetachFromRoom => "".to_string(),
-			},
-			UniDirectionCommand::S2C(command) => match command {
-				S2CCommand::Create(command) => format!("access_groups = {:?}", command.access_groups),
-				S2CCommand::Created(_) => "".to_string(),
-				S2CCommand::SetLong(command) => format!("{:?}", command.value),
-				S2CCommand::SetFloat(command) => format!("{:?}", command.value),
-				S2CCommand::SetStruct(command) => format!("{:?}", command.structure),
-				S2CCommand::Event(command) => format!("{:?}", command.event),
-				S2CCommand::Delete(_) => "".to_string(),
-			},
-		};
+		let value = get_string_value(&command);
 
 		Self {
 			direction: direction.to_string(),
@@ -179,6 +139,53 @@ impl From<CollectedCommand> for admin::Command {
 	}
 }
 
+fn get_string_value(command: &TracedCommand) -> String {
+	match &command.network_command {
+		UniDirectionCommand::C2S(command) => match command {
+			C2SCommand::Create(command) => {
+				format!("access_groups = {:?} ", command.access_groups)
+			}
+			C2SCommand::Created(_) => "".to_string(),
+			C2SCommand::SetLong(command) => {
+				format!("{:?}", command.value)
+			}
+			C2SCommand::IncrementLongValue(command) => {
+				format!("{:?}", command.increment)
+			}
+			C2SCommand::CompareAndSetLongValue(command) => {
+				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
+			}
+			C2SCommand::SetFloat(command) => {
+				format!("{:?}", command.value)
+			}
+			C2SCommand::IncrementFloatCounter(command) => {
+				format!("{:?}", command.increment)
+			}
+			C2SCommand::SetStruct(command) => {
+				format!("{:?}", command.structure)
+			}
+			C2SCommand::Event(command) => {
+				format!("{:?}", command.event)
+			}
+			C2SCommand::TargetEvent(command) => {
+				format!("target_user = {:?}, value = {:?}", command.target, command.event.event)
+			}
+			C2SCommand::Delete(_) => "".to_string(),
+			C2SCommand::AttachToRoom => "".to_string(),
+			C2SCommand::DetachFromRoom => "".to_string(),
+		},
+		UniDirectionCommand::S2C(command) => match command {
+			S2CCommand::Create(command) => format!("access_groups = {:?}", command.access_groups),
+			S2CCommand::Created(_) => "".to_string(),
+			S2CCommand::SetLong(command) => format!("{:?}", command.value),
+			S2CCommand::SetFloat(command) => format!("{:?}", command.value),
+			S2CCommand::SetStruct(command) => format!("{:?}", command.structure),
+			S2CCommand::Event(command) => format!("{:?}", command.event),
+			S2CCommand::Delete(_) => "".to_string(),
+		},
+	}
+}
+
 #[cfg(test)]
 pub mod test {
 	use cheetah_matches_relay_common::commands::command::event::EventCommand;
@@ -187,11 +194,11 @@ pub mod test {
 	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 
 	use crate::debug::tracer::proto::admin;
-	use crate::debug::tracer::{CollectedCommand, UniDirectionCommand};
+	use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
 
 	#[test]
 	pub fn should_convert() {
-		let command = CollectedCommand {
+		let command = TracedCommand {
 			template: Option::Some(155),
 			user: 255,
 			network_command: UniDirectionCommand::C2S(C2SCommand::Event(EventCommand {
@@ -218,7 +225,7 @@ pub mod test {
 
 	#[test]
 	pub fn should_convert_with_none_template_and_none_field() {
-		let command = CollectedCommand {
+		let command = TracedCommand {
 			template: None,
 			user: 255,
 			network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom),
