@@ -35,7 +35,11 @@ pub enum RuleCommandDirection {
 
 impl Filter {
 	pub fn filter(&self, command: &TracedCommand) -> bool {
-		self.rules.iter().any(|group| !group.iter().any(|r| !r.filter(command)))
+		if self.rules.is_empty() {
+			true
+		} else {
+			self.rules.iter().any(|group| !group.iter().any(|r| !r.filter(command)))
+		}
 	}
 }
 
@@ -278,5 +282,21 @@ mod tests {
 		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
 		assert!(filter.filter(&TracedCommand::s2c().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
 		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(0, ObjectOwner::Root))));
+	}
+
+	#[test]
+	fn should_filter_with_empty_group() {
+		let filter = Filter::from(vec![vec![]]);
+		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
+		assert!(filter.filter(&TracedCommand::s2c().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
+		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(0, ObjectOwner::Root))));
+	}
+
+	#[test]
+	fn should_filter_with_no_group() {
+		let filter = Filter::from(vec![]);
+		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
+		assert!(filter.filter(&TracedCommand::s2c().with_object_id(GameObjectId::new(100, ObjectOwner::Root))));
+		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(0, ObjectOwner::Root))));
 	}
 }

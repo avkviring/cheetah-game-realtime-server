@@ -167,6 +167,7 @@ impl CommandTracerSessions {
 				match self.sessions.get_mut(&session_id) {
 					None => Result::Err(CommandTracerSessionsError::SessionNotFound),
 					Some(session) => {
+						log::info!("CommandTracer: set filter {:?} {:?}", query, filter);
 						session.apply_filter(filter);
 						Result::Ok(())
 					}
@@ -185,8 +186,21 @@ impl CommandTracerSessions {
 			let template = match network_command.get_object_id() {
 				None => Option::None,
 				Some(object_id) => {
-					let game_object = objects.get(&object_id).unwrap();
-					Option::Some(game_object.template.clone())
+					let template_from_command = match command {
+						C2SCommand::Create(command) => Some(command.template),
+						_ => None,
+					};
+					let template = match template_from_command {
+						None => match objects.get(&object_id) {
+							None => {
+								log::error!("CommandTracer: template not found for {:?}", command);
+								None
+							}
+							Some(object) => Some(object.template.clone()),
+						},
+						Some(template) => Some(template),
+					};
+					template
 				}
 			};
 			s.collect(template, user, network_command);
@@ -246,6 +260,7 @@ impl CommandTracerSessions {
 #[cfg(test)]
 pub mod tests {
 	use cheetah_matches_relay_common::commands::command::event::EventCommand;
+	use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
 	use cheetah_matches_relay_common::room::UserId;
 
@@ -451,5 +466,34 @@ pub mod tests {
 			},
 			Err(_) => assert!(false),
 		}
+	}
+
+	#[test]
+	fn should_collect_create_command() {
+		let mut tracer = CommandTracerSessions::default();
+		let session_id = tracer.create_session();
+		tracer.collect_c2s(
+			&Default::default(),
+			100,
+			&C2SCommand::Create(CreateGameObjectCommand {
+				object_id: Default::default(),
+				template: 100,
+				access_groups: Default::default(),
+			}),
+		);
+
+		let commands = tracer.drain_filtered_commands(session_id).unwrap();
+		assert_eq!(
+			commands,
+			vec![TracedCommand {
+				template: Some(100),
+				user: 100,
+				network_command: UniDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
+					object_id: Default::default(),
+					template: 100,
+					access_groups: Default::default()
+				}))
+			}]
+		)
 	}
 }
