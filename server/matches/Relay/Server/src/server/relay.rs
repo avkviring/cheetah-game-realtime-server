@@ -27,6 +27,12 @@ pub struct Relay {
 	time_offset: Option<Duration>,
 }
 
+impl Drop for Relay {
+	fn drop(&mut self) {
+		log::error!("Relay: Drop invoked");
+	}
+}
+
 impl Relay {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
