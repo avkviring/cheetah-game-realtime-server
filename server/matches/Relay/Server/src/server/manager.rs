@@ -106,7 +106,7 @@ impl RelayManager {
 	pub fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: CommandTracerSessionsTask) -> Result<(), CommandTracerSessionTaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender)).unwrap();
-		match receiver.recv_timeout(Duration::from_millis(100)) {
+		match receiver.recv_timeout(Duration::from_secs(2)) {
 			Ok(r) => match r {
 				Ok(_) => Result::Ok(()),
 				Err(e) => Result::Err(e),

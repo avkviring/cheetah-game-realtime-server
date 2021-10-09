@@ -122,7 +122,7 @@ impl UDPServer {
 						let mut readed_frame = Option::None;
 						match sessions_cloned.borrow_mut().sessions.get_mut(&user_and_room_id) {
 							None => {
-								log::error!("[network] user session not found for user {:?}", user_and_room_id);
+								log::error!("[network] user session not found {:?}", user_and_room_id);
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
@@ -160,7 +160,7 @@ impl UDPServer {
 impl RoomUserListener for UserSessions {
 	fn register_user(&mut self, room_id: RoomId, user_id: UserId, template: UserTemplate) {
 		self.sessions.insert(
-			UserAndRoomId { user_id: user_id, room_id },
+			UserAndRoomId { user_id, room_id },
 			UserSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
@@ -170,7 +170,8 @@ impl RoomUserListener for UserSessions {
 	}
 
 	fn disconnected_user(&mut self, room_id: RoomId, user_id: UserId) {
-		self.sessions.remove(&UserAndRoomId { user_id: user_id, room_id });
+		log::info!("user {:?} disconnect from room {:?}", user_id, room_id);
+		self.sessions.remove(&UserAndRoomId { user_id, room_id });
 	}
 }
 
