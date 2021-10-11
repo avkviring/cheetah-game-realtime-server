@@ -50,7 +50,7 @@ pub enum ManagementTask {
 
 #[derive(Debug)]
 pub enum CommandTracerSessionTaskError {
-	RoomNotFound,
+	RoomNotFound(RoomId),
 	RecvTimeoutError,
 }
 

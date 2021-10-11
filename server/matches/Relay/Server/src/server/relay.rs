@@ -91,7 +91,7 @@ impl Relay {
 					sender.send(self.rooms.room_by_id.keys().cloned().collect()).unwrap();
 				}
 				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => match self.rooms.room_by_id.get_mut(&room_id) {
-					None => sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound)).unwrap(),
+					None => sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id))).unwrap(),
 					Some(room) => {
 						room.command_trace_session.clone().borrow_mut().execute_task(task);
 						sender.send(Result::Ok(())).unwrap();
