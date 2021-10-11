@@ -1,3 +1,4 @@
+using System;
 using Cheetah.Auth.Cookie;
 using Cheetah.Matches.Matchmaking;
 using Cheetah.Matches.Relay.Command;
@@ -14,11 +15,12 @@ namespace Relay
         private ushort clientId;
         private CheetahObjectId objectA;
         private CheetahObjectId objectB;
+        private Connector connector;
 
         private async void OnEnable()
         {
             // устанавливаем связь с кластером
-            var connector = new Connector("127.0.0.1", 7777, false);
+            connector = new Connector("127.0.0.1", 7777, false);
 
             // создаем нового пользователя
             var cookieAuthenticator = new CookieAuthenticator(connector, "user1");
@@ -38,7 +40,7 @@ namespace Relay
             var client = CheetahClient.CreateClient(ticket.RelayGameHost + ":" + ticket.RelayGamePort, (ushort)ticket.UserId, ticket.RoomId,
                 ref privateKey, 0, out clientId);
             CheetahClient.SetCurrentClient(clientId);
-            CheetahObject.Create(0, 256, ref objectA);
+            CheetahObject.Create(30, 256, ref objectA);
             CheetahObject.Created(ref objectA);
             CheetahObject.Create(10, 256, ref objectB);
             CheetahObject.Created(ref objectB);
@@ -54,8 +56,15 @@ namespace Relay
             }
 
             CheetahLong.Increment(ref objectA, 10, counter);
-            CheetahDouble.Increment(ref objectB, 20, counter * 3.14);
+            CheetahDouble.Increment(ref objectB, 20, counter);
+            CheetahDouble.Increment(ref objectB, 30, 10);
+            CheetahClient.Receive();
             counter++;
+        }
+
+        private async void OnDestroy()
+        {
+            await connector.Shutdown();
         }
     }
 }
