@@ -151,6 +151,7 @@ mod tests {
 	impl TracedCommand {
 		pub fn c2s() -> Self {
 			Self {
+				time: 0.0,
 				template: Option::None,
 				user: 0,
 				network_command: UniDirectionCommand::C2S(C2SCommand::Event(EventCommand {
@@ -163,6 +164,7 @@ mod tests {
 
 		pub fn s2c() -> Self {
 			Self {
+				time: 0.0,
 				template: Option::None,
 				user: 0,
 				network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {

@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::mpsc::Sender;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use fnv::FnvBuildHasher;
 use indexmap::IndexMap;
@@ -63,6 +64,7 @@ struct Session {
 ///
 #[derive(Debug, Clone, PartialEq)]
 pub struct TracedCommand {
+	time: f64,
 	template: Option<GameObjectTemplateId>,
 	user: UserId,
 	network_command: UniDirectionCommand,
@@ -101,12 +103,23 @@ impl Session {
 	///
 	pub const BUFFER_LIMIT: usize = 65000;
 
+	#[cfg(not(test))]
+	fn now() -> f64 {
+		let now = SystemTime::now();
+		now.duration_since(UNIX_EPOCH).unwrap().as_secs_f64()
+	}
+	#[cfg(test)]
+	fn now() -> f64 {
+		55.55
+	}
+
 	///
 	/// Сохранение сетевой команды
 	/// - учитывается ограничение на размер буфера команд
 	///
 	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, user: UserId, network_command: UniDirectionCommand) {
 		let collected_command = TracedCommand {
+			time: Session::now(),
 			template,
 			user,
 			network_command,
@@ -293,21 +306,25 @@ pub mod tests {
 			commands,
 			vec![
 				TracedCommand {
+					time: Session::now(),
 					template: None,
 					user: 100,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
+					time: Session::now(),
 					template: None,
 					user: 101,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
+					time: Session::now(),
 					template: None,
 					user: 102,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
+					time: Session::now(),
 					template: Some(200),
 					user: 100,
 					network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {
@@ -345,11 +362,13 @@ pub mod tests {
 			commands,
 			vec![
 				TracedCommand {
+					time: Session::now(),
 					template: None,
 					user: 100,
 					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
+					time: Session::now(),
 					template: Some(200),
 					user: 100,
 					network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {
@@ -381,6 +400,7 @@ pub mod tests {
 		assert_eq!(
 			last_command,
 			TracedCommand {
+				time: Session::now(),
 				template: None,
 				user: 55,
 				network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
@@ -490,6 +510,7 @@ pub mod tests {
 		assert_eq!(
 			commands,
 			vec![TracedCommand {
+				time: Session::now(),
 				template: Some(100),
 				user: 100,
 				network_command: UniDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {

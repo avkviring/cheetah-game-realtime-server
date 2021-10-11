@@ -64,17 +64,18 @@ message GetCommandsResponse {
 
 
 message Command {
-  string direction = 1;
-  string command = 2;
-  string object_id = 3;
-  uint32 user_id = 4;
+  double time = 1;
+  string direction = 2;
+  string command = 3;
+  string object_id = 4;
+  uint32 user_id = 5;
 
   // u32.max - значение не определено
-  uint32 template = 5;
+  uint32 template = 6;
 
   // u32.max - значение не определено
-  uint32 field_id = 6;
-  string value = 7;
+  uint32 field_id = 7;
+  string value = 8;
 }
 
 

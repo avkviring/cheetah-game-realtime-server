@@ -35,9 +35,9 @@ impl CommandTracerGRPCServer {
 		match manager.execute_command_trace_sessions_task(room_id, task) {
 			Ok(_) => match receiver.recv_timeout(Duration::from_millis(100)) {
 				Ok(result) => converter(result),
-				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e).to_string())),
+				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
 			},
-			Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e).to_string())),
+			Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
 		}
 	}
 }
@@ -128,6 +128,7 @@ impl From<TracedCommand> for admin::Command {
 		let value = get_string_value(&command);
 
 		Self {
+			time: command.time,
 			direction: direction.to_string(),
 			command: command_name,
 			object_id,
@@ -199,6 +200,7 @@ pub mod test {
 	#[test]
 	pub fn should_convert() {
 		let command = TracedCommand {
+			time: 1.1,
 			template: Option::Some(155),
 			user: 255,
 			network_command: UniDirectionCommand::C2S(C2SCommand::Event(EventCommand {
@@ -212,6 +214,7 @@ pub mod test {
 		assert_eq!(
 			grpc_command,
 			admin::Command {
+				time: 1.1,
 				direction: "c2s".to_string(),
 				command: "Event".to_string(),
 				object_id: "root(100)".to_string(),
@@ -226,6 +229,7 @@ pub mod test {
 	#[test]
 	pub fn should_convert_with_none_template_and_none_field() {
 		let command = TracedCommand {
+			time: 1.1,
 			template: None,
 			user: 255,
 			network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom),
@@ -235,6 +239,7 @@ pub mod test {
 		assert_eq!(
 			grpc_command,
 			admin::Command {
+				time: 1.1,
 				direction: "c2s".to_string(),
 				command: "AttachToRoom".to_string(),
 				object_id: "none".to_string(),
