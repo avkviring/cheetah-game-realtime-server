@@ -144,7 +144,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
 		UniDirectionCommand::C2S(command) => match command {
 			C2SCommand::Create(command) => {
-				format!("access_groups = {:?} ", command.access_groups)
+				format!("{:?} ", command.access_groups)
 			}
 			C2SCommand::Created(_) => "".to_string(),
 			C2SCommand::SetLong(command) => {
