@@ -93,7 +93,7 @@ impl RelayManager {
 	pub fn get_rooms(&self) -> Result<Vec<RoomId>, String> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(ManagementTask::GetRooms(sender)).unwrap();
-		match receiver.recv_timeout(Duration::from_millis(100)) {
+		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(rooms) => Result::Ok(rooms),
 			Err(e) => Result::Err(format!("{:?}", e).to_string()),
 		}
@@ -106,7 +106,7 @@ impl RelayManager {
 	pub fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: CommandTracerSessionsTask) -> Result<(), CommandTracerSessionTaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender)).unwrap();
-		match receiver.recv_timeout(Duration::from_secs(2)) {
+		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(_) => Result::Ok(()),
 				Err(e) => Result::Err(e),
@@ -123,7 +123,7 @@ impl RelayManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(ManagementTask::RegisterRoom(template, sender)).unwrap();
 		self.created_room_counter += 1;
-		match receiver.recv_timeout(Duration::from_millis(100)) {
+		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(room_id) => {
 				log::info!("[server] create room({:?})", room_id);
 				Result::Ok(room_id)
@@ -138,7 +138,7 @@ impl RelayManager {
 	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<UserId, RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(ManagementTask::RegisterUser(room_id, template.clone(), sender)).unwrap();
-		match receiver.recv_timeout(Duration::from_millis(100)) {
+		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {
 					log::info!("[server] create user({:?}) in room ({:?})", user_id, room_id);

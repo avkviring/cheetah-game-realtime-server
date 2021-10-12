@@ -1,8 +1,9 @@
+use cheetah_matches_relay_common::room::RoomId;
 use std::cmp::max;
 use std::net::UdpSocket;
 use std::ops::{Add, Sub};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::Receiver;
+use std::sync::mpsc::{Receiver, SendError};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -87,14 +88,23 @@ impl Relay {
 				ManagementTask::Dump(sender) => {
 					sender.send(ServerDump::from(&*self)).unwrap();
 				}
-				ManagementTask::GetRooms(sender) => {
-					sender.send(self.rooms.room_by_id.keys().cloned().collect()).unwrap();
-				}
+				ManagementTask::GetRooms(sender) => match sender.send(self.rooms.room_by_id.keys().cloned().collect()) {
+					Ok(_) => {}
+					Err(e) => {
+						log::error!("[Request::RegisterUser] error send response {:?}", e)
+					}
+				},
 				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => match self.rooms.room_by_id.get_mut(&room_id) {
 					None => sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id))).unwrap(),
 					Some(room) => {
 						room.command_trace_session.clone().borrow_mut().execute_task(task);
-						sender.send(Result::Ok(())).unwrap();
+
+						match sender.send(Result::Ok(())) {
+							Ok(_) => {}
+							Err(e) => {
+								log::error!("[Request::RegisterUser] error send response {:?}", e)
+							}
+						}
 					}
 				},
 			}
