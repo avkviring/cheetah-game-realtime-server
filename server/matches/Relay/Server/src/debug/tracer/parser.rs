@@ -19,7 +19,7 @@ pub fn parser<'a>() -> Parser<'a, u8, Vec<Vec<Rule>>> {
 /// Набор правил, без скобок - user=id, template=id, ...
 ///  
 fn rules_group<'a>() -> Parser<'a, u8, Vec<Rule>> {
-	list(call(rules_with_not), space() * seq(b",") * space())
+	list(call(rules), space() * seq(b",") * space())
 }
 
 ///
@@ -47,13 +47,6 @@ fn field<'a>(name: &'a str) -> Parser<'a, u8, Op> {
 	let name = space() * (seq(name.as_bytes()).discard() | sym(name.as_bytes()[0]).discard()) * space();
 	let op = seq(b"=").map(|_| Op::EQUALS) | seq(b"!=").map(|_| Op::NOT);
 	(name + op).map(|v| v.1)
-}
-
-///
-/// Правило с отрицанием - !s2c, !user=55, ...
-///
-fn rules_with_not<'a>() -> Parser<'a, u8, Rule> {
-	(sym(b'!') * rules()).map(|v| Rule::Not(Box::new(v))) | rules()
 }
 
 ///
@@ -146,20 +139,6 @@ mod test {
 		let query = "(template=155)";
 		let result = parser().parse(query.as_ref()).unwrap();
 		assert_eq!(result, vec![vec![Rule::Template(155)]])
-	}
-
-	#[test]
-	fn should_parse_not_symbol() {
-		let query = "(!c2s,!template=55,user!=100)";
-		let result = parser().parse(query.as_ref()).unwrap();
-		assert_eq!(
-			result,
-			vec![vec![
-				Rule::Not(Box::new(Rule::Direction(RuleCommandDirection::C2S))),
-				Rule::Not(Box::new(Rule::Template(55))),
-				Rule::Not(Box::new(Rule::User(100))),
-			]]
-		)
 	}
 
 	#[test]
