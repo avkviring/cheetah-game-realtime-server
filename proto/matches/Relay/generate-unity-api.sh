@@ -5,6 +5,6 @@ docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/matches/Relay ak
   protoc \
   --proto_path=. \
   --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-  --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.relay/Editor/NetworkCommandsViewer/GRPC \
-  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.relay/Editor/NetworkCommandsViewer/GRPC \
+  --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.relay/Editor/Admin/GRPC \
+  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.relay/Editor/Admin/GRPC \
   matches.relay.admin.proto

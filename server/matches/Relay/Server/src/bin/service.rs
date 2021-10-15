@@ -9,7 +9,11 @@ use futures::Future;
 use tonic::transport::Server;
 
 use cheetah_matches_relay::agones::run_agones_cycle;
-use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCServer;
+use cheetah_matches_relay::debug::dump::DumpGrpcService;
+use cheetah_matches_relay::debug::grpc::RelayAdminGRPCService;
+use cheetah_matches_relay::debug::proto::admin;
+use cheetah_matches_relay::debug::tracer;
+use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCService;
 use cheetah_matches_relay::factory::RelayGRPCService;
 use cheetah_matches_relay::server::manager::RelayManager;
 
@@ -32,10 +36,15 @@ fn create_internal_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future
 }
 
 fn create_admin_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
-	let service =
-		cheetah_matches_relay::debug::tracer::proto::admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCServer::new(manager));
+	let relay = admin::relay_server::RelayServer::new(RelayAdminGRPCService::new(manager.clone()));
+	let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(manager.clone()));
+	let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
 	let address = cheetah_microservice::get_admin_service_binding_addr();
-	Server::builder().add_service(service).serve(address)
+	Server::builder()
+		.add_service(dumper)
+		.add_service(relay)
+		.add_service(tracer)
+		.serve(address)
 }
 
 fn create_manager() -> (Arc<AtomicBool>, Arc<Mutex<RelayManager>>) {

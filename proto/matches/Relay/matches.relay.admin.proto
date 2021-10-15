@@ -1,13 +1,66 @@
 syntax = "proto3";
 package cheetah.matches.relay.admin;
-option csharp_namespace = "Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.GRPC";
+option csharp_namespace = "Cheetah.Matches.Relay.Editor.Admin.GRPC";
 
-service CommandTracer {
-
+/**
+ Общие команды для получения информации и управления сервером
+ */
+service Relay {
   /**
-    Получить список комнат
-   */
+  Получить список комнат
+ */
   rpc GetRooms(GetRoomsRequest) returns(GetRoomsResponse);
+}
+
+message GetRoomsRequest {
+
+}
+
+message GetRoomsResponse {
+  repeated uint64 rooms = 1;
+}
+
+/**
+ Получения состояния комнаты для отладки
+ */
+service Dump {
+  rpc Dump(DumpRequest) returns(DumpResponse);
+}
+
+message DumpRequest {
+  uint64 room = 1;
+}
+
+message DumpResponse {
+  repeated DumpUser users = 1;
+  repeated DumpObject objects = 2;
+}
+
+message  DumpUser {
+  uint32 id = 1;
+  uint64 groups = 2;
+  bool attached = 3;
+}
+
+message DumpObject {
+  uint32 id = 1;
+  uint64 groups = 2;
+  uint32 template = 3;
+  bool created = 4;
+  // max - объект принадлежит комнате, а не пользователю
+  uint32 user = 5;
+  map<uint32, int64> longs = 6;
+  map<uint32, double> floats = 7;
+  map<uint32, bytes> structures = 8;
+  map<uint32, uint32> compare_and_set_owners = 9;
+}
+
+
+
+/**
+  Сервис получения сетевых команд для отладки
+ */
+service CommandTracer {
 
   /**
     Создать сессию
@@ -28,13 +81,6 @@ service CommandTracer {
 
 }
 
-message GetRoomsRequest {
-
-}
-
-message GetRoomsResponse {
-  repeated uint64 rooms = 1;
-}
 
 message CreateSessionRequest {
   uint64 room = 1;

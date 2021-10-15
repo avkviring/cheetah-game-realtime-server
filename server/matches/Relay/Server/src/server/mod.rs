@@ -1,4 +1,3 @@
-pub mod dump;
 pub mod manager;
 pub mod relay;
 pub mod rooms;

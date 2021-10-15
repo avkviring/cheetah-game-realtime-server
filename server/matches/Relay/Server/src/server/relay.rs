@@ -1,4 +1,3 @@
-use cheetah_matches_relay_common::room::RoomId;
 use std::cmp::max;
 use std::net::UdpSocket;
 use std::ops::{Add, Sub};
@@ -8,7 +7,9 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::server::dump::ServerDump;
+use admin::DumpResponse;
+
+use crate::debug::proto::admin;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
 use crate::server::rooms::Rooms;
@@ -69,41 +70,45 @@ impl Relay {
 					match sender.send(result) {
 						Ok(_) => {}
 						Err(e) => {
-							log::error!("[Request::RegisterRoom] error send response {:?}", e)
+							log::error!("[Request::RegisterRoom] error send response {:?}", e);
 						}
 					}
 				}
 				ManagementTask::RegisterUser(room_id, user_template, sender) => {
 					let register_user_result = self.rooms.register_user(room_id, user_template);
-					match sender.send(register_user_result) {
-						Ok(_) => {}
-						Err(e) => {
-							log::error!("[Request::RegisterUser] error send response {:?}", e)
-						}
+					if let Err(e) = sender.send(register_user_result) {
+						log::error!("[Request::RegisterUser] error send response {:?}", e);
 					}
 				}
 				TimeOffset(time_offset) => {
 					self.time_offset = Option::Some(time_offset);
 				}
-				ManagementTask::Dump(sender) => {
-					sender.send(ServerDump::from(&*self)).unwrap();
-				}
+				ManagementTask::Dump(room_id, sender) => match self.rooms.room_by_id.get(&room_id) {
+					None => {
+						if let Err(e) = sender.send(Result::Err(format!("Room not found {:?}", room_id).to_string())) {
+							log::error!("[Request::Dump] error send response {:?}", e);
+						}
+					}
+					Some(room) => {
+						let response: DumpResponse = DumpResponse::from(room);
+						let result = Result::Ok(response);
+						if let Err(e) = sender.send(result) {
+							log::error!("[Request::Dump] error send response {:?}", e);
+						}
+					}
+				},
 				ManagementTask::GetRooms(sender) => match sender.send(self.rooms.room_by_id.keys().cloned().collect()) {
 					Ok(_) => {}
 					Err(e) => {
-						log::error!("[Request::RegisterUser] error send response {:?}", e)
+						log::error!("[Request::RegisterUser] error send response {:?}", e);
 					}
 				},
 				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => match self.rooms.room_by_id.get_mut(&room_id) {
 					None => sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id))).unwrap(),
 					Some(room) => {
 						room.command_trace_session.clone().borrow_mut().execute_task(task);
-
-						match sender.send(Result::Ok(())) {
-							Ok(_) => {}
-							Err(e) => {
-								log::error!("[Request::RegisterUser] error send response {:?}", e)
-							}
+						if let Err(e) = sender.send(Result::Ok(())) {
+							log::error!("[Request::RegisterUser] error send response {:?}", e);
 						}
 					}
 				},

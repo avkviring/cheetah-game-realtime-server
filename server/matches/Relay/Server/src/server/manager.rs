@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{RecvTimeoutError, Sender};
+use std::sync::mpsc::{RecvError, RecvTimeoutError, SendError, Sender};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
@@ -8,9 +8,9 @@ use std::time::Duration;
 
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
+use crate::debug::proto::admin;
 use crate::debug::tracer::CommandTracerSessionsTask;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
-use crate::server::dump::ServerDump;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::relay::Relay;
 use crate::server::rooms::RegisterUserError;
@@ -38,7 +38,7 @@ pub enum ManagementTask {
 	///
 	/// Скопировать состояние сервера для отладки
 	///
-	Dump(Sender<ServerDump>),
+	Dump(RoomId, Sender<Result<admin::DumpResponse, String>>),
 	///
 	/// Запросить список комнат
 	///
@@ -174,10 +174,15 @@ impl RelayManager {
 		self.handler.take().unwrap().join().unwrap();
 	}
 
-	pub fn dump(&self) -> Result<ServerDump, ()> {
+	pub fn dump(&self, room_id: u64) -> Result<admin::DumpResponse, String> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ManagementTask::Dump(sender)).unwrap();
-		receiver.recv().map_err(|_| ())
+		match self.sender.send(ManagementTask::Dump(room_id, sender)) {
+			Ok(_) => match receiver.recv() {
+				Ok(result) => result,
+				Err(e) => Result::Err(format!("{:?}", e).to_string()),
+			},
+			Err(e) => Result::Err(format!("{:?}", e).to_string()),
+		}
 	}
 }
 
