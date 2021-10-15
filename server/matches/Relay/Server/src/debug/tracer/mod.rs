@@ -21,7 +21,6 @@ use crate::room::object::GameObject;
 pub mod filter;
 pub mod grpc;
 pub mod parser;
-pub mod proto;
 
 ///
 /// Список сессий для сбора команд

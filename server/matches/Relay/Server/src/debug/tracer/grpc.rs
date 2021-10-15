@@ -7,15 +7,15 @@ use cheetah_matches_relay_common::room::owner::ObjectOwner;
 use cheetah_matches_relay_common::room::RoomId;
 use cheetah_microservice::tonic::{Request, Response};
 
-use crate::debug::tracer::proto::admin;
+use crate::debug::proto::admin;
 use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, UniDirectionCommand};
 use crate::server::manager::RelayManager;
 
-pub struct CommandTracerGRPCServer {
+pub struct CommandTracerGRPCService {
 	pub manager: Arc<Mutex<RelayManager>>,
 }
 
-impl CommandTracerGRPCServer {
+impl CommandTracerGRPCService {
 	pub fn new(relay_server: Arc<Mutex<RelayManager>>) -> Self {
 		Self { manager: relay_server }
 	}
@@ -43,15 +43,7 @@ impl CommandTracerGRPCServer {
 }
 
 #[tonic::async_trait]
-impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCServer {
-	async fn get_rooms(&self, _request: Request<admin::GetRoomsRequest>) -> Result<Response<admin::GetRoomsResponse>, tonic::Status> {
-		let manager = self.manager.lock().unwrap();
-		match manager.get_rooms() {
-			Ok(rooms) => Result::Ok(Response::new(admin::GetRoomsResponse { rooms })),
-			Err(e) => Result::Err(tonic::Status::internal(e)),
-		}
-	}
-
+impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn create_session(&self, request: Request<admin::CreateSessionRequest>) -> Result<Response<admin::CreateSessionResponse>, tonic::Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let task = CommandTracerSessionsTask::CreateSession(sender);
@@ -194,7 +186,7 @@ pub mod test {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::ObjectOwner;
 
-	use crate::debug::tracer::proto::admin;
+	use crate::debug::proto::admin;
 	use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
 
 	#[test]
