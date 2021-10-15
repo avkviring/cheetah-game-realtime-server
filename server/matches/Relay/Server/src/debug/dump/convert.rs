@@ -22,7 +22,7 @@ impl From<&GameObject> for admin::DumpObject {
 		Self {
 			user: match &source.id.owner {
 				ObjectOwner::Root => u32::MAX,
-				ObjectOwner::User(id) => id as u32,
+				ObjectOwner::User(id) => *id as u32,
 			},
 			id: source.id.id,
 			template: source.template as u32,
