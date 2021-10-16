@@ -14,7 +14,7 @@ namespace Tests.Helpers
     /// </summary>
     public class ConnectorFactory : IDockerProgressListener
     {
-        public Connector Connector { get; private set; }
+        public GRPCConnector GrpcConnector { get; private set; }
 
         public void SetProgressTitle(string title)
         {
@@ -32,13 +32,13 @@ namespace Tests.Helpers
             if (testConfiguration == null)
             {
                 PlatformApplication.ImageVersion = null;
-                Connector = CreateLocalConnector();
+                GrpcConnector = CreateLocalConnector();
             }
             else
             {
                 if (testConfiguration.ServerHost != null)
                 {
-                    Connector = new Connector(testConfiguration.ServerHost, 443, true);
+                    GrpcConnector = new GRPCConnector(testConfiguration.ServerHost, 443, true);
                 }
                 else
                 {
@@ -49,14 +49,14 @@ namespace Tests.Helpers
                     {
                         await dockerRunner.Restart(this);
                     }
-                    Connector = CreateLocalConnector();
+                    GrpcConnector = CreateLocalConnector();
                 }
             }
         }
 
-        private static Connector CreateLocalConnector()
+        private static GRPCConnector CreateLocalConnector()
         {
-            return new Connector("127.0.0.1", 7777, false);
+            return new GRPCConnector("127.0.0.1", 7777, false);
         }
     }
 }

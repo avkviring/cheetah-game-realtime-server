@@ -13,7 +13,7 @@ namespace Auth
 
         [SerializeField] private Text resultText;
         [SerializeField] private Button androidLoginButton;
-        private Connector connector = new Connector("test.dev.cheetah.games", 443, true);
+        private GRPCConnector grpcConnector = new GRPCConnector("test.dev.cheetah.games", 443, true);
 
         private void Start()
         {

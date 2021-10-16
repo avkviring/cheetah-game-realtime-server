@@ -1,4 +1,3 @@
-using System;
 using Cheetah.Auth.Cookie;
 using Cheetah.Matches.Matchmaking;
 using Cheetah.Matches.Relay.Command;
@@ -15,15 +14,15 @@ namespace Relay
         private ushort clientId;
         private CheetahObjectId objectA;
         private CheetahObjectId objectB;
-        private Connector connector;
+        private GRPCConnector grpcConnector;
 
         private async void OnEnable()
         {
             // устанавливаем связь с кластером
-            connector = new Connector("127.0.0.1", 7777, false);
+            grpcConnector = new GRPCConnector("127.0.0.1", 7777, false);
 
             // создаем нового пользователя
-            var cookieAuthenticator = new CookieAuthenticator(connector, "user1");
+            var cookieAuthenticator = new CookieAuthenticator(grpcConnector, "user1");
             cookieAuthenticator.RemoveLocalCookie();
             var loginOrRegister = await cookieAuthenticator.LoginOrRegister();
 
@@ -64,7 +63,7 @@ namespace Relay
 
         private async void OnDestroy()
         {
-            await connector.Shutdown();
+            await grpcConnector.Destroy();
         }
     }
 }
