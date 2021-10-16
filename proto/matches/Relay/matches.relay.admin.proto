@@ -52,7 +52,7 @@ message DumpObject {
   map<uint32, int64> longs = 6;
   map<uint32, double> floats = 7;
   map<uint32, bytes> structures = 8;
-  map<uint32, uint32> compare_and_set_owners = 9;
+  map<uint32, int64> compare_and_set_owners = 9;
 }
 
 
