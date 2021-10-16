@@ -47,6 +47,19 @@ impl From<&User> for admin::DumpUser {
 			id: user.id as u32,
 			groups: user.template.groups.0,
 			attached: user.attached,
+			compare_and_set_cleaners: user
+				.compare_and_sets_cleaners
+				.iter()
+				.map(|((object_id, field_id), value)| admin::CompareAndSetsCleaners {
+					game_object_id: object_id.id,
+					game_object_owner_user: match object_id.owner {
+						ObjectOwner::Root => u32::MAX,
+						ObjectOwner::User(id) => id as u32,
+					},
+					field_id: *field_id as u32,
+					reset: *value,
+				})
+				.collect(),
 		}
 	}
 }
