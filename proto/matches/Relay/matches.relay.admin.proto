@@ -55,8 +55,8 @@ message DumpObject {
   uint64 groups = 2;
   uint32 template = 3;
   bool created = 4;
-  // max - объект принадлежит комнате, а не пользователю
-  uint32 user = 5;
+  // max - объект принадлежит комнате, иначе идентификатор пользователя
+  uint32 owner = 5;
   map<uint32, int64> longs = 6;
   map<uint32, double> floats = 7;
   map<uint32, bytes> structures = 8;

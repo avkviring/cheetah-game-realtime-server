@@ -20,7 +20,7 @@ impl From<&Room> for admin::DumpResponse {
 impl From<&GameObject> for admin::DumpObject {
 	fn from(source: &GameObject) -> Self {
 		Self {
-			user: match &source.id.owner {
+			owner: match &source.id.owner {
 				ObjectOwner::Root => u32::MAX,
 				ObjectOwner::User(id) => *id as u32,
 			},
