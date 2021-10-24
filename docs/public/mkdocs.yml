@@ -50,4 +50,5 @@ nav:
           - "Локальная разработка":
               - "Эмуляция параметров сети": "components/relay/develop/network.md"
               - "Логирование": "components/relay/develop/logger.md"
-              - "Панель сетевых команд" : "components/relay/develop/commands_panel.md"
+              - "Панель сетевых команд" : "components/relay/develop/commands-panel.md"
+              - "Просмотр состояния сервера": "components/relay/develop/dump-panel.md"
