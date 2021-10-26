@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use cheetah_matches_relay_common::commands::command::HeaplessBuffer;
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::controller::ClientController;
@@ -93,12 +93,12 @@ impl GameObjectIdFFI {
 impl From<&GameObjectId> for GameObjectIdFFI {
 	fn from(from: &GameObjectId) -> Self {
 		match from.owner {
-			ObjectOwner::Root => GameObjectIdFFI {
+			GameObjectOwner::Room => GameObjectIdFFI {
 				id: from.id,
 				room_owner: true,
 				user_id: UserId::max_value(),
 			},
-			ObjectOwner::User(user_id) => GameObjectIdFFI {
+			GameObjectOwner::User(user_id) => GameObjectIdFFI {
 				id: from.id,
 				room_owner: false,
 				user_id,
@@ -111,11 +111,11 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 	fn from(from: &GameObjectIdFFI) -> Self {
 		match from.room_owner {
 			true => Self {
-				owner: ObjectOwner::Root,
+				owner: GameObjectOwner::Room,
 				id: from.id,
 			},
 			false => Self {
-				owner: ObjectOwner::User(from.user_id),
+				owner: GameObjectOwner::User(from.user_id),
 				id: from.id,
 			},
 		}
@@ -177,14 +177,14 @@ impl From<&HeaplessBuffer> for BufferFFI {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::ffi::GameObjectIdFFI;
 
 	#[test]
 	fn should_convert_object_id() {
 		let object_id = GameObjectId {
-			owner: ObjectOwner::User(123),
+			owner: GameObjectOwner::User(123),
 			id: 100,
 		};
 		let object_id_fff = GameObjectIdFFI::from(&object_id);

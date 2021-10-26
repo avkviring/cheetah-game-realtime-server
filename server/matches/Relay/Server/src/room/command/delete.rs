@@ -1,5 +1,5 @@
 use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
@@ -8,7 +8,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(self, room: &mut Room, user_id: UserId) {
 		let user = room.get_user(user_id).unwrap();
-		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
+		if let GameObjectOwner::User(object_id_user) = self.object_id.owner {
 			if object_id_user != user.id {
 				error_c2s_command(
 					"DeleteGameObjectCommand",
@@ -29,7 +29,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::command::S2CCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
@@ -66,7 +66,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(UserTemplate::stub(AccessGroups(0b11)));
 
-		let object_id = GameObjectId::new(100, ObjectOwner::User(user_id));
+		let object_id = GameObjectId::new(100, GameObjectOwner::User(user_id));
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};

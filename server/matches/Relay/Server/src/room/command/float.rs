@@ -69,7 +69,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::command::S2CCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
@@ -128,7 +128,7 @@ mod tests {
 		let (mut room, user, _) = setup();
 
 		let command = IncrementFloat64C2SCommand {
-			object_id: GameObjectId::new(10, ObjectOwner::Root),
+			object_id: GameObjectId::new(10, GameObjectOwner::Room),
 			field_id: 10,
 			increment: 100.100,
 		};

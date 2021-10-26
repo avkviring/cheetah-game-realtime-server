@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomId;
 use cheetah_microservice::tonic::{Request, Response};
 
@@ -95,10 +95,10 @@ impl From<TracedCommand> for admin::Command {
 		let object_id = match command.network_command.get_object_id() {
 			None => "none".to_string(),
 			Some(id) => match &id.owner {
-				ObjectOwner::Root => {
+				GameObjectOwner::Room => {
 					format!("root({})", id.id)
 				}
-				ObjectOwner::User(user) => {
+				GameObjectOwner::User(user) => {
 					format!("user({},{})", user, id.id)
 				}
 			},
@@ -184,7 +184,7 @@ pub mod test {
 	use cheetah_matches_relay_common::commands::command::event::EventCommand;
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, HeaplessBuffer};
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::debug::proto::admin;
 	use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
@@ -196,7 +196,7 @@ pub mod test {
 			template: Option::Some(155),
 			user: 255,
 			network_command: UniDirectionCommand::C2S(C2SCommand::Event(EventCommand {
-				object_id: GameObjectId::new(100, ObjectOwner::Root),
+				object_id: GameObjectId::new(100, GameObjectOwner::Room),
 				field_id: 555,
 				event: HeaplessBuffer::from_slice(vec![10, 20, 30].as_slice()).unwrap(),
 			})),

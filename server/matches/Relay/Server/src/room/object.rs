@@ -84,7 +84,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::command::S2CCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 	use crate::room::types::FieldType;
@@ -94,7 +94,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_collect_command() {
-		let id = GameObjectId::new(1, ObjectOwner::Root);
+		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id.clone());
 		object.template = 55;
 		object.access_groups = AccessGroups(63);
@@ -130,7 +130,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_collect_command_for_not_created_object() {
-		let id = GameObjectId::new(1, ObjectOwner::Root);
+		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id.clone());
 		object.longs.insert(1, 100);
 

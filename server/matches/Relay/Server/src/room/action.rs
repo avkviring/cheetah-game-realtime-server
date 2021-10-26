@@ -1,7 +1,7 @@
 use cheetah_matches_relay_common::commands::command::S2CCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
@@ -57,7 +57,7 @@ impl Room {
 				return;
 			}
 
-			let object_owner = if let ObjectOwner::User(owner) = object.id.owner {
+			let object_owner = if let GameObjectOwner::User(owner) = object.id.owner {
 				Option::Some(owner)
 			} else {
 				Option::None

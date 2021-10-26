@@ -15,7 +15,7 @@ use cheetah_matches_relay_common::protocol::frame::applications::{
 };
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::client::OutApplicationCommand;
@@ -209,7 +209,7 @@ impl ClientController {
 
 	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> GameObjectIdFFI {
 		self.game_object_id_generator += 1;
-		let game_object_id = GameObjectId::new(self.game_object_id_generator, ObjectOwner::User(self.user_id));
+		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::User(self.user_id));
 		self.send(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,

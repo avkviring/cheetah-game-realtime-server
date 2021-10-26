@@ -41,7 +41,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::command::S2CCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::room::command::ServerCommandExecutor;
@@ -107,7 +107,7 @@ mod tests {
 		let (mut room, user, _) = setup();
 
 		let command = EventCommand {
-			object_id: GameObjectId::new(10, ObjectOwner::Root),
+			object_id: GameObjectId::new(10, GameObjectOwner::Room),
 			field_id: 100,
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};

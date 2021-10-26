@@ -1,5 +1,5 @@
 use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
@@ -27,7 +27,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			return;
 		}
 
-		if let ObjectOwner::User(object_id_user) = self.object_id.owner {
+		if let GameObjectOwner::User(object_id_user) = self.object_id.owner {
 			if object_id_user != user.id {
 				error_c2s_command(
 					"CreateGameObjectCommand",
@@ -69,7 +69,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
@@ -80,7 +80,7 @@ mod tests {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 		room.mark_as_connected(user_id);
 
-		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
+		let object_id = GameObjectId::new(1, GameObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
@@ -103,7 +103,7 @@ mod tests {
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 
-		let object_id = GameObjectId::new(1, ObjectOwner::User(1000));
+		let object_id = GameObjectId::new(1, GameObjectOwner::User(1000));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
@@ -120,7 +120,7 @@ mod tests {
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
-		let object_id = GameObjectId::new(1, ObjectOwner::User(user_id));
+		let object_id = GameObjectId::new(1, GameObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
@@ -137,7 +137,7 @@ mod tests {
 	fn should_not_create_when_id_is_zero() {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 
-		let object_id = GameObjectId::new(0, ObjectOwner::User(user_id));
+		let object_id = GameObjectId::new(0, GameObjectOwner::User(user_id));
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,

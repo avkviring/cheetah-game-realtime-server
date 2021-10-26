@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::room::owner::ObjectOwner;
+use crate::room::owner::GameObjectOwner;
 
 ///
 /// Идентификатор игрового объекта на клиенте
@@ -10,7 +10,7 @@ pub struct GameObjectId {
 	///
 	/// Создатель игрового объекта
 	///
-	pub owner: ObjectOwner,
+	pub owner: GameObjectOwner,
 
 	///
 	/// Идентификатор игрового объекта в рамках владельца
@@ -24,13 +24,13 @@ impl GameObjectId {
 	///
 	pub const CLIENT_OBJECT_ID_OFFSET: u32 = 512;
 
-	pub fn new(id: u32, owner: ObjectOwner) -> Self {
+	pub fn new(id: u32, owner: GameObjectOwner) -> Self {
 		GameObjectId { owner, id }
 	}
 }
 
 impl Default for GameObjectId {
 	fn default() -> Self {
-		GameObjectId::new(0, ObjectOwner::Root)
+		GameObjectId::new(0, GameObjectOwner::Room)
 	}
 }

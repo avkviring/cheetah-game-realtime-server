@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 use crate::debug::proto::admin;
 use crate::room::object::GameObject;
@@ -21,8 +21,8 @@ impl From<&GameObject> for admin::DumpObject {
 	fn from(source: &GameObject) -> Self {
 		Self {
 			owner: match &source.id.owner {
-				ObjectOwner::Root => u32::MAX,
-				ObjectOwner::User(id) => *id as u32,
+				GameObjectOwner::Room => u32::MAX,
+				GameObjectOwner::User(id) => *id as u32,
 			},
 			id: source.id.id,
 			template: source.template as u32,
@@ -53,8 +53,8 @@ impl From<&User> for admin::DumpUser {
 				.map(|((object_id, field_id), value)| admin::CompareAndSetsCleaners {
 					game_object_id: object_id.id,
 					game_object_owner_user: match object_id.owner {
-						ObjectOwner::Root => u32::MAX,
-						ObjectOwner::User(id) => id as u32,
+						GameObjectOwner::Room => u32::MAX,
+						GameObjectOwner::User(id) => id as u32,
 					},
 					field_id: *field_id as u32,
 					reset: *value,

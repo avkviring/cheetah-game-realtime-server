@@ -4,7 +4,7 @@ use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::object::GameObject;
@@ -12,10 +12,10 @@ use crate::room::template::config::GameObjectTemplate;
 
 impl GameObjectTemplate {
 	pub fn to_root_game_object(&self) -> GameObject {
-		self.to_game_object(GameObjectId::new(self.id, ObjectOwner::Root))
+		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Room))
 	}
 	pub fn create_user_game_object(&self, user_id: UserId) -> GameObject {
-		self.to_game_object(GameObjectId::new(self.id, ObjectOwner::User(user_id)))
+		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::User(user_id)))
 	}
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {
 		if id.id == 0 {
@@ -52,7 +52,7 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::template::config::GameObjectTemplate;
 
@@ -86,7 +86,7 @@ mod tests {
 
 		let object = config_object.clone().to_root_game_object();
 		assert_eq!(config_object.id, object.id.id);
-		assert!(matches!(object.id.owner, ObjectOwner::Root));
+		assert!(matches!(object.id.owner, GameObjectOwner::Room));
 		assert_eq!(config_object.template, object.template);
 		assert_eq!(config_object.groups, object.access_groups);
 		assert_eq!(config_object.fields.longs[&0], object.longs[&0]);

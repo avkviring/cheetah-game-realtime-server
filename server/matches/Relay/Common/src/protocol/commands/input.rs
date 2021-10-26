@@ -146,7 +146,7 @@ mod tests {
 	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
 	use crate::protocol::frame::Frame;
 	use crate::room::object::GameObjectId;
-	use crate::room::owner::ObjectOwner;
+	use crate::room::owner::GameObjectOwner;
 
 	#[test]
 	pub fn test_unordered() {
@@ -364,7 +364,7 @@ mod tests {
 		fn add_object_command(mut self, channel: ApplicationCommandChannel, object_id: u32, content: String) -> Self {
 			let command_description = ApplicationCommandDescription {
 				channel,
-				command: ApplicationCommand::TestObject(GameObjectId::new(object_id, ObjectOwner::Root), content),
+				command: ApplicationCommand::TestObject(GameObjectId::new(object_id, GameObjectOwner::Room), content),
 			};
 			self.commands.reliable.push_back(command_description);
 			self

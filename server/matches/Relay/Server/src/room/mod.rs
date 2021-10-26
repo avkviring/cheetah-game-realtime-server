@@ -19,7 +19,7 @@ use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 #[cfg(test)]
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::ObjectOwner;
+use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::{RoomId, UserId};
 
 use crate::debug::tracer::CommandTracerSessions;
@@ -230,7 +230,7 @@ impl Room {
 			Some(user) => {
 				let mut objects = Vec::new();
 				self.process_objects(&mut |o| {
-					if let ObjectOwner::User(owner) = o.id.owner {
+					if let GameObjectOwner::User(owner) = o.id.owner {
 						if owner == user.id {
 							objects.push(o.id.clone());
 						}
@@ -348,7 +348,7 @@ mod tests {
 	use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::ObjectOwner;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::room::object::GameObject;
@@ -369,7 +369,7 @@ mod tests {
 
 		pub fn create_object(&mut self, owner: UserId, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
-			let id = GameObjectId::new(self.object_id_generator, ObjectOwner::User(owner.clone()));
+			let id = GameObjectId::new(self.object_id_generator, GameObjectOwner::User(owner.clone()));
 			let mut object = GameObject::new(id.clone());
 			object.access_groups = access_groups;
 			self.insert_object(object);
@@ -480,7 +480,7 @@ mod tests {
 		template.objects = vec![object_template.clone()];
 
 		let room = Room::from_template(template);
-		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::Root)));
+		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::Room)));
 	}
 
 	#[test]
@@ -502,7 +502,7 @@ mod tests {
 		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
-			.contains_key(&GameObjectId::new(object_template.id, ObjectOwner::User(user_id))));
+			.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::User(user_id))));
 	}
 
 	///
@@ -562,7 +562,7 @@ mod tests {
 				.command
 				.get_object_id()
 				.unwrap(),
-			&GameObjectId::new(object1_template.id, ObjectOwner::User(user1_id))
+			&GameObjectId::new(object1_template.id, GameObjectOwner::User(user1_id))
 		);
 		protocol.out_commands_collector.commands.reliable.clear();
 		room.process_in_frame(user2_id, Frame::new(0), &Instant::now());
@@ -578,7 +578,7 @@ mod tests {
 				.command
 				.get_object_id()
 				.unwrap(),
-			&GameObjectId::new(object2_template.id, ObjectOwner::User(user2_id))
+			&GameObjectId::new(object2_template.id, GameObjectOwner::User(user2_id))
 		);
 	}
 
@@ -621,7 +621,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		room.register_user(user_template);
 		room.insert_object(GameObject {
-			id: GameObjectId::new(100, ObjectOwner::Root),
+			id: GameObjectId::new(100, GameObjectOwner::Room),
 			template: 0,
 			access_groups: Default::default(),
 			created: false,
@@ -632,7 +632,7 @@ mod tests {
 		});
 
 		room.insert_object(GameObject {
-			id: GameObjectId::new(5, ObjectOwner::Root),
+			id: GameObjectId::new(5, GameObjectOwner::Room),
 			template: 0,
 			access_groups: Default::default(),
 			created: false,
@@ -642,7 +642,7 @@ mod tests {
 			structures: Default::default(),
 		});
 
-		room.insert_object(GameObject::new(GameObjectId::new(200, ObjectOwner::Root)));
+		room.insert_object(GameObject::new(GameObjectId::new(200, GameObjectOwner::Room)));
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
@@ -650,7 +650,7 @@ mod tests {
 		});
 		assert_eq!(order, "1005200");
 
-		room.delete_object(&GameObjectId::new(100, ObjectOwner::Root));
+		room.delete_object(&GameObjectId::new(100, GameObjectOwner::Room));
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {

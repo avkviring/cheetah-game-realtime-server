@@ -11,6 +11,7 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::debug::tracer::filter::Filter;
+use crate::debug::tracer::parser::parse;
 use crate::room::object::GameObject;
 
 ///
@@ -173,9 +174,9 @@ impl CommandTracerSessions {
 	/// Установить фильтр для сессии
 	///
 	pub fn set_filter(&mut self, session_id: SessionId, query: String) -> Result<(), CommandTracerSessionsError> {
-		match parser::parser().parse(query.as_ref()) {
-			Ok(rules) => {
-				let filter = Filter::from(rules);
+		match parse(query.as_ref()) {
+			Ok(rule) => {
+				let filter = Filter::new(rule);
 				match self.sessions.get_mut(&session_id) {
 					None => Result::Err(CommandTracerSessionsError::SessionNotFound),
 					Some(session) => {
