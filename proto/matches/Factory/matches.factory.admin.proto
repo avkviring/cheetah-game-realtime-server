@@ -17,7 +17,23 @@ message GetItemsNamesRequest {
 }
 
 message GetItemsNamesResponse {
-  map<uint32, string> templates = 1;
-  map<uint32, string> fields = 2;
+  repeated TemplateInfo templates = 1;
+  repeated FieldInfo fields = 2;
 }
 
+message TemplateInfo {
+  uint32  id = 1;
+  string name = 3 ;
+}
+message FieldInfo {
+  uint32  id = 1;
+  FieldType type = 2;
+  string name = 3;
+}
+
+enum FieldType {
+  long = 0;
+  double = 1;
+  structure = 2;
+  event = 3;
+}

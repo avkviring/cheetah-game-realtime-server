@@ -3,11 +3,12 @@ use std::collections::HashMap;
 use cheetah_microservice::tonic::{Request, Response, Status};
 
 use crate::proto::matches::factory::admin;
+use crate::service::configurations::structures::FieldType;
 use crate::service::configurations::Configurations;
 
 pub struct ConfigurationsService {
-	templates: HashMap<u32, String>,
-	fields: HashMap<u32, String>,
+	templates: Vec<admin::TemplateInfo>,
+	fields: Vec<admin::FieldInfo>,
 }
 
 impl ConfigurationsService {
@@ -16,14 +17,30 @@ impl ConfigurationsService {
 			templates: config
 				.templates
 				.iter()
-				.map(|(name, template)| (template.id, name.to_owned()))
+				.map(|(name, template)| admin::TemplateInfo {
+					id: template.id,
+					name: name.to_string(),
+				})
 				.collect(),
 			fields: config
 				.fields
 				.iter()
-				.map(|(name, field)| (field.id as u32, name.to_owned()))
+				.map(|(name, field)| admin::FieldInfo {
+					id: field.id as u32,
+					r#type: to_admin_field_type(&field.r#type),
+					name: name.to_string(),
+				})
 				.collect(),
 		}
+	}
+}
+
+fn to_admin_field_type(fieldType: &FieldType) -> i32 {
+	match fieldType {
+		FieldType::Long => admin::FieldType::Long as i32,
+		FieldType::Double => admin::FieldType::Double as i32,
+		FieldType::Struct => admin::FieldType::Structure as i32,
+		FieldType::Event => admin::FieldType::Event as i32,
 	}
 }
 
@@ -31,7 +48,7 @@ impl ConfigurationsService {
 impl admin::configurations_server::Configurations for ConfigurationsService {
 	async fn get_item_names(
 		&self,
-		request: Request<admin::GetItemsNamesRequest>,
+		_: Request<admin::GetItemsNamesRequest>,
 	) -> Result<Response<admin::GetItemsNamesResponse>, tonic::Status> {
 		Result::Ok(Response::new(admin::GetItemsNamesResponse {
 			templates: self.templates.clone(),
@@ -43,6 +60,7 @@ impl admin::configurations_server::Configurations for ConfigurationsService {
 #[cfg(test)]
 pub mod tests {
 	use crate::admin::ConfigurationsService;
+	use crate::proto::matches::factory::admin;
 	use crate::service::configurations::structures::{Field, FieldType, Template};
 	use crate::service::configurations::Configurations;
 
@@ -63,7 +81,13 @@ pub mod tests {
 			rooms: Default::default(),
 		};
 		let service: ConfigurationsService = ConfigurationsService::new(&conf);
-		assert_eq!(service.templates.get(&10).unwrap(), "tank");
+		assert_eq!(
+			*service.templates.first().unwrap(),
+			admin::TemplateInfo {
+				id: 10,
+				name: "tank".to_string()
+			}
+		);
 	}
 
 	#[test]
@@ -83,6 +107,13 @@ pub mod tests {
 			rooms: Default::default(),
 		};
 		let service: ConfigurationsService = ConfigurationsService::new(&conf);
-		assert_eq!(service.fields.get(&10).unwrap(), "score");
+		assert_eq!(
+			*service.fields.first().unwrap(),
+			admin::FieldInfo {
+				id: 10,
+				r#type: admin::FieldType::Long as i32,
+				name: "score".to_string()
+			}
+		);
 	}
 }
