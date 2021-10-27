@@ -3,6 +3,9 @@ pub mod matches {
 		pub mod internal {
 			tonic::include_proto!("cheetah.matches.factory.internal");
 		}
+		pub mod admin {
+			tonic::include_proto!("cheetah.matches.factory.admin");
+		}
 	}
 
 	pub mod registry {

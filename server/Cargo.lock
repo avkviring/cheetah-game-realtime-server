@@ -543,6 +543,7 @@ name = "cheetah-matches-factory"
 version = "999.999.999"
 dependencies = [
  "cheetah-microservice",
+ "futures",
  "include_dir",
  "log",
  "pretty_env_logger",

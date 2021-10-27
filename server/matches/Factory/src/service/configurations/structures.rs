@@ -15,14 +15,14 @@ pub struct Room {
 	pub objects: Vec<RoomObject>,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Field {
 	pub id: u16,
 	pub r#type: FieldType,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Template {
 	pub id: u32,
@@ -30,7 +30,7 @@ pub struct Template {
 	pub permissions: TemplatePermissions,
 }
 
-#[derive(Debug, Deserialize, Default, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Default, Eq, PartialEq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct TemplatePermissions {
 	/// Права доступа для всего объекта
@@ -41,7 +41,7 @@ pub struct TemplatePermissions {
 	pub fields: Vec<PermissionField>,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct PermissionField {
 	pub field: FieldName,
@@ -49,7 +49,7 @@ pub struct PermissionField {
 	pub groups: HashMap<GroupName, PermissionLevel>,
 }
 
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
 pub enum PermissionLevel {
 	#[serde(rename = "deny")]
 	Deny,

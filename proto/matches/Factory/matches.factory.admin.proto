@@ -1,0 +1,23 @@
+syntax = "proto3";
+package cheetah.matches.factory.admin;
+option csharp_namespace = "Cheetah.Matches.Factory.Editor.Admin.GRPC";
+
+/**
+ Общие команды для получения информации и управления сервером
+ */
+service Configurations {
+  /**
+  Получить имена полей и шаблоной
+ */
+  rpc GetItemNames(GetItemsNamesRequest) returns(GetItemsNamesResponse);
+}
+
+message GetItemsNamesRequest {
+
+}
+
+message GetItemsNamesResponse {
+  map<uint32, string> templates = 1;
+  map<uint32, string> fields = 2;
+}
+
