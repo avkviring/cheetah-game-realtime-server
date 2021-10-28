@@ -32,8 +32,8 @@ message FieldInfo {
 }
 
 enum FieldType {
-  long = 0;
-  double = 1;
-  structure = 2;
-  event = 3;
+  Long = 0;
+  Double = 1;
+  Structure = 2;
+  Event = 3;
 }

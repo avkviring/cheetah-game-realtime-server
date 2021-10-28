@@ -28,7 +28,15 @@ impl ServerCommandExecutor for IncrementFloat64C2SCommand {
 			}))
 		};
 
-		room.change_data_and_send(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, Option::None, action);
+		room.change_data_and_send(
+			&object_id,
+			&field_id,
+			FieldType::Double,
+			user_id,
+			Permission::Rw,
+			Option::None,
+			action,
+		);
 	}
 }
 
@@ -41,7 +49,15 @@ impl ServerCommandExecutor for SetFloat64Command {
 			object.floats.insert(self.field_id, self.value);
 			Option::Some(S2CCommand::SetFloat(self))
 		};
-		room.change_data_and_send(&object_id, &field_id, FieldType::Float, user_id, Permission::Rw, Option::None, action);
+		room.change_data_and_send(
+			&object_id,
+			&field_id,
+			FieldType::Double,
+			user_id,
+			Permission::Rw,
+			Option::None,
+			action,
+		);
 	}
 }
 
@@ -51,7 +67,7 @@ impl GameObject {
 			commands.push(S2CommandWithFieldInfo {
 				field: Option::Some(FieldIdAndType {
 					field_id: field_id.clone(),
-					field_type: FieldType::Float,
+					field_type: FieldType::Double,
 				}),
 				command: S2CCommand::SetFloat(SetFloat64Command {
 					object_id: self.id.clone(),

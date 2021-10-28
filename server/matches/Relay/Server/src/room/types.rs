@@ -1,15 +1,12 @@
 use serde::{Deserialize, Serialize};
+
 ///
 /// Тип данных поля
 ///
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Hash, Eq, Copy)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum FieldType {
-	#[serde(rename = "long")]
 	Long,
-	#[serde(rename = "float")]
-	Float,
-	#[serde(rename = "structure")]
+	Double,
 	Structure,
-	#[serde(rename = "event")]
 	Event,
 }

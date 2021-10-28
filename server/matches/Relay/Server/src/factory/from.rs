@@ -48,7 +48,11 @@ impl From<proto::GameObjectFieldsTemplate> for config::GameObjectFieldsTemplate 
 impl From<proto::Permissions> for config::Permissions {
 	fn from(source: proto::Permissions) -> Self {
 		config::Permissions {
-			templates: source.objects.into_iter().map(config::GameObjectTemplatePermission::from).collect(),
+			templates: source
+				.objects
+				.into_iter()
+				.map(config::GameObjectTemplatePermission::from)
+				.collect(),
 		}
 	}
 }
@@ -87,13 +91,13 @@ impl From<proto::GroupsPermissionRule> for config::GroupsPermissionRule {
 impl From<proto::PermissionField> for config::PermissionField {
 	fn from(source: proto::PermissionField) -> Self {
 		let event = proto::FieldType::Event as i32;
-		let float = proto::FieldType::Float as i32;
+		let double = proto::FieldType::Double as i32;
 		let long = proto::FieldType::Long as i32;
 		let structure = proto::FieldType::Structure as i32;
 
 		let field_type = match source.r#type {
 			x if x == event => crate::room::types::FieldType::Event,
-			x if x == float => crate::room::types::FieldType::Float,
+			x if x == double => crate::room::types::FieldType::Double,
 			x if x == long => crate::room::types::FieldType::Long,
 			x if x == structure => crate::room::types::FieldType::Structure,
 			_ => {

@@ -6,7 +6,9 @@ use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 
 use crate::service::configurations::error::Error;
-use crate::service::configurations::structures::{Field, FieldName, FieldType, GroupName, Room, RoomName, Template, TemplateName};
+use crate::service::configurations::structures::{
+	Field, FieldName, FieldType, GroupName, Room, RoomName, Template, TemplateName,
+};
 
 pub mod error;
 pub mod structures;

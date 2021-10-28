@@ -61,7 +61,9 @@ impl GameObject {
 		if self.created {
 			commands.push(S2CommandWithFieldInfo {
 				field: None,
-				command: S2CCommand::Created(CreatedGameObjectCommand { object_id: self.id.clone() }),
+				command: S2CCommand::Created(CreatedGameObjectCommand {
+					object_id: self.id.clone(),
+				}),
 			});
 		}
 	}
@@ -118,7 +120,7 @@ mod tests {
 			if c.object_id==id && c.field_id == 1 && c.value == 100));
 
 		assert!(matches!(commands.remove(0),
-			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 2, field_type: FieldType::Float }),  command: S2CCommand::SetFloat(c)}
+			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetFloat(c)}
 			if c.object_id==id && c.field_id == 2 && c.value == 200.200));
 
 		assert!(matches!(commands.remove(0),

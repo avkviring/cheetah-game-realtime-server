@@ -134,7 +134,7 @@ impl From<TracedCommand> for admin::Command {
 			None => admin::FieldType::None,
 			Some(field_type) => match field_type {
 				FieldType::Long => admin::FieldType::Long,
-				FieldType::Float => admin::FieldType::Float,
+				FieldType::Double => admin::FieldType::Double,
 				FieldType::Structure => admin::FieldType::Structure,
 				FieldType::Event => admin::FieldType::Event,
 			},

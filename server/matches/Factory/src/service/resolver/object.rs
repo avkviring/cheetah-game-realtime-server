@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use crate::proto::matches::relay::types as relay;
-use crate::service::configurations::structures::{Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName};
+use crate::service::configurations::structures::{
+	Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName,
+};
 use crate::service::resolver::error::Error;
 
 ///
@@ -34,22 +36,21 @@ pub fn create_relay_object(
 			.ok_or_else(|| Error::FieldNotExistForObject(room_name.clone(), value.field.clone()))?;
 		match field.r#type {
 			FieldType::Long => {
-				let value = value
-					.value
-					.as_i64()
-					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
+				let value = value.value.as_i64().ok_or_else(|| {
+					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
+				})?;
 				relay_fields.longs.insert(field.id as u32, value);
 			}
 			FieldType::Double => {
-				let value = value
-					.value
-					.as_f64()
-					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
+				let value = value.value.as_f64().ok_or_else(|| {
+					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
+				})?;
 				relay_fields.floats.insert(field.id as u32, value);
 			}
 			FieldType::Struct => {
-				let value = rmp_serde::to_vec(&value.value)
-					.map_err(|_| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
+				let value = rmp_serde::to_vec(&value.value).map_err(|_| {
+					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
+				})?;
 				relay_fields.structures.insert(field.id as u32, value);
 			}
 			FieldType::Event => {

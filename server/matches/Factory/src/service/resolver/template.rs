@@ -88,7 +88,7 @@ impl From<&FieldType> for relay::FieldType {
 	fn from(field_type: &FieldType) -> Self {
 		match field_type {
 			FieldType::Long => relay::FieldType::Long,
-			FieldType::Double => relay::FieldType::Float,
+			FieldType::Double => relay::FieldType::Double,
 			FieldType::Struct => relay::FieldType::Structure,
 			FieldType::Event => relay::FieldType::Event,
 		}
@@ -195,7 +195,7 @@ pub mod test {
 	fn should_convert_field_type() {
 		assert_eq!(relay::FieldType::from(&FieldType::Long), relay::FieldType::Long);
 		assert_eq!(relay::FieldType::from(&FieldType::Struct), relay::FieldType::Structure);
-		assert_eq!(relay::FieldType::from(&FieldType::Double), relay::FieldType::Float);
+		assert_eq!(relay::FieldType::from(&FieldType::Double), relay::FieldType::Double);
 		assert_eq!(relay::FieldType::from(&FieldType::Event), relay::FieldType::Event);
 	}
 
