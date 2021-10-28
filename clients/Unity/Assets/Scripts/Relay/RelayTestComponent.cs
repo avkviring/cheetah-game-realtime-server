@@ -54,7 +54,7 @@ namespace Relay
                 return;
             }
 
-            CheetahLong.Increment(ref objectA, 10, counter);
+            CheetahLong.Increment(ref objectA, 2, counter);
             CheetahDouble.Increment(ref objectB, 20, counter);
             CheetahDouble.Increment(ref objectB, 30, 10);
             CheetahClient.Receive();
