@@ -5,6 +5,7 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
+use crate::room::types::FieldType;
 
 ///
 /// Фильтрация сетевых команд на основе правил
@@ -53,6 +54,34 @@ impl UniDirectionCommand {
 		match self {
 			UniDirectionCommand::C2S(_) => RuleCommandDirection::C2S,
 			UniDirectionCommand::S2C(_) => RuleCommandDirection::S2C,
+		}
+	}
+	pub fn get_field_type(&self) -> Option<FieldType> {
+		match self {
+			UniDirectionCommand::C2S(command) => match command {
+				C2SCommand::Create(_) => Option::None,
+				C2SCommand::Created(_) => Option::None,
+				C2SCommand::SetLong(_) => Option::Some(FieldType::Long),
+				C2SCommand::IncrementLongValue(_) => Option::Some(FieldType::Long),
+				C2SCommand::CompareAndSetLongValue(_) => Option::Some(FieldType::Long),
+				C2SCommand::SetFloat(_) => Option::Some(FieldType::Float),
+				C2SCommand::IncrementFloatCounter(_) => Option::Some(FieldType::Float),
+				C2SCommand::SetStruct(_) => Option::Some(FieldType::Structure),
+				C2SCommand::Event(_) => Option::Some(FieldType::Event),
+				C2SCommand::TargetEvent(_) => Option::Some(FieldType::Event),
+				C2SCommand::Delete(_) => Option::None,
+				C2SCommand::AttachToRoom => Option::None,
+				C2SCommand::DetachFromRoom => Option::None,
+			},
+			UniDirectionCommand::S2C(command) => match command {
+				S2CCommand::Create(_) => Option::None,
+				S2CCommand::Created(_) => Option::None,
+				S2CCommand::SetLong(_) => Option::Some(FieldType::Long),
+				S2CCommand::SetFloat(_) => Option::Some(FieldType::Float),
+				S2CCommand::SetStruct(_) => Option::Some(FieldType::Structure),
+				S2CCommand::Event(_) => Option::Some(FieldType::Event),
+				S2CCommand::Delete(_) => Option::None,
+			},
 		}
 	}
 	pub fn get_field_id(&self) -> Option<FieldId> {

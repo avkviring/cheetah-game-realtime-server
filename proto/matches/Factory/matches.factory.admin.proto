@@ -7,7 +7,7 @@ option csharp_namespace = "Cheetah.Matches.Factory.Editor.Admin.GRPC";
  */
 service Configurations {
   /**
-  Получить имена полей и шаблоной
+  Получить имена полей и шаблонов
  */
   rpc GetItemNames(GetItemsNamesRequest) returns(GetItemsNamesResponse);
 }

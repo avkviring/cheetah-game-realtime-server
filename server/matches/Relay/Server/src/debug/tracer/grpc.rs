@@ -9,6 +9,7 @@ use cheetah_microservice::tonic::{Request, Response};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, UniDirectionCommand};
+use crate::room::types::FieldType;
 use crate::server::manager::RelayManager;
 
 pub struct CommandTracerGRPCService {
@@ -44,7 +45,10 @@ impl CommandTracerGRPCService {
 
 #[tonic::async_trait]
 impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
-	async fn create_session(&self, request: Request<admin::CreateSessionRequest>) -> Result<Response<admin::CreateSessionResponse>, tonic::Status> {
+	async fn create_session(
+		&self,
+		request: Request<admin::CreateSessionRequest>,
+	) -> Result<Response<admin::CreateSessionResponse>, tonic::Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let task = CommandTracerSessionsTask::CreateSession(sender);
 		self.execute_task(request.get_ref().room as RoomId, task, receiver, |session_id| {
@@ -52,7 +56,10 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		})
 	}
 
-	async fn set_filter(&self, request: Request<admin::SetFilterRequest>) -> Result<Response<admin::SetFilterResponse>, tonic::Status> {
+	async fn set_filter(
+		&self,
+		request: Request<admin::SetFilterRequest>,
+	) -> Result<Response<admin::SetFilterResponse>, tonic::Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = CommandTracerSessionsTask::SetFilter(request.session as SessionId, request.filter.clone(), sender);
@@ -62,7 +69,10 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		})
 	}
 
-	async fn get_commands(&self, request: Request<admin::GetCommandsRequest>) -> Result<Response<admin::GetCommandsResponse>, tonic::Status> {
+	async fn get_commands(
+		&self,
+		request: Request<admin::GetCommandsRequest>,
+	) -> Result<Response<admin::GetCommandsResponse>, tonic::Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = CommandTracerSessionsTask::GetCommands(request.session as SessionId, sender);
@@ -74,7 +84,10 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		})
 	}
 
-	async fn close_session(&self, request: Request<admin::CloseSessionRequest>) -> Result<Response<admin::CloseSessionResponse>, tonic::Status> {
+	async fn close_session(
+		&self,
+		request: Request<admin::CloseSessionRequest>,
+	) -> Result<Response<admin::CloseSessionResponse>, tonic::Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = CommandTracerSessionsTask::CloseSession(request.session as SessionId, sender);
@@ -117,6 +130,15 @@ impl From<TracedCommand> for admin::Command {
 			Some(field_id) => field_id as u32,
 		};
 
+		let field_type = match command.network_command.get_field_type() {
+			None => admin::FieldType::None,
+			Some(field_type) => match field_type {
+				FieldType::Long => admin::FieldType::Long,
+				FieldType::Float => admin::FieldType::Float,
+				FieldType::Structure => admin::FieldType::Structure,
+				FieldType::Event => admin::FieldType::Event,
+			},
+		};
 		let value = get_string_value(&command);
 
 		Self {
@@ -128,6 +150,7 @@ impl From<TracedCommand> for admin::Command {
 			template,
 			value,
 			field_id,
+			field_type: field_type as i32,
 		}
 	}
 }
@@ -146,7 +169,10 @@ fn get_string_value(command: &TracedCommand) -> String {
 				format!("{:?}", command.increment)
 			}
 			C2SCommand::CompareAndSetLongValue(command) => {
-				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
+				format!(
+					"new = {:?}, current = {:?}, reset = {:?}",
+					command.new, command.current, command.reset
+				)
 			}
 			C2SCommand::SetFloat(command) => {
 				format!("{:?}", command.value)
@@ -213,7 +239,8 @@ pub mod test {
 				user_id: 255,
 				template: 155,
 				value: "[10, 20, 30]".to_string(),
-				field_id: 555
+				field_id: 555,
+				field_type: admin::FieldType::Event as i32
 			}
 		)
 	}
@@ -238,7 +265,8 @@ pub mod test {
 				user_id: 255,
 				template: u32::MAX,
 				value: "".to_string(),
-				field_id: u32::MAX
+				field_id: u32::MAX,
+				field_type: admin::FieldType::None as i32
 			}
 		)
 	}

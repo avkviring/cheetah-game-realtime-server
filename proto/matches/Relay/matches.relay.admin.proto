@@ -63,8 +63,6 @@ message DumpObject {
   map<uint32, int64> compare_and_set_owners = 9;
 }
 
-
-
 /**
   Сервис получения сетевых команд для отладки
  */
@@ -123,14 +121,22 @@ message Command {
   string command = 3;
   string object_id = 4;
   uint32 user_id = 5;
-
   // u32.max - значение не определено
   uint32 template = 6;
-
   // u32.max - значение не определено
   uint32 field_id = 7;
-  string value = 8;
+  FieldType field_type = 8;
+  string value = 9;
 }
+
+enum FieldType {
+  Long = 0;
+  Float = 1;
+  Structure = 2;
+  Event = 3;
+  None = 4;
+}
+
 
 
 message CloseSessionRequest {
