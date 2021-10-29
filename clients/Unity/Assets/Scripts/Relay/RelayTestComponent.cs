@@ -39,9 +39,9 @@ namespace Relay
             var client = CheetahClient.CreateClient(ticket.RelayGameHost + ":" + ticket.RelayGamePort, (ushort)ticket.UserId, ticket.RoomId,
                 ref privateKey, 0, out clientId);
             CheetahClient.SetCurrentClient(clientId);
-            CheetahObject.Create(30, 256, ref objectA);
+            CheetahObject.Create(1, 256, ref objectA);
             CheetahObject.Created(ref objectA);
-            CheetahObject.Create(10, 256, ref objectB);
+            CheetahObject.Create(100, 256, ref objectB);
             CheetahObject.Created(ref objectB);
         }
 

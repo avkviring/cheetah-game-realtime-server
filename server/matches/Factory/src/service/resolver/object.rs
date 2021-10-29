@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::proto::matches::relay::types as relay;
+use crate::proto::matches::relay::internal as relay;
 use crate::service::configurations::structures::{
 	Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName,
 };
@@ -73,7 +73,7 @@ pub mod test {
 
 	use rmpv::Utf8String;
 
-	use crate::proto::matches::relay::types as relay;
+	use crate::proto::matches::relay::internal as relay;
 	use crate::service::configurations::structures::{
 		Field, FieldType, FieldValue, GroupName, RoomObject, Template, TemplateName, TemplatePermissions,
 	};

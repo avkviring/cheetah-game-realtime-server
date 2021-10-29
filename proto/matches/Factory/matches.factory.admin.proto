@@ -1,7 +1,8 @@
 syntax = "proto3";
 package cheetah.matches.factory.admin;
-option csharp_namespace = "Cheetah.Matches.Factory.Editor.Admin.GRPC";
+option csharp_namespace = "Cheetah.Matches.Factory.Editor.GRPC";
 
+import public "matches.relay.shared.proto";
 /**
  Общие команды для получения информации и управления сервером
  */
@@ -27,13 +28,7 @@ message TemplateInfo {
 }
 message FieldInfo {
   uint32  id = 1;
-  FieldType type = 2;
+  cheetah.matches.relay.shared.FieldType type = 2;
   string name = 3;
 }
 
-enum FieldType {
-  Long = 0;
-  Double = 1;
-  Structure = 2;
-  Event = 3;
-}

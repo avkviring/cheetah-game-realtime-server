@@ -1,13 +1,13 @@
 syntax = "proto3";
 package cheetah.matches.relay.internal;
 
-import public "matches.relay.types.proto";
+import public "matches.relay.shared.proto";
 
 service Relay {
   /**
     Создать комнату
    */
-  rpc CreateRoom(cheetah.matches.relay.types.RoomTemplate) returns(CreateRoomResponse);
+  rpc CreateRoom(RoomTemplate) returns(CreateRoomResponse);
   /**
     Присоединить пользователя к комнате, после этого комната будет ожидать udp соединения
    */
@@ -20,10 +20,100 @@ message CreateRoomResponse {
 
 message AttachUserRequest {
   uint64 room_id = 1;
-  cheetah.matches.relay.types.UserTemplate user = 2;
+  UserTemplate user = 2;
 }
 
 message  AttachUserResponse {
   uint32 user_id = 1;
   bytes private_key = 2;
 }
+
+
+/**
+  Шаблон для описания комнаты
+ */
+message RoomTemplate {
+  /**
+    Начальные игровые объекты комнаты
+   */
+  repeated GameObjectTemplate objects = 1;
+  /**
+    Права доступа для комнаты
+   */
+  Permissions permissions = 2;
+}
+
+
+/**
+  Описание прав доступа для комнаты
+ */
+message Permissions {
+  /**
+    Права доступа для объектов комнаты
+   */
+  repeated GameObjectTemplatePermission objects = 1;
+}
+
+/**
+  Права доступа для объектов
+ */
+message GameObjectTemplatePermission {
+  /**
+    Шаблон игрового объекта, к которому применимы данные права
+   */
+  uint32 template = 1;
+  /**
+    Права доступа к полям для групп
+   */
+  repeated GroupsPermissionRule rules = 2;
+
+  /**
+    Права доступа к конкретным полям
+   */
+  repeated PermissionField fields = 3;
+}
+
+
+/**
+  Права доступа для группы
+ */
+message GroupsPermissionRule {
+  uint64 groups = 1;
+  PermissionLevel permission = 2;
+}
+
+
+/**
+  Права доступа для поля
+ */
+message PermissionField {
+  uint32 id = 1;
+  cheetah.matches.relay.shared.FieldType type = 2;
+  repeated GroupsPermissionRule rules = 3;
+}
+
+
+enum PermissionLevel {
+  Deny = 0;
+  Ro = 1;
+  Rw = 2;
+}
+
+message UserTemplate {
+  uint64 groups = 3;
+  repeated GameObjectTemplate objects = 4;
+}
+
+message GameObjectTemplate {
+  uint32 id = 1;
+  uint32 template = 2;
+  uint64 groups = 3;
+  GameObjectFieldsTemplate fields = 4;
+}
+
+message GameObjectFieldsTemplate {
+  map<uint32, int64> longs = 1;
+  map<uint32, double> floats = 2;
+  map<uint32, bytes> structures = 3;
+}
+

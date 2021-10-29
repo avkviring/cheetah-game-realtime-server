@@ -3,7 +3,6 @@ use std::sync::{Arc, Mutex};
 use tonic::{Request, Response, Status};
 
 use crate::factory::proto::internal::*;
-use crate::factory::proto::types::RoomTemplate;
 use crate::server::manager::RelayManager;
 
 mod from;

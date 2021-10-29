@@ -60,7 +60,10 @@ impl StubMatchmakingService {
 		}
 	}
 
-	async fn attach_user(ticket: &matchmaking::external::TicketRequest, match_info: &MatchInfo) -> Result<relay::internal::AttachUserResponse, ()> {
+	async fn attach_user(
+		ticket: &matchmaking::external::TicketRequest,
+		match_info: &MatchInfo,
+	) -> Result<relay::internal::AttachUserResponse, ()> {
 		let mut relay = relay::internal::relay_client::RelayClient::connect(cheetah_microservice::make_internal_srv_uri(
 			match_info.relay_grpc_host.as_str(),
 			match_info.relay_grpc_port,
@@ -71,7 +74,7 @@ impl StubMatchmakingService {
 		match relay
 			.attach_user(Request::new(AttachUserRequest {
 				room_id: match_info.room_id,
-				user: Option::Some(relay::types::UserTemplate {
+				user: Option::Some(relay::internal::UserTemplate {
 					groups: ticket.user_groups,
 					objects: Default::default(),
 				}),
@@ -95,7 +98,9 @@ impl StubMatchmakingService {
 				let mut factory = FactoryClient::connect(self.factory_service_uri.clone()).await.unwrap();
 
 				let create_match_response = factory
-					.create_match(Request::new(CreateMatchRequest { template: template.clone() }))
+					.create_match(Request::new(CreateMatchRequest {
+						template: template.clone(),
+					}))
 					.await
 					.unwrap()
 					.into_inner();
@@ -265,7 +270,10 @@ pub mod tests {
 		});
 
 		let matchmaking = StubMatchmakingService::new(
-			cheetah_microservice::make_internal_srv_uri(stub_grpc_service_addr.ip().to_string().as_str(), stub_grpc_service_addr.port()),
+			cheetah_microservice::make_internal_srv_uri(
+				stub_grpc_service_addr.ip().to_string().as_str(),
+				stub_grpc_service_addr.port(),
+			),
 			Default::default(),
 		);
 		matchmaking
@@ -282,7 +290,10 @@ pub mod tests {
 	}
 	#[tonic::async_trait]
 	impl Factory for StubFactory {
-		async fn create_match(&self, _request: Request<CreateMatchRequest>) -> Result<tonic::Response<CreateMatchResponse>, tonic::Status> {
+		async fn create_match(
+			&self,
+			_request: Request<CreateMatchRequest>,
+		) -> Result<tonic::Response<CreateMatchResponse>, tonic::Status> {
 			let mut sequence = self.room_sequence.write().await;
 			let current_seq = *sequence;
 			*sequence += 1;
@@ -306,12 +317,15 @@ pub mod tests {
 	impl relay::internal::relay_server::Relay for StubRelay {
 		async fn create_room(
 			&self,
-			_request: Request<relay::types::RoomTemplate>,
+			_request: Request<relay::internal::RoomTemplate>,
 		) -> Result<tonic::Response<relay::internal::CreateRoomResponse>, tonic::Status> {
 			todo!()
 		}
 
-		async fn attach_user(&self, _request: tonic::Request<AttachUserRequest>) -> Result<tonic::Response<AttachUserResponse>, tonic::Status> {
+		async fn attach_user(
+			&self,
+			_request: tonic::Request<AttachUserRequest>,
+		) -> Result<tonic::Response<AttachUserResponse>, tonic::Status> {
 			let mut fail = self.fail_when_zero.write().await;
 			let current = *fail;
 			*fail = *fail - 1;

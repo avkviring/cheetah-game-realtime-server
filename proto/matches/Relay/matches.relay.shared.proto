@@ -1,0 +1,11 @@
+syntax = "proto3";
+package cheetah.matches.relay.shared;
+option csharp_namespace = "Cheetah.Matches.Relay.Shared.GRPC";
+
+enum FieldType {
+  Long = 0;
+  Double = 1;
+  Structure = 2;
+  Event = 3;
+}
+

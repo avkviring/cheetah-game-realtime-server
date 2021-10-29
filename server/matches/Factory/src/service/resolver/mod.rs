@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-use crate::proto::matches::relay::types as relay;
+use crate::proto::matches::relay::internal as relay;
 use crate::service::configurations::structures::Room;
 use crate::service::configurations::Configurations;
 use crate::service::resolver::error::Error;
@@ -38,7 +38,9 @@ impl TryFrom<&Configurations> for HashMap<String, relay::RoomTemplate> {
 				let objects = objects
 					.iter()
 					.enumerate()
-					.map(|(index, o)| create_relay_object(room_name, o, templates, groups, fields, auto_object_id_start + index as u32))
+					.map(|(index, o)| {
+						create_relay_object(room_name, o, templates, groups, fields, auto_object_id_start + index as u32)
+					})
 					.collect::<Result<_, Error>>()?;
 
 				let permissions = templates

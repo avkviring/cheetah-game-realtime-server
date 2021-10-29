@@ -8,6 +8,7 @@ use cheetah_matches_relay_common::room::RoomId;
 use cheetah_microservice::tonic::{Request, Response};
 
 use crate::debug::proto::admin;
+use crate::debug::proto::shared;
 use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, UniDirectionCommand};
 use crate::room::types::FieldType;
 use crate::server::manager::RelayManager;
@@ -116,29 +117,22 @@ impl From<TracedCommand> for admin::Command {
 				}
 			},
 		};
-		let template = match command.template {
-			None => u32::MAX,
-			Some(id) => id as u32,
-		};
+		let template = command.template.map(|id| id as u32);
 		let command_name: String = match &command.network_command {
 			UniDirectionCommand::C2S(command) => command.as_ref().to_string(),
 			UniDirectionCommand::S2C(command) => command.as_ref().to_string(),
 		};
-
-		let field_id = match command.network_command.get_field_id() {
-			None => u32::MAX,
-			Some(field_id) => field_id as u32,
-		};
-
-		let field_type = match command.network_command.get_field_type() {
-			None => admin::FieldType::None,
-			Some(field_type) => match field_type {
-				FieldType::Long => admin::FieldType::Long,
-				FieldType::Double => admin::FieldType::Double,
-				FieldType::Structure => admin::FieldType::Structure,
-				FieldType::Event => admin::FieldType::Event,
-			},
-		};
+		let field_id = command.network_command.get_field_id().map(|field_id| field_id as u32);
+		let field_type = command
+			.network_command
+			.get_field_type()
+			.map(|field_type| match field_type {
+				FieldType::Long => shared::FieldType::Long,
+				FieldType::Double => shared::FieldType::Double,
+				FieldType::Structure => shared::FieldType::Structure,
+				FieldType::Event => shared::FieldType::Event,
+			})
+			.map(|field_type| field_type as i32);
 		let value = get_string_value(&command);
 
 		Self {
@@ -150,7 +144,7 @@ impl From<TracedCommand> for admin::Command {
 			template,
 			value,
 			field_id,
-			field_type: field_type as i32,
+			field_type,
 		}
 	}
 }
@@ -213,6 +207,7 @@ pub mod test {
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::debug::proto::admin;
+	use crate::debug::proto::shared;
 	use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
 
 	#[test]
@@ -237,10 +232,10 @@ pub mod test {
 				command: "Event".to_string(),
 				object_id: "root(100)".to_string(),
 				user_id: 255,
-				template: 155,
+				template: Option::Some(155),
 				value: "[10, 20, 30]".to_string(),
-				field_id: 555,
-				field_type: admin::FieldType::Event as i32
+				field_id: Option::Some(555),
+				field_type: Option::Some(shared::FieldType::Event as i32)
 			}
 		)
 	}
@@ -263,10 +258,10 @@ pub mod test {
 				command: "AttachToRoom".to_string(),
 				object_id: "none".to_string(),
 				user_id: 255,
-				template: u32::MAX,
+				template: Option::None,
 				value: "".to_string(),
-				field_id: u32::MAX,
-				field_type: admin::FieldType::None as i32
+				field_id: Option::None,
+				field_type: Option::None
 			}
 		)
 	}

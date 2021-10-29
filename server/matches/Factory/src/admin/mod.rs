@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
-use cheetah_microservice::tonic::{Request, Response, Status};
+use cheetah_microservice::tonic::{Request, Response};
 
 use crate::proto::matches::factory::admin;
+use crate::proto::matches::relay::shared;
 use crate::service::configurations::structures::FieldType;
 use crate::service::configurations::Configurations;
 
@@ -35,12 +34,12 @@ impl ConfigurationsService {
 	}
 }
 
-fn to_admin_field_type(fieldType: &FieldType) -> i32 {
-	match fieldType {
-		FieldType::Long => admin::FieldType::Long as i32,
-		FieldType::Double => admin::FieldType::Double as i32,
-		FieldType::Struct => admin::FieldType::Structure as i32,
-		FieldType::Event => admin::FieldType::Event as i32,
+fn to_admin_field_type(field_type: &FieldType) -> i32 {
+	match field_type {
+		FieldType::Long => shared::FieldType::Long as i32,
+		FieldType::Double => shared::FieldType::Double as i32,
+		FieldType::Struct => shared::FieldType::Structure as i32,
+		FieldType::Event => shared::FieldType::Event as i32,
 	}
 }
 
@@ -61,6 +60,7 @@ impl admin::configurations_server::Configurations for ConfigurationsService {
 pub mod tests {
 	use crate::admin::ConfigurationsService;
 	use crate::proto::matches::factory::admin;
+	use crate::proto::matches::relay::shared;
 	use crate::service::configurations::structures::{Field, FieldType, Template};
 	use crate::service::configurations::Configurations;
 
@@ -111,7 +111,7 @@ pub mod tests {
 			*service.fields.first().unwrap(),
 			admin::FieldInfo {
 				id: 10,
-				r#type: admin::FieldType::Long as i32,
+				r#type: shared::FieldType::Long as i32,
 				name: "score".to_string()
 			}
 		);

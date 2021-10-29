@@ -1,7 +1,8 @@
 syntax = "proto3";
 package cheetah.matches.relay.admin;
-option csharp_namespace = "Cheetah.Matches.Relay.Editor.Admin.GRPC";
+option csharp_namespace = "Cheetah.Matches.Relay.Editor.GRPC";
 
+import public "matches.relay.shared.proto";
 /**
  Общие команды для получения информации и управления сервером
  */
@@ -55,8 +56,7 @@ message DumpObject {
   uint64 groups = 2;
   uint32 template = 3;
   bool created = 4;
-  // max - объект принадлежит комнате, иначе идентификатор пользователя
-  uint32 owner = 5;
+  optional uint32 owner_user_id = 5;
   map<uint32, int64> longs = 6;
   map<uint32, double> floats = 7;
   map<uint32, bytes> structures = 8;
@@ -121,20 +121,10 @@ message Command {
   string command = 3;
   string object_id = 4;
   uint32 user_id = 5;
-  // u32.max - значение не определено
-  uint32 template = 6;
-  // u32.max - значение не определено
-  uint32 field_id = 7;
-  FieldType field_type = 8;
+  optional uint32 template = 6;
+  optional uint32 field_id = 7;
+  optional cheetah.matches.relay.shared.FieldType field_type = 8;
   string value = 9;
-}
-
-enum FieldType {
-  Long = 0;
-  Double = 1;
-  Structure = 2;
-  Event = 3;
-  None = 4;
 }
 
 message CloseSessionRequest {

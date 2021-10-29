@@ -32,7 +32,10 @@ impl FactoryService {
 
 #[tonic::async_trait]
 impl factory::factory_server::Factory for FactoryService {
-	async fn create_match(&self, request: Request<factory::CreateMatchRequest>) -> Result<Response<factory::CreateMatchResponse>, Status> {
+	async fn create_match(
+		&self,
+		request: Request<factory::CreateMatchRequest>,
+	) -> Result<Response<factory::CreateMatchResponse>, Status> {
 		self.do_create_match(request.into_inner().template).await.map(Response::new)
 	}
 }
@@ -82,9 +85,11 @@ mod tests {
 	impl relay::internal::relay_server::Relay for StubRelay {
 		async fn create_room(
 			&self,
-			_request: Request<relay::types::RoomTemplate>,
+			_request: Request<relay::internal::RoomTemplate>,
 		) -> Result<tonic::Response<relay::internal::CreateRoomResponse>, tonic::Status> {
-			Ok(tonic::Response::new(relay::internal::CreateRoomResponse { id: StubRelay::ROOM_ID }))
+			Ok(tonic::Response::new(relay::internal::CreateRoomResponse {
+				id: StubRelay::ROOM_ID,
+			}))
 		}
 
 		async fn attach_user(

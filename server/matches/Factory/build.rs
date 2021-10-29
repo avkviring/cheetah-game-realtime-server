@@ -6,7 +6,7 @@ fn main() -> Result<(), Error> {
 			"../../../proto/matches/Factory/matches.factory.internal.proto",
 			"../../../proto/matches/Factory/matches.factory.admin.proto",
 			"../../../proto/matches/Registry/matches.registry.internal.proto",
-			"../../../proto/matches/Relay/matches.relay.types.proto",
+			"../../../proto/matches/Relay/matches.relay.shared.proto",
 			"../../../proto/matches/Relay/matches.relay.internal.proto",
 		],
 		&[

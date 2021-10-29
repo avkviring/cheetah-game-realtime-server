@@ -20,9 +20,9 @@ impl From<&Room> for admin::DumpResponse {
 impl From<&GameObject> for admin::DumpObject {
 	fn from(source: &GameObject) -> Self {
 		Self {
-			owner: match &source.id.owner {
-				GameObjectOwner::Room => u32::MAX,
-				GameObjectOwner::User(id) => *id as u32,
+			owner_user_id: match &source.id.owner {
+				GameObjectOwner::Room => Option::None,
+				GameObjectOwner::User(id) => Option::Some(*id as u32),
 			},
 			id: source.id.id,
 			template: source.template as u32,

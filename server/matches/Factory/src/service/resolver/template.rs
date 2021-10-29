@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use crate::proto::matches::relay::types as relay;
+use crate::proto::matches::relay::internal as relay;
+use crate::proto::matches::relay::shared as shared;
 use crate::service::configurations::structures::{Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template, TemplateName};
 use crate::service::resolver::error::Error;
 
@@ -51,7 +52,7 @@ fn create_permissions_field(
 
 	Result::Ok(relay::PermissionField {
 		id: field.id as u32,
-		r#type: relay::FieldType::from(&field.r#type) as i32,
+		r#type: shared::FieldType::from(&field.r#type) as i32,
 		rules,
 	})
 }
@@ -84,20 +85,21 @@ impl From<&PermissionLevel> for relay::PermissionLevel {
 	}
 }
 
-impl From<&FieldType> for relay::FieldType {
+impl From<&FieldType> for shared::FieldType {
 	fn from(field_type: &FieldType) -> Self {
 		match field_type {
-			FieldType::Long => relay::FieldType::Long,
-			FieldType::Double => relay::FieldType::Double,
-			FieldType::Struct => relay::FieldType::Structure,
-			FieldType::Event => relay::FieldType::Event,
+			FieldType::Long => shared::FieldType::Long,
+			FieldType::Double => shared::FieldType::Double,
+			FieldType::Struct => shared::FieldType::Structure,
+			FieldType::Event => shared::FieldType::Event,
 		}
 	}
 }
 
 #[cfg(test)]
 pub mod test {
-	use crate::proto::matches::relay::types as relay;
+	use crate::proto::matches::relay::internal as relay;
+	use crate::proto::matches::relay::shared as shared;
 	use crate::service::configurations::structures::{Field, FieldType, PermissionField, PermissionLevel, Template, TemplatePermissions};
 	use crate::service::resolver::error::Error;
 	use crate::service::resolver::template::{create_permission_rule, create_permissions_field, create_template_permission};
@@ -141,7 +143,7 @@ pub mod test {
 			result.fields,
 			vec![relay::PermissionField {
 				id: 77,
-				r#type: relay::FieldType::Long as i32,
+				r#type: shared::FieldType::Long as i32,
 				rules: vec![relay::GroupsPermissionRule {
 					groups: 5,
 					permission: relay::PermissionLevel::Rw as i32
@@ -193,10 +195,10 @@ pub mod test {
 
 	#[test]
 	fn should_convert_field_type() {
-		assert_eq!(relay::FieldType::from(&FieldType::Long), relay::FieldType::Long);
-		assert_eq!(relay::FieldType::from(&FieldType::Struct), relay::FieldType::Structure);
-		assert_eq!(relay::FieldType::from(&FieldType::Double), relay::FieldType::Double);
-		assert_eq!(relay::FieldType::from(&FieldType::Event), relay::FieldType::Event);
+		assert_eq!(shared::FieldType::from(&FieldType::Long), shared::FieldType::Long);
+		assert_eq!(shared::FieldType::from(&FieldType::Struct), shared::FieldType::Structure);
+		assert_eq!(shared::FieldType::from(&FieldType::Double), shared::FieldType::Double);
+		assert_eq!(shared::FieldType::from(&FieldType::Event), shared::FieldType::Event);
 	}
 
 	#[test]
@@ -227,7 +229,7 @@ pub mod test {
 		);
 		let result = result.unwrap();
 		assert_eq!(result.id, 128);
-		assert_eq!(result.r#type, relay::FieldType::Long as i32);
+		assert_eq!(result.r#type, shared::FieldType::Long as i32);
 		assert_eq!(
 			result.rules,
 			vec![relay::GroupsPermissionRule {
