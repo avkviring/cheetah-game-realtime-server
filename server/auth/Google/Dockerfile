@@ -1,5 +1,5 @@
 # определяем зависимости для кеширования
-FROM akviring/rust-builder:1.54.0-01 as planner
+FROM akviring/rust-builder:1.56.0-01 as planner
 WORKDIR planner
 COPY server/auth/Cerberus/ server/auth/Cerberus/
 COPY server/Microservice server/Microservice
@@ -8,7 +8,7 @@ COPY server/auth/Google/ server/auth/Google/
 RUN cd server/auth/Google/ && cargo chef prepare --recipe-path recipe.json
 
 # собираем зависимости
-FROM akviring/rust-builder:1.54.0-01 as cacher
+FROM akviring/rust-builder:1.56.0-01 as cacher
 WORKDIR cache
 COPY proto/auth/ proto/auth/
 COPY server/Microservice server/Microservice
@@ -18,7 +18,7 @@ COPY --from=planner /planner/server/auth/Google/recipe.json server/auth/Google/r
 RUN cd server/auth/Google/ && cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-linux-musl
 
 # компиляция приложения
-FROM akviring/rust-builder:1.54.0-01 as builder
+FROM akviring/rust-builder:1.56.0-01 as builder
 WORKDIR build
 COPY proto/auth/ proto/auth/
 COPY server/Microservice server/Microservice
