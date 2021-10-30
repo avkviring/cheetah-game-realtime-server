@@ -7,7 +7,7 @@ pub async fn create_postgres_pool(db: &str, user: &str, passwd: &str, host: &str
 	let uri = format!("postgres://{}:{}@{}:{}/{}", user, passwd, host, port, db);
 	PgPoolOptions::new()
 		.max_connections(5)
-		.connect_timeout(Duration::from_secs(5))
+		.connect_timeout(Duration::from_secs(10))
 		.connect(&uri)
 		.await
 		.unwrap()
@@ -79,16 +79,13 @@ impl Storage {
 			.fetch_optional(&self.pool)
 			.await
 			.unwrap()
-			.map_or(
-				FindResult::NotFound,
-				|(user, linked)| {
-					if linked {
-						FindResult::Linked
-					} else {
-						FindResult::Player(user)
-					}
-				},
-			)
+			.map_or(FindResult::NotFound, |(user, linked)| {
+				if linked {
+					FindResult::Linked
+				} else {
+					FindResult::Player(user)
+				}
+			})
 	}
 
 	pub async fn link_cookie(&self, user: user::Id) {
@@ -214,6 +211,9 @@ create table if not exists users (
 		let ip = IpNetwork::from_str("127.0.0.1").unwrap();
 		let user = users.create(ip).await.into();
 		assert!(storage.do_attach(user, "cookie").await.is_ok());
-		assert!(matches!(storage.do_attach(user, "cookie").await, Err(AttachError::UniqueViolation)));
+		assert!(matches!(
+			storage.do_attach(user, "cookie").await,
+			Err(AttachError::UniqueViolation)
+		));
 	}
 }

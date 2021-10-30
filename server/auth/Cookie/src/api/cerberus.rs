@@ -1,6 +1,6 @@
 use crate::api::user;
-use cheetah_microservice::proto::auth::cerberus::internal::{cerberus_client, CreateTokenRequest};
-pub use cheetah_microservice::proto::auth::cerberus::types::Tokens;
+use crate::proto::auth::cerberus::internal::{cerberus_client, CreateTokenRequest};
+use crate::proto::auth::cerberus::types::Tokens;
 use cheetah_microservice::tonic;
 use cheetah_microservice::tonic::{Request, Response, Status};
 

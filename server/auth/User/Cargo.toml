@@ -9,12 +9,13 @@ path = "src/bin/service.rs"
 
 
 [dependencies]
-cheetah-microservice = { path = "../../Microservice", features = ["auth"] }
-
+cheetah-microservice = { path = "../../Microservice" }
 tokio = { version = "1.10", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 serde = { version = "1.0", features = ["derive"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "migrate", "ipnetwork", "chrono"] }
 log = "0.4"
+tonic = "0.5.2"
+prost = "0.8.0"
 
 # обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
 # это зависимость sqlx, как только они включат новую зависимость lexical-core
@@ -26,3 +27,6 @@ testcontainers = "0.12.0"
 chrono = "0.4"
 cheetah-auth-cerberus = { path = "../Cerberus/", features = ["test-helper"] }
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
+
+[build-dependencies]
+tonic-build = "0.5.2"

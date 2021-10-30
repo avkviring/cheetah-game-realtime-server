@@ -1,7 +1,7 @@
-use cheetah_microservice::proto::auth::user::internal::{user_client, CreateRequest, CreateResponse};
-use cheetah_microservice::tonic;
-use cheetah_microservice::tonic::{Request, Response, Status};
 use sqlx::types::ipnetwork::IpNetwork;
+use tonic::{Request, Response, Status};
+
+use crate::proto::auth::user::internal::{user_client, CreateRequest, CreateResponse};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, sqlx::FromRow, sqlx::Type)]
 #[sqlx(transparent)]

@@ -1,15 +1,16 @@
 pub mod api;
+pub mod proto;
 pub mod storage;
 
 use crate::api::{cerberus, user};
-use crate::storage::Storage;
-use cheetah_microservice::jwt::JWTTokenParser;
-use cheetah_microservice::proto::auth::google::external::{
+use crate::proto::auth::google::external::{
 	google_server, {AttachRequest, AttachResponse}, {RegisterOrLoginRequest, RegisterOrLoginResponse},
 };
-use cheetah_microservice::tonic::{self, metadata::MetadataMap, transport::Server, Request, Response, Status};
+use crate::storage::Storage;
+use cheetah_microservice::jwt::JWTTokenParser;
 use jsonwebtoken_google::Parser as GoogleTokenParser;
 use sqlx::types::ipnetwork::IpNetwork;
+use tonic::{self, metadata::MetadataMap, transport::Server, Request, Response, Status};
 
 pub fn get_client_ip(metadata: &MetadataMap) -> IpNetwork {
 	metadata
@@ -52,7 +53,13 @@ pub struct Service {
 }
 
 impl Service {
-	pub fn new(storage: impl Into<Storage>, cerberus: cerberus::Client, users: user::Client, parser: GoogleTokenParser, jwt: JWTTokenParser) -> Self {
+	pub fn new(
+		storage: impl Into<Storage>,
+		cerberus: cerberus::Client,
+		users: user::Client,
+		parser: GoogleTokenParser,
+		jwt: JWTTokenParser,
+	) -> Self {
 		Self {
 			storage: storage.into(),
 			cerberus,
@@ -79,7 +86,10 @@ impl Service {
 
 #[tonic::async_trait]
 impl google_server::Google for Service {
-	async fn register_or_login(&self, request: Request<RegisterOrLoginRequest>) -> Result<Response<RegisterOrLoginResponse>, Status> {
+	async fn register_or_login(
+		&self,
+		request: Request<RegisterOrLoginRequest>,
+	) -> Result<Response<RegisterOrLoginResponse>, Status> {
 		let registry_or_login_request = request.get_ref();
 		let token = &registry_or_login_request.google_token;
 		let token = self.parser.parse(token).await;
@@ -113,10 +123,14 @@ impl google_server::Google for Service {
 			Status::internal("error")
 		})?;
 
-		let user = self.jwt.parse_player_id(request.metadata()).map(user::Id::from).map_err(|err| {
-			log::error!("{:?}", err);
-			Status::unauthenticated(format!("{:?}", err))
-		})?;
+		let user = self
+			.jwt
+			.parse_player_id(request.metadata())
+			.map(user::Id::from)
+			.map_err(|err| {
+				log::error!("{:?}", err);
+				Status::unauthenticated(format!("{:?}", err))
+			})?;
 
 		let ip = get_client_ip(request.metadata());
 		self.storage.attach(user, &google_id, ip).await;

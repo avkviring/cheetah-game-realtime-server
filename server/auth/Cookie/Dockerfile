@@ -27,6 +27,7 @@ COPY server/auth/Cerberus/ server/auth/Cerberus/
 COPY server/auth/Cookie server/auth/Cookie/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/auth/Cookie/target/ server/auth/Cookie/target/
+RUN touch server/auth/Cookie/build.rs
 RUN cd server/auth/Cookie/ && cargo build --offline --release --target x86_64-unknown-linux-musl
 
 # образ для запуска

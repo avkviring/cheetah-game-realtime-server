@@ -24,6 +24,7 @@ COPY server/auth/User/ server/auth/User/
 COPY server/auth/Cerberus/ server/auth/Cerberus/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/auth/User/target/ server/auth/User/target/
+RUN touch server/auth/User/build.rs
 RUN cd server/auth/User/ && cargo build --offline --release --target x86_64-unknown-linux-musl
 
 # образ для запуска

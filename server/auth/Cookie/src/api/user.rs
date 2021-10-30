@@ -1,6 +1,6 @@
 use sqlx::types::ipnetwork::IpNetwork;
 
-use cheetah_microservice::proto::auth::user::internal::{user_client, CreateRequest, CreateResponse};
+use crate::proto::auth::user::internal::{user_client, CreateRequest, CreateResponse};
 use cheetah_microservice::tonic;
 use cheetah_microservice::tonic::{Request, Response, Status};
 

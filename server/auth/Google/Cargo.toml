@@ -8,8 +8,7 @@ name = "cheetah-auth-google"
 path = "src/bin/service.rs"
 
 [dependencies]
-cheetah-microservice = { path = "../../Microservice", features = ["auth"] }
-
+cheetah-microservice = { path = "../../Microservice" }
 chrono = "0.4"
 tokio = { version = "1.10", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tokio-stream = { version = "0.1", features = ["net"] }
@@ -20,6 +19,8 @@ async-trait = "0.1.50"
 log = "0.4"
 rand = "0.8"
 jsonwebtoken-google = { version = "0.1.1" }
+tonic = "0.5.2"
+prost = "0.8.0"
 
 # обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
 # это зависимость sqlx, как только они включат новую зависимость lexical-core
@@ -27,7 +28,6 @@ jsonwebtoken-google = { version = "0.1.1" }
 lexical-core = "0.7.6"
 
 [dev-dependencies]
-cheetah-microservice = { path = "../../Microservice", features = ["auth","postgresql_test_helper"] }
 cheetah-auth-cerberus = { path = "../Cerberus/", features = ["test-helper"] }
 cheetah-auth-user = { path = "../User" }
 

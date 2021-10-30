@@ -1,3 +1,5 @@
+pub mod postgresql;
+
 use std::net::SocketAddr;
 use std::time::Duration;
 
@@ -7,10 +9,10 @@ use testcontainers::images::redis::Redis;
 use testcontainers::{images, Container, Docker};
 use tokio::task::JoinHandle;
 
-use cheetah_auth_cerberus::test_helper;
-use cheetah_microservice::proto::auth::cookie;
-use cheetah_microservice::tonic::transport::{Channel, Uri};
-use cheetah_microservice::tonic::{Request, Response};
+use cheetah_auth_cerberus::test_helper::stub_cerberus_grpc_server;
+use cheetah_auth_cookie::proto::auth::cookie;
+use tonic::transport::{Channel, Uri};
+use tonic::{Request, Response};
 
 pub async fn setup(
 	cli: &Cli,
@@ -25,9 +27,9 @@ pub async fn setup(
 	JoinHandle<()>,
 	JoinHandle<()>,
 ) {
-	let (handler_cerberus, redis_container) = test_helper::stub_cerberus_grpc_server(internal_cerberus_port, external_cerberus_port).await;
+	let (handler_cerberus, redis_container) = stub_cerberus_grpc_server(internal_cerberus_port, external_cerberus_port).await;
 
-	let (pools, container) = cheetah_microservice::test_helper::postgresql::create_psql_databases(&cli, 2).await;
+	let (pools, container) = postgresql::create_psql_databases(&cli, 2).await;
 
 	let user_pool = pools[0].clone();
 	cheetah_auth_user::storage::migrate_db(&user_pool).await;
@@ -58,7 +60,9 @@ pub async fn should_registry_and_login_by_cookie() {
 
 	let cookie_addr = format!("http://127.0.0.1:{}", service_port);
 	let mut cookie_client: cookie::external::cookie_client::CookieClient<Channel> =
-		cookie::external::cookie_client::CookieClient::connect(cookie_addr).await.unwrap();
+		cookie::external::cookie_client::CookieClient::connect(cookie_addr)
+			.await
+			.unwrap();
 
 	// регистрируем нового игрока
 	let registry_response: Response<cookie::external::RegistryResponse> = cookie_client
@@ -99,7 +103,9 @@ pub async fn should_not_login_by_wrong_cookie() {
 
 	let cookie_addr = format!("http://127.0.0.1:{}", service_port);
 	let mut cookie_client: cookie::external::cookie_client::CookieClient<Channel> =
-		cookie::external::cookie_client::CookieClient::connect(cookie_addr).await.unwrap();
+		cookie::external::cookie_client::CookieClient::connect(cookie_addr)
+			.await
+			.unwrap();
 	let login_response: Response<cookie::external::LoginResponse> = cookie_client
 		.login(Request::new(cookie::external::LoginRequest {
 			cookie: "some-wrong-cookie".to_owned(),
@@ -108,6 +114,9 @@ pub async fn should_not_login_by_wrong_cookie() {
 		.await
 		.unwrap();
 	let login_response = login_response.into_inner();
-	assert_eq!(login_response.status, cookie::external::login_response::Status::NotFound as i32);
+	assert_eq!(
+		login_response.status,
+		cookie::external::login_response::Status::NotFound as i32
+	);
 	assert!(matches!(login_response.tokens, None));
 }

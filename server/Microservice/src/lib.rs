@@ -7,8 +7,6 @@ pub use tonic;
 use tonic::transport::Uri;
 
 pub mod jwt;
-pub mod proto;
-pub mod test_helper;
 
 pub fn get_env(name: &str) -> String {
 	let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {} dont set", name));
@@ -19,7 +17,9 @@ pub fn get_env(name: &str) -> String {
 }
 
 pub fn init(name: &str) {
-	pretty_env_logger::formatted_timed_builder().filter_level(LevelFilter::Info).init();
+	pretty_env_logger::formatted_timed_builder()
+		.filter_level(LevelFilter::Info)
+		.init();
 
 	println!("start service {} ", name);
 }
@@ -53,6 +53,8 @@ pub fn make_internal_srv_uri(host: &str, port: u16) -> Uri {
 
 pub fn get_internal_srv_uri_from_env(service: &str) -> Uri {
 	let host = get_env(format!("{}_INTERNAL_SERVICE_HOST", service).as_str());
-	let port = get_env(format!("{}_INTERNAL_SERVICE_PORT", service).as_str()).parse().unwrap();
+	let port = get_env(format!("{}_INTERNAL_SERVICE_PORT", service).as_str())
+		.parse()
+		.unwrap();
 	make_internal_srv_uri(&host, port)
 }

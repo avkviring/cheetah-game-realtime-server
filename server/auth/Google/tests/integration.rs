@@ -9,12 +9,13 @@ use tokio::task::JoinHandle;
 
 use cheetah_auth_cerberus::test_helper;
 use cheetah_auth_google::api::user::Id;
+use cheetah_auth_google::proto::auth::cerberus::types::Tokens;
+use cheetah_auth_google::proto::auth::google::external as google;
 use cheetah_microservice::jwt::JWTTokenParser;
-use cheetah_microservice::proto::auth::cerberus::types::Tokens;
-
-use cheetah_microservice::proto::auth::google::external as google;
 use cheetah_microservice::tonic::transport::Uri;
 use cheetah_microservice::tonic::{self, metadata::MetadataValue};
+
+mod postgresql;
 
 pub async fn setup(
 	cli: &Cli,
@@ -34,7 +35,7 @@ pub async fn setup(
 	let (handler_cerberus, redis_container) =
 		test_helper::stub_cerberus_grpc_server(internal_cerberus_service_port, external_cerberus_service_port).await;
 
-	let (pools, container) = cheetah_microservice::test_helper::postgresql::create_psql_databases(&cli, 2).await;
+	let (pools, container) = postgresql::create_psql_databases(&cli, 2).await;
 
 	let user_pool = pools[0].clone();
 	cheetah_auth_user::storage::migrate_db(&user_pool).await;
@@ -45,7 +46,9 @@ pub async fn setup(
 	let google_pool = pools[1].clone();
 	cheetah_auth_google::storage::migrate_db(&google_pool).await;
 	let handler_google = tokio::spawn(async move {
-		let cerberus_service_uri: Uri = format!("http://127.0.0.1:{}", internal_cerberus_service_port).parse().unwrap();
+		let cerberus_service_uri: Uri = format!("http://127.0.0.1:{}", internal_cerberus_service_port)
+			.parse()
+			.unwrap();
 		let user_service_uri: Uri = format!("http://127.0.0.1:{}", internal_user_service_port).parse().unwrap();
 		cheetah_auth_google::run_grpc_server(
 			google_pool,
@@ -53,7 +56,10 @@ pub async fn setup(
 			cerberus_service_uri,
 			user_service_uri,
 			public_jwt_key,
-			jsonwebtoken_google::Parser::new_with_custom_cert_url(jsonwebtoken_google::test_helper::CLIENT_ID, &public_google_key_url),
+			jsonwebtoken_google::Parser::new_with_custom_cert_url(
+				jsonwebtoken_google::test_helper::CLIENT_ID,
+				&public_google_key_url,
+			),
 		)
 		.await;
 	});
@@ -134,7 +140,9 @@ pub async fn should_attach() {
 
 	let _user_internal_service_uri: Uri = format!("http://127.0.0.1:{}", user_internal_service_port).parse().unwrap();
 	let google_internal_service_uri = format!("http://127.0.0.1:{}", google_internal_service_port);
-	let cerberus_internal_service_uri: Uri = format!("http://127.0.0.1:{}", cerberus_internal_service_port).parse().unwrap();
+	let cerberus_internal_service_uri: Uri = format!("http://127.0.0.1:{}", cerberus_internal_service_port)
+		.parse()
+		.unwrap();
 
 	// регистрируемся через cookie
 	let token_from_cookie: Tokens = cheetah_auth_google::api::cerberus::Client::new(cerberus_internal_service_uri)
@@ -143,7 +151,9 @@ pub async fn should_attach() {
 		.unwrap();
 
 	// связываем игрока с google
-	let mut google_client = google::google_client::GoogleClient::connect(google_internal_service_uri).await.unwrap();
+	let mut google_client = google::google_client::GoogleClient::connect(google_internal_service_uri)
+		.await
+		.unwrap();
 	let mut request = tonic::Request::new(google::AttachRequest {
 		google_token: google_token.clone(),
 		device_id: "some-device-id".to_owned(),

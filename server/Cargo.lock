@@ -492,11 +492,14 @@ dependencies = [
  "lazy_static",
  "lexical-core",
  "log",
+ "prost",
  "rand",
  "serde",
  "sqlx",
  "testcontainers",
  "tokio",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]
@@ -512,12 +515,14 @@ dependencies = [
  "lazy_static",
  "lexical-core",
  "log",
+ "prost",
  "rand",
  "serde",
  "sqlx",
  "testcontainers",
  "tokio",
  "tokio-stream",
+ "tonic",
  "tonic-build",
  "tower",
 ]
@@ -532,10 +537,13 @@ dependencies = [
  "jsonwebtoken-google",
  "lexical-core",
  "log",
+ "prost",
  "serde",
  "sqlx",
  "testcontainers",
  "tokio",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]
@@ -669,10 +677,7 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "pretty_env_logger",
- "prost",
  "serde",
- "sqlx",
- "testcontainers",
  "tonic",
  "tonic-build",
 ]

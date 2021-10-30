@@ -5,7 +5,7 @@ pub async fn create_postgres_pool(db: &str, user: &str, passwd: &str, host: &str
 	let uri = format!("postgres://{}:{}@{}:{}/{}", user, passwd, host, port, db);
 	let pool = PgPoolOptions::new()
 		.max_connections(5)
-		.connect_timeout(Duration::from_secs(5))
+		.connect_timeout(Duration::from_secs(10))
 		.connect(&uri)
 		.await
 		.unwrap();
@@ -93,7 +93,10 @@ pub mod tests {
 		let id_b = users.create(addr_b).await;
 		assert_eq!(id_b, Id(2));
 
-		let result: Vec<(Id, IpNetwork, NaiveDateTime)> = sqlx::query_as("select id, ip, create_time from users").fetch_all(&pool).await.unwrap();
+		let result: Vec<(Id, IpNetwork, NaiveDateTime)> = sqlx::query_as("select id, ip, create_time from users")
+			.fetch_all(&pool)
+			.await
+			.unwrap();
 
 		assert_eq!(result[0].0, id_a);
 		assert_eq!(result[0].1, addr_a);

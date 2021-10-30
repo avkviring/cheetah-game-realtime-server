@@ -1,19 +1,15 @@
-use sqlx::types::ipnetwork::IpNetwork;
-
-use cheetah_microservice::{
-	proto::auth::cookie::external::{
-		cookie_server,
-		{login_response::Status as LoginStatus, LoginRequest, LoginResponse},
-		{RegistryRequest, RegistryResponse},
-	},
-	tonic::{self, transport::Server, Request, Response},
-};
-
-use crate::api::{cerberus, user};
-use crate::storage::{FindResult, Storage};
 use std::net::SocketAddr;
 
+use sqlx::types::ipnetwork::IpNetwork;
+use tonic::transport::Server;
+use tonic::{Request, Response};
+
+use crate::api::{cerberus, user};
+use crate::proto::auth::cookie::external;
+use crate::storage::{FindResult, Storage};
+
 pub mod api;
+pub mod proto;
 pub mod storage;
 
 pub fn get_client_ip(metadata: &tonic::metadata::MetadataMap) -> IpNetwork {
@@ -55,14 +51,17 @@ impl Service {
 		}
 	}
 
-	pub fn server(self) -> cookie_server::CookieServer<Self> {
-		cookie_server::CookieServer::new(self)
+	pub fn server(self) -> external::cookie_server::CookieServer<Self> {
+		external::cookie_server::CookieServer::new(self)
 	}
 }
 
 #[tonic::async_trait]
-impl cookie_server::Cookie for Service {
-	async fn register(&self, request: Request<RegistryRequest>) -> Result<Response<RegistryResponse>, tonic::Status> {
+impl external::cookie_server::Cookie for Service {
+	async fn register(
+		&self,
+		request: Request<external::RegistryRequest>,
+	) -> Result<Response<external::RegistryResponse>, tonic::Status> {
 		let ip = get_client_ip(request.metadata());
 		let user = self.users.create(ip).await?;
 		let cookie = self.storage.attach(user).await;
@@ -70,22 +69,22 @@ impl cookie_server::Cookie for Service {
 			.create_token(&request.get_ref().device_id, user)
 			.await
 			.map(Some)
-			.map(|tokens| RegistryResponse { tokens, cookie })
+			.map(|tokens| external::RegistryResponse { tokens, cookie })
 			.map(Response::new)
 	}
 
-	async fn login(&self, request: Request<LoginRequest>) -> Result<Response<LoginResponse>, tonic::Status> {
+	async fn login(&self, request: Request<external::LoginRequest>) -> Result<Response<external::LoginResponse>, tonic::Status> {
 		let request = request.get_ref();
 		match self.storage.find(&request.cookie).await {
-			FindResult::NotFound => Ok((None, LoginStatus::NotFound as i32)),
-			FindResult::Linked => Ok((None, LoginStatus::Linked as i32)),
+			FindResult::NotFound => Ok((None, external::login_response::Status::NotFound as i32)),
+			FindResult::Linked => Ok((None, external::login_response::Status::Linked as i32)),
 			FindResult::Player(user) => self
 				.cerberus
 				.create_token(&request.device_id, user)
 				.await
-				.map(|tokens| (Some(tokens), LoginStatus::Ok as i32)),
+				.map(|tokens| (Some(tokens), external::login_response::Status::Ok as i32)),
 		}
-		.map(|(tokens, status)| LoginResponse { tokens, status })
+		.map(|(tokens, status)| external::LoginResponse { tokens, status })
 		.map(Response::new)
 	}
 }

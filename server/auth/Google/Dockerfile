@@ -27,6 +27,7 @@ COPY server/auth/Cerberus server/auth/Cerberus
 COPY server/auth/Google/ server/auth/Google/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/auth/Google/target/ server/auth/Google/target/
+RUN touch server/auth/Google/build.rs
 RUN cd server/auth/Google/ && cargo build --offline --release --target x86_64-unknown-linux-musl
 
 # образ для запуска
