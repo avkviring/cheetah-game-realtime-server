@@ -1,30 +1,8 @@
-name: Release unity package & docker images for components
+name: Release docker images
 on:
   release:
     types: [ published ]
 jobs:
-  publish-unity-package:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package:
-          - games.cheetah.auth.user
-          - games.cheetah.auth.google
-          - games.cheetah.auth.cookie
-          - games.cheetah.auth.cerberus
-          - games.cheetah.platfrom
-          - games.cheetah.matches.matchmaking
-          - games.cheetah.matches.factory
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2.4.0
-        with:
-          node-version: '12.x'
-          registry-url: 'https://npm.registry.cheetah.games'
-      - run: cd clients/Unity/Packages/ && sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' ${{ matrix.package}}/package.json
-      - run: cd clients/Unity/Packages/ && npm publish ${{ matrix.package}} --access private
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}
   publish-docker-image:
     runs-on: ubuntu-latest
     strategy:
@@ -79,20 +57,3 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-  publish-helm-chart:
-    needs: publish-docker-image
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Publish
-        run: |
-          find . -name Chart.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' {}
-          find . -name values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' {}
-          cd hosting/charts/Platform
-          helm dependency update .
-          export HELM_EXPERIMENTAL_OCI=1
-          helm registry login docker.registry.cheetah.games -u ${{ secrets.DOCKER_REGISTRY_USER }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-          helm chart save . docker.registry.cheetah.games/platform:${{ github.event.release.tag_name }}
-          helm chart push  docker.registry.cheetah.games/platform:${{ github.event.release.tag_name }}
-

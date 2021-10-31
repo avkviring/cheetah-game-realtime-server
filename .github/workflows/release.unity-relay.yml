@@ -1,4 +1,4 @@
-name: Release Relay
+name: Release relay client libraries
 
 on:
   release:
@@ -14,16 +14,16 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            server/relay/target
+            server/target
           key: cargo-macos-${{ hashFiles('**/Cargo.lock') }}
       - name: Build client
-        run: cd server/relay/ && cargo build --manifest-path Client/Cargo.toml --release
+        run: cd server && cargo build --manifest-path matches/Relay/Client/Cargo.toml --release
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: macos-build
           path: |
-            server/relay/target/release/libcheetah_relay_client.dylib
+            server/target/release/libcheetah_matches_relay_client.dylib
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -33,16 +33,16 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            server/relay/target
+            server/target
           key: cargo-linux-${{ hashFiles('**/Cargo.lock') }}
       - name: Build client
-        run: cd server/relay/ && cargo build --manifest-path Client/Cargo.toml --release
+        run: cd server/ && cargo build --manifest-path matches/Relay/Client/Cargo.toml --release
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: linux-build
           path: |
-            server/relay/target/release/libcheetah_relay_client.so
+            server/target/release/libcheetah_matches_relay_client.so
   build-android-windows:
     runs-on: ubuntu-latest
     steps:
@@ -57,19 +57,19 @@ jobs:
       - name: Install cross
         run: cargo install --version 0.1.16 cross
       - name: Build windows (client & server)
-        run: cd server/relay/ && cross build --manifest-path Client/Cargo.toml --target x86_64-pc-windows-gnu --release
+        run: cd server/ && cross build --manifest-path matches/Relay/Client/Cargo.toml --target x86_64-pc-windows-gnu --release
       - name: Build android armv7-linux-androideabi
-        run: cd server/relay/ && cross build --manifest-path Client/Cargo.toml --target armv7-linux-androideabi --release
+        run: cd server/ && cross build --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
       - name: Build android aarch64-linux-android
-        run: cd server/relay/ && cross build --manifest-path Client/Cargo.toml --target aarch64-linux-android --release
+        run: cd server/ && cross build --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: android-windows-build
           path: |
-            server/relay/target/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll
-            server/relay/target/armv7-linux-androideabi/release/libcheetah_relay_client.so
-            server/relay/target/aarch64-linux-android/release/libcheetah_relay_client.so
+            server/target/x86_64-pc-windows-gnu/release/cheetah_matches_relay_client.dll
+            server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so
+            server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so
   publish-unity-package:
     runs-on: ubuntu-latest
     needs: [ build-mac, build-linux, build-android-windows ]
@@ -87,16 +87,16 @@ jobs:
         with:
           name: android-windows-build
           path: android-windows-build
-      - run: cp macos-build/libcheetah_relay_client.dylib clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.bundle
-      - run: cp linux-build/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.so
-      - run: cp android-windows-build/x86_64-pc-windows-gnu/release/cheetah_relay_client.dll clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_relay_client.dll
-      - run: cp android-windows-build/armv7-linux-androideabi/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/armv7/libcheetah_relay_client.so
-      - run: cp android-windows-build/aarch64-linux-android/release/libcheetah_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/aarch64/libcheetah_relay_client.so
+      - run: cp macos-build/libcheetah_matches_relay_client.dylib clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.bundle
+      - run: cp linux-build/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
+      - run: cp android-windows-build/x86_64-pc-windows-gnu/release/cheetah_matches_relay_client.dll clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.dll
+      - run: cp android-windows-build/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/armv7/libcheetah_matches_relay_client.so
+      - run: cp android-windows-build/aarch64-linux-android/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/aarch64/libcheetah_matches_relay_client.so
       - uses: actions/setup-node@v2.4.0
         with:
           node-version: '12.x'
           registry-url: 'https://npm.registry.cheetah.games'
       - run: sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' clients/Unity/Packages/games.cheetah.matches.relay/package.json
-      - run: npm publish clients/Unity/Packages/games.cheetah.matches.relay/ --access private
+      - run: npm publish clients/Unity/Packages/games.cheetah.matches.relay/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}
