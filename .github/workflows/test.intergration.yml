@@ -86,13 +86,13 @@ jobs:
         run: |
           cd server
           cross build --manifest-path matches/Relay/Client/Cargo.toml --release --target x86_64-unknown-linux-gnu
-          cp target/x86_64-unknown-linux-gnu/release/libcheetah_matches_relay_client.so /tmp/libcheetah_relay_client.so
+          cp target/x86_64-unknown-linux-gnu/release/libcheetah_matches_relay_client.so /tmp/libcheetah_matches_relay_client.so
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: relay-client-so
           path: |
-            /tmp/libcheetah_relay_client.so
+            /tmp/libcheetah_matches_relay_client.so
   integration-kuberenetes-test:
     runs-on: ubuntu-latest
     needs:
