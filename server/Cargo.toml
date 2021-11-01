@@ -2,9 +2,10 @@
 members = [
     "Microservice",
     "auth/*/",
-    "matches/*",
+    "matches/Factory",
+    "matches/StubMatchmaking",
+    "matches/StubRegistry",
     "matches/Relay/Macro",
     "matches/Relay/Common",
     "matches/Relay/Client",
     "matches/Relay/Server"]
-exclude = ["matches/Relay/.", "matches/Registry"]
