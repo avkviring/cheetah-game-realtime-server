@@ -11,9 +11,3 @@ updates:
       interval: "weekly"
     rebase-strategy: "disabled"
     target-branch: dependabot
-  - package-ecosystem: "cargo"
-    directory: "/server/matches/Relay"
-    schedule:
-      interval: "weekly"
-    rebase-strategy: "disabled"
-    target-branch: dependabot
