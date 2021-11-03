@@ -6,20 +6,23 @@ use cheetah_matches_stub_registry::proto::internal::FindFreeRelayResponse;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	pretty_env_logger::init();
-	println!("±± cheetah match stub registry component ±±");
+	cheetah_microservice::init("matches.stub-registry");
 
 	let registry_service = RegistryService {
-		relay_grpc_host: get_env("MATCHES_RELAY_INTERNAL_GRPC_HOST"),
-		relay_grpc_port: get_env("MATCHES_RELAY_INTERNAL_GRPC_PORT").parse().unwrap(),
-		relay_game_host: get_env("MATCHES_RELAY_EXTERNAL_GAME_HOST"),
-		relay_game_port: get_env("MATCHES_RELAY_EXTERNAL_GAME_PORT").parse().unwrap(),
+		relay_grpc_host: cheetah_microservice::get_env("MATCHES_RELAY_INTERNAL_GRPC_HOST"),
+		relay_grpc_port: cheetah_microservice::get_env("MATCHES_RELAY_INTERNAL_GRPC_PORT")
+			.parse()
+			.unwrap(),
+		relay_game_host: cheetah_microservice::get_env("MATCHES_RELAY_EXTERNAL_GAME_HOST"),
+		relay_game_port: cheetah_microservice::get_env("MATCHES_RELAY_EXTERNAL_GAME_PORT")
+			.parse()
+			.unwrap(),
 	};
 
 	let grpc_service = cheetah_matches_stub_registry::proto::internal::registry_server::RegistryServer::new(registry_service);
 	Server::builder()
 		.add_service(grpc_service)
-		.serve("0.0.0.0:5001".parse().unwrap())
+		.serve(cheetah_microservice::get_internal_service_binding_addr())
 		.await
 		.unwrap();
 
@@ -45,12 +48,4 @@ impl Registry for RegistryService {
 			relay_game_port: self.relay_game_port as u32,
 		}))
 	}
-}
-
-fn get_env(name: &str) -> String {
-	let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {} is not set", name));
-	if value.trim().is_empty() {
-		panic!("Env {} is empty", name);
-	}
-	value
 }
