@@ -3,6 +3,7 @@ members = [
     "Microservice",
     "auth/*/",
     "matches/Factory",
+    "matches/Registry",
     "matches/StubMatchmaking",
     "matches/StubRegistry",
     "matches/Relay/Macro",

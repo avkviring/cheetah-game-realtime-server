@@ -24,6 +24,8 @@ jobs:
             image: cheetah-matches-stub-registry
           - directory: matches/Factory
             image: cheetah-matches-factory
+          - directory: matches/Registry
+            image: cheetah-matches-registry
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.6
