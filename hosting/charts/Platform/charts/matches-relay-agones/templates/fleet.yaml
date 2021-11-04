@@ -1,0 +1,24 @@
+apiVersion: agones.dev/v1
+kind: Fleet
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: 1
+  template:
+    spec:
+      ports:
+        - name: default
+          containerPort: 5555
+      template:
+        spec:
+          imagePullSecrets:
+            - name: cheetahdockerregistry
+          containers:
+            - name: relay
+              image: docker.registry.cheetah.games/cheetah-matches-relay:999.999.999
+              imagePullPolicy: Always
+              env:
+                - name: ENABLE_AGONES
+                  value: "true"
