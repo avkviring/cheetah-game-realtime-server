@@ -12,7 +12,7 @@ cheetah-matches-factory:
   imageVersion: 999.999.999
 cheetah-matches-relay-agones:
   imageVersion: 999.999.999
-cheetah-matches-stub-registry:
+cheetah-matches-registry:
   imageVersion: 999.999.999
 cheetah-matches-stub-matchmaking:
   imageVersion: 999.999.999

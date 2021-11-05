@@ -6,16 +6,15 @@ use crate::service::FactoryService;
 
 impl FactoryService {
 	async fn do_create_match(&self, template_name: String) -> Result<factory::CreateMatchResponse, Status> {
-		// ищем свободный relay сервер
-		let relay = self.registry.find_free_relay().await;
-
-		let relay_addr = cheetah_microservice::make_internal_srv_uri(&relay.relay_grpc_host, relay.relay_grpc_port as u16);
-
 		// получаем шаблон
 		let room_template = self
 			.template(&template_name)
 			.ok_or_else(|| Status::internal(format!("Template {} not found", template_name)))?;
 
+		// ищем свободный relay сервер
+		let relay = self.registry.find_free_relay().await;
+		let relay_addr = cheetah_microservice::make_internal_srv_uri(&relay.relay_grpc_host, relay.relay_grpc_port as u16);
+		log::info!("Connect to relay {}", relay_addr);
 		// создаем матч на relay сервере
 		let mut connect = RelayClient::connect(relay_addr).await.unwrap();
 

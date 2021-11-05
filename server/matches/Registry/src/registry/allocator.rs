@@ -17,17 +17,6 @@ pub enum Error {
 pub async fn allocate_game_server() -> Result<GameServerAllocationStatus, Box<dyn std::error::Error>> {
 	let client = Client::try_default().await?;
 	let crd: Api<GameServerAllocation> = Api::default_namespaced(client.clone());
-	let exists_resource = crd.get("single-server").await;
-	match exists_resource {
-		Ok(resource) => resource
-			.status
-			.ok_or_else::<Box<dyn std::error::Error>, _>(|| Box::new(Error::EmptyStatus)),
-		Err(e) => create_new_resource(&client).await,
-	}
-}
-
-pub async fn create_new_resource(client: &Client) -> Result<GameServerAllocationStatus, Box<dyn std::error::Error>> {
-	let crd: Api<GameServerAllocation> = Api::default_namespaced(client.clone());
 	let resource = GameServerAllocation::new("single-server", GameServerAllocationSpec::default());
 	let created = crd.create(&PostParams::default(), &resource).await?;
 	created

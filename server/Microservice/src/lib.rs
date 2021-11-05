@@ -53,8 +53,12 @@ pub fn make_internal_srv_uri(host: &str, port: u16) -> Uri {
 
 pub fn get_internal_srv_uri_from_env(service: &str) -> Uri {
 	let host = get_env(format!("{}_INTERNAL_SERVICE_HOST", service).as_str());
-	let port = get_env(format!("{}_INTERNAL_SERVICE_PORT", service).as_str())
-		.parse()
-		.unwrap();
+	let port_string = get_env(format!("{}_INTERNAL_SERVICE_PORT", service).as_str());
+	let port = match port_string.parse() {
+		Ok(value) => value,
+		Err(_) => {
+			panic!("{}_INTERNAL_SERVICE_PORT is not int {}", service, port_string);
+		}
+	};
 	make_internal_srv_uri(&host, port)
 }

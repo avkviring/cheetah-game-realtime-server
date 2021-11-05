@@ -25,9 +25,11 @@ pub struct GameServerSelector {}
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 pub struct GameServerAllocationStatus {
 	pub state: GameServerAllocationState,
+	#[serde(rename = "gameServerName")]
 	pub game_server_name: String,
 	pub ports: Vec<GameServerStatusPort>,
 	pub address: String,
+	#[serde(rename = "nodeName")]
 	pub node_name: String,
 }
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
