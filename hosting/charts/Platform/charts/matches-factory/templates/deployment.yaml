@@ -25,10 +25,6 @@ spec:
           env:
             - name: TEMPLATES_PATH
               value: /tmp/config/
-            - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST
-              value: "$(CHEETAH_MATCHES_STUB_REGISTRY_INTERNAL_SERVICE_HOST)"
-            - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_PORT
-              value: "$(CHEETAH_MATCHES_STUB_REGISTRY_INTERNAL_SERVICE_PORT)"
           volumeMounts:
             - mountPath: /var/lib/room-templates/
               readOnly: true

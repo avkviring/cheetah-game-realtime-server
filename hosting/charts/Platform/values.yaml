@@ -10,7 +10,7 @@ cheetah-auth-cerberus:
   imageVersion: 999.999.999
 cheetah-matches-factory:
   imageVersion: 999.999.999
-cheetah-matches-relay:
+cheetah-matches-relay-agones:
   imageVersion: 999.999.999
 cheetah-matches-stub-registry:
   imageVersion: 999.999.999

@@ -17,7 +17,7 @@ spec:
             - name: cheetahdockerregistry
           containers:
             - name: relay
-              image: docker.registry.cheetah.games/cheetah-matches-relay:999.999.999
+              image: "docker.registry.cheetah.games/cheetah-matches-relay:{{ .Values.imageVersion }}"
               imagePullPolicy: Always
               env:
                 - name: ENABLE_AGONES

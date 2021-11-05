@@ -27,6 +27,12 @@ kubectl create namespace system
 helm upgrade --namespace=system --install system .
 ```
 
+### Установка agones
+```
+kubectl create namespace agones-system
+helm install agones agones/agones --set "gameservers.namespaces={kviring,zakharovvi,dependabot}" --namespace agones-system
+```
+
 ### Linkerd
 
 Установить, по-инструкции - https://linkerd.io/2.10/getting-started/
@@ -36,6 +42,7 @@ helm upgrade --namespace=system --install system .
 В панели DigitalOcean связать доменное имя с созданным балансировщиком.
 
 ## Настройка глобальных секретов
+
 В каждом namespace для запуска платформы.
 
 ### Доступ к реестру

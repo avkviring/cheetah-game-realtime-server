@@ -1,3 +1,24 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: allocate-game-server
+subjects:
+  - kind: ServiceAccount
+    namespace: {{ .Release.Namespace}}
+    name: {{ .Chart.Name }}
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: agones-allocator
+  apiGroup: rbac.authorization.k8s.io
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,18 +35,12 @@ spec:
       labels:
         app: {{ .Chart.Name }}
     spec:
+      serviceAccountName: {{ .Chart.Name }}
       imagePullSecrets:
         - name: cheetahdockerregistry
       containers:
         - name: {{ .Chart.Name }}
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
           imagePullPolicy: Always
-          env:
-            - name: MATCHES_RELAY_INTERNAL_GRPC_HOST
-              value: "$(CHEETAH_MATCHES_RELAY_INTERNAL_SERVICE_HOST)"
-            - name: MATCHES_RELAY_INTERNAL_GRPC_PORT
-              value: "$(CHEETAH_MATCHES_RELAY_INTERNAL_SERVICE_PORT)"
-            - name: MATCHES_RELAY_EXTERNAL_GAME_HOST
-              value: "{{ .Values.relay.host}}"
-            - name: MATCHES_RELAY_EXTERNAL_GAME_PORT
-              value: "{{ .Values.relay.port}}"
+
+
