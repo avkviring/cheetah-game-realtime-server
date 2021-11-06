@@ -26,7 +26,7 @@ impl RegistryService {
 			game_address: status.address,
 			game_port: status_port.port,
 		};
-		log::info!("RegistryService  {:?}", registry_service);
+		log::info!("{:?}", registry_service);
 		Result::Ok(registry_service)
 	}
 }
