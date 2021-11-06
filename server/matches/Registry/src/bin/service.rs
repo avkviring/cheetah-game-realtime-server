@@ -1,5 +1,4 @@
 use tonic::transport::Server;
-use tonic::{Request, Response, Status};
 
 use cheetah_matches_registry::registry::RegistryService;
 

@@ -2,8 +2,10 @@ use tonic::{Request, Response, Status};
 
 use crate::proto::internal;
 use crate::registry::allocator::allocate_game_server;
+use crate::registry::pod::get_pod_ip;
 
 pub mod allocator;
+pub mod pod;
 pub mod spec;
 
 #[derive(Debug)]
@@ -17,10 +19,9 @@ pub struct RegistryService {
 impl RegistryService {
 	pub async fn new() -> Result<RegistryService, Box<dyn std::error::Error>> {
 		let status = allocate_game_server().await?;
-		log::info!("Allocated status {:?}", status);
 		let status_port = status.ports.first().unwrap();
 		let registry_service = RegistryService {
-			grpc_address: status.game_server_name,
+			grpc_address: get_pod_ip(&status.game_server_name).await?,
 			grpc_port: cheetah_microservice::get_internal_service_port(),
 			game_address: status.address,
 			game_port: status_port.port,
