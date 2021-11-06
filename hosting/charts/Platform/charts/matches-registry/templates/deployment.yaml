@@ -40,7 +40,7 @@ spec:
         - name: cheetahdockerregistry
       containers:
         - name: {{ .Chart.Name }}
-          image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.imageVersion }}"
+          image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
           imagePullPolicy: Always
 
 

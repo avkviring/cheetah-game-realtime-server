@@ -1,10 +1,6 @@
 #
 # В режиме разработчика данные не сохраняются на диск
 #
-cheetah-matches-stub-registry:
-  relay:
-    host: 188.166.98.151
-    port: 30555
 cheetah-auth-cerberus:
   redis:
     master:

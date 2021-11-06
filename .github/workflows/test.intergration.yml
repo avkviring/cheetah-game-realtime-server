@@ -134,12 +134,12 @@ jobs:
         run: |
           cd hosting/charts/
           tar -czf Platform/charts/matches-factory/rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
-          find . -name Platform/values.yaml | xargs -I {} sed -i.bak 's/999.999.999/${{ github.sha }}/' {}
           helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
             --namespace=${{ steps.vars.outputs.short_ref }} \
             Platform \
             -f Platform/values-dev.yaml \
             --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
+            --set global.platformImageVersion=${{ github.sha }} \
             --wait=true
           sleep 10
       - uses: actions/download-artifact@v2

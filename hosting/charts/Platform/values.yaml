@@ -1,18 +1,3 @@
 global:
   grpcDomain: test.dev.cheetah.games
-cheetah-auth-user:
-  imageVersion: 999.999.999
-cheetah-auth-google:
-  imageVersion: 999.999.999
-cheetah-auth-cookie:
-  imageVersion: 999.999.999
-cheetah-auth-cerberus:
-  imageVersion: 999.999.999
-cheetah-matches-factory:
-  imageVersion: 999.999.999
-cheetah-matches-relay-agones:
-  imageVersion: 999.999.999
-cheetah-matches-registry:
-  imageVersion: 999.999.999
-cheetah-matches-stub-matchmaking:
-  imageVersion: 999.999.999
+  platformImageVersion: VERSION
