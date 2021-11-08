@@ -93,7 +93,13 @@ pub extern "C" fn set_drop_emulation(drop_probability: f64, drop_time_in_ms: u64
 
 #[no_mangle]
 pub extern "C" fn reset_emulation() -> bool {
-	execute_with_client(|client, trace| (client.reset_emulation(), if trace { Some(format!("reset_emulation")) } else { None })).is_ok()
+	execute_with_client(|client, trace| {
+		(
+			client.reset_emulation(),
+			if trace { Some(format!("reset_emulation")) } else { None },
+		)
+	})
+	.is_ok()
 }
 
 #[no_mangle]
@@ -127,7 +133,11 @@ pub extern "C" fn get_statistics(statistics: &mut Statistics) -> bool {
 				statistics.rtt_in_ms = client.rtt_in_ms.load(Ordering::Relaxed);
 				statistics.average_retransmit_frames = client.average_retransmit_frames.load(Ordering::Relaxed);
 			},
-			if trace { Some(format!("get_statistics {:?}", statistics)) } else { None },
+			if trace {
+				Some(format!("get_statistics {:?}", statistics))
+			} else {
+				None
+			},
 		)
 	})
 	.is_ok()
@@ -137,6 +147,13 @@ pub extern "C" fn get_statistics(statistics: &mut Statistics) -> bool {
 pub extern "C" fn enable_test_mode(on_trace: extern "C" fn(*const u16)) {
 	execute(|registry| {
 		registry.enable_test_mode(on_trace);
+	});
+}
+
+#[no_mangle]
+pub extern "C" fn disable_test_mode() {
+	execute(|registry| {
+		registry.disable_test_mode();
 	});
 }
 
@@ -160,7 +177,14 @@ pub unsafe extern "C" fn create_client(
 	let server_address = CStr::from_ptr(addr).to_str().unwrap().to_string();
 	let mut user_private_key = [0; 32];
 	user_private_key.copy_from_slice(&user_private_key_buffer.buffer[0..32]);
-	do_create_client(server_address, user_id, room_id, &user_private_key, start_frame_id, out_client_id)
+	do_create_client(
+		server_address,
+		user_id,
+		room_id,
+		&user_private_key,
+		start_frame_id,
+		out_client_id,
+	)
 }
 
 pub fn do_create_client(

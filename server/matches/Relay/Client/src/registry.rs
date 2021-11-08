@@ -144,6 +144,10 @@ impl Registry {
 		self.trace_mode_callback = Some(trace_mode_callback);
 	}
 
+	pub fn disable_test_mode(&mut self) {
+		self.trace_mode_callback = None;
+	}
+
 	pub fn trace(&self, trace: String) {
 		if let Some(trace_callback) = self.trace_mode_callback {
 			let trace = U16CString::from_str(trace).unwrap();
