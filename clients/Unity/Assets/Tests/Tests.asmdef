@@ -1,13 +1,28 @@
 {
-  "name": "Tests",
-  "references": [
-    "games.cheetah.platform",
-    "games.cheetah.platform.editor",
-    "games.cheetah.auth.cookie",
-    "games.cheetah.auth.user",
-    "games.cheetah.matches.matchmaking"
-  ],
-  "optionalUnityReferences": [
-    "TestAssemblies"
-  ]
+    "name": "Tests",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "games.cheetah.platform.editor",
+        "games.cheetah.platform",
+        "games.cheetah.auth.cookie",
+        "games.cheetah.matches.relay",
+        "games.cheetah.matches.matchmaking",
+        "Shared"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Google.Protobuf.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

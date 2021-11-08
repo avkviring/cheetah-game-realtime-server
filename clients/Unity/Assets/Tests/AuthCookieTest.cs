@@ -9,7 +9,7 @@ namespace Tests
 {
     public class AuthCookieTest
     {
-        private GRPCConnector grpcConnector;
+        private ClusterConnector clusterConnector;
 
 
         [UnityTest]
@@ -17,9 +17,9 @@ namespace Tests
         {
             var connectorFactory = new ConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
-            grpcConnector = connectorFactory.GrpcConnector;
+            clusterConnector = connectorFactory.ClusterConnector;
 
-            var cookieAuthenticator = new CookieAuthenticator(grpcConnector);
+            var cookieAuthenticator = new CookieAuthenticator(clusterConnector);
             cookieAuthenticator.RemoveLocalCookie();
             yield return Enumerators.Await(cookieAuthenticator.LoginOrRegister());
         }
@@ -27,7 +27,7 @@ namespace Tests
         [TearDown]
         public async void TearDown()
         {
-            await grpcConnector.Destroy();
+            await clusterConnector.Destroy();
         }
     }
 }
