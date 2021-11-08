@@ -3,12 +3,7 @@
 #
 name: Server tests
 on:
-  push:
-    branches:
-      - zakharovvi
-      - kviring
-      - dependabot
-      - master
+  push: 
 jobs:
   server-unit-test:
     runs-on: ubuntu-latest

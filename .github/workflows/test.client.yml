@@ -4,10 +4,6 @@
 name: Client tests
 on:
   push:
-    branches:
-      - zakharovvi
-      - kviring
-      - dependabot
 jobs:
   check-meta-files-in-relay-client:
     runs-on: ubuntu-latest
