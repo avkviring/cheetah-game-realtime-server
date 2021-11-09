@@ -30,7 +30,7 @@ tokio-stream = { version = "0.1.8", features = ["net"] }
 tonic = "0.5.2"
 prost = "0.8.0"
 rymder = "0.2.2"
-strum_macros = "0.21.1"
+strum_macros = "0.22.0"
 cheetah-microservice = { path = "../../../Microservice" }
 
 [build-dependencies]
