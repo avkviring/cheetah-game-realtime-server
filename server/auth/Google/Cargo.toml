@@ -19,8 +19,8 @@ async-trait = "0.1.50"
 log = "0.4"
 rand = "0.8"
 jsonwebtoken-google = { version = "0.1.1" }
-tonic = "0.5.2"
-prost = "0.8.0"
+tonic = "0.6.1"
+prost = "0.9.0"
 
 # обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
 # это зависимость sqlx, как только они включат новую зависимость lexical-core
@@ -36,4 +36,4 @@ lazy_static = "1.4.0"
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
 
 [build-dependencies]
-tonic-build = "0.5.2"
+tonic-build = "0.6.0"

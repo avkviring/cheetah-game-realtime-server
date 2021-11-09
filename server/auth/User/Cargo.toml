@@ -14,8 +14,8 @@ tokio = { version = "1.10", features = ["rt-multi-thread", "time", "fs", "macros
 serde = { version = "1.0", features = ["derive"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "migrate", "ipnetwork", "chrono"] }
 log = "0.4"
-tonic = "0.5.2"
-prost = "0.8.0"
+tonic = "0.6.1"
+prost = "0.9.0"
 
 # обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
 # это зависимость sqlx, как только они включат новую зависимость lexical-core
@@ -29,4 +29,4 @@ cheetah-auth-cerberus = { path = "../Cerberus/", features = ["test-helper"] }
 jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
 
 [build-dependencies]
-tonic-build = "0.5.2"
+tonic-build = "0.6.0"

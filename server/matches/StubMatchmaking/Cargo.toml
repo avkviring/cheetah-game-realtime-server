@@ -11,12 +11,12 @@ path = "src/bin/service.rs"
 tokio = { version = "1.10.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 log = "0.4"
 pretty_env_logger = "0.4.0"
-tonic = "0.5.2"
-prost = "0.8.0"
+tonic = "0.6.1"
+prost = "0.9.0"
 cheetah-microservice = { path = "../../Microservice/" }
 async-recursion = "0.3.2"
 tokio-stream = { version = "0.1.8", features = ["net"] }
 
 
 [build-dependencies]
-tonic-build = "0.5.2"
+tonic-build = "0.6.0"
