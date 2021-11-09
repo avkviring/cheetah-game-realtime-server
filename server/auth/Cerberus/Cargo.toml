@@ -30,7 +30,7 @@ chrono = "0.4"
 tonic = "0.5.2"
 prost = "0.8.0"
 tokio = { version = "1.10.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
-tokio-stream = { version = "0.1.7", features = ["net"] }
+tokio-stream = { version = "0.1.8", features = ["net"] }
 async-stream = "0.3"
 futures = "0.3.16"
 tower = { version = "0.4" }
