@@ -15,26 +15,16 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             server/target
-          key: server-unit-rust-test-${{ github.sha }}
+          key: rust-test-${{ github.sha }}
           restore-keys: |
-            server-unit-rust-test-
+            rust-test-
       - name: Install minimal nightly
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: nightly
           components: rustfmt, llvm-tools-preview
-      - name: Install cargo-llvm-cov
-        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
-      - name: Generate code coverage
-        run: cd server/ && cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          files: server/lcov.info
-          flags: unittests
-          name: rust-coverage
-          fail_ci_if_error: true
-          verbose: true
+      - name: Test
+        run: cd server/ && cargo test
+
 
