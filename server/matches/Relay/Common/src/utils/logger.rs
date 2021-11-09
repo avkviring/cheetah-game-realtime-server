@@ -19,7 +19,9 @@ lazy_static! {
 
 impl LogCollector {
 	fn new() -> Self {
-		LogCollector { items: Default::default() }
+		LogCollector {
+			items: Default::default(),
+		}
 	}
 }
 

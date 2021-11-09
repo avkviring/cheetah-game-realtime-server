@@ -36,6 +36,11 @@ lazy_static! {
 	static ref STRUCTURE: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_structure_listener(_: &S2CMetaCommandInformationFFI, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_structure_listener(
+	_: &S2CMetaCommandInformationFFI,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	buffer: &BufferFFI,
+) {
 	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

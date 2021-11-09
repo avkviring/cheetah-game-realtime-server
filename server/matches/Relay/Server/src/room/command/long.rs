@@ -22,7 +22,11 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 			let value = if let Some(value) = object.longs.get_mut(&self.field_id) {
 				match (*value).checked_add(self.increment) {
 					None => {
-						log::error!("[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})", value, self.increment);
+						log::error!(
+							"[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})",
+							value,
+							self.increment
+						);
 					}
 					Some(result) => {
 						*value = result;
@@ -61,7 +65,15 @@ impl ServerCommandExecutor for SetLongCommand {
 			Option::Some(S2CCommand::SetLong(self))
 		};
 
-		room.change_data_and_send(&object_id, &field_id, FieldType::Long, user_id, Permission::Rw, Option::None, action);
+		room.change_data_and_send(
+			&object_id,
+			&field_id,
+			FieldType::Long,
+			user_id,
+			Permission::Rw,
+			Option::None,
+			action,
+		);
 	}
 }
 
@@ -93,7 +105,15 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			}
 		};
 
-		room.change_data_and_send(&object_id, &field_id, FieldType::Long, uesr_id, Permission::Rw, Option::None, action);
+		room.change_data_and_send(
+			&object_id,
+			&field_id,
+			FieldType::Long,
+			uesr_id,
+			Permission::Rw,
+			Option::None,
+			action,
+		);
 
 		if *(is_set.borrow()) {
 			room.get_user_mut(uesr_id)
@@ -104,7 +124,11 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 	}
 }
 
-pub fn reset_all_compare_and_set(room: &mut Room, user_id: UserId, compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>) {
+pub fn reset_all_compare_and_set(
+	room: &mut Room,
+	user_id: UserId,
+	compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
+) {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
 		match room.get_object_mut(&object_id) {
 			None => {
@@ -155,7 +179,9 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
+	use cheetah_matches_relay_common::commands::command::long::{
+		CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand,
+	};
 	use cheetah_matches_relay_common::commands::command::S2CCommand;
 	use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -239,7 +265,12 @@ mod tests {
 		};
 		command1.clone().execute(&mut room, user1_id);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
+			*room
+				.get_object_mut(&object_id)
+				.unwrap()
+				.longs
+				.get(&command1.field_id)
+				.unwrap(),
 			command1.new
 		);
 
@@ -252,7 +283,12 @@ mod tests {
 		};
 		command2.clone().execute(&mut room, user1_id);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
+			*room
+				.get_object_mut(&object_id)
+				.unwrap()
+				.longs
+				.get(&command1.field_id)
+				.unwrap(),
 			command1.new
 		);
 
@@ -265,7 +301,12 @@ mod tests {
 		};
 		command3.clone().execute(&mut room, user1_id);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().longs.get(&command1.field_id).unwrap(),
+			*room
+				.get_object_mut(&object_id)
+				.unwrap()
+				.longs
+				.get(&command1.field_id)
+				.unwrap(),
 			command3.new
 		);
 	}
@@ -339,7 +380,12 @@ mod tests {
 
 		room.disconnect_user(user1_id);
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().longs.get(&command_1.field_id).unwrap(),
+			*room
+				.get_object_mut(&object_id)
+				.unwrap()
+				.longs
+				.get(&command_1.field_id)
+				.unwrap(),
 			command_2.new
 		);
 	}

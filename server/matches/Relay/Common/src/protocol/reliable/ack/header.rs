@@ -105,6 +105,9 @@ mod tests {
 	pub fn should_store_frame_fail_if_not_enough_capacity() {
 		let frame_first = 100;
 		let mut header = AckFrameHeader::new(frame_first);
-		assert_eq!(header.store_frame_id(frame_first + AckFrameHeader::CAPACITY as u64 + 1), false)
+		assert_eq!(
+			header.store_frame_id(frame_first + AckFrameHeader::CAPACITY as u64 + 1),
+			false
+		)
 	}
 }

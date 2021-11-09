@@ -15,7 +15,9 @@ pub struct DisconnectWatcher {
 impl DisconnectWatcher {
 	pub const TIMEOUT: Duration = Duration::from_secs(10);
 	pub fn new(now: &Instant) -> Self {
-		Self { last_in_frame_time: *now }
+		Self {
+			last_in_frame_time: *now,
+		}
 	}
 }
 

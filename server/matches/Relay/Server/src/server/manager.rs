@@ -45,7 +45,11 @@ pub enum ManagementTask {
 	GetRooms(Sender<Vec<RoomId>>),
 	///
 	/// Выполнить задачу для трассировщика команд
-	CommandTracerSessionTask(RoomId, CommandTracerSessionsTask, Sender<Result<(), CommandTracerSessionTaskError>>),
+	CommandTracerSessionTask(
+		RoomId,
+		CommandTracerSessionsTask,
+		Sender<Result<(), CommandTracerSessionTaskError>>,
+	),
 }
 
 #[derive(Debug)]
@@ -103,9 +107,15 @@ impl RelayManager {
 	/// Выполнить задачу в CommandTracerSessions конкретной комнаты
 	/// Подход с вложенным enum для отдельного класса задач применяется для изолирования функционала
 	///
-	pub fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: CommandTracerSessionsTask) -> Result<(), CommandTracerSessionTaskError> {
+	pub fn execute_command_trace_sessions_task(
+		&self,
+		room_id: RoomId,
+		task: CommandTracerSessionsTask,
+	) -> Result<(), CommandTracerSessionTaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender)).unwrap();
+		self.sender
+			.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender))
+			.unwrap();
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(_) => Result::Ok(()),
@@ -137,7 +147,9 @@ impl RelayManager {
 
 	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<UserId, RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ManagementTask::RegisterUser(room_id, template.clone(), sender)).unwrap();
+		self.sender
+			.send(ManagementTask::RegisterUser(room_id, template.clone(), sender))
+			.unwrap();
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {

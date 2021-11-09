@@ -97,7 +97,9 @@ impl ClientController {
 	}
 
 	pub fn set_protocol_time_offset(&mut self, time_offset: Duration) {
-		self.request_to_client.send(ClientRequest::SetProtocolTimeOffset(time_offset)).unwrap();
+		self.request_to_client
+			.send(ClientRequest::SetProtocolTimeOffset(time_offset))
+			.unwrap();
 	}
 
 	pub fn send(&mut self, command: C2SCommand) {
@@ -187,23 +189,38 @@ impl ClientController {
 		}
 	}
 
-	pub fn register_long_value_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, i64)) {
+	pub fn register_long_value_listener(
+		&mut self,
+		listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, i64),
+	) {
 		self.listener_long_value = Option::Some(listener);
 	}
-	pub fn register_float_value_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64)) {
+	pub fn register_float_value_listener(
+		&mut self,
+		listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64),
+	) {
 		self.listener_float_value = Option::Some(listener);
 	}
-	pub fn register_event_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)) {
+	pub fn register_event_listener(
+		&mut self,
+		listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI),
+	) {
 		self.listener_event = Option::Some(listener);
 	}
-	pub fn register_structure_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)) {
+	pub fn register_structure_listener(
+		&mut self,
+		listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI),
+	) {
 		self.listener_structure = Option::Some(listener);
 	}
 	pub fn register_delete_object_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)) {
 		self.listener_delete_object = Option::Some(listener);
 	}
 
-	pub fn register_create_object_listener(&mut self, listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, u16)) {
+	pub fn register_create_object_listener(
+		&mut self,
+		listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, u16),
+	) {
 		self.listener_create_object = Option::Some(listener);
 	}
 
@@ -220,7 +237,10 @@ impl ClientController {
 	}
 
 	pub fn set_rtt_emulation(&mut self, rtt: Duration, rtt_dispersion: f64) {
-		match self.request_to_client.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion)) {
+		match self
+			.request_to_client
+			.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion))
+		{
 			Ok(_) => {}
 			Err(e) => {
 				log::error!("[controller] error send to channel {:?}", e);

@@ -1,7 +1,4 @@
-
-
-
-use kube::core::{Resource};
+use kube::core::Resource;
 
 use kube_derive::CustomResource;
 use schemars::JsonSchema;

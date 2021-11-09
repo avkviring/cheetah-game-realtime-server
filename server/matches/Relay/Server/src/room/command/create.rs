@@ -11,7 +11,12 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 		let user = room.get_user(user_id).unwrap();
 
 		if self.object_id.id == 0 {
-			error_c2s_command("CreateGameObjectCommand", room, user.id, format!("0 is forbidden for game object id"));
+			error_c2s_command(
+				"CreateGameObjectCommand",
+				room,
+				user.id,
+				format!("0 is forbidden for game object id"),
+			);
 			return;
 		}
 
@@ -22,7 +27,10 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 				"CreateGameObjectCommand",
 				room,
 				user.id,
-				format!("Incorrect access group {:?} with client groups {:?}", groups, user.template.groups),
+				format!(
+					"Incorrect access group {:?} with client groups {:?}",
+					groups, user.template.groups
+				),
 			);
 			return;
 		}

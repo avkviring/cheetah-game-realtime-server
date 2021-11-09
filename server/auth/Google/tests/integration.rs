@@ -4,7 +4,7 @@ use jsonwebtoken_google::test_helper::TokenClaims;
 use testcontainers::clients::Cli;
 use testcontainers::images::postgres::Postgres;
 use testcontainers::images::redis::Redis;
-use testcontainers::{Container};
+use testcontainers::Container;
 use tokio::task::JoinHandle;
 
 use cheetah_auth_cerberus::test_helper;

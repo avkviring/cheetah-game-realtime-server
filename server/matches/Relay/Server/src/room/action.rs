@@ -65,10 +65,12 @@ impl Room {
 
 			let current_user_is_object_owner = object_owner == Option::Some(command_owner_user);
 			let allow = current_user_is_object_owner
-				|| permission_manager
-					.borrow_mut()
-					.get_permission(object.template, *field_id, field_type, current_user_access_group)
-					>= permission;
+				|| permission_manager.borrow_mut().get_permission(
+					object.template,
+					*field_id,
+					field_type,
+					current_user_access_group,
+				) >= permission;
 
 			if !allow {
 				log::error!(

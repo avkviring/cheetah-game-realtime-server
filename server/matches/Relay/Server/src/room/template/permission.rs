@@ -122,7 +122,9 @@ impl PermissionManager {
 mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
-	use crate::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions};
+	use crate::room::template::config::{
+		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
+	};
 	use crate::room::template::permission::PermissionManager;
 	use crate::room::types::FieldType;
 

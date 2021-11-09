@@ -88,7 +88,11 @@ impl NetworkClient {
 			match self.channel.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
 					if size != frame_buffer_size {
-						log::error!("error send frame size mismatch send {:?}, frame {:?}", size, frame_buffer_size);
+						log::error!(
+							"error send frame size mismatch send {:?}, frame {:?}",
+							size,
+							frame_buffer_size
+						);
 					} else {
 						self.out_frames.pop_back();
 					}

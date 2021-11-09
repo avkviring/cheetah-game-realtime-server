@@ -1,7 +1,5 @@
 use std::cmp::min;
 
-
-
 use crate::debug::tracer::filter::{Rule, RuleCommandDirection};
 
 #[derive(Debug)]
@@ -139,9 +137,15 @@ fn get_rule(token: Token) -> Result<Rule, ParseError> {
 
 fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 	if let Some(stripped) = query.strip_prefix("c2s") {
-		Result::Ok((Token::Rule(Rule::Direction(RuleCommandDirection::C2S)), stripped.to_ascii_lowercase()))
+		Result::Ok((
+			Token::Rule(Rule::Direction(RuleCommandDirection::C2S)),
+			stripped.to_ascii_lowercase(),
+		))
 	} else if let Some(stripped) = query.strip_prefix("s2c") {
-		Result::Ok((Token::Rule(Rule::Direction(RuleCommandDirection::S2C)), stripped.to_ascii_lowercase()))
+		Result::Ok((
+			Token::Rule(Rule::Direction(RuleCommandDirection::S2C)),
+			stripped.to_ascii_lowercase(),
+		))
 	} else {
 		let (field, op, query) = get_field(query)?;
 		let (value, query) = get_value(query);
@@ -337,7 +341,10 @@ mod test {
 	fn should_parse_or() {
 		let query = "c2s || user=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55)]))
+		assert_eq!(
+			result,
+			Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55)])
+		)
 	}
 	#[test]
 	fn should_parse_more_two_or() {
@@ -345,7 +352,11 @@ mod test {
 		let result = parse(query).unwrap();
 		assert_eq!(
 			result,
-			Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55), Rule::Template(10)])
+			Rule::OrRule(vec![
+				Rule::Direction(RuleCommandDirection::C2S),
+				Rule::User(55),
+				Rule::Template(10)
+			])
 		)
 	}
 
@@ -353,7 +364,10 @@ mod test {
 	fn should_parse_and() {
 		let query = "user=55 && c2s";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S)]))
+		assert_eq!(
+			result,
+			Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S)])
+		)
 	}
 	#[test]
 	fn should_parse_more_two_and() {
@@ -361,7 +375,11 @@ mod test {
 		let result = parse(query).unwrap();
 		assert_eq!(
 			result,
-			Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S), Rule::Field(100)])
+			Rule::AndRule(vec![
+				Rule::User(55),
+				Rule::Direction(RuleCommandDirection::C2S),
+				Rule::Field(100)
+			])
 		)
 	}
 
@@ -396,8 +414,10 @@ mod test {
 	#[test]
 	fn should_fail_when_wrong_bracket() {
 		let query = "(id=ttt";
-		assert!(matches!(parse(query), Result::Err(ParseError::RightBracketNotFound(value)) if 
-			value=="(id=ttt"));
+		assert!(
+			matches!(parse(query), Result::Err(ParseError::RightBracketNotFound(value)) if 
+			value=="(id=ttt")
+		);
 	}
 
 	#[test]

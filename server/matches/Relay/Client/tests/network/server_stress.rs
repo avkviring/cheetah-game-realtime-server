@@ -30,7 +30,9 @@ pub fn test() {
 	thread::sleep(Duration::from_millis(500));
 	ffi::client::receive();
 
-	assert!(matches!(LONG_VALUE.lock().unwrap().as_ref(), Option::Some((id, field_id, value)) if *id == object_id  && *field_id == 1 && *value==500));
+	assert!(
+		matches!(LONG_VALUE.lock().unwrap().as_ref(), Option::Some((id, field_id, value)) if *id == object_id  && *field_id == 1 && *value==500)
+	);
 }
 
 lazy_static! {

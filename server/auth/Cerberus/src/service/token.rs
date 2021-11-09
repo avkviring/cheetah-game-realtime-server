@@ -37,7 +37,13 @@ pub struct JWTTokensService {
 }
 
 impl JWTTokensService {
-	pub fn new(private_key: String, public_key: String, session_exp_in_sec: u64, refresh_exp_in_sec: u64, storage: RedisRefreshTokenStorage) -> Self {
+	pub fn new(
+		private_key: String,
+		public_key: String,
+		session_exp_in_sec: u64,
+		refresh_exp_in_sec: u64,
+		storage: RedisRefreshTokenStorage,
+	) -> Self {
 		Self {
 			session_exp_in_sec,
 			refresh_exp_in_sec,
@@ -94,7 +100,10 @@ impl JWTTokensService {
 	}
 
 	fn get_time_stamp() -> u64 {
-		SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards").as_secs()
+		SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.expect("Time went backwards")
+			.as_secs()
 	}
 
 	fn remove_head(token: String) -> String {

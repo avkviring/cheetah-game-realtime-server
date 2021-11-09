@@ -37,7 +37,9 @@ impl RedisRefreshTokenStorage {
 
 		let client = redis::Client::open(storage.make_url()).unwrap();
 		let mut connection = client.get_connection().unwrap();
-		connection.set::<String, String, ()>("test".to_string(), "value".to_string()).unwrap();
+		connection
+			.set::<String, String, ()>("test".to_string(), "value".to_string())
+			.unwrap();
 		return Result::Ok(storage);
 	}
 

@@ -22,7 +22,14 @@ pub async fn run_grpc_server(
 		redis_auth.clone(),
 		internal_port,
 	);
-	let external = setup_external(&jwt_public_key, &jwt_private_key, &redis_host, redis_port, redis_auth, external_port);
+	let external = setup_external(
+		&jwt_public_key,
+		&jwt_private_key,
+		&redis_host,
+		redis_port,
+		redis_auth,
+		external_port,
+	);
 	tokio::try_join!(internal, external).unwrap();
 }
 

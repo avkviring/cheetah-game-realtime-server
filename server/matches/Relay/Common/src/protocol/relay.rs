@@ -104,15 +104,17 @@ impl RelayProtocol {
 			&mut self.rtt,
 			&mut self.keep_alive,
 		];
-		let contains_data =
-			builders.iter().any(|h| h.contains_self_data(&now)) || self.additional_frame_builders.iter().any(|h| h.contains_self_data(&now));
+		let contains_data = builders.iter().any(|h| h.contains_self_data(&now))
+			|| self.additional_frame_builders.iter().any(|h| h.contains_self_data(&now));
 
 		if contains_data {
 			let mut frame = Frame::new(self.next_frame_id);
 			self.next_frame_id += 1;
 			builders.iter_mut().for_each(|h| h.build_frame(&mut frame, now));
 
-			self.additional_frame_builders.iter_mut().for_each(|h| h.build_frame(&mut frame, now));
+			self.additional_frame_builders
+				.iter_mut()
+				.for_each(|h| h.build_frame(&mut frame, now));
 
 			self.retransmitter.on_frame_built(&frame, now);
 			Option::Some(frame)
@@ -125,7 +127,9 @@ impl RelayProtocol {
 	/// Разорвана ли связь?
 	///
 	pub fn disconnected(&self, now: &Instant) -> bool {
-		self.retransmitter.disconnected(now) || self.disconnect_watcher.disconnected(now) || self.disconnect_handler.disconnected(now)
+		self.retransmitter.disconnected(now)
+			|| self.disconnect_watcher.disconnected(now)
+			|| self.disconnect_handler.disconnected(now)
 	}
 
 	///

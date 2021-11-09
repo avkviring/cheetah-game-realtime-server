@@ -126,7 +126,9 @@ impl FrameReceivedListener for AckSender {
 			// так как буфер кольцевой - то мы перепишем старый frame_id
 			// если подтверждение для старого frame_id отправлялось недостаточное количество раз - то отметим данный факт
 			let frame_position = self.next_frame_position;
-			if self.ack_counts[frame_position] < AckSender::ALERT_LOW_COUNT_ACK && self.frames[frame_position] != NOT_EXIST_FRAME_ID {
+			if self.ack_counts[frame_position] < AckSender::ALERT_LOW_COUNT_ACK
+				&& self.frames[frame_position] != NOT_EXIST_FRAME_ID
+			{
 				self.low_count_ack_count += 1;
 			}
 			self.frames[frame_position] = frame_id;

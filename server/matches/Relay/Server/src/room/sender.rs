@@ -40,7 +40,10 @@ impl Room {
 
 		let meta = match &self.current_user {
 			None => S2CMetaCommandInformation::new(0, &C2SMetaCommandInformation::default()),
-			Some(user) => S2CMetaCommandInformation::new(user.clone(), self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation::default())),
+			Some(user) => S2CMetaCommandInformation::new(
+				user.clone(),
+				self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation::default()),
+			),
 		};
 
 		let permission_manager = self.permission_manager.clone();
@@ -57,15 +60,19 @@ impl Room {
 					let allow = match &command.field {
 						None => true,
 						Some(FieldIdAndType { field_id, field_type }) => {
-							permission_manager
-								.borrow_mut()
-								.get_permission(object_template, *field_id, *field_type, user.template.groups)
-								> Permission::Deny
+							permission_manager.borrow_mut().get_permission(
+								object_template,
+								*field_id,
+								*field_type,
+								user.template.groups,
+							) > Permission::Deny
 						}
 					};
 
 					if allow {
-						command_trace_session.borrow_mut().collect_s2c(object_template, 100, &command.command);
+						command_trace_session
+							.borrow_mut()
+							.collect_s2c(object_template, 100, &command.command);
 
 						let command_with_meta = S2CCommandWithMeta {
 							meta: meta.clone(),
@@ -81,7 +88,12 @@ impl Room {
 			});
 	}
 
-	pub fn send_to_user(&mut self, user_id: &UserId, object_template: GameObjectTemplateId, commands: Iter<S2CommandWithFieldInfo>) {
+	pub fn send_to_user(
+		&mut self,
+		user_id: &UserId,
+		object_template: GameObjectTemplateId,
+		commands: Iter<S2CommandWithFieldInfo>,
+	) {
 		let command_trace_session = self.command_trace_session.clone();
 		match self.users.get_mut(user_id) {
 			None => {
@@ -95,10 +107,12 @@ impl Room {
 							let allow = match command.field {
 								None => true,
 								Some(FieldIdAndType { field_id, field_type }) => {
-									self.permission_manager
-										.borrow_mut()
-										.get_permission(object_template, field_id, field_type, groups)
-										> Permission::Deny
+									self.permission_manager.borrow_mut().get_permission(
+										object_template,
+										field_id,
+										field_type,
+										groups,
+									) > Permission::Deny
 								}
 							};
 							if allow {
@@ -113,10 +127,14 @@ impl Room {
 									meta: S2CMetaCommandInformation::new(self.current_user.unwrap_or(0), meta),
 									command: command.command.clone(),
 								};
-								command_trace_session.borrow_mut().collect_s2c(object_template, 100, &command.command);
+								command_trace_session
+									.borrow_mut()
+									.collect_s2c(object_template, 100, &command.command);
 
 								let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
-								protocol.out_commands_collector.add_command(channel.clone(), application_command);
+								protocol
+									.out_commands_collector
+									.add_command(channel.clone(), application_command);
 							}
 						}
 					}
@@ -214,29 +232,48 @@ mod tests {
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		let mut executed = false;
-		room.change_data_and_send(&object_id, &field_id_1, field_type, user_id, Permission::Rw, Option::None, |_| {
-			executed = true;
-			Option::Some(S2CCommand::SetLong(SetLongCommand {
-				object_id: object_id.clone(),
-				field_id: field_id_1,
-				value: 0,
-			}))
-		});
+		room.change_data_and_send(
+			&object_id,
+			&field_id_1,
+			field_type,
+			user_id,
+			Permission::Rw,
+			Option::None,
+			|_| {
+				executed = true;
+				Option::Some(S2CCommand::SetLong(SetLongCommand {
+					object_id: object_id.clone(),
+					field_id: field_id_1,
+					value: 0,
+				}))
+			},
+		);
 		assert!(executed);
 		assert!(room.get_user_out_commands(user_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
 		let mut executed = false;
-		room.change_data_and_send(&object_id, &field_id_2, field_type, user_id, Permission::Rw, Option::None, |_| {
-			executed = true;
-			Option::Some(S2CCommand::SetLong(SetLongCommand {
-				object_id: object_id.clone(),
-				field_id: field_id_2,
-				value: 0,
-			}))
-		});
+		room.change_data_and_send(
+			&object_id,
+			&field_id_2,
+			field_type,
+			user_id,
+			Permission::Rw,
+			Option::None,
+			|_| {
+				executed = true;
+				Option::Some(S2CCommand::SetLong(SetLongCommand {
+					object_id: object_id.clone(),
+					field_id: field_id_2,
+					value: 0,
+				}))
+			},
+		);
 		assert!(executed);
-		assert!(matches!(room.get_user_out_commands(user_id).get(0), Option::Some(S2CCommand::SetLong(_))));
+		assert!(matches!(
+			room.get_user_out_commands(user_id).get(0),
+			Option::Some(S2CCommand::SetLong(_))
+		));
 	}
 
 	///
@@ -331,9 +368,13 @@ mod tests {
 		let field_type = FieldType::Long;
 
 		let mut template = RoomTemplate::default();
-		template
-			.permissions
-			.set_permission(object_template, &deny_field_id, FieldType::Long, &access_groups, Permission::Deny);
+		template.permissions.set_permission(
+			object_template,
+			&deny_field_id,
+			FieldType::Long,
+			&access_groups,
+			Permission::Deny,
+		);
 
 		let mut room = Room::from_template(template);
 

@@ -287,10 +287,7 @@ pub mod tests {
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
 	use cheetah_matches_relay_common::room::UserId;
 
-	use crate::debug::tracer::{
-		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand,
-		UniDirectionCommand,
-	};
+	use crate::debug::tracer::{CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand, UniDirectionCommand};
 
 	#[test]
 	fn should_collect_command_without_filter() {

@@ -161,7 +161,8 @@ impl Room {
 				}
 
 				if new_user {
-					self.current_channel.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+					self.current_channel
+						.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 					self.current_meta.replace(C2SMetaCommandInformation::default());
 					let user_id = user.id;
 					let template = user.template.clone();
@@ -176,7 +177,9 @@ impl Room {
 				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					self.current_meta.replace(command_with_meta.meta.clone());
-					tracer.borrow_mut().collect_c2s(&self.objects, user_id, &command_with_meta.command);
+					tracer
+						.borrow_mut()
+						.collect_c2s(&self.objects, user_id, &command_with_meta.command);
 					execute(command_with_meta.command, self, user_id);
 				}
 				_ => {
@@ -343,7 +346,9 @@ mod tests {
 
 	use cheetah_matches_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
-	use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+	use cheetah_matches_relay_common::protocol::frame::applications::{
+		ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription,
+	};
 	use cheetah_matches_relay_common::protocol::frame::Frame;
 	use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -464,8 +469,12 @@ mod tests {
 		assert!(room.contains_object(&object_b_1));
 		assert!(room.contains_object(&object_b_2));
 
-		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1));
-		assert!(matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2));
+		assert!(
+			matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1)
+		);
+		assert!(
+			matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2)
+		);
 	}
 
 	#[test]
@@ -480,7 +489,9 @@ mod tests {
 		template.objects = vec![object_template.clone()];
 
 		let room = Room::from_template(template);
-		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::Room)));
+		assert!(room
+			.objects
+			.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::Room)));
 	}
 
 	#[test]
@@ -541,13 +552,16 @@ mod tests {
 		room.process_in_frame(user1_id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
-		frame_with_attach_to_room.commands.reliable.push_back(ApplicationCommandDescription {
-			channel: ApplicationCommandChannel::ReliableUnordered,
-			command: ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-				meta: C2SMetaCommandInformation::default(),
-				command: C2SCommand::AttachToRoom,
-			}),
-		});
+		frame_with_attach_to_room
+			.commands
+			.reliable
+			.push_back(ApplicationCommandDescription {
+				channel: ApplicationCommandChannel::ReliableUnordered,
+				command: ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
+					meta: C2SMetaCommandInformation::default(),
+					command: C2SCommand::AttachToRoom,
+				}),
+			});
 		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
 
 		let user1 = room.get_user_mut(user1_id).unwrap();
@@ -612,7 +626,10 @@ mod tests {
 		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		room.disconnect_user(user_id);
 
-		assert_eq!(test_listener.clone().borrow().trace, format!("r{}d{}", user_id, user_id).to_string());
+		assert_eq!(
+			test_listener.clone().borrow().trace,
+			format!("r{}d{}", user_id, user_id).to_string()
+		);
 	}
 
 	#[test]

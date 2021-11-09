@@ -135,7 +135,8 @@ impl RetransmitterImpl {
 						let original_frame_id = scheduled_frame.original_frame_id;
 						let mut retransmit_frame = scheduled_frame.frame.clone();
 						retransmit_frame.header.frame_id = retransmit_frame_id;
-						let retransmit_header = Header::RetransmitFrame(RetransmitFrameHeader::new(original_frame_id, retransmit_count));
+						let retransmit_header =
+							Header::RetransmitFrame(RetransmitFrameHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
 
 						self.frames.push_back(scheduled_frame);

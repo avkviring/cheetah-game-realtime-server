@@ -13,7 +13,15 @@ impl ServerCommandExecutor for EventCommand {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self));
-		room.change_data_and_send(&object_id, &field_id, FieldType::Event, user_id, Permission::Rw, Option::None, action);
+		room.change_data_and_send(
+			&object_id,
+			&field_id,
+			FieldType::Event,
+			user_id,
+			Permission::Rw,
+			Option::None,
+			action,
+		);
 	}
 }
 
@@ -98,7 +106,9 @@ mod tests {
 
 		command.clone().execute(&mut room, user1);
 		assert!(matches!(room.get_user_out_commands(user1).pop_back(), None));
-		assert!(matches!(room.get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id));
+		assert!(
+			matches!(room.get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id)
+		);
 		assert!(matches!(room.get_user_out_commands(user3).pop_back(), None));
 	}
 

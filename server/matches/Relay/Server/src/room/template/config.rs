@@ -91,8 +91,8 @@ impl UserTemplate {
 #[cfg(test)]
 mod tests {
 	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions, UserTemplate,
-		UserTemplateError,
+		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
+		UserTemplate, UserTemplateError,
 	};
 	use crate::room::types::FieldType;
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
@@ -108,7 +108,12 @@ mod tests {
 			};
 		}
 
-		pub fn configure_object(&mut self, id: u32, template: GameObjectTemplateId, access_groups: AccessGroups) -> &mut GameObjectTemplate {
+		pub fn configure_object(
+			&mut self,
+			id: u32,
+			template: GameObjectTemplateId,
+			access_groups: AccessGroups,
+		) -> &mut GameObjectTemplate {
 			let objects = &mut self.objects;
 			objects.push(GameObjectTemplate {
 				id,
@@ -177,6 +182,9 @@ mod tests {
 			}],
 		};
 
-		assert!(matches!(template.validate(), Result::Err(UserTemplateError::UserObjectHasWrongId(_, _))))
+		assert!(matches!(
+			template.validate(),
+			Result::Err(UserTemplateError::UserObjectHasWrongId(_, _))
+		))
 	}
 }

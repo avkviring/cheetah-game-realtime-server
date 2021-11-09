@@ -74,6 +74,8 @@ impl Headers {
 
 impl Default for Headers {
 	fn default() -> Self {
-		Self { headers: Default::default() }
+		Self {
+			headers: Default::default(),
+		}
 	}
 }

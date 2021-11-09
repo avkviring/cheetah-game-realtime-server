@@ -120,7 +120,10 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		let token = format!("{}.{}", parts.get(1).unwrap(), parts.get(2).unwrap());
 
 		let mut metadata = MetadataMap::new();
-		metadata.insert("authorization", MetadataValue::from_str(format!("Bear {}", token).as_str()).unwrap());
+		metadata.insert(
+			"authorization",
+			MetadataValue::from_str(format!("Bear {}", token).as_str()).unwrap(),
+		);
 		println!("{:?}", get_player_id(&metadata, PUBLIC_KEY.to_string()));
 		assert!(matches!(get_player_id(&metadata, PUBLIC_KEY.to_string()), Result::Ok(_)));
 	}

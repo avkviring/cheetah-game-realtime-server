@@ -7,14 +7,21 @@ use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 
 #[no_mangle]
-pub extern "C" fn set_event_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI)) -> bool {
+pub extern "C" fn set_event_listener(
+	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI),
+) -> bool {
 	execute_with_client(|client, trace| {
 		(
 			{
 				client.register_event_listener(listener);
 			},
 			if trace {
-				listener(&S2CMetaCommandInformationFFI::stub(), &GameObjectIdFFI::stub(), 77, &BufferFFI::stub());
+				listener(
+					&S2CMetaCommandInformationFFI::stub(),
+					&GameObjectIdFFI::stub(),
+					77,
+					&BufferFFI::stub(),
+				);
 				Some(format!("set_event_listener"))
 			} else {
 				None
@@ -34,7 +41,12 @@ pub extern "C" fn send_event(object_id: &GameObjectIdFFI, field_id: FieldId, eve
 }
 
 #[no_mangle]
-pub extern "C" fn send_target_event(target_user: UserId, object_id: &GameObjectIdFFI, field_id: FieldId, event: &BufferFFI) -> bool {
+pub extern "C" fn send_target_event(
+	target_user: UserId,
+	object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	event: &BufferFFI,
+) -> bool {
 	let event_command = EventCommand {
 		object_id: From::from(object_id),
 		field_id,

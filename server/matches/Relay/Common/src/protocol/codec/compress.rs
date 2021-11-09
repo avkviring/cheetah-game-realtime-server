@@ -14,7 +14,9 @@ mod tests {
 
 	#[test]
 	fn should_compress() {
-		let original = vec![1, 2, 3, 4, 4, 3, 2, 4, 5, 6, 7, 5, 4, 3, 4, 5, 7, 7, 8, 5, 4, 2, 3, 4, 5, 6, 7, 8];
+		let original = vec![
+			1, 2, 3, 4, 4, 3, 2, 4, 5, 6, 7, 5, 4, 3, 4, 5, 7, 7, 8, 5, 4, 2, 3, 4, 5, 6, 7, 8,
+		];
 		let mut compressed = [0; 100];
 		let compressed_size = packet_compress(&original, &mut compressed).unwrap();
 

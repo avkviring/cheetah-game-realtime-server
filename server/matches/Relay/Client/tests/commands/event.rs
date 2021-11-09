@@ -32,13 +32,20 @@ fn test() {
 	ffi::client::set_current_client(client2);
 	ffi::client::receive();
 
-	assert!(matches!(EVENT.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer ));
+	assert!(
+		matches!(EVENT.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer )
+	);
 }
 
 lazy_static! {
 	static ref EVENT: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_event_listener(_: &S2CMetaCommandInformationFFI, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_event_listener(
+	_: &S2CMetaCommandInformationFFI,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	buffer: &BufferFFI,
+) {
 	EVENT.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

@@ -182,7 +182,11 @@ mod tests {
 		let in_buffer = vec![1, 2, 3, 4, 5];
 		let out_buffer = vec![10, 11, 12];
 		emulator.schedule_in(&Instant::now(), &in_buffer.as_slice());
-		emulator.schedule_out(&Instant::now(), &out_buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_out(
+			&Instant::now(),
+			&out_buffer.as_slice(),
+			SocketAddr::from_str("127.0.0.1:5050").unwrap(),
+		);
 
 		assert!(matches!(emulator.get_in(&Instant::now()), Some(buffer) if buffer==in_buffer));
 		assert!(matches!(emulator.get_out(&Instant::now()), Some((buffer,_)) if buffer==out_buffer));

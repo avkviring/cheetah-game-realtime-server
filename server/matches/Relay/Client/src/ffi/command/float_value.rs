@@ -6,7 +6,9 @@ use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
 
 #[no_mangle]
-pub extern "C" fn set_float_value_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64)) -> bool {
+pub extern "C" fn set_float_value_listener(
+	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64),
+) -> bool {
 	execute_with_client(|client, trace| {
 		(
 			{

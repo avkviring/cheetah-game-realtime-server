@@ -74,7 +74,9 @@ fn should_compare_and_set() {
 	helper.wait_udp();
 	ffi::client::set_current_client(client1);
 	ffi::client::receive();
-	assert!(matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==100 ));
+	assert!(
+		matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==100 )
+	);
 
 	// теперь второй клиент разрывает соединение
 	// первый наблюдает за тем что значение поменяется на reset
@@ -84,7 +86,9 @@ fn should_compare_and_set() {
 
 	ffi::client::set_current_client(client1);
 	ffi::client::receive();
-	assert!(matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==555 ));
+	assert!(
+		matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==555 )
+	);
 }
 
 lazy_static! {
@@ -107,6 +111,11 @@ extern "C" fn listener_for_inc(_: &S2CMetaCommandInformationFFI, _object_id: &Ga
 	INCR.lock().unwrap().replace((field_id, value));
 }
 
-extern "C" fn listener_for_compare_and_set(_: &S2CMetaCommandInformationFFI, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn listener_for_compare_and_set(
+	_: &S2CMetaCommandInformationFFI,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	value: i64,
+) {
 	COMPARE_AND_SET.lock().unwrap().replace((field_id, value));
 }

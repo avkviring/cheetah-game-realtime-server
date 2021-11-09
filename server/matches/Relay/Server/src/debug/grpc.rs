@@ -16,7 +16,10 @@ impl RelayAdminGRPCService {
 
 #[tonic::async_trait]
 impl admin::relay_server::Relay for RelayAdminGRPCService {
-	async fn get_rooms(&self, _request: Request<admin::GetRoomsRequest>) -> Result<Response<admin::GetRoomsResponse>, tonic::Status> {
+	async fn get_rooms(
+		&self,
+		_request: Request<admin::GetRoomsRequest>,
+	) -> Result<Response<admin::GetRoomsResponse>, tonic::Status> {
 		let manager = self.manager.lock().unwrap();
 		match manager.get_rooms() {
 			Ok(rooms) => Result::Ok(Response::new(admin::GetRoomsResponse { rooms })),

@@ -1,4 +1,3 @@
-
 use kube::core::params::PostParams;
 use kube::{Api, Client};
 use thiserror::Error;

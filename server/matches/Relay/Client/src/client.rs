@@ -8,7 +8,9 @@ use std::time::{Duration, Instant};
 
 use cheetah_matches_relay_common::commands::command::C2SCommandWithMeta;
 use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription};
+use cheetah_matches_relay_common::protocol::frame::applications::{
+	ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription,
+};
 use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
 use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
 
@@ -120,12 +122,16 @@ impl Client {
 				ClientRequest::SetProtocolTimeOffset(duration) => {
 					self.protocol_time_offset = Option::Some(duration);
 				}
-				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => self.udp_client.channel.config_emulator(|emulator| {
-					emulator.configure_rtt(rtt, rtt_dispersion);
-				}),
-				ClientRequest::ConfigureDropEmulation(drop_probability, drop_time) => self.udp_client.channel.config_emulator(|emulator| {
-					emulator.configure_drop(drop_probability, drop_time);
-				}),
+				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => {
+					self.udp_client.channel.config_emulator(|emulator| {
+						emulator.configure_rtt(rtt, rtt_dispersion);
+					})
+				}
+				ClientRequest::ConfigureDropEmulation(drop_probability, drop_time) => {
+					self.udp_client.channel.config_emulator(|emulator| {
+						emulator.configure_drop(drop_probability, drop_time);
+					})
+				}
 				ClientRequest::ResetEmulation => {
 					self.udp_client.channel.reset_emulator();
 				}
@@ -143,9 +149,15 @@ impl Client {
 	/// Обновление статистики для контроллера
 	///
 	fn update_state(&mut self) {
-		self.current_frame_id.store(self.udp_client.protocol.next_frame_id, Ordering::Relaxed);
+		self.current_frame_id
+			.store(self.udp_client.protocol.next_frame_id, Ordering::Relaxed);
 		self.rtt_in_ms.store(
-			self.udp_client.protocol.rtt.get_rtt().unwrap_or(Duration::from_millis(0)).as_millis() as u64,
+			self.udp_client
+				.protocol
+				.rtt
+				.get_rtt()
+				.unwrap_or(Duration::from_millis(0))
+				.as_millis() as u64,
 			Ordering::Relaxed,
 		);
 		self.average_retransmit_frames.store(

@@ -2,7 +2,7 @@ use std::cmp::max;
 use std::net::UdpSocket;
 use std::ops::{Add, Sub};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver};
+use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -103,15 +103,19 @@ impl Relay {
 						log::error!("[Request::RegisterUser] error send response {:?}", e);
 					}
 				},
-				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => match self.rooms.room_by_id.get_mut(&room_id) {
-					None => sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id))).unwrap(),
-					Some(room) => {
-						room.command_trace_session.clone().borrow_mut().execute_task(task);
-						if let Err(e) = sender.send(Result::Ok(())) {
-							log::error!("[Request::RegisterUser] error send response {:?}", e);
+				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => {
+					match self.rooms.room_by_id.get_mut(&room_id) {
+						None => sender
+							.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id)))
+							.unwrap(),
+						Some(room) => {
+							room.command_trace_session.clone().borrow_mut().execute_task(task);
+							if let Err(e) = sender.send(Result::Ok(())) {
+								log::error!("[Request::RegisterUser] error send response {:?}", e);
+							}
 						}
 					}
-				},
+				}
 			}
 		}
 	}

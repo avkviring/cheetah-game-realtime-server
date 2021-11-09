@@ -159,7 +159,9 @@ mod tests {
 			original_frame_id: 0,
 			retransmit_count: 1,
 		}));
-		frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 100 }));
+		frame
+			.headers
+			.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&frame, &now);
 		assert!(handler.rtt.is_empty(), "{}", true);
 	}

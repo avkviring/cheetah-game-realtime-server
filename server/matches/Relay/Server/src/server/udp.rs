@@ -107,7 +107,14 @@ impl UDPServer {
 		}
 	}
 
-	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; Frame::MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: &Instant) {
+	fn process_in_frame(
+		&mut self,
+		rooms: &mut Rooms,
+		buffer: &[u8; Frame::MAX_FRAME_SIZE],
+		size: usize,
+		address: SocketAddr,
+		now: &Instant,
+	) {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_header, headers)) => {
@@ -128,7 +135,9 @@ impl UDPServer {
 								let private_key = &session.private_key;
 								match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
 									Ok(frame) => {
-										if frame.header.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
+										if frame.header.frame_id > session.max_receive_frame_id
+											|| session.max_receive_frame_id == 0
+										{
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.header.frame_id;
 										}
@@ -214,7 +223,9 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
-		frame.headers.add(Header::UserAndRoomId(UserAndRoomId { user_id: 0, room_id: 0 }));
+		frame
+			.headers
+			.add(Header::UserAndRoomId(UserAndRoomId { user_id: 0, room_id: 0 }));
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -262,7 +273,11 @@ mod tests {
 			template: user_template.clone(),
 			compare_and_sets_cleaners: Default::default(),
 		};
-		udp_server.sessions.clone().borrow_mut().register_user(0, user.id, user.template.clone());
+		udp_server
+			.sessions
+			.clone()
+			.borrow_mut()
+			.register_user(0, user.id, user.template.clone());
 
 		let mut frame = Frame::new(100);
 		let user_and_room_id = UserAndRoomId {

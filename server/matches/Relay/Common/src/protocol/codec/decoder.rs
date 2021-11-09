@@ -26,7 +26,8 @@ impl Frame {
 		if header.protocol_version != Frame::PROTOCOL_VERSION {
 			Result::Err(UdpFrameDecodeError::ProtocolVersionMismatch)
 		} else {
-			let additional_headers: Headers = deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
+			let additional_headers: Headers =
+				deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
 			Result::Ok((header, additional_headers))
 		}
 	}
@@ -39,7 +40,12 @@ impl Frame {
 	///
 	/// Метод вызывается после decode_headers (более подробно в тестах)
 	///
-	pub fn decode_frame(cursor: Cursor<&[u8]>, mut cipher: Cipher, header: FrameHeader, headers: Headers) -> Result<Frame, UdpFrameDecodeError> {
+	pub fn decode_frame(
+		cursor: Cursor<&[u8]>,
+		mut cipher: Cipher,
+		header: FrameHeader,
+		headers: Headers,
+	) -> Result<Frame, UdpFrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -50,16 +56,24 @@ impl Frame {
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
 		vec.extend_from_slice(&data[header_end as usize..data.len()]).unwrap();
 
-		cipher.decrypt(&mut vec, ad, nonce).map_err(|_| UdpFrameDecodeError::DecryptedError)?;
+		cipher
+			.decrypt(&mut vec, ad, nonce)
+			.map_err(|_| UdpFrameDecodeError::DecryptedError)?;
 
 		// commands - decompress
 		let mut decompressed_buffer = [0; Frame::MAX_FRAME_SIZE];
-		let decompressed_size = packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| UdpFrameDecodeError::DecompressError)?;
+		let decompressed_size =
+			packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| UdpFrameDecodeError::DecompressError)?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 
-		let commands = deserialize(&mut Cursor::new(decompressed_buffer)).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
+		let commands =
+			deserialize(&mut Cursor::new(decompressed_buffer)).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
 
-		Result::Ok(Frame { header, headers, commands })
+		Result::Ok(Frame {
+			header,
+			headers,
+			commands,
+		})
 	}
 
 	///
@@ -76,7 +90,11 @@ impl Frame {
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		serialize(&self.commands, &mut commands_cursor);
 		if commands_cursor.position() > 1024 {
-			panic!("frame size({:?}) is more than 1024, frame  {:#?}", commands_cursor.position(), self)
+			panic!(
+				"frame size({:?}) is more than 1024, frame  {:#?}",
+				commands_cursor.position(),
+				self
+			)
 		}
 
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
@@ -87,7 +105,10 @@ impl Frame {
 		let commands_position = commands_cursor.position() as usize;
 		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
 		if compressed_size > 1024 {
-			panic!("frame size({:?}) after compress is more than 1024, frame  {:#?}", compressed_size, self)
+			panic!(
+				"frame size({:?}) after compress is more than 1024, frame  {:#?}",
+				compressed_size, self
+			)
 		}
 		unsafe {
 			vec.set_len(compressed_size);
@@ -95,7 +116,11 @@ impl Frame {
 
 		let frame_position = frame_cursor.position() as usize;
 		cipher
-			.encrypt(&mut vec, &frame_cursor.get_ref()[0..frame_position], self.header.frame_id.to_be_bytes())
+			.encrypt(
+				&mut vec,
+				&frame_cursor.get_ref()[0..frame_position],
+				self.header.frame_id.to_be_bytes(),
+			)
 			.unwrap();
 
 		frame_cursor.write_all(&vec).unwrap();
@@ -115,8 +140,8 @@ pub mod tests {
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
 
 	const PRIVATE_KEY: &[u8; 32] = &[
-		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f, 0x9e, 0x27, 0xad,
-		0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10, 0xe4, 0x94,
+		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f,
+		0x9e, 0x27, 0xad, 0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10, 0xe4, 0x94,
 	];
 
 	#[test]

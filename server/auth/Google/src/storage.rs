@@ -152,10 +152,11 @@ create table if not exists users (
 		storage.attach(user, "a@kviring.com", ip).await;
 		storage.attach(user, "b@kviring.com", ip).await;
 
-		let result: Vec<(NaiveDateTime, UserId, String)> = sqlx::query_as("select time, user_id, google_id from google_users_history order by time")
-			.fetch_all(&storage.pool)
-			.await
-			.unwrap();
+		let result: Vec<(NaiveDateTime, UserId, String)> =
+			sqlx::query_as("select time, user_id, google_id from google_users_history order by time")
+				.fetch_all(&storage.pool)
+				.await
+				.unwrap();
 
 		let i1 = result.get(0).unwrap();
 		assert_eq!(i1.1, user);

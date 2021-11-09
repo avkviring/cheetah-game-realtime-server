@@ -69,6 +69,11 @@ extern "C" fn on_object_created(_: &S2CMetaCommandInformationFFI, object_id: &Ga
 extern "C" fn on_object_delete(_: &S2CMetaCommandInformationFFI, object_id: &GameObjectIdFFI) {
 	DELETED_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
-extern "C" fn on_structure_listener(_: &S2CMetaCommandInformationFFI, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_structure_listener(
+	_: &S2CMetaCommandInformationFFI,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	buffer: &BufferFFI,
+) {
 	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

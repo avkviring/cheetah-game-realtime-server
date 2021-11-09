@@ -15,7 +15,13 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 		return;
 	}
 	log::info!("Agones: Starting");
-	match rymder::Sdk::connect(None, Option::Some(Duration::from_secs(2)), Option::Some(Duration::from_secs(2))).await {
+	match rymder::Sdk::connect(
+		None,
+		Option::Some(Duration::from_secs(2)),
+		Option::Some(Duration::from_secs(2)),
+	)
+	.await
+	{
 		Ok((mut sdk, _gameserver)) => {
 			log::info!("Agones: Connected to SDK");
 			// сервер готов к работе

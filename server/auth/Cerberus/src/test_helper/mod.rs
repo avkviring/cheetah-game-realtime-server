@@ -22,7 +22,13 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 pub fn stub_token_service<'a>(session_exp: u64, refresh_exp: u64) -> (Container<'a, Cli, Redis>, JWTTokensService) {
 	let (node, storage) = stub_storage(refresh_exp + 1);
 
-	let service = JWTTokensService::new(PRIVATE_KEY.to_string(), PUBLIC_KEY.to_string(), session_exp, refresh_exp, storage);
+	let service = JWTTokensService::new(
+		PRIVATE_KEY.to_string(),
+		PUBLIC_KEY.to_string(),
+		session_exp,
+		refresh_exp,
+		storage,
+	);
 	(node, service)
 }
 
@@ -39,7 +45,10 @@ fn stub_storage<'a>(time_of_life_in_sec: u64) -> (Container<'a, Cli, Redis>, Red
 	)
 }
 
-pub async fn stub_cerberus_grpc_server<'a>(internal_port: u16, external_port: u16) -> (JoinHandle<()>, Container<'a, Cli, Redis>) {
+pub async fn stub_cerberus_grpc_server<'a>(
+	internal_port: u16,
+	external_port: u16,
+) -> (JoinHandle<()>, Container<'a, Cli, Redis>) {
 	let node = (*CLI).run(images::redis::Redis::default());
 	let port = node.get_host_port(6379).unwrap();
 	let handler = tokio::spawn(async move {

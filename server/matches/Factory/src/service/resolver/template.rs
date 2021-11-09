@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use crate::proto::matches::relay::internal as relay;
-use crate::proto::matches::relay::shared as shared;
-use crate::service::configurations::structures::{Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template, TemplateName};
+use crate::proto::matches::relay::shared;
+use crate::service::configurations::structures::{
+	Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template, TemplateName,
+};
 use crate::service::resolver::error::Error;
 
 ///
@@ -99,8 +101,10 @@ impl From<&FieldType> for shared::FieldType {
 #[cfg(test)]
 pub mod test {
 	use crate::proto::matches::relay::internal as relay;
-	use crate::proto::matches::relay::shared as shared;
-	use crate::service::configurations::structures::{Field, FieldType, PermissionField, PermissionLevel, Template, TemplatePermissions};
+	use crate::proto::matches::relay::shared;
+	use crate::service::configurations::structures::{
+		Field, FieldType, PermissionField, PermissionLevel, Template, TemplatePermissions,
+	};
 	use crate::service::resolver::error::Error;
 	use crate::service::resolver::template::{create_permission_rule, create_permissions_field, create_template_permission};
 
@@ -203,9 +207,18 @@ pub mod test {
 
 	#[test]
 	fn should_convert_permission_level() {
-		assert_eq!(relay::PermissionLevel::from(&PermissionLevel::ReadOnly), relay::PermissionLevel::Ro);
-		assert_eq!(relay::PermissionLevel::from(&PermissionLevel::ReadWrite), relay::PermissionLevel::Rw);
-		assert_eq!(relay::PermissionLevel::from(&PermissionLevel::Deny), relay::PermissionLevel::Deny);
+		assert_eq!(
+			relay::PermissionLevel::from(&PermissionLevel::ReadOnly),
+			relay::PermissionLevel::Ro
+		);
+		assert_eq!(
+			relay::PermissionLevel::from(&PermissionLevel::ReadWrite),
+			relay::PermissionLevel::Rw
+		);
+		assert_eq!(
+			relay::PermissionLevel::from(&PermissionLevel::Deny),
+			relay::PermissionLevel::Deny
+		);
 	}
 
 	#[test]

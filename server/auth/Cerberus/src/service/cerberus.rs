@@ -15,7 +15,8 @@ pub struct Cerberus {
 
 impl Cerberus {
 	pub fn new(private_key: String, public_key: String, redis_host: String, redis_port: u16, redis_auth: Option<String>) -> Self {
-		let storage = RedisRefreshTokenStorage::new(redis_host, redis_port, redis_auth, REFRESH_EXP_IN_SEC + HOUR_IN_SEC).unwrap();
+		let storage =
+			RedisRefreshTokenStorage::new(redis_host, redis_port, redis_auth, REFRESH_EXP_IN_SEC + HOUR_IN_SEC).unwrap();
 		Self {
 			service: JWTTokensService::new(private_key, public_key, SESSION_EXP_IN_SEC, REFRESH_EXP_IN_SEC, storage),
 		}
@@ -24,7 +25,10 @@ impl Cerberus {
 
 #[tonic::async_trait]
 impl proto::internal::cerberus_server::Cerberus for Cerberus {
-	async fn create(&self, request: Request<proto::internal::CreateTokenRequest>) -> Result<tonic::Response<proto::types::Tokens>, tonic::Status> {
+	async fn create(
+		&self,
+		request: Request<proto::internal::CreateTokenRequest>,
+	) -> Result<tonic::Response<proto::types::Tokens>, tonic::Status> {
 		let request = request.get_ref();
 		match self.service.create(request.player, request.device_id.clone()).await {
 			Ok(tokens) => {

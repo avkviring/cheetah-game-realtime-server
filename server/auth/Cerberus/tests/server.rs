@@ -12,7 +12,9 @@ pub async fn test_server() {
 	let device_id = "iphone se".to_owned();
 
 	// проверяем создание токена
-	let mut internal_client = internal::cerberus_client::CerberusClient::connect("http://127.0.0.1:7001").await.unwrap();
+	let mut internal_client = internal::cerberus_client::CerberusClient::connect("http://127.0.0.1:7001")
+		.await
+		.unwrap();
 	let request = tonic::Request::new(internal::CreateTokenRequest {
 		player,
 		device_id: device_id.clone(),
@@ -23,7 +25,9 @@ pub async fn test_server() {
 	assert!(matches!(parser.get_player_id(tokens.session.to_owned()), Result::Ok(value) if value==player));
 
 	// проверяем обновление токена
-	let mut external_client = external::cerberus_client::CerberusClient::connect("http://127.0.0.1:7002").await.unwrap();
+	let mut external_client = external::cerberus_client::CerberusClient::connect("http://127.0.0.1:7002")
+		.await
+		.unwrap();
 
 	let request = tonic::Request::new(external::RefreshTokenRequest { token: tokens.refresh });
 	let result: Response<types::Tokens> = external_client.refresh(request).await.unwrap();

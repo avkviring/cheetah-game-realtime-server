@@ -121,12 +121,18 @@ impl From<&ApplicationCommandChannel> for ApplicationCommandChannelType {
 		match channel {
 			ApplicationCommandChannel::ReliableUnordered => ApplicationCommandChannelType::ReliableUnordered,
 			ApplicationCommandChannel::ReliableOrderedByObject => ApplicationCommandChannelType::ReliableOrderedByObject,
-			ApplicationCommandChannel::ReliableOrderedByGroup(channel) => ApplicationCommandChannelType::ReliableOrderedByGroup(*channel),
+			ApplicationCommandChannel::ReliableOrderedByGroup(channel) => {
+				ApplicationCommandChannelType::ReliableOrderedByGroup(*channel)
+			}
 			ApplicationCommandChannel::UnreliableUnordered => ApplicationCommandChannelType::UnreliableUnordered,
 			ApplicationCommandChannel::UnreliableOrderedByObject => ApplicationCommandChannelType::UnreliableOrderedByObject,
-			ApplicationCommandChannel::UnreliableOrderedByGroup(channel) => ApplicationCommandChannelType::UnreliableOrderedByGroup(*channel),
+			ApplicationCommandChannel::UnreliableOrderedByGroup(channel) => {
+				ApplicationCommandChannelType::UnreliableOrderedByGroup(*channel)
+			}
 			ApplicationCommandChannel::ReliableSequenceByObject(_) => ApplicationCommandChannelType::ReliableSequenceByObject,
-			ApplicationCommandChannel::ReliableSequenceByGroup(channel, _) => ApplicationCommandChannelType::ReliableSequenceByGroup(*channel),
+			ApplicationCommandChannel::ReliableSequenceByGroup(channel, _) => {
+				ApplicationCommandChannelType::ReliableSequenceByGroup(*channel)
+			}
 		}
 	}
 }
