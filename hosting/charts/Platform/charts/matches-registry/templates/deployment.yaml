@@ -14,7 +14,7 @@ spec:
       labels:
         app: {{ .Chart.Name }}
     spec:
-      serviceAccountName: {{ .Chart.Name }}
+      serviceAccountName:  {{ .Chart.Name }}
       imagePullSecrets:
         - name: cheetahdockerregistry
       containers:
