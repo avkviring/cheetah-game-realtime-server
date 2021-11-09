@@ -4,6 +4,9 @@
 name: Client tests
 on:
   push:
+    branches:
+      - zakharovvi
+      - kviring
 jobs:
   check-meta-files-in-relay-client:
     runs-on: ubuntu-latest

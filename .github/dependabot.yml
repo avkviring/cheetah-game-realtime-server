@@ -10,4 +10,3 @@ updates:
     schedule:
       interval: "weekly"
     rebase-strategy: "disabled"
-    target-branch: dependabot

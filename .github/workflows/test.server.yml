@@ -3,7 +3,10 @@
 #
 name: Server tests
 on:
-  push: 
+  push:
+    branches:
+      - zakharovvi
+      - kviring
 jobs:
   server-unit-test:
     runs-on: ubuntu-latest
