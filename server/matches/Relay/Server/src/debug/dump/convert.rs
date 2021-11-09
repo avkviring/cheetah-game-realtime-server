@@ -11,8 +11,8 @@ use crate::room::{Room, User};
 
 impl From<&Room> for admin::DumpResponse {
 	fn from(room: &Room) -> Self {
-		let users = room.users.iter().map(|(k, u)| admin::DumpUser::from(u)).collect();
-		let objects = room.objects.iter().map(|(k, o)| admin::DumpObject::from(o)).collect();
+		let users = room.users.iter().map(|(_k, u)| admin::DumpUser::from(u)).collect();
+		let objects = room.objects.iter().map(|(_k, o)| admin::DumpObject::from(o)).collect();
 		Self { users, objects }
 	}
 }

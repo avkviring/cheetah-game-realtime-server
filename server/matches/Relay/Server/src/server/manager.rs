@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{RecvError, RecvTimeoutError, SendError, Sender};
+use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;

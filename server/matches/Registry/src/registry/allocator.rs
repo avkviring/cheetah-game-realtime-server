@@ -1,4 +1,4 @@
-use k8s_openapi::api::core::v1::{Pod, PodStatus};
+
 use kube::core::params::PostParams;
 use kube::{Api, Client};
 use thiserror::Error;

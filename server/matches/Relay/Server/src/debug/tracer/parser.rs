@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use Rule::OrRule;
+
 
 use crate::debug::tracer::filter::{Rule, RuleCommandDirection};
 
@@ -28,7 +28,7 @@ enum Op {
 /// Парсер запросов вида name=value, с поддержкой &&, ||,()
 ///
 pub fn parse(query: &str) -> Result<Rule, ParseError> {
-	let mut query = query.replace(" ", "");
+	let query = query.replace(" ", "");
 	if query.is_empty() {
 		Result::Ok(Rule::True)
 	} else {
@@ -122,7 +122,7 @@ fn reduce(mut source_tokens: Vec<Token>) -> Result<Token, ParseError> {
 /// преобразуется в Rule:And(rule_1,rule_2, rule_3)
 ///
 
-fn reduce_token(mut source_tokens: &mut Vec<Token>, mut dest_tokens: &mut Vec<Token>, token: &Token) -> Result<Token, ParseError> {
+fn reduce_token(source_tokens: &mut Vec<Token>, dest_tokens: &mut Vec<Token>, token: &Token) -> Result<Token, ParseError> {
 	let left = get_rule(dest_tokens.remove(dest_tokens.len() - 1))?;
 	let right = get_rule(source_tokens.remove(0))?;
 	let rules = vec![left, right].into_iter().flat_map(|r| token.expand(r)).collect();

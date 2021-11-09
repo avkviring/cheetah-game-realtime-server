@@ -12,7 +12,7 @@ use cheetah_matches_relay::agones::run_agones_cycle;
 use cheetah_matches_relay::debug::dump::DumpGrpcService;
 use cheetah_matches_relay::debug::grpc::RelayAdminGRPCService;
 use cheetah_matches_relay::debug::proto::admin;
-use cheetah_matches_relay::debug::tracer;
+
 use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCService;
 use cheetah_matches_relay::factory::RelayGRPCService;
 use cheetah_matches_relay::server::manager::RelayManager;

@@ -6,7 +6,7 @@ use std::time::Duration;
 use testcontainers::clients::Cli;
 use testcontainers::images::postgres::Postgres;
 use testcontainers::images::redis::Redis;
-use testcontainers::{images, Container, Docker};
+use testcontainers::{Container};
 use tokio::task::JoinHandle;
 
 use cheetah_auth_cerberus::test_helper::stub_cerberus_grpc_server;

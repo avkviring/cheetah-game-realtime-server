@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::mpsc::Sender;
+#[cfg(not(test))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use fnv::FnvBuildHasher;
@@ -193,7 +194,12 @@ impl CommandTracerSessions {
 	///
 	/// Сохранить c2s команду в сессии
 	///
-	pub fn collect_c2s(&mut self, objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>, user: UserId, command: &C2SCommand) {
+	pub fn collect_c2s(
+		&mut self,
+		objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
+		user: UserId,
+		command: &C2SCommand,
+	) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = UniDirectionCommand::C2S(command.clone());
 			let template = match network_command.get_object_id() {
@@ -282,7 +288,8 @@ pub mod tests {
 	use cheetah_matches_relay_common::room::UserId;
 
 	use crate::debug::tracer::{
-		CommandTracerSessions, CommandTracerSessionsError, CommandTracerSessionsTask, Session, SessionId, TracedCommand, UniDirectionCommand,
+		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand,
+		UniDirectionCommand,
 	};
 
 	#[test]
@@ -436,7 +443,11 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.execute_task(CommandTracerSessionsTask::SetFilter(session_id, "(user=55)".to_string(), sender));
+		tracer.execute_task(CommandTracerSessionsTask::SetFilter(
+			session_id,
+			"(user=55)".to_string(),
+			sender,
+		));
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => assert!(true),

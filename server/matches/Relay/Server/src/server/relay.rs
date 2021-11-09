@@ -2,7 +2,7 @@ use std::cmp::max;
 use std::net::UdpSocket;
 use std::ops::{Add, Sub};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, SendError};
+use std::sync::mpsc::{Receiver};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};

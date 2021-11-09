@@ -1,8 +1,8 @@
-use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::LabelSelector;
-use kube::core::params::PostParams;
-use kube::core::{CustomResourceExt, Resource};
-use kube::{Api, Client};
+
+
+
+use kube::core::{Resource};
+
 use kube_derive::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
