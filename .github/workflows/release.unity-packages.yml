@@ -24,6 +24,7 @@ jobs:
           node-version: '12.x'
           registry-url: 'https://npm.registry.cheetah.games'
       - run: cd clients/Unity/Packages/ && sed -i.bak 's/999.999.999/${{ github.event.release.tag_name }}/' ${{ matrix.package}}/package.json
+      - run: rm -f clients/Unity/Packages/${{ matrix.package}}/package.json.back
       - run: cd clients/Unity/Packages/ && npm publish ${{ matrix.package}}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN_REPOSITORY_CHEETAH_GAMES}}

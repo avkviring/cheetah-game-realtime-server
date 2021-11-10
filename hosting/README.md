@@ -41,7 +41,10 @@ helm install agones agones/agones --set "gameservers.namespaces={kviring,zakharo
 
 В панели DigitalOcean связать доменное имя с созданным балансировщиком.
 
-## Настройка глобальных секретов
+### Настройка firewall
+Открыть UDP в DigitalOcean на всех нодах.
+
+# Настройка namespace для запуска платформы
 
 В каждом namespace для запуска платформы.
 
