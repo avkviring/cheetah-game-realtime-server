@@ -39,7 +39,6 @@ ExportedObj/
 *.sln
 *.suo
 *.tmp
-*.user
 *.userprefs
 *.pidb
 *.booproj
@@ -71,7 +70,4 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
-
-/Assets/Editor/Cheetah/Relay/
-/Assets/Editor/Cheetah/Relay.meta
 InitTestScene*

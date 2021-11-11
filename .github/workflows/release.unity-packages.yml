@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         package:
-          - games.cheetah.auth.authentication
+          - games.cheetah.auth.user
           - games.cheetah.auth.cerberus
           - games.cheetah.auth.cookie
           - games.cheetah.auth.google
@@ -16,7 +16,7 @@ jobs:
           - games.cheetah.matches.matchmaking
           - games.cheetah.matches.registry
           - games.cheetah.matches.relay.shared
-          - games.cheetah.platfrom
+          - games.cheetah.platform
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2.4.1

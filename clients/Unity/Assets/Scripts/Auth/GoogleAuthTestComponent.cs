@@ -15,6 +15,7 @@ namespace Auth
         [SerializeField] private Button androidLoginButton;
         private ClusterConnector clusterConnector = new ClusterConnector("test.dev.cheetah.games", 443, true);
 
+#if UNITY_ANDROID_T
         private void Start()
         {
             androidLoginButton.onClick.AddListener(OnAndroidLogin);
@@ -23,7 +24,6 @@ namespace Auth
 
         private async void OnAndroidLogin()
         {
-#if UNITY_ANDROID_T
             try
             {
                 // вначале используем сохраненый токен для авторизации
@@ -60,7 +60,8 @@ namespace Auth
                 Debug.LogError(e.Message);
             }
 
-#endif
+
         }
+#endif
     }
 }
