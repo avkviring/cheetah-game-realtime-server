@@ -34,9 +34,9 @@ namespace Relay
 
         private void CreateRelayObjects()
         {
-            CheetahObject.Create(1, 256, ref objectA);
+            CheetahObject.Create(1, PlayerHelper.UserGroup, ref objectA);
             CheetahObject.Created(ref objectA);
-            CheetahObject.Create(100, 256, ref objectB);
+            CheetahObject.Create(100, PlayerHelper.UserGroup, ref objectB);
             CheetahObject.Created(ref objectB);
         }
 
