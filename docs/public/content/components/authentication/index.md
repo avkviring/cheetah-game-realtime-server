@@ -13,7 +13,7 @@
 
 ```csharp
   // соединение с серверной платформой
-  var Connector connector = new Connector("host:port");
+  var connector = new ClusterConnector("127.0.0.1", 7777, false);
   // попытка входа с сохраненными токенами
   var storedAuthenticator = new StoredPlayerAuthenticator();
   var player = await storedAuthenticator.Login(connector);

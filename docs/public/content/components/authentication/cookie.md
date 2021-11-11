@@ -13,7 +13,7 @@
 ### Пример кода
 
 ```csharp
-    var connector = new Connector("192.168.212.97:7777");
+    var connector = new ClusterConnector("127.0.0.1", 7777, false);
     var cookieAuthenticator = new CookieAuthenticator(connector);
     var result = await cookieAuthenticator.LoginOrRegister();
     var player = result.Player;    

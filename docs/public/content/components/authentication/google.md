@@ -13,7 +13,7 @@ ID приложения прописать в настройки Unity прое�
 
 ```csharp
 #if UNITY_ANDROID
-    var connector = new Connector("192.168.212.97:7777");
+    var connector = new ClusterConnector("127.0.0.1", 7777, false);
     string androidWebClientId = "some_code.apps.googleusercontent.com";
     var androidAuthenticator = new AndroidAuthenticator(androidWebClientId);
     var result = await androidAuthenticator.LoginOrRegister(connector);

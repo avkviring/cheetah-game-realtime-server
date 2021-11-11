@@ -32,6 +32,7 @@ nav:
           - "Введение": "components/authentication/index.md"
           - "Временная регистрация": "components/authentication/cookie.md"
           - "Google": "components/authentication/google.md"
+      - "Выбор битвы": "components/matchmaking/index.md"
       - "Битва реального времени":
           - "Введение": "components/relay/index.md"
           - "Базовые понятия":
