@@ -22,10 +22,6 @@ jsonwebtoken-google = { version = "0.1.1" }
 tonic = "0.6.1"
 prost = "0.9.0"
 
-# обход проблемы https://github.com/Alexhuszagh/rust-lexical/issues/65
-# это зависимость sqlx, как только они включат новую зависимость lexical-core
-# то эту строчку надо удалить
-lexical-core = "0.7.6"
 
 [dev-dependencies]
 cheetah-auth-cerberus = { path = "../Cerberus/", features = ["test-helper"] }
