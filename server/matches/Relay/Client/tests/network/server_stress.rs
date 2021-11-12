@@ -27,7 +27,7 @@ pub fn test() {
 		ffi::command::long_value::inc_long_value(&object_id, 1, 1);
 	}
 	ffi::client::set_current_client(client2);
-	thread::sleep(Duration::from_millis(500));
+	thread::sleep(Duration::from_millis(2000));
 	ffi::client::receive();
 
 	assert!(
