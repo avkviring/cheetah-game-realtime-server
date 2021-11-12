@@ -12,4 +12,4 @@ tonic = "0.6.1"
 
 
 [build-dependencies]
-tonic-build = {version="0.5.2", features=["rustfmt"]}
+tonic-build = {version="0.6.0", features=["rustfmt"]}
