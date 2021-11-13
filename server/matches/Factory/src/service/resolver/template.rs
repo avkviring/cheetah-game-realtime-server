@@ -126,6 +126,7 @@ pub mod test {
 			&vec![(
 				"score".to_string(),
 				Field {
+					name: None,
 					id: 77,
 					r#type: FieldType::Long,
 				},
@@ -229,6 +230,7 @@ pub mod test {
 			&vec![(
 				"score".to_string(),
 				Field {
+					name: None,
 					id: 128,
 					r#type: FieldType::Long,
 				},

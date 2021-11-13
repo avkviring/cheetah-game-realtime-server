@@ -104,6 +104,7 @@ pub mod test {
 				(
 					"score",
 					Field {
+						name: None,
 						id: 55,
 						r#type: FieldType::Long,
 					},
@@ -111,6 +112,7 @@ pub mod test {
 				(
 					"healing",
 					Field {
+						name: None,
 						id: 57,
 						r#type: FieldType::Double,
 					},
@@ -118,6 +120,7 @@ pub mod test {
 				(
 					"profile",
 					Field {
+						name: None,
 						id: 59,
 						r#type: FieldType::Struct,
 					},
@@ -149,6 +152,7 @@ pub mod test {
 			vec![(
 				"score",
 				Field {
+					name: None,
 					id: 55,
 					r#type: FieldType::Long,
 				},
@@ -171,6 +175,7 @@ pub mod test {
 			vec![(
 				"score",
 				Field {
+					name: None,
 					id: 0,
 					r#type: FieldType::Event,
 				},
@@ -193,6 +198,7 @@ pub mod test {
 			vec![(
 				"score",
 				Field {
+					name: None,
 					id: 55,
 					r#type: FieldType::Double,
 				},

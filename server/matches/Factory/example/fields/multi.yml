@@ -1,0 +1,9 @@
+# мощность урона
+name: power
+id: 100
+type: double
+---
+# мощность урона
+name: info
+id: 110
+type: struct

@@ -7,6 +7,14 @@ pub type TemplateName = String;
 pub type RoomName = String;
 pub type GroupName = String;
 
+///
+/// Если задано - то полное имя определяется из пути до файла + собственное имя, если не задано -
+/// то имя определяется только по пути
+///
+pub trait SelfName {
+	fn get_self_name(&self) -> Option<String>;
+}
+
 /// Описание комнаты
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -14,12 +22,26 @@ pub struct Room {
 	/// Объекты комнаты
 	pub objects: Vec<RoomObject>,
 }
+impl SelfName for Room {
+	fn get_self_name(&self) -> Option<String> {
+		None
+	}
+}
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Field {
+	///
+	/// Имя опционально, актуально только для мультидокументого файла
+	pub name: Option<String>,
 	pub id: u16,
 	pub r#type: FieldType,
+}
+
+impl SelfName for Field {
+	fn get_self_name(&self) -> Option<String> {
+		self.name.clone()
+	}
 }
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
@@ -28,6 +50,11 @@ pub struct Template {
 	pub id: u32,
 	#[serde(default)]
 	pub permissions: TemplatePermissions,
+}
+impl SelfName for Template {
+	fn get_self_name(&self) -> Option<String> {
+		None
+	}
 }
 
 #[derive(Debug, Deserialize, Default, Eq, PartialEq, Clone)]

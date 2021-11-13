@@ -97,6 +97,7 @@ pub mod tests {
 			fields: vec![(
 				"score".to_string(),
 				Field {
+					name: None,
 					id: 10,
 					r#type: FieldType::Long,
 				},

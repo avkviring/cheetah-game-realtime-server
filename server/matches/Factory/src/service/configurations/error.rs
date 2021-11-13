@@ -21,6 +21,10 @@ pub enum Error {
 		exist: FieldName,
 		current: FieldName,
 	},
+	NameAlreadyExists {
+		name: String,
+		file: PathBuf,
+	},
 }
 
 impl std::error::Error for Error {}
@@ -51,6 +55,9 @@ impl std::fmt::Display for Error {
 			}
 			Error::FieldWithSameIdAlreadyExists { id, exist, current } => {
 				write!(f, "Fields {} and {} has same id {} ", exist, current, id)
+			}
+			Error::NameAlreadyExists { name, file } => {
+				write!(f, "Name {} already exists in file {:?}", name, file)
 			}
 		}
 	}

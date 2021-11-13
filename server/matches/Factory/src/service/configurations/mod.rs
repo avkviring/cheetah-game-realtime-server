@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 
 use crate::service::configurations::error::Error;
 use crate::service::configurations::structures::{
-	Field, FieldName, FieldType, GroupName, Room, RoomName, Template, TemplateName,
+	Field, FieldName, FieldType, GroupName, Room, RoomName, SelfName, Template, TemplateName,
 };
 
 pub mod error;
@@ -88,7 +88,7 @@ impl Configurations {
 		})
 	}
 
-	fn load_items<T>(global_root: PathBuf, dir: &Path, prefix: &Path) -> Result<HashMap<String, T>, Error>
+	fn load_items<T: SelfName>(global_root: PathBuf, dir: &Path, prefix: &Path) -> Result<HashMap<String, T>, Error>
 	where
 		T: DeserializeOwned,
 	{
@@ -115,12 +115,29 @@ impl Configurations {
 				let name = prefix.join(name);
 				let path = entry.path();
 				let content = read_to_string(&path)?;
-				let value = serde_yaml::from_str(content.as_ref()).map_err(|e| Error::Yaml {
-					global_root: global_root.clone(),
-					file: path.clone(),
-					e,
-				})?;
-				result.insert(name.to_str().unwrap().to_string(), value);
+				for document in serde_yaml::Deserializer::from_str(content.as_ref()) {
+					let value = T::deserialize(document).map_err(|e| Error::Yaml {
+						global_root: global_root.clone(),
+						file: path.clone(),
+						e,
+					})?;
+					let name_from_path = name.to_str().unwrap().to_string();
+					let name_from_item = value
+						.get_self_name()
+						.map(|v| format!("/{}", v))
+						.unwrap_or_else(|| "".to_string());
+
+					let key = format!("{}{}", name_from_path, name_from_item);
+					match result.insert(key.clone(), value) {
+						None => {}
+						Some(_) => {
+							return Err(Error::NameAlreadyExists {
+								name: key,
+								file: path.clone(),
+							})
+						}
+					}
+				}
 			}
 		}
 
@@ -161,6 +178,7 @@ pub mod test {
 				(
 					"characteristic/damage".to_string(),
 					Field {
+						name: None,
 						id: 10,
 						r#type: FieldType::Double
 					}
@@ -168,6 +186,7 @@ pub mod test {
 				(
 					"characteristic/healing".to_string(),
 					Field {
+						name: None,
 						id: 15,
 						r#type: FieldType::Double
 					}
@@ -175,6 +194,7 @@ pub mod test {
 				(
 					"user/info".to_string(),
 					Field {
+						name: None,
 						id: 1,
 						r#type: FieldType::Struct
 					}
@@ -182,8 +202,25 @@ pub mod test {
 				(
 					"user/score".to_string(),
 					Field {
+						name: None,
 						id: 2,
 						r#type: FieldType::Long
+					}
+				),
+				(
+					"multi/power".to_string(),
+					Field {
+						name: Some("power".to_string()),
+						id: 100,
+						r#type: FieldType::Double
+					}
+				),
+				(
+					"multi/info".to_string(),
+					Field {
+						name: Some("info".to_string()),
+						id: 110,
+						r#type: FieldType::Struct
 					}
 				)
 			]
@@ -321,6 +358,7 @@ pub mod test {
 				(
 					"fieldA".to_string(),
 					Field {
+						name: None,
 						id: 100,
 						r#type: FieldType::Long,
 					},
@@ -328,6 +366,7 @@ pub mod test {
 				(
 					"fieldB".to_string(),
 					Field {
+						name: None,
 						id: 100,
 						r#type: FieldType::Long,
 					},
@@ -360,6 +399,7 @@ pub mod test {
 				(
 					"fieldA".to_string(),
 					Field {
+						name: None,
 						id: 100,
 						r#type: FieldType::Long,
 					},
@@ -367,6 +407,7 @@ pub mod test {
 				(
 					"fieldB".to_string(),
 					Field {
+						name: None,
 						id: 100,
 						r#type: FieldType::Struct,
 					},

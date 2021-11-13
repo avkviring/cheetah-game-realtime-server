@@ -19,7 +19,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let grpc_server = create_internal_grpc_server(&configurations);
 	let admin_server = create_admin_grpc_server(&configurations);
-	futures::join!(grpc_server, admin_server);
+	let (res1, res2) = futures::join!(grpc_server, admin_server);
+	res1.unwrap();
+	res2.unwrap();
 	Ok(())
 }
 
