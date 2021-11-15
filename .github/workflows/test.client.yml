@@ -18,6 +18,7 @@ jobs:
           - clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.bundle.meta
           - clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.dll.meta
           - clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so.meta
+          - clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.pdb.meta
     steps:
       - uses: actions/checkout@v2
       - run: test -f "${{ matrix.file}}" || exit -1
