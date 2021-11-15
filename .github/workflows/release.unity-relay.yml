@@ -57,7 +57,7 @@ jobs:
       - name: Install cross
         run: cargo install --version 0.1.16 cross
       - name: Build windows (client & server)
-        run: cd server/ && cross build --manifest-path matches/Relay/Client/Cargo.toml --target x86_64-pc-windows-gnu --release
+        run: cd server/ && cross build --manifest-path matches/Relay/Client/Cargo.toml --target x86_64-pc-windows-gnu
       - name: Build android armv7-linux-androideabi
         run: cd server/ && cross build --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
       - name: Build android aarch64-linux-android
@@ -67,7 +67,7 @@ jobs:
         with:
           name: android-windows-build
           path: |
-            server/target/x86_64-pc-windows-gnu/release/cheetah_matches_relay_client.dll
+            server/target/x86_64-pc-windows-gnu/debug/cheetah_matches_relay_client.dll
             server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so
             server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so
   publish-unity-package:
