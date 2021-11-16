@@ -54,13 +54,16 @@ pub fn create_relay_object(
 				relay_fields.structures.insert(field.id as u32, value);
 			}
 			FieldType::Event => {
-				Result::Err(Error::EventValueNotSupported(room_name.to_string(), value.field.clone()))?;
+				return Err(Error::EventValueNotSupported(room_name.to_string(), value.field.clone()));
 			}
 		}
 	}
 
 	Result::Ok(relay::GameObjectTemplate {
-		id: if room_object.id > 0 { room_object.id } else { next_object_id },
+		id: match room_object.id {
+			None => next_object_id,
+			Some(id) => id,
+		},
 		template: template.id,
 		groups: *groups,
 		fields: Option::Some(relay_fields),
@@ -220,7 +223,7 @@ pub mod test {
 		let result = create_relay_object(
 			&"room".to_string(),
 			&RoomObject {
-				id: 0,
+				id: None,
 				template: "template".to_string(),
 				group: "red".to_string(),
 				values: Default::default(),
@@ -256,7 +259,7 @@ pub mod test {
 			create_relay_object(
 				&"room".to_string(),
 				&RoomObject {
-					id: 100,
+					id: Some(100),
 					template: "template".to_string(),
 					group: "red".to_string(),
 					values: vec![],
@@ -276,7 +279,7 @@ pub mod test {
 		let result = create_relay_object(
 			&"room".to_string(),
 			&RoomObject {
-				id: 100,
+				id: Some(100),
 				template: "template".to_string(),
 				group: "red".to_string(),
 				values: vec![],
@@ -297,7 +300,7 @@ pub mod test {
 		create_relay_object(
 			&"room".to_string(),
 			&RoomObject {
-				id: 100,
+				id: Some(100),
 				template: "template".to_string(),
 				group: "red".to_string(),
 				values: field_values,

@@ -92,8 +92,7 @@ pub enum PermissionLevel {
 pub struct RoomObject {
 	/// опциональный идентификатор объекта
 	/// если не задан - то используется генерация идентификаторов
-	#[serde(default)]
-	pub id: u32,
+	pub id: Option<u32>,
 	/// Имя шаблона
 	pub template: TemplateName,
 	/// Имя группы

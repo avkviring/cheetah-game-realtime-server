@@ -115,7 +115,7 @@ impl Configurations {
 				let name = prefix.join(name);
 				let path = entry.path();
 				let content = read_to_string(&path)?;
-				for document in serde_yaml::Deserializer::from_str(content.as_ref()) {
+				for document in serde_yaml::Deserializer::from_str(Configurations::prepare_content(content).as_str()) {
 					let value = T::deserialize(document).map_err(|e| Error::Yaml {
 						global_root: global_root.clone(),
 						file: path.clone(),
@@ -142,6 +142,10 @@ impl Configurations {
 		}
 
 		Ok(result)
+	}
+
+	fn prepare_content(content: String) -> String {
+		content.replace("\u{feff}", "").to_string()
 	}
 }
 
@@ -222,6 +226,14 @@ pub mod test {
 						id: 110,
 						r#type: FieldType::Struct
 					}
+				),
+				(
+					"with_bom".to_string(),
+					Field {
+						name: None,
+						id: 55,
+						r#type: FieldType::Struct
+					}
 				)
 			]
 			.into_iter()
@@ -277,7 +289,7 @@ pub mod test {
 				Room {
 					objects: vec![
 						RoomObject {
-							id: 100,
+							id: Some(100),
 							template: "user".to_string(),
 							group: "red".to_string(),
 							values: vec![
@@ -295,7 +307,7 @@ pub mod test {
 							]
 						},
 						RoomObject {
-							id: 0,
+							id: None,
 							template: "weapons/turret".to_string(),
 							group: "blue".to_string(),
 							values: vec![FieldValue {

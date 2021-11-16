@@ -15,6 +15,8 @@ pub mod error;
 mod object;
 mod template;
 
+const DEFAULT_OBJECT_ID_START: u32 = 1;
+
 impl TryFrom<&Configurations> for HashMap<String, relay::RoomTemplate> {
 	type Error = Error;
 
@@ -31,9 +33,12 @@ impl TryFrom<&Configurations> for HashMap<String, relay::RoomTemplate> {
 				log::info!("resolve room {:?}", room_name);
 
 				let Room { objects } = room;
-
 				//  смещение для генерации id объектов
-				let auto_object_id_start = objects.iter().map(|o| o.id).max().unwrap_or(0);
+				let auto_object_id_start = objects
+					.iter()
+					.map(|o| o.id.unwrap_or(DEFAULT_OBJECT_ID_START))
+					.max()
+					.unwrap_or(DEFAULT_OBJECT_ID_START);
 
 				let objects = objects
 					.iter()
@@ -56,5 +61,49 @@ impl TryFrom<&Configurations> for HashMap<String, relay::RoomTemplate> {
 				Ok((room_name.clone(), relay_room))
 			})
 			.collect()
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use std::collections::HashMap;
+	use std::convert::TryFrom;
+
+	use crate::proto::matches::relay::internal as relay;
+	use crate::service::configurations::structures::{Room, RoomObject, Template};
+	use crate::service::configurations::Configurations;
+
+	#[test]
+	fn should_auto_increment_start_not_zero() {
+		let config = Configurations {
+			groups: vec![("group".to_string(), 7)].into_iter().collect(),
+			fields: Default::default(),
+			templates: vec![(
+				"template".to_string(),
+				Template {
+					id: 0,
+					permissions: Default::default(),
+				},
+			)]
+			.into_iter()
+			.collect(),
+			rooms: vec![(
+				"name".to_string(),
+				Room {
+					objects: vec![RoomObject {
+						id: None,
+						template: "template".to_string(),
+						group: "group".to_string(),
+						values: vec![],
+					}],
+				},
+			)]
+			.into_iter()
+			.collect(),
+		};
+
+		let result = HashMap::<String, relay::RoomTemplate>::try_from(&config).unwrap();
+		let room = result.get(&"name".to_string()).unwrap();
+		assert_eq!(room.objects.first().unwrap().id, 1);
 	}
 }
