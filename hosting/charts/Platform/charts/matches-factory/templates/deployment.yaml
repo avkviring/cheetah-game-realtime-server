@@ -36,4 +36,4 @@ spec:
       volumes:
         - name: room-templates
           configMap:
-            name: {{ .Values.global.roomTemplates}}
+            name: "rooms-configuration"

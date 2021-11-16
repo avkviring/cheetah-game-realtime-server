@@ -132,13 +132,15 @@ jobs:
       - name: Deploy Release
         run: |
           cd hosting/charts/
-          tar -czf Platform/charts/matches-factory/rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
+          tar -czf rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
+          cat rooms-configuration.tgz | openssl enc -A -base64
           helm upgrade --debug --install ${{ steps.vars.outputs.short_ref }} \
             --namespace=${{ steps.vars.outputs.short_ref }} \
             Platform \
             -f Platform/values-dev.yaml \
             --set global.grpcDomain=${{ steps.vars.outputs.short_ref }}.cluster.dev.cheetah.games \
             --set global.platformImageVersion=${{ github.sha }} \
+            --set global.roomsConfiguration=`cat rooms-configuration.tgz | openssl enc -A -base64` \
             --wait=true
           sleep 10
       - uses: actions/download-artifact@v2

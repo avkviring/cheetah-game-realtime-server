@@ -5,4 +5,4 @@ kind: ConfigMap
 metadata:
   name: "rooms-configuration"
 binaryData:
-  configs.tgz: {{.Files.Get "rooms-configuration.tgz" |b64enc}}
+  configs.tgz: {{.Values.global.roomsConfiguration}}
