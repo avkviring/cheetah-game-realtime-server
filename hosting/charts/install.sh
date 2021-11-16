@@ -1,6 +1,6 @@
 ## Выкладка платформы в kubernetes для локальных тестов
 tar -czf Platform/charts/matches-factory/rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
-helm -n kviring uninstall $1
+helm -n $1 uninstall $1
 kubectl delete --namespace $1 --all deployments,statefulsets,services,pods,pvc,pv
 helm -n $1 upgrade \
 --install $1 Platform \
