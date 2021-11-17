@@ -26,7 +26,7 @@ futures = "0.3.16"
 
 [dev-dependencies]
 tempfile = "3.2.0"
-include_dir = "0.6.2"
+include_dir = "0.7.0"
 
 [build-dependencies]
 tonic-build = "0.6.0"

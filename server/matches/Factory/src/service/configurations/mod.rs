@@ -160,7 +160,7 @@ pub mod test {
 	};
 	use crate::service::configurations::Configurations;
 
-	pub const EXAMPLE_DIR: Dir = include_dir!("example/");
+	pub const EXAMPLE_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/example/");
 
 	#[test]
 	pub fn should_load_groups() {
