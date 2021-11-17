@@ -18,7 +18,7 @@ kube-derive = { version = "0.63.2", default-features = false }
 k8s-openapi = { version = "0.13.1", default-features = false, features = ["v1_22"] }
 cheetah-microservice = { path = "../../Microservice" }
 serde = { version = "1.0.130", features = ["derive"] }
-serde_json = "1.0.69"
+serde_json = "1.0.70"
 serde_yaml = "0.8.21"
 schemars = "0.8.7"
 validator = { version = "0.14.0", features = ["derive"] }
