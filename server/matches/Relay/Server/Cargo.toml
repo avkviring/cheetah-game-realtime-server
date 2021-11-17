@@ -19,7 +19,7 @@ indexmap = { version = "1.7.0", features = ["serde-1"] }
 cheetah-matches-relay-common = { path = "../Common/" }
 fnv = "1.0.7"
 serde = { version = "1.0.127", features = ["derive", "rc"] }
-heapless = { version = "0.7.7", features = ["serde"] }
+heapless = { version = "0.7.8", features = ["serde"] }
 futures = "0.3.16"
 serde_json = "1.0.70"
 rmp-serde = "0.15.5"
