@@ -2,6 +2,8 @@ using System.Collections;
 using AOT;
 using Cheetah.Matches.Matchmaking.GRPC;
 using Cheetah.Matches.Relay.Command;
+using Cheetah.Matches.Relay.FFI;
+using Cheetah.Matches.Relay.Type;
 using Cheetah.Platform;
 using NUnit.Framework;
 using Shared;
