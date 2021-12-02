@@ -153,7 +153,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
 		UniDirectionCommand::C2S(command) => match command {
 			C2SCommand::Create(command) => {
-				format!("{:?} ", command.access_groups)
+				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
 			}
 			C2SCommand::Created(_) => "".to_string(),
 			C2SCommand::SetLong(command) => {
@@ -188,7 +188,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 			C2SCommand::DetachFromRoom => "".to_string(),
 		},
 		UniDirectionCommand::S2C(command) => match command {
-			S2CCommand::Create(command) => format!("access_groups = {:?}", command.access_groups),
+			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
 			S2CCommand::Created(_) => "".to_string(),
 			S2CCommand::SetLong(command) => format!("{:?}", command.value),
 			S2CCommand::SetFloat(command) => format!("{:?}", command.value),

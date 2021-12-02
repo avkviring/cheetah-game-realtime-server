@@ -6,12 +6,10 @@ use cheetah_matches_relay_common::commands::command::S2CCommandWithMeta;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_matches_relay_common::room::access::AccessGroups;
-
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
-
 use crate::room::{Room, User};
 
 ///
@@ -72,7 +70,7 @@ impl Room {
 					if allow {
 						command_trace_session
 							.borrow_mut()
-							.collect_s2c(object_template, 100, &command.command);
+							.collect_s2c(object_template, user.id, &command.command);
 
 						let command_with_meta = S2CCommandWithMeta {
 							meta: meta.clone(),
@@ -129,7 +127,7 @@ impl Room {
 								};
 								command_trace_session
 									.borrow_mut()
-									.collect_s2c(object_template, 100, &command.command);
+									.collect_s2c(object_template, user.id, &command.command);
 
 								let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
 								protocol
