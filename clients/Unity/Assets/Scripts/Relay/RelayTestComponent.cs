@@ -1,7 +1,6 @@
 using Cheetah.Matches.Matchmaking.GRPC;
-using Cheetah.Matches.Relay.Command;
-using Cheetah.Matches.Relay.FFI;
-using Cheetah.Matches.Relay.Type;
+using Cheetah.Matches.Relay;
+using Cheetah.Matches.Relay.Codec;
 using Cheetah.Platform;
 using Shared;
 using UnityEngine;
@@ -13,53 +12,46 @@ namespace Relay
     /// </summary>
     public class RelayTestComponent : MonoBehaviour
     {
-        private ushort clientId;
-        private CheetahObjectId objectA;
-        private CheetahObjectId objectB;
+        private CheetahObject objectA;
+        private CheetahObject objectB;
+        private CheetahClient relayClient;
         private ClusterConnector clusterConnector;
 
         private async void OnEnable()
         {
             clusterConnector = new ClusterConnector("127.0.0.1", 7777, false);
-            var ticket = await PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector);
+            var ticket = await PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector,"user");
             ConnectToRelay(ticket);
             CreateRelayObjects();
         }
 
         private void ConnectToRelay(TicketResponse ticket)
         {
-            var userPrivateKey = new CheetahBuffer(ticket.PrivateKey.ToByteArray());
-            CheetahClient.CreateClient(ticket.RelayGameHost + ":" + ticket.RelayGamePort, (ushort)ticket.UserId, ticket.RoomId,
-                ref userPrivateKey, 0, out clientId);
-            CheetahClient.SetCurrentClient(clientId);
+            relayClient = new CheetahClient(ticket.RelayGameHost, ticket.RelayGamePort, ticket.UserId, ticket.RoomId, ticket.PrivateKey.ToByteArray(),
+                new CodecRegistry());
         }
 
         private void CreateRelayObjects()
         {
-            CheetahObject.Create(1, PlayerHelper.UserGroup, ref objectA);
-            CheetahObject.Created(ref objectA);
-            CheetahObject.Create(100, PlayerHelper.UserGroup, ref objectB);
-            CheetahObject.Created(ref objectB);
+            objectA = relayClient.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            objectB = relayClient.NewObjectBuilder(100, PlayerHelper.UserGroup).Build();
         }
 
         private long counter;
 
+
         private void Update()
         {
-            if (clientId == 0)
-            {
-                return;
-            }
-
-            CheetahLong.Increment(ref objectA, 2, counter);
-            CheetahDouble.Increment(ref objectB, 20, counter);
-            CheetahDouble.Increment(ref objectB, 30, 10);
-            CheetahClient.Receive();
+            objectA.IncrementLong(2, counter);
+            objectB.IncrementDouble(20, counter);
+            objectB.IncrementDouble(30, 10);
+            relayClient.Update();
             counter++;
         }
 
         private async void OnDestroy()
         {
+            relayClient.Destroy();
             await clusterConnector.Destroy();
         }
     }

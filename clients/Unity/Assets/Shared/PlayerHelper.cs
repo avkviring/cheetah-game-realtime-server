@@ -13,10 +13,10 @@ namespace Shared
         /// </summary>
         /// <param name="clusterConnector"></param>
         /// <returns></returns>
-        public static async Task<TicketResponse> CreateNewPlayerAndMatchToBattle(ClusterConnector clusterConnector)
+        public static async Task<TicketResponse> CreateNewPlayerAndMatchToBattle(ClusterConnector clusterConnector, string prefix)
         {
             // создаем нового пользователя
-            var cookieAuthenticator = new CookieAuthenticator(clusterConnector, "user1");
+            var cookieAuthenticator = new CookieAuthenticator(clusterConnector, prefix);
             cookieAuthenticator.RemoveLocalCookie();
             var loginOrRegister = await cookieAuthenticator.LoginOrRegister();
 
