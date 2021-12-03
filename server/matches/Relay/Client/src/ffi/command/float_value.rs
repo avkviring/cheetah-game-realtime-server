@@ -9,20 +9,7 @@ use crate::ffi::{execute_with_client, GameObjectIdFFI};
 pub extern "C" fn set_float_value_listener(
 	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64),
 ) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				client.register_float_value_listener(listener);
-			},
-			if trace {
-				listener(&S2CMetaCommandInformationFFI::stub(), &GameObjectIdFFI::stub(), 77, 5.0);
-				Some(format!("set_float_value_listener"))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.register_float_value_listener(listener)).is_ok()
 }
 
 #[no_mangle]

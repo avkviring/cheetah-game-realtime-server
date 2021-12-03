@@ -12,16 +12,7 @@ use crate::registry::ClientId;
 
 #[no_mangle]
 pub extern "C" fn get_connection_status(result: &mut ConnectionStatus) -> bool {
-	match execute_with_client(|client, trace| {
-		(
-			client.get_connection_status(),
-			if trace {
-				Some(format!("get_connection_status {:?}", result))
-			} else {
-				None
-			},
-		)
-	}) {
+	match execute_with_client(|client| client.get_connection_status()) {
 		Ok(status) => {
 			*result = status;
 			true
@@ -32,129 +23,61 @@ pub extern "C" fn get_connection_status(result: &mut ConnectionStatus) -> bool {
 
 #[no_mangle]
 pub extern "C" fn set_current_client(client_id: ClientId) -> bool {
-	execute(|registry| {
-		if registry.trace_mode_callback.is_some() {
-			registry.trace(format!("set_current_client {:?}", client_id));
-		}
-		match registry.controllers.get(&client_id) {
-			None => false,
-			Some(_) => {
-				registry.current_client = Some(client_id);
-				true
-			}
+	execute(|registry| match registry.controllers.get(&client_id) {
+		None => false,
+		Some(_) => {
+			registry.current_client = Some(client_id);
+			true
 		}
 	})
 }
 
 #[no_mangle]
 pub extern "C" fn destroy_client() -> bool {
-	execute(|registry| {
-		if registry.trace_mode_callback.is_some() {
-			registry.trace("destroy_client".to_string());
-		}
-		registry.destroy_client()
-	})
+	execute(|registry| registry.destroy_client())
 }
 
 #[no_mangle]
 pub extern "C" fn receive() -> bool {
-	execute_with_client(|client, trace| (client.receive(), if trace { Some(format!("receive")) } else { None })).is_ok()
+	execute_with_client(|client| client.receive()).is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn set_rtt_emulation(rtt_in_ms: u64, rtt_dispersion: f64) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion),
-			if trace {
-				Some(format!("set_rtt_emulation {:?} {:?}", rtt_in_ms, rtt_dispersion))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)).is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn set_drop_emulation(drop_probability: f64, drop_time_in_ms: u64) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms)),
-			if trace {
-				Some(format!("set_drop_emulation {:?} {:?}", drop_probability, drop_time_in_ms))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms))).is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn reset_emulation() -> bool {
-	execute_with_client(|client, trace| {
-		(
-			client.reset_emulation(),
-			if trace { Some(format!("reset_emulation")) } else { None },
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.reset_emulation()).is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn set_source_object_to_meta(source_object: &GameObjectIdFFI) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				let source_object = if source_object.id == 0 {
-					Option::None
-				} else {
-					Option::Some(GameObjectId::from(source_object))
-				};
-				client.source_object = source_object
-			},
-			if trace {
-				Some(format!("set_source_object_to_meta {:?}", source_object))
-			} else {
-				None
-			},
-		)
+	execute_with_client(|client| {
+		let source_object = if source_object.id == 0 {
+			Option::None
+		} else {
+			Option::Some(GameObjectId::from(source_object))
+		};
+		client.source_object = source_object;
 	})
 	.is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn get_statistics(statistics: &mut Statistics) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				statistics.last_frame_id = client.current_frame_id.load(Ordering::Relaxed);
-				statistics.rtt_in_ms = client.rtt_in_ms.load(Ordering::Relaxed);
-				statistics.average_retransmit_frames = client.average_retransmit_frames.load(Ordering::Relaxed);
-			},
-			if trace {
-				Some(format!("get_statistics {:?}", statistics))
-			} else {
-				None
-			},
-		)
+	execute_with_client(|client| {
+		statistics.last_frame_id = client.current_frame_id.load(Ordering::Relaxed);
+		statistics.rtt_in_ms = client.rtt_in_ms.load(Ordering::Relaxed);
+		statistics.average_retransmit_frames = client.average_retransmit_frames.load(Ordering::Relaxed);
 	})
 	.is_ok()
-}
-
-#[no_mangle]
-pub extern "C" fn enable_test_mode(on_trace: extern "C" fn(*const u16)) {
-	execute(|registry| {
-		registry.enable_test_mode(on_trace);
-	});
-}
-
-#[no_mangle]
-pub extern "C" fn disable_test_mode() {
-	execute(|registry| {
-		registry.disable_test_mode();
-	});
 }
 
 #[derive(Debug, Copy, Clone)]

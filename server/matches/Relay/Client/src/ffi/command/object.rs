@@ -9,54 +9,19 @@ use crate::ffi::{execute_with_client, GameObjectIdFFI};
 pub extern "C" fn set_create_object_listener(
 	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, template: u16),
 ) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				client.register_create_object_listener(listener);
-			},
-			if trace {
-				listener(&S2CMetaCommandInformationFFI::stub(), &GameObjectIdFFI::stub(), 10);
-				Some(format!("set_create_object_listener"))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.register_create_object_listener(listener)).is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn set_created_object_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				client.listener_created_object = Option::Some(listener);
-			},
-			if trace {
-				listener(&S2CMetaCommandInformationFFI::stub(), &GameObjectIdFFI::stub());
-				Some(format!("set_created_object_listener"))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.listener_created_object = Option::Some(listener)).is_ok()
 }
 
 #[no_mangle]
 pub extern "C" fn create_object(template: u16, access_group: u64, result: &mut GameObjectIdFFI) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				let game_object_id = client.create_game_object(template, access_group);
-				*result = game_object_id;
-			},
-			if trace {
-				Some(format!("create_object {:?} {:?}", template, access_group))
-			} else {
-				None
-			},
-		)
+	execute_with_client(|client| {
+		let game_object_id = client.create_game_object(template, access_group);
+		*result = game_object_id;
 	})
 	.is_ok()
 }
@@ -70,20 +35,7 @@ pub extern "C" fn created_object(object_id: &GameObjectIdFFI) -> bool {
 
 #[no_mangle]
 pub extern "C" fn set_delete_object_listener(listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI)) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				client.register_delete_object_listener(listener);
-			},
-			if trace {
-				listener(&S2CMetaCommandInformationFFI::stub(), &GameObjectIdFFI::stub());
-				Some(format!("set_delete_object_listener"))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.register_delete_object_listener(listener)).is_ok()
 }
 
 #[no_mangle]

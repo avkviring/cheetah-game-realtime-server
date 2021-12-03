@@ -5,15 +5,7 @@ use crate::ffi::execute_with_client;
 
 #[no_mangle]
 pub extern "C" fn attach_to_room() -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				client.attach_to_room();
-			},
-			if trace { Some(format!("attach_to_room")) } else { None },
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.attach_to_room()).is_ok()
 }
 
 #[no_mangle]

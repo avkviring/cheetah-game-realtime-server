@@ -17,15 +17,5 @@ pub enum Channel {
 
 #[no_mangle]
 pub extern "C" fn set_channel(channel: Channel, group: ChannelGroupId) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			client.set_current_channel(channel.clone(), group),
-			if trace {
-				Some(format!("set_channel {:?} {:?}", channel, group))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.set_current_channel(channel.clone(), group)).is_ok()
 }

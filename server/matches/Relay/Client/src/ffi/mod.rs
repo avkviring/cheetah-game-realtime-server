@@ -29,7 +29,7 @@ where
 
 pub fn execute_with_client<F, R>(action: F) -> Result<R, ()>
 where
-	F: FnOnce(&mut ClientController, bool) -> (R, Option<String>),
+	F: FnOnce(&mut ClientController) -> R,
 {
 	execute(|registry| match registry.current_client {
 		None => {
@@ -43,11 +43,7 @@ where
 			}
 			Some(client_api) => {
 				if !client_api.error_in_client_thread {
-					let (result, trace) = action(client_api, registry.trace_mode_callback.is_some());
-					if let Some(trace) = trace {
-						registry.trace(trace);
-					}
-					Result::Ok(result)
+					Result::Ok(action(client_api))
 				} else {
 					registry.destroy_client();
 					Result::Err(())
@@ -96,7 +92,7 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 			GameObjectOwner::Room => GameObjectIdFFI {
 				id: from.id,
 				room_owner: true,
-				user_id: UserId::max_value(),
+				user_id: UserId::MAX,
 			},
 			GameObjectOwner::User(user_id) => GameObjectIdFFI {
 				id: from.id,

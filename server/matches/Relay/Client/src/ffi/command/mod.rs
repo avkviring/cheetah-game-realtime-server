@@ -12,20 +12,7 @@ pub mod room;
 pub mod structure;
 
 fn send_command(command: C2SCommand) -> bool {
-	let command_clone = command.clone();
-	execute_with_client(|client, trace| {
-		(
-			{
-				client.send(command);
-			},
-			if trace {
-				Some(format!("send_command {:?}", command_clone))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.send(command)).is_ok()
 }
 
 #[repr(C)]

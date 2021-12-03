@@ -10,25 +10,7 @@ use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 pub extern "C" fn set_structure_listener(
 	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI),
 ) -> bool {
-	execute_with_client(|client, trace| {
-		(
-			{
-				client.register_structure_listener(listener);
-			},
-			if trace {
-				listener(
-					&S2CMetaCommandInformationFFI::stub(),
-					&GameObjectIdFFI::stub(),
-					77,
-					&BufferFFI::stub(),
-				);
-				Some(format!("set_structure_listener"))
-			} else {
-				None
-			},
-		)
-	})
-	.is_ok()
+	execute_with_client(|client| client.register_structure_listener(listener)).is_ok()
 }
 
 #[no_mangle]
