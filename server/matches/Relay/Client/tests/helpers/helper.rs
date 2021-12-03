@@ -7,14 +7,13 @@ use rand::RngCore;
 
 use cheetah_matches_relay::room::template::config::UserTemplate;
 use cheetah_matches_relay::server::manager::RelayManager;
-
-use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
-
-use crate::helpers::server::IntegrationTestServerBuilder;
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::client::do_create_client;
 use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
 use cheetah_matches_relay_client::registry::ClientId;
+use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
+
+use crate::helpers::server::IntegrationTestServerBuilder;
 
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
@@ -42,14 +41,15 @@ impl IntegrationTestHelper {
 		thread::sleep(Duration::from_millis(500));
 	}
 
-	pub fn create_user_object(&self) -> GameObjectIdFFI {
+	pub fn create_user_object(&self, client_id: ClientId) -> GameObjectIdFFI {
 		let mut object_id = GameObjectIdFFI::new();
 		ffi::command::object::create_object(
+			client_id,
 			IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
 			IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
 			&mut object_id,
 		);
-		ffi::command::object::created_object(&object_id);
+		ffi::command::object::created_object(client_id, &object_id);
 		object_id
 	}
 

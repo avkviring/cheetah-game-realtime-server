@@ -11,16 +11,14 @@ use crate::helpers::helper::*;
 fn should_inc() {
 	let (helper, client1, client2) = setup(Default::default());
 
-	ffi::client::set_current_client(client1);
-	let object_id = helper.create_user_object();
-	ffi::command::float_value::inc_float_value(&object_id, 1, 100.0);
-	ffi::command::float_value::inc_float_value(&object_id, 1, 100.0);
+	let object_id = helper.create_user_object(client1);
+	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
+	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
 
-	ffi::client::set_current_client(client2);
-	ffi::command::float_value::set_float_value_listener(listener_for_inc);
-	ffi::command::room::attach_to_room();
+	ffi::command::float_value::set_double_value_listener(client2, listener_for_inc);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	println!("{:?}", INCR.lock().unwrap().as_ref());
 	assert!(matches!(INCR.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==200.0 ));
@@ -30,16 +28,14 @@ fn should_inc() {
 fn should_set() {
 	let (helper, client1, client2) = setup(Default::default());
 
-	ffi::client::set_current_client(client1);
-	let object_id = helper.create_user_object();
-	ffi::command::float_value::set_float_value(&object_id, 1, 100.0);
-	ffi::command::float_value::set_float_value(&object_id, 1, 200.0);
+	let object_id = helper.create_user_object(client1);
+	ffi::command::float_value::set_double_value(client1, &object_id, 1, 100.0);
+	ffi::command::float_value::set_double_value(client1, &object_id, 1, 200.0);
 
-	ffi::client::set_current_client(client2);
-	ffi::command::float_value::set_float_value_listener(listener_for_set);
-	ffi::command::room::attach_to_room();
+	ffi::command::float_value::set_double_value_listener(client2, listener_for_set);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	println!("{:?}", SET.lock().unwrap().as_ref());
 	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==200.0 ));

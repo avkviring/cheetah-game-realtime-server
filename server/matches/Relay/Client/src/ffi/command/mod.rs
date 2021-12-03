@@ -3,6 +3,7 @@ use cheetah_matches_relay_common::commands::command::C2SCommand;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
+use crate::registry::ClientId;
 
 pub mod event;
 pub mod float_value;
@@ -11,8 +12,8 @@ pub mod object;
 pub mod room;
 pub mod structure;
 
-fn send_command(command: C2SCommand) -> bool {
-	execute_with_client(|client| client.send(command)).is_ok()
+fn send_command(client_id: ClientId, command: C2SCommand) -> bool {
+	execute_with_client(client_id, |client| client.send(command)).is_ok()
 }
 
 #[repr(C)]

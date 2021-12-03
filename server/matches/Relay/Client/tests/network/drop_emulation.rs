@@ -13,25 +13,21 @@ use crate::helpers::server::*;
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client1);
-	let object_id = helper.create_user_object();
+	let object_id = helper.create_user_object(client1);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client2);
-	ffi::command::long_value::set_long_value_listener(listener);
-	ffi::command::room::attach_to_room();
-	ffi::client::set_drop_emulation(0.1, 0);
+	ffi::command::long_value::set_long_value_listener(client2, listener);
+	ffi::command::room::attach_to_room(client2);
+	ffi::client::set_drop_emulation(client2, 0.1, 0);
 
-	ffi::client::set_current_client(client1);
-	ffi::channel::set_channel(Channel::UnreliableUnordered, 0);
+	ffi::channel::set_channel(client1, Channel::UnreliableUnordered, 0);
 	for _ in 0..20000 {
-		ffi::command::long_value::inc_long_value(&object_id, 1, 1);
+		ffi::command::long_value::inc_long_value(client1, &object_id, 1, 1);
 	}
 	helper.wait_udp();
 	helper.wait_udp();
 	helper.wait_udp();
-	ffi::client::set_current_client(client2);
-	ffi::client::receive();
+	ffi::client::receive(client2);
 	println!("value {:?}", SET.lock().unwrap().as_ref());
 	assert!(
 		matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id ==

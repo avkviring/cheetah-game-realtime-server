@@ -11,8 +11,8 @@ use crate::ffi::{execute, execute_with_client, BufferFFI, GameObjectIdFFI};
 use crate::registry::ClientId;
 
 #[no_mangle]
-pub extern "C" fn get_connection_status(result: &mut ConnectionStatus) -> bool {
-	match execute_with_client(|client| client.get_connection_status()) {
+pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut ConnectionStatus) -> bool {
+	match execute_with_client(client_id, |client| client.get_connection_status()) {
 		Ok(status) => {
 			*result = status;
 			true
@@ -22,44 +22,39 @@ pub extern "C" fn get_connection_status(result: &mut ConnectionStatus) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn set_current_client(client_id: ClientId) -> bool {
-	execute(|registry| match registry.controllers.get(&client_id) {
-		None => false,
-		Some(_) => {
-			registry.current_client = Some(client_id);
-			true
-		}
+pub extern "C" fn destroy_client(client: ClientId) -> bool {
+	execute(|registry| registry.destroy_client(client))
+}
+
+#[no_mangle]
+pub extern "C" fn receive(client_id: ClientId) -> bool {
+	execute_with_client(client_id, |client| client.receive()).is_ok()
+}
+
+#[no_mangle]
+pub extern "C" fn set_rtt_emulation(client_id: ClientId, rtt_in_ms: u64, rtt_dispersion: f64) -> bool {
+	execute_with_client(client_id, |client| {
+		client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)
 	})
+	.is_ok()
 }
 
 #[no_mangle]
-pub extern "C" fn destroy_client() -> bool {
-	execute(|registry| registry.destroy_client())
+pub extern "C" fn set_drop_emulation(client_id: ClientId, drop_probability: f64, drop_time_in_ms: u64) -> bool {
+	execute_with_client(client_id, |client| {
+		client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms))
+	})
+	.is_ok()
 }
 
 #[no_mangle]
-pub extern "C" fn receive() -> bool {
-	execute_with_client(|client| client.receive()).is_ok()
+pub extern "C" fn reset_emulation(client_id: ClientId) -> bool {
+	execute_with_client(client_id, |client| client.reset_emulation()).is_ok()
 }
 
 #[no_mangle]
-pub extern "C" fn set_rtt_emulation(rtt_in_ms: u64, rtt_dispersion: f64) -> bool {
-	execute_with_client(|client| client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)).is_ok()
-}
-
-#[no_mangle]
-pub extern "C" fn set_drop_emulation(drop_probability: f64, drop_time_in_ms: u64) -> bool {
-	execute_with_client(|client| client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms))).is_ok()
-}
-
-#[no_mangle]
-pub extern "C" fn reset_emulation() -> bool {
-	execute_with_client(|client| client.reset_emulation()).is_ok()
-}
-
-#[no_mangle]
-pub extern "C" fn set_source_object_to_meta(source_object: &GameObjectIdFFI) -> bool {
-	execute_with_client(|client| {
+pub extern "C" fn set_source_object_to_meta(client_id: ClientId, source_object: &GameObjectIdFFI) -> bool {
+	execute_with_client(client_id, |client| {
 		let source_object = if source_object.id == 0 {
 			Option::None
 		} else {
@@ -71,8 +66,8 @@ pub extern "C" fn set_source_object_to_meta(source_object: &GameObjectIdFFI) -> 
 }
 
 #[no_mangle]
-pub extern "C" fn get_statistics(statistics: &mut Statistics) -> bool {
-	execute_with_client(|client| {
+pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistics) -> bool {
+	execute_with_client(client_id, |client| {
 		statistics.last_frame_id = client.current_frame_id.load(Ordering::Relaxed);
 		statistics.rtt_in_ms = client.rtt_in_ms.load(Ordering::Relaxed);
 		statistics.average_retransmit_frames = client.average_retransmit_frames.load(Ordering::Relaxed);

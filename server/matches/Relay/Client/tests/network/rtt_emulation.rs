@@ -13,25 +13,21 @@ use crate::helpers::server::*;
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client1);
-	let object_id = helper.create_user_object();
+	let object_id = helper.create_user_object(client1);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client2);
-	ffi::command::long_value::set_long_value_listener(listener);
-	ffi::command::room::attach_to_room();
-	ffi::client::set_rtt_emulation(300, 0.0);
+	ffi::command::long_value::set_long_value_listener(client2, listener);
+	ffi::command::room::attach_to_room(client2);
+	ffi::client::set_rtt_emulation(client2, 300, 0.0);
 
-	ffi::client::set_current_client(client1);
-	ffi::command::long_value::set_long_value(&object_id, 1, 555);
+	ffi::command::long_value::set_long_value(client1, &object_id, 1, 555);
 
-	ffi::client::set_current_client(client2);
 	std::thread::sleep(Duration::from_millis(200));
-	ffi::client::receive();
+	ffi::client::receive(client2);
 	assert!(matches!(SET.lock().unwrap().as_ref(), Option::None));
 
 	std::thread::sleep(Duration::from_millis(250));
-	ffi::client::receive();
+	ffi::client::receive(client2);
 	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==555 ));
 }
 

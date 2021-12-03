@@ -6,7 +6,7 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::UserId;
 
 use crate::controller::ClientController;
-use crate::registry::Registry;
+use crate::registry::{ClientId, Registry};
 
 pub mod channel;
 pub mod client;
@@ -27,29 +27,23 @@ where
 	})
 }
 
-pub fn execute_with_client<F, R>(action: F) -> Result<R, ()>
+pub fn execute_with_client<F, R>(client_id: ClientId, action: F) -> Result<R, ()>
 where
 	F: FnOnce(&mut ClientController) -> R,
 {
-	execute(|registry| match registry.current_client {
+	execute(|registry| match registry.controllers.get_mut(&client_id) {
 		None => {
-			log::error!("current client not set");
+			log::error!("client not found {:?}", client_id);
 			Result::Err(())
 		}
-		Some(ref client_id) => match registry.controllers.get_mut(client_id) {
-			None => {
-				log::error!("client not found {:?}", client_id);
+		Some(client_api) => {
+			if !client_api.error_in_client_thread {
+				Result::Ok(action(client_api))
+			} else {
+				registry.destroy_client(client_id);
 				Result::Err(())
 			}
-			Some(client_api) => {
-				if !client_api.error_in_client_thread {
-					Result::Ok(action(client_api))
-				} else {
-					registry.destroy_client();
-					Result::Err(())
-				}
-			}
-		},
+		}
 	})
 }
 

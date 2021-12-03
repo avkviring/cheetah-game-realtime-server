@@ -12,20 +12,17 @@ use crate::helpers::server::*;
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client2);
-	ffi::command::structure::set_structure_listener(on_structure_listener);
-	ffi::command::room::attach_to_room();
+	ffi::command::structure::set_structure_listener(client2, on_structure_listener);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client1);
-	let object_id = helper.create_user_object();
+	let object_id = helper.create_user_object(client1);
 	let structure_buffer = BufferFFI::from(vec![100]);
 	let structure_field_id = 10;
-	ffi::command::structure::set_structure(&object_id, structure_field_id, &structure_buffer);
+	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
 
 	helper.wait_udp();
-	ffi::client::set_current_client(client2);
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	assert!(
 		matches!(STRUCTURE.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == structure_field_id && *buffer == structure_buffer )

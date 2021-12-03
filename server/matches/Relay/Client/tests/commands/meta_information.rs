@@ -12,20 +12,17 @@ use crate::helpers::server::*;
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client2);
-	ffi::command::structure::set_structure_listener(on_structure_listener);
-	ffi::command::room::attach_to_room();
+	ffi::command::structure::set_structure_listener(client2, on_structure_listener);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client1);
-	let meta_object_id = helper.create_user_object();
-	ffi::client::set_source_object_to_meta(&meta_object_id);
-	let object_id_with_structure = helper.create_user_object();
-	ffi::command::structure::set_structure(&object_id_with_structure, 1, &BufferFFI::from(vec![1]));
+	let meta_object_id = helper.create_user_object(client1);
+	ffi::client::set_source_object_to_meta(client1, &meta_object_id);
+	let object_id_with_structure = helper.create_user_object(client1);
+	ffi::command::structure::set_structure(client1, &object_id_with_structure, 1, &BufferFFI::from(vec![1]));
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client2);
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	assert!(matches!(STRUCTURE.lock().unwrap().as_ref(), Some(object_id) if *object_id==meta_object_id))
 }

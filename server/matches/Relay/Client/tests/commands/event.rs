@@ -12,25 +12,27 @@ use crate::helpers::server::*;
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client2);
-	ffi::command::event::set_event_listener(on_event_listener);
-	ffi::command::room::attach_to_room();
+	ffi::command::event::set_event_listener(client2, on_event_listener);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client1);
 	let mut object_id = GameObjectIdFFI::new();
-	ffi::command::object::create_object(1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
-	ffi::command::object::created_object(&object_id);
+	ffi::command::object::create_object(
+		client1,
+		1,
+		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
+		&mut object_id,
+	);
+	ffi::command::object::created_object(client1, &object_id);
 
 	let mut event_buffer = BufferFFI::new();
 	event_buffer.len = 1;
 	event_buffer.buffer[0] = 100;
 	let event_field_id = 10;
-	ffi::command::event::send_event(&object_id, event_field_id, &event_buffer);
+	ffi::command::event::send_event(client1, &object_id, event_field_id, &event_buffer);
 
 	helper.wait_udp();
-	ffi::client::set_current_client(client2);
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	assert!(
 		matches!(EVENT.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer )

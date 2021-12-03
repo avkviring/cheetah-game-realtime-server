@@ -4,28 +4,36 @@ use cheetah_matches_relay_common::constants::FieldId;
 
 use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
+use crate::registry::ClientId;
 
 #[no_mangle]
-pub extern "C" fn set_float_value_listener(
+pub extern "C" fn set_double_value_listener(
+	client_id: ClientId,
 	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, f64),
 ) -> bool {
-	execute_with_client(|client| client.register_float_value_listener(listener)).is_ok()
+	execute_with_client(client_id, |client| client.register_float_value_listener(listener)).is_ok()
 }
 
 #[no_mangle]
-pub extern "C" fn set_float_value(object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) -> bool {
-	send_command(C2SCommand::SetFloat(SetFloat64Command {
-		object_id: From::from(object_id),
-		field_id,
-		value,
-	}))
+pub extern "C" fn set_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) -> bool {
+	send_command(
+		client_id,
+		C2SCommand::SetFloat(SetFloat64Command {
+			object_id: From::from(object_id),
+			field_id,
+			value,
+		}),
+	)
 }
 
 #[no_mangle]
-pub extern "C" fn inc_float_value(object_id: &GameObjectIdFFI, field_id: FieldId, increment: f64) -> bool {
-	send_command(C2SCommand::IncrementFloatCounter(IncrementFloat64C2SCommand {
-		object_id: From::from(object_id),
-		field_id,
-		increment,
-	}))
+pub extern "C" fn inc_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: f64) -> bool {
+	send_command(
+		client_id,
+		C2SCommand::IncrementFloatCounter(IncrementFloat64C2SCommand {
+			object_id: From::from(object_id),
+			field_id,
+			increment,
+		}),
+	)
 }

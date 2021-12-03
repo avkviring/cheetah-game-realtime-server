@@ -26,7 +26,6 @@ pub type ClientId = u16;
 pub struct Registry {
 	pub controllers: HashMap<ClientId, ClientController, FnvBuildHasher>,
 	client_generator_id: ClientId,
-	pub current_client: Option<u16>,
 }
 
 #[derive(Debug)]
@@ -44,7 +43,6 @@ impl Default for Registry {
 		Registry {
 			controllers: Default::default(),
 			client_generator_id: Default::default(),
-			current_client: None,
 		}
 	}
 }
@@ -101,7 +99,6 @@ impl Registry {
 				self.controllers.insert(client_id, controller);
 
 				log::info!("[registry] create client({})", client_id);
-				self.current_client = Some(client_id);
 				Result::Ok(client_id)
 			}
 			Err(_) => {
@@ -111,22 +108,16 @@ impl Registry {
 		}
 	}
 
-	pub fn destroy_client(&mut self) -> bool {
-		match self.current_client {
+	pub fn destroy_client(&mut self, client: ClientId) -> bool {
+		match self.controllers.remove(&client) {
 			None => {
-				log::error!("[registry:destroy] current client not set");
+				log::error!("[registry:destroy] connection with id {} not found", client);
 				false
 			}
-			Some(ref current_client) => match self.controllers.remove(current_client) {
-				None => {
-					log::error!("[registry:destroy] connection with id {} not found", current_client);
-					false
-				}
-				Some(_) => {
-					log::trace!("[registry:destroy] connection {}", current_client);
-					true
-				}
-			},
+			Some(_) => {
+				log::trace!("[registry:destroy] connection {}", client);
+				true
+			}
 		}
 	}
 }

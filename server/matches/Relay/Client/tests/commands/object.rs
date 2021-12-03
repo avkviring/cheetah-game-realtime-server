@@ -3,10 +3,10 @@ use std::sync::Mutex;
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_matches_relay_common::constants::FieldId;
 
 use crate::helpers::helper::*;
 use crate::helpers::server::*;
-use cheetah_matches_relay_common::constants::FieldId;
 
 ///
 /// Тест на создание/удаление объекта
@@ -15,26 +15,28 @@ use cheetah_matches_relay_common::constants::FieldId;
 fn test() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client2);
-	ffi::command::object::set_create_object_listener(on_object_create);
-	ffi::command::structure::set_structure_listener(on_structure_listener);
-	ffi::command::object::set_created_object_listener(on_object_created);
-	ffi::command::object::set_delete_object_listener(on_object_delete);
-	ffi::command::room::attach_to_room();
+	ffi::command::object::set_create_object_listener(client2, on_object_create);
+	ffi::command::structure::set_structure_listener(client2, on_structure_listener);
+	ffi::command::object::set_created_object_listener(client2, on_object_created);
+	ffi::command::object::set_delete_object_listener(client2, on_object_delete);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client1);
 	let mut object_id = GameObjectIdFFI::new();
-	ffi::command::object::create_object(1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
+	ffi::command::object::create_object(
+		client1,
+		1,
+		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
+		&mut object_id,
+	);
 	let structure_field_id = 10;
 	let structure_buffer = BufferFFI::from(vec![125]);
-	ffi::command::structure::set_structure(&object_id, structure_field_id, &structure_buffer);
-	ffi::command::object::created_object(&object_id);
-	ffi::command::object::delete_object(&object_id);
+	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
+	ffi::command::object::created_object(client1, &object_id);
+	ffi::command::object::delete_object(client1, &object_id);
 
 	helper.wait_udp();
-	ffi::client::set_current_client(client2);
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	assert!(matches!(CREATE_OBJECT_ID.lock().unwrap().as_ref(),Option::Some(id) if *id==object_id));
 	assert!(

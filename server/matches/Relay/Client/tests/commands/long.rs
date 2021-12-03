@@ -14,16 +14,14 @@ use crate::helpers::server::*;
 fn should_inc() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client1);
-	let object_id = helper.create_user_object();
-	ffi::command::long_value::inc_long_value(&object_id, 1, 100);
-	ffi::command::long_value::inc_long_value(&object_id, 1, 100);
+	let object_id = helper.create_user_object(client1);
+	ffi::command::long_value::inc_long_value(client1, &object_id, 1, 100);
+	ffi::command::long_value::inc_long_value(client1, &object_id, 1, 100);
 
-	ffi::client::set_current_client(client2);
-	ffi::command::long_value::set_long_value_listener(listener_for_inc);
-	ffi::command::room::attach_to_room();
+	ffi::command::long_value::set_long_value_listener(client2, listener_for_inc);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	assert!(matches!(INCR.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==200 ));
 }
@@ -32,16 +30,14 @@ fn should_inc() {
 fn should_set() {
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 
-	ffi::client::set_current_client(client1);
-	let object_id = helper.create_user_object();
-	ffi::command::long_value::set_long_value(&object_id, 1, 100);
-	ffi::command::long_value::set_long_value(&object_id, 1, 200);
+	let object_id = helper.create_user_object(client1);
+	ffi::command::long_value::set_long_value(client1, &object_id, 1, 100);
+	ffi::command::long_value::set_long_value(client1, &object_id, 1, 200);
 
-	ffi::client::set_current_client(client2);
-	ffi::command::long_value::set_long_value_listener(listener_for_set);
-	ffi::command::room::attach_to_room();
+	ffi::command::long_value::set_long_value_listener(client2, listener_for_set);
+	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
-	ffi::client::receive();
+	ffi::client::receive(client2);
 
 	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==200 ));
 }
@@ -60,32 +56,28 @@ fn should_compare_and_set() {
 	);
 	let (helper, client1, client2) = setup(builder);
 
-	ffi::client::set_current_client(client1);
-	ffi::command::long_value::set_long_value_listener(listener_for_compare_and_set);
-	ffi::command::room::attach_to_room();
-	let object_id = helper.create_user_object();
+	ffi::command::long_value::set_long_value_listener(client1, listener_for_compare_and_set);
+	ffi::command::room::attach_to_room(client1);
+	let object_id = helper.create_user_object(client1);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client2);
-	ffi::command::room::attach_to_room();
+	ffi::command::room::attach_to_room(client2);
 	// проверяем, что установится только первое значение
-	ffi::command::long_value::compare_and_set_long_value(&object_id, field_id, 0, 100, 555);
-	ffi::command::long_value::compare_and_set_long_value(&object_id, field_id, 0, 200, 777);
+	ffi::command::long_value::compare_and_set_long_value(client2, &object_id, field_id, 0, 100, 555);
+	ffi::command::long_value::compare_and_set_long_value(client2, &object_id, field_id, 0, 200, 777);
 	helper.wait_udp();
-	ffi::client::set_current_client(client1);
-	ffi::client::receive();
+
+	ffi::client::receive(client1);
 	assert!(
 		matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==100 )
 	);
 
 	// теперь второй клиент разрывает соединение
 	// первый наблюдает за тем что значение поменяется на reset
-	ffi::client::set_current_client(client2);
-	ffi::client::destroy_client();
+	ffi::client::destroy_client(client2);
 	helper.wait_udp();
 
-	ffi::client::set_current_client(client1);
-	ffi::client::receive();
+	ffi::client::receive(client1);
 	assert!(
 		matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==555 )
 	);
