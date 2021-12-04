@@ -19,6 +19,7 @@ namespace Tests
         private CheetahClient clientA;
         
         private CheetahClient clientB;
+        private uint userB;
         private const ushort TurretsParamsFieldId = 333;
         private const ushort DropMineEventId = 555;
         private const ushort HealFieldId = 777; 
@@ -46,6 +47,7 @@ namespace Tests
             // подключаем второрого клиента
             var ticketB = PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector,"user_b");
             yield return Enumerators.Await(ticketB);
+            userB = ticketB.Result.UserId;
             clientB = ConnectToRelay(ticketB.Result,codecRegistry);
             clientB.AttachToRoom();
             
@@ -108,6 +110,28 @@ namespace Tests
         }
         
         [UnityTest]
+        public IEnumerator TestTargetEventIncomeCommands()
+        {
+            // слушаем события определенного типа
+            var collector = new EventIncomeCommandCollector<DropMineEvent>(clientB, DropMineEventId);
+            // создаем объект на первом клиенте
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            // отправляем сообщение
+            var dropMineEvent = new DropMineEvent()
+            {
+                MineId = 150
+            };
+            createdObject.SendEvent(DropMineEventId, userB, ref dropMineEvent);
+            // ждем отправки команды
+            yield return new WaitForSeconds(2);
+            // прием команды
+            clientB.Update();
+            // проверяем результат
+            var eventsStream= collector.GetStream();
+            Assert.AreEqual(dropMineEvent.MineId, eventsStream.GetItem(0).data.MineId);
+        }
+        
+        [UnityTest]
         public IEnumerator TestStructureIncomeCommands()
         {
             // слушаем события определенного типа
@@ -150,6 +174,44 @@ namespace Tests
             var value = stream.GetItem(0).data;
             Assert.AreEqual(value, 7799);
         }
+            
+        [UnityTest]
+        public IEnumerator TestIncrementLongIncomeCommands()
+        {
+            // слушаем события определенного типа
+            var collector = new LongIncomeCommandCollector(clientB, HealFieldId);
+            // создаем объект на первом клиенте
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            // изменяем значение
+            createdObject.IncrementLong(HealFieldId, 1001);
+            // ждем отправки команды
+            yield return new WaitForSeconds(2);
+            // прием команды
+            clientB.Update();
+            // проверяем результат
+            var stream= collector.GetStream();
+            var value = stream.GetItem(0).data;
+            Assert.AreEqual(value, 1001);
+        }
+        
+        [UnityTest]
+        public IEnumerator TestCompareAndSetLongIncomeCommands()
+        {
+            // слушаем события определенного типа
+            var collector = new LongIncomeCommandCollector(clientB, HealFieldId);
+            // создаем объект на первом клиенте
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            // изменяем значение
+            createdObject.CompareAndSet(HealFieldId, 0,555,0);
+            // ждем отправки команды
+            yield return new WaitForSeconds(2);
+            // прием команды
+            clientB.Update();
+            // проверяем результат
+            var stream= collector.GetStream();
+            var value = stream.GetItem(0).data;
+            Assert.AreEqual(value, 555);
+        }
         
         [UnityTest]
         public IEnumerator TestDoubleIncomeCommands()
@@ -160,6 +222,25 @@ namespace Tests
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
             // изменяем значение
             createdObject.SetDouble(HealFieldId, 77.99);
+            // ждем отправки команды
+            yield return new WaitForSeconds(2);
+            // прием команды
+            clientB.Update();
+            // проверяем результат
+            var stream= collector.GetStream();
+            var value = stream.GetItem(0).data;
+            Assert.AreEqual(value, 77.99);
+        }
+        
+        [UnityTest]
+        public IEnumerator TestIncrementDoubleIncomeCommands()
+        {
+            // слушаем события определенного типа
+            var collector = new DoubleIncomeCommandCollector(clientB, HealFieldId);
+            // создаем объект на первом клиенте
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            // изменяем значение
+            createdObject.IncrementDouble(HealFieldId, 77.99);
             // ждем отправки команды
             yield return new WaitForSeconds(2);
             // прием команды
