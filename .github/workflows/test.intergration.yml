@@ -129,6 +129,7 @@ jobs:
         run: |
           helm uninstall ${{ steps.vars.outputs.short_ref }} -n ${{ steps.vars.outputs.short_ref }} || true
           kubectl delete --namespace ${{ steps.vars.outputs.short_ref }} --all deployments,statefulsets,services,pods,pvc,pv
+          sleep 20
       - name: Deploy Release
         run: |
           cd hosting/charts/
