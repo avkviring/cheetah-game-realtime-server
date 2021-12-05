@@ -8,7 +8,7 @@ use cheetah_matches_relay_common::commands::command::long::{CompareAndSetLongCom
 use cheetah_matches_relay_common::commands::command::S2CCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
@@ -17,7 +17,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(self, room: &mut Room, user_id: UserId) {
+	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.longs.get_mut(&self.field_id) {
 				match (*value).checked_add(self.increment) {
@@ -56,7 +56,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 }
 
 impl ServerCommandExecutor for SetLongCommand {
-	fn execute(self, room: &mut Room, user_id: UserId) {
+	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id.clone();
 		let object_id = self.object_id.clone();
 
@@ -78,7 +78,7 @@ impl ServerCommandExecutor for SetLongCommand {
 }
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
-	fn execute(self, room: &mut Room, uesr_id: UserId) {
+	fn execute(self, room: &mut Room, uesr_id: RoomMemberId) {
 		let object_id = self.object_id.clone();
 		let field_id = self.field_id.clone();
 		let reset = self.reset.clone();
@@ -126,7 +126,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 
 pub fn reset_all_compare_and_set(
 	room: &mut Room,
-	user_id: UserId,
+	user_id: RoomMemberId,
 	compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
 ) {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
@@ -186,7 +186,7 @@ mod tests {
 	use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::UserId;
+	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{
@@ -390,7 +390,7 @@ mod tests {
 		);
 	}
 
-	fn setup_for_compare_and_set() -> (Room, UserId, UserId, GameObjectId, FieldId) {
+	fn setup_for_compare_and_set() -> (Room, RoomMemberId, RoomMemberId, GameObjectId, FieldId) {
 		let access_group = AccessGroups(55);
 		let mut template = RoomTemplate::default();
 		let user_template_1 = UserTemplate {
@@ -436,7 +436,7 @@ mod tests {
 		(room, user1_id, user2_id, object_id, object_field)
 	}
 
-	fn setup() -> (Room, UserId, GameObjectId) {
+	fn setup() -> (Room, RoomMemberId, GameObjectId) {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);

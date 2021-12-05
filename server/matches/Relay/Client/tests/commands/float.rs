@@ -1,9 +1,9 @@
 use std::sync::Mutex;
 
 use cheetah_matches_relay_client::ffi;
-use cheetah_matches_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
 use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::*;
 
@@ -49,10 +49,10 @@ lazy_static! {
 	static ref SET: Mutex<Option<(FieldId, f64)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn listener_for_set(_: &S2CMetaCommandInformationFFI, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
+extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
 	SET.lock().unwrap().replace((field_id, value));
 }
 
-extern "C" fn listener_for_inc(_: &S2CMetaCommandInformationFFI, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
+extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
 	INCR.lock().unwrap().replace((field_id, value));
 }

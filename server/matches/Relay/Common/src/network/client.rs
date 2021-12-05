@@ -6,9 +6,9 @@ use std::time::Instant;
 use crate::network::channel::NetworkChannel;
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::Frame;
-use crate::protocol::others::user_id::{UserAndRoomId, UserIdFrameBuilder};
+use crate::protocol::others::user_id::{MemberAndRoomId, MemberIdFrameBuilder};
 use crate::protocol::relay::RelayProtocol;
-use crate::room::{RoomId, UserId, UserPrivateKey};
+use crate::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 #[derive(Debug)]
 pub struct NetworkClient {
@@ -37,7 +37,7 @@ pub enum ConnectionStatus {
 impl NetworkClient {
 	pub fn new(
 		private_key: UserPrivateKey,
-		user_id: UserId,
+		member_id: RoomMemberId,
 		room_id: RoomId,
 		server_address: SocketAddr,
 		start_frame_id: u64,
@@ -45,7 +45,10 @@ impl NetworkClient {
 		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
 
-		protocol.add_frame_builder(Box::new(UserIdFrameBuilder(UserAndRoomId { user_id, room_id })));
+		protocol.add_frame_builder(Box::new(MemberIdFrameBuilder(MemberAndRoomId {
+			user_id: member_id,
+			room_id,
+		})));
 		let channel = NetworkChannel::new()?;
 
 		Result::Ok(NetworkClient {

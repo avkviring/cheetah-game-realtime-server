@@ -6,13 +6,13 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use cheetah_matches_relay_common::commands::command::C2SCommandWithMeta;
+use cheetah_matches_relay_common::commands::command::C2SCommand;
 use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
 use cheetah_matches_relay_common::protocol::frame::applications::{
 	ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription,
 };
 use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
-use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::registry::ClientRequest;
 
@@ -30,15 +30,15 @@ pub struct Client {
 }
 
 #[derive(Debug)]
-pub struct OutApplicationCommand {
+pub struct C2SCommandWithChannel {
 	pub channel_type: ApplicationCommandChannelType,
-	pub command: C2SCommandWithMeta,
+	pub command: C2SCommand,
 }
 
 impl Client {
 	pub fn new(
 		server_address: SocketAddr,
-		user_id: UserId,
+		member_id: RoomMemberId,
 		room_id: RoomId,
 		user_private_key: UserPrivateKey,
 		in_commands: Sender<ApplicationCommandDescription>,
@@ -53,7 +53,7 @@ impl Client {
 			commands_from_server: in_commands,
 			udp_client: NetworkClient::new(
 				user_private_key,
-				user_id,
+				member_id,
 				room_id,
 				server_address,
 				current_frame_id.load(Ordering::Relaxed),
@@ -139,7 +139,7 @@ impl Client {
 					self.udp_client
 						.protocol
 						.out_commands_collector
-						.add_command(command.channel_type, ApplicationCommand::C2SCommandWithMeta(command.command));
+						.add_command(command.channel_type, ApplicationCommand::C2SCommand(command.command));
 				}
 			}
 		}

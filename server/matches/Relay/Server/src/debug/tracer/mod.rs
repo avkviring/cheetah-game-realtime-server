@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::debug::tracer::filter::Filter;
 use crate::debug::tracer::parser::parse;
@@ -67,7 +67,7 @@ struct Session {
 pub struct TracedCommand {
 	time: f64,
 	template: Option<GameObjectTemplateId>,
-	user: UserId,
+	user: RoomMemberId,
 	network_command: UniDirectionCommand,
 }
 ///
@@ -118,7 +118,7 @@ impl Session {
 	/// Сохранение сетевой команды
 	/// - учитывается ограничение на размер буфера команд
 	///
-	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, user: UserId, network_command: UniDirectionCommand) {
+	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, user: RoomMemberId, network_command: UniDirectionCommand) {
 		let collected_command = TracedCommand {
 			time: Session::now(),
 			template,
@@ -197,7 +197,7 @@ impl CommandTracerSessions {
 	pub fn collect_c2s(
 		&mut self,
 		objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
-		user: UserId,
+		user: RoomMemberId,
 		command: &C2SCommand,
 	) {
 		self.sessions.values_mut().for_each(|s| {
@@ -229,7 +229,7 @@ impl CommandTracerSessions {
 	///
 	/// Сохранить s2c команду в сессии
 	///
-	pub fn collect_s2c(&mut self, template: GameObjectTemplateId, user: UserId, command: &S2CCommand) {
+	pub fn collect_s2c(&mut self, template: GameObjectTemplateId, user: RoomMemberId, command: &S2CCommand) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = UniDirectionCommand::S2C(command.clone());
 			s.collect(Option::Some(template), user, network_command);
@@ -285,7 +285,7 @@ pub mod tests {
 	use cheetah_matches_relay_common::commands::command::event::EventCommand;
 	use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
-	use cheetah_matches_relay_common::room::UserId;
+	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::debug::tracer::{CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand, UniDirectionCommand};
 
@@ -393,7 +393,7 @@ pub mod tests {
 		let session_id = tracer.create_session();
 		tracer.collect_c2s(&Default::default(), 50, &C2SCommand::AttachToRoom);
 		for _i in 0..Session::BUFFER_LIMIT {
-			tracer.collect_c2s(&Default::default(), 1000 as UserId, &C2SCommand::AttachToRoom);
+			tracer.collect_c2s(&Default::default(), 1000 as RoomMemberId, &C2SCommand::AttachToRoom);
 		}
 		tracer.collect_c2s(&Default::default(), 55, &C2SCommand::AttachToRoom);
 

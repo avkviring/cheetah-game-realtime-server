@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use cheetah_matches_relay_common::commands::command::HeaplessBuffer;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::controller::ClientController;
 use crate::registry::{ClientId, Registry};
@@ -52,7 +52,7 @@ where
 pub struct GameObjectIdFFI {
 	id: u32,
 	room_owner: bool,
-	user_id: UserId,
+	user_id: RoomMemberId,
 }
 
 impl GameObjectIdFFI {
@@ -86,7 +86,7 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 			GameObjectOwner::Room => GameObjectIdFFI {
 				id: from.id,
 				room_owner: true,
-				user_id: UserId::MAX,
+				user_id: RoomMemberId::MAX,
 			},
 			GameObjectOwner::User(user_id) => GameObjectIdFFI {
 				id: from.id,

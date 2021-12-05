@@ -8,19 +8,18 @@ use std::time::Instant;
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 
-use cheetah_matches_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
 use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::commands::command::S2CCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_matches_relay_common::protocol::frame::Frame;
-use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
+use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 #[cfg(test)]
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::{RoomId, UserId};
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::execute;
@@ -41,13 +40,12 @@ pub mod types;
 pub struct Room {
 	pub id: RoomId,
 	pub permission_manager: Rc<RefCell<PermissionManager>>,
-	pub users: HashMap<UserId, User, FnvBuildHasher>,
+	pub users: HashMap<RoomMemberId, User, FnvBuildHasher>,
 	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ApplicationCommandChannelType>,
-	current_meta: Option<C2SMetaCommandInformation>,
-	current_user: Option<UserId>,
+	current_user: Option<RoomMemberId>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
-	pub user_id_generator: UserId,
+	pub user_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	#[cfg(test)]
 	object_id_generator: u32,
@@ -59,8 +57,8 @@ pub struct Room {
 }
 
 pub trait RoomUserListener {
-	fn register_user(&mut self, room_id: RoomId, user_id: UserId, template: UserTemplate);
-	fn disconnected_user(&mut self, room_id: RoomId, user_id: UserId);
+	fn register_user(&mut self, room_id: RoomId, user_id: RoomMemberId, template: UserTemplate);
+	fn disconnected_user(&mut self, room_id: RoomId, user_id: RoomMemberId);
 }
 impl Debug for dyn RoomUserListener {
 	fn fmt(&self, _: &mut Formatter<'_>) -> fmt::Result {
@@ -70,7 +68,7 @@ impl Debug for dyn RoomUserListener {
 
 #[derive(Debug)]
 pub struct User {
-	pub id: UserId,
+	pub id: RoomMemberId,
 	///
 	/// None - нет сетевого коннекта с пользователем
 	///
@@ -96,7 +94,6 @@ impl Room {
 			users: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
-			current_meta: Default::default(),
 			current_user: Default::default(),
 			user_listeners,
 			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
@@ -121,9 +118,9 @@ impl Room {
 	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
 		for (user_id, user) in self.users.iter_mut() {
 			if let Some(ref mut protocol) = user.protocol {
-				while let Some(frame) = protocol.build_next_frame(&now) {
+				while let Some(frame) = protocol.build_next_frame(now) {
 					out_frames.push_front(OutFrame {
-						user_and_room_id: UserAndRoomId {
+						user_and_room_id: MemberAndRoomId {
 							user_id: *user_id,
 							room_id: self.id,
 						},
@@ -137,7 +134,7 @@ impl Room {
 	///
 	/// Обработать входящий фрейм для пользователя
 	///
-	pub fn process_in_frame(&mut self, user_id: UserId, frame: Frame, now: &Instant) {
+	pub fn process_in_frame(&mut self, user_id: RoomMemberId, frame: Frame, now: &Instant) {
 		let user = self.users.get_mut(&user_id);
 		let mut commands = Vec::new();
 		match user {
@@ -163,7 +160,6 @@ impl Room {
 				if new_user {
 					self.current_channel
 						.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
-					self.current_meta.replace(C2SMetaCommandInformation::default());
 					let user_id = user.id;
 					let template = user.template.clone();
 					self.on_user_connect(user_id, template);
@@ -174,13 +170,10 @@ impl Room {
 		let tracer = self.command_trace_session.clone();
 		for application_command in commands.into_iter() {
 			match application_command.command {
-				ApplicationCommand::C2SCommandWithMeta(command_with_meta) => {
+				ApplicationCommand::C2SCommand(command) => {
 					self.current_channel.replace(From::from(&application_command.channel));
-					self.current_meta.replace(command_with_meta.meta.clone());
-					tracer
-						.borrow_mut()
-						.collect_c2s(&self.objects, user_id, &command_with_meta.command);
-					execute(command_with_meta.command, self, user_id);
+					tracer.borrow_mut().collect_c2s(&self.objects, user_id, &command);
+					execute(command, self, user_id);
 				}
 				_ => {
 					log::error!("[room({:?})] receive unsupported command {:?}", self.id, application_command)
@@ -190,10 +183,9 @@ impl Room {
 
 		self.current_user = None;
 		self.current_channel = None;
-		self.current_meta = None;
 	}
 
-	pub fn register_user(&mut self, template: UserTemplate) -> UserId {
+	pub fn register_user(&mut self, template: UserTemplate) -> RoomMemberId {
 		self.user_id_generator += 1;
 		let user_id = self.user_id_generator;
 		let user = User {
@@ -206,18 +198,18 @@ impl Room {
 
 		self.user_listeners.iter().cloned().for_each(|listener| {
 			let mut listener = (*listener).borrow_mut();
-			listener.register_user(self.id.clone(), user.id, user.template.clone());
+			listener.register_user(self.id, user.id, user.template.clone());
 		});
 
 		self.users.insert(user_id, user);
 		user_id
 	}
 
-	pub fn get_user(&self, user_id: UserId) -> Option<&User> {
+	pub fn get_user(&self, user_id: RoomMemberId) -> Option<&User> {
 		self.users.get(&user_id)
 	}
 
-	pub fn get_user_mut(&mut self, user_id: UserId) -> Option<&mut User> {
+	pub fn get_user_mut(&mut self, user_id: RoomMemberId) -> Option<&mut User> {
 		self.users.get_mut(&user_id)
 	}
 
@@ -225,9 +217,9 @@ impl Room {
 	/// Связь с пользователям разорвана
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
-	pub fn disconnect_user(&mut self, user_id: UserId) {
+	pub fn disconnect_user(&mut self, user_id: RoomMemberId) {
 		log::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
-		self.current_user.replace(user_id.clone());
+		self.current_user.replace(user_id);
 		match self.users.remove(&user_id) {
 			None => {}
 			Some(user) => {
@@ -246,10 +238,10 @@ impl Room {
 
 				self.user_listeners.iter().cloned().for_each(|listener| {
 					let mut listener = (*listener).borrow_mut();
-					listener.disconnected_user(self.id.clone(), user.id);
+					listener.disconnected_user(self.id, user.id);
 				});
 
-				reset_all_compare_and_set(self, user.id.clone(), user.compare_and_sets_cleaners);
+				reset_all_compare_and_set(self, user.id, user.compare_and_sets_cleaners);
 			}
 		};
 	}
@@ -267,7 +259,7 @@ impl Room {
 	}
 
 	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
-		let current_user = self.current_user.clone();
+		let current_user = self.current_user;
 		match self.objects.shift_remove(object_id) {
 			None => {
 				log::error!("[room({:?})] delete_object - object({:?}) not found", self.id, object_id);
@@ -297,7 +289,7 @@ impl Room {
 		}
 	}
 
-	pub fn process_objects(&self, f: &mut dyn FnMut(&GameObject) -> ()) {
+	pub fn process_objects(&self, f: &mut dyn FnMut(&GameObject)) {
 		self.objects.iter().for_each(|(_, o)| f(o));
 	}
 
@@ -306,12 +298,12 @@ impl Room {
 	/// true - если room была изменена и требуется отправка команды
 	///
 	pub fn cycle(&mut self, now: &Instant) -> bool {
-		let mut disconnected_user: [UserId; 10] = [0; 10];
+		let mut disconnected_user: [RoomMemberId; 10] = [0; 10];
 		let mut disconnected_users_count = 0;
 		self.users.values_mut().for_each(|u| {
 			if let Some(ref mut protocol) = u.protocol {
 				if protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
-					disconnected_user[disconnected_users_count] = u.id.clone();
+					disconnected_user[disconnected_users_count] = u.id;
 					disconnected_users_count += 1;
 				}
 			}
@@ -324,7 +316,7 @@ impl Room {
 		disconnected_users_count > 0
 	}
 
-	fn on_user_connect(&mut self, user_id: UserId, template: UserTemplate) {
+	fn on_user_connect(&mut self, user_id: RoomMemberId, template: UserTemplate) {
 		template.objects.iter().for_each(|object_template| {
 			let object = object_template.create_user_game_object(user_id);
 			let mut commands = Vec::new();
@@ -344,8 +336,7 @@ mod tests {
 	use std::rc::Rc;
 	use std::time::Instant;
 
-	use cheetah_matches_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-	use cheetah_matches_relay_common::commands::command::{C2SCommand, C2SCommandWithMeta, S2CCommand, S2CCommandWithMeta};
+	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::protocol::frame::applications::{
 		ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription,
 	};
@@ -354,7 +345,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-	use cheetah_matches_relay_common::room::UserId;
+	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
@@ -372,16 +363,16 @@ mod tests {
 			Room::new(0, template, Default::default())
 		}
 
-		pub fn create_object(&mut self, owner: UserId, access_groups: AccessGroups) -> &mut GameObject {
+		pub fn create_object(&mut self, owner: RoomMemberId, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
-			let id = GameObjectId::new(self.object_id_generator, GameObjectOwner::User(owner.clone()));
+			let id = GameObjectId::new(self.object_id_generator, GameObjectOwner::User(owner));
 			let mut object = GameObject::new(id.clone());
 			object.access_groups = access_groups;
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
 		}
 
-		pub fn mark_as_connected(&mut self, user_id: UserId) {
+		pub fn mark_as_connected(&mut self, user_id: RoomMemberId) {
 			match self.get_user_mut(user_id) {
 				None => {}
 				Some(user) => {
@@ -391,7 +382,7 @@ mod tests {
 			}
 		}
 
-		pub fn get_user_out_commands(&self, user_id: UserId) -> VecDeque<S2CCommand> {
+		pub fn get_user_out_commands(&self, user_id: RoomMemberId) -> VecDeque<S2CCommand> {
 			self.get_user(user_id)
 				.unwrap()
 				.protocol
@@ -405,15 +396,14 @@ mod tests {
 				.map(|c| match c {
 					ApplicationCommand::TestSimple(_) => None,
 					ApplicationCommand::TestObject(_, _) => None,
-					ApplicationCommand::S2CCommandWithMeta(c) => Some(c.command.clone()),
-					ApplicationCommand::C2SCommandWithMeta(_) => None,
+					ApplicationCommand::S2CCommandWithUser(c) => Some(c.command.clone()),
+					ApplicationCommand::C2SCommand(_) => None,
 				})
-				.filter(|c| c.is_some())
-				.map(|c| c.unwrap())
+				.flatten()
 				.collect()
 		}
 
-		pub fn get_user_out_commands_with_meta(&self, user_id: UserId) -> VecDeque<S2CCommandWithMeta> {
+		pub fn get_user_out_commands_with_meta(&self, user_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
 			self.get_user(user_id)
 				.unwrap()
 				.protocol
@@ -427,15 +417,14 @@ mod tests {
 				.map(|c| match c {
 					ApplicationCommand::TestSimple(_) => None,
 					ApplicationCommand::TestObject(_, _) => None,
-					ApplicationCommand::S2CCommandWithMeta(c) => Some(c.clone()),
-					ApplicationCommand::C2SCommandWithMeta(_) => None,
+					ApplicationCommand::S2CCommandWithUser(c) => Some(c.clone()),
+					ApplicationCommand::C2SCommand(_) => None,
 				})
-				.filter(|c| c.is_some())
-				.map(|c| c.unwrap())
+				.flatten()
 				.collect()
 		}
 
-		pub fn clear_user_out_commands(&mut self, user_id: UserId) {
+		pub fn clear_user_out_commands(&mut self, user_id: RoomMemberId) {
 			self.get_user_mut(user_id)
 				.unwrap()
 				.protocol
@@ -509,7 +498,7 @@ mod tests {
 			objects: vec![object_template.clone()],
 		};
 		let mut room = Room::from_template(template);
-		let user_id = room.register_user(user_template.clone());
+		let user_id = room.register_user(user_template);
 		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		assert!(room
 			.objects
@@ -547,8 +536,8 @@ mod tests {
 		};
 
 		let mut room = Room::from_template(template);
-		let user1_id = room.register_user(user1_template.clone());
-		let user2_id = room.register_user(user2_template.clone());
+		let user1_id = room.register_user(user1_template);
+		let user2_id = room.register_user(user2_template);
 		room.process_in_frame(user1_id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
@@ -557,10 +546,7 @@ mod tests {
 			.reliable
 			.push_back(ApplicationCommandDescription {
 				channel: ApplicationCommandChannel::ReliableUnordered,
-				command: ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: C2SMetaCommandInformation::default(),
-					command: C2SCommand::AttachToRoom,
-				}),
+				command: ApplicationCommand::C2SCommand(C2SCommand::AttachToRoom),
 			});
 		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
 
@@ -622,14 +608,11 @@ mod tests {
 
 		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
 		let mut room = Room::new(0, template, vec![test_listener.clone()]);
-		let user_id = room.register_user(user_template.clone());
+		let user_id = room.register_user(user_template);
 		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
 		room.disconnect_user(user_id);
 
-		assert_eq!(
-			test_listener.clone().borrow().trace,
-			format!("r{}d{}", user_id, user_id).to_string()
-		);
+		assert_eq!(test_listener.borrow().trace, format!("r{}d{}", user_id, user_id));
 	}
 
 	#[test]
@@ -697,7 +680,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user1_id = room.register_user(user1_template.clone());
 		let user2 = UserTemplate::stub(groups);
-		let user2_id = room.register_user(user2.clone());
+		let user2_id = room.register_user(user2);
 		room.mark_as_connected(user2_id);
 		room.on_user_connect(user1_id, user1_template.clone());
 

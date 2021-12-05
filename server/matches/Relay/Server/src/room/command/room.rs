@@ -1,10 +1,10 @@
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::object::S2CommandWithFieldInfo;
 use crate::room::Room;
 
-pub fn attach_to_room(room: &mut Room, user_id: UserId) {
+pub fn attach_to_room(room: &mut Room, user_id: RoomMemberId) {
 	match room.get_user_mut(user_id) {
 		None => {
 			log::error!("[load_room] user not found {:?}", user_id);
@@ -31,7 +31,7 @@ pub fn attach_to_room(room: &mut Room, user_id: UserId) {
 	}
 }
 
-pub fn detach_from_room(room: &mut Room, user_id: UserId) {
+pub fn detach_from_room(room: &mut Room, user_id: RoomMemberId) {
 	match room.get_user_mut(user_id) {
 		None => {
 			log::error!("[load_room] user not found {:?}", user_id);

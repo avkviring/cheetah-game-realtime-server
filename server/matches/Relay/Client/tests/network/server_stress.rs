@@ -3,9 +3,9 @@ use std::thread;
 use std::time::Duration;
 
 use cheetah_matches_relay_client::ffi;
-use cheetah_matches_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
 use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::*;
 use crate::helpers::server::*;
@@ -38,6 +38,6 @@ lazy_static! {
 	static ref LONG_VALUE: Mutex<Option<(GameObjectIdFFI, FieldId, i64)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn listener(_: &S2CMetaCommandInformationFFI, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn listener(_: RoomMemberId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
 	LONG_VALUE.lock().unwrap().replace(((*object_id).clone(), field_id, value));
 }

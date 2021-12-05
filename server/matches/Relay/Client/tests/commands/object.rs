@@ -1,9 +1,9 @@
 use std::sync::Mutex;
 
 use cheetah_matches_relay_client::ffi;
-use cheetah_matches_relay_client::ffi::command::S2CMetaCommandInformationFFI;
 use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
 use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::*;
 use crate::helpers::server::*;
@@ -60,22 +60,17 @@ lazy_static! {
 	static ref STRUCTURE: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_object_create(_: &S2CMetaCommandInformationFFI, object_id: &GameObjectIdFFI, _: u16) {
+extern "C" fn on_object_create(object_id: &GameObjectIdFFI, _: u16) {
 	CREATE_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
 
-extern "C" fn on_object_created(_: &S2CMetaCommandInformationFFI, object_id: &GameObjectIdFFI) {
+extern "C" fn on_object_created(object_id: &GameObjectIdFFI) {
 	CREATED_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
 
-extern "C" fn on_object_delete(_: &S2CMetaCommandInformationFFI, object_id: &GameObjectIdFFI) {
+extern "C" fn on_object_delete(object_id: &GameObjectIdFFI) {
 	DELETED_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
-extern "C" fn on_structure_listener(
-	_: &S2CMetaCommandInformationFFI,
-	_object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	buffer: &BufferFFI,
-) {
+extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
 	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

@@ -121,8 +121,7 @@ mod tests {
 
 	use crate::commands::command::event::EventCommand;
 	use crate::commands::command::long::SetLongCommand;
-	use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
-	use crate::commands::command::{C2SCommand, C2SCommandWithMeta};
+	use crate::commands::command::C2SCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandChannelType};
 	use crate::protocol::frame::Frame;
@@ -134,10 +133,7 @@ mod tests {
 		for _ in 0..3 {
 			output.add_command(
 				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
-				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: C2SMetaCommandInformation::default(),
-					command: C2SCommand::AttachToRoom,
-				}),
+				ApplicationCommand::C2SCommand(C2SCommand::AttachToRoom),
 			);
 		}
 		assert!(
@@ -157,14 +153,11 @@ mod tests {
 		for i in 0..2 * OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 			output.add_command(
 				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
-				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: C2SMetaCommandInformation::default(),
-					command: C2SCommand::SetLong(SetLongCommand {
-						object_id: Default::default(),
-						field_id: 1,
-						value: i as i64,
-					}),
-				}),
+				ApplicationCommand::C2SCommand(C2SCommand::SetLong(SetLongCommand {
+					object_id: Default::default(),
+					field_id: 1,
+					value: i as i64,
+				})),
 			);
 		}
 
@@ -174,14 +167,11 @@ mod tests {
 		// в коллекторе первой должна быть команда с value равным размеру фрейма
 		assert!(matches!(
 			output.commands.reliable.pop_front().unwrap().command,
-			ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-				meta: _,
-				command: C2SCommand::SetLong(SetLongCommand {
+			ApplicationCommand::C2SCommand(C2SCommand::SetLong(SetLongCommand {
 					object_id: _,
 					field_id: _,
 					value,
-				}),
-			})
+				}))
 			if value == OutCommandsCollector::MAX_COMMAND_IN_FRAME as i64
 		));
 
@@ -189,14 +179,11 @@ mod tests {
 		for i in 0..OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 			assert!(matches!(
 				frame.commands.reliable.pop_front().unwrap().command,
-				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: _,
-					command: C2SCommand::SetLong(SetLongCommand {
+				ApplicationCommand::C2SCommand( C2SCommand::SetLong(SetLongCommand {
 						object_id: _,
 						field_id: _,
 						value,
-					}),
-				})
+					}))
 				if value == i as i64
 			));
 		}
@@ -209,14 +196,11 @@ mod tests {
 		for _ in 0..3 {
 			output.add_command(
 				ApplicationCommandChannelType::ReliableSequenceByObject,
-				ApplicationCommand::C2SCommandWithMeta(C2SCommandWithMeta {
-					meta: C2SMetaCommandInformation::default(),
-					command: C2SCommand::Event(EventCommand {
-						object_id: Default::default(),
-						field_id: 0,
-						event: Default::default(),
-					}),
-				}),
+				ApplicationCommand::C2SCommand(C2SCommand::Event(EventCommand {
+					object_id: Default::default(),
+					field_id: 0,
+					event: Default::default(),
+				})),
 			);
 		}
 

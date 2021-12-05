@@ -1,12 +1,10 @@
 use std::slice::Iter;
 
-use cheetah_matches_relay_common::commands::command::meta::c2s::C2SMetaCommandInformation;
-use cheetah_matches_relay_common::commands::command::meta::s2c::S2CMetaCommandInformation;
-use cheetah_matches_relay_common::commands::command::S2CCommandWithMeta;
+use cheetah_matches_relay_common::commands::command::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
 use cheetah_matches_relay_common::room::access::AccessGroups;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
@@ -36,13 +34,7 @@ impl Room {
 			.as_ref()
 			.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 
-		let meta = match &self.current_user {
-			None => S2CMetaCommandInformation::new(0, &C2SMetaCommandInformation::default()),
-			Some(user) => S2CMetaCommandInformation::new(
-				user.clone(),
-				self.current_meta.as_ref().unwrap_or(&C2SMetaCommandInformation::default()),
-			),
-		};
+		let current_user = self.current_user.unwrap_or(0);
 
 		let permission_manager = self.permission_manager.clone();
 		let command_trace_session = self.command_trace_session.clone();
@@ -72,12 +64,12 @@ impl Room {
 							.borrow_mut()
 							.collect_s2c(object_template, user.id, &command.command);
 
-						let command_with_meta = S2CCommandWithMeta {
-							meta: meta.clone(),
+						let command_with_user = S2CCommandWithCreator {
+							creator: current_user,
 							command: command.command.clone(),
 						};
 
-						let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
+						let application_command = ApplicationCommand::S2CCommandWithUser(command_with_user);
 						protocol
 							.out_commands_collector
 							.add_command(channel_type.clone(), application_command.clone());
@@ -88,7 +80,7 @@ impl Room {
 
 	pub fn send_to_user(
 		&mut self,
-		user_id: &UserId,
+		user_id: &RoomMemberId,
 		object_template: GameObjectTemplateId,
 		commands: Iter<S2CommandWithFieldInfo>,
 	) {
@@ -114,22 +106,20 @@ impl Room {
 								}
 							};
 							if allow {
-								let default = C2SMetaCommandInformation::default();
-								let meta = self.current_meta.as_ref().unwrap_or(&default);
 								let channel = self
 									.current_channel
 									.as_ref()
 									.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
 
-								let command_with_meta = S2CCommandWithMeta {
-									meta: S2CMetaCommandInformation::new(self.current_user.unwrap_or(0), meta),
+								let command_with_meta = S2CCommandWithCreator {
+									creator: self.current_user.unwrap_or(0),
 									command: command.command.clone(),
 								};
 								command_trace_session
 									.borrow_mut()
 									.collect_s2c(object_template, user.id, &command.command);
 
-								let application_command = ApplicationCommand::S2CCommandWithMeta(command_with_meta);
+								let application_command = ApplicationCommand::S2CCommandWithUser(command_with_meta);
 								protocol
 									.out_commands_collector
 									.add_command(channel.clone(), application_command);
@@ -145,7 +135,7 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::commands::command::long::SetLongCommand;
-	use cheetah_matches_relay_common::commands::command::{S2CCommand, S2CCommandWithMeta};
+	use cheetah_matches_relay_common::commands::command::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
@@ -349,7 +339,8 @@ mod tests {
 		let command = out_commands.get(0);
 
 		assert!(
-			matches!(command, Some(S2CCommandWithMeta{meta, command: S2CCommand::SetLong(command)}) if command.field_id == allow_field_id && meta.user_id == user_source_id)
+			matches!(command, Some(S2CCommandWithCreator{creator, command: S2CCommand::SetLong
+				(command)}) if command.field_id == allow_field_id && *creator == user_source_id)
 		);
 		assert_eq!(out_commands.len(), 1);
 	}

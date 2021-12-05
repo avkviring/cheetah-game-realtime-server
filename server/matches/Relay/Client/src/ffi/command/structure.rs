@@ -1,8 +1,9 @@
 use cheetah_matches_relay_common::commands::command::structure::StructureCommand;
 use cheetah_matches_relay_common::commands::command::C2SCommand;
 use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
+use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 use crate::registry::ClientId;
 
@@ -10,7 +11,7 @@ use crate::registry::ClientId;
 #[allow(unused_must_use)]
 pub extern "C" fn set_structure_listener(
 	client_id: ClientId,
-	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, &BufferFFI),
+	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI),
 ) -> bool {
 	execute_with_client(client_id, |client| client.register_structure_listener(listener)).is_ok()
 }

@@ -2,7 +2,7 @@ use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
 use crate::room::types::FieldType;
@@ -25,11 +25,11 @@ pub enum Rule {
 	AndRule(Vec<Rule>),
 	Direction(RuleCommandDirection),
 	Not(Box<Rule>),
-	User(UserId),
+	User(RoomMemberId),
 	Template(GameObjectTemplateId),
 	Field(FieldId),
 	RoomOwner,
-	UserOwner(UserId),
+	UserOwner(RoomMemberId),
 	ObjectId(u32),
 	True,
 }
@@ -189,7 +189,7 @@ mod tests {
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-	use cheetah_matches_relay_common::room::UserId;
+	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedCommand, UniDirectionCommand};
 
@@ -220,7 +220,7 @@ mod tests {
 			}
 		}
 
-		pub fn with_user(mut self, user_id: UserId) -> Self {
+		pub fn with_user(mut self, user_id: RoomMemberId) -> Self {
 			self.user = user_id;
 			self
 		}

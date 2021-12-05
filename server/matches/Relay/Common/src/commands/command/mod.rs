@@ -5,16 +5,14 @@ use crate::commands::command::event::{EventCommand, TargetEventCommand};
 use crate::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 use crate::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-use crate::commands::command::meta::c2s::C2SMetaCommandInformation;
-use crate::commands::command::meta::s2c::S2CMetaCommandInformation;
 use crate::commands::command::structure::StructureCommand;
 use crate::commands::command::unload::DeleteGameObjectCommand;
+use crate::room::RoomMemberId;
 
 pub mod event;
 pub mod float;
 pub mod load;
 pub mod long;
-pub mod meta;
 pub mod structure;
 pub mod unload;
 
@@ -52,13 +50,7 @@ pub enum S2CCommand {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct S2CCommandWithMeta {
-	pub meta: S2CMetaCommandInformation,
+pub struct S2CCommandWithCreator {
+	pub creator: RoomMemberId,
 	pub command: S2CCommand,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub struct C2SCommandWithMeta {
-	pub meta: C2SMetaCommandInformation,
-	pub command: C2SCommand,
 }

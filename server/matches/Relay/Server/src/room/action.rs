@@ -2,7 +2,7 @@ use cheetah_matches_relay_common::commands::command::S2CCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
@@ -25,9 +25,9 @@ impl Room {
 		game_object_id: &GameObjectId,
 		field_id: &FieldId,
 		field_type: FieldType,
-		command_owner_user: UserId,
+		command_owner_user: RoomMemberId,
 		permission: Permission,
-		target_user: Option<UserId>,
+		target_user: Option<RoomMemberId>,
 		action: T,
 	) where
 		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,

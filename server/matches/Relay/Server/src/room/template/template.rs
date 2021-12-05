@@ -5,7 +5,7 @@ use fnv::FnvBuildHasher;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::object::GameObject;
 use crate::room::template::config::GameObjectTemplate;
@@ -14,7 +14,7 @@ impl GameObjectTemplate {
 	pub fn to_root_game_object(&self) -> GameObject {
 		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Room))
 	}
-	pub fn create_user_game_object(&self, user_id: UserId) -> GameObject {
+	pub fn create_user_game_object(&self, user_id: RoomMemberId) -> GameObject {
 		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::User(user_id)))
 	}
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {

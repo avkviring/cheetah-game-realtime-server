@@ -19,7 +19,8 @@ namespace Tests
         private CheetahClient clientA;
         
         private CheetahClient clientB;
-        private uint userB;
+        private uint memberA;
+        private uint memberB;
         private const ushort TurretsParamsFieldId = 333;
         private const ushort DropMineEventId = 555;
         private const ushort HealFieldId = 777; 
@@ -41,13 +42,14 @@ namespace Tests
             // подключаем первого клиента
             var ticketA = PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector,"user_a");
             yield return Enumerators.Await(ticketA);
+            memberA = ticketA.Result.UserId;
             clientA = ConnectToRelay(ticketA.Result,codecRegistry);
             clientA.AttachToRoom();
 
             // подключаем второрого клиента
             var ticketB = PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector,"user_b");
             yield return Enumerators.Await(ticketB);
-            userB = ticketB.Result.UserId;
+            memberB = ticketB.Result.UserId;
             clientB = ConnectToRelay(ticketB.Result,codecRegistry);
             clientB.AttachToRoom();
             
@@ -87,6 +89,25 @@ namespace Tests
             Assert.AreEqual(turretsParams, incomeTurretsParams);
         }
         
+        
+        [UnityTest]
+        public IEnumerator TestDeleteObjectIncomeCommands()
+        {
+            // слушаем создание новых объектов на втором клиенте
+            var collector = new DeleteObjectIncomeCommands(clientB, 777);
+            // создаем объект на первом клиенте
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            createdObject.Delete();
+            // ждем отправки команды
+            yield return new WaitForSeconds(2);
+            // прием команды
+            clientB.Update();
+            // проверяем результат
+            var deletedObjectStream= collector.GetStream();
+            Assert.AreEqual(createdObject, deletedObjectStream.GetItem(0));
+        }
+        
+        
         [UnityTest]
         public IEnumerator TestEventIncomeCommands()
         {
@@ -106,7 +127,9 @@ namespace Tests
             clientB.Update();
             // проверяем результат
             var eventsStream= collector.GetStream();
-            Assert.AreEqual(dropMineEvent.MineId, eventsStream.GetItem(0).data.MineId);
+            var actual = eventsStream.GetItem(0);
+            Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
         
         [UnityTest]
@@ -121,14 +144,16 @@ namespace Tests
             {
                 MineId = 150
             };
-            createdObject.SendEvent(DropMineEventId, userB, ref dropMineEvent);
+            createdObject.SendEvent(DropMineEventId, memberB, ref dropMineEvent);
             // ждем отправки команды
             yield return new WaitForSeconds(2);
             // прием команды
             clientB.Update();
             // проверяем результат
             var eventsStream= collector.GetStream();
-            Assert.AreEqual(dropMineEvent.MineId, eventsStream.GetItem(0).data.MineId);
+            var actual = eventsStream.GetItem(0);
+            Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
         
         [UnityTest]
@@ -151,9 +176,11 @@ namespace Tests
             clientB.Update();
             // проверяем результат
             var structuresStream= collector.GetStream();
-            var turretsParamsStructure = structuresStream.GetItem(0).data;
+            var actual = structuresStream.GetItem(0);
+            var turretsParamsStructure = actual.value;
             Assert.AreEqual(turretsParams.Damage, turretsParamsStructure.Damage);
             Assert.AreEqual(turretsParams.Speed, turretsParamsStructure.Speed);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
         
         [UnityTest]
@@ -171,8 +198,9 @@ namespace Tests
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
-            var value = stream.GetItem(0).data;
-            Assert.AreEqual(value, 7799);
+            var actual = stream.GetItem(0);
+            Assert.AreEqual( 7799, actual.value);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
             
         [UnityTest]
@@ -190,8 +218,9 @@ namespace Tests
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
-            var value = stream.GetItem(0).data;
-            Assert.AreEqual(value, 1001);
+            var actual = stream.GetItem(0);
+            Assert.AreEqual(1001, actual.value);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
         
         [UnityTest]
@@ -209,8 +238,9 @@ namespace Tests
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
-            var value = stream.GetItem(0).data;
-            Assert.AreEqual(value, 555);
+            var actual = stream.GetItem(0);
+            Assert.AreEqual( 555, actual.value);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
         
         [UnityTest]
@@ -228,8 +258,9 @@ namespace Tests
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
-            var value = stream.GetItem(0).data;
-            Assert.AreEqual(value, 77.99);
+            var actual = stream.GetItem(0);
+            Assert.AreEqual( 77.99, actual.value);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
         
         [UnityTest]
@@ -247,8 +278,9 @@ namespace Tests
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
-            var value = stream.GetItem(0).data;
-            Assert.AreEqual(value, 77.99);
+            var actual = stream.GetItem(0);
+            Assert.AreEqual( 77.99, actual.value);
+            Assert.AreEqual(memberA, actual.commandCreator);
         }
         
 

@@ -1,12 +1,12 @@
 use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: UserId) {
+	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let user = room.get_user(user_id).unwrap();
 		if let GameObjectOwner::User(object_id_user) = self.object_id.owner {
 			if object_id_user != user.id {

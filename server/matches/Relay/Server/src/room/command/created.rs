@@ -1,13 +1,13 @@
 use cheetah_matches_relay_common::commands::command::load::CreatedGameObjectCommand;
 
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
 
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: UserId) {
+	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let room_id = room.id;
 		let _permission_manager = room.permission_manager.clone();
 		if let Some(object) = room.get_object_mut(&self.object_id) {

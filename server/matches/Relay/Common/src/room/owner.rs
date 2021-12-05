@@ -1,4 +1,4 @@
-use crate::room::UserId;
+use crate::room::RoomMemberId;
 use serde::{Deserialize, Serialize};
 
 ///
@@ -7,5 +7,5 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub enum GameObjectOwner {
 	Room,
-	User(UserId),
+	User(RoomMemberId),
 }

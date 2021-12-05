@@ -1,13 +1,13 @@
 use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: UserId) {
+	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let user = room.get_user(user_id).unwrap();
 
 		if self.object_id.id == 0 {

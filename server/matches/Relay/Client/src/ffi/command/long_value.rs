@@ -1,15 +1,16 @@
 use cheetah_matches_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use cheetah_matches_relay_common::commands::command::C2SCommand;
 use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::ffi::command::{send_command, S2CMetaCommandInformationFFI};
+use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
 use crate::registry::ClientId;
 
 #[no_mangle]
 pub extern "C" fn set_long_value_listener(
 	client_id: ClientId,
-	listener: extern "C" fn(&S2CMetaCommandInformationFFI, &GameObjectIdFFI, FieldId, i64),
+	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64),
 ) -> bool {
 	execute_with_client(client_id, |client| client.register_long_value_listener(listener)).is_ok()
 }

@@ -11,7 +11,7 @@ use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::client::do_create_client;
 use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
 use cheetah_matches_relay_client::registry::ClientId;
-use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::helpers::server::IntegrationTestServerBuilder;
 
@@ -31,7 +31,7 @@ impl IntegrationTestHelper {
 		}
 	}
 
-	pub fn create_client(&self, user_id: UserId, user_key: UserPrivateKey) -> ClientId {
+	pub fn create_client(&self, user_id: RoomMemberId, user_key: UserPrivateKey) -> ClientId {
 		let mut client: ClientId = 0;
 		do_create_client(self.socket_addr.to_string(), user_id, self.room_id, &user_key, 0, &mut client);
 		client
@@ -53,7 +53,7 @@ impl IntegrationTestHelper {
 		object_id
 	}
 
-	pub fn create_user(&mut self) -> (UserId, UserPrivateKey) {
+	pub fn create_user(&mut self) -> (RoomMemberId, UserPrivateKey) {
 		let mut private_key = [0; 32];
 		OsRng.fill_bytes(&mut private_key);
 		let user_template = UserTemplate {

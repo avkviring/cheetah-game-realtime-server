@@ -10,8 +10,8 @@ use fnv::FnvBuildHasher;
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::headers::Header;
 use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
-use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
-use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::room::template::config::UserTemplate;
 use crate::room::RoomUserListener;
@@ -27,7 +27,7 @@ pub struct UDPServer {
 
 #[derive(Default, Debug)]
 struct UserSessions {
-	sessions: HashMap<UserAndRoomId, UserSession, FnvBuildHasher>,
+	sessions: HashMap<MemberAndRoomId, UserSession, FnvBuildHasher>,
 }
 
 #[derive(Debug)]
@@ -118,7 +118,7 @@ impl UDPServer {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_header, headers)) => {
-				let ident_header: Option<UserAndRoomId> = headers.first(Header::predicate_user_and_room_id).cloned();
+				let ident_header: Option<MemberAndRoomId> = headers.first(Header::predicate_user_and_room_id).cloned();
 
 				let sessions_cloned = self.sessions.clone();
 				match ident_header {
@@ -167,9 +167,9 @@ impl UDPServer {
 }
 
 impl RoomUserListener for UserSessions {
-	fn register_user(&mut self, room_id: RoomId, user_id: UserId, template: UserTemplate) {
+	fn register_user(&mut self, room_id: RoomId, user_id: RoomMemberId, template: UserTemplate) {
 		self.sessions.insert(
-			UserAndRoomId { user_id, room_id },
+			MemberAndRoomId { user_id, room_id },
 			UserSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
@@ -178,9 +178,9 @@ impl RoomUserListener for UserSessions {
 		);
 	}
 
-	fn disconnected_user(&mut self, room_id: RoomId, user_id: UserId) {
+	fn disconnected_user(&mut self, room_id: RoomId, user_id: RoomMemberId) {
 		log::info!("user {:?} disconnect from room {:?}", user_id, room_id);
-		self.sessions.remove(&UserAndRoomId { user_id, room_id });
+		self.sessions.remove(&MemberAndRoomId { user_id, room_id });
 	}
 }
 
@@ -194,7 +194,7 @@ mod tests {
 	use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 	use cheetah_matches_relay_common::protocol::frame::headers::Header;
 	use cheetah_matches_relay_common::protocol::frame::Frame;
-	use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
+	use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 
 	use crate::room::template::config::UserTemplate;
 	use crate::room::RoomUserListener;
@@ -225,7 +225,7 @@ mod tests {
 		let mut frame = Frame::new(0);
 		frame
 			.headers
-			.add(Header::UserAndRoomId(UserAndRoomId { user_id: 0, room_id: 0 }));
+			.add(Header::UserAndRoomId(MemberAndRoomId { user_id: 0, room_id: 0 }));
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -280,7 +280,7 @@ mod tests {
 			.register_user(0, user.id, user.template.clone());
 
 		let mut frame = Frame::new(100);
-		let user_and_room_id = UserAndRoomId {
+		let user_and_room_id = MemberAndRoomId {
 			user_id: user.id,
 			room_id: 0,
 		};

@@ -1,6 +1,6 @@
 use cheetah_matches_relay_common::commands::command::structure::StructureCommand;
 use cheetah_matches_relay_common::commands::command::{HeaplessBuffer, S2CCommand};
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
@@ -9,7 +9,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {
-	fn execute(self, room: &mut Room, user_id: UserId) {
+	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {

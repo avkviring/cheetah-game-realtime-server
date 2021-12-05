@@ -6,8 +6,8 @@ use std::time::Instant;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
-use cheetah_matches_relay_common::protocol::others::user_id::UserAndRoomId;
-use cheetah_matches_relay_common::room::{RoomId, UserId};
+use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::{Room, RoomUserListener};
@@ -20,7 +20,7 @@ pub struct Rooms {
 
 #[derive(Debug)]
 pub struct OutFrame {
-	pub user_and_room_id: UserAndRoomId,
+	pub user_and_room_id: MemberAndRoomId,
 	pub frame: Frame,
 }
 
@@ -46,7 +46,7 @@ impl Rooms {
 		room_id
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<UserId, RegisterUserError> {
+	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<RoomMemberId, RegisterUserError> {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Result::Err(RegisterUserError::RoomNotFound),
 			Some(room) => Result::Ok(room.register_user(template)),
@@ -72,7 +72,7 @@ impl Rooms {
 		}
 	}
 
-	pub fn on_frame_received(&mut self, user_and_room_id: UserAndRoomId, frame: Frame, now: &Instant) {
+	pub fn on_frame_received(&mut self, user_and_room_id: MemberAndRoomId, frame: Frame, now: &Instant) {
 		match self.room_by_id.get_mut(&user_and_room_id.room_id) {
 			None => {
 				log::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);

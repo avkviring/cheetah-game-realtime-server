@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::commands::command::HeaplessBuffer;
 use crate::constants::FieldId;
 use crate::room::object::GameObjectId;
-use crate::room::UserId;
+use crate::room::RoomMemberId;
 
 ///
 /// Событие по объекту
@@ -20,6 +20,6 @@ pub struct EventCommand {
 ///
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TargetEventCommand {
-	pub target: UserId,
+	pub target: RoomMemberId,
 	pub event: EventCommand,
 }

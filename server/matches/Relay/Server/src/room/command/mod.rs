@@ -1,5 +1,5 @@
 use cheetah_matches_relay_common::commands::command::C2SCommand;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::Room;
 
@@ -16,18 +16,18 @@ pub mod structure;
 /// Выполнение серверной команды
 ///
 pub trait ServerCommandExecutor {
-	fn execute(self, room: &mut Room, user_id: UserId);
+	fn execute(self, room: &mut Room, user_id: RoomMemberId);
 }
 
-pub fn trace_c2s_command(command: &str, room: &Room, user_id: UserId, message: String) {
+pub fn trace_c2s_command(command: &str, room: &Room, user_id: RoomMemberId, message: String) {
 	log::trace!("C2S {:<10} : room {} : client {} : {}", command, room.id, user_id, message);
 }
 
-pub fn error_c2s_command(command: &str, room: &Room, user_id: UserId, message: String) {
+pub fn error_c2s_command(command: &str, room: &Room, user_id: RoomMemberId, message: String) {
 	log::error!("C2S {:<10} : room {} : client {} : {}", command, room.id, user_id, message);
 }
 
-pub fn execute(command: C2SCommand, room: &mut Room, user_id: UserId) {
+pub fn execute(command: C2SCommand, room: &mut Room, user_id: RoomMemberId) {
 	match command {
 		C2SCommand::Create(command) => command.execute(room, user_id),
 		C2SCommand::SetLong(command) => command.execute(room, user_id),
@@ -49,12 +49,12 @@ pub fn execute(command: C2SCommand, room: &mut Room, user_id: UserId) {
 mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::UserId;
+	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
-	pub fn setup() -> (Room, GameObjectId, UserId, UserId) {
+	pub fn setup() -> (Room, GameObjectId, RoomMemberId, RoomMemberId) {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 		let mut room = Room::from_template(template);

@@ -4,7 +4,7 @@ use cheetah_matches_relay_macro::EnumMatchPredicates;
 
 use crate::protocol::disconnect::handler::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
-use crate::protocol::others::user_id::UserAndRoomId;
+use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::reliable::ack::header::AckFrameHeader;
 use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
 
@@ -25,7 +25,7 @@ pub enum Header {
 	/// Идентификатор комнаты и клиента
 	/// Посылается от клиента к серверу
 	///
-	UserAndRoomId(UserAndRoomId),
+	UserAndRoomId(MemberAndRoomId),
 
 	///
 	/// Подтверждение пакета

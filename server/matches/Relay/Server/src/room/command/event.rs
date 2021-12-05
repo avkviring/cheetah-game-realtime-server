@@ -1,6 +1,6 @@
 use cheetah_matches_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
 use cheetah_matches_relay_common::commands::command::S2CCommand;
-use cheetah_matches_relay_common::room::UserId;
+use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::GameObject;
@@ -9,7 +9,7 @@ use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(self, room: &mut Room, user_id: UserId) {
+	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self));
@@ -50,7 +50,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-	use cheetah_matches_relay_common::room::UserId;
+	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
@@ -124,7 +124,7 @@ mod tests {
 		command.execute(&mut room, user);
 	}
 
-	fn setup() -> (Room, UserId, AccessGroups) {
+	fn setup() -> (Room, RoomMemberId, AccessGroups) {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);

@@ -9,9 +9,9 @@ use std::time::Duration;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
-use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
-use crate::client::{Client, OutApplicationCommand};
+use crate::client::{C2SCommandWithChannel, Client};
 use crate::controller::ClientController;
 
 pub type ClientId = u16;
@@ -33,7 +33,7 @@ pub enum ClientRequest {
 	SetProtocolTimeOffset(Duration),
 	ConfigureRttEmulation(Duration, f64),
 	ConfigureDropEmulation(f64, Duration),
-	SendCommandToServer(OutApplicationCommand),
+	SendCommandToServer(C2SCommandWithChannel),
 	ResetEmulation,
 	Close,
 }
@@ -51,7 +51,7 @@ impl Registry {
 	pub fn create_client(
 		&mut self,
 		server_address: String,
-		user_id: UserId,
+		member_id: RoomMemberId,
 		room_id: RoomId,
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
@@ -66,7 +66,7 @@ impl Registry {
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
 		match Client::new(
 			SocketAddr::from_str(server_address.as_str()).unwrap(),
-			user_id,
+			member_id,
 			room_id,
 			user_private_key,
 			in_command_sender,
@@ -78,14 +78,14 @@ impl Registry {
 		) {
 			Ok(client) => {
 				let handler = thread::Builder::new()
-					.name(format!("user({:?})", user_id))
+					.name(format!("user({:?})", member_id))
 					.spawn(move || {
 						client.run();
 					})
 					.unwrap();
 
 				let controller = ClientController::new(
-					user_id,
+					member_id,
 					handler,
 					state_cloned,
 					in_command_receiver,

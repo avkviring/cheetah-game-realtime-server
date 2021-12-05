@@ -4,10 +4,9 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::{RoomId, UserId, UserPrivateKey};
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
-use crate::ffi::{execute, execute_with_client, BufferFFI, GameObjectIdFFI};
+use crate::ffi::{execute, execute_with_client, BufferFFI};
 use crate::registry::ClientId;
 
 #[no_mangle]
@@ -53,19 +52,6 @@ pub extern "C" fn reset_emulation(client_id: ClientId) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn set_source_object_to_meta(client_id: ClientId, source_object: &GameObjectIdFFI) -> bool {
-	execute_with_client(client_id, |client| {
-		let source_object = if source_object.id == 0 {
-			Option::None
-		} else {
-			Option::Some(GameObjectId::from(source_object))
-		};
-		client.source_object = source_object;
-	})
-	.is_ok()
-}
-
-#[no_mangle]
 pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistics) -> bool {
 	execute_with_client(client_id, |client| {
 		statistics.last_frame_id = client.current_frame_id.load(Ordering::Relaxed);
@@ -86,7 +72,7 @@ pub struct Statistics {
 #[no_mangle]
 pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
-	user_id: UserId,
+	member_id: RoomMemberId,
 	room_id: RoomId,
 	user_private_key_buffer: &BufferFFI,
 	start_frame_id: u64,
@@ -97,7 +83,7 @@ pub unsafe extern "C" fn create_client(
 	user_private_key.copy_from_slice(&user_private_key_buffer.buffer[0..32]);
 	do_create_client(
 		server_address,
-		user_id,
+		member_id,
 		room_id,
 		&user_private_key,
 		start_frame_id,
@@ -107,14 +93,14 @@ pub unsafe extern "C" fn create_client(
 
 pub fn do_create_client(
 	server_address: String,
-	user_id: UserId,
+	member_id: RoomMemberId,
 	room_id: RoomId,
 	user_private_key: &UserPrivateKey,
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> bool {
 	execute(
-		|api| match api.create_client(server_address, user_id, room_id, user_private_key.clone(), start_frame_id) {
+		|api| match api.create_client(server_address, member_id, room_id, user_private_key.clone(), start_frame_id) {
 			Ok(client_id) => {
 				*out_client_id = client_id;
 				true

@@ -6,7 +6,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use cheetah_matches_relay_common::room::{RoomId, UserId};
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::CommandTracerSessionsTask;
@@ -29,7 +29,7 @@ pub struct RelayManager {
 
 pub enum ManagementTask {
 	RegisterRoom(RoomTemplate, Sender<RoomId>),
-	RegisterUser(RoomId, UserTemplate, Sender<Result<UserId, RegisterUserError>>),
+	RegisterUser(RoomId, UserTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
 	///
 	/// Смещение текущего времени для тестирования
 	///
@@ -145,7 +145,7 @@ impl RelayManager {
 		}
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<UserId, RegisterUserRequestError> {
+	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<RoomMemberId, RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::RegisterUser(room_id, template.clone(), sender))
