@@ -25,6 +25,10 @@ pub enum Error {
 		name: String,
 		file: PathBuf,
 	},
+	CannotCreateDefault {
+		name: String,
+		file: PathBuf,
+	},
 }
 
 impl std::error::Error for Error {}
@@ -58,6 +62,9 @@ impl std::fmt::Display for Error {
 			}
 			Error::NameAlreadyExists { name, file } => {
 				write!(f, "Name {} already exists in file {:?}", name, file)
+			}
+			Error::CannotCreateDefault { name: _, file } => {
+				write!(f, "Cannot create default struct for empty file {:?}", file)
 			}
 		}
 	}

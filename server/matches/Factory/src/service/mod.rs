@@ -6,6 +6,7 @@ use crate::service::configurations::Configurations;
 use crate::service::grpc::registry_client::RegistryClient;
 use crate::service::resolver::error;
 
+pub mod admin;
 pub mod configurations;
 pub mod grpc;
 pub mod resolver;

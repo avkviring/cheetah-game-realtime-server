@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use tonic::transport::Server;
 
-use cheetah_matches_factory::admin::ConfigurationsService;
 use cheetah_matches_factory::proto::matches::factory::admin::configurations_server::ConfigurationsServer;
 use cheetah_matches_factory::proto::matches::factory::internal::factory_server::FactoryServer;
+use cheetah_matches_factory::service::admin::ConfigurationsService;
 use cheetah_matches_factory::service::configurations::Configurations;
 use cheetah_matches_factory::service::grpc::registry_client::RegistryClient;
 use cheetah_matches_factory::service::FactoryService;

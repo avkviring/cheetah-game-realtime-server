@@ -19,7 +19,7 @@ pub trait SelfName {
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Room {
-	/// Объекты комнаты
+	#[serde(default)]
 	pub objects: Vec<RoomObject>,
 }
 impl SelfName for Room {
@@ -31,7 +31,6 @@ impl SelfName for Room {
 #[derive(Debug, Deserialize, Eq, PartialEq, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Field {
-	///
 	/// Имя опционально, актуально только для мультидокументого файла
 	pub name: Option<String>,
 	pub id: u16,

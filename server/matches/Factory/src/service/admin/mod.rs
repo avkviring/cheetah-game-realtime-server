@@ -58,9 +58,9 @@ impl admin::configurations_server::Configurations for ConfigurationsService {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::admin::ConfigurationsService;
 	use crate::proto::matches::factory::admin;
 	use crate::proto::matches::relay::shared;
+	use crate::service::admin::ConfigurationsService;
 	use crate::service::configurations::structures::{Field, FieldType, Template};
 	use crate::service::configurations::Configurations;
 

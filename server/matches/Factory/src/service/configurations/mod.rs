@@ -28,9 +28,11 @@ impl Configurations {
 	pub fn load(root: impl Into<PathBuf>) -> Result<Self, Error> {
 		let root = root.into();
 		let groups = Self::load_group(root.clone())?;
-		let fields = Self::load_items::<_>(root.clone(), root.join("fields").as_path(), Path::new(""))?;
-		let templates = Self::load_items::<_>(root.clone(), root.join("templates").as_path(), Path::new(""))?;
-		let rooms = Self::load_items::<_>(root.clone(), root.join("rooms").as_path(), Path::new(""))?;
+		let fields = Self::load_items::<_>(root.clone(), root.join("fields").as_path(), Path::new(""), || None)?;
+		let templates = Self::load_items::<_>(root.clone(), root.join("templates").as_path(), Path::new(""), || None)?;
+		let rooms = Self::load_items::<_>(root.clone(), root.join("rooms").as_path(), Path::new(""), || {
+			Some(Room { objects: vec![] })
+		})?;
 		Configurations {
 			groups,
 			fields,
@@ -88,7 +90,18 @@ impl Configurations {
 		})
 	}
 
-	fn load_items<T: SelfName>(global_root: PathBuf, dir: &Path, prefix: &Path) -> Result<HashMap<String, T>, Error>
+	///
+	/// Default это временный костыль, так как serde_yaml не может распарсить пустую строку в
+	/// структуру со всеми полями по-умолчанию
+	///
+	/// Убрать после закрытия задачи - https://github.com/dtolnay/serde-yaml/issues/86
+	///
+	fn load_items<T: SelfName>(
+		global_root: PathBuf,
+		dir: &Path,
+		prefix: &Path,
+		default_factory: fn() -> Option<T>,
+	) -> Result<HashMap<String, T>, Error>
 	where
 		T: DeserializeOwned,
 	{
@@ -107,7 +120,7 @@ impl Configurations {
 
 			if entry_type.is_dir() {
 				let prefix = prefix.join(name);
-				let sub_entities = Self::load_items(global_root.clone(), &entry.path(), &prefix)?;
+				let sub_entities = Self::load_items(global_root.clone(), &entry.path(), &prefix, default_factory)?;
 				sub_entities.into_iter().for_each(|(k, v)| {
 					result.insert(k, v);
 				});
@@ -115,13 +128,17 @@ impl Configurations {
 				let name = prefix.join(name);
 				let path = entry.path();
 				let content = read_to_string(&path)?;
-				for document in serde_yaml::Deserializer::from_str(Configurations::prepare_content(content).as_str()) {
+
+				let mut count = 0;
+				let name_from_path = name.to_str().unwrap().to_string();
+				let prepared_content = Configurations::prepare_content(content);
+				for document in serde_yaml::Deserializer::from_str(prepared_content.as_str()) {
+					count += 1;
 					let value = T::deserialize(document).map_err(|e| Error::Yaml {
 						global_root: global_root.clone(),
 						file: path.clone(),
 						e,
 					})?;
-					let name_from_path = name.to_str().unwrap().to_string();
 					let name_from_item = value
 						.get_self_name()
 						.map(|v| format!("/{}", v))
@@ -130,12 +147,27 @@ impl Configurations {
 					let key = format!("{}{}", name_from_path, name_from_item);
 					match result.insert(key.clone(), value) {
 						None => {}
-						Some(_) => {
-							return Err(Error::NameAlreadyExists {
-								name: key,
-								file: path.clone(),
+						Some(_) => return Err(Error::NameAlreadyExists { name: key, file: path }),
+					}
+				}
+				// файл пустой - необходимо создать структуру по-умолчанию
+				if count == 0 {
+					match default_factory() {
+						None => {
+							return Err(Error::CannotCreateDefault {
+								name: name_from_path,
+								file: path,
 							})
 						}
+						Some(value) => match result.insert(name_from_path.clone(), value) {
+							None => {}
+							Some(_) => {
+								return Err(Error::NameAlreadyExists {
+									name: name_from_path,
+									file: path,
+								})
+							}
+						},
 					}
 				}
 			}
@@ -145,7 +177,7 @@ impl Configurations {
 	}
 
 	fn prepare_content(content: String) -> String {
-		content.replace("\u{feff}", "").to_string()
+		content.replace("\u{feff}", "")
 	}
 }
 
@@ -284,40 +316,43 @@ pub mod test {
 		let configuration = setup();
 		assert_eq!(
 			configuration.rooms,
-			vec![(
-				"gubaha".to_string(),
-				Room {
-					objects: vec![
-						RoomObject {
-							id: Some(100),
-							template: "user".to_string(),
-							group: "red".to_string(),
-							values: vec![
-								FieldValue {
-									field: "user/score".to_string(),
-									value: rmpv::Value::Integer(Integer::from(100))
-								},
-								FieldValue {
-									field: "user/info".to_string(),
-									value: rmpv::Value::Map(vec![(
-										rmpv::Value::String(Utf8String::from("name")),
-										rmpv::Value::String(Utf8String::from("alex"))
-									)])
-								}
-							]
-						},
-						RoomObject {
-							id: None,
-							template: "weapons/turret".to_string(),
-							group: "blue".to_string(),
-							values: vec![FieldValue {
-								field: "characteristic/damage".to_string(),
-								value: rmpv::Value::Integer(Integer::from(200))
-							}]
-						}
-					]
-				}
-			)]
+			vec![
+				(
+					"gubaha".to_string(),
+					Room {
+						objects: vec![
+							RoomObject {
+								id: Some(100),
+								template: "user".to_string(),
+								group: "red".to_string(),
+								values: vec![
+									FieldValue {
+										field: "user/score".to_string(),
+										value: rmpv::Value::Integer(Integer::from(100))
+									},
+									FieldValue {
+										field: "user/info".to_string(),
+										value: rmpv::Value::Map(vec![(
+											rmpv::Value::String(Utf8String::from("name")),
+											rmpv::Value::String(Utf8String::from("alex"))
+										)])
+									}
+								]
+							},
+							RoomObject {
+								id: None,
+								template: "weapons/turret".to_string(),
+								group: "blue".to_string(),
+								values: vec![FieldValue {
+									field: "characteristic/damage".to_string(),
+									value: rmpv::Value::Integer(Integer::from(200))
+								}]
+							}
+						]
+					}
+				),
+				("kungur".to_string(), Room { objects: vec![] })
+			]
 			.into_iter()
 			.collect()
 		)
