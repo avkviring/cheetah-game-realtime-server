@@ -50,6 +50,8 @@ jobs:
         uses: docker/build-push-action@v2.7.0
         with:
           context: .
+          build-args: |
+            RUSTFLAGS_ARG="-Ctarget-cpu=haswell -Ctarget-feature=+avx2"
           push: true
           file: server/${{ matrix.directory }}/Dockerfile
           tags: docker.registry.cheetah.games/${{ matrix.image }}:${{ github.event.release.tag_name }}
