@@ -103,6 +103,7 @@ impl Frame {
 		}
 
 		let commands_position = commands_cursor.position() as usize;
+		//println!("raw {}", (commands_position + frame_cursor.position() as usize));
 		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
 		if compressed_size > 1024 {
 			panic!(
@@ -114,6 +115,7 @@ impl Frame {
 			vec.set_len(compressed_size);
 		}
 
+		//println!("compressed {}", compressed_size);
 		let frame_position = frame_cursor.position() as usize;
 		cipher
 			.encrypt(
@@ -125,6 +127,7 @@ impl Frame {
 
 		frame_cursor.write_all(&vec).unwrap();
 
+		//println!("chiper {}", frame_cursor.position());
 		frame_cursor.position() as usize
 	}
 }
