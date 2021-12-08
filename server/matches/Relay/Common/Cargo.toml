@@ -12,7 +12,7 @@ rmp-serde = "0.15.5"
 rand = "0.8.3"
 snap = "1.0.5"
 byteorder = "1.4.3"
-chacha20poly1305 = { version = "0.9.0", features = ["heapless"] }
+chacha20poly1305 = { version = "0.9.0", features = ["heapless","reduced-round"] }
 cheetah-matches-relay-macro = { path = "../Macro/" }
 generic-array = "0.14.4"
 heapless = { version = "0.7.8", features = ["serde"] }

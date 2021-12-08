@@ -1,6 +1,6 @@
 use crate::room::UserPrivateKey;
 use chacha20poly1305::aead::{AeadInPlace, NewAead};
-use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
+use chacha20poly1305::{ChaCha8Poly1305, Key, Nonce};
 use heapless::Vec;
 
 ///
@@ -25,7 +25,7 @@ impl<'a> Cipher<'a> {
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
-		let cipher = ChaCha20Poly1305::new(key);
+		let cipher = ChaCha8Poly1305::new(key);
 		cipher.encrypt_in_place(nonce, ad, buffer).map_err(|_| ())?;
 		Result::Ok(())
 	}
@@ -35,7 +35,7 @@ impl<'a> Cipher<'a> {
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
-		let cipher = ChaCha20Poly1305::new(key);
+		let cipher = ChaCha8Poly1305::new(key);
 		cipher.decrypt_in_place(nonce, ad, buffer).map_err(|_| ())?;
 		Result::Ok(())
 	}
