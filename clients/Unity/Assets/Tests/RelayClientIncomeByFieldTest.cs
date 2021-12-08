@@ -3,6 +3,7 @@ using Cheetah.Matches.Matchmaking.GRPC;
 using Cheetah.Matches.Relay;
 using Cheetah.Matches.Relay.Codec;
 using Cheetah.Matches.Relay.Income.ByField;
+using Cheetah.Matches.Relay.Income.ByTemplate;
 using Cheetah.Platform;
 using NUnit.Framework;
 using Shared;
@@ -64,7 +65,7 @@ namespace Tests
         public IEnumerator TestCreatedObjectIncomeCommands()
         {
             // слушаем создание новых объектов на втором клиенте
-            var collector = new CreatedObjectByFieldIncomeCommands(clientB, 777);
+            var collector = new CreatedObjectByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
             var objectBuilder = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup);
             var turretsParams = new TurretsParamsStructure()
@@ -94,7 +95,7 @@ namespace Tests
         public IEnumerator TestDeleteObjectIncomeCommands()
         {
             // слушаем создание новых объектов на втором клиенте
-            var collector = new DeleteObjectByFieldIncomeCommands(clientB, 777);
+            var collector = new DeletedObjectByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
             createdObject.Delete();
