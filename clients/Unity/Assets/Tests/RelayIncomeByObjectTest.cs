@@ -13,7 +13,7 @@ using UnityEngine.TestTools;
 
 namespace Tests
 {
-    public class RelayClientIncomeByObjectTest
+    public class RelayIncomeByObjectTest
     {
         private ClusterConnector clusterConnector;
         private CheetahClient clientA;
