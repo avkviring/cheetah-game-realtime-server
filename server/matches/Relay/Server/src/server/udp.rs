@@ -135,11 +135,9 @@ impl UDPServer {
 								let private_key = &session.private_key;
 								match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
 									Ok(frame) => {
-										if frame.header.frame_id > session.max_receive_frame_id
-											|| session.max_receive_frame_id == 0
-										{
+										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);
-											session.max_receive_frame_id = frame.header.frame_id;
+											session.max_receive_frame_id = frame.frame_id;
 										}
 										readed_frame.replace(frame);
 									}

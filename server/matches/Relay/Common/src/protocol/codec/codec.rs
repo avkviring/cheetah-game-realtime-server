@@ -1,5 +1,6 @@
 use std::io::{Cursor, Write};
 
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use rmp_serde::Serializer;
 use serde::Serialize;
 
@@ -7,12 +8,12 @@ use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::serializer::{deserialize, serialize};
 use crate::protocol::frame::headers::Headers;
-use crate::protocol::frame::{Frame, FrameHeader};
+use crate::protocol::frame::{Frame, FrameId};
 
 #[derive(Debug)]
 pub enum UdpFrameDecodeError {
-	HeaderDeserializeError,
 	AdditionalHeadersDeserializeError,
+	DecodeFrameIdError,
 	DecryptedError,
 	DecompressError,
 	CommandCountReadError,
@@ -20,11 +21,13 @@ pub enum UdpFrameDecodeError {
 }
 
 impl Frame {
-	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameHeader, Headers), UdpFrameDecodeError> {
-		let header: FrameHeader = deserialize(cursor).map_err(|_| UdpFrameDecodeError::HeaderDeserializeError)?;
+	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameId, Headers), UdpFrameDecodeError> {
+		let frame_id = cursor
+			.read_u64::<BigEndian>()
+			.map_err(|_| UdpFrameDecodeError::DecodeFrameIdError)?;
 		let additional_headers: Headers =
 			deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
-		Result::Ok((header, additional_headers))
+		Result::Ok((frame_id, additional_headers))
 	}
 
 	///
@@ -38,14 +41,14 @@ impl Frame {
 	pub fn decode_frame(
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
-		header: FrameHeader,
+		frame_id: FrameId,
 		headers: Headers,
 	) -> Result<Frame, UdpFrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
 		// commands - decrypt
-		let nonce = header.frame_id.to_be_bytes() as [u8; 8];
+		let nonce = frame_id.to_be_bytes() as [u8; 8];
 		let ad = &data[0..header_end as usize];
 
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
@@ -65,7 +68,7 @@ impl Frame {
 			deserialize(&mut Cursor::new(decompressed_buffer)).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
 
 		Result::Ok(Frame {
-			header,
+			frame_id,
 			headers,
 			commands,
 		})
@@ -76,8 +79,8 @@ impl Frame {
 	///
 	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> usize {
 		let mut frame_cursor = Cursor::new(out);
+		frame_cursor.write_u64::<BigEndian>(self.frame_id).unwrap();
 		let mut serializer = Serializer::new(&mut frame_cursor);
-		self.header.serialize(&mut serializer).unwrap();
 		self.headers.serialize(&mut serializer).unwrap();
 		drop(serializer);
 
@@ -116,7 +119,7 @@ impl Frame {
 			.encrypt(
 				&mut vec,
 				&frame_cursor.get_ref()[0..frame_position],
-				self.header.frame_id.to_be_bytes(),
+				self.frame_id.to_be_bytes(),
 			)
 			.unwrap();
 

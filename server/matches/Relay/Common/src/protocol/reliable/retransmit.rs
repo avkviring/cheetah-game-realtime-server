@@ -134,7 +134,7 @@ impl RetransmitterImpl {
 
 						let original_frame_id = scheduled_frame.original_frame_id;
 						let mut retransmit_frame = scheduled_frame.frame.clone();
-						retransmit_frame.header.frame_id = retransmit_frame_id;
+						retransmit_frame.frame_id = retransmit_frame_id;
 						let retransmit_header =
 							Header::RetransmitFrame(RetransmitFrameHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
@@ -196,7 +196,7 @@ impl FrameBuiltListener for RetransmitterImpl {
 	///
 	fn on_frame_built(&mut self, frame: &Frame, now: &Instant) {
 		if frame.is_reliability() {
-			let original_grame_id = frame.header.frame_id;
+			let original_grame_id = frame.frame_id;
 			let mut frame = frame.clone();
 			frame.commands.unreliable.clear();
 			self.schedule_retransmit(frame, original_grame_id, 0, now);
@@ -256,9 +256,9 @@ mod tests {
 		assert!(matches!(
 			handler.get_retransmit_frame(&get_time,2),
 			Option::Some(frame)
-			if frame.header.frame_id == 2
+			if frame.frame_id == 2
 			&&
-			frame.headers.first(Header::predicate_retransmit_frame).unwrap().original_frame_id==original_frame.header.frame_id
+			frame.headers.first(Header::predicate_retransmit_frame).unwrap().original_frame_id==original_frame.frame_id
 		));
 	}
 
@@ -275,7 +275,7 @@ mod tests {
 		let get_time = now.add(handler.ack_wait_duration);
 		assert!(matches!(
 				handler.get_retransmit_frame(&get_time,2),
-				Option::Some(retransmit_frame) if retransmit_frame.header.frame_id ==2 ));
+				Option::Some(retransmit_frame) if retransmit_frame.frame_id ==2 ));
 	}
 
 	///
@@ -301,7 +301,7 @@ mod tests {
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
-		handler.on_frame_received(&create_ack_frame(100, frame.header.frame_id), &now);
+		handler.on_frame_received(&create_ack_frame(100, frame.frame_id), &now);
 		let get_time = now.add(handler.ack_wait_duration);
 		assert!(matches!(handler.get_retransmit_frame(&get_time, 2), Option::None));
 	}
@@ -319,12 +319,12 @@ mod tests {
 		let get_time = now.add(handler.ack_wait_duration);
 		assert!(matches!(
 				handler.get_retransmit_frame(&get_time,2),
-				Option::Some(retransmit_frame) if retransmit_frame.header.frame_id == 2));
+				Option::Some(retransmit_frame) if retransmit_frame.frame_id == 2));
 		assert!(matches!(handler.get_retransmit_frame(&get_time, 3), Option::None));
 		let get_time = get_time.add(handler.ack_wait_duration);
 		assert!(matches!(
 				handler.get_retransmit_frame(&get_time,4),
-				Option::Some(retransmit_frame) if retransmit_frame.header.frame_id == 4 ));
+				Option::Some(retransmit_frame) if retransmit_frame.frame_id == 4 ));
 	}
 
 	///

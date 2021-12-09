@@ -1,8 +1,9 @@
+use std::time::Instant;
+
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::reliable::ack::header::AckFrameHeader;
 use crate::protocol::{FrameBuilder, FrameReceivedListener, NOT_EXIST_FRAME_ID};
-use std::time::Instant;
 
 pub mod header;
 
@@ -114,7 +115,7 @@ impl FrameReceivedListener for AckSender {
 	fn on_frame_received(&mut self, frame: &Frame, _now: &Instant) {
 		if frame.is_reliability() {
 			self.send_ack_counter = AckSender::SEND_ACK_COUNTER;
-			let mut frame_id = frame.header.frame_id;
+			let mut frame_id = frame.frame_id;
 			match frame.headers.first(Header::predicate_retransmit_frame) {
 				None => {}
 				Some(header) => {
@@ -206,7 +207,7 @@ mod tests {
 		reliable.build_frame(&mut out_frame, &time);
 
 		let header = out_frame.headers.first(Header::predicate_ack_frame);
-		assert!(matches!(header, Option::Some(v) if v.start_frame_id == in_frame.header.frame_id));
+		assert!(matches!(header, Option::Some(v) if v.start_frame_id == in_frame.frame_id));
 	}
 
 	///
@@ -262,8 +263,8 @@ mod tests {
 
 		let headers: Vec<&AckFrameHeader> = out_frame.headers.find(Header::predicate_ack_frame);
 		assert_eq!(headers.len(), 2);
-		assert_eq!(headers[0].start_frame_id, frame_a.header.frame_id);
-		assert_eq!(headers[1].start_frame_id, frame_b.header.frame_id);
+		assert_eq!(headers[0].start_frame_id, frame_a.frame_id);
+		assert_eq!(headers[1].start_frame_id, frame_b.frame_id);
 	}
 
 	fn create_command() -> ApplicationCommandDescription {

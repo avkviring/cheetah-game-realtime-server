@@ -33,7 +33,7 @@ impl InCommandsCollector {
 	}
 
 	pub fn collect(&mut self, frame: Frame) {
-		let frame_id = frame.header.frame_id.clone();
+		let frame_id = frame.frame_id;
 		let commands = frame
 			.commands
 			.reliable
