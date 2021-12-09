@@ -13,7 +13,6 @@ use crate::protocol::frame::{Frame, FrameHeader};
 pub enum UdpFrameDecodeError {
 	HeaderDeserializeError,
 	AdditionalHeadersDeserializeError,
-	ProtocolVersionMismatch,
 	DecryptedError,
 	DecompressError,
 	CommandCountReadError,
@@ -23,13 +22,9 @@ pub enum UdpFrameDecodeError {
 impl Frame {
 	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameHeader, Headers), UdpFrameDecodeError> {
 		let header: FrameHeader = deserialize(cursor).map_err(|_| UdpFrameDecodeError::HeaderDeserializeError)?;
-		if header.protocol_version != Frame::PROTOCOL_VERSION {
-			Result::Err(UdpFrameDecodeError::ProtocolVersionMismatch)
-		} else {
-			let additional_headers: Headers =
-				deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
-			Result::Ok((header, additional_headers))
-		}
+		let additional_headers: Headers =
+			deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
+		Result::Ok((header, additional_headers))
 	}
 
 	///
@@ -103,7 +98,7 @@ impl Frame {
 		}
 
 		let commands_position = commands_cursor.position() as usize;
-		//println!("raw {}", (commands_position + frame_cursor.position() as usize));
+		println!("raw {}", (commands_position + frame_cursor.position() as usize));
 		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
 		if compressed_size > 1024 {
 			panic!(
@@ -115,7 +110,7 @@ impl Frame {
 			vec.set_len(compressed_size);
 		}
 
-		//println!("compressed {}", compressed_size);
+		println!("compressed {}", compressed_size);
 		let frame_position = frame_cursor.position() as usize;
 		cipher
 			.encrypt(
@@ -127,7 +122,7 @@ impl Frame {
 
 		frame_cursor.write_all(&vec).unwrap();
 
-		//println!("chiper {}", frame_cursor.position());
+		println!("chiper {}", frame_cursor.position());
 		frame_cursor.position() as usize
 	}
 }

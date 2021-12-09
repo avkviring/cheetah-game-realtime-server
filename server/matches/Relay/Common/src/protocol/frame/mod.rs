@@ -30,11 +30,6 @@ pub struct Frame {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct FrameHeader {
 	///
-	/// Версия протокола
-	///
-	pub protocol_version: u8,
-
-	///
 	/// Уникальный возрастающий идентификатор фрейма
 	/// - игнорируем уже принятый фрейм с таким же frame_id
 	/// - используется как nonce в алгоритме шифрования
@@ -44,16 +39,12 @@ pub struct FrameHeader {
 }
 
 impl Frame {
-	pub const PROTOCOL_VERSION: u8 = 0;
 	pub const MAX_FRAME_SIZE: usize = 1024;
 	pub const MAX_COMMAND_COUNT: usize = 64;
 
 	pub fn new(frame_id: FrameId) -> Self {
 		Self {
-			header: FrameHeader {
-				protocol_version: Frame::PROTOCOL_VERSION,
-				frame_id,
-			},
+			header: FrameHeader { frame_id },
 			headers: Default::default(),
 			commands: ApplicationCommands::default(),
 		}
