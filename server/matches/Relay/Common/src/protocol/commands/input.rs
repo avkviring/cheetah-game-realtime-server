@@ -3,9 +3,8 @@ use std::collections::{BinaryHeap, HashMap, VecDeque};
 
 use fnv::FnvBuildHasher;
 
-use crate::protocol::frame::applications::{
-	ApplicationCommandChannel, ApplicationCommandDescription, ChannelGroupId, ChannelSequence,
-};
+use crate::protocol::frame::applications::{ApplicationCommandDescription, ChannelGroupId, ChannelSequence};
+use crate::protocol::frame::channel::ApplicationCommandChannel;
 use crate::protocol::frame::{Frame, FrameId};
 use crate::room::object::GameObjectId;
 
@@ -155,7 +154,8 @@ impl Ord for SequenceApplicationCommand {
 #[cfg(test)]
 mod tests {
 	use crate::protocol::commands::input::InCommandsCollector;
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
+	use crate::protocol::frame::channel::ApplicationCommandChannel;
 	use crate::protocol::frame::Frame;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;

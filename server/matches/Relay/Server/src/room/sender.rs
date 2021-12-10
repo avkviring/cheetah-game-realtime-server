@@ -2,7 +2,8 @@ use std::slice::Iter;
 
 use cheetah_matches_relay_common::commands::command::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
+use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommand;
+use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::RoomMemberId;
 

@@ -8,9 +8,8 @@ use std::time::{Duration, Instant};
 
 use cheetah_matches_relay_common::commands::command::C2SCommand;
 use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_matches_relay_common::protocol::frame::applications::{
-	ApplicationCommand, ApplicationCommandChannelType, ApplicationCommandDescription,
-};
+use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
+use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 

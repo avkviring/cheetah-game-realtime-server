@@ -1,6 +1,7 @@
 use std::time::Instant;
 
-use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
+use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommand;
+use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 
 use crate::stub::Channel;

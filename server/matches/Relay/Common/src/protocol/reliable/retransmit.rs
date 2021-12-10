@@ -216,7 +216,8 @@ mod tests {
 	use std::ops::Add;
 	use std::time::Instant;
 
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
+	use crate::protocol::frame::channel::ApplicationCommandChannel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::{Frame, FrameId};
 	use crate::protocol::reliable::ack::header::AckFrameHeader;

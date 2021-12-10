@@ -4,9 +4,9 @@ use std::time::Instant;
 use fnv::FnvBuildHasher;
 
 use crate::protocol::frame::applications::{
-	ApplicationCommand, ApplicationCommandChannel, ApplicationCommandChannelType, ApplicationCommandDescription,
-	ApplicationCommands, ChannelGroupId, ChannelSequence,
+	ApplicationCommand, ApplicationCommandDescription, ApplicationCommands, ChannelGroupId, ChannelSequence,
 };
+use crate::protocol::frame::channel::{ApplicationCommandChannel, ApplicationCommandChannelType};
 use crate::protocol::frame::Frame;
 use crate::protocol::FrameBuilder;
 use crate::room::object::GameObjectId;
@@ -123,7 +123,8 @@ mod tests {
 	use crate::commands::command::long::SetLongCommand;
 	use crate::commands::command::C2SCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandChannelType};
+	use crate::protocol::frame::applications::ApplicationCommand;
+	use crate::protocol::frame::channel::{ApplicationCommandChannel, ApplicationCommandChannelType};
 	use crate::protocol::frame::Frame;
 	use crate::protocol::FrameBuilder;
 

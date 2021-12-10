@@ -11,7 +11,8 @@ use indexmap::map::IndexMap;
 use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::commands::command::S2CCommand;
 use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannelType};
+use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommand;
+use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::protocol::frame::Frame;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
@@ -337,9 +338,8 @@ mod tests {
 	use std::time::Instant;
 
 	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand, S2CCommandWithCreator};
-	use cheetah_matches_relay_common::protocol::frame::applications::{
-		ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription,
-	};
+	use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
+	use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannel;
 	use cheetah_matches_relay_common::protocol::frame::Frame;
 	use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
