@@ -99,10 +99,10 @@ impl From<internal::PermissionField> for config::PermissionField {
 		let structure = shared::FieldType::Structure as i32;
 
 		let field_type = match source.r#type {
-			x if x == event => crate::room::types::FieldType::Event,
-			x if x == double => crate::room::types::FieldType::Double,
-			x if x == long => crate::room::types::FieldType::Long,
-			x if x == structure => crate::room::types::FieldType::Structure,
+			x if x == event => cheetah_matches_relay_common::commands::command::FieldType::Event,
+			x if x == double => cheetah_matches_relay_common::commands::command::FieldType::Double,
+			x if x == long => cheetah_matches_relay_common::commands::command::FieldType::Long,
+			x if x == structure => cheetah_matches_relay_common::commands::command::FieldType::Structure,
 			_ => {
 				panic!("Enum field_type unrecognized {}", source.r#type)
 			}

@@ -1,11 +1,10 @@
 use cheetah_matches_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
-use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
-use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementFloat64C2SCommand {

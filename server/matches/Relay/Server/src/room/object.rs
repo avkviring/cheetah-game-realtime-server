@@ -4,13 +4,11 @@ use fnv::FnvBuildHasher;
 use serde::{Deserialize, Serialize};
 
 use cheetah_matches_relay_common::commands::command::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
-use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
-
-use crate::room::types::FieldType;
 
 ///
 /// Игровой объект - логическая группировка игровых данных
@@ -83,13 +81,12 @@ pub struct FieldIdAndType {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
-	use crate::room::types::FieldType;
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -107,7 +104,6 @@ mod tests {
 
 		let mut commands = Vec::new();
 		object.collect_create_commands(&mut commands);
-
 		assert!(matches!(commands.remove(0),
 			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
 

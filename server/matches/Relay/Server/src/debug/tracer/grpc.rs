@@ -2,7 +2,7 @@ use std::convert::AsRef;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
+use cheetah_matches_relay_common::commands::command::{C2SCommand, FieldType, S2CCommand};
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomId;
 use cheetah_microservice::tonic::{Request, Response};
@@ -10,7 +10,6 @@ use cheetah_microservice::tonic::{Request, Response};
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
 use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, UniDirectionCommand};
-use crate::room::types::FieldType;
 use crate::server::manager::RelayManager;
 
 pub struct CommandTracerGRPCService {

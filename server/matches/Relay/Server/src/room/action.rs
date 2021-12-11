@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -6,7 +6,6 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
-use crate::room::types::FieldType;
 use crate::room::Room;
 
 ///

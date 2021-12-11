@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 
+use cheetah_matches_relay_common::commands::command::FieldType;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::UserPrivateKey;
-
-use crate::room::types::FieldType;
 
 ///
 /// Шаблон для создания комнаты
@@ -94,7 +93,7 @@ mod tests {
 		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
 		UserTemplate, UserTemplateError,
 	};
-	use crate::room::types::FieldType;
+	use cheetah_matches_relay_common::commands::command::FieldType;
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;

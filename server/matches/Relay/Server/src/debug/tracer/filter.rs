@@ -1,11 +1,10 @@
-use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
+use cheetah_matches_relay_common::commands::command::FieldType;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
-use crate::room::types::FieldType;
 
 ///
 /// Фильтрация сетевых команд на основе правил
@@ -58,87 +57,22 @@ impl UniDirectionCommand {
 	}
 	pub fn get_field_type(&self) -> Option<FieldType> {
 		match self {
-			UniDirectionCommand::C2S(command) => match command {
-				C2SCommand::Create(_) => Option::None,
-				C2SCommand::Created(_) => Option::None,
-				C2SCommand::SetLong(_) => Option::Some(FieldType::Long),
-				C2SCommand::IncrementLongValue(_) => Option::Some(FieldType::Long),
-				C2SCommand::CompareAndSetLongValue(_) => Option::Some(FieldType::Long),
-				C2SCommand::SetFloat(_) => Option::Some(FieldType::Double),
-				C2SCommand::IncrementFloatCounter(_) => Option::Some(FieldType::Double),
-				C2SCommand::SetStruct(_) => Option::Some(FieldType::Structure),
-				C2SCommand::Event(_) => Option::Some(FieldType::Event),
-				C2SCommand::TargetEvent(_) => Option::Some(FieldType::Event),
-				C2SCommand::Delete(_) => Option::None,
-				C2SCommand::AttachToRoom => Option::None,
-				C2SCommand::DetachFromRoom => Option::None,
-			},
-			UniDirectionCommand::S2C(command) => match command {
-				S2CCommand::Create(_) => Option::None,
-				S2CCommand::Created(_) => Option::None,
-				S2CCommand::SetLong(_) => Option::Some(FieldType::Long),
-				S2CCommand::SetFloat(_) => Option::Some(FieldType::Double),
-				S2CCommand::SetStruct(_) => Option::Some(FieldType::Structure),
-				S2CCommand::Event(_) => Option::Some(FieldType::Event),
-				S2CCommand::Delete(_) => Option::None,
-			},
+			UniDirectionCommand::C2S(command) => command.get_field_type(),
+			UniDirectionCommand::S2C(command) => command.get_field_type(),
 		}
 	}
+
 	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
-			UniDirectionCommand::C2S(command) => match command {
-				C2SCommand::Create(_) => Option::None,
-				C2SCommand::Created(_) => Option::None,
-				C2SCommand::SetLong(command) => Some(command.field_id),
-				C2SCommand::IncrementLongValue(command) => Some(command.field_id),
-				C2SCommand::CompareAndSetLongValue(command) => Some(command.field_id),
-				C2SCommand::SetFloat(command) => Some(command.field_id),
-				C2SCommand::IncrementFloatCounter(command) => Some(command.field_id),
-				C2SCommand::SetStruct(command) => Some(command.field_id),
-				C2SCommand::Event(command) => Some(command.field_id),
-				C2SCommand::TargetEvent(command) => Some(command.event.field_id),
-				C2SCommand::Delete(_) => Option::None,
-				C2SCommand::AttachToRoom => Option::None,
-				C2SCommand::DetachFromRoom => Option::None,
-			},
-			UniDirectionCommand::S2C(command) => match command {
-				S2CCommand::Create(_) => Option::None,
-				S2CCommand::Created(_) => Option::None,
-				S2CCommand::SetLong(command) => Some(command.field_id),
-				S2CCommand::SetFloat(command) => Some(command.field_id),
-				S2CCommand::SetStruct(command) => Some(command.field_id),
-				S2CCommand::Event(command) => Some(command.field_id),
-				S2CCommand::Delete(_) => Option::None,
-			},
+			UniDirectionCommand::C2S(command) => command.get_field_id(),
+			UniDirectionCommand::S2C(command) => command.get_field_id(),
 		}
 	}
 
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
-			UniDirectionCommand::C2S(command) => match command {
-				C2SCommand::Create(command) => Some(command.object_id.clone()),
-				C2SCommand::Created(command) => Some(command.object_id.clone()),
-				C2SCommand::SetLong(command) => Some(command.object_id.clone()),
-				C2SCommand::IncrementLongValue(command) => Some(command.object_id.clone()),
-				C2SCommand::CompareAndSetLongValue(command) => Some(command.object_id.clone()),
-				C2SCommand::SetFloat(command) => Some(command.object_id.clone()),
-				C2SCommand::IncrementFloatCounter(command) => Some(command.object_id.clone()),
-				C2SCommand::SetStruct(command) => Some(command.object_id.clone()),
-				C2SCommand::Event(command) => Some(command.object_id.clone()),
-				C2SCommand::TargetEvent(command) => Some(command.event.object_id.clone()),
-				C2SCommand::Delete(command) => Some(command.object_id.clone()),
-				C2SCommand::AttachToRoom => Option::None,
-				C2SCommand::DetachFromRoom => Option::None,
-			},
-			UniDirectionCommand::S2C(command) => match command {
-				S2CCommand::Create(command) => Some(command.object_id.clone()),
-				S2CCommand::Created(command) => Some(command.object_id.clone()),
-				S2CCommand::SetLong(command) => Some(command.object_id.clone()),
-				S2CCommand::SetFloat(command) => Some(command.object_id.clone()),
-				S2CCommand::SetStruct(command) => Some(command.object_id.clone()),
-				S2CCommand::Event(command) => Some(command.object_id.clone()),
-				S2CCommand::Delete(command) => Some(command.object_id.clone()),
-			},
+			UniDirectionCommand::C2S(command) => command.get_object_id(),
+			UniDirectionCommand::S2C(command) => command.get_object_id(),
 		}
 	}
 }

@@ -5,7 +5,7 @@ use std::rc::Rc;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -13,7 +13,6 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
-use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
@@ -182,7 +181,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::command::long::{
 		CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand,
 	};
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
 	use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -192,7 +191,6 @@ mod tests {
 	use crate::room::template::config::{
 		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate, UserTemplate,
 	};
-	use crate::room::types::FieldType;
 	use crate::room::Room;
 
 	#[test]
@@ -244,7 +242,7 @@ mod tests {
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
-			increment: i64::max_value(),
+			increment: i64::MAX,
 		};
 		command.clone().execute(&mut room, user);
 		command.execute(&mut room, user);

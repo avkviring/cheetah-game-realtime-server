@@ -337,7 +337,7 @@ mod tests {
 	use std::rc::Rc;
 	use std::time::Instant;
 
-	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_relay_common::commands::command::{C2SCommand, FieldType, S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
 	use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannel;
 	use cheetah_matches_relay_common::protocol::frame::Frame;
@@ -349,7 +349,6 @@ mod tests {
 
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
-	use crate::room::types::FieldType;
 	use crate::room::{Room, RoomUserListener};
 
 	impl Default for Room {
@@ -396,7 +395,7 @@ mod tests {
 				.map(|c| match c {
 					ApplicationCommand::TestSimple(_) => None,
 					ApplicationCommand::TestObject(_, _) => None,
-					ApplicationCommand::S2CCommandWithUser(c) => Some(c.command.clone()),
+					ApplicationCommand::S2CCommandWithCreator(c) => Some(c.command.clone()),
 					ApplicationCommand::C2SCommand(_) => None,
 				})
 				.flatten()
@@ -417,7 +416,7 @@ mod tests {
 				.map(|c| match c {
 					ApplicationCommand::TestSimple(_) => None,
 					ApplicationCommand::TestObject(_, _) => None,
-					ApplicationCommand::S2CCommandWithUser(c) => Some(c.clone()),
+					ApplicationCommand::S2CCommandWithCreator(c) => Some(c.clone()),
 					ApplicationCommand::C2SCommand(_) => None,
 				})
 				.flatten()

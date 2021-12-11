@@ -35,7 +35,7 @@ pub struct ApplicationCommandDescription {
 pub enum ApplicationCommand {
 	TestSimple(String),
 	TestObject(GameObjectId, String),
-	S2CCommandWithUser(S2CCommandWithCreator),
+	S2CCommandWithCreator(S2CCommandWithCreator),
 	C2SCommand(C2SCommand),
 }
 
@@ -44,7 +44,7 @@ impl ApplicationCommand {
 		match &self {
 			ApplicationCommand::TestSimple(_) => Option::None,
 			ApplicationCommand::TestObject(object_id, _) => Option::Some(object_id),
-			ApplicationCommand::S2CCommandWithUser(command_with_meta) => match &command_with_meta.command {
+			ApplicationCommand::S2CCommandWithCreator(command_with_meta) => match &command_with_meta.command {
 				S2CCommand::Create(c) => Option::Some(&c.object_id),
 				S2CCommand::SetLong(c) => Option::Some(&c.object_id),
 				S2CCommand::SetFloat(c) => Option::Some(&c.object_id),

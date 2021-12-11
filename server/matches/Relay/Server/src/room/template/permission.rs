@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
+use cheetah_matches_relay_common::commands::command::FieldType;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
 use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
-use crate::room::types::FieldType;
 
 #[derive(Debug)]
 pub struct PermissionManager {
@@ -120,13 +120,13 @@ impl PermissionManager {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_relay_common::commands::command::FieldType;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::template::config::{
 		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
 	};
 	use crate::room::template::permission::PermissionManager;
-	use crate::room::types::FieldType;
 
 	#[test]
 	fn should_default_permission() {

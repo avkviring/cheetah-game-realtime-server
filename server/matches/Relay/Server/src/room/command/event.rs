@@ -1,11 +1,10 @@
 use cheetah_matches_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
-use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::GameObject;
 use crate::room::template::config::Permission;
-use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {

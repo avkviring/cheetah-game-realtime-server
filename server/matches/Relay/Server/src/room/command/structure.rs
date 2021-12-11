@@ -1,11 +1,10 @@
 use cheetah_matches_relay_common::commands::command::structure::StructureCommand;
-use cheetah_matches_relay_common::commands::command::{HeaplessBuffer, S2CCommand};
+use cheetah_matches_relay_common::commands::command::{FieldType, HeaplessBuffer, S2CCommand};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
 use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
-use crate::room::types::FieldType;
 use crate::room::Room;
 
 impl ServerCommandExecutor for StructureCommand {

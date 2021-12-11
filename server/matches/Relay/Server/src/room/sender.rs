@@ -70,7 +70,7 @@ impl Room {
 							command: command.command.clone(),
 						};
 
-						let application_command = ApplicationCommand::S2CCommandWithUser(command_with_user);
+						let application_command = ApplicationCommand::S2CCommandWithCreator(command_with_user);
 						protocol
 							.out_commands_collector
 							.add_command(channel_type.clone(), application_command.clone());
@@ -120,7 +120,7 @@ impl Room {
 									.borrow_mut()
 									.collect_s2c(object_template, user.id, &command.command);
 
-								let application_command = ApplicationCommand::S2CCommandWithUser(command_with_meta);
+								let application_command = ApplicationCommand::S2CCommandWithCreator(command_with_meta);
 								protocol
 									.out_commands_collector
 									.add_command(channel.clone(), application_command);
@@ -136,12 +136,11 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::commands::command::long::SetLongCommand;
-	use cheetah_matches_relay_common::commands::command::{S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
 	use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
-	use crate::room::types::FieldType;
 	use crate::room::Room;
 
 	///
