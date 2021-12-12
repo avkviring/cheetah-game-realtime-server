@@ -44,7 +44,7 @@ pub fn detach_from_room(room: &mut Room, user_id: RoomMemberId) {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::room::attach_to_room;

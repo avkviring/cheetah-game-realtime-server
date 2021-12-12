@@ -1,5 +1,6 @@
-use cheetah_matches_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
-use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+use cheetah_matches_relay_common::commands::types::float::{IncrementFloat64C2SCommand, SetFloat64Command};
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
@@ -80,8 +81,8 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::float::{IncrementFloat64C2SCommand, SetFloat64Command};
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::float::{IncrementFloat64C2SCommand, SetFloat64Command};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -104,7 +105,7 @@ mod tests {
 			value: 100.100,
 		};
 		command.clone().execute(&mut room, user);
-
+		
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.floats.get(&10).unwrap() as u64, 100);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetFloat(c))) if c==command));
@@ -134,6 +135,7 @@ mod tests {
 			field_id: 10,
 			value: 200.200,
 		};
+		
 		room.out_commands.pop_back();
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetFloat(c))) if c==result));
 	}

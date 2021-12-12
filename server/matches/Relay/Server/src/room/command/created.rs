@@ -1,9 +1,7 @@
-use cheetah_matches_relay_common::commands::command::load::CreatedGameObjectCommand;
-
+use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
-
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
@@ -28,8 +26,8 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::load::CreatedGameObjectCommand;
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 
 	use crate::room::command::tests::setup;
 	use crate::room::command::ServerCommandExecutor;

@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -25,8 +25,8 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -54,7 +54,7 @@ mod tests {
 
 		room.current_user = Option::Some(user_a_id);
 		command.clone().execute(&mut room, user_a_id);
-
+		
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.get_user_out_commands(user_a_id).pop_back(), None));
 		assert!(matches!(room.get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));

@@ -1,6 +1,6 @@
-use cheetah_matches_relay_common::commands::command::load::CreatedGameObjectCommand;
-use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_matches_relay_common::commands::command::C2SCommand;
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 
 use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, GameObjectIdFFI};

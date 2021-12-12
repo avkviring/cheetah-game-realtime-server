@@ -1,6 +1,10 @@
+use std::io::Cursor;
+
+use byteorder::WriteBytesExt;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::GameObjectTemplateId;
+use crate::protocol::codec::cursor::VariableInt;
 use crate::room::access::AccessGroups;
 use crate::room::object::GameObjectId;
 
@@ -22,4 +26,11 @@ pub struct CreateGameObjectCommand {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct CreatedGameObjectCommand {
 	pub object_id: GameObjectId,
+}
+
+impl CreateGameObjectCommand {
+	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+		out.write_variable_u64(self.template as u64)?;
+		out.write_variable_u64(self.access_groups.0)
+	}
 }

@@ -1,9 +1,9 @@
 use std::sync::Mutex;
 
 use cheetah_matches_relay::room::template::config::Permission;
-use cheetah_matches_relay::room::types::FieldType;
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 

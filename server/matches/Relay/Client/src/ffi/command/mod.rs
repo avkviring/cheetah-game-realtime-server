@@ -1,7 +1,6 @@
-use cheetah_matches_relay_common::commands::command::C2SCommand;
-
 use crate::ffi::execute_with_client;
 use crate::registry::ClientId;
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 
 pub mod event;
 pub mod float_value;

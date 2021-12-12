@@ -5,11 +5,11 @@ use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 use std::time::Instant;
 
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 
-use cheetah_matches_relay_common::commands::command::unload::DeleteGameObjectCommand;
-use cheetah_matches_relay_common::commands::command::S2CCommand;
+use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
@@ -336,8 +336,10 @@ mod tests {
 	use std::collections::VecDeque;
 	use std::rc::Rc;
 	use std::time::Instant;
+	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+	use cheetah_matches_relay_common::commands::FieldType;
+	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 
-	use cheetah_matches_relay_common::commands::command::{C2SCommand, FieldType, S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
 	use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannel;
 	use cheetah_matches_relay_common::protocol::frame::Frame;

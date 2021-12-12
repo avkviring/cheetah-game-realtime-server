@@ -2,10 +2,11 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+use cheetah_matches_relay_common::commands::FieldType;
 use fnv::FnvBuildHasher;
 
-use cheetah_matches_relay_common::commands::command::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
+use cheetah_matches_relay_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -178,10 +179,11 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::long::{
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::long::{
 		CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand,
 	};
-	use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
+	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -231,6 +233,7 @@ mod tests {
 			field_id: 10,
 			value: 200,
 		};
+
 		room.out_commands.pop_back();
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==result));
 	}
@@ -321,6 +324,7 @@ mod tests {
 			new: 100,
 			reset: 555,
 		};
+
 		room.out_commands.clear();
 		command.clone().execute(&mut room, user1_id);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c.value==command.new));

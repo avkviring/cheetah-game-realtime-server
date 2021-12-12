@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::command::FieldType;
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -118,8 +118,9 @@ impl Rule {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::event::EventCommand;
-	use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
+	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::event::EventCommand;
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;

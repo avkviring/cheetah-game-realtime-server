@@ -1,5 +1,5 @@
-use cheetah_matches_relay_common::commands::command::structure::StructureCommand;
-use cheetah_matches_relay_common::commands::command::C2SCommand;
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::commands::types::structure::StructureCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 

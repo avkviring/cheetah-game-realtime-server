@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -74,7 +74,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
+	use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;

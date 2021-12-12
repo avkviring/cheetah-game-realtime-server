@@ -1,6 +1,6 @@
+use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use std::slice::Iter;
 
-use cheetah_matches_relay_common::commands::command::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
@@ -135,8 +135,9 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::long::SetLongCommand;
-	use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
+	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};

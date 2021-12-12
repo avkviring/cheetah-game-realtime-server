@@ -1,4 +1,5 @@
-use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;

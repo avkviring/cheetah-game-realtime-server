@@ -1,11 +1,12 @@
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use cheetah_matches_relay_common::commands::command::load::CreateGameObjectCommand;
-use cheetah_matches_relay_common::commands::command::{C2SCommand, S2CCommand};
+use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::protocol::frame::applications::{

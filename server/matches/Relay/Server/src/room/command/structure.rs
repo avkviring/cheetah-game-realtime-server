@@ -1,5 +1,6 @@
-use cheetah_matches_relay_common::commands::command::structure::StructureCommand;
-use cheetah_matches_relay_common::commands::command::{FieldType, HeaplessBuffer, S2CCommand};
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+use cheetah_matches_relay_common::commands::types::structure::StructureCommand;
+use cheetah_matches_relay_common::commands::{FieldType, HeaplessBuffer};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
@@ -48,8 +49,8 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::structure::StructureCommand;
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::structure::StructureCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::ServerCommandExecutor;

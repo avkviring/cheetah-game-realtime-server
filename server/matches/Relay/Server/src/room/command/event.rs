@@ -1,5 +1,6 @@
-use cheetah_matches_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
-use cheetah_matches_relay_common::commands::command::{FieldType, S2CCommand};
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetEventCommand};
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
@@ -44,8 +45,8 @@ impl ServerCommandExecutor for TargetEventCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::command::event::{EventCommand, TargetEventCommand};
-	use cheetah_matches_relay_common::commands::command::S2CCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetEventCommand};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -69,6 +70,7 @@ mod tests {
 			field_id: 100,
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
+		
 		command.clone().execute(&mut room, user);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
@@ -103,6 +105,7 @@ mod tests {
 			},
 		};
 
+		
 		command.clone().execute(&mut room, user1);
 		assert!(matches!(room.get_user_out_commands(user1).pop_back(), None));
 		assert!(

@@ -1,6 +1,6 @@
+use cheetah_matches_relay_common::commands::HeaplessBuffer;
 use std::cell::RefCell;
 
-use cheetah_matches_relay_common::commands::command::HeaplessBuffer;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
