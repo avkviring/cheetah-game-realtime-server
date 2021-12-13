@@ -1,10 +1,5 @@
-use std::io::Cursor;
-
-use byteorder::{BigEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-
-use crate::protocol::codec::cursor::VarInt;
-use crate::protocol::frame::applications::{ChannelGroupId, ChannelSequence};
+use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 
 ///
 /// Тип канала для отправки
@@ -22,7 +17,7 @@ pub enum ApplicationCommandChannelType {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	ReliableOrderedByGroup(ChannelGroupId),
+	ReliableOrderedByGroup(ChannelGroup),
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -34,7 +29,7 @@ pub enum ApplicationCommandChannelType {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByGroup(ChannelGroupId),
+	UnreliableOrderedByGroup(ChannelGroup),
 	///
 	/// Выполняем команды строго по-порядку по объекту
 	///
@@ -42,14 +37,14 @@ pub enum ApplicationCommandChannelType {
 	///
 	/// Выполняем команды строго по-порядку по группе
 	///
-	ReliableSequenceByGroup(ChannelGroupId),
+	ReliableSequenceByGroup(ChannelGroup),
 }
 
 ///
 /// Канал для отправки, отличается от [ApplicationCommandChannelType] полным набором данных для канала
 ///
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-pub enum ApplicationCommandChannel {
+pub enum CommandChannel {
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -61,7 +56,7 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	ReliableOrderedByGroup(ChannelGroupId),
+	ReliableOrderedByGroup(ChannelGroup),
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -73,7 +68,7 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByGroup(ChannelGroupId),
+	UnreliableOrderedByGroup(ChannelGroup),
 	///
 	/// Выполняем команды строго по-порядку по объекту
 	///
@@ -81,54 +76,41 @@ pub enum ApplicationCommandChannel {
 	///
 	/// Выполняем команды строго по-порядку по группе
 	///
-	ReliableSequenceByGroup(ChannelGroupId, ChannelSequence),
+	ReliableSequenceByGroup(ChannelGroup, ChannelSequence),
 }
 
-impl From<&ApplicationCommandChannel> for ApplicationCommandChannelType {
-	fn from(channel: &ApplicationCommandChannel) -> Self {
+impl From<&CommandChannel> for ApplicationCommandChannelType {
+	fn from(channel: &CommandChannel) -> Self {
 		match channel {
-			ApplicationCommandChannel::ReliableUnordered => ApplicationCommandChannelType::ReliableUnordered,
-			ApplicationCommandChannel::ReliableOrderedByObject => ApplicationCommandChannelType::ReliableOrderedByObject,
-			ApplicationCommandChannel::ReliableOrderedByGroup(channel) => {
+			CommandChannel::ReliableUnordered => ApplicationCommandChannelType::ReliableUnordered,
+			CommandChannel::ReliableOrderedByObject => ApplicationCommandChannelType::ReliableOrderedByObject,
+			CommandChannel::ReliableOrderedByGroup(channel) => {
 				ApplicationCommandChannelType::ReliableOrderedByGroup(*channel)
 			}
-			ApplicationCommandChannel::UnreliableUnordered => ApplicationCommandChannelType::UnreliableUnordered,
-			ApplicationCommandChannel::UnreliableOrderedByObject => ApplicationCommandChannelType::UnreliableOrderedByObject,
-			ApplicationCommandChannel::UnreliableOrderedByGroup(channel) => {
+			CommandChannel::UnreliableUnordered => ApplicationCommandChannelType::UnreliableUnordered,
+			CommandChannel::UnreliableOrderedByObject => ApplicationCommandChannelType::UnreliableOrderedByObject,
+			CommandChannel::UnreliableOrderedByGroup(channel) => {
 				ApplicationCommandChannelType::UnreliableOrderedByGroup(*channel)
 			}
-			ApplicationCommandChannel::ReliableSequenceByObject(_) => ApplicationCommandChannelType::ReliableSequenceByObject,
-			ApplicationCommandChannel::ReliableSequenceByGroup(channel, _) => {
+			CommandChannel::ReliableSequenceByObject(_) => ApplicationCommandChannelType::ReliableSequenceByObject,
+			CommandChannel::ReliableSequenceByGroup(channel, _) => {
 				ApplicationCommandChannelType::ReliableSequenceByGroup(*channel)
 			}
 		}
 	}
 }
 
-impl ApplicationCommandChannel {
-	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+impl CommandChannel {
+	pub fn get_channel_group_id(&self) -> Option<ChannelGroup> {
 		match self {
-			ApplicationCommandChannel::ReliableUnordered => out.write_u8(1),
-			ApplicationCommandChannel::ReliableOrderedByObject => out.write_u8(2),
-			ApplicationCommandChannel::ReliableOrderedByGroup(group) => {
-				out.write_u8(3)?;
-				out.write_varint(*group as u64)
-			}
-			ApplicationCommandChannel::UnreliableUnordered => out.write_u8(4),
-			ApplicationCommandChannel::UnreliableOrderedByObject => out.write_u8(5),
-			ApplicationCommandChannel::UnreliableOrderedByGroup(group) => {
-				out.write_u8(6)?;
-				out.write_varint(*group as u64)
-			}
-			ApplicationCommandChannel::ReliableSequenceByObject(sequence) => {
-				out.write_u8(7)?;
-				out.write_varint(*sequence as u64)
-			}
-			ApplicationCommandChannel::ReliableSequenceByGroup(group, sequence) => {
-				out.write_u8(8)?;
-				out.write_varint(*group as u64)?;
-				out.write_varint(*sequence as u64)
-			}
+			CommandChannel::ReliableUnordered => None,
+			CommandChannel::ReliableOrderedByObject => None,
+			CommandChannel::ReliableOrderedByGroup(group) => Some(*group),
+			CommandChannel::UnreliableUnordered => None,
+			CommandChannel::UnreliableOrderedByObject => None,
+			CommandChannel::UnreliableOrderedByGroup(group) => Some(*group),
+			CommandChannel::ReliableSequenceByObject(_) => None,
+			CommandChannel::ReliableSequenceByGroup(group, _) => Some(*group),
 		}
 	}
 }

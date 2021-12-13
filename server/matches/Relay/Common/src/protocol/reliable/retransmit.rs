@@ -216,8 +216,8 @@ mod tests {
 	use std::ops::Add;
 	use std::time::Instant;
 
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
-	use crate::protocol::frame::channel::ApplicationCommandChannel;
+	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+	use crate::protocol::frame::channel::CommandChannel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::{Frame, FrameId};
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
@@ -359,9 +359,9 @@ mod tests {
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
-		frame.commands.unreliable.push_back(ApplicationCommandDescription {
-			channel: ApplicationCommandChannel::ReliableUnordered,
-			command: ApplicationCommand::TestSimple("".to_string()),
+		frame.commands.unreliable.push_back(CommandWithChannel {
+			channel: CommandChannel::ReliableUnordered,
+			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
 		let now = Instant::now();
 		handler.on_frame_built(&frame, &now);
@@ -372,9 +372,9 @@ mod tests {
 
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.commands.reliable.push_back(ApplicationCommandDescription {
-			channel: ApplicationCommandChannel::ReliableUnordered,
-			command: ApplicationCommand::TestSimple("".to_string()),
+		frame.commands.reliable.push_back(CommandWithChannel {
+			channel: CommandChannel::ReliableUnordered,
+			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
 		frame
 	}

@@ -11,7 +11,7 @@ use indexmap::map::IndexMap;
 
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommand;
+use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::protocol::frame::Frame;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
@@ -171,7 +171,7 @@ impl Room {
 		let tracer = self.command_trace_session.clone();
 		for application_command in commands.into_iter() {
 			match application_command.command {
-				ApplicationCommand::C2SCommand(command) => {
+				BothDirectionCommand::C2SCommand(command) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, &command);
 					execute(command, self, user_id);
@@ -340,8 +340,8 @@ mod tests {
 	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 
-	use cheetah_matches_relay_common::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
-	use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannel;
+	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+	use cheetah_matches_relay_common::protocol::frame::channel::CommandChannel;
 	use cheetah_matches_relay_common::protocol::frame::Frame;
 	use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -395,10 +395,10 @@ mod tests {
 				.iter()
 				.map(|c| &c.command)
 				.map(|c| match c {
-					ApplicationCommand::TestSimple(_) => None,
-					ApplicationCommand::TestObject(_, _) => None,
-					ApplicationCommand::S2CCommandWithCreator(c) => Some(c.command.clone()),
-					ApplicationCommand::C2SCommand(_) => None,
+					BothDirectionCommand::TestSimple(_) => None,
+					BothDirectionCommand::TestObject(_, _) => None,
+					BothDirectionCommand::S2CCommandWithCreator(c) => Some(c.command.clone()),
+					BothDirectionCommand::C2SCommand(_) => None,
 				})
 				.flatten()
 				.collect()
@@ -416,10 +416,10 @@ mod tests {
 				.iter()
 				.map(|c| &c.command)
 				.map(|c| match c {
-					ApplicationCommand::TestSimple(_) => None,
-					ApplicationCommand::TestObject(_, _) => None,
-					ApplicationCommand::S2CCommandWithCreator(c) => Some(c.clone()),
-					ApplicationCommand::C2SCommand(_) => None,
+					BothDirectionCommand::TestSimple(_) => None,
+					BothDirectionCommand::TestObject(_, _) => None,
+					BothDirectionCommand::S2CCommandWithCreator(c) => Some(c.clone()),
+					BothDirectionCommand::C2SCommand(_) => None,
 				})
 				.flatten()
 				.collect()
@@ -545,9 +545,9 @@ mod tests {
 		frame_with_attach_to_room
 			.commands
 			.reliable
-			.push_back(ApplicationCommandDescription {
-				channel: ApplicationCommandChannel::ReliableUnordered,
-				command: ApplicationCommand::C2SCommand(C2SCommand::AttachToRoom),
+			.push_back(CommandWithChannel {
+				channel: CommandChannel::ReliableUnordered,
+				command: BothDirectionCommand::C2SCommand(C2SCommand::AttachToRoom),
 			});
 		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
 

@@ -1,15 +1,18 @@
 use std::io::Cursor;
 
 use strum_macros::AsRefStr;
+use thiserror::Error;
 
+use crate::commands::s2c::S2CCommand::SetStruct;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::float::SetFloat64Command;
 use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::structure::StructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
-use crate::commands::FieldType;
+use crate::commands::{CommandTypeId, FieldType};
 use crate::constants::FieldId;
+use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
 
@@ -22,12 +25,6 @@ pub enum S2CCommand {
 	SetStruct(StructureCommand),
 	Event(EventCommand),
 	Delete(DeleteGameObjectCommand),
-}
-
-impl S2CCommand {
-	pub(crate) fn decode(p0: u8, p1: Option<GameObjectId>, p2: Option<FieldId>, p3: &mut Cursor<&mut [u8]>) -> S2CCommand {
-		todo!()
-	}
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -72,15 +69,15 @@ impl S2CCommand {
 		}
 	}
 
-	pub fn get_type_id(&self) -> u8 {
+	pub fn get_type_id(&self) -> CommandTypeId {
 		match self {
-			S2CCommand::Create(_) => 0,
-			S2CCommand::Created(_) => 1,
-			S2CCommand::SetLong(_) => 2,
-			S2CCommand::SetFloat(_) => 3,
-			S2CCommand::SetStruct(_) => 4,
-			S2CCommand::Event(_) => 5,
-			S2CCommand::Delete(_) => 6,
+			S2CCommand::Create(_) => CommandTypeId(0),
+			S2CCommand::Created(_) => CommandTypeId(1),
+			S2CCommand::SetLong(_) => CommandTypeId(2),
+			S2CCommand::SetFloat(_) => CommandTypeId(3),
+			S2CCommand::SetStruct(_) => CommandTypeId(4),
+			S2CCommand::Event(_) => CommandTypeId(5),
+			S2CCommand::Delete(_) => CommandTypeId(6),
 		}
 	}
 
@@ -95,4 +92,42 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => Ok(()),
 		}
 	}
+
+	pub fn decode(
+		command_type_id: CommandTypeId,
+		context: &CommandContext,
+		input: &mut Cursor<&mut [u8]>,
+	) -> Result<S2CCommand, S2CCommandDecodeError> {
+		let object_id = context.get_object_id()?.clone();
+		match command_type_id {
+			CommandTypeId(0) => return Ok(S2CCommand::Create(CreateGameObjectCommand::decode(object_id, input)?)),
+			CommandTypeId(1) => return Ok(S2CCommand::Created(CreatedGameObjectCommand { object_id })),
+			CommandTypeId(6) => return Ok(S2CCommand::Delete(DeleteGameObjectCommand { object_id })),
+			_ => {}
+		};
+		let field_id = context.get_field_id()?;
+		Ok(match command_type_id {
+			CommandTypeId(2) => S2CCommand::SetLong(SetLongCommand::decode(object_id, field_id, input)?),
+			CommandTypeId(3) => S2CCommand::SetFloat(SetFloat64Command::decode(object_id, field_id, input)?),
+			CommandTypeId(4) => S2CCommand::SetStruct(StructureCommand::decode(object_id, field_id, input)?),
+			CommandTypeId(5) => S2CCommand::Event(EventCommand::decode(object_id, field_id, input)?),
+			_ => Err(S2CCommandDecodeError::UnknownTypeId(command_type_id))?,
+		})
+	}
+}
+
+#[derive(Error, Debug)]
+pub enum S2CCommandDecodeError {
+	#[error("Unknown type {:?}.",.0)]
+	UnknownTypeId(CommandTypeId),
+	#[error("IO error {:?}",.source)]
+	Io {
+		#[from]
+		source: std::io::Error,
+	},
+	#[error("CommandContext error {:?}", .source)]
+	CommandContext {
+		#[from]
+		source: CommandContextError,
+	},
 }

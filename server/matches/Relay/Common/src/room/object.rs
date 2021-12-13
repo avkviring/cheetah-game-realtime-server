@@ -1,3 +1,5 @@
+use std::io::Cursor;
+
 use serde::{Deserialize, Serialize};
 
 use crate::room::owner::GameObjectOwner;
@@ -16,6 +18,15 @@ pub struct GameObjectId {
 	/// Идентификатор игрового объекта в рамках владельца
 	///
 	pub id: u32,
+}
+
+impl GameObjectId {
+	pub fn encode(&self, p0: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+		todo!()
+	}
+	pub fn decode(input: &mut Cursor<&mut [u8]>) -> std::io::Result<Self> {
+		todo!()
+	}
 }
 
 impl GameObjectId {

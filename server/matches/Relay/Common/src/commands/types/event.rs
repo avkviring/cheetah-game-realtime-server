@@ -1,8 +1,9 @@
-use std::io::{Cursor, Write};
+use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
+use byteorder::ReadBytesExt;
 use serde::{Deserialize, Serialize};
 
-use crate::commands::HeaplessBuffer;
+use crate::commands::CommandBuffer;
 use crate::constants::FieldId;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::room::object::GameObjectId;
@@ -15,7 +16,7 @@ use crate::room::RoomMemberId;
 pub struct EventCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
-	pub event: HeaplessBuffer,
+	pub event: CommandBuffer,
 }
 
 ///
@@ -32,11 +33,38 @@ impl EventCommand {
 		out.write_variable_u64(self.event.len() as u64)?;
 		out.write_all(self.event.as_slice())
 	}
+
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&mut [u8]>) -> std::io::Result<Self> {
+		let size = input.read_variable_u64()? as usize;
+		let mut event = CommandBuffer::new();
+		if size > event.capacity() {
+			return Err(Error::new(
+				ErrorKind::InvalidData,
+				format!("Event buffer size to big {}", size),
+			));
+		}
+		input.read(&mut event[0..size]);
+
+		Ok(Self {
+			object_id,
+			field_id,
+			event,
+		})
+	}
 }
 
 impl TargetEventCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_u64(self.target as u64)?;
 		self.event.encode(out)
+	}
+
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&mut [u8]>) -> std::io::Result<Self> {
+		let target = input.read_variable_u64()? as RoomMemberId;
+
+		Ok(Self {
+			target,
+			event: EventCommand::decode(object_id, field_id, input)?,
+		})
 	}
 }

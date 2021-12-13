@@ -1,6 +1,6 @@
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::structure::StructureCommand;
-use cheetah_matches_relay_common::commands::{FieldType, HeaplessBuffer};
+use cheetah_matches_relay_common::commands::{FieldType, CommandBuffer};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
@@ -31,7 +31,7 @@ impl ServerCommandExecutor for StructureCommand {
 impl GameObject {
 	pub fn structures_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
 		self.structures.iter().for_each(|(field_id, v)| {
-			let structure = HeaplessBuffer::from_slice(&v.as_slice()).unwrap();
+			let structure = CommandBuffer::from_slice(&v.as_slice()).unwrap();
 			commands.push(S2CommandWithFieldInfo {
 				field: Option::Some(FieldIdAndType {
 					field_id: field_id.clone(),

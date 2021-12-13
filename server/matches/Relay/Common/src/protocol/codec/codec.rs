@@ -5,6 +5,7 @@ use rmp_serde::Serializer;
 use serde::Serialize;
 
 use crate::protocol::codec::cipher::Cipher;
+// use crate::protocol::codec::commands::CommandsEncoder;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::serializer::{deserialize, serialize};
 use crate::protocol::frame::headers::Headers;
@@ -64,14 +65,15 @@ impl Frame {
 			packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| UdpFrameDecodeError::DecompressError)?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 
-		let commands =
-			deserialize(&mut Cursor::new(decompressed_buffer)).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
-
-		Result::Ok(Frame {
-			frame_id,
-			headers,
-			commands,
-		})
+		// let commands =
+		// 	deserialize(&mut Cursor::new(decompressed_buffer)).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
+		//
+		// Result::Ok(Frame {
+		// 	frame_id,
+		// 	headers,
+		// 	commands,
+		// })
+		todo!()
 	}
 
 	///
@@ -86,7 +88,11 @@ impl Frame {
 
 		let mut commands_buffer = [0 as u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-		serialize(&self.commands, &mut commands_cursor);
+
+		// let mut commands_encoder = CommandsEncoder::new();
+		// commands_encoder.encode(&self.commands.reliable, &mut commands_cursor);
+		// commands_encoder.encode(&self.commands.unreliable, &mut commands_cursor);
+
 		if commands_cursor.position() > 1024 {
 			panic!(
 				"frame size({:?}) is more than 1024, frame  {:#?}",
@@ -135,7 +141,8 @@ pub mod tests {
 	use std::io::Cursor;
 
 	use crate::protocol::codec::cipher::Cipher;
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandChannel, ApplicationCommandDescription};
+	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+	use crate::protocol::frame::channel::CommandChannel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
@@ -151,9 +158,9 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
-		frame.commands.reliable.push_back(ApplicationCommandDescription {
-			channel: ApplicationCommandChannel::ReliableUnordered,
-			command: ApplicationCommand::TestSimple("test".to_string()),
+		frame.commands.reliable.push_back(CommandWithChannel {
+			channel: CommandChannel::ReliableUnordered,
+			command: BothDirectionCommand::TestSimple("test".to_string()),
 		});
 		let mut buffer = [0; 1024];
 		let size = frame.encode(&mut cipher, &mut buffer);

@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::HeaplessBuffer;
+use cheetah_matches_relay_common::commands::CommandBuffer;
 use std::cell::RefCell;
 
 use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -146,14 +146,14 @@ impl From<Vec<u8>> for BufferFFI {
 	}
 }
 
-impl From<&BufferFFI> for HeaplessBuffer {
+impl From<&BufferFFI> for CommandBuffer {
 	fn from(source: &BufferFFI) -> Self {
-		HeaplessBuffer::from_slice(&source.buffer[0..source.len as usize]).unwrap()
+		CommandBuffer::from_slice(&source.buffer[0..source.len as usize]).unwrap()
 	}
 }
 
-impl From<&HeaplessBuffer> for BufferFFI {
-	fn from(source: &HeaplessBuffer) -> Self {
+impl From<&CommandBuffer> for BufferFFI {
+	fn from(source: &CommandBuffer) -> Self {
 		let mut result = BufferFFI {
 			len: source.len() as u8,
 			buffer: [0; BUFFER_MAX_SIZE],

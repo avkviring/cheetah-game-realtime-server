@@ -1,8 +1,8 @@
-use std::io::{Cursor, Write};
+use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
-use crate::commands::HeaplessBuffer;
 use serde::{Deserialize, Serialize};
 
+use crate::commands::CommandBuffer;
 use crate::constants::FieldId;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::room::object::GameObjectId;
@@ -15,11 +15,29 @@ use crate::room::object::GameObjectId;
 pub struct StructureCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
-	pub structure: HeaplessBuffer,
+	pub structure: CommandBuffer,
 }
 impl StructureCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_u64(self.structure.len() as u64)?;
 		out.write_all(self.structure.as_slice())
+	}
+
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&mut [u8]>) -> std::io::Result<Self> {
+		let size = input.read_variable_u64()? as usize;
+		let mut structure = CommandBuffer::new();
+		if size > structure.capacity() {
+			return Err(Error::new(
+				ErrorKind::InvalidData,
+				format!("Structure buffer size to big {}", size),
+			));
+		}
+		input.read(&mut structure[0..size]);
+
+		Ok(Self {
+			object_id,
+			field_id,
+			structure,
+		})
 	}
 }

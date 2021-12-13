@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::protocol::frame::applications::ChannelGroupId;
+use cheetah_matches_relay_common::protocol::frame::applications::ChannelGroup;
 
 use crate::ffi::execute_with_client;
 use crate::registry::ClientId;
@@ -17,6 +17,6 @@ pub enum Channel {
 }
 
 #[no_mangle]
-pub extern "C" fn set_channel(client_id: ClientId, channel: Channel, group: ChannelGroupId) -> bool {
+pub extern "C" fn set_channel(client_id: ClientId, channel: Channel, group: ChannelGroup) -> bool {
 	execute_with_client(client_id, |client| client.set_current_channel(channel.clone(), group)).is_ok()
 }

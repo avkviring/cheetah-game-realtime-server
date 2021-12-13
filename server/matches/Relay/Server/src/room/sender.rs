@@ -2,7 +2,7 @@ use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use std::slice::Iter;
 
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::protocol::frame::applications::ApplicationCommand;
+use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -70,7 +70,7 @@ impl Room {
 							command: command.command.clone(),
 						};
 
-						let application_command = ApplicationCommand::S2CCommandWithCreator(command_with_user);
+						let application_command = BothDirectionCommand::S2CCommandWithCreator(command_with_user);
 						protocol
 							.out_commands_collector
 							.add_command(channel_type.clone(), application_command.clone());
@@ -120,7 +120,7 @@ impl Room {
 									.borrow_mut()
 									.collect_s2c(object_template, user.id, &command.command);
 
-								let application_command = ApplicationCommand::S2CCommandWithCreator(command_with_meta);
+								let application_command = BothDirectionCommand::S2CCommandWithCreator(command_with_meta);
 								protocol
 									.out_commands_collector
 									.add_command(channel.clone(), application_command);

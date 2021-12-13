@@ -10,7 +10,7 @@ use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::protocol::frame::applications::{
-	ApplicationCommand, ApplicationCommandDescription, ChannelGroupId,
+	BothDirectionCommand, CommandWithChannel, ChannelGroup,
 };
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -28,7 +28,7 @@ use crate::registry::ClientRequest;
 ///
 pub struct ClientController {
 	user_id: RoomMemberId,
-	commands_from_server: Receiver<ApplicationCommandDescription>,
+	commands_from_server: Receiver<CommandWithChannel>,
 	handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
 	request_to_client: Sender<ClientRequest>,
@@ -63,7 +63,7 @@ impl ClientController {
 		user_id: RoomMemberId,
 		handler: JoinHandle<()>,
 		state: Arc<Mutex<ConnectionStatus>>,
-		in_commands: Receiver<ApplicationCommandDescription>,
+		in_commands: Receiver<CommandWithChannel>,
 		sender: Sender<ClientRequest>,
 		current_frame_id: Arc<AtomicU64>,
 		rtt_in_ms: Arc<AtomicU64>,
@@ -115,7 +115,7 @@ impl ClientController {
 		*self.state.lock().unwrap()
 	}
 
-	pub fn set_current_channel(&mut self, channel: Channel, group: ChannelGroupId) {
+	pub fn set_current_channel(&mut self, channel: Channel, group: ChannelGroup) {
 		self.channel = match channel {
 			Channel::ReliableUnordered => ApplicationCommandChannelType::ReliableUnordered,
 			Channel::UnreliableUnordered => ApplicationCommandChannelType::UnreliableUnordered,
@@ -130,7 +130,7 @@ impl ClientController {
 
 	pub fn receive(&mut self) {
 		while let Ok(command) = self.commands_from_server.try_recv() {
-			if let ApplicationCommand::S2CCommandWithCreator(command_with_user) = command.command {
+			if let BothDirectionCommand::S2CCommandWithCreator(command_with_user) = command.command {
 				match command_with_user.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {

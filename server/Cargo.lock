@@ -662,6 +662,7 @@ dependencies = [
  "serde",
  "snap",
  "strum_macros",
+ "thiserror",
 ]
 
 [[package]]

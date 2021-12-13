@@ -204,7 +204,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 pub mod test {
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::types::event::EventCommand;
-	use cheetah_matches_relay_common::commands::HeaplessBuffer;
+	use cheetah_matches_relay_common::commands::CommandBuffer;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
@@ -221,7 +221,7 @@ pub mod test {
 			network_command: UniDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Room),
 				field_id: 555,
-				event: HeaplessBuffer::from_slice(vec![10, 20, 30].as_slice()).unwrap(),
+				event: CommandBuffer::from_slice(vec![10, 20, 30].as_slice()).unwrap(),
 			})),
 		};
 

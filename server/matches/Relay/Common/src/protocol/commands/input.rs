@@ -3,8 +3,8 @@ use std::collections::{BinaryHeap, HashMap, VecDeque};
 
 use fnv::FnvBuildHasher;
 
-use crate::protocol::frame::applications::{ApplicationCommandDescription, ChannelGroupId, ChannelSequence};
-use crate::protocol::frame::channel::ApplicationCommandChannel;
+use crate::protocol::frame::applications::{CommandWithChannel, ChannelGroup, ChannelSequence};
+use crate::protocol::frame::channel::CommandChannel;
 use crate::protocol::frame::{Frame, FrameId};
 use crate::room::object::GameObjectId;
 
@@ -17,17 +17,17 @@ pub struct InCommandsCollector {
 	ordered: HashMap<ChannelKey, FrameId, FnvBuildHasher>,
 	sequence_commands: HashMap<ChannelKey, BinaryHeap<SequenceApplicationCommand>, FnvBuildHasher>,
 	sequence_last: HashMap<ChannelKey, ChannelSequence, FnvBuildHasher>,
-	commands: VecDeque<ApplicationCommandDescription>,
+	commands: VecDeque<CommandWithChannel>,
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 enum ChannelKey {
-	Group(ChannelGroupId),
+	Group(ChannelGroup),
 	ClientGameObjectId(GameObjectId),
 }
 
 impl InCommandsCollector {
-	pub fn get_commands(&mut self) -> &mut VecDeque<ApplicationCommandDescription> {
+	pub fn get_commands(&mut self) -> &mut VecDeque<CommandWithChannel> {
 		&mut self.commands
 	}
 
@@ -41,34 +41,34 @@ impl InCommandsCollector {
 
 		commands.into_iter().for_each(|c| {
 			match c.channel {
-				ApplicationCommandChannel::ReliableUnordered | ApplicationCommandChannel::UnreliableUnordered => {
+				CommandChannel::ReliableUnordered | CommandChannel::UnreliableUnordered => {
 					self.commands.push_front(c)
 				}
 
-				ApplicationCommandChannel::ReliableOrderedByObject | ApplicationCommandChannel::UnreliableOrderedByObject => {
+				CommandChannel::ReliableOrderedByObject | CommandChannel::UnreliableOrderedByObject => {
 					if let Some(object_id) = c.command.get_object_id() {
 						self.process_ordered(ChannelKey::ClientGameObjectId(object_id.clone()), frame_id, c);
 					}
 				}
-				ApplicationCommandChannel::ReliableOrderedByGroup(group)
-				| ApplicationCommandChannel::UnreliableOrderedByGroup(group) => {
+				CommandChannel::ReliableOrderedByGroup(group)
+				| CommandChannel::UnreliableOrderedByGroup(group) => {
 					self.process_ordered(ChannelKey::Group(group), frame_id, c);
 				}
 
-				ApplicationCommandChannel::ReliableSequenceByObject(sequence) => {
+				CommandChannel::ReliableSequenceByObject(sequence) => {
 					if let Some(object_id) = c.command.get_object_id().cloned() {
 						self.process_sequence(ChannelKey::ClientGameObjectId(object_id.clone()), sequence, c);
 					}
 				}
 
-				ApplicationCommandChannel::ReliableSequenceByGroup(channel_id, sequence) => {
+				CommandChannel::ReliableSequenceByGroup(channel_id, sequence) => {
 					self.process_sequence(ChannelKey::Group(channel_id), sequence, c)
 				}
 			};
 		});
 	}
 
-	fn process_sequence(&mut self, channel_key: ChannelKey, sequence: u32, command: ApplicationCommandDescription) {
+	fn process_sequence(&mut self, channel_key: ChannelKey, sequence: u32, command: CommandWithChannel) {
 		let mut last = *self.sequence_last.get(&channel_key).unwrap_or(&0);
 		if sequence == 0 || sequence == last + 1 {
 			last = sequence;
@@ -99,7 +99,7 @@ impl InCommandsCollector {
 		}
 	}
 
-	fn process_ordered(&mut self, channel_key: ChannelKey, frame_id: FrameId, command: ApplicationCommandDescription) {
+	fn process_ordered(&mut self, channel_key: ChannelKey, frame_id: FrameId, command: CommandWithChannel) {
 		match self.ordered.get(&channel_key) {
 			None => {
 				self.ordered.insert(channel_key, frame_id);
@@ -117,7 +117,7 @@ impl InCommandsCollector {
 #[derive(Debug)]
 struct SequenceApplicationCommand {
 	sequence: ChannelSequence,
-	command: ApplicationCommandDescription,
+	command: CommandWithChannel,
 }
 
 impl PartialEq for SequenceApplicationCommand {
@@ -154,8 +154,8 @@ impl Ord for SequenceApplicationCommand {
 #[cfg(test)]
 mod tests {
 	use crate::protocol::commands::input::InCommandsCollector;
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
-	use crate::protocol::frame::channel::ApplicationCommandChannel;
+	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+	use crate::protocol::frame::channel::CommandChannel;
 	use crate::protocol::frame::Frame;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
@@ -167,14 +167,14 @@ mod tests {
 		let content_1 = "command_1".to_string();
 		let content_2 = "command_2".to_string();
 
-		in_commands.collect(Frame::new(2).add_command(ApplicationCommandChannel::ReliableUnordered, content_2.clone()));
-		in_commands.collect(Frame::new(1).add_command(ApplicationCommandChannel::ReliableUnordered, content_1.clone()));
+		in_commands.collect(Frame::new(2).add_command(CommandChannel::ReliableUnordered, content_2.clone()));
+		in_commands.collect(Frame::new(1).add_command(CommandChannel::ReliableUnordered, content_1.clone()));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content == content_2)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content == content_2)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content == content_1)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content == content_1)
 		);
 	}
 
@@ -186,15 +186,15 @@ mod tests {
 		let content_2 = "command_2".to_string();
 		let content_3 = "command_3".to_string();
 
-		in_commands.collect(Frame::new(1).add_command(ApplicationCommandChannel::ReliableOrderedByGroup(1), content_1.clone()));
-		in_commands.collect(Frame::new(3).add_command(ApplicationCommandChannel::ReliableOrderedByGroup(1), content_3.clone()));
-		in_commands.collect(Frame::new(2).add_command(ApplicationCommandChannel::ReliableOrderedByGroup(1), content_2.clone()));
+		in_commands.collect(Frame::new(1).add_command(CommandChannel::ReliableOrderedByGroup(1), content_1.clone()));
+		in_commands.collect(Frame::new(3).add_command(CommandChannel::ReliableOrderedByGroup(1), content_3.clone()));
+		in_commands.collect(Frame::new(2).add_command(CommandChannel::ReliableOrderedByGroup(1), content_2.clone()));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content) if content==content_1)
+			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content) if content==content_1)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content==content_3)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_3)
 		);
 		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
 	}
@@ -206,14 +206,14 @@ mod tests {
 		let content_1 = "command_1".to_string();
 		let content_2 = "command_2".to_string();
 
-		in_commands.collect(Frame::new(2).add_command(ApplicationCommandChannel::ReliableOrderedByGroup(1), content_2.clone()));
-		in_commands.collect(Frame::new(1).add_command(ApplicationCommandChannel::ReliableOrderedByGroup(2), content_1.clone()));
+		in_commands.collect(Frame::new(2).add_command(CommandChannel::ReliableOrderedByGroup(1), content_2.clone()));
+		in_commands.collect(Frame::new(1).add_command(CommandChannel::ReliableOrderedByGroup(2), content_1.clone()));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content == "command_2")
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content == "command_2")
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content == "command_1")
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content == "command_1")
 		);
 	}
 
@@ -226,26 +226,26 @@ mod tests {
 		let content_3 = "command_3".to_string();
 
 		in_commands.collect(Frame::new(1).add_object_command(
-			ApplicationCommandChannel::ReliableOrderedByObject,
+			CommandChannel::ReliableOrderedByObject,
 			1,
 			content_1.clone(),
 		));
 		in_commands.collect(Frame::new(3).add_object_command(
-			ApplicationCommandChannel::ReliableOrderedByObject,
+			CommandChannel::ReliableOrderedByObject,
 			1,
 			content_3.clone(),
 		));
 		in_commands.collect(Frame::new(2).add_object_command(
-			ApplicationCommandChannel::ReliableOrderedByObject,
+			CommandChannel::ReliableOrderedByObject,
 			1,
 			content_2.clone(),
 		));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_3)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_3)
 		);
 		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
 	}
@@ -264,34 +264,34 @@ mod tests {
 
 		in_commands.collect(
 			Frame::new(1)
-				.add_object_command(ApplicationCommandChannel::ReliableOrderedByObject, 1, content_1_a.clone())
-				.add_object_command(ApplicationCommandChannel::ReliableOrderedByObject, 2, content_2_a.clone()),
+				.add_object_command(CommandChannel::ReliableOrderedByObject, 1, content_1_a.clone())
+				.add_object_command(CommandChannel::ReliableOrderedByObject, 2, content_2_a.clone()),
 		);
 
 		in_commands.collect(
 			Frame::new(3)
-				.add_object_command(ApplicationCommandChannel::ReliableOrderedByObject, 1, content_1_c.clone())
-				.add_object_command(ApplicationCommandChannel::ReliableOrderedByObject, 2, content_2_c.clone()),
+				.add_object_command(CommandChannel::ReliableOrderedByObject, 1, content_1_c.clone())
+				.add_object_command(CommandChannel::ReliableOrderedByObject, 2, content_2_c.clone()),
 		);
 
 		// этот фрейм не должен быть учтен
 		in_commands.collect(
 			Frame::new(2)
-				.add_object_command(ApplicationCommandChannel::ReliableOrderedByObject, 1, content_1_b.clone())
-				.add_object_command(ApplicationCommandChannel::ReliableOrderedByObject, 2, content_2_b.clone()),
+				.add_object_command(CommandChannel::ReliableOrderedByObject, 1, content_1_b.clone())
+				.add_object_command(CommandChannel::ReliableOrderedByObject, 2, content_2_b.clone()),
 		);
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1_a)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1_a)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_2_a)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_2_a)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1_c)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1_c)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_2_c)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_2_c)
 		);
 		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
 	}
@@ -307,30 +307,30 @@ mod tests {
 		let content_5 = "command_5".to_string();
 
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 0), content_1.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 0), content_1.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 2), content_3.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 2), content_3.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 4), content_5.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 4), content_5.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 3), content_4.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 3), content_4.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 1), content_2.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 1), content_2.clone()));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content)if content==content_1)
+			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content)if content==content_1)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content) if content==content_2)
+			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content) if content==content_2)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content) if content==content_3)
+			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content) if content==content_3)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content) if content==content_4)
+			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content) if content==content_4)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command,ApplicationCommand::TestSimple(content) if content==content_5)
+			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content) if content==content_5)
 		);
 		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
 	}
@@ -348,35 +348,35 @@ mod tests {
 		let content_2_c = "command_2_c".to_string();
 
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 1), content_1_a.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 1), content_1_a.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(2, 2), content_2_b.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(2, 2), content_2_b.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 3), content_1_c.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 3), content_1_c.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(2, 1), content_2_a.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(2, 1), content_2_a.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(1, 2), content_1_b.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(1, 2), content_1_b.clone()));
 		in_commands
-			.collect(Frame::new(0).add_command(ApplicationCommandChannel::ReliableSequenceByGroup(2, 3), content_2_c.clone()));
+			.collect(Frame::new(0).add_command(CommandChannel::ReliableSequenceByGroup(2, 3), content_2_c.clone()));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content==content_1_a)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_1_a)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content==content_2_a)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_2_a)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content==content_2_b)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_2_b)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content==content_1_b)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_1_b)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content==content_1_c)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_1_c)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestSimple(content) if content==content_2_c)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_2_c)
 		);
 		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
 	}
@@ -392,45 +392,45 @@ mod tests {
 		let content_5 = "command_5".to_string();
 
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(0),
+			CommandChannel::ReliableSequenceByObject(0),
 			1,
 			content_1.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(2),
+			CommandChannel::ReliableSequenceByObject(2),
 			1,
 			content_3.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(4),
+			CommandChannel::ReliableSequenceByObject(4),
 			1,
 			content_5.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(3),
+			CommandChannel::ReliableSequenceByObject(3),
 			1,
 			content_4.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(1),
+			CommandChannel::ReliableSequenceByObject(1),
 			1,
 			content_2.clone(),
 		));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_2)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_2)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_3)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_3)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_4)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_4)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_5)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_5)
 		);
 		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
 	}
@@ -448,70 +448,70 @@ mod tests {
 		let content_2_c = "command_2_c".to_string();
 
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(1),
+			CommandChannel::ReliableSequenceByObject(1),
 			1,
 			content_1_a.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(2),
+			CommandChannel::ReliableSequenceByObject(2),
 			2,
 			content_2_b.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(3),
+			CommandChannel::ReliableSequenceByObject(3),
 			1,
 			content_1_c.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(1),
+			CommandChannel::ReliableSequenceByObject(1),
 			2,
 			content_2_a.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(2),
+			CommandChannel::ReliableSequenceByObject(2),
 			1,
 			content_1_b.clone(),
 		));
 		in_commands.collect(Frame::new(0).add_object_command(
-			ApplicationCommandChannel::ReliableSequenceByObject(3),
+			CommandChannel::ReliableSequenceByObject(3),
 			2,
 			content_2_c.clone(),
 		));
 
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1_a)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1_a)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_2_a)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_2_a)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_2_b)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_2_b)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1_b)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1_b)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_1_c)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1_c)
 		);
 		assert!(
-			matches!(in_commands.get_commands().pop_back().unwrap().command, ApplicationCommand::TestObject(_,content) if content==content_2_c)
+			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_2_c)
 		);
 		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
 	}
 
 	impl Frame {
-		fn add_command(mut self, channel: ApplicationCommandChannel, content: String) -> Self {
-			self.commands.reliable.push_back(ApplicationCommandDescription {
+		fn add_command(mut self, channel: CommandChannel, content: String) -> Self {
+			self.commands.reliable.push_back(CommandWithChannel {
 				channel,
-				command: ApplicationCommand::TestSimple(content),
+				command: BothDirectionCommand::TestSimple(content),
 			});
 			self
 		}
 
-		fn add_object_command(mut self, channel: ApplicationCommandChannel, object_id: u32, content: String) -> Self {
-			let command_description = ApplicationCommandDescription {
+		fn add_object_command(mut self, channel: CommandChannel, object_id: u32, content: String) -> Self {
+			let command_description = CommandWithChannel {
 				channel,
-				command: ApplicationCommand::TestObject(GameObjectId::new(object_id, GameObjectOwner::Room), content),
+				command: BothDirectionCommand::TestObject(GameObjectId::new(object_id, GameObjectOwner::Room), content),
 			};
 			self.commands.reliable.push_back(command_description);
 			self

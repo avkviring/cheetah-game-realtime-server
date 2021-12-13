@@ -147,8 +147,8 @@ impl FrameReceivedListener for AckSender {
 mod tests {
 	use std::time::Instant;
 
-	use crate::protocol::frame::applications::{ApplicationCommand, ApplicationCommandDescription};
-	use crate::protocol::frame::channel::ApplicationCommandChannel;
+	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+	use crate::protocol::frame::channel::CommandChannel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
@@ -249,9 +249,9 @@ mod tests {
 		let time = Instant::now();
 
 		let mut frame_a = Frame::new(10);
-		frame_a.commands.reliable.push_back(ApplicationCommandDescription {
-			channel: ApplicationCommandChannel::ReliableUnordered,
-			command: ApplicationCommand::TestSimple("".to_string()),
+		frame_a.commands.reliable.push_back(CommandWithChannel {
+			channel: CommandChannel::ReliableUnordered,
+			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
 		reliable.on_frame_received(&frame_a, &time);
 
@@ -268,10 +268,10 @@ mod tests {
 		assert_eq!(headers[1].start_frame_id, frame_b.frame_id);
 	}
 
-	fn create_command() -> ApplicationCommandDescription {
-		ApplicationCommandDescription {
-			channel: ApplicationCommandChannel::ReliableUnordered,
-			command: ApplicationCommand::TestSimple("".to_string()),
+	fn create_command() -> CommandWithChannel {
+		CommandWithChannel {
+			channel: CommandChannel::ReliableUnordered,
+			command: BothDirectionCommand::TestSimple("".to_string()),
 		}
 	}
 }
