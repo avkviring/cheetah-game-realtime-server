@@ -27,6 +27,6 @@ namespace Shared
             return ticket;
         }
 
-        public const ulong UserGroup = 7;
+        public const ulong UserGroup = 8;
     }
 }

@@ -3,6 +3,7 @@ using Cheetah.Matches.Matchmaking.GRPC;
 using Cheetah.Matches.Relay;
 using Cheetah.Matches.Relay.Codec;
 using Cheetah.Matches.Relay.Income.ByObject;
+using Cheetah.Matches.Relay.Income.ByTemplate;
 using Cheetah.Platform;
 using NUnit.Framework;
 using Shared;
@@ -23,7 +24,7 @@ namespace Tests
         private uint memberB;
         private const ushort TurretsParamsFieldId = 333;
         private const ushort DropMineEventId = 555;
-        private const ushort HealFieldId = 777; 
+        private const ushort HealFieldId = 1; 
 
          
 
@@ -65,7 +66,7 @@ namespace Tests
         public IEnumerator TestEventIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientB, createdObject.ObjectId,DropMineEventId);
             // отправляем сообщение
@@ -85,11 +86,50 @@ namespace Tests
             Assert.AreEqual(memberA, actual.commandCreator);
         }
         
+        /// <summary>
+        /// Проверяем посылку события от удаленного клиента по объекту созданному локальным
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [UnityTest]
+        public IEnumerator TestEventBySelfObjectIncomeCommands()
+        {
+            // слушаем создание объектов
+            var collectorB = new CreatedObjectByTemplateIncomeCommands(clientB, 1);;
+            // создаем объект на первом клиенте
+            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            // слушаем события 
+            var eventCollectorA = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientA, createdObject.ObjectId,DropMineEventId);
+            // ждем отправки команды
+            yield return new WaitForSeconds(2);
+            // прием команды
+            clientB.Update();
+
+            var incomeEvent = collectorB.GetStream()[0];
+            // отправляем сообщение
+            var dropMineEvent = new DropMineEvent()
+            {
+                MineId = 150
+            };
+            incomeEvent.cheetahObject.SendEvent(DropMineEventId, ref dropMineEvent);
+            
+            // ждем отправки команды
+            yield return new WaitForSeconds(2);
+            // прием команды
+            clientA.Update();
+            // проверяем результат
+            var eventsStream= eventCollectorA.GetStream();
+            Assert.AreEqual(1,eventsStream.Count);
+            var actual = eventsStream.GetItem(0);
+            Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
+            Assert.AreEqual(memberB, actual.commandCreator);
+        }
+        
         [UnityTest]
         public IEnumerator TestTargetEventIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientB, createdObject.ObjectId, DropMineEventId);
             // отправляем сообщение
@@ -113,7 +153,7 @@ namespace Tests
         public IEnumerator TestStructureIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new StructureIncomeByObjectCommandCollector<TurretsParamsStructure>(clientB, createdObject.ObjectId,TurretsParamsFieldId);
             // изменяем структуру
@@ -140,7 +180,7 @@ namespace Tests
         public IEnumerator TestLongIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new LongIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
             // изменяем значение
@@ -161,7 +201,7 @@ namespace Tests
         public IEnumerator TestDoubleIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new DoubleIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
             // изменяем значение
