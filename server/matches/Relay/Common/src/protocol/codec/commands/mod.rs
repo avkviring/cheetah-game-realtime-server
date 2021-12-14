@@ -5,4 +5,4 @@ pub mod context;
 ///
 pub mod decoder;
 pub mod encoder;
-mod flags;
+mod header;

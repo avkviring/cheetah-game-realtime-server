@@ -6,7 +6,7 @@ use thiserror::Error;
 use crate::commands::c2s::{C2SCommand, C2SCommandDecodeError};
 use crate::commands::s2c::{S2CCommand, S2CCommandDecodeError, S2CCommandWithCreator};
 use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
-use crate::protocol::codec::commands::flags::CommandHeader;
+use crate::protocol::codec::commands::header::CommandHeader;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use crate::protocol::frame::channel::CommandChannel;
@@ -37,12 +37,12 @@ fn decode_command(
 	context: &CommandContext,
 ) -> Result<CommandWithChannel, CommandsDecoderError> {
 	Ok(CommandWithChannel {
-		channel: CommandChannel::decode(header.get_channel_type_id(), context, input)?,
+		channel: CommandChannel::decode(&header.channel_type_id, context, input)?,
 		command: match from_client {
-			true => BothDirectionCommand::C2SCommand(C2SCommand::decode(header.get_command_type_id(), context, input)?),
-			false => BothDirectionCommand::S2CCommandWithCreator(S2CCommandWithCreator {
+			true => BothDirectionCommand::C2S(C2SCommand::decode(&header.command_type_id, context, input)?),
+			false => BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				creator: context.get_creator()?,
-				command: S2CCommand::decode(header.get_command_type_id(), context, input)?,
+				command: S2CCommand::decode(&header.command_type_id, context, input)?,
 			}),
 		},
 	})

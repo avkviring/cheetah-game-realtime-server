@@ -5,7 +5,7 @@ use crate::commands::CommandTypeId;
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::cursor::VariableInt;
-use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
+use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use crate::protocol::frame::channel::CommandChannel;
 use crate::protocol::frame::codec::channel::ChannelTypeId;
 use crate::room::object::GameObjectId;
@@ -49,13 +49,13 @@ fn get_command_info(
 	command: &CommandWithChannel,
 ) -> (Option<GameObjectId>, Option<FieldId>, CommandTypeId, Option<RoomMemberId>) {
 	match &command.command {
-		BothDirectionCommand::S2CCommandWithCreator(command_with_creator) => (
+		BothDirectionCommand::S2CWithCreator(command_with_creator) => (
 			command_with_creator.command.get_object_id(),
 			command_with_creator.command.get_field_id(),
 			command_with_creator.command.get_type_id(),
 			Some(command_with_creator.creator),
 		),
-		BothDirectionCommand::C2SCommand(c2s_command) => (
+		BothDirectionCommand::C2S(c2s_command) => (
 			c2s_command.get_object_id(),
 			c2s_command.get_field_id(),
 			c2s_command.get_type_id(),
@@ -73,7 +73,7 @@ fn encode_command(command: &CommandWithChannel, out: &mut Cursor<&mut [u8]>) -> 
 	match &command.command {
 		BothDirectionCommand::TestSimple(_) => Ok(()),
 		BothDirectionCommand::TestObject(_, _) => Ok(()),
-		BothDirectionCommand::S2CCommandWithCreator(command) => command.command.encode(out),
-		BothDirectionCommand::C2SCommand(command) => command.encode(out),
+		BothDirectionCommand::S2CWithCreator(command) => command.command.encode(out),
+		BothDirectionCommand::C2S(command) => command.encode(out),
 	}
 }

@@ -1,11 +1,13 @@
-use std::io::Cursor;
+use std::convert::TryFrom;
+use std::fmt::format;
+use std::io::{Cursor, ErrorKind};
 
 use byteorder::{BigEndian, WriteBytesExt};
 use thiserror::Error;
 
 use crate::commands::CommandTypeId;
 use crate::constants::FieldId;
-use crate::protocol::codec::commands::flags::CommandHeader;
+use crate::protocol::codec::commands::header::CommandHeader;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::ChannelGroup;
 use crate::protocol::frame::codec::channel::ChannelTypeId;
@@ -28,7 +30,7 @@ pub struct CommandContext {
 ///
 /// Источник владельца
 ///
-#[derive(Clone, Debug)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum CreatorSource {
 	///
 	/// Нет необходимости сохранять данные о создателе (например для команд с клиента)
@@ -98,7 +100,10 @@ impl CommandContext {
 		creator: Option<RoomMemberId>,
 		out: &mut Cursor<&mut [u8]>,
 	) -> std::io::Result<()> {
-		let mut header = CommandHeader::new(command_type_id);
+		let mut header = CommandHeader::new();
+		header.command_type_id = command_type_id;
+		header.channel_type_id = channel_type_id;
+
 		let position = out.position();
 		header.reserve(out);
 
@@ -121,10 +126,11 @@ impl CommandContext {
 			let creator = creator.unwrap();
 			out.write_variable_u64(creator as u64)?;
 			self.creator.replace(creator);
+			header.creator_source = creator_source;
 		}
 		let current_position = out.position();
 		out.set_position(position);
-		header.encode(creator_source, command_type_id, channel_type_id, out)?;
+		header.encode(out)?;
 		out.set_position(current_position);
 		Ok(())
 	}
@@ -172,7 +178,7 @@ impl CommandContext {
 		if header.new_channel_group_id {
 			self.channel_group_id.replace(input.read_variable_u64()? as ChannelGroup);
 		}
-		self.read_and_set_creator(input, header.get_creator_source())?;
+		self.read_and_set_creator(input, &header.creator_source)?;
 		Ok(header)
 	}
 
@@ -183,7 +189,7 @@ impl CommandContext {
 	fn read_and_set_creator(
 		&mut self,
 		input: &mut Cursor<&mut [u8]>,
-		creator_source: CreatorSource,
+		creator_source: &CreatorSource,
 	) -> Result<Option<RoomMemberId>, CommandContextError> {
 		match creator_source {
 			CreatorSource::NotSupported => Ok(None),
@@ -225,6 +231,35 @@ fn compare_and_set<T: PartialEq>(context: &mut Option<T>, current: Option<T>) ->
 					true
 				}
 			}
+		}
+	}
+}
+
+impl TryFrom<u8> for CreatorSource {
+	type Error = std::io::Error;
+	fn try_from(value: u8) -> Result<Self, Self::Error> {
+		Ok(match value {
+			0 => CreatorSource::NotSupported,
+			1 => CreatorSource::Current,
+			2 => CreatorSource::New,
+			3 => CreatorSource::AsObjectOwner,
+			_ => {
+				return Err(std::io::Error::new(
+					ErrorKind::InvalidData,
+					format!("Invalid tag {} CreatorSource", value),
+				))
+			}
+		})
+	}
+}
+
+impl From<&CreatorSource> for u8 {
+	fn from(source: &CreatorSource) -> Self {
+		match source {
+			CreatorSource::NotSupported => 0,
+			CreatorSource::Current => 1,
+			CreatorSource::New => 2,
+			CreatorSource::AsObjectOwner => 3,
 		}
 	}
 }
