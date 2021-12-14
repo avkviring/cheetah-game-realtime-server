@@ -34,8 +34,8 @@ pub struct CommandWithChannel {
 pub enum BothDirectionCommand {
 	TestSimple(String),
 	TestObject(GameObjectId, String),
-	S2CCommandWithCreator(S2CCommandWithCreator),
-	C2SCommand(C2SCommand),
+	S2CWithCreator(S2CCommandWithCreator),
+	C2S(C2SCommand),
 }
 
 impl BothDirectionCommand {
@@ -43,7 +43,7 @@ impl BothDirectionCommand {
 		match &self {
 			BothDirectionCommand::TestSimple(_) => Option::None,
 			BothDirectionCommand::TestObject(object_id, _) => Option::Some(object_id),
-			BothDirectionCommand::S2CCommandWithCreator(command_with_meta) => match &command_with_meta.command {
+			BothDirectionCommand::S2CWithCreator(command_with_meta) => match &command_with_meta.command {
 				S2CCommand::Create(c) => Option::Some(&c.object_id),
 				S2CCommand::SetLong(c) => Option::Some(&c.object_id),
 				S2CCommand::SetFloat(c) => Option::Some(&c.object_id),
@@ -52,7 +52,7 @@ impl BothDirectionCommand {
 				S2CCommand::Delete(c) => Option::Some(&c.object_id),
 				S2CCommand::Created(c) => Option::Some(&c.object_id),
 			},
-			BothDirectionCommand::C2SCommand(command) => match command {
+			BothDirectionCommand::C2S(command) => match command {
 				C2SCommand::Create(c) => Option::Some(&c.object_id),
 				C2SCommand::SetLong(c) => Option::Some(&c.object_id),
 				C2SCommand::IncrementLongValue(c) => Option::Some(&c.object_id),

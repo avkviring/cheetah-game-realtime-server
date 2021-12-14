@@ -130,7 +130,7 @@ impl ClientController {
 
 	pub fn receive(&mut self) {
 		while let Ok(command) = self.commands_from_server.try_recv() {
-			if let BothDirectionCommand::S2CCommandWithCreator(command_with_user) = command.command {
+			if let BothDirectionCommand::S2CWithCreator(command_with_user) = command.command {
 				match command_with_user.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {

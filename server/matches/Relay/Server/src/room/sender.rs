@@ -70,7 +70,7 @@ impl Room {
 							command: command.command.clone(),
 						};
 
-						let application_command = BothDirectionCommand::S2CCommandWithCreator(command_with_user);
+						let application_command = BothDirectionCommand::S2CWithCreator(command_with_user);
 						protocol
 							.out_commands_collector
 							.add_command(channel_type.clone(), application_command.clone());
@@ -120,7 +120,7 @@ impl Room {
 									.borrow_mut()
 									.collect_s2c(object_template, user.id, &command.command);
 
-								let application_command = BothDirectionCommand::S2CCommandWithCreator(command_with_meta);
+								let application_command = BothDirectionCommand::S2CWithCreator(command_with_meta);
 								protocol
 									.out_commands_collector
 									.add_command(channel.clone(), application_command);

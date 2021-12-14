@@ -171,7 +171,7 @@ impl Room {
 		let tracer = self.command_trace_session.clone();
 		for application_command in commands.into_iter() {
 			match application_command.command {
-				BothDirectionCommand::C2SCommand(command) => {
+				BothDirectionCommand::C2S(command) => {
 					self.current_channel.replace(From::from(&application_command.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, &command);
 					execute(command, self, user_id);
@@ -397,8 +397,8 @@ mod tests {
 				.map(|c| match c {
 					BothDirectionCommand::TestSimple(_) => None,
 					BothDirectionCommand::TestObject(_, _) => None,
-					BothDirectionCommand::S2CCommandWithCreator(c) => Some(c.command.clone()),
-					BothDirectionCommand::C2SCommand(_) => None,
+					BothDirectionCommand::S2CWithCreator(c) => Some(c.command.clone()),
+					BothDirectionCommand::C2S(_) => None,
 				})
 				.flatten()
 				.collect()
@@ -418,8 +418,8 @@ mod tests {
 				.map(|c| match c {
 					BothDirectionCommand::TestSimple(_) => None,
 					BothDirectionCommand::TestObject(_, _) => None,
-					BothDirectionCommand::S2CCommandWithCreator(c) => Some(c.clone()),
-					BothDirectionCommand::C2SCommand(_) => None,
+					BothDirectionCommand::S2CWithCreator(c) => Some(c.clone()),
+					BothDirectionCommand::C2S(_) => None,
 				})
 				.flatten()
 				.collect()
@@ -547,7 +547,7 @@ mod tests {
 			.reliable
 			.push_back(CommandWithChannel {
 				channel: CommandChannel::ReliableUnordered,
-				command: BothDirectionCommand::C2SCommand(C2SCommand::AttachToRoom),
+				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			});
 		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
 

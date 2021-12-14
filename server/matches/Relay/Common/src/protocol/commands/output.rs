@@ -134,7 +134,7 @@ mod tests {
 		for _ in 0..3 {
 			output.add_command(
                 ApplicationCommandChannelType::ReliableSequenceByGroup(100),
-                BothDirectionCommand::C2SCommand(C2SCommand::AttachToRoom),
+                BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
 		assert!(
@@ -154,7 +154,7 @@ mod tests {
 		for i in 0..2 * OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 			output.add_command(
                 ApplicationCommandChannelType::ReliableSequenceByGroup(100),
-                BothDirectionCommand::C2SCommand(C2SCommand::SetLong(SetLongCommand {
+                BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),
 					field_id: 1,
 					value: i as i64,
@@ -168,7 +168,7 @@ mod tests {
 		// в коллекторе первой должна быть команда с value равным размеру фрейма
 		assert!(matches!(
 			output.commands.reliable.pop_front().unwrap().command,
-			BothDirectionCommand::C2SCommand(C2SCommand::SetLong(SetLongCommand {
+			BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: _,
 					field_id: _,
 					value,
@@ -180,7 +180,7 @@ mod tests {
 		for i in 0..OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 			assert!(matches!(
 				frame.commands.reliable.pop_front().unwrap().command,
-				BothDirectionCommand::C2SCommand( C2SCommand::SetLong(SetLongCommand {
+				BothDirectionCommand::C2S( C2SCommand::SetLong(SetLongCommand {
 						object_id: _,
 						field_id: _,
 						value,
@@ -197,7 +197,7 @@ mod tests {
 		for _ in 0..3 {
 			output.add_command(
                 ApplicationCommandChannelType::ReliableSequenceByObject,
-                BothDirectionCommand::C2SCommand(C2SCommand::Event(EventCommand {
+                BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 0,
 					event: Default::default(),

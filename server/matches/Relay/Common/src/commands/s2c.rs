@@ -94,7 +94,7 @@ impl S2CCommand {
 	}
 
 	pub fn decode(
-		command_type_id: CommandTypeId,
+		command_type_id: &CommandTypeId,
 		context: &CommandContext,
 		input: &mut Cursor<&mut [u8]>,
 	) -> Result<S2CCommand, S2CCommandDecodeError> {
@@ -111,7 +111,7 @@ impl S2CCommand {
 			CommandTypeId(3) => S2CCommand::SetFloat(SetFloat64Command::decode(object_id, field_id, input)?),
 			CommandTypeId(4) => S2CCommand::SetStruct(StructureCommand::decode(object_id, field_id, input)?),
 			CommandTypeId(5) => S2CCommand::Event(EventCommand::decode(object_id, field_id, input)?),
-			_ => Err(S2CCommandDecodeError::UnknownTypeId(command_type_id))?,
+			_ => Err(S2CCommandDecodeError::UnknownTypeId(command_type_id.clone()))?,
 		})
 	}
 }

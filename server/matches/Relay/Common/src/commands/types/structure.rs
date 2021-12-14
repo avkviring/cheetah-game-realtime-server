@@ -30,7 +30,7 @@ impl StructureCommand {
 				format!("Structure buffer size to big {}", size),
 			));
 		}
-		input.read(&mut structure[0..size]);
+		input.read(&mut structure[0..size])?;
 
 		Ok(Self {
 			object_id,

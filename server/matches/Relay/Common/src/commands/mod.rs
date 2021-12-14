@@ -7,7 +7,7 @@ pub type CommandBuffer = heapless::Vec<u8, 256>;
 ///
 /// Идентификатор типа команды
 ///
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CommandTypeId(pub u8);
 
 ///

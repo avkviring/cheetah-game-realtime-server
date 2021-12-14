@@ -7,7 +7,10 @@ use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::ChannelSequence;
 use crate::protocol::frame::channel::CommandChannel;
 
-#[derive(Debug)]
+///
+/// Тип канала передача данных (тег для [CommandChannel])
+///
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub struct ChannelTypeId(pub u8);
 
 ///
@@ -50,7 +53,7 @@ impl CommandChannel {
 	}
 
 	pub fn decode(
-		channel_type_id: ChannelTypeId,
+		channel_type_id: &ChannelTypeId,
 		context: &CommandContext,
 		input: &mut Cursor<&mut [u8]>,
 	) -> Result<CommandChannel, ApplicationCommandChannelDecodeError> {
@@ -71,7 +74,7 @@ impl CommandChannel {
 		match channel_type_id {
 			ChannelTypeId(7) => Ok(CommandChannel::ReliableSequenceByGroup(channel_group_id, channel_sequence)),
 			ChannelTypeId(6) => Ok(CommandChannel::ReliableSequenceByObject(channel_sequence)),
-			_ => Err(ApplicationCommandChannelDecodeError::UnknownType(channel_type_id)),
+			_ => Err(ApplicationCommandChannelDecodeError::UnknownType(channel_type_id.clone())),
 		}
 	}
 }

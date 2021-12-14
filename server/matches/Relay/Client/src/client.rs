@@ -138,7 +138,7 @@ impl Client {
 					self.udp_client
 						.protocol
 						.out_commands_collector
-						.add_command(command.channel_type, BothDirectionCommand::C2SCommand(command.command));
+						.add_command(command.channel_type, BothDirectionCommand::C2S(command.command));
 				}
 			}
 		}
