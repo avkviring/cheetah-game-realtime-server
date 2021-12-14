@@ -614,7 +614,6 @@ dependencies = [
  "log",
  "prost 0.9.0",
  "rand",
- "rmp-serde",
  "rymder",
  "serde",
  "serde_json",

@@ -12,7 +12,7 @@ use cheetah_matches_relay_common::protocol::frame::Frame;
 pub fn empty_frame() {
 	let frame = Frame::new(100500);
 	let mut buffer = [0; 2048];
-	let mut private_key = [0; 32];
+	let private_key = [0; 32];
 	let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
 	println!("{}", size);
 	// 30 байт
@@ -48,7 +48,7 @@ pub fn create_object_frame() {
 	});
 
 	let mut buffer = [0; 2048];
-	let mut private_key = [0; 32];
+	let private_key = [0; 32];
 	let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
 	println!("{}", size);
 }

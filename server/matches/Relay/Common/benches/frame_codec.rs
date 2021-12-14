@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, Criterion, Throughput};
 
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::Frame;
@@ -15,7 +15,7 @@ fn frame_encode(c: &mut Criterion) {
 		b.iter(|| {
 			let frame = Frame::new(100500);
 			let mut buffer = [0; 2048];
-			let mut private_key = [0; 32];
+			let private_key = [0; 32];
 			frame.encode(&mut Cipher::new(&private_key), &mut buffer);
 		})
 	});
@@ -28,7 +28,7 @@ fn frame_encode(c: &mut Criterion) {
 fn frame_decode(c: &mut Criterion) {
 	let frame = Frame::new(100500);
 	let mut buffer = [0; 2048];
-	let mut private_key = [0; 32];
+	let private_key = [0; 32];
 	let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
 
 	let mut group = c.benchmark_group("throughput-decode");

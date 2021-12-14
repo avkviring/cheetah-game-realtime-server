@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
-use serde::{Deserialize, Serialize};
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
@@ -14,7 +13,7 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 ///
 /// Игровой объект - логическая группировка игровых данных
 ///
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct GameObject {
 	pub id: GameObjectId,
 	pub template: GameObjectTemplateId,
