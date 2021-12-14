@@ -1,7 +1,5 @@
 use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
-use serde::{Deserialize, Serialize};
-
 use crate::commands::CommandBuffer;
 use crate::constants::FieldId;
 use crate::protocol::codec::cursor::VariableInt;
@@ -11,7 +9,7 @@ use crate::room::object::GameObjectId;
 /// Обновить структуру в обьекте
 /// - C->S, S->C
 ///
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StructureCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,

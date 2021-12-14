@@ -1,8 +1,5 @@
 use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
-use byteorder::ReadBytesExt;
-use serde::{Deserialize, Serialize};
-
 use crate::commands::CommandBuffer;
 use crate::constants::FieldId;
 use crate::protocol::codec::cursor::VariableInt;
@@ -12,7 +9,7 @@ use crate::room::RoomMemberId;
 ///
 /// Событие по объекту
 /// - C->S, S->C
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EventCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
@@ -22,7 +19,7 @@ pub struct EventCommand {
 ///
 /// Событие по объекту для определенного пользователя
 ///
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TargetEventCommand {
 	pub target: RoomMemberId,
 	pub event: EventCommand,

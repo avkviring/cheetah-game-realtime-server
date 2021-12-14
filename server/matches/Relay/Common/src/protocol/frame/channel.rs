@@ -1,10 +1,9 @@
-use serde::{Deserialize, Serialize};
 use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 
 ///
 /// Тип канала для отправки
 ///
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ApplicationCommandChannelType {
 	///
 	/// Выполняем команды без учета порядка
@@ -43,7 +42,7 @@ pub enum ApplicationCommandChannelType {
 ///
 /// Канал для отправки, отличается от [ApplicationCommandChannelType] полным набором данных для канала
 ///
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum CommandChannel {
 	///
 	/// Выполняем команды без учета порядка
@@ -84,9 +83,7 @@ impl From<&CommandChannel> for ApplicationCommandChannelType {
 		match channel {
 			CommandChannel::ReliableUnordered => ApplicationCommandChannelType::ReliableUnordered,
 			CommandChannel::ReliableOrderedByObject => ApplicationCommandChannelType::ReliableOrderedByObject,
-			CommandChannel::ReliableOrderedByGroup(channel) => {
-				ApplicationCommandChannelType::ReliableOrderedByGroup(*channel)
-			}
+			CommandChannel::ReliableOrderedByGroup(channel) => ApplicationCommandChannelType::ReliableOrderedByGroup(*channel),
 			CommandChannel::UnreliableUnordered => ApplicationCommandChannelType::UnreliableUnordered,
 			CommandChannel::UnreliableOrderedByObject => ApplicationCommandChannelType::UnreliableOrderedByObject,
 			CommandChannel::UnreliableOrderedByGroup(channel) => {

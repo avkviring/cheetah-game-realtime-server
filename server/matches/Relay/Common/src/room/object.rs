@@ -1,13 +1,11 @@
 use std::io::Cursor;
 
-use serde::{Deserialize, Serialize};
-
 use crate::room::owner::GameObjectOwner;
 
 ///
 /// Идентификатор игрового объекта на клиенте
 ///
-#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub struct GameObjectId {
 	///
 	/// Создатель игрового объекта

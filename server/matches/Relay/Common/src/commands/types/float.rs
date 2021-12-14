@@ -1,7 +1,6 @@
 use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use serde::{Deserialize, Serialize};
 
 use crate::constants::FieldId;
 use crate::room::object::GameObjectId;
@@ -10,7 +9,7 @@ use crate::room::object::GameObjectId;
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IncrementFloat64C2SCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
@@ -21,7 +20,7 @@ pub struct IncrementFloat64C2SCommand {
 /// Установка счетчика
 /// - C->S, S->C
 ///
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SetFloat64Command {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,

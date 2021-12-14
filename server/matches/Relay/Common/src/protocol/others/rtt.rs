@@ -4,7 +4,6 @@ use std::time::{Duration, Instant};
 
 #[cfg(test)]
 use mockall::{automock, predicate::*};
-use serde::{Deserialize, Serialize};
 
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::Frame;
@@ -28,7 +27,7 @@ pub struct RoundTripTimeImpl {
 	pub rtt: VecDeque<Duration>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct RoundTripTimeHeader {
 	self_time: u64,
 }

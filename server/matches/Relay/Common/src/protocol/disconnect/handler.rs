@@ -1,7 +1,5 @@
 use std::time::Instant;
 
-use serde::{Deserialize, Serialize};
-
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::Frame;
 use crate::protocol::{DisconnectedStatus, FrameBuilder, FrameReceivedListener};
@@ -26,10 +24,6 @@ pub struct DisconnectHandler {
 	///
 	disconnected_by_self: bool,
 }
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
-pub struct DisconnectHeader {}
-
 impl DisconnectHandler {
 	///
 	/// Разорвать соединение с удаленной стороной
@@ -51,6 +45,9 @@ impl FrameBuilder for DisconnectHandler {
 		}
 	}
 }
+
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct DisconnectHeader {}
 
 impl FrameReceivedListener for DisconnectHandler {
 	fn on_frame_received(&mut self, frame: &Frame, _: &Instant) {

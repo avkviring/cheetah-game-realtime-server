@@ -5,7 +5,6 @@ use std::time::{Duration, Instant};
 
 #[cfg(test)]
 use mockall::{automock, predicate::*};
-use serde::{Deserialize, Serialize};
 
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::{Frame, FrameId};
@@ -64,7 +63,7 @@ pub struct ScheduledFrame {
 ///
 /// Заголовок для указания факта повторной передачи данного фрейма
 ///
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RetransmitFrameHeader {
 	pub original_frame_id: FrameId,
 	pub retransmit_count: u8,

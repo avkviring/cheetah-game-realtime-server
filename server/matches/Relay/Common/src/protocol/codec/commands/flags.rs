@@ -19,7 +19,7 @@ impl CommandHeader {
 }
 
 impl CommandHeader {
-	pub(crate) fn decode(p0: &mut Cursor<&mut [u8]>) -> std::io::Result<CommandHeader> {
+	pub(crate) fn decode(input: &mut Cursor<&mut [u8]>) -> std::io::Result<CommandHeader> {
 		todo!()
 	}
 

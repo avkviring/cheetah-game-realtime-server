@@ -658,8 +658,6 @@ dependencies = [
  "log",
  "mockall",
  "rand",
- "rmp-serde",
- "serde",
  "snap",
  "strum_macros",
  "thiserror",

@@ -1,8 +1,5 @@
 use std::io::Cursor;
 
-use byteorder::WriteBytesExt;
-use serde::{Deserialize, Serialize};
-
 use crate::constants::{FieldId, GameObjectTemplateId};
 use crate::protocol::codec::cursor::VariableInt;
 use crate::room::access::AccessGroups;
@@ -12,7 +9,7 @@ use crate::room::object::GameObjectId;
 /// Игровой объект создается
 /// - направления C->S, S->C
 ///
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CreateGameObjectCommand {
 	pub object_id: GameObjectId,
 	pub template: GameObjectTemplateId,
@@ -23,7 +20,7 @@ pub struct CreateGameObjectCommand {
 /// Игровой объект создан
 /// - направления C->S, S->C
 ///
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CreatedGameObjectCommand {
 	pub object_id: GameObjectId,
 }

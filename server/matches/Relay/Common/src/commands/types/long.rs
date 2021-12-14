@@ -1,7 +1,5 @@
 use std::io::Cursor;
 
-use serde::{Deserialize, Serialize};
-
 use crate::constants::FieldId;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::room::object::GameObjectId;
@@ -10,7 +8,7 @@ use crate::room::object::GameObjectId;
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IncrementLongC2SCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
@@ -21,7 +19,7 @@ pub struct IncrementLongC2SCommand {
 /// Установка счетчика
 /// - C->S, S->C
 ///
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SetLongCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
@@ -32,7 +30,7 @@ pub struct SetLongCommand {
 /// Установка значения new если текущее равно current
 /// reset - значение после выхода пользователя
 ///  
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CompareAndSetLongCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,

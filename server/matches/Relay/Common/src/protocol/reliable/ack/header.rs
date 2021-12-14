@@ -1,15 +1,12 @@
-use std::ops::{BitAnd, Shl};
-
-use serde::{Deserialize, Serialize};
-
 use crate::protocol::frame::FrameId;
+use std::ops::{BitAnd, Shl};
 
 ///
 /// Подтверждение пакета
 /// - содержит подтверждение для N фреймов, начиная от [start_frame_id]
 /// - N зависит от [AskFrameHeader::CAPACITY]
 ///
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AckFrameHeader {
 	///
 	/// id подтверждаемого пакета

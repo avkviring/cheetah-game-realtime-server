@@ -1,13 +1,9 @@
 use std::io::{Cursor, Write};
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use rmp_serde::Serializer;
-use serde::Serialize;
 
 use crate::protocol::codec::cipher::Cipher;
-// use crate::protocol::codec::commands::CommandsEncoder;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
-use crate::protocol::codec::serializer::{deserialize, serialize};
 use crate::protocol::frame::headers::Headers;
 use crate::protocol::frame::{Frame, FrameId};
 
@@ -26,9 +22,10 @@ impl Frame {
 		let frame_id = cursor
 			.read_u64::<BigEndian>()
 			.map_err(|_| UdpFrameDecodeError::DecodeFrameIdError)?;
-		let additional_headers: Headers =
-			deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
-		Result::Ok((frame_id, additional_headers))
+		// let additional_headers: Headers =
+		// 	deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
+		// Result::Ok((frame_id, additional_headers))
+		todo!()
 	}
 
 	///
@@ -82,9 +79,10 @@ impl Frame {
 	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> usize {
 		let mut frame_cursor = Cursor::new(out);
 		frame_cursor.write_u64::<BigEndian>(self.frame_id).unwrap();
-		let mut serializer = Serializer::new(&mut frame_cursor);
-		self.headers.serialize(&mut serializer).unwrap();
-		drop(serializer);
+		todo!();
+		// let mut serializer = Serializer::new(&mut frame_cursor);
+		// self.headers.serialize(&mut serializer).unwrap();
+		//drop(serializer);
 
 		let mut commands_buffer = [0 as u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);

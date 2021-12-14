@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-
 use cheetah_matches_relay_macro::EnumMatchPredicates;
 
 use crate::protocol::disconnect::handler::DisconnectHeader;
@@ -14,12 +12,12 @@ use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
 /// - не шифруется
 /// - защищены aead
 ///
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Headers {
 	headers: Vec<Header>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, EnumMatchPredicates)]
+#[derive(Debug, PartialEq, Clone, EnumMatchPredicates)]
 pub enum Header {
 	///
 	/// Идентификатор комнаты и клиента

@@ -155,7 +155,7 @@ impl C2SCommand {
 			CommandTypeId(7) => C2SCommand::SetStruct(StructureCommand::decode(object_id, field_id, input)?),
 			CommandTypeId(8) => C2SCommand::Event(EventCommand::decode(object_id, field_id, input)?),
 			CommandTypeId(9) => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id, field_id, input)?),
-			_ => return Err(C2SCommandDecodeError::UnknownTypeId(command_type_id)),
+			_ => Err(C2SCommandDecodeError::UnknownTypeId(command_type_id))?,
 		})
 	}
 }

@@ -1,11 +1,8 @@
-use std::time::Instant;
-
-use serde::{Deserialize, Serialize};
-
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::Frame;
 use crate::protocol::FrameBuilder;
 use crate::room::{RoomId, RoomMemberId};
+use std::time::Instant;
 
 ///
 /// Добавляет заголовок с UserPublicKey
@@ -14,7 +11,7 @@ use crate::room::{RoomId, RoomMemberId};
 #[derive(Debug)]
 pub struct MemberIdFrameBuilder(pub MemberAndRoomId);
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub struct MemberAndRoomId {
 	pub user_id: RoomMemberId,
 	pub room_id: RoomId,

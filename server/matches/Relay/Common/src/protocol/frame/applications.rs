@@ -1,7 +1,5 @@
 use std::collections::VecDeque;
 
-use serde::{Deserialize, Serialize};
-
 use crate::commands::c2s::C2SCommand;
 use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 use crate::protocol::frame::channel::CommandChannel;
