@@ -40,7 +40,10 @@ impl EventCommand {
 				format!("Event buffer size to big {}", size),
 			));
 		}
-		input.read(&mut event[0..size]);
+		unsafe {
+			event.set_len(size);
+		}
+		input.read_exact(&mut event[0..size])?;
 
 		Ok(Self {
 			object_id,

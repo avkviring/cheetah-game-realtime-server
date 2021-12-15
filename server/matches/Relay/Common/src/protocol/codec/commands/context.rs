@@ -81,8 +81,8 @@ impl CommandContext {
 		self.field_id.ok_or(CommandContextError::ContextNotContainsCreator)
 	}
 
-	pub(crate) fn get_object_id(&self) -> Result<&GameObjectId, CommandContextError> {
-		self.object_id.as_ref().ok_or(CommandContextError::ContextNotContainsObjectId)
+	pub(crate) fn get_object_id(&self) -> Result<GameObjectId, CommandContextError> {
+		self.object_id.clone().ok_or(CommandContextError::ContextNotContainsObjectId)
 	}
 
 	///

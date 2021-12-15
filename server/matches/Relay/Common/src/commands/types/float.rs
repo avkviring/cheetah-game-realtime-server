@@ -10,7 +10,7 @@ use crate::room::object::GameObjectId;
 /// - C->S
 ///
 #[derive(Debug, PartialEq, Clone)]
-pub struct IncrementFloat64C2SCommand {
+pub struct IncrementDoubleC2SCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub increment: f64,
@@ -21,13 +21,13 @@ pub struct IncrementFloat64C2SCommand {
 /// - C->S, S->C
 ///
 #[derive(Debug, Clone, PartialEq)]
-pub struct SetFloat64Command {
+pub struct SetDoubleCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub value: f64,
 }
 
-impl SetFloat64Command {
+impl SetDoubleCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_f64::<BigEndian>(self.value)
 	}
@@ -41,7 +41,7 @@ impl SetFloat64Command {
 	}
 }
 
-impl IncrementFloat64C2SCommand {
+impl IncrementDoubleC2SCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_f64::<BigEndian>(self.increment)
 	}

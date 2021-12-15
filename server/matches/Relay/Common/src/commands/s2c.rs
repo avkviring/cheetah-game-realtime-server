@@ -4,10 +4,10 @@ use strum_macros::AsRefStr;
 use thiserror::Error;
 
 use crate::commands::types::event::EventCommand;
-use crate::commands::types::float::SetFloat64Command;
+use crate::commands::types::float::SetDoubleCommand;
 use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::types::long::SetLongCommand;
-use crate::commands::types::structure::StructureCommand;
+use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
 use crate::commands::{CommandTypeId, FieldType};
 use crate::constants::FieldId;
@@ -20,8 +20,8 @@ pub enum S2CCommand {
 	Create(CreateGameObjectCommand),
 	Created(CreatedGameObjectCommand),
 	SetLong(SetLongCommand),
-	SetFloat(SetFloat64Command),
-	SetStruct(StructureCommand),
+	SetFloat(SetDoubleCommand),
+	SetStruct(SetStructureCommand),
 	Event(EventCommand),
 	Delete(DeleteGameObjectCommand),
 }
@@ -107,8 +107,8 @@ impl S2CCommand {
 		let field_id = context.get_field_id()?;
 		Ok(match command_type_id {
 			CommandTypeId(2) => S2CCommand::SetLong(SetLongCommand::decode(object_id, field_id, input)?),
-			CommandTypeId(3) => S2CCommand::SetFloat(SetFloat64Command::decode(object_id, field_id, input)?),
-			CommandTypeId(4) => S2CCommand::SetStruct(StructureCommand::decode(object_id, field_id, input)?),
+			CommandTypeId(3) => S2CCommand::SetFloat(SetDoubleCommand::decode(object_id, field_id, input)?),
+			CommandTypeId(4) => S2CCommand::SetStruct(SetStructureCommand::decode(object_id, field_id, input)?),
 			CommandTypeId(5) => S2CCommand::Event(EventCommand::decode(object_id, field_id, input)?),
 			_ => Err(S2CCommandDecodeError::UnknownTypeId(command_type_id.clone()))?,
 		})

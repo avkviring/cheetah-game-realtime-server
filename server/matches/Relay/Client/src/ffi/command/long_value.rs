@@ -50,7 +50,7 @@ pub extern "C" fn compare_and_set_long_value(
 ) -> bool {
 	send_command(
 		client_id,
-		C2SCommand::CompareAndSetLongValue(CompareAndSetLongCommand {
+		C2SCommand::CompareAndSetLong(CompareAndSetLongCommand {
 			object_id: From::from(object_id),
 			field_id,
 			current,

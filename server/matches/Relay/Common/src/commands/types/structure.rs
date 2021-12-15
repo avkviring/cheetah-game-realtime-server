@@ -10,12 +10,12 @@ use crate::room::object::GameObjectId;
 /// - C->S, S->C
 ///
 #[derive(Debug, Clone, PartialEq)]
-pub struct StructureCommand {
+pub struct SetStructureCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub structure: CommandBuffer,
 }
-impl StructureCommand {
+impl SetStructureCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_u64(self.structure.len() as u64)?;
 		out.write_all(self.structure.as_slice())
@@ -30,7 +30,10 @@ impl StructureCommand {
 				format!("Structure buffer size to big {}", size),
 			));
 		}
-		input.read(&mut structure[0..size])?;
+		unsafe {
+			structure.set_len(size);
+		}
+		input.read_exact(&mut structure[0..size])?;
 
 		Ok(Self {
 			object_id,

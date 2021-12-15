@@ -1,10 +1,10 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
-use cheetah_matches_relay_common::commands::types::structure::StructureCommand;
+use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-use cheetah_matches_relay_common::protocol::frame::channel::CommandChannel;
+use cheetah_matches_relay_common::protocol::frame::channel::Channel;
 use cheetah_matches_relay_common::protocol::frame::Frame;
 
 #[test]
@@ -23,24 +23,24 @@ pub fn empty_frame() {
 pub fn create_object_frame() {
 	let mut frame = Frame::new(100500);
 	frame.commands.reliable.push_back(CommandWithChannel {
-		channel: CommandChannel::ReliableUnordered,
-		command: BothDirectionCommand::C2SCommand(C2SCommand::Create(CreateGameObjectCommand {
+		channel: Channel::ReliableUnordered,
+		command: BothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: Default::default(),
 			template: 0,
 			access_groups: Default::default(),
 		})),
 	});
 	frame.commands.reliable.push_back(CommandWithChannel {
-		channel: CommandChannel::ReliableUnordered,
-		command: BothDirectionCommand::C2SCommand(C2SCommand::SetStruct(StructureCommand {
+		channel: Channel::ReliableUnordered,
+		command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
 			object_id: Default::default(),
 			field_id: 30,
 			structure: Default::default(),
 		})),
 	});
 	frame.commands.reliable.push_back(CommandWithChannel {
-		channel: CommandChannel::ReliableUnordered,
-		command: BothDirectionCommand::C2SCommand(C2SCommand::SetLong(SetLongCommand {
+		channel: Channel::ReliableUnordered,
+		command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 			object_id: Default::default(),
 			field_id: 55,
 			value: 100,

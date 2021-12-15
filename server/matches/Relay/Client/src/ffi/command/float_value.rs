@@ -1,5 +1,5 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::float::{IncrementFloat64C2SCommand, SetFloat64Command};
+use cheetah_matches_relay_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -19,7 +19,7 @@ pub extern "C" fn set_double_value_listener(
 pub extern "C" fn set_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) -> bool {
 	send_command(
 		client_id,
-		C2SCommand::SetFloat(SetFloat64Command {
+		C2SCommand::SetDouble(SetDoubleCommand {
 			object_id: From::from(object_id),
 			field_id,
 			value,
@@ -31,7 +31,7 @@ pub extern "C" fn set_double_value(client_id: ClientId, object_id: &GameObjectId
 pub extern "C" fn inc_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: f64) -> bool {
 	send_command(
 		client_id,
-		C2SCommand::IncrementFloatCounter(IncrementFloat64C2SCommand {
+		C2SCommand::IncrementDouble(IncrementDoubleC2SCommand {
 			object_id: From::from(object_id),
 			field_id,
 			increment,

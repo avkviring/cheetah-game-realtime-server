@@ -1,6 +1,6 @@
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::structure::StructureCommand;
-use cheetah_matches_relay_common::commands::{FieldType, CommandBuffer};
+use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
+use cheetah_matches_relay_common::commands::{CommandBuffer, FieldType};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
@@ -8,7 +8,7 @@ use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
-impl ServerCommandExecutor for StructureCommand {
+impl ServerCommandExecutor for SetStructureCommand {
 	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
@@ -37,7 +37,7 @@ impl GameObject {
 					field_id: field_id.clone(),
 					field_type: FieldType::Structure,
 				}),
-				command: S2CCommand::SetStruct(StructureCommand {
+				command: S2CCommand::SetStruct(SetStructureCommand {
 					object_id: self.id.clone(),
 					field_id: field_id.clone(),
 					structure,
@@ -50,7 +50,7 @@ impl GameObject {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::structure::StructureCommand;
+	use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::ServerCommandExecutor;
@@ -69,7 +69,7 @@ mod tests {
 		let object_id = object.id.clone();
 
 		room.out_commands.clear();
-		let command = StructureCommand {
+		let command = SetStructureCommand {
 			object_id: object_id.clone(),
 			field_id: 100,
 			structure: from_vec(vec![1, 2, 3, 4, 5]),

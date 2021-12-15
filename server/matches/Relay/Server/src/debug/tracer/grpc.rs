@@ -163,19 +163,19 @@ fn get_string_value(command: &TracedCommand) -> String {
 			C2SCommand::IncrementLongValue(command) => {
 				format!("{:?}", command.increment)
 			}
-			C2SCommand::CompareAndSetLongValue(command) => {
+			C2SCommand::CompareAndSetLong(command) => {
 				format!(
 					"new = {:?}, current = {:?}, reset = {:?}",
 					command.new, command.current, command.reset
 				)
 			}
-			C2SCommand::SetFloat(command) => {
+			C2SCommand::SetDouble(command) => {
 				format!("{:?}", command.value)
 			}
-			C2SCommand::IncrementFloatCounter(command) => {
+			C2SCommand::IncrementDouble(command) => {
 				format!("{:?}", command.increment)
 			}
-			C2SCommand::SetStruct(command) => {
+			C2SCommand::SetStructure(command) => {
 				format!("{:?}", command.structure)
 			}
 			C2SCommand::Event(command) => {

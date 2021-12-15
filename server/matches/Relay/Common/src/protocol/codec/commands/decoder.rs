@@ -39,7 +39,12 @@ fn decode_command(
 	Ok(CommandWithChannel {
 		channel: Channel::decode(&header.channel_type_id, context.get_channel_group_id(), input)?,
 		command: match from_client {
-			true => BothDirectionCommand::C2S(C2SCommand::decode(&header.command_type_id, context, input)?),
+			true => BothDirectionCommand::C2S(C2SCommand::decode(
+				&header.command_type_id,
+				context.get_object_id(),
+				context.get_field_id(),
+				input,
+			)?),
 			false => BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				creator: context.get_creator()?,
 				command: S2CCommand::decode(&header.command_type_id, context, input)?,
@@ -63,18 +68,18 @@ pub enum CommandsDecoderError {
 	},
 
 	#[error("C2SCommandDecodeError error {:?}", .source)]
-	C2SCommandDecodeError {
+	C2SCommandDecode {
 		#[from]
 		source: C2SCommandDecodeError,
 	},
 
 	#[error("CommandContextError error {:?}", .source)]
-	CommandContextError {
+	CommandContext {
 		#[from]
 		source: CommandContextError,
 	},
 	#[error("S2CCommandDecodeError error {:?}", .source)]
-	S2CCommandDecodeError {
+	S2CCommandDecode {
 		#[from]
 		source: S2CCommandDecodeError,
 	},
