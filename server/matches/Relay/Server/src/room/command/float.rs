@@ -21,7 +21,7 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 				object.floats.insert(field_id, self.increment);
 				self.increment
 			};
-			Option::Some(S2CCommand::SetFloat(SetDoubleCommand {
+			Option::Some(S2CCommand::SetDouble(SetDoubleCommand {
 				object_id: self.object_id.clone(),
 				field_id,
 				value,
@@ -47,7 +47,7 @@ impl ServerCommandExecutor for SetDoubleCommand {
 
 		let action = |object: &mut GameObject| {
 			object.floats.insert(self.field_id, self.value);
-			Option::Some(S2CCommand::SetFloat(self))
+			Option::Some(S2CCommand::SetDouble(self))
 		};
 		room.change_data_and_send(
 			&object_id,
@@ -69,7 +69,7 @@ impl GameObject {
 					field_id: field_id.clone(),
 					field_type: FieldType::Double,
 				}),
-				command: S2CCommand::SetFloat(SetDoubleCommand {
+				command: S2CCommand::SetDouble(SetDoubleCommand {
 					object_id: self.id.clone(),
 					field_id: field_id.clone(),
 					value: *v,
@@ -108,7 +108,7 @@ mod tests {
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.floats.get(&10).unwrap() as u64, 100);
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetFloat(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==command));
 	}
 
 	#[test]
@@ -137,7 +137,7 @@ mod tests {
 		};
 
 		room.out_commands.pop_back();
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetFloat(c))) if c==result));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==result));
 	}
 
 	#[test]

@@ -190,8 +190,12 @@ mod tests {
 	use crate::room::owner::GameObjectOwner;
 
 	#[test]
-	fn should_decode_encode_decode_encode_() {
+	fn should_decode_encode_attach() {
 		check(C2SCommand::AttachToRoom, CommandTypeId::ATTACH_TO_ROOM, None, None);
+	}
+	#[test]
+	fn should_decode_encode_detach() {
+		check(C2SCommand::DetachFromRoom, CommandTypeId::DETACH_FROM_ROOM, None, None);
 	}
 
 	#[test]

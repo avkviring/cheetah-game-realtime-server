@@ -46,8 +46,8 @@ impl BothDirectionCommand {
 			BothDirectionCommand::S2CWithCreator(command_with_meta) => match &command_with_meta.command {
 				S2CCommand::Create(c) => Option::Some(&c.object_id),
 				S2CCommand::SetLong(c) => Option::Some(&c.object_id),
-				S2CCommand::SetFloat(c) => Option::Some(&c.object_id),
-				S2CCommand::SetStruct(c) => Option::Some(&c.object_id),
+				S2CCommand::SetDouble(c) => Option::Some(&c.object_id),
+				S2CCommand::SetStructure(c) => Option::Some(&c.object_id),
 				S2CCommand::Event(c) => Option::Some(&c.object_id),
 				S2CCommand::Delete(c) => Option::Some(&c.object_id),
 				S2CCommand::Created(c) => Option::Some(&c.object_id),

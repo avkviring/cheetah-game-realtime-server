@@ -14,7 +14,7 @@ impl ServerCommandExecutor for SetStructureCommand {
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {
 			object.structures.insert(self.field_id, self.structure.to_vec());
-			Option::Some(S2CCommand::SetStruct(self))
+			Option::Some(S2CCommand::SetStructure(self))
 		};
 		room.change_data_and_send(
 			&object_id,
@@ -37,7 +37,7 @@ impl GameObject {
 					field_id: field_id.clone(),
 					field_type: FieldType::Structure,
 				}),
-				command: S2CCommand::SetStruct(SetStructureCommand {
+				command: S2CCommand::SetStructure(SetStructureCommand {
 					object_id: self.id.clone(),
 					field_id: field_id.clone(),
 					structure,
@@ -79,6 +79,6 @@ mod tests {
 		let object = room.get_object_mut(&object_id).unwrap();
 
 		assert_eq!(*object.structures.get(&100).unwrap(), command.structure.to_vec());
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStruct(c))) if c==command));
+		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c==command));
 	}
 }

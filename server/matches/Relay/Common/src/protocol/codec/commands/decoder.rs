@@ -47,7 +47,12 @@ fn decode_command(
 			)?),
 			false => BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				creator: context.get_creator()?,
-				command: S2CCommand::decode(&header.command_type_id, context, input)?,
+				command: S2CCommand::decode(
+					&header.command_type_id,
+					context.get_object_id(),
+					context.get_field_id(),
+					input,
+				)?,
 			}),
 		},
 	})

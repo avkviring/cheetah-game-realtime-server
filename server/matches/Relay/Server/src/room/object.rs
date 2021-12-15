@@ -110,7 +110,7 @@ mod tests {
 			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
 
 		assert!(matches!(commands.remove(0),
-			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStruct(c) }
+			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
 			if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
 
 		assert!(matches!(commands.remove(0),
@@ -118,7 +118,7 @@ mod tests {
 			if c.object_id==id && c.field_id == 1 && c.value == 100));
 
 		assert!(matches!(commands.remove(0),
-			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetFloat(c)}
+			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
 			if c.object_id==id && c.field_id == 2 && c.value == 200.200));
 
 		assert!(matches!(commands.remove(0),

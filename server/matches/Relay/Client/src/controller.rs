@@ -150,13 +150,13 @@ impl ClientController {
 							listener(command_with_user.creator, &object_id, command.field_id, command.value);
 						}
 					}
-					S2CCommand::SetFloat(command) => {
+					S2CCommand::SetDouble(command) => {
 						if let Some(ref listener) = self.listener_float_value {
 							let object_id = From::from(&command.object_id);
 							listener(command_with_user.creator, &object_id, command.field_id, command.value);
 						}
 					}
-					S2CCommand::SetStruct(command) => {
+					S2CCommand::SetStructure(command) => {
 						if let Some(ref listener) = self.listener_structure {
 							let object_id = From::from(&command.object_id);
 							listener(
