@@ -23,7 +23,7 @@ use crate::room::RoomMemberId;
 pub struct CommandContext {
 	object_id: Option<GameObjectId>,
 	field_id: Option<FieldId>,
-	channel_group_id: Option<ChannelGroup>,
+	channel_group: Option<ChannelGroup>,
 	creator: Option<RoomMemberId>,
 }
 
@@ -73,7 +73,7 @@ impl CommandContext {
 	}
 
 	pub(crate) fn get_channel_group_id(&self) -> Result<ChannelGroup, CommandContextError> {
-		self.channel_group_id
+		self.channel_group
 			.ok_or(CommandContextError::ContextNotContainsChannelGroupId)
 	}
 
@@ -105,7 +105,7 @@ impl CommandContext {
 		header.channel_type_id = channel_type_id;
 
 		let position = out.position();
-		header.reserve(out);
+		header.reserve(out)?;
 
 		if compare_and_set(&mut self.object_id, object_id) {
 			self.object_id.as_ref().unwrap().encode(out)?;
@@ -116,8 +116,8 @@ impl CommandContext {
 			header.new_field_id = true;
 		}
 
-		if compare_and_set(&mut self.channel_group_id, channel_group) {
-			out.write_variable_u64(*self.channel_group_id.as_ref().unwrap() as u64)?;
+		if compare_and_set(&mut self.channel_group, channel_group) {
+			out.write_variable_u64(*self.channel_group.as_ref().unwrap() as u64)?;
 			header.new_channel_group_id = true;
 		}
 
@@ -125,9 +125,12 @@ impl CommandContext {
 		if let CreatorSource::New = creator_source {
 			let creator = creator.unwrap();
 			out.write_variable_u64(creator as u64)?;
+		};
+		if let Some(creator) = creator {
 			self.creator.replace(creator);
-			header.creator_source = creator_source;
 		}
+		header.creator_source = creator_source;
+
 		let current_position = out.position();
 		out.set_position(position);
 		header.encode(out)?;
@@ -160,7 +163,7 @@ impl CommandContext {
 				return CreatorSource::AsObjectOwner;
 			}
 		}
-		return CreatorSource::New;
+		CreatorSource::New
 	}
 
 	///
@@ -176,7 +179,7 @@ impl CommandContext {
 			self.field_id.replace(input.read_variable_u64()? as FieldId);
 		}
 		if header.new_channel_group_id {
-			self.channel_group_id.replace(input.read_variable_u64()? as ChannelGroup);
+			self.channel_group.replace(input.read_variable_u64()? as ChannelGroup);
 		}
 		self.read_and_set_creator(input, &header.creator_source)?;
 		Ok(header)
@@ -223,14 +226,13 @@ fn compare_and_set<T: PartialEq>(context: &mut Option<T>, current: Option<T>) ->
 	match current {
 		None => false, // нет данных - значит и не надо их использовать
 		Some(value_current) => {
-			match context {
+			let result = match context {
 				None => true, // данные в контексте отсутствуют - записываем новые данные
 				Some(value_context) if value_current == *value_context => false,
-				_ => {
-					context.replace(value_current);
-					true
-				}
-			}
+				_ => true,
+			};
+			context.replace(value_current);
+			result
 		}
 	}
 }
@@ -260,6 +262,234 @@ impl From<&CreatorSource> for u8 {
 			CreatorSource::Current => 1,
 			CreatorSource::New => 2,
 			CreatorSource::AsObjectOwner => 3,
+		}
+	}
+}
+
+#[cfg(test)]
+pub mod tests {
+	use std::io::Cursor;
+
+	use crate::commands::CommandTypeId;
+	use crate::constants::FieldId;
+	use crate::protocol::codec::commands::context::CommandContext;
+	use crate::protocol::frame::applications::ChannelGroup;
+	use crate::protocol::frame::codec::channel::ChannelTypeId;
+	use crate::room::object::GameObjectId;
+	use crate::room::owner::GameObjectOwner;
+	use crate::room::RoomMemberId;
+
+	struct Params {
+		object_id: Option<GameObjectId>,
+		field_id: Option<FieldId>,
+		channel_group: Option<ChannelGroup>,
+		channel_type_id: ChannelTypeId,
+		command_type_id: CommandTypeId,
+		creator: Option<RoomMemberId>,
+		size: u64,
+	}
+	///
+	/// Проверяем последовательное переключение контекста
+	///
+	#[test]
+	fn test() {
+		let params = vec![
+			Params {
+				object_id: None,
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: None,
+				size: 2, //flags
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: None,
+				size: 2 + 2, //flags + object_id
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: None,
+				size: 2, // flags
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
+				field_id: Some(5),
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: None,
+				size: 3, // flags + field_id
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
+				field_id: Some(5),
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: None,
+				size: 2, // flags
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
+				field_id: Some(5),
+				channel_group: Some(100),
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: None,
+				size: 3, // flags + channel_group
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
+				field_id: Some(5),
+				channel_group: Some(100),
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: None,
+				size: 2, // flags
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
+				field_id: Some(5),
+				channel_group: Some(100),
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(7),
+				size: 3, // flags+creator
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
+				field_id: Some(5),
+				channel_group: Some(100),
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(7),
+				size: 4, // flags + object_id
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
+				field_id: Some(10),
+				channel_group: Some(100),
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(7),
+				size: 3, // flags + field_id
+			},
+			Params {
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
+				field_id: Some(10),
+				channel_group: Some(100),
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(5),
+				size: 2, // flags
+			},
+		];
+
+		check(params);
+	}
+
+	#[test]
+	fn test_creator() {
+		let params = vec![
+			Params {
+				object_id: None,
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(5),
+				size: 2 + 1, //flags + сохранение идентификатора пользователя
+			},
+			Params {
+				object_id: None,
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(5),
+				size: 2, //flags + пользователь не поменялся
+			},
+			Params {
+				object_id: Some(GameObjectId::new(100, GameObjectOwner::User(7))),
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(5),
+				size: 2 + 2, //flags + игровой объект
+			},
+			Params {
+				object_id: Some(GameObjectId::new(100, GameObjectOwner::User(7))),
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(7),
+				size: 2, //flags + пользователь равен владельцу игрового объекта, отдельного
+				         // сохранения не требуется
+			},
+			Params {
+				object_id: Some(GameObjectId::new(100, GameObjectOwner::Room)),
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(7),
+				size: 4, //flags + object_id
+			},
+			Params {
+				object_id: Some(GameObjectId::new(100, GameObjectOwner::Room)),
+				field_id: None,
+				channel_group: None,
+				channel_type_id: ChannelTypeId(5),
+				command_type_id: CommandTypeId(31),
+				creator: Some(9),
+				size: 3, //flags + user_id
+			},
+		];
+		check(params);
+	}
+
+	fn check(params: Vec<Params>) {
+		let mut buffer = [0 as u8; 100];
+		let mut cursor = Cursor::new(buffer.as_mut());
+		let mut write_context = CommandContext::default();
+
+		for param in params.iter() {
+			let delta_size = cursor.position();
+			write_context
+				.write_next(
+					param.object_id.clone(),
+					param.field_id,
+					param.channel_group,
+					param.channel_type_id,
+					param.command_type_id,
+					param.creator,
+					&mut cursor,
+				)
+				.unwrap();
+			assert_eq!(cursor.position() - delta_size, param.size, "size");
+		}
+		cursor.set_position(0);
+		let mut read_context = CommandContext::default();
+		for param in params.iter() {
+			let header = read_context.read_next(&mut cursor).unwrap();
+			assert_eq!(read_context.object_id, param.object_id, "object_id");
+			assert_eq!(read_context.field_id, param.field_id, "field_id");
+			assert_eq!(read_context.channel_group, param.channel_group, "channel_group_id");
+			assert_eq!(header.channel_type_id, param.channel_type_id, "channel_type_id");
+			assert_eq!(header.command_type_id, param.command_type_id, "command_type_id");
+			assert_eq!(read_context.creator, param.creator, "creator");
 		}
 	}
 }
