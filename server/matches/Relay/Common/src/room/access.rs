@@ -8,7 +8,7 @@ pub struct AccessGroups(pub u64);
 
 impl AccessGroups {
 	pub fn contains_group(&self, group: u8) -> bool {
-		let bits = (1 as u64).shl(group as u64);
+		let bits = 1_u64.shl(group as u64);
 		self.0.bitand(bits) == bits
 	}
 
@@ -28,10 +28,10 @@ mod tests {
 	#[test]
 	fn create_group_from_vec() {
 		let group = AccessGroups(0b1001);
-		assert_eq!(group.contains_group(0), true);
-		assert_eq!(group.contains_group(1), false);
-		assert_eq!(group.contains_group(2), false);
-		assert_eq!(group.contains_group(3), true);
+		assert!(group.contains_group(0));
+		assert!(!group.contains_group(1));
+		assert!(!group.contains_group(2));
+		assert!(group.contains_group(3));
 	}
 
 	#[test]

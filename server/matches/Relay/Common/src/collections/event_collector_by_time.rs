@@ -180,7 +180,7 @@ mod tests {
 
 	fn setup() -> (EventCollectorByTime<u8, U8>, Duration) {
 		let duration = Duration::from_millis(1);
-		let collector = EventCollectorByTime::<u8, U8>::new(0, 0, u8::max_value(), duration);
+		let collector = EventCollectorByTime::<u8, U8>::new(0, 0, u8::MAX, duration);
 		(collector, duration)
 	}
 }

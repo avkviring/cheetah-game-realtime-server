@@ -3,7 +3,7 @@ use std::collections::{BinaryHeap, HashMap, VecDeque};
 
 use fnv::FnvBuildHasher;
 
-use crate::protocol::frame::applications::{CommandWithChannel, ChannelGroup, ChannelSequence};
+use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
 use crate::protocol::frame::{Frame, FrameId};
 use crate::room::object::GameObjectId;
@@ -41,23 +41,20 @@ impl InCommandsCollector {
 
 		commands.into_iter().for_each(|c| {
 			match c.channel {
-				Channel::ReliableUnordered | Channel::UnreliableUnordered => {
-					self.commands.push_front(c)
-				}
+				Channel::ReliableUnordered | Channel::UnreliableUnordered => self.commands.push_front(c),
 
 				Channel::ReliableOrderedByObject | Channel::UnreliableOrderedByObject => {
 					if let Some(object_id) = c.command.get_object_id() {
 						self.process_ordered(ChannelKey::ClientGameObjectId(object_id.clone()), frame_id, c);
 					}
 				}
-				Channel::ReliableOrderedByGroup(group)
-				| Channel::UnreliableOrderedByGroup(group) => {
+				Channel::ReliableOrderedByGroup(group) | Channel::UnreliableOrderedByGroup(group) => {
 					self.process_ordered(ChannelKey::Group(group), frame_id, c);
 				}
 
 				Channel::ReliableSequenceByObject(sequence) => {
 					if let Some(object_id) = c.command.get_object_id().cloned() {
-						self.process_sequence(ChannelKey::ClientGameObjectId(object_id.clone()), sequence, c);
+						self.process_sequence(ChannelKey::ClientGameObjectId(object_id), sequence, c);
 					}
 				}
 
@@ -188,7 +185,7 @@ mod tests {
 
 		in_commands.collect(Frame::new(1).add_command(Channel::ReliableOrderedByGroup(1), content_1.clone()));
 		in_commands.collect(Frame::new(3).add_command(Channel::ReliableOrderedByGroup(1), content_3.clone()));
-		in_commands.collect(Frame::new(2).add_command(Channel::ReliableOrderedByGroup(1), content_2.clone()));
+		in_commands.collect(Frame::new(2).add_command(Channel::ReliableOrderedByGroup(1), content_2));
 
 		assert!(
 			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content) if content==content_1)
@@ -206,8 +203,8 @@ mod tests {
 		let content_1 = "command_1".to_string();
 		let content_2 = "command_2".to_string();
 
-		in_commands.collect(Frame::new(2).add_command(Channel::ReliableOrderedByGroup(1), content_2.clone()));
-		in_commands.collect(Frame::new(1).add_command(Channel::ReliableOrderedByGroup(2), content_1.clone()));
+		in_commands.collect(Frame::new(2).add_command(Channel::ReliableOrderedByGroup(1), content_2));
+		in_commands.collect(Frame::new(1).add_command(Channel::ReliableOrderedByGroup(2), content_1));
 
 		assert!(
 			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content == "command_2")
@@ -225,21 +222,9 @@ mod tests {
 		let content_2 = "command_2".to_string();
 		let content_3 = "command_3".to_string();
 
-		in_commands.collect(Frame::new(1).add_object_command(
-            Channel::ReliableOrderedByObject,
-            1,
-            content_1.clone(),
-		));
-		in_commands.collect(Frame::new(3).add_object_command(
-            Channel::ReliableOrderedByObject,
-            1,
-            content_3.clone(),
-		));
-		in_commands.collect(Frame::new(2).add_object_command(
-            Channel::ReliableOrderedByObject,
-            1,
-            content_2.clone(),
-		));
+		in_commands.collect(Frame::new(1).add_object_command(Channel::ReliableOrderedByObject, 1, content_1.clone()));
+		in_commands.collect(Frame::new(3).add_object_command(Channel::ReliableOrderedByObject, 1, content_3.clone()));
+		in_commands.collect(Frame::new(2).add_object_command(Channel::ReliableOrderedByObject, 1, content_2));
 
 		assert!(
 			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1)
@@ -263,22 +248,22 @@ mod tests {
 		let content_2_c = "command_2_c".to_string();
 
 		in_commands.collect(
-            Frame::new(1)
+			Frame::new(1)
 				.add_object_command(Channel::ReliableOrderedByObject, 1, content_1_a.clone())
 				.add_object_command(Channel::ReliableOrderedByObject, 2, content_2_a.clone()),
 		);
 
 		in_commands.collect(
-            Frame::new(3)
+			Frame::new(3)
 				.add_object_command(Channel::ReliableOrderedByObject, 1, content_1_c.clone())
 				.add_object_command(Channel::ReliableOrderedByObject, 2, content_2_c.clone()),
 		);
 
 		// этот фрейм не должен быть учтен
 		in_commands.collect(
-            Frame::new(2)
-				.add_object_command(Channel::ReliableOrderedByObject, 1, content_1_b.clone())
-				.add_object_command(Channel::ReliableOrderedByObject, 2, content_2_b.clone()),
+			Frame::new(2)
+				.add_object_command(Channel::ReliableOrderedByObject, 1, content_1_b)
+				.add_object_command(Channel::ReliableOrderedByObject, 2, content_2_b),
 		);
 
 		assert!(
@@ -306,16 +291,11 @@ mod tests {
 		let content_4 = "command_4".to_string();
 		let content_5 = "command_5".to_string();
 
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 0), content_1.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 2), content_3.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 4), content_5.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 3), content_4.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 1), content_2.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 0), content_1.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 2), content_3.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 4), content_5.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 3), content_4.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 1), content_2.clone()));
 
 		assert!(
 			matches!(in_commands.get_commands().pop_back().unwrap().command,BothDirectionCommand::TestSimple(content)if content==content_1)
@@ -347,18 +327,12 @@ mod tests {
 		let content_2_b = "command_2_b".to_string();
 		let content_2_c = "command_2_c".to_string();
 
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 1), content_1_a.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(2, 2), content_2_b.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 3), content_1_c.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(2, 1), content_2_a.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 2), content_1_b.clone()));
-		in_commands
-			.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(2, 3), content_2_c.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 1), content_1_a.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(2, 2), content_2_b.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 3), content_1_c.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(2, 1), content_2_a.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(1, 2), content_1_b.clone()));
+		in_commands.collect(Frame::new(0).add_command(Channel::ReliableSequenceByGroup(2, 3), content_2_c.clone()));
 
 		assert!(
 			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestSimple(content) if content==content_1_a)
@@ -391,31 +365,11 @@ mod tests {
 		let content_4 = "command_4".to_string();
 		let content_5 = "command_5".to_string();
 
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(0),
-            1,
-            content_1.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(2),
-            1,
-            content_3.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(4),
-            1,
-            content_5.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(3),
-            1,
-            content_4.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(1),
-            1,
-            content_2.clone(),
-		));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(0), 1, content_1.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(2), 1, content_3.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(4), 1, content_5.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(3), 1, content_4.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(1), 1, content_2.clone()));
 
 		assert!(
 			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1)
@@ -447,36 +401,12 @@ mod tests {
 		let content_2_b = "command_2_b".to_string();
 		let content_2_c = "command_2_c".to_string();
 
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(1),
-            1,
-            content_1_a.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(2),
-            2,
-            content_2_b.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(3),
-            1,
-            content_1_c.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(1),
-            2,
-            content_2_a.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(2),
-            1,
-            content_1_b.clone(),
-		));
-		in_commands.collect(Frame::new(0).add_object_command(
-            Channel::ReliableSequenceByObject(3),
-            2,
-            content_2_c.clone(),
-		));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(1), 1, content_1_a.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(2), 2, content_2_b.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(3), 1, content_1_c.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(1), 2, content_2_a.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(2), 1, content_1_b.clone()));
+		in_commands.collect(Frame::new(0).add_object_command(Channel::ReliableSequenceByObject(3), 2, content_2_c.clone()));
 
 		assert!(
 			matches!(in_commands.get_commands().pop_back().unwrap().command, BothDirectionCommand::TestObject(_,content) if content==content_1_a)

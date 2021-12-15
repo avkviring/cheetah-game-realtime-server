@@ -11,7 +11,7 @@ use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
 use crate::commands::{CommandTypeId, FieldType};
 use crate::constants::FieldId;
-use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
+use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
@@ -150,7 +150,7 @@ impl C2SCommand {
 			CommandTypeId::SET_STRUCTURE => C2SCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::TARGET_EVENT => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
-			_ => Err(C2SCommandDecodeError::UnknownTypeId(command_type_id.clone()))?,
+			_ => return Err(C2SCommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
 }
@@ -201,7 +201,6 @@ mod tests {
 	#[test]
 	fn should_decode_encode_create() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
-		let field_id = 77;
 		check(
 			C2SCommand::Create(CreateGameObjectCommand {
 				object_id: object_id.clone(),
@@ -209,7 +208,7 @@ mod tests {
 				access_groups: AccessGroups(5),
 			}),
 			CommandTypeId::CREATE,
-			Some(object_id.clone()),
+			Some(object_id),
 			None,
 		);
 	}

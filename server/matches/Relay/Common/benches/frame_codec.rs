@@ -37,7 +37,7 @@ fn frame_decode(c: &mut Criterion) {
 		b.iter(|| {
 			let mut cursor = Cursor::new(&buffer[0..size]);
 			let headers = Frame::decode_headers(&mut cursor).unwrap();
-			Frame::decode_frame(cursor, Cipher::new(&private_key), headers.0, headers.1);
+			Frame::decode_frame(cursor, Cipher::new(&private_key), headers.0, headers.1).unwrap();
 		})
 	});
 	group.finish();

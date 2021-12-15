@@ -48,9 +48,9 @@ impl CongestionControl {
 	}
 
 	fn can_rebalance(&mut self, now: &Instant) -> bool {
-		let start_time = self.last_balanced.get_or_insert(now.clone());
+		let start_time = self.last_balanced.get_or_insert(*now);
 		if now.sub(*start_time) >= CongestionControl::REBALANCE_PERIOD {
-			self.last_balanced.replace(now.clone());
+			self.last_balanced.replace(*now);
 			true
 		} else {
 			false

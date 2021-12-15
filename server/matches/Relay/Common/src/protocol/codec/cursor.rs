@@ -55,6 +55,15 @@ impl VariableInt for Cursor<&mut [u8]> {
 		self.write_u64::<BigEndian>(value)
 	}
 
+	fn write_variable_i64(&mut self, value: i64) -> std::io::Result<()> {
+		let zigzag = if value < 0 {
+			!(value as u64) * 2 + 1
+		} else {
+			(value as u64) * 2
+		};
+		self.write_variable_u64(zigzag)
+	}
+
 	fn read_variable_u64(&mut self) -> std::io::Result<u64> {
 		let first = self.read_u8()?;
 		if first < U8_MAX as u8 {
@@ -76,15 +85,6 @@ impl VariableInt for Cursor<&mut [u8]> {
 		})
 	}
 
-	fn write_variable_i64(&mut self, value: i64) -> std::io::Result<()> {
-		let zigzag = if value < 0 {
-			!(value as u64) * 2 + 1
-		} else {
-			(value as u64) * 2
-		};
-		self.write_variable_u64(zigzag)
-	}
-
 	fn read_variable_i64(&mut self) -> std::io::Result<i64> {
 		let unsigned = self.read_variable_u64()?;
 		Ok(if unsigned % 2 == 0 { unsigned / 2 } else { !(unsigned / 2) } as i64)
@@ -93,7 +93,7 @@ impl VariableInt for Cursor<&mut [u8]> {
 
 #[cfg(test)]
 mod test {
-	use std::io::{Cursor, Seek};
+	use std::io::Cursor;
 
 	use crate::protocol::codec::cursor::{VariableInt, U8_MAX, U9_MARKER};
 
@@ -117,7 +117,7 @@ mod test {
 	}
 
 	fn check_u64(value: u64, size: u64) {
-		let mut buffer = [0 as u8; 100];
+		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		cursor.write_variable_u64(value).unwrap();
 		assert_eq!(cursor.position(), size);
@@ -126,7 +126,7 @@ mod test {
 	}
 
 	fn check_i64(value: i64, size: u64) {
-		let mut buffer = [0 as u8; 100];
+		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		cursor.write_variable_i64(value).unwrap();
 		assert_eq!(cursor.position(), size);

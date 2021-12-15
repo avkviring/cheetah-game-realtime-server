@@ -46,9 +46,6 @@ impl Channel {
 				Option::None
 			}
 		});
-		match find {
-			None => true,
-			Some(allow) => allow,
-		}
+		find.unwrap_or(true)
 	}
 }

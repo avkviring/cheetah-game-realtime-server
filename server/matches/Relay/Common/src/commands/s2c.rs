@@ -11,7 +11,7 @@ use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
 use crate::commands::{CommandTypeId, FieldType};
 use crate::constants::FieldId;
-use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
+use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
 
@@ -106,7 +106,7 @@ impl S2CCommand {
 			CommandTypeId::SET_DOUBLE => S2CCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SET_STRUCTURE => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			_ => return Err(S2CCommandDecodeError::UnknownTypeId(command_type_id.clone())),
+			_ => return Err(S2CCommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
 }
@@ -131,24 +131,25 @@ pub enum S2CCommandDecodeError {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::commands::s2c::S2CCommand;
-	use crate::commands::types::event::{EventCommand, TargetEventCommand};
-	use crate::commands::types::float::SetDoubleCommand;
-	use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
-	use crate::commands::types::long::{CompareAndSetLongCommand, SetLongCommand};
-	use crate::commands::types::structure::SetStructureCommand;
-	use crate::commands::types::unload::DeleteGameObjectCommand;
-	use crate::commands::{CommandBuffer, CommandTypeId};
-	use crate::constants::FieldId;
-	use crate::protocol::codec::commands::context::CommandContextError;
-	use crate::room::access::AccessGroups;
-	use crate::room::object::GameObjectId;
-	use crate::room::owner::GameObjectOwner;
+	use crate::{
+		commands::s2c::S2CCommand,
+		commands::types::event::EventCommand,
+		commands::types::float::SetDoubleCommand,
+		commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand},
+		commands::types::long::SetLongCommand,
+		commands::types::structure::SetStructureCommand,
+		commands::types::unload::DeleteGameObjectCommand,
+		commands::{CommandBuffer, CommandTypeId},
+		constants::FieldId,
+		protocol::codec::commands::context::CommandContextError,
+		room::access::AccessGroups,
+		room::object::GameObjectId,
+		room::owner::GameObjectOwner,
+	};
 
 	#[test]
 	fn should_decode_encode_create() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
-		let field_id = 77;
 		check(
 			S2CCommand::Create(CreateGameObjectCommand {
 				object_id: object_id.clone(),
@@ -156,7 +157,7 @@ mod tests {
 				access_groups: AccessGroups(5),
 			}),
 			CommandTypeId::CREATE,
-			Some(object_id.clone()),
+			Some(object_id),
 			None,
 		);
 	}

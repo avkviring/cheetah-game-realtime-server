@@ -1,8 +1,5 @@
 use std::convert::TryFrom;
-use std::fmt::format;
 use std::io::{Cursor, ErrorKind};
-
-use byteorder::{BigEndian, WriteBytesExt};
 use thiserror::Error;
 
 use crate::commands::CommandTypeId;
@@ -461,7 +458,7 @@ pub mod tests {
 	}
 
 	fn check(params: Vec<Params>) {
-		let mut buffer = [0 as u8; 100];
+		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let mut write_context = CommandContext::default();
 

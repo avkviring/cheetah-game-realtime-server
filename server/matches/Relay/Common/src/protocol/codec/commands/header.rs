@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::convert::TryFrom;
 use std::io::Cursor;
 
@@ -126,7 +125,7 @@ mod tests {
 	}
 
 	fn check(header: CommandHeader) {
-		let mut buffer = [0 as u8; 10];
+		let mut buffer = [0_u8; 10];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		header.encode(&mut cursor).unwrap();
 		cursor.set_position(0);

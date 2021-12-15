@@ -4,9 +4,9 @@ use std::time::Instant;
 use fnv::FnvBuildHasher;
 
 use crate::protocol::frame::applications::{
-	BothDirectionCommand, CommandWithChannel, ApplicationCommands, ChannelGroup, ChannelSequence,
+	ApplicationCommands, BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel,
 };
-use crate::protocol::frame::channel::{Channel, ApplicationCommandChannelType};
+use crate::protocol::frame::channel::{ApplicationCommandChannelType, Channel};
 use crate::protocol::frame::Frame;
 use crate::protocol::FrameBuilder;
 use crate::room::object::GameObjectId;
@@ -52,22 +52,18 @@ impl OutCommandsCollector {
 	}
 
 	fn create_channel(
-        &mut self,
-        channel_type: &ApplicationCommandChannelType,
-        command: &BothDirectionCommand,
+		&mut self,
+		channel_type: &ApplicationCommandChannelType,
+		command: &BothDirectionCommand,
 	) -> Option<Channel> {
 		match channel_type {
 			ApplicationCommandChannelType::ReliableUnordered => Option::Some(Channel::ReliableUnordered),
-			ApplicationCommandChannelType::ReliableOrderedByObject => {
-				Option::Some(Channel::ReliableOrderedByObject)
-			}
+			ApplicationCommandChannelType::ReliableOrderedByObject => Option::Some(Channel::ReliableOrderedByObject),
 			ApplicationCommandChannelType::ReliableOrderedByGroup(group_id) => {
 				Option::Some(Channel::ReliableOrderedByGroup(*group_id))
 			}
 			ApplicationCommandChannelType::UnreliableUnordered => Option::Some(Channel::UnreliableUnordered),
-			ApplicationCommandChannelType::UnreliableOrderedByObject => {
-				Option::Some(Channel::UnreliableOrderedByObject)
-			}
+			ApplicationCommandChannelType::UnreliableOrderedByObject => Option::Some(Channel::UnreliableOrderedByObject),
 			ApplicationCommandChannelType::UnreliableOrderedByGroup(group_id) => {
 				Option::Some(Channel::UnreliableOrderedByGroup(*group_id))
 			}
@@ -77,11 +73,11 @@ impl OutCommandsCollector {
 					.entry(game_object_id.clone())
 					.and_modify(|v| *v += 1)
 					.or_insert(0);
-				Option::Some(Channel::ReliableSequenceByObject(sequence.clone()))
+				Option::Some(Channel::ReliableSequenceByObject(*sequence))
 			}),
 			ApplicationCommandChannelType::ReliableSequenceByGroup(group) => {
 				let sequence = self.group_sequence.entry(*group).and_modify(|v| *v += 1).or_insert(0);
-				Option::Some(Channel::ReliableSequenceByGroup(*group, sequence.clone()))
+				Option::Some(Channel::ReliableSequenceByGroup(*group, *sequence))
 			}
 		}
 	}
@@ -124,7 +120,7 @@ mod tests {
 	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::BothDirectionCommand;
-	use crate::protocol::frame::channel::{Channel, ApplicationCommandChannelType};
+	use crate::protocol::frame::channel::{ApplicationCommandChannelType, Channel};
 	use crate::protocol::frame::Frame;
 	use crate::protocol::FrameBuilder;
 
@@ -133,19 +129,13 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for _ in 0..3 {
 			output.add_command(
-                ApplicationCommandChannelType::ReliableSequenceByGroup(100),
-                BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
+				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
-		assert!(
-			matches!(output.commands.reliable[0].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==0)
-		);
-		assert!(
-			matches!(output.commands.reliable[1].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==1)
-		);
-		assert!(
-			matches!(output.commands.reliable[2].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==2)
-		);
+		assert!(matches!(output.commands.reliable[0].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==0));
+		assert!(matches!(output.commands.reliable[1].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==1));
+		assert!(matches!(output.commands.reliable[2].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==2));
 	}
 
 	#[test]
@@ -153,8 +143,8 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for i in 0..2 * OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 			output.add_command(
-                ApplicationCommandChannelType::ReliableSequenceByGroup(100),
-                BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
+				BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),
 					field_id: 1,
 					value: i as i64,
@@ -196,8 +186,8 @@ mod tests {
 
 		for _ in 0..3 {
 			output.add_command(
-                ApplicationCommandChannelType::ReliableSequenceByObject,
-                BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
+				ApplicationCommandChannelType::ReliableSequenceByObject,
+				BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 0,
 					event: Default::default(),
@@ -205,14 +195,8 @@ mod tests {
 			);
 		}
 
-		assert!(
-			matches!(output.commands.reliable[0].channel, Channel::ReliableSequenceByObject(sequence) if sequence==0)
-		);
-		assert!(
-			matches!(output.commands.reliable[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence==1)
-		);
-		assert!(
-			matches!(output.commands.reliable[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence==2)
-		);
+		assert!(matches!(output.commands.reliable[0].channel, Channel::ReliableSequenceByObject(sequence) if sequence==0));
+		assert!(matches!(output.commands.reliable[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence==1));
+		assert!(matches!(output.commands.reliable[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence==2));
 	}
 }

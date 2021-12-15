@@ -129,7 +129,7 @@ impl RetransmitterImpl {
 						let retransmit_count = scheduled_frame.retransmit_count + 1;
 						self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);
 						scheduled_frame.retransmit_count = retransmit_count;
-						scheduled_frame.time = now.clone();
+						scheduled_frame.time = *now;
 
 						let original_frame_id = scheduled_frame.original_frame_id;
 						let mut retransmit_frame = scheduled_frame.frame.clone();
@@ -151,7 +151,7 @@ impl RetransmitterImpl {
 
 	fn schedule_retransmit(&mut self, frame: Frame, original_frame_id: FrameId, retransmit_count: u8, now: &Instant) {
 		self.frames.push_back(ScheduledFrame {
-			time: now.clone(),
+			time: *now,
 			original_frame_id,
 			frame,
 			retransmit_count,
@@ -182,7 +182,7 @@ impl FrameReceivedListener for RetransmitterImpl {
 		let ack_headers: Vec<&AckFrameHeader> = frame.headers.find(Header::predicate_ack_frame);
 		ack_headers.iter().for_each(|ack_header| {
 			ack_header.get_frames().iter().for_each(|frame_id| {
-				self.unacked_frames.remove(&frame_id);
+				self.unacked_frames.remove(frame_id);
 				self.statistics.on_ack_received(*frame_id, now);
 			});
 		});
@@ -337,7 +337,7 @@ mod tests {
 		let frame = create_reliability_frame(1);
 		handler.on_frame_built(&frame, &now);
 
-		let mut get_time = now.clone();
+		let mut get_time = now;
 		for _ in 0..RetransmitterImpl::RETRANSMIT_LIMIT - 1 {
 			get_time = get_time.add(handler.ack_wait_duration);
 			handler.get_retransmit_frame(&get_time, 2);

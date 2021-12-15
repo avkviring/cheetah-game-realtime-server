@@ -26,7 +26,7 @@ impl FrameBuilder for KeepAlive {
 	}
 
 	fn build_frame(&mut self, _: &mut Frame, now: &Instant) {
-		self.last_send = Option::Some(now.clone());
+		self.last_send = Option::Some(*now);
 	}
 }
 

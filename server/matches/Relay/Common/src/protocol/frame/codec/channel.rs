@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use thiserror::Error;
 
-use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
+use crate::protocol::codec::commands::context::CommandContextError;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 use crate::protocol::frame::channel::Channel;
@@ -149,7 +149,7 @@ mod tests {
 	}
 
 	fn check(original: Channel, channel_type: ChannelType, channel_group_id: Result<ChannelGroup, CommandContextError>) {
-		let mut buffer = [0 as u8; 100];
+		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		original.encode(&mut cursor).unwrap();
 		let position = cursor.position();

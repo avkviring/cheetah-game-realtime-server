@@ -53,7 +53,7 @@ impl RetransmitStatistics {
 	///
 	/// Пометка ячейки в [redundant_frames_measurements] как не занятой
 	///
-	const EMPTY_MEASUREMENT_MARK: u8 = u8::max_value();
+	const EMPTY_MEASUREMENT_MARK: u8 = u8::MAX;
 
 	///
 	/// Время измерения для одной ячейки в [redundant_frames_measurements]
