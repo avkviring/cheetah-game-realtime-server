@@ -216,7 +216,7 @@ mod tests {
 	use std::time::Instant;
 
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use crate::protocol::frame::channel::CommandChannel;
+	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::{Frame, FrameId};
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
@@ -359,7 +359,7 @@ mod tests {
 		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
 		frame.commands.unreliable.push_back(CommandWithChannel {
-			channel: CommandChannel::ReliableUnordered,
+			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
 		let now = Instant::now();
@@ -372,7 +372,7 @@ mod tests {
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
 		frame.commands.reliable.push_back(CommandWithChannel {
-			channel: CommandChannel::ReliableUnordered,
+			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
 		frame

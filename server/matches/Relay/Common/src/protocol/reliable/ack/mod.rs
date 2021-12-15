@@ -148,7 +148,7 @@ mod tests {
 	use std::time::Instant;
 
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use crate::protocol::frame::channel::CommandChannel;
+	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
@@ -250,7 +250,7 @@ mod tests {
 
 		let mut frame_a = Frame::new(10);
 		frame_a.commands.reliable.push_back(CommandWithChannel {
-			channel: CommandChannel::ReliableUnordered,
+			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
 		reliable.on_frame_received(&frame_a, &time);
@@ -270,7 +270,7 @@ mod tests {
 
 	fn create_command() -> CommandWithChannel {
 		CommandWithChannel {
-			channel: CommandChannel::ReliableUnordered,
+			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("".to_string()),
 		}
 	}

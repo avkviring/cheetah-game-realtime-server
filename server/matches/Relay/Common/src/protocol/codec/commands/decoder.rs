@@ -9,8 +9,8 @@ use crate::protocol::codec::commands::context::{CommandContext, CommandContextEr
 use crate::protocol::codec::commands::header::CommandHeader;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-use crate::protocol::frame::channel::CommandChannel;
-use crate::protocol::frame::codec::channel::ApplicationCommandChannelDecodeError;
+use crate::protocol::frame::channel::Channel;
+use crate::protocol::frame::codec::channel::CommandChannelDecodeError;
 
 ///
 /// Преобразование массива байт в список команд
@@ -37,7 +37,7 @@ fn decode_command(
 	context: &CommandContext,
 ) -> Result<CommandWithChannel, CommandsDecoderError> {
 	Ok(CommandWithChannel {
-		channel: CommandChannel::decode(&header.channel_type_id, context, input)?,
+		channel: Channel::decode(&header.channel_type_id, context.get_channel_group_id(), input)?,
 		command: match from_client {
 			true => BothDirectionCommand::C2S(C2SCommand::decode(&header.command_type_id, context, input)?),
 			false => BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
@@ -59,7 +59,7 @@ pub enum CommandsDecoderError {
 	#[error("ApplicationCommandChannel error {:?}", .source)]
 	ApplicationCommandChannel {
 		#[from]
-		source: ApplicationCommandChannelDecodeError,
+		source: CommandChannelDecodeError,
 	},
 
 	#[error("C2SCommandDecodeError error {:?}", .source)]

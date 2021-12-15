@@ -3,7 +3,6 @@ use std::io::Cursor;
 use strum_macros::AsRefStr;
 use thiserror::Error;
 
-use crate::commands::s2c::S2CCommand::SetStruct;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::float::SetFloat64Command;
 use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};

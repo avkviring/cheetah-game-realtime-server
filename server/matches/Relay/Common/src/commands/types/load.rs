@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use crate::constants::{FieldId, GameObjectTemplateId};
+use crate::constants::GameObjectTemplateId;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::room::access::AccessGroups;
 use crate::room::object::GameObjectId;

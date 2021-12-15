@@ -4,33 +4,44 @@ use thiserror::Error;
 
 use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
 use crate::protocol::codec::cursor::VariableInt;
-use crate::protocol::frame::applications::ChannelSequence;
-use crate::protocol::frame::channel::CommandChannel;
+use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
+use crate::protocol::frame::channel::Channel;
 
 ///
 /// Тип канала передача данных (тег для [CommandChannel])
 ///
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-pub struct ChannelTypeId(pub u8);
+pub struct ChannelType(pub u8);
+
+impl ChannelType {
+	const RELIABLE_UNORDERED: Self = ChannelType(0);
+	const RELIABLE_ORDERED_BY_OBJECT: Self = ChannelType(1);
+	const RELIABLE_ORDERED_BY_GROUP: Self = ChannelType(2);
+	const UNRELIABLE_UNORDERED: Self = ChannelType(3);
+	const UNRELIABLE_ORDERED_BY_OBJECT: Self = ChannelType(4);
+	const UNRELIABLE_ORDERED_BY_GROUP: Self = ChannelType(5);
+	const RELIABLE_SEQUENCE_BY_OBJECT: Self = ChannelType(6);
+	const RELIABLE_SEQUENCE_BY_GROUP: Self = ChannelType(7);
+}
 
 ///
 /// Кодирование/декодирование канала
 ///
 
-impl CommandChannel {
+impl Channel {
 	///
 	/// Получить идентификатор типа
 	///
-	pub fn get_type_id(&self) -> ChannelTypeId {
+	pub fn get_type(&self) -> ChannelType {
 		let id = match self {
-			CommandChannel::ReliableUnordered => ChannelTypeId(0),
-			CommandChannel::ReliableOrderedByObject => ChannelTypeId(1),
-			CommandChannel::ReliableOrderedByGroup(_) => ChannelTypeId(2),
-			CommandChannel::UnreliableUnordered => ChannelTypeId(3),
-			CommandChannel::UnreliableOrderedByObject => ChannelTypeId(4),
-			CommandChannel::UnreliableOrderedByGroup(_) => ChannelTypeId(5),
-			CommandChannel::ReliableSequenceByObject(_) => ChannelTypeId(6),
-			CommandChannel::ReliableSequenceByGroup(_, _) => ChannelTypeId(7),
+			Channel::ReliableUnordered => ChannelType::RELIABLE_UNORDERED,
+			Channel::ReliableOrderedByObject => ChannelType::RELIABLE_ORDERED_BY_OBJECT,
+			Channel::ReliableOrderedByGroup(_) => ChannelType::RELIABLE_ORDERED_BY_GROUP,
+			Channel::UnreliableUnordered => ChannelType::UNRELIABLE_UNORDERED,
+			Channel::UnreliableOrderedByObject => ChannelType::UNRELIABLE_ORDERED_BY_OBJECT,
+			Channel::UnreliableOrderedByGroup(_) => ChannelType::UNRELIABLE_ORDERED_BY_GROUP,
+			Channel::ReliableSequenceByObject(_) => ChannelType::RELIABLE_SEQUENCE_BY_OBJECT,
+			Channel::ReliableSequenceByGroup(_, _) => ChannelType::RELIABLE_SEQUENCE_BY_GROUP,
 		};
 		assert!(id.0 < 8); // если больше 7 то надо переделывать формат передачи фреймов
 		id
@@ -38,51 +49,40 @@ impl CommandChannel {
 
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		match self {
-			CommandChannel::ReliableUnordered => Ok(()),
-			CommandChannel::ReliableOrderedByObject => Ok(()),
-			CommandChannel::ReliableOrderedByGroup(group) => out.write_variable_u64(*group as u64),
-			CommandChannel::UnreliableUnordered => Ok(()),
-			CommandChannel::UnreliableOrderedByObject => Ok(()),
-			CommandChannel::UnreliableOrderedByGroup(group) => out.write_variable_u64(*group as u64),
-			CommandChannel::ReliableSequenceByObject(sequence) => out.write_variable_u64(*sequence as u64),
-			CommandChannel::ReliableSequenceByGroup(group, sequence) => {
-				out.write_variable_u64(*group as u64)?;
-				out.write_variable_u64(*sequence as u64)
-			}
-		}
+			Channel::ReliableSequenceByObject(sequence) => out.write_variable_u64(*sequence as u64)?,
+			Channel::ReliableSequenceByGroup(_, sequence) => out.write_variable_u64(*sequence as u64)?,
+			_ => {}
+		};
+		Ok(())
 	}
 
 	pub fn decode(
-		channel_type_id: &ChannelTypeId,
-		context: &CommandContext,
+		channel_type: &ChannelType,
+		channel_group: Result<ChannelGroup, CommandContextError>,
 		input: &mut Cursor<&mut [u8]>,
-	) -> Result<CommandChannel, ApplicationCommandChannelDecodeError> {
-		match channel_type_id {
-			ChannelTypeId(0) => return Ok(CommandChannel::ReliableUnordered),
-			ChannelTypeId(1) => return Ok(CommandChannel::ReliableOrderedByObject),
-			ChannelTypeId(3) => return Ok(CommandChannel::UnreliableUnordered),
-			ChannelTypeId(4) => return Ok(CommandChannel::UnreliableOrderedByObject),
-			_ => {}
-		};
-		let channel_group_id = context.get_channel_group_id()?;
-		match channel_type_id {
-			ChannelTypeId(2) => return Ok(CommandChannel::ReliableOrderedByGroup(channel_group_id)),
-			ChannelTypeId(5) => return Ok(CommandChannel::UnreliableOrderedByGroup(channel_group_id)),
-			_ => {}
-		}
-		let channel_sequence = input.read_variable_u64()? as ChannelSequence;
-		match channel_type_id {
-			ChannelTypeId(7) => Ok(CommandChannel::ReliableSequenceByGroup(channel_group_id, channel_sequence)),
-			ChannelTypeId(6) => Ok(CommandChannel::ReliableSequenceByObject(channel_sequence)),
-			_ => Err(ApplicationCommandChannelDecodeError::UnknownType(channel_type_id.clone())),
-		}
+	) -> Result<Channel, CommandChannelDecodeError> {
+		Ok(match *channel_type {
+			ChannelType::RELIABLE_UNORDERED => Channel::ReliableUnordered,
+			ChannelType::RELIABLE_ORDERED_BY_OBJECT => Channel::ReliableOrderedByObject,
+			ChannelType::UNRELIABLE_UNORDERED => Channel::UnreliableUnordered,
+			ChannelType::UNRELIABLE_ORDERED_BY_OBJECT => Channel::UnreliableOrderedByObject,
+			ChannelType::RELIABLE_ORDERED_BY_GROUP => Channel::ReliableOrderedByGroup(channel_group?),
+			ChannelType::UNRELIABLE_ORDERED_BY_GROUP => Channel::UnreliableOrderedByGroup(channel_group?),
+			ChannelType::RELIABLE_SEQUENCE_BY_GROUP => {
+				Channel::ReliableSequenceByGroup(channel_group?, input.read_variable_u64()? as ChannelSequence)
+			}
+			ChannelType::RELIABLE_SEQUENCE_BY_OBJECT => {
+				Channel::ReliableSequenceByObject(input.read_variable_u64()? as ChannelSequence)
+			}
+			_ => return Err(CommandChannelDecodeError::UnknownType(*channel_type)),
+		})
 	}
 }
 
 #[derive(Error, Debug)]
-pub enum ApplicationCommandChannelDecodeError {
+pub enum CommandChannelDecodeError {
 	#[error("Unknown command type {:?}", .0)]
-	UnknownType(ChannelTypeId),
+	UnknownType(ChannelType),
 	#[error("IO error {:?}", .source)]
 	Io {
 		#[from]
@@ -93,4 +93,69 @@ pub enum ApplicationCommandChannelDecodeError {
 		#[from]
 		source: CommandContextError,
 	},
+}
+
+#[cfg(test)]
+mod tests {
+	use std::io::Cursor;
+
+	use crate::protocol::codec::commands::context::CommandContextError;
+	use crate::protocol::frame::applications::ChannelGroup;
+	use crate::protocol::frame::channel::Channel;
+	use crate::protocol::frame::codec::channel::ChannelType;
+
+	#[test]
+	fn test() {
+		check(
+			Channel::ReliableUnordered,
+			ChannelType::RELIABLE_UNORDERED,
+			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
+		);
+		check(
+			Channel::ReliableOrderedByObject,
+			ChannelType::RELIABLE_ORDERED_BY_OBJECT,
+			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
+		);
+		check(
+			Channel::ReliableOrderedByGroup(100),
+			ChannelType::RELIABLE_ORDERED_BY_GROUP,
+			Result::Ok(100),
+		);
+		check(
+			Channel::UnreliableUnordered,
+			ChannelType::UNRELIABLE_UNORDERED,
+			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
+		);
+		check(
+			Channel::UnreliableOrderedByObject,
+			ChannelType::UNRELIABLE_ORDERED_BY_OBJECT,
+			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
+		);
+		check(
+			Channel::UnreliableOrderedByGroup(155),
+			ChannelType::UNRELIABLE_ORDERED_BY_GROUP,
+			Result::Ok(155),
+		);
+		check(
+			Channel::ReliableSequenceByObject(255),
+			ChannelType::RELIABLE_SEQUENCE_BY_OBJECT,
+			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
+		);
+		check(
+			Channel::ReliableSequenceByGroup(7, 255),
+			ChannelType::RELIABLE_SEQUENCE_BY_GROUP,
+			Result::Ok(7),
+		);
+	}
+
+	fn check(original: Channel, channel_type: ChannelType, channel_group_id: Result<ChannelGroup, CommandContextError>) {
+		let mut buffer = [0 as u8; 100];
+		let mut cursor = Cursor::new(buffer.as_mut());
+		original.encode(&mut cursor).unwrap();
+		let position = cursor.position();
+		cursor.set_position(0);
+		let actual = Channel::decode(&channel_type, channel_group_id, &mut cursor).unwrap();
+		assert_eq!(cursor.position(), position); // проверяем что прочитаны все данные
+		assert_eq!(original, actual);
+	}
 }

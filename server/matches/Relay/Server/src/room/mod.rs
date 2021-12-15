@@ -341,7 +341,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 
 	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use cheetah_matches_relay_common::protocol::frame::channel::CommandChannel;
+	use cheetah_matches_relay_common::protocol::frame::channel::Channel;
 	use cheetah_matches_relay_common::protocol::frame::Frame;
 	use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -546,7 +546,7 @@ mod tests {
 			.commands
 			.reliable
 			.push_back(CommandWithChannel {
-				channel: CommandChannel::ReliableUnordered,
+				channel: Channel::ReliableUnordered,
 				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			});
 		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());

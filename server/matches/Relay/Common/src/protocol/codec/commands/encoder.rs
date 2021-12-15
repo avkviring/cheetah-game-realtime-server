@@ -6,8 +6,8 @@ use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
-use crate::protocol::frame::channel::CommandChannel;
-use crate::protocol::frame::codec::channel::ChannelTypeId;
+use crate::protocol::frame::channel::Channel;
+use crate::protocol::frame::codec::channel::ChannelType;
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
 
@@ -31,19 +31,19 @@ pub fn encode(commands: &VecDeque<CommandWithChannel>, out: &mut Cursor<&mut [u8
 	Result::Ok(())
 }
 
-fn get_channel_info(command: &CommandWithChannel) -> (ChannelTypeId, Option<ChannelGroup>) {
+fn get_channel_info(command: &CommandWithChannel) -> (ChannelType, Option<ChannelGroup>) {
 	let channel = &command.channel;
 	let group = match channel {
-		CommandChannel::ReliableUnordered => None,
-		CommandChannel::ReliableOrderedByObject => None,
-		CommandChannel::ReliableOrderedByGroup(group) => Some(*group),
-		CommandChannel::UnreliableUnordered => None,
-		CommandChannel::UnreliableOrderedByObject => None,
-		CommandChannel::UnreliableOrderedByGroup(group) => Some(*group),
-		CommandChannel::ReliableSequenceByObject(_) => None,
-		CommandChannel::ReliableSequenceByGroup(group, _) => Some(*group),
+		Channel::ReliableUnordered => None,
+		Channel::ReliableOrderedByObject => None,
+		Channel::ReliableOrderedByGroup(group) => Some(*group),
+		Channel::UnreliableUnordered => None,
+		Channel::UnreliableOrderedByObject => None,
+		Channel::UnreliableOrderedByGroup(group) => Some(*group),
+		Channel::ReliableSequenceByObject(_) => None,
+		Channel::ReliableSequenceByGroup(group, _) => Some(*group),
 	};
-	(channel.get_type_id(), group)
+	(channel.get_type(), group)
 }
 fn get_command_info(
 	command: &CommandWithChannel,

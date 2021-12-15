@@ -140,7 +140,7 @@ pub mod tests {
 
 	use crate::protocol::codec::cipher::Cipher;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use crate::protocol::frame::channel::CommandChannel;
+	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::ack::header::AckFrameHeader;
@@ -157,7 +157,7 @@ pub mod tests {
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
 		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
 		frame.commands.reliable.push_back(CommandWithChannel {
-			channel: CommandChannel::ReliableUnordered,
+			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("test".to_string()),
 		});
 		let mut buffer = [0; 1024];

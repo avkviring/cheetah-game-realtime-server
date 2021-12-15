@@ -6,7 +6,7 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::commands::CommandTypeId;
 use crate::protocol::codec::commands::context::CreatorSource;
-use crate::protocol::frame::codec::channel::ChannelTypeId;
+use crate::protocol::frame::codec::channel::ChannelType;
 
 ///
 /// Заголовок команды
@@ -18,7 +18,7 @@ pub(crate) struct CommandHeader {
 	pub(crate) new_field_id: bool,
 	pub(crate) new_channel_group_id: bool,
 	pub(crate) creator_source: CreatorSource,
-	pub(crate) channel_type_id: ChannelTypeId,
+	pub(crate) channel_type_id: ChannelType,
 	pub(crate) command_type_id: CommandTypeId,
 }
 
@@ -33,7 +33,7 @@ impl CommandHeader {
 			new_field_id: false,
 			new_channel_group_id: false,
 			creator_source: CreatorSource::NotSupported,
-			channel_type_id: ChannelTypeId(0),
+			channel_type_id: ChannelType(0),
 			command_type_id: CommandTypeId(0),
 		}
 	}
@@ -44,7 +44,7 @@ impl CommandHeader {
 			new_field_id: (header & 1 << NEW_FIELD_ID_BIT) > 0,
 			new_channel_group_id: (header & 1 << NEW_CHANNEL_GROUP_ID_BIT) > 0,
 			creator_source: CreatorSource::try_from(((header & 0b11000000000) >> 9) as u8)?,
-			channel_type_id: ChannelTypeId(((header & 0b111000000) >> 6) as u8),
+			channel_type_id: ChannelType(((header & 0b111000000) >> 6) as u8),
 			command_type_id: CommandTypeId((header & 0b111111) as u8),
 		})
 	}
@@ -77,7 +77,7 @@ mod tests {
 	use crate::commands::CommandTypeId;
 	use crate::protocol::codec::commands::context::CreatorSource;
 	use crate::protocol::codec::commands::header::CommandHeader;
-	use crate::protocol::frame::codec::channel::ChannelTypeId;
+	use crate::protocol::frame::codec::channel::ChannelType;
 
 	#[test]
 	fn test() {
@@ -86,7 +86,7 @@ mod tests {
 			new_field_id: false,
 			new_channel_group_id: false,
 			creator_source: CreatorSource::NotSupported,
-			channel_type_id: ChannelTypeId(0),
+			channel_type_id: ChannelType(0),
 			command_type_id: CommandTypeId(0),
 		});
 		check(CommandHeader {
@@ -94,7 +94,7 @@ mod tests {
 			new_field_id: false,
 			new_channel_group_id: false,
 			creator_source: CreatorSource::New,
-			channel_type_id: ChannelTypeId(7),
+			channel_type_id: ChannelType(7),
 			command_type_id: CommandTypeId(0),
 		});
 		check(CommandHeader {
@@ -102,7 +102,7 @@ mod tests {
 			new_field_id: true,
 			new_channel_group_id: false,
 			creator_source: CreatorSource::Current,
-			channel_type_id: ChannelTypeId(5),
+			channel_type_id: ChannelType(5),
 			command_type_id: CommandTypeId(7),
 		});
 
@@ -111,7 +111,7 @@ mod tests {
 			new_field_id: false,
 			new_channel_group_id: true,
 			creator_source: CreatorSource::AsObjectOwner,
-			channel_type_id: ChannelTypeId(3),
+			channel_type_id: ChannelType(3),
 			command_type_id: CommandTypeId(31),
 		});
 
@@ -120,7 +120,7 @@ mod tests {
 			new_field_id: true,
 			new_channel_group_id: true,
 			creator_source: CreatorSource::NotSupported,
-			channel_type_id: ChannelTypeId(7),
+			channel_type_id: ChannelType(7),
 			command_type_id: CommandTypeId(63),
 		});
 	}

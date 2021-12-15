@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::commands::c2s::C2SCommand;
 use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-use crate::protocol::frame::channel::CommandChannel;
+use crate::protocol::frame::channel::Channel;
 use crate::room::object::GameObjectId;
 
 pub type ChannelGroup = u16;
@@ -26,7 +26,7 @@ pub struct ApplicationCommands {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CommandWithChannel {
-	pub channel: CommandChannel,
+	pub channel: Channel,
 	pub command: BothDirectionCommand,
 }
 
