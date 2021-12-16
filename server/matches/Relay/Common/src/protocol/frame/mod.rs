@@ -3,7 +3,6 @@ use crate::protocol::frame::headers::{Header, Headers};
 
 pub mod applications;
 pub mod channel;
-pub mod codec;
 pub mod headers;
 pub type FrameId = u64;
 

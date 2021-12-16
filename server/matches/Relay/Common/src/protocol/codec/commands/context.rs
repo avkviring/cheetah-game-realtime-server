@@ -4,10 +4,10 @@ use thiserror::Error;
 
 use crate::commands::CommandTypeId;
 use crate::constants::FieldId;
+use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::header::CommandHeader;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::ChannelGroup;
-use crate::protocol::frame::codec::channel::ChannelType;
 use crate::room::object::GameObjectId;
 use crate::room::owner::GameObjectOwner;
 use crate::room::RoomMemberId;
@@ -269,9 +269,9 @@ pub mod tests {
 
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
+	use crate::protocol::codec::channel::ChannelType;
 	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::frame::applications::ChannelGroup;
-	use crate::protocol::frame::codec::channel::ChannelType;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
 	use crate::room::RoomMemberId;

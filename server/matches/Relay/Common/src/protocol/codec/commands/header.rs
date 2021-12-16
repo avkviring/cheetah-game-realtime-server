@@ -4,8 +4,8 @@ use std::io::Cursor;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::commands::CommandTypeId;
+use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::context::CreatorSource;
-use crate::protocol::frame::codec::channel::ChannelType;
 
 ///
 /// Заголовок команды
@@ -74,9 +74,9 @@ mod tests {
 	use std::io::Cursor;
 
 	use crate::commands::CommandTypeId;
+	use crate::protocol::codec::channel::ChannelType;
 	use crate::protocol::codec::commands::context::CreatorSource;
 	use crate::protocol::codec::commands::header::CommandHeader;
-	use crate::protocol::frame::codec::channel::ChannelType;
 
 	#[test]
 	fn test() {

@@ -99,48 +99,75 @@ pub enum CommandChannelDecodeError {
 mod tests {
 	use std::io::Cursor;
 
+	use crate::protocol::codec::channel::ChannelType;
 	use crate::protocol::codec::commands::context::CommandContextError;
 	use crate::protocol::frame::applications::ChannelGroup;
 	use crate::protocol::frame::channel::Channel;
-	use crate::protocol::frame::codec::channel::ChannelType;
 
 	#[test]
-	fn test() {
+	fn test_reliable_unordered() {
 		check(
 			Channel::ReliableUnordered,
 			ChannelType::RELIABLE_UNORDERED,
 			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
+	}
+
+	#[test]
+	fn test_reliable_ordered_by_object() {
 		check(
 			Channel::ReliableOrderedByObject,
 			ChannelType::RELIABLE_ORDERED_BY_OBJECT,
 			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
+	}
+
+	#[test]
+	fn test_reliable_ordered_by_group() {
 		check(
 			Channel::ReliableOrderedByGroup(100),
 			ChannelType::RELIABLE_ORDERED_BY_GROUP,
 			Result::Ok(100),
 		);
+	}
+
+	#[test]
+	fn test_unreliable_unordered() {
 		check(
 			Channel::UnreliableUnordered,
 			ChannelType::UNRELIABLE_UNORDERED,
 			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
+	}
+
+	#[test]
+	fn test_unreliable_ordered_by_object() {
 		check(
 			Channel::UnreliableOrderedByObject,
 			ChannelType::UNRELIABLE_ORDERED_BY_OBJECT,
 			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
+	}
+
+	#[test]
+	fn test_unreliable_ordered_by_group() {
 		check(
 			Channel::UnreliableOrderedByGroup(155),
 			ChannelType::UNRELIABLE_ORDERED_BY_GROUP,
 			Result::Ok(155),
 		);
+	}
+
+	#[test]
+	fn test_reliable_sequence_by_object() {
 		check(
 			Channel::ReliableSequenceByObject(255),
 			ChannelType::RELIABLE_SEQUENCE_BY_OBJECT,
 			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
+	}
+	#[test]
+	fn test_reliable_sequence_by_group() {
 		check(
 			Channel::ReliableSequenceByGroup(7, 255),
 			ChannelType::RELIABLE_SEQUENCE_BY_GROUP,

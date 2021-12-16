@@ -5,12 +5,12 @@ use thiserror::Error;
 
 use crate::commands::c2s::{C2SCommand, C2SCommandDecodeError};
 use crate::commands::s2c::{S2CCommand, S2CCommandDecodeError, S2CCommandWithCreator};
+use crate::protocol::codec::channel::CommandChannelDecodeError;
 use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
 use crate::protocol::codec::commands::header::CommandHeader;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
-use crate::protocol::frame::codec::channel::CommandChannelDecodeError;
 
 ///
 /// Преобразование массива байт в список команд
