@@ -3,15 +3,15 @@ use std::io::Cursor;
 
 use crate::commands::CommandTypeId;
 use crate::constants::FieldId;
+use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::cursor::VariableInt;
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
-use crate::protocol::frame::codec::channel::ChannelType;
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
 
-pub fn encode(commands: &VecDeque<CommandWithChannel>, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+pub fn encode_commands(commands: &VecDeque<CommandWithChannel>, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 	out.write_variable_u64(commands.len() as u64)?;
 	let mut context = CommandContext::default();
 	for command in commands {
@@ -70,6 +70,7 @@ fn get_command_info(
 	}
 }
 fn encode_command(command: &CommandWithChannel, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+	command.channel.encode(out)?;
 	match &command.command {
 		BothDirectionCommand::TestSimple(_) => Ok(()),
 		BothDirectionCommand::TestObject(_, _) => Ok(()),
