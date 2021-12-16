@@ -78,12 +78,11 @@ mod tests {
 		let mut buffer = [0_u8; 64];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		encode_commands(&commands, &mut cursor).unwrap();
-		let position = cursor.position();
-		cursor.set_position(0);
-
+		let write_position = cursor.position();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
 		let mut readed = VecDeque::new();
-		decode_commands(from_client, &mut cursor, &mut readed).unwrap();
-		assert_eq!(cursor.position(), position);
+		decode_commands(from_client, &mut read_cursor, &mut readed).unwrap();
+		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(commands, readed);
 	}
 }

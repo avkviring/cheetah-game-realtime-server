@@ -128,7 +128,7 @@ impl C2SCommand {
 		command_type_id: &CommandTypeId,
 		object_id: Result<GameObjectId, CommandContextError>,
 		field_id: Result<FieldId, CommandContextError>,
-		input: &mut Cursor<&mut [u8]>,
+		input: &mut Cursor<&[u8]>,
 	) -> Result<C2SCommand, C2SCommandDecodeError> {
 		Ok(match *command_type_id {
 			CommandTypeId::ATTACH_TO_ROOM => C2SCommand::AttachToRoom,
@@ -378,11 +378,10 @@ mod tests {
 		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		excepted.encode(&mut cursor).unwrap();
-		let position = cursor.position();
-		cursor.set_position(0);
-		let actual = C2SCommand::decode(&command_type_id, object_id, field_id, &mut cursor).unwrap();
-
-		assert_eq!(cursor.position(), position);
+		let write_position = cursor.position();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let actual = C2SCommand::decode(&command_type_id, object_id, field_id, &mut read_cursor).unwrap();
+		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(excepted, actual);
 	}
 }

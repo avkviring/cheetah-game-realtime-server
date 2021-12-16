@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use crate::constants::GameObjectTemplateId;
-use crate::protocol::codec::cursor::VariableInt;
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::access::AccessGroups;
 use crate::room::object::GameObjectId;
 
@@ -31,7 +31,7 @@ impl CreateGameObjectCommand {
 		out.write_variable_u64(self.access_groups.0)
 	}
 
-	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&mut [u8]>) -> std::io::Result<Self> {
+	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let template = input.read_variable_u64()? as GameObjectTemplateId;
 		let access_groups = AccessGroups(input.read_variable_u64()?);
 		Ok(Self {

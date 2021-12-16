@@ -5,10 +5,12 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 ///
 /// Запись/чтения целого числа с переменным количеством бит для хранения
 ///
-pub trait VariableInt {
+pub trait VariableIntWriter {
 	fn write_variable_u64(&mut self, value: u64) -> std::io::Result<()>;
 	fn write_variable_i64(&mut self, value: i64) -> std::io::Result<()>;
+}
 
+pub trait VariableIntReader {
 	fn read_variable_u64(&mut self) -> std::io::Result<u64>;
 	fn read_variable_i64(&mut self) -> std::io::Result<i64>;
 }
@@ -20,7 +22,7 @@ const U32_MARKER: u8 = 253;
 const U48_MARKER: u8 = 254;
 const U64_MARKER: u8 = 255;
 
-impl VariableInt for Cursor<&mut [u8]> {
+impl VariableIntWriter for Cursor<&mut [u8]> {
 	fn write_variable_u64(&mut self, value: u64) -> std::io::Result<()> {
 		if value < U8_MAX {
 			return self.write_u8(value as u8);
@@ -63,7 +65,8 @@ impl VariableInt for Cursor<&mut [u8]> {
 		};
 		self.write_variable_u64(zigzag)
 	}
-
+}
+impl VariableIntReader for Cursor<&[u8]> {
 	fn read_variable_u64(&mut self) -> std::io::Result<u64> {
 		let first = self.read_u8()?;
 		if first < U8_MAX as u8 {
@@ -95,7 +98,7 @@ impl VariableInt for Cursor<&mut [u8]> {
 mod test {
 	use std::io::Cursor;
 
-	use crate::protocol::codec::cursor::{VariableInt, U8_MAX, U9_MARKER};
+	use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter, U8_MAX, U9_MARKER};
 
 	#[test]
 	fn test_u64() {
@@ -121,8 +124,10 @@ mod test {
 		let mut cursor = Cursor::new(buffer.as_mut());
 		cursor.write_variable_u64(value).unwrap();
 		assert_eq!(cursor.position(), size);
-		cursor.set_position(0);
-		assert_eq!(cursor.read_variable_u64().unwrap(), value);
+		let write_position = cursor.position();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		assert_eq!(write_position, read_cursor.position());
+		assert_eq!(read_cursor.read_variable_u64().unwrap(), value);
 	}
 
 	fn check_i64(value: i64, size: u64) {
@@ -130,7 +135,11 @@ mod test {
 		let mut cursor = Cursor::new(buffer.as_mut());
 		cursor.write_variable_i64(value).unwrap();
 		assert_eq!(cursor.position(), size);
-		cursor.set_position(0);
-		assert_eq!(cursor.read_variable_i64().unwrap(), value);
+		let write_position = cursor.position();
+
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+
+		assert_eq!(write_position, read_cursor.position());
+		assert_eq!(read_cursor.read_variable_i64().unwrap(), value);
 	}
 }

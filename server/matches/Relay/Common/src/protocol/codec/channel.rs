@@ -3,7 +3,7 @@ use std::io::Cursor;
 use thiserror::Error;
 
 use crate::protocol::codec::commands::context::CommandContextError;
-use crate::protocol::codec::cursor::VariableInt;
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 use crate::protocol::frame::channel::Channel;
 
@@ -59,7 +59,7 @@ impl Channel {
 	pub fn decode(
 		channel_type: &ChannelType,
 		channel_group: Result<ChannelGroup, CommandContextError>,
-		input: &mut Cursor<&mut [u8]>,
+		input: &mut Cursor<&[u8]>,
 	) -> Result<Channel, CommandChannelDecodeError> {
 		Ok(match *channel_type {
 			ChannelType::RELIABLE_UNORDERED => Channel::ReliableUnordered,
@@ -179,10 +179,10 @@ mod tests {
 		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		original.encode(&mut cursor).unwrap();
-		let position = cursor.position();
-		cursor.set_position(0);
-		let actual = Channel::decode(&channel_type, channel_group_id, &mut cursor).unwrap();
-		assert_eq!(cursor.position(), position); // проверяем что прочитаны все данные
+		let write_position = cursor.position();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let actual = Channel::decode(&channel_type, channel_group_id, &mut read_cursor).unwrap();
+		assert_eq!(write_position, read_cursor.position()); // проверяем что прочитаны все данные
 		assert_eq!(original, actual);
 	}
 }

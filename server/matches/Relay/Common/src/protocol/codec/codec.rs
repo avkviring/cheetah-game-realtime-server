@@ -4,6 +4,7 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::headers::Headers;
 use crate::protocol::frame::{Frame, FrameId};
 
@@ -20,7 +21,7 @@ pub enum UdpFrameDecodeError {
 impl Frame {
 	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameId, Headers), UdpFrameDecodeError> {
 		let frame_id = cursor
-			.read_u64::<BigEndian>()
+			.read_variable_u64()
 			.map_err(|_| UdpFrameDecodeError::DecodeFrameIdError)?;
 		// let additional_headers: Headers =
 		// 	deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;

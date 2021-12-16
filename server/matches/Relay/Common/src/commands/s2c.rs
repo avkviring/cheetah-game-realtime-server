@@ -96,7 +96,7 @@ impl S2CCommand {
 		command_type_id: &CommandTypeId,
 		object_id: Result<GameObjectId, CommandContextError>,
 		field_id: Result<FieldId, CommandContextError>,
-		input: &mut Cursor<&mut [u8]>,
+		input: &mut Cursor<&[u8]>,
 	) -> Result<S2CCommand, S2CCommandDecodeError> {
 		Ok(match *command_type_id {
 			CommandTypeId::CREATE => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
@@ -258,11 +258,11 @@ mod tests {
 		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		excepted.encode(&mut cursor).unwrap();
-		let position = cursor.position();
-		cursor.set_position(0);
-		let actual = S2CCommand::decode(&command_type_id, object_id, field_id, &mut cursor).unwrap();
+		let write_position = cursor.position();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let actual = S2CCommand::decode(&command_type_id, object_id, field_id, &mut read_cursor).unwrap();
 
-		assert_eq!(cursor.position(), position);
+		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(excepted, actual);
 	}
 }

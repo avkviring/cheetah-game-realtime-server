@@ -5,7 +5,7 @@ use crate::commands::CommandTypeId;
 use crate::constants::FieldId;
 use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::context::CommandContext;
-use crate::protocol::codec::cursor::VariableInt;
+use crate::protocol::codec::variable_int::VariableIntWriter;
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
 use crate::room::object::GameObjectId;

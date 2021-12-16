@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use crate::protocol::codec::cursor::VariableInt;
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::owner::GameObjectOwner;
 use crate::room::RoomMemberId;
 
@@ -37,7 +37,7 @@ impl GameObjectId {
 			GameObjectOwner::User(user) => out.write_variable_i64(user as i64),
 		}
 	}
-	pub fn decode(input: &mut Cursor<&mut [u8]>) -> std::io::Result<Self> {
+	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		Ok(GameObjectId {
 			id: input.read_variable_u64()? as u32,
 			owner: match input.read_variable_i64()? {
@@ -67,8 +67,8 @@ mod tests {
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let original = GameObjectId::new(100, GameObjectOwner::Room);
 		original.encode(&mut cursor).unwrap();
-		cursor.set_position(0);
-		let actual = GameObjectId::decode(&mut cursor).unwrap();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let actual = GameObjectId::decode(&mut read_cursor).unwrap();
 		assert_eq!(original, actual);
 	}
 
@@ -78,8 +78,8 @@ mod tests {
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let original = GameObjectId::new(100, GameObjectOwner::User(5));
 		original.encode(&mut cursor).unwrap();
-		cursor.set_position(0);
-		let actual = GameObjectId::decode(&mut cursor).unwrap();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let actual = GameObjectId::decode(&mut read_cursor).unwrap();
 		assert_eq!(original, actual);
 	}
 }

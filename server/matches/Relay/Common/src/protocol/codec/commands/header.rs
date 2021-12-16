@@ -36,7 +36,7 @@ impl CommandHeader {
 			command_type_id: CommandTypeId(0),
 		}
 	}
-	pub(crate) fn decode(input: &mut Cursor<&mut [u8]>) -> std::io::Result<CommandHeader> {
+	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<CommandHeader> {
 		let header = input.read_u16::<BigEndian>()?;
 		Ok(Self {
 			new_object_id: (header & 1 << NEW_OBJECT_ID_BIT) > 0,
@@ -128,8 +128,12 @@ mod tests {
 		let mut buffer = [0_u8; 10];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		header.encode(&mut cursor).unwrap();
-		cursor.set_position(0);
-		let actual = CommandHeader::decode(&mut cursor).unwrap();
+		let write_position = cursor.position();
+
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let actual = CommandHeader::decode(&mut read_cursor).unwrap();
+
+		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(actual.command_type_id, header.command_type_id, "command_type");
 		assert_eq!(actual.channel_type_id, header.channel_type_id, "channel_type_id");
 		assert_eq!(actual.creator_source, header.creator_source, "creator_source");

@@ -8,7 +8,7 @@ use crate::commands::s2c::{S2CCommand, S2CCommandDecodeError, S2CCommandWithCrea
 use crate::protocol::codec::channel::CommandChannelDecodeError;
 use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
 use crate::protocol::codec::commands::header::CommandHeader;
-use crate::protocol::codec::cursor::VariableInt;
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
 
@@ -17,7 +17,7 @@ use crate::protocol::frame::channel::Channel;
 ///
 pub fn decode_commands(
 	from_client: bool,
-	input: &mut Cursor<&mut [u8]>,
+	input: &mut Cursor<&[u8]>,
 	out: &mut VecDeque<CommandWithChannel>,
 ) -> Result<(), CommandsDecoderError> {
 	let length = input.read_variable_u64()?;
@@ -32,7 +32,7 @@ pub fn decode_commands(
 
 fn decode_command(
 	from_client: bool,
-	input: &mut Cursor<&mut [u8]>,
+	input: &mut Cursor<&[u8]>,
 	header: &CommandHeader,
 	context: &CommandContext,
 ) -> Result<CommandWithChannel, CommandsDecoderError> {

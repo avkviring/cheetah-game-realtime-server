@@ -1,12 +1,13 @@
 use std::convert::TryFrom;
 use std::io::{Cursor, ErrorKind};
+
 use thiserror::Error;
 
 use crate::commands::CommandTypeId;
 use crate::constants::FieldId;
 use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::header::CommandHeader;
-use crate::protocol::codec::cursor::VariableInt;
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::applications::ChannelGroup;
 use crate::room::object::GameObjectId;
 use crate::room::owner::GameObjectOwner;
@@ -167,7 +168,7 @@ impl CommandContext {
 	/// Читаем следующую порцию данных
 	/// после чтения - контекст будет изменен на актуальные значения
 	///
-	pub(crate) fn read_next(&mut self, input: &mut Cursor<&mut [u8]>) -> Result<CommandHeader, CommandContextError> {
+	pub(crate) fn read_next(&mut self, input: &mut Cursor<&[u8]>) -> Result<CommandHeader, CommandContextError> {
 		let header = CommandHeader::decode(input)?;
 		if header.new_object_id {
 			self.object_id.replace(GameObjectId::decode(input)?);
@@ -188,7 +189,7 @@ impl CommandContext {
 	///
 	fn read_and_set_creator(
 		&mut self,
-		input: &mut Cursor<&mut [u8]>,
+		input: &mut Cursor<&[u8]>,
 		creator_source: &CreatorSource,
 	) -> Result<Option<RoomMemberId>, CommandContextError> {
 		match creator_source {
@@ -477,10 +478,12 @@ pub mod tests {
 				.unwrap();
 			assert_eq!(cursor.position() - delta_size, param.size, "size");
 		}
-		cursor.set_position(0);
+		let write_position = cursor.position();
+
 		let mut read_context = CommandContext::default();
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
 		for param in params.iter() {
-			let header = read_context.read_next(&mut cursor).unwrap();
+			let header = read_context.read_next(&mut read_cursor).unwrap();
 			assert_eq!(read_context.object_id, param.object_id, "object_id");
 			assert_eq!(read_context.field_id, param.field_id, "field_id");
 			assert_eq!(read_context.channel_group, param.channel_group, "channel_group_id");
@@ -488,5 +491,7 @@ pub mod tests {
 			assert_eq!(header.command_type_id, param.command_type_id, "command_type_id");
 			assert_eq!(read_context.creator, param.creator, "creator");
 		}
+
+		assert_eq!(write_position, read_cursor.position());
 	}
 }
