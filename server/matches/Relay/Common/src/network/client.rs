@@ -133,9 +133,15 @@ impl NetworkClient {
 					let header = Frame::decode_headers(&mut cursor);
 					match header {
 						Ok((frame_id, headers)) => {
-							let frame = Frame::decode_frame(self.from_client, frame_id, cursor, Cipher::new(&self.private_key));
-							match frame {
-								Ok(frame) => {
+							match Frame::decode_frame_commands(self.from_client, frame_id, cursor, Cipher::new(&self.private_key))
+							{
+								Ok((reliable, unreliable)) => {
+									let frame = Frame {
+										frame_id,
+										headers,
+										reliable,
+										unreliable,
+									};
 									self.on_frame_received(now, frame);
 								}
 								Err(e) => {
@@ -144,7 +150,7 @@ impl NetworkClient {
 							}
 						}
 						Err(e) => {
-							log::error!("skip protocol by header {:?}", e)
+							log::error!("error decode header {:?}", e)
 						}
 					}
 				}

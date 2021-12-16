@@ -28,9 +28,9 @@ impl VariableIntWriter for Cursor<&mut [u8]> {
 			return self.write_u8(value as u8);
 		};
 
-		if value < U9_MARKER as u64 + 255 {
+		if value < U8_MAX + 255 {
 			self.write_u8(U9_MARKER)?;
-			return self.write_u8((value - U9_MARKER as u64) as u8);
+			return self.write_u8((value - U8_MAX as u64) as u8);
 		};
 
 		if value < u16::MAX as _ {
@@ -73,7 +73,7 @@ impl VariableIntReader for Cursor<&[u8]> {
 			return Ok(first as u64);
 		};
 		Ok(match first {
-			U9_MARKER => U9_MARKER as u64 + self.read_u8()? as u64,
+			U9_MARKER => U8_MAX + self.read_u8()? as u64,
 			U16_MARKER => self.read_u16::<BigEndian>()? as u64,
 			U24_MARKER => self.read_u24::<BigEndian>()? as u64,
 			U32_MARKER => self.read_u32::<BigEndian>()? as u64,
@@ -103,7 +103,8 @@ mod test {
 	#[test]
 	fn test_u64() {
 		check_u64(U8_MAX - 1, 1);
-		check_u64(U9_MARKER as u64 + 255 - 1, 2);
+		check_u64(U8_MAX, 2);
+		check_u64(U8_MAX as u64 + 255 - 1, 2);
 		check_u64((u16::MAX - 1) as u64, 3);
 		check_u64((u16::MAX as u64) * (u8::MAX as u64) - 1, 4);
 		check_u64((u32::MAX - 1) as u64, 5);

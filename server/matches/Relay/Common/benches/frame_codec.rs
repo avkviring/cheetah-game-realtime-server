@@ -7,6 +7,7 @@ use cheetah_matches_relay_common::protocol::frame::Frame;
 
 ///
 /// msgpack - 1.5024 Melem/s
+/// self - 1.6 Melem/s
 ///
 fn frame_encode(c: &mut Criterion) {
 	let mut group = c.benchmark_group("throughput-encode");
@@ -24,6 +25,7 @@ fn frame_encode(c: &mut Criterion) {
 
 ///
 /// msgpack - 1.1398 Melem/s
+/// self - 1.5 Melem/s
 ///
 fn frame_decode(c: &mut Criterion) {
 	let frame = Frame::new(100500);
@@ -36,8 +38,8 @@ fn frame_decode(c: &mut Criterion) {
 	group.bench_function("frame_decode", |b| {
 		b.iter(|| {
 			let mut cursor = Cursor::new(&buffer[0..size]);
-			let headers = Frame::decode_headers(&mut cursor).unwrap();
-			Frame::decode_frame(cursor, Cipher::new(&private_key), headers.0, headers.1).unwrap();
+			let (frame_id, _) = Frame::decode_headers(&mut cursor).unwrap();
+			Frame::decode_frame_commands(true, frame_id, cursor, Cipher::new(&private_key)).unwrap();
 		})
 	});
 	group.finish();

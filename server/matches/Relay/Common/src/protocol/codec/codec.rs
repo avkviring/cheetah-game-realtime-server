@@ -1,14 +1,14 @@
+use std::collections::VecDeque;
 use std::io::{Cursor, Write};
 
-use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use thiserror::Error;
 
-use crate::protocol;
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::commands::decoder::{decode_commands, CommandsDecoderError};
 use crate::protocol::codec::commands::encoder::encode_commands;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::Headers;
 use crate::protocol::frame::{Frame, FrameId};
 
@@ -47,12 +47,12 @@ impl Frame {
 	///
 	/// Метод вызывается после decode_headers (более подробно в тестах)
 	///
-	pub fn decode_frame(
+	pub fn decode_frame_commands(
 		c2s_commands: bool,
 		frame_id: FrameId,
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
-	) -> Result<Frame, UdpFrameDecodeError> {
+	) -> Result<(VecDeque<CommandWithChannel>, VecDeque<CommandWithChannel>), UdpFrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -75,10 +75,11 @@ impl Frame {
 
 		let mut cursor = Cursor::new(decompressed_buffer);
 
-		let mut frame = Frame::new(frame_id);
-		decode_commands(c2s_commands, &mut cursor, &mut frame.reliable)?;
-		decode_commands(c2s_commands, &mut cursor, &mut frame.unreliable)?;
-		Result::Ok(frame)
+		let mut reliable = VecDeque::new();
+		let mut unreliable = VecDeque::new();
+		decode_commands(c2s_commands, &mut cursor, &mut reliable)?;
+		decode_commands(c2s_commands, &mut cursor, &mut unreliable)?;
+		Ok((reliable, unreliable))
 	}
 
 	///
@@ -87,12 +88,12 @@ impl Frame {
 	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> usize {
 		let mut frame_cursor = Cursor::new(out);
 		frame_cursor.write_variable_u64(self.frame_id).unwrap();
-		self.headers.encode_headers(&mut frame_cursor);
+		self.headers.encode_headers(&mut frame_cursor).unwrap();
 
 		let mut commands_buffer = [0 as u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-		encode_commands(&self.reliable, &mut commands_cursor);
-		encode_commands(&self.unreliable, &mut commands_cursor);
+		encode_commands(&self.reliable, &mut commands_cursor).unwrap();
+		encode_commands(&self.unreliable, &mut commands_cursor).unwrap();
 
 		if commands_cursor.position() > 1024 {
 			panic!(
@@ -108,7 +109,7 @@ impl Frame {
 		}
 
 		let commands_position = commands_cursor.position() as usize;
-		println!("raw {}", (commands_position + frame_cursor.position() as usize));
+		//println!("raw {}", (commands_position + frame_cursor.position() as usize));
 		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
 		if compressed_size > 1024 {
 			panic!(
@@ -120,7 +121,7 @@ impl Frame {
 			vec.set_len(compressed_size);
 		}
 
-		println!("compressed {}", compressed_size);
+		//println!("compressed {}", compressed_size);
 		let frame_position = frame_cursor.position() as usize;
 		cipher
 			.encrypt(
@@ -132,7 +133,7 @@ impl Frame {
 
 		frame_cursor.write_all(&vec).unwrap();
 
-		println!("chiper {}", frame_cursor.position());
+		//println!("chiper {}", frame_cursor.position());
 		frame_cursor.position() as usize
 	}
 }
@@ -149,6 +150,8 @@ pub mod tests {
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::ack::header::AckHeader;
+	use crate::room::object::GameObjectId;
+	use crate::room::owner::GameObjectOwner;
 
 	const PRIVATE_KEY: &[u8; 32] = &[
 		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f,
@@ -157,16 +160,16 @@ pub mod tests {
 
 	#[test]
 	fn should_encode_decode_frame() {
-		let mut frame = Frame::new(0);
+		let mut frame = Frame::new(55);
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::Ack(AckHeader::new(10)));
 		frame.headers.add(Header::Ack(AckHeader::new(15)));
 		frame.reliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
-				object_id: Default::default(),
-				field_id: 0,
-				value: 0,
+				object_id: GameObjectId::new(100, GameObjectOwner::User(200)),
+				field_id: 78,
+				value: 155,
 			})),
 		});
 		let mut buffer = [0; 1024];
@@ -174,8 +177,14 @@ pub mod tests {
 		let buffer = &buffer[0..size];
 
 		let mut cursor = Cursor::new(buffer);
-		let (frame_id, header) = Frame::decode_headers(&mut cursor).unwrap();
-		let decoded_frame = Frame::decode_frame(true, frame_id, cursor, cipher.clone()).unwrap();
+		let (frame_id, headers) = Frame::decode_headers(&mut cursor).unwrap();
+		let (reliable, unreliable) = Frame::decode_frame_commands(true, frame_id, cursor, cipher.clone()).unwrap();
+		let decoded_frame = Frame {
+			frame_id,
+			headers,
+			reliable,
+			unreliable,
+		};
 
 		assert_eq!(frame, decoded_frame);
 	}

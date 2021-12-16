@@ -8,7 +8,7 @@ use crate::commands::s2c::{S2CCommand, S2CCommandDecodeError, S2CCommandWithCrea
 use crate::protocol::codec::channel::CommandChannelDecodeError;
 use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
 use crate::protocol::codec::commands::header::CommandHeader;
-use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use crate::protocol::codec::variable_int::VariableIntReader;
 use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
 

@@ -9,6 +9,7 @@ use cheetah_matches_relay_common::protocol::frame::Frame;
 
 #[test]
 // msgpack - raw(12), compressed(5), chiper(30)
+// self - raw(7), compressed(4), chiper(25)
 pub fn empty_frame() {
 	let frame = Frame::new(100500);
 	let mut buffer = [0; 2048];
@@ -20,6 +21,7 @@ pub fn empty_frame() {
 
 #[test]
 // msgpack - raw(61), compressed(40), chiper(66)
+// self - raw(21), compressed(18), chiper(39)
 pub fn create_object_frame() {
 	let mut frame = Frame::new(100500);
 	frame.reliable.push_back(CommandWithChannel {

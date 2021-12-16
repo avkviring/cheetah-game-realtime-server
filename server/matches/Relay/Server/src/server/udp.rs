@@ -117,8 +117,8 @@ impl UDPServer {
 	) {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
-			Ok((frame_header, headers)) => {
-				let ident_header: Option<MemberAndRoomId> = headers.first(Header::predicate_user_and_room_id).cloned();
+			Ok((frame_id, headers)) => {
+				let ident_header: Option<MemberAndRoomId> = headers.first(Header::predicate_member_and_room_id).cloned();
 
 				let sessions_cloned = self.sessions.clone();
 				match ident_header {
@@ -133,8 +133,14 @@ impl UDPServer {
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
-								match Frame::decode_frame(cursor, Cipher::new(private_key), frame_header, headers) {
-									Ok(frame) => {
+								match Frame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
+									Ok((reliable, unreliable)) => {
+										let frame = Frame {
+											frame_id,
+											headers,
+											reliable,
+											unreliable,
+										};
 										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.frame_id;

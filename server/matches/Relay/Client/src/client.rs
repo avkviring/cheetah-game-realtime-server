@@ -1,4 +1,3 @@
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
@@ -7,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
@@ -51,6 +51,7 @@ impl Client {
 			state,
 			commands_from_server: in_commands,
 			udp_client: NetworkClient::new(
+				false,
 				user_private_key,
 				member_id,
 				room_id,
