@@ -18,6 +18,7 @@ pub struct NetworkClient {
 	server_address: SocketAddr,
 	pub channel: NetworkChannel,
 	out_frames: VecDeque<Frame>,
+	from_client: bool,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -36,6 +37,7 @@ pub enum ConnectionStatus {
 
 impl NetworkClient {
 	pub fn new(
+		from_client: bool,
 		private_key: UserPrivateKey,
 		member_id: RoomMemberId,
 		room_id: RoomId,
@@ -58,6 +60,7 @@ impl NetworkClient {
 			server_address,
 			channel,
 			out_frames: Default::default(),
+			from_client,
 		})
 	}
 
@@ -129,8 +132,8 @@ impl NetworkClient {
 					let mut cursor = Cursor::new(&buffer[0..size]);
 					let header = Frame::decode_headers(&mut cursor);
 					match header {
-						Ok((header, additional_headers)) => {
-							let frame = Frame::decode_frame(cursor, Cipher::new(&self.private_key), header, additional_headers);
+						Ok((frame_id, headers)) => {
+							let frame = Frame::decode_frame(frame_id, self.from_client, cursor, Cipher::new(&self.private_key));
 							match frame {
 								Ok(frame) => {
 									self.on_frame_received(now, frame);

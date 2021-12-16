@@ -1,32 +1,42 @@
 use std::io::{Cursor, Write};
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use thiserror::Error;
 
+use crate::protocol;
 use crate::protocol::codec::cipher::Cipher;
+use crate::protocol::codec::commands::decoder::{decode_commands, CommandsDecoderError};
+use crate::protocol::codec::commands::encoder::encode_commands;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::headers::Headers;
 use crate::protocol::frame::{Frame, FrameId};
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum UdpFrameDecodeError {
-	AdditionalHeadersDeserializeError,
-	DecodeFrameIdError,
+	#[error("DecryptedError")]
 	DecryptedError,
+	#[error("DecompressError")]
 	DecompressError,
+	#[error("CommandCountReadError")]
 	CommandCountReadError,
-	CommandDeserializeError,
+	#[error("Decode commands error {:?}", .source)]
+	CommandsDecode {
+		#[from]
+		source: CommandsDecoderError,
+	},
+	#[error("Io error {:?}", .source)]
+	Io {
+		#[from]
+		source: std::io::Error,
+	},
 }
 
 impl Frame {
 	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameId, Headers), UdpFrameDecodeError> {
-		let frame_id = cursor
-			.read_variable_u64()
-			.map_err(|_| UdpFrameDecodeError::DecodeFrameIdError)?;
-		// let additional_headers: Headers =
-		// 	deserialize(cursor).map_err(|_| UdpFrameDecodeError::AdditionalHeadersDeserializeError)?;
-		// Result::Ok((frame_id, additional_headers))
-		todo!()
+		let frame_id = cursor.read_variable_u64()?;
+		let headers = Headers::decode_headers(cursor)?;
+		Result::Ok((frame_id, headers))
 	}
 
 	///
@@ -38,10 +48,10 @@ impl Frame {
 	/// Метод вызывается после decode_headers (более подробно в тестах)
 	///
 	pub fn decode_frame(
+		frame_id: FrameId,
+		from_client: bool,
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
-		frame_id: FrameId,
-		headers: Headers,
 	) -> Result<Frame, UdpFrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
@@ -63,15 +73,12 @@ impl Frame {
 			packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| UdpFrameDecodeError::DecompressError)?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 
-		// let commands =
-		// 	deserialize(&mut Cursor::new(decompressed_buffer)).map_err(|_| UdpFrameDecodeError::CommandDeserializeError)?;
-		//
-		// Result::Ok(Frame {
-		// 	frame_id,
-		// 	headers,
-		// 	commands,
-		// })
-		todo!()
+		let mut cursor = Cursor::new(decompressed_buffer);
+
+		let mut frame = Frame::new(frame_id);
+		decode_commands(from_client, &mut cursor, &mut frame.reliable)?;
+		decode_commands(from_client, &mut cursor, &mut frame.unreliable)?;
+		Result::Ok(frame)
 	}
 
 	///
@@ -79,18 +86,13 @@ impl Frame {
 	///
 	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> usize {
 		let mut frame_cursor = Cursor::new(out);
-		frame_cursor.write_u64::<BigEndian>(self.frame_id).unwrap();
-		todo!();
-		// let mut serializer = Serializer::new(&mut frame_cursor);
-		// self.headers.serialize(&mut serializer).unwrap();
-		//drop(serializer);
+		frame_cursor.write_variable_u64(self.frame_id).unwrap();
+		self.headers.encode_headers(&mut frame_cursor);
 
 		let mut commands_buffer = [0 as u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-
-		// let mut commands_encoder = CommandsEncoder::new();
-		// commands_encoder.encode(&self.commands.reliable, &mut commands_cursor);
-		// commands_encoder.encode(&self.commands.unreliable, &mut commands_cursor);
+		encode_commands(&self.reliable, &mut commands_cursor);
+		encode_commands(&self.unreliable, &mut commands_cursor);
 
 		if commands_cursor.position() > 1024 {
 			panic!(
@@ -144,7 +146,7 @@ pub mod tests {
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
-	use crate::protocol::reliable::ack::header::AckFrameHeader;
+	use crate::protocol::reliable::ack::header::AckHeader;
 
 	const PRIVATE_KEY: &[u8; 32] = &[
 		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f,
@@ -155,9 +157,9 @@ pub mod tests {
 	fn should_encode_decode_frame() {
 		let mut frame = Frame::new(0);
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		frame.headers.add(Header::AckFrame(AckFrameHeader::new(10)));
-		frame.headers.add(Header::AckFrame(AckFrameHeader::new(15)));
-		frame.commands.reliable.push_back(CommandWithChannel {
+		frame.headers.add(Header::Ack(AckHeader::new(10)));
+		frame.headers.add(Header::Ack(AckHeader::new(15)));
+		frame.reliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("test".to_string()),
 		});
@@ -166,8 +168,8 @@ pub mod tests {
 		let buffer = &buffer[0..size];
 
 		let mut cursor = Cursor::new(buffer);
-		let (header, additional_header) = Frame::decode_headers(&mut cursor).unwrap();
-		let decoded_frame = Frame::decode_frame(cursor, cipher.clone(), header, additional_header).unwrap();
+		let (frame_id, header) = Frame::decode_headers(&mut cursor).unwrap();
+		let decoded_frame = Frame::decode_frame(frame_id, true, cursor, cipher.clone()).unwrap();
 
 		assert_eq!(frame, decoded_frame);
 	}

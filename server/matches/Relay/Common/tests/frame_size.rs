@@ -22,7 +22,7 @@ pub fn empty_frame() {
 // msgpack - raw(61), compressed(40), chiper(66)
 pub fn create_object_frame() {
 	let mut frame = Frame::new(100500);
-	frame.commands.reliable.push_back(CommandWithChannel {
+	frame.reliable.push_back(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
 		command: BothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: Default::default(),
@@ -30,7 +30,7 @@ pub fn create_object_frame() {
 			access_groups: Default::default(),
 		})),
 	});
-	frame.commands.reliable.push_back(CommandWithChannel {
+	frame.reliable.push_back(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
 		command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
 			object_id: Default::default(),
@@ -38,7 +38,7 @@ pub fn create_object_frame() {
 			structure: Default::default(),
 		})),
 	});
-	frame.commands.reliable.push_back(CommandWithChannel {
+	frame.reliable.push_back(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
 		command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 			object_id: Default::default(),

@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::{Frame, FrameId};
-use crate::protocol::reliable::ack::header::AckFrameHeader;
+use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::{FrameBuilder, FrameReceivedListener, NOT_EXIST_FRAME_ID};
 
 pub mod header;
@@ -78,7 +78,7 @@ impl FrameBuilder for AckSender {
 		let mut frames = self.frames.clone();
 		frames.sort();
 
-		let mut current_header: Option<AckFrameHeader> = Option::None;
+		let mut current_header: Option<AckHeader> = Option::None;
 		for i in 0..frames.len() {
 			let frame_id = frames[i];
 			if frame_id == NOT_EXIST_FRAME_ID {
@@ -89,13 +89,13 @@ impl FrameBuilder for AckSender {
 			}
 			match current_header {
 				None => {
-					let header = AckFrameHeader::new(frame_id);
+					let header = AckHeader::new(frame_id);
 					current_header = Option::Some(header);
 				}
 				Some(ref mut header) => {
 					if !header.store_frame_id(frame_id) {
-						frame.headers.add(Header::AckFrame(header.clone()));
-						let header = AckFrameHeader::new(frame_id);
+						frame.headers.add(Header::Ack(header.clone()));
+						let header = AckHeader::new(frame_id);
 						current_header = Option::Some(header);
 					}
 				}
@@ -105,7 +105,7 @@ impl FrameBuilder for AckSender {
 		match current_header {
 			None => {}
 			Some(header) => {
-				frame.headers.add(Header::AckFrame(header));
+				frame.headers.add(Header::Ack(header));
 			}
 		}
 	}
@@ -116,7 +116,7 @@ impl FrameReceivedListener for AckSender {
 		if frame.is_reliability() {
 			self.send_ack_counter = AckSender::SEND_ACK_COUNTER;
 			let mut frame_id = frame.frame_id;
-			match frame.headers.first(Header::predicate_retransmit_frame) {
+			match frame.headers.first(Header::predicate_retransmit) {
 				None => {}
 				Some(header) => {
 					frame_id = header.original_frame_id;
@@ -151,7 +151,7 @@ mod tests {
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
-	use crate::protocol::reliable::ack::header::AckFrameHeader;
+	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::ack::AckSender;
 	use crate::protocol::{FrameBuilder, FrameReceivedListener};
 
@@ -174,7 +174,7 @@ mod tests {
 		for i in 0..AckSender::BUFFER_SIZE + 10 {
 			let time = Instant::now();
 			let mut frame = Frame::new(i as u64);
-			frame.commands.reliable.push_back(create_command());
+			frame.reliable.push_back(create_command());
 			reliable.on_frame_received(&frame, &time);
 		}
 	}
@@ -187,7 +187,7 @@ mod tests {
 		let mut reliable = AckSender::default();
 		let time = Instant::now();
 		let mut frame = Frame::new(10);
-		frame.commands.reliable.push_back(create_command());
+		frame.reliable.push_back(create_command());
 		reliable.on_frame_received(&frame, &time);
 		assert_eq!(reliable.contains_self_data(&time), true);
 	}
@@ -201,13 +201,13 @@ mod tests {
 		let time = Instant::now();
 
 		let mut in_frame = Frame::new(10);
-		in_frame.commands.reliable.push_back(create_command());
+		in_frame.reliable.push_back(create_command());
 		reliable.on_frame_received(&in_frame, &time);
 
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 
-		let header = out_frame.headers.first(Header::predicate_ack_frame);
+		let header = out_frame.headers.first(Header::predicate_ack);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == in_frame.frame_id));
 	}
 
@@ -222,14 +222,14 @@ mod tests {
 
 		for i in 0..AckSender::BUFFER_SIZE {
 			let mut in_frame = Frame::new(10 + i as u64);
-			in_frame.commands.reliable.push_back(create_command());
+			in_frame.reliable.push_back(create_command());
 			reliable.on_frame_received(&in_frame, &time);
 		}
 
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 
-		let header: Option<&AckFrameHeader> = out_frame.headers.first(Header::predicate_ack_frame);
+		let header: Option<&AckHeader> = out_frame.headers.first(Header::predicate_ack);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == 10));
 		let frames = header.unwrap().get_frames();
 
@@ -249,20 +249,20 @@ mod tests {
 		let time = Instant::now();
 
 		let mut frame_a = Frame::new(10);
-		frame_a.commands.reliable.push_back(CommandWithChannel {
+		frame_a.reliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
 		reliable.on_frame_received(&frame_a, &time);
 
-		let mut frame_b = Frame::new(10 + AckFrameHeader::CAPACITY as u64 + 1);
-		frame_b.commands.reliable.push_back(create_command());
+		let mut frame_b = Frame::new(10 + AckHeader::CAPACITY as u64 + 1);
+		frame_b.reliable.push_back(create_command());
 		reliable.on_frame_received(&frame_b, &time);
 
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 
-		let headers: Vec<&AckFrameHeader> = out_frame.headers.find(Header::predicate_ack_frame);
+		let headers: Vec<&AckHeader> = out_frame.headers.find(Header::predicate_ack);
 		assert_eq!(headers.len(), 2);
 		assert_eq!(headers[0].start_frame_id, frame_a.frame_id);
 		assert_eq!(headers[1].start_frame_id, frame_b.frame_id);

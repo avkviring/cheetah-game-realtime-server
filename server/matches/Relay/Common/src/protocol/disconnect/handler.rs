@@ -1,3 +1,4 @@
+use std::io::Cursor;
 use std::time::Instant;
 
 use crate::protocol::frame::headers::Header;
@@ -48,6 +49,7 @@ impl FrameBuilder for DisconnectHandler {
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct DisconnectHeader {}
+
 
 impl FrameReceivedListener for DisconnectHandler {
 	fn on_frame_received(&mut self, frame: &Frame, _: &Instant) {

@@ -223,7 +223,7 @@ mod tests {
 		let mut frame = Frame::new(0);
 		frame
 			.headers
-			.add(Header::UserAndRoomId(MemberAndRoomId { user_id: 0, room_id: 0 }));
+			.add(Header::MemberAndRoomId(MemberAndRoomId { user_id: 0, room_id: 0 }));
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -282,7 +282,7 @@ mod tests {
 			user_id: user.id,
 			room_id: 0,
 		};
-		frame.headers.add(Header::UserAndRoomId(user_and_room_id.clone()));
+		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
 		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer);
 
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
@@ -291,7 +291,7 @@ mod tests {
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &Instant::now());
 
 		let mut frame = Frame::new(10);
-		frame.headers.add(Header::UserAndRoomId(user_and_room_id.clone()));
+		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
 		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer);
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 

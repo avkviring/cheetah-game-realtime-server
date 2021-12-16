@@ -126,8 +126,8 @@ mod test {
 		assert_eq!(cursor.position(), size);
 		let write_position = cursor.position();
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
-		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(read_cursor.read_variable_u64().unwrap(), value);
+		assert_eq!(write_position, read_cursor.position());
 	}
 
 	fn check_i64(value: i64, size: u64) {
@@ -138,8 +138,7 @@ mod test {
 		let write_position = cursor.position();
 
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
-
-		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(read_cursor.read_variable_i64().unwrap(), value);
+		assert_eq!(write_position, read_cursor.position());
 	}
 }

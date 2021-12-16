@@ -3,8 +3,8 @@ use cheetah_matches_relay_macro::EnumMatchPredicates;
 use crate::protocol::disconnect::handler::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
 use crate::protocol::others::user_id::MemberAndRoomId;
-use crate::protocol::reliable::ack::header::AckFrameHeader;
-use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
+use crate::protocol::reliable::ack::header::AckHeader;
+use crate::protocol::reliable::retransmit::RetransmitHeader;
 
 ///
 /// Дополнительные UDP заголовки
@@ -14,7 +14,7 @@ use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
 ///
 #[derive(Debug, PartialEq, Clone)]
 pub struct Headers {
-	headers: Vec<Header>,
+	pub(crate) headers: Vec<Header>,
 }
 
 #[derive(Debug, PartialEq, Clone, EnumMatchPredicates)]
@@ -23,12 +23,12 @@ pub enum Header {
 	/// Идентификатор комнаты и клиента
 	/// Посылается от клиента к серверу
 	///
-	UserAndRoomId(MemberAndRoomId),
+	MemberAndRoomId(MemberAndRoomId),
 
 	///
 	/// Подтверждение пакета
 	///
-	AckFrame(AckFrameHeader),
+	Ack(AckHeader),
 
 	///
 	/// Принудительный разрыв соединения
@@ -48,7 +48,7 @@ pub enum Header {
 	///
 	/// Фрейм отослан повторно
 	///
-	RetransmitFrame(RetransmitFrameHeader),
+	Retransmit(RetransmitHeader),
 
 	///
 	/// Приветственный пакет

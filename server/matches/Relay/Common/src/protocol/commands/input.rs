@@ -33,11 +33,7 @@ impl InCommandsCollector {
 
 	pub fn collect(&mut self, frame: Frame) {
 		let frame_id = frame.frame_id;
-		let commands = frame
-			.commands
-			.reliable
-			.into_iter()
-			.chain(frame.commands.unreliable.into_iter());
+		let commands = frame.reliable.into_iter().chain(frame.unreliable.into_iter());
 
 		commands.into_iter().for_each(|c| {
 			match c.channel {
@@ -431,7 +427,7 @@ mod tests {
 
 	impl Frame {
 		fn add_command(mut self, channel: Channel, content: String) -> Self {
-			self.commands.reliable.push_back(CommandWithChannel {
+			self.reliable.push_back(CommandWithChannel {
 				channel,
 				command: BothDirectionCommand::TestSimple(content),
 			});
@@ -443,7 +439,7 @@ mod tests {
 				channel,
 				command: BothDirectionCommand::TestObject(GameObjectId::new(object_id, GameObjectOwner::Room), content),
 			};
-			self.commands.reliable.push_back(command_description);
+			self.reliable.push_back(command_description);
 			self
 		}
 	}

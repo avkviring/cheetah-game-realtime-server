@@ -8,22 +8,6 @@ use crate::room::object::GameObjectId;
 pub type ChannelGroup = u16;
 pub type ChannelSequence = u32;
 
-///
-/// Прикладные команды
-///
-#[derive(Clone, Debug, PartialEq, Default)]
-pub struct ApplicationCommands {
-	///
-	/// С гарантией доставки
-	///
-	pub reliable: VecDeque<CommandWithChannel>,
-
-	///
-	/// Без гарантии доставки
-	///
-	pub unreliable: VecDeque<CommandWithChannel>,
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct CommandWithChannel {
 	pub channel: Channel,

@@ -1,14 +1,17 @@
 use std::cmp::max;
 use std::collections::{HashSet, LinkedList};
+use std::io::Cursor;
 use std::ops::Sub;
 use std::time::{Duration, Instant};
 
+use byteorder::{ReadBytesExt, WriteBytesExt};
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::{Frame, FrameId};
-use crate::protocol::reliable::ack::header::AckFrameHeader;
+use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
 use crate::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 
@@ -64,17 +67,28 @@ pub struct ScheduledFrame {
 /// Заголовок для указания факта повторной передачи данного фрейма
 ///
 #[derive(Debug, PartialEq, Clone)]
-pub struct RetransmitFrameHeader {
+pub struct RetransmitHeader {
 	pub original_frame_id: FrameId,
 	pub retransmit_count: u8,
 }
 
-impl RetransmitFrameHeader {
+impl RetransmitHeader {
 	fn new(original_frame_id: FrameId, retransmit_count: u8) -> Self {
 		Self {
 			original_frame_id,
 			retransmit_count,
 		}
+	}
+	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+		Ok(Self {
+			original_frame_id: input.read_variable_u64()?,
+			retransmit_count: input.read_u8()?,
+		})
+	}
+
+	pub(crate) fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+		out.write_variable_u64(self.original_frame_id)?;
+		out.write_u8(self.retransmit_count)
 	}
 }
 
@@ -134,8 +148,7 @@ impl RetransmitterImpl {
 						let original_frame_id = scheduled_frame.original_frame_id;
 						let mut retransmit_frame = scheduled_frame.frame.clone();
 						retransmit_frame.frame_id = retransmit_frame_id;
-						let retransmit_header =
-							Header::RetransmitFrame(RetransmitFrameHeader::new(original_frame_id, retransmit_count));
+						let retransmit_header = Header::Retransmit(RetransmitHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
 
 						self.frames.push_back(scheduled_frame);
@@ -179,7 +192,7 @@ impl FrameReceivedListener for RetransmitterImpl {
 	/// Обрабатываем подтверждения фреймов
 	///
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
-		let ack_headers: Vec<&AckFrameHeader> = frame.headers.find(Header::predicate_ack_frame);
+		let ack_headers: Vec<&AckHeader> = frame.headers.find(Header::predicate_ack);
 		ack_headers.iter().for_each(|ack_header| {
 			ack_header.get_frames().iter().for_each(|frame_id| {
 				self.unacked_frames.remove(frame_id);
@@ -197,7 +210,7 @@ impl FrameBuiltListener for RetransmitterImpl {
 		if frame.is_reliability() {
 			let original_grame_id = frame.frame_id;
 			let mut frame = frame.clone();
-			frame.commands.unreliable.clear();
+			frame.unreliable.clear();
 			self.schedule_retransmit(frame, original_grame_id, 0, now);
 			self.unacked_frames.insert(original_grame_id);
 		}
@@ -219,7 +232,7 @@ mod tests {
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::{Frame, FrameId};
-	use crate::protocol::reliable::ack::header::AckFrameHeader;
+	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::retransmit::RetransmitterImpl;
 	use crate::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 
@@ -258,7 +271,7 @@ mod tests {
 			Option::Some(frame)
 			if frame.frame_id == 2
 			&&
-			frame.headers.first(Header::predicate_retransmit_frame).unwrap().original_frame_id==original_frame.frame_id
+			frame.headers.first(Header::predicate_retransmit).unwrap().original_frame_id==original_frame.frame_id
 		));
 	}
 
@@ -358,7 +371,7 @@ mod tests {
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
-		frame.commands.unreliable.push_back(CommandWithChannel {
+		frame.unreliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
@@ -366,12 +379,12 @@ mod tests {
 		handler.on_frame_built(&frame, &now);
 
 		let now = now.add(handler.ack_wait_duration);
-		assert!(matches!(handler.get_retransmit_frame(&now,2), Option::Some(frame) if frame.commands.unreliable.is_empty()))
+		assert!(matches!(handler.get_retransmit_frame(&now,2), Option::Some(frame) if frame.unreliable.is_empty()))
 	}
 
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.commands.reliable.push_back(CommandWithChannel {
+		frame.reliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::TestSimple("".to_string()),
 		});
@@ -384,7 +397,7 @@ mod tests {
 
 	fn create_ack_frame(frame_id: FrameId, acked_frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.headers.add(Header::AckFrame(AckFrameHeader::new(acked_frame_id)));
+		frame.headers.add(Header::Ack(AckHeader::new(acked_frame_id)));
 		frame
 	}
 }

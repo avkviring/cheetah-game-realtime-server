@@ -1,10 +1,12 @@
 use std::collections::VecDeque;
+use std::io::Cursor;
 use std::ops::Div;
 use std::time::{Duration, Instant};
 
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::Frame;
 use crate::protocol::{FrameBuilder, FrameReceivedListener};
@@ -29,7 +31,19 @@ pub struct RoundTripTimeImpl {
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct RoundTripTimeHeader {
-	self_time: u64,
+	pub(crate) self_time: u64,
+}
+
+impl RoundTripTimeHeader {
+	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+		Ok(Self {
+			self_time: input.read_variable_u64()?,
+		})
+	}
+
+	pub(crate) fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+		out.write_variable_u64(self.self_time)
+	}
 }
 
 impl RoundTripTimeImpl {
@@ -62,7 +76,7 @@ impl RoundTripTime for RoundTripTimeImpl {
 impl FrameReceivedListener for RoundTripTimeImpl {
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		// игнорируем повторно отосланные фреймы, так как они не показательны для измерения rtt
-		if frame.headers.first(Header::predicate_retransmit_frame).is_some() {
+		if frame.headers.first(Header::predicate_retransmit).is_some() {
 			return;
 		}
 
@@ -121,7 +135,7 @@ mod tests {
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::others::rtt::{RoundTripTime, RoundTripTimeHeader, RoundTripTimeImpl};
-	use crate::protocol::reliable::retransmit::RetransmitFrameHeader;
+	use crate::protocol::reliable::retransmit::RetransmitHeader;
 	use crate::protocol::{FrameBuilder, FrameReceivedListener};
 
 	#[test]
@@ -154,7 +168,7 @@ mod tests {
 		let mut handler = RoundTripTimeImpl::new(&Instant::now());
 		let now = Instant::now();
 		let mut frame = Frame::new(10);
-		frame.headers.add(Header::RetransmitFrame(RetransmitFrameHeader {
+		frame.headers.add(Header::Retransmit(RetransmitHeader {
 			original_frame_id: 0,
 			retransmit_count: 1,
 		}));
@@ -174,7 +188,7 @@ mod tests {
 		let now = Instant::now();
 
 		let mut input_frame = Frame::new(10);
-		input_frame.headers.add(Header::RetransmitFrame(RetransmitFrameHeader {
+		input_frame.headers.add(Header::Retransmit(RetransmitHeader {
 			original_frame_id: 0,
 			retransmit_count: 1,
 		}));

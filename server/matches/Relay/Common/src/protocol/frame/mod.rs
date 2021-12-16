@@ -1,4 +1,6 @@
-use crate::protocol::frame::applications::ApplicationCommands;
+use std::collections::VecDeque;
+
+use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::{Header, Headers};
 
 pub mod applications;
@@ -20,10 +22,16 @@ pub struct Frame {
 	pub frame_id: FrameId,
 
 	pub headers: Headers,
+
 	///
-	/// Сжимаются и шифруются
+	/// С гарантией доставки
 	///
-	pub commands: ApplicationCommands,
+	pub reliable: VecDeque<CommandWithChannel>,
+
+	///
+	/// Без гарантии доставки
+	///
+	pub unreliable: VecDeque<CommandWithChannel>,
 }
 
 impl Frame {
@@ -34,7 +42,8 @@ impl Frame {
 		Self {
 			frame_id,
 			headers: Default::default(),
-			commands: ApplicationCommands::default(),
+			reliable: Default::default(),
+			unreliable: Default::default(),
 		}
 	}
 
@@ -44,7 +53,7 @@ impl Frame {
 	/// - для всех остальных id фрейма
 	///
 	pub fn get_original_frame_id(&self) -> FrameId {
-		match self.headers.first(Header::predicate_retransmit_frame) {
+		match self.headers.first(Header::predicate_retransmit) {
 			None => self.frame_id,
 			Some(value) => value.original_frame_id,
 		}
@@ -54,6 +63,6 @@ impl Frame {
 	/// Фрейм с надежной доставкой?
 	///
 	pub fn is_reliability(&self) -> bool {
-		!self.commands.reliable.is_empty()
+		!self.reliable.is_empty()
 	}
 }

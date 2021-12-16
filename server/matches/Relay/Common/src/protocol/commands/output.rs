@@ -1,11 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
-use crate::protocol::frame::applications::{
-	ApplicationCommands, BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel,
-};
+use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{ApplicationCommandChannelType, Channel};
 use crate::protocol::frame::Frame;
 use crate::protocol::FrameBuilder;
@@ -19,7 +17,16 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Default, Debug)]
 pub struct OutCommandsCollector {
-	pub commands: ApplicationCommands,
+	///
+	/// С гарантией доставки
+	///
+	pub reliable: VecDeque<CommandWithChannel>,
+
+	///
+	/// Без гарантии доставки
+	///
+	pub unreliable: VecDeque<CommandWithChannel>,
+
 	group_sequence: HashMap<ChannelGroup, ChannelSequence, FnvBuildHasher>,
 	object_sequence: HashMap<GameObjectId, ChannelSequence, FnvBuildHasher>,
 }
@@ -39,11 +46,11 @@ impl OutCommandsCollector {
 					| ApplicationCommandChannelType::ReliableOrderedByObject
 					| ApplicationCommandChannelType::ReliableOrderedByGroup(_)
 					| ApplicationCommandChannelType::ReliableSequenceByObject
-					| ApplicationCommandChannelType::ReliableSequenceByGroup(_) => &mut self.commands.reliable,
+					| ApplicationCommandChannelType::ReliableSequenceByGroup(_) => &mut self.reliable,
 
 					ApplicationCommandChannelType::UnreliableUnordered
 					| ApplicationCommandChannelType::UnreliableOrderedByObject
-					| ApplicationCommandChannelType::UnreliableOrderedByGroup(_) => &mut self.commands.unreliable,
+					| ApplicationCommandChannelType::UnreliableOrderedByGroup(_) => &mut self.unreliable,
 				};
 
 				commands.push_back(description);
@@ -85,13 +92,13 @@ impl OutCommandsCollector {
 
 impl FrameBuilder for OutCommandsCollector {
 	fn contains_self_data(&self, _: &Instant) -> bool {
-		self.commands.reliable.len() + self.commands.unreliable.len() > 0
+		self.reliable.len() + self.unreliable.len() > 0
 	}
 
 	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
 		let mut command_count = 0;
-		while let Some(command) = self.commands.reliable.pop_front() {
-			frame.commands.reliable.push_back(command);
+		while let Some(command) = self.reliable.pop_front() {
+			frame.reliable.push_back(command);
 			command_count += 1;
 			if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 				break;
@@ -101,8 +108,8 @@ impl FrameBuilder for OutCommandsCollector {
 			return;
 		}
 
-		while let Some(command) = self.commands.unreliable.pop_front() {
-			frame.commands.unreliable.push_back(command);
+		while let Some(command) = self.unreliable.pop_front() {
+			frame.unreliable.push_back(command);
 			command_count += 1;
 			if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 				break;
@@ -133,9 +140,9 @@ mod tests {
 				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
-		assert!(matches!(output.commands.reliable[0].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==0));
-		assert!(matches!(output.commands.reliable[1].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==1));
-		assert!(matches!(output.commands.reliable[2].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==2));
+		assert!(matches!(output.reliable[0].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==0));
+		assert!(matches!(output.reliable[1].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==1));
+		assert!(matches!(output.reliable[2].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==2));
 	}
 
 	#[test]
@@ -157,7 +164,7 @@ mod tests {
 
 		// в коллекторе первой должна быть команда с value равным размеру фрейма
 		assert!(matches!(
-			output.commands.reliable.pop_front().unwrap().command,
+			output.reliable.pop_front().unwrap().command,
 			BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: _,
 					field_id: _,
@@ -169,7 +176,7 @@ mod tests {
 		// проверяем как собран фрейм
 		for i in 0..OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 			assert!(matches!(
-				frame.commands.reliable.pop_front().unwrap().command,
+				frame.reliable.pop_front().unwrap().command,
 				BothDirectionCommand::C2S( C2SCommand::SetLong(SetLongCommand {
 						object_id: _,
 						field_id: _,
@@ -195,8 +202,8 @@ mod tests {
 			);
 		}
 
-		assert!(matches!(output.commands.reliable[0].channel, Channel::ReliableSequenceByObject(sequence) if sequence==0));
-		assert!(matches!(output.commands.reliable[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence==1));
-		assert!(matches!(output.commands.reliable[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence==2));
+		assert!(matches!(output.reliable[0].channel, Channel::ReliableSequenceByObject(sequence) if sequence==0));
+		assert!(matches!(output.reliable[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence==1));
+		assert!(matches!(output.reliable[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence==2));
 	}
 }
