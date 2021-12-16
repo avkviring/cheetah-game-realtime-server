@@ -48,8 +48,8 @@ impl Frame {
 	/// Метод вызывается после decode_headers (более подробно в тестах)
 	///
 	pub fn decode_frame(
+		c2s_commands: bool,
 		frame_id: FrameId,
-		from_client: bool,
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
 	) -> Result<Frame, UdpFrameDecodeError> {
@@ -76,8 +76,8 @@ impl Frame {
 		let mut cursor = Cursor::new(decompressed_buffer);
 
 		let mut frame = Frame::new(frame_id);
-		decode_commands(from_client, &mut cursor, &mut frame.reliable)?;
-		decode_commands(from_client, &mut cursor, &mut frame.unreliable)?;
+		decode_commands(c2s_commands, &mut cursor, &mut frame.reliable)?;
+		decode_commands(c2s_commands, &mut cursor, &mut frame.unreliable)?;
 		Result::Ok(frame)
 	}
 
@@ -141,6 +141,8 @@ impl Frame {
 pub mod tests {
 	use std::io::Cursor;
 
+	use crate::commands::c2s::C2SCommand;
+	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::codec::cipher::Cipher;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
@@ -161,7 +163,11 @@ pub mod tests {
 		frame.headers.add(Header::Ack(AckHeader::new(15)));
 		frame.reliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::TestSimple("test".to_string()),
+			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+				object_id: Default::default(),
+				field_id: 0,
+				value: 0,
+			})),
 		});
 		let mut buffer = [0; 1024];
 		let size = frame.encode(&mut cipher, &mut buffer);
@@ -169,7 +175,7 @@ pub mod tests {
 
 		let mut cursor = Cursor::new(buffer);
 		let (frame_id, header) = Frame::decode_headers(&mut cursor).unwrap();
-		let decoded_frame = Frame::decode_frame(frame_id, true, cursor, cipher.clone()).unwrap();
+		let decoded_frame = Frame::decode_frame(true, frame_id, cursor, cipher.clone()).unwrap();
 
 		assert_eq!(frame, decoded_frame);
 	}

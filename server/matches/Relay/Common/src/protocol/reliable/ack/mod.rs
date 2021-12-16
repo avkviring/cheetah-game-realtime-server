@@ -147,6 +147,7 @@ impl FrameReceivedListener for AckSender {
 mod tests {
 	use std::time::Instant;
 
+	use crate::commands::c2s::C2SCommand;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
@@ -251,7 +252,7 @@ mod tests {
 		let mut frame_a = Frame::new(10);
 		frame_a.reliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::TestSimple("".to_string()),
+			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		});
 		reliable.on_frame_received(&frame_a, &time);
 
@@ -271,7 +272,7 @@ mod tests {
 	fn create_command() -> CommandWithChannel {
 		CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::TestSimple("".to_string()),
+			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		}
 	}
 }

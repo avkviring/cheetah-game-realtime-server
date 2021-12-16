@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use crate::commands::c2s::C2SCommand;
 use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 use crate::protocol::frame::channel::Channel;
@@ -16,8 +14,6 @@ pub struct CommandWithChannel {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BothDirectionCommand {
-	TestSimple(String),
-	TestObject(GameObjectId, String),
 	S2CWithCreator(S2CCommandWithCreator),
 	C2S(C2SCommand),
 }
@@ -25,8 +21,6 @@ pub enum BothDirectionCommand {
 impl BothDirectionCommand {
 	pub fn get_object_id(&self) -> Option<&GameObjectId> {
 		match &self {
-			BothDirectionCommand::TestSimple(_) => Option::None,
-			BothDirectionCommand::TestObject(object_id, _) => Option::Some(object_id),
 			BothDirectionCommand::S2CWithCreator(command_with_meta) => match &command_with_meta.command {
 				S2CCommand::Create(c) => Option::Some(&c.object_id),
 				S2CCommand::SetLong(c) => Option::Some(&c.object_id),

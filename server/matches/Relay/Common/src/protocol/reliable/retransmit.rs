@@ -225,6 +225,7 @@ impl DisconnectedStatus for RetransmitterImpl {
 
 #[cfg(test)]
 mod tests {
+	use crate::commands::c2s::C2SCommand;
 	use std::ops::Add;
 	use std::time::Instant;
 
@@ -373,7 +374,7 @@ mod tests {
 		let mut frame = create_reliability_frame(1);
 		frame.unreliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::TestSimple("".to_string()),
+			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		});
 		let now = Instant::now();
 		handler.on_frame_built(&frame, &now);
@@ -386,7 +387,7 @@ mod tests {
 		let mut frame = Frame::new(frame_id);
 		frame.reliable.push_back(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::TestSimple("".to_string()),
+			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		});
 		frame
 	}

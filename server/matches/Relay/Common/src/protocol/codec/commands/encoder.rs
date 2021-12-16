@@ -61,19 +61,11 @@ fn get_command_info(
 			c2s_command.get_type_id(),
 			None,
 		),
-		BothDirectionCommand::TestSimple(_) => {
-			todo!()
-		}
-		BothDirectionCommand::TestObject(_, _) => {
-			todo!()
-		}
 	}
 }
 fn encode_command(command: &CommandWithChannel, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 	command.channel.encode(out)?;
 	match &command.command {
-		BothDirectionCommand::TestSimple(_) => Ok(()),
-		BothDirectionCommand::TestObject(_, _) => Ok(()),
 		BothDirectionCommand::S2CWithCreator(command) => command.command.encode(out),
 		BothDirectionCommand::C2S(command) => command.encode(out),
 	}

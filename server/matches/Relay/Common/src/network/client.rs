@@ -133,7 +133,7 @@ impl NetworkClient {
 					let header = Frame::decode_headers(&mut cursor);
 					match header {
 						Ok((frame_id, headers)) => {
-							let frame = Frame::decode_frame(frame_id, self.from_client, cursor, Cipher::new(&self.private_key));
+							let frame = Frame::decode_frame(self.from_client, frame_id, cursor, Cipher::new(&self.private_key));
 							match frame {
 								Ok(frame) => {
 									self.on_frame_received(now, frame);

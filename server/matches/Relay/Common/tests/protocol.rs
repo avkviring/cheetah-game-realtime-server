@@ -1,5 +1,6 @@
 use std::time::Instant;
 
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
@@ -17,13 +18,13 @@ fn should_send_from_client() {
 	let mut peer_b = RelayProtocol::new(&Instant::now());
 
 	peer_a.out_commands_collector.add_command(
-        ApplicationCommandChannelType::ReliableUnordered,
-        BothDirectionCommand::TestSimple("test reliability".to_string()),
+		ApplicationCommandChannelType::ReliableUnordered,
+		BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 	);
 
 	peer_a.out_commands_collector.add_command(
-        ApplicationCommandChannelType::UnreliableUnordered,
-        BothDirectionCommand::TestSimple("test unreliability".to_string()),
+		ApplicationCommandChannelType::UnreliableUnordered,
+		BothDirectionCommand::C2S(C2SCommand::DetachFromRoom),
 	);
 
 	let mut channel = Channel::default();
@@ -33,12 +34,10 @@ fn should_send_from_client() {
 
 	assert!(commands
 		.iter()
-		.find(|p| matches!(&p.command, BothDirectionCommand::TestSimple(v) if *v == "test reliability".to_string()))
-		.is_some());
+		.any(|p| p.command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
 	assert!(commands
 		.iter()
-		.find(|p| matches!(&p.command, BothDirectionCommand::TestSimple(v) if *v == "test unreliability".to_string()))
-		.is_some());
+		.any(|p| p.command == BothDirectionCommand::C2S(C2SCommand::DetachFromRoom)));
 }
 
 ///
@@ -49,13 +48,13 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	let mut peer_b = RelayProtocol::new(&Instant::now());
 
 	peer_a.out_commands_collector.add_command(
-        ApplicationCommandChannelType::ReliableUnordered,
-        BothDirectionCommand::TestSimple("test reliability".to_string()),
+		ApplicationCommandChannelType::ReliableUnordered,
+		BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 	);
 
 	peer_a.out_commands_collector.add_command(
-        ApplicationCommandChannelType::UnreliableUnordered,
-        BothDirectionCommand::TestSimple("test unreliability".to_string()),
+		ApplicationCommandChannelType::UnreliableUnordered,
+		BothDirectionCommand::C2S(C2SCommand::DetachFromRoom),
 	);
 
 	let mut channel = Channel::default();
@@ -71,6 +70,5 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	assert_eq!(commands.len(), 1);
 	assert!(commands
 		.iter()
-		.find(|p| matches!(&p.command, BothDirectionCommand::TestSimple(v) if *v == "test reliability".to_string()))
-		.is_some());
+		.any(|p| p.command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
 }
