@@ -42,7 +42,7 @@ impl IntegrationTestHelper {
 	}
 
 	pub fn create_user_object(&self, client_id: ClientId) -> GameObjectIdFFI {
-		let mut object_id = GameObjectIdFFI::new();
+		let mut object_id = GameObjectIdFFI::default();
 		ffi::command::object::create_object(
 			client_id,
 			IntegrationTestServerBuilder::DEFAULT_TEMPLATE,

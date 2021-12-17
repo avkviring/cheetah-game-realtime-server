@@ -94,7 +94,7 @@ impl UDPServer {
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
 			match result {
-				Ok((size, address)) => self.process_in_frame(rooms, &mut buffer, size, address, now),
+				Ok((size, address)) => self.process_in_frame(rooms, &buffer, size, address, now),
 				Err(e) => match e.kind() {
 					ErrorKind::WouldBlock => {
 						return;

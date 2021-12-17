@@ -162,7 +162,7 @@ mod tests {
 	///
 	fn should_ack_not_need_send() {
 		let reliable = AckSender::default();
-		assert_eq!(reliable.contains_self_data(&Instant::now()), false);
+		assert!(!reliable.contains_self_data(&Instant::now()));
 	}
 
 	///
@@ -190,7 +190,7 @@ mod tests {
 		let mut frame = Frame::new(10);
 		frame.reliable.push_back(create_command());
 		reliable.on_frame_received(&frame, &time);
-		assert_eq!(reliable.contains_self_data(&time), true);
+		assert!(reliable.contains_self_data(&time));
 	}
 
 	///

@@ -110,7 +110,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		let token = jsonwebtoken::encode(
 			&Header::new(Algorithm::ES256),
 			&TokenClaims {
-				exp: usize::max_value(),
+				exp: usize::MAX,
 				player: 10,
 			},
 			&EncodingKey::from_ec_pem(PRIVATE_KEY.as_bytes()).unwrap(),
@@ -124,7 +124,6 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 			"authorization",
 			MetadataValue::from_str(format!("Bear {}", token).as_str()).unwrap(),
 		);
-		println!("{:?}", get_player_id(&metadata, PUBLIC_KEY.to_string()));
 		assert!(matches!(get_player_id(&metadata, PUBLIC_KEY.to_string()), Result::Ok(_)));
 	}
 }

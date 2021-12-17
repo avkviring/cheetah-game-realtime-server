@@ -134,7 +134,7 @@ impl NetworkLatencyEmulator {
 
 	fn is_drop_time(&mut self, now: &Instant) -> bool {
 		if let Some(drop_time) = &self.drop_start {
-			if drop_time.add(self.drop_time.unwrap_or(Duration::from_millis(0))) > *now {
+			if drop_time.add(self.drop_time.unwrap_or_else(|| Duration::from_millis(0))) > *now {
 				return true;
 			}
 			self.drop_start = None;
@@ -257,9 +257,11 @@ mod tests {
 
 	#[test]
 	fn should_drop_packet() {
-		let mut emulator = NetworkLatencyEmulator::default();
-		emulator.drop_probability = Option::Some(0.5);
-		emulator.drop_time = Option::Some(Duration::from_millis(10));
+		let mut emulator = NetworkLatencyEmulator {
+			drop_probability: Some(0.5),
+			drop_time: Some(Duration::from_millis(10)),
+			..Default::default()
+		};
 		let buffer = vec![1, 2, 3];
 
 		let count = 1000;
@@ -288,10 +290,12 @@ mod tests {
 
 	#[test]
 	fn should_drop_packet_with_time() {
-		let mut emulator = NetworkLatencyEmulator::default();
-		emulator.drop_probability = Option::Some(1.0);
 		let drop_time = Duration::from_millis(10);
-		emulator.drop_time = Option::Some(drop_time);
+		let mut emulator = NetworkLatencyEmulator {
+			drop_probability: Some(1.0),
+			drop_time: Some(drop_time),
+			..Default::default()
+		};
 
 		let now = Instant::now();
 		emulator.is_drop_time(&now);
@@ -299,7 +303,7 @@ mod tests {
 		assert!(matches!(emulator.drop_start, Some(time) if time == now));
 
 		// мы в зоне отказа сети, даже если вероятность отказа 0
-		emulator.drop_probability = Option::Some(0.0);
+		emulator.drop_probability = Some(0.0);
 		assert!(emulator.is_drop_time(&now));
 		// выходим из зоны отказа сети
 		assert!(!emulator.is_drop_time(&now.add(drop_time)));

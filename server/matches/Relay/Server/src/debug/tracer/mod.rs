@@ -3,11 +3,11 @@ use std::sync::mpsc::Sender;
 #[cfg(not(test))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use fnv::FnvBuildHasher;
 use indexmap::IndexMap;
 
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -287,7 +287,6 @@ pub mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::event::EventCommand;
 	use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
-	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::debug::tracer::{CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand, UniDirectionCommand};
 

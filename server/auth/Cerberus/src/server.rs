@@ -34,9 +34,9 @@ pub async fn run_grpc_server(
 }
 
 fn setup_internal(
-	jwt_public_key: &String,
-	jwt_private_key: &String,
-	redis_host: &String,
+	jwt_public_key: &str,
+	jwt_private_key: &str,
+	redis_host: &str,
 	redis_port: u16,
 	redis_auth: Option<String>,
 	port: u16,
@@ -44,9 +44,9 @@ fn setup_internal(
 	let internal_addr = format!("0.0.0.0:{}", port).parse().unwrap();
 
 	let cerberus = Cerberus::new(
-		jwt_private_key.clone(),
-		jwt_public_key.clone(),
-		redis_host.clone(),
+		jwt_private_key.to_string(),
+		jwt_public_key.to_string(),
+		redis_host.to_string(),
 		redis_port,
 		redis_auth,
 	);
@@ -55,18 +55,18 @@ fn setup_internal(
 }
 
 fn setup_external(
-	jwt_public_key: &String,
-	jwt_private_key: &String,
-	redis_host: &String,
+	jwt_public_key: &str,
+	jwt_private_key: &str,
+	redis_host: &str,
 	redis_port: u16,
 	redis_auth: Option<String>,
 	port: u16,
 ) -> impl Future<Output = Result<(), Error>> {
 	let external_addr = format!("0.0.0.0:{}", port).parse().unwrap();
 	let external_service = proto::external::cerberus_server::CerberusServer::new(Cerberus::new(
-		jwt_private_key.clone(),
-		jwt_public_key.clone(),
-		redis_host.clone(),
+		jwt_private_key.to_string(),
+		jwt_public_key.to_string(),
+		redis_host.to_string(),
 		redis_port,
 		redis_auth,
 	));

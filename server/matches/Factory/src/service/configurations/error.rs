@@ -1,5 +1,5 @@
 use std::fmt::Formatter;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::service::configurations::structures::{FieldName, TemplateName};
 
@@ -70,7 +70,7 @@ impl std::fmt::Display for Error {
 	}
 }
 
-fn write_yaml_error(f: &mut Formatter, file: &PathBuf, err: &serde_yaml::Error) -> std::fmt::Result {
+fn write_yaml_error(f: &mut Formatter, file: &Path, err: &serde_yaml::Error) -> std::fmt::Result {
 	write!(
 		f,
 		"Error in file {}. Wrong format {:?}: {:?}",

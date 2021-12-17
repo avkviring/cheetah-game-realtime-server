@@ -1,6 +1,6 @@
-use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use std::slice::Iter;
 
+use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
@@ -310,29 +310,30 @@ mod tests {
 		object.template = object_template;
 		let object_id = object.id.clone();
 
-		let mut commands = Vec::new();
-		commands.push(S2CommandWithFieldInfo {
-			field: Some(FieldIdAndType {
-				field_id: deny_field_id,
-				field_type: FieldType::Long,
-			}),
-			command: S2CCommand::SetLong(SetLongCommand {
-				object_id: object_id.clone(),
-				field_id: deny_field_id,
-				value: 0,
-			}),
-		});
-		commands.push(S2CommandWithFieldInfo {
-			field: Some(FieldIdAndType {
-				field_id: allow_field_id,
-				field_type: FieldType::Long,
-			}),
-			command: S2CCommand::SetLong(SetLongCommand {
-				object_id: object_id,
-				field_id: allow_field_id,
-				value: 100,
-			}),
-		});
+		let commands = vec![
+			S2CommandWithFieldInfo {
+				field: Some(FieldIdAndType {
+					field_id: deny_field_id,
+					field_type: FieldType::Long,
+				}),
+				command: S2CCommand::SetLong(SetLongCommand {
+					object_id: object_id.clone(),
+					field_id: deny_field_id,
+					value: 0,
+				}),
+			},
+			S2CommandWithFieldInfo {
+				field: Some(FieldIdAndType {
+					field_id: allow_field_id,
+					field_type: FieldType::Long,
+				}),
+				command: S2CCommand::SetLong(SetLongCommand {
+					object_id,
+					field_id: allow_field_id,
+					value: 100,
+				}),
+			},
+		];
 		room.current_user = Some(user_source_id);
 		room.send_to_user(&user_target_id, object_template, commands.iter());
 
@@ -396,7 +397,7 @@ mod tests {
 					field_type,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
-					object_id: object_id,
+					object_id,
 					field_id: deny_field_id,
 					value: 155,
 				}),

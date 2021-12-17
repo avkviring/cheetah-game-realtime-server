@@ -77,20 +77,20 @@ mod tests {
 		let mut self_handler = DisconnectHandler::default();
 		let mut remote_handler = DisconnectHandler::default();
 
-		assert_eq!(self_handler.contains_self_data(&now), false);
-		assert_eq!(self_handler.disconnected(&now), false);
-		assert_eq!(remote_handler.disconnected(&now), false);
+		assert!(!self_handler.contains_self_data(&now));
+		assert!(!self_handler.disconnected(&now));
+		assert!(!remote_handler.disconnected(&now));
 
 		self_handler.disconnect();
 
-		assert_eq!(self_handler.contains_self_data(&now), true);
+		assert!(self_handler.contains_self_data(&now));
 
 		let mut frame = Frame::new(10);
 		self_handler.build_frame(&mut frame, &now);
 		remote_handler.on_frame_received(&frame, &now);
 
-		assert_eq!(self_handler.disconnected(&now), true);
-		assert_eq!(remote_handler.disconnected(&now), true);
+		assert!(self_handler.disconnected(&now));
+		assert!(remote_handler.disconnected(&now));
 	}
 
 	#[test]
@@ -99,7 +99,7 @@ mod tests {
 		let mut handler = DisconnectHandler::default();
 		let mut frame = Frame::new(10);
 		handler.build_frame(&mut frame, &now);
-		assert_eq!(handler.disconnected(&now), false);
+		assert!(!handler.disconnected(&now));
 		assert!(matches!(frame.headers.first(Header::predicate_disconnect), Option::None));
 	}
 }

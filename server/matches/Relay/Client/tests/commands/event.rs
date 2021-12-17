@@ -16,7 +16,7 @@ fn test() {
 	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	let mut object_id = GameObjectIdFFI::new();
+	let mut object_id = GameObjectIdFFI::default();
 	ffi::command::object::create_object(
 		client1,
 		1,
@@ -25,7 +25,7 @@ fn test() {
 	);
 	ffi::command::object::created_object(client1, &object_id);
 
-	let mut event_buffer = BufferFFI::new();
+	let mut event_buffer = BufferFFI::default();
 	event_buffer.len = 1;
 	event_buffer.buffer[0] = 100;
 	let event_field_id = 10;

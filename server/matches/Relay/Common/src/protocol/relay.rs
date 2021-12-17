@@ -73,16 +73,13 @@ impl RelayProtocol {
 		self.in_frame_counter += 1;
 		self.disconnect_watcher.on_frame_received(&frame, now);
 		self.retransmitter.on_frame_received(&frame, now);
-		match self.replay_protection.set_and_check(&frame, now) {
-			Ok(replayed) => {
-				if !replayed {
-					self.disconnect_handler.on_frame_received(&frame, now);
-					self.ack_sender.on_frame_received(&frame, now);
-					self.rtt.on_frame_received(&frame, now);
-					self.in_commands_collector.collect(frame);
-				}
+		if let Ok(replayed) = self.replay_protection.set_and_check(&frame, now) {
+			if !replayed {
+				self.disconnect_handler.on_frame_received(&frame, now);
+				self.ack_sender.on_frame_received(&frame, now);
+				self.rtt.on_frame_received(&frame, now);
+				self.in_commands_collector.collect(frame);
 			}
-			Err(_) => {}
 		}
 	}
 

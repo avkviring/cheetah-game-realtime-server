@@ -22,7 +22,7 @@ fn test() {
 	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	let mut object_id = GameObjectIdFFI::new();
+	let mut object_id = GameObjectIdFFI::default();
 	ffi::command::object::create_object(
 		client1,
 		1,

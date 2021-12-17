@@ -357,12 +357,12 @@ mod tests {
 			handler.get_retransmit_frame(&get_time, 2);
 		}
 
-		assert_eq!(handler.disconnected(&get_time), false);
+		assert!(!handler.disconnected(&get_time));
 
 		get_time = get_time.add(handler.ack_wait_duration);
 		handler.get_retransmit_frame(&get_time, 3);
 
-		assert_eq!(handler.disconnected(&get_time), true);
+		assert!(handler.disconnected(&get_time));
 	}
 
 	///

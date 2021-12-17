@@ -74,7 +74,7 @@ fn parse_with_bracket(mut query: String) -> Result<Token, ParseError> {
 	}
 }
 
-fn find_right_bracket(query: &String) -> Result<usize, ParseError> {
+fn find_right_bracket(query: &str) -> Result<usize, ParseError> {
 	let mut deep = 0;
 	for (index, x) in query.chars().into_iter().enumerate() {
 		if x == '(' {

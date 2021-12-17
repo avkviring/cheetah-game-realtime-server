@@ -91,7 +91,7 @@ impl StubMatchmakingService {
 		}
 	}
 
-	async fn find_or_create_match(&self, template: &String) -> MatchInfo {
+	async fn find_or_create_match(&self, template: &str) -> MatchInfo {
 		let mut matches = self.matches.write().await;
 		match matches.get(template) {
 			None => {
@@ -99,7 +99,7 @@ impl StubMatchmakingService {
 
 				let create_match_response = factory
 					.create_match(Request::new(CreateMatchRequest {
-						template: template.clone(),
+						template: template.to_string(),
 					}))
 					.await
 					.unwrap()
@@ -111,7 +111,7 @@ impl StubMatchmakingService {
 					relay_game_port: create_match_response.relay_game_port as u16,
 					room_id: create_match_response.id,
 				};
-				matches.insert(template.clone(), match_info.clone());
+				matches.insert(template.to_string(), match_info.clone());
 				match_info
 			}
 			Some(match_info) => match_info.clone(),

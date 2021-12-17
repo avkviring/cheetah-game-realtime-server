@@ -54,7 +54,7 @@ mod tests {
 
 		room.current_user = Option::Some(user_a_id);
 		command.clone().execute(&mut room, user_a_id);
-		
+
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.get_user_out_commands(user_a_id).pop_back(), None));
 		assert!(matches!(room.get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
@@ -67,9 +67,7 @@ mod tests {
 		let user_id = room.register_user(UserTemplate::stub(AccessGroups(0b11)));
 
 		let object_id = GameObjectId::new(100, GameObjectOwner::User(user_id));
-		let command = DeleteGameObjectCommand {
-			object_id: object_id,
-		};
+		let command = DeleteGameObjectCommand { object_id };
 		command.execute(&mut room, user_id);
 	}
 

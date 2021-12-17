@@ -37,30 +37,30 @@ mod tests {
 	#[test]
 	fn should_clone() {
 		let group = AccessGroups(0b1001);
-		assert_eq!(group.contains_group(0), true);
-		assert_eq!(group.contains_group(1), false);
-		assert_eq!(group.contains_group(2), false);
-		assert_eq!(group.contains_group(3), true);
+		assert!(group.contains_group(0));
+		assert!(!group.contains_group(1));
+		assert!(!group.contains_group(2));
+		assert!(group.contains_group(3));
 	}
 
 	#[test]
 	fn contains_group_should_true_when_equals() {
 		let group_a = AccessGroups(0b1001);
 		let group_b = AccessGroups(0b1001);
-		assert_eq!(group_a.contains_any(&group_b), true)
+		assert!(group_a.contains_any(&group_b))
 	}
 
 	#[test]
 	fn contains_group_should_true_when_subgroup() {
 		let group_a = AccessGroups(0b1001);
 		let group_b = AccessGroups(0b1100);
-		assert_eq!(group_a.contains_any(&group_b), true)
+		assert!(group_a.contains_any(&group_b))
 	}
 
 	#[test]
 	fn contains_group_should_false() {
 		let group_a = AccessGroups(0b1001);
 		let group_b = AccessGroups(0b0110);
-		assert_eq!(group_a.contains_any(&group_b), false)
+		assert!(!group_a.contains_any(&group_b))
 	}
 }

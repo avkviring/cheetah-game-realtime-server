@@ -12,6 +12,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::{Room, RoomUserListener};
 
+#[derive(Default)]
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
@@ -30,14 +31,6 @@ pub enum RegisterUserError {
 }
 
 impl Rooms {
-	pub fn new() -> Self {
-		Self {
-			room_by_id: Default::default(),
-			room_id_generator: 0,
-			changed_rooms: Default::default(),
-		}
-	}
-
 	pub fn create_room(&mut self, template: RoomTemplate, listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> RoomId {
 		self.room_id_generator += 1;
 		let room_id = self.room_id_generator;
@@ -95,17 +88,6 @@ impl Rooms {
 		});
 		for i in 0..index {
 			self.changed_rooms.insert(changed[i]);
-		}
-	}
-}
-
-#[cfg(test)]
-impl Default for Rooms {
-	fn default() -> Self {
-		Self {
-			room_by_id: Default::default(),
-			room_id_generator: 0,
-			changed_rooms: Default::default(),
 		}
 	}
 }

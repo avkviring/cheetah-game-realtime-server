@@ -156,7 +156,7 @@ impl Client {
 				.protocol
 				.rtt
 				.get_rtt()
-				.unwrap_or(Duration::from_millis(0))
+				.unwrap_or_else(|| Duration::from_millis(0))
 				.as_millis() as u64,
 			Ordering::Relaxed,
 		);

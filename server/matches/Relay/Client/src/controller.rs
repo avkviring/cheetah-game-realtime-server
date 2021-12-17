@@ -9,9 +9,7 @@ use std::time::Duration;
 use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
-use cheetah_matches_relay_common::protocol::frame::applications::{
-	BothDirectionCommand, CommandWithChannel, ChannelGroup,
-};
+use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -49,11 +47,8 @@ pub struct ClientController {
 
 impl Drop for ClientController {
 	fn drop(&mut self) {
-		match self.request_to_client.send(ClientRequest::Close) {
-			Ok(_) => {
-				self.handler.take().unwrap().join().unwrap();
-			}
-			Err(_) => {}
+		if self.request_to_client.send(ClientRequest::Close).is_ok() {
+			self.handler.take().unwrap().join().unwrap();
 		}
 	}
 }
@@ -252,7 +247,7 @@ impl ClientController {
 
 	pub fn attach_to_room(&mut self) {
 		// удаляем все пришедшие команды (ситуация возникает при attach/detach)
-		while let Ok(_) = self.commands_from_server.try_recv() {}
+		while self.commands_from_server.try_recv().is_ok() {}
 		self.send(C2SCommand::AttachToRoom);
 	}
 }

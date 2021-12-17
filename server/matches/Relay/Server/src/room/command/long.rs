@@ -243,7 +243,7 @@ mod tests {
 		let (mut room, user, object_id) = setup();
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
-			object_id: object_id,
+			object_id,
 			field_id: 10,
 			increment: i64::MAX,
 		};
@@ -318,7 +318,7 @@ mod tests {
 	fn test_compare_and_set_1() {
 		let (mut room, user1_id, _, object_id, field_id) = setup_for_compare_and_set();
 		let command = CompareAndSetLongCommand {
-			object_id: object_id,
+			object_id,
 			field_id,
 			current: 0,
 			new: 100,

@@ -20,7 +20,6 @@ fn should_inc() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	println!("{:?}", INCR.lock().unwrap().as_ref());
 	assert!(matches!(INCR.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==200.0 ));
 }
 
@@ -37,7 +36,6 @@ fn should_set() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	println!("{:?}", SET.lock().unwrap().as_ref());
 	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==200.0 ));
 }
 

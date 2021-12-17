@@ -31,13 +31,10 @@ impl proto::internal::cerberus_server::Cerberus for Cerberus {
 	) -> Result<tonic::Response<proto::types::Tokens>, tonic::Status> {
 		let request = request.get_ref();
 		match self.service.create(request.player, request.device_id.clone()).await {
-			Ok(tokens) => {
-				println!("session token {}", tokens.session);
-				Result::Ok(tonic::Response::new(proto::types::Tokens {
-					session: tokens.session,
-					refresh: tokens.refresh,
-				}))
-			}
+			Ok(tokens) => Result::Ok(tonic::Response::new(proto::types::Tokens {
+				session: tokens.session,
+				refresh: tokens.refresh,
+			})),
 			Err(e) => {
 				log::error!("{:?}", e);
 				Result::Err(tonic::Status::failed_precondition(format!("{:?}", e)))

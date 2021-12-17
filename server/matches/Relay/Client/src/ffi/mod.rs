@@ -1,6 +1,6 @@
-use cheetah_matches_relay_common::commands::CommandBuffer;
 use std::cell::RefCell;
 
+use cheetah_matches_relay_common::commands::CommandBuffer;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -48,36 +48,11 @@ where
 }
 
 #[repr(C)]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct GameObjectIdFFI {
 	id: u32,
 	room_owner: bool,
 	user_id: RoomMemberId,
-}
-
-impl GameObjectIdFFI {
-	pub fn new() -> Self {
-		Self {
-			id: 0,
-			room_owner: false,
-			user_id: 0,
-		}
-	}
-	pub fn empty() -> Self {
-		Self {
-			id: 0,
-			room_owner: false,
-			user_id: 0,
-		}
-	}
-
-	pub fn stub() -> Self {
-		Self {
-			id: 5,
-			room_owner: false,
-			user_id: 77,
-		}
-	}
 }
 
 impl From<&GameObjectId> for GameObjectIdFFI {
@@ -121,25 +96,18 @@ pub struct BufferFFI {
 	pub buffer: [u8; BUFFER_MAX_SIZE],
 }
 
-impl BufferFFI {
-	pub fn new() -> Self {
+impl Default for BufferFFI {
+	fn default() -> Self {
 		Self {
 			len: 0,
 			buffer: [0; BUFFER_MAX_SIZE],
-		}
-	}
-
-	pub fn stub() -> Self {
-		Self {
-			len: 3,
-			buffer: [99; BUFFER_MAX_SIZE],
 		}
 	}
 }
 
 impl From<Vec<u8>> for BufferFFI {
 	fn from(source: Vec<u8>) -> Self {
-		let mut buffer = BufferFFI::new();
+		let mut buffer = BufferFFI::default();
 		buffer.len = source.len() as u8;
 		buffer.buffer[0..source.len()].copy_from_slice(source.as_slice());
 		buffer

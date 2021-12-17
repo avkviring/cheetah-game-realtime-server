@@ -74,8 +74,8 @@ mod tests {
 		let mut protection = FrameReplayProtection::default();
 		let frame_a = Frame::new(1000);
 		let now = Instant::now();
-		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), false);
-		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), true);
+		assert!(!protection.set_and_check(&frame_a, &now).unwrap());
+		assert!(protection.set_and_check(&frame_a, &now).unwrap());
 	}
 
 	#[test]
@@ -84,8 +84,8 @@ mod tests {
 		let frame_a = Frame::new(1000 + FrameReplayProtection::BUFFER_SIZE as u64);
 		let frame_b = Frame::new(10);
 		let now = Instant::now();
-		assert_eq!(protection.set_and_check(&frame_a, &now).unwrap(), false);
-		assert_eq!(protection.set_and_check(&frame_b, &now).is_err(), true);
+		assert!(!protection.set_and_check(&frame_a, &now).unwrap());
+		assert!(protection.set_and_check(&frame_b, &now).is_err());
 	}
 
 	#[test]
@@ -94,8 +94,8 @@ mod tests {
 		let now = Instant::now();
 		for i in 1..(FrameReplayProtection::BUFFER_SIZE * 2) as u64 {
 			let frame = Frame::new(i);
-			assert_eq!(protection.set_and_check(&frame, &now).unwrap(), false);
-			assert_eq!(protection.set_and_check(&frame, &now).unwrap(), true);
+			assert!(!protection.set_and_check(&frame, &now).unwrap());
+			assert!(protection.set_and_check(&frame, &now).unwrap());
 		}
 	}
 
@@ -109,7 +109,7 @@ mod tests {
 			if i > 2 {
 				for j in 1..i {
 					let frame = Frame::new(j);
-					assert_eq!(protection.set_and_check(&frame, &now).unwrap(), true);
+					assert!(protection.set_and_check(&frame, &now).unwrap());
 				}
 			}
 		}

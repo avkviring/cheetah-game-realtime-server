@@ -28,7 +28,6 @@ fn test() {
 	helper.wait_udp();
 	helper.wait_udp();
 	ffi::client::receive(client2);
-	println!("value {:?}", SET.lock().unwrap().as_ref());
 	assert!(
 		matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id ==
 		1 && *value<20000)

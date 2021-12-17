@@ -12,7 +12,6 @@ use cheetah_matches_relay::agones::run_agones_cycle;
 use cheetah_matches_relay::debug::dump::DumpGrpcService;
 use cheetah_matches_relay::debug::grpc::RelayAdminGRPCService;
 use cheetah_matches_relay::debug::proto::admin;
-
 use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCService;
 use cheetah_matches_relay::factory::RelayGRPCService;
 use cheetah_matches_relay::server::manager::RelayManager;
@@ -24,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let internal_grpc_service = create_internal_grpc_server(manager.clone());
 	let admin_grpc_service = create_admin_grpc_server(manager.clone());
 	let agones = run_agones_cycle(halt_signal.clone(), manager.clone());
-	futures::join!(internal_grpc_service, admin_grpc_service, agones);
+	let (_, _, _) = futures::join!(internal_grpc_service, admin_grpc_service, agones);
 	halt_signal.store(true, Ordering::Relaxed);
 	Result::Ok(())
 }

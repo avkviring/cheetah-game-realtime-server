@@ -24,11 +24,8 @@ impl NetworkChannel {
 
 		if let Some(emulator) = self.emulator.as_mut() {
 			// полученный пакет из сети сохраняем в эмуляторе
-			match result {
-				Ok(size) => {
-					emulator.schedule_in(now, &buf[0..size]);
-				}
-				Err(_) => {}
+			if let Ok(size) = result {
+				emulator.schedule_in(now, &buf[0..size]);
 			}
 			// вместо полученного пакета получаем пакет из очереди с учетом эмуляции сети
 			match emulator.get_in(now) {

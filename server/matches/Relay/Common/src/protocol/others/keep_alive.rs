@@ -43,7 +43,7 @@ mod tests {
 	pub fn should_send_first_time() {
 		let handler = KeepAlive::default();
 		let now = Instant::now();
-		assert_eq!(handler.contains_self_data(&now), true);
+		assert!(handler.contains_self_data(&now));
 	}
 
 	#[test]
@@ -52,7 +52,7 @@ mod tests {
 		let now = Instant::now();
 		let mut frame = Frame::new(1);
 		handler.build_frame(&mut frame, &now);
-		assert_eq!(handler.contains_self_data(&now), false);
-		assert_eq!(handler.contains_self_data(&now.add(KeepAlive::INTERVAL)), true);
+		assert!(!handler.contains_self_data(&now));
+		assert!(handler.contains_self_data(&now.add(KeepAlive::INTERVAL)));
 	}
 }

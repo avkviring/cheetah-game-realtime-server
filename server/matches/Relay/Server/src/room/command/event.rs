@@ -66,11 +66,11 @@ mod tests {
 		room.out_commands.clear();
 
 		let command = EventCommand {
-			object_id: object_id,
+			object_id,
 			field_id: 100,
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
-		
+
 		command.clone().execute(&mut room, user);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
@@ -99,13 +99,12 @@ mod tests {
 		let command = TargetEventCommand {
 			target: user2,
 			event: EventCommand {
-				object_id: object_id,
+				object_id,
 				field_id: 100,
 				event: from_vec(vec![1, 2, 3, 4, 5]),
 			},
 		};
 
-		
 		command.clone().execute(&mut room, user1);
 		assert!(matches!(room.get_user_out_commands(user1).pop_back(), None));
 		assert!(

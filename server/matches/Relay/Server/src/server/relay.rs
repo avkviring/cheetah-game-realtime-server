@@ -39,7 +39,7 @@ impl Relay {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
 			udp_server: UDPServer::new(socket).unwrap(),
-			rooms: Rooms::new(),
+			rooms: Rooms::default(),
 			receiver,
 			max_cycle_time: 0,
 			avg_cycle_time: 0,

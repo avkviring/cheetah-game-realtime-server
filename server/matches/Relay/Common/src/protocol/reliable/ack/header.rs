@@ -58,8 +58,7 @@ impl AckHeader {
 	}
 
 	pub fn get_frames(&self) -> Vec<u64> {
-		let mut result = Vec::new();
-		result.push(self.start_frame_id);
+		let mut result = vec![self.start_frame_id];
 		for i in 0..AckHeader::CAPACITY {
 			let byte_offset = i / 8;
 			let bit_offset = i - byte_offset * 8;
@@ -119,6 +118,6 @@ mod tests {
 	pub fn should_store_frame_fail_if_not_enough_capacity() {
 		let frame_first = 100;
 		let mut header = AckHeader::new(frame_first);
-		assert_eq!(header.store_frame_id(frame_first + AckHeader::CAPACITY as u64 + 1), false)
+		assert!(!header.store_frame_id(frame_first + AckHeader::CAPACITY as u64 + 1))
 	}
 }
