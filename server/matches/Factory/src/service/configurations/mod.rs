@@ -199,9 +199,14 @@ pub mod test {
 		let configuration = setup();
 		assert_eq!(
 			configuration.groups,
-			vec![("red".to_string(), 1), ("blue".to_string(), 2), ("bot".to_string(), 4)]
-				.into_iter()
-				.collect()
+			vec![
+				("red".to_string(), 1),
+				("blue".to_string(), 2),
+				("bot".to_string(), 4),
+				("user".to_string(), 8)
+			]
+			.into_iter()
+			.collect()
 		);
 	}
 
@@ -297,7 +302,12 @@ pub mod test {
 					Template {
 						id: 1,
 						permissions: TemplatePermissions {
-							groups: vec![("bot".to_string(), PermissionLevel::Deny)].into_iter().collect(),
+							groups: vec![
+								("bot".to_string(), PermissionLevel::Deny),
+								("user".to_string(), PermissionLevel::ReadWrite),
+							]
+							.into_iter()
+							.collect(),
 							fields: vec![PermissionField {
 								field: "user/score".to_string(),
 								groups: vec![("bot".to_string(), PermissionLevel::ReadWrite)].into_iter().collect(),

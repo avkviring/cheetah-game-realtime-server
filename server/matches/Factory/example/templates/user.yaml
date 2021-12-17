@@ -5,6 +5,7 @@ permissions:
   # права по-умолчанию (перекрывают права полей)
   groups:
     bot: deny
+    user: rw
   fields:
     - field: user/score
       groups:
