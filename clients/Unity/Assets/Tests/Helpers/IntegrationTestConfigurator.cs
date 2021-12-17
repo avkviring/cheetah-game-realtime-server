@@ -25,17 +25,9 @@ namespace Tests.Helpers
         public static IntegrationTestConfigurator Load()
         {
             var fileName = Path.GetFullPath(Path.Combine(Application.dataPath, "../integration-test-config.json"));
-            Debug.Log(">>> IntegrationTestConfigurator filename " + fileName);
-            if (File.Exists(fileName))
-            {
-                var json = Encoding.Default.GetString(File.ReadAllBytes(fileName));
-                Debug.Log(">>> json " + json);
-                return JsonUtility.FromJson<IntegrationTestConfigurator>(json);
-            }
-            else
-            {
-                return null;
-            }
+            if (!File.Exists(fileName)) return null;
+            var json = Encoding.Default.GetString(File.ReadAllBytes(fileName));
+            return JsonUtility.FromJson<IntegrationTestConfigurator>(json);
         }
     }
 }

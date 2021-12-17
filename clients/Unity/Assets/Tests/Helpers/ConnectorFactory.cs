@@ -18,12 +18,12 @@ namespace Tests.Helpers
 
         public void SetProgressTitle(string title)
         {
-            Debug.Log("Docker progress set title " + title);
+            
         }
 
         public void SetProgress(int percent)
         {
-            Debug.Log("Docker progress percent " + percent);
+            
         }
 
         public async Task Connect()
