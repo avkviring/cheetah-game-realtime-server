@@ -148,8 +148,8 @@ impl Ord for SequenceApplicationCommand {
 mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::long::SetLongCommand;
-	use crate::commands::types::structure::SetStructureCommand;
-	use crate::commands::CommandBuffer;
+	
+	
 	use crate::protocol::commands::input::InCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
