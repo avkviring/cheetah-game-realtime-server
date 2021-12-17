@@ -31,9 +31,7 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			id: source.id,
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),
-			fields: config::GameObjectFieldsTemplate::from(
-				source.fields.unwrap_or_default(),
-			),
+			fields: config::GameObjectFieldsTemplate::from(source.fields.unwrap_or_default()),
 		}
 	}
 }

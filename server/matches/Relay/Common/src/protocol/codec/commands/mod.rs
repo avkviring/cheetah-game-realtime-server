@@ -16,7 +16,7 @@ mod tests {
 	use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use crate::commands::types::float::SetDoubleCommand;
 	use crate::commands::types::long::SetLongCommand;
-	
+
 	use crate::protocol::codec::commands::decoder::decode_commands;
 	use crate::protocol::codec::commands::encoder::encode_commands;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};

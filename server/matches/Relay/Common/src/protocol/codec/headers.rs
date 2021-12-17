@@ -77,7 +77,7 @@ impl Headers {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::protocol::disconnect::handler::{DisconnectHeader};
+	use crate::protocol::disconnect::handler::DisconnectHeader;
 	use crate::protocol::frame::headers::{Header, Headers};
 	use crate::protocol::others::rtt::RoundTripTimeHeader;
 	use crate::protocol::others::user_id::MemberAndRoomId;

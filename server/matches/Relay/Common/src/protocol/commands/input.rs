@@ -84,10 +84,7 @@ impl InCommandsCollector {
 
 			self.sequence_last.insert(channel_key, last);
 		} else {
-			let buffer = self
-				.sequence_commands
-				.entry(channel_key)
-				.or_insert_with(BinaryHeap::default);
+			let buffer = self.sequence_commands.entry(channel_key).or_insert_with(BinaryHeap::default);
 			buffer.push(SequenceApplicationCommand { sequence, command });
 		}
 	}
@@ -148,8 +145,7 @@ impl Ord for SequenceApplicationCommand {
 mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::long::SetLongCommand;
-	
-	
+
 	use crate::protocol::commands::input::InCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;

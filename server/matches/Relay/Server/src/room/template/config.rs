@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use fnv::FnvBuildHasher;
 use cheetah_matches_relay_common::commands::FieldType;
+use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -89,11 +89,11 @@ impl UserTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::FieldType;
 	use crate::room::template::config::{
 		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
 		UserTemplate, UserTemplateError,
 	};
+	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
