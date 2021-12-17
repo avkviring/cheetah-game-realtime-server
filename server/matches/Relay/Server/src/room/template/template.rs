@@ -24,17 +24,17 @@ impl GameObjectTemplate {
 
 		let mut longs: HashMap<FieldId, i64, FnvBuildHasher> = Default::default();
 		self.fields.longs.iter().for_each(|(k, v)| {
-			longs.insert(k.clone(), *v);
+			longs.insert(*k, *v);
 		});
 
 		let mut floats: HashMap<FieldId, f64, FnvBuildHasher> = Default::default();
 		self.fields.floats.iter().for_each(|(k, v)| {
-			floats.insert(k.clone(), *v);
+			floats.insert(*k, *v);
 		});
 
 		let mut structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher> = Default::default();
 		self.fields.structures.iter().for_each(|(k, v)| {
-			structures.insert(k.clone(), v.clone());
+			structures.insert(*k, v.clone());
 		});
 
 		GameObject {

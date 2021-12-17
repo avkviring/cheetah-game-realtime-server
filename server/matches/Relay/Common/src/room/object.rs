@@ -63,7 +63,7 @@ mod tests {
 
 	#[test]
 	fn should_encode_decode_room_owner() {
-		let mut buffer = [0 as u8; 100];
+		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let original = GameObjectId::new(100, GameObjectOwner::Room);
 		original.encode(&mut cursor).unwrap();
@@ -74,7 +74,7 @@ mod tests {
 
 	#[test]
 	fn should_encode_decode_user_owner() {
-		let mut buffer = [0 as u8; 100];
+		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let original = GameObjectId::new(100, GameObjectOwner::User(5));
 		original.encode(&mut cursor).unwrap();

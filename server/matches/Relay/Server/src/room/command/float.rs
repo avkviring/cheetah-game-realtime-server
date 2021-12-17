@@ -66,12 +66,12 @@ impl GameObject {
 		self.floats.iter().for_each(|(field_id, v)| {
 			commands.push(S2CommandWithFieldInfo {
 				field: Option::Some(FieldIdAndType {
-					field_id: field_id.clone(),
+					field_id: *field_id,
 					field_type: FieldType::Double,
 				}),
 				command: S2CCommand::SetDouble(SetDoubleCommand {
 					object_id: self.id.clone(),
-					field_id: field_id.clone(),
+					field_id: *field_id,
 					value: *v,
 				}),
 			});
@@ -125,7 +125,7 @@ mod tests {
 			increment: 100.100,
 		};
 		command.clone().execute(&mut room, user);
-		command.clone().execute(&mut room, user);
+		command.execute(&mut room, user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.floats.get(&10).unwrap() as u64, 200);

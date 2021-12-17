@@ -66,7 +66,7 @@ mod tests {
 		room.out_commands.clear();
 
 		let command = EventCommand {
-			object_id: object_id.clone(),
+			object_id: object_id,
 			field_id: 100,
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
@@ -99,7 +99,7 @@ mod tests {
 		let command = TargetEventCommand {
 			target: user2,
 			event: EventCommand {
-				object_id: object_id.clone(),
+				object_id: object_id,
 				field_id: 100,
 				event: from_vec(vec![1, 2, 3, 4, 5]),
 			},

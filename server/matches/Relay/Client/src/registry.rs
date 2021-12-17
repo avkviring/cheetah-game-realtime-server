@@ -91,8 +91,8 @@ impl Registry {
 					in_command_receiver,
 					sender,
 					start_frame_id,
-					rtt_in_ms.clone(),
-					average_retransmit_frames.clone(),
+					rtt_in_ms,
+					average_retransmit_frames,
 				);
 				self.client_generator_id += 1;
 				let client_id = self.client_generator_id;

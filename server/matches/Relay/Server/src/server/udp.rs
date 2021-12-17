@@ -154,7 +154,7 @@ impl UDPServer {
 							}
 						};
 						if let Some(frame) = readed_frame {
-							rooms.on_frame_received(user_and_room_id, frame, &now);
+							rooms.on_frame_received(user_and_room_id, frame, now);
 						}
 					}
 				}
@@ -211,7 +211,7 @@ mod tests {
 		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
 		let mut rooms = Rooms::default();
 		let buffer = [0; Frame::MAX_FRAME_SIZE];
-		let usize = 100 as usize;
+		let usize = 100_usize;
 		udp_server.process_in_frame(
 			&mut rooms,
 			&buffer,

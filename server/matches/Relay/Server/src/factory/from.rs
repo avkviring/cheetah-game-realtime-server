@@ -10,7 +10,7 @@ impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
 		config::RoomTemplate {
 			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
-			permissions: config::Permissions::from(source.permissions.unwrap_or(internal::Permissions::default())),
+			permissions: config::Permissions::from(source.permissions.unwrap_or_default()),
 		}
 	}
 }
@@ -32,7 +32,7 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),
 			fields: config::GameObjectFieldsTemplate::from(
-				source.fields.unwrap_or(internal::GameObjectFieldsTemplate::default()),
+				source.fields.unwrap_or_default(),
 			),
 		}
 	}

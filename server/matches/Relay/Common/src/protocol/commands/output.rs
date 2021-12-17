@@ -74,13 +74,13 @@ impl OutCommandsCollector {
 			ApplicationCommandChannelType::UnreliableOrderedByGroup(group_id) => {
 				Option::Some(Channel::UnreliableOrderedByGroup(*group_id))
 			}
-			ApplicationCommandChannelType::ReliableSequenceByObject => command.get_object_id().and_then(|game_object_id| {
+			ApplicationCommandChannelType::ReliableSequenceByObject => command.get_object_id().map(|game_object_id| {
 				let sequence = self
 					.object_sequence
 					.entry(game_object_id.clone())
 					.and_modify(|v| *v += 1)
 					.or_insert(0);
-				Option::Some(Channel::ReliableSequenceByObject(*sequence))
+				Channel::ReliableSequenceByObject(*sequence)
 			}),
 			ApplicationCommandChannelType::ReliableSequenceByGroup(group) => {
 				let sequence = self.group_sequence.entry(*group).and_modify(|v| *v += 1).or_insert(0);

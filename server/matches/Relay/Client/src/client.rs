@@ -171,7 +171,7 @@ impl Client {
 		);
 
 		let arc_state = self.state.clone();
-		*arc_state.lock().unwrap() = self.udp_client.state.clone();
+		*arc_state.lock().unwrap() = self.udp_client.state;
 		drop(arc_state);
 	}
 }

@@ -104,8 +104,8 @@ impl RelayProtocol {
 			&mut self.rtt,
 			&mut self.keep_alive,
 		];
-		let contains_data = builders.iter().any(|h| h.contains_self_data(&now))
-			|| self.additional_frame_builders.iter().any(|h| h.contains_self_data(&now));
+		let contains_data = builders.iter().any(|h| h.contains_self_data(now))
+			|| self.additional_frame_builders.iter().any(|h| h.contains_self_data(now));
 
 		if contains_data {
 			let mut frame = Frame::new(self.next_frame_id);
@@ -145,7 +145,7 @@ impl RelayProtocol {
 
 	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<Frame> {
 		let next_frame_id = self.next_frame_id + 1;
-		match self.retransmitter.get_retransmit_frame(&now, next_frame_id) {
+		match self.retransmitter.get_retransmit_frame(now, next_frame_id) {
 			None => Option::None,
 			Some(frame) => {
 				self.next_frame_id = next_frame_id;

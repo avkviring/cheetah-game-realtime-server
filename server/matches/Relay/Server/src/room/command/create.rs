@@ -15,7 +15,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 				"CreateGameObjectCommand",
 				room,
 				user.id,
-				format!("0 is forbidden for game object id"),
+				"0 is forbidden for game object id".to_string(),
 			);
 			return;
 		}
@@ -118,7 +118,7 @@ mod tests {
 			access_groups: AccessGroups(0b10),
 		};
 
-		command.clone().execute(&mut room, user_id);
+		command.execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 	}
 
@@ -134,7 +134,7 @@ mod tests {
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
-		command.clone().execute(&mut room, user_id);
+		command.execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 	}
 
@@ -152,7 +152,7 @@ mod tests {
 			access_groups: AccessGroups(0b11),
 		};
 
-		command.clone().execute(&mut room, user_id);
+		command.execute(&mut room, user_id);
 		assert!(matches!(room.get_object_mut(&object_id), None));
 	}
 
@@ -162,7 +162,7 @@ mod tests {
 	#[test]
 	fn should_not_replace_exists_object() {
 		let access_groups = AccessGroups(0b11);
-		let (mut room, user_id) = setup(access_groups.clone());
+		let (mut room, user_id) = setup(access_groups);
 		let object = room.create_object(user_id, access_groups);
 		object.template = 777;
 		let object_id = object.id.clone();
@@ -173,7 +173,7 @@ mod tests {
 			access_groups: AccessGroups(0b1000),
 		};
 
-		command.clone().execute(&mut room, user_id);
+		command.execute(&mut room, user_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template == 777));
 	}

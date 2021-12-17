@@ -214,7 +214,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(UserTemplate::stub(access_groups));
 		let object = room.create_object(user_id, access_groups);
-		object.access_groups = access_groups.clone();
+		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id.clone();
 		room.mark_as_connected(user_id);
@@ -328,7 +328,7 @@ mod tests {
 				field_type: FieldType::Long,
 			}),
 			command: S2CCommand::SetLong(SetLongCommand {
-				object_id: object_id.clone(),
+				object_id: object_id,
 				field_id: allow_field_id,
 				value: 100,
 			}),
@@ -396,7 +396,7 @@ mod tests {
 					field_type,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
-					object_id: object_id.clone(),
+					object_id: object_id,
 					field_id: deny_field_id,
 					value: 155,
 				}),

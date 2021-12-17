@@ -40,7 +40,7 @@ impl RedisRefreshTokenStorage {
 		connection
 			.set::<String, String, ()>("test".to_string(), "value".to_string())
 			.unwrap();
-		return Result::Ok(storage);
+		Result::Ok(storage)
 	}
 
 	fn make_key(player: u64) -> String {
@@ -63,7 +63,7 @@ impl RedisRefreshTokenStorage {
 		if len > RedisRefreshTokenStorage::COUNT_DEVICES_PER_USER {
 			connection.del::<&String, usize>(&key).await?;
 		}
-		let result = connection.hincr(&key, device_id, 1 as u64).await?;
+		let result = connection.hincr(&key, device_id, 1_u64).await?;
 
 		connection.expire(&key, self.time_of_life_in_sec as usize).await?;
 
@@ -114,8 +114,8 @@ pub mod tests {
 
 		let player = 123;
 		let device = "device";
-		let version_1 = storage.new_version(player, &device);
-		let version_2 = storage.new_version(player, &device);
+		let version_1 = storage.new_version(player, device);
+		let version_2 = storage.new_version(player, device);
 		let (version_1, version_2) = futures::join!(version_1, version_2);
 		assert_ne!(version_1.unwrap(), version_2.unwrap());
 	}

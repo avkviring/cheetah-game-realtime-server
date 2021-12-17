@@ -90,7 +90,7 @@ impl Frame {
 		frame_cursor.write_variable_u64(self.frame_id).unwrap();
 		self.headers.encode_headers(&mut frame_cursor).unwrap();
 
-		let mut commands_buffer = [0 as u8; 4 * Frame::MAX_FRAME_SIZE];
+		let mut commands_buffer = [0_u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		encode_commands(&self.reliable, &mut commands_cursor).unwrap();
 		encode_commands(&self.unreliable, &mut commands_cursor).unwrap();

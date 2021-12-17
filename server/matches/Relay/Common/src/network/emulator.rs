@@ -181,10 +181,10 @@ mod tests {
 		let mut emulator = NetworkLatencyEmulator::default();
 		let in_buffer = vec![1, 2, 3, 4, 5];
 		let out_buffer = vec![10, 11, 12];
-		emulator.schedule_in(&Instant::now(), &in_buffer.as_slice());
+		emulator.schedule_in(&Instant::now(), in_buffer.as_slice());
 		emulator.schedule_out(
 			&Instant::now(),
-			&out_buffer.as_slice(),
+			out_buffer.as_slice(),
 			SocketAddr::from_str("127.0.0.1:5050").unwrap(),
 		);
 
@@ -268,14 +268,14 @@ mod tests {
 		let mut now = Instant::now();
 		for _ in 0..count {
 			now = now.add(Duration::from_millis(1));
-			emulator.schedule_in(&now, &buffer.as_slice());
+			emulator.schedule_in(&now, buffer.as_slice());
 
-			if let None = emulator.get_in(&now) {
+			if emulator.get_in(&now).is_none() {
 				in_dropped_count += 1;
 			}
 
-			emulator.schedule_out(&now, &buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
-			if let None = emulator.get_out(&now) {
+			emulator.schedule_out(&now, buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+			if emulator.get_out(&now).is_none() {
 				out_dropped_count += 1;
 			}
 		}
@@ -316,10 +316,10 @@ mod tests {
 		let frame_2 = vec![2];
 		let now = Instant::now();
 
-		emulator.schedule_in(&now, &frame_1.as_slice());
-		emulator.schedule_in(&now, &frame_2.as_slice());
-		emulator.schedule_out(&now, &frame_1.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
-		emulator.schedule_out(&now, &frame_2.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_in(&now, frame_1.as_slice());
+		emulator.schedule_in(&now, frame_2.as_slice());
+		emulator.schedule_out(&now, frame_1.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_out(&now, frame_2.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
 		let now = now.add(half_rtt.sub(Duration::from_millis(1)));
 		assert!(matches!(emulator.get_in(&now), None));

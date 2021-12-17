@@ -51,7 +51,7 @@ fn create_manager() -> (Arc<AtomicBool>, Arc<Mutex<RelayManager>>) {
 	let relay_server_binding_address = SocketAddr::from_str("0.0.0.0:5555").unwrap();
 	let relay_server_socket = UdpSocket::bind(relay_server_binding_address).unwrap();
 	let relay_server = RelayManager::new(relay_server_socket);
-	let halt_signal = relay_server.get_halt_signal().clone();
+	let halt_signal = relay_server.get_halt_signal();
 	let server = Arc::new(Mutex::new(relay_server));
 	(halt_signal, server)
 }

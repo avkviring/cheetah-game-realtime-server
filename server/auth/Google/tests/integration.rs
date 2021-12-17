@@ -35,7 +35,7 @@ pub async fn setup(
 	let (handler_cerberus, redis_container) =
 		test_helper::stub_cerberus_grpc_server(internal_cerberus_service_port, external_cerberus_service_port).await;
 
-	let (pools, container) = postgresql::create_psql_databases(&cli, 2).await;
+	let (pools, container) = postgresql::create_psql_databases(cli, 2).await;
 
 	let user_pool = pools[0].clone();
 	cheetah_auth_user::storage::migrate_db(&user_pool).await;

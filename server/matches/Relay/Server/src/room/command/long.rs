@@ -57,7 +57,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 
 impl ServerCommandExecutor for SetLongCommand {
 	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
-		let field_id = self.field_id.clone();
+		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
@@ -80,8 +80,8 @@ impl ServerCommandExecutor for SetLongCommand {
 impl ServerCommandExecutor for CompareAndSetLongCommand {
 	fn execute(self, room: &mut Room, uesr_id: RoomMemberId) {
 		let object_id = self.object_id.clone();
-		let field_id = self.field_id.clone();
-		let reset = self.reset.clone();
+		let field_id = self.field_id;
+		let reset = self.reset;
 
 		let is_set = Rc::new(RefCell::new(false));
 		let is_set_cloned = is_set.clone();
@@ -93,7 +93,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			};
 			if allow {
 				object.longs.insert(self.field_id, self.new);
-				object.compare_and_set_owners.insert(self.field_id, uesr_id.clone());
+				object.compare_and_set_owners.insert(self.field_id, uesr_id);
 				*is_set_cloned.borrow_mut() = true;
 				Option::Some(S2CCommand::SetLong(SetLongCommand {
 					object_id: self.object_id,
@@ -149,7 +149,7 @@ pub fn reset_all_compare_and_set(
 								value: reset,
 							}),
 						}];
-						let groups = object.access_groups.clone();
+						let groups = object.access_groups;
 						let template = object.template;
 						room.send_to_users(groups, template, command.iter(), |_| true)
 					}
@@ -164,12 +164,12 @@ impl GameObject {
 		self.longs.iter().for_each(|(field_id, v)| {
 			commands.push(S2CommandWithFieldInfo {
 				field: Option::Some(FieldIdAndType {
-					field_id: field_id.clone(),
+					field_id: *field_id,
 					field_type: FieldType::Long,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
 					object_id: self.id.clone(),
-					field_id: field_id.clone(),
+					field_id: *field_id,
 					value: *v,
 				}),
 			});
@@ -223,7 +223,7 @@ mod tests {
 			increment: 100,
 		};
 		command.clone().execute(&mut room, user);
-		command.clone().execute(&mut room, user);
+		command.execute(&mut room, user);
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.longs.get(&10).unwrap(), 200);
@@ -243,7 +243,7 @@ mod tests {
 		let (mut room, user, object_id) = setup();
 		room.out_commands.clear();
 		let command = IncrementLongC2SCommand {
-			object_id: object_id.clone(),
+			object_id: object_id,
 			field_id: 10,
 			increment: i64::MAX,
 		};
@@ -282,7 +282,7 @@ mod tests {
 			new: 200,
 			reset: 0,
 		};
-		command2.clone().execute(&mut room, user1_id);
+		command2.execute(&mut room, user1_id);
 		assert_eq!(
 			*room
 				.get_object_mut(&object_id)
@@ -318,7 +318,7 @@ mod tests {
 	fn test_compare_and_set_1() {
 		let (mut room, user1_id, _, object_id, field_id) = setup_for_compare_and_set();
 		let command = CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id: object_id,
 			field_id,
 			current: 0,
 			new: 100,
@@ -427,9 +427,9 @@ mod tests {
 			}],
 		});
 		let mut room = Room::from_template(template);
-		let user1_id = room.register_user(user_template_1.clone());
-		let user2_id = room.register_user(user_template_2.clone());
-		let user3_id = room.register_user(user_template_3.clone());
+		let user1_id = room.register_user(user_template_1);
+		let user2_id = room.register_user(user_template_2);
+		let user3_id = room.register_user(user_template_3);
 		let object = room.create_object(user3_id, access_group);
 		object.created = true;
 		object.template = object_template;

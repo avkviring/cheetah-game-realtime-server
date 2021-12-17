@@ -87,7 +87,7 @@ impl InCommandsCollector {
 			let buffer = self
 				.sequence_commands
 				.entry(channel_key)
-				.or_insert_with(|| BinaryHeap::default());
+				.or_insert_with(BinaryHeap::default);
 			buffer.push(SequenceApplicationCommand { sequence, command });
 		}
 	}
@@ -121,7 +121,7 @@ impl PartialEq for SequenceApplicationCommand {
 
 impl PartialOrd for SequenceApplicationCommand {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		Option::Some(self.cmp(&other))
+		Option::Some(self.cmp(other))
 	}
 }
 
@@ -189,7 +189,7 @@ mod tests {
 		frame1.reliable.push_back(command_1.clone());
 
 		let mut frame2 = Frame::new(2);
-		frame2.reliable.push_back(command_2.clone());
+		frame2.reliable.push_back(command_2);
 
 		let mut frame3 = Frame::new(3);
 		frame3.reliable.push_back(command_3.clone());
@@ -235,7 +235,7 @@ mod tests {
 		frame1.reliable.push_back(command_1.clone());
 
 		let mut frame2 = Frame::new(2);
-		frame2.reliable.push_back(command_2.clone());
+		frame2.reliable.push_back(command_2);
 
 		let mut frame3 = Frame::new(3);
 		frame3.reliable.push_back(command_3.clone());
@@ -266,8 +266,8 @@ mod tests {
 		frame1.reliable.push_back(command_2_a.clone());
 
 		let mut frame2 = Frame::new(2);
-		frame2.reliable.push_back(command_1_b.clone());
-		frame2.reliable.push_back(command_2_b.clone());
+		frame2.reliable.push_back(command_1_b);
+		frame2.reliable.push_back(command_2_b);
 
 		let mut frame3 = Frame::new(3);
 		frame3.reliable.push_back(command_1_c.clone());

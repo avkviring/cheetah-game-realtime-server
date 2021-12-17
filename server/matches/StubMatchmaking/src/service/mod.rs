@@ -328,7 +328,7 @@ pub mod tests {
 		) -> Result<tonic::Response<AttachUserResponse>, tonic::Status> {
 			let mut fail = self.fail_when_zero.write().await;
 			let current = *fail;
-			*fail = *fail - 1;
+			*fail -= 1;
 			if current == 0 {
 				Result::Err(Status::not_found(""))
 			} else {

@@ -47,8 +47,8 @@ impl GameObject {
 			field: Option::None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id.clone(),
-				template: self.template.clone(),
-				access_groups: self.access_groups.clone(),
+				template: self.template,
+				access_groups: self.access_groups,
 			}),
 		});
 

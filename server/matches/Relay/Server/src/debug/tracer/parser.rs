@@ -196,7 +196,7 @@ fn to_id(value: String) -> Result<u64, ParseError> {
 /// Получить имя поля, а также операцию и урезанную исходную строку
 ///
 fn get_field(query: String) -> Result<(String, Op, String), ParseError> {
-	let eq_index = query.find("=");
+	let eq_index = query.find('=');
 	let not_index = query.find("!=");
 	if eq_index.is_none() && not_index.is_none() {
 		Result::Err(ParseError::UnknownOperation(query))

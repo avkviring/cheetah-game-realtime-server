@@ -31,15 +31,15 @@ impl ServerCommandExecutor for SetStructureCommand {
 impl GameObject {
 	pub fn structures_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
 		self.structures.iter().for_each(|(field_id, v)| {
-			let structure = CommandBuffer::from_slice(&v.as_slice()).unwrap();
+			let structure = CommandBuffer::from_slice(v.as_slice()).unwrap();
 			commands.push(S2CommandWithFieldInfo {
 				field: Option::Some(FieldIdAndType {
-					field_id: field_id.clone(),
+					field_id: *field_id,
 					field_type: FieldType::Structure,
 				}),
 				command: S2CCommand::SetStructure(SetStructureCommand {
 					object_id: self.id.clone(),
-					field_id: field_id.clone(),
+					field_id: *field_id,
 					structure,
 				}),
 			});

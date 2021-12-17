@@ -10,7 +10,7 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 		let _permission_manager = room.permission_manager.clone();
 		if let Some(object) = room.get_object_mut(&self.object_id) {
 			if !object.created {
-				let groups = object.access_groups.clone();
+				let groups = object.access_groups;
 				object.created = true;
 				// объект полностью загружен - теперь его надо загрузить остальным клиентам
 				let mut commands = Vec::new();

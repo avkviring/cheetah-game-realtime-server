@@ -116,7 +116,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 			&EncodingKey::from_ec_pem(PRIVATE_KEY.as_bytes()).unwrap(),
 		)
 		.unwrap();
-		let parts: Vec<_> = token.split(".").collect();
+		let parts: Vec<_> = token.split('.').collect();
 		let token = format!("{}.{}", parts.get(1).unwrap(), parts.get(2).unwrap());
 
 		let mut metadata = MetadataMap::new();

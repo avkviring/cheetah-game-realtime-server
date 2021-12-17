@@ -73,10 +73,10 @@ impl FrameBuilder for AckSender {
 
 	fn build_frame(&mut self, frame: &mut Frame, _now: &Instant) {
 		if self.send_ack_counter > 0 {
-			self.send_ack_counter = self.send_ack_counter - 1;
+			self.send_ack_counter -= 1;
 		}
-		let mut frames = self.frames.clone();
-		frames.sort();
+		let mut frames = self.frames;
+		frames.sort_unstable();
 
 		let mut current_header: Option<AckHeader> = Option::None;
 		for i in 0..frames.len() {

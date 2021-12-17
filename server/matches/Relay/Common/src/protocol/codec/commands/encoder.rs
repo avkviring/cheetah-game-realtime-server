@@ -16,7 +16,7 @@ pub fn encode_commands(commands: &VecDeque<CommandWithChannel>, out: &mut Cursor
 	let mut context = CommandContext::default();
 	for command in commands {
 		let (object_id, field_id, command_type_id, creator) = get_command_info(command);
-		let (channel_type_id, channel_group) = get_channel_info(&command);
+		let (channel_type_id, channel_group) = get_channel_info(command);
 		context.write_next(
 			object_id,
 			field_id,

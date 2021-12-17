@@ -59,7 +59,7 @@ impl NetworkChannel {
 	pub fn cycle(&mut self, now: &Instant) {
 		if let Some(emulator) = self.emulator.as_mut() {
 			while let Some((buffer, addr)) = emulator.get_out(now) {
-				match self.socket.send_to(&buffer.as_slice(), addr) {
+				match self.socket.send_to(buffer.as_slice(), addr) {
 					Ok(_) => {}
 					Err(e) => {
 						log::error!("[NetworkChannel] emulate mode, send to socket error {:?}", e)
@@ -74,7 +74,7 @@ impl NetworkChannel {
 	///
 	pub fn config_emulator<T>(&mut self, f: T)
 	where
-		T: FnOnce(&mut NetworkLatencyEmulator) -> (),
+		T: FnOnce(&mut NetworkLatencyEmulator),
 	{
 		if self.emulator.is_none() {
 			self.emulator.replace(NetworkLatencyEmulator::default());
@@ -113,7 +113,7 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(&now, &send_data.as_slice(), channel_b.socket.local_addr().unwrap().clone())
+			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
@@ -141,7 +141,7 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(&now, &send_data.as_slice(), channel_b.socket.local_addr().unwrap().clone())
+			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 
 		// данных нет - так как включен эмулятор лага

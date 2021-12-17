@@ -68,9 +68,9 @@ mod tests {
 
 		let object_id = GameObjectId::new(100, GameObjectOwner::User(user_id));
 		let command = DeleteGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id: object_id,
 		};
-		command.clone().execute(&mut room, user_id);
+		command.execute(&mut room, user_id);
 	}
 
 	#[test]
@@ -87,7 +87,7 @@ mod tests {
 			object_id: object_id.clone(),
 		};
 
-		command.clone().execute(&mut room, user_b);
+		command.execute(&mut room, user_b);
 
 		assert!(matches!(room.get_object_mut(&object_id), Some(_)));
 		assert!(matches!(room.out_commands.pop_back(), None));

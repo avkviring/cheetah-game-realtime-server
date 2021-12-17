@@ -57,7 +57,7 @@ impl Rooms {
 		let mut data: [FrameId; 30_000] = [0; 30_000];
 		let mut index = 0;
 		self.changed_rooms.iter().for_each(|room_id| {
-			data[index] = room_id.clone();
+			data[index] = *room_id;
 			index += 1;
 		});
 		self.changed_rooms.clear();

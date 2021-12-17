@@ -41,19 +41,19 @@ impl PermissionManager {
 		};
 
 		for template in &permission.templates {
-			if template.rules.iter().find(|t| t.permission > Permission::Ro).is_some() {
+			if template.rules.iter().any(|t| t.permission > Permission::Ro) {
 				result.write_access_template.insert(template.template);
 			}
-			result.templates.insert(template.template.clone(), template.rules.clone());
+			result.templates.insert(template.template, template.rules.clone());
 
 			for field in &template.fields {
 				let key = PermissionFieldKey {
 					template: template.template,
 					field_id: field.id,
-					field_type: field.field_type.clone(),
+					field_type: field.field_type,
 				};
 
-				if field.rules.iter().find(|t| t.permission > Permission::Ro).is_some() {
+				if field.rules.iter().any(|t| t.permission > Permission::Ro) {
 					result.write_access_fields.insert(key.clone());
 				}
 

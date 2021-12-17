@@ -100,11 +100,11 @@ mod tests {
 
 	impl UserTemplate {
 		pub fn stub(access_group: AccessGroups) -> Self {
-			return UserTemplate {
+			UserTemplate {
 				private_key: [5; 32],
 				groups: access_group,
 				objects: Default::default(),
-			};
+			}
 		}
 
 		pub fn configure_object(
@@ -151,7 +151,7 @@ mod tests {
 			let permission_field = match template_permission.fields.iter_mut().find(|f| f.id == *field_id) {
 				None => {
 					let permission_field = PermissionField {
-						id: field_id.clone(),
+						id: *field_id,
 						field_type,
 						rules: vec![],
 					};
@@ -162,7 +162,7 @@ mod tests {
 			};
 
 			permission_field.rules.push(GroupsPermissionRule {
-				groups: access_group.clone(),
+				groups: *access_group,
 				permission,
 			});
 		}

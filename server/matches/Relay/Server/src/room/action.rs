@@ -41,10 +41,10 @@ impl Room {
 				log::error!("[room({})] user({}) not found", self.id, command_owner_user);
 				return;
 			}
-			Some(user) => user.template.groups.clone(),
+			Some(user) => user.template.groups,
 		};
 
-		if let Some(object) = self.get_object_mut(&game_object_id) {
+		if let Some(object) = self.get_object_mut(game_object_id) {
 			// проверяем группу доступа
 			if !object.access_groups.contains_any(&current_user_access_group) {
 				log::error!(
@@ -88,7 +88,7 @@ impl Room {
 			let command = action(object);
 			// отправляем команду только для созданного объекта
 			if object.created {
-				let groups = object.access_groups.clone();
+				let groups = object.access_groups;
 				let template = object.template;
 
 				if let Some(command) = command {

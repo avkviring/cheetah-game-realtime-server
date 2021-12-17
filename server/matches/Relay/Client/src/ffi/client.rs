@@ -100,7 +100,7 @@ pub fn do_create_client(
 	out_client_id: &mut u16,
 ) -> bool {
 	execute(
-		|api| match api.create_client(server_address, member_id, room_id, user_private_key.clone(), start_frame_id) {
+		|api| match api.create_client(server_address, member_id, room_id, *user_private_key, start_frame_id) {
 			Ok(client_id) => {
 				*out_client_id = client_id;
 				true

@@ -99,7 +99,7 @@ impl RelayManager {
 		self.sender.send(ManagementTask::GetRooms(sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(rooms) => Result::Ok(rooms),
-			Err(e) => Result::Err(format!("{:?}", e).to_string()),
+			Err(e) => Result::Err(format!("{:?}", e)),
 		}
 	}
 
@@ -191,9 +191,9 @@ impl RelayManager {
 		match self.sender.send(ManagementTask::Dump(room_id, sender)) {
 			Ok(_) => match receiver.recv() {
 				Ok(result) => result,
-				Err(e) => Result::Err(format!("{:?}", e).to_string()),
+				Err(e) => Result::Err(format!("{:?}", e)),
 			},
-			Err(e) => Result::Err(format!("{:?}", e).to_string()),
+			Err(e) => Result::Err(format!("{:?}", e)),
 		}
 	}
 }

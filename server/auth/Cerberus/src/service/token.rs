@@ -77,7 +77,7 @@ impl JWTTokensService {
 		let token = encode(
 			&Header::new(Algorithm::ES256),
 			&claims,
-			&EncodingKey::from_ec_pem(&self.private_key.as_bytes()).unwrap(),
+			&EncodingKey::from_ec_pem(self.private_key.as_bytes()).unwrap(),
 		)
 		.unwrap();
 		Result::Ok(JWTTokensService::remove_head(token))
@@ -93,7 +93,7 @@ impl JWTTokensService {
 		let token = encode(
 			&Header::new(Algorithm::ES256),
 			&claims,
-			&EncodingKey::from_ec_pem(&self.private_key.as_bytes()).unwrap(),
+			&EncodingKey::from_ec_pem(self.private_key.as_bytes()).unwrap(),
 		)
 		.unwrap();
 		JWTTokensService::remove_head(token)
@@ -107,7 +107,7 @@ impl JWTTokensService {
 	}
 
 	fn remove_head(token: String) -> String {
-		let collect: Vec<_> = token.split(".").collect();
+		let collect: Vec<_> = token.split('.').collect();
 		format!("{}.{}", collect[1], collect[2])
 	}
 

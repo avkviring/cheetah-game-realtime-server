@@ -9,7 +9,7 @@ use cheetah_microservice::jwt::JWTTokenParser;
 async fn should_refresh_token_different_for_players() {
 	let (_node, service) = test_helper::stub_token_service(1, 100);
 	let tokens_for_player_a = service.create(123u64, "some-devicea-id".to_string()).await.unwrap();
-	let tokens_for_player_b = service.create(124 as u64, "some-deviceb-id".to_string()).await.unwrap();
+	let tokens_for_player_b = service.create(124_u64, "some-deviceb-id".to_string()).await.unwrap();
 	assert_ne!(tokens_for_player_a.refresh, tokens_for_player_b.refresh)
 }
 

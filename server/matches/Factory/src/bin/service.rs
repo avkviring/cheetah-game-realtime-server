@@ -35,7 +35,7 @@ fn create_admin_grpc_server(configurations: &Configurations) -> impl Future<Outp
 fn create_internal_grpc_server(configurations: &Configurations) -> impl Future<Output = Result<(), Error>> {
 	let registry_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
 	let registry = RegistryClient::new(registry_url).unwrap();
-	let service = FactoryService::new(registry, &configurations).unwrap();
+	let service = FactoryService::new(registry, configurations).unwrap();
 	Server::builder()
 		.add_service(FactoryServer::new(service))
 		.serve(cheetah_microservice::get_internal_service_binding_addr())

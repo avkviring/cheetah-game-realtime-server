@@ -135,7 +135,7 @@ impl Session {
 		match &self.filter {
 			None => self.filtered_commands.push_back(collected_command.clone()),
 			Some(filter) => {
-				if filter.filter(&collected_command) {
+				if filter.filter(collected_command) {
 					self.filtered_commands.push_back(collected_command.clone())
 				}
 			}
@@ -188,7 +188,7 @@ impl CommandTracerSessions {
 					}
 				}
 			}
-			Err(e) => Result::Err(CommandTracerSessionsError::QueryError(format!("{:?}", e).to_string())),
+			Err(e) => Result::Err(CommandTracerSessionsError::QueryError(format!("{:?}", e))),
 		}
 	}
 
@@ -216,7 +216,7 @@ impl CommandTracerSessions {
 								log::error!("CommandTracer: template not found for {:?}", command);
 								None
 							}
-							Some(object) => Some(object.template.clone()),
+							Some(object) => Some(object.template),
 						},
 						Some(template) => Some(template),
 					};
@@ -395,7 +395,7 @@ pub mod tests {
 		let session_id = tracer.create_session();
 		tracer.collect_c2s(&Default::default(), 50, &C2SCommand::AttachToRoom);
 		for _i in 0..Session::BUFFER_LIMIT {
-			tracer.collect_c2s(&Default::default(), 1000 as RoomMemberId, &C2SCommand::AttachToRoom);
+			tracer.collect_c2s(&Default::default(), 1000_u16, &C2SCommand::AttachToRoom);
 		}
 		tracer.collect_c2s(&Default::default(), 55, &C2SCommand::AttachToRoom);
 
