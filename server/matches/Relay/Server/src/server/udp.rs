@@ -123,7 +123,7 @@ impl UDPServer {
 				let sessions_cloned = self.sessions.clone();
 				match ident_header {
 					None => {
-						log::error!("[network] user public key not found");
+						log::error!("[network] MemberAndRoomId header not found {:?}", headers);
 					}
 					Some(user_and_room_id) => {
 						let mut readed_frame = Option::None;

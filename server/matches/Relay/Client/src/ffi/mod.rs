@@ -1,4 +1,6 @@
-use std::cell::RefCell;
+use std::sync::Mutex;
+
+use lazy_static::lazy_static;
 
 use cheetah_matches_relay_common::commands::CommandBuffer;
 use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -13,18 +15,17 @@ pub mod client;
 pub mod command;
 pub mod logs;
 
-thread_local! {
-	static REGISTRY: RefCell<Registry> = RefCell::new(Default::default());
+lazy_static! {
+	static ref REGISTRY: Mutex<Registry> = Mutex::new(Default::default());
 }
 
 pub fn execute<F, T>(body: F) -> T
 where
 	F: FnOnce(&mut Registry) -> T,
 {
-	REGISTRY.with(|f| {
-		let mut ref_mut = f.borrow_mut();
-		body(&mut ref_mut)
-	})
+	let mut lock = REGISTRY.lock();
+	let mut registry = lock.as_mut().unwrap();
+	body(&mut registry)
 }
 
 pub fn execute_with_client<F, R>(client_id: ClientId, action: F) -> Result<R, ()>
