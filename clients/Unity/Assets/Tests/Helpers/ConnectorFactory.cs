@@ -1,9 +1,10 @@
 using System.Threading.Tasks;
 using Cheetah.Platform;
-using Cheetah.Platform.Editor.LocalServer.Applications;
+#if UNITY_EDITOR
 using Cheetah.Platform.Editor.LocalServer.CheetahRegistry;
+using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Runner;
-using UnityEngine;
+#endif
 
 namespace Tests.Helpers
 {
@@ -12,18 +13,16 @@ namespace Tests.Helpers
     /// - если в интеграционных тестах не задан адрес сервера - то запускаем локальный сервер
     /// - обязательно вызывать connector.Shutdown() в конце теста, иначе Unity не сможет выйти после теста
     /// </summary>
-    public class ConnectorFactory : IDockerProgressListener
+    public class ConnectorFactory
     {
         public ClusterConnector ClusterConnector { get; private set; }
 
         public void SetProgressTitle(string title)
         {
-            
         }
 
         public void SetProgress(int percent)
         {
-            
         }
 
         public async Task Connect()
@@ -31,8 +30,10 @@ namespace Tests.Helpers
             var testConfiguration = IntegrationTestConfigurator.Load();
             if (testConfiguration == null)
             {
+#if UNITY_EDITOR
                 PlatformApplication.ImageVersion = null;
                 ClusterConnector = CreateLocalConnector();
+#endif
             }
             else
             {
@@ -42,14 +43,17 @@ namespace Tests.Helpers
                 }
                 else
                 {
+#if UNITY_EDITOR
                     PlatformApplication.ImageVersion = testConfiguration.ServerImageVersion;
                     var dockerRunner = new DockerServerRunner(CheetahRegistrySettingsFromConfig.Load());
                     await dockerRunner.DeterminationState();
                     if (dockerRunner.Status != Status.Started)
                     {
-                        await dockerRunner.Restart(this);
+                        await dockerRunner.Restart(new StubDockerProgressListener());
                     }
+
                     ClusterConnector = CreateLocalConnector();
+#endif
                 }
             }
         }
@@ -60,3 +64,16 @@ namespace Tests.Helpers
         }
     }
 }
+
+#if UNITY_EDITOR
+class StubDockerProgressListener : IDockerProgressListener
+{
+    public void SetProgressTitle(string title)
+    {
+    }
+
+    public void SetProgress(int percent)
+    {
+    }
+}
+#endif

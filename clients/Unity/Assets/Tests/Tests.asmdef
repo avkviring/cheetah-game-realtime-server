@@ -11,8 +11,6 @@
         "games.cheetah.matches.matchmaking",
         "Shared"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
