@@ -55,7 +55,7 @@ namespace Tests
             clientB.AttachToRoom();
             
             // полуаем сетевые команды, которые не надо учитывать в тестах
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             clientA.Update();
             clientB.Update();
             
@@ -76,7 +76,7 @@ namespace Tests
             };
             createdObject.SendEvent(DropMineEventId, ref dropMineEvent);
             // ждем отправки команды
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -101,7 +101,7 @@ namespace Tests
             // слушаем события 
             var eventCollectorA = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientA, createdObject.ObjectId,DropMineEventId);
             // ждем отправки команды
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             // прием команды
             clientB.Update();
 
@@ -114,7 +114,7 @@ namespace Tests
             incomeEvent.cheetahObject.SendEvent(DropMineEventId, ref dropMineEvent);
             
             // ждем отправки команды
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             // прием команды
             clientA.Update();
             // проверяем результат
@@ -139,7 +139,7 @@ namespace Tests
             };
             createdObject.SendEvent(DropMineEventId, memberB, ref dropMineEvent);
             // ждем отправки команды
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -164,7 +164,7 @@ namespace Tests
             };
             createdObject.SetStructure(TurretsParamsFieldId, ref turretsParams);
             // ждем отправки команды
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -186,7 +186,7 @@ namespace Tests
             // изменяем значение
             createdObject.SetLong(HealFieldId, 7799);
             // ждем отправки команды
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -207,7 +207,7 @@ namespace Tests
             // изменяем значение
             createdObject.SetDouble(HealFieldId, 77.99);
             // ждем отправки команды
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(1);
             // прием команды
             clientB.Update();
             // проверяем результат
