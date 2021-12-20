@@ -493,6 +493,7 @@ dependencies = [
  "tokio-stream",
  "tonic 0.6.1",
  "tonic-build",
+ "tonic-web",
  "tower",
 ]
 
@@ -538,6 +539,7 @@ dependencies = [
  "tokio-stream",
  "tonic 0.6.1",
  "tonic-build",
+ "tonic-web",
  "tower",
 ]
 
@@ -578,6 +580,7 @@ dependencies = [
  "tokio-stream",
  "tonic 0.6.1",
  "tonic-build",
+ "tonic-web",
 ]
 
 [[package]]
@@ -624,6 +627,7 @@ dependencies = [
  "tokio-stream",
  "tonic 0.6.1",
  "tonic-build",
+ "tonic-web",
 ]
 
 [[package]]

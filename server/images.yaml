@@ -8,48 +8,48 @@
 #
 version: "3.1"
 services:
-#  cheetah-auth-cerberus:
-#    image: docker.registry.cheetah.games/cheetah-auth-cerberus:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/auth/Cerberus/Dockerfile
-#  cheetah-auth-user:
-#    image: docker.registry.cheetah.games/cheetah-auth-user:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/auth/User/Dockerfile
-#  cheetah-auth-cookie:
-#    image: docker.registry.cheetah.games/cheetah-auth-cookie:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/auth/Cookie/Dockerfile
-#  cheetah-auth-google:
-#    image: docker.registry.cheetah.games/cheetah-auth-google:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/auth/Google/Dockerfile
-#  cheetah-matches-relay:
-#    image: docker.registry.cheetah.games/cheetah-matches-relay:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/matches/Relay/Dockerfile
-#  cheetah-matches-factory:
-#    image: docker.registry.cheetah.games/cheetah-matches-factory:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/matches/Factory/Dockerfile
+  cheetah-auth-cerberus:
+    image: docker.registry.cheetah.games/cheetah-auth-cerberus:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/auth/Cerberus/Dockerfile
+  cheetah-auth-user:
+    image: docker.registry.cheetah.games/cheetah-auth-user:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/auth/User/Dockerfile
+  cheetah-auth-cookie:
+    image: docker.registry.cheetah.games/cheetah-auth-cookie:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/auth/Cookie/Dockerfile
+  cheetah-auth-google:
+    image: docker.registry.cheetah.games/cheetah-auth-google:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/auth/Google/Dockerfile
+  cheetah-matches-relay:
+    image: docker.registry.cheetah.games/cheetah-matches-relay:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/Relay/Dockerfile
+  cheetah-matches-factory:
+    image: docker.registry.cheetah.games/cheetah-matches-factory:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/Factory/Dockerfile
   cheetah-matches-stub-making:
     image: docker.registry.cheetah.games/cheetah-matches-stub-matchmaking:${PLATFORM_VERSION}
     build:
       context: ../
       dockerfile: server/matches/StubMatchmaking/Dockerfile
-#  cheetah-matches-stub-registry:
-#    image: docker.registry.cheetah.games/cheetah-matches-stub-registry:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/matches/StubRegistry/Dockerfile
-#  cheetah-matches-registry:
-#    image: docker.registry.cheetah.games/cheetah-matches-registry:${PLATFORM_VERSION}
-#    build:
-#      context: ../
-#      dockerfile: server/matches/Registry/Dockerfile
+  cheetah-matches-stub-registry:
+    image: docker.registry.cheetah.games/cheetah-matches-stub-registry:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/StubRegistry/Dockerfile
+  cheetah-matches-registry:
+    image: docker.registry.cheetah.games/cheetah-matches-registry:${PLATFORM_VERSION}
+    build:
+      context: ../
+      dockerfile: server/matches/Registry/Dockerfile

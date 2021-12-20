@@ -40,9 +40,10 @@ fn create_admin_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future<Ou
 	let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
 	let address = cheetah_microservice::get_admin_service_binding_addr();
 	Server::builder()
-		.add_service(dumper)
-		.add_service(relay)
-		.add_service(tracer)
+		.accept_http1(true)
+		.add_service(tonic_web::enable(dumper))
+		.add_service(tonic_web::enable(relay))
+		.add_service(tonic_web::enable(tracer))
 		.serve(address)
 }
 

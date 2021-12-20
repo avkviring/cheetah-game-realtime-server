@@ -32,8 +32,10 @@ pub async fn run_grpc_server(
 	let users = user::Client::new(user_url);
 	let jwt = JWTTokenParser::new(public_jwt_key.into());
 
+	let grpc_service = Service::new(pool, cerberus, users, parser, jwt).grpc_service();
 	Server::builder()
-		.add_service(Service::new(pool, cerberus, users, parser, jwt).server())
+		.accept_http1(true)
+		.add_service(tonic_web::enable(grpc_service))
 		.serve(format!("0.0.0.0:{}", service_port).parse().unwrap())
 		.await
 		.unwrap();
@@ -69,7 +71,7 @@ impl Service {
 		}
 	}
 
-	pub fn server(self) -> google_server::GoogleServer<Self> {
+	pub fn grpc_service(self) -> google_server::GoogleServer<Self> {
 		google_server::GoogleServer::new(self)
 	}
 

@@ -27,9 +27,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn create_admin_grpc_server(configurations: &Configurations) -> impl Future<Output = Result<(), Error>> {
 	let service = ConfigurationsService::new(configurations);
-	let server = ConfigurationsServer::new(service);
+	let grpc_service = ConfigurationsServer::new(service);
 	Server::builder()
-		.add_service(server)
+		.accept_http1(true)
+		.add_service(tonic_web::enable(grpc_service))
 		.serve(cheetah_microservice::get_admin_service_binding_addr())
 }
 fn create_internal_grpc_server(configurations: &Configurations) -> impl Future<Output = Result<(), Error>> {

@@ -71,5 +71,8 @@ fn setup_external(
 		redis_auth,
 	));
 
-	Server::builder().add_service(external_service).serve(external_addr)
+	Server::builder()
+		.accept_http1(true)
+		.add_service(tonic_web::enable(external_service))
+		.serve(external_addr)
 }
