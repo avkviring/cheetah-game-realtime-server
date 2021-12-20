@@ -9,8 +9,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let factory_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_FACTORY");
 	let jwt_public_key = cheetah_microservice::get_env("JWT_PUBLIC_KEY");
 	let service = StubMatchmakingService::new(factory_url, jwt_public_key);
+	let grpc_service = matchmaking::external::matchmaking_server::MatchmakingServer::new(service);
 	Server::builder()
-		.add_service(matchmaking::external::matchmaking_server::MatchmakingServer::new(service))
+		.accept_http1(true)
+		.add_service(tonic_web::enable(grpc_service))
 		.serve(cheetah_microservice::get_external_service_binding_addr())
 		.await
 		.unwrap();

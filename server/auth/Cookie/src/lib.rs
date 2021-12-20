@@ -29,8 +29,10 @@ pub async fn run_grpc_server(
 	let cerberus = cerberus::Client::new(cerberus_internal_service);
 	let user_client = user::Client::new(user_internal_service);
 
+	let service = Service::new(pool.clone(), cerberus.clone(), user_client.clone()).grpc_service();
 	Server::builder()
-		.add_service(Service::new(pool.clone(), cerberus.clone(), user_client.clone()).server())
+		.accept_http1(true)
+		.add_service(tonic_web::enable(service))
 		.serve(binding_address)
 		.await
 		.unwrap();
@@ -51,7 +53,7 @@ impl Service {
 		}
 	}
 
-	pub fn server(self) -> external::cookie_server::CookieServer<Self> {
+	pub fn grpc_service(self) -> external::cookie_server::CookieServer<Self> {
 		external::cookie_server::CookieServer::new(self)
 	}
 }
