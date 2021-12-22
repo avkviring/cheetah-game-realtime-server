@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, AtomicU64};
@@ -65,7 +66,8 @@ impl Registry {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
 		let client = Client::new(
-			SocketAddr::from_str(server_address.as_str()).unwrap(),
+			SocketAddr::from_str(server_address.as_str())
+				.map_err(|e| std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{:?}", e)))?,
 			member_id,
 			room_id,
 			user_private_key,
