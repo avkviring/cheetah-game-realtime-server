@@ -5,8 +5,11 @@ use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::helpers::helper::*;
-use crate::helpers::server::*;
+use crate::helpers::helper::setup;
+use crate::helpers::server::IntegrationTestServerBuilder;
+use lazy_static::lazy_static;
+
+pub mod helpers;
 
 #[test]
 fn test() {

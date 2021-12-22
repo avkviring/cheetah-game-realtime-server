@@ -1,12 +1,16 @@
 use std::sync::Mutex;
 
+use lazy_static::lazy_static;
+
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::helpers::helper::*;
-use crate::helpers::server::*;
+use crate::helpers::helper::setup;
+use crate::helpers::server::IntegrationTestServerBuilder;
+
+pub mod helpers;
 
 ///
 /// Тест на создание/удаление объекта

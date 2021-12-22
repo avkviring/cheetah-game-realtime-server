@@ -1,12 +1,13 @@
 use std::thread;
 use std::time::Duration;
 
-use cheetah_matches_relay_client::ffi::{execute_with_client, BufferFFI};
+use crate::helpers::helper::IntegrationTestHelper;
+use crate::helpers::server::IntegrationTestServerBuilder;
+use cheetah_matches_relay_client::ffi::execute_with_client;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::protocol::disconnect::watcher::DisconnectWatcher;
 
-use crate::helpers::helper::*;
-use crate::helpers::server::*;
+pub mod helpers;
 
 #[test]
 fn should_connect_to_server() {
