@@ -13,9 +13,9 @@ pub struct NetworkChannel {
 }
 
 impl NetworkChannel {
-	pub fn new() -> Result<Self, ()> {
+	pub fn new() -> io::Result<Self> {
 		let socket = bind_to_free_socket()?.0;
-		socket.set_nonblocking(true).map_err(|_| ())?;
+		socket.set_nonblocking(true)?;
 		Result::Ok(Self { socket, emulator: None })
 	}
 

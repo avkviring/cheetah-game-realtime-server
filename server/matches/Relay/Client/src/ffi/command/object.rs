@@ -10,26 +10,32 @@ use crate::registry::ClientId;
 pub extern "C" fn set_create_object_listener(
 	client_id: ClientId,
 	listener: extern "C" fn(&GameObjectIdFFI, template: u16),
-) -> bool {
-	execute_with_client(client_id, |client| client.listener_create_object = Option::Some(listener)).is_ok()
-}
-
-#[no_mangle]
-pub extern "C" fn set_created_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI)) -> bool {
-	execute_with_client(client_id, |client| client.listener_created_object = Option::Some(listener)).is_ok()
-}
-
-#[no_mangle]
-pub extern "C" fn create_object(client_id: ClientId, template: u16, access_group: u64, result: &mut GameObjectIdFFI) -> bool {
+) -> u8 {
 	execute_with_client(client_id, |client| {
-		let game_object_id = client.create_game_object(template, access_group);
-		*result = game_object_id;
+		client.listener_create_object = Some(listener);
+		Ok(())
 	})
-	.is_ok()
 }
 
 #[no_mangle]
-pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectIdFFI) -> bool {
+pub extern "C" fn set_created_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI)) -> u8 {
+	execute_with_client(client_id, |client| {
+		client.listener_created_object = Some(listener);
+		Ok(())
+	})
+}
+
+#[no_mangle]
+pub extern "C" fn create_object(client_id: ClientId, template: u16, access_group: u64, result: &mut GameObjectIdFFI) -> u8 {
+	execute_with_client(client_id, |client| {
+		let game_object_id = client.create_game_object(template, access_group)?;
+		*result = game_object_id;
+		Ok(())
+	})
+}
+
+#[no_mangle]
+pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectIdFFI) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::Created(CreatedGameObjectCommand {
@@ -39,12 +45,15 @@ pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectIdFF
 }
 
 #[no_mangle]
-pub extern "C" fn set_delete_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI)) -> bool {
-	execute_with_client(client_id, |client| client.listener_delete_object = Option::Some(listener)).is_ok()
+pub extern "C" fn set_delete_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI)) -> u8 {
+	execute_with_client(client_id, |client| {
+		client.listener_delete_object = Some(listener);
+		Ok(())
+	})
 }
 
 #[no_mangle]
-pub extern "C" fn delete_object(client_id: ClientId, object_id: &GameObjectIdFFI) -> bool {
+pub extern "C" fn delete_object(client_id: ClientId, object_id: &GameObjectIdFFI) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::Delete(DeleteGameObjectCommand {

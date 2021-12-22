@@ -644,6 +644,7 @@ dependencies = [
  "log",
  "rand",
  "stderrlog",
+ "thiserror",
  "widestring",
 ]
 

@@ -11,12 +11,12 @@ use crate::registry::ClientId;
 pub extern "C" fn set_event_listener(
 	client_id: ClientId,
 	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI),
-) -> bool {
-	execute_with_client(client_id, |client| client.register_event_listener(listener)).is_ok()
+) -> u8 {
+	execute_with_client(client_id, |client| Ok(client.listener_event = Some(listener)))
 }
 
 #[no_mangle]
-pub extern "C" fn send_event(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, event: &BufferFFI) -> bool {
+pub extern "C" fn send_event(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, event: &BufferFFI) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::Event(EventCommand {
@@ -34,7 +34,7 @@ pub extern "C" fn send_target_event(
 	object_id: &GameObjectIdFFI,
 	field_id: FieldId,
 	event: &BufferFFI,
-) -> bool {
+) -> u8 {
 	let event_command = EventCommand {
 		object_id: From::from(object_id),
 		field_id,

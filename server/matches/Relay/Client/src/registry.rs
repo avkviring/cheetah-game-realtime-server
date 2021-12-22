@@ -55,7 +55,7 @@ impl Registry {
 		room_id: RoomId,
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
-	) -> Result<ClientId, ()> {
+	) -> std::io::Result<ClientId> {
 		let start_frame_id = Arc::new(AtomicU64::new(start_frame_id));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
 		let state_cloned = state.clone();
@@ -64,7 +64,7 @@ impl Registry {
 
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
-		match Client::new(
+		let client = Client::new(
 			SocketAddr::from_str(server_address.as_str()).unwrap(),
 			member_id,
 			room_id,
@@ -75,49 +75,34 @@ impl Registry {
 			start_frame_id.clone(),
 			rtt_in_ms.clone(),
 			average_retransmit_frames.clone(),
-		) {
-			Ok(client) => {
-				let handler = thread::Builder::new()
-					.name(format!("user({:?})", member_id))
-					.spawn(move || {
-						client.run();
-					})
-					.unwrap();
+		)?;
 
-				let controller = ClientController::new(
-					member_id,
-					handler,
-					state_cloned,
-					in_command_receiver,
-					sender,
-					start_frame_id,
-					rtt_in_ms,
-					average_retransmit_frames,
-				);
-				self.client_generator_id += 1;
-				let client_id = self.client_generator_id;
-				self.controllers.insert(client_id, controller);
+		let handler = thread::Builder::new()
+			.name(format!("user({:?})", member_id))
+			.spawn(move || {
+				client.run();
+			})
+			.unwrap();
 
-				log::info!("[registry] create client({})", client_id);
-				Result::Ok(client_id)
-			}
-			Err(_) => {
-				log::error!("[registry] error create client");
-				Result::Err(())
-			}
-		}
+		let controller = ClientController::new(
+			member_id,
+			handler,
+			state_cloned,
+			in_command_receiver,
+			sender,
+			start_frame_id,
+			rtt_in_ms,
+			average_retransmit_frames,
+		);
+		self.client_generator_id += 1;
+		let client_id = self.client_generator_id;
+		self.controllers.insert(client_id, controller);
+
+		log::info!("[registry] create client({})", client_id);
+		Result::Ok(client_id)
 	}
 
-	pub fn destroy_client(&mut self, client: ClientId) -> bool {
-		match self.controllers.remove(&client) {
-			None => {
-				log::error!("[registry:destroy] connection with id {} not found", client);
-				false
-			}
-			Some(_) => {
-				log::trace!("[registry:destroy] connection {}", client);
-				true
-			}
-		}
+	pub fn destroy_client(&mut self, client: ClientId) -> Option<ClientController> {
+		self.controllers.remove(&client)
 	}
 }

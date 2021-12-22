@@ -1,11 +1,11 @@
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use std::sync::atomic::{AtomicU32, AtomicU64};
-use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{Receiver, SendError, Sender};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
@@ -35,14 +35,13 @@ pub struct ClientController {
 	pub current_frame_id: Arc<AtomicU64>,
 	pub rtt_in_ms: Arc<AtomicU64>,
 	pub average_retransmit_frames: Arc<AtomicU32>,
-	listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64)>,
-	listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)>,
-	listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
+	pub listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64)>,
+	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)>,
+	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
+	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
 	pub(crate) listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
-	pub error_in_client_thread: bool,
 }
 
 impl Drop for ClientController {
@@ -82,32 +81,24 @@ impl ClientController {
 			listener_delete_object: None,
 			listener_create_object: None,
 			listener_created_object: None,
-			error_in_client_thread: false,
 		}
 	}
 
-	pub fn set_protocol_time_offset(&mut self, time_offset: Duration) {
-		self.request_to_client
-			.send(ClientRequest::SetProtocolTimeOffset(time_offset))
-			.unwrap();
+	pub fn set_protocol_time_offset(&mut self, time_offset: Duration) -> Result<(), SendError<ClientRequest>> {
+		self.request_to_client.send(ClientRequest::SetProtocolTimeOffset(time_offset))
 	}
 
-	pub fn send(&mut self, command: C2SCommand) {
+	pub fn send(&mut self, command: C2SCommand) -> Result<(), SendError<ClientRequest>> {
 		let out_command = C2SCommandWithChannel {
 			channel_type: self.channel.clone(),
 			command,
 		};
-		match self.request_to_client.send(ClientRequest::SendCommandToServer(out_command)) {
-			Ok(_) => {}
-			Err(e) => {
-				log::error!("[controller] error send to channel {:?}", e);
-				self.error_in_client_thread = true;
-			}
-		}
+		self.request_to_client.send(ClientRequest::SendCommandToServer(out_command))
 	}
 
-	pub fn get_connection_status(&self) -> ConnectionStatus {
-		*self.state.lock().unwrap()
+	pub fn get_connection_status(&self, result: &mut ConnectionStatus) -> Result<(), PoisonError<MutexGuard<ConnectionStatus>>> {
+		*result = *self.state.lock()?;
+		Ok(())
 	}
 
 	pub fn set_current_channel(&mut self, channel: Channel, group: ChannelGroup) {
@@ -184,70 +175,35 @@ impl ClientController {
 		}
 	}
 
-	pub fn register_long_value_listener(&mut self, listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64)) {
-		self.listener_long_value = Option::Some(listener);
-	}
-	pub fn register_float_value_listener(&mut self, listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)) {
-		self.listener_float_value = Option::Some(listener);
-	}
-	pub fn register_event_listener(&mut self, listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)) {
-		self.listener_event = Option::Some(listener);
-	}
-	pub fn register_structure_listener(&mut self, listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)) {
-		self.listener_structure = Option::Some(listener);
-	}
-
-	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> GameObjectIdFFI {
+	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
 		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::User(self.user_id));
 		self.send(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,
 			access_groups: AccessGroups(access_group),
-		}));
+		}))?;
 
-		From::from(&game_object_id)
+		Ok(From::from(&game_object_id))
 	}
 
-	pub fn set_rtt_emulation(&mut self, rtt: Duration, rtt_dispersion: f64) {
-		match self
-			.request_to_client
+	pub fn set_rtt_emulation(&mut self, rtt: Duration, rtt_dispersion: f64) -> Result<(), SendError<ClientRequest>> {
+		self.request_to_client
 			.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion))
-		{
-			Ok(_) => {}
-			Err(e) => {
-				log::error!("[controller] error send to channel {:?}", e);
-				self.error_in_client_thread = true;
-			}
-		}
 	}
 
-	pub fn set_drop_emulation(&mut self, drop_probability: f64, drop_time: Duration) {
-		match self
-			.request_to_client
+	pub fn set_drop_emulation(&mut self, drop_probability: f64, drop_time: Duration) -> Result<(), SendError<ClientRequest>> {
+		self.request_to_client
 			.send(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time))
-		{
-			Ok(_) => {}
-			Err(e) => {
-				log::error!("[controller] error send to channel {:?}", e);
-				self.error_in_client_thread = true;
-			}
-		}
 	}
 
-	pub fn reset_emulation(&mut self) {
-		match self.request_to_client.send(ClientRequest::ResetEmulation) {
-			Ok(_) => {}
-			Err(e) => {
-				log::error!("[controller] error send to channel {:?}", e);
-				self.error_in_client_thread = true;
-			}
-		}
+	pub fn reset_emulation(&mut self) -> Result<(), SendError<ClientRequest>> {
+		self.request_to_client.send(ClientRequest::ResetEmulation)
 	}
 
-	pub fn attach_to_room(&mut self) {
+	pub fn attach_to_room(&mut self) -> Result<(), SendError<ClientRequest>> {
 		// удаляем все пришедшие команды (ситуация возникает при attach/detach)
 		while self.commands_from_server.try_recv().is_ok() {}
-		self.send(C2SCommand::AttachToRoom);
+		self.send(C2SCommand::AttachToRoom)
 	}
 }

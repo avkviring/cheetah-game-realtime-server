@@ -24,6 +24,7 @@ pub struct NetworkClient {
 #[derive(Debug, PartialEq, Copy, Clone)]
 #[repr(C)]
 pub enum ConnectionStatus {
+	Unknown,
 	Connecting,
 	///
 	/// Соединение установлено
@@ -43,7 +44,7 @@ impl NetworkClient {
 		room_id: RoomId,
 		server_address: SocketAddr,
 		start_frame_id: u64,
-	) -> Result<NetworkClient, ()> {
+	) -> std::io::Result<NetworkClient> {
 		let mut protocol = RelayProtocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
 

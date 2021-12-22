@@ -46,7 +46,7 @@ impl Client {
 		current_frame_id: Arc<AtomicU64>,
 		rtt_in_ms: Arc<AtomicU64>,
 		average_retransmit_frames: Arc<AtomicU32>,
-	) -> Result<Client, ()> {
+	) -> std::io::Result<Client> {
 		Result::Ok(Client {
 			state,
 			commands_from_server: in_commands,

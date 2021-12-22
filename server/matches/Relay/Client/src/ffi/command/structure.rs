@@ -12,8 +12,8 @@ use crate::registry::ClientId;
 pub extern "C" fn set_structure_listener(
 	client_id: ClientId,
 	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI),
-) -> bool {
-	execute_with_client(client_id, |client| client.register_structure_listener(listener)).is_ok()
+) -> u8 {
+	execute_with_client(client_id, |client| Ok(client.listener_structure = Some(listener)))
 }
 
 #[no_mangle]
@@ -22,7 +22,7 @@ pub extern "C" fn set_structure(
 	object_id: &GameObjectIdFFI,
 	field_id: FieldId,
 	structure: &BufferFFI,
-) -> bool {
+) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::SetStructure(SetStructureCommand {

@@ -11,12 +11,12 @@ use crate::registry::ClientId;
 pub extern "C" fn set_long_value_listener(
 	client_id: ClientId,
 	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64),
-) -> bool {
-	execute_with_client(client_id, |client| client.register_long_value_listener(listener)).is_ok()
+) -> u8 {
+	execute_with_client(client_id, |client| Ok(client.listener_long_value = Some(listener)))
 }
 
 #[no_mangle]
-pub extern "C" fn set_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) -> bool {
+pub extern "C" fn set_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::SetLong(SetLongCommand {
@@ -28,7 +28,7 @@ pub extern "C" fn set_long_value(client_id: ClientId, object_id: &GameObjectIdFF
 }
 
 #[no_mangle]
-pub extern "C" fn inc_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: i64) -> bool {
+pub extern "C" fn inc_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: i64) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::IncrementLongValue(IncrementLongC2SCommand {
@@ -47,7 +47,7 @@ pub extern "C" fn compare_and_set_long_value(
 	current: i64,
 	new: i64,
 	reset: i64,
-) -> bool {
+) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::CompareAndSetLong(CompareAndSetLongCommand {

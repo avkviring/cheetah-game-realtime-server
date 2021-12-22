@@ -1,14 +1,15 @@
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+
 use crate::ffi::command::send_command;
 use crate::ffi::execute_with_client;
 use crate::registry::ClientId;
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 
 #[no_mangle]
-pub extern "C" fn attach_to_room(client_id: ClientId) -> bool {
-	execute_with_client(client_id, |client| client.attach_to_room()).is_ok()
+pub extern "C" fn attach_to_room(client_id: ClientId) -> u8 {
+	execute_with_client(client_id, |client| Ok(client.attach_to_room()?))
 }
 
 #[no_mangle]
-pub extern "C" fn detach_from_room(client_id: ClientId) -> bool {
+pub extern "C" fn detach_from_room(client_id: ClientId) -> u8 {
 	send_command(client_id, C2SCommand::DetachFromRoom)
 }

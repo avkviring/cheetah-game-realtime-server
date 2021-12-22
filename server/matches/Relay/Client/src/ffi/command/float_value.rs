@@ -11,12 +11,15 @@ use crate::registry::ClientId;
 pub extern "C" fn set_double_value_listener(
 	client_id: ClientId,
 	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64),
-) -> bool {
-	execute_with_client(client_id, |client| client.register_float_value_listener(listener)).is_ok()
+) -> u8 {
+	execute_with_client(client_id, |client| {
+		client.listener_float_value = Some(listener);
+		Ok(())
+	})
 }
 
 #[no_mangle]
-pub extern "C" fn set_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) -> bool {
+pub extern "C" fn set_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::SetDouble(SetDoubleCommand {
@@ -28,7 +31,7 @@ pub extern "C" fn set_double_value(client_id: ClientId, object_id: &GameObjectId
 }
 
 #[no_mangle]
-pub extern "C" fn inc_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: f64) -> bool {
+pub extern "C" fn inc_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: f64) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::IncrementDouble(IncrementDoubleC2SCommand {
