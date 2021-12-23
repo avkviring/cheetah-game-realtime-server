@@ -57,6 +57,10 @@ pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistic
 		statistics.last_frame_id = shared_statistics.current_frame_id.load(Ordering::Relaxed);
 		statistics.rtt_in_ms = shared_statistics.rtt_in_ms.load(Ordering::Relaxed);
 		statistics.average_retransmit_frames = shared_statistics.average_retransmit_frames.load(Ordering::Relaxed);
+		statistics.recv_packet_count = shared_statistics.recv_packet_count.load(Ordering::Relaxed);
+		statistics.send_packet_count = shared_statistics.send_packet_count.load(Ordering::Relaxed);
+		statistics.recv_size = shared_statistics.recv_size.load(Ordering::Relaxed);
+		statistics.send_size = shared_statistics.send_size.load(Ordering::Relaxed);
 		Ok(())
 	})
 }
@@ -76,6 +80,10 @@ pub struct Statistics {
 	pub last_frame_id: u64,
 	pub rtt_in_ms: u64,
 	pub average_retransmit_frames: u32,
+	pub recv_packet_count: u64,
+	pub send_packet_count: u64,
+	pub recv_size: u64,
+	pub send_size: u64,
 }
 
 #[no_mangle]

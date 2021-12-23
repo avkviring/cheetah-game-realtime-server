@@ -10,11 +10,10 @@ use crate::network::emulator::NetworkLatencyEmulator;
 pub struct NetworkChannel {
 	socket: UdpSocket,
 	emulator: Option<NetworkLatencyEmulator>,
-
-	recv_packet_count: u64,
-	send_packet_count: u64,
-	recv_size: u64, // размер всех принятых данных
-	send_size: u64, //размер всех отправленных данных
+	pub recv_packet_count: u64,
+	pub send_packet_count: u64,
+	pub recv_size: u64, // размер всех принятых данных
+	pub send_size: u64, //размер всех отправленных данных
 }
 
 impl NetworkChannel {

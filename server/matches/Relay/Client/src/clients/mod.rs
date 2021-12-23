@@ -31,4 +31,8 @@ pub struct SharedClientStatistics {
 	pub current_frame_id: Arc<AtomicU64>,
 	pub rtt_in_ms: Arc<AtomicU64>,
 	pub average_retransmit_frames: Arc<AtomicU32>,
+	pub recv_packet_count: Arc<AtomicU64>,
+	pub send_packet_count: Arc<AtomicU64>,
+	pub recv_size: Arc<AtomicU64>,
+	pub send_size: Arc<AtomicU64>,
 }
