@@ -1,8 +1,8 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 
+use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
 use crate::ffi::execute_with_client;
-use crate::registry::ClientId;
 
 #[no_mangle]
 pub extern "C" fn attach_to_room(client_id: ClientId) -> u8 {

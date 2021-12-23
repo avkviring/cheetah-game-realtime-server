@@ -6,8 +6,8 @@ use std::time::Duration;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
+use crate::clients::registry::ClientId;
 use crate::ffi::{execute, execute_with_client, BufferFFI, ClientError, LAST_ERROR};
-use crate::registry::ClientId;
 
 #[no_mangle]
 pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut ConnectionStatus) -> u8 {

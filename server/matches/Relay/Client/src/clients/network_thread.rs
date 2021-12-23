@@ -1,3 +1,10 @@
+use crate::clients::ClientRequest;
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
+use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
+use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
@@ -6,17 +13,11 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
-use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
-
-use crate::registry::ClientRequest;
-
+///
+/// Управление сетевым клиентом, связывает поток unity и поток сетевого клиента
+///
 #[derive(Debug)]
-pub struct Client {
+pub struct NetworkThreadClient {
 	state: Arc<Mutex<ConnectionStatus>>,
 	commands_from_server: Sender<CommandWithChannel>,
 	udp_client: NetworkClient,
@@ -34,7 +35,7 @@ pub struct C2SCommandWithChannel {
 	pub command: C2SCommand,
 }
 
-impl Client {
+impl NetworkThreadClient {
 	pub fn new(
 		server_address: SocketAddr,
 		member_id: RoomMemberId,
@@ -46,8 +47,8 @@ impl Client {
 		current_frame_id: Arc<AtomicU64>,
 		rtt_in_ms: Arc<AtomicU64>,
 		average_retransmit_frames: Arc<AtomicU32>,
-	) -> std::io::Result<Client> {
-		Result::Ok(Client {
+	) -> std::io::Result<NetworkThreadClient> {
+		Result::Ok(NetworkThreadClient {
 			state,
 			commands_from_server: in_commands,
 			udp_client: NetworkClient::new(

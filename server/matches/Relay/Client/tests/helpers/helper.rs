@@ -7,10 +7,10 @@ use rand::RngCore;
 
 use cheetah_matches_relay::room::template::config::UserTemplate;
 use cheetah_matches_relay::server::manager::RelayManager;
+use cheetah_matches_relay_client::clients::registry::ClientId;
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::client::do_create_client;
 use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
-use cheetah_matches_relay_client::registry::ClientId;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::helpers::server::IntegrationTestServerBuilder;

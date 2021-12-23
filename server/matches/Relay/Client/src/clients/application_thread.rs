@@ -16,15 +16,15 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::client::C2SCommandWithChannel;
+use crate::clients::network_thread::C2SCommandWithChannel;
+use crate::clients::ClientRequest;
 use crate::ffi::channel::Channel;
 use crate::ffi::{BufferFFI, GameObjectIdFFI};
-use crate::registry::ClientRequest;
 
 ///
-/// Управление сетевым потоком клиента
+/// Взаимодействие с сетевым потоком клиента, через Sender
 ///
-pub struct ClientController {
+pub struct ApplicationThreadClient {
 	user_id: RoomMemberId,
 	commands_from_server: Receiver<CommandWithChannel>,
 	handler: Option<JoinHandle<()>>,
@@ -39,12 +39,12 @@ pub struct ClientController {
 	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)>,
 	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
 	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	pub(crate) listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
+	pub listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 }
 
-impl Drop for ClientController {
+impl Drop for ApplicationThreadClient {
 	fn drop(&mut self) {
 		if self.request_to_client.send(ClientRequest::Close).is_ok() {
 			self.handler.take().unwrap().join().unwrap();
@@ -52,7 +52,7 @@ impl Drop for ClientController {
 	}
 }
 
-impl ClientController {
+impl ApplicationThreadClient {
 	pub fn new(
 		user_id: RoomMemberId,
 		handler: JoinHandle<()>,

@@ -3,9 +3,9 @@ use cheetah_matches_relay_common::commands::types::structure::SetStructureComman
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
+use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
-use crate::registry::ClientId;
 
 #[no_mangle]
 #[allow(unused_must_use)]

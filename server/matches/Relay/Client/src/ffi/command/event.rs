@@ -3,9 +3,9 @@ use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetE
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
+use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
-use crate::registry::ClientId;
 
 #[no_mangle]
 pub extern "C" fn set_event_listener(

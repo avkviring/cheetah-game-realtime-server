@@ -5,15 +5,14 @@ use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
 
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
-use crate::client::{C2SCommandWithChannel, Client};
-use crate::controller::ClientController;
+use crate::clients::application_thread::ApplicationThreadClient;
+use crate::clients::network_thread::NetworkThreadClient;
 
 pub type ClientId = u16;
 
@@ -25,24 +24,14 @@ pub type ClientId = u16;
 ///
 ///
 pub struct Registry {
-	pub controllers: HashMap<ClientId, ClientController, FnvBuildHasher>,
+	pub clients: HashMap<ClientId, ApplicationThreadClient, FnvBuildHasher>,
 	client_generator_id: ClientId,
-}
-
-#[derive(Debug)]
-pub enum ClientRequest {
-	SetProtocolTimeOffset(Duration),
-	ConfigureRttEmulation(Duration, f64),
-	ConfigureDropEmulation(f64, Duration),
-	SendCommandToServer(C2SCommandWithChannel),
-	ResetEmulation,
-	Close,
 }
 
 impl Default for Registry {
 	fn default() -> Self {
 		Registry {
-			controllers: Default::default(),
+			clients: Default::default(),
 			client_generator_id: Default::default(),
 		}
 	}
@@ -65,7 +54,7 @@ impl Registry {
 
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
-		let client = Client::new(
+		let client = NetworkThreadClient::new(
 			SocketAddr::from_str(server_address.as_str())
 				.map_err(|e| std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{:?}", e)))?,
 			member_id,
@@ -86,7 +75,7 @@ impl Registry {
 			})
 			.unwrap();
 
-		let controller = ClientController::new(
+		let application_thread_client = ApplicationThreadClient::new(
 			member_id,
 			handler,
 			state_cloned,
@@ -98,13 +87,13 @@ impl Registry {
 		);
 		self.client_generator_id += 1;
 		let client_id = self.client_generator_id;
-		self.controllers.insert(client_id, controller);
+		self.clients.insert(client_id, application_thread_client);
 
 		log::info!("[registry] create client({})", client_id);
 		Result::Ok(client_id)
 	}
 
-	pub fn destroy_client(&mut self, client: ClientId) -> Option<ClientController> {
-		self.controllers.remove(&client)
+	pub fn destroy_client(&mut self, client: ClientId) -> Option<ApplicationThreadClient> {
+		self.clients.remove(&client)
 	}
 }

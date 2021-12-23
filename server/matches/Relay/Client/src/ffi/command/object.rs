@@ -2,9 +2,9 @@ use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 
+use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
-use crate::registry::ClientId;
 
 #[no_mangle]
 pub extern "C" fn set_create_object_listener(

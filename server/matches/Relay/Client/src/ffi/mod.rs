@@ -9,8 +9,9 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::controller::ClientController;
-use crate::registry::{ClientId, ClientRequest, Registry};
+use crate::clients::application_thread::ApplicationThreadClient;
+use crate::clients::registry::{ClientId, Registry};
+use crate::clients::ClientRequest;
 
 pub mod channel;
 pub mod client;
@@ -74,9 +75,9 @@ where
 
 pub fn execute_with_client<F, R>(client_id: ClientId, action: F) -> u8
 where
-	F: FnOnce(&mut ClientController) -> Result<R, ClientError>,
+	F: FnOnce(&mut ApplicationThreadClient) -> Result<R, ClientError>,
 {
-	execute(|registry| match registry.controllers.get_mut(&client_id) {
+	execute(|registry| match registry.clients.get_mut(&client_id) {
 		None => Result::Err(ClientError::ClientNotFound(client_id)),
 		Some(client_api) => action(client_api),
 	})

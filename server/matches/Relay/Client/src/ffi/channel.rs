@@ -1,7 +1,7 @@
 use cheetah_matches_relay_common::protocol::frame::applications::ChannelGroup;
 
+use crate::clients::registry::ClientId;
 use crate::ffi::execute_with_client;
-use crate::registry::ClientId;
 
 #[derive(Debug, Clone)]
 #[repr(C)]
