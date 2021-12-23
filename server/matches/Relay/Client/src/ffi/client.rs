@@ -53,9 +53,10 @@ pub extern "C" fn reset_emulation(client_id: ClientId) -> u8 {
 #[no_mangle]
 pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistics) -> u8 {
 	execute_with_client(client_id, |client| {
-		statistics.last_frame_id = client.current_frame_id.load(Ordering::Relaxed);
-		statistics.rtt_in_ms = client.rtt_in_ms.load(Ordering::Relaxed);
-		statistics.average_retransmit_frames = client.average_retransmit_frames.load(Ordering::Relaxed);
+		let shared_statistics = &client.shared_statistics;
+		statistics.last_frame_id = shared_statistics.current_frame_id.load(Ordering::Relaxed);
+		statistics.rtt_in_ms = shared_statistics.rtt_in_ms.load(Ordering::Relaxed);
+		statistics.average_retransmit_frames = shared_statistics.average_retransmit_frames.load(Ordering::Relaxed);
 		Ok(())
 	})
 }

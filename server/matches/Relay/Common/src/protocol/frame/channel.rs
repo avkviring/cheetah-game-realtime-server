@@ -4,7 +4,7 @@ use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 /// Тип канала для отправки
 ///
 #[derive(Debug, PartialEq, Clone)]
-pub enum ApplicationCommandChannelType {
+pub enum ChannelType {
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -78,17 +78,17 @@ pub enum Channel {
 	ReliableSequenceByGroup(ChannelGroup, ChannelSequence),
 }
 
-impl From<&Channel> for ApplicationCommandChannelType {
+impl From<&Channel> for ChannelType {
 	fn from(channel: &Channel) -> Self {
 		match channel {
-			Channel::ReliableUnordered => ApplicationCommandChannelType::ReliableUnordered,
-			Channel::ReliableOrderedByObject => ApplicationCommandChannelType::ReliableOrderedByObject,
-			Channel::ReliableOrderedByGroup(channel) => ApplicationCommandChannelType::ReliableOrderedByGroup(*channel),
-			Channel::UnreliableUnordered => ApplicationCommandChannelType::UnreliableUnordered,
-			Channel::UnreliableOrderedByObject => ApplicationCommandChannelType::UnreliableOrderedByObject,
-			Channel::UnreliableOrderedByGroup(channel) => ApplicationCommandChannelType::UnreliableOrderedByGroup(*channel),
-			Channel::ReliableSequenceByObject(_) => ApplicationCommandChannelType::ReliableSequenceByObject,
-			Channel::ReliableSequenceByGroup(channel, _) => ApplicationCommandChannelType::ReliableSequenceByGroup(*channel),
+			Channel::ReliableUnordered => ChannelType::ReliableUnordered,
+			Channel::ReliableOrderedByObject => ChannelType::ReliableOrderedByObject,
+			Channel::ReliableOrderedByGroup(channel) => ChannelType::ReliableOrderedByGroup(*channel),
+			Channel::UnreliableUnordered => ChannelType::UnreliableUnordered,
+			Channel::UnreliableOrderedByObject => ChannelType::UnreliableOrderedByObject,
+			Channel::UnreliableOrderedByGroup(channel) => ChannelType::UnreliableOrderedByGroup(*channel),
+			Channel::ReliableSequenceByObject(_) => ChannelType::ReliableSequenceByObject,
+			Channel::ReliableSequenceByGroup(channel, _) => ChannelType::ReliableSequenceByGroup(*channel),
 		}
 	}
 }

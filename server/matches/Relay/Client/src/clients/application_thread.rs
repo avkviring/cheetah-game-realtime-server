@@ -1,4 +1,3 @@
-use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::mpsc::{Receiver, SendError, Sender};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
@@ -10,14 +9,14 @@ use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
-use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
+use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::clients::network_thread::C2SCommandWithChannel;
-use crate::clients::ClientRequest;
+use crate::clients::{ClientRequest, SharedClientStatistics};
 use crate::ffi::channel::Channel;
 use crate::ffi::{BufferFFI, GameObjectIdFFI};
 
@@ -30,11 +29,9 @@ pub struct ApplicationThreadClient {
 	handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
 	request_to_client: Sender<ClientRequest>,
-	channel: ApplicationCommandChannelType,
+	channel: ChannelType,
 	game_object_id_generator: u32,
-	pub current_frame_id: Arc<AtomicU64>,
-	pub rtt_in_ms: Arc<AtomicU64>,
-	pub average_retransmit_frames: Arc<AtomicU32>,
+	pub shared_statistics: SharedClientStatistics,
 	pub listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64)>,
 	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)>,
 	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
@@ -59,9 +56,7 @@ impl ApplicationThreadClient {
 		state: Arc<Mutex<ConnectionStatus>>,
 		in_commands: Receiver<CommandWithChannel>,
 		sender: Sender<ClientRequest>,
-		current_frame_id: Arc<AtomicU64>,
-		rtt_in_ms: Arc<AtomicU64>,
-		average_retransmit_frames: Arc<AtomicU32>,
+		shared_statistics: SharedClientStatistics,
 	) -> Self {
 		Self {
 			user_id,
@@ -69,11 +64,9 @@ impl ApplicationThreadClient {
 			handler: Option::Some(handler),
 			state,
 			request_to_client: sender,
-			channel: ApplicationCommandChannelType::ReliableSequenceByGroup(0),
+			channel: ChannelType::ReliableSequenceByGroup(0),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
-			current_frame_id,
-			rtt_in_ms,
-			average_retransmit_frames,
+			shared_statistics,
 			listener_long_value: None,
 			listener_float_value: None,
 			listener_event: None,
@@ -103,14 +96,14 @@ impl ApplicationThreadClient {
 
 	pub fn set_current_channel(&mut self, channel: Channel, group: ChannelGroup) {
 		self.channel = match channel {
-			Channel::ReliableUnordered => ApplicationCommandChannelType::ReliableUnordered,
-			Channel::UnreliableUnordered => ApplicationCommandChannelType::UnreliableUnordered,
-			Channel::ReliableOrderedByObject => ApplicationCommandChannelType::ReliableOrderedByObject,
-			Channel::UnreliableOrderedByObject => ApplicationCommandChannelType::UnreliableOrderedByObject,
-			Channel::ReliableOrderedByGroup => ApplicationCommandChannelType::ReliableOrderedByGroup(group),
-			Channel::UnreliableOrderedByGroup => ApplicationCommandChannelType::UnreliableOrderedByGroup(group),
-			Channel::ReliableSequenceByObject => ApplicationCommandChannelType::ReliableSequenceByObject,
-			Channel::ReliableSequenceByGroup => ApplicationCommandChannelType::ReliableSequenceByGroup(group),
+			Channel::ReliableUnordered => ChannelType::ReliableUnordered,
+			Channel::UnreliableUnordered => ChannelType::UnreliableUnordered,
+			Channel::ReliableOrderedByObject => ChannelType::ReliableOrderedByObject,
+			Channel::UnreliableOrderedByObject => ChannelType::UnreliableOrderedByObject,
+			Channel::ReliableOrderedByGroup => ChannelType::ReliableOrderedByGroup(group),
+			Channel::UnreliableOrderedByGroup => ChannelType::UnreliableOrderedByGroup(group),
+			Channel::ReliableSequenceByObject => ChannelType::ReliableSequenceByObject,
+			Channel::ReliableSequenceByGroup => ChannelType::ReliableSequenceByGroup(group),
 		}
 	}
 

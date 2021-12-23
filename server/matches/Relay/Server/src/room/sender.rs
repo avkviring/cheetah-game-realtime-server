@@ -3,7 +3,7 @@ use std::slice::Iter;
 use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
-use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
+use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -33,7 +33,7 @@ impl Room {
 		let channel_type = self
 			.current_channel
 			.as_ref()
-			.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+			.unwrap_or(&ChannelType::ReliableSequenceByGroup(0));
 
 		let current_user = self.current_user.unwrap_or(0);
 
@@ -110,7 +110,7 @@ impl Room {
 								let channel = self
 									.current_channel
 									.as_ref()
-									.unwrap_or(&ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+									.unwrap_or(&ChannelType::ReliableSequenceByGroup(0));
 
 								let command_with_meta = S2CCommandWithCreator {
 									creator: self.current_user.unwrap_or(0),

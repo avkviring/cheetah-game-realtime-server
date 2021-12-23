@@ -10,17 +10,33 @@ use crate::network::emulator::NetworkLatencyEmulator;
 pub struct NetworkChannel {
 	socket: UdpSocket,
 	emulator: Option<NetworkLatencyEmulator>,
+
+	recv_packet_count: u64,
+	send_packet_count: u64,
+	recv_size: u64, // размер всех принятых данных
+	send_size: u64, //размер всех отправленных данных
 }
 
 impl NetworkChannel {
 	pub fn new() -> io::Result<Self> {
 		let socket = bind_to_free_socket()?.0;
 		socket.set_nonblocking(true)?;
-		Result::Ok(Self { socket, emulator: None })
+		Result::Ok(Self {
+			socket,
+			emulator: None,
+			recv_packet_count: 0,
+			send_packet_count: 0,
+			recv_size: 0,
+			send_size: 0,
+		})
 	}
 
 	pub fn recv(&mut self, now: &Instant, buf: &mut [u8]) -> io::Result<usize> {
 		let result = self.socket.recv(buf);
+		if result.is_ok() {
+			self.recv_packet_count += 1;
+			self.recv_size += *result.as_ref().unwrap() as u64;
+		}
 
 		if let Some(emulator) = self.emulator.as_mut() {
 			// полученный пакет из сети сохраняем в эмуляторе
@@ -41,6 +57,8 @@ impl NetworkChannel {
 	}
 
 	pub fn send_to(&mut self, now: &Instant, buf: &[u8], addr: SocketAddr) -> io::Result<usize> {
+		self.send_packet_count += 1;
+		self.send_size += buf.len() as u64;
 		match &mut self.emulator {
 			None => self.socket.send_to(buf, addr),
 			Some(emulator) => {

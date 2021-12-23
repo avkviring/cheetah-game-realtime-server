@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
-use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
+use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 
 use crate::stub::Channel;
@@ -18,12 +18,12 @@ fn should_send_from_client() {
 	let mut peer_b = RelayProtocol::new(&Instant::now());
 
 	peer_a.out_commands_collector.add_command(
-		ApplicationCommandChannelType::ReliableUnordered,
+		ChannelType::ReliableUnordered,
 		BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 	);
 
 	peer_a.out_commands_collector.add_command(
-		ApplicationCommandChannelType::UnreliableUnordered,
+		ChannelType::UnreliableUnordered,
 		BothDirectionCommand::C2S(C2SCommand::DetachFromRoom),
 	);
 
@@ -48,12 +48,12 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	let mut peer_b = RelayProtocol::new(&Instant::now());
 
 	peer_a.out_commands_collector.add_command(
-		ApplicationCommandChannelType::ReliableUnordered,
+		ChannelType::ReliableUnordered,
 		BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 	);
 
 	peer_a.out_commands_collector.add_command(
-		ApplicationCommandChannelType::UnreliableUnordered,
+		ChannelType::UnreliableUnordered,
 		BothDirectionCommand::C2S(C2SCommand::DetachFromRoom),
 	);
 

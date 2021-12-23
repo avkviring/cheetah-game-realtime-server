@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -13,6 +12,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::clients::application_thread::ApplicationThreadClient;
 use crate::clients::network_thread::NetworkThreadClient;
+use crate::clients::SharedClientStatistics;
 
 pub type ClientId = u16;
 
@@ -46,11 +46,9 @@ impl Registry {
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
 	) -> std::io::Result<ClientId> {
-		let start_frame_id = Arc::new(AtomicU64::new(start_frame_id));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
 		let state_cloned = state.clone();
-		let rtt_in_ms = Arc::new(AtomicU64::new(0));
-		let average_retransmit_frames = Arc::new(AtomicU32::new(0));
+		let shared_statistics = SharedClientStatistics::default();
 
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
@@ -63,9 +61,8 @@ impl Registry {
 			in_command_sender,
 			state,
 			receiver,
-			start_frame_id.clone(),
-			rtt_in_ms.clone(),
-			average_retransmit_frames.clone(),
+			start_frame_id,
+			shared_statistics.clone(),
 		)?;
 
 		let handler = thread::Builder::new()
@@ -81,9 +78,7 @@ impl Registry {
 			state_cloned,
 			in_command_receiver,
 			sender,
-			start_frame_id,
-			rtt_in_ms,
-			average_retransmit_frames,
+			shared_statistics,
 		);
 		self.client_generator_id += 1;
 		let client_id = self.client_generator_id;

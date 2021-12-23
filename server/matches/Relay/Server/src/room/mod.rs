@@ -12,7 +12,7 @@ use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
-use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
+use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::protocol::frame::Frame;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
@@ -43,7 +43,7 @@ pub struct Room {
 	pub permission_manager: Rc<RefCell<PermissionManager>>,
 	pub users: HashMap<RoomMemberId, User, FnvBuildHasher>,
 	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
-	current_channel: Option<ApplicationCommandChannelType>,
+	current_channel: Option<ChannelType>,
 	current_user: Option<RoomMemberId>,
 	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub user_id_generator: RoomMemberId,
@@ -159,8 +159,7 @@ impl Room {
 				}
 
 				if new_user {
-					self.current_channel
-						.replace(ApplicationCommandChannelType::ReliableSequenceByGroup(0));
+					self.current_channel.replace(ChannelType::ReliableSequenceByGroup(0));
 					let user_id = user.id;
 					let template = user.template.clone();
 					self.on_user_connect(user_id, template);

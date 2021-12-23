@@ -4,7 +4,7 @@ use std::time::Instant;
 use fnv::FnvBuildHasher;
 
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
-use crate::protocol::frame::channel::{ApplicationCommandChannelType, Channel};
+use crate::protocol::frame::channel::{Channel, ChannelType};
 use crate::protocol::frame::Frame;
 use crate::protocol::FrameBuilder;
 use crate::room::object::GameObjectId;
@@ -34,7 +34,7 @@ pub struct OutCommandsCollector {
 impl OutCommandsCollector {
 	const MAX_COMMAND_IN_FRAME: usize = 3;
 
-	pub fn add_command(&mut self, channel_type: ApplicationCommandChannelType, command: BothDirectionCommand) {
+	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
 		match self.create_channel(&channel_type, &command) {
 			None => {
 				log::error!("can not create channel for {:?} {:?}", channel_type, command)
@@ -42,15 +42,15 @@ impl OutCommandsCollector {
 			Some(channel) => {
 				let description = CommandWithChannel { channel, command };
 				let commands = match channel_type {
-					ApplicationCommandChannelType::ReliableUnordered
-					| ApplicationCommandChannelType::ReliableOrderedByObject
-					| ApplicationCommandChannelType::ReliableOrderedByGroup(_)
-					| ApplicationCommandChannelType::ReliableSequenceByObject
-					| ApplicationCommandChannelType::ReliableSequenceByGroup(_) => &mut self.reliable,
+					ChannelType::ReliableUnordered
+					| ChannelType::ReliableOrderedByObject
+					| ChannelType::ReliableOrderedByGroup(_)
+					| ChannelType::ReliableSequenceByObject
+					| ChannelType::ReliableSequenceByGroup(_) => &mut self.reliable,
 
-					ApplicationCommandChannelType::UnreliableUnordered
-					| ApplicationCommandChannelType::UnreliableOrderedByObject
-					| ApplicationCommandChannelType::UnreliableOrderedByGroup(_) => &mut self.unreliable,
+					ChannelType::UnreliableUnordered
+					| ChannelType::UnreliableOrderedByObject
+					| ChannelType::UnreliableOrderedByGroup(_) => &mut self.unreliable,
 				};
 
 				commands.push_back(description);
@@ -58,23 +58,15 @@ impl OutCommandsCollector {
 		}
 	}
 
-	fn create_channel(
-		&mut self,
-		channel_type: &ApplicationCommandChannelType,
-		command: &BothDirectionCommand,
-	) -> Option<Channel> {
+	fn create_channel(&mut self, channel_type: &ChannelType, command: &BothDirectionCommand) -> Option<Channel> {
 		match channel_type {
-			ApplicationCommandChannelType::ReliableUnordered => Option::Some(Channel::ReliableUnordered),
-			ApplicationCommandChannelType::ReliableOrderedByObject => Option::Some(Channel::ReliableOrderedByObject),
-			ApplicationCommandChannelType::ReliableOrderedByGroup(group_id) => {
-				Option::Some(Channel::ReliableOrderedByGroup(*group_id))
-			}
-			ApplicationCommandChannelType::UnreliableUnordered => Option::Some(Channel::UnreliableUnordered),
-			ApplicationCommandChannelType::UnreliableOrderedByObject => Option::Some(Channel::UnreliableOrderedByObject),
-			ApplicationCommandChannelType::UnreliableOrderedByGroup(group_id) => {
-				Option::Some(Channel::UnreliableOrderedByGroup(*group_id))
-			}
-			ApplicationCommandChannelType::ReliableSequenceByObject => command.get_object_id().map(|game_object_id| {
+			ChannelType::ReliableUnordered => Option::Some(Channel::ReliableUnordered),
+			ChannelType::ReliableOrderedByObject => Option::Some(Channel::ReliableOrderedByObject),
+			ChannelType::ReliableOrderedByGroup(group_id) => Option::Some(Channel::ReliableOrderedByGroup(*group_id)),
+			ChannelType::UnreliableUnordered => Option::Some(Channel::UnreliableUnordered),
+			ChannelType::UnreliableOrderedByObject => Option::Some(Channel::UnreliableOrderedByObject),
+			ChannelType::UnreliableOrderedByGroup(group_id) => Option::Some(Channel::UnreliableOrderedByGroup(*group_id)),
+			ChannelType::ReliableSequenceByObject => command.get_object_id().map(|game_object_id| {
 				let sequence = self
 					.object_sequence
 					.entry(game_object_id.clone())
@@ -82,7 +74,7 @@ impl OutCommandsCollector {
 					.or_insert(0);
 				Channel::ReliableSequenceByObject(*sequence)
 			}),
-			ApplicationCommandChannelType::ReliableSequenceByGroup(group) => {
+			ChannelType::ReliableSequenceByGroup(group) => {
 				let sequence = self.group_sequence.entry(*group).and_modify(|v| *v += 1).or_insert(0);
 				Option::Some(Channel::ReliableSequenceByGroup(*group, *sequence))
 			}
@@ -127,7 +119,7 @@ mod tests {
 	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::BothDirectionCommand;
-	use crate::protocol::frame::channel::{ApplicationCommandChannelType, Channel};
+	use crate::protocol::frame::channel::{Channel, ChannelType};
 	use crate::protocol::frame::Frame;
 	use crate::protocol::FrameBuilder;
 
@@ -136,7 +128,7 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for _ in 0..3 {
 			output.add_command(
-				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
+				ChannelType::ReliableSequenceByGroup(100),
 				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
@@ -150,7 +142,7 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for i in 0..2 * OutCommandsCollector::MAX_COMMAND_IN_FRAME {
 			output.add_command(
-				ApplicationCommandChannelType::ReliableSequenceByGroup(100),
+				ChannelType::ReliableSequenceByGroup(100),
 				BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),
 					field_id: 1,
@@ -193,7 +185,7 @@ mod tests {
 
 		for _ in 0..3 {
 			output.add_command(
-				ApplicationCommandChannelType::ReliableSequenceByObject,
+				ChannelType::ReliableSequenceByObject,
 				BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 0,

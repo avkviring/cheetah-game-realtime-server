@@ -1,17 +1,19 @@
-use crate::clients::ClientRequest;
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-use cheetah_matches_relay_common::protocol::frame::channel::ApplicationCommandChannelType;
-use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 use std::net::SocketAddr;
 use std::ops::Add;
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::Ordering;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
+
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
+use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
+use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+
+use crate::clients::{ClientRequest, SharedClientStatistics};
 
 ///
 /// Управление сетевым клиентом, связывает поток unity и поток сетевого клиента
@@ -23,15 +25,13 @@ pub struct NetworkThreadClient {
 	udp_client: NetworkClient,
 	request_from_controller: Receiver<ClientRequest>,
 	protocol_time_offset: Option<Duration>,
-	current_frame_id: Arc<AtomicU64>,
-	rtt_in_ms: Arc<AtomicU64>,
-	average_retransmit_frames: Arc<AtomicU32>,
+	shared_statistics: SharedClientStatistics,
 	running: bool,
 }
 
 #[derive(Debug)]
 pub struct C2SCommandWithChannel {
-	pub channel_type: ApplicationCommandChannelType,
+	pub channel_type: ChannelType,
 	pub command: C2SCommand,
 }
 
@@ -44,26 +44,16 @@ impl NetworkThreadClient {
 		in_commands: Sender<CommandWithChannel>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
-		current_frame_id: Arc<AtomicU64>,
-		rtt_in_ms: Arc<AtomicU64>,
-		average_retransmit_frames: Arc<AtomicU32>,
+		start_frame_id: u64,
+		shared_statistics: SharedClientStatistics,
 	) -> std::io::Result<NetworkThreadClient> {
 		Result::Ok(NetworkThreadClient {
 			state,
 			commands_from_server: in_commands,
-			udp_client: NetworkClient::new(
-				false,
-				user_private_key,
-				member_id,
-				room_id,
-				server_address,
-				current_frame_id.load(Ordering::Relaxed),
-			)?,
+			udp_client: NetworkClient::new(false, user_private_key, member_id, room_id, server_address, start_frame_id)?,
 			request_from_controller: receiver,
 			protocol_time_offset: None,
-			current_frame_id,
-			rtt_in_ms,
-			average_retransmit_frames,
+			shared_statistics,
 			running: false,
 		})
 	}
@@ -150,9 +140,10 @@ impl NetworkThreadClient {
 	/// Обновление статистики для контроллера
 	///
 	fn update_state(&mut self) {
-		self.current_frame_id
+		self.shared_statistics
+			.current_frame_id
 			.store(self.udp_client.protocol.next_frame_id, Ordering::Relaxed);
-		self.rtt_in_ms.store(
+		self.shared_statistics.rtt_in_ms.store(
 			self.udp_client
 				.protocol
 				.rtt
@@ -161,7 +152,7 @@ impl NetworkThreadClient {
 				.as_millis() as u64,
 			Ordering::Relaxed,
 		);
-		self.average_retransmit_frames.store(
+		self.shared_statistics.average_retransmit_frames.store(
 			self.udp_client
 				.protocol
 				.retransmitter
