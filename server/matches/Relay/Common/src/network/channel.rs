@@ -172,4 +172,37 @@ pub mod tests {
 		// а теперь будут, так как прошло время эмуляции rtt
 		assert!(matches!(channel_b.recv(&after_rtt_time, &mut recv_data), Result::Ok(size) if send_data.len()==size));
 	}
+
+	///
+	/// Проверяем как собирается статистика по количеству и размеру пакетов
+	///
+	#[test]
+	fn should_statistics() {
+		let mut channel_a = NetworkChannel::new().unwrap();
+		let mut channel_b = NetworkChannel::new().unwrap();
+
+		assert_eq!(channel_a.recv_size, 0);
+		assert_eq!(channel_a.send_size, 0);
+		assert_eq!(channel_a.recv_packet_count, 0);
+		assert_eq!(channel_a.send_packet_count, 0);
+
+		let now = Instant::now();
+		let send_data = vec![1, 2, 3];
+		channel_a
+			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
+			.unwrap();
+		std::thread::sleep(Duration::from_millis(10));
+		let mut recv_data = [0; 1024];
+		channel_b.recv(&now, &mut recv_data).unwrap();
+
+		assert_eq!(channel_a.recv_size, 0);
+		assert_eq!(channel_a.send_size, 3);
+		assert_eq!(channel_a.recv_packet_count, 0);
+		assert_eq!(channel_a.send_packet_count, 1);
+
+		assert_eq!(channel_b.recv_size, 3);
+		assert_eq!(channel_b.send_size, 0);
+		assert_eq!(channel_b.recv_packet_count, 1);
+		assert_eq!(channel_b.send_packet_count, 0);
+	}
 }
