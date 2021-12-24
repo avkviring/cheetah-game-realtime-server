@@ -590,7 +590,7 @@ dependencies = [
  "cheetah-microservice",
  "k8s-openapi",
  "kube",
- "kube-derive",
+ "kube-derive 0.65.0",
  "log",
  "pretty_env_logger",
  "prost 0.9.0",
@@ -1947,7 +1947,7 @@ dependencies = [
  "k8s-openapi",
  "kube-client",
  "kube-core",
- "kube-derive",
+ "kube-derive 0.63.2",
  "kube-runtime",
 ]
 
@@ -2009,6 +2009,19 @@ name = "kube-derive"
 version = "0.63.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2034f57f3db36978ef366f45f1e263e623d9a6a8fcc6a6b1ef8879a213e1d2c4"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn",
+]
+
+[[package]]
+name = "kube-derive"
+version = "0.65.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b98ff3d647085c6c025083efad0435890867f4bea042fc62d408ab3aeb1cdf66"
 dependencies = [
  "darling",
  "proc-macro2",
