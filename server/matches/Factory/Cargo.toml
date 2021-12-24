@@ -27,7 +27,7 @@ tonic-web = "0.2.0"
 
 [dev-dependencies]
 tempfile = "3.2.0"
-include_dir = "0.7.0"
+include_dir = "0.7.2"
 
 [build-dependencies]
 tonic-build = "0.6.0"
