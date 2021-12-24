@@ -36,7 +36,7 @@ jsonwebtoken = "7.2.0"
 serde = { version = "1.0.132", features = ["derive"] }
 cheetah-microservice = { path = "../../Microservice" }
 redis = { version = "0.21.4", features = ["tokio-comp"] }
-async-trait = "0.1.50"
+async-trait = "0.1.52"
 log = "0.4"
 pretty_env_logger = "0.4.0"
 testcontainers = { version = "0.12.0", optional = true }
@@ -48,7 +48,7 @@ tonic-web = "0.2.0"
 [dev-dependencies]
 testcontainers = "0.12.0"
 lazy_static = "1.4.0"
-futures = "0.3.16"
+futures = "0.3.19"
 
 [build-dependencies]
 tonic-build = {version="0.6.2", features=["rustfmt"]}
