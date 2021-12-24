@@ -17,7 +17,7 @@ sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "m
 async-trait = "0.1.50"
 log = "0.4"
 rand = "0.8"
-jsonwebtoken-google = { version = "0.1.1" }
+jsonwebtoken-google = { version = "0.1.2" }
 tonic = "0.6.2"
 prost = "0.9.0"
 tonic-web = "0.2.0"
@@ -29,7 +29,7 @@ cheetah-auth-user = { path = "../User" }
 
 testcontainers = "0.12.0"
 lazy_static = "1.4.0"
-jsonwebtoken-google = { version = "0.1.1", features = ["test-helper"] }
+jsonwebtoken-google = { version = "0.1.2", features = ["test-helper"] }
 
 [build-dependencies]
 tonic-build = "0.6.2"

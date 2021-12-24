@@ -435,6 +435,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "castaway"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2698f953def977c68f935bb0dfa959375ad4638570e969e2f1e9f433cbf1af6"
+
+[[package]]
 name = "cc"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1639,9 +1645,9 @@ checksum = "6456b8a6c8f33fee7d958fcd1b60d55b11940a79e63ae87013e6d22e26034440"
 
 [[package]]
 name = "httpmock"
-version = "0.5.8"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b217899bcbe8ad3bdee7a46727bd3754b908831462755567852fb20eac585d46"
+checksum = "a24a520a3193799852cc4baf0d8356d7578a8847dfc5603d087529f099661e42"
 dependencies = [
  "assert-json-diff",
  "async-object-pool",
@@ -1649,7 +1655,7 @@ dependencies = [
  "base64 0.13.0",
  "basic-cookies",
  "crossbeam-utils",
- "difference",
+ "form_urlencoded",
  "futures-util",
  "hyper",
  "isahc",
@@ -1661,6 +1667,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_regex",
+ "similar",
  "tokio",
 ]
 
@@ -1821,11 +1828,12 @@ checksum = "02c3eaab3ac0ede60ffa41add21970a7df7d91772c03383aac6c2c3d53cc716b"
 
 [[package]]
 name = "isahc"
-version = "1.4.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81c01404730bb4574bbacb59ca0855f969f8eabd688ca22866f2cc333f1a4f69"
+checksum = "d140e84730d325378912ede32d7cd53ef1542725503b3353e5ec8113c7c6f588"
 dependencies = [
  "async-channel",
+ "castaway",
  "crossbeam-utils",
  "curl",
  "curl-sys",
@@ -1913,9 +1921,9 @@ dependencies = [
 
 [[package]]
 name = "jsonwebtoken-google"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05717fa409fee993240f3298dae3a1da807fa7bce24974ad3f6d9c258bb8d448"
+checksum = "0d4450a120b4afd4cd60b95cf4cb6c37ec719bdd8f0858eac07f8c471454330c"
 dependencies = [
  "base64 0.13.0",
  "headers",
@@ -1925,6 +1933,7 @@ dependencies = [
  "rand",
  "reqwest",
  "serde",
+ "thiserror",
  "tokio",
 ]
 
@@ -3403,6 +3412,12 @@ checksum = "e51e73328dc4ac0c7ccbda3a494dfa03df1de2f46018127f60c693f2648455b0"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "similar"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e24979f63a11545f5f2c60141afe249d4f19f84581ea2138065e400941d83d3"
 
 [[package]]
 name = "simple_asn1"
