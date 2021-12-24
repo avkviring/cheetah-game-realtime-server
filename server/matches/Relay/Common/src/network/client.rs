@@ -91,7 +91,7 @@ impl NetworkClient {
 
 		let mut buffer = [0; 2048];
 		while let Some(frame) = self.out_frames.back() {
-			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer);
+			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer).unwrap();
 			match self.channel.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
 					if size != frame_buffer_size {

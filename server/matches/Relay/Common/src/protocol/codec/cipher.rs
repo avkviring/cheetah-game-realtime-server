@@ -1,7 +1,8 @@
-use crate::room::UserPrivateKey;
-use chacha20poly1305::aead::{AeadInPlace, NewAead};
+use chacha20poly1305::aead::{AeadInPlace, Error, NewAead};
 use chacha20poly1305::{ChaCha8Poly1305, Key, Nonce};
 use heapless::Vec;
+
+use crate::room::UserPrivateKey;
 
 ///
 /// Шифрование пакета
@@ -20,23 +21,23 @@ impl<'a> Cipher<'a> {
 		Self { private_key }
 	}
 
-	pub fn encrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
+	pub fn encrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), Error> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
 		let cipher = ChaCha8Poly1305::new(key);
-		cipher.encrypt_in_place(nonce, ad, buffer).map_err(|_| ())?;
+		cipher.encrypt_in_place(nonce, ad, buffer)?;
 		Result::Ok(())
 	}
 
-	pub fn decrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), ()> {
+	pub fn decrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), Error> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
 		let nonce = Nonce::from_slice(&nonce_buffer);
 		let cipher = ChaCha8Poly1305::new(key);
-		cipher.decrypt_in_place(nonce, ad, buffer).map_err(|_| ())?;
+		cipher.decrypt_in_place(nonce, ad, buffer)?;
 		Result::Ok(())
 	}
 }
@@ -73,7 +74,8 @@ mod tests {
 		let mut buffer: Vec<u8, 4096> = Vec::new();
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
-		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(())));
+
+		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(_)));
 	}
 
 	#[test]
@@ -83,6 +85,6 @@ mod tests {
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		buffer[0] = 0;
-		assert!(matches!(cipher.decrypt(&mut buffer, &AD, NONCE), Result::Err(())));
+		assert!(matches!(cipher.decrypt(&mut buffer, &AD, NONCE), Result::Err(_)));
 	}
 }

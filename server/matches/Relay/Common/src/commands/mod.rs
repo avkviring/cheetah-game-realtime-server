@@ -1,7 +1,10 @@
+use thiserror::Error;
+
+use crate::protocol::codec::commands::context::CommandContextError;
+
 pub mod c2s;
 pub mod s2c;
 pub mod types;
-
 pub type CommandBuffer = heapless::Vec<u8, 256>;
 
 ///
@@ -35,4 +38,20 @@ pub enum FieldType {
 	Double,
 	Structure,
 	Event,
+}
+
+#[derive(Error, Debug)]
+pub enum CommandDecodeError {
+	#[error("Unknown type {:?}.",.0)]
+	UnknownTypeId(CommandTypeId),
+	#[error("IO error {:?}",.source)]
+	Io {
+		#[from]
+		source: std::io::Error,
+	},
+	#[error("CommandContext error {:?}", .source)]
+	CommandContext {
+		#[from]
+		source: CommandContextError,
+	},
 }

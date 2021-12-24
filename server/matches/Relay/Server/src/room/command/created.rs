@@ -29,7 +29,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 
-	use crate::room::command::tests::setup;
+	use crate::room::command::tests::setup_two_players;
 	use crate::room::command::ServerCommandExecutor;
 
 	///
@@ -38,7 +38,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_send_commands() {
-		let (mut room, object_id, user1, user2) = setup();
+		let (mut room, object_id, user1, user2) = setup_two_players();
 		room.mark_as_connected(user1);
 		room.mark_as_connected(user2);
 		let command = CreatedGameObjectCommand {
@@ -63,7 +63,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_switch_object_to_created_state() {
-		let (mut room, object_id, user1, _) = setup();
+		let (mut room, object_id, user1, _) = setup_two_players();
 		let command = CreatedGameObjectCommand {
 			object_id: object_id.clone(),
 		};
@@ -80,7 +80,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_dont_send_command_if_object_already_created() {
-		let (mut room, object_id, user1, _) = setup();
+		let (mut room, object_id, user1, _) = setup_two_players();
 		let object = room.get_object_mut(&object_id).unwrap();
 		object.created = true;
 		let command = CreatedGameObjectCommand {

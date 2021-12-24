@@ -12,7 +12,10 @@ pub extern "C" fn set_long_value_listener(
 	client_id: ClientId,
 	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64),
 ) -> u8 {
-	execute_with_client(client_id, |client| Ok(client.listener_long_value = Some(listener)))
+	execute_with_client(client_id, |client| {
+		client.listener_long_value = Some(listener);
+		Ok(())
+	})
 }
 
 #[no_mangle]

@@ -1,7 +1,6 @@
 use std::io::Cursor;
 
 use strum_macros::AsRefStr;
-use thiserror::Error;
 
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
@@ -9,7 +8,7 @@ use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCom
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
-use crate::commands::{CommandTypeId, FieldType};
+use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
@@ -129,7 +128,7 @@ impl C2SCommand {
 		object_id: Result<GameObjectId, CommandContextError>,
 		field_id: Result<FieldId, CommandContextError>,
 		input: &mut Cursor<&[u8]>,
-	) -> Result<C2SCommand, C2SCommandDecodeError> {
+	) -> Result<C2SCommand, CommandDecodeError> {
 		Ok(match *command_type_id {
 			CommandTypeId::ATTACH_TO_ROOM => C2SCommand::AttachToRoom,
 			CommandTypeId::DETACH_FROM_ROOM => C2SCommand::DetachFromRoom,
@@ -150,25 +149,9 @@ impl C2SCommand {
 			CommandTypeId::SET_STRUCTURE => C2SCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::TARGET_EVENT => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
-			_ => return Err(C2SCommandDecodeError::UnknownTypeId(*command_type_id)),
+			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
-}
-
-#[derive(Error, Debug)]
-pub enum C2SCommandDecodeError {
-	#[error("Unknown type {:?}.",.0)]
-	UnknownTypeId(CommandTypeId),
-	#[error("IO error {:?}",.source)]
-	Io {
-		#[from]
-		source: std::io::Error,
-	},
-	#[error("CommandContext error {:?}", .source)]
-	CommandContext {
-		#[from]
-		source: CommandContextError,
-	},
 }
 
 #[cfg(test)]

@@ -18,5 +18,8 @@ pub enum Channel {
 
 #[no_mangle]
 pub extern "C" fn set_channel(client_id: ClientId, channel: Channel, group: ChannelGroup) -> u8 {
-	execute_with_client(client_id, |client| Ok(client.set_current_channel(channel.clone(), group)))
+	execute_with_client(client_id, |client| {
+		client.set_current_channel(channel.clone(), group);
+		Ok(())
+	})
 }

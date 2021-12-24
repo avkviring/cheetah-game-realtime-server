@@ -3,8 +3,9 @@ use std::io::Cursor;
 
 use thiserror::Error;
 
-use crate::commands::c2s::{C2SCommand, C2SCommandDecodeError};
-use crate::commands::s2c::{S2CCommand, S2CCommandDecodeError, S2CCommandWithCreator};
+use crate::commands::c2s::C2SCommand;
+use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+use crate::commands::CommandDecodeError;
 use crate::protocol::codec::channel::CommandChannelDecodeError;
 use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
 use crate::protocol::codec::commands::header::CommandHeader;
@@ -72,20 +73,15 @@ pub enum CommandsDecoderError {
 		source: CommandChannelDecodeError,
 	},
 
-	#[error("C2SCommandDecodeError error {:?}", .source)]
-	C2SCommandDecode {
+	#[error("CommandDecodeError error {:?}", .source)]
+	CommandDecode {
 		#[from]
-		source: C2SCommandDecodeError,
+		source: CommandDecodeError,
 	},
 
 	#[error("CommandContextError error {:?}", .source)]
 	CommandContext {
 		#[from]
 		source: CommandContextError,
-	},
-	#[error("S2CCommandDecodeError error {:?}", .source)]
-	S2CCommandDecode {
-		#[from]
-		source: S2CCommandDecodeError,
 	},
 }

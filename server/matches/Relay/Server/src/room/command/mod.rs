@@ -54,7 +54,7 @@ mod tests {
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
-	pub fn setup() -> (Room, GameObjectId, RoomMemberId, RoomMemberId) {
+	pub fn setup_two_players() -> (Room, GameObjectId, RoomMemberId, RoomMemberId) {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 		let mut room = Room::from_template(template);
@@ -62,5 +62,13 @@ mod tests {
 		let user_2 = room.register_user(UserTemplate::stub(access_groups));
 		let object_id = room.create_object(user_1, access_groups).id.clone();
 		(room, object_id, user_1, user_2)
+	}
+
+	pub fn setup_one_player() -> (Room, RoomMemberId, AccessGroups) {
+		let template = RoomTemplate::default();
+		let access_groups = AccessGroups(10);
+		let mut room = Room::from_template(template);
+		let user_id = room.register_user(UserTemplate::stub(access_groups));
+		(room, user_id, access_groups)
 	}
 }

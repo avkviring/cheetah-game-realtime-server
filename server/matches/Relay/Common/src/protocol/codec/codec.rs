@@ -13,11 +13,11 @@ use crate::protocol::frame::headers::Headers;
 use crate::protocol::frame::{Frame, FrameId};
 
 #[derive(Error, Debug)]
-pub enum UdpFrameDecodeError {
-	#[error("DecryptedError")]
-	DecryptedError,
-	#[error("DecompressError")]
-	DecompressError,
+pub enum FrameDecodeError {
+	#[error("DecryptedError {}",.0)]
+	DecryptedError(String),
+	#[error("DecompressError {}",.0)]
+	DecompressError(String),
 	#[error("CommandCountReadError")]
 	CommandCountReadError,
 	#[error("Decode commands error {:?}", .source)]
@@ -32,8 +32,21 @@ pub enum UdpFrameDecodeError {
 	},
 }
 
+#[derive(Error, Debug)]
+pub enum FrameEncodeError {
+	#[error("EncryptedError {}",.0)]
+	EncryptedError(String),
+	#[error("CompressError {}",.0)]
+	CompressError(String),
+	#[error("Io error {:?}", .source)]
+	Io {
+		#[from]
+		source: std::io::Error,
+	},
+}
+
 impl Frame {
-	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameId, Headers), UdpFrameDecodeError> {
+	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameId, Headers), FrameDecodeError> {
 		let frame_id = cursor.read_variable_u64()?;
 		let headers = Headers::decode_headers(cursor)?;
 		Result::Ok((frame_id, headers))
@@ -52,7 +65,7 @@ impl Frame {
 		frame_id: FrameId,
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
-	) -> Result<(VecDeque<CommandWithChannel>, VecDeque<CommandWithChannel>), UdpFrameDecodeError> {
+	) -> Result<(VecDeque<CommandWithChannel>, VecDeque<CommandWithChannel>), FrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -65,12 +78,12 @@ impl Frame {
 
 		cipher
 			.decrypt(&mut vec, ad, nonce)
-			.map_err(|_| UdpFrameDecodeError::DecryptedError)?;
+			.map_err(|e| FrameDecodeError::DecryptedError(format!("{:?}", e)))?;
 
 		// commands - decompress
 		let mut decompressed_buffer = [0; Frame::MAX_FRAME_SIZE];
-		let decompressed_size =
-			packet_decompress(&vec, &mut decompressed_buffer).map_err(|_| UdpFrameDecodeError::DecompressError)?;
+		let decompressed_size = packet_decompress(&vec, &mut decompressed_buffer)
+			.map_err(|e| FrameDecodeError::DecompressError(format!("{:?}", e)))?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 
 		let mut cursor = Cursor::new(decompressed_buffer);
@@ -85,15 +98,15 @@ impl Frame {
 	///
 	/// Преобразуем Frame в набор байт для отправки через сеть
 	///
-	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> usize {
+	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> Result<usize, FrameEncodeError> {
 		let mut frame_cursor = Cursor::new(out);
 		frame_cursor.write_variable_u64(self.frame_id).unwrap();
 		self.headers.encode_headers(&mut frame_cursor).unwrap();
 
 		let mut commands_buffer = [0_u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-		encode_commands(&self.reliable, &mut commands_cursor).unwrap();
-		encode_commands(&self.unreliable, &mut commands_cursor).unwrap();
+		encode_commands(&self.reliable, &mut commands_cursor)?;
+		encode_commands(&self.unreliable, &mut commands_cursor)?;
 
 		if commands_cursor.position() > 1024 {
 			panic!(
@@ -110,7 +123,8 @@ impl Frame {
 
 		let commands_position = commands_cursor.position() as usize;
 		//println!("raw {}", (commands_position + frame_cursor.position() as usize));
-		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec).unwrap();
+		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec)
+			.map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
 		if compressed_size > 1024 {
 			panic!(
 				"frame size({:?}) after compress is more than 1024, frame  {:#?}",
@@ -129,12 +143,12 @@ impl Frame {
 				&frame_cursor.get_ref()[0..frame_position],
 				self.frame_id.to_be_bytes(),
 			)
-			.unwrap();
+			.map_err(|e| FrameEncodeError::EncryptedError(format!("{:?}", e)))?;
 
-		frame_cursor.write_all(&vec).unwrap();
+		frame_cursor.write_all(&vec)?;
 
 		//println!("chiper {}", frame_cursor.position());
-		frame_cursor.position() as usize
+		Ok(frame_cursor.position() as usize)
 	}
 }
 
@@ -173,7 +187,7 @@ pub mod tests {
 			})),
 		});
 		let mut buffer = [0; 1024];
-		let size = frame.encode(&mut cipher, &mut buffer);
+		let size = frame.encode(&mut cipher, &mut buffer).unwrap();
 		let buffer = &buffer[0..size];
 
 		let mut cursor = Cursor::new(buffer);

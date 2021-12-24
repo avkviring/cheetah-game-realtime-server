@@ -69,7 +69,7 @@ impl UDPServer {
 				None => {}
 				Some(session) => {
 					log::trace!("[network] server -> user({:?}) {:?}", user_id, frame);
-					let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer);
+					let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
 					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
 						Ok(size) => {
 							if size == buffer_size {
@@ -230,7 +230,7 @@ mod tests {
 		frame
 			.headers
 			.add(Header::MemberAndRoomId(MemberAndRoomId { user_id: 0, room_id: 0 }));
-		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
+		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,
 			&buffer,
@@ -246,7 +246,7 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
-		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer);
+		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,
 			&buffer,
@@ -289,7 +289,9 @@ mod tests {
 			room_id: 0,
 		};
 		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
-		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer);
+		let size = frame
+			.encode(&mut Cipher::new(&user_template.private_key), &mut buffer)
+			.unwrap();
 
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
@@ -298,7 +300,9 @@ mod tests {
 
 		let mut frame = Frame::new(10);
 		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
-		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer);
+		let size = frame
+			.encode(&mut Cipher::new(&user_template.private_key), &mut buffer)
+			.unwrap();
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 
 		assert_eq!(

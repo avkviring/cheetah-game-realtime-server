@@ -1,11 +1,13 @@
-pub fn packet_compress(input: &[u8], output: &mut [u8]) -> Result<usize, ()> {
+use snap::Error;
+
+pub fn packet_compress(input: &[u8], output: &mut [u8]) -> Result<usize, Error> {
 	let mut encoder = snap::raw::Encoder::new();
-	encoder.compress(input, output).map_err(|_| ())
+	encoder.compress(input, output)
 }
 
-pub fn packet_decompress(input: &[u8], output: &mut [u8]) -> Result<usize, ()> {
+pub fn packet_decompress(input: &[u8], output: &mut [u8]) -> Result<usize, Error> {
 	let mut decoder = snap::raw::Decoder::new();
-	decoder.decompress(input, output).map_err(|_| ())
+	decoder.decompress(input, output)
 }
 
 #[cfg(test)]

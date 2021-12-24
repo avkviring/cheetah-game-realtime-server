@@ -119,7 +119,7 @@ mod tests {
 
 		assert!(matches!(commands.remove(0),
 			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
-			if c.object_id==id && c.field_id == 2 && c.value == 200.200));
+			if c.object_id==id && c.field_id == 2 && (c.value - 200.200).abs() < 0.0001));
 
 		assert!(matches!(commands.remove(0),
 		S2CommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id));

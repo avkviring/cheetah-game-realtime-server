@@ -13,7 +13,10 @@ pub extern "C" fn set_structure_listener(
 	client_id: ClientId,
 	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI),
 ) -> u8 {
-	execute_with_client(client_id, |client| Ok(client.listener_structure = Some(listener)))
+	execute_with_client(client_id, |client| {
+		client.listener_structure = Some(listener);
+		Ok(())
+	})
 }
 
 #[no_mangle]

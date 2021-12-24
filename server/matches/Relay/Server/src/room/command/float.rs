@@ -83,18 +83,15 @@ impl GameObject {
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-	use cheetah_matches_relay_common::room::RoomMemberId;
 
+	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{RoomTemplate, UserTemplate};
-	use crate::room::Room;
 
 	#[test]
 	fn should_set_float_command() {
-		let (mut room, user, access_groups) = setup();
+		let (mut room, user, access_groups) = setup_one_player();
 		let object = room.create_object(user, access_groups);
 		let object_id = object.id.clone();
 		object.created = true;
@@ -113,7 +110,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_float_command() {
-		let (mut room, user, access_groups) = setup();
+		let (mut room, user, access_groups) = setup_one_player();
 
 		let object = room.create_object(user, access_groups);
 		object.created = true;
@@ -142,7 +139,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let (mut room, user, _) = setup();
+		let (mut room, user, _) = setup_one_player();
 
 		let command = IncrementDoubleC2SCommand {
 			object_id: GameObjectId::new(10, GameObjectOwner::Room),
@@ -150,13 +147,5 @@ mod tests {
 			increment: 100.100,
 		};
 		command.execute(&mut room, user);
-	}
-
-	fn setup() -> (Room, RoomMemberId, AccessGroups) {
-		let template = RoomTemplate::default();
-		let access_groups = AccessGroups(10);
-		let mut room = Room::from_template(template);
-		let user_id = room.register_user(UserTemplate::stub(access_groups));
-		(room, user_id, access_groups)
 	}
 }

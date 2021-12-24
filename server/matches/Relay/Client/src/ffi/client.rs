@@ -28,7 +28,10 @@ pub extern "C" fn destroy_client(client: ClientId) -> u8 {
 
 #[no_mangle]
 pub extern "C" fn receive(client_id: ClientId) -> u8 {
-	execute_with_client(client_id, |client| Ok(client.receive()))
+	execute_with_client(client_id, |client| {
+		client.receive();
+		Ok(())
+	})
 }
 
 #[no_mangle]

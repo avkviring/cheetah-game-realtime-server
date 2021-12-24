@@ -50,8 +50,8 @@ mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-	use cheetah_matches_relay_common::room::RoomMemberId;
 
+	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::tests::from_vec;
@@ -59,7 +59,7 @@ mod tests {
 
 	#[test]
 	pub fn should_send_event() {
-		let (mut room, user, access_groups) = setup();
+		let (mut room, user, access_groups) = setup_one_player();
 		let object = room.create_object(user, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
@@ -115,7 +115,7 @@ mod tests {
 
 	#[test]
 	pub fn should_not_panic_when_missing_object() {
-		let (mut room, user, _) = setup();
+		let (mut room, user, _) = setup_one_player();
 
 		let command = EventCommand {
 			object_id: GameObjectId::new(10, GameObjectOwner::Room),
@@ -123,13 +123,5 @@ mod tests {
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 		command.execute(&mut room, user);
-	}
-
-	fn setup() -> (Room, RoomMemberId, AccessGroups) {
-		let template = RoomTemplate::default();
-		let access_groups = AccessGroups(10);
-		let mut room = Room::from_template(template);
-		let user_id = room.register_user(UserTemplate::stub(access_groups));
-		(room, user_id, access_groups)
 	}
 }

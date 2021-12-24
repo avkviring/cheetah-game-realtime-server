@@ -7,7 +7,6 @@ use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::variable_int::VariableIntWriter;
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
-use crate::protocol::frame::channel::Channel;
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
 
@@ -33,16 +32,7 @@ pub fn encode_commands(commands: &VecDeque<CommandWithChannel>, out: &mut Cursor
 
 fn get_channel_info(command: &CommandWithChannel) -> (ChannelType, Option<ChannelGroup>) {
 	let channel = &command.channel;
-	let group = match channel {
-		Channel::ReliableUnordered => None,
-		Channel::ReliableOrderedByObject => None,
-		Channel::ReliableOrderedByGroup(group) => Some(*group),
-		Channel::UnreliableUnordered => None,
-		Channel::UnreliableOrderedByObject => None,
-		Channel::UnreliableOrderedByGroup(group) => Some(*group),
-		Channel::ReliableSequenceByObject(_) => None,
-		Channel::ReliableSequenceByGroup(group, _) => Some(*group),
-	};
+	let group = channel.get_channel_group_id();
 	(channel.get_type(), group)
 }
 fn get_command_info(

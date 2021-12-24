@@ -90,7 +90,7 @@ mod tests {
 		assert_eq!(config_object.template, object.template);
 		assert_eq!(config_object.groups, object.access_groups);
 		assert_eq!(config_object.fields.longs[&0], object.longs[&0]);
-		assert_eq!(config_object.fields.floats[&1], object.floats[&1]);
+		assert!((config_object.fields.floats[&1] - object.floats[&1]).abs() < 0.001);
 		assert_eq!(config_object.fields.structures[&1], object.structures[&1]);
 	}
 }

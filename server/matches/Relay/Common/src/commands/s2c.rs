@@ -1,7 +1,6 @@
 use std::io::Cursor;
 
 use strum_macros::AsRefStr;
-use thiserror::Error;
 
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::float::SetDoubleCommand;
@@ -9,7 +8,7 @@ use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCom
 use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
-use crate::commands::{CommandTypeId, FieldType};
+use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
@@ -97,7 +96,7 @@ impl S2CCommand {
 		object_id: Result<GameObjectId, CommandContextError>,
 		field_id: Result<FieldId, CommandContextError>,
 		input: &mut Cursor<&[u8]>,
-	) -> Result<S2CCommand, S2CCommandDecodeError> {
+	) -> Result<S2CCommand, CommandDecodeError> {
 		Ok(match *command_type_id {
 			CommandTypeId::CREATE => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
 			CommandTypeId::CREATED => S2CCommand::Created(CreatedGameObjectCommand { object_id: object_id? }),
@@ -106,25 +105,9 @@ impl S2CCommand {
 			CommandTypeId::SET_DOUBLE => S2CCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SET_STRUCTURE => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			_ => return Err(S2CCommandDecodeError::UnknownTypeId(*command_type_id)),
+			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
-}
-
-#[derive(Error, Debug)]
-pub enum S2CCommandDecodeError {
-	#[error("Unknown type {:?}.",.0)]
-	UnknownTypeId(CommandTypeId),
-	#[error("IO error {:?}",.source)]
-	Io {
-		#[from]
-		source: std::io::Error,
-	},
-	#[error("CommandContext error {:?}", .source)]
-	CommandContext {
-		#[from]
-		source: CommandContextError,
-	},
 }
 
 #[cfg(test)]
