@@ -494,7 +494,6 @@ dependencies = [
  "tonic 0.6.1",
  "tonic-build",
  "tonic-web",
- "tower",
 ]
 
 [[package]]
@@ -540,7 +539,6 @@ dependencies = [
  "tonic 0.6.1",
  "tonic-build",
  "tonic-web",
- "tower",
 ]
 
 [[package]]
