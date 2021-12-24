@@ -15,7 +15,7 @@ cheetah-matches-relay-macro = { path = "../Macro/" }
 generic-array = "0.14.4"
 heapless = { version = "0.7.8", features = ["serde"] }
 fnv = "1.0.7"
-strum_macros = "0.22.0"
+strum_macros = "0.23.1"
 thiserror = "1.0.30"
 
 [dev-dependencies]
