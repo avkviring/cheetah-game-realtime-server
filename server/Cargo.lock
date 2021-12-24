@@ -491,7 +491,7 @@ dependencies = [
  "testcontainers",
  "tokio",
  "tokio-stream",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
  "tonic-web",
 ]
@@ -512,7 +512,7 @@ dependencies = [
  "sqlx",
  "testcontainers",
  "tokio",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
  "tonic-web",
 ]
@@ -536,7 +536,7 @@ dependencies = [
  "testcontainers",
  "tokio",
  "tokio-stream",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
  "tonic-web",
 ]
@@ -555,7 +555,7 @@ dependencies = [
  "sqlx",
  "testcontainers",
  "tokio",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
 ]
 
@@ -576,7 +576,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-stream",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
  "tonic-web",
 ]
@@ -598,7 +598,7 @@ dependencies = [
  "serde_yaml",
  "thiserror",
  "tokio",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
  "validator",
 ]
@@ -623,7 +623,7 @@ dependencies = [
  "strum_macros",
  "tokio",
  "tokio-stream",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
  "tonic-web",
 ]
@@ -687,7 +687,7 @@ dependencies = [
  "prost 0.9.0",
  "tokio",
  "tokio-stream",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
  "tonic-web",
 ]
@@ -701,7 +701,7 @@ dependencies = [
  "pretty_env_logger",
  "prost 0.9.0",
  "tokio",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
 ]
 
@@ -713,7 +713,7 @@ dependencies = [
  "log",
  "pretty_env_logger",
  "serde",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tonic-build",
 ]
 
@@ -3942,9 +3942,9 @@ dependencies = [
 
 [[package]]
 name = "tonic"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24203b79cf2d68909da91178db3026e77054effba0c5d93deb870d3ca7b35afa"
+checksum = "ff08f4649d10a70ffa3522ca559031285d8e421d727ac85c60825761818f5d0a"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -3973,9 +3973,9 @@ dependencies = [
 
 [[package]]
 name = "tonic-build"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88358bb1dcfeb62dcce85c63006cafb964b7be481d522b7e09589d4d1e718d2a"
+checksum = "9403f1bafde247186684b230dc6f38b5cd514584e8bec1dd32514be4745fa757"
 dependencies = [
  "proc-macro2",
  "prost-build",
@@ -3996,7 +3996,7 @@ dependencies = [
  "http-body",
  "hyper",
  "pin-project 1.0.8",
- "tonic 0.6.1",
+ "tonic 0.6.2",
  "tower-service",
  "tracing",
 ]

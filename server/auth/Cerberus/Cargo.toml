@@ -27,7 +27,7 @@ required-features = ["test-helper"]
 [dependencies]
 base64 = "0.13.0"
 chrono = "0.4"
-tonic = "0.6.1"
+tonic = "0.6.2"
 prost = "0.9.0"
 tokio = { version = "1.15.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tokio-stream = { version = "0.1.8", features = ["net"] }
@@ -51,7 +51,7 @@ lazy_static = "1.4.0"
 futures = "0.3.16"
 
 [build-dependencies]
-tonic-build = {version="0.6.0", features=["rustfmt"]}
+tonic-build = {version="0.6.2", features=["rustfmt"]}
 
 [features]
 test-helper = ["testcontainers", "lazy_static"]
