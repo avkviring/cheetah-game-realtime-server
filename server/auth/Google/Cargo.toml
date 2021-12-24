@@ -12,7 +12,7 @@ cheetah-microservice = { path = "../../Microservice" }
 chrono = "0.4"
 tokio = { version = "1.15.0", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tokio-stream = { version = "0.1.8", features = ["net"] }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.132", features = ["derive"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "migrate", "ipnetwork", "chrono"] }
 async-trait = "0.1.50"
 log = "0.4"

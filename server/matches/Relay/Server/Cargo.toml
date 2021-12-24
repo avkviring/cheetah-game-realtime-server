@@ -18,10 +18,10 @@ stderrlog = "0.5.0"
 indexmap = { version = "1.7.0", features = ["serde-1"] }
 cheetah-matches-relay-common = { path = "../Common/" }
 fnv = "1.0.7"
-serde = { version = "1.0.127", features = ["derive", "rc"] }
+serde = { version = "1.0.132", features = ["derive", "rc"] }
 heapless = { version = "0.7.8", features = ["serde"] }
 futures = "0.3.16"
-serde_json = "1.0.70"
+serde_json = "1.0.73"
 tokio = { version = "1.15.0", features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
 tokio-stream = { version = "0.1.8", features = ["net"] }
 tonic = "0.6.1"
