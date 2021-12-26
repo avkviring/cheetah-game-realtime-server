@@ -3,8 +3,8 @@ using Cheetah.Matches.Relay.Income.ByObject;
 using Cheetah.Matches.Relay.Income.ByTemplate;
 using NUnit.Framework;
 using Shared;
+using Shared.Types;
 using Tests.Matches.Pride.Helpers;
-using Tests.Types;
 using UnityEngine;
 using UnityEngine.TestTools;
 

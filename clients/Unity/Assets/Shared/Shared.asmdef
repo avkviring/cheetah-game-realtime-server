@@ -1,12 +1,13 @@
 {
   "name": "Shared",
-  "rootNamespace": "Shared",
+  "rootNamespace": "",
   "references": [
     "games.cheetah.platform.editor",
     "games.cheetah.platform",
     "games.cheetah.auth.user",
     "games.cheetah.auth.cookie",
-    "games.cheetah.matches.matchmaking"
+    "games.cheetah.matches.matchmaking",
+    "games.cheetah.matches.relay"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -14,7 +14,7 @@ namespace Tests.Matches.Pride
         public void ShouldException()
         {
             var wrongHost = "____";
-            Assert.Throws<CreateClientError>(() => new CheetahClient(wrongHost, 0, 0, 0, new byte[128], new CodecRegistry()));
+            Assert.Throws<CreateClientError>(() => new CheetahClient(wrongHost, 0, 0, 0, new byte[128], new CodecRegistryBuilder().Build()));
         }
     }
 }

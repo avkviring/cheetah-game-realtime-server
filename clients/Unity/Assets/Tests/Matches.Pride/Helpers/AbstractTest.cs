@@ -6,7 +6,6 @@ using Cheetah.Platform;
 using NUnit.Framework;
 using Shared;
 using Tests.Helpers;
-using Tests.Types;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -27,9 +26,9 @@ namespace Tests.Matches.Pride.Helpers
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            var codecRegistry = new CodecRegistry();
-            codecRegistry.RegisterEventCodec(DropMineEventId, new DropMineEventCodec());
-            codecRegistry.RegisterStructureCodec(TurretsParamsFieldId, new TurretsParamsStructureCodec());
+            var codecRegistry = new CodecRegistryBuilder();
+            // codecRegistry.RegisterEventCodec(DropMineEventId, new DropMineEventCodec());
+            // codecRegistry.RegisterStructureCodec(TurretsParamsFieldId, new TurretsParamsStructureCodec());
 
             var connectorFactory = new ConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
@@ -55,10 +54,10 @@ namespace Tests.Matches.Pride.Helpers
             clientB.Update();
         }
 
-        private static CheetahClient ConnectToRelay(TicketResponse ticket, CodecRegistry codecRegistry)
+        private static CheetahClient ConnectToRelay(TicketResponse ticket, CodecRegistryBuilder codecRegistryBuilder)
         {
             return new CheetahClient(ticket.RelayGameHost, ticket.RelayGamePort, ticket.UserId, ticket.RoomId, ticket.PrivateKey.ToByteArray(),
-                codecRegistry);
+                codecRegistryBuilder.Build());
         }
 
         [TearDown]
