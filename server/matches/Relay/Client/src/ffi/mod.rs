@@ -129,6 +129,7 @@ const BUFFER_MAX_SIZE: usize = 255;
 #[derive(Clone, Eq, PartialEq)]
 pub struct BufferFFI {
 	pub len: u8,
+	pub pos: u8, // используется в C#
 	pub buffer: [u8; BUFFER_MAX_SIZE],
 }
 
@@ -137,6 +138,7 @@ impl Default for BufferFFI {
 		Self {
 			len: 0,
 			buffer: [0; BUFFER_MAX_SIZE],
+			pos: 0,
 		}
 	}
 }
@@ -160,6 +162,7 @@ impl From<&CommandBuffer> for BufferFFI {
 	fn from(source: &CommandBuffer) -> Self {
 		let mut result = BufferFFI {
 			len: source.len() as u8,
+			pos: 0,
 			buffer: [0; BUFFER_MAX_SIZE],
 		};
 		let buffer = &mut result.buffer[0..source.len()];
