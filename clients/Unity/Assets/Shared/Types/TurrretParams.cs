@@ -2,7 +2,7 @@ using Cheetah.Matches.Relay.Codec;
 
 namespace Shared.Types
 {
-    [GenerateDecode]
+    [GenerateCodec]
     public struct TurretsParamsStructure
     {
         public double Speed;

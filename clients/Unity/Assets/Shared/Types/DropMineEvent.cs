@@ -2,7 +2,7 @@ using Cheetah.Matches.Relay.Codec;
 
 namespace Shared.Types
 {
-    [GenerateDecode]
+    [GenerateCodec]
     public struct DropMineEvent
     {
         public int MineId;
