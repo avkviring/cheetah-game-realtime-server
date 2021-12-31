@@ -21,7 +21,7 @@ namespace Shared.Types
 	
 	
 			[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-			static void OnRuntimeMethodLoad()
+			private static void OnRuntimeMethodLoad()
 			{
 				CodecRegistryBuilder.RegisterDefault(factory=>new DropMineEventCodec());
 			}
