@@ -2,6 +2,7 @@
 FROM akviring/rust-builder:1.57.0-01 as planner
 ARG RUSTFLAGS_ARG
 WORKDIR planner
+COPY server/Cargo.lock server/auth/Cerberus/
 COPY server/Microservice/ server/Microservice/
 COPY server/auth/Cerberus/ server/auth/Cerberus/
 RUN cd server/auth/Cerberus/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef prepare --recipe-path recipe.json

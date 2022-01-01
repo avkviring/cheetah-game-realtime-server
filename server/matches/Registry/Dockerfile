@@ -2,6 +2,7 @@
 FROM akviring/rust-builder:1.57.0-01 as planner
 ARG RUSTFLAGS_ARG
 WORKDIR planner
+COPY server/Cargo.lock server/matches/Registry/
 COPY server/Microservice/ server/Microservice/
 COPY server/matches/Registry/ server/matches/Registry/
 RUN cd server/matches/Registry/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef prepare --recipe-path recipe.json
