@@ -1,5 +1,5 @@
 # определяем зависимости для кеширования
-FROM akviring/rust-builder:1.56.0-01 as planner
+FROM akviring/rust-builder:1.57.0-01 as planner
 ARG RUSTFLAGS_ARG
 WORKDIR planner
 COPY server/Microservice/ server/Microservice/
@@ -7,7 +7,7 @@ COPY server/matches/StubMatchmaking/ server/matches/StubMatchmaking/
 RUN cd server/matches/StubMatchmaking/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef prepare --recipe-path recipe.json
 
 # собираем зависимости
-FROM akviring/rust-builder:1.56.0-01 as cacher
+FROM akviring/rust-builder:1.57.0-01 as cacher
 ARG RUSTFLAGS_ARG
 WORKDIR cache
 COPY server/Microservice/ server/Microservice/
@@ -15,7 +15,7 @@ COPY --from=planner /planner/server/matches/StubMatchmaking/recipe.json server/m
 RUN cd server/matches/StubMatchmaking/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-linux-musl
 
 # компиляция приложения
-FROM akviring/rust-builder:1.56.0-01 as builder
+FROM akviring/rust-builder:1.57.0-01 as builder
 ARG RUSTFLAGS_ARG
 WORKDIR build
 COPY proto/matches/Matchmaking/ proto/matches/Matchmaking/

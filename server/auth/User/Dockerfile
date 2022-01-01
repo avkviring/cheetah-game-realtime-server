@@ -1,5 +1,5 @@
 # определяем зависимости для кеширования
-FROM akviring/rust-builder:1.56.0-01 as planner
+FROM akviring/rust-builder:1.57.0-01 as planner
 ARG RUSTFLAGS_ARG
 WORKDIR planner
 COPY server/Microservice server/Microservice
@@ -8,7 +8,7 @@ COPY server/auth/Cerberus/ server/auth/Cerberus/
 RUN cd server/auth/User/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef prepare --recipe-path recipe.json
 
 # собираем зависимости
-FROM akviring/rust-builder:1.56.0-01 as cacher
+FROM akviring/rust-builder:1.57.0-01 as cacher
 ARG RUSTFLAGS_ARG
 WORKDIR cache
 COPY proto/auth/ proto/auth/
@@ -18,7 +18,7 @@ COPY --from=planner /planner/server/auth/User/recipe.json server/auth/User/recip
 RUN cd server/auth/User/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef cook --release --recipe-path recipe.json --target x86_64-unknown-linux-musl
 
 # компиляция приложения
-FROM akviring/rust-builder:1.56.0-01 as builder
+FROM akviring/rust-builder:1.57.0-01 as builder
 ARG RUSTFLAGS_ARG
 WORKDIR build
 COPY proto/auth/ proto/auth/
