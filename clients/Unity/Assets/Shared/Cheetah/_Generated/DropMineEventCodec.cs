@@ -14,12 +14,12 @@ namespace Shared.Types
 		{
 			public void Decode(ref CheetahBuffer buffer, ref DropMineEvent dest)
 			{
-				dest.MineId = PrimitiveReaders.ReadInt(ref buffer);
+				dest.MineId = IntFormatter.Instance.Read(ref buffer);
 			}
 	
 			public void  Encode(ref DropMineEvent source, ref CheetahBuffer buffer)
 			{
-				PrimitiveWriters.Write(source.MineId,ref buffer);
+				IntFormatter.Instance.Write(source.MineId,ref buffer);
 			}
 	
 	
