@@ -35,7 +35,7 @@ async-stream = "0.3"
 jsonwebtoken = "7.2.0"
 serde = { version = "1.0.132", features = ["derive"] }
 cheetah-microservice = { path = "../../Microservice" }
-redis = { version = "0.21.4", features = ["tokio-comp"] }
+redis = { version = "0.21.5", features = ["tokio-comp"] }
 async-trait = "0.1.52"
 log = "0.4"
 pretty_env_logger = "0.4.0"

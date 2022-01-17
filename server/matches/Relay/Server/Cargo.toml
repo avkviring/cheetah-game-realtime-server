@@ -15,7 +15,7 @@ path = "src/bin/service.rs"
 rand = "0.8.4"
 log = "0.4"
 stderrlog = "0.5.0"
-indexmap = { version = "1.7.0", features = ["serde-1"] }
+indexmap = { version = "1.8.0", features = ["serde-1"] }
 cheetah-matches-relay-common = { path = "../Common/" }
 fnv = "1.0.7"
 serde = { version = "1.0.132", features = ["derive", "rc"] }
@@ -26,7 +26,7 @@ tokio = { version = "1.15.0", features = ["rt-multi-thread", "time", "fs", "macr
 tokio-stream = { version = "0.1.8", features = ["net"] }
 tonic = "0.6.2"
 prost = "0.9.0"
-rymder = "0.2.2"
+rymder = "0.3.0"
 strum_macros = "0.23.1"
 cheetah-microservice = { path = "../../../Microservice" }
 tonic-web = "0.2.0"
