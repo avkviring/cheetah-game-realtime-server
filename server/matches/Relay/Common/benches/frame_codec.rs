@@ -17,7 +17,7 @@ fn frame_encode(c: &mut Criterion) {
 			let frame = Frame::new(100500);
 			let mut buffer = [0; 2048];
 			let private_key = [0; 32];
-			frame.encode(&mut Cipher::new(&private_key), &mut buffer);
+			frame.encode(&mut Cipher::new(&private_key), &mut buffer).unwrap();
 		})
 	});
 	group.finish();
@@ -31,7 +31,7 @@ fn frame_decode(c: &mut Criterion) {
 	let frame = Frame::new(100500);
 	let mut buffer = [0; 2048];
 	let private_key = [0; 32];
-	let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
+	let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer).unwrap();
 
 	let mut group = c.benchmark_group("throughput-decode");
 	group.throughput(Throughput::Elements(1));

@@ -8,23 +8,24 @@ name = "cheetah-auth-cerberus"
 path = "src/main.rs"
 
 [[test]]
-name="server"
+name = "server"
 path = "tests/server.rs"
 required-features = ["test-helper"]
 
 [[test]]
-name="resfresh_token"
+name = "resfresh_token"
 path = "tests/resfresh_token.rs"
 required-features = ["test-helper"]
 
 [[test]]
-name="session_token"
+name = "session_token"
 path = "tests/session_token.rs"
 required-features = ["test-helper"]
 
 
 
 [dependencies]
+sha2 = "0.9.9"
 base64 = "0.13.0"
 chrono = "0.4"
 tonic = "0.6.2"
@@ -51,7 +52,7 @@ lazy_static = "1.4.0"
 futures = "0.3.19"
 
 [build-dependencies]
-tonic-build = {version="0.6.2", features=["rustfmt"]}
+tonic-build = { version = "0.6.2", features = ["rustfmt"] }
 
 [features]
 test-helper = ["testcontainers", "lazy_static"]
