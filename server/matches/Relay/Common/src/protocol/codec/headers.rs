@@ -5,7 +5,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::disconnect::handler::DisconnectHeader;
 use crate::protocol::frame::headers::Header::RoundTripTimeRequest;
-use crate::protocol::frame::headers::{Header, Headers};
+use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
 use crate::protocol::others::rtt::RoundTripTimeHeader;
 use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::reliable::ack::header::AckHeader;
@@ -13,7 +13,7 @@ use crate::protocol::reliable::retransmit::RetransmitHeader;
 
 impl Headers {
 	pub fn decode_headers(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let mut headers = Vec::new();
+		let mut headers = HeaderVec::new();
 		let count = input.read_variable_u64()?;
 		for _ in 0..count {
 			let type_header = input.read_u8()?;
@@ -32,7 +32,9 @@ impl Headers {
 					));
 				}
 			};
-			headers.push(header);
+			headers
+				.push(header)
+				.map_err(|_| std::io::Error::new(ErrorKind::InvalidInput, "Headers count overflow"))?;
 		}
 		Ok(Self { headers })
 	}
@@ -78,7 +80,7 @@ mod tests {
 	use std::io::Cursor;
 
 	use crate::protocol::disconnect::handler::DisconnectHeader;
-	use crate::protocol::frame::headers::{Header, Headers};
+	use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
 	use crate::protocol::others::rtt::RoundTripTimeHeader;
 	use crate::protocol::others::user_id::MemberAndRoomId;
 	use crate::protocol::reliable::ack::header::AckHeader;
@@ -127,6 +129,7 @@ mod tests {
 	}
 
 	fn check(headers: Vec<Header>) {
+		let headers = HeaderVec::from_slice(&headers).unwrap();
 		let headers = Headers { headers };
 		let mut data = [0_u8; 100];
 		let mut out = Cursor::new(data.as_mut());

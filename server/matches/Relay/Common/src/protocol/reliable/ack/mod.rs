@@ -150,7 +150,7 @@ mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
-	use crate::protocol::frame::headers::Header;
+	use crate::protocol::frame::headers::{Header, HeaderVec};
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::ack::AckSender;
@@ -263,7 +263,7 @@ mod tests {
 		let mut out_frame = Frame::new(20);
 		reliable.build_frame(&mut out_frame, &time);
 
-		let headers: Vec<&AckHeader> = out_frame.headers.find(Header::predicate_ack);
+		let headers: HeaderVec<&AckHeader> = out_frame.headers.find(Header::predicate_ack);
 		assert_eq!(headers.len(), 2);
 		assert_eq!(headers[0].start_frame_id, frame_a.frame_id);
 		assert_eq!(headers[1].start_frame_id, frame_b.frame_id);

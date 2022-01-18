@@ -9,7 +9,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use mockall::{automock, predicate::*};
 
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use crate::protocol::frame::headers::Header;
+use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
@@ -192,7 +192,7 @@ impl FrameReceivedListener for RetransmitterImpl {
 	/// Обрабатываем подтверждения фреймов
 	///
 	fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
-		let ack_headers: Vec<&AckHeader> = frame.headers.find(Header::predicate_ack);
+		let ack_headers: HeaderVec<&AckHeader> = frame.headers.find(Header::predicate_ack);
 		ack_headers.iter().for_each(|ack_header| {
 			ack_header.get_frames().iter().for_each(|frame_id| {
 				self.unacked_frames.remove(frame_id);

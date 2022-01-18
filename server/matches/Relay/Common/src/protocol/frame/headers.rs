@@ -6,6 +6,7 @@ use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::RetransmitHeader;
 
+pub type HeaderVec<T> = heapless::Vec<T, 10>;
 ///
 /// Дополнительные UDP заголовки
 /// - не сжимается
@@ -14,7 +15,7 @@ use crate::protocol::reliable::retransmit::RetransmitHeader;
 ///
 #[derive(Debug, PartialEq, Clone)]
 pub struct Headers {
-	pub(crate) headers: Vec<Header>,
+	pub(crate) headers: HeaderVec<Header>,
 }
 
 #[derive(Debug, PartialEq, Clone, EnumMatchPredicates)]
@@ -58,13 +59,13 @@ pub enum Header {
 
 impl Headers {
 	pub fn add(&mut self, header: Header) {
-		self.headers.push(header);
+		self.headers.push(header).unwrap();
 	}
 
-	pub fn find<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> Vec<&T> {
+	pub fn find<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> HeaderVec<&T> {
 		self.headers.iter().filter_map(p).collect()
 	}
-
+	
 	pub fn first<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> Option<&T> {
 		self.headers.iter().find_map(p)
 	}
