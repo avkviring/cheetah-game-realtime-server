@@ -389,7 +389,7 @@ mod tests {
 				.as_ref()
 				.unwrap()
 				.out_commands_collector
-				.reliable
+				.commands
 				.iter()
 				.map(|c| &c.command)
 				.map(|c| match c {
@@ -407,7 +407,7 @@ mod tests {
 				.as_ref()
 				.unwrap()
 				.out_commands_collector
-				.reliable
+				.commands
 				.iter()
 				.map(|c| &c.command)
 				.map(|c| match c {
@@ -425,7 +425,7 @@ mod tests {
 				.as_mut()
 				.unwrap()
 				.out_commands_collector
-				.reliable
+				.commands
 				.clear();
 		}
 	}
@@ -534,10 +534,13 @@ mod tests {
 		room.process_in_frame(user1_id, Frame::new(0), &Instant::now());
 
 		let mut frame_with_attach_to_room = Frame::new(1);
-		frame_with_attach_to_room.reliable.push_back(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-		});
+		frame_with_attach_to_room
+			.commands
+			.push(CommandWithChannel {
+				channel: Channel::ReliableUnordered,
+				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			})
+			.unwrap();
 		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
 
 		let user1 = room.get_user_mut(user1_id).unwrap();
@@ -545,7 +548,7 @@ mod tests {
 		assert_eq!(
 			protocol
 				.out_commands_collector
-				.reliable
+				.commands
 				.pop_front()
 				.unwrap()
 				.command
@@ -553,14 +556,14 @@ mod tests {
 				.unwrap(),
 			&GameObjectId::new(object1_template.id, GameObjectOwner::User(user1_id))
 		);
-		protocol.out_commands_collector.reliable.clear();
+		protocol.out_commands_collector.commands.clear();
 		room.process_in_frame(user2_id, Frame::new(0), &Instant::now());
 		let user1 = room.get_user_mut(user1_id).unwrap();
 		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
 			protocol
 				.out_commands_collector
-				.reliable
+				.commands
 				.pop_front()
 				.unwrap()
 				.command

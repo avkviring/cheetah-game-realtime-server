@@ -25,7 +25,7 @@ pub fn empty_frame() {
 pub fn create_object_frame() {
 	let mut frame = Frame::new(100500);
 	frame
-		.reliable
+		.commands
 		.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
@@ -36,7 +36,7 @@ pub fn create_object_frame() {
 		})
 		.unwrap();
 	frame
-		.reliable
+		.commands
 		.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
@@ -47,7 +47,7 @@ pub fn create_object_frame() {
 		})
 		.unwrap();
 	frame
-		.reliable
+		.commands
 		.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {

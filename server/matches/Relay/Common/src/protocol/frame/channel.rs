@@ -94,6 +94,18 @@ impl From<&Channel> for ChannelType {
 }
 
 impl Channel {
+	pub fn is_reliable(&self) -> bool {
+		match self {
+			Channel::ReliableUnordered => true,
+			Channel::ReliableOrderedByObject => true,
+			Channel::ReliableOrderedByGroup(_) => true,
+			Channel::ReliableSequenceByObject(_) => true,
+			Channel::ReliableSequenceByGroup(_, _) => true,
+			Channel::UnreliableUnordered => false,
+			Channel::UnreliableOrderedByObject => false,
+			Channel::UnreliableOrderedByGroup(_) => false,
+		}
+	}
 	pub fn get_channel_group_id(&self) -> Option<ChannelGroup> {
 		match self {
 			Channel::ReliableUnordered => None,

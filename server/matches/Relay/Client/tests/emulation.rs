@@ -23,7 +23,7 @@ fn should_drop() {
 
 	ffi::command::long_value::set_long_value_listener(client2, should_drop_listener);
 	ffi::command::room::attach_to_room(client2);
-	ffi::client::set_drop_emulation(client2, 0.1, 0);
+	ffi::client::set_drop_emulation(client2, 0.5, 0);
 
 	ffi::channel::set_channel(client1, Channel::UnreliableUnordered, 0);
 	for _ in 0..20000 {

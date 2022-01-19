@@ -134,12 +134,11 @@ impl UDPServer {
 							Some(session) => {
 								let private_key = &session.private_key;
 								match Frame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
-									Ok((reliable, unreliable)) => {
+									Ok(commands) => {
 										let frame = Frame {
 											frame_id,
 											headers,
-											reliable,
-											unreliable,
+											commands,
 										};
 										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);

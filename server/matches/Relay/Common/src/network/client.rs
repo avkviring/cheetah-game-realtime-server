@@ -136,12 +136,11 @@ impl NetworkClient {
 						Ok((frame_id, headers)) => {
 							match Frame::decode_frame_commands(self.from_client, frame_id, cursor, Cipher::new(&self.private_key))
 							{
-								Ok((reliable, unreliable)) => {
+								Ok(commands) => {
 									let frame = Frame {
 										frame_id,
 										headers,
-										reliable,
-										unreliable,
+										commands,
 									};
 									self.on_frame_received(now, frame);
 								}

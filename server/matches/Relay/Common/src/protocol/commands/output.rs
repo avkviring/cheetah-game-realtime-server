@@ -17,16 +17,7 @@ use crate::room::object::GameObjectId;
 ///
 #[derive(Default, Debug)]
 pub struct OutCommandsCollector {
-	///
-	/// С гарантией доставки
-	///
-	pub reliable: VecDeque<CommandWithChannel>,
-
-	///
-	/// Без гарантии доставки
-	///
-	pub unreliable: VecDeque<CommandWithChannel>,
-
+	pub commands: VecDeque<CommandWithChannel>,
 	group_sequence: HashMap<ChannelGroup, ChannelSequence, FnvBuildHasher>,
 	object_sequence: HashMap<GameObjectId, ChannelSequence, FnvBuildHasher>,
 }
@@ -38,20 +29,7 @@ impl OutCommandsCollector {
 				log::error!("can not create channel for {:?} {:?}", channel_type, command)
 			}
 			Some(channel) => {
-				let description = CommandWithChannel { channel, command };
-				let commands = match channel_type {
-					ChannelType::ReliableUnordered
-					| ChannelType::ReliableOrderedByObject
-					| ChannelType::ReliableOrderedByGroup(_)
-					| ChannelType::ReliableSequenceByObject
-					| ChannelType::ReliableSequenceByGroup(_) => &mut self.reliable,
-
-					ChannelType::UnreliableUnordered
-					| ChannelType::UnreliableOrderedByObject
-					| ChannelType::UnreliableOrderedByGroup(_) => &mut self.unreliable,
-				};
-
-				commands.push_back(description);
+				self.commands.push_back(CommandWithChannel { channel, command });
 			}
 		}
 	}
@@ -82,24 +60,13 @@ impl OutCommandsCollector {
 
 impl FrameBuilder for OutCommandsCollector {
 	fn contains_self_data(&self, _: &Instant) -> bool {
-		self.reliable.len() + self.unreliable.len() > 0
+		!self.commands.is_empty()
 	}
 
 	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
 		let mut command_count = 0;
-		while let Some(command) = self.reliable.pop_front() {
-			frame.reliable.push(command).unwrap();
-			command_count += 1;
-			if command_count == MAX_COMMAND_IN_FRAME {
-				break;
-			}
-		}
-		if command_count == MAX_COMMAND_IN_FRAME {
-			return;
-		}
-
-		while let Some(command) = self.unreliable.pop_front() {
-			frame.unreliable.push(command).unwrap();
+		while let Some(command) = self.commands.pop_front() {
+			frame.commands.push(command).unwrap();
 			command_count += 1;
 			if command_count == MAX_COMMAND_IN_FRAME {
 				break;
@@ -130,9 +97,9 @@ mod tests {
 				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
-		assert!(matches!(output.reliable[0].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==0));
-		assert!(matches!(output.reliable[1].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==1));
-		assert!(matches!(output.reliable[2].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==2));
+		assert!(matches!(output.commands[0].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==0));
+		assert!(matches!(output.commands[1].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==1));
+		assert!(matches!(output.commands[2].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==2));
 	}
 
 	#[test]
@@ -154,7 +121,7 @@ mod tests {
 
 		// в коллекторе первой должна быть команда с value равным размеру фрейма
 		assert!(matches!(
-			output.reliable.pop_front().unwrap().command,
+			output.commands.pop_front().unwrap().command,
 			BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: _,
 					field_id: _,
@@ -166,7 +133,7 @@ mod tests {
 		// проверяем как собран фрейм
 		for i in 0..MAX_COMMAND_IN_FRAME {
 			assert!(matches!(
-				frame.reliable[i].command,
+				frame.commands[i].command,
 				BothDirectionCommand::C2S( C2SCommand::SetLong(SetLongCommand {
 						object_id: _,
 						field_id: _,
@@ -192,8 +159,8 @@ mod tests {
 			);
 		}
 
-		assert!(matches!(output.reliable[0].channel, Channel::ReliableSequenceByObject(sequence) if sequence==0));
-		assert!(matches!(output.reliable[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence==1));
-		assert!(matches!(output.reliable[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence==2));
+		assert!(matches!(output.commands[0].channel, Channel::ReliableSequenceByObject(sequence) if sequence==0));
+		assert!(matches!(output.commands[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence==1));
+		assert!(matches!(output.commands[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence==2));
 	}
 }

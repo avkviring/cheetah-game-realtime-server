@@ -8,12 +8,12 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 
+use crate::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::{Frame, FrameId};
+use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
-use crate::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 
 ///
 /// Повторная посылка фреймов, для которых не пришло подтверждение
@@ -208,11 +208,18 @@ impl FrameBuiltListener for RetransmitterImpl {
 	///
 	fn on_frame_built(&mut self, frame: &Frame, now: &Instant) {
 		if frame.is_reliability() {
-			let original_grame_id = frame.frame_id;
-			let mut frame = frame.clone();
-			frame.unreliable.clear();
-			self.schedule_retransmit(frame, original_grame_id, 0, now);
-			self.unacked_frames.insert(original_grame_id);
+			let original_frame_id = frame.frame_id;
+			let mut cloned_frame = frame.clone();
+			cloned_frame.commands.clear();
+			for command in frame.commands.iter() {
+				if !command.channel.is_reliable() {
+					continue;
+				}
+				cloned_frame.commands.push(command.clone()).unwrap();
+			}
+
+			self.schedule_retransmit(cloned_frame, original_frame_id, 0, now);
+			self.unacked_frames.insert(original_frame_id);
 		}
 	}
 }
@@ -225,17 +232,18 @@ impl DisconnectedStatus for RetransmitterImpl {
 
 #[cfg(test)]
 mod tests {
-	use crate::commands::c2s::C2SCommand;
 	use std::ops::Add;
 	use std::time::Instant;
 
+	use crate::commands::c2s::C2SCommand;
+	use crate::commands::types::event::EventCommand;
+	use crate::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
+	use crate::protocol::frame::{Frame, FrameId};
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
-	use crate::protocol::frame::{Frame, FrameId};
 	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::retransmit::RetransmitterImpl;
-	use crate::protocol::{DisconnectedStatus, FrameBuiltListener, FrameReceivedListener};
 
 	#[test]
 	///
@@ -371,25 +379,39 @@ mod tests {
 	#[test]
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = RetransmitterImpl::default();
-		let mut frame = create_reliability_frame(1);
+		let mut frame = Frame::new(0);
 		frame
-			.unreliable
+			.commands
 			.push(CommandWithChannel {
-				channel: Channel::ReliableUnordered,
+				channel: Channel::UnreliableUnordered,
 				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			})
 			.unwrap();
+
+		let reliable_command = CommandWithChannel {
+			channel: Channel::ReliableUnordered,
+			command: BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
+				object_id: Default::default(),
+				field_id: 0,
+				event: Default::default(),
+			})),
+		};
+		frame
+			.commands
+			.push(reliable_command.clone())
+			.unwrap();
 		let now = Instant::now();
 		handler.on_frame_built(&frame, &now);
-
 		let now = now.add(handler.ack_wait_duration);
-		assert!(matches!(handler.get_retransmit_frame(&now,2), Option::Some(frame) if frame.unreliable.is_empty()))
+		assert!(matches!(handler.get_retransmit_frame(&now,2), 
+			Option::Some(frame) 
+			if *frame.commands.as_slice()==[reliable_command]));
 	}
 
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
 		frame
-			.reliable
+			.commands
 			.push(CommandWithChannel {
 				channel: Channel::ReliableUnordered,
 				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),

@@ -63,7 +63,7 @@ impl Frame {
 		frame_id: FrameId,
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
-	) -> Result<(CommandVec, CommandVec), FrameDecodeError> {
+	) -> Result<CommandVec, FrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -86,11 +86,9 @@ impl Frame {
 
 		let mut cursor = Cursor::new(decompressed_buffer);
 
-		let mut reliable = CommandVec::new();
-		let mut unreliable = CommandVec::new();
-		decode_commands(c2s_commands, &mut cursor, &mut reliable)?;
-		decode_commands(c2s_commands, &mut cursor, &mut unreliable)?;
-		Ok((reliable, unreliable))
+		let mut commands = CommandVec::new();
+		decode_commands(c2s_commands, &mut cursor, &mut commands)?;
+		Ok(commands)
 	}
 
 	///
@@ -103,8 +101,7 @@ impl Frame {
 
 		let mut commands_buffer = [0_u8; 4 * Frame::MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-		encode_commands(&self.reliable, &mut commands_cursor)?;
-		encode_commands(&self.unreliable, &mut commands_cursor)?;
+		encode_commands(&self.commands, &mut commands_cursor)?;
 
 		if commands_cursor.position() > 1024 {
 			panic!(
@@ -177,7 +174,7 @@ pub mod tests {
 		frame.headers.add(Header::Ack(AckHeader::new(10)));
 		frame.headers.add(Header::Ack(AckHeader::new(15)));
 		frame
-			.reliable
+			.commands
 			.push(CommandWithChannel {
 				channel: Channel::ReliableUnordered,
 				command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
@@ -193,12 +190,11 @@ pub mod tests {
 
 		let mut cursor = Cursor::new(buffer);
 		let (frame_id, headers) = Frame::decode_headers(&mut cursor).unwrap();
-		let (reliable, unreliable) = Frame::decode_frame_commands(true, frame_id, cursor, cipher.clone()).unwrap();
+		let commands = Frame::decode_frame_commands(true, frame_id, cursor, cipher.clone()).unwrap();
 		let decoded_frame = Frame {
 			frame_id,
 			headers,
-			reliable,
-			unreliable,
+			commands,
 		};
 
 		assert_eq!(frame, decoded_frame);

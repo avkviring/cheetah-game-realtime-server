@@ -21,18 +21,8 @@ pub struct Frame {
 	/// - должен быть уникальным, даже если это повторно отсылаемый фрейм
 	///
 	pub frame_id: FrameId,
-
 	pub headers: Headers,
-
-	///
-	/// С гарантией доставки
-	///
-	pub reliable: CommandVec,
-
-	///
-	/// Без гарантии доставки
-	///
-	pub unreliable: CommandVec,
+	pub commands: CommandVec,
 }
 
 impl Frame {
@@ -43,8 +33,7 @@ impl Frame {
 		Self {
 			frame_id,
 			headers: Default::default(),
-			reliable: Default::default(),
-			unreliable: Default::default(),
+			commands: Default::default(),
 		}
 	}
 
@@ -64,6 +53,6 @@ impl Frame {
 	/// Фрейм с надежной доставкой?
 	///
 	pub fn is_reliability(&self) -> bool {
-		!self.reliable.is_empty()
+		!self.commands.is_empty()
 	}
 }
