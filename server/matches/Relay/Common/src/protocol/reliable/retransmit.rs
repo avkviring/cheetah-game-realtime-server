@@ -372,10 +372,13 @@ mod tests {
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = RetransmitterImpl::default();
 		let mut frame = create_reliability_frame(1);
-		frame.unreliable.push_back(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-		});
+		frame
+			.unreliable
+			.push(CommandWithChannel {
+				channel: Channel::ReliableUnordered,
+				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			})
+			.unwrap();
 		let now = Instant::now();
 		handler.on_frame_built(&frame, &now);
 
@@ -385,10 +388,13 @@ mod tests {
 
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.reliable.push_back(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-		});
+		frame
+			.reliable
+			.push(CommandWithChannel {
+				channel: Channel::ReliableUnordered,
+				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			})
+			.unwrap();
 		frame
 	}
 

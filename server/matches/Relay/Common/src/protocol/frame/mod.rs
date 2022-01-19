@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::{Header, Headers};
 
@@ -7,6 +5,9 @@ pub mod applications;
 pub mod channel;
 pub mod headers;
 pub type FrameId = u64;
+
+pub const MAX_COMMAND_IN_FRAME: usize = 20;
+pub type CommandVec = heapless::Vec<CommandWithChannel, MAX_COMMAND_IN_FRAME>;
 
 ///
 /// Структура для передачи через UDP
@@ -26,12 +27,12 @@ pub struct Frame {
 	///
 	/// С гарантией доставки
 	///
-	pub reliable: VecDeque<CommandWithChannel>,
+	pub reliable: CommandVec,
 
 	///
 	/// Без гарантии доставки
 	///
-	pub unreliable: VecDeque<CommandWithChannel>,
+	pub unreliable: CommandVec,
 }
 
 impl Frame {

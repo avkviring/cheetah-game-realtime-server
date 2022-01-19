@@ -145,7 +145,6 @@ impl Ord for SequenceApplicationCommand {
 mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::long::SetLongCommand;
-
 	use crate::protocol::commands::input::InCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
@@ -161,10 +160,10 @@ mod tests {
 		let command_2 = create_test_command(Channel::ReliableUnordered, 2);
 
 		let mut frame1 = Frame::new(2);
-		frame1.unreliable.push_back(command_1.clone());
+		frame1.unreliable.push(command_1.clone()).unwrap();
 
 		let mut frame2 = Frame::new(2);
-		frame2.unreliable.push_back(command_2.clone());
+		frame2.unreliable.push(command_2.clone()).unwrap();
 
 		in_commands.collect(frame2);
 		in_commands.collect(frame1);
@@ -182,13 +181,13 @@ mod tests {
 		let command_3 = create_test_command(Channel::ReliableOrderedByGroup(1), 3);
 
 		let mut frame1 = Frame::new(1);
-		frame1.reliable.push_back(command_1.clone());
+		frame1.reliable.push(command_1.clone()).unwrap();
 
 		let mut frame2 = Frame::new(2);
-		frame2.reliable.push_back(command_2);
+		frame2.reliable.push(command_2).unwrap();
 
 		let mut frame3 = Frame::new(3);
-		frame3.reliable.push_back(command_3.clone());
+		frame3.reliable.push(command_3.clone()).unwrap();
 
 		in_commands.collect(frame1);
 		in_commands.collect(frame3);
@@ -207,10 +206,10 @@ mod tests {
 		let command_2 = create_test_command(Channel::ReliableOrderedByGroup(2), 2);
 
 		let mut frame1 = Frame::new(1);
-		frame1.reliable.push_back(command_1.clone());
+		frame1.reliable.push(command_1.clone()).unwrap();
 
 		let mut frame2 = Frame::new(2);
-		frame2.reliable.push_back(command_2.clone());
+		frame2.reliable.push(command_2.clone()).unwrap();
 
 		in_commands.collect(frame2);
 		in_commands.collect(frame1);
@@ -228,13 +227,13 @@ mod tests {
 		let command_3 = create_test_object_command(Channel::ReliableOrderedByObject, 1, 3);
 
 		let mut frame1 = Frame::new(1);
-		frame1.reliable.push_back(command_1.clone());
+		frame1.reliable.push(command_1.clone()).unwrap();
 
 		let mut frame2 = Frame::new(2);
-		frame2.reliable.push_back(command_2);
+		frame2.reliable.push(command_2).unwrap();
 
 		let mut frame3 = Frame::new(3);
-		frame3.reliable.push_back(command_3.clone());
+		frame3.reliable.push(command_3.clone()).unwrap();
 
 		in_commands.collect(frame1);
 		in_commands.collect(frame3);
@@ -258,16 +257,16 @@ mod tests {
 		let command_2_c = create_test_object_command(Channel::ReliableOrderedByObject, 2, 3);
 
 		let mut frame1 = Frame::new(1);
-		frame1.reliable.push_back(command_1_a.clone());
-		frame1.reliable.push_back(command_2_a.clone());
+		frame1.reliable.push(command_1_a.clone()).unwrap();
+		frame1.reliable.push(command_2_a.clone()).unwrap();
 
 		let mut frame2 = Frame::new(2);
-		frame2.reliable.push_back(command_1_b);
-		frame2.reliable.push_back(command_2_b);
+		frame2.reliable.push(command_1_b).unwrap();
+		frame2.reliable.push(command_2_b).unwrap();
 
 		let mut frame3 = Frame::new(3);
-		frame3.reliable.push_back(command_1_c.clone());
-		frame3.reliable.push_back(command_2_c.clone());
+		frame3.reliable.push(command_1_c.clone()).unwrap();
+		frame3.reliable.push(command_2_c.clone()).unwrap();
 
 		in_commands.collect(frame1);
 		in_commands.collect(frame3);
@@ -291,23 +290,23 @@ mod tests {
 		let command_5 = create_test_command(Channel::ReliableSequenceByGroup(1, 5), 5);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1.clone());
+		frame.reliable.push(command_1.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_3.clone());
+		frame.reliable.push(command_3.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_5.clone());
+		frame.reliable.push(command_5.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2.clone());
+		frame.reliable.push(command_2.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_4.clone());
+		frame.reliable.push(command_4.clone()).unwrap();
 		in_commands.collect(frame);
 
 		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
@@ -331,27 +330,27 @@ mod tests {
 		let command_2_c = create_test_command(Channel::ReliableSequenceByGroup(2, 3), 6);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1_a.clone());
+		frame.reliable.push(command_1_a.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2_b.clone());
+		frame.reliable.push(command_2_b.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1_c.clone());
+		frame.reliable.push(command_1_c.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2_a.clone());
+		frame.reliable.push(command_2_a.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1_b.clone());
+		frame.reliable.push(command_1_b.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2_c.clone());
+		frame.reliable.push(command_2_c.clone()).unwrap();
 		in_commands.collect(frame);
 
 		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_a);
@@ -374,23 +373,23 @@ mod tests {
 		let command_5 = create_test_object_command(Channel::ReliableSequenceByObject(4), 1, 5);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1.clone());
+		frame.reliable.push(command_1.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_3.clone());
+		frame.reliable.push(command_3.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_5.clone());
+		frame.reliable.push(command_5.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_4.clone());
+		frame.reliable.push(command_4.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2.clone());
+		frame.reliable.push(command_2.clone()).unwrap();
 		in_commands.collect(frame);
 
 		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
@@ -415,27 +414,27 @@ mod tests {
 		let command_2_c = create_test_object_command(Channel::ReliableSequenceByObject(3), 2, 3);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1_a.clone());
+		frame.reliable.push(command_1_a.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2_b.clone());
+		frame.reliable.push(command_2_b.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1_c.clone());
+		frame.reliable.push(command_1_c.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2_a.clone());
+		frame.reliable.push(command_2_a.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_1_b.clone());
+		frame.reliable.push(command_1_b.clone()).unwrap();
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
-		frame.reliable.push_back(command_2_c.clone());
+		frame.reliable.push(command_2_c.clone()).unwrap();
 		in_commands.collect(frame);
 
 		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_a);

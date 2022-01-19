@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::io::{Cursor, Write};
 
 use thiserror::Error;
@@ -8,9 +7,8 @@ use crate::protocol::codec::commands::decoder::{decode_commands, CommandsDecoder
 use crate::protocol::codec::commands::encoder::encode_commands;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::Headers;
-use crate::protocol::frame::{Frame, FrameId};
+use crate::protocol::frame::{CommandVec, Frame, FrameId};
 
 #[derive(Error, Debug)]
 pub enum FrameDecodeError {
@@ -65,7 +63,7 @@ impl Frame {
 		frame_id: FrameId,
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
-	) -> Result<(VecDeque<CommandWithChannel>, VecDeque<CommandWithChannel>), FrameDecodeError> {
+	) -> Result<(CommandVec, CommandVec), FrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -88,8 +86,8 @@ impl Frame {
 
 		let mut cursor = Cursor::new(decompressed_buffer);
 
-		let mut reliable = VecDeque::new();
-		let mut unreliable = VecDeque::new();
+		let mut reliable = CommandVec::new();
+		let mut unreliable = CommandVec::new();
 		decode_commands(c2s_commands, &mut cursor, &mut reliable)?;
 		decode_commands(c2s_commands, &mut cursor, &mut unreliable)?;
 		Ok((reliable, unreliable))
@@ -178,14 +176,17 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::Ack(AckHeader::new(10)));
 		frame.headers.add(Header::Ack(AckHeader::new(15)));
-		frame.reliable.push_back(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
-				object_id: GameObjectId::new(100, GameObjectOwner::User(200)),
-				field_id: 78,
-				value: 155,
-			})),
-		});
+		frame
+			.reliable
+			.push(CommandWithChannel {
+				channel: Channel::ReliableUnordered,
+				command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+					object_id: GameObjectId::new(100, GameObjectOwner::User(200)),
+					field_id: 78,
+					value: 155,
+				})),
+			})
+			.unwrap();
 		let mut buffer = [0; 1024];
 		let size = frame.encode(&mut cipher, &mut buffer).unwrap();
 		let buffer = &buffer[0..size];

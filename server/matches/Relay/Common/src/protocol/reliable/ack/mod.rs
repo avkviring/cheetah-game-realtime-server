@@ -175,7 +175,7 @@ mod tests {
 		for i in 0..AckSender::BUFFER_SIZE + 10 {
 			let time = Instant::now();
 			let mut frame = Frame::new(i as u64);
-			frame.reliable.push_back(create_command());
+			frame.reliable.push(create_command()).unwrap();
 			reliable.on_frame_received(&frame, &time);
 		}
 	}
@@ -188,7 +188,7 @@ mod tests {
 		let mut reliable = AckSender::default();
 		let time = Instant::now();
 		let mut frame = Frame::new(10);
-		frame.reliable.push_back(create_command());
+		frame.reliable.push(create_command()).unwrap();
 		reliable.on_frame_received(&frame, &time);
 		assert!(reliable.contains_self_data(&time));
 	}
@@ -202,7 +202,7 @@ mod tests {
 		let time = Instant::now();
 
 		let mut in_frame = Frame::new(10);
-		in_frame.reliable.push_back(create_command());
+		in_frame.reliable.push(create_command()).unwrap();
 		reliable.on_frame_received(&in_frame, &time);
 
 		let mut out_frame = Frame::new(20);
@@ -223,7 +223,7 @@ mod tests {
 
 		for i in 0..AckSender::BUFFER_SIZE {
 			let mut in_frame = Frame::new(10 + i as u64);
-			in_frame.reliable.push_back(create_command());
+			in_frame.reliable.push(create_command()).unwrap();
 			reliable.on_frame_received(&in_frame, &time);
 		}
 
@@ -250,14 +250,17 @@ mod tests {
 		let time = Instant::now();
 
 		let mut frame_a = Frame::new(10);
-		frame_a.reliable.push_back(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-		});
+		frame_a
+			.reliable
+			.push(CommandWithChannel {
+				channel: Channel::ReliableUnordered,
+				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			})
+			.unwrap();
 		reliable.on_frame_received(&frame_a, &time);
 
 		let mut frame_b = Frame::new(10 + AckHeader::CAPACITY as u64 + 1);
-		frame_b.reliable.push_back(create_command());
+		frame_b.reliable.push(create_command()).unwrap();
 		reliable.on_frame_received(&frame_b, &time);
 
 		let mut out_frame = Frame::new(20);

@@ -5,7 +5,7 @@ use fnv::FnvBuildHasher;
 
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{Channel, ChannelType};
-use crate::protocol::frame::Frame;
+use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
 use crate::protocol::FrameBuilder;
 use crate::room::object::GameObjectId;
 
@@ -32,8 +32,6 @@ pub struct OutCommandsCollector {
 }
 
 impl OutCommandsCollector {
-	const MAX_COMMAND_IN_FRAME: usize = 3;
-
 	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
 		match self.create_channel(&channel_type, &command) {
 			None => {
@@ -90,20 +88,20 @@ impl FrameBuilder for OutCommandsCollector {
 	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
 		let mut command_count = 0;
 		while let Some(command) = self.reliable.pop_front() {
-			frame.reliable.push_back(command);
+			frame.reliable.push(command).unwrap();
 			command_count += 1;
-			if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+			if command_count == MAX_COMMAND_IN_FRAME {
 				break;
 			}
 		}
-		if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+		if command_count == MAX_COMMAND_IN_FRAME {
 			return;
 		}
 
 		while let Some(command) = self.unreliable.pop_front() {
-			frame.unreliable.push_back(command);
+			frame.unreliable.push(command).unwrap();
 			command_count += 1;
-			if command_count == OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+			if command_count == MAX_COMMAND_IN_FRAME {
 				break;
 			}
 		}
@@ -120,7 +118,7 @@ mod tests {
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::BothDirectionCommand;
 	use crate::protocol::frame::channel::{Channel, ChannelType};
-	use crate::protocol::frame::Frame;
+	use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
 	use crate::protocol::FrameBuilder;
 
 	#[test]
@@ -140,7 +138,7 @@ mod tests {
 	#[test]
 	pub fn should_split_commands() {
 		let mut output = OutCommandsCollector::default();
-		for i in 0..2 * OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+		for i in 0..2 * MAX_COMMAND_IN_FRAME {
 			output.add_command(
 				ChannelType::ReliableSequenceByGroup(100),
 				BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
@@ -162,13 +160,13 @@ mod tests {
 					field_id: _,
 					value,
 				}))
-			if value == OutCommandsCollector::MAX_COMMAND_IN_FRAME as i64
+			if value == MAX_COMMAND_IN_FRAME as i64
 		));
 
 		// проверяем как собран фрейм
-		for i in 0..OutCommandsCollector::MAX_COMMAND_IN_FRAME {
+		for i in 0..MAX_COMMAND_IN_FRAME {
 			assert!(matches!(
-				frame.reliable.pop_front().unwrap().command,
+				frame.reliable[i].command,
 				BothDirectionCommand::C2S( C2SCommand::SetLong(SetLongCommand {
 						object_id: _,
 						field_id: _,
