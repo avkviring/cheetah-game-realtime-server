@@ -3,7 +3,7 @@ use std::time::Instant;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
-use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
+use cheetah_matches_relay_common::protocol::Protocol;
 
 use crate::stub::Channel;
 
@@ -14,8 +14,8 @@ pub mod stub;
 ///
 #[test]
 fn should_send_from_client() {
-	let mut peer_a = RelayProtocol::new(&Instant::now());
-	let mut peer_b = RelayProtocol::new(&Instant::now());
+	let mut peer_a = Protocol::new(&Instant::now());
+	let mut peer_b = Protocol::new(&Instant::now());
 
 	peer_a.out_commands_collector.add_command(
 		ChannelType::ReliableUnordered,
@@ -44,8 +44,8 @@ fn should_send_from_client() {
 /// Тестирование надежной доставки по ненадежному каналу
 #[test]
 fn should_transfer_reliable_on_unreliable_channel() {
-	let mut peer_a = RelayProtocol::new(&Instant::now());
-	let mut peer_b = RelayProtocol::new(&Instant::now());
+	let mut peer_a = Protocol::new(&Instant::now());
+	let mut peer_b = Protocol::new(&Instant::now());
 
 	peer_a.out_commands_collector.add_command(
 		ChannelType::ReliableUnordered,

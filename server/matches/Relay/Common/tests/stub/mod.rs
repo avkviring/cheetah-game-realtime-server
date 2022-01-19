@@ -1,10 +1,9 @@
 use std::ops::{Add, RangeInclusive};
 use std::time::{Duration, Instant};
 
+use cheetah_matches_relay_common::protocol::Protocol;
 use rand::rngs::OsRng;
 use rand::Rng;
-
-use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
 
 #[derive(Default)]
 pub struct Channel {
@@ -12,7 +11,7 @@ pub struct Channel {
 }
 
 impl Channel {
-	pub fn cycle(&mut self, count: usize, peer_a: &mut RelayProtocol, peer_b: &mut RelayProtocol) {
+	pub fn cycle(&mut self, count: usize, peer_a: &mut Protocol, peer_b: &mut Protocol) {
 		let mut now = Instant::now();
 
 		for i in 0..count {

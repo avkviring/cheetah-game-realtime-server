@@ -15,7 +15,8 @@ use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCo
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::protocol::frame::Frame;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
-use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
+use cheetah_matches_relay_common::protocol::Protocol;
+
 #[cfg(test)]
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -73,7 +74,7 @@ pub struct User {
 	///
 	/// None - нет сетевого коннекта с пользователем
 	///
-	pub protocol: Option<RelayProtocol>,
+	pub protocol: Option<Protocol>,
 	pub attached: bool,
 	pub template: UserTemplate,
 	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
@@ -148,7 +149,7 @@ impl Room {
 				let mut new_user = false;
 				let protocol = &mut user.protocol;
 				if protocol.is_none() {
-					protocol.replace(RelayProtocol::new(now));
+					protocol.replace(Protocol::new(now));
 					new_user = true;
 				}
 
@@ -342,7 +343,7 @@ mod tests {
 	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use cheetah_matches_relay_common::protocol::frame::channel::Channel;
 	use cheetah_matches_relay_common::protocol::frame::Frame;
-	use cheetah_matches_relay_common::protocol::relay::RelayProtocol;
+	use cheetah_matches_relay_common::protocol::Protocol;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -376,7 +377,7 @@ mod tests {
 			match self.get_user_mut(user_id) {
 				None => {}
 				Some(user) => {
-					user.protocol = Option::Some(RelayProtocol::new(&Instant::now()));
+					user.protocol = Option::Some(Protocol::new(&Instant::now()));
 					user.attached = true;
 				}
 			}

@@ -8,7 +8,7 @@ use crate::protocol::{DisconnectedStatus, FrameBuilder, FrameReceivedListener};
 /// Быстрое закрытие соединения по команде с удаленной стороны
 ///
 #[derive(Default, Debug)]
-pub struct DisconnectHandler {
+pub struct DisconnectCommandHandler {
 	///
 	/// Соединение разорвано удаленной стороной
 	///
@@ -24,7 +24,7 @@ pub struct DisconnectHandler {
 	///
 	disconnected_by_self: bool,
 }
-impl DisconnectHandler {
+impl DisconnectCommandHandler {
 	///
 	/// Разорвать соединение с удаленной стороной
 	///
@@ -33,7 +33,7 @@ impl DisconnectHandler {
 	}
 }
 
-impl FrameBuilder for DisconnectHandler {
+impl FrameBuilder for DisconnectCommandHandler {
 	fn contains_self_data(&self, _: &Instant) -> bool {
 		self.disconnecting_by_self_request && !self.disconnected_by_self
 	}
@@ -49,14 +49,14 @@ impl FrameBuilder for DisconnectHandler {
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct DisconnectHeader {}
 
-impl FrameReceivedListener for DisconnectHandler {
+impl FrameReceivedListener for DisconnectCommandHandler {
 	fn on_frame_received(&mut self, frame: &Frame, _: &Instant) {
 		let headers: Option<&DisconnectHeader> = frame.headers.first(Header::predicate_disconnect);
 		self.disconnected_by_peer = headers.is_some();
 	}
 }
 
-impl DisconnectedStatus for DisconnectHandler {
+impl DisconnectedStatus for DisconnectCommandHandler {
 	fn disconnected(&self, _: &Instant) -> bool {
 		self.disconnected_by_peer || self.disconnected_by_self
 	}
@@ -66,7 +66,7 @@ impl DisconnectedStatus for DisconnectHandler {
 mod tests {
 	use std::time::Instant;
 
-	use crate::protocol::disconnect::handler::DisconnectHandler;
+	use crate::protocol::disconnect::handler::DisconnectCommandHandler;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::{DisconnectedStatus, FrameBuilder, FrameReceivedListener};
@@ -74,8 +74,8 @@ mod tests {
 	#[test]
 	pub fn should_disconnect() {
 		let now = Instant::now();
-		let mut self_handler = DisconnectHandler::default();
-		let mut remote_handler = DisconnectHandler::default();
+		let mut self_handler = DisconnectCommandHandler::default();
+		let mut remote_handler = DisconnectCommandHandler::default();
 
 		assert!(!self_handler.contains_self_data(&now));
 		assert!(!self_handler.disconnected(&now));
@@ -96,7 +96,7 @@ mod tests {
 	#[test]
 	pub fn should_not_disconnect() {
 		let now = Instant::now();
-		let mut handler = DisconnectHandler::default();
+		let mut handler = DisconnectCommandHandler::default();
 		let mut frame = Frame::new(10);
 		handler.build_frame(&mut frame, &now);
 		assert!(!handler.disconnected(&now));

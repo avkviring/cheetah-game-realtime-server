@@ -5,20 +5,22 @@ use std::time::Instant;
 
 use crate::network::channel::NetworkChannel;
 use crate::protocol::codec::cipher::Cipher;
+use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::Frame;
-use crate::protocol::others::user_id::{MemberAndRoomId, MemberIdFrameBuilder};
-use crate::protocol::relay::RelayProtocol;
+use crate::protocol::others::user_id::MemberAndRoomId;
+use crate::protocol::Protocol;
 use crate::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 #[derive(Debug)]
 pub struct NetworkClient {
 	pub state: ConnectionStatus,
-	pub protocol: RelayProtocol,
+	pub protocol: Protocol,
 	private_key: UserPrivateKey,
 	server_address: SocketAddr,
 	pub channel: NetworkChannel,
 	out_frames: VecDeque<Frame>,
 	from_client: bool,
+	member_and_room_id: MemberAndRoomId,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -45,13 +47,8 @@ impl NetworkClient {
 		server_address: SocketAddr,
 		start_frame_id: u64,
 	) -> std::io::Result<NetworkClient> {
-		let mut protocol = RelayProtocol::new(&Instant::now());
+		let mut protocol = Protocol::new(&Instant::now());
 		protocol.next_frame_id = start_frame_id;
-
-		protocol.add_frame_builder(Box::new(MemberIdFrameBuilder(MemberAndRoomId {
-			user_id: member_id,
-			room_id,
-		})));
 		let channel = NetworkChannel::new()?;
 
 		Result::Ok(NetworkClient {
@@ -62,6 +59,10 @@ impl NetworkClient {
 			channel,
 			out_frames: Default::default(),
 			from_client,
+			member_and_room_id: MemberAndRoomId {
+				user_id: member_id,
+				room_id,
+			},
 		})
 	}
 
@@ -90,7 +91,10 @@ impl NetworkClient {
 		}
 
 		let mut buffer = [0; 2048];
-		while let Some(frame) = self.out_frames.back() {
+		while let Some(frame) = self.out_frames.back_mut() {
+			let headers = &mut frame.headers;
+			headers.add(Header::MemberAndRoomId(self.member_and_room_id.clone()));
+
 			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer).unwrap();
 			match self.channel.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
