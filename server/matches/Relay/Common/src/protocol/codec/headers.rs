@@ -9,7 +9,7 @@ use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
 use crate::protocol::others::rtt::RoundTripTimeHeader;
 use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::reliable::ack::header::AckHeader;
-use crate::protocol::reliable::retransmit::RetransmitHeader;
+use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
 impl Headers {
 	pub fn decode_headers(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
@@ -84,7 +84,7 @@ mod tests {
 	use crate::protocol::others::rtt::RoundTripTimeHeader;
 	use crate::protocol::others::user_id::MemberAndRoomId;
 	use crate::protocol::reliable::ack::header::AckHeader;
-	use crate::protocol::reliable::retransmit::RetransmitHeader;
+	use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
 	#[test]
 	fn test_hello() {

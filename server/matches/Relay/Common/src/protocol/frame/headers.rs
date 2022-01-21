@@ -4,7 +4,7 @@ use crate::protocol::disconnect::handler::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
 use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::reliable::ack::header::AckHeader;
-use crate::protocol::reliable::retransmit::RetransmitHeader;
+use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
 pub type HeaderVec<T> = heapless::Vec<T, 10>;
 ///
@@ -65,7 +65,7 @@ impl Headers {
 	pub fn find<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> HeaderVec<&T> {
 		self.headers.iter().filter_map(p).collect()
 	}
-	
+
 	pub fn first<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> Option<&T> {
 		self.headers.iter().find_map(p)
 	}

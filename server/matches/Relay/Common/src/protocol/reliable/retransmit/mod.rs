@@ -1,10 +1,10 @@
 use std::cmp::max;
-use std::collections::{HashSet, LinkedList};
-use std::io::Cursor;
+use std::collections::{HashSet, VecDeque};
 use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use fnv::FnvBuildHasher;
 #[cfg(test)]
 use mockall::{automock, predicate::*};
 
@@ -13,7 +13,38 @@ use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter}
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::reliable::ack::header::AckHeader;
+use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
+
+pub mod header;
+
+///
+/// Количество фреймов с командами, требующими надежную доставку в секунду
+///
+pub const RELIABILITY_FRAME_PER_SECOND:usize = 10;
+
+///
+/// Время ожидания доставки оригинально фрейма (при повторных пересылках)
+///
+pub const RETRANSMIT_MAX_TIME_IN_SEC:usize = 10;
+
+///
+/// Время ожидания ACK
+///
+pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC:f64 = 0.5;
+
+///
+/// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
+///
+pub const RETRANSMIT_LIMIT: usize =
+	(RETRANSMIT_MAX_TIME_IN_SEC as f64/RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC) as usize;
+
+///
+/// количество фреймов в буферах, должно гарантированно хватить для всех фреймов
+/// как только количество фреймов будет больше - то канал переходит в состояние disconnected
+///
+pub const RETRANSMIT_FRAMES_CAPACITY:usize = RELIABILITY_FRAME_PER_SECOND*RETRANSMIT_MAX_TIME_IN_SEC;
+
 
 ///
 /// Повторная посылка фреймов, для которых не пришло подтверждение
@@ -33,15 +64,16 @@ pub trait Retransmitter {
 
 #[derive(Debug)]
 pub struct RetransmitterImpl {
+
 	///
 	/// Фреймы, отсортированные по времени отсылки
 	///
-	frames: LinkedList<ScheduledFrame>,
+	frames: VecDeque<ScheduledFrame>,
 
 	///
 	/// Фреймы, для которых мы ожидаем ACK
 	///
-	unacked_frames: HashSet<FrameId>,
+	unacked_frames: HashSet<FrameId, FnvBuildHasher>,
 
 	///
 	/// Текущее максимальное количество повтора пакета
@@ -63,34 +95,6 @@ pub struct ScheduledFrame {
 	pub retransmit_count: u8,
 }
 
-///
-/// Заголовок для указания факта повторной передачи данного фрейма
-///
-#[derive(Debug, PartialEq, Clone)]
-pub struct RetransmitHeader {
-	pub original_frame_id: FrameId,
-	pub retransmit_count: u8,
-}
-
-impl RetransmitHeader {
-	fn new(original_frame_id: FrameId, retransmit_count: u8) -> Self {
-		Self {
-			original_frame_id,
-			retransmit_count,
-		}
-	}
-	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		Ok(Self {
-			original_frame_id: input.read_variable_u64()?,
-			retransmit_count: input.read_u8()?,
-		})
-	}
-
-	pub(crate) fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_variable_u64(self.original_frame_id)?;
-		out.write_u8(self.retransmit_count)
-	}
-}
 
 impl Default for RetransmitterImpl {
 	fn default() -> Self {
@@ -98,31 +102,15 @@ impl Default for RetransmitterImpl {
 			frames: Default::default(),
 			unacked_frames: Default::default(),
 			max_retransmit_count: Default::default(),
-			ack_wait_duration: RetransmitterImpl::DEFAULT_ACK_TIMEOUT,
+			ack_wait_duration: Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC),
 			statistics: Default::default(),
 		}
 	}
 }
 
+
+
 impl RetransmitterImpl {
-	///
-	/// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
-	/// примерно 30 секунд без подтверждения при [DEFAULT_ACK_TIMEOUT]
-	///
-	pub const RETRANSMIT_LIMIT: u8 = 100;
-
-	///
-	/// Время ожидания ACK по умолчанию
-	///
-	pub const DEFAULT_ACK_TIMEOUT: Duration = Duration::from_millis(300);
-
-	///
-	/// Максимальная длина [self.retransmit_to_original]
-	///
-	/// - должно гарантированно хватить все фреймы, ожидающие ACK
-	/// - включая ACK на повторно отосланные фреймы
-	///
-	pub const RETRANSMIT_TO_ORIGINAL_MAX_LEN: usize = 4096;
 
 	///
 	/// Получить фрейм для повторной отправки (если такой есть)
@@ -151,7 +139,10 @@ impl RetransmitterImpl {
 						let retransmit_header = Header::Retransmit(RetransmitHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
 
+						// мы только-что удалили фрейм, значит место в точно должно быть
+						// поэтому unwrap вполне ок
 						self.frames.push_back(scheduled_frame);
+
 						self.statistics.on_retransmit_frame(now);
 						return Option::Some(retransmit_frame);
 					} else {
@@ -160,15 +151,6 @@ impl RetransmitterImpl {
 				}
 			}
 		}
-	}
-
-	fn schedule_retransmit(&mut self, frame: Frame, original_frame_id: FrameId, retransmit_count: u8, now: &Instant) {
-		self.frames.push_back(ScheduledFrame {
-			time: *now,
-			original_frame_id,
-			frame,
-			retransmit_count,
-		});
 	}
 }
 
@@ -218,7 +200,13 @@ impl FrameBuiltListener for RetransmitterImpl {
 				cloned_frame.commands.push(command.clone()).unwrap();
 			}
 
-			self.schedule_retransmit(cloned_frame, original_frame_id, 0, now);
+			self.frames.push_back(ScheduledFrame {
+				time: *now,
+				original_frame_id,
+				frame: cloned_frame,
+				retransmit_count: 0
+			});
+
 			self.unacked_frames.insert(original_frame_id);
 		}
 	}
@@ -226,7 +214,9 @@ impl FrameBuiltListener for RetransmitterImpl {
 
 impl DisconnectedStatus for RetransmitterImpl {
 	fn disconnected(&self, _: &Instant) -> bool {
-		self.max_retransmit_count >= RetransmitterImpl::RETRANSMIT_LIMIT
+		self.max_retransmit_count >= RETRANSMIT_LIMIT as u8
+			|| self.frames.len() > RETRANSMIT_FRAMES_CAPACITY
+			|| self.unacked_frames.len() >RETRANSMIT_FRAMES_CAPACITY
 	}
 }
 
@@ -243,7 +233,7 @@ mod tests {
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::reliable::ack::header::AckHeader;
-	use crate::protocol::reliable::retransmit::RetransmitterImpl;
+	use crate::protocol::reliable::retransmit::{RETRANSMIT_LIMIT, RetransmitterImpl};
 
 	#[test]
 	///
@@ -329,7 +319,8 @@ mod tests {
 	}
 
 	///
-	/// Если не было ACK после повторной отправки - то фрейм должен быть перепослан через Timeout
+	/// Если не было ACK после повторной отправки - то фрейм должен быть повторно отослан через
+	/// Timeout
 	///
 	#[test]
 	fn should_retransmit_after_retransmit() {
@@ -360,7 +351,7 @@ mod tests {
 		handler.on_frame_built(&frame, &now);
 
 		let mut get_time = now;
-		for _ in 0..RetransmitterImpl::RETRANSMIT_LIMIT - 1 {
+		for _ in 0..RETRANSMIT_LIMIT - 1 {
 			get_time = get_time.add(handler.ack_wait_duration);
 			handler.get_retransmit_frame(&get_time, 2);
 		}

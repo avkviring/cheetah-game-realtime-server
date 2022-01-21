@@ -135,7 +135,7 @@ mod tests {
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 	use crate::protocol::others::rtt::{RoundTripTime, RoundTripTimeHeader, RoundTripTimeImpl};
-	use crate::protocol::reliable::retransmit::RetransmitHeader;
+	use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 	use crate::protocol::{FrameBuilder, FrameReceivedListener};
 
 	#[test]

@@ -2,7 +2,7 @@ use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use crate::protocol::others::rtt::RoundTripTime;
-use crate::protocol::reliable::retransmit::Retransmitter;
+use crate::protocol::reliable::retransmit::{Retransmitter, RetransmitterImpl};
 
 ///
 /// Контроль скорости для устранения перегрузок канала
@@ -18,7 +18,7 @@ impl CongestionControl {
 	///
 	pub const REBALANCE_PERIOD: Duration = Duration::from_millis(500);
 
-	pub fn rebalance(&mut self, now: &Instant, rtt: &dyn RoundTripTime, retransmitter: &mut dyn Retransmitter) {
+	pub fn rebalance(&mut self, now: &Instant, rtt: &dyn RoundTripTime, retransmitter: &mut RetransmitterImpl) {
 		if !self.can_rebalance(now) {
 			return;
 		}
