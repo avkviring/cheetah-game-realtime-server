@@ -65,7 +65,7 @@ impl RoundTripTime {
 	///
 	/// Скользящий средний для rtt
 	///
-	fn get_rtt(&self) -> Option<Duration> {
+	pub fn get_rtt(&self) -> Option<Duration> {
 		if self.rtt.len() < RoundTripTime::AVERAGE_RTT_MIN_LEN {
 			Option::None
 		} else {
