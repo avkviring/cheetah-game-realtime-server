@@ -1,6 +1,7 @@
 use std::ops::{Add, RangeInclusive};
 use std::time::{Duration, Instant};
 
+use cheetah_matches_relay_common::protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC;
 use cheetah_matches_relay_common::protocol::Protocol;
 use rand::rngs::OsRng;
 use rand::Rng;
@@ -29,7 +30,7 @@ impl Channel {
 				}
 			}
 
-			now = now.add(Duration::from_millis(100));
+			now = now.add(Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC));
 		}
 	}
 
