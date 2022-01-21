@@ -2,7 +2,6 @@ use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use crate::protocol::frame::Frame;
-use crate::protocol::{DisconnectedStatus, FrameReceivedListener};
 
 ///
 /// Если за определенное время не было входящих пакетов - считаем что связь разорвана
@@ -19,16 +18,10 @@ impl DisconnectWatcher {
 			last_in_frame_time: *now,
 		}
 	}
-}
-
-impl FrameReceivedListener for DisconnectWatcher {
-	fn on_frame_received(&mut self, _: &Frame, now: &Instant) {
+	pub fn on_frame_received(&mut self, now: &Instant) {
 		self.last_in_frame_time = *now;
 	}
-}
-
-impl DisconnectedStatus for DisconnectWatcher {
-	fn disconnected(&self, now: &Instant) -> bool {
+	pub fn disconnected(&self, now: &Instant) -> bool {
 		now.sub(self.last_in_frame_time) > DisconnectWatcher::TIMEOUT
 	}
 }
@@ -39,8 +32,6 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use crate::protocol::disconnect::watcher::DisconnectWatcher;
-	use crate::protocol::frame::Frame;
-	use crate::protocol::{DisconnectedStatus, FrameReceivedListener};
 
 	#[test]
 	///
@@ -69,8 +60,7 @@ mod tests {
 	pub fn should_not_disconnect_when_not_timeout_after_frame() {
 		let now = Instant::now();
 		let mut handler = DisconnectWatcher::new(&now);
-		let frame = Frame::new(0);
-		handler.on_frame_received(&frame, &now);
+		handler.on_frame_received(&now);
 		assert!(!handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT - Duration::from_millis(1))));
 	}
 
@@ -81,8 +71,7 @@ mod tests {
 	pub fn should_disconnect_when_not_timeout_after_frame() {
 		let now = Instant::now();
 		let mut handler = DisconnectWatcher::new(&now);
-		let frame = Frame::new(0);
-		handler.on_frame_received(&frame, &now);
+		handler.on_frame_received(&now);
 		assert!(handler.disconnected(&now.add(DisconnectWatcher::TIMEOUT + Duration::from_millis(1))));
 	}
 }

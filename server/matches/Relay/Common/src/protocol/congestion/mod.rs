@@ -2,7 +2,7 @@ use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use crate::protocol::others::rtt::RoundTripTime;
-use crate::protocol::reliable::retransmit::{Retransmitter, RetransmitterImpl};
+use crate::protocol::reliable::retransmit::Retransmitter;
 
 ///
 /// Контроль скорости для устранения перегрузок канала
@@ -18,7 +18,7 @@ impl CongestionControl {
 	///
 	pub const REBALANCE_PERIOD: Duration = Duration::from_millis(500);
 
-	pub fn rebalance(&mut self, now: &Instant, rtt: &dyn RoundTripTime, retransmitter: &mut RetransmitterImpl) {
+	pub fn rebalance(&mut self, now: &Instant, rtt: &RoundTripTime, retransmitter: &mut Retransmitter) {
 		if !self.can_rebalance(now) {
 			return;
 		}
@@ -29,7 +29,7 @@ impl CongestionControl {
 	///
 	/// Балансируем время ожидания ack для пакета
 	///
-	fn rebalance_ack_timeout(&mut self, _now: &Instant, _retransmitter: &mut dyn Retransmitter, _rtt: &dyn RoundTripTime) {
+	fn rebalance_ack_timeout(&mut self, _now: &Instant, _retransmitter: &mut Retransmitter, _rtt: &RoundTripTime) {
 		// let average_rtt = rtt.get_rtt();
 		// if let Option::Some(average_rtt) = average_rtt {
 		// 	let koeff = match retransmitter.get_redundant_frames_percent(now) {

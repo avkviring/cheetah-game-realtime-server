@@ -1,12 +1,10 @@
 use std::collections::{HashMap, VecDeque};
-use std::time::Instant;
 
 use fnv::FnvBuildHasher;
 
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{Channel, ChannelType};
 use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
-use crate::protocol::FrameBuilder;
 use crate::room::object::GameObjectId;
 
 ///
@@ -56,14 +54,12 @@ impl OutCommandsCollector {
 			}
 		}
 	}
-}
 
-impl FrameBuilder for OutCommandsCollector {
-	fn contains_self_data(&self, _: &Instant) -> bool {
+	pub fn contains_self_data(&self) -> bool {
 		!self.commands.is_empty()
 	}
 
-	fn build_frame(&mut self, frame: &mut Frame, _: &Instant) {
+	pub fn build_frame(&mut self, frame: &mut Frame) {
 		let mut command_count = 0;
 		while let Some(command) = self.commands.pop_front() {
 			frame.commands.push(command).unwrap();
@@ -86,7 +82,6 @@ mod tests {
 	use crate::protocol::frame::applications::BothDirectionCommand;
 	use crate::protocol::frame::channel::{Channel, ChannelType};
 	use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
-	use crate::protocol::FrameBuilder;
 
 	#[test]
 	pub fn test_group_sequence() {
@@ -117,7 +112,7 @@ mod tests {
 		}
 
 		let mut frame = Frame::new(0);
-		output.build_frame(&mut frame, &Instant::now());
+		output.build_frame(&mut frame);
 
 		// в коллекторе первой должна быть команда с value равным размеру фрейма
 		assert!(matches!(

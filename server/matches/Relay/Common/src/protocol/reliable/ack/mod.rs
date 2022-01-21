@@ -1,9 +1,7 @@
-use std::time::Instant;
-
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::reliable::ack::header::AckHeader;
-use crate::protocol::{FrameBuilder, FrameReceivedListener, NOT_EXIST_FRAME_ID};
+use crate::protocol::NOT_EXIST_FRAME_ID;
 
 pub mod header;
 
@@ -66,12 +64,12 @@ impl AckSender {
 	pub const ALERT_LOW_COUNT_ACK: u8 = 2;
 }
 
-impl FrameBuilder for AckSender {
-	fn contains_self_data(&self, _now: &Instant) -> bool {
+impl AckSender {
+	pub fn contains_self_data(&self) -> bool {
 		self.send_ack_counter > 0
 	}
 
-	fn build_frame(&mut self, frame: &mut Frame, _now: &Instant) {
+	pub fn build_frame(&mut self, frame: &mut Frame) {
 		if self.send_ack_counter > 0 {
 			self.send_ack_counter -= 1;
 		}
@@ -109,10 +107,8 @@ impl FrameBuilder for AckSender {
 			}
 		}
 	}
-}
 
-impl FrameReceivedListener for AckSender {
-	fn on_frame_received(&mut self, frame: &Frame, _now: &Instant) {
+	pub fn on_frame_received(&mut self, frame: &Frame) {
 		if frame.is_reliability() {
 			self.send_ack_counter = AckSender::SEND_ACK_COUNTER;
 			let mut frame_id = frame.frame_id;
@@ -154,7 +150,6 @@ mod tests {
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::ack::AckSender;
-	use crate::protocol::{FrameBuilder, FrameReceivedListener};
 
 	#[test]
 	///
@@ -162,7 +157,7 @@ mod tests {
 	///
 	fn should_ack_not_need_send() {
 		let reliable = AckSender::default();
-		assert!(!reliable.contains_self_data(&Instant::now()));
+		assert!(!reliable.contains_self_data());
 	}
 
 	///
@@ -173,10 +168,9 @@ mod tests {
 		let mut reliable = AckSender::default();
 
 		for i in 0..AckSender::BUFFER_SIZE + 10 {
-			let time = Instant::now();
 			let mut frame = Frame::new(i as u64);
 			frame.commands.push(create_command()).unwrap();
-			reliable.on_frame_received(&frame, &time);
+			reliable.on_frame_received(&frame);
 		}
 	}
 
@@ -186,11 +180,10 @@ mod tests {
 	#[test]
 	fn should_ack_need_send() {
 		let mut reliable = AckSender::default();
-		let time = Instant::now();
 		let mut frame = Frame::new(10);
 		frame.commands.push(create_command()).unwrap();
-		reliable.on_frame_received(&frame, &time);
-		assert!(reliable.contains_self_data(&time));
+		reliable.on_frame_received(&frame);
+		assert!(reliable.contains_self_data());
 	}
 
 	///
@@ -199,14 +192,13 @@ mod tests {
 	#[test]
 	fn should_send_ack_header() {
 		let mut reliable = AckSender::default();
-		let time = Instant::now();
 
 		let mut in_frame = Frame::new(10);
 		in_frame.commands.push(create_command()).unwrap();
-		reliable.on_frame_received(&in_frame, &time);
+		reliable.on_frame_received(&in_frame);
 
 		let mut out_frame = Frame::new(20);
-		reliable.build_frame(&mut out_frame, &time);
+		reliable.build_frame(&mut out_frame);
 
 		let header = out_frame.headers.first(Header::predicate_ack);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == in_frame.frame_id));
@@ -224,11 +216,11 @@ mod tests {
 		for i in 0..AckSender::BUFFER_SIZE {
 			let mut in_frame = Frame::new(10 + i as u64);
 			in_frame.commands.push(create_command()).unwrap();
-			reliable.on_frame_received(&in_frame, &time);
+			reliable.on_frame_received(&in_frame);
 		}
 
 		let mut out_frame = Frame::new(20);
-		reliable.build_frame(&mut out_frame, &time);
+		reliable.build_frame(&mut out_frame);
 
 		let header: Option<&AckHeader> = out_frame.headers.first(Header::predicate_ack);
 		assert!(matches!(header, Option::Some(v) if v.start_frame_id == 10));
@@ -257,14 +249,14 @@ mod tests {
 				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			})
 			.unwrap();
-		reliable.on_frame_received(&frame_a, &time);
+		reliable.on_frame_received(&frame_a);
 
 		let mut frame_b = Frame::new(10 + AckHeader::CAPACITY as u64 + 1);
 		frame_b.commands.push(create_command()).unwrap();
-		reliable.on_frame_received(&frame_b, &time);
+		reliable.on_frame_received(&frame_b);
 
 		let mut out_frame = Frame::new(20);
-		reliable.build_frame(&mut out_frame, &time);
+		reliable.build_frame(&mut out_frame);
 
 		let headers: HeaderVec<&AckHeader> = out_frame.headers.find(Header::predicate_ack);
 		assert_eq!(headers.len(), 2);

@@ -2,7 +2,6 @@ use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use crate::protocol::frame::Frame;
-use crate::protocol::FrameBuilder;
 
 ///
 /// Поддержание канала в открытом состоянии если нет прикладных команд
@@ -15,17 +14,15 @@ pub struct KeepAlive {
 impl KeepAlive {
 	// должно быть кратно меньше чем время разрыва соединения
 	const INTERVAL: Duration = Duration::from_secs(1);
-}
 
-impl FrameBuilder for KeepAlive {
-	fn contains_self_data(&self, now: &Instant) -> bool {
+	pub fn contains_self_data(&self, now: &Instant) -> bool {
 		match self.last_send.as_ref() {
 			None => true,
 			Some(last_time) => now.sub(*last_time) >= KeepAlive::INTERVAL,
 		}
 	}
 
-	fn build_frame(&mut self, _: &mut Frame, now: &Instant) {
+	pub fn build_frame(&mut self, _: &mut Frame, now: &Instant) {
 		self.last_send = Option::Some(*now);
 	}
 }
@@ -37,7 +34,6 @@ mod tests {
 
 	use crate::protocol::frame::Frame;
 	use crate::protocol::others::keep_alive::KeepAlive;
-	use crate::protocol::FrameBuilder;
 
 	#[test]
 	pub fn should_send_first_time() {
