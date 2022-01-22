@@ -5,7 +5,7 @@ use crate::protocol::frame::Frame;
 /// Быстрое закрытие соединения по команде с удаленной стороны
 ///
 #[derive(Default, Debug)]
-pub struct DisconnectCommandHandler {
+pub struct DisconnectByCommandHandler {
 	///
 	/// Соединение разорвано удаленной стороной
 	///
@@ -21,7 +21,7 @@ pub struct DisconnectCommandHandler {
 	///
 	disconnected_by_self: bool,
 }
-impl DisconnectCommandHandler {
+impl DisconnectByCommandHandler {
 	///
 	/// Разорвать соединение с удаленной стороной
 	///
@@ -57,14 +57,14 @@ pub struct DisconnectHeader {}
 mod tests {
 	use std::time::Instant;
 
-	use crate::protocol::disconnect::handler::DisconnectCommandHandler;
+	use crate::protocol::disconnect::handler::DisconnectByCommandHandler;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
 
 	#[test]
 	pub fn should_disconnect() {
-		let mut self_handler = DisconnectCommandHandler::default();
-		let mut remote_handler = DisconnectCommandHandler::default();
+		let mut self_handler = DisconnectByCommandHandler::default();
+		let mut remote_handler = DisconnectByCommandHandler::default();
 
 		assert!(!self_handler.contains_self_data());
 		assert!(!self_handler.disconnected());
@@ -84,7 +84,7 @@ mod tests {
 
 	#[test]
 	pub fn should_not_disconnect() {
-		let mut handler = DisconnectCommandHandler::default();
+		let mut handler = DisconnectByCommandHandler::default();
 		let mut frame = Frame::new(10);
 		handler.build_frame(&mut frame);
 		assert!(!handler.disconnected());

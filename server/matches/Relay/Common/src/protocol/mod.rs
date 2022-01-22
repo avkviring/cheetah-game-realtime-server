@@ -4,8 +4,8 @@ use std::time::Instant;
 use crate::protocol::commands::input::InCommandsCollector;
 use crate::protocol::commands::output::OutCommandsCollector;
 use crate::protocol::congestion::CongestionControl;
-use crate::protocol::disconnect::handler::DisconnectCommandHandler;
-use crate::protocol::disconnect::watcher::DisconnectWatcher;
+use crate::protocol::disconnect::handler::DisconnectByCommandHandler;
+use crate::protocol::disconnect::watcher::DisconnectByTimeoutHandler;
 use crate::protocol::frame::{Frame, FrameId};
 use crate::protocol::others::keep_alive::KeepAlive;
 use crate::protocol::others::rtt::RoundTripTime;
@@ -48,8 +48,8 @@ pub struct Protocol {
 	pub replay_protection: FrameReplayProtection,
 	pub ack_sender: AckSender,
 	pub retransmitter: Retransmitter,
-	pub disconnect_watcher: DisconnectWatcher,
-	pub disconnect_handler: DisconnectCommandHandler,
+	pub disconnect_watcher: DisconnectByTimeoutHandler,
+	pub disconnect_handler: DisconnectByCommandHandler,
 	pub in_commands_collector: InCommandsCollector,
 	pub out_commands_collector: OutCommandsCollector,
 	pub rtt: RoundTripTime,
@@ -62,7 +62,7 @@ impl Protocol {
 	pub fn new(now: &Instant) -> Self {
 		Self {
 			next_frame_id: 1,
-			disconnect_watcher: DisconnectWatcher::new(now),
+			disconnect_watcher: DisconnectByTimeoutHandler::new(now),
 			replay_protection: Default::default(),
 			ack_sender: Default::default(),
 			in_commands_collector: Default::default(),

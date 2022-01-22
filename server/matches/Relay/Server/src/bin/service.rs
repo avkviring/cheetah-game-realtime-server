@@ -14,7 +14,7 @@ use cheetah_matches_relay::debug::grpc::RelayAdminGRPCService;
 use cheetah_matches_relay::debug::proto::admin;
 use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCService;
 use cheetah_matches_relay::factory::RelayGRPCService;
-use cheetah_matches_relay::server::manager::RelayManager;
+use cheetah_matches_relay::server::manager::ServerManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,13 +28,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	Result::Ok(())
 }
 
-fn create_internal_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+fn create_internal_grpc_server(manager: Arc<Mutex<ServerManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let service = cheetah_matches_relay::factory::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(manager));
 	let address = cheetah_microservice::get_internal_service_binding_addr();
 	Server::builder().add_service(service).serve(address)
 }
 
-fn create_admin_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+fn create_admin_grpc_server(manager: Arc<Mutex<ServerManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let relay = admin::relay_server::RelayServer::new(RelayAdminGRPCService::new(manager.clone()));
 	let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(manager.clone()));
 	let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
@@ -47,10 +47,10 @@ fn create_admin_grpc_server(manager: Arc<Mutex<RelayManager>>) -> impl Future<Ou
 		.serve(address)
 }
 
-fn create_manager() -> (Arc<AtomicBool>, Arc<Mutex<RelayManager>>) {
+fn create_manager() -> (Arc<AtomicBool>, Arc<Mutex<ServerManager>>) {
 	let relay_server_binding_address = SocketAddr::from_str("0.0.0.0:5555").unwrap();
 	let relay_server_socket = UdpSocket::bind(relay_server_binding_address).unwrap();
-	let relay_server = RelayManager::new(relay_server_socket);
+	let relay_server = ServerManager::new(relay_server_socket);
 	let halt_signal = relay_server.get_halt_signal();
 	let server = Arc::new(Mutex::new(relay_server));
 	(halt_signal, server)

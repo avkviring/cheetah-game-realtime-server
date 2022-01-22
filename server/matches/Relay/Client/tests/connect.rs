@@ -5,7 +5,7 @@ use crate::helpers::helper::IntegrationTestHelper;
 use crate::helpers::server::IntegrationTestServerBuilder;
 use cheetah_matches_relay_client::ffi::execute_with_client;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
-use cheetah_matches_relay_common::protocol::disconnect::watcher::DisconnectWatcher;
+use cheetah_matches_relay_common::protocol::disconnect::watcher::DisconnectByTimeoutHandler;
 
 pub mod helpers;
 
@@ -43,7 +43,7 @@ fn should_disconnect_when_server_closed() {
 	drop(helper);
 
 	execute_with_client(client, |api| {
-		api.set_protocol_time_offset(DisconnectWatcher::TIMEOUT).unwrap();
+		api.set_protocol_time_offset(DisconnectByTimeoutHandler::TIMEOUT).unwrap();
 		Ok(())
 	});
 	thread::sleep(Duration::from_millis(100));

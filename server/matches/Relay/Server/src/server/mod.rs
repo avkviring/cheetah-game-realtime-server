@@ -1,4 +1,4 @@
 pub mod manager;
-pub mod relay;
+pub mod network;
 pub mod rooms;
-pub mod udp;
+pub mod server;

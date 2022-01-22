@@ -12,15 +12,15 @@ use admin::DumpResponse;
 use crate::debug::proto::admin;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
+use crate::server::network::NetworkServer;
 use crate::server::rooms::Rooms;
-use crate::server::udp::UDPServer;
 
 ///
 /// Relay сервер, запускается в отдельном потоке, обрабатывает сетевые команды, поддерживает
 /// одновременно несколько комнат
 ///
-pub struct Relay {
-	udp_server: UDPServer,
+pub struct Server {
+	network_server: NetworkServer,
 	pub rooms: Rooms,
 	receiver: Receiver<ManagementTask>,
 	max_cycle_time: u128,
@@ -29,16 +29,16 @@ pub struct Relay {
 	time_offset: Option<Duration>,
 }
 
-impl Drop for Relay {
+impl Drop for Server {
 	fn drop(&mut self) {
 		log::error!("Relay: Drop invoked");
 	}
 }
 
-impl Relay {
+impl Server {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
 		Self {
-			udp_server: UDPServer::new(socket).unwrap(),
+			network_server: NetworkServer::new(socket).unwrap(),
 			rooms: Rooms::default(),
 			receiver,
 			max_cycle_time: 0,
@@ -54,7 +54,7 @@ impl Relay {
 			if let Some(time_offset) = self.time_offset {
 				now = now.add(time_offset);
 			}
-			self.udp_server.cycle(&mut self.rooms, &now);
+			self.network_server.cycle(&mut self.rooms, &now);
 			self.rooms.cycle(&now);
 			self.execute_management_tasks();
 			self.statistics(now);
@@ -65,7 +65,7 @@ impl Relay {
 		while let Ok(request) = self.receiver.try_recv() {
 			match request {
 				ManagementTask::RegisterRoom(template, sender) => {
-					let listener = self.udp_server.get_room_user_listener();
+					let listener = self.network_server.get_room_user_listener();
 					let result = self.rooms.create_room(template.clone(), vec![listener]);
 					match sender.send(result) {
 						Ok(_) => {}

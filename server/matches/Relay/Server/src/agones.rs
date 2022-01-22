@@ -4,13 +4,13 @@ use std::time::Duration;
 
 use cheetah_microservice::tonic::codegen::Arc;
 
-use crate::server::manager::RelayManager;
+use crate::server::manager::ServerManager;
 
 ///
 /// Взаимодействие с AGONES SDK
 /// Если Agones  не запущен - то relay будет остановлен
 ///
-pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mutex<RelayManager>>) {
+pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mutex<ServerManager>>) {
 	if std::env::var("ENABLE_AGONES").is_err() {
 		return;
 	}

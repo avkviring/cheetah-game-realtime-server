@@ -3,17 +3,17 @@ use std::sync::{Arc, Mutex};
 use tonic::{Request, Response, Status};
 
 use crate::factory::proto::internal::*;
-use crate::server::manager::RelayManager;
+use crate::server::manager::ServerManager;
 
 mod from;
 pub mod proto;
 
 pub struct RelayGRPCService {
-	pub relay_server: Arc<Mutex<RelayManager>>,
+	pub relay_server: Arc<Mutex<ServerManager>>,
 }
 
 impl RelayGRPCService {
-	pub fn new(relay_server: Arc<Mutex<RelayManager>>) -> Self {
+	pub fn new(relay_server: Arc<Mutex<ServerManager>>) -> Self {
 		RelayGRPCService { relay_server }
 	}
 }

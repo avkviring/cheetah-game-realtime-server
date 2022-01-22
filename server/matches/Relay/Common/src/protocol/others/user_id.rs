@@ -1,9 +1,9 @@
-use std::io::Cursor;
-
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::{RoomId, RoomMemberId};
+use hash32_derive::Hash32;
+use std::io::Cursor;
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Hash, Eq, Hash32)]
 pub struct MemberAndRoomId {
 	pub user_id: RoomMemberId,
 	pub room_id: RoomId,

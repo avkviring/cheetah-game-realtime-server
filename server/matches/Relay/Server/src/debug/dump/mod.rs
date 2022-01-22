@@ -3,16 +3,16 @@ use std::sync::{Arc, Mutex};
 use cheetah_microservice::tonic::{Request, Response};
 
 use crate::debug::proto::admin;
-use crate::server::manager::RelayManager;
+use crate::server::manager::ServerManager;
 
 pub mod convert;
 
 pub struct DumpGrpcService {
-	pub manager: Arc<Mutex<RelayManager>>,
+	pub manager: Arc<Mutex<ServerManager>>,
 }
 
 impl DumpGrpcService {
-	pub fn new(manager: Arc<Mutex<RelayManager>>) -> Self {
+	pub fn new(manager: Arc<Mutex<ServerManager>>) -> Self {
 		Self { manager }
 	}
 }

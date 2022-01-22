@@ -12,15 +12,15 @@ use crate::debug::proto::admin;
 use crate::debug::tracer::CommandTracerSessionsTask;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::server::manager::ManagementTask::TimeOffset;
-use crate::server::relay::Relay;
 use crate::server::rooms::RegisterUserError;
+use crate::server::server::Server;
 
 ///
 /// Управление сервером
 /// - запуск сервера в отдельном потоке
 /// - связь с сервером через Sender
 ///
-pub struct RelayManager {
+pub struct ServerManager {
 	handler: Option<JoinHandle<()>>,
 	sender: Sender<ManagementTask>,
 	halt_signal: Arc<AtomicBool>,
@@ -69,13 +69,13 @@ pub enum RegisterUserRequestError {
 	Error(RegisterUserError),
 }
 
-impl Drop for RelayManager {
+impl Drop for ServerManager {
 	fn drop(&mut self) {
 		self.halt_signal.store(true, Ordering::Relaxed);
 	}
 }
 
-impl RelayManager {
+impl ServerManager {
 	pub fn new(socket: UdpSocket) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
@@ -83,7 +83,7 @@ impl RelayManager {
 		let handler = thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr().unwrap()))
 			.spawn(move || {
-				Relay::new(socket, receiver, halt_signal).run();
+				Server::new(socket, receiver, halt_signal).run();
 			})
 			.unwrap();
 		Self {
@@ -203,18 +203,18 @@ mod test {
 	use cheetah_matches_relay_common::network::bind_to_free_socket;
 
 	use crate::room::template::config::RoomTemplate;
-	use crate::server::manager::RelayManager;
+	use crate::server::manager::ServerManager;
 
 	#[test]
 	fn should_increment_created_room_count() {
-		let mut server = RelayManager::new(bind_to_free_socket().unwrap().0);
+		let mut server = ServerManager::new(bind_to_free_socket().unwrap().0);
 		server.register_room(RoomTemplate::default()).unwrap();
 		assert_eq!(server.created_room_counter, 1);
 	}
 
 	#[test]
 	fn should_get_rooms() {
-		let mut server = RelayManager::new(bind_to_free_socket().unwrap().0);
+		let mut server = ServerManager::new(bind_to_free_socket().unwrap().0);
 		let room_id = server.register_room(RoomTemplate::default()).unwrap();
 		let rooms = server.get_rooms().unwrap();
 		assert_eq!(rooms, vec![room_id]);

@@ -12,14 +12,14 @@ use cheetah_microservice::tonic::{Request, Response};
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
 use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, UniDirectionCommand};
-use crate::server::manager::RelayManager;
+use crate::server::manager::ServerManager;
 
 pub struct CommandTracerGRPCService {
-	pub manager: Arc<Mutex<RelayManager>>,
+	pub manager: Arc<Mutex<ServerManager>>,
 }
 
 impl CommandTracerGRPCService {
-	pub fn new(relay_server: Arc<Mutex<RelayManager>>) -> Self {
+	pub fn new(relay_server: Arc<Mutex<ServerManager>>) -> Self {
 		Self { manager: relay_server }
 	}
 

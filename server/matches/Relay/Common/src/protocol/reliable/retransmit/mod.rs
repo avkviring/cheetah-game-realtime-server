@@ -133,19 +133,6 @@ impl Retransmitter {
 		}
 	}
 
-	fn set_ack_wait_duration(&mut self, duration: Duration) {
-		self.ack_wait_duration = duration;
-		log::info!("[retransmit] set_ack_wait_duration({:?})", duration);
-	}
-
-	fn get_redundant_frames_percent(&mut self, now: &Instant) -> Option<f64> {
-		let redundant = self.statistics.get_average_redundant_frames(now);
-		let retransmit = self.statistics.get_average_retransmit_frames(now);
-		redundant
-			.zip(retransmit)
-			.map(|(redundant, retransmit)| redundant as f64 / retransmit as f64)
-	}
-
 	///
 	/// Обрабатываем подтверждения фреймов
 	///

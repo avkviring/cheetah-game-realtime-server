@@ -1,11 +1,9 @@
 use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 use std::rc::Rc;
 use std::time::Instant;
-
-use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::headers::Header;
@@ -18,7 +16,7 @@ use crate::room::RoomUserListener;
 use crate::server::rooms::{OutFrame, Rooms};
 
 #[derive(Debug)]
-pub struct UDPServer {
+pub struct NetworkServer {
 	sessions: Rc<RefCell<UserSessions>>,
 	socket: UdpSocket,
 	halt: bool,
@@ -27,17 +25,17 @@ pub struct UDPServer {
 
 #[derive(Default, Debug)]
 struct UserSessions {
-	sessions: HashMap<MemberAndRoomId, UserSession, FnvBuildHasher>,
+	sessions: heapless::FnvIndexMap<MemberAndRoomId, UserSession, 128>,
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 struct UserSession {
 	peer_address: Option<SocketAddr>,
 	private_key: UserPrivateKey,
 	max_receive_frame_id: FrameId,
 }
 
-impl UDPServer {
+impl NetworkServer {
 	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		log::info!("Starting network server on {:?}", socket);
@@ -171,14 +169,16 @@ impl UDPServer {
 
 impl RoomUserListener for UserSessions {
 	fn register_user(&mut self, room_id: RoomId, user_id: RoomMemberId, template: UserTemplate) {
-		self.sessions.insert(
-			MemberAndRoomId { user_id, room_id },
-			UserSession {
-				peer_address: Default::default(),
-				private_key: template.private_key,
-				max_receive_frame_id: 0,
-			},
-		);
+		self.sessions
+			.insert(
+				MemberAndRoomId { user_id, room_id },
+				UserSession {
+					peer_address: Default::default(),
+					private_key: template.private_key,
+					max_receive_frame_id: 0,
+				},
+			)
+			.expect("User count overflow.");
 	}
 
 	fn disconnected_user(&mut self, room_id: RoomId, user_id: RoomMemberId) {
@@ -202,12 +202,12 @@ mod tests {
 	use crate::room::template::config::UserTemplate;
 	use crate::room::RoomUserListener;
 	use crate::room::User;
+	use crate::server::network::NetworkServer;
 	use crate::server::rooms::Rooms;
-	use crate::server::udp::UDPServer;
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
 		let mut rooms = Rooms::default();
 		let buffer = [0; Frame::MAX_FRAME_SIZE];
 		let usize = 100_usize;
@@ -222,7 +222,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_wrong_user() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
@@ -241,7 +241,7 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
@@ -260,7 +260,7 @@ mod tests {
 	///
 	#[test]
 	fn should_keep_address_from_last_frame() {
-		let mut udp_server = UDPServer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 

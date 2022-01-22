@@ -17,6 +17,9 @@ heapless = { version = "0.7.8"}
 fnv = "1.0.7"
 strum_macros = "0.23.1"
 thiserror = "1.0.30"
+hash32 = "0.2.1"
+hash32-derive = "0.1.1"
+
 
 [dev-dependencies]
 criterion = "0.3"
