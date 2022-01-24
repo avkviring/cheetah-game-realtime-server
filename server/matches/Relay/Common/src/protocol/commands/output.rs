@@ -19,6 +19,11 @@ pub struct OutCommandsCollector {
 	group_sequence: HashMap<ChannelGroup, ChannelSequence, FnvBuildHasher>,
 	object_sequence: HashMap<GameObjectId, ChannelSequence, FnvBuildHasher>,
 }
+#[derive(Debug)]
+pub struct OutCommand {
+	pub channel_type: ChannelType,
+	pub command: BothDirectionCommand,
+}
 
 impl OutCommandsCollector {
 	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
@@ -27,7 +32,10 @@ impl OutCommandsCollector {
 				log::error!("can not create channel for {:?} {:?}", channel_type, command)
 			}
 			Some(channel) => {
-				self.commands.push_back(CommandWithChannel { channel, command });
+				self.commands.push_back(CommandWithChannel {
+					channel,
+					both_direction_command: command,
+				});
 			}
 		}
 	}
@@ -73,8 +81,6 @@ impl OutCommandsCollector {
 
 #[cfg(test)]
 mod tests {
-	use std::time::Instant;
-
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
 	use crate::commands::types::long::SetLongCommand;
@@ -116,7 +122,7 @@ mod tests {
 
 		// в коллекторе первой должна быть команда с value равным размеру фрейма
 		assert!(matches!(
-			output.commands.pop_front().unwrap().command,
+			output.commands.pop_front().unwrap().both_direction_command,
 			BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: _,
 					field_id: _,
@@ -128,7 +134,7 @@ mod tests {
 		// проверяем как собран фрейм
 		for i in 0..MAX_COMMAND_IN_FRAME {
 			assert!(matches!(
-				frame.commands[i].command,
+				frame.commands[i].both_direction_command,
 				BothDirectionCommand::C2S( C2SCommand::SetLong(SetLongCommand {
 						object_id: _,
 						field_id: _,

@@ -177,7 +177,7 @@ pub mod tests {
 			.commands
 			.push(CommandWithChannel {
 				channel: Channel::ReliableUnordered,
-				command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: GameObjectId::new(100, GameObjectOwner::User(200)),
 					field_id: 78,
 					value: 155,

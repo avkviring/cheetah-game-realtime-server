@@ -38,7 +38,7 @@ fn get_channel_info(command: &CommandWithChannel) -> (ChannelType, Option<Channe
 fn get_command_info(
 	command: &CommandWithChannel,
 ) -> (Option<GameObjectId>, Option<FieldId>, CommandTypeId, Option<RoomMemberId>) {
-	match &command.command {
+	match &command.both_direction_command {
 		BothDirectionCommand::S2CWithCreator(command_with_creator) => (
 			command_with_creator.command.get_object_id(),
 			command_with_creator.command.get_field_id(),
@@ -55,7 +55,7 @@ fn get_command_info(
 }
 fn encode_command(command: &CommandWithChannel, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 	command.channel.encode(out)?;
-	match &command.command {
+	match &command.both_direction_command {
 		BothDirectionCommand::S2CWithCreator(command) => command.command.encode(out),
 		BothDirectionCommand::C2S(command) => command.encode(out),
 	}

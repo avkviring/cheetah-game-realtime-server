@@ -334,13 +334,13 @@ mod tests {
 			.commands
 			.push(CommandWithChannel {
 				channel: Channel::UnreliableUnordered,
-				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			})
 			.unwrap();
 
 		let reliable_command = CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: Default::default(),
 				field_id: 0,
 				event: Default::default(),
@@ -364,7 +364,7 @@ mod tests {
 			.commands
 			.push(CommandWithChannel {
 				channel: Channel::ReliableUnordered,
-				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			})
 			.unwrap();
 		frame

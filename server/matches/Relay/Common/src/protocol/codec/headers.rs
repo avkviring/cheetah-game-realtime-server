@@ -93,7 +93,7 @@ mod tests {
 	#[test]
 	fn test_user_and_room() {
 		check(vec![Header::MemberAndRoomId(MemberAndRoomId {
-			user_id: 55,
+			member_id: 55,
 			room_id: 77,
 		})]);
 	}

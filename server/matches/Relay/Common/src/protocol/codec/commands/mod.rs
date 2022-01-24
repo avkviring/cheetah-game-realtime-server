@@ -27,7 +27,7 @@ mod tests {
 		let mut commands = Vec::new();
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetDoubleCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetDoubleCommand {
 				object_id: Default::default(),
 				field_id: 10,
 				value: 1.5,
@@ -35,7 +35,7 @@ mod tests {
 		});
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableSequenceByGroup(11, 12),
-			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 				object_id: GameObjectId::new(13, GameObjectOwner::User(14)),
 				field_id: 15,
 				value: 16,
@@ -49,7 +49,7 @@ mod tests {
 		let mut commands = Vec::new();
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+			both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				command: S2CCommand::SetDouble(SetDoubleCommand {
 					object_id: Default::default(),
 					field_id: 10,
@@ -60,7 +60,7 @@ mod tests {
 		});
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableSequenceByGroup(11, 12),
-			command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+			both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				command: S2CCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),
 					field_id: 5,

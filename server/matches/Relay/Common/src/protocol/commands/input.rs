@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, VecDeque};
+use std::collections::{BinaryHeap, HashMap};
 
 use fnv::FnvBuildHasher;
 
@@ -17,7 +17,8 @@ pub struct InCommandsCollector {
 	ordered: HashMap<ChannelKey, FrameId, FnvBuildHasher>,
 	sequence_commands: HashMap<ChannelKey, BinaryHeap<SequenceApplicationCommand>, FnvBuildHasher>,
 	sequence_last: HashMap<ChannelKey, ChannelSequence, FnvBuildHasher>,
-	commands: VecDeque<CommandWithChannel>,
+	ready_commands: Vec<CommandWithChannel>,
+	is_get_commands: bool,
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -27,18 +28,23 @@ enum ChannelKey {
 }
 
 impl InCommandsCollector {
-	pub fn get_commands(&mut self) -> &mut VecDeque<CommandWithChannel> {
-		&mut self.commands
+	pub fn get_ready_commands(&mut self) -> &[CommandWithChannel] {
+		self.is_get_commands = true;
+		self.ready_commands.as_slice()
 	}
 
 	pub fn collect(&mut self, frame: Frame) {
+		if self.is_get_commands {
+			self.ready_commands.clear();
+			self.is_get_commands = false;
+		}
 		let frame_id = frame.frame_id;
 		frame.commands.into_iter().for_each(|c| {
 			match c.channel {
-				Channel::ReliableUnordered | Channel::UnreliableUnordered => self.commands.push_front(c),
+				Channel::ReliableUnordered | Channel::UnreliableUnordered => self.ready_commands.push(c),
 
 				Channel::ReliableOrderedByObject | Channel::UnreliableOrderedByObject => {
-					if let Some(object_id) = c.command.get_object_id() {
+					if let Some(object_id) = c.both_direction_command.get_object_id() {
 						self.process_ordered(ChannelKey::ClientGameObjectId(object_id.clone()), frame_id, c);
 					}
 				}
@@ -47,7 +53,7 @@ impl InCommandsCollector {
 				}
 
 				Channel::ReliableSequenceByObject(sequence) => {
-					if let Some(object_id) = c.command.get_object_id().cloned() {
+					if let Some(object_id) = c.both_direction_command.get_object_id().cloned() {
 						self.process_sequence(ChannelKey::ClientGameObjectId(object_id), sequence, c);
 					}
 				}
@@ -63,7 +69,7 @@ impl InCommandsCollector {
 		let mut last = *self.sequence_last.get(&channel_key).unwrap_or(&0);
 		if sequence == 0 || sequence == last + 1 {
 			last = sequence;
-			self.commands.push_front(command);
+			self.ready_commands.push(command);
 
 			match self.sequence_commands.get_mut(&channel_key) {
 				None => {}
@@ -71,7 +77,7 @@ impl InCommandsCollector {
 					while let Option::Some(peek) = buffer.peek() {
 						let sequence = peek.sequence;
 						if sequence == last + 1 {
-							self.commands.push_front(buffer.pop().unwrap().command);
+							self.ready_commands.push(buffer.pop().unwrap().command);
 							last = sequence;
 						} else {
 							break;
@@ -91,11 +97,11 @@ impl InCommandsCollector {
 		match self.ordered.get(&channel_key) {
 			None => {
 				self.ordered.insert(channel_key, frame_id);
-				self.commands.push_front(command);
+				self.ready_commands.push(command);
 			}
 			Some(processed_frame_id) if frame_id >= *processed_frame_id => {
 				self.ordered.insert(channel_key, frame_id);
-				self.commands.push_front(command);
+				self.ready_commands.push(command);
 			}
 			_ => {}
 		}
@@ -164,10 +170,12 @@ mod tests {
 		frame2.commands.push(command_2.clone()).unwrap();
 
 		in_commands.collect(frame2);
-		in_commands.collect(frame1);
+		assert_eq!(in_commands.get_ready_commands().len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_2);
 
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
+		in_commands.collect(frame1);
+		assert_eq!(in_commands.get_ready_commands().len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1);
 	}
 
 	#[test]
@@ -182,18 +190,23 @@ mod tests {
 		frame1.commands.push(command_1.clone()).unwrap();
 
 		let mut frame2 = Frame::new(2);
-		frame2.commands.push(command_2).unwrap();
+		frame2.commands.push(command_2.clone()).unwrap();
 
 		let mut frame3 = Frame::new(3);
 		frame3.commands.push(command_3.clone()).unwrap();
 
 		in_commands.collect(frame1);
-		in_commands.collect(frame3);
-		in_commands.collect(frame2);
+		let ready_commands = in_commands.get_ready_commands();
+		assert_eq!(ready_commands.len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1);
 
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_3);
-		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
+		in_commands.collect(frame3);
+		let ready_commands = in_commands.get_ready_commands();
+		assert_eq!(ready_commands.len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_3);
+
+		in_commands.collect(frame2);
+		assert!(in_commands.get_ready_commands().is_empty());
 	}
 
 	#[test]
@@ -210,10 +223,9 @@ mod tests {
 		frame2.commands.push(command_2.clone()).unwrap();
 
 		in_commands.collect(frame2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_2);
 		in_commands.collect(frame1);
-
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1);
 	}
 
 	#[test]
@@ -234,12 +246,11 @@ mod tests {
 		frame3.commands.push(command_3.clone()).unwrap();
 
 		in_commands.collect(frame1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1);
 		in_commands.collect(frame3);
+		assert_eq!(in_commands.get_ready_commands()[0], command_3);
 		in_commands.collect(frame2);
-
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_3);
-		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
+		assert!(in_commands.get_ready_commands().is_empty());
 	}
 
 	#[test]
@@ -267,14 +278,17 @@ mod tests {
 		frame3.commands.push(command_2_c.clone()).unwrap();
 
 		in_commands.collect(frame1);
-		in_commands.collect(frame3);
-		in_commands.collect(frame2);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1_a);
+		assert_eq!(in_commands.get_ready_commands()[1], command_2_a);
 
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_a);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_a);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_c);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_c);
-		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
+		in_commands.collect(frame3);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1_c);
+		assert_eq!(in_commands.get_ready_commands()[1], command_2_c);
+
+		in_commands.collect(frame2);
+		assert_eq!(in_commands.get_ready_commands().len(), 0);
 	}
 
 	#[test]
@@ -286,10 +300,6 @@ mod tests {
 		let command_3 = create_test_command(Channel::ReliableSequenceByGroup(1, 3), 3);
 		let command_4 = create_test_command(Channel::ReliableSequenceByGroup(1, 4), 4);
 		let command_5 = create_test_command(Channel::ReliableSequenceByGroup(1, 5), 5);
-
-		let mut frame = Frame::new(0);
-		frame.commands.push(command_1.clone()).unwrap();
-		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_3.clone()).unwrap();
@@ -307,12 +317,17 @@ mod tests {
 		frame.commands.push(command_4.clone()).unwrap();
 		in_commands.collect(frame);
 
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_3);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_4);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_5);
-		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
+		let mut frame = Frame::new(0);
+		frame.commands.push(command_1.clone()).unwrap();
+		in_commands.collect(frame);
+
+		let ready_commands = in_commands.get_ready_commands();
+		assert_eq!(ready_commands.len(), 5);
+		assert_eq!(ready_commands[0], command_1);
+		assert_eq!(ready_commands[1], command_2);
+		assert_eq!(ready_commands[2], command_3);
+		assert_eq!(ready_commands[3], command_4);
+		assert_eq!(ready_commands[4], command_5);
 	}
 
 	#[test]
@@ -330,34 +345,38 @@ mod tests {
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_1_a.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1_a);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_2_b.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 0);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_1_c.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 0);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_2_a.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_2_a);
+		assert_eq!(in_commands.get_ready_commands()[1], command_2_b);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_1_b.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1_b);
+		assert_eq!(in_commands.get_ready_commands()[1], command_1_c);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_2_c.clone()).unwrap();
 		in_commands.collect(frame);
-
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_a);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_a);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_b);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_b);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_c);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_c);
-		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
+		assert_eq!(in_commands.get_ready_commands().len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_2_c);
 	}
 
 	#[test]
@@ -373,30 +392,32 @@ mod tests {
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_1.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_3.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 0);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_5.clone()).unwrap();
-		in_commands.collect(frame);
-
-		let mut frame = Frame::new(0);
-		frame.commands.push(command_4.clone()).unwrap();
+		assert_eq!(in_commands.get_ready_commands().len(), 0);
 		in_commands.collect(frame);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_2.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_2);
+		assert_eq!(in_commands.get_ready_commands()[1], command_3);
 
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_3);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_4);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_5);
-
-		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
+		let mut frame = Frame::new(0);
+		frame.commands.push(command_4.clone()).unwrap();
+		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_4);
+		assert_eq!(in_commands.get_ready_commands()[1], command_5);
 	}
 
 	#[test]
@@ -414,34 +435,38 @@ mod tests {
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_1_a.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1_a);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_2_b.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 0);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_1_c.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 0);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_2_a.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_2_a);
+		assert_eq!(in_commands.get_ready_commands()[1], command_2_b);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_1_b.clone()).unwrap();
 		in_commands.collect(frame);
+		assert_eq!(in_commands.get_ready_commands().len(), 2);
+		assert_eq!(in_commands.get_ready_commands()[0], command_1_b);
+		assert_eq!(in_commands.get_ready_commands()[1], command_1_c);
 
 		let mut frame = Frame::new(0);
 		frame.commands.push(command_2_c.clone()).unwrap();
 		in_commands.collect(frame);
-
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_a);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_a);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_b);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_b);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_1_c);
-		assert_eq!(in_commands.get_commands().pop_back().unwrap(), command_2_c);
-		assert!(matches!(in_commands.get_commands().pop_back(), Option::None));
+		assert_eq!(in_commands.get_ready_commands().len(), 1);
+		assert_eq!(in_commands.get_ready_commands()[0], command_2_c);
 	}
 
 	fn create_test_command(channel: Channel, content: i64) -> CommandWithChannel {
@@ -451,7 +476,7 @@ mod tests {
 	fn create_test_object_command(channel: Channel, object_id: u32, content: i64) -> CommandWithChannel {
 		CommandWithChannel {
 			channel,
-			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
 				field_id: 0,
 				value: content,

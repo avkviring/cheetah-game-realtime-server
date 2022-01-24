@@ -30,14 +30,14 @@ fn should_send_from_client() {
 	let mut channel = Channel::default();
 	channel.cycle(1, &mut peer_a, &mut peer_b);
 
-	let commands = peer_b.in_commands_collector.get_commands();
+	let commands = peer_b.in_commands_collector.get_ready_commands();
 
 	assert!(commands
 		.iter()
-		.any(|p| p.command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
+		.any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
 	assert!(commands
 		.iter()
-		.any(|p| p.command == BothDirectionCommand::C2S(C2SCommand::DetachFromRoom)));
+		.any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::DetachFromRoom)));
 }
 
 ///
@@ -61,14 +61,14 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	channel.add_reliable_percent(0..=10, 0.0);
 	channel.cycle(1, &mut peer_a, &mut peer_b);
 
-	let commands = peer_b.in_commands_collector.get_commands();
+	let commands = peer_b.in_commands_collector.get_ready_commands();
 	assert!(commands.is_empty());
 
 	channel.cycle(15, &mut peer_a, &mut peer_b);
 
-	let commands = peer_b.in_commands_collector.get_commands();
+	let commands = peer_b.in_commands_collector.get_ready_commands();
 	assert_eq!(commands.len(), 1);
 	assert!(commands
 		.iter()
-		.any(|p| p.command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
+		.any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
 }

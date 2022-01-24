@@ -1,16 +1,13 @@
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::rc::Rc;
-use std::time::Instant;
-
 use fnv::FnvBuildHasher;
+use std::collections::{HashMap, HashSet, VecDeque};
 
-use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
+use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
+use cheetah_matches_relay_common::protocol::frame::applications::CommandWithChannel;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::room::template::config::{RoomTemplate, UserTemplate};
-use crate::room::{Room, RoomUserListener};
+use crate::room::Room;
 
 #[derive(Default)]
 pub struct Rooms {
@@ -20,21 +17,15 @@ pub struct Rooms {
 }
 
 #[derive(Debug)]
-pub struct OutFrame {
-	pub user_and_room_id: MemberAndRoomId,
-	pub frame: Frame,
-}
-
-#[derive(Debug)]
 pub enum RegisterUserError {
 	RoomNotFound,
 }
 
 impl Rooms {
-	pub fn create_room(&mut self, template: RoomTemplate, listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> RoomId {
+	pub fn create_room(&mut self, template: RoomTemplate) -> RoomId {
 		self.room_id_generator += 1;
 		let room_id = self.room_id_generator;
-		let room = Room::new(room_id, template, listeners);
+		let room = Room::new(room_id, template);
 		self.room_by_id.insert(room_id, room);
 		room_id
 	}
@@ -46,8 +37,11 @@ impl Rooms {
 		}
 	}
 
-	pub fn collect_out_frames(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
-		let mut data: [FrameId; 30_000] = [0; 30_000];
+	pub fn collect_out_commands<F>(&mut self, mut collector: F)
+	where
+		F: FnMut(&RoomId, &RoomMemberId, &mut VecDeque<OutCommand>),
+	{
+		let mut data: [RoomId; 30_000] = [0; 30_000];
 		let mut index = 0;
 		self.changed_rooms.iter().for_each(|room_id| {
 			data[index] = *room_id;
@@ -59,35 +53,33 @@ impl Rooms {
 			match self.room_by_id.get_mut(&data[i]) {
 				None => {}
 				Some(room) => {
-					room.collect_out_frame(out_frames, now);
+					let room_id = room.id;
+					room.collect_out_commands(|user_id, commands| collector(&room_id, user_id, commands));
 				}
 			}
 		}
 	}
 
-	pub fn on_frame_received(&mut self, user_and_room_id: MemberAndRoomId, frame: Frame, now: &Instant) {
+	pub fn execute_commands(&mut self, user_and_room_id: MemberAndRoomId, commands: &[CommandWithChannel]) {
 		match self.room_by_id.get_mut(&user_and_room_id.room_id) {
 			None => {
 				log::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
 			}
 			Some(room) => {
-				room.process_in_frame(user_and_room_id.user_id, frame, now);
+				room.execute_commands(user_and_room_id.member_id, commands);
 				self.changed_rooms.insert(room.id);
 			}
 		}
 	}
-
-	pub fn cycle(&mut self, now: &Instant) {
-		let mut changed = [0; 30_000];
-		let mut index = 0;
-		self.room_by_id.values_mut().for_each(|room| {
-			if room.cycle(now) {
-				changed[index] = room.id;
-				index += 1;
+	pub fn user_disconnected(&mut self, member_and_room_id: &MemberAndRoomId) {
+		match self.room_by_id.get_mut(&member_and_room_id.room_id) {
+			None => {
+				log::error!("[rooms] room not found ({:?}) in user_disconnect", member_and_room_id);
 			}
-		});
-		for i in 0..index {
-			self.changed_rooms.insert(changed[i]);
+			Some(room) => {
+				room.disconnect_user(member_and_room_id.member_id);
+				self.changed_rooms.insert(member_and_room_id.room_id);
+			}
 		}
 	}
 }

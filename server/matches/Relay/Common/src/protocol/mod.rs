@@ -3,7 +3,6 @@ use std::time::Instant;
 
 use crate::protocol::commands::input::InCommandsCollector;
 use crate::protocol::commands::output::OutCommandsCollector;
-use crate::protocol::congestion::CongestionControl;
 use crate::protocol::disconnect::handler::DisconnectByCommandHandler;
 use crate::protocol::disconnect::watcher::DisconnectByTimeoutHandler;
 use crate::protocol::frame::{Frame, FrameId};
@@ -15,7 +14,6 @@ use crate::protocol::reliable::retransmit::Retransmitter;
 
 pub mod codec;
 pub mod commands;
-pub mod congestion;
 pub mod disconnect;
 pub mod frame;
 pub mod others;
@@ -54,7 +52,6 @@ pub struct Protocol {
 	pub out_commands_collector: OutCommandsCollector,
 	pub rtt: RoundTripTime,
 	pub keep_alive: KeepAlive,
-	pub congestion_control: CongestionControl,
 	pub in_frame_counter: u64,
 }
 
@@ -71,17 +68,8 @@ impl Protocol {
 			disconnect_handler: Default::default(),
 			rtt: RoundTripTime::new(now),
 			keep_alive: Default::default(),
-			congestion_control: Default::default(),
 			in_frame_counter: Default::default(),
 		}
-	}
-
-	///
-	/// Данный метод необходимо периодически вызывать
-	/// для обработки внутренних данных
-	///
-	pub fn cycle(&mut self, now: &Instant) {
-		self.congestion_control.rebalance(now, &self.rtt, &mut self.retransmitter);
 	}
 
 	///
@@ -136,7 +124,7 @@ impl Protocol {
 	///
 	/// Разорвана ли связь?
 	///
-	pub fn disconnected(&self, now: &Instant) -> bool {
+	pub fn is_disconnected(&self, now: &Instant) -> bool {
 		self.retransmitter.disconnected(now)
 			|| self.disconnect_watcher.disconnected(now)
 			|| self.disconnect_handler.disconnected()
@@ -145,8 +133,8 @@ impl Protocol {
 	///
 	/// Установлено ли соединения?
 	///
-	pub fn connected(&self, now: &Instant) -> bool {
-		self.in_frame_counter > 0 && !self.disconnected(now)
+	pub fn is_connected(&self, now: &Instant) -> bool {
+		self.in_frame_counter > 0 && !self.is_disconnected(now)
 	}
 
 	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<Frame> {

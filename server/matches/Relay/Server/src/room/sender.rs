@@ -2,6 +2,7 @@ use std::slice::Iter;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
+use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
 use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -42,11 +43,10 @@ impl Room {
 		self.users
 			.values_mut()
 			.filter(|user| user.attached)
-			.filter(|user| user.protocol.is_some())
+			.filter(|user| user.connected)
 			.filter(|user| user.template.groups.contains_any(&access_groups))
 			.filter(|user| filter(user))
 			.for_each(|user| {
-				let protocol = user.protocol.as_mut().unwrap();
 				for command in commands.clone() {
 					let allow = match &command.field {
 						None => true,
@@ -70,10 +70,10 @@ impl Room {
 							command: command.command.clone(),
 						};
 
-						let application_command = BothDirectionCommand::S2CWithCreator(command_with_user);
-						protocol
-							.out_commands_collector
-							.add_command(channel_type.clone(), application_command.clone());
+						user.out_commands.push_back(OutCommand {
+							channel_type: channel_type.clone(),
+							command: BothDirectionCommand::S2CWithCreator(command_with_user),
+						});
 					}
 				}
 			});
@@ -91,40 +91,36 @@ impl Room {
 				log::error!("[room] send to unknown user {:?}", user_id)
 			}
 			Some(user) => {
-				if let Some(ref mut protocol) = user.protocol {
-					if user.attached {
-						let groups = user.template.groups;
-						for command in commands {
-							let allow = match command.field {
-								None => true,
-								Some(FieldIdAndType { field_id, field_type }) => {
-									self.permission_manager.borrow_mut().get_permission(
-										object_template,
-										field_id,
-										field_type,
-										groups,
-									) > Permission::Deny
-								}
-							};
-							if allow {
-								let channel = self
-									.current_channel
-									.as_ref()
-									.unwrap_or(&ChannelType::ReliableSequenceByGroup(0));
-
-								let command_with_meta = S2CCommandWithCreator {
-									creator: self.current_user.unwrap_or(0),
-									command: command.command.clone(),
-								};
-								command_trace_session
+				if user.attached && user.connected {
+					let groups = user.template.groups;
+					for command in commands {
+						let allow = match command.field {
+							None => true,
+							Some(FieldIdAndType { field_id, field_type }) => {
+								self.permission_manager
 									.borrow_mut()
-									.collect_s2c(object_template, user.id, &command.command);
-
-								let application_command = BothDirectionCommand::S2CWithCreator(command_with_meta);
-								protocol
-									.out_commands_collector
-									.add_command(channel.clone(), application_command);
+									.get_permission(object_template, field_id, field_type, groups)
+									> Permission::Deny
 							}
+						};
+						if allow {
+							let channel = self
+								.current_channel
+								.as_ref()
+								.unwrap_or(&ChannelType::ReliableSequenceByGroup(0));
+
+							let command_with_meta = S2CCommandWithCreator {
+								creator: self.current_user.unwrap_or(0),
+								command: command.command.clone(),
+							};
+							command_trace_session
+								.borrow_mut()
+								.collect_s2c(object_template, user.id, &command.command);
+
+							user.out_commands.push_back(OutCommand {
+								channel_type: channel.clone(),
+								command: BothDirectionCommand::S2CWithCreator(command_with_meta),
+							});
 						}
 					}
 				}

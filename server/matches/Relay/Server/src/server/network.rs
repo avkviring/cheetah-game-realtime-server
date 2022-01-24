@@ -1,38 +1,31 @@
-use std::cell::RefCell;
-use std::collections::VecDeque;
+use std::collections::HashMap;
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
-use std::rc::Rc;
 use std::time::Instant;
 
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::headers::Header;
 use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_relay_common::protocol::Protocol;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::room::template::config::UserTemplate;
-use crate::room::RoomUserListener;
-use crate::server::rooms::{OutFrame, Rooms};
+use crate::server::rooms::Rooms;
 
 #[derive(Debug)]
 pub struct NetworkServer {
-	sessions: Rc<RefCell<UserSessions>>,
+	sessions: HashMap<MemberAndRoomId, UserSession>,
 	socket: UdpSocket,
 	halt: bool,
-	tmp_out_frames: VecDeque<OutFrame>,
 }
 
-#[derive(Default, Debug)]
-struct UserSessions {
-	sessions: heapless::FnvIndexMap<MemberAndRoomId, UserSession, 128>,
-}
-
-#[derive(Default, Debug)]
+#[derive(Debug)]
 struct UserSession {
 	peer_address: Option<SocketAddr>,
 	private_key: UserPrivateKey,
 	max_receive_frame_id: FrameId,
+	pub protocol: Protocol,
 }
 
 impl NetworkServer {
@@ -43,48 +36,69 @@ impl NetworkServer {
 			sessions: Default::default(),
 			socket,
 			halt: false,
-			tmp_out_frames: VecDeque::with_capacity(50_000),
 		})
 	}
 
 	pub fn cycle(&mut self, rooms: &mut Rooms, now: &Instant) {
 		self.receive(rooms, now);
-		self.send(rooms, now);
+		self.send(rooms);
+
+		let mut disconnected = heapless::Vec::<MemberAndRoomId, 1000>::new();
+		self.sessions.iter_mut().for_each(|(id, session)| {
+			if session.protocol.is_disconnected(now) && !disconnected.is_full() {
+				rooms.user_disconnected(id);
+				disconnected.push(id.clone()).unwrap();
+			}
+		});
+		for id in disconnected {
+			self.sessions.remove(&id);
+		}
 	}
 
 	///
 	/// Отправить команды клиентам
 	///
-	fn send(&mut self, rooms: &mut Rooms, now: &Instant) {
-		rooms.collect_out_frames(&mut self.tmp_out_frames, now);
-		let mut buffer = [0; 2048];
-		while let Some(OutFrame {
-			user_and_room_id: user_id,
-			frame,
-		}) = self.tmp_out_frames.back()
-		{
-			match self.sessions.clone().borrow().sessions.get(user_id) {
-				None => {}
+	fn send(&mut self, rooms: &mut Rooms) {
+		rooms.collect_out_commands(|room_id, member_id, commands| {
+			let id = MemberAndRoomId {
+				member_id: *member_id,
+				room_id: *room_id,
+			};
+			match self.sessions.get_mut(&id) {
+				None => {
+					log::error!("[network] member not found {:?}", id);
+				}
 				Some(session) => {
-					log::trace!("[network] server -> user({:?}) {:?}", user_id, frame);
-					let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
-					match self.socket.send_to(&buffer[0..buffer_size], session.peer_address.unwrap()) {
-						Ok(size) => {
-							if size == buffer_size {
-								self.tmp_out_frames.pop_back();
-							} else {
-								log::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
-							}
+					if let Some(peer_address) = session.peer_address.as_ref() {
+						while let Some(command) = commands.pop_front() {
+							session
+								.protocol
+								.out_commands_collector
+								.add_command(command.channel_type, command.command);
 						}
-						Err(e) => {
-							if let ErrorKind::WouldBlock = e.kind() {
-								return;
+						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
+							log::trace!("[network] server -> user({:?}) {:?}", member_id, frame);
+							let mut buffer = [0; Frame::MAX_FRAME_SIZE];
+							let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
+							match self.socket.send_to(&buffer[0..buffer_size], peer_address) {
+								Ok(size) => {
+									if size != buffer_size {
+										log::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
+									}
+								}
+								Err(e) => {
+									if let ErrorKind::WouldBlock = e.kind() {
+										return;
+									} else {
+										log::error!("[network] socket error {:?}", e);
+									}
+								}
 							}
 						}
 					}
 				}
 			}
-		}
+		});
 	}
 
 	fn receive(&mut self, rooms: &mut Rooms, now: &Instant) {
@@ -116,16 +130,15 @@ impl NetworkServer {
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_id, headers)) => {
-				let ident_header: Option<MemberAndRoomId> = headers.first(Header::predicate_member_and_room_id).cloned();
+				let member_and_room_id_header: Option<MemberAndRoomId> =
+					headers.first(Header::predicate_member_and_room_id).cloned();
 
-				let sessions_cloned = self.sessions.clone();
-				match ident_header {
+				match member_and_room_id_header {
 					None => {
 						log::error!("[network] MemberAndRoomId header not found {:?}", headers);
 					}
 					Some(user_and_room_id) => {
-						let mut readed_frame = Option::None;
-						match sessions_cloned.borrow_mut().sessions.get_mut(&user_and_room_id) {
+						match self.sessions.get_mut(&user_and_room_id) {
 							None => {
 								log::error!("[network] user session not found {:?}", user_and_room_id);
 							}
@@ -142,7 +155,11 @@ impl NetworkServer {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.frame_id;
 										}
-										readed_frame.replace(frame);
+										session.protocol.on_frame_received(frame, &now);
+										rooms.execute_commands(
+											user_and_room_id,
+											session.protocol.in_commands_collector.get_ready_commands(),
+										)
 									}
 									Err(e) => {
 										log::error!("[network] error decode frame {:?}", e)
@@ -150,9 +167,6 @@ impl NetworkServer {
 								}
 							}
 						};
-						if let Some(frame) = readed_frame {
-							rooms.on_frame_received(user_and_room_id, frame, now);
-						}
 					}
 				}
 			}
@@ -162,28 +176,19 @@ impl NetworkServer {
 		}
 	}
 
-	pub fn get_room_user_listener(&self) -> Rc<RefCell<dyn RoomUserListener>> {
-		self.sessions.clone()
-	}
-}
-
-impl RoomUserListener for UserSessions {
-	fn register_user(&mut self, room_id: RoomId, user_id: RoomMemberId, template: UserTemplate) {
-		self.sessions
-			.insert(
-				MemberAndRoomId { user_id, room_id },
-				UserSession {
-					peer_address: Default::default(),
-					private_key: template.private_key,
-					max_receive_frame_id: 0,
-				},
-			)
-			.expect("User count overflow.");
-	}
-
-	fn disconnected_user(&mut self, room_id: RoomId, user_id: RoomMemberId) {
-		log::info!("user {:?} disconnect from room {:?}", user_id, room_id);
-		self.sessions.remove(&MemberAndRoomId { user_id, room_id });
+	pub fn register_user(&mut self, now: &Instant, room_id: RoomId, user_id: RoomMemberId, template: UserTemplate) {
+		self.sessions.insert(
+			MemberAndRoomId {
+				member_id: user_id,
+				room_id,
+			},
+			UserSession {
+				peer_address: Default::default(),
+				private_key: template.private_key,
+				max_receive_frame_id: 0,
+				protocol: Protocol::new(now),
+			},
+		);
 	}
 }
 
@@ -200,7 +205,6 @@ mod tests {
 	use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 
 	use crate::room::template::config::UserTemplate;
-	use crate::room::RoomUserListener;
 	use crate::room::User;
 	use crate::server::network::NetworkServer;
 	use crate::server::rooms::Rooms;
@@ -226,9 +230,10 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
-		frame
-			.headers
-			.add(Header::MemberAndRoomId(MemberAndRoomId { user_id: 0, room_id: 0 }));
+		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId {
+			member_id: 0,
+			room_id: 0,
+		}));
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -271,20 +276,17 @@ mod tests {
 		};
 		let user = User {
 			id: 100,
-			protocol: None,
+			connected: false,
 			attached: false,
 			template: user_template.clone(),
 			compare_and_sets_cleaners: Default::default(),
+			out_commands: Default::default(),
 		};
-		udp_server
-			.sessions
-			.clone()
-			.borrow_mut()
-			.register_user(0, user.id, user.template.clone());
+		udp_server.register_user(&Instant::now(), 0, user.id, user.template.clone());
 
 		let mut frame = Frame::new(100);
 		let user_and_room_id = MemberAndRoomId {
-			user_id: user.id,
+			member_id: user.id,
 			room_id: 0,
 		};
 		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
@@ -305,15 +307,7 @@ mod tests {
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 
 		assert_eq!(
-			udp_server
-				.sessions
-				.clone()
-				.borrow()
-				.sessions
-				.get(&user_and_room_id)
-				.unwrap()
-				.peer_address
-				.unwrap(),
+			udp_server.sessions.get(&user_and_room_id).unwrap().peer_address.unwrap(),
 			addr_1
 		);
 	}

@@ -28,7 +28,7 @@ pub fn create_object_frame() {
 		.commands
 		.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
 				object_id: Default::default(),
 				template: 0,
 				access_groups: Default::default(),
@@ -39,7 +39,7 @@ pub fn create_object_frame() {
 		.commands
 		.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
 				object_id: Default::default(),
 				field_id: 30,
 				structure: Default::default(),
@@ -50,7 +50,7 @@ pub fn create_object_frame() {
 		.commands
 		.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 				object_id: Default::default(),
 				field_id: 55,
 				value: 100,

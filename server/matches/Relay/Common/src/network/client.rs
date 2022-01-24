@@ -60,7 +60,7 @@ impl NetworkClient {
 			out_frames: Default::default(),
 			from_client,
 			member_and_room_id: MemberAndRoomId {
-				user_id: member_id,
+				member_id: member_id,
 				room_id,
 			},
 		})
@@ -72,15 +72,14 @@ impl NetworkClient {
 		}
 
 		self.channel.cycle(now);
-		self.protocol.cycle(now);
 		self.do_read(now);
 		self.do_write(now);
 
-		if self.protocol.connected(now) {
+		if self.protocol.is_connected(now) {
 			self.state = ConnectionStatus::Connected
 		}
 
-		if self.protocol.disconnected(now) {
+		if self.protocol.is_disconnected(now) {
 			self.state = ConnectionStatus::Disconnected
 		}
 	}

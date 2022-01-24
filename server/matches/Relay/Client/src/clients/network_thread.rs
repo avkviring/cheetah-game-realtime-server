@@ -10,7 +10,6 @@ use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
-use cheetah_matches_relay_common::protocol::others::rtt::RoundTripTime;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::clients::{ClientRequest, SharedClientStatistics};
@@ -86,9 +85,9 @@ impl NetworkThreadClient {
 	/// Обработка команд с сервера
 	///
 	fn commands_from_server(&mut self) {
-		let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_commands();
-		while let Some(command) = in_commands_from_protocol.pop_back() {
-			match self.commands_from_server.send(command) {
+		let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_ready_commands();
+		for command in in_commands_from_protocol {
+			match self.commands_from_server.send(command.clone()) {
 				Ok(_) => {}
 				Err(e) => {
 					self.running = false;

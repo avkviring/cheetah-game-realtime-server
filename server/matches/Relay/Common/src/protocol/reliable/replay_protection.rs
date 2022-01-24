@@ -62,8 +62,6 @@ impl FrameReplayProtection {
 
 #[cfg(test)]
 mod tests {
-	use std::time::Instant;
-
 	use crate::protocol::frame::Frame;
 	use crate::protocol::reliable::replay_protection::FrameReplayProtection;
 
@@ -87,7 +85,6 @@ mod tests {
 	#[test]
 	fn should_protection_replay_check_all() {
 		let mut protection = FrameReplayProtection::default();
-		let now = Instant::now();
 		for i in 1..(FrameReplayProtection::BUFFER_SIZE * 2) as u64 {
 			let frame = Frame::new(i);
 			assert!(!protection.set_and_check(&frame).unwrap());
@@ -98,7 +95,6 @@ mod tests {
 	#[test]
 	fn should_protection_replay_check_prev_packets() {
 		let mut protection = FrameReplayProtection::default();
-		let now = Instant::now();
 		for i in 1..FrameReplayProtection::BUFFER_SIZE as u64 {
 			let frame = Frame::new(i);
 			protection.set_and_check(&frame).unwrap();

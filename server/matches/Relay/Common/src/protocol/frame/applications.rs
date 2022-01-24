@@ -6,10 +6,10 @@ use crate::room::object::GameObjectId;
 pub type ChannelGroup = u16;
 pub type ChannelSequence = u32;
 
-#[derive(Debug,  PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CommandWithChannel {
 	pub channel: Channel,
-	pub command: BothDirectionCommand,
+	pub both_direction_command: BothDirectionCommand,
 }
 
 #[derive(Debug, PartialEq, Clone)]

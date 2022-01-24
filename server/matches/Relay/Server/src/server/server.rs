@@ -55,18 +55,16 @@ impl Server {
 				now = now.add(time_offset);
 			}
 			self.network_server.cycle(&mut self.rooms, &now);
-			self.rooms.cycle(&now);
-			self.execute_management_tasks();
+			self.execute_management_tasks(&now);
 			self.statistics(now);
 		}
 	}
 
-	fn execute_management_tasks(&mut self) {
+	fn execute_management_tasks(&mut self, now: &Instant) {
 		while let Ok(request) = self.receiver.try_recv() {
 			match request {
 				ManagementTask::RegisterRoom(template, sender) => {
-					let listener = self.network_server.get_room_user_listener();
-					let result = self.rooms.create_room(template.clone(), vec![listener]);
+					let result = self.rooms.create_room(template.clone());
 					match sender.send(result) {
 						Ok(_) => {}
 						Err(e) => {
@@ -75,8 +73,11 @@ impl Server {
 					}
 				}
 				ManagementTask::RegisterUser(room_id, user_template, sender) => {
-					let register_user_result = self.rooms.register_user(room_id, user_template);
-					if let Err(e) = sender.send(register_user_result) {
+					let result = self.rooms.register_user(room_id, user_template.clone());
+					if let Ok(user_id) = &result {
+						self.network_server.register_user(now, room_id, *user_id, user_template);
+					}
+					if let Err(e) = sender.send(result) {
 						log::error!("[Request::RegisterUser] error send response {:?}", e);
 					}
 				}

@@ -141,8 +141,6 @@ impl AckSender {
 
 #[cfg(test)]
 mod tests {
-	use std::time::Instant;
-
 	use crate::commands::c2s::C2SCommand;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
@@ -211,8 +209,6 @@ mod tests {
 	#[test]
 	fn should_send_ack_header_for_prev_frames() {
 		let mut reliable = AckSender::default();
-		let time = Instant::now();
-
 		for i in 0..AckSender::BUFFER_SIZE {
 			let mut in_frame = Frame::new(10 + i as u64);
 			in_frame.commands.push(create_command()).unwrap();
@@ -239,14 +235,12 @@ mod tests {
 	#[test]
 	fn should_ack_send_more_one_header() {
 		let mut reliable = AckSender::default();
-		let time = Instant::now();
-
 		let mut frame_a = Frame::new(10);
 		frame_a
 			.commands
 			.push(CommandWithChannel {
 				channel: Channel::ReliableUnordered,
-				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			})
 			.unwrap();
 		reliable.on_frame_received(&frame_a);
@@ -267,7 +261,7 @@ mod tests {
 	fn create_command() -> CommandWithChannel {
 		CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		}
 	}
 }

@@ -35,7 +35,7 @@ fn decode_command(
 ) -> Result<CommandWithChannel, CommandsDecoderError> {
 	Ok(CommandWithChannel {
 		channel: Channel::decode(&header.channel_type_id, context.get_channel_group_id(), input)?,
-		command: match from_client {
+		both_direction_command: match from_client {
 			true => BothDirectionCommand::C2S(C2SCommand::decode(
 				&header.command_type_id,
 				context.get_object_id(),

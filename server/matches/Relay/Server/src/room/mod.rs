@@ -1,9 +1,7 @@
-use core::fmt;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 use std::rc::Rc;
-use std::time::Instant;
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
@@ -11,12 +9,9 @@ use indexmap::map::IndexMap;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
+use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
+use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
-use cheetah_matches_relay_common::protocol::frame::Frame;
-use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
-use cheetah_matches_relay_common::protocol::Protocol;
-
 #[cfg(test)]
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -29,7 +24,6 @@ use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::object::{GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
-use crate::server::rooms::OutFrame;
 
 pub mod action;
 pub mod command;
@@ -46,7 +40,6 @@ pub struct Room {
 	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ChannelType>,
 	current_user: Option<RoomMemberId>,
-	pub user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>,
 	pub user_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	#[cfg(test)]
@@ -58,26 +51,14 @@ pub struct Room {
 	pub out_commands: VecDeque<(AccessGroups, S2CCommand)>,
 }
 
-pub trait RoomUserListener {
-	fn register_user(&mut self, room_id: RoomId, user_id: RoomMemberId, template: UserTemplate);
-	fn disconnected_user(&mut self, room_id: RoomId, user_id: RoomMemberId);
-}
-impl Debug for dyn RoomUserListener {
-	fn fmt(&self, _: &mut Formatter<'_>) -> fmt::Result {
-		Result::Ok(())
-	}
-}
-
 #[derive(Debug)]
 pub struct User {
 	pub id: RoomMemberId,
-	///
-	/// None - нет сетевого коннекта с пользователем
-	///
-	pub protocol: Option<Protocol>,
+	pub connected: bool,
 	pub attached: bool,
 	pub template: UserTemplate,
 	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
+	pub out_commands: VecDeque<OutCommand>,
 }
 
 impl User {
@@ -90,14 +71,13 @@ impl User {
 }
 
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate, user_listeners: Vec<Rc<RefCell<dyn RoomUserListener>>>) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate) -> Self {
 		let mut room = Room {
 			id,
 			users: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
 			current_user: Default::default(),
-			user_listeners,
 			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
 			#[cfg(test)]
 			object_id_generator: 0,
@@ -115,30 +95,22 @@ impl Room {
 	}
 
 	///
-	/// Собрать фреймы для отправки в сеть
+	/// Получить команды для отправки в сеть
 	///
-	pub fn collect_out_frame(&mut self, out_frames: &mut VecDeque<OutFrame>, now: &Instant) {
+	pub fn collect_out_commands<F>(&mut self, mut collector: F)
+	where
+		F: FnMut(&RoomMemberId, &mut VecDeque<OutCommand>),
+	{
 		for (user_id, user) in self.users.iter_mut() {
-			if let Some(ref mut protocol) = user.protocol {
-				while let Some(frame) = protocol.build_next_frame(now) {
-					out_frames.push_front(OutFrame {
-						user_and_room_id: MemberAndRoomId {
-							user_id: *user_id,
-							room_id: self.id,
-						},
-						frame,
-					});
-				}
-			}
+			collector(user_id, &mut user.out_commands);
 		}
 	}
 
 	///
-	/// Обработать входящий фрейм для пользователя
+	/// Обработать входящие команды
 	///
-	pub fn process_in_frame(&mut self, user_id: RoomMemberId, frame: Frame, now: &Instant) {
+	pub fn execute_commands(&mut self, user_id: RoomMemberId, commands: &[CommandWithChannel]) {
 		let user = self.users.get_mut(&user_id);
-		let mut commands = Vec::new();
 		match user {
 			None => {
 				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
@@ -146,20 +118,10 @@ impl Room {
 			Some(user) => {
 				self.current_user.replace(user_id);
 
-				let mut new_user = false;
-				let protocol = &mut user.protocol;
-				if protocol.is_none() {
-					protocol.replace(Protocol::new(now));
-					new_user = true;
-				}
+				let connected_now = !user.connected;
+				user.connected = true;
 
-				let protocol = protocol.as_mut().unwrap();
-				protocol.on_frame_received(frame, now);
-				while let Some(application_command) = protocol.in_commands_collector.get_commands().pop_back() {
-					commands.push(application_command);
-				}
-
-				if new_user {
+				if connected_now {
 					self.current_channel.replace(ChannelType::ReliableSequenceByGroup(0));
 					let user_id = user.id;
 					let template = user.template.clone();
@@ -169,15 +131,16 @@ impl Room {
 		}
 
 		let tracer = self.command_trace_session.clone();
-		for application_command in commands.into_iter() {
-			match application_command.command {
+		for command_with_channel in commands {
+			let command_with_channel = command_with_channel.clone();
+			match command_with_channel.both_direction_command {
 				BothDirectionCommand::C2S(command) => {
-					self.current_channel.replace(From::from(&application_command.channel));
+					self.current_channel.replace(From::from(&command_with_channel.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, &command);
 					execute(command, self, user_id);
 				}
 				_ => {
-					log::error!("[room({:?})] receive unsupported command {:?}", self.id, application_command)
+					log::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel)
 				}
 			}
 		}
@@ -191,17 +154,12 @@ impl Room {
 		let user_id = self.user_id_generator;
 		let user = User {
 			id: user_id,
-			protocol: None,
+			connected: false,
 			attached: false,
 			template,
 			compare_and_sets_cleaners: Default::default(),
+			out_commands: Default::default(),
 		};
-
-		self.user_listeners.iter().cloned().for_each(|listener| {
-			let mut listener = (*listener).borrow_mut();
-			listener.register_user(self.id, user.id, user.template.clone());
-		});
-
 		self.users.insert(user_id, user);
 		user_id
 	}
@@ -236,11 +194,6 @@ impl Room {
 				for id in objects {
 					self.delete_object(&id);
 				}
-
-				self.user_listeners.iter().cloned().for_each(|listener| {
-					let mut listener = (*listener).borrow_mut();
-					listener.disconnected_user(self.id, user.id);
-				});
 
 				reset_all_compare_and_set(self, user.id, user.compare_and_sets_cleaners);
 			}
@@ -294,29 +247,6 @@ impl Room {
 		self.objects.iter().for_each(|(_, o)| f(o));
 	}
 
-	///
-	/// Тактируем протоколы пользователей и определяем дисконнекты
-	/// true - если room была изменена и требуется отправка команды
-	///
-	pub fn cycle(&mut self, now: &Instant) -> bool {
-		let mut disconnected_user: [RoomMemberId; 10] = [0; 10];
-		let mut disconnected_users_count = 0;
-		self.users.values_mut().for_each(|u| {
-			if let Some(ref mut protocol) = u.protocol {
-				if protocol.disconnected(now) && disconnected_users_count < disconnected_user.len() {
-					disconnected_user[disconnected_users_count] = u.id;
-					disconnected_users_count += 1;
-				}
-			}
-		});
-
-		for i in 0..disconnected_users_count {
-			self.disconnect_user(disconnected_user[i]);
-		}
-
-		disconnected_users_count > 0
-	}
-
 	fn on_user_connect(&mut self, user_id: RoomMemberId, template: UserTemplate) {
 		template.objects.iter().for_each(|object_template| {
 			let object = object_template.create_user_game_object(user_id);
@@ -332,18 +262,13 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use std::cell::RefCell;
 	use std::collections::VecDeque;
-	use std::rc::Rc;
-	use std::time::Instant;
 
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use cheetah_matches_relay_common::protocol::frame::channel::Channel;
-	use cheetah_matches_relay_common::protocol::frame::Frame;
-	use cheetah_matches_relay_common::protocol::Protocol;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -351,17 +276,17 @@ mod tests {
 
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
-	use crate::room::{Room, RoomUserListener};
+	use crate::room::Room;
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(0, RoomTemplate::default(), Default::default())
+			Room::new(0, RoomTemplate::default())
 		}
 	}
 
 	impl Room {
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template, Default::default())
+			Room::new(0, template)
 		}
 
 		pub fn create_object(&mut self, owner: RoomMemberId, access_groups: AccessGroups) -> &mut GameObject {
@@ -377,7 +302,7 @@ mod tests {
 			match self.get_user_mut(user_id) {
 				None => {}
 				Some(user) => {
-					user.protocol = Option::Some(Protocol::new(&Instant::now()));
+					user.connected = true;
 					user.attached = true;
 				}
 			}
@@ -386,11 +311,7 @@ mod tests {
 		pub fn get_user_out_commands(&self, user_id: RoomMemberId) -> VecDeque<S2CCommand> {
 			self.get_user(user_id)
 				.unwrap()
-				.protocol
-				.as_ref()
-				.unwrap()
-				.out_commands_collector
-				.commands
+				.out_commands
 				.iter()
 				.map(|c| &c.command)
 				.map(|c| match c {
@@ -404,11 +325,7 @@ mod tests {
 		pub fn get_user_out_commands_with_meta(&self, user_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
 			self.get_user(user_id)
 				.unwrap()
-				.protocol
-				.as_ref()
-				.unwrap()
-				.out_commands_collector
-				.commands
+				.out_commands
 				.iter()
 				.map(|c| &c.command)
 				.map(|c| match c {
@@ -420,14 +337,7 @@ mod tests {
 		}
 
 		pub fn clear_user_out_commands(&mut self, user_id: RoomMemberId) {
-			self.get_user_mut(user_id)
-				.unwrap()
-				.protocol
-				.as_mut()
-				.unwrap()
-				.out_commands_collector
-				.commands
-				.clear();
+			self.get_user_mut(user_id).unwrap().out_commands.clear();
 		}
 	}
 
@@ -493,7 +403,7 @@ mod tests {
 		};
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(user_template);
-		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
+		room.execute_commands(user_id, &[]);
 		assert!(room
 			.objects
 			.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::User(user_id))));
@@ -532,44 +442,27 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user1_id = room.register_user(user1_template);
 		let user2_id = room.register_user(user2_template);
-		room.process_in_frame(user1_id, Frame::new(0), &Instant::now());
-
-		let mut frame_with_attach_to_room = Frame::new(1);
-		frame_with_attach_to_room
-			.commands
-			.push(CommandWithChannel {
+		room.execute_commands(user1_id, &[]);
+		room.execute_commands(
+			user1_id,
+			vec![CommandWithChannel {
 				channel: Channel::ReliableUnordered,
-				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-			})
-			.unwrap();
-		room.process_in_frame(user1_id, frame_with_attach_to_room, &Instant::now());
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			}]
+			.as_slice(),
+		);
 
 		let user1 = room.get_user_mut(user1_id).unwrap();
-		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
-			protocol
-				.out_commands_collector
-				.commands
-				.pop_front()
-				.unwrap()
-				.command
-				.get_object_id()
-				.unwrap(),
+			user1.out_commands.pop_front().unwrap().command.get_object_id().unwrap(),
 			&GameObjectId::new(object1_template.id, GameObjectOwner::User(user1_id))
 		);
-		protocol.out_commands_collector.commands.clear();
-		room.process_in_frame(user2_id, Frame::new(0), &Instant::now());
+		user1.out_commands.clear();
+
+		room.execute_commands(user2_id, &[]);
 		let user1 = room.get_user_mut(user1_id).unwrap();
-		let protocol = user1.protocol.as_mut().unwrap();
 		assert_eq!(
-			protocol
-				.out_commands_collector
-				.commands
-				.pop_front()
-				.unwrap()
-				.command
-				.get_object_id()
-				.unwrap(),
+			user1.out_commands.pop_front().unwrap().command.get_object_id().unwrap(),
 			&GameObjectId::new(object2_template.id, GameObjectOwner::User(user2_id))
 		);
 	}
@@ -578,33 +471,6 @@ mod tests {
 		let mut result = heapless::Vec::new();
 		result.extend_from_slice(vec.as_slice()).unwrap();
 		result
-	}
-
-	#[test]
-	fn should_invoke_user_listeners() {
-		struct TestUserListener {
-			trace: String,
-		}
-
-		impl RoomUserListener for TestUserListener {
-			fn register_user(&mut self, _room_id: u64, user_id: u16, _: UserTemplate) {
-				self.trace = format!("{}r{}", self.trace, user_id);
-			}
-
-			fn disconnected_user(&mut self, _room_id: u64, user_id: u16) {
-				self.trace = format!("{}d{}", self.trace, user_id);
-			}
-		}
-
-		let (template, user_template) = create_template();
-
-		let test_listener = Rc::new(RefCell::new(TestUserListener { trace: "".to_string() }));
-		let mut room = Room::new(0, template, vec![test_listener.clone()]);
-		let user_id = room.register_user(user_template);
-		room.process_in_frame(user_id, Frame::new(0), &Instant::now());
-		room.disconnect_user(user_id);
-
-		assert_eq!(test_listener.borrow().trace, format!("r{}d{}", user_id, user_id));
 	}
 
 	#[test]
