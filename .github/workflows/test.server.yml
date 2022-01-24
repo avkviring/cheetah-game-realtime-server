@@ -17,12 +17,11 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            server/target
-          key: rust-test-${{ github.sha }}
+          key: rust-server-test-${{ github.sha }}
           restore-keys: |
-            rust-test-
-      - run: rustup override set 1.56.0
-      - run: rustup component add rustfmt --toolchain 1.56.0-x86_64-unknown-linux-gnu
+            rust-server-test-
+      - run: rustup override set 1.58.1
+      - run: rustup component add rustfmt
       - name: Run rust test
         run: cd server/ && cargo test
 
