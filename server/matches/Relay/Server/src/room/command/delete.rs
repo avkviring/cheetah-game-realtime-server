@@ -6,7 +6,7 @@ use crate::room::command::{error_c2s_command, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let user = room.get_user(user_id).unwrap();
 		if let GameObjectOwner::User(object_id_user) = self.object_id.owner {
 			if object_id_user != user.id {

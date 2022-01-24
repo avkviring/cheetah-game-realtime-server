@@ -9,10 +9,10 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
-		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self));
+		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.clone()));
 		room.change_data_and_send(
 			&object_id,
 			&field_id,
@@ -26,11 +26,11 @@ impl ServerCommandExecutor for EventCommand {
 }
 
 impl ServerCommandExecutor for TargetEventCommand {
-	fn execute(self, room: &mut Room, user_id: u16) {
+	fn execute(&self, room: &mut Room, user_id: u16) {
 		let field_id = self.event.field_id;
 		let object_id = self.event.object_id.clone();
 		let target = self.target;
-		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.event));
+		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.event.clone()));
 		room.change_data_and_send(
 			&object_id,
 			&field_id,

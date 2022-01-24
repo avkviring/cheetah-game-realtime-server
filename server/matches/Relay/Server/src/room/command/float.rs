@@ -9,7 +9,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementDoubleC2SCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -41,13 +41,13 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 }
 
 impl ServerCommandExecutor for SetDoubleCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
 			object.floats.insert(self.field_id, self.value);
-			Option::Some(S2CCommand::SetDouble(self))
+			Option::Some(S2CCommand::SetDouble(self.clone()))
 		};
 		room.change_data_and_send(
 			&object_id,

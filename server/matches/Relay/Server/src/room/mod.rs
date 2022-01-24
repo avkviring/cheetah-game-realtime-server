@@ -132,8 +132,7 @@ impl Room {
 
 		let tracer = self.command_trace_session.clone();
 		for command_with_channel in commands {
-			let command_with_channel = command_with_channel.clone();
-			match command_with_channel.both_direction_command {
+			match &command_with_channel.both_direction_command {
 				BothDirectionCommand::C2S(command) => {
 					self.current_channel.replace(From::from(&command_with_channel.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, &command);

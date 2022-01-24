@@ -5,7 +5,7 @@ use crate::room::command::ServerCommandExecutor;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let room_id = room.id;
 		let _permission_manager = room.permission_manager.clone();
 		if let Some(object) = room.get_object_mut(&self.object_id) {

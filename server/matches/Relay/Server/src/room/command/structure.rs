@@ -9,12 +9,12 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for SetStructureCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {
 			object.structures.insert(self.field_id, self.structure.to_vec());
-			Option::Some(S2CCommand::SetStructure(self))
+			Option::Some(S2CCommand::SetStructure(self.clone()))
 		};
 		room.change_data_and_send(
 			&object_id,

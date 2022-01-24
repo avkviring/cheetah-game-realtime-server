@@ -17,7 +17,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.longs.get_mut(&self.field_id) {
 				match (*value).checked_add(self.increment) {
@@ -56,13 +56,13 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 }
 
 impl ServerCommandExecutor for SetLongCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
 			object.longs.insert(self.field_id, self.value);
-			Option::Some(S2CCommand::SetLong(self))
+			Option::Some(S2CCommand::SetLong(self.clone()))
 		};
 
 		room.change_data_and_send(
@@ -78,7 +78,7 @@ impl ServerCommandExecutor for SetLongCommand {
 }
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
-	fn execute(self, room: &mut Room, uesr_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let object_id = self.object_id.clone();
 		let field_id = self.field_id;
 		let reset = self.reset;
@@ -93,10 +93,10 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			};
 			if allow {
 				object.longs.insert(self.field_id, self.new);
-				object.compare_and_set_owners.insert(self.field_id, uesr_id);
+				object.compare_and_set_owners.insert(self.field_id, user_id);
 				*is_set_cloned.borrow_mut() = true;
 				Option::Some(S2CCommand::SetLong(SetLongCommand {
-					object_id: self.object_id,
+					object_id: self.object_id.clone(),
 					field_id: self.field_id,
 					value: self.new,
 				}))
@@ -109,14 +109,14 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			&object_id,
 			&field_id,
 			FieldType::Long,
-			uesr_id,
+			user_id,
 			Permission::Rw,
 			Option::None,
 			action,
 		);
 
 		if *(is_set.borrow()) {
-			room.get_user_mut(uesr_id)
+			room.get_user_mut(user_id)
 				.unwrap()
 				.compare_and_sets_cleaners
 				.insert((object_id, field_id), reset);

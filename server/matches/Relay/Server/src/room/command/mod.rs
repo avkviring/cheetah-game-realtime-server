@@ -16,7 +16,7 @@ pub mod structure;
 /// Выполнение серверной команды
 ///
 pub trait ServerCommandExecutor {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId);
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId);
 }
 
 pub fn trace_c2s_command(command: &str, room: &Room, user_id: RoomMemberId, message: String) {
@@ -27,7 +27,7 @@ pub fn error_c2s_command(command: &str, room: &Room, user_id: RoomMemberId, mess
 	log::error!("C2S {:<10} : room {} : client {} : {}", command, room.id, user_id, message);
 }
 
-pub fn execute(command: C2SCommand, room: &mut Room, user_id: RoomMemberId) {
+pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) {
 	match command {
 		C2SCommand::Create(command) => command.execute(room, user_id),
 		C2SCommand::SetLong(command) => command.execute(room, user_id),

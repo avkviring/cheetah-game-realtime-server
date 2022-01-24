@@ -7,7 +7,7 @@ use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
 		let user = room.get_user(user_id).unwrap();
 
 		if self.object_id.id == 0 {
