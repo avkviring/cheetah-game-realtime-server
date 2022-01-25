@@ -19,6 +19,7 @@ RUN cd server/matches/Registry/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef cook --
 FROM akviring/rust-builder:1.57.0-01 as builder
 ARG RUSTFLAGS_ARG
 WORKDIR build
+COPY server/Cargo.lock server/matches/Registry/
 COPY server/Microservice/ server/Microservice/
 COPY server/matches/Registry server/matches/Registry
 COPY proto/matches/Registry/ proto/matches/Registry/
