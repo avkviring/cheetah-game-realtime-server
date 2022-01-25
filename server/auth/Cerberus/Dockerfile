@@ -19,6 +19,7 @@ RUN cd server/auth/Cerberus/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef cook --rel
 FROM akviring/rust-builder:1.57.0-01 as builder
 ARG RUSTFLAGS_ARG
 WORKDIR build
+COPY server/Cargo.lock server/auth/Cerberus/
 COPY server/Microservice/ server/Microservice/
 COPY server/auth/Cerberus/ server/auth/Cerberus/
 COPY proto/auth/Cerberus proto/auth/Cerberus

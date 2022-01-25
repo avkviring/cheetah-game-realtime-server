@@ -13,6 +13,7 @@ FROM akviring/rust-builder:1.57.0-01 as cacher
 ARG RUSTFLAGS_ARG
 WORKDIR cache
 COPY proto/auth/ proto/auth/
+COPY server/Cargo.lock server/auth/Cerberus/
 COPY server/Microservice server/Microservice
 COPY server/auth/Cerberus/ server/auth/Cerberus/
 COPY --from=planner /planner/server/auth/User/recipe.json server/auth/User/recipe.json

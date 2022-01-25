@@ -25,6 +25,7 @@ FROM akviring/rust-builder:1.57.0-01 as builder
 ARG RUSTFLAGS_ARG
 WORKDIR build
 COPY proto/auth/ proto/auth/
+COPY server/Cargo.lock server/auth/Cookie/
 COPY server/Microservice server/Microservice
 COPY server/auth/User/ server/auth/User/
 COPY server/auth/Cerberus/ server/auth/Cerberus/

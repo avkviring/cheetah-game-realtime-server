@@ -19,9 +19,10 @@ RUN cd server/matches/StubRegistry/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo chef coo
 FROM akviring/rust-builder:1.57.0-01 as builder
 ARG RUSTFLAGS_ARG
 WORKDIR build
+COPY proto/matches/Registry/ proto/matches/Registry/
+COPY server/Cargo.lock server/matches/StubRegistry/
 COPY server/Microservice/ server/Microservice/
 COPY server/matches/StubRegistry server/matches/StubRegistry
-COPY proto/matches/Registry/ proto/matches/Registry/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/matches/StubRegistry/target/ server/matches/StubRegistry/target/
 RUN touch server/matches/StubRegistry/build.rs

@@ -22,6 +22,7 @@ WORKDIR build
 COPY proto/matches/Matchmaking/ proto/matches/Matchmaking/
 COPY proto/matches/Factory/ proto/matches/Factory/
 COPY proto/matches/Relay/ proto/matches/Relay/
+COPY server/Cargo.lock server/matches/StubMatchmaking/
 COPY server/Microservice/ server/Microservice/
 COPY server/matches/StubMatchmaking server/matches/StubMatchmaking
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
