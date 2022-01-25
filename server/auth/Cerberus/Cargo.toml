@@ -25,7 +25,6 @@ required-features = ["test-helper"]
 
 
 [dependencies]
-sha2 = "0.9.9"
 base64 = "0.13.0"
 chrono = "0.4"
 tonic = "0.6.2"
