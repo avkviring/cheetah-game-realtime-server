@@ -75,7 +75,7 @@ impl CommandContext {
 			.ok_or(CommandContextError::ContextNotContainsChannelGroupId)
 	}
 
-	pub(crate) fn get_field_id(&self) -> Result<ChannelGroup, CommandContextError> {
+	pub(crate) fn get_field_id(&self) -> Result<FieldId, CommandContextError> {
 		self.field_id.ok_or(CommandContextError::ContextNotContainsCreator)
 	}
 
@@ -115,7 +115,7 @@ impl CommandContext {
 		}
 
 		if compare_and_set(&mut self.channel_group, channel_group) {
-			out.write_variable_u64(*self.channel_group.as_ref().unwrap() as u64)?;
+			out.write_variable_u64(self.channel_group.as_ref().unwrap().0 as u64)?;
 			header.new_channel_group_id = true;
 		}
 
@@ -177,7 +177,7 @@ impl CommandContext {
 			self.field_id.replace(input.read_variable_u64()? as FieldId);
 		}
 		if header.new_channel_group_id {
-			self.channel_group.replace(input.read_variable_u64()? as ChannelGroup);
+			self.channel_group.replace(ChannelGroup(input.read_variable_u64()? as u16));
 		}
 		self.read_and_set_creator(input, &header.creator_source)?;
 		Ok(header)
@@ -340,7 +340,7 @@ pub mod tests {
 			Params {
 				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
 				field_id: Some(5),
-				channel_group: Some(100),
+				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId(31),
 				creator: None,
@@ -349,7 +349,7 @@ pub mod tests {
 			Params {
 				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
 				field_id: Some(5),
-				channel_group: Some(100),
+				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId(31),
 				creator: None,
@@ -358,7 +358,7 @@ pub mod tests {
 			Params {
 				object_id: Some(GameObjectId::new(0, GameObjectOwner::Room)),
 				field_id: Some(5),
-				channel_group: Some(100),
+				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId(31),
 				creator: Some(7),
@@ -367,7 +367,7 @@ pub mod tests {
 			Params {
 				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
 				field_id: Some(5),
-				channel_group: Some(100),
+				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId(31),
 				creator: Some(7),
@@ -376,7 +376,7 @@ pub mod tests {
 			Params {
 				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
 				field_id: Some(10),
-				channel_group: Some(100),
+				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId(31),
 				creator: Some(7),
@@ -385,7 +385,7 @@ pub mod tests {
 			Params {
 				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
 				field_id: Some(10),
-				channel_group: Some(100),
+				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId(31),
 				creator: Some(5),
@@ -469,7 +469,7 @@ pub mod tests {
 				.write_next(
 					param.object_id.clone(),
 					param.field_id,
-					param.channel_group,
+					param.channel_group.clone(),
 					param.channel_type_id,
 					param.command_type_id,
 					param.creator,

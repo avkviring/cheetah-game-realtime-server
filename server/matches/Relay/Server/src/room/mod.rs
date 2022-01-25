@@ -10,7 +10,7 @@ use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
-use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 #[cfg(test)]
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -122,7 +122,8 @@ impl Room {
 				user.connected = true;
 
 				if connected_now {
-					self.current_channel.replace(ChannelType::ReliableSequenceByGroup(0));
+					self.current_channel
+						.replace(ChannelType::ReliableSequenceByGroup(ChannelGroup(0)));
 					let user_id = user.id;
 					let template = user.template.clone();
 					self.on_user_connect(user_id, template);

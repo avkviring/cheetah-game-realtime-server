@@ -64,7 +64,7 @@ impl ApplicationThreadClient {
 			handler: Option::Some(handler),
 			state,
 			request_to_client: sender,
-			channel: ChannelType::ReliableSequenceByGroup(0),
+			channel: ChannelType::ReliableSequenceByGroup(ChannelGroup(0)),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
 			shared_statistics,
 			listener_long_value: None,

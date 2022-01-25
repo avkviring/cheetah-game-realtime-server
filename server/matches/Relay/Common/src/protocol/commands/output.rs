@@ -52,12 +52,16 @@ impl OutCommandsCollector {
 				let sequence = self
 					.object_sequence
 					.entry(game_object_id.clone())
-					.and_modify(|v| *v += 1)
-					.or_insert(0);
+					.and_modify(|v| v.0 += 1)
+					.or_insert(ChannelSequence::FIRST);
 				Channel::ReliableSequenceByObject(*sequence)
 			}),
 			ChannelType::ReliableSequenceByGroup(group) => {
-				let sequence = self.group_sequence.entry(*group).and_modify(|v| *v += 1).or_insert(0);
+				let sequence = self
+					.group_sequence
+					.entry(*group)
+					.and_modify(|v| v.0 += 1)
+					.or_insert(ChannelSequence(0));
 				Option::Some(Channel::ReliableSequenceByGroup(*group, *sequence))
 			}
 		}
@@ -85,7 +89,7 @@ mod tests {
 	use crate::commands::types::event::EventCommand;
 	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
-	use crate::protocol::frame::applications::BothDirectionCommand;
+	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence};
 	use crate::protocol::frame::channel::{Channel, ChannelType};
 	use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
 
@@ -94,13 +98,22 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for _ in 0..3 {
 			output.add_command(
-				ChannelType::ReliableSequenceByGroup(100),
+				ChannelType::ReliableSequenceByGroup(ChannelGroup(100)),
 				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
-		assert!(matches!(output.commands[0].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==0));
-		assert!(matches!(output.commands[1].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==1));
-		assert!(matches!(output.commands[2].channel, Channel::ReliableSequenceByGroup(_,sequence) if sequence==2));
+		assert!(
+			matches!(output.commands[0].channel, Channel::ReliableSequenceByGroup(_,sequence)
+			if sequence.0==0)
+		);
+		assert!(
+			matches!(output.commands[1].channel, Channel::ReliableSequenceByGroup(_,sequence)
+			if sequence.0==1)
+		);
+		assert!(
+			matches!(output.commands[2].channel, Channel::ReliableSequenceByGroup(_,sequence)
+			if sequence.0==2)
+		);
 	}
 
 	#[test]
@@ -108,7 +121,7 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for i in 0..2 * MAX_COMMAND_IN_FRAME {
 			output.add_command(
-				ChannelType::ReliableSequenceByGroup(100),
+				ChannelType::ReliableSequenceByGroup(ChannelGroup(100)),
 				BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),
 					field_id: 1,
@@ -160,8 +173,11 @@ mod tests {
 			);
 		}
 
-		assert!(matches!(output.commands[0].channel, Channel::ReliableSequenceByObject(sequence) if sequence==0));
-		assert!(matches!(output.commands[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence==1));
-		assert!(matches!(output.commands[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence==2));
+		assert!(
+			matches!(output.commands[0].channel, Channel::ReliableSequenceByObject(sequence) 
+			if sequence.0==0)
+		);
+		assert!(matches!(output.commands[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence.0==1));
+		assert!(matches!(output.commands[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence.0==2));
 	}
 }

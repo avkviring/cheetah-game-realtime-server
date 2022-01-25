@@ -3,8 +3,10 @@ use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 use crate::protocol::frame::channel::Channel;
 use crate::room::object::GameObjectId;
 
-pub type ChannelGroup = u16;
-pub type ChannelSequence = u32;
+#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
+pub struct ChannelGroup(pub u16);
+#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
+pub struct ChannelSequence(pub u32);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CommandWithChannel {
@@ -16,6 +18,14 @@ pub struct CommandWithChannel {
 pub enum BothDirectionCommand {
 	S2CWithCreator(S2CCommandWithCreator),
 	C2S(C2SCommand),
+}
+
+impl ChannelSequence {
+	pub const FIRST: ChannelSequence = ChannelSequence(0);
+
+	pub fn is_next(&self, other: &ChannelSequence) -> bool {
+		self.0 == other.0 + 1
+	}
 }
 
 impl BothDirectionCommand {

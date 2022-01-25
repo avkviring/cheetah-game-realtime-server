@@ -49,8 +49,8 @@ impl Channel {
 
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		match self {
-			Channel::ReliableSequenceByObject(sequence) => out.write_variable_u64(*sequence as u64)?,
-			Channel::ReliableSequenceByGroup(_, sequence) => out.write_variable_u64(*sequence as u64)?,
+			Channel::ReliableSequenceByObject(sequence) => out.write_variable_u64(sequence.0 as u64)?,
+			Channel::ReliableSequenceByGroup(_, sequence) => out.write_variable_u64(sequence.0 as u64)?,
 			_ => {}
 		};
 		Ok(())
@@ -69,10 +69,10 @@ impl Channel {
 			ChannelType::RELIABLE_ORDERED_BY_GROUP => Channel::ReliableOrderedByGroup(channel_group?),
 			ChannelType::UNRELIABLE_ORDERED_BY_GROUP => Channel::UnreliableOrderedByGroup(channel_group?),
 			ChannelType::RELIABLE_SEQUENCE_BY_GROUP => {
-				Channel::ReliableSequenceByGroup(channel_group?, input.read_variable_u64()? as ChannelSequence)
+				Channel::ReliableSequenceByGroup(channel_group?, ChannelSequence(input.read_variable_u64()? as u32))
 			}
 			ChannelType::RELIABLE_SEQUENCE_BY_OBJECT => {
-				Channel::ReliableSequenceByObject(input.read_variable_u64()? as ChannelSequence)
+				Channel::ReliableSequenceByObject(ChannelSequence(input.read_variable_u64()? as u32))
 			}
 			_ => return Err(CommandChannelDecodeError::UnknownType(*channel_type)),
 		})
@@ -101,7 +101,7 @@ mod tests {
 
 	use crate::protocol::codec::channel::ChannelType;
 	use crate::protocol::codec::commands::context::CommandContextError;
-	use crate::protocol::frame::applications::ChannelGroup;
+	use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 	use crate::protocol::frame::channel::Channel;
 
 	#[test]
@@ -125,9 +125,9 @@ mod tests {
 	#[test]
 	fn test_reliable_ordered_by_group() {
 		check(
-			Channel::ReliableOrderedByGroup(100),
+			Channel::ReliableOrderedByGroup(ChannelGroup(100)),
 			ChannelType::RELIABLE_ORDERED_BY_GROUP,
-			Result::Ok(100),
+			Result::Ok(ChannelGroup(100)),
 		);
 	}
 
@@ -152,16 +152,16 @@ mod tests {
 	#[test]
 	fn test_unreliable_ordered_by_group() {
 		check(
-			Channel::UnreliableOrderedByGroup(155),
+			Channel::UnreliableOrderedByGroup(ChannelGroup(155)),
 			ChannelType::UNRELIABLE_ORDERED_BY_GROUP,
-			Result::Ok(155),
+			Result::Ok(ChannelGroup(155)),
 		);
 	}
 
 	#[test]
 	fn test_reliable_sequence_by_object() {
 		check(
-			Channel::ReliableSequenceByObject(255),
+			Channel::ReliableSequenceByObject(ChannelSequence(255)),
 			ChannelType::RELIABLE_SEQUENCE_BY_OBJECT,
 			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
@@ -169,9 +169,9 @@ mod tests {
 	#[test]
 	fn test_reliable_sequence_by_group() {
 		check(
-			Channel::ReliableSequenceByGroup(7, 255),
+			Channel::ReliableSequenceByGroup(ChannelGroup(7), ChannelSequence(255)),
 			ChannelType::RELIABLE_SEQUENCE_BY_GROUP,
-			Result::Ok(7),
+			Result::Ok(ChannelGroup(7)),
 		);
 	}
 
