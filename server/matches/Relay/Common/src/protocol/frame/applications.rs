@@ -4,8 +4,11 @@ use crate::protocol::frame::channel::Channel;
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
+#[repr(C)]
 pub struct ChannelGroup(pub u16);
+
 #[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
+#[repr(C)]
 pub struct ChannelSequence(pub u32);
 
 #[derive(Debug, PartialEq, Clone)]

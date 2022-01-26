@@ -89,7 +89,7 @@ mod tests {
 	use crate::commands::types::event::EventCommand;
 	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
-	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence};
+	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
 	use crate::protocol::frame::channel::{Channel, ChannelType};
 	use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
 
