@@ -1,8 +1,6 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
 
-use fnv::FnvBuildHasher;
-
-use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
+use crate::protocol::frame::applications::{BothDirectionCommand, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{Channel, ChannelType};
 use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
 
@@ -12,15 +10,25 @@ use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
 /// - удаление дубликатов команд
 /// - sequence команды
 ///
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct OutCommandsCollector {
 	pub commands: VecDeque<CommandWithChannel>,
-	group_sequence: HashMap<ChannelGroup, ChannelSequence, FnvBuildHasher>,
+	group_sequence: [ChannelSequence; 256],
 }
+
 #[derive(Debug)]
 pub struct OutCommand {
 	pub channel_type: ChannelType,
 	pub command: BothDirectionCommand,
+}
+
+impl Default for OutCommandsCollector {
+	fn default() -> Self {
+		Self {
+			commands: VecDeque::with_capacity(64),
+			group_sequence: [ChannelSequence(0); 256],
+		}
+	}
 }
 
 impl OutCommandsCollector {
@@ -45,12 +53,10 @@ impl OutCommandsCollector {
 			ChannelType::UnreliableUnordered => Option::Some(Channel::UnreliableUnordered),
 			ChannelType::UnreliableOrdered(group_id) => Option::Some(Channel::UnreliableOrdered(*group_id)),
 			ChannelType::ReliableSequence(group) => {
-				let sequence = self
-					.group_sequence
-					.entry(*group)
-					.and_modify(|v| v.0 += 1)
-					.or_insert(ChannelSequence(0));
-				Option::Some(Channel::ReliableSequence(*group, *sequence))
+				let mut sequence = &mut self.group_sequence[group.0 as usize];
+				let result = Option::Some(Channel::ReliableSequence(*group, *sequence));
+				sequence.0 += 1;
+				result
 			}
 		}
 	}
