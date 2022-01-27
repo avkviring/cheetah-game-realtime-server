@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::io::Cursor;
 use std::ops::Div;
 use std::time::{Duration, Instant};
@@ -18,8 +17,9 @@ use crate::protocol::frame::Frame;
 pub struct RoundTripTime {
 	start_time: Instant,
 	scheduled_response: Option<RoundTripTimeHeader>,
-	pub rtt: VecDeque<Duration>,
+	pub rtt: heapless::Deque<Duration, AVERAGE_RTT_MIN_LEN>,
 }
+const AVERAGE_RTT_MIN_LEN: usize = 10;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct RoundTripTimeHeader {
@@ -39,8 +39,6 @@ impl RoundTripTimeHeader {
 }
 
 impl RoundTripTime {
-	pub const AVERAGE_RTT_MIN_LEN: usize = 10;
-
 	pub fn new(start_time: &Instant) -> Self {
 		Self {
 			start_time: *start_time,
@@ -66,12 +64,12 @@ impl RoundTripTime {
 	/// Скользящий средний для rtt
 	///
 	pub fn get_rtt(&self) -> Option<Duration> {
-		if self.rtt.len() < RoundTripTime::AVERAGE_RTT_MIN_LEN {
-			Option::None
-		} else {
+		if self.rtt.is_full() {
 			let sum_rtt: Duration = self.rtt.iter().sum();
 			let average_rtt = sum_rtt.div(self.rtt.len() as u32);
 			Option::Some(average_rtt)
+		} else {
+			Option::None
 		}
 	}
 
@@ -98,10 +96,10 @@ impl RoundTripTime {
 				let header_time = header.self_time;
 				let current_time = now.duration_since(self.start_time).as_millis() as u64;
 				if current_time >= header_time {
-					self.rtt.push_back(Duration::from_millis(current_time - header_time));
-					if self.rtt.len() > RoundTripTime::AVERAGE_RTT_MIN_LEN {
+					if self.rtt.is_full() {
 						self.rtt.pop_front();
 					}
+					self.rtt.push_back(Duration::from_millis(current_time - header_time)).unwrap();
 				}
 			}
 		}
@@ -115,7 +113,7 @@ mod tests {
 
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::Frame;
-	use crate::protocol::others::rtt::{RoundTripTime, RoundTripTimeHeader};
+	use crate::protocol::others::rtt::{RoundTripTime, RoundTripTimeHeader, AVERAGE_RTT_MIN_LEN};
 	use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
 	#[test]
@@ -194,7 +192,7 @@ mod tests {
 	#[test]
 	pub fn should_calculate_rtt_average() {
 		let mut handler = RoundTripTime::new(&Instant::now());
-		for i in 0..RoundTripTime::AVERAGE_RTT_MIN_LEN {
+		for i in 0..AVERAGE_RTT_MIN_LEN {
 			let mut frame = Frame::new(10);
 			frame
 				.headers
@@ -212,7 +210,7 @@ mod tests {
 	#[test]
 	pub fn should_limit_on_length_rtt() {
 		let mut handler = RoundTripTime::new(&Instant::now());
-		for i in 0..2 * RoundTripTime::AVERAGE_RTT_MIN_LEN {
+		for i in 0..2 * AVERAGE_RTT_MIN_LEN {
 			let mut frame = Frame::new(10);
 			frame
 				.headers
@@ -220,6 +218,6 @@ mod tests {
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, &now);
 		}
-		assert_eq!(handler.rtt.len(), RoundTripTime::AVERAGE_RTT_MIN_LEN);
+		assert_eq!(handler.rtt.len(), AVERAGE_RTT_MIN_LEN);
 	}
 }

@@ -3,7 +3,7 @@ use std::io::{Cursor, ErrorKind};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use crate::protocol::disconnect::handler::DisconnectHeader;
+use crate::protocol::disconnect::command::DisconnectHeader;
 use crate::protocol::frame::headers::Header::RoundTripTimeRequest;
 use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
 use crate::protocol::others::rtt::RoundTripTimeHeader;
@@ -79,7 +79,7 @@ impl Headers {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::protocol::disconnect::handler::DisconnectHeader;
+	use crate::protocol::disconnect::command::DisconnectHeader;
 	use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
 	use crate::protocol::others::rtt::RoundTripTimeHeader;
 	use crate::protocol::others::user_id::MemberAndRoomId;

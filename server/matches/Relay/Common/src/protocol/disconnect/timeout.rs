@@ -4,11 +4,11 @@ use std::time::{Duration, Instant};
 /// Если за определенное время не было входящих пакетов - считаем что связь разорвана
 ///
 #[derive(Debug)]
-pub struct DisconnectByTimeoutHandler {
+pub struct DisconnectByTimeout {
 	pub last_in_frame_time: Instant,
 }
 
-impl DisconnectByTimeoutHandler {
+impl DisconnectByTimeout {
 	pub const TIMEOUT: Duration = Duration::from_secs(10);
 	pub fn new(now: &Instant) -> Self {
 		Self {
@@ -19,7 +19,7 @@ impl DisconnectByTimeoutHandler {
 		self.last_in_frame_time = *now;
 	}
 	pub fn disconnected(&self, now: &Instant) -> bool {
-		now.sub(self.last_in_frame_time) > DisconnectByTimeoutHandler::TIMEOUT
+		now.sub(self.last_in_frame_time) > DisconnectByTimeout::TIMEOUT
 	}
 }
 
@@ -28,7 +28,7 @@ mod tests {
 	use std::ops::Add;
 	use std::time::{Duration, Instant};
 
-	use crate::protocol::disconnect::watcher::DisconnectByTimeoutHandler;
+	use crate::protocol::disconnect::timeout::DisconnectByTimeout;
 
 	#[test]
 	///
@@ -36,7 +36,7 @@ mod tests {
 	///
 	pub fn should_not_disconnect_when_start() {
 		let now = Instant::now();
-		let handler = DisconnectByTimeoutHandler::new(&now);
+		let handler = DisconnectByTimeout::new(&now);
 		assert!(!handler.disconnected(&now));
 	}
 
@@ -46,8 +46,8 @@ mod tests {
 	#[test]
 	pub fn should_disconnect_after_timeout() {
 		let now = Instant::now();
-		let handler = DisconnectByTimeoutHandler::new(&now);
-		assert!(handler.disconnected(&now.add(DisconnectByTimeoutHandler::TIMEOUT).add(Duration::from_millis(1))));
+		let handler = DisconnectByTimeout::new(&now);
+		assert!(handler.disconnected(&now.add(DisconnectByTimeout::TIMEOUT).add(Duration::from_millis(1))));
 	}
 
 	///
@@ -56,9 +56,9 @@ mod tests {
 	#[test]
 	pub fn should_not_disconnect_when_not_timeout_after_frame() {
 		let now = Instant::now();
-		let mut handler = DisconnectByTimeoutHandler::new(&now);
+		let mut handler = DisconnectByTimeout::new(&now);
 		handler.on_frame_received(&now);
-		assert!(!handler.disconnected(&now.add(DisconnectByTimeoutHandler::TIMEOUT - Duration::from_millis(1))));
+		assert!(!handler.disconnected(&now.add(DisconnectByTimeout::TIMEOUT - Duration::from_millis(1))));
 	}
 
 	///
@@ -67,8 +67,8 @@ mod tests {
 	#[test]
 	pub fn should_disconnect_when_not_timeout_after_frame() {
 		let now = Instant::now();
-		let mut handler = DisconnectByTimeoutHandler::new(&now);
+		let mut handler = DisconnectByTimeout::new(&now);
 		handler.on_frame_received(&now);
-		assert!(handler.disconnected(&now.add(DisconnectByTimeoutHandler::TIMEOUT + Duration::from_millis(1))));
+		assert!(handler.disconnected(&now.add(DisconnectByTimeout::TIMEOUT + Duration::from_millis(1))));
 	}
 }

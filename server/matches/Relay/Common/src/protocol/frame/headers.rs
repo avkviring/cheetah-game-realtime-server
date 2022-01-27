@@ -1,6 +1,6 @@
 use cheetah_matches_relay_macro::EnumMatchPredicates;
 
-use crate::protocol::disconnect::handler::DisconnectHeader;
+use crate::protocol::disconnect::command::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
 use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::reliable::ack::header::AckHeader;
@@ -13,7 +13,7 @@ pub type HeaderVec<T> = heapless::Vec<T, 10>;
 /// - не шифруется
 /// - защищены aead
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct Headers {
 	pub(crate) headers: HeaderVec<Header>,
 }
@@ -68,13 +68,5 @@ impl Headers {
 
 	pub fn first<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> Option<&T> {
 		self.headers.iter().find_map(p)
-	}
-}
-
-impl Default for Headers {
-	fn default() -> Self {
-		Self {
-			headers: Default::default(),
-		}
 	}
 }

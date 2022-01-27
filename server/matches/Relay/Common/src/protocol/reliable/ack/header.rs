@@ -30,9 +30,9 @@ impl AckHeader {
 	///
 	pub const CAPACITY: usize = 8 * 8;
 
-	pub fn new(acked_frame_id: FrameId) -> Self {
+	pub fn new(ack_frame_id: FrameId) -> Self {
 		Self {
-			start_frame_id: acked_frame_id,
+			start_frame_id: ack_frame_id,
 			frames: [0; AckHeader::CAPACITY / 8],
 		}
 	}
