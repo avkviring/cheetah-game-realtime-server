@@ -9,13 +9,32 @@ use crate::protocol::frame::{Frame, FrameId};
 /// Коллектор входящих команд
 /// - поддержка мультиплексирования
 ///
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct InCommandsCollector {
-	ordered: heapless::FnvIndexMap<ChannelGroup, FrameId, 256>,
-	sequence_last: heapless::FnvIndexMap<ChannelGroup, ChannelSequence, 256>,
-	sequence_commands: heapless::FnvIndexMap<ChannelGroup, BinaryHeap<SequenceApplicationCommand>, 256>,
+	ordered: [FrameId; 256],
+	sequences: [ChannelSequence; 256],
+	sequence_commands: [Option<BinaryHeap<SequenceApplicationCommand>>; 256],
 	ready_commands: Vec<CommandWithChannel>,
 	is_get_ready_commands: bool,
+}
+
+///
+/// Лимит очереди для команд ожидающих сбора последовательности для одной группы
+/// Применяется для исключения атаки на память сервера путем посылки с клиента никогда не
+/// завершающихся последовательностей
+///
+const SEQUENCE_COMMANDS_LIMIT: usize = 256;
+
+impl Default for InCommandsCollector {
+	fn default() -> Self {
+		Self {
+			ordered: [0; 256],
+			sequences: [ChannelSequence(0); 256],
+			sequence_commands: [(); 256].map(|_| Option::None),
+			ready_commands: Default::default(),
+			is_get_ready_commands: false,
+		}
+	}
 }
 
 impl InCommandsCollector {
@@ -47,77 +66,50 @@ impl InCommandsCollector {
 
 	fn process_sequence(&mut self, channel_group: ChannelGroup, input_sequence: ChannelSequence, command: CommandWithChannel) {
 		let mut is_ready_command = false;
+		let allow_sequence = &mut self.sequences[channel_group.0 as usize];
 
-		if input_sequence == ChannelSequence::FIRST {
-			self.insert_last_sequence(&channel_group, input_sequence);
+		if input_sequence == ChannelSequence::FIRST || input_sequence == *allow_sequence {
 			self.ready_commands.push(command.clone());
+			*allow_sequence = input_sequence.next();
 			is_ready_command = true;
 		}
 
-		if let Some(last_sequence) = self.sequence_last.get_mut(&channel_group) {
-			if input_sequence.is_next(last_sequence) {
-				self.ready_commands.push(command.clone());
-				*last_sequence = input_sequence;
-				is_ready_command = true;
-			}
-
-			let mut current_ready_sequence = *last_sequence;
-			if let Some(commands) = self.sequence_commands.get_mut(&channel_group) {
-				while let Option::Some(command_with_sequence) = commands.peek() {
-					let command_sequence = command_with_sequence.sequence;
-					if command_sequence.is_next(&current_ready_sequence) {
-						self.ready_commands.push(commands.pop().unwrap().command);
-						current_ready_sequence = command_sequence;
-						*last_sequence = command_sequence;
-					} else {
-						break;
-					}
+		let mut current_ready_sequence = *allow_sequence;
+		if let Some(commands) = &mut self.sequence_commands[channel_group.0 as usize] {
+			while let Option::Some(command_with_sequence) = commands.peek() {
+				let command_sequence = command_with_sequence.sequence;
+				if command_sequence == current_ready_sequence {
+					self.ready_commands.push(commands.pop().unwrap().command);
+					current_ready_sequence = command_sequence.next();
+					*allow_sequence = current_ready_sequence;
+				} else {
+					break;
 				}
 			}
 		}
 
 		if !is_ready_command {
-			if !self.sequence_commands.contains_key(&channel_group) {
-				self.sequence_commands.insert(channel_group, BinaryHeap::default()).unwrap();
+			if self.sequence_commands[channel_group.0 as usize].is_none() {
+				self.sequence_commands[channel_group.0 as usize] = Option::Some(BinaryHeap::default());
 			}
-
-			let buffer = self.sequence_commands.get_mut(&channel_group).unwrap();
-			buffer.push(SequenceApplicationCommand {
-				sequence: input_sequence,
-				command,
-			});
-		}
-	}
-
-	fn insert_last_sequence(&mut self, channel_group: &ChannelGroup, input_sequence: ChannelSequence) {
-		match self.sequence_last.insert(channel_group.clone(), input_sequence) {
-			Ok(_) => {}
-			Err(_) => {
-				log::error!("Last sequence map overflow");
+			let option_buffer = &mut self.sequence_commands[channel_group.0 as usize];
+			let buffer = option_buffer.as_mut().unwrap();
+			if buffer.len() > SEQUENCE_COMMANDS_LIMIT {
+				log::error!("Sequence commands buffer overflow")
+			} else {
+				buffer.push(SequenceApplicationCommand {
+					sequence: input_sequence,
+					command,
+				});
 			}
 		}
 	}
 
 	fn process_ordered(&mut self, channel_group: ChannelGroup, frame_id: FrameId, command: CommandWithChannel) {
-		match self.ordered.get(&channel_group) {
-			None => {
-				self.insert_ordered(channel_group, frame_id);
-				self.ready_commands.push(command);
-			}
-			Some(processed_frame_id) if frame_id >= *processed_frame_id => {
-				self.insert_ordered(channel_group, frame_id);
-				self.ready_commands.push(command);
-			}
-			_ => {}
-		}
-	}
-
-	fn insert_ordered(&mut self, channel_group: ChannelGroup, frame_id: FrameId) {
-		match self.ordered.insert(channel_group, frame_id) {
-			Ok(_) => {}
-			Err(_) => {
-				log::error!("Ordered map overflow");
-			}
+		let order = &self.ordered[channel_group.0 as usize];
+		if frame_id >= *order {
+			self.ordered[channel_group.0 as usize] = frame_id;
+			self.ready_commands.push(command);
 		}
 	}
 }

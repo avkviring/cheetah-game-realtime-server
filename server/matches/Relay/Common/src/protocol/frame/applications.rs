@@ -28,8 +28,8 @@ pub enum BothDirectionCommand {
 impl ChannelSequence {
 	pub const FIRST: ChannelSequence = ChannelSequence(0);
 
-	pub fn is_next(&self, other: &ChannelSequence) -> bool {
-		self.0 == other.0 + 1
+	pub fn next(&self) -> ChannelSequence {
+		ChannelSequence(self.0 + 1)
 	}
 }
 
