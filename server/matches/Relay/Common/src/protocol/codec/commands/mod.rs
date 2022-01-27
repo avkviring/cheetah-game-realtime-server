@@ -34,7 +34,7 @@ mod tests {
 			})),
 		});
 		commands.push(CommandWithChannel {
-			channel: Channel::ReliableSequenceByGroup(ChannelGroup(11), ChannelSequence(12)),
+			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
 			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 				object_id: GameObjectId::new(13, GameObjectOwner::User(14)),
 				field_id: 15,
@@ -59,7 +59,7 @@ mod tests {
 			}),
 		});
 		commands.push(CommandWithChannel {
-			channel: Channel::ReliableSequenceByGroup(ChannelGroup(11), ChannelSequence(12)),
+			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
 			both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				command: S2CCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),

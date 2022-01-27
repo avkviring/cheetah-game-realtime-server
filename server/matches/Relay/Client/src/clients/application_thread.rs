@@ -64,7 +64,7 @@ impl ApplicationThreadClient {
 			handler: Option::Some(handler),
 			state,
 			request_to_client: sender,
-			channel: ChannelType::ReliableSequenceByGroup(ChannelGroup(0)),
+			channel: ChannelType::ReliableSequence(ChannelGroup(0)),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
 			shared_statistics,
 			listener_long_value: None,
@@ -98,12 +98,9 @@ impl ApplicationThreadClient {
 		self.channel = match channel {
 			Channel::ReliableUnordered => ChannelType::ReliableUnordered,
 			Channel::UnreliableUnordered => ChannelType::UnreliableUnordered,
-			Channel::ReliableOrderedByObject => ChannelType::ReliableOrderedByObject,
-			Channel::UnreliableOrderedByObject => ChannelType::UnreliableOrderedByObject,
-			Channel::ReliableOrderedByGroup => ChannelType::ReliableOrderedByGroup(group),
-			Channel::UnreliableOrderedByGroup => ChannelType::UnreliableOrderedByGroup(group),
-			Channel::ReliableSequenceByObject => ChannelType::ReliableSequenceByObject,
-			Channel::ReliableSequenceByGroup => ChannelType::ReliableSequenceByGroup(group),
+			Channel::ReliableOrdered => ChannelType::ReliableOrdered(group),
+			Channel::UnreliableOrdered => ChannelType::UnreliableOrdered(group),
+			Channel::ReliableSequence => ChannelType::ReliableSequence(group),
 		}
 	}
 

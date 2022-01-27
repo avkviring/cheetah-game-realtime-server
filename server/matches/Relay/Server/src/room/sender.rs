@@ -34,7 +34,7 @@ impl Room {
 		let channel_type = self
 			.current_channel
 			.as_ref()
-			.unwrap_or(&ChannelType::ReliableSequenceByGroup(ChannelGroup(0)));
+			.unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
 		let current_user = self.current_user.unwrap_or(0);
 
@@ -107,7 +107,7 @@ impl Room {
 							let channel = self
 								.current_channel
 								.as_ref()
-								.unwrap_or(&ChannelType::ReliableSequenceByGroup(ChannelGroup(0)));
+								.unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
 							let command_with_meta = S2CCommandWithCreator {
 								creator: self.current_user.unwrap_or(0),

@@ -123,7 +123,7 @@ impl Room {
 
 				if connected_now {
 					self.current_channel
-						.replace(ChannelType::ReliableSequenceByGroup(ChannelGroup(0)));
+						.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
 					let user_id = user.id;
 					let template = user.template.clone();
 					self.on_user_connect(user_id, template);

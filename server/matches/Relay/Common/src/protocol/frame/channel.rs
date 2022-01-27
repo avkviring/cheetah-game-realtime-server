@@ -10,33 +10,21 @@ pub enum ChannelType {
 	///
 	ReliableUnordered,
 	///
-	/// Отбрасываем команды из прошлого по объекту
-	///
-	ReliableOrderedByObject,
-	///
-	/// Отбрасываем команды из прошлого по группе
-	///
-	ReliableOrderedByGroup(ChannelGroup),
-	///
 	/// Выполняем команды без учета порядка
 	///
 	UnreliableUnordered,
 	///
-	/// Отбрасываем команды из прошлого по объекту
+	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByObject,
+	ReliableOrdered(ChannelGroup),
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByGroup(ChannelGroup),
-	///
-	/// Выполняем команды строго по-порядку по объекту
-	///
-	ReliableSequenceByObject,
+	UnreliableOrdered(ChannelGroup),
 	///
 	/// Выполняем команды строго по-порядку по группе
 	///
-	ReliableSequenceByGroup(ChannelGroup),
+	ReliableSequence(ChannelGroup),
 }
 
 ///
@@ -49,46 +37,31 @@ pub enum Channel {
 	///
 	ReliableUnordered,
 	///
-	/// Отбрасываем команды из прошлого по объекту
-	///
-	ReliableOrderedByObject,
-	///
-	/// Отбрасываем команды из прошлого по группе
-	///
-	ReliableOrderedByGroup(ChannelGroup),
-	///
 	/// Выполняем команды без учета порядка
 	///
 	UnreliableUnordered,
 	///
-	/// Отбрасываем команды из прошлого по объекту
+	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByObject,
+	ReliableOrdered(ChannelGroup),
 	///
 	/// Отбрасываем команды из прошлого по группе
 	///
-	UnreliableOrderedByGroup(ChannelGroup),
-	///
-	/// Выполняем команды строго по-порядку по объекту
-	///
-	ReliableSequenceByObject(ChannelSequence),
+	UnreliableOrdered(ChannelGroup),
 	///
 	/// Выполняем команды строго по-порядку по группе
 	///
-	ReliableSequenceByGroup(ChannelGroup, ChannelSequence),
+	ReliableSequence(ChannelGroup, ChannelSequence),
 }
 
 impl From<&Channel> for ChannelType {
 	fn from(channel: &Channel) -> Self {
 		match channel {
 			Channel::ReliableUnordered => ChannelType::ReliableUnordered,
-			Channel::ReliableOrderedByObject => ChannelType::ReliableOrderedByObject,
-			Channel::ReliableOrderedByGroup(channel) => ChannelType::ReliableOrderedByGroup(*channel),
+			Channel::ReliableOrdered(channel) => ChannelType::ReliableOrdered(*channel),
 			Channel::UnreliableUnordered => ChannelType::UnreliableUnordered,
-			Channel::UnreliableOrderedByObject => ChannelType::UnreliableOrderedByObject,
-			Channel::UnreliableOrderedByGroup(channel) => ChannelType::UnreliableOrderedByGroup(*channel),
-			Channel::ReliableSequenceByObject(_) => ChannelType::ReliableSequenceByObject,
-			Channel::ReliableSequenceByGroup(channel, _) => ChannelType::ReliableSequenceByGroup(*channel),
+			Channel::UnreliableOrdered(channel) => ChannelType::UnreliableOrdered(*channel),
+			Channel::ReliableSequence(channel, _) => ChannelType::ReliableSequence(*channel),
 		}
 	}
 }
@@ -97,25 +70,19 @@ impl Channel {
 	pub fn is_reliable(&self) -> bool {
 		match self {
 			Channel::ReliableUnordered => true,
-			Channel::ReliableOrderedByObject => true,
-			Channel::ReliableOrderedByGroup(_) => true,
-			Channel::ReliableSequenceByObject(_) => true,
-			Channel::ReliableSequenceByGroup(_, _) => true,
+			Channel::ReliableOrdered(_) => true,
+			Channel::ReliableSequence(_, _) => true,
 			Channel::UnreliableUnordered => false,
-			Channel::UnreliableOrderedByObject => false,
-			Channel::UnreliableOrderedByGroup(_) => false,
+			Channel::UnreliableOrdered(_) => false,
 		}
 	}
 	pub fn get_channel_group_id(&self) -> Option<ChannelGroup> {
 		match self {
 			Channel::ReliableUnordered => None,
-			Channel::ReliableOrderedByObject => None,
-			Channel::ReliableOrderedByGroup(group) => Some(*group),
+			Channel::ReliableOrdered(group) => Some(*group),
 			Channel::UnreliableUnordered => None,
-			Channel::UnreliableOrderedByObject => None,
-			Channel::UnreliableOrderedByGroup(group) => Some(*group),
-			Channel::ReliableSequenceByObject(_) => None,
-			Channel::ReliableSequenceByGroup(group, _) => Some(*group),
+			Channel::UnreliableOrdered(group) => Some(*group),
+			Channel::ReliableSequence(group, _) => Some(*group),
 		}
 	}
 }

@@ -5,7 +5,6 @@ use fnv::FnvBuildHasher;
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{Channel, ChannelType};
 use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
-use crate::room::object::GameObjectId;
 
 ///
 /// Коллектор команд для отправки
@@ -17,7 +16,6 @@ use crate::room::object::GameObjectId;
 pub struct OutCommandsCollector {
 	pub commands: VecDeque<CommandWithChannel>,
 	group_sequence: HashMap<ChannelGroup, ChannelSequence, FnvBuildHasher>,
-	object_sequence: HashMap<GameObjectId, ChannelSequence, FnvBuildHasher>,
 }
 #[derive(Debug)]
 pub struct OutCommand {
@@ -27,7 +25,7 @@ pub struct OutCommand {
 
 impl OutCommandsCollector {
 	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
-		match self.create_channel(&channel_type, &command) {
+		match self.create_channel(&channel_type) {
 			None => {
 				log::error!("can not create channel for {:?} {:?}", channel_type, command)
 			}
@@ -40,29 +38,19 @@ impl OutCommandsCollector {
 		}
 	}
 
-	fn create_channel(&mut self, channel_type: &ChannelType, command: &BothDirectionCommand) -> Option<Channel> {
+	fn create_channel(&mut self, channel_type: &ChannelType) -> Option<Channel> {
 		match channel_type {
 			ChannelType::ReliableUnordered => Option::Some(Channel::ReliableUnordered),
-			ChannelType::ReliableOrderedByObject => Option::Some(Channel::ReliableOrderedByObject),
-			ChannelType::ReliableOrderedByGroup(group_id) => Option::Some(Channel::ReliableOrderedByGroup(*group_id)),
+			ChannelType::ReliableOrdered(group_id) => Option::Some(Channel::ReliableOrdered(*group_id)),
 			ChannelType::UnreliableUnordered => Option::Some(Channel::UnreliableUnordered),
-			ChannelType::UnreliableOrderedByObject => Option::Some(Channel::UnreliableOrderedByObject),
-			ChannelType::UnreliableOrderedByGroup(group_id) => Option::Some(Channel::UnreliableOrderedByGroup(*group_id)),
-			ChannelType::ReliableSequenceByObject => command.get_object_id().map(|game_object_id| {
-				let sequence = self
-					.object_sequence
-					.entry(game_object_id.clone())
-					.and_modify(|v| v.0 += 1)
-					.or_insert(ChannelSequence::FIRST);
-				Channel::ReliableSequenceByObject(*sequence)
-			}),
-			ChannelType::ReliableSequenceByGroup(group) => {
+			ChannelType::UnreliableOrdered(group_id) => Option::Some(Channel::UnreliableOrdered(*group_id)),
+			ChannelType::ReliableSequence(group) => {
 				let sequence = self
 					.group_sequence
 					.entry(*group)
 					.and_modify(|v| v.0 += 1)
 					.or_insert(ChannelSequence(0));
-				Option::Some(Channel::ReliableSequenceByGroup(*group, *sequence))
+				Option::Some(Channel::ReliableSequence(*group, *sequence))
 			}
 		}
 	}
@@ -86,7 +74,6 @@ impl OutCommandsCollector {
 #[cfg(test)]
 mod tests {
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::types::event::EventCommand;
 	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
@@ -98,22 +85,16 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for _ in 0..3 {
 			output.add_command(
-				ChannelType::ReliableSequenceByGroup(ChannelGroup(100)),
+				ChannelType::ReliableSequence(ChannelGroup(100)),
 				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
-		assert!(
-			matches!(output.commands[0].channel, Channel::ReliableSequenceByGroup(_,sequence)
-			if sequence.0==0)
-		);
-		assert!(
-			matches!(output.commands[1].channel, Channel::ReliableSequenceByGroup(_,sequence)
-			if sequence.0==1)
-		);
-		assert!(
-			matches!(output.commands[2].channel, Channel::ReliableSequenceByGroup(_,sequence)
-			if sequence.0==2)
-		);
+		assert!(matches!(output.commands[0].channel, Channel::ReliableSequence(_,sequence)
+			if sequence.0==0));
+		assert!(matches!(output.commands[1].channel, Channel::ReliableSequence(_,sequence)
+			if sequence.0==1));
+		assert!(matches!(output.commands[2].channel, Channel::ReliableSequence(_,sequence)
+			if sequence.0==2));
 	}
 
 	#[test]
@@ -121,7 +102,7 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for i in 0..2 * MAX_COMMAND_IN_FRAME {
 			output.add_command(
-				ChannelType::ReliableSequenceByGroup(ChannelGroup(100)),
+				ChannelType::ReliableSequence(ChannelGroup(100)),
 				BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),
 					field_id: 1,
@@ -156,28 +137,5 @@ mod tests {
 				if value == i as i64
 			));
 		}
-	}
-
-	#[test]
-	pub fn test_object_sequence() {
-		let mut output = OutCommandsCollector::default();
-
-		for _ in 0..3 {
-			output.add_command(
-				ChannelType::ReliableSequenceByObject,
-				BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
-					object_id: Default::default(),
-					field_id: 0,
-					event: Default::default(),
-				})),
-			);
-		}
-
-		assert!(
-			matches!(output.commands[0].channel, Channel::ReliableSequenceByObject(sequence) 
-			if sequence.0==0)
-		);
-		assert!(matches!(output.commands[1].channel, Channel::ReliableSequenceByObject(sequence) if sequence.0==1));
-		assert!(matches!(output.commands[2].channel, Channel::ReliableSequenceByObject(sequence) if sequence.0==2));
 	}
 }

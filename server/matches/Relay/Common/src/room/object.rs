@@ -3,11 +3,12 @@ use std::io::Cursor;
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::owner::GameObjectOwner;
 use crate::room::RoomMemberId;
+use hash32_derive::Hash32;
 
 ///
 /// Идентификатор игрового объекта на клиенте
 ///
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, Hash32)]
 pub struct GameObjectId {
 	///
 	/// Создатель игрового объекта

@@ -8,18 +8,15 @@ use crate::ffi::execute_with_client;
 pub enum Channel {
 	ReliableUnordered,
 	UnreliableUnordered,
-	ReliableOrderedByObject,
-	UnreliableOrderedByObject,
-	ReliableSequenceByObject,
-	ReliableOrderedByGroup,
-	UnreliableOrderedByGroup,
-	ReliableSequenceByGroup,
+	ReliableOrdered,
+	UnreliableOrdered,
+	ReliableSequence,
 }
 
 #[no_mangle]
-pub extern "C" fn set_channel(client_id: ClientId, channel: Channel, group: ChannelGroup) -> u8 {
+pub extern "C" fn set_channel(client_id: ClientId, channel: Channel, group: u8) -> u8 {
 	execute_with_client(client_id, |client| {
-		client.set_current_channel(channel.clone(), group);
+		client.set_current_channel(channel.clone(), ChannelGroup(group));
 		Ok(())
 	})
 }

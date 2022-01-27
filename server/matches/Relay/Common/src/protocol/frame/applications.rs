@@ -1,11 +1,13 @@
+use hash32_derive::Hash32;
+
 use crate::commands::c2s::C2SCommand;
 use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 use crate::protocol::frame::channel::Channel;
 use crate::room::object::GameObjectId;
 
-#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
+#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default, Hash32)]
 #[repr(C)]
-pub struct ChannelGroup(pub u16);
+pub struct ChannelGroup(pub u8);
 
 #[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
 #[repr(C)]

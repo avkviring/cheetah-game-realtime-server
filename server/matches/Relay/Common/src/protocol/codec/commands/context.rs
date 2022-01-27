@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 use std::io::{Cursor, ErrorKind};
 
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use thiserror::Error;
 
 use crate::commands::CommandTypeId;
@@ -115,7 +116,7 @@ impl CommandContext {
 		}
 
 		if compare_and_set(&mut self.channel_group, channel_group) {
-			out.write_variable_u64(self.channel_group.as_ref().unwrap().0 as u64)?;
+			out.write_u8(self.channel_group.as_ref().unwrap().0)?;
 			header.new_channel_group_id = true;
 		}
 
@@ -177,7 +178,7 @@ impl CommandContext {
 			self.field_id.replace(input.read_variable_u64()? as FieldId);
 		}
 		if header.new_channel_group_id {
-			self.channel_group.replace(ChannelGroup(input.read_variable_u64()? as u16));
+			self.channel_group.replace(ChannelGroup(input.read_u8()?));
 		}
 		self.read_and_set_creator(input, &header.creator_source)?;
 		Ok(header)
