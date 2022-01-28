@@ -5,7 +5,7 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -23,8 +23,7 @@ impl Room {
 	pub fn validate_permission_and_send<T>(
 		&mut self,
 		game_object_id: &GameObjectId,
-		field_id: FieldId,
-		field_type: FieldType,
+		field: Field,
 		command_owner_user: RoomMemberId,
 		permission: Permission,
 		target_user: Option<RoomMemberId>,
@@ -65,22 +64,19 @@ impl Room {
 
 			let current_user_is_object_owner = object_owner == Option::Some(command_owner_user);
 			let allow = current_user_is_object_owner
-				|| permission_manager.borrow_mut().get_permission(
-					object.template,
-					field_id,
-					field_type,
-					current_user_access_group,
-				) >= permission;
+				|| permission_manager
+					.borrow_mut()
+					.get_permission(object.template, field, current_user_access_group)
+					>= permission;
 
 			if !allow {
 				log::error!(
-					"[room({:?})] user({:?}) has not permissions({:?}) for action with object({:?}), field({:?}), field_type({:?})",
+					"[room({:?})] user({:?}) has not permissions({:?}) for action with object({:?}), field({:?})",
 					self.id,
 					command_owner_user,
 					permission,
 					game_object_id,
-					field_id,
-					field_type
+					field
 				);
 				return;
 			}
@@ -93,7 +89,7 @@ impl Room {
 
 				if let Some(command) = command {
 					let commands_with_field = S2CommandWithFieldInfo {
-						field: Some(FieldIdAndType { field_id, field_type }),
+						field: Some(field),
 						command,
 					};
 					let commands = [commands_with_field];
@@ -109,7 +105,7 @@ impl Room {
 								// иначе никто другой не может вносит изменения в данное поле и
 								// отправлять себе как единственному источнику изменений избыточно
 								if object_owner == Option::Some(user.id) {
-									permission_manager.has_write_access(template, field_id, field_type)
+									permission_manager.has_write_access(template, field)
 								} else {
 									true
 								}

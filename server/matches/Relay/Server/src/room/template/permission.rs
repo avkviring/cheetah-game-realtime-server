@@ -6,6 +6,7 @@ use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
+use crate::room::object::Field;
 use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
 
 #[derive(Debug)]
@@ -20,8 +21,7 @@ pub struct PermissionManager {
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
 struct PermissionFieldKey {
 	template: GameObjectTemplateId,
-	field_id: FieldId,
-	field_type: FieldType,
+	field: Field,
 }
 
 #[derive(Hash, Eq, PartialEq, Debug)]
@@ -49,8 +49,7 @@ impl PermissionManager {
 			for field in &template.fields {
 				let key = PermissionFieldKey {
 					template: template.template,
-					field_id: field.id,
-					field_type: field.field_type,
+					field: field.field.clone(),
 				};
 
 				if field.rules.iter().any(|t| t.permission > Permission::Ro) {
@@ -67,27 +66,13 @@ impl PermissionManager {
 	///
 	/// Доступен ли объект на запись другим пользователем кроме создателя
 	///
-	pub fn has_write_access(&mut self, template: GameObjectTemplateId, field_id: FieldId, field_type: FieldType) -> bool {
+	pub fn has_write_access(&mut self, template: GameObjectTemplateId, field: Field) -> bool {
 		self.write_access_template.contains(&template)
-			|| self.write_access_fields.contains(&PermissionFieldKey {
-				template,
-				field_id,
-				field_type,
-			})
+			|| self.write_access_fields.contains(&PermissionFieldKey { template, field })
 	}
 
-	pub fn get_permission(
-		&mut self,
-		template: GameObjectTemplateId,
-		field_id: FieldId,
-		field_type: FieldType,
-		user_group: AccessGroups,
-	) -> Permission {
-		let field_key = PermissionFieldKey {
-			template,
-			field_id,
-			field_type,
-		};
+	pub fn get_permission(&mut self, template: GameObjectTemplateId, field: Field, user_group: AccessGroups) -> Permission {
+		let field_key = PermissionFieldKey { template, field };
 
 		let cached_key = PermissionCachedFieldKey {
 			field_key,
@@ -123,6 +108,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
+	use crate::room::object::Field;
 	use crate::room::template::config::{
 		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
 	};
@@ -132,7 +118,14 @@ mod tests {
 	fn should_default_permission() {
 		let mut permissions_manager = PermissionManager::new(&Permissions::default());
 		assert_eq!(
-			permissions_manager.get_permission(10, 10, FieldType::Long, AccessGroups(0)),
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 10,
+					field_type: FieldType::Long
+				},
+				AccessGroups(0)
+			),
 			Permission::Ro
 		);
 	}
@@ -159,11 +152,25 @@ mod tests {
 		let mut permissions_manager = PermissionManager::new(&permissions);
 
 		assert_eq!(
-			permissions_manager.get_permission(10, 10, FieldType::Long, AccessGroups(0b01)),
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 10,
+					field_type: FieldType::Long
+				},
+				AccessGroups(0b01)
+			),
 			Permission::Rw
 		);
 		assert_eq!(
-			permissions_manager.get_permission(10, 10, FieldType::Long, AccessGroups(0b1000)),
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 10,
+					field_type: FieldType::Long
+				},
+				AccessGroups(0b1000)
+			),
 			Permission::Deny
 		);
 	}
@@ -182,8 +189,10 @@ mod tests {
 		});
 
 		template_permission.fields.push(PermissionField {
-			id: 15,
-			field_type: FieldType::Long,
+			field: Field {
+				id: 15,
+				field_type: FieldType::Long,
+			},
 			rules: vec![GroupsPermissionRule {
 				groups: AccessGroups(0b11),
 				permission: Permission::Rw,
@@ -194,11 +203,25 @@ mod tests {
 		let mut permissions_manager = PermissionManager::new(&permissions);
 
 		assert_eq!(
-			permissions_manager.get_permission(10, 10, FieldType::Long, AccessGroups(0b01)),
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 10,
+					field_type: FieldType::Long
+				},
+				AccessGroups(0b01)
+			),
 			Permission::Deny
 		);
 		assert_eq!(
-			permissions_manager.get_permission(10, 15, FieldType::Long, AccessGroups(0b01)),
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 15,
+					field_type: FieldType::Long
+				},
+				AccessGroups(0b01)
+			),
 			Permission::Rw
 		);
 	}
@@ -217,8 +240,10 @@ mod tests {
 		});
 
 		template_permission.fields.push(PermissionField {
-			id: 15,
-			field_type: FieldType::Long,
+			field: Field {
+				id: 15,
+				field_type: FieldType::Long,
+			},
 			rules: vec![GroupsPermissionRule {
 				groups: AccessGroups(0b11),
 				permission: Permission::Rw,
@@ -228,18 +253,46 @@ mod tests {
 
 		let mut permissions_manager = PermissionManager::new(&permissions);
 		// прогреваем кеш
-		permissions_manager.get_permission(10, 10, FieldType::Long, AccessGroups(0b01));
-		permissions_manager.get_permission(10, 15, FieldType::Long, AccessGroups(0b01));
+		permissions_manager.get_permission(
+			10,
+			Field {
+				id: 10,
+				field_type: FieldType::Long,
+			},
+			AccessGroups(0b01),
+		);
+		permissions_manager.get_permission(
+			10,
+			Field {
+				id: 15,
+				field_type: FieldType::Long,
+			},
+			AccessGroups(0b01),
+		);
 		// удаляем исходные данные
 		permissions_manager.fields.clear();
 		permissions_manager.templates.clear();
 
 		assert_eq!(
-			permissions_manager.get_permission(10, 10, FieldType::Long, AccessGroups(0b01)),
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 10,
+					field_type: FieldType::Long
+				},
+				AccessGroups(0b01)
+			),
 			Permission::Deny
 		);
 		assert_eq!(
-			permissions_manager.get_permission(10, 15, FieldType::Long, AccessGroups(0b01)),
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 15,
+					field_type: FieldType::Long
+				},
+				AccessGroups(0b01)
+			),
 			Permission::Rw
 		);
 	}
@@ -248,7 +301,13 @@ mod tests {
 	fn should_not_has_write_access_by_default() {
 		let permissions = Permissions::default();
 		let mut permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(10, 100, FieldType::Long));
+		assert!(!permissions_manager.has_write_access(
+			10,
+			Field {
+				id: 100,
+				field_type: FieldType::Long
+			}
+		));
 	}
 
 	#[test]
@@ -263,7 +322,13 @@ mod tests {
 			fields: vec![],
 		});
 		let mut permissions_manager = PermissionManager::new(&permissions);
-		assert!(permissions_manager.has_write_access(10, 100, FieldType::Long));
+		assert!(permissions_manager.has_write_access(
+			10,
+			Field {
+				id: 100,
+				field_type: FieldType::Long
+			}
+		));
 	}
 
 	#[test]
@@ -278,7 +343,13 @@ mod tests {
 			fields: vec![],
 		});
 		let mut permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(10, 100, FieldType::Long));
+		assert!(!permissions_manager.has_write_access(
+			10,
+			Field {
+				id: 100,
+				field_type: FieldType::Long
+			}
+		));
 	}
 
 	#[test]
@@ -288,8 +359,10 @@ mod tests {
 			template: 10,
 			rules: vec![],
 			fields: vec![PermissionField {
-				id: 100,
-				field_type: FieldType::Long,
+				field: Field {
+					id: 100,
+					field_type: FieldType::Long,
+				},
 				rules: vec![GroupsPermissionRule {
 					groups: Default::default(),
 					permission: Permission::Rw,
@@ -297,6 +370,12 @@ mod tests {
 			}],
 		});
 		let mut permissions_manager = PermissionManager::new(&permissions);
-		assert!(permissions_manager.has_write_access(10, 100, FieldType::Long));
+		assert!(permissions_manager.has_write_access(
+			10,
+			Field {
+				id: 100,
+				field_type: FieldType::Long,
+			}
+		));
 	}
 }

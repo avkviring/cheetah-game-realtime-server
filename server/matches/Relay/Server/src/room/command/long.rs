@@ -2,17 +2,17 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::FieldType;
 use fnv::FnvBuildHasher;
 
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -45,8 +45,10 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 		};
 		room.validate_permission_and_send(
 			&self.object_id,
-			self.field_id,
-			FieldType::Long,
+			Field {
+				id: self.field_id,
+				field_type: FieldType::Long,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -67,8 +69,10 @@ impl ServerCommandExecutor for SetLongCommand {
 
 		room.validate_permission_and_send(
 			&object_id,
-			field_id,
-			FieldType::Long,
+			Field {
+				id: field_id,
+				field_type: FieldType::Long,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -107,8 +111,10 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 
 		room.validate_permission_and_send(
 			&object_id,
-			field_id,
-			FieldType::Long,
+			Field {
+				id: field_id,
+				field_type: FieldType::Long,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -139,8 +145,8 @@ pub fn reset_all_compare_and_set(
 					if *owner == user_id {
 						object.longs.insert(field, reset);
 						let command = [S2CommandWithFieldInfo {
-							field: Some(FieldIdAndType {
-								field_id: field,
+							field: Some(Field {
+								id: field,
 								field_type: FieldType::Long,
 							}),
 							command: S2CCommand::SetLong(SetLongCommand {
@@ -163,8 +169,8 @@ impl GameObject {
 	pub fn longs_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
 		self.longs.iter().for_each(|(field_id, v)| {
 			commands.push(S2CommandWithFieldInfo {
-				field: Option::Some(FieldIdAndType {
-					field_id: *field_id,
+				field: Option::Some(Field {
+					id: *field_id,
 					field_type: FieldType::Long,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
@@ -190,6 +196,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::command::ServerCommandExecutor;
+	use crate::room::object::Field;
 	use crate::room::template::config::{
 		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate, UserTemplate,
 	};
@@ -418,8 +425,10 @@ mod tests {
 			template: object_template,
 			rules: vec![],
 			fields: vec![PermissionField {
-				id: object_field,
-				field_type: FieldType::Long,
+				field: Field {
+					id: object_field,
+					field_type: FieldType::Long,
+				},
 				rules: vec![GroupsPermissionRule {
 					groups: access_group,
 					permission: Permission::Rw,

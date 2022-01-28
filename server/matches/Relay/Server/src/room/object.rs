@@ -69,13 +69,13 @@ impl GameObject {
 
 #[derive(Debug)]
 pub struct S2CommandWithFieldInfo {
-	pub field: Option<FieldIdAndType>,
+	pub field: Option<Field>,
 	pub command: S2CCommand,
 }
 
-#[derive(Debug, Clone)]
-pub struct FieldIdAndType {
-	pub field_id: FieldId,
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+pub struct Field {
+	pub id: FieldId,
 	pub field_type: FieldType,
 }
 
@@ -87,7 +87,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+	use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -110,15 +110,15 @@ mod tests {
 			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
 
 		assert!(matches!(commands.remove(0),
-			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
+			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
 			if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
 
 		assert!(matches!(commands.remove(0),
-			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
+			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id == 1 && c.value == 100));
 
 		assert!(matches!(commands.remove(0),
-			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
+			S2CommandWithFieldInfo { field: Some(Field { id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
 			if c.object_id==id && c.field_id == 2 && (c.value - 200.200).abs() < 0.0001));
 
 		assert!(matches!(commands.remove(0),
@@ -144,7 +144,7 @@ mod tests {
 			}
 		));
 		assert!(matches!(commands.remove(0),
-			S2CommandWithFieldInfo { field: Some(FieldIdAndType { field_id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
+			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id== 1 && c.value == 100));
 		assert_eq!(commands.len(), 0)
 	}

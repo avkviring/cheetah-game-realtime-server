@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::commands::{CommandBuffer, FieldType};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -18,8 +18,10 @@ impl ServerCommandExecutor for SetStructureCommand {
 		};
 		room.validate_permission_and_send(
 			&object_id,
-			field_id,
-			FieldType::Structure,
+			Field {
+				id: field_id,
+				field_type: FieldType::Structure,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -33,8 +35,8 @@ impl GameObject {
 		self.structures.iter().for_each(|(field_id, v)| {
 			let structure = CommandBuffer::from_slice(v.as_slice()).unwrap();
 			commands.push(S2CommandWithFieldInfo {
-				field: Option::Some(FieldIdAndType {
-					field_id: *field_id,
+				field: Option::Some(Field {
+					id: *field_id,
 					field_type: FieldType::Structure,
 				}),
 				command: S2CCommand::SetStructure(SetStructureCommand {

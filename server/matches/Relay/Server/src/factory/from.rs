@@ -4,6 +4,7 @@ use cheetah_matches_relay_common::room::access::AccessGroups;
 
 use crate::factory::proto::internal;
 use crate::factory::proto::shared;
+use crate::room::object::Field;
 use crate::room::template::config;
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
@@ -106,8 +107,10 @@ impl From<internal::PermissionField> for config::PermissionField {
 			}
 		};
 		config::PermissionField {
-			id: source.id as u16,
-			field_type,
+			field: Field {
+				id: source.id as u16,
+				field_type,
+			},
 			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
 		}
 	}

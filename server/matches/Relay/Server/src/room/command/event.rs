@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::GameObject;
+use crate::room::object::{Field, GameObject};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -15,8 +15,10 @@ impl ServerCommandExecutor for EventCommand {
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.clone()));
 		room.validate_permission_and_send(
 			&object_id,
-			field_id,
-			FieldType::Event,
+			Field {
+				id: field_id,
+				field_type: FieldType::Long,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -33,8 +35,10 @@ impl ServerCommandExecutor for TargetEventCommand {
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.event.clone()));
 		room.validate_permission_and_send(
 			&object_id,
-			field_id,
-			FieldType::Event,
+			Field {
+				id: field_id,
+				field_type: FieldType::Event,
+			},
 			user_id,
 			Permission::Rw,
 			Option::Some(target),

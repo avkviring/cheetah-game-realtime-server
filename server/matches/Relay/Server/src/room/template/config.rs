@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use cheetah_matches_relay_common::commands::FieldType;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::UserPrivateKey;
+
+use crate::room::object::Field;
 
 ///
 /// Шаблон для создания комнаты
@@ -59,8 +60,7 @@ pub struct GroupsPermissionRule {
 
 #[derive(Debug, Clone)]
 pub struct PermissionField {
-	pub id: FieldId,
-	pub field_type: FieldType,
+	pub field: Field,
 	pub rules: Vec<GroupsPermissionRule>,
 }
 
@@ -89,14 +89,16 @@ impl UserTemplate {
 
 #[cfg(test)]
 mod tests {
-	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
-		UserTemplate, UserTemplateError,
-	};
 	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
+
+	use crate::room::object::Field;
+	use crate::room::template::config::{
+		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
+		UserTemplate, UserTemplateError,
+	};
 
 	impl UserTemplate {
 		pub fn stub(access_group: AccessGroups) -> Self {
@@ -148,15 +150,21 @@ mod tests {
 				Some(template) => template,
 			};
 
-			let permission_field = match template_permission.fields.iter_mut().find(|f| f.id == *field_id) {
+			let permission_field = match template_permission.fields.iter_mut().find(|f| f.field.id == *field_id) {
 				None => {
 					let permission_field = PermissionField {
-						id: *field_id,
-						field_type,
+						field: Field {
+							id: *field_id,
+							field_type,
+						},
 						rules: vec![],
 					};
 					template_permission.fields.push(permission_field);
-					template_permission.fields.iter_mut().find(|f| f.id == *field_id).unwrap()
+					template_permission
+						.fields
+						.iter_mut()
+						.find(|f| f.field.id == *field_id)
+						.unwrap()
 				}
 				Some(permission_field) => permission_field,
 			};

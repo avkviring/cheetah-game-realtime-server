@@ -8,7 +8,7 @@ use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
+use crate::room::object::{Field, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::{Room, User};
 
@@ -48,15 +48,13 @@ impl Room {
 			.filter(|user| filter(user))
 			.for_each(|user| {
 				for command in commands.clone() {
-					let allow = match &command.field {
+					let allow = match command.field {
 						None => true,
-						Some(FieldIdAndType { field_id, field_type }) => {
-							permission_manager.borrow_mut().get_permission(
-								object_template,
-								*field_id,
-								*field_type,
-								user.template.groups,
-							) > Permission::Deny
+						Some(field) => {
+							permission_manager
+								.borrow_mut()
+								.get_permission(object_template, field, user.template.groups)
+								> Permission::Deny
 						}
 					};
 
@@ -96,10 +94,10 @@ impl Room {
 					for command in commands {
 						let allow = match command.field {
 							None => true,
-							Some(FieldIdAndType { field_id, field_type }) => {
+							Some(field) => {
 								self.permission_manager
 									.borrow_mut()
-									.get_permission(object_template, field_id, field_type, groups)
+									.get_permission(object_template, field, groups)
 									> Permission::Deny
 							}
 						};
@@ -136,7 +134,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
-	use crate::room::object::{FieldIdAndType, S2CommandWithFieldInfo};
+	use crate::room::object::{Field, S2CommandWithFieldInfo};
 	use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
@@ -162,34 +160,74 @@ mod tests {
 
 		// владельцу разрешены любые операции
 		let mut executed = false;
-		room.validate_permission_and_send(&object_id, field_id_1, FieldType::Long, user_1, Permission::Rw, None, |_| {
-			executed = true;
-			None
-		});
+		room.validate_permission_and_send(
+			&object_id,
+			Field {
+				id: field_id_1,
+				field_type: FieldType::Long,
+			},
+			user_1,
+			Permission::Rw,
+			None,
+			|_| {
+				executed = true;
+				None
+			},
+		);
 		assert!(executed);
 
 		// RO - по-умолчанию для всех полей
 		let mut executed = false;
-		room.validate_permission_and_send(&object_id, field_id_1, FieldType::Long, user_2, Permission::Ro, None, |_| {
-			executed = true;
-			None
-		});
+		room.validate_permission_and_send(
+			&object_id,
+			Field {
+				id: field_id_1,
+				field_type: FieldType::Long,
+			},
+			user_2,
+			Permission::Ro,
+			None,
+			|_| {
+				executed = true;
+				None
+			},
+		);
 		assert!(executed);
 
 		// RW - по-умолчанию запрещен
 		let mut executed = false;
-		room.validate_permission_and_send(&object_id, field_id_1, FieldType::Long, user_2, Permission::Rw, None, |_| {
-			executed = true;
-			None
-		});
+		room.validate_permission_and_send(
+			&object_id,
+			Field {
+				id: field_id_1,
+				field_type: FieldType::Long,
+			},
+			user_2,
+			Permission::Rw,
+			None,
+			|_| {
+				executed = true;
+				None
+			},
+		);
 		assert!(!executed);
 
 		// RW - разрешен для второго поля
 		let mut executed = false;
-		room.validate_permission_and_send(&object_id, field_id_2, FieldType::Long, user_2, Permission::Rw, None, |_| {
-			executed = true;
-			None
-		});
+		room.validate_permission_and_send(
+			&object_id,
+			Field {
+				id: field_id_2,
+				field_type: FieldType::Long,
+			},
+			user_2,
+			Permission::Rw,
+			None,
+			|_| {
+				executed = true;
+				None
+			},
+		);
 		assert!(executed);
 	}
 
@@ -219,8 +257,10 @@ mod tests {
 		let mut executed = false;
 		room.validate_permission_and_send(
 			&object_id,
-			field_id_1,
-			field_type,
+			Field {
+				id: field_id_1,
+				field_type,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -240,8 +280,10 @@ mod tests {
 		let mut executed = false;
 		room.validate_permission_and_send(
 			&object_id,
-			field_id_2,
-			field_type,
+			Field {
+				id: field_id_2,
+				field_type,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -277,10 +319,20 @@ mod tests {
 		let object_id = object.id.clone();
 
 		let mut executed = false;
-		room.validate_permission_and_send(&object_id, 0, FieldType::Long, user_2, Permission::Ro, None, |_| {
-			executed = true;
-			None
-		});
+		room.validate_permission_and_send(
+			&object_id,
+			Field {
+				id: 0,
+				field_type: FieldType::Long,
+			},
+			user_2,
+			Permission::Ro,
+			None,
+			|_| {
+				executed = true;
+				None
+			},
+		);
 		assert!(!executed);
 	}
 
@@ -308,8 +360,8 @@ mod tests {
 
 		let commands = vec![
 			S2CommandWithFieldInfo {
-				field: Some(FieldIdAndType {
-					field_id: deny_field_id,
+				field: Some(Field {
+					id: deny_field_id,
 					field_type: FieldType::Long,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
@@ -319,8 +371,8 @@ mod tests {
 				}),
 			},
 			S2CommandWithFieldInfo {
-				field: Some(FieldIdAndType {
-					field_id: allow_field_id,
+				field: Some(Field {
+					id: allow_field_id,
 					field_type: FieldType::Long,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
@@ -377,8 +429,8 @@ mod tests {
 
 		let commands = [
 			S2CommandWithFieldInfo {
-				field: Some(FieldIdAndType {
-					field_id: allow_field_id,
+				field: Some(Field {
+					id: allow_field_id,
 					field_type,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
@@ -388,8 +440,8 @@ mod tests {
 				}),
 			},
 			S2CommandWithFieldInfo {
-				field: Some(FieldIdAndType {
-					field_id: deny_field_id,
+				field: Some(Field {
+					id: deny_field_id,
 					field_type,
 				}),
 				command: S2CCommand::SetLong(SetLongCommand {
@@ -422,8 +474,10 @@ mod tests {
 
 		room.validate_permission_and_send(
 			&object_id.clone(),
-			field_id,
-			FieldType::Long,
+			Field {
+				id: field_id,
+				field_type: FieldType::Long,
+			},
 			user_1,
 			Permission::Rw,
 			Option::None,

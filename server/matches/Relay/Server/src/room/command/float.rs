@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::{FieldIdAndType, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -30,8 +30,10 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 
 		room.validate_permission_and_send(
 			&object_id,
-			field_id,
-			FieldType::Double,
+			Field {
+				id: field_id,
+				field_type: FieldType::Double,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -51,8 +53,10 @@ impl ServerCommandExecutor for SetDoubleCommand {
 		};
 		room.validate_permission_and_send(
 			&object_id,
-			field_id,
-			FieldType::Double,
+			Field {
+				id: field_id,
+				field_type: FieldType::Double,
+			},
 			user_id,
 			Permission::Rw,
 			Option::None,
@@ -65,8 +69,8 @@ impl GameObject {
 	pub fn floats_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
 		self.floats.iter().for_each(|(field_id, v)| {
 			commands.push(S2CommandWithFieldInfo {
-				field: Option::Some(FieldIdAndType {
-					field_id: *field_id,
+				field: Option::Some(Field {
+					id: *field_id,
 					field_type: FieldType::Double,
 				}),
 				command: S2CCommand::SetDouble(SetDoubleCommand {
