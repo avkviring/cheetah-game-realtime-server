@@ -1,17 +1,17 @@
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::object::{CreateCommandsCollector, S2CommandWithFieldInfo};
+use crate::room::object::CreateCommandsCollector;
 use crate::room::Room;
 
-pub fn attach_to_room(room: &mut Room, user_id: RoomMemberId) {
-	match room.get_user_mut(user_id) {
+pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) {
+	match room.get_member_mut(member_id) {
 		None => {
-			log::error!("[load_room] user not found {:?}", user_id);
+			log::error!("[load_room] member not found {:?}", member_id);
 		}
-		Some(user) => {
-			user.attach_to_room();
-			let access_group = user.template.groups;
+		Some(member) => {
+			member.attach_to_room();
+			let access_group = member.template.groups;
 			let commands_by_object: Vec<(GameObjectTemplateId, CreateCommandsCollector)> = room
 				.objects
 				.iter()
@@ -25,19 +25,19 @@ pub fn attach_to_room(room: &mut Room, user_id: RoomMemberId) {
 				.collect();
 
 			for (template, commands) in commands_by_object {
-				room.send_to_user(&user_id, template, commands.as_slice());
+				room.send_to_member(&member_id, template, commands.as_slice());
 			}
 		}
 	}
 }
 
-pub fn detach_from_room(room: &mut Room, user_id: RoomMemberId) {
-	match room.get_user_mut(user_id) {
+pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) {
+	match room.get_member_mut(member_id) {
 		None => {
-			log::error!("[load_room] user not found {:?}", user_id);
+			log::error!("[load_room] member not found {:?}", member_id);
 		}
-		Some(user) => {
-			user.detach_from_room();
+		Some(member) => {
+			member.detach_from_room();
 		}
 	}
 }

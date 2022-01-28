@@ -122,7 +122,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 		);
 
 		if *(is_set.borrow()) {
-			room.get_user_mut(user_id)
+			room.get_member_mut(user_id)
 				.unwrap()
 				.compare_and_sets_cleaners
 				.insert((object_id, field_id), reset);
@@ -157,7 +157,7 @@ pub fn reset_all_compare_and_set(
 						}];
 						let groups = object.access_groups;
 						let template = object.template;
-						room.send_to_users(groups, template, &command, |_| true)
+						room.send_to_members(groups, template, &command, |_| true)
 					}
 				}
 			}

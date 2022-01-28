@@ -2,8 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use fnv::FnvBuildHasher;
 
-use cheetah_matches_relay_common::commands::FieldType;
-use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
 use crate::room::object::Field;

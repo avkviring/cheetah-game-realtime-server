@@ -93,10 +93,10 @@ impl Room {
 
 					match target {
 						Some(target_user) => {
-							self.send_to_user(&target_user, template, &commands);
+							self.send_to_member(&target_user, template, &commands);
 						}
 						None => {
-							self.send_to_users(groups, template, &commands, |user| {
+							self.send_to_members(groups, template, &commands, |user| {
 								let mut permission_manager = permission_manager.borrow_mut();
 								// отправляем себе только если есть права на запись
 								// иначе никто другой не может вносит изменения в данное поле и

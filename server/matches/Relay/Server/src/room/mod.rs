@@ -167,7 +167,7 @@ impl Room {
 		self.members.get(&user_id)
 	}
 
-	pub fn get_user_mut(&mut self, user_id: RoomMemberId) -> Option<&mut Member> {
+	pub fn get_member_mut(&mut self, user_id: RoomMemberId) -> Option<&mut Member> {
 		self.members.get_mut(&user_id)
 	}
 
@@ -219,7 +219,7 @@ impl Room {
 				Option::None
 			}
 			Some(object) => {
-				self.send_to_users(
+				self.send_to_members(
 					object.access_groups,
 					object.template,
 					&[S2CommandWithFieldInfo {
@@ -252,7 +252,7 @@ impl Room {
 			object.collect_create_commands(&mut commands);
 			let template = object.template;
 			let access_groups = object.access_groups;
-			self.send_to_users(access_groups, template, commands.as_slice(), |_user| true);
+			self.send_to_members(access_groups, template, commands.as_slice(), |_user| true);
 			self.insert_object(object);
 		});
 	}
@@ -297,7 +297,7 @@ mod tests {
 		}
 
 		pub fn mark_as_connected(&mut self, user_id: RoomMemberId) {
-			match self.get_user_mut(user_id) {
+			match self.get_member_mut(user_id) {
 				None => {}
 				Some(user) => {
 					user.connected = true;
@@ -335,7 +335,7 @@ mod tests {
 		}
 
 		pub fn clear_user_out_commands(&mut self, user_id: RoomMemberId) {
-			self.get_user_mut(user_id).unwrap().out_commands.clear();
+			self.get_member_mut(user_id).unwrap().out_commands.clear();
 		}
 	}
 
@@ -450,7 +450,7 @@ mod tests {
 			.as_slice(),
 		);
 
-		let user1 = room.get_user_mut(user1_id).unwrap();
+		let user1 = room.get_member_mut(user1_id).unwrap();
 		assert_eq!(
 			user1.out_commands.pop_front().unwrap().command.get_object_id().unwrap(),
 			&GameObjectId::new(object1_template.id, GameObjectOwner::User(user1_id))
@@ -458,7 +458,7 @@ mod tests {
 		user1.out_commands.clear();
 
 		room.execute_commands(user2_id, &[]);
-		let user1 = room.get_user_mut(user1_id).unwrap();
+		let user1 = room.get_member_mut(user1_id).unwrap();
 		assert_eq!(
 			user1.out_commands.pop_front().unwrap().command.get_object_id().unwrap(),
 			&GameObjectId::new(object2_template.id, GameObjectOwner::User(user2_id))

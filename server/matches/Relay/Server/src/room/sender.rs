@@ -1,5 +1,3 @@
-use std::slice::Iter;
-
 use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
@@ -17,7 +15,7 @@ use crate::room::{Member, Room};
 ///
 ///
 impl Room {
-	pub fn send_to_users<T>(
+	pub fn send_to_members<T>(
 		&mut self,
 		access_groups: AccessGroups,
 		object_template: GameObjectTemplateId,
@@ -77,7 +75,7 @@ impl Room {
 			});
 	}
 
-	pub fn send_to_user(
+	pub fn send_to_member(
 		&mut self,
 		user_id: &RoomMemberId,
 		object_template: GameObjectTemplateId,
@@ -383,7 +381,7 @@ mod tests {
 			},
 		];
 		room.current_member_id = Some(user_source_id);
-		room.send_to_user(&user_target_id, object_template, &commands);
+		room.send_to_member(&user_target_id, object_template, &commands);
 
 		let out_commands = room.get_user_out_commands_with_meta(user_target_id);
 		let command = out_commands.get(0);
@@ -452,7 +450,7 @@ mod tests {
 			},
 		];
 
-		room.send_to_users(access_groups, object_template, &commands, |_| true);
+		room.send_to_members(access_groups, object_template, &commands, |_| true);
 
 		let commands = room.get_user_out_commands(user_2);
 		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetLong(c)) if c.field_id == allow_field_id));

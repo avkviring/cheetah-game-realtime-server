@@ -16,7 +16,7 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 				let mut commands = CreateCommandsCollector::new();
 				object.collect_create_commands(&mut commands);
 				let template = object.template;
-				room.send_to_users(groups, template, commands.as_slice(), |user| user.id != user_id)
+				room.send_to_members(groups, template, commands.as_slice(), |user| user.id != user_id)
 			} else {
 				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);
 			}
