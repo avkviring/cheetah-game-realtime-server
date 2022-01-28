@@ -3,6 +3,7 @@ use std::net::SocketAddr;
 
 use log::LevelFilter;
 
+use cheetah_matches_relay::room::object::Field;
 use cheetah_matches_relay::room::template::config::{
 	GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate,
 };
@@ -34,8 +35,10 @@ impl IntegrationTestServerBuilder {
 		permission: Permission,
 	) {
 		let field = PermissionField {
-			id: field_id,
-			field_type,
+			field: Field {
+				id: field_id,
+				field_type,
+			},
 			rules: vec![GroupsPermissionRule {
 				groups: group,
 				permission,

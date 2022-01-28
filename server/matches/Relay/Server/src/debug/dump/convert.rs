@@ -7,11 +7,11 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 use crate::debug::proto::admin;
 use crate::room::object::GameObject;
-use crate::room::{Room, User};
+use crate::room::{Member, Room};
 
 impl From<&Room> for admin::DumpResponse {
 	fn from(room: &Room) -> Self {
-		let users = room.users.iter().map(|(_k, u)| admin::DumpUser::from(u)).collect();
+		let users = room.members.iter().map(|(_k, u)| admin::DumpUser::from(u)).collect();
 		let objects = room.objects.iter().map(|(_k, o)| admin::DumpObject::from(o)).collect();
 		Self { users, objects }
 	}
@@ -41,8 +41,8 @@ fn from<IN: Clone, OUT: From<IN>>(source: &HashMap<FieldId, IN, FnvBuildHasher>)
 	cloned.into_iter().map(|(k, v)| (k as u32, OUT::from(v))).collect()
 }
 
-impl From<&User> for admin::DumpUser {
-	fn from(user: &User) -> Self {
+impl From<&Member> for admin::DumpUser {
+	fn from(user: &Member) -> Self {
 		Self {
 			id: user.id as u32,
 			groups: user.template.groups.0,

@@ -12,7 +12,7 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -43,7 +43,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				value,
 			}))
 		};
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&self.object_id,
 			Field {
 				id: self.field_id,
@@ -67,7 +67,7 @@ impl ServerCommandExecutor for SetLongCommand {
 			Option::Some(S2CCommand::SetLong(self.clone()))
 		};
 
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id,
@@ -109,7 +109,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			}
 		};
 
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id,
@@ -157,7 +157,7 @@ pub fn reset_all_compare_and_set(
 						}];
 						let groups = object.access_groups;
 						let template = object.template;
-						room.send_to_users(groups, template, command.iter(), |_| true)
+						room.send_to_users(groups, template, &command, |_| true)
 					}
 				}
 			}
@@ -166,9 +166,9 @@ pub fn reset_all_compare_and_set(
 }
 
 impl GameObject {
-	pub fn longs_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
-		self.longs.iter().for_each(|(field_id, v)| {
-			commands.push(S2CommandWithFieldInfo {
+	pub fn longs_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
+		for (field_id, v) in &self.longs {
+			let command = S2CommandWithFieldInfo {
 				field: Option::Some(Field {
 					id: *field_id,
 					field_type: FieldType::Long,
@@ -178,8 +178,10 @@ impl GameObject {
 					field_id: *field_id,
 					value: *v,
 				}),
-			});
-		})
+			};
+			commands.push(command)?;
+		}
+		Ok(())
 	}
 }
 

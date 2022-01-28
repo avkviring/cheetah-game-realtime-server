@@ -8,9 +8,9 @@ use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::object::{Field, S2CommandWithFieldInfo};
+use crate::room::object::S2CommandWithFieldInfo;
 use crate::room::template::config::Permission;
-use crate::room::{Room, User};
+use crate::room::{Member, Room};
 
 ///
 /// Методы для отправки команд пользователям
@@ -21,13 +21,13 @@ impl Room {
 		&mut self,
 		access_groups: AccessGroups,
 		object_template: GameObjectTemplateId,
-		commands: Iter<S2CommandWithFieldInfo>,
+		commands: &[S2CommandWithFieldInfo],
 		filter: T,
 	) where
-		T: Fn(&User) -> bool,
+		T: Fn(&Member) -> bool,
 	{
 		#[cfg(test)]
-		commands.clone().for_each(|command| {
+		commands.iter().for_each(|command| {
 			self.out_commands.push_front((access_groups, command.command.clone()));
 		});
 
@@ -36,18 +36,18 @@ impl Room {
 			.as_ref()
 			.unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
-		let current_user = self.current_user.unwrap_or(0);
+		let current_user = self.current_member_id.unwrap_or(0);
 
 		let permission_manager = self.permission_manager.clone();
 		let command_trace_session = self.command_trace_session.clone();
-		self.users
+		self.members
 			.values_mut()
 			.filter(|user| user.attached)
 			.filter(|user| user.connected)
 			.filter(|user| user.template.groups.contains_any(&access_groups))
 			.filter(|user| filter(user))
 			.for_each(|user| {
-				for command in commands.clone() {
+				for command in commands {
 					let allow = match command.field {
 						None => true,
 						Some(field) => {
@@ -81,10 +81,10 @@ impl Room {
 		&mut self,
 		user_id: &RoomMemberId,
 		object_template: GameObjectTemplateId,
-		commands: Iter<S2CommandWithFieldInfo>,
+		commands: &[S2CommandWithFieldInfo],
 	) {
 		let command_trace_session = self.command_trace_session.clone();
-		match self.users.get_mut(user_id) {
+		match self.members.get_mut(user_id) {
 			None => {
 				log::error!("[room] send to unknown user {:?}", user_id)
 			}
@@ -108,7 +108,7 @@ impl Room {
 								.unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
 							let command_with_meta = S2CCommandWithCreator {
-								creator: self.current_user.unwrap_or(0),
+								creator: self.current_member_id.unwrap_or(0),
 								command: command.command.clone(),
 							};
 							command_trace_session
@@ -160,7 +160,7 @@ mod tests {
 
 		// владельцу разрешены любые операции
 		let mut executed = false;
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id_1,
@@ -178,7 +178,7 @@ mod tests {
 
 		// RO - по-умолчанию для всех полей
 		let mut executed = false;
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id_1,
@@ -196,7 +196,7 @@ mod tests {
 
 		// RW - по-умолчанию запрещен
 		let mut executed = false;
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id_1,
@@ -214,7 +214,7 @@ mod tests {
 
 		// RW - разрешен для второго поля
 		let mut executed = false;
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id_2,
@@ -255,7 +255,7 @@ mod tests {
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		let mut executed = false;
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id_1,
@@ -278,7 +278,7 @@ mod tests {
 
 		// изменяем поле, которое могут изменять другие пользователи
 		let mut executed = false;
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id_2,
@@ -319,7 +319,7 @@ mod tests {
 		let object_id = object.id.clone();
 
 		let mut executed = false;
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: 0,
@@ -382,8 +382,8 @@ mod tests {
 				}),
 			},
 		];
-		room.current_user = Some(user_source_id);
-		room.send_to_user(&user_target_id, object_template, commands.iter());
+		room.current_member_id = Some(user_source_id);
+		room.send_to_user(&user_target_id, object_template, &commands);
 
 		let out_commands = room.get_user_out_commands_with_meta(user_target_id);
 		let command = out_commands.get(0);
@@ -452,7 +452,7 @@ mod tests {
 			},
 		];
 
-		room.send_to_users(access_groups, object_template, commands.iter(), |_| true);
+		room.send_to_users(access_groups, object_template, &commands, |_| true);
 
 		let commands = room.get_user_out_commands(user_2);
 		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetLong(c)) if c.field_id == allow_field_id));
@@ -472,7 +472,7 @@ mod tests {
 		room.mark_as_connected(user_1);
 		room.mark_as_connected(user_2);
 
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id.clone(),
 			Field {
 				id: field_id,

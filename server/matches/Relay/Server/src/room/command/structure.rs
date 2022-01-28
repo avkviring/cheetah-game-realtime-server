@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::commands::{CommandBuffer, FieldType};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandExecutor;
-use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -16,7 +16,7 @@ impl ServerCommandExecutor for SetStructureCommand {
 			object.structures.insert(self.field_id, self.structure.to_vec());
 			Option::Some(S2CCommand::SetStructure(self.clone()))
 		};
-		room.validate_permission_and_send(
+		room.do_action_and_send_commands(
 			&object_id,
 			Field {
 				id: field_id,
@@ -31,10 +31,10 @@ impl ServerCommandExecutor for SetStructureCommand {
 }
 
 impl GameObject {
-	pub fn structures_to_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
-		self.structures.iter().for_each(|(field_id, v)| {
+	pub fn structures_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
+		for (field_id, v) in &self.structures {
 			let structure = CommandBuffer::from_slice(v.as_slice()).unwrap();
-			commands.push(S2CommandWithFieldInfo {
+			let command = S2CommandWithFieldInfo {
 				field: Option::Some(Field {
 					id: *field_id,
 					field_type: FieldType::Structure,
@@ -44,8 +44,10 @@ impl GameObject {
 					field_id: *field_id,
 					structure,
 				}),
-			});
-		})
+			};
+			commands.push(command)?;
+		}
+		Ok(())
 	}
 }
 

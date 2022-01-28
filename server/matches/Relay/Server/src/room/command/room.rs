@@ -1,7 +1,7 @@
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::object::S2CommandWithFieldInfo;
+use crate::room::object::{CreateCommandsCollector, S2CommandWithFieldInfo};
 use crate::room::Room;
 
 pub fn attach_to_room(room: &mut Room, user_id: RoomMemberId) {
@@ -12,20 +12,20 @@ pub fn attach_to_room(room: &mut Room, user_id: RoomMemberId) {
 		Some(user) => {
 			user.attach_to_room();
 			let access_group = user.template.groups;
-			let commands_by_object: Vec<(GameObjectTemplateId, Vec<S2CommandWithFieldInfo>)> = room
+			let commands_by_object: Vec<(GameObjectTemplateId, CreateCommandsCollector)> = room
 				.objects
 				.iter()
 				.filter(|(_, o)| o.created)
 				.filter(|(_, o)| o.access_groups.contains_any(&access_group))
 				.map(|(_, o)| {
-					let mut commands = Vec::new();
+					let mut commands = CreateCommandsCollector::new();
 					o.collect_create_commands(&mut commands);
 					(o.template, commands)
 				})
 				.collect();
 
 			for (template, commands) in commands_by_object {
-				room.send_to_user(&user_id, template, commands.iter());
+				room.send_to_user(&user_id, template, commands.as_slice());
 			}
 		}
 	}

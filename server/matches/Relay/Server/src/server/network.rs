@@ -205,7 +205,7 @@ mod tests {
 	use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 
 	use crate::room::template::config::UserTemplate;
-	use crate::room::User;
+	use crate::room::Member;
 	use crate::server::network::NetworkServer;
 	use crate::server::rooms::Rooms;
 
@@ -274,7 +274,7 @@ mod tests {
 			groups: Default::default(),
 			objects: Default::default(),
 		};
-		let user = User {
+		let user = Member {
 			id: 100,
 			connected: false,
 			attached: false,

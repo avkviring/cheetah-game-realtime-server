@@ -52,7 +52,7 @@ mod tests {
 			object_id: object_id.clone(),
 		};
 
-		room.current_user = Option::Some(user_a_id);
+		room.current_member_id = Option::Some(user_a_id);
 		command.clone().execute(&mut room, user_a_id);
 
 		assert!(matches!(room.get_object_mut(&object_id), None));

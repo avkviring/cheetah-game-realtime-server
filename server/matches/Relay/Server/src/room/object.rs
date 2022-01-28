@@ -28,6 +28,8 @@ pub struct GameObject {
 	pub compare_and_set_owners: HashMap<FieldId, RoomMemberId, FnvBuildHasher>,
 }
 
+pub type CreateCommandsCollector = heapless::Vec<S2CommandWithFieldInfo, 255>;
+
 impl GameObject {
 	pub fn new(id: GameObjectId) -> Self {
 		Self {
@@ -42,7 +44,16 @@ impl GameObject {
 		}
 	}
 
-	pub fn collect_create_commands(&self, commands: &mut Vec<S2CommandWithFieldInfo>) {
+	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector) {
+		match self.do_collect_create_commands(commands) {
+			Ok(_) => {}
+			Err(_) => {
+				log::error!("Collect create commands overflow {:?}", self);
+			}
+		}
+	}
+
+	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
 		commands.push(S2CommandWithFieldInfo {
 			field: Option::None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
@@ -50,11 +61,11 @@ impl GameObject {
 				template: self.template,
 				access_groups: self.access_groups,
 			}),
-		});
+		})?;
 
-		self.structures_to_commands(commands);
-		self.longs_to_commands(commands);
-		self.floats_to_commands(commands);
+		self.structures_to_commands(commands)?;
+		self.longs_to_commands(commands)?;
+		self.floats_to_commands(commands)?;
 
 		if self.created {
 			commands.push(S2CommandWithFieldInfo {
@@ -62,8 +73,9 @@ impl GameObject {
 				command: S2CCommand::Created(CreatedGameObjectCommand {
 					object_id: self.id.clone(),
 				}),
-			});
+			})?;
 		}
+		Ok(())
 	}
 }
 
@@ -87,7 +99,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
+	use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -103,26 +115,27 @@ mod tests {
 		object.floats.insert(2, 200.200);
 		object.structures.insert(1, vec![1, 2, 3]);
 
-		let mut commands = Vec::new();
+		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
 
-		assert!(matches!(commands.remove(0),
+		assert!(matches!(&commands[0],
 			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
 
-		assert!(matches!(commands.remove(0),
+		assert!(matches!(&commands[1],
 			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
 			if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
 
-		assert!(matches!(commands.remove(0),
+		assert!(matches!(&commands[2],
 			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id == 1 && c.value == 100));
 
-		assert!(matches!(commands.remove(0),
+		assert!(matches!(&commands[3],
 			S2CommandWithFieldInfo { field: Some(Field { id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
 			if c.object_id==id && c.field_id == 2 && (c.value - 200.200).abs() < 0.0001));
 
-		assert!(matches!(commands.remove(0),
-		S2CommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id));
+		assert!(
+			matches!(&commands[4],S2CommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id)
+		);
 	}
 
 	///
@@ -134,18 +147,18 @@ mod tests {
 		let mut object = GameObject::new(id.clone());
 		object.longs.insert(1, 100);
 
-		let mut commands = Vec::new();
+		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
+		assert_eq!(commands.len(), 2);
 		assert!(matches!(
-			commands.remove(0),
+			&commands[0],
 			S2CommandWithFieldInfo {
 				field: None,
 				command: S2CCommand::Create(_)
 			}
 		));
-		assert!(matches!(commands.remove(0),
+		assert!(matches!(&commands[1],
 			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id== 1 && c.value == 100));
-		assert_eq!(commands.len(), 0)
 	}
 }

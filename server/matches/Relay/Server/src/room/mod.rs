@@ -21,7 +21,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
-use crate::room::object::{GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
 
@@ -36,10 +36,10 @@ pub mod types;
 pub struct Room {
 	pub id: RoomId,
 	pub permission_manager: Rc<RefCell<PermissionManager>>,
-	pub users: HashMap<RoomMemberId, User, FnvBuildHasher>,
+	pub members: HashMap<RoomMemberId, Member, FnvBuildHasher>,
 	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ChannelType>,
-	current_user: Option<RoomMemberId>,
+	current_member_id: Option<RoomMemberId>,
 	pub user_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	#[cfg(test)]
@@ -52,7 +52,7 @@ pub struct Room {
 }
 
 #[derive(Debug)]
-pub struct User {
+pub struct Member {
 	pub id: RoomMemberId,
 	pub connected: bool,
 	pub attached: bool,
@@ -61,7 +61,7 @@ pub struct User {
 	pub out_commands: VecDeque<OutCommand>,
 }
 
-impl User {
+impl Member {
 	pub fn attach_to_room(&mut self) {
 		self.attached = true;
 	}
@@ -74,10 +74,10 @@ impl Room {
 	pub fn new(id: RoomId, template: RoomTemplate) -> Self {
 		let mut room = Room {
 			id,
-			users: FnvHashMap::default(),
+			members: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
-			current_user: Default::default(),
+			current_member_id: Default::default(),
 			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
 			#[cfg(test)]
 			object_id_generator: 0,
@@ -101,7 +101,7 @@ impl Room {
 	where
 		F: FnMut(&RoomMemberId, &mut VecDeque<OutCommand>),
 	{
-		for (user_id, user) in self.users.iter_mut() {
+		for (user_id, user) in self.members.iter_mut() {
 			collector(user_id, &mut user.out_commands);
 		}
 	}
@@ -110,20 +110,19 @@ impl Room {
 	/// Обработать входящие команды
 	///
 	pub fn execute_commands(&mut self, user_id: RoomMemberId, commands: &[CommandWithChannel]) {
-		let user = self.users.get_mut(&user_id);
+		let user = self.members.get_mut(&user_id);
 		match user {
 			None => {
 				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
 			}
 			Some(user) => {
-				self.current_user.replace(user_id);
+				self.current_member_id.replace(user_id);
 
 				let connected_now = !user.connected;
 				user.connected = true;
 
 				if connected_now {
-					self.current_channel
-						.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
+					self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
 					let user_id = user.id;
 					let template = user.template.clone();
 					self.on_user_connect(user_id, template);
@@ -145,14 +144,14 @@ impl Room {
 			}
 		}
 
-		self.current_user = None;
+		self.current_member_id = None;
 		self.current_channel = None;
 	}
 
 	pub fn register_user(&mut self, template: UserTemplate) -> RoomMemberId {
 		self.user_id_generator += 1;
 		let user_id = self.user_id_generator;
-		let user = User {
+		let user = Member {
 			id: user_id,
 			connected: false,
 			attached: false,
@@ -160,16 +159,16 @@ impl Room {
 			compare_and_sets_cleaners: Default::default(),
 			out_commands: Default::default(),
 		};
-		self.users.insert(user_id, user);
+		self.members.insert(user_id, user);
 		user_id
 	}
 
-	pub fn get_user(&self, user_id: RoomMemberId) -> Option<&User> {
-		self.users.get(&user_id)
+	pub fn get_user(&self, user_id: RoomMemberId) -> Option<&Member> {
+		self.members.get(&user_id)
 	}
 
-	pub fn get_user_mut(&mut self, user_id: RoomMemberId) -> Option<&mut User> {
-		self.users.get_mut(&user_id)
+	pub fn get_user_mut(&mut self, user_id: RoomMemberId) -> Option<&mut Member> {
+		self.members.get_mut(&user_id)
 	}
 
 	///
@@ -178,8 +177,8 @@ impl Room {
 	///
 	pub fn disconnect_user(&mut self, user_id: RoomMemberId) {
 		log::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
-		self.current_user.replace(user_id);
-		match self.users.remove(&user_id) {
+		self.current_member_id.replace(user_id);
+		match self.members.remove(&user_id) {
 			None => {}
 			Some(user) => {
 				let mut objects = Vec::new();
@@ -213,7 +212,7 @@ impl Room {
 	}
 
 	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
-		let current_user = self.current_user;
+		let current_user = self.current_member_id;
 		match self.objects.shift_remove(object_id) {
 			None => {
 				log::error!("[room({:?})] delete_object - object({:?}) not found", self.id, object_id);
@@ -223,13 +222,12 @@ impl Room {
 				self.send_to_users(
 					object.access_groups,
 					object.template,
-					[S2CommandWithFieldInfo {
+					&[S2CommandWithFieldInfo {
 						field: None,
 						command: S2CCommand::Delete(DeleteGameObjectCommand {
 							object_id: object.id.clone(),
 						}),
-					}]
-					.iter(),
+					}],
 					|user| {
 						if let Some(user_id) = current_user {
 							user.id != user_id
@@ -250,11 +248,11 @@ impl Room {
 	fn on_user_connect(&mut self, user_id: RoomMemberId, template: UserTemplate) {
 		template.objects.iter().for_each(|object_template| {
 			let object = object_template.create_user_game_object(user_id);
-			let mut commands = Vec::new();
+			let mut commands = CreateCommandsCollector::new();
 			object.collect_create_commands(&mut commands);
 			let template = object.template;
 			let access_groups = object.access_groups;
-			self.send_to_users(access_groups, template, commands.iter(), |_user| true);
+			self.send_to_users(access_groups, template, commands.as_slice(), |_user| true);
 			self.insert_object(object);
 		});
 	}
