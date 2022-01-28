@@ -16,9 +16,9 @@ impl ServerCommandExecutor for SetStructureCommand {
 			object.structures.insert(self.field_id, self.structure.to_vec());
 			Option::Some(S2CCommand::SetStructure(self.clone()))
 		};
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id,
+			field_id,
 			FieldType::Structure,
 			user_id,
 			Permission::Rw,

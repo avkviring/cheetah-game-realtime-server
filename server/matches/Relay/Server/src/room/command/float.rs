@@ -28,9 +28,9 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 			}))
 		};
 
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id,
+			field_id,
 			FieldType::Double,
 			user_id,
 			Permission::Rw,
@@ -49,9 +49,9 @@ impl ServerCommandExecutor for SetDoubleCommand {
 			object.floats.insert(self.field_id, self.value);
 			Option::Some(S2CCommand::SetDouble(self.clone()))
 		};
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id,
+			field_id,
 			FieldType::Double,
 			user_id,
 			Permission::Rw,

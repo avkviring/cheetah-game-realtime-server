@@ -13,9 +13,9 @@ impl ServerCommandExecutor for EventCommand {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.clone()));
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id,
+			field_id,
 			FieldType::Event,
 			user_id,
 			Permission::Rw,
@@ -31,9 +31,9 @@ impl ServerCommandExecutor for TargetEventCommand {
 		let object_id = self.event.object_id.clone();
 		let target = self.target;
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.event.clone()));
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id,
+			field_id,
 			FieldType::Event,
 			user_id,
 			Permission::Rw,

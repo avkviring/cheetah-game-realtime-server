@@ -20,10 +20,10 @@ impl Room {
 	/// - владелец объекта получает обновления если только данные доступны на запись другим клиентам
 	/// - владелец объекта имеет полный доступ к полям объекта, информация о правах игнорируется
 	///
-	pub fn change_data_and_send<T>(
+	pub fn validate_permission_and_send<T>(
 		&mut self,
 		game_object_id: &GameObjectId,
-		field_id: &FieldId,
+		field_id: FieldId,
 		field_type: FieldType,
 		command_owner_user: RoomMemberId,
 		permission: Permission,
@@ -67,7 +67,7 @@ impl Room {
 			let allow = current_user_is_object_owner
 				|| permission_manager.borrow_mut().get_permission(
 					object.template,
-					*field_id,
+					field_id,
 					field_type,
 					current_user_access_group,
 				) >= permission;
@@ -93,10 +93,7 @@ impl Room {
 
 				if let Some(command) = command {
 					let commands_with_field = S2CommandWithFieldInfo {
-						field: Some(FieldIdAndType {
-							field_id: *field_id,
-							field_type,
-						}),
+						field: Some(FieldIdAndType { field_id, field_type }),
 						command,
 					};
 					let commands = [commands_with_field];
@@ -112,7 +109,7 @@ impl Room {
 								// иначе никто другой не может вносит изменения в данное поле и
 								// отправлять себе как единственному источнику изменений избыточно
 								if object_owner == Option::Some(user.id) {
-									permission_manager.has_write_access(template, *field_id, field_type)
+									permission_manager.has_write_access(template, field_id, field_type)
 								} else {
 									true
 								}

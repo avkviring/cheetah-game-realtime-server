@@ -43,9 +43,9 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				value,
 			}))
 		};
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&self.object_id,
-			&self.field_id,
+			self.field_id,
 			FieldType::Long,
 			user_id,
 			Permission::Rw,
@@ -65,9 +65,9 @@ impl ServerCommandExecutor for SetLongCommand {
 			Option::Some(S2CCommand::SetLong(self.clone()))
 		};
 
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id,
+			field_id,
 			FieldType::Long,
 			user_id,
 			Permission::Rw,
@@ -105,9 +105,9 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			}
 		};
 
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id,
+			field_id,
 			FieldType::Long,
 			user_id,
 			Permission::Rw,

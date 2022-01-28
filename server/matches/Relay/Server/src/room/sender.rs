@@ -162,7 +162,7 @@ mod tests {
 
 		// владельцу разрешены любые операции
 		let mut executed = false;
-		room.change_data_and_send(&object_id, &field_id_1, FieldType::Long, user_1, Permission::Rw, None, |_| {
+		room.validate_permission_and_send(&object_id, field_id_1, FieldType::Long, user_1, Permission::Rw, None, |_| {
 			executed = true;
 			None
 		});
@@ -170,7 +170,7 @@ mod tests {
 
 		// RO - по-умолчанию для всех полей
 		let mut executed = false;
-		room.change_data_and_send(&object_id, &field_id_1, FieldType::Long, user_2, Permission::Ro, None, |_| {
+		room.validate_permission_and_send(&object_id, field_id_1, FieldType::Long, user_2, Permission::Ro, None, |_| {
 			executed = true;
 			None
 		});
@@ -178,7 +178,7 @@ mod tests {
 
 		// RW - по-умолчанию запрещен
 		let mut executed = false;
-		room.change_data_and_send(&object_id, &field_id_1, FieldType::Long, user_2, Permission::Rw, None, |_| {
+		room.validate_permission_and_send(&object_id, field_id_1, FieldType::Long, user_2, Permission::Rw, None, |_| {
 			executed = true;
 			None
 		});
@@ -186,7 +186,7 @@ mod tests {
 
 		// RW - разрешен для второго поля
 		let mut executed = false;
-		room.change_data_and_send(&object_id, &field_id_2, FieldType::Long, user_2, Permission::Rw, None, |_| {
+		room.validate_permission_and_send(&object_id, field_id_2, FieldType::Long, user_2, Permission::Rw, None, |_| {
 			executed = true;
 			None
 		});
@@ -217,9 +217,9 @@ mod tests {
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		let mut executed = false;
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id_1,
+			field_id_1,
 			field_type,
 			user_id,
 			Permission::Rw,
@@ -238,9 +238,9 @@ mod tests {
 
 		// изменяем поле, которое могут изменять другие пользователи
 		let mut executed = false;
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id,
-			&field_id_2,
+			field_id_2,
 			field_type,
 			user_id,
 			Permission::Rw,
@@ -277,7 +277,7 @@ mod tests {
 		let object_id = object.id.clone();
 
 		let mut executed = false;
-		room.change_data_and_send(&object_id, &0, FieldType::Long, user_2, Permission::Ro, None, |_| {
+		room.validate_permission_and_send(&object_id, 0, FieldType::Long, user_2, Permission::Ro, None, |_| {
 			executed = true;
 			None
 		});
@@ -420,9 +420,9 @@ mod tests {
 		room.mark_as_connected(user_1);
 		room.mark_as_connected(user_2);
 
-		room.change_data_and_send(
+		room.validate_permission_and_send(
 			&object_id.clone(),
-			&field_id,
+			field_id,
 			FieldType::Long,
 			user_1,
 			Permission::Rw,
