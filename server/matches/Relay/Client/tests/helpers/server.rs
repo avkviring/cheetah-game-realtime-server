@@ -18,7 +18,6 @@ use cheetah_matches_relay_common::room::RoomId;
 ///
 #[derive(Debug, Default)]
 pub struct IntegrationTestServerBuilder {
-	object_id_generator: u32,
 	template: RoomTemplate,
 }
 

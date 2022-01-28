@@ -16,30 +16,31 @@ pub mod helpers;
 
 #[test]
 fn should_drop() {
-	// let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
-	//
-	// let object_id = helper.create_user_object(client1);
-	// helper.wait_udp();
-	//
-	// ffi::command::long_value::set_long_value_listener(client2, should_drop_listener);
-	// ffi::command::room::attach_to_room(client2);
-	// ffi::client::set_drop_emulation(client2, 0.5, 0);
-	//
-	// ffi::channel::set_channel(client1, Channel::UnreliableUnordered, 0);
-	// for _ in 0..200000 {
-	// 	ffi::command::long_value::inc_long_value(client1, &object_id, 1, 1);
-	// }
-	// helper.wait_udp();
-	// helper.wait_udp();
-	// helper.wait_udp();
-	// ffi::client::receive(client2);
-	// dbg!(SHOULD_DROP_SET.lock().unwrap().as_ref());
-	// assert!(
-	// 	matches!(SHOULD_DROP_SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if
-	// 		*field_id ==
-	// 	1 && *value<200000)
-	// );
-	// assert!(matches!(SHOULD_DROP_SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value>0 ));
+	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+
+	let object_id = helper.create_user_object(client1);
+	helper.wait_udp();
+
+	ffi::command::long_value::set_long_value_listener(client2, should_drop_listener);
+	ffi::command::room::attach_to_room(client2);
+	ffi::client::set_drop_emulation(client2, 0.1, 0);
+	helper.wait_udp();
+
+	ffi::channel::set_channel(client1, Channel::ReliableOrdered, 0);
+	const COMMAND_COUNTS: usize = 200000;
+	for _ in 0..COMMAND_COUNTS {
+		ffi::command::long_value::inc_long_value(client1, &object_id, 1, 1);
+	}
+	helper.wait_udp();
+	ffi::client::receive(client2);
+
+	match SHOULD_DROP_SET.lock().unwrap().as_ref() {
+		None => assert!(false, "SHOULD_DROP_SET is None"),
+		Some(counter) => {
+			assert!(counter.1 < COMMAND_COUNTS as i64, "counter should less 200_000 {}", counter.1);
+			assert!(counter.1 > 0, "counter should more zero {}", counter.1);
+		}
+	}
 }
 
 lazy_static! {
