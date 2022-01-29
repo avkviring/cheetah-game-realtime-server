@@ -21,7 +21,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) {
 				.map(|(_, o)| {
 					let mut commands = CreateCommandsCollector::new();
 					o.collect_create_commands(&mut commands);
-					(o.template, commands)
+					(o.template_id, commands)
 				})
 				.clone()
 				.for_each(|v| command_collector.push(v));

@@ -56,19 +56,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 			);
 			return;
 		}
-
-		let object = GameObject {
-			id: self.object_id.clone(),
-			template: self.template,
-			access_groups: groups,
-			created: false,
-			longs: Default::default(),
-			floats: Default::default(),
-			structures: Default::default(),
-			compare_and_set_owners: Default::default(),
-		};
-
-		room.insert_object(object);
+		room.insert_object(GameObject::new(self.object_id.clone(), self.template, groups, false));
 	}
 }
 
@@ -99,7 +87,7 @@ mod tests {
 		assert!(matches!(
 			room.get_object_mut(&object_id),
 			Some(object)
-				if object.template == command.template
+				if object.template_id == command.template
 				&& object.access_groups == command.access_groups
 		));
 	}
@@ -164,7 +152,7 @@ mod tests {
 		let access_groups = AccessGroups(0b11);
 		let (mut room, user_id) = setup(access_groups);
 		let object = room.create_object(user_id, access_groups);
-		object.template = 777;
+		object.template_id = 777;
 		let object_id = object.id.clone();
 		room.out_commands.clear();
 		let command = CreateGameObjectCommand {
@@ -175,7 +163,7 @@ mod tests {
 
 		command.execute(&mut room, user_id);
 
-		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template == 777));
+		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template_id == 777));
 	}
 
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {

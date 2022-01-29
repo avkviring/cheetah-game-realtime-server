@@ -1,7 +1,4 @@
 use std::collections::HashMap;
-
-use fnv::FnvBuildHasher;
-
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
@@ -25,20 +22,23 @@ impl From<&GameObject> for admin::DumpObject {
 				GameObjectOwner::User(id) => Option::Some(*id as u32),
 			},
 			id: source.id.id,
-			template: source.template as u32,
+			template: source.template_id as u32,
 			groups: source.access_groups.0,
 			created: source.created,
-			longs: from(&source.longs),
-			floats: from(&source.floats),
-			compare_and_set_owners: from(&source.compare_and_set_owners),
+			longs: from_heapless(source.get_longs()),
+			floats: from_heapless(source.get_floats()),
+			compare_and_set_owners: from_heapless(&source.compare_and_set_owners),
 			structures: from(&source.structures),
 		}
 	}
 }
 
-fn from<IN: Clone, OUT: From<IN>>(source: &HashMap<FieldId, IN, FnvBuildHasher>) -> HashMap<u32, OUT> {
-	let cloned = (*source).clone();
-	cloned.into_iter().map(|(k, v)| (k as u32, OUT::from(v))).collect()
+fn from_heapless<IN: Clone, OUT: From<IN>, const N: usize>(source: &heapless::FnvIndexMap<FieldId, IN, N>) -> HashMap<u32, OUT> {
+	source.iter().map(|(k, v)| (*k as u32, OUT::from(v.clone()))).collect()
+}
+
+fn from<IN: Clone, OUT: From<IN>, H>(source: &HashMap<FieldId, IN, H>) -> HashMap<u32, OUT> {
+	source.iter().map(|(k, v)| (*k as u32, OUT::from(v.clone()))).collect()
 }
 
 impl From<&Member> for admin::DumpUser {

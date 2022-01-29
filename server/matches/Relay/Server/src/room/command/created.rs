@@ -15,7 +15,7 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 				// объект полностью загружен - теперь его надо загрузить остальным клиентам
 				let mut commands = CreateCommandsCollector::new();
 				object.collect_create_commands(&mut commands);
-				let template = object.template;
+				let template = object.template_id;
 				room.send_to_members(groups, template, commands.as_slice(), |user| user.id != user_id)
 			} else {
 				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);

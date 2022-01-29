@@ -16,31 +16,55 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 #[derive(Debug, Clone)]
 pub struct GameObject {
 	pub id: GameObjectId,
-	pub template: GameObjectTemplateId,
+	pub template_id: GameObjectTemplateId,
 	pub access_groups: AccessGroups,
 	///
 	/// Объект полностью создан
 	///
 	pub created: bool,
-	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
-	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
+	longs: heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT>,
+	floats: heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT>,
 	pub structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher>,
-	pub compare_and_set_owners: HashMap<FieldId, RoomMemberId, FnvBuildHasher>,
+	pub compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
-
+pub const MAX_FIELD_COUNT: usize = 64;
 pub type CreateCommandsCollector = heapless::Vec<S2CommandWithFieldInfo, 255>;
 
 impl GameObject {
-	pub fn new(id: GameObjectId) -> Self {
+	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, created: bool) -> Self {
 		Self {
 			id,
-			template: 0,
-			access_groups: Default::default(),
-			created: false,
+			template_id,
+			access_groups,
+			created,
 			longs: Default::default(),
 			floats: Default::default(),
 			structures: Default::default(),
 			compare_and_set_owners: Default::default(),
+		}
+	}
+
+	pub fn get_longs(&self) -> &heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT> {
+		&self.longs
+	}
+	pub fn get_long(&self, field_id: &FieldId) -> Option<&i64> {
+		self.longs.get(field_id)
+	}
+	pub fn set_long(&mut self, field_id: FieldId, value: i64) {
+		if self.longs.insert(field_id, value).is_err() {
+			log::error!("Long count fields overflow")
+		}
+	}
+
+	pub fn get_floats(&self) -> &heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT> {
+		&self.floats
+	}
+	pub fn get_float(&self, field_id: &FieldId) -> Option<&f64> {
+		self.floats.get(field_id)
+	}
+	pub fn set_float(&mut self, field_id: FieldId, value: f64) {
+		if self.floats.insert(field_id, value).is_err() {
+			log::error!("Long count fields overflow")
 		}
 	}
 
@@ -58,7 +82,7 @@ impl GameObject {
 			field: Option::None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id.clone(),
-				template: self.template,
+				template: self.template_id,
 				access_groups: self.access_groups,
 			}),
 		})?;
@@ -107,19 +131,16 @@ mod tests {
 	#[test]
 	pub fn should_collect_command() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id.clone());
-		object.template = 55;
-		object.access_groups = AccessGroups(63);
-		object.created = true;
-		object.longs.insert(1, 100);
-		object.floats.insert(2, 200.200);
+		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
+		object.set_long(1, 100);
+		object.set_float(2, 200.200);
 		object.structures.insert(1, vec![1, 2, 3]);
 
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
 
 		assert!(matches!(&commands[0],
-			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template && c.access_groups == object.access_groups));
+			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template_id && c.access_groups == object.access_groups));
 
 		assert!(matches!(&commands[1],
 			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
@@ -144,8 +165,8 @@ mod tests {
 	#[test]
 	pub fn should_collect_command_for_not_created_object() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id.clone());
-		object.longs.insert(1, 100);
+		let mut object = GameObject::new(id.clone(), 0, Default::default(), false);
+		object.set_long(1, 100);
 
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);

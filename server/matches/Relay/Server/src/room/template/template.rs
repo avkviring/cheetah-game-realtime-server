@@ -1,8 +1,3 @@
-use std::collections::HashMap;
-
-use fnv::FnvBuildHasher;
-
-use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -22,31 +17,15 @@ impl GameObjectTemplate {
 			panic!("0 is forbidden for game object id");
 		}
 
-		let mut longs: HashMap<FieldId, i64, FnvBuildHasher> = Default::default();
-		self.fields.longs.iter().for_each(|(k, v)| {
-			longs.insert(*k, *v);
-		});
+		let mut object = GameObject::new(id, self.template, self.groups, true);
 
-		let mut floats: HashMap<FieldId, f64, FnvBuildHasher> = Default::default();
-		self.fields.floats.iter().for_each(|(k, v)| {
-			floats.insert(*k, *v);
-		});
-
-		let mut structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher> = Default::default();
+		self.fields.longs.iter().for_each(|(k, v)| object.set_long(*k, *v));
+		self.fields.floats.iter().for_each(|(k, v)| object.set_float(*k, *v));
 		self.fields.structures.iter().for_each(|(k, v)| {
-			structures.insert(*k, v.clone());
+			object.structures.insert(*k, v.clone());
 		});
 
-		GameObject {
-			id,
-			template: self.template,
-			access_groups: self.groups,
-			created: true,
-			longs,
-			floats,
-			structures,
-			compare_and_set_owners: Default::default(),
-		}
+		object
 	}
 }
 
@@ -87,10 +66,10 @@ mod tests {
 		let object = config_object.clone().to_root_game_object();
 		assert_eq!(config_object.id, object.id.id);
 		assert!(matches!(object.id.owner, GameObjectOwner::Room));
-		assert_eq!(config_object.template, object.template);
+		assert_eq!(config_object.template, object.template_id);
 		assert_eq!(config_object.groups, object.access_groups);
-		assert_eq!(config_object.fields.longs[&0], object.longs[&0]);
-		assert!((config_object.fields.floats[&1] - object.floats[&1]).abs() < 0.001);
+		assert_eq!(config_object.fields.longs[&0], object.get_long(&0).cloned().unwrap());
+		assert!((config_object.fields.floats[&1] - object.get_float(&1).cloned().unwrap()).abs() < 0.001);
 		assert_eq!(config_object.fields.structures[&1], object.structures[&1]);
 	}
 }

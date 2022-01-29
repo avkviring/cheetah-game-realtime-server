@@ -353,7 +353,7 @@ mod tests {
 		room.mark_as_connected(user_target_id);
 		let object = room.create_object(user_target_id, groups);
 		object.created = true;
-		object.template = object_template;
+		object.template_id = object_template;
 		let object_id = object.id.clone();
 
 		let commands = vec![
@@ -422,7 +422,7 @@ mod tests {
 
 		let object = room.create_object(user_1, access_groups);
 		object.created = true;
-		object.template = object_template;
+		object.template_id = object_template;
 		let object_id = object.id.clone();
 
 		let commands = [

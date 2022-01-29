@@ -216,7 +216,7 @@ impl CommandTracerSessions {
 								log::error!("CommandTracer: template not found for {:?}", command);
 								None
 							}
-							Some(object) => Some(object.template),
+							Some(object) => Some(object.template_id),
 						},
 						Some(template) => Some(template),
 					};

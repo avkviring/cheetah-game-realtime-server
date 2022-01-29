@@ -224,7 +224,7 @@ impl Room {
 			Some(object) => {
 				self.send_to_members(
 					object.access_groups,
-					object.template,
+					object.template_id,
 					&[S2CommandWithFieldInfo {
 						field: None,
 						command: S2CCommand::Delete(DeleteGameObjectCommand {
@@ -253,7 +253,7 @@ impl Room {
 			let object = object_template.create_user_game_object(user_id);
 			let mut commands = CreateCommandsCollector::new();
 			object.collect_create_commands(&mut commands);
-			let template = object.template;
+			let template = object.template_id;
 			let access_groups = object.access_groups;
 			self.send_to_members(access_groups, template, commands.as_slice(), |_user| true);
 			self.insert_object(object);
@@ -293,8 +293,7 @@ mod tests {
 		pub fn create_object(&mut self, owner: RoomMemberId, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, GameObjectOwner::User(owner));
-			let mut object = GameObject::new(id.clone());
-			object.access_groups = access_groups;
+			let object = GameObject::new(id.clone(), 0, access_groups, false);
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
 		}
@@ -479,29 +478,26 @@ mod tests {
 		let (template, user_template) = create_template();
 		let mut room = Room::from_template(template);
 		room.register_user(user_template);
-		room.insert_object(GameObject {
-			id: GameObjectId::new(100, GameObjectOwner::Room),
-			template: 0,
-			access_groups: Default::default(),
-			created: false,
-			longs: Default::default(),
-			floats: Default::default(),
-			compare_and_set_owners: Default::default(),
-			structures: Default::default(),
-		});
+		room.insert_object(GameObject::new(
+			GameObjectId::new(100, GameObjectOwner::Room),
+			0,
+			Default::default(),
+			false,
+		));
 
-		room.insert_object(GameObject {
-			id: GameObjectId::new(5, GameObjectOwner::Room),
-			template: 0,
-			access_groups: Default::default(),
-			created: false,
-			longs: Default::default(),
-			floats: Default::default(),
-			compare_and_set_owners: Default::default(),
-			structures: Default::default(),
-		});
+		room.insert_object(GameObject::new(
+			GameObjectId::new(5, GameObjectOwner::Room),
+			0,
+			Default::default(),
+			false,
+		));
 
-		room.insert_object(GameObject::new(GameObjectId::new(200, GameObjectOwner::Room)));
+		room.insert_object(GameObject::new(
+			GameObjectId::new(200, GameObjectOwner::Room),
+			0,
+			Default::default(),
+			false,
+		));
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {

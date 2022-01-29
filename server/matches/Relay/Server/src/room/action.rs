@@ -63,7 +63,7 @@ impl Room {
 			let allow = is_creator_object_owner
 				|| permission_manager
 					.borrow_mut()
-					.get_permission(object.template, field, creator_access_group)
+					.get_permission(object.template_id, field, creator_access_group)
 					>= permission;
 
 			if !allow {
@@ -82,7 +82,7 @@ impl Room {
 			// отправляем команду только для созданного объекта
 			if object.created {
 				let groups = object.access_groups;
-				let template = object.template;
+				let template = object.template_id;
 
 				if let Some(command) = command {
 					let commands_with_field = S2CommandWithFieldInfo {
