@@ -1,4 +1,3 @@
-use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::object::CreateCommandsCollector;
@@ -12,8 +11,10 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) {
 		Some(member) => {
 			member.attach_to_room();
 			let access_group = member.template.groups;
-			let commands_by_object: Vec<(GameObjectTemplateId, CreateCommandsCollector)> = room
-				.objects
+			let command_collector_rc = room.tmp_command_collector.clone();
+			let mut command_collector = (*command_collector_rc).borrow_mut();
+			command_collector.clear();
+			room.objects
 				.iter()
 				.filter(|(_, o)| o.created)
 				.filter(|(_, o)| o.access_groups.contains_any(&access_group))
@@ -22,10 +23,11 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) {
 					o.collect_create_commands(&mut commands);
 					(o.template, commands)
 				})
-				.collect();
+				.clone()
+				.for_each(|v| command_collector.push(v));
 
-			for (template, commands) in commands_by_object {
-				room.send_to_member(&member_id, template, commands.as_slice());
+			for (template, commands) in command_collector.iter() {
+				room.send_to_member(&member_id, *template, commands.as_slice());
 			}
 		}
 	}

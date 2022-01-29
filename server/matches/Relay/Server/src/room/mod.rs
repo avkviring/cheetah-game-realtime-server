@@ -8,7 +8,7 @@ use indexmap::map::IndexMap;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
-use cheetah_matches_relay_common::constants::FieldId;
+use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
@@ -42,6 +42,8 @@ pub struct Room {
 	current_member_id: Option<RoomMemberId>,
 	pub user_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
+	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, CreateCommandsCollector)>>>,
+
 	#[cfg(test)]
 	object_id_generator: u32,
 	#[cfg(test)]
@@ -85,6 +87,7 @@ impl Room {
 			out_commands: Default::default(),
 			user_id_generator: 0,
 			command_trace_session: Default::default(),
+			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 		};
 
 		template.objects.into_iter().for_each(|object| {
