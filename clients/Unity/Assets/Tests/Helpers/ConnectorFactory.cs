@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Cheetah.Platform;
 #if UNITY_EDITOR
@@ -34,6 +35,10 @@ namespace Tests.Helpers
                 PlatformApplication.ImageVersion = null;
                 ClusterConnector = CreateLocalConnector();
 #endif
+
+#if UNITY_IOS                
+                ClusterConnector = CreateLocalConnector();
+#endif
             }
             else
             {
@@ -56,6 +61,8 @@ namespace Tests.Helpers
 #endif
                 }
             }
+
+            if (ClusterConnector == null) throw new Exception("Cluster connection not created");
         }
 
         private static ClusterConnector CreateLocalConnector()
