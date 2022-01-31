@@ -36,6 +36,7 @@ jobs:
             server/target
           key: cargo-ios-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: cargo-ios-
+      - run: rustup target add aarch64-apple-ios
       - name: Build client
         run: cd server && cargo build --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-apple-ios --release
       - name: Upload artifact
