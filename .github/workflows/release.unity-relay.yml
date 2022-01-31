@@ -24,6 +24,26 @@ jobs:
           name: macos-build
           path: |
             server/target/release/libcheetah_matches_relay_client.dylib
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            server/target
+          key: cargo-ios-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-ios-
+      - name: Build client
+        run: cd server && cargo build --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-apple-ios --release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ios-build
+          path: |
+            server/target/aarch64-apple-ios/release/libcheetah_matches_relay_client.a
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +112,7 @@ jobs:
             server/target/debug/*.pdb
   publish-unity-package:
     runs-on: ubuntu-latest
-    needs: [ build-mac, build-linux, build-android, build-windows ]
+    needs: [ build-ios, build-mac, build-linux, build-android, build-windows ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
@@ -112,6 +132,7 @@ jobs:
           name: windows-build
           path: windows-build
       - run: cp macos-build/libcheetah_matches_relay_client.dylib clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.bundle
+      - run: cp ios-build/libcheetah_matches_relay_client.a clients/Unity/Packages/games.cheetah.matches.relay/iOS/libcheetah_matches_relay_client.a
       - run: cp linux-build/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
       - run: cp windows-build/cheetah_matches_relay_client.dll clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.dll
       - run: cp windows-build/cheetah_matches_relay_client.pdb clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.pdb
