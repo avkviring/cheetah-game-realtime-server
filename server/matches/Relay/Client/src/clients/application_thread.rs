@@ -167,7 +167,7 @@ impl ApplicationThreadClient {
 
 	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
-		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::User(self.user_id));
+		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
 		self.send(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,

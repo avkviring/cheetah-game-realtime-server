@@ -1,7 +1,11 @@
+use thiserror::Error;
+
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::Room;
+use crate::room::action::DoActionAndSendCommandsError;
+use crate::room::{Room, RoomError};
 
 pub mod create;
 pub mod created;
@@ -16,18 +20,34 @@ pub mod structure;
 /// Выполнение серверной команды
 ///
 pub trait ServerCommandExecutor {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId);
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError>;
 }
 
-pub fn trace_c2s_command(command: &str, room: &Room, user_id: RoomMemberId, message: String) {
-	log::trace!("C2S {:<10} : room {} : client {} : {}", command, room.id, user_id, message);
+#[derive(Error, Debug)]
+pub enum ExecuteServerCommandError {
+	#[error("{:?}",.0)]
+	Error(String),
+
+	#[error("{error:?}")]
+	RoomError {
+		#[from]
+		error: RoomError,
+	},
+
+	#[error("Member {member_id:?} not owner for game object {object_id:?}")]
+	MemberNotOwnerGameObject {
+		object_id: GameObjectId,
+		member_id: RoomMemberId,
+	},
+
+	#[error("{:?}",.error)]
+	DoActionAndSendCommandsError {
+		#[from]
+		error: DoActionAndSendCommandsError,
+	},
 }
 
-pub fn error_c2s_command(command: &str, room: &Room, user_id: RoomMemberId, message: String) {
-	log::error!("C2S {:<10} : room {} : client {} : {}", command, room.id, user_id, message);
-}
-
-pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) {
+pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 	match command {
 		C2SCommand::Create(command) => command.execute(room, user_id),
 		C2SCommand::SetLong(command) => command.execute(room, user_id),

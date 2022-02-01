@@ -1,7 +1,13 @@
+use thiserror::Error;
+
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+
+use cheetah_matches_relay_common::constants::GameObjectTemplateId;
+
+use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
@@ -26,7 +32,8 @@ impl Room {
 		permission: Permission,
 		target: Option<RoomMemberId>,
 		action: T,
-	) where
+	) -> Result<(), DoActionAndSendCommandsError>
+	where
 		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
 	{
 		let room_id = self.id;
@@ -34,7 +41,10 @@ impl Room {
 		let creator_access_group = match self.members.get(&creator_id) {
 			None => {
 				log::error!("[room({})] user({}) not found", self.id, creator_id);
-				return;
+				return Result::Err(DoActionAndSendCommandsError::MemberNotFound {
+					room_id: self.id,
+					member_id: creator_id,
+				});
 			}
 			Some(member) => member.template.groups,
 		};
@@ -42,17 +52,16 @@ impl Room {
 		if let Some(object) = self.get_object_mut(game_object_id) {
 			// проверяем группу доступа
 			if !object.access_groups.contains_any(&creator_access_group) {
-				log::error!(
-					"[room({})] user({}) group({:?}) don't allow access to object ({:?})",
+				return Result::Err(DoActionAndSendCommandsError::MemberCannotAccessToObject {
 					room_id,
-					creator_id,
-					creator_access_group,
-					object.access_groups
-				);
-				return;
+					member_id: creator_id,
+					object_id: game_object_id.clone(),
+					member_access_group: creator_access_group,
+					object_access_group: object.access_groups,
+				});
 			}
 
-			let object_owner = if let GameObjectOwner::User(owner) = object.id.owner {
+			let object_owner = if let GameObjectOwner::Member(owner) = object.id.owner {
 				Option::Some(owner)
 			} else {
 				Option::None
@@ -67,15 +76,13 @@ impl Room {
 					>= permission;
 
 			if !allow {
-				log::error!(
-					"[room({:?})] user({:?}) has not permissions({:?}) for action with object({:?}), field({:?})",
-					self.id,
-					creator_id,
-					permission,
-					game_object_id,
-					field
-				);
-				return;
+				return Result::Err(DoActionAndSendCommandsError::MemberCannotAccessToObjectField {
+					room_id,
+					member_id: creator_id,
+					object_id: object.id.clone(),
+					template_id: object.template_id,
+					field,
+				});
 			}
 
 			let command = action(object);
@@ -112,7 +119,45 @@ impl Room {
 				};
 			}
 		} else {
-			log::error!("room[({:?})] do_action object not found ({:?}) ", self.id, game_object_id);
+			return Result::Err(DoActionAndSendCommandsError::GameObjectNotFound {
+				room_id: self.id,
+				object_id: game_object_id.clone(),
+			});
 		}
+
+		Ok(())
 	}
+}
+
+#[derive(Error, Debug)]
+pub enum DoActionAndSendCommandsError {
+	#[error("Member with id {member_id:?} not found in room {room_id:?} ")]
+	MemberNotFound { room_id: RoomId, member_id: RoomMemberId },
+
+	#[error(
+		"Member {member_id:?} with group {member_access_group:?} cannot access to \
+	object {object_id:?} with group {object_access_group:?} in room {room_id:?}"
+	)]
+	MemberCannotAccessToObject {
+		room_id: RoomId,
+		member_id: RoomMemberId,
+		object_id: GameObjectId,
+		member_access_group: AccessGroups,
+		object_access_group: AccessGroups,
+	},
+
+	#[error(
+		"Member {member_id:?} cannot access to field {field:?} in object {object_id:?} with \
+		template {template_id:?} in room {room_id:?}"
+	)]
+	MemberCannotAccessToObjectField {
+		room_id: RoomId,
+		member_id: RoomMemberId,
+		object_id: GameObjectId,
+		template_id: GameObjectTemplateId,
+		field: Field,
+	},
+
+	#[error("Game object with id {object_id:?} not found in room {room_id:?} ")]
+	GameObjectNotFound { room_id: RoomId, object_id: GameObjectId },
 }

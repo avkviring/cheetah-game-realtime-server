@@ -20,7 +20,7 @@ impl From<&GameObject> for admin::DumpObject {
 		Self {
 			owner_user_id: match &source.id.owner {
 				GameObjectOwner::Room => Option::None,
-				GameObjectOwner::User(id) => Option::Some(*id as u32),
+				GameObjectOwner::Member(id) => Option::Some(*id as u32),
 			},
 			id: source.id.id,
 			template: source.template_id as u32,
@@ -51,7 +51,7 @@ impl From<&Member> for admin::DumpUser {
 					game_object_id: object_id.id,
 					game_object_owner_user: match object_id.owner {
 						GameObjectOwner::Room => u32::MAX,
-						GameObjectOwner::User(id) => id as u32,
+						GameObjectOwner::Member(id) => id as u32,
 					},
 					field_id: *field_id as u32,
 					reset: *value,

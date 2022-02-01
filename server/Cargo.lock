@@ -635,6 +635,7 @@ dependencies = [
  "serde_json",
  "stderrlog",
  "strum_macros",
+ "thiserror",
  "tokio",
  "tokio-stream",
  "tonic",

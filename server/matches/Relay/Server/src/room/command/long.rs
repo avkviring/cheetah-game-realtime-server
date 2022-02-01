@@ -11,13 +11,13 @@ use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::ServerCommandExecutor;
+use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
 use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 		let action = |object: &mut GameObject| {
 			let value = match object.get_long(&self.field_id) {
 				Some(value) => match (*value).checked_add(self.increment) {
@@ -55,12 +55,13 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		);
+		)?;
+		Ok(())
 	}
 }
 
 impl ServerCommandExecutor for SetLongCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -79,12 +80,13 @@ impl ServerCommandExecutor for SetLongCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		);
+		)?;
+		Ok(())
 	}
 }
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 		let object_id = self.object_id.clone();
 		let field_id = self.field_id;
 		let reset = self.reset;
@@ -121,7 +123,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		);
+		)?;
 
 		if *(is_set.borrow()) {
 			room.get_member_mut(user_id)
@@ -129,6 +131,8 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 				.compare_and_sets_cleaners
 				.insert((object_id, field_id), reset);
 		}
+
+		Ok(())
 	}
 }
 
@@ -216,7 +220,7 @@ mod tests {
 			field_id: 10,
 			value: 100,
 		};
-		command.clone().execute(&mut room, user);
+		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.get_long(&10).unwrap(), 100);
@@ -233,8 +237,8 @@ mod tests {
 			field_id: 10,
 			increment: 100,
 		};
-		command.clone().execute(&mut room, user);
-		command.execute(&mut room, user);
+		command.clone().execute(&mut room, user).unwrap();
+		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.get_long(&10).unwrap(), 200);
@@ -258,8 +262,8 @@ mod tests {
 			field_id: 10,
 			increment: i64::MAX,
 		};
-		command.clone().execute(&mut room, user);
-		command.execute(&mut room, user);
+		command.clone().execute(&mut room, user).unwrap();
+		command.execute(&mut room, user).unwrap();
 	}
 
 	///
@@ -275,7 +279,7 @@ mod tests {
 			new: 100,
 			reset: 0,
 		};
-		command1.clone().execute(&mut room, user1_id);
+		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
 			command1.new
@@ -288,7 +292,7 @@ mod tests {
 			new: 200,
 			reset: 0,
 		};
-		command2.execute(&mut room, user1_id);
+		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
 			command1.new
@@ -301,7 +305,7 @@ mod tests {
 			new: 300,
 			reset: 0,
 		};
-		command3.clone().execute(&mut room, user1_id);
+		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
 			command3.new
@@ -322,7 +326,7 @@ mod tests {
 		};
 
 		room.out_commands.clear();
-		command.clone().execute(&mut room, user1_id);
+		command.execute(&mut room, user1_id).unwrap();
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c.value==command.new));
 	}
 
@@ -339,7 +343,7 @@ mod tests {
 			new: 100,
 			reset: 555,
 		};
-		command.clone().execute(&mut room, user1_id);
+		command.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().get_long(&command.field_id).unwrap(),
 			command.new
@@ -373,8 +377,8 @@ mod tests {
 			new: 200,
 			reset: 1555,
 		};
-		command_1.execute(&mut room, user1_id);
-		command_2.execute(&mut room, user2_id);
+		command_1.execute(&mut room, user1_id).unwrap();
+		command_2.execute(&mut room, user2_id).unwrap();
 
 		room.disconnect_user(user1_id);
 		assert_eq!(

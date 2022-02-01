@@ -157,7 +157,7 @@ impl CommandContext {
 			return CreatorSource::New;
 		}
 
-		if let GameObjectOwner::User(user_id) = self.object_id.as_ref().unwrap().owner {
+		if let GameObjectOwner::Member(user_id) = self.object_id.as_ref().unwrap().owner {
 			if user_id == creator {
 				return CreatorSource::AsObjectOwner;
 			}
@@ -208,7 +208,7 @@ impl CommandContext {
 				None => Err(CommandContextError::ContextNotContainsObjectId),
 				Some(object_id) => match &object_id.owner {
 					GameObjectOwner::Room => Err(CommandContextError::ContextNotContainsObjectId),
-					GameObjectOwner::User(user) => {
+					GameObjectOwner::Member(user) => {
 						self.creator.replace(*user);
 						Ok(Some(*user))
 					}
@@ -366,7 +366,7 @@ pub mod tests {
 				size: 3, // flags+creator
 			},
 			Params {
-				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Member(5))),
 				field_id: Some(5),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
@@ -375,7 +375,7 @@ pub mod tests {
 				size: 4, // flags + object_id
 			},
 			Params {
-				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Member(5))),
 				field_id: Some(10),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
@@ -384,7 +384,7 @@ pub mod tests {
 				size: 3, // flags + field_id
 			},
 			Params {
-				object_id: Some(GameObjectId::new(0, GameObjectOwner::User(5))),
+				object_id: Some(GameObjectId::new(0, GameObjectOwner::Member(5))),
 				field_id: Some(10),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
@@ -419,7 +419,7 @@ pub mod tests {
 				size: 2, //flags + пользователь не поменялся
 			},
 			Params {
-				object_id: Some(GameObjectId::new(100, GameObjectOwner::User(7))),
+				object_id: Some(GameObjectId::new(100, GameObjectOwner::Member(7))),
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
@@ -428,7 +428,7 @@ pub mod tests {
 				size: 2 + 2, //flags + игровой объект
 			},
 			Params {
-				object_id: Some(GameObjectId::new(100, GameObjectOwner::User(7))),
+				object_id: Some(GameObjectId::new(100, GameObjectOwner::Member(7))),
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),

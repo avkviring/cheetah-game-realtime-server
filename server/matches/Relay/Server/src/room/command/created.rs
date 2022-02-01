@@ -1,12 +1,12 @@
 use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::ServerCommandExecutor;
+use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
 use crate::room::object::CreateCommandsCollector;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 		let room_id = room.id;
 		if let Some(object) = room.get_object_mut(&self.object_id) {
 			if !object.created {
@@ -18,9 +18,13 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 				let template = object.template_id;
 				room.send_to_members(groups, template, commands.as_slice(), |user| user.id != user_id)
 			} else {
-				log::error!("room[({:?})] object ({:?}) already created", room_id, object.id);
+				return Err(ExecuteServerCommandError::Error(format!(
+					"room[({:?})] object ({:?}) already created",
+					room_id, object.id
+				)));
 			}
 		}
+		Ok(())
 	}
 }
 
@@ -30,7 +34,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 
 	use crate::room::command::tests::setup_two_players;
-	use crate::room::command::ServerCommandExecutor;
+	use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
 
 	///
 	/// - Команда должна приводить к рассылки оповещения для пользователей
@@ -39,12 +43,12 @@ mod tests {
 	#[test]
 	pub fn should_send_commands() {
 		let (mut room, object_id, user1, user2) = setup_two_players();
-		room.mark_as_connected(user1);
-		room.mark_as_connected(user2);
+		room.mark_as_connected(user1).unwrap();
+		room.mark_as_connected(user2).unwrap();
 		let command = CreatedGameObjectCommand {
 			object_id: object_id.clone(),
 		};
-		command.execute(&mut room, user1);
+		command.execute(&mut room, user1).unwrap();
 
 		assert!(room.get_user_out_commands(user1).is_empty());
 		assert!(matches!(
@@ -68,7 +72,7 @@ mod tests {
 			object_id: object_id.clone(),
 		};
 		room.out_commands.clear();
-		command.execute(&mut room, user1);
+		command.execute(&mut room, user1).unwrap();
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert!(object.created);
@@ -87,8 +91,11 @@ mod tests {
 			object_id: object_id.clone(),
 		};
 		room.out_commands.clear();
-		command.execute(&mut room, user1);
 
+		assert!(matches!(
+			command.execute(&mut room, user1),
+			Err(ExecuteServerCommandError::Error(_))
+		));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }

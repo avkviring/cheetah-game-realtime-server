@@ -48,7 +48,7 @@ impl PermissionManager {
 			for field in &template.fields {
 				let key = PermissionFieldKey {
 					template: template.template,
-					field: field.field.clone(),
+					field: field.field,
 				};
 
 				if field.rules.iter().any(|t| t.permission > Permission::Ro) {

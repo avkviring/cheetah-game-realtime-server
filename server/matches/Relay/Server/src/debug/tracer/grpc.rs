@@ -113,7 +113,7 @@ impl From<TracedCommand> for admin::Command {
 				GameObjectOwner::Room => {
 					format!("root({})", id.id)
 				}
-				GameObjectOwner::User(user) => {
+				GameObjectOwner::Member(user) => {
 					format!("user({},{})", user, id.id)
 				}
 			},

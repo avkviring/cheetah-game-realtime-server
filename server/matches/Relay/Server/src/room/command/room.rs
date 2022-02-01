@@ -1,47 +1,39 @@
 use cheetah_matches_relay_common::room::RoomMemberId;
 
+use crate::room::command::ExecuteServerCommandError;
 use crate::room::object::CreateCommandsCollector;
 use crate::room::Room;
 
-pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) {
-	match room.get_member_mut(member_id) {
-		None => {
-			log::error!("[load_room] member not found {:?}", member_id);
-		}
-		Some(member) => {
-			member.attach_to_room();
-			let access_group = member.template.groups;
-			let command_collector_rc = room.tmp_command_collector.clone();
-			let mut command_collector = (*command_collector_rc).borrow_mut();
-			command_collector.clear();
-			room.objects
-				.iter()
-				.filter(|(_, o)| o.created)
-				.filter(|(_, o)| o.access_groups.contains_any(&access_group))
-				.map(|(_, o)| {
-					let mut commands = CreateCommandsCollector::new();
-					o.collect_create_commands(&mut commands);
-					(o.template_id, commands)
-				})
-				.clone()
-				.for_each(|v| command_collector.push(v));
+pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	let member = room.get_member_mut(member_id)?;
 
-			for (template, commands) in command_collector.iter() {
-				room.send_to_member(&member_id, *template, commands.as_slice());
-			}
-		}
+	member.attach_to_room();
+	let access_group = member.template.groups;
+	let command_collector_rc = room.tmp_command_collector.clone();
+	let mut command_collector = (*command_collector_rc).borrow_mut();
+	command_collector.clear();
+	room.objects
+		.iter()
+		.filter(|(_, o)| o.created)
+		.filter(|(_, o)| o.access_groups.contains_any(&access_group))
+		.map(|(_, o)| {
+			let mut commands = CreateCommandsCollector::new();
+			o.collect_create_commands(&mut commands);
+			(o.template_id, commands)
+		})
+		.clone()
+		.for_each(|v| command_collector.push(v));
+
+	for (template, commands) in command_collector.iter() {
+		room.send_to_member(&member_id, *template, commands.as_slice());
 	}
+	Ok(())
 }
 
-pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) {
-	match room.get_member_mut(member_id) {
-		None => {
-			log::error!("[load_room] member not found {:?}", member_id);
-		}
-		Some(member) => {
-			member.detach_from_room();
-		}
-	}
+pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	let member = room.get_member_mut(member_id)?;
+	member.detach_from_room();
+	Ok(())
 }
 
 #[cfg(test)]
@@ -62,8 +54,8 @@ mod tests {
 		let groups_b = AccessGroups(0b10);
 		let user_b = room.register_user(UserTemplate::stub(groups_b));
 
-		room.mark_as_connected(user_a);
-		room.mark_as_connected(user_b);
+		room.mark_as_connected(user_a).unwrap();
+		room.mark_as_connected(user_b).unwrap();
 
 		let object_a_1 = room.create_object(user_b, groups_a);
 		object_a_1.created = true;
@@ -76,7 +68,7 @@ mod tests {
 		// другая группа - не должен загрузиться
 		room.create_object(user_b, groups_b);
 
-		attach_to_room(&mut room, user_a);
+		attach_to_room(&mut room, user_a).unwrap();
 
 		let mut commands = room.get_user_out_commands(user_a);
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));

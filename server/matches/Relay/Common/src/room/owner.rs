@@ -8,7 +8,7 @@ use crate::room::RoomMemberId;
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub enum GameObjectOwner {
 	Room,
-	User(RoomMemberId),
+	Member(RoomMemberId),
 }
 
 impl hash32::Hash for GameObjectOwner {
@@ -20,7 +20,7 @@ impl hash32::Hash for GameObjectOwner {
 			GameObjectOwner::Room => {
 				hash32::Hash::hash(&0, state);
 			}
-			GameObjectOwner::User(user) => {
+			GameObjectOwner::Member(user) => {
 				hash32::Hash::hash(&1, state);
 				hash32::Hash::hash(user, state);
 			}

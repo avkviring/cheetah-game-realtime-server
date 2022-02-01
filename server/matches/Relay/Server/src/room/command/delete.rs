@@ -2,24 +2,22 @@ use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectComma
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{error_c2s_command, ServerCommandExecutor};
+use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
-		let user = room.get_user(user_id).unwrap();
-		if let GameObjectOwner::User(object_id_user) = self.object_id.owner {
-			if object_id_user != user.id {
-				error_c2s_command(
-					"DeleteGameObjectCommand",
-					room,
-					user.id,
-					format!("User not owner for game object {:?} for user {:?}", self.object_id, user),
-				);
-				return;
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+		let member = room.get_member(member_id).unwrap();
+		if let GameObjectOwner::Member(object_id_user) = self.object_id.owner {
+			if object_id_user != member.id {
+				return Err(ExecuteServerCommandError::MemberNotOwnerGameObject {
+					object_id: self.object_id.clone(),
+					member_id,
+				});
 			}
 		}
 		room.delete_object(&self.object_id);
+		Ok(())
 	}
 }
 
@@ -31,7 +29,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::command::ServerCommandExecutor;
+	use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
@@ -43,8 +41,8 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_a_id = room.register_user(UserTemplate::stub(access_groups));
 		let user_b_id = room.register_user(UserTemplate::stub(access_groups));
-		room.mark_as_connected(user_a_id);
-		room.mark_as_connected(user_b_id);
+		room.mark_as_connected(user_a_id).unwrap();
+		room.mark_as_connected(user_b_id).unwrap();
 
 		let object_id = room.create_object(user_a_id, access_groups).id.clone();
 		room.out_commands.clear();
@@ -53,7 +51,7 @@ mod tests {
 		};
 
 		room.current_member_id = Option::Some(user_a_id);
-		command.clone().execute(&mut room, user_a_id);
+		command.execute(&mut room, user_a_id).unwrap();
 
 		assert!(matches!(room.get_object_mut(&object_id), None));
 		assert!(matches!(room.get_user_out_commands(user_a_id).pop_back(), None));
@@ -66,9 +64,9 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_id = room.register_user(UserTemplate::stub(AccessGroups(0b11)));
 
-		let object_id = GameObjectId::new(100, GameObjectOwner::User(user_id));
+		let object_id = GameObjectId::new(100, GameObjectOwner::Member(user_id));
 		let command = DeleteGameObjectCommand { object_id };
-		command.execute(&mut room, user_id);
+		command.execute(&mut room, user_id).unwrap();
 	}
 
 	#[test]
@@ -85,8 +83,13 @@ mod tests {
 			object_id: object_id.clone(),
 		};
 
-		command.execute(&mut room, user_b);
-
+		assert!(matches!(
+			command.execute(&mut room, user_b),
+			Err(ExecuteServerCommandError::MemberNotOwnerGameObject {
+				object_id: _,
+				member_id: _
+			})
+		));
 		assert!(matches!(room.get_object_mut(&object_id), Some(_)));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}

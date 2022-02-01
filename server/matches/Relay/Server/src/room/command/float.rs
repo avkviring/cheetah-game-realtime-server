@@ -3,13 +3,13 @@ use cheetah_matches_relay_common::commands::types::float::{IncrementDoubleC2SCom
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::ServerCommandExecutor;
+use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
 use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementDoubleC2SCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -39,12 +39,13 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		);
+		)?;
+		Ok(())
 	}
 }
 
 impl ServerCommandExecutor for SetDoubleCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
@@ -62,7 +63,8 @@ impl ServerCommandExecutor for SetDoubleCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		);
+		)?;
+		Ok(())
 	}
 }
 
@@ -108,7 +110,7 @@ mod tests {
 			field_id: 10,
 			value: 100.100,
 		};
-		command.clone().execute(&mut room, user);
+		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.get_float(&10).unwrap() as u64, 100);
@@ -128,8 +130,8 @@ mod tests {
 			field_id: 10,
 			increment: 100.100,
 		};
-		command.clone().execute(&mut room, user);
-		command.execute(&mut room, user);
+		command.clone().execute(&mut room, user).unwrap();
+		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.get_float(&10).unwrap() as u64, 200);
@@ -142,17 +144,5 @@ mod tests {
 
 		room.out_commands.pop_back();
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==result));
-	}
-
-	#[test]
-	fn should_not_panic_when_increment_float_command_not_panic_for_missing_object() {
-		let (mut room, user, _) = setup_one_player();
-
-		let command = IncrementDoubleC2SCommand {
-			object_id: GameObjectId::new(10, GameObjectOwner::Room),
-			field_id: 10,
-			increment: 100.100,
-		};
-		command.execute(&mut room, user);
 	}
 }

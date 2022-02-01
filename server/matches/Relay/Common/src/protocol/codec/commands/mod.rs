@@ -36,7 +36,7 @@ mod tests {
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
 			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
-				object_id: GameObjectId::new(13, GameObjectOwner::User(14)),
+				object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
 				field_id: 15,
 				value: 16,
 			})),

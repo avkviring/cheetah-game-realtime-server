@@ -99,7 +99,7 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 				room_owner: true,
 				user_id: RoomMemberId::MAX,
 			},
-			GameObjectOwner::User(user_id) => GameObjectIdFFI {
+			GameObjectOwner::Member(user_id) => GameObjectIdFFI {
 				id: from.id,
 				room_owner: false,
 				user_id,
@@ -116,7 +116,7 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 				id: from.id,
 			},
 			false => Self {
-				owner: GameObjectOwner::User(from.user_id),
+				owner: GameObjectOwner::Member(from.user_id),
 				id: from.id,
 			},
 		}
@@ -181,7 +181,7 @@ mod tests {
 	#[test]
 	fn should_convert_object_id() {
 		let object_id = GameObjectId {
-			owner: GameObjectOwner::User(123),
+			owner: GameObjectOwner::Member(123),
 			id: 100,
 		};
 		let object_id_fff = GameObjectIdFFI::from(&object_id);

@@ -10,7 +10,7 @@ impl GameObjectTemplate {
 		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Room))
 	}
 	pub fn create_user_game_object(&self, user_id: RoomMemberId) -> GameObject {
-		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::User(user_id)))
+		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Member(user_id)))
 	}
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {
 		if id.id == 0 {

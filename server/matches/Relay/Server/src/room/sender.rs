@@ -171,7 +171,8 @@ mod tests {
 				executed = true;
 				None
 			},
-		);
+		)
+		.unwrap();
 		assert!(executed);
 
 		// RO - по-умолчанию для всех полей
@@ -189,26 +190,28 @@ mod tests {
 				executed = true;
 				None
 			},
-		);
+		)
+		.unwrap();
 		assert!(executed);
 
 		// RW - по-умолчанию запрещен
 		let mut executed = false;
-		room.do_action_and_send_commands(
-			&object_id,
-			Field {
-				id: field_id_1,
-				field_type: FieldType::Long,
-			},
-			user_2,
-			Permission::Rw,
-			None,
-			|_| {
-				executed = true;
-				None
-			},
-		);
-		assert!(!executed);
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id,
+				Field {
+					id: field_id_1,
+					field_type: FieldType::Long,
+				},
+				user_2,
+				Permission::Rw,
+				None,
+				|_| {
+					executed = true;
+					None
+				},
+			)
+			.is_err());
 
 		// RW - разрешен для второго поля
 		let mut executed = false;
@@ -225,7 +228,8 @@ mod tests {
 				executed = true;
 				None
 			},
-		);
+		)
+		.unwrap();
 		assert!(executed);
 	}
 
@@ -249,7 +253,7 @@ mod tests {
 		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id.clone();
-		room.mark_as_connected(user_id);
+		room.mark_as_connected(user_id).unwrap();
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		let mut executed = false;
@@ -270,7 +274,8 @@ mod tests {
 					value: 0,
 				}))
 			},
-		);
+		)
+		.unwrap();
 		assert!(executed);
 		assert!(room.get_user_out_commands(user_id).is_empty());
 
@@ -293,7 +298,8 @@ mod tests {
 					value: 0,
 				}))
 			},
-		);
+		)
+		.unwrap();
 		assert!(executed);
 		assert!(matches!(
 			room.get_user_out_commands(user_id).get(0),
@@ -315,23 +321,19 @@ mod tests {
 		let object = room.create_object(user_1, access_groups_a);
 		object.created = true;
 		let object_id = object.id.clone();
-
-		let mut executed = false;
-		room.do_action_and_send_commands(
-			&object_id,
-			Field {
-				id: 0,
-				field_type: FieldType::Long,
-			},
-			user_2,
-			Permission::Ro,
-			None,
-			|_| {
-				executed = true;
-				None
-			},
-		);
-		assert!(!executed);
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id,
+				Field {
+					id: 0,
+					field_type: FieldType::Long,
+				},
+				user_2,
+				Permission::Ro,
+				None,
+				|_| { None },
+			)
+			.is_err());
 	}
 
 	#[test]
@@ -350,7 +352,7 @@ mod tests {
 		let user_source_id = room.register_user(UserTemplate::stub(groups));
 		let user_target_id = room.register_user(UserTemplate::stub(groups));
 
-		room.mark_as_connected(user_target_id);
+		room.mark_as_connected(user_target_id).unwrap();
 		let object = room.create_object(user_target_id, groups);
 		object.created = true;
 		object.template_id = object_template;
@@ -417,8 +419,8 @@ mod tests {
 
 		let user_1 = room.register_user(UserTemplate::stub(access_groups));
 		let user_2 = room.register_user(UserTemplate::stub(access_groups));
-		room.mark_as_connected(user_1);
-		room.mark_as_connected(user_2);
+		room.mark_as_connected(user_1).unwrap();
+		room.mark_as_connected(user_2).unwrap();
 
 		let object = room.create_object(user_1, access_groups);
 		object.created = true;
@@ -467,8 +469,8 @@ mod tests {
 		let user_2 = room.register_user(UserTemplate::stub(access_groups));
 		let object = room.create_object(user_1, access_groups);
 		let object_id = object.id.clone();
-		room.mark_as_connected(user_1);
-		room.mark_as_connected(user_2);
+		room.mark_as_connected(user_1).unwrap();
+		room.mark_as_connected(user_2).unwrap();
 
 		room.do_action_and_send_commands(
 			&object_id.clone(),
@@ -486,7 +488,8 @@ mod tests {
 					value: 200,
 				}))
 			},
-		);
+		)
+		.unwrap();
 
 		let commands = room.get_user_out_commands(user_2);
 		assert!(commands.is_empty());

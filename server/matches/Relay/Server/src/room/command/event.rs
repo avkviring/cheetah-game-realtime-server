@@ -3,13 +3,13 @@ use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetE
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::ServerCommandExecutor;
+use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
 use crate::room::object::{Field, GameObject};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.clone()));
@@ -23,12 +23,13 @@ impl ServerCommandExecutor for EventCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		);
+		)?;
+		Ok(())
 	}
 }
 
 impl ServerCommandExecutor for TargetEventCommand {
-	fn execute(&self, room: &mut Room, user_id: u16) {
+	fn execute(&self, room: &mut Room, user_id: u16) -> Result<(), ExecuteServerCommandError> {
 		let field_id = self.event.field_id;
 		let object_id = self.event.object_id.clone();
 		let target = self.target;
@@ -43,7 +44,8 @@ impl ServerCommandExecutor for TargetEventCommand {
 			Permission::Rw,
 			Option::Some(target),
 			action,
-		);
+		)?;
+		Ok(())
 	}
 }
 
@@ -75,7 +77,7 @@ mod tests {
 			event: from_vec(vec![1, 2, 3, 4, 5]),
 		};
 
-		command.clone().execute(&mut room, user);
+		command.execute(&mut room, user).unwrap();
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
 
@@ -89,9 +91,9 @@ mod tests {
 		let user2 = room.register_user(UserTemplate::stub(access_groups));
 		let user3 = room.register_user(UserTemplate::stub(access_groups));
 
-		room.mark_as_connected(user1);
-		room.mark_as_connected(user2);
-		room.mark_as_connected(user3);
+		room.mark_as_connected(user1).unwrap();
+		room.mark_as_connected(user2).unwrap();
+		room.mark_as_connected(user3).unwrap();
 
 		let object = room.create_object(user1, access_groups);
 		object.created = true;
@@ -109,23 +111,11 @@ mod tests {
 			},
 		};
 
-		command.clone().execute(&mut room, user1);
+		command.execute(&mut room, user1).unwrap();
 		assert!(matches!(room.get_user_out_commands(user1).pop_back(), None));
 		assert!(
 			matches!(room.get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id)
 		);
 		assert!(matches!(room.get_user_out_commands(user3).pop_back(), None));
-	}
-
-	#[test]
-	pub fn should_not_panic_when_missing_object() {
-		let (mut room, user, _) = setup_one_player();
-
-		let command = EventCommand {
-			object_id: GameObjectId::new(10, GameObjectOwner::Room),
-			field_id: 100,
-			event: from_vec(vec![1, 2, 3, 4, 5]),
-		};
-		command.execute(&mut room, user);
 	}
 }

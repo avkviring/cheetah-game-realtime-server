@@ -97,14 +97,14 @@ impl Rule {
 				None => false,
 				Some(object_id) => match object_id.owner {
 					GameObjectOwner::Room => true,
-					GameObjectOwner::User(_) => false,
+					GameObjectOwner::Member(_) => false,
 				},
 			},
 			Rule::UserOwner(user) => match command.network_command.get_object_id() {
 				None => false,
 				Some(object_id) => match object_id.owner {
 					GameObjectOwner::Room => false,
-					GameObjectOwner::User(object_user) => object_user == *user,
+					GameObjectOwner::Member(object_user) => object_user == *user,
 				},
 			},
 			Rule::ObjectId(object_id) => match command.network_command.get_object_id() {
@@ -247,20 +247,20 @@ mod tests {
 	fn should_filter_by_room_owner() {
 		let filter = Filter::new(Rule::RoomOwner);
 		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
-		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::User(100)))));
+		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Member(100)))));
 	}
 	#[test]
 	fn should_filter_by_user_owner() {
 		let filter = Filter::new(Rule::UserOwner(55));
-		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::User(55)))));
+		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Member(55)))));
 		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
 	}
 	#[test]
 	fn should_filter_by_object_id() {
 		let filter = Filter::new(Rule::ObjectId(100));
-		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::User(55)))));
+		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Member(55)))));
 		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
-		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(70, GameObjectOwner::User(55)))));
+		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(70, GameObjectOwner::Member(55)))));
 		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Room))));
 	}
 
