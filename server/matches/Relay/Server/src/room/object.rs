@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-
-use fnv::FnvBuildHasher;
-
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use cheetah_matches_relay_common::commands::FieldType;
@@ -24,7 +20,7 @@ pub struct GameObject {
 	pub created: bool,
 	longs: heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT>,
 	floats: heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT>,
-	pub structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher>,
+	structures: heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT>,
 	pub compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
 pub const MAX_FIELD_COUNT: usize = 64;
@@ -50,6 +46,7 @@ impl GameObject {
 	pub fn get_long(&self, field_id: &FieldId) -> Option<&i64> {
 		self.longs.get(field_id)
 	}
+
 	pub fn set_long(&mut self, field_id: FieldId, value: i64) {
 		if self.longs.insert(field_id, value).is_err() {
 			log::error!("Long count fields overflow")
@@ -65,6 +62,28 @@ impl GameObject {
 	pub fn set_float(&mut self, field_id: FieldId, value: f64) {
 		if self.floats.insert(field_id, value).is_err() {
 			log::error!("Long count fields overflow")
+		}
+	}
+
+	pub fn get_structures(&self) -> &heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT> {
+		&self.structures
+	}
+
+	pub fn get_structure(&self, field_id: &FieldId) -> Option<&Vec<u8>> {
+		self.structures.get(field_id)
+	}
+
+	pub fn set_structure(&mut self, field_id: FieldId, structure: &[u8]) {
+		match self.structures.get_mut(&field_id) {
+			Some(vec) => {
+				vec.clear();
+				vec.extend_from_slice(structure);
+			}
+			None => {
+				if self.structures.insert(field_id, structure.to_vec()).is_err() {
+					log::error!("Structures count fields overflow")
+				}
+			}
 		}
 	}
 
@@ -134,7 +153,7 @@ mod tests {
 		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
 		object.set_long(1, 100);
 		object.set_float(2, 200.200);
-		object.structures.insert(1, vec![1, 2, 3]);
+		object.structures.insert(1, vec![1, 2, 3]).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
@@ -181,5 +200,13 @@ mod tests {
 		assert!(matches!(&commands[1],
 			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id== 1 && c.value == 100));
+	}
+
+	#[test]
+	pub fn should_update_structure() {
+		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
+		object.set_structure(1, &[1, 2, 3]);
+		object.set_structure(1, &[4, 5, 6, 7]);
+		assert_eq!(*object.get_structure(&1).unwrap(), [4, 5, 6, 7])
 	}
 }

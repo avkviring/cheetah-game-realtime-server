@@ -13,7 +13,7 @@ impl ServerCommandExecutor for SetStructureCommand {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {
-			object.structures.insert(self.field_id, self.structure.to_vec());
+			object.set_structure(self.field_id, self.structure.as_slice());
 			Option::Some(S2CCommand::SetStructure(self.clone()))
 		};
 		room.do_action_and_send_commands(
@@ -32,7 +32,7 @@ impl ServerCommandExecutor for SetStructureCommand {
 
 impl GameObject {
 	pub fn structures_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
-		for (field_id, v) in &self.structures {
+		for (field_id, v) in self.get_structures().iter() {
 			let structure = CommandBuffer::from_slice(v.as_slice()).unwrap();
 			let command = S2CommandWithFieldInfo {
 				field: Option::Some(Field {
@@ -82,7 +82,7 @@ mod tests {
 		command.clone().execute(&mut room, user);
 		let object = room.get_object_mut(&object_id).unwrap();
 
-		assert_eq!(*object.structures.get(&100).unwrap(), command.structure.to_vec());
+		assert_eq!(*object.get_structure(&100).unwrap(), command.structure.to_vec());
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c==command));
 	}
 }
