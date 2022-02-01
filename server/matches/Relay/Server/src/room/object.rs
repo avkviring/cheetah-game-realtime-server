@@ -21,7 +21,7 @@ pub struct GameObject {
 	longs: heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT>,
 	floats: heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT>,
 	structures: heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT>,
-	pub compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
+	compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
 pub const MAX_FIELD_COUNT: usize = 64;
 pub type CreateCommandsCollector = heapless::Vec<S2CommandWithFieldInfo, 255>;
@@ -84,6 +84,19 @@ impl GameObject {
 					log::error!("Structures count fields overflow")
 				}
 			}
+		}
+	}
+
+	pub fn get_compare_and_set_owners(&self) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
+		&self.compare_and_set_owners
+	}
+	pub fn get_compare_and_set_owner(&self, field_id: &FieldId) -> Option<&RoomMemberId> {
+		self.compare_and_set_owners.get(field_id)
+	}
+
+	pub fn set_compare_and_set_owner(&mut self, field_id: FieldId, value: RoomMemberId) {
+		if self.compare_and_set_owners.insert(field_id, value).is_err() {
+			log::error!("Compare and set owners count fields overflow")
 		}
 	}
 

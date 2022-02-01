@@ -28,8 +28,8 @@ impl From<&GameObject> for admin::DumpObject {
 			created: source.created,
 			longs: from(source.get_longs()),
 			floats: from(source.get_floats()),
-			compare_and_set_owners: from(&source.compare_and_set_owners),
-			structures: from(&source.get_structures()),
+			compare_and_set_owners: from(source.get_compare_and_set_owners()),
+			structures: from(source.get_structures()),
 		}
 	}
 }

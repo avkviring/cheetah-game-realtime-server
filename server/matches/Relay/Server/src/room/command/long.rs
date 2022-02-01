@@ -99,7 +99,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			};
 			if allow {
 				object.set_long(self.field_id, self.new);
-				object.compare_and_set_owners.insert(self.field_id, user_id);
+				object.set_compare_and_set_owner(self.field_id, user_id);
 				*is_set_cloned.borrow_mut() = true;
 				Option::Some(S2CCommand::SetLong(SetLongCommand {
 					object_id: self.object_id.clone(),
@@ -143,7 +143,7 @@ pub fn reset_all_compare_and_set(
 				// нормальная ситуация для пользовательских объектов
 			}
 			Some(object) => {
-				if let Some(owner) = object.compare_and_set_owners.get(&field) {
+				if let Some(owner) = object.get_compare_and_set_owner(&field) {
 					if *owner == user_id {
 						object.set_long(field, reset);
 						let command = [S2CommandWithFieldInfo {
