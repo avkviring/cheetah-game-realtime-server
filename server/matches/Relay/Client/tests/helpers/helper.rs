@@ -5,7 +5,7 @@ use std::time::Duration;
 use rand::rngs::OsRng;
 use rand::RngCore;
 
-use cheetah_matches_relay::room::template::config::UserTemplate;
+use cheetah_matches_relay::room::template::config::MemberTemplate;
 use cheetah_matches_relay::server::manager::ServerManager;
 use cheetah_matches_relay_client::clients::registry::ClientId;
 use cheetah_matches_relay_client::ffi;
@@ -56,7 +56,7 @@ impl IntegrationTestHelper {
 	pub fn create_user(&mut self) -> (RoomMemberId, UserPrivateKey) {
 		let mut private_key = [0; 32];
 		OsRng.fill_bytes(&mut private_key);
-		let user_template = UserTemplate {
+		let user_template = MemberTemplate {
 			private_key,
 			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),

@@ -58,7 +58,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{RoomTemplate, UserTemplate};
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
 
@@ -67,8 +67,8 @@ mod tests {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
-		let user = room.register_user(UserTemplate::stub(access_groups));
-		let object = room.create_object(user, access_groups);
+		let user = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object(user, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 

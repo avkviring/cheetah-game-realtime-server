@@ -32,7 +32,7 @@ impl crate::factory::proto::internal::relay_server::Relay for RelayGRPCService {
 	async fn attach_user(&self, request: Request<AttachUserRequest>) -> Result<Response<AttachUserResponse>, Status> {
 		let mut server = self.relay_server.lock().unwrap();
 		let request = request.into_inner();
-		let template = crate::room::template::config::UserTemplate::from(request.user.unwrap());
+		let template = crate::room::template::config::MemberTemplate::from(request.user.unwrap());
 		let private_key = template.private_key;
 		match server.register_user(request.room_id, template) {
 			Ok(user_id) => Result::Ok(Response::new(AttachUserResponse {

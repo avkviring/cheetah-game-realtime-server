@@ -16,9 +16,9 @@ impl From<internal::RoomTemplate> for config::RoomTemplate {
 	}
 }
 
-impl From<internal::UserTemplate> for config::UserTemplate {
+impl From<internal::UserTemplate> for config::MemberTemplate {
 	fn from(source: internal::UserTemplate) -> Self {
-		config::UserTemplate {
+		config::MemberTemplate {
 			private_key: rand::thread_rng().gen::<[u8; 32]>(),
 			groups: AccessGroups(source.groups),
 			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),

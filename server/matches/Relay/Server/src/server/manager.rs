@@ -10,7 +10,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::CommandTracerSessionsTask;
-use crate::room::template::config::{RoomTemplate, UserTemplate};
+use crate::room::template::config::{RoomTemplate, MemberTemplate};
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
 use crate::server::server::Server;
@@ -29,7 +29,7 @@ pub struct ServerManager {
 
 pub enum ManagementTask {
 	RegisterRoom(RoomTemplate, Sender<RoomId>),
-	RegisterUser(RoomId, UserTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
+	RegisterUser(RoomId, MemberTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
 	///
 	/// Смещение текущего времени для тестирования
 	///
@@ -145,7 +145,7 @@ impl ServerManager {
 		}
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<RoomMemberId, RegisterUserRequestError> {
+	pub fn register_user(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::RegisterUser(room_id, template.clone(), sender))

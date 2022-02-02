@@ -19,7 +19,7 @@ pub struct RoomTemplate {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct UserTemplate {
+pub struct MemberTemplate {
 	pub private_key: UserPrivateKey,
 	pub groups: AccessGroups,
 	pub objects: Vec<GameObjectTemplate>,
@@ -76,8 +76,8 @@ pub enum UserTemplateError {
 	UserObjectHasWrongId(UserPrivateKey, u32),
 }
 
-impl UserTemplate {
-	pub fn validate(self) -> Result<UserTemplate, UserTemplateError> {
+impl MemberTemplate {
+	pub fn validate(self) -> Result<MemberTemplate, UserTemplateError> {
 		for object in &self.objects {
 			if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
 				return Result::Err(UserTemplateError::UserObjectHasWrongId(self.private_key, object.id));
@@ -97,12 +97,12 @@ mod tests {
 	use crate::room::object::Field;
 	use crate::room::template::config::{
 		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
-		UserTemplate, UserTemplateError,
+		MemberTemplate, UserTemplateError,
 	};
 
-	impl UserTemplate {
+	impl MemberTemplate {
 		pub fn stub(access_group: AccessGroups) -> Self {
-			UserTemplate {
+			MemberTemplate {
 				private_key: [5; 32],
 				groups: access_group,
 				objects: Default::default(),
@@ -178,7 +178,7 @@ mod tests {
 
 	#[test]
 	fn should_validate_fail_when_user_object_has_wrong_id() {
-		let template = UserTemplate {
+		let template = MemberTemplate {
 			private_key: [5; 32],
 			groups: AccessGroups(0b1111),
 			objects: vec![GameObjectTemplate {

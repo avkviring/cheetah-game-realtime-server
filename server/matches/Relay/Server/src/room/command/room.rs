@@ -5,7 +5,7 @@ use crate::room::object::CreateCommandsCollector;
 use crate::room::Room;
 
 pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-	let member = room.get_member_mut(member_id)?;
+	let member = room.get_member_mut(&member_id)?;
 
 	member.attach_to_room();
 	let access_group = member.template.groups;
@@ -31,7 +31,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 }
 
 pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-	let member = room.get_member_mut(member_id)?;
+	let member = room.get_member_mut(&member_id)?;
 	member.detach_from_room();
 	Ok(())
 }
@@ -42,7 +42,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::command::room::attach_to_room;
-	use crate::room::template::config::{RoomTemplate, UserTemplate};
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::Room;
 
 	#[test]
@@ -50,27 +50,27 @@ mod tests {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let groups_a = AccessGroups(0b100);
-		let user_a = room.register_user(UserTemplate::stub(groups_a));
+		let user_a = room.register_member(MemberTemplate::stub(groups_a));
 		let groups_b = AccessGroups(0b10);
-		let user_b = room.register_user(UserTemplate::stub(groups_b));
+		let user_b = room.register_member(MemberTemplate::stub(groups_b));
 
-		room.mark_as_connected(user_a).unwrap();
-		room.mark_as_connected(user_b).unwrap();
+		room.test_mark_as_connected(user_a).unwrap();
+		room.test_mark_as_connected(user_b).unwrap();
 
-		let object_a_1 = room.create_object(user_b, groups_a);
+		let object_a_1 = room.test_create_object(user_b, groups_a);
 		object_a_1.created = true;
 		let object_a_1_id = object_a_1.id.clone();
 
 		// не созданный объект - не должен загрузиться
-		room.create_object(user_b, groups_a);
+		room.test_create_object(user_b, groups_a);
 		// другая группа + созданный объект - не должен загрузиться
-		room.create_object(user_b, groups_b).created = true;
+		room.test_create_object(user_b, groups_b).created = true;
 		// другая группа - не должен загрузиться
-		room.create_object(user_b, groups_b);
+		room.test_create_object(user_b, groups_b);
 
 		attach_to_room(&mut room, user_a).unwrap();
 
-		let mut commands = room.get_user_out_commands(user_a);
+		let mut commands = room.test_get_user_out_commands(user_a);
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), None));

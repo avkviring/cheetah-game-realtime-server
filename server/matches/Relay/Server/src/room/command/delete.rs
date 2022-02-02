@@ -30,7 +30,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-	use crate::room::template::config::{RoomTemplate, UserTemplate};
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::Room;
 
 	#[test]
@@ -39,12 +39,12 @@ mod tests {
 		let access_groups = AccessGroups(0b11);
 
 		let mut room = Room::from_template(template);
-		let user_a_id = room.register_user(UserTemplate::stub(access_groups));
-		let user_b_id = room.register_user(UserTemplate::stub(access_groups));
-		room.mark_as_connected(user_a_id).unwrap();
-		room.mark_as_connected(user_b_id).unwrap();
+		let user_a_id = room.register_member(MemberTemplate::stub(access_groups));
+		let user_b_id = room.register_member(MemberTemplate::stub(access_groups));
+		room.test_mark_as_connected(user_a_id).unwrap();
+		room.test_mark_as_connected(user_b_id).unwrap();
 
-		let object_id = room.create_object(user_a_id, access_groups).id.clone();
+		let object_id = room.test_create_object(user_a_id, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
@@ -53,16 +53,16 @@ mod tests {
 		room.current_member_id = Option::Some(user_a_id);
 		command.execute(&mut room, user_a_id).unwrap();
 
-		assert!(matches!(room.get_object_mut(&object_id), None));
-		assert!(matches!(room.get_user_out_commands(user_a_id).pop_back(), None));
-		assert!(matches!(room.get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
+		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.test_get_user_out_commands(user_a_id).pop_back(), None));
+		assert!(matches!(room.test_get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
 	}
 
 	#[test]
 	fn should_not_panic_when_missing_object() {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
-		let user_id = room.register_user(UserTemplate::stub(AccessGroups(0b11)));
+		let user_id = room.register_member(MemberTemplate::stub(AccessGroups(0b11)));
 
 		let object_id = GameObjectId::new(100, GameObjectOwner::Member(user_id));
 		let command = DeleteGameObjectCommand { object_id };
@@ -74,10 +74,10 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
 		let mut room = Room::from_template(template);
-		let user_a = room.register_user(UserTemplate::stub(access_groups));
-		let user_b = room.register_user(UserTemplate::stub(access_groups));
+		let user_a = room.register_member(MemberTemplate::stub(access_groups));
+		let user_b = room.register_member(MemberTemplate::stub(access_groups));
 
-		let object_id = room.create_object(user_a, access_groups).id.clone();
+		let object_id = room.test_create_object(user_a, access_groups).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
@@ -90,7 +90,7 @@ mod tests {
 				member_id: _
 			})
 		));
-		assert!(matches!(room.get_object_mut(&object_id), Some(_)));
+		assert!(matches!(room.get_object_mut(&object_id), Ok(_)));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }

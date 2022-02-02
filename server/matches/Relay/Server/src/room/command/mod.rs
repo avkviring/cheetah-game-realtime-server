@@ -75,8 +75,8 @@ pub enum ServerCommandError {
 		field: Field,
 	},
 
-	#[error("Game object with id {object_id:?} not found in room {room_id:?} ")]
-	GameObjectNotFound { room_id: RoomId, object_id: GameObjectId },
+	#[error("Game object with id {object_id:?} ")]
+	GameObjectNotFound { object_id: GameObjectId },
 }
 
 impl ServerCommandError {
@@ -119,16 +119,16 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
-	use crate::room::template::config::{RoomTemplate, UserTemplate};
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::Room;
 
 	pub fn setup_two_players() -> (Room, GameObjectId, RoomMemberId, RoomMemberId) {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_user(UserTemplate::stub(access_groups));
-		let user_2 = room.register_user(UserTemplate::stub(access_groups));
-		let object_id = room.create_object(user_1, access_groups).id.clone();
+		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let object_id = room.test_create_object(user_1, access_groups).id.clone();
 		(room, object_id, user_1, user_2)
 	}
 
@@ -136,7 +136,7 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let user_id = room.register_user(UserTemplate::stub(access_groups));
+		let user_id = room.register_member(MemberTemplate::stub(access_groups));
 		(room, user_id, access_groups)
 	}
 }

@@ -1,14 +1,14 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
+use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_relay_common::protocol::frame::applications::CommandWithChannel;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
-use crate::room::template::config::{RoomTemplate, UserTemplate};
+use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
 
 #[derive(Default)]
@@ -32,16 +32,16 @@ impl Rooms {
 		room_id
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: UserTemplate) -> Result<RoomMemberId, RegisterUserError> {
+	pub fn register_user(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, RegisterUserError> {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Result::Err(RegisterUserError::RoomNotFound),
-			Some(room) => Result::Ok(room.register_user(template)),
+			Some(room) => Result::Ok(room.register_member(template)),
 		}
 	}
 
 	pub fn collect_out_commands<F>(&mut self, mut collector: F)
 	where
-		F: FnMut(&RoomId, &RoomMemberId, &mut VecDeque<OutCommand>),
+		F: FnMut(&RoomId, &RoomMemberId, &[CommandWithChannelType]),
 	{
 		for room_id in self.changed_rooms.iter() {
 			match self.room_by_id.get_mut(room_id) {

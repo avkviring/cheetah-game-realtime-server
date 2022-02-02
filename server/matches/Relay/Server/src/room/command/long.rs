@@ -1,8 +1,5 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
-
-use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
@@ -124,9 +121,10 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 		)?;
 
 		if *(is_set.borrow()) {
-			room.get_member_mut(user_id)?
+			room.get_member_mut(&user_id)?
 				.compare_and_sets_cleaners
-				.insert((object_id, field_id), reset);
+				.insert((object_id, field_id), reset)
+				.map_err(|_| ServerCommandError::Error("Overflow compare and sets cleaners".to_string()))?;
 		}
 
 		Ok(())
@@ -136,31 +134,31 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 pub fn reset_all_compare_and_set(
 	room: &mut Room,
 	user_id: RoomMemberId,
-	compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
+	compare_and_sets_cleaners: &heapless::FnvIndexMap<(GameObjectId, FieldId), i64, 256>,
 ) -> Result<(), ServerCommandError> {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
-		match room.get_object_mut(&object_id) {
-			None => {
+		match room.get_object_mut(object_id) {
+			Err(e) => {
 				// нормальная ситуация для пользовательских объектов
 			}
-			Some(object) => {
-				if let Some(owner) = object.get_compare_and_set_owner(&field) {
+			Ok(object) => {
+				if let Some(owner) = object.get_compare_and_set_owner(field) {
 					if *owner == user_id {
-						object.set_long(field, reset)?;
+						object.set_long(*field, *reset)?;
 						let command = [S2CommandWithFieldInfo {
 							field: Some(Field {
-								id: field,
+								id: *field,
 								field_type: FieldType::Long,
 							}),
 							command: S2CCommand::SetLong(SetLongCommand {
-								object_id,
-								field_id: field,
-								value: reset,
+								object_id: object_id.clone(),
+								field_id: *field,
+								value: *reset,
 							}),
 						}];
 						let groups = object.access_groups;
 						let template = object.template_id;
-						room.send_to_members(groups, template, &command, |_| true)
+						room.send_to_members(groups, template, &command, |_| true)?
 					}
 				}
 			}
@@ -204,7 +202,7 @@ mod tests {
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::object::Field;
 	use crate::room::template::config::{
-		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate, UserTemplate,
+		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
 	};
 	use crate::room::Room;
 
@@ -392,18 +390,18 @@ mod tests {
 	fn setup_for_compare_and_set() -> (Room, RoomMemberId, RoomMemberId, GameObjectId, FieldId) {
 		let access_group = AccessGroups(55);
 		let mut template = RoomTemplate::default();
-		let user_template_1 = UserTemplate {
+		let user_template_1 = MemberTemplate {
 			private_key: Default::default(),
 			groups: access_group,
 			objects: Default::default(),
 		};
-		let user_template_2 = UserTemplate {
+		let user_template_2 = MemberTemplate {
 			private_key: Default::default(),
 			groups: access_group,
 			objects: Default::default(),
 		};
 
-		let user_template_3 = UserTemplate {
+		let user_template_3 = MemberTemplate {
 			private_key: Default::default(),
 			groups: access_group,
 			objects: Default::default(),
@@ -426,10 +424,10 @@ mod tests {
 			}],
 		});
 		let mut room = Room::from_template(template);
-		let user1_id = room.register_user(user_template_1);
-		let user2_id = room.register_user(user_template_2);
-		let user3_id = room.register_user(user_template_3);
-		let object = room.create_object(user3_id, access_group);
+		let user1_id = room.register_member(user_template_1);
+		let user2_id = room.register_member(user_template_2);
+		let user3_id = room.register_member(user_template_3);
+		let object = room.test_create_object(user3_id, access_group);
 		object.created = true;
 		object.template_id = object_template;
 
@@ -441,8 +439,8 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let user_id = room.register_user(UserTemplate::stub(access_groups));
-		let object = room.create_object(user_id, access_groups);
+		let user_id = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object(user_id, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		(room, user_id, object_id)

@@ -17,7 +17,7 @@ pub struct OutCommandsCollector {
 }
 
 #[derive(Debug)]
-pub struct OutCommand {
+pub struct CommandWithChannelType {
 	pub channel_type: ChannelType,
 	pub command: BothDirectionCommand,
 }

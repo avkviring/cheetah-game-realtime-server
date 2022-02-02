@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -10,7 +10,7 @@ use thiserror::Error;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
-use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
+use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 #[cfg(test)]
@@ -23,7 +23,7 @@ use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::long::reset_all_compare_and_set;
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
-use crate::room::template::config::{RoomTemplate, UserTemplate};
+use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
 
 pub mod action;
@@ -51,7 +51,7 @@ pub struct Room {
 	///
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
-	pub out_commands: VecDeque<(AccessGroups, S2CCommand)>,
+	pub out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 }
 
 #[derive(Error, Debug)]
@@ -65,9 +65,9 @@ pub struct Member {
 	pub id: RoomMemberId,
 	pub connected: bool,
 	pub attached: bool,
-	pub template: UserTemplate,
-	pub compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
-	pub out_commands: VecDeque<OutCommand>,
+	pub template: MemberTemplate,
+	pub compare_and_sets_cleaners: heapless::FnvIndexMap<(GameObjectId, FieldId), i64, 256>,
+	pub out_commands: heapless::Vec<CommandWithChannelType, 64>,
 }
 
 impl Member {
@@ -109,10 +109,10 @@ impl Room {
 	///
 	pub fn collect_out_commands<F>(&mut self, mut collector: F)
 	where
-		F: FnMut(&RoomMemberId, &mut VecDeque<OutCommand>),
+		F: FnMut(&RoomMemberId, &[CommandWithChannelType]),
 	{
 		for (user_id, user) in self.members.iter_mut() {
-			collector(user_id, &mut user.out_commands);
+			collector(user_id, user.out_commands.as_slice());
 		}
 	}
 
@@ -163,7 +163,7 @@ impl Room {
 		self.current_channel = None;
 	}
 
-	pub fn register_user(&mut self, template: UserTemplate) -> RoomMemberId {
+	pub fn register_member(&mut self, template: MemberTemplate) -> RoomMemberId {
 		self.user_id_generator += 1;
 		let user_id = self.user_id_generator;
 		let user = Member {
@@ -182,8 +182,10 @@ impl Room {
 		self.members.get(&member_id).ok_or(RoomError::MemberNotFound(member_id))
 	}
 
-	pub fn get_member_mut(&mut self, member_id: RoomMemberId) -> Result<&mut Member, RoomError> {
-		self.members.get_mut(&member_id).ok_or(RoomError::MemberNotFound(member_id))
+	pub fn get_member_mut(&mut self, member_id: &RoomMemberId) -> Result<&mut Member, RoomError> {
+		self.members
+			.get_mut(member_id)
+			.ok_or(RoomError::MemberNotFound(member_id.clone()))
 	}
 
 	///
@@ -208,8 +210,7 @@ impl Room {
 				for id in objects {
 					self.delete_object(&id);
 				}
-
-				reset_all_compare_and_set(self, user.id, user.compare_and_sets_cleaners)?;
+				reset_all_compare_and_set(self, user.id, &user.compare_and_sets_cleaners)?;
 			}
 		};
 		Ok(())
@@ -219,8 +220,12 @@ impl Room {
 		self.objects.insert(object.id.clone(), object);
 	}
 
-	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Option<&mut GameObject> {
-		self.objects.get_mut(object_id)
+	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
+		self.objects
+			.get_mut(object_id)
+			.ok_or_else(|| ServerCommandError::GameObjectNotFound {
+				object_id: object_id.clone(),
+			})
 	}
 
 	pub fn contains_object(&self, object_id: &GameObjectId) -> bool {
@@ -261,7 +266,7 @@ impl Room {
 		self.objects.iter().for_each(|(_, o)| f(o));
 	}
 
-	fn on_user_connect(&mut self, user_id: RoomMemberId, template: UserTemplate) {
+	fn on_user_connect(&mut self, user_id: RoomMemberId, template: MemberTemplate) {
 		template.objects.iter().for_each(|object_template| {
 			let object = object_template.create_user_game_object(user_id);
 			let mut commands = CreateCommandsCollector::new();
@@ -289,8 +294,8 @@ mod tests {
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::object::GameObject;
-	use crate::room::template::config::{GameObjectTemplate, Permission, RoomTemplate, UserTemplate};
-	use crate::room::{Room, RoomError};
+	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
+	use crate::room::{Room, ServerCommandError};
 
 	impl Default for Room {
 		fn default() -> Self {
@@ -303,7 +308,7 @@ mod tests {
 			Room::new(0, template)
 		}
 
-		pub fn create_object(&mut self, owner: RoomMemberId, access_groups: AccessGroups) -> &mut GameObject {
+		pub fn test_create_object(&mut self, owner: RoomMemberId, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, GameObjectOwner::Member(owner));
 			let object = GameObject::new(id.clone(), 0, access_groups, false);
@@ -311,14 +316,14 @@ mod tests {
 			self.get_object_mut(&id).unwrap()
 		}
 
-		pub fn mark_as_connected(&mut self, user_id: RoomMemberId) -> Result<(), RoomError> {
-			let member = self.get_member_mut(user_id)?;
+		pub fn test_mark_as_connected(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+			let member = self.get_member_mut(&user_id)?;
 			member.connected = true;
 			member.attached = true;
 			Ok(())
 		}
 
-		pub fn get_user_out_commands(&self, user_id: RoomMemberId) -> VecDeque<S2CCommand> {
+		pub fn test_get_user_out_commands(&self, user_id: RoomMemberId) -> VecDeque<S2CCommand> {
 			self.get_member(user_id)
 				.unwrap()
 				.out_commands
@@ -332,7 +337,7 @@ mod tests {
 				.collect()
 		}
 
-		pub fn get_user_out_commands_with_meta(&self, user_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
+		pub fn test_get_user_out_commands_with_meta(&self, user_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
 			self.get_member(user_id)
 				.unwrap()
 				.out_commands
@@ -346,8 +351,8 @@ mod tests {
 				.collect()
 		}
 
-		pub fn clear_user_out_commands(&mut self, user_id: RoomMemberId) {
-			self.get_member_mut(user_id).unwrap().out_commands.clear();
+		pub fn test_clear_user_out_commands(&mut self, user_id: RoomMemberId) {
+			self.get_member_mut(&user_id).unwrap().out_commands.clear();
 		}
 	}
 
@@ -356,12 +361,12 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b111);
 		let mut room = Room::from_template(template);
-		let user_a = room.register_user(UserTemplate::stub(access_groups));
-		let user_b = room.register_user(UserTemplate::stub(access_groups));
-		let object_a_1 = room.create_object(user_a, access_groups).id.clone();
-		let object_a_2 = room.create_object(user_a, access_groups).id.clone();
-		let object_b_1 = room.create_object(user_b, access_groups).id.clone();
-		let object_b_2 = room.create_object(user_b, access_groups).id.clone();
+		let user_a = room.register_member(MemberTemplate::stub(access_groups));
+		let user_b = room.register_member(MemberTemplate::stub(access_groups));
+		let object_a_1 = room.test_create_object(user_a, access_groups).id.clone();
+		let object_a_2 = room.test_create_object(user_a, access_groups).id.clone();
+		let object_b_1 = room.test_create_object(user_b, access_groups).id.clone();
+		let object_b_2 = room.test_create_object(user_b, access_groups).id.clone();
 
 		room.out_commands.clear();
 		room.disconnect_user(user_a).unwrap();
@@ -406,13 +411,13 @@ mod tests {
 			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
-		let user_template = UserTemplate {
+		let user_template = MemberTemplate {
 			private_key: Default::default(),
 			groups: AccessGroups(55),
 			objects: vec![object_template.clone()],
 		};
 		let mut room = Room::from_template(template);
-		let user_id = room.register_user(user_template);
+		let user_id = room.register_member(user_template);
 		room.execute_commands(user_id, &[]);
 		assert!(room
 			.objects
@@ -431,7 +436,7 @@ mod tests {
 			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
-		let user1_template = UserTemplate {
+		let user1_template = MemberTemplate {
 			private_key: Default::default(),
 			groups: AccessGroups(55),
 			objects: vec![object1_template.clone()],
@@ -443,15 +448,15 @@ mod tests {
 			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
-		let user2_template = UserTemplate {
+		let user2_template = MemberTemplate {
 			private_key: Default::default(),
 			groups: AccessGroups(55),
 			objects: vec![object2_template.clone()],
 		};
 
 		let mut room = Room::from_template(template);
-		let user1_id = room.register_user(user1_template);
-		let user2_id = room.register_user(user2_template);
+		let user1_id = room.register_member(user1_template);
+		let user2_id = room.register_member(user2_template);
 		room.execute_commands(user1_id, &[]);
 		room.execute_commands(
 			user1_id,
@@ -462,17 +467,17 @@ mod tests {
 			.as_slice(),
 		);
 
-		let user1 = room.get_member_mut(user1_id).unwrap();
+		let user1 = room.get_member_mut(&user1_id).unwrap();
 		assert_eq!(
-			user1.out_commands.pop_front().unwrap().command.get_object_id().unwrap(),
+			user1.out_commands[0].command.get_object_id().unwrap(),
 			&GameObjectId::new(object1_template.id, GameObjectOwner::Member(user1_id))
 		);
 		user1.out_commands.clear();
 
 		room.execute_commands(user2_id, &[]);
-		let user1 = room.get_member_mut(user1_id).unwrap();
+		let user1 = room.get_member_mut(&user1_id).unwrap();
 		assert_eq!(
-			user1.out_commands.pop_front().unwrap().command.get_object_id().unwrap(),
+			user1.out_commands[1].command.get_object_id().unwrap(),
 			&GameObjectId::new(object2_template.id, GameObjectOwner::Member(user2_id))
 		);
 	}
@@ -487,7 +492,7 @@ mod tests {
 	pub fn should_keep_order_object() {
 		let (template, user_template) = create_template();
 		let mut room = Room::from_template(template);
-		room.register_user(user_template);
+		room.register_member(user_template);
 		room.insert_object(GameObject::new(
 			GameObjectId::new(100, GameObjectOwner::Room),
 			0,
@@ -532,7 +537,7 @@ mod tests {
 		let mut template = RoomTemplate::default();
 		let groups = AccessGroups(55);
 
-		let mut user1_template = UserTemplate::stub(groups);
+		let mut user1_template = MemberTemplate::stub(groups);
 		let object1_template = user1_template.configure_object(1, 100, groups);
 		let allow_field_id = 5;
 		let deny_field_id = 10;
@@ -543,22 +548,22 @@ mod tests {
 			.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		let user1_id = room.register_user(user1_template.clone());
-		let user2 = UserTemplate::stub(groups);
-		let user2_id = room.register_user(user2);
-		room.mark_as_connected(user2_id).unwrap();
+		let user1_id = room.register_member(user1_template.clone());
+		let user2 = MemberTemplate::stub(groups);
+		let user2_id = room.register_member(user2);
+		room.test_mark_as_connected(user2_id).unwrap();
 		room.on_user_connect(user1_id, user1_template.clone());
 
-		let commands = room.get_user_out_commands(user2_id);
+		let commands = room.test_get_user_out_commands(user2_id);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
 		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
 	}
 
-	pub fn create_template() -> (RoomTemplate, UserTemplate) {
+	pub fn create_template() -> (RoomTemplate, MemberTemplate) {
 		let template = RoomTemplate::default();
-		let user_template = UserTemplate {
+		let user_template = MemberTemplate {
 			private_key: Default::default(),
 			groups: AccessGroups(55),
 			objects: Default::default(),

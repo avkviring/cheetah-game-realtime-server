@@ -1,11 +1,12 @@
 use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
+use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
+use crate::room::command::ServerCommandError;
 use crate::room::object::S2CommandWithFieldInfo;
 use crate::room::template::config::Permission;
 use crate::room::{Member, Room};
@@ -21,7 +22,8 @@ impl Room {
 		object_template: GameObjectTemplateId,
 		commands: &[S2CommandWithFieldInfo],
 		filter: T,
-	) where
+	) -> Result<(), ServerCommandError>
+	where
 		T: Fn(&Member) -> bool,
 	{
 		#[cfg(test)]
@@ -38,41 +40,49 @@ impl Room {
 
 		let permission_manager = self.permission_manager.clone();
 		let command_trace_session = self.command_trace_session.clone();
-		self.members
+
+		let members_for_send = self
+			.members
 			.values_mut()
 			.filter(|user| user.attached)
 			.filter(|user| user.connected)
 			.filter(|user| user.template.groups.contains_any(&access_groups))
-			.filter(|user| filter(user))
-			.for_each(|user| {
-				for command in commands {
-					let allow = match command.field {
-						None => true,
-						Some(field) => {
-							permission_manager
-								.borrow_mut()
-								.get_permission(object_template, field, user.template.groups)
-								> Permission::Deny
-						}
+			.filter(|user| filter(user));
+
+		for member in members_for_send {
+			for command in commands {
+				let allow = match command.field {
+					None => true,
+					Some(field) => {
+						permission_manager
+							.borrow_mut()
+							.get_permission(object_template, field, member.template.groups)
+							> Permission::Deny
+					}
+				};
+
+				if allow {
+					command_trace_session
+						.borrow_mut()
+						.collect_s2c(object_template, member.id, &command.command);
+
+					let command_with_user = S2CCommandWithCreator {
+						creator: current_user,
+						command: command.command.clone(),
 					};
 
-					if allow {
-						command_trace_session
-							.borrow_mut()
-							.collect_s2c(object_template, user.id, &command.command);
-
-						let command_with_user = S2CCommandWithCreator {
-							creator: current_user,
-							command: command.command.clone(),
-						};
-
-						user.out_commands.push_back(OutCommand {
+					member
+						.out_commands
+						.push(CommandWithChannelType {
 							channel_type: channel_type.clone(),
 							command: BothDirectionCommand::S2CWithCreator(command_with_user),
-						});
-					}
+						})
+						.map_err(|_| ServerCommandError::Error("Member out commands overflow".to_string()))?;
 				}
-			});
+			}
+		}
+
+		Ok(())
 	}
 
 	pub fn send_to_member(
@@ -80,48 +90,44 @@ impl Room {
 		user_id: &RoomMemberId,
 		object_template: GameObjectTemplateId,
 		commands: &[S2CommandWithFieldInfo],
-	) {
+	) -> Result<(), ServerCommandError> {
 		let command_trace_session = self.command_trace_session.clone();
-		match self.members.get_mut(user_id) {
-			None => {
-				log::error!("[room] send to unknown user {:?}", user_id)
-			}
-			Some(user) => {
-				if user.attached && user.connected {
-					let groups = user.template.groups;
-					for command in commands {
-						let allow = match command.field {
-							None => true,
-							Some(field) => {
-								self.permission_manager
-									.borrow_mut()
-									.get_permission(object_template, field, groups)
-									> Permission::Deny
-							}
-						};
-						if allow {
-							let channel = self
-								.current_channel
-								.as_ref()
-								.unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
+		let permission_manager_rc = self.permission_manager.clone();
+		let mut permission_manager = permission_manager_rc.borrow_mut();
+		let channel = self
+			.current_channel
+			.clone()
+			.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
+		let creator = self.current_member_id.unwrap_or(0);
+		let member = self.get_member_mut(user_id)?;
 
-							let command_with_meta = S2CCommandWithCreator {
-								creator: self.current_member_id.unwrap_or(0),
-								command: command.command.clone(),
-							};
-							command_trace_session
-								.borrow_mut()
-								.collect_s2c(object_template, user.id, &command.command);
+		if member.attached && member.connected {
+			let groups = member.template.groups;
+			for command in commands {
+				let allow = match command.field {
+					None => true,
+					Some(field) => permission_manager.get_permission(object_template, field, groups) > Permission::Deny,
+				};
+				if allow {
+					let command_with_meta = S2CCommandWithCreator {
+						creator,
+						command: command.command.clone(),
+					};
+					command_trace_session
+						.borrow_mut()
+						.collect_s2c(object_template, member.id, &command.command);
 
-							user.out_commands.push_back(OutCommand {
-								channel_type: channel.clone(),
-								command: BothDirectionCommand::S2CWithCreator(command_with_meta),
-							});
-						}
-					}
+					member
+						.out_commands
+						.push(CommandWithChannelType {
+							channel_type: channel.clone(),
+							command: BothDirectionCommand::S2CWithCreator(command_with_meta),
+						})
+						.map_err(|_| ServerCommandError::Error("Member out commands overflow".to_string()));
 				}
 			}
 		}
+		Ok(())
 	}
 }
 
@@ -133,7 +139,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
 	use crate::room::object::{Field, S2CommandWithFieldInfo};
-	use crate::room::template::config::{Permission, RoomTemplate, UserTemplate};
+	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
 	use crate::room::Room;
 
 	///
@@ -150,9 +156,9 @@ mod tests {
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_user(UserTemplate::stub(access_groups));
-		let user_2 = room.register_user(UserTemplate::stub(access_groups));
-		let object = room.create_object(user_1, access_groups);
+		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object(user_1, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 
@@ -232,12 +238,12 @@ mod tests {
 			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let user_id = room.register_user(UserTemplate::stub(access_groups));
-		let object = room.create_object(user_id, access_groups);
+		let user_id = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object(user_id, access_groups);
 		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id.clone();
-		room.mark_as_connected(user_id).unwrap();
+		room.test_mark_as_connected(user_id).unwrap();
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		assert!(room
@@ -260,7 +266,7 @@ mod tests {
 			)
 			.is_ok());
 
-		assert!(room.get_user_out_commands(user_id).is_empty());
+		assert!(room.test_get_user_out_commands(user_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
 		assert!(room
@@ -284,7 +290,7 @@ mod tests {
 			.is_ok());
 
 		assert!(matches!(
-			room.get_user_out_commands(user_id).get(0),
+			room.test_get_user_out_commands(user_id).get(0),
 			Option::Some(S2CCommand::SetLong(_))
 		));
 	}
@@ -298,9 +304,9 @@ mod tests {
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_user(UserTemplate::stub(access_groups_a));
-		let user_2 = room.register_user(UserTemplate::stub(access_groups_b));
-		let object = room.create_object(user_1, access_groups_a);
+		let user_1 = room.register_member(MemberTemplate::stub(access_groups_a));
+		let user_2 = room.register_member(MemberTemplate::stub(access_groups_b));
+		let object = room.test_create_object(user_1, access_groups_a);
 		object.created = true;
 		let object_id = object.id.clone();
 		assert!(room
@@ -331,11 +337,11 @@ mod tests {
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		let user_source_id = room.register_user(UserTemplate::stub(groups));
-		let user_target_id = room.register_user(UserTemplate::stub(groups));
+		let user_source_id = room.register_member(MemberTemplate::stub(groups));
+		let user_target_id = room.register_member(MemberTemplate::stub(groups));
 
-		room.mark_as_connected(user_target_id).unwrap();
-		let object = room.create_object(user_target_id, groups);
+		room.test_mark_as_connected(user_target_id).unwrap();
+		let object = room.test_create_object(user_target_id, groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id.clone();
@@ -367,7 +373,7 @@ mod tests {
 		room.current_member_id = Some(user_source_id);
 		room.send_to_member(&user_target_id, object_template, &commands);
 
-		let out_commands = room.get_user_out_commands_with_meta(user_target_id);
+		let out_commands = room.test_get_user_out_commands_with_meta(user_target_id);
 		let command = out_commands.get(0);
 
 		assert!(
@@ -399,12 +405,12 @@ mod tests {
 
 		let mut room = Room::from_template(template);
 
-		let user_1 = room.register_user(UserTemplate::stub(access_groups));
-		let user_2 = room.register_user(UserTemplate::stub(access_groups));
-		room.mark_as_connected(user_1).unwrap();
-		room.mark_as_connected(user_2).unwrap();
+		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
+		room.test_mark_as_connected(user_1).unwrap();
+		room.test_mark_as_connected(user_2).unwrap();
 
-		let object = room.create_object(user_1, access_groups);
+		let object = room.test_create_object(user_1, access_groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id.clone();
@@ -434,9 +440,10 @@ mod tests {
 			},
 		];
 
-		room.send_to_members(access_groups, object_template, &commands, |_| true);
+		room.send_to_members(access_groups, object_template, &commands, |_| true)
+			.unwrap();
 
-		let commands = room.get_user_out_commands(user_2);
+		let commands = room.test_get_user_out_commands(user_2);
 		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetLong(c)) if c.field_id == allow_field_id));
 		assert_eq!(commands.len(), 1);
 	}
@@ -447,12 +454,12 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_user(UserTemplate::stub(access_groups));
-		let user_2 = room.register_user(UserTemplate::stub(access_groups));
-		let object = room.create_object(user_1, access_groups);
+		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object(user_1, access_groups);
 		let object_id = object.id.clone();
-		room.mark_as_connected(user_1).unwrap();
-		room.mark_as_connected(user_2).unwrap();
+		room.test_mark_as_connected(user_1).unwrap();
+		room.test_mark_as_connected(user_2).unwrap();
 
 		assert!(room
 			.do_action_and_send_commands(
@@ -474,7 +481,7 @@ mod tests {
 			)
 			.is_ok());
 
-		let commands = room.get_user_out_commands(user_2);
+		let commands = room.test_get_user_out_commands(user_2);
 		assert!(commands.is_empty());
 	}
 }

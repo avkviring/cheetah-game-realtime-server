@@ -55,14 +55,14 @@ mod tests {
 
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{RoomTemplate, UserTemplate};
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::tests::from_vec;
 	use crate::room::Room;
 
 	#[test]
 	pub fn should_send_event() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.create_object(user, access_groups);
+		let object = room.test_create_object(user, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.out_commands.clear();
@@ -83,20 +83,20 @@ mod tests {
 		let access_groups = AccessGroups(10);
 
 		let mut room = Room::from_template(template);
-		let user1 = room.register_user(UserTemplate::stub(access_groups));
-		let user2 = room.register_user(UserTemplate::stub(access_groups));
-		let user3 = room.register_user(UserTemplate::stub(access_groups));
+		let user1 = room.register_member(MemberTemplate::stub(access_groups));
+		let user2 = room.register_member(MemberTemplate::stub(access_groups));
+		let user3 = room.register_member(MemberTemplate::stub(access_groups));
 
-		room.mark_as_connected(user1).unwrap();
-		room.mark_as_connected(user2).unwrap();
-		room.mark_as_connected(user3).unwrap();
+		room.test_mark_as_connected(user1).unwrap();
+		room.test_mark_as_connected(user2).unwrap();
+		room.test_mark_as_connected(user3).unwrap();
 
-		let object = room.create_object(user1, access_groups);
+		let object = room.test_create_object(user1, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
-		room.get_user_out_commands(user1).clear();
-		room.get_user_out_commands(user2).clear();
-		room.get_user_out_commands(user3).clear();
+		room.test_get_user_out_commands(user1).clear();
+		room.test_get_user_out_commands(user2).clear();
+		room.test_get_user_out_commands(user3).clear();
 
 		let command = TargetEventCommand {
 			target: user2,
@@ -108,10 +108,10 @@ mod tests {
 		};
 
 		command.execute(&mut room, user1).unwrap();
-		assert!(matches!(room.get_user_out_commands(user1).pop_back(), None));
+		assert!(matches!(room.test_get_user_out_commands(user1).pop_back(), None));
 		assert!(
-			matches!(room.get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id)
+			matches!(room.test_get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id)
 		);
-		assert!(matches!(room.get_user_out_commands(user3).pop_back(), None));
+		assert!(matches!(room.test_get_user_out_commands(user3).pop_back(), None));
 	}
 }

@@ -10,7 +10,7 @@ use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::protocol::Protocol;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
-use crate::room::template::config::UserTemplate;
+use crate::room::template::config::MemberTemplate;
 use crate::server::rooms::Rooms;
 
 #[derive(Debug)]
@@ -72,12 +72,13 @@ impl NetworkServer {
 				}
 				Some(session) => {
 					if let Some(peer_address) = session.peer_address.as_ref() {
-						while let Some(command) = commands.pop_front() {
+						for command in commands {
 							session
 								.protocol
 								.out_commands_collector
-								.add_command(command.channel_type, command.command);
+								.add_command(command.channel_type.clone(), command.command.clone());
 						}
+
 						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
 							log::trace!("[network] server -> user({:?}) {:?}", member_id, frame);
 							let mut buffer = [0; Frame::MAX_FRAME_SIZE];
@@ -177,7 +178,7 @@ impl NetworkServer {
 		}
 	}
 
-	pub fn register_user(&mut self, now: &Instant, room_id: RoomId, user_id: RoomMemberId, template: UserTemplate) {
+	pub fn register_user(&mut self, now: &Instant, room_id: RoomId, user_id: RoomMemberId, template: MemberTemplate) {
 		self.sessions.insert(
 			MemberAndRoomId {
 				member_id: user_id,
@@ -205,7 +206,7 @@ mod tests {
 	use cheetah_matches_relay_common::protocol::frame::Frame;
 	use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 
-	use crate::room::template::config::UserTemplate;
+	use crate::room::template::config::MemberTemplate;
 	use crate::room::Member;
 	use crate::server::network::NetworkServer;
 	use crate::server::rooms::Rooms;
@@ -270,7 +271,7 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 
-		let user_template = UserTemplate {
+		let user_template = MemberTemplate {
 			private_key: Default::default(),
 			groups: Default::default(),
 			objects: Default::default(),

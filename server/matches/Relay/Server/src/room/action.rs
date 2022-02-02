@@ -44,82 +44,75 @@ impl Room {
 			Some(member) => member.template.groups,
 		};
 
-		if let Some(object) = self.get_object_mut(game_object_id) {
-			// проверяем группу доступа
-			if !object.access_groups.contains_any(&creator_access_group) {
-				return Result::Err(ServerCommandError::MemberCannotAccessToObject {
-					room_id,
-					member_id: creator_id,
-					object_id: game_object_id.clone(),
-					member_access_group: creator_access_group,
-					object_access_group: object.access_groups,
-				});
-			}
-
-			let object_owner = if let GameObjectOwner::Member(owner) = object.id.owner {
-				Option::Some(owner)
-			} else {
-				Option::None
-			};
-
-			let is_creator_object_owner = object_owner == Option::Some(creator_id);
-
-			let allow = is_creator_object_owner
-				|| permission_manager
-					.borrow_mut()
-					.get_permission(object.template_id, field, creator_access_group)
-					>= permission;
-
-			if !allow {
-				return Result::Err(ServerCommandError::MemberCannotAccessToObjectField {
-					room_id,
-					member_id: creator_id,
-					object_id: object.id.clone(),
-					template_id: object.template_id,
-					field,
-				});
-			}
-
-			let command = action(object)?;
-			if let Some(command) = command {
-				// отправляем команду только для созданного объекта
-				if object.created {
-					let groups = object.access_groups;
-					let template = object.template_id;
-
-					let commands_with_field = S2CommandWithFieldInfo {
-						field: Some(field),
-						command,
-					};
-					let commands = [commands_with_field];
-
-					match target {
-						Some(target_user) => {
-							self.send_to_member(&target_user, template, &commands);
-						}
-						None => {
-							self.send_to_members(groups, template, &commands, |user| {
-								let mut permission_manager = permission_manager.borrow_mut();
-								// отправляем себе только если есть права на запись
-								// иначе никто другой не может вносит изменения в данное поле и
-								// отправлять себе как единственному источнику изменений избыточно
-								if object_owner == Option::Some(user.id) {
-									permission_manager.has_write_access(template, field)
-								} else {
-									true
-								}
-							});
-						}
-					}
-				}
-			}
-		} else {
-			return Result::Err(ServerCommandError::GameObjectNotFound {
-				room_id: self.id,
+		let mut object = self.get_object_mut(game_object_id)?;
+		// проверяем группу доступа
+		if !object.access_groups.contains_any(&creator_access_group) {
+			return Result::Err(ServerCommandError::MemberCannotAccessToObject {
+				room_id,
+				member_id: creator_id,
 				object_id: game_object_id.clone(),
+				member_access_group: creator_access_group,
+				object_access_group: object.access_groups,
 			});
 		}
 
+		let object_owner = if let GameObjectOwner::Member(owner) = object.id.owner {
+			Option::Some(owner)
+		} else {
+			Option::None
+		};
+
+		let is_creator_object_owner = object_owner == Option::Some(creator_id);
+
+		let allow = is_creator_object_owner
+			|| permission_manager
+				.borrow_mut()
+				.get_permission(object.template_id, field, creator_access_group)
+				>= permission;
+
+		if !allow {
+			return Result::Err(ServerCommandError::MemberCannotAccessToObjectField {
+				room_id,
+				member_id: creator_id,
+				object_id: object.id.clone(),
+				template_id: object.template_id,
+				field,
+			});
+		}
+
+		let command = action(object)?;
+		if let Some(command) = command {
+			// отправляем команду только для созданного объекта
+			if object.created {
+				let groups = object.access_groups;
+				let template = object.template_id;
+
+				let commands_with_field = S2CommandWithFieldInfo {
+					field: Some(field),
+					command,
+				};
+				let commands = [commands_with_field];
+
+				match target {
+					Some(target_user) => {
+						self.send_to_member(&target_user, template, &commands);
+					}
+					None => {
+						self.send_to_members(groups, template, &commands, |user| {
+							let mut permission_manager = permission_manager.borrow_mut();
+							// отправляем себе только если есть права на запись
+							// иначе никто другой не может вносит изменения в данное поле и
+							// отправлять себе как единственному источнику изменений избыточно
+							if object_owner == Option::Some(user.id) {
+								permission_manager.has_write_access(template, field)
+							} else {
+								true
+							}
+						});
+					}
+				}
+			}
+		}
 		Ok(())
 	}
 }
