@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use cheetah_matches_relay_common::commands::FieldType;
@@ -23,8 +25,15 @@ pub struct GameObject {
 	structures: heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT>,
 	compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
+
 pub const MAX_FIELD_COUNT: usize = 64;
 pub type CreateCommandsCollector = heapless::Vec<S2CommandWithFieldInfo, 255>;
+
+#[derive(Error, Debug)]
+pub enum GameObjectError {
+	#[error("Field count overflow in game object {:?} with template {:?}", .0,.1)]
+	FieldCountOverflow(GameObjectId, GameObjectTemplateId),
+}
 
 impl GameObject {
 	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, created: bool) -> Self {
@@ -47,10 +56,11 @@ impl GameObject {
 		self.longs.get(field_id)
 	}
 
-	pub fn set_long(&mut self, field_id: FieldId, value: i64) {
-		if self.longs.insert(field_id, value).is_err() {
-			log::error!("Long count fields overflow")
-		}
+	pub fn set_long(&mut self, field_id: FieldId, value: i64) -> Result<(), GameObjectError> {
+		self.longs
+			.insert(field_id, value)
+			.map(|_| ())
+			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
 	}
 
 	pub fn get_floats(&self) -> &heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT> {
@@ -59,10 +69,11 @@ impl GameObject {
 	pub fn get_float(&self, field_id: &FieldId) -> Option<&f64> {
 		self.floats.get(field_id)
 	}
-	pub fn set_float(&mut self, field_id: FieldId, value: f64) {
-		if self.floats.insert(field_id, value).is_err() {
-			log::error!("Long count fields overflow")
-		}
+	pub fn set_float(&mut self, field_id: FieldId, value: f64) -> Result<(), GameObjectError> {
+		self.floats
+			.insert(field_id, value)
+			.map(|_| ())
+			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
 	}
 
 	pub fn get_structures(&self) -> &heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT> {
@@ -73,17 +84,18 @@ impl GameObject {
 		self.structures.get(field_id)
 	}
 
-	pub fn set_structure(&mut self, field_id: FieldId, structure: &[u8]) {
+	pub fn set_structure(&mut self, field_id: FieldId, structure: &[u8]) -> Result<(), GameObjectError> {
 		match self.structures.get_mut(&field_id) {
 			Some(vec) => {
 				vec.clear();
 				vec.extend_from_slice(structure);
+				Ok(())
 			}
-			None => {
-				if self.structures.insert(field_id, structure.to_vec()).is_err() {
-					log::error!("Structures count fields overflow")
-				}
-			}
+			None => self
+				.structures
+				.insert(field_id, structure.to_vec())
+				.map(|_| ())
+				.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id)),
 		}
 	}
 
@@ -94,10 +106,11 @@ impl GameObject {
 		self.compare_and_set_owners.get(field_id)
 	}
 
-	pub fn set_compare_and_set_owner(&mut self, field_id: FieldId, value: RoomMemberId) {
-		if self.compare_and_set_owners.insert(field_id, value).is_err() {
-			log::error!("Compare and set owners count fields overflow")
-		}
+	pub fn set_compare_and_set_owner(&mut self, field_id: FieldId, value: RoomMemberId) -> Result<(), GameObjectError> {
+		self.compare_and_set_owners
+			.insert(field_id, value)
+			.map(|_| ())
+			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
 	}
 
 	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector) {
@@ -164,8 +177,8 @@ mod tests {
 	pub fn should_collect_command() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
-		object.set_long(1, 100);
-		object.set_float(2, 200.200);
+		object.set_long(1, 100).unwrap();
+		object.set_float(2, 200.200).unwrap();
 		object.structures.insert(1, vec![1, 2, 3]).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
@@ -198,7 +211,7 @@ mod tests {
 	pub fn should_collect_command_for_not_created_object() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id.clone(), 0, Default::default(), false);
-		object.set_long(1, 100);
+		object.set_long(1, 100).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
@@ -218,8 +231,8 @@ mod tests {
 	#[test]
 	pub fn should_update_structure() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
-		object.set_structure(1, &[1, 2, 3]);
-		object.set_structure(1, &[4, 5, 6, 7]);
+		object.set_structure(1, &[1, 2, 3]).unwrap();
+		object.set_structure(1, &[4, 5, 6, 7]).unwrap();
 		assert_eq!(*object.get_structure(&1).unwrap(), [4, 5, 6, 7])
 	}
 }

@@ -2,15 +2,15 @@ use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectComma
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
-		let member = room.get_member(member_id).unwrap();
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		let member = room.get_member(member_id)?;
 		if let GameObjectOwner::Member(object_id_user) = self.object_id.owner {
 			if object_id_user != member.id {
-				return Err(ExecuteServerCommandError::MemberNotOwnerGameObject {
+				return Err(ServerCommandError::MemberNotOwnerGameObject {
 					object_id: self.object_id.clone(),
 					member_id,
 				});
@@ -29,7 +29,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
@@ -85,7 +85,7 @@ mod tests {
 
 		assert!(matches!(
 			command.execute(&mut room, user_b),
-			Err(ExecuteServerCommandError::MemberNotOwnerGameObject {
+			Err(ServerCommandError::MemberNotOwnerGameObject {
 				object_id: _,
 				member_id: _
 			})

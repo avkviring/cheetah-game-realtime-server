@@ -1,14 +1,9 @@
-use thiserror::Error;
-
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-
-use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-
-use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
+use cheetah_matches_relay_common::room::RoomMemberId;
 
+use crate::room::command::ServerCommandError;
 use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
@@ -32,16 +27,16 @@ impl Room {
 		permission: Permission,
 		target: Option<RoomMemberId>,
 		action: T,
-	) -> Result<(), DoActionAndSendCommandsError>
+	) -> Result<(), ServerCommandError>
 	where
-		T: FnOnce(&mut GameObject) -> Option<S2CCommand>,
+		T: FnOnce(&mut GameObject) -> Result<Option<S2CCommand>, ServerCommandError>,
 	{
 		let room_id = self.id;
 		let permission_manager = self.permission_manager.clone();
 		let creator_access_group = match self.members.get(&creator_id) {
 			None => {
 				log::error!("[room({})] user({}) not found", self.id, creator_id);
-				return Result::Err(DoActionAndSendCommandsError::MemberNotFound {
+				return Result::Err(ServerCommandError::MemberNotFound {
 					room_id: self.id,
 					member_id: creator_id,
 				});
@@ -52,7 +47,7 @@ impl Room {
 		if let Some(object) = self.get_object_mut(game_object_id) {
 			// проверяем группу доступа
 			if !object.access_groups.contains_any(&creator_access_group) {
-				return Result::Err(DoActionAndSendCommandsError::MemberCannotAccessToObject {
+				return Result::Err(ServerCommandError::MemberCannotAccessToObject {
 					room_id,
 					member_id: creator_id,
 					object_id: game_object_id.clone(),
@@ -76,7 +71,7 @@ impl Room {
 					>= permission;
 
 			if !allow {
-				return Result::Err(DoActionAndSendCommandsError::MemberCannotAccessToObjectField {
+				return Result::Err(ServerCommandError::MemberCannotAccessToObjectField {
 					room_id,
 					member_id: creator_id,
 					object_id: object.id.clone(),
@@ -85,13 +80,13 @@ impl Room {
 				});
 			}
 
-			let command = action(object);
-			// отправляем команду только для созданного объекта
-			if object.created {
-				let groups = object.access_groups;
-				let template = object.template_id;
+			let command = action(object)?;
+			if let Some(command) = command {
+				// отправляем команду только для созданного объекта
+				if object.created {
+					let groups = object.access_groups;
+					let template = object.template_id;
 
-				if let Some(command) = command {
 					let commands_with_field = S2CommandWithFieldInfo {
 						field: Some(field),
 						command,
@@ -116,10 +111,10 @@ impl Room {
 							});
 						}
 					}
-				};
+				}
 			}
 		} else {
-			return Result::Err(DoActionAndSendCommandsError::GameObjectNotFound {
+			return Result::Err(ServerCommandError::GameObjectNotFound {
 				room_id: self.id,
 				object_id: game_object_id.clone(),
 			});
@@ -127,37 +122,4 @@ impl Room {
 
 		Ok(())
 	}
-}
-
-#[derive(Error, Debug)]
-pub enum DoActionAndSendCommandsError {
-	#[error("Member with id {member_id:?} not found in room {room_id:?} ")]
-	MemberNotFound { room_id: RoomId, member_id: RoomMemberId },
-
-	#[error(
-		"Member {member_id:?} with group {member_access_group:?} cannot access to \
-	object {object_id:?} with group {object_access_group:?} in room {room_id:?}"
-	)]
-	MemberCannotAccessToObject {
-		room_id: RoomId,
-		member_id: RoomMemberId,
-		object_id: GameObjectId,
-		member_access_group: AccessGroups,
-		object_access_group: AccessGroups,
-	},
-
-	#[error(
-		"Member {member_id:?} cannot access to field {field:?} in object {object_id:?} with \
-		template {template_id:?} in room {room_id:?}"
-	)]
-	MemberCannotAccessToObjectField {
-		room_id: RoomId,
-		member_id: RoomMemberId,
-		object_id: GameObjectId,
-		template_id: GameObjectTemplateId,
-		field: Field,
-	},
-
-	#[error("Game object with id {object_id:?} not found in room {room_id:?} ")]
-	GameObjectNotFound { room_id: RoomId, object_id: GameObjectId },
 }

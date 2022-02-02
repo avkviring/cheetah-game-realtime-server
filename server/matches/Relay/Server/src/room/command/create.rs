@@ -2,24 +2,22 @@ use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
-		let user = room.get_member(user_id).unwrap();
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		let user = room.get_member(user_id)?;
 
 		if self.object_id.id == 0 {
-			return Err(ExecuteServerCommandError::Error(
-				"0 is forbidden for game object id".to_string(),
-			));
+			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_string()));
 		}
 
 		let groups = self.access_groups;
 
 		if !groups.is_sub_groups(&user.template.groups) {
-			return Err(ExecuteServerCommandError::Error(format!(
+			return Err(ServerCommandError::Error(format!(
 				"Incorrect access group {:?} with client groups {:?}",
 				groups, user.template.groups
 			)));
@@ -27,7 +25,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 		if let GameObjectOwner::Member(object_id_user) = self.object_id.owner {
 			if object_id_user != user.id {
-				return Err(ExecuteServerCommandError::Error(format!(
+				return Err(ServerCommandError::Error(format!(
 					"Incorrect object_id {:?} for user {:?}",
 					self.object_id, user
 				)));
@@ -35,7 +33,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 		}
 
 		if room.contains_object(&self.object_id) {
-			return Err(ExecuteServerCommandError::Error(format!(
+			return Err(ServerCommandError::Error(format!(
 				"Object already exists with id {:?}",
 				self.object_id
 			)));
@@ -52,7 +50,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 	use crate::room::template::config::{RoomTemplate, UserTemplate};
 	use crate::room::Room;
 
@@ -93,7 +91,7 @@ mod tests {
 
 		assert!(matches!(
 			command.execute(&mut room, user_id),
-			Err(ExecuteServerCommandError::Error(_))
+			Err(ServerCommandError::Error(_))
 		));
 		assert!(matches!(room.get_object_mut(&object_id), None));
 	}
@@ -113,7 +111,7 @@ mod tests {
 
 		assert!(matches!(
 			command.execute(&mut room, user_id),
-			Err(ExecuteServerCommandError::Error(_))
+			Err(ServerCommandError::Error(_))
 		));
 		assert!(matches!(room.get_object_mut(&object_id), None));
 	}
@@ -133,7 +131,7 @@ mod tests {
 		};
 		assert!(matches!(
 			command.execute(&mut room, user_id),
-			Err(ExecuteServerCommandError::Error(_))
+			Err(ServerCommandError::Error(_))
 		));
 		assert!(matches!(room.get_object_mut(&object_id), None));
 	}
@@ -157,7 +155,7 @@ mod tests {
 
 		assert!(matches!(
 			command.execute(&mut room, user_id),
-			Err(ExecuteServerCommandError::Error(_))
+			Err(ServerCommandError::Error(_))
 		));
 		assert!(matches!(room.get_object_mut(&object_id), Some(object) if object.template_id == 777));
 	}

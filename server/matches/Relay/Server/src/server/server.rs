@@ -106,9 +106,11 @@ impl Server {
 				},
 				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => {
 					match self.rooms.room_by_id.get_mut(&room_id) {
-						None => sender
-							.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id)))
-							.unwrap(),
+						None => {
+							if let Err(e) = sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id))) {
+								log::error!("[Request::RegisterUser] error send response {:?}", e);
+							}
+						}
 						Some(room) => {
 							room.command_trace_session.clone().borrow_mut().execute_task(task);
 							if let Err(e) = sender.send(Result::Ok(())) {

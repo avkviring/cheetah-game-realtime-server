@@ -1,12 +1,12 @@
 use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::CreateCommandsCollector;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreatedGameObjectCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let room_id = room.id;
 		if let Some(object) = room.get_object_mut(&self.object_id) {
 			if !object.created {
@@ -18,7 +18,7 @@ impl ServerCommandExecutor for CreatedGameObjectCommand {
 				let template = object.template_id;
 				room.send_to_members(groups, template, commands.as_slice(), |user| user.id != user_id)
 			} else {
-				return Err(ExecuteServerCommandError::Error(format!(
+				return Err(ServerCommandError::Error(format!(
 					"room[({:?})] object ({:?}) already created",
 					room_id, object.id
 				)));
@@ -34,7 +34,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::types::load::CreatedGameObjectCommand;
 
 	use crate::room::command::tests::setup_two_players;
-	use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 
 	///
 	/// - Команда должна приводить к рассылки оповещения для пользователей
@@ -94,7 +94,7 @@ mod tests {
 
 		assert!(matches!(
 			command.execute(&mut room, user1),
-			Err(ExecuteServerCommandError::Error(_))
+			Err(ServerCommandError::Error(_))
 		));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}

@@ -19,10 +19,10 @@ impl GameObjectTemplate {
 
 		let mut object = GameObject::new(id, self.template, self.groups, true);
 
-		self.fields.longs.iter().for_each(|(k, v)| object.set_long(*k, *v));
-		self.fields.floats.iter().for_each(|(k, v)| object.set_float(*k, *v));
+		self.fields.longs.iter().for_each(|(k, v)| object.set_long(*k, *v).unwrap());
+		self.fields.floats.iter().for_each(|(k, v)| object.set_float(*k, *v).unwrap());
 		self.fields.structures.iter().for_each(|(k, v)| {
-			object.set_structure(*k, v.as_slice());
+			object.set_structure(*k, v.as_slice()).unwrap();
 		});
 
 		object

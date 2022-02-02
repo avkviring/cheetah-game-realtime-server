@@ -3,16 +3,16 @@ use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetE
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::{Field, GameObject};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
-		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.clone()));
+		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.clone())));
 		room.do_action_and_send_commands(
 			&object_id,
 			Field {
@@ -23,17 +23,16 @@ impl ServerCommandExecutor for EventCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		)?;
-		Ok(())
+		)
 	}
 }
 
 impl ServerCommandExecutor for TargetEventCommand {
-	fn execute(&self, room: &mut Room, user_id: u16) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: u16) -> Result<(), ServerCommandError> {
 		let field_id = self.event.field_id;
 		let object_id = self.event.object_id.clone();
 		let target = self.target;
-		let action = |_object: &mut GameObject| Option::Some(S2CCommand::Event(self.event.clone()));
+		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.event.clone())));
 		room.do_action_and_send_commands(
 			&object_id,
 			Field {
@@ -44,8 +43,7 @@ impl ServerCommandExecutor for TargetEventCommand {
 			Permission::Rw,
 			Option::Some(target),
 			action,
-		)?;
-		Ok(())
+		)
 	}
 }
 
@@ -54,8 +52,6 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetEventCommand};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;

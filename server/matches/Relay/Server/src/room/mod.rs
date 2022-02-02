@@ -20,8 +20,8 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::tracer::CommandTracerSessions;
-use crate::room::command::execute;
 use crate::room::command::long::reset_all_compare_and_set;
+use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::template::permission::PermissionManager;
@@ -149,7 +149,7 @@ impl Room {
 					match execute(command, self, user_id) {
 						Ok(_) => {}
 						Err(e) => {
-							log::error!("C2S {:?} : room {} : client {} : {:?}", command, self.id, user_id, e);
+							e.log_error_with_command(command, self.id, user_id);
 						}
 					}
 				}
@@ -178,8 +178,8 @@ impl Room {
 		user_id
 	}
 
-	pub fn get_member(&self, user_id: RoomMemberId) -> Option<&Member> {
-		self.members.get(&user_id)
+	pub fn get_member(&self, member_id: RoomMemberId) -> Result<&Member, RoomError> {
+		self.members.get(&member_id).ok_or(RoomError::MemberNotFound(member_id))
 	}
 
 	pub fn get_member_mut(&mut self, member_id: RoomMemberId) -> Result<&mut Member, RoomError> {
@@ -190,7 +190,7 @@ impl Room {
 	/// Связь с пользователям разорвана
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
-	pub fn disconnect_user(&mut self, user_id: RoomMemberId) {
+	pub fn disconnect_user(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		log::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
 		self.current_member_id.replace(user_id);
 		match self.members.remove(&user_id) {
@@ -209,9 +209,10 @@ impl Room {
 					self.delete_object(&id);
 				}
 
-				reset_all_compare_and_set(self, user.id, user.compare_and_sets_cleaners);
+				reset_all_compare_and_set(self, user.id, user.compare_and_sets_cleaners)?;
 			}
 		};
+		Ok(())
 	}
 
 	pub fn insert_object(&mut self, object: GameObject) {
@@ -363,7 +364,7 @@ mod tests {
 		let object_b_2 = room.create_object(user_b, access_groups).id.clone();
 
 		room.out_commands.clear();
-		room.disconnect_user(user_a);
+		room.disconnect_user(user_a).unwrap();
 
 		assert!(!room.contains_object(&object_a_1));
 		assert!(!room.contains_object(&object_a_2));

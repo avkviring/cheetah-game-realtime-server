@@ -15,13 +15,13 @@ use crate::server::rooms::Rooms;
 
 #[derive(Debug)]
 pub struct NetworkServer {
-	sessions: HashMap<MemberAndRoomId, UserSession>,
+	sessions: HashMap<MemberAndRoomId, MemberSession>,
 	socket: UdpSocket,
 	halt: bool,
 }
 
 #[derive(Debug)]
-struct UserSession {
+struct MemberSession {
 	peer_address: Option<SocketAddr>,
 	private_key: UserPrivateKey,
 	max_receive_frame_id: FrameId,
@@ -46,7 +46,9 @@ impl NetworkServer {
 		let mut disconnected = heapless::Vec::<MemberAndRoomId, 1000>::new();
 		self.sessions.iter_mut().for_each(|(id, session)| {
 			if session.protocol.is_disconnected(now) && !disconnected.is_full() {
-				rooms.user_disconnected(id);
+				if let Err(e) = rooms.user_disconnected(id) {
+					e.log_error(id.room_id, id.member_id);
+				}
 				disconnected.push(id.clone()).unwrap();
 			}
 		});
@@ -86,13 +88,12 @@ impl NetworkServer {
 										log::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
 									}
 								}
-								Err(e) => {
-									if let ErrorKind::WouldBlock = e.kind() {
-										return;
-									} else {
+								Err(e) => match e.kind() {
+									ErrorKind::WouldBlock => {}
+									_ => {
 										log::error!("[network] socket error {:?}", e);
 									}
-								}
+								},
 							}
 						}
 					}
@@ -155,7 +156,7 @@ impl NetworkServer {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.frame_id;
 										}
-										session.protocol.on_frame_received(frame, &now);
+										session.protocol.on_frame_received(frame, now);
 										rooms.execute_commands(
 											user_and_room_id,
 											session.protocol.in_commands_collector.get_ready_commands(),
@@ -182,7 +183,7 @@ impl NetworkServer {
 				member_id: user_id,
 				room_id,
 			},
-			UserSession {
+			MemberSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
 				max_receive_frame_id: 0,

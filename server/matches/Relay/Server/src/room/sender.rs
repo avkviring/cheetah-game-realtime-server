@@ -157,45 +157,36 @@ mod tests {
 		let object_id = object.id.clone();
 
 		// владельцу разрешены любые операции
-		let mut executed = false;
-		room.do_action_and_send_commands(
-			&object_id,
-			Field {
-				id: field_id_1,
-				field_type: FieldType::Long,
-			},
-			user_1,
-			Permission::Rw,
-			None,
-			|_| {
-				executed = true;
-				None
-			},
-		)
-		.unwrap();
-		assert!(executed);
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id,
+				Field {
+					id: field_id_1,
+					field_type: FieldType::Long,
+				},
+				user_1,
+				Permission::Rw,
+				None,
+				|_| Ok(None),
+			)
+			.is_ok());
 
 		// RO - по-умолчанию для всех полей
-		let mut executed = false;
-		room.do_action_and_send_commands(
-			&object_id,
-			Field {
-				id: field_id_1,
-				field_type: FieldType::Long,
-			},
-			user_2,
-			Permission::Ro,
-			None,
-			|_| {
-				executed = true;
-				None
-			},
-		)
-		.unwrap();
-		assert!(executed);
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id,
+				Field {
+					id: field_id_1,
+					field_type: FieldType::Long,
+				},
+				user_2,
+				Permission::Ro,
+				None,
+				|_| Ok(None),
+			)
+			.is_ok());
 
 		// RW - по-умолчанию запрещен
-		let mut executed = false;
 		assert!(room
 			.do_action_and_send_commands(
 				&object_id,
@@ -206,31 +197,24 @@ mod tests {
 				user_2,
 				Permission::Rw,
 				None,
-				|_| {
-					executed = true;
-					None
-				},
+				|_| Ok(None),
 			)
 			.is_err());
 
 		// RW - разрешен для второго поля
-		let mut executed = false;
-		room.do_action_and_send_commands(
-			&object_id,
-			Field {
-				id: field_id_2,
-				field_type: FieldType::Long,
-			},
-			user_2,
-			Permission::Rw,
-			None,
-			|_| {
-				executed = true;
-				None
-			},
-		)
-		.unwrap();
-		assert!(executed);
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id,
+				Field {
+					id: field_id_2,
+					field_type: FieldType::Long,
+				},
+				user_2,
+				Permission::Rw,
+				None,
+				|_| Ok(None),
+			)
+			.is_ok());
 	}
 
 	///
@@ -256,51 +240,49 @@ mod tests {
 		room.mark_as_connected(user_id).unwrap();
 
 		// изменяем поле, которое никто кроме нас не может изменять
-		let mut executed = false;
-		room.do_action_and_send_commands(
-			&object_id,
-			Field {
-				id: field_id_1,
-				field_type,
-			},
-			user_id,
-			Permission::Rw,
-			Option::None,
-			|_| {
-				executed = true;
-				Option::Some(S2CCommand::SetLong(SetLongCommand {
-					object_id: object_id.clone(),
-					field_id: field_id_1,
-					value: 0,
-				}))
-			},
-		)
-		.unwrap();
-		assert!(executed);
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id,
+				Field {
+					id: field_id_1,
+					field_type,
+				},
+				user_id,
+				Permission::Rw,
+				Option::None,
+				|_| {
+					Ok(Some(S2CCommand::SetLong(SetLongCommand {
+						object_id: object_id.clone(),
+						field_id: field_id_1,
+						value: 0,
+					})))
+				},
+			)
+			.is_ok());
+
 		assert!(room.get_user_out_commands(user_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
-		let mut executed = false;
-		room.do_action_and_send_commands(
-			&object_id,
-			Field {
-				id: field_id_2,
-				field_type,
-			},
-			user_id,
-			Permission::Rw,
-			Option::None,
-			|_| {
-				executed = true;
-				Option::Some(S2CCommand::SetLong(SetLongCommand {
-					object_id: object_id.clone(),
-					field_id: field_id_2,
-					value: 0,
-				}))
-			},
-		)
-		.unwrap();
-		assert!(executed);
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id,
+				Field {
+					id: field_id_2,
+					field_type,
+				},
+				user_id,
+				Permission::Rw,
+				Option::None,
+				|_| {
+					Ok(Some(S2CCommand::SetLong(SetLongCommand {
+						object_id: object_id.clone(),
+						field_id: field_id_2,
+						value: 0,
+					})))
+				},
+			)
+			.is_ok());
+
 		assert!(matches!(
 			room.get_user_out_commands(user_id).get(0),
 			Option::Some(S2CCommand::SetLong(_))
@@ -331,7 +313,7 @@ mod tests {
 				user_2,
 				Permission::Ro,
 				None,
-				|_| { None },
+				|_| Ok(None),
 			)
 			.is_err());
 	}
@@ -472,24 +454,25 @@ mod tests {
 		room.mark_as_connected(user_1).unwrap();
 		room.mark_as_connected(user_2).unwrap();
 
-		room.do_action_and_send_commands(
-			&object_id.clone(),
-			Field {
-				id: field_id,
-				field_type: FieldType::Long,
-			},
-			user_1,
-			Permission::Rw,
-			Option::None,
-			|_| {
-				Option::Some(S2CCommand::SetLong(SetLongCommand {
-					object_id,
-					field_id: 100,
-					value: 200,
-				}))
-			},
-		)
-		.unwrap();
+		assert!(room
+			.do_action_and_send_commands(
+				&object_id.clone(),
+				Field {
+					id: field_id,
+					field_type: FieldType::Long,
+				},
+				user_1,
+				Permission::Rw,
+				Option::None,
+				|_| {
+					Ok(Some(S2CCommand::SetLong(SetLongCommand {
+						object_id,
+						field_id: 100,
+						value: 200,
+					})))
+				},
+			)
+			.is_ok());
 
 		let commands = room.get_user_out_commands(user_2);
 		assert!(commands.is_empty());

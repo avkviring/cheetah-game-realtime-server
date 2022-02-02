@@ -3,30 +3,30 @@ use cheetah_matches_relay_common::commands::types::float::{IncrementDoubleC2SCom
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementDoubleC2SCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.get_float(&field_id) {
 				let new_value = value + self.increment;
-				object.set_float(field_id, new_value);
+				object.set_float(field_id, new_value)?;
 				new_value
 			} else {
-				object.set_float(field_id, self.increment);
+				object.set_float(field_id, self.increment)?;
 				self.increment
 			};
-			Option::Some(S2CCommand::SetDouble(SetDoubleCommand {
+			Ok(Some(S2CCommand::SetDouble(SetDoubleCommand {
 				object_id: self.object_id.clone(),
 				field_id,
 				value,
-			}))
+			})))
 		};
 
 		room.do_action_and_send_commands(
@@ -39,19 +39,18 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		)?;
-		Ok(())
+		)
 	}
 }
 
 impl ServerCommandExecutor for SetDoubleCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
-			object.set_float(self.field_id, self.value);
-			Option::Some(S2CCommand::SetDouble(self.clone()))
+			object.set_float(self.field_id, self.value)?;
+			Ok(Some(S2CCommand::SetDouble(self.clone())))
 		};
 		room.do_action_and_send_commands(
 			&object_id,
@@ -63,8 +62,7 @@ impl ServerCommandExecutor for SetDoubleCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		)?;
-		Ok(())
+		)
 	}
 }
 
@@ -92,8 +90,6 @@ impl GameObject {
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;

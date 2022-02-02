@@ -1,11 +1,13 @@
+use std::collections::{HashMap, VecDeque};
+
 use fnv::FnvBuildHasher;
-use std::collections::{HashMap, HashSet, VecDeque};
 
 use cheetah_matches_relay_common::protocol::commands::output::OutCommand;
 use cheetah_matches_relay_common::protocol::frame::applications::CommandWithChannel;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
+use crate::room::command::ServerCommandError;
 use crate::room::template::config::{RoomTemplate, UserTemplate};
 use crate::room::Room;
 
@@ -13,7 +15,7 @@ use crate::room::Room;
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
-	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
+	changed_rooms: heapless::FnvIndexSet<RoomId, 10_000>,
 }
 
 #[derive(Debug)]
@@ -41,16 +43,8 @@ impl Rooms {
 	where
 		F: FnMut(&RoomId, &RoomMemberId, &mut VecDeque<OutCommand>),
 	{
-		let mut data: [RoomId; 30_000] = [0; 30_000];
-		let mut index = 0;
-		self.changed_rooms.iter().for_each(|room_id| {
-			data[index] = *room_id;
-			index += 1;
-		});
-		self.changed_rooms.clear();
-
-		for i in 0..index {
-			match self.room_by_id.get_mut(&data[i]) {
+		for room_id in self.changed_rooms.iter() {
+			match self.room_by_id.get_mut(room_id) {
 				None => {}
 				Some(room) => {
 					let room_id = room.id;
@@ -67,18 +61,20 @@ impl Rooms {
 			}
 			Some(room) => {
 				room.execute_commands(user_and_room_id.member_id, commands);
-				self.changed_rooms.insert(room.id);
+				self.changed_rooms.insert(room.id).unwrap();
 			}
 		}
 	}
-	pub fn user_disconnected(&mut self, member_and_room_id: &MemberAndRoomId) {
+	pub fn user_disconnected(&mut self, member_and_room_id: &MemberAndRoomId) -> Result<(), ServerCommandError> {
 		match self.room_by_id.get_mut(&member_and_room_id.room_id) {
-			None => {
-				log::error!("[rooms] room not found ({:?}) in user_disconnect", member_and_room_id);
-			}
+			None => Err(ServerCommandError::Error(format!(
+				"[rooms] room not found ({:?}) in user_disconnect",
+				member_and_room_id
+			))),
 			Some(room) => {
-				room.disconnect_user(member_and_room_id.member_id);
-				self.changed_rooms.insert(member_and_room_id.room_id);
+				room.disconnect_user(member_and_room_id.member_id)?;
+				self.changed_rooms.insert(member_and_room_id.room_id).unwrap();
+				Ok(())
 			}
 		}
 	}

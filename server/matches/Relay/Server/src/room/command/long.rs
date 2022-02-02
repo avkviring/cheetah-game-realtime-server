@@ -11,13 +11,13 @@ use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let action = |object: &mut GameObject| {
 			let value = match object.get_long(&self.field_id) {
 				Some(value) => match (*value).checked_add(self.increment) {
@@ -30,20 +30,20 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 						*value
 					}
 					Some(result) => {
-						object.set_long(self.field_id, result);
+						object.set_long(self.field_id, result)?;
 						result
 					}
 				},
 				None => {
-					object.set_long(self.field_id, self.increment);
+					object.set_long(self.field_id, self.increment)?;
 					self.increment
 				}
 			};
-			Option::Some(S2CCommand::SetLong(SetLongCommand {
+			Ok(Some(S2CCommand::SetLong(SetLongCommand {
 				object_id: self.object_id.clone(),
 				field_id: self.field_id,
 				value,
-			}))
+			})))
 		};
 		room.do_action_and_send_commands(
 			&self.object_id,
@@ -55,19 +55,18 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		)?;
-		Ok(())
+		)
 	}
 }
 
 impl ServerCommandExecutor for SetLongCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
-			object.set_long(self.field_id, self.value);
-			Option::Some(S2CCommand::SetLong(self.clone()))
+			object.set_long(self.field_id, self.value)?;
+			Ok(Some(S2CCommand::SetLong(self.clone())))
 		};
 
 		room.do_action_and_send_commands(
@@ -80,13 +79,12 @@ impl ServerCommandExecutor for SetLongCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		)?;
-		Ok(())
+		)
 	}
 }
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let object_id = self.object_id.clone();
 		let field_id = self.field_id;
 		let reset = self.reset;
@@ -100,16 +98,16 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 				Some(value) => *value == self.current,
 			};
 			if allow {
-				object.set_long(self.field_id, self.new);
-				object.set_compare_and_set_owner(self.field_id, user_id);
+				object.set_long(self.field_id, self.new)?;
+				object.set_compare_and_set_owner(self.field_id, user_id)?;
 				*is_set_cloned.borrow_mut() = true;
-				Option::Some(S2CCommand::SetLong(SetLongCommand {
+				Ok(Some(S2CCommand::SetLong(SetLongCommand {
 					object_id: self.object_id.clone(),
 					field_id: self.field_id,
 					value: self.new,
-				}))
+				})))
 			} else {
-				Option::None
+				Ok(None)
 			}
 		};
 
@@ -126,8 +124,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 		)?;
 
 		if *(is_set.borrow()) {
-			room.get_member_mut(user_id)
-				.unwrap()
+			room.get_member_mut(user_id)?
 				.compare_and_sets_cleaners
 				.insert((object_id, field_id), reset);
 		}
@@ -140,7 +137,7 @@ pub fn reset_all_compare_and_set(
 	room: &mut Room,
 	user_id: RoomMemberId,
 	compare_and_sets_cleaners: HashMap<(GameObjectId, FieldId), i64, FnvBuildHasher>,
-) {
+) -> Result<(), ServerCommandError> {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
 		match room.get_object_mut(&object_id) {
 			None => {
@@ -149,7 +146,7 @@ pub fn reset_all_compare_and_set(
 			Some(object) => {
 				if let Some(owner) = object.get_compare_and_set_owner(&field) {
 					if *owner == user_id {
-						object.set_long(field, reset);
+						object.set_long(field, reset)?;
 						let command = [S2CommandWithFieldInfo {
 							field: Some(Field {
 								id: field,
@@ -169,6 +166,7 @@ pub fn reset_all_compare_and_set(
 			}
 		}
 	}
+	Ok(())
 }
 
 impl GameObject {
@@ -349,7 +347,7 @@ mod tests {
 			command.new
 		);
 
-		room.disconnect_user(user1_id);
+		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(&object_id).unwrap().get_long(&command.field_id).unwrap(),
 			command.reset
@@ -380,7 +378,7 @@ mod tests {
 		command_1.execute(&mut room, user1_id).unwrap();
 		command_2.execute(&mut room, user2_id).unwrap();
 
-		room.disconnect_user(user1_id);
+		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
 			*room
 				.get_object_mut(&object_id)

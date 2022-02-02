@@ -1,10 +1,10 @@
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::ExecuteServerCommandError;
+use crate::room::command::ServerCommandError;
 use crate::room::object::CreateCommandsCollector;
 use crate::room::Room;
 
-pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(member_id)?;
 
 	member.attach_to_room();
@@ -30,7 +30,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Ex
 	Ok(())
 }
 
-pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(member_id)?;
 	member.detach_from_room();
 	Ok(())

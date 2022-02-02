@@ -3,18 +3,18 @@ use cheetah_matches_relay_common::commands::types::structure::SetStructureComman
 use cheetah_matches_relay_common::commands::{CommandBuffer, FieldType};
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::room::command::{ExecuteServerCommandError, ServerCommandExecutor};
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for SetStructureCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ExecuteServerCommandError> {
+	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {
-			object.set_structure(self.field_id, self.structure.as_slice());
-			Option::Some(S2CCommand::SetStructure(self.clone()))
+			object.set_structure(self.field_id, self.structure.as_slice())?;
+			Ok(Some(S2CCommand::SetStructure(self.clone())))
 		};
 		room.do_action_and_send_commands(
 			&object_id,
@@ -26,8 +26,7 @@ impl ServerCommandExecutor for SetStructureCommand {
 			Permission::Rw,
 			Option::None,
 			action,
-		)?;
-		Ok(())
+		)
 	}
 }
 
