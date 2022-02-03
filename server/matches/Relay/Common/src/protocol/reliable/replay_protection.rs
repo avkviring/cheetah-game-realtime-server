@@ -24,7 +24,7 @@ impl Default for FrameReplayProtection {
 }
 
 impl FrameReplayProtection {
-	pub const BUFFER_SIZE: usize = MAX_FRAME_PER_SECONDS * 120;
+	pub const BUFFER_SIZE: usize = MAX_FRAME_PER_SECONDS * 20;
 
 	///
 	/// Отметить фрейм как принятый и проверить его статус
