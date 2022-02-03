@@ -63,15 +63,6 @@ pub struct Member {
 	pub out_commands: heapless::Vec<CommandWithChannelType, 64>,
 }
 
-impl Member {
-	pub fn attach_to_room(&mut self) {
-		self.attached = true;
-	}
-	pub fn detach_from_room(&mut self) {
-		self.attached = false;
-	}
-}
-
 impl Room {
 	pub fn new(id: RoomId, template: RoomTemplate) -> Self {
 		let mut room = Room {

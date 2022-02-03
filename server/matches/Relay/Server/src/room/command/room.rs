@@ -6,8 +6,7 @@ use crate::room::Room;
 
 pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(&member_id)?;
-
-	member.attach_to_room();
+	member.attached = true;
 	let access_group = member.template.groups;
 	let command_collector_rc = room.tmp_command_collector.clone();
 	let mut command_collector = (*command_collector_rc).borrow_mut();
@@ -32,7 +31,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 
 pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(&member_id)?;
-	member.detach_from_room();
+	member.attached = false;
 	Ok(())
 }
 
