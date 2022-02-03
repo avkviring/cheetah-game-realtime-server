@@ -123,7 +123,7 @@ impl Room {
 							channel_type: channel.clone(),
 							command: BothDirectionCommand::S2CWithCreator(command_with_meta),
 						})
-						.map_err(|_| ServerCommandError::Error("Member out commands overflow".to_string()));
+						.map_err(|_| ServerCommandError::Error("Member out commands overflow".to_string()))?;
 				}
 			}
 		}
@@ -371,7 +371,7 @@ mod tests {
 			},
 		];
 		room.current_member_id = Some(user_source_id);
-		room.send_to_member(&user_target_id, object_template, &commands);
+		room.send_to_member(&user_target_id, object_template, &commands).unwrap();
 
 		let out_commands = room.test_get_user_out_commands_with_meta(user_target_id);
 		let command = out_commands.get(0);

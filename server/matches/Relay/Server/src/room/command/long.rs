@@ -138,7 +138,7 @@ pub fn reset_all_compare_and_set(
 ) -> Result<(), ServerCommandError> {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
 		match room.get_object_mut(object_id) {
-			Err(e) => {
+			Err(_) => {
 				// нормальная ситуация для пользовательских объектов
 			}
 			Ok(object) => {

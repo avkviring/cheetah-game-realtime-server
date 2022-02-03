@@ -8,7 +8,7 @@ use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let user = room.get_member(user_id)?;
+		let user = room.get_member(&user_id)?;
 
 		if self.object_id.id == 0 {
 			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_string()));

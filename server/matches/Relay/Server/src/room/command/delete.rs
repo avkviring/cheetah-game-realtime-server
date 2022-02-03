@@ -7,7 +7,7 @@ use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let member = room.get_member(member_id)?;
+		let member = room.get_member(&member_id)?;
 		if let GameObjectOwner::Member(object_id_user) = self.object_id.owner {
 			if object_id_user != member.id {
 				return Err(ServerCommandError::MemberNotOwnerGameObject {
@@ -16,7 +16,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 				});
 			}
 		}
-		room.delete_object(&self.object_id);
+		room.delete_object(&self.object_id)?;
 		Ok(())
 	}
 }
@@ -26,8 +26,6 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
@@ -56,17 +54,6 @@ mod tests {
 		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
 		assert!(matches!(room.test_get_user_out_commands(user_a_id).pop_back(), None));
 		assert!(matches!(room.test_get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
-	}
-
-	#[test]
-	fn should_not_panic_when_missing_object() {
-		let template = RoomTemplate::default();
-		let mut room = Room::from_template(template);
-		let user_id = room.register_member(MemberTemplate::stub(AccessGroups(0b11)));
-
-		let object_id = GameObjectId::new(100, GameObjectOwner::Member(user_id));
-		let command = DeleteGameObjectCommand { object_id };
-		command.execute(&mut room, user_id).unwrap();
 	}
 
 	#[test]

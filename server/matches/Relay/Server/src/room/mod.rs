@@ -113,6 +113,7 @@ impl Room {
 	{
 		for (user_id, user) in self.members.iter_mut() {
 			collector(user_id, user.out_commands.as_slice());
+			user.out_commands.clear();
 		}
 	}
 
@@ -135,7 +136,10 @@ impl Room {
 					self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
 					let user_id = user.id;
 					let template = user.template.clone();
-					self.on_user_connect(user_id, template);
+					if let Err(e) = self.on_user_connect(user_id, template) {
+						e.log_error(self.id, user_id);
+						return;
+					}
 				}
 			}
 		}
@@ -178,8 +182,10 @@ impl Room {
 		user_id
 	}
 
-	pub fn get_member(&self, member_id: RoomMemberId) -> Result<&Member, RoomError> {
-		self.members.get(&member_id).ok_or(RoomError::MemberNotFound(member_id))
+	pub fn get_member(&self, member_id: &RoomMemberId) -> Result<&Member, RoomError> {
+		self.members
+			.get(member_id)
+			.ok_or(RoomError::MemberNotFound(member_id.clone()))
 	}
 
 	pub fn get_member_mut(&mut self, member_id: &RoomMemberId) -> Result<&mut Member, RoomError> {
@@ -208,7 +214,7 @@ impl Room {
 				});
 
 				for id in objects {
-					self.delete_object(&id);
+					self.delete_object(&id)?;
 				}
 				reset_all_compare_and_set(self, user.id, &user.compare_and_sets_cleaners)?;
 			}
@@ -232,13 +238,12 @@ impl Room {
 		self.objects.contains_key(object_id)
 	}
 
-	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Option<GameObject> {
+	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Result<GameObject, ServerCommandError> {
 		let current_user = self.current_member_id;
 		match self.objects.shift_remove(object_id) {
-			None => {
-				log::error!("[room({:?})] delete_object - object({:?}) not found", self.id, object_id);
-				Option::None
-			}
+			None => Err(ServerCommandError::GameObjectNotFound {
+				object_id: object_id.clone(),
+			}),
 			Some(object) => {
 				self.send_to_members(
 					object.access_groups,
@@ -256,8 +261,8 @@ impl Room {
 							true
 						}
 					},
-				);
-				Option::Some(object)
+				)?;
+				Ok(object)
 			}
 		}
 	}
@@ -266,16 +271,17 @@ impl Room {
 		self.objects.iter().for_each(|(_, o)| f(o));
 	}
 
-	fn on_user_connect(&mut self, user_id: RoomMemberId, template: MemberTemplate) {
-		template.objects.iter().for_each(|object_template| {
+	fn on_user_connect(&mut self, user_id: RoomMemberId, template: MemberTemplate) -> Result<(), ServerCommandError> {
+		for object_template in template.objects {
 			let object = object_template.create_user_game_object(user_id);
 			let mut commands = CreateCommandsCollector::new();
 			object.collect_create_commands(&mut commands);
 			let template = object.template_id;
 			let access_groups = object.access_groups;
-			self.send_to_members(access_groups, template, commands.as_slice(), |_user| true);
+			self.send_to_members(access_groups, template, commands.as_slice(), |_user| true)?;
 			self.insert_object(object);
-		});
+		}
+		Ok(())
 	}
 }
 
@@ -284,10 +290,13 @@ mod tests {
 	use std::collections::VecDeque;
 
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand::SetLong;
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
 	use cheetah_matches_relay_common::commands::FieldType;
+	use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use cheetah_matches_relay_common::protocol::frame::channel::Channel;
+	use cheetah_matches_relay_common::protocol::frame::channel::{Channel, ChannelType};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -324,7 +333,7 @@ mod tests {
 		}
 
 		pub fn test_get_user_out_commands(&self, user_id: RoomMemberId) -> VecDeque<S2CCommand> {
-			self.get_member(user_id)
+			self.get_member(&user_id)
 				.unwrap()
 				.out_commands
 				.iter()
@@ -338,7 +347,7 @@ mod tests {
 		}
 
 		pub fn test_get_user_out_commands_with_meta(&self, user_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
-			self.get_member(user_id)
+			self.get_member(&user_id)
 				.unwrap()
 				.out_commands
 				.iter()
@@ -520,7 +529,7 @@ mod tests {
 		});
 		assert_eq!(order, "1005200");
 
-		room.delete_object(&GameObjectId::new(100, GameObjectOwner::Room));
+		room.delete_object(&GameObjectId::new(100, GameObjectOwner::Room)).unwrap();
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
@@ -552,13 +561,39 @@ mod tests {
 		let user2 = MemberTemplate::stub(groups);
 		let user2_id = room.register_member(user2);
 		room.test_mark_as_connected(user2_id).unwrap();
-		room.on_user_connect(user1_id, user1_template.clone());
+		room.on_user_connect(user1_id, user1_template.clone()).unwrap();
 
 		let commands = room.test_get_user_out_commands(user2_id);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
 		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
+	}
+
+	#[test]
+	pub fn should_clear_out_commands_after_collect() {
+		let mut room = Room::default();
+		let member_template = MemberTemplate::stub(AccessGroups(8));
+		let member_id = room.register_member(member_template);
+		room.test_mark_as_connected(member_id.clone()).unwrap();
+		let member = room.get_member_mut(&member_id).unwrap();
+		member
+			.out_commands
+			.push(CommandWithChannelType {
+				channel_type: ChannelType::ReliableUnordered,
+				command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+					command: SetLong(SetLongCommand {
+						object_id: Default::default(),
+						field_id: 0,
+						value: 0,
+					}),
+					creator: 0,
+				}),
+			})
+			.unwrap();
+		room.collect_out_commands(|_, _| {});
+		let member = room.get_member(&member_id).unwrap();
+		assert!(member.out_commands.is_empty());
 	}
 
 	pub fn create_template() -> (RoomTemplate, MemberTemplate) {

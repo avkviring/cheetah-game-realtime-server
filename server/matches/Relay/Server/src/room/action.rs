@@ -44,7 +44,7 @@ impl Room {
 			Some(member) => member.template.groups,
 		};
 
-		let mut object = self.get_object_mut(game_object_id)?;
+		let object = self.get_object_mut(game_object_id)?;
 		// проверяем группу доступа
 		if !object.access_groups.contains_any(&creator_access_group) {
 			return Result::Err(ServerCommandError::MemberCannotAccessToObject {
@@ -95,7 +95,7 @@ impl Room {
 
 				match target {
 					Some(target_user) => {
-						self.send_to_member(&target_user, template, &commands);
+						self.send_to_member(&target_user, template, &commands)?;
 					}
 					None => {
 						self.send_to_members(groups, template, &commands, |user| {
@@ -108,7 +108,7 @@ impl Room {
 							} else {
 								true
 							}
-						});
+						})?;
 					}
 				}
 			}
