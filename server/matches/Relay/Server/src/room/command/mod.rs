@@ -7,7 +7,7 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::room::object::{Field, GameObjectError};
-use crate::room::{Room, RoomError};
+use crate::room::Room;
 
 pub mod create;
 pub mod created;
@@ -31,12 +31,6 @@ pub enum ServerCommandError {
 	Error(String),
 
 	#[error("{error:?}")]
-	RoomError {
-		#[from]
-		error: RoomError,
-	},
-
-	#[error("{error:?}")]
 	GameObjectError {
 		#[from]
 		error: GameObjectError,
@@ -48,8 +42,8 @@ pub enum ServerCommandError {
 		member_id: RoomMemberId,
 	},
 
-	#[error("Member with id {member_id:?} not found in room {room_id:?} ")]
-	MemberNotFound { room_id: RoomId, member_id: RoomMemberId },
+	#[error("Member with id {:?}",.0)]
+	MemberNotFound(RoomMemberId),
 
 	#[error(
 		"Member {member_id:?} with group {member_access_group:?} cannot access to \

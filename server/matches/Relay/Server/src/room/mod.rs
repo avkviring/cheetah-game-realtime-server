@@ -5,7 +5,6 @@ use std::rc::Rc;
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
-use thiserror::Error;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
@@ -52,12 +51,6 @@ pub struct Room {
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
 	pub out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
-}
-
-#[derive(Error, Debug)]
-pub enum RoomError {
-	#[error("Member not found {:?}",.0)]
-	MemberNotFound(RoomMemberId),
 }
 
 #[derive(Debug)]
@@ -182,16 +175,16 @@ impl Room {
 		user_id
 	}
 
-	pub fn get_member(&self, member_id: &RoomMemberId) -> Result<&Member, RoomError> {
+	pub fn get_member(&self, member_id: &RoomMemberId) -> Result<&Member, ServerCommandError> {
 		self.members
 			.get(member_id)
-			.ok_or(RoomError::MemberNotFound(member_id.clone()))
+			.ok_or_else(|| ServerCommandError::MemberNotFound(member_id.clone()))
 	}
 
-	pub fn get_member_mut(&mut self, member_id: &RoomMemberId) -> Result<&mut Member, RoomError> {
+	pub fn get_member_mut(&mut self, member_id: &RoomMemberId) -> Result<&mut Member, ServerCommandError> {
 		self.members
 			.get_mut(member_id)
-			.ok_or(RoomError::MemberNotFound(member_id.clone()))
+			.ok_or_else(|| ServerCommandError::MemberNotFound(member_id.clone()))
 	}
 
 	///

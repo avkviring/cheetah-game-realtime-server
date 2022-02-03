@@ -35,11 +35,7 @@ impl Room {
 		let permission_manager = self.permission_manager.clone();
 		let creator_access_group = match self.members.get(&creator_id) {
 			None => {
-				log::error!("[room({})] user({}) not found", self.id, creator_id);
-				return Result::Err(ServerCommandError::MemberNotFound {
-					room_id: self.id,
-					member_id: creator_id,
-				});
+				return Result::Err(ServerCommandError::MemberNotFound(creator_id));
 			}
 			Some(member) => member.template.groups,
 		};
