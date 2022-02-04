@@ -1,0 +1,28 @@
+// API для обновления токенов - используется игровыми клиентами
+syntax = "proto3";
+package cheetah.cerberus.external;
+option csharp_namespace = "Cheetah.Cerberus.External";
+
+service Tokens {
+  /*
+    Обновить токены
+    - после обновления refresh токен становиться не валидным
+    - refresh токен связан с device_id
+   */
+  rpc refresh (RefreshTokenRequest) returns (RefreshTokenResponse);
+}
+
+message RefreshTokenRequest {
+  string token = 1;
+}
+
+message Token {
+  string token = 1;
+}
+
+message RefreshTokenResponse {
+  string session = 1;
+  string refresh = 2;
+}
+
+

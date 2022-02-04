@@ -572,6 +572,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "cheetah-cerberus"
+version = "0.0.0"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "base64 0.13.0",
+ "cheetah-microservice",
+ "chrono",
+ "futures",
+ "jsonwebtoken",
+ "lazy_static",
+ "log",
+ "pretty_env_logger",
+ "prost",
+ "redis",
+ "serde",
+ "testcontainers",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-build",
+ "tonic-web",
+]
+
+[[package]]
 name = "cheetah-matches-factory"
 version = "999.999.999"
 dependencies = [

@@ -2,6 +2,7 @@
 members = [
     "Microservice",
     "auth/*/",
+    "Cerberus",
     "matches/Factory",
     "matches/Registry",
     "matches/StubMatchmaking",

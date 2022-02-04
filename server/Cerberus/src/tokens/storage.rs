@@ -106,7 +106,7 @@ pub mod tests {
 	use testcontainers::images::redis::Redis;
 	use testcontainers::{clients, images, Container, Docker};
 
-	use crate::service::storage::RedisRefreshTokenStorage;
+	use crate::tokens::storage::RedisRefreshTokenStorage;
 
 	#[tokio::test]
 	async fn should_increment_version() {

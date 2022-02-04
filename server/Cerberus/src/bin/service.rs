@@ -1,8 +1,4 @@
-use crate::server::run_grpc_server;
-
-pub mod proto;
-pub mod server;
-pub mod service;
+use cheetah_cerberus::server::run_grpc_server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,20 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let redis_port = get_env("REDIS_PORT").parse().unwrap();
 	let redis_auth = std::env::var("REDIS_AUTH").ok();
 
-	// порты grpc сервисов
-	let external_service_port = 5000;
-	let internal_service_port = 5001;
-
-	run_grpc_server(
-		jwt_public_key,
-		jwt_private_key,
-		redis_host,
-		redis_port,
-		redis_auth,
-		internal_service_port,
-		external_service_port,
-	)
-	.await;
+	run_grpc_server(jwt_public_key, jwt_private_key, redis_host, redis_port, redis_auth).await;
 	Ok(())
 }
 fn get_env(name: &str) -> String {
