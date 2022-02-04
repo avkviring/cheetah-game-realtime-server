@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "Microservice",
-    "auth/*/",
     "Cerberus",
     "matches/Factory",
     "matches/Registry",

@@ -36,17 +36,17 @@ impl From<i64> for Id {
 }
 
 #[derive(Clone)]
-pub struct Storage {
+pub struct UserService {
 	pool: PgPool,
 }
 
-impl From<PgPool> for Storage {
+impl From<PgPool> for UserService {
 	fn from(pool: PgPool) -> Self {
 		Self { pool }
 	}
 }
 
-impl Storage {
+impl UserService {
 	/// Создать игрока, для каждого игры создается запись вида `id, create_date`
 	/// Все остальное храниться в отдельных таблицах
 	pub async fn create(&self, ip: IpNetwork) -> Id {
@@ -60,13 +60,15 @@ impl Storage {
 
 #[cfg(test)]
 pub mod tests {
-	use super::{Id, Storage};
+	use crate::users::create_postgres_pool;
 	use chrono::NaiveDateTime;
 	use sqlx::types::ipnetwork::IpNetwork;
 	use sqlx::PgPool;
 	use std::collections::HashMap;
 	use testcontainers::images::postgres::Postgres;
 	use testcontainers::{clients::Cli, Container, Docker as _};
+
+	use super::{Id, UserService};
 
 	pub async fn setup_postgresql_storage(cli: &Cli) -> (PgPool, Container<'_, Cli, Postgres>) {
 		let mut env = HashMap::default();
@@ -75,7 +77,7 @@ pub mod tests {
 		let image = Postgres::default().with_version(13).with_env_vars(env);
 		let node = cli.run(image);
 		let port = node.get_host_port(5432).unwrap();
-		let storage = crate::storage::create_postgres_pool("authentication", "authentication", "passwd", "127.0.0.1", port).await;
+		let storage = create_postgres_pool("authentication", "authentication", "passwd", "127.0.0.1", port).await;
 		(storage, node)
 	}
 
@@ -83,7 +85,7 @@ pub mod tests {
 	pub async fn should_create() {
 		let cli = Cli::default();
 		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let users = Storage::from(pool.clone());
+		let users = UserService::from(pool.clone());
 
 		let addr_a = "127.1.0.1".parse().unwrap();
 		let id_a = users.create(addr_a).await;
