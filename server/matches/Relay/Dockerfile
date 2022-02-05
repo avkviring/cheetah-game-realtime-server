@@ -23,6 +23,7 @@ ARG RUSTFLAGS_ARG
 WORKDIR build
 COPY server/Microservice/ server/Microservice/
 COPY proto/matches/Relay/ proto/matches/Relay/
+COPY proto/matches/Registry/ proto/matches/Registry/
 COPY server/Cargo.lock server/matches/Relay/Server/
 COPY server/matches/Relay/Common/ server/matches/Relay/Common/
 COPY server/matches/Relay/Macro/ server/matches/Relay/Macro/

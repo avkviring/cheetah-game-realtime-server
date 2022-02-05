@@ -2,7 +2,7 @@ use tonic::transport::Server;
 use tonic::{Request, Response, Status};
 
 use cheetah_matches_stub_registry::proto::internal::registry_server::Registry;
-use cheetah_matches_stub_registry::proto::internal::FindFreeRelayResponse;
+use cheetah_matches_stub_registry::proto::internal::{Addr, FindFreeRelayResponse, RelayAddrs};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,11 +41,26 @@ impl Registry for RegistryService {
 		&self,
 		_request: Request<cheetah_matches_stub_registry::proto::internal::FindFreeRelayRequest>,
 	) -> Result<Response<FindFreeRelayResponse>, Status> {
-		Result::Ok(Response::new(FindFreeRelayResponse {
-			relay_grpc_host: self.relay_grpc_host.clone(),
-			relay_grpc_port: self.relay_grpc_port as u32,
-			relay_game_host: self.relay_game_host.clone(),
-			relay_game_port: self.relay_game_port as u32,
-		}))
+		let addrs = RelayAddrs {
+			game: Some(Addr {
+				host: self.relay_game_host.clone(),
+				port: self.relay_game_port as u32,
+			}),
+			grpc_internal: Some(Addr {
+				host: self.relay_grpc_host.clone(),
+				port: self.relay_grpc_port as u32,
+			}),
+		};
+
+		Result::Ok(Response::new(FindFreeRelayResponse { addrs: Some(addrs) }))
+	}
+
+	async fn update_relay_status(
+		&self,
+		_request: tonic::Request<cheetah_matches_stub_registry::proto::internal::RelayStatusUpdate>,
+	) -> Result<tonic::Response<cheetah_matches_stub_registry::proto::internal::UpdateRelayStatusResponse>, Status> {
+		Ok(tonic::Response::new(
+			cheetah_matches_stub_registry::proto::internal::UpdateRelayStatusResponse::default(),
+		))
 	}
 }

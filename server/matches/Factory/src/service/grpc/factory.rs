@@ -12,8 +12,9 @@ impl FactoryService {
 			.ok_or_else(|| Status::internal(format!("Template {} not found", template_name)))?;
 
 		// ищем свободный relay сервер
-		let relay = self.registry.find_free_relay().await;
-		let relay_addr = cheetah_microservice::make_internal_srv_uri(&relay.relay_grpc_host, relay.relay_grpc_port as u16);
+		let addrs = self.registry.find_free_relay().await.unwrap();
+		let relay_grpc_addr = addrs.grpc_internal.as_ref().unwrap();
+		let relay_addr = cheetah_microservice::make_internal_srv_uri(&relay_grpc_addr.host, relay_grpc_addr.port as u16);
 		log::info!("Connect to relay {}", relay_addr);
 		// создаем матч на relay сервере
 		let mut connect = RelayClient::connect(relay_addr).await.unwrap();
@@ -21,10 +22,7 @@ impl FactoryService {
 		// создаем комнату
 		Ok(factory::CreateMatchResponse {
 			id: connect.create_room(room_template).await?.into_inner().id,
-			relay_grpc_host: relay.relay_grpc_host,
-			relay_grpc_port: relay.relay_grpc_port,
-			relay_game_host: relay.relay_game_host,
-			relay_game_port: relay.relay_game_port,
+			addrs: Some(addrs),
 		})
 	}
 }
@@ -47,32 +45,33 @@ mod tests {
 	use tonic::transport::{Server, Uri};
 	use tonic::{Request, Response, Status};
 
-	use crate::proto::matches::registry::internal as registry;
-	use crate::proto::matches::relay;
+	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
+	use crate::proto::matches::{registry, relay};
 	use crate::service::configurations::test::EXAMPLE_DIR;
 	use crate::service::configurations::Configurations;
 	use crate::service::grpc::registry_client::RegistryClient;
 	use crate::service::FactoryService;
 
 	struct StubRegistry {
-		pub relay_grpc_host: String,
-		pub relay_grpc_port: u16,
-		pub relay_game_host: String,
-		pub relay_game_port: u16,
+		addrs: RelayAddrs,
 	}
 
 	#[tonic::async_trait]
-	impl registry::registry_server::Registry for StubRegistry {
+	impl registry::internal::registry_server::Registry for StubRegistry {
 		async fn find_free_relay(
 			&self,
-			_request: Request<registry::FindFreeRelayRequest>,
-		) -> Result<Response<registry::FindFreeRelayResponse>, Status> {
-			Ok(Response::new(registry::FindFreeRelayResponse {
-				relay_grpc_host: self.relay_grpc_host.clone(),
-				relay_grpc_port: self.relay_grpc_port as u32,
-				relay_game_host: self.relay_game_host.clone(),
-				relay_game_port: self.relay_game_port as u32,
+			_request: Request<registry::internal::FindFreeRelayRequest>,
+		) -> Result<Response<registry::internal::FindFreeRelayResponse>, Status> {
+			Ok(Response::new(registry::internal::FindFreeRelayResponse {
+				addrs: Some(self.addrs.clone()),
 			}))
+		}
+
+		async fn update_relay_status(
+			&self,
+			_: tonic::Request<registry::internal::RelayStatusUpdate>,
+		) -> Result<tonic::Response<registry::internal::UpdateRelayStatusResponse>, tonic::Status> {
+			unimplemented!()
 		}
 	}
 
@@ -104,7 +103,7 @@ mod tests {
 		let templates_directory = prepare_templates();
 		let uri = stub_grpc_services().await;
 
-		let registry = RegistryClient::new(uri).unwrap();
+		let registry = RegistryClient::new(uri).await.unwrap();
 		let factory = FactoryService::new(registry, &Configurations::load(templates_directory).unwrap()).unwrap();
 		let result = factory.do_create_match("gubaha".to_string()).await.unwrap();
 		assert_eq!(result.id, StubRelay::ROOM_ID);
@@ -115,16 +114,23 @@ mod tests {
 		let stub_grpc_service_addr = stub_grpc_service_tcp.local_addr().unwrap();
 
 		let stub_registry = StubRegistry {
-			relay_grpc_host: stub_grpc_service_addr.ip().to_string(),
-			relay_grpc_port: stub_grpc_service_addr.port(),
-			relay_game_host: "game-host".to_owned(),
-			relay_game_port: 555,
+			addrs: RelayAddrs {
+				// not used
+				game: Some(Addr {
+					host: "127.0.0.1".to_string(),
+					port: 0,
+				}),
+				grpc_internal: Some(Addr {
+					host: stub_grpc_service_addr.ip().to_string(),
+					port: stub_grpc_service_addr.port() as u32,
+				}),
+			},
 		};
 
 		let stub_relay = StubRelay {};
 		tokio::spawn(async move {
 			Server::builder()
-				.add_service(registry::registry_server::RegistryServer::new(stub_registry))
+				.add_service(registry::internal::registry_server::RegistryServer::new(stub_registry))
 				.add_service(relay::internal::relay_server::RelayServer::new(stub_relay))
 				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(stub_grpc_service_tcp))
 				.await

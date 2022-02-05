@@ -5,27 +5,27 @@ edition = "2018"
 
 [[bin]]
 name = "cheetah-matches-registry"
-path = "src/bin/service.rs"
+path = "src/bin/main.rs"
 
 [dependencies]
 pin-project = "1.0.10"
 pin-project-internal = "1.0.10"
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
-log = "0.4"
-pretty_env_logger = "0.4.0"
 tonic = "0.6.2"
 prost = "0.9.0"
-kube = { version = "0.68.0", default-features = false, features = ["runtime", "derive", "rustls-tls", "client"] }
-kube-derive = { version = "0.68.0", default-features = false }
-k8s-openapi = { version = "0.14.0", default-features = false, features = ["v1_22"] }
 cheetah-microservice = { path = "../../Microservice" }
-serde = { version = "1.0.133", features = ["derive"] }
-serde_json = "1.0.78"
-serde_yaml = "0.8.23"
-schemars = "0.8.7"
-validator = { version = "0.14.0", features = ["derive"] }
 thiserror = "1.0"
+redis = { version = "0.21.4", features = ["tokio-comp"] }
+futures = "0.3.19"
+async-trait = "0.1.52"
+serde = { version = "1.0.132", features = ["derive"] }
+serde_json = "1.0.73"
+log = "0.4"
+pretty_env_logger = "0.4.0"
 
+[dev-dependencies]
+testcontainers = "0.12.0"
+lazy_static = "1.4.0"
 
 [build-dependencies]
 tonic-build = "0.6.2"

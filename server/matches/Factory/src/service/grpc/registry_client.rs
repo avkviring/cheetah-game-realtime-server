@@ -1,25 +1,37 @@
-use std::convert::TryInto;
-
-use cheetah_microservice::tonic::transport::Endpoint;
-
 use crate::proto::matches::registry::internal as registry;
+use crate::proto::matches::registry::internal::RelayAddrs;
+use thiserror::Error;
+use tonic::transport::Uri;
+
+#[derive(Error, Debug)]
+pub enum RegistryError {
+	#[error("RelayAddrs field is empty")]
+	RelayAddrsFieldIsEmpty,
+	#[error(transparent)]
+	CouldNotConnect(#[from] tonic::transport::Error),
+	#[error(transparent)]
+	RpcFailed(#[from] tonic::Status),
+}
 
 pub struct RegistryClient {
-	endpoint: Endpoint,
+	client: registry::registry_client::RegistryClient<tonic::transport::Channel>,
 }
 
 impl RegistryClient {
-	pub fn new<E: TryInto<Endpoint>>(endpoint: E) -> Result<Self, E::Error> {
-		endpoint.try_into().map(|endpoint| Self { endpoint })
+	pub async fn new(uri: Uri) -> Result<Self, RegistryError> {
+		let client = registry::registry_client::RegistryClient::connect(uri).await?;
+
+		Ok(Self { client })
 	}
 
-	pub async fn find_free_relay(&self) -> registry::FindFreeRelayResponse {
-		registry::registry_client::RegistryClient::connect(self.endpoint.clone())
-			.await
-			.unwrap()
+	pub async fn find_free_relay(&self) -> Result<RelayAddrs, RegistryError> {
+		self.client
+			.clone()
 			.find_free_relay(registry::FindFreeRelayRequest {})
 			.await
-			.unwrap()
+			.map_err(RegistryError::from)?
 			.into_inner()
+			.addrs
+			.ok_or(RegistryError::RelayAddrsFieldIsEmpty)
 	}
 }

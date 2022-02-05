@@ -18,4 +18,10 @@ pub mod matches {
 			tonic::include_proto!("cheetah.matches.relay.internal");
 		}
 	}
+
+	pub mod registry {
+		pub mod internal {
+			tonic::include_proto!("cheetah.matches.registry.internal");
+		}
+	}
 }

@@ -11,6 +11,7 @@ use matchmaking::external::{TicketRequest, TicketResponse};
 use relay::internal::AttachUserRequest;
 
 use crate::proto::matches::factory;
+use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::matchmaking;
 use crate::proto::matches::relay;
 
@@ -104,18 +105,25 @@ impl StubMatchmakingService {
 					.await
 					.unwrap()
 					.into_inner();
-				let match_info = MatchInfo {
-					relay_grpc_host: create_match_response.relay_grpc_host,
-					relay_grpc_port: create_match_response.relay_grpc_port as u16,
-					relay_game_host: create_match_response.relay_game_host,
-					relay_game_port: create_match_response.relay_game_port as u16,
-					room_id: create_match_response.id,
-				};
+				let match_info = create_match_info(create_match_response);
 				matches.insert(template.to_string(), match_info.clone());
 				match_info
 			}
 			Some(match_info) => match_info.clone(),
 		}
+	}
+}
+
+fn create_match_info(create_match_response: CreateMatchResponse) -> MatchInfo {
+	let addrs = create_match_response.addrs.unwrap();
+	let grpc_addr = addrs.grpc_internal.unwrap();
+	let game_addr = addrs.game.unwrap();
+	MatchInfo {
+		relay_grpc_host: grpc_addr.host,
+		relay_grpc_port: grpc_addr.port as u16,
+		relay_game_host: game_addr.host,
+		relay_game_port: game_addr.port as u16,
+		room_id: create_match_response.id,
 	}
 }
 
@@ -147,6 +155,7 @@ pub mod tests {
 
 	use crate::proto::matches::factory;
 	use crate::proto::matches::matchmaking;
+	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::relay;
 	use crate::service::StubMatchmakingService;
 
@@ -298,10 +307,17 @@ pub mod tests {
 			let current_seq = *sequence;
 			*sequence += 1;
 			Result::Ok(Response::new(CreateMatchResponse {
-				relay_grpc_host: self.relay_grpc_host.clone(),
-				relay_grpc_port: self.relay_grpc_port as u32,
-				relay_game_host: "".to_string(),
-				relay_game_port: 0,
+				addrs: Some(RelayAddrs {
+					// not used
+					game: Some(Addr {
+						host: "127.0.0.1".to_string(),
+						port: 0,
+					}),
+					grpc_internal: Some(Addr {
+						host: self.relay_grpc_host.clone(),
+						port: self.relay_grpc_port as u32,
+					}),
+				}),
 				id: StubFactory::ROOM_ID + current_seq as u64,
 			}))
 		}

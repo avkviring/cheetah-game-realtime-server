@@ -14,12 +14,19 @@ spec:
       labels:
         app: {{ .Chart.Name }}
     spec:
-      serviceAccountName:  {{ .Chart.Name }}
       imagePullSecrets:
         - name: cheetahdockerregistry
       containers:
         - name: {{ .Chart.Name }}
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
           imagePullPolicy: Always
-
-
+          env:
+            - name: "REDIS_HOST"
+              value: "$(CHEETAH_REGISTRY_REDIS_MASTER_SERVICE_HOST)"
+            - name: "REDIS_PORT"
+              value: "$(CHEETAH_REGISTRY_REDIS_MASTER_SERVICE_PORT)"
+            - name: "REDIS_AUTH"
+              valueFrom:
+                secretKeyRef:
+                  name: cheetah-registry-redis-password
+                  key: password

@@ -4,3 +4,8 @@ description: cheetah-matches-registry
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"
+
+dependencies:
+  - name: redis
+    version: "14.8.3"
+    repository: "https://charts.bitnami.com/bitnami"

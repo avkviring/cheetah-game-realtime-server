@@ -1,6 +1,8 @@
 syntax = "proto3";
 package cheetah.matches.factory.internal;
 
+import public "matches.registry.internal.proto";
+
 service Factory {
   /**
     Создание матча на свободном Relay сервере
@@ -14,9 +16,6 @@ message CreateMatchRequest {
 }
 
 message CreateMatchResponse {
-  string relay_grpc_host = 1;
-  uint32 relay_grpc_port = 2;
-  string relay_game_host = 3;
-  uint32 relay_game_port = 4;
-  uint64 id = 5;
+  cheetah.matches.registry.internal.RelayAddrs addrs = 1;
+  uint64 id = 2;
 }

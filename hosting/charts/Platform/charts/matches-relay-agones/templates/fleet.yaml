@@ -22,3 +22,12 @@ spec:
               env:
                 - name: ENABLE_AGONES
                   value: "true"
+                # используется для публикации адреса relay в registry
+                - name: POD_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
+                - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST
+                  value: "$(CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST)"
+                - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_PORT
+                  value: "$(CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_PORT)"

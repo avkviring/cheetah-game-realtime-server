@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let templates_path = cheetah_microservice::get_env("TEMPLATES_PATH");
 	let configurations = Configurations::load(PathBuf::from(templates_path))?;
 
-	let grpc_server = create_internal_grpc_server(&configurations);
+	let grpc_server = create_internal_grpc_server(&configurations).await;
 	let admin_server = create_admin_grpc_server(&configurations);
 	let (res1, res2) = futures::join!(grpc_server, admin_server);
 	res1.unwrap();
@@ -33,9 +33,9 @@ fn create_admin_grpc_server(configurations: &Configurations) -> impl Future<Outp
 		.add_service(tonic_web::enable(grpc_service))
 		.serve(cheetah_microservice::get_admin_service_binding_addr())
 }
-fn create_internal_grpc_server(configurations: &Configurations) -> impl Future<Output = Result<(), Error>> {
+async fn create_internal_grpc_server(configurations: &Configurations) -> impl Future<Output = Result<(), Error>> {
 	let registry_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
-	let registry = RegistryClient::new(registry_url).unwrap();
+	let registry = RegistryClient::new(registry_url).await.unwrap();
 	let service = FactoryService::new(registry, configurations).unwrap();
 	Server::builder()
 		.add_service(FactoryServer::new(service))

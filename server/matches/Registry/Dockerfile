@@ -23,6 +23,7 @@ COPY server/Cargo.lock server/matches/Registry/
 COPY server/Microservice/ server/Microservice/
 COPY server/matches/Registry server/matches/Registry
 COPY proto/matches/Registry/ proto/matches/Registry/
+COPY proto/matches/Relay/ proto/matches/Relay/
 COPY --from=cacher $CARGO_HOME $CARGO_HOME
 COPY --from=cacher /cache/server/matches/Registry/target/ server/matches/Registry/target/
 RUN touch server/matches/Registry/build.rs
