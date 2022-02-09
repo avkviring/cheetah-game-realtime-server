@@ -22,7 +22,7 @@ pub fn get_player_id(metadata: &MetadataMap, public_key: String) -> Result<u64, 
 				Result::Err(WrongHeader)
 			} else {
 				let token = splitted.get(1).unwrap().to_string();
-				let result = crate::jwt::JWTTokenParser::new(public_key).get_player_id(token);
+				let result = crate::jwt::JWTTokenParser::new(public_key).get_user_id(token);
 				result.map_err(AuthorizationError::Token)
 			}
 		}
@@ -39,7 +39,7 @@ impl super::JWTTokenParser {
 			Err(WrongHeader)
 		} else {
 			let token = splitted.get(1).unwrap().to_string();
-			let result = self.get_player_id(token);
+			let result = self.get_user_id(token);
 			result.map_err(AuthorizationError::Token)
 		}
 	}

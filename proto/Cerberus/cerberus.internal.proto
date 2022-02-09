@@ -1,6 +1,0 @@
-// API для создания токенов
-// Для внутреннего использования
-
-syntax = "proto3";
-package cheetah.cerberus.internal;
-

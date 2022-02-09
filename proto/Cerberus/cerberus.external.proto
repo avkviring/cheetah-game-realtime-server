@@ -9,20 +9,86 @@ service Tokens {
     - после обновления refresh токен становиться не валидным
     - refresh токен связан с device_id
    */
-  rpc refresh (RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc refresh (RefreshTokenRequest) returns (SessionAndRefreshTokens);
 }
 
-message RefreshTokenRequest {
-  string token = 1;
+service Cookie {
+  /*
+    Регистрация пользователя по cookie
+   */
+  rpc Register(RegistryRequest) returns (RegistryResponse);
+  /*
+    Вход пользователя по cookie
+   */
+  rpc Login(LoginRequest) returns (LoginResponse);
+}
+
+service Google {
+  rpc RegisterOrLogin(RegisterOrLoginRequest) returns (RegisterOrLoginResponse);
+  rpc Attach(AttachRequest) returns (AttachResponse);
 }
 
 message Token {
   string token = 1;
 }
 
-message RefreshTokenResponse {
+message SessionAndRefreshTokens {
   string session = 1;
   string refresh = 2;
 }
 
+
+message RefreshTokenRequest {
+  string token = 1;
+}
+
+
+message RegistryRequest {
+  string device_id = 1;
+}
+
+message RegistryResponse {
+  SessionAndRefreshTokens tokens = 1;
+  string cookie = 2;
+}
+
+message LoginRequest {
+  string cookie = 1;
+  string device_id = 2;
+}
+message LoginResponse {
+  SessionAndRefreshTokens tokens = 1;
+  Status status = 2;
+  enum Status {
+    OK = 0;
+    NOT_FOUND = 1;
+    LINKED = 2;
+  }
+}
+
+message RegisterOrLoginRequest {
+  string google_token = 1;
+  string device_id = 2;
+}
+
+message RegisterOrLoginResponse {
+  /**
+    токен для доступа к платформе
+   */
+  SessionAndRefreshTokens tokens = 1;
+  /**
+    true - зарегистрирован новый игрок
+   */
+  bool registered_player = 2;
+}
+
+
+message AttachRequest {
+  string device_id = 1;
+  string google_token = 2;
+}
+
+message AttachResponse {
+
+}
 

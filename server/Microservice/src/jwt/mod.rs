@@ -32,7 +32,7 @@ impl JWTTokenParser {
 		Self { public_key }
 	}
 
-	pub fn get_player_id(&self, token: String) -> Result<u64, SessionTokenError> {
+	pub fn get_user_id(&self, token: String) -> Result<u64, SessionTokenError> {
 		let token = JWTTokenParser::add_head(token);
 		match jsonwebtoken::decode::<SessionTokenClaims>(
 			token.as_str(),
