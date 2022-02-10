@@ -4,5 +4,5 @@ fn main() -> Result<(), Error> {
 	tonic_build::configure()
 		.build_server(true)
 		.build_client(true)
-		.compile(&["../../proto/Cerberus/cerberus.external.proto"], &["../../proto/Cerberus/"])
+		.compile(&["../../proto/Accounts/accounts.external.proto"], &["../../proto/Accounts/"])
 }

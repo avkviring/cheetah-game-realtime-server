@@ -8,26 +8,11 @@
 #
 version: "3.1"
 services:
-  cheetah-auth-cerberus:
-    image: docker.registry.cheetah.games/cheetah-auth-cerberus:${PLATFORM_VERSION}
+  cheetah-accounts:
+    image: docker.registry.cheetah.games/cheetah-accounts:${PLATFORM_VERSION}
     build:
       context: ../
-      dockerfile: server/auth/Cerberus/Dockerfile
-  cheetah-auth-user:
-    image: docker.registry.cheetah.games/cheetah-auth-user:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/auth/User/Dockerfile
-  cheetah-auth-cookie:
-    image: docker.registry.cheetah.games/cheetah-auth-cookie:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/auth/Cookie/Dockerfile
-  cheetah-auth-google:
-    image: docker.registry.cheetah.games/cheetah-auth-google:${PLATFORM_VERSION}
-    build:
-      context: ../
-      dockerfile: server/auth/Google/Dockerfile
+      dockerfile: server/Accounts/Dockerfile
   cheetah-matches-relay:
     image: docker.registry.cheetah.games/cheetah-matches-relay:${PLATFORM_VERSION}
     build:
