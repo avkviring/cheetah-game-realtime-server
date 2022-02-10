@@ -1,6 +1,5 @@
 apiVersion: v2
-name: cheetah-auth-cerberus
-description: JWT token for cluster
+name: cheetah-accounts
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"
@@ -9,4 +8,3 @@ dependencies:
   - name: redis
     version: "14.8.3"
     repository: "https://charts.bitnami.com/bitnami"
-

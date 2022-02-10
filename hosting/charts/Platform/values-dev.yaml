@@ -1,17 +1,10 @@
 #
 # В режиме разработчика данные не сохраняются на диск
 #
-cheetah-auth-cerberus:
+cheetah-accounts:
   redis:
     master:
       persistence:
         enabled: false
-cheetah-auth-user:
-  persistence:
-    enabled: false
-cheetah-auth-cookie:
-  persistence:
-    enabled: false
-cheetah-auth-google:
   persistence:
     enabled: false
