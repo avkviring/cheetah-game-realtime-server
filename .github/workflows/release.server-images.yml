@@ -8,14 +8,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - directory: auth/Cerberus
-            image: cheetah-auth-cerberus
-          - directory: auth/User
-            image: cheetah-auth-user
-          - directory: auth/Cookie
-            image: cheetah-auth-cookie
-          - directory: auth/Google
-            image: cheetah-auth-google
+          - directory: Accounts
+            image: cheetah-accounts
           - directory: matches/Relay
             image: cheetah-matches-relay
           - directory: matches/StubMatchmaking
