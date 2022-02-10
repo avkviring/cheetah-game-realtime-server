@@ -1,5 +1,7 @@
 using Cheetah.Accounts;
+#if UNITY_ANDROID
 using Cheetah.Accounts.Google;
+#endif
 using Cheetah.Platform;
 using Grpc.Core;
 using UnityEngine;
