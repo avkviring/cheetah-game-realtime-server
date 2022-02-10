@@ -17,7 +17,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new EventIncomeByFieldCommandCollector<DropMineEvent>(clientB, DropMineEventId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // отправляем сообщение
             var dropMineEvent = new DropMineEvent()
             {
@@ -41,7 +41,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new EventIncomeByFieldCommandCollector<DropMineEvent>(clientB, DropMineEventId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // отправляем сообщение
             var dropMineEvent = new DropMineEvent()
             {
@@ -65,7 +65,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new StructureIncomeByFieldCommandCollector<TurretsParamsStructure>(clientB, TurretsParamsFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем структуру
             var turretsParams = new TurretsParamsStructure()
             {
@@ -92,7 +92,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем значение
             createdObject.SetLong(HealFieldId, 7799);
             // ждем отправки команды
@@ -112,7 +112,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем значение
             createdObject.IncrementLong(HealFieldId, 1001);
             // ждем отправки команды
@@ -132,7 +132,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем значение
             createdObject.CompareAndSet(HealFieldId, 0,555,0);
             // ждем отправки команды
@@ -152,7 +152,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new DoubleIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем значение
             createdObject.SetDouble(HealFieldId, 77.99);
             // ждем отправки команды
@@ -172,7 +172,7 @@ namespace Tests.Matches.Pride
             // слушаем события определенного типа
             var collector = new DoubleIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем значение
             createdObject.IncrementDouble(HealFieldId, 77.99);
             // ждем отправки команды

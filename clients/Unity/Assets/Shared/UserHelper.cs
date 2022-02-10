@@ -1,12 +1,12 @@
 using System.Threading.Tasks;
-using Cheetah.Auth.Cookie;
+using Cheetah.Accounts.Cookie;
 using Cheetah.Matches.Matchmaking;
 using Cheetah.Matches.Matchmaking.GRPC;
 using Cheetah.Platform;
 
 namespace Shared
 {
-    public class PlayerHelper
+    public class UserHelper
     {
         /// <summary>
         /// Создаем нового игрока и закидываем его в битву
@@ -21,7 +21,7 @@ namespace Shared
             var loginOrRegister = await cookieAuthenticator.LoginOrRegister();
 
             // сообщаем mm о желании попасть в битву
-            var player = loginOrRegister.Player;
+            var player = loginOrRegister.User;
             var scheduler = new MatchmakingScheduler(player);
             var ticket = await scheduler.Schedule("gubaha", UserGroup);
             return ticket;

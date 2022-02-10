@@ -17,7 +17,7 @@ namespace Tests.Matches.Pride
         public IEnumerator TestEventIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, UserHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientB, createdObject.ObjectId,DropMineEventId);
             // отправляем сообщение
@@ -41,7 +41,7 @@ namespace Tests.Matches.Pride
         public IEnumerator TestTargetEventIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, UserHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientB, createdObject.ObjectId, DropMineEventId);
             // отправляем сообщение
@@ -65,7 +65,7 @@ namespace Tests.Matches.Pride
         public IEnumerator TestStructureIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, UserHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new StructureIncomeByObjectCommandCollector<TurretsParamsStructure>(clientB, createdObject.ObjectId,TurretsParamsFieldId);
             // изменяем структуру
@@ -92,7 +92,7 @@ namespace Tests.Matches.Pride
         public IEnumerator TestLongIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, UserHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new LongIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
             // изменяем значение
@@ -113,7 +113,7 @@ namespace Tests.Matches.Pride
         public IEnumerator TestDoubleIncomeCommands()
         {
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, UserHelper.UserGroup).Build();
             // слушаем события определенного типа
             var collector = new DoubleIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
             // изменяем значение

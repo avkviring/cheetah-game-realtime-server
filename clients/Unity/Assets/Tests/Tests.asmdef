@@ -6,7 +6,7 @@
         "UnityEditor.TestRunner",
         "games.cheetah.platform.editor",
         "games.cheetah.platform",
-        "games.cheetah.auth.cookie",
+        "games.cheetah.accounts",
         "games.cheetah.matches.relay",
         "games.cheetah.matches.matchmaking",
         "Shared"

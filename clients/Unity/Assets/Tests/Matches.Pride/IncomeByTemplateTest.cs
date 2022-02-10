@@ -18,7 +18,7 @@ namespace Tests.Matches.Pride
             // слушаем создание новых объектов на втором клиенте
             var collector = new CreatedObjectByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
-            var objectBuilder = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup);
+            var objectBuilder = clientA.NewObjectBuilder(777, UserHelper.UserGroup);
             var turretsParams = new TurretsParamsStructure()
             {
                 Damage = 1.5,
@@ -48,7 +48,7 @@ namespace Tests.Matches.Pride
             // слушаем создание новых объектов на втором клиенте
             var collector = new DeletedObjectByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             createdObject.Delete();
             // ждем отправки команды
             yield return new WaitForSeconds(1);
@@ -71,7 +71,7 @@ namespace Tests.Matches.Pride
             var collectorB = new CreatedObjectByTemplateIncomeCommands(clientB, 1);
             ;
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, UserHelper.UserGroup).Build();
             // слушаем события 
             var eventCollectorA = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientA, createdObject.ObjectId, DropMineEventId);
             // ждем отправки команды

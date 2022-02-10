@@ -1,11 +1,11 @@
 using System.Collections;
-using Cheetah.Auth.Cookie;
+using Cheetah.Accounts.Cookie;
 using Cheetah.Platform;
 using NUnit.Framework;
 using Tests.Helpers;
 using UnityEngine.TestTools;
 
-namespace Tests.Auth
+namespace Tests.Accounts
 {
     public class AuthCookieTest
     {

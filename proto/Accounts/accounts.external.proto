@@ -1,7 +1,7 @@
 // API для обновления токенов - используется игровыми клиентами
 syntax = "proto3";
-package cheetah.cerberus.external;
-option csharp_namespace = "Cheetah.Cerberus.External";
+package cheetah.accounts.external;
+option csharp_namespace = "Cheetah.Accounts.GRPC";
 
 service Tokens {
   /*
