@@ -76,7 +76,7 @@ mod test {
 	use crate::postgresql::test::setup_postgresql_storage;
 	use crate::proto;
 	use crate::proto::cookie_server::Cookie;
-	use crate::proto::{RegistryRequest, LoginRequest};
+	use crate::proto::{LoginRequest, RegistryRequest};
 	use crate::tokens::tests::{stub_token_service, PUBLIC_KEY};
 	use crate::users::UserService;
 
@@ -84,7 +84,7 @@ mod test {
 	async fn should_register_and_login() {
 		let cli = Cli::default();
 		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let (_node, token_service) = stub_token_service(1, 100);
+		let (_node, token_service) = stub_token_service(1, 100).await;
 		let service = CookieGrpcService::new(pool.clone(), token_service, UserService::new(pool.clone()));
 		let result = service
 			.register(Request::new(RegistryRequest {
@@ -119,7 +119,7 @@ mod test {
 	async fn should_not_login_with_wrong_cookie() {
 		let cli = Cli::default();
 		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let (_node, token_service) = stub_token_service(1, 100);
+		let (_node, token_service) = stub_token_service(1, 100).await;
 		let service = CookieGrpcService::new(pool.clone(), token_service, UserService::new(pool.clone()));
 		let login_result = service
 			.login(Request::new(LoginRequest {

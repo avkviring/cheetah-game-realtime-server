@@ -137,7 +137,7 @@ mod test {
 	async fn should_register_and_login() {
 		let cli = Cli::default();
 		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let (_node, token_service) = stub_token_service(1, 100);
+		let (_node, token_service) = stub_token_service(1, 100).await;
 		let (google_user_token, google_service) = setup_google(pool, token_service);
 
 		let response_1 = google_service
@@ -189,7 +189,7 @@ mod test {
 	async fn should_attach() {
 		let cli = Cli::default();
 		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let (_node, token_service) = stub_token_service(1, 100);
+		let (_node, token_service) = stub_token_service(1, 100).await;
 		let (google_user_token, google_service) = setup_google(pool.clone(), token_service.clone());
 		let service = CookieGrpcService::new(pool.clone(), token_service, UserService::new(pool.clone()));
 		let cookie_registry_response = service

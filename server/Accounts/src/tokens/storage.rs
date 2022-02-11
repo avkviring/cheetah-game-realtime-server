@@ -1,4 +1,4 @@
-use redis::aio::Connection;
+use redis::aio::{Connection, MultiplexedConnection};
 pub use redis::{AsyncCommands, Commands, ConnectionLike, ErrorKind, RedisError, RedisResult};
 
 use crate::users::UserId;
@@ -10,13 +10,11 @@ use crate::users::UserId;
 ///
 #[derive(Clone)]
 pub struct TokenStorage {
-	host: String,
-	port: u16,
-	auth: Option<String>,
 	///
 	/// Время жизни данных для пользователя
 	///
 	time_of_life_in_sec: u64,
+	redis: MultiplexedConnection,
 }
 
 impl TokenStorage {
@@ -30,20 +28,31 @@ impl TokenStorage {
 	///
 	const COUNT_DEVICES_PER_USER: usize = 32;
 
-	pub fn new(host: &str, port: u16, auth: Option<String>, time_of_life_in_sec: u64) -> Result<Self, String> {
-		let storage = Self {
-			host: host.to_owned(),
-			port,
-			auth,
-			time_of_life_in_sec,
+	pub async fn new(host: &str, port: u16, auth: Option<String>, time_of_life_in_sec: u64) -> Result<Self, String> {
+		let url = match auth {
+			Option::Some(ref password) => {
+				format!("redis://:{}@{}:{}", password, host, port)
+			}
+			Option::None => {
+				format!("redis://{}:{}", host, port)
+			}
 		};
 
-		let client = redis::Client::open(storage.make_url()).unwrap();
-		let mut connection = client.get_connection().unwrap();
-		connection
-			.set::<String, String, ()>("test".to_string(), "value".to_string())
+		let redis = redis::Client::open(url)
+			.unwrap()
+			.get_multiplexed_tokio_connection()
+			.await
 			.unwrap();
-		Result::Ok(storage)
+		redis
+			.clone()
+			.set::<String, String, ()>("test".to_string(), "value".to_string())
+			.await
+			.unwrap();
+
+		Ok(Self {
+			time_of_life_in_sec,
+			redis,
+		})
 	}
 
 	fn make_key(user_id: UserId) -> String {
@@ -61,7 +70,7 @@ impl TokenStorage {
 	pub(crate) async fn new_version(&self, user: UserId, device_id: &str) -> Result<u64, RedisError> {
 		let key = TokenStorage::make_key(user);
 		let device_id = TokenStorage::normalize_device_id(device_id);
-		let mut connection = self.open_connection().await?;
+		let mut connection = self.redis.clone();
 		let len: usize = connection.hlen(&key).await?;
 		if len > TokenStorage::COUNT_DEVICES_PER_USER {
 			connection.del::<&String, usize>(&key).await?;
@@ -76,27 +85,10 @@ impl TokenStorage {
 	pub(crate) async fn get_version(&self, user_id: UserId, device_id: &str) -> Result<u64, RedisError> {
 		let key = TokenStorage::make_key(user_id);
 		let device_id = TokenStorage::normalize_device_id(device_id);
-		let mut connection = self.open_connection().await?;
+		let mut connection = self.redis.clone();
 		connection.expire(&key, self.time_of_life_in_sec as usize).await?;
 		let result: Result<Option<u64>, RedisError> = connection.hget(key, device_id).await;
 		result.map(|v| v.unwrap_or(0))
-	}
-
-	fn make_url(&self) -> String {
-		match &self.auth {
-			Option::Some(ref password) => {
-				format!("redis://:{}@{}:{}", password, self.host, self.port)
-			}
-			Option::None => {
-				format!("redis://{}:{}", self.host, self.port)
-			}
-		}
-	}
-
-	async fn open_connection(&self) -> Result<Connection, RedisError> {
-		let client = redis::Client::open(self.make_url())?;
-		let connection = client.get_async_connection().await?;
-		Result::Ok(connection)
 	}
 }
 
@@ -114,7 +106,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn should_increment_version() {
-		let (_node, storage) = stub_storage();
+		let (_node, storage) = stub_storage().await;
 
 		let user_id = UserId::from(123u64);
 		let device = "device";
@@ -126,7 +118,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn should_get_version() {
-		let (_node, storage) = stub_storage();
+		let (_node, storage) = stub_storage().await;
 
 		let user_id = UserId::from(123u64);
 		let device = "device".to_owned();
@@ -137,7 +129,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn should_get_unset_version() {
-		let (_node, storage) = stub_storage();
+		let (_node, storage) = stub_storage().await;
 		let user_id = UserId::from(123u64);
 		let device = "device".to_owned();
 		let version = storage.get_version(user_id, &device).await;
@@ -146,7 +138,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn should_clear_after_timeout() {
-		let (_node, storage) = stub_storage();
+		let (_node, storage) = stub_storage().await;
 		let user_id = UserId::from(123u64);
 		let device = "device".to_owned();
 		storage.new_version(user_id, &device).await.unwrap();
@@ -157,7 +149,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn should_clear_if_so_much_user_id() {
-		let (_node, storage) = stub_storage();
+		let (_node, storage) = stub_storage().await;
 		let user_id = UserId::from(123u64);
 		let device = "device".to_owned();
 
@@ -173,7 +165,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn should_truncate_device_id() {
-		let (_node, storage) = stub_storage();
+		let (_node, storage) = stub_storage().await;
 		let user_id = UserId::from(123u64);
 		let device_long_name = "012345678901234567890123456789".to_owned();
 		let device_short_name = device_long_name[0..TokenStorage::DEVICE_ID_MAX_LEN].to_owned();
@@ -188,9 +180,9 @@ pub mod tests {
 		static ref CLI: clients::Cli = Default::default();
 	}
 
-	pub fn stub_storage<'a>() -> (Container<'a, Cli, Redis>, TokenStorage) {
+	pub async fn stub_storage<'a>() -> (Container<'a, Cli, Redis>, TokenStorage) {
 		let node = (*CLI).run(images::redis::Redis::default());
 		let port = node.get_host_port(6379).unwrap();
-		(node, TokenStorage::new("127.0.0.1", port, Option::None, 1).unwrap())
+		(node, TokenStorage::new("127.0.0.1", port, Option::None, 1).await.unwrap())
 	}
 }

@@ -20,7 +20,7 @@ pub async fn run_grpc_server(
 	pool: PgPool,
 	google_client_id: Option<String>,
 ) {
-	let token_service = TokensService::new(jwt_private_key, jwt_public_key.clone(), redis_host, redis_port, redis_auth);
+	let token_service = TokensService::new(jwt_private_key, jwt_public_key.clone(), redis_host, redis_port, redis_auth).await;
 	let user_service = UserService::new(pool.clone());
 
 	let token_grpc_service = proto::tokens_server::TokensServer::new(TokensGrpcService::new(token_service.clone()));

@@ -48,8 +48,16 @@ const SESSION_EXP_IN_SEC: u64 = 10 * HOUR_IN_SEC;
 const REFRESH_EXP_IN_SEC: u64 = 30 * 24 * HOUR_IN_SEC;
 
 impl TokensService {
-	pub fn new(private_key: String, public_key: String, redis_host: &str, redis_port: u16, redis_auth: Option<String>) -> Self {
-		let storage = TokenStorage::new(redis_host, redis_port, redis_auth, REFRESH_EXP_IN_SEC + HOUR_IN_SEC).unwrap();
+	pub async fn new(
+		private_key: String,
+		public_key: String,
+		redis_host: &str,
+		redis_port: u16,
+		redis_auth: Option<String>,
+	) -> Self {
+		let storage = TokenStorage::new(redis_host, redis_port, redis_auth, REFRESH_EXP_IN_SEC + HOUR_IN_SEC)
+			.await
+			.unwrap();
 		Self {
 			session_exp_in_sec: SESSION_EXP_IN_SEC,
 			refresh_exp_in_sec: REFRESH_EXP_IN_SEC,
@@ -177,7 +185,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn session_token_should_correct() {
-		let (_node, service) = stub_token_service(1, 1);
+		let (_node, service) = stub_token_service(1, 1).await;
 		let user_id = UserId::from(123u64);
 		let tokens = service.create(user_id, "some-device-id").await.unwrap();
 
@@ -189,7 +197,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn session_token_should_exp() {
-		let (_node, service) = stub_token_service(1, 1);
+		let (_node, service) = stub_token_service(1, 1).await;
 		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 		thread::sleep(Duration::from_secs(2));
 		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
@@ -199,7 +207,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn session_token_should_fail_if_not_correct() {
-		let (_node, service) = stub_token_service(1, 1);
+		let (_node, service) = stub_token_service(1, 1).await;
 		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
 		let user_id_from_token = parser.get_user_id(tokens.session.replace("IzfQ", "ccoY"));
@@ -217,8 +225,8 @@ BTeGSzANXGlEzutd9IIm6/inl0ahRANCAARVUc1crGhQ2Shf2Gc4mlLPorYoN+KD
 FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 -----END PRIVATE KEY-----";
 
-	pub fn stub_token_service<'a>(session_exp: u64, refresh_exp: u64) -> (Container<'a, Cli, Redis>, TokensService) {
-		let (node, storage) = stub_storage(refresh_exp + 1);
+	pub async fn stub_token_service<'a>(session_exp: u64, refresh_exp: u64) -> (Container<'a, Cli, Redis>, TokensService) {
+		let (node, storage) = stub_storage(refresh_exp + 1).await;
 
 		let service = TokensService::new_with_storage(
 			PRIVATE_KEY.to_string(),
@@ -234,18 +242,20 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		static ref CLI: Cli = Default::default();
 
 	}
-	fn stub_storage<'a>(time_of_life_in_sec: u64) -> (Container<'a, Cli, Redis>, TokenStorage) {
+	async fn stub_storage<'a>(time_of_life_in_sec: u64) -> (Container<'a, Cli, Redis>, TokenStorage) {
 		let node = (*CLI).run(images::redis::Redis::default());
 		let port = node.get_host_port(6379).unwrap();
 		(
 			node,
-			TokenStorage::new("127.0.0.1", port, Option::None, time_of_life_in_sec).unwrap(),
+			TokenStorage::new("127.0.0.1", port, Option::None, time_of_life_in_sec)
+				.await
+				.unwrap(),
 		)
 	}
 
 	#[tokio::test]
 	async fn should_refresh_token_different_for_players() {
-		let (_node, service) = stub_token_service(1, 100);
+		let (_node, service) = stub_token_service(1, 100).await;
 		let tokens_for_player_a = service.create(UserId::from(123u64), "some-devicea-id").await.unwrap();
 		let tokens_for_player_b = service.create(UserId::from(124u64), "some-deviceb-id").await.unwrap();
 		assert_ne!(tokens_for_player_a.refresh, tokens_for_player_b.refresh)
@@ -253,7 +263,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 
 	#[tokio::test]
 	async fn should_refresh_token() {
-		let (_node, service) = stub_token_service(1, 100);
+		let (_node, service) = stub_token_service(1, 100).await;
 
 		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 
@@ -274,7 +284,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_exp() {
-		let (_node, service) = stub_token_service(1, 1);
+		let (_node, service) = stub_token_service(1, 1).await;
 		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 		thread::sleep(Duration::from_secs(2));
 		let result = service.refresh(tokens.refresh).await;
@@ -286,7 +296,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_fail() {
-		let (_node, service) = stub_token_service(1, 1);
+		let (_node, service) = stub_token_service(1, 1).await;
 		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 		assert!(matches!(
 			service.refresh(tokens.refresh.replace("eyJleHA", "eyJleHB")).await,
@@ -299,7 +309,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_use_once() {
-		let (_node, service) = stub_token_service(1, 1);
+		let (_node, service) = stub_token_service(1, 1).await;
 		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 		service.refresh(tokens.refresh.clone()).await.unwrap();
 		assert!(matches!(
@@ -313,7 +323,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_invalidate_tokens() {
-		let (_node, service) = stub_token_service(1, 1);
+		let (_node, service) = stub_token_service(1, 1).await;
 		let tokens_a = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 		let tokens_b = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
 		service.refresh(tokens_b.refresh.clone()).await.unwrap();
