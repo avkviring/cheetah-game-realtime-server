@@ -1,4 +1,4 @@
-use redis::aio::{Connection, MultiplexedConnection};
+use redis::aio::{MultiplexedConnection};
 pub use redis::{AsyncCommands, Commands, ConnectionLike, ErrorKind, RedisError, RedisResult};
 
 use crate::users::UserId;
