@@ -96,8 +96,8 @@ mod tests {
 
 	use crate::room::object::Field;
 	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
-		MemberTemplate, UserTemplateError,
+		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField,
+		Permissions, UserTemplateError,
 	};
 
 	impl MemberTemplate {

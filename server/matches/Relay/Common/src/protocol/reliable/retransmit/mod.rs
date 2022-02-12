@@ -5,8 +5,8 @@ use std::time::{Duration, Instant};
 
 use fnv::FnvBuildHasher;
 
-use crate::protocol::frame::{Frame, FrameId, MAX_COMMAND_IN_FRAME};
 use crate::protocol::frame::headers::{Header, HeaderVec};
+use crate::protocol::frame::{Frame, FrameId, MAX_COMMAND_IN_FRAME};
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
@@ -16,35 +16,31 @@ pub mod header;
 ///
 /// Количество фреймов с командами, требующими надежную доставку в секунду
 ///
-pub const RELIABILITY_FRAME_PER_SECOND:usize = 10;
+pub const RELIABILITY_FRAME_PER_SECOND: usize = 10;
 
 ///
 /// Время ожидания доставки оригинально фрейма (при повторных пересылках)
 ///
-pub const RETRANSMIT_MAX_TIME_IN_SEC:usize = 10;
+pub const RETRANSMIT_MAX_TIME_IN_SEC: usize = 10;
 
 ///
 /// Время ожидания ACK
 ///
-pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC:f64 = 0.5;
+pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 0.5;
 
 ///
 /// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
 ///
-pub const RETRANSMIT_LIMIT: usize =
-	(RETRANSMIT_MAX_TIME_IN_SEC as f64/RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC) as usize;
+pub const RETRANSMIT_LIMIT: usize = (RETRANSMIT_MAX_TIME_IN_SEC as f64 / RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC) as usize;
 
 ///
 /// количество фреймов в буферах, должно гарантированно хватить для всех фреймов
 /// как только количество фреймов будет больше - то канал переходит в состояние disconnected
 ///
-pub const RETRANSMIT_FRAMES_CAPACITY:usize = RELIABILITY_FRAME_PER_SECOND*RETRANSMIT_MAX_TIME_IN_SEC;
-
-
+pub const RETRANSMIT_FRAMES_CAPACITY: usize = RELIABILITY_FRAME_PER_SECOND * RETRANSMIT_MAX_TIME_IN_SEC;
 
 #[derive(Debug)]
 pub struct Retransmit {
-
 	///
 	/// Фреймы, отсортированные по времени отсылки
 	///
@@ -75,7 +71,6 @@ pub struct ScheduledFrame {
 	pub retransmit_count: u8,
 }
 
-
 impl Default for Retransmit {
 	fn default() -> Self {
 		Self {
@@ -88,10 +83,7 @@ impl Default for Retransmit {
 	}
 }
 
-
-
 impl Retransmit {
-
 	///
 	/// Получить фрейм для повторной отправки (если такой есть)
 	/// - метод необходимо вызывать пока результат Option::Some
@@ -164,7 +156,7 @@ impl Retransmit {
 				time: *now,
 				original_frame_id,
 				frame: cloned_frame,
-				retransmit_count: 0
+				retransmit_count: 0,
 			});
 
 			self.wait_ack_frames.insert(original_frame_id);
@@ -174,11 +166,9 @@ impl Retransmit {
 	pub fn disconnected(&self, _: &Instant) -> bool {
 		self.max_retransmit_count >= RETRANSMIT_LIMIT as u8
 			|| self.frames.len() > RETRANSMIT_FRAMES_CAPACITY
-			|| self.wait_ack_frames.len() >RETRANSMIT_FRAMES_CAPACITY
+			|| self.wait_ack_frames.len() > RETRANSMIT_FRAMES_CAPACITY
 	}
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -187,12 +177,12 @@ mod tests {
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
-	use crate::protocol::frame::{Frame, FrameId};
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
+	use crate::protocol::frame::{Frame, FrameId};
 	use crate::protocol::reliable::ack::header::AckHeader;
-	use crate::protocol::reliable::retransmit::{RETRANSMIT_LIMIT, Retransmit};
+	use crate::protocol::reliable::retransmit::{Retransmit, RETRANSMIT_LIMIT};
 
 	#[test]
 	///
@@ -346,10 +336,7 @@ mod tests {
 				event: Default::default(),
 			})),
 		};
-		frame
-			.commands
-			.push(reliable_command.clone())
-			.unwrap();
+		frame.commands.push(reliable_command.clone()).unwrap();
 		let now = Instant::now();
 		handler.build_frame(&frame, &now);
 		let now = now.add(handler.ack_wait_duration);

@@ -10,7 +10,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::CommandTracerSessionsTask;
-use crate::room::template::config::{RoomTemplate, MemberTemplate};
+use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
 use crate::server::server::Server;

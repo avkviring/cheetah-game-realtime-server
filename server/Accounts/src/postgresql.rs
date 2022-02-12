@@ -22,7 +22,7 @@ pub mod test {
 	use testcontainers::images::postgres::Postgres;
 	use testcontainers::{Container, Docker};
 
-	use crate::postgresql::{create_postgres_pool};
+	use crate::postgresql::create_postgres_pool;
 	use crate::PgPool;
 
 	pub async fn setup_postgresql_storage(cli: &Cli) -> (PgPool, Container<'_, Cli, Postgres>) {
