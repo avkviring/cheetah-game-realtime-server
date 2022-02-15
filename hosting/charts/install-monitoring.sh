@@ -9,3 +9,4 @@ helm -n monitoring upgrade --install monitoring Monitoring \
   --set kube-prometheus-stack.grafana.ingress.tls[0].hosts=\{grafana.$1\} \
   --set kube-prometheus-stack.grafana.ingress.tls[0].secretName=grafana-ingress \
   --set kube-prometheus-stack.grafana.adminPassword=$2
+
