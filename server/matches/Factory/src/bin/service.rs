@@ -13,7 +13,7 @@ use cheetah_microservice::tonic::transport::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	cheetah_microservice::init("match.factory");
+	cheetah_microservice::init("matches.factory");
 	let templates_path = cheetah_microservice::get_env("TEMPLATES_PATH");
 	let configurations = Configurations::load(PathBuf::from(templates_path))?;
 

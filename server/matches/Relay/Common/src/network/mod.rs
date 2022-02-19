@@ -11,7 +11,7 @@ pub fn bind_to_free_socket() -> std::io::Result<(UdpSocket, SocketAddr)> {
 		let socket_addr = SocketAddr::from_str(format!("0.0.0.0:{:}", port).as_str()).unwrap();
 		match UdpSocket::bind(socket_addr) {
 			Ok(socket) => {
-				log::info!("[bind_to_free_socket] bind({:?})", socket_addr);
+				tracing::info!("[bind_to_free_socket] bind({:?})", socket_addr);
 				return Result::Ok((socket, socket_addr));
 			}
 			Err(e) => match e.kind() {
@@ -21,6 +21,6 @@ pub fn bind_to_free_socket() -> std::io::Result<(UdpSocket, SocketAddr)> {
 		}
 	}
 
-	log::error!("[bind_to_free_socket] cannot find free socket");
+	tracing::error!("[bind_to_free_socket] cannot find free socket");
 	Result::Err(std::io::Error::new(ErrorKind::AddrInUse, "Check all ports in 2048..8912"))
 }

@@ -59,10 +59,7 @@ impl NetworkClient {
 			channel,
 			out_frames: Default::default(),
 			from_client,
-			member_and_room_id: MemberAndRoomId {
-				member_id: member_id,
-				room_id,
-			},
+			member_and_room_id: MemberAndRoomId { member_id, room_id },
 		})
 	}
 
@@ -98,7 +95,7 @@ impl NetworkClient {
 			match self.channel.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
 					if size != frame_buffer_size {
-						log::error!(
+						tracing::error!(
 							"error send frame size mismatch send {:?}, frame {:?}",
 							size,
 							frame_buffer_size
@@ -110,7 +107,7 @@ impl NetworkClient {
 				Err(e) => match e.kind() {
 					ErrorKind::WouldBlock => {}
 					_ => {
-						log::error!("error send {:?}", e);
+						tracing::error!("error send {:?}", e);
 						self.state = ConnectionStatus::Disconnected;
 					}
 				},
@@ -126,7 +123,7 @@ impl NetworkClient {
 					match e.kind() {
 						ErrorKind::WouldBlock => {}
 						_ => {
-							log::error!("error receive {:?}", e);
+							tracing::error!("error receive {:?}", e);
 							self.state = ConnectionStatus::Disconnected;
 						}
 					}
@@ -148,12 +145,12 @@ impl NetworkClient {
 									self.on_frame_received(now, frame);
 								}
 								Err(e) => {
-									log::error!("error decode frame {:?}", e)
+									tracing::error!("error decode frame {:?}", e)
 								}
 							}
 						}
 						Err(e) => {
-							log::error!("error decode header {:?}", e)
+							tracing::error!("error decode header {:?}", e)
 						}
 					}
 				}

@@ -15,7 +15,7 @@ impl FactoryService {
 		let addrs = self.registry.find_free_relay().await.unwrap();
 		let relay_grpc_addr = addrs.grpc_internal.as_ref().unwrap();
 		let relay_addr = cheetah_microservice::make_internal_srv_uri(&relay_grpc_addr.host, relay_grpc_addr.port as u16);
-		log::info!("Connect to relay {}", relay_addr);
+		tracing::info!("Connect to relay {}", relay_addr);
 		// создаем матч на relay сервере
 		let mut connect = RelayClient::connect(relay_addr).await.unwrap();
 

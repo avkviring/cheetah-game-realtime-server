@@ -76,7 +76,7 @@ impl NetworkChannel {
 				match self.socket.send_to(buffer.as_slice(), addr) {
 					Ok(_) => {}
 					Err(e) => {
-						log::error!("[NetworkChannel] emulate mode, send to socket error {:?}", e)
+						tracing::error!("[NetworkChannel] emulate mode, send to socket error {:?}", e)
 					}
 				}
 			}

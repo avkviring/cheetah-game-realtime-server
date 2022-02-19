@@ -9,14 +9,13 @@ path = "src/bin/service.rs"
 
 [dependencies]
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
-log = "0.4"
-pretty_env_logger = "0.4.0"
 tonic = "0.6.2"
 prost = "0.9.0"
 cheetah-microservice = { path = "../../Microservice/" }
 async-recursion = "1.0.0"
 tokio-stream = { version = "0.1.8", features = ["net"] }
 tonic-web = "0.2.0"
+tracing = "0.1.30"
 
 [build-dependencies]
 tonic-build = "0.6.2"

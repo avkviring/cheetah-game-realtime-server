@@ -37,9 +37,9 @@ impl Registry for RegistryService {
 	async fn find_free_relay(&self, _request: Request<FindFreeRelayRequest>) -> Result<Response<FindFreeRelayResponse>, Status> {
 		let addrs = self.free_relay_provider.get_random_relay_addr().await.map_err(|err| {
 			match err {
-				StorageError::NoRelayFound => log::warn!("could not find free relay"),
-				StorageError::MalformedValue(ref e) => log::error!("storage value corrupted: {:?}", e),
-				StorageError::RedisError(ref e) => log::warn!("redis error: {:?}", e),
+				StorageError::NoRelayFound => tracing::warn!("could not find free relay"),
+				StorageError::MalformedValue(ref e) => tracing::error!("storage value corrupted: {:?}", e),
+				StorageError::RedisError(ref e) => tracing::warn!("redis error: {:?}", e),
 			};
 			Status::unavailable(format!("Error: {:?}", err))
 		})?;
@@ -57,14 +57,14 @@ impl Registry for RegistryService {
 
 		let addrs = msg.addrs.try_into().map_err(|e| {
 			let msg = format!("received malformed RelayAddrs: {:?}", e);
-			log::error!("{}", msg);
+			tracing::error!("{}", msg);
 			Status::invalid_argument(msg)
 		})?;
 
 		let msg_state = msg.state;
 		let state = RelayState::from_i32(msg_state).ok_or_else(|| {
 			let msg = format!("received unknown RelayState: {:?}", msg_state);
-			log::error!("{}", msg);
+			tracing::error!("{}", msg);
 			Status::invalid_argument(msg)
 		})?;
 
@@ -72,7 +72,7 @@ impl Registry for RegistryService {
 			Ok(_) => Ok(tonic::Response::new(UpdateRelayStatusResponse::default())),
 			Err(err) => {
 				let msg = format!("could not save status to storage: {:?}", err);
-				log::warn!("{}", msg);
+				tracing::warn!("{}", msg);
 				Err(Status::unavailable(msg))
 			}
 		}

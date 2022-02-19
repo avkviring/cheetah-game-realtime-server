@@ -1,5 +1,3 @@
-extern crate stderrlog;
-
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -18,7 +16,7 @@ use cheetah_matches_relay::server::manager::ServerManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	cheetah_microservice::init("relay");
+	cheetah_microservice::init("matches.relay");
 	let (halt_signal, manager) = create_manager();
 	let internal_grpc_service = create_internal_grpc_server(manager.clone());
 	let admin_grpc_service = create_admin_grpc_server(manager.clone());

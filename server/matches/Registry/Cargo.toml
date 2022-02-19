@@ -20,8 +20,7 @@ futures = "0.3.19"
 async-trait = "0.1.52"
 serde = { version = "1.0.132", features = ["derive"] }
 serde_json = "1.0.73"
-log = "0.4"
-pretty_env_logger = "0.4.0"
+tracing = "0.1.30"
 
 [dev-dependencies]
 testcontainers = "0.12.0"

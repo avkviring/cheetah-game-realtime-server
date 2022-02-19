@@ -135,11 +135,11 @@ impl ServerManager {
 		self.created_room_counter += 1;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(room_id) => {
-				log::info!("[server] create room({:?})", room_id);
+				tracing::info!("[server] create room({:?})", room_id);
 				Result::Ok(room_id)
 			}
 			Err(e) => {
-				log::error!("[server] fail create room");
+				tracing::error!("[server] fail create room");
 				Result::Err(RegisterRoomRequestError::ChannelError(e))
 			}
 		}
@@ -153,11 +153,11 @@ impl ServerManager {
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {
-					log::info!("[server] create user({:?}) in room ({:?})", user_id, room_id);
+					tracing::info!("[server] create user({:?}) in room ({:?})", user_id, room_id);
 					Result::Ok(user_id)
 				}
 				Err(e) => {
-					log::error!(
+					tracing::error!(
 						"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
 						template.private_key,
 						room_id,
@@ -167,7 +167,7 @@ impl ServerManager {
 				}
 			},
 			Err(e) => {
-				log::error!(
+				tracing::error!(
 					"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
 					template.private_key,
 					room_id,

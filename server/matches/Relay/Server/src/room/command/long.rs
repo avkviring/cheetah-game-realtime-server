@@ -19,7 +19,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 			let value = match object.get_long(&self.field_id) {
 				Some(value) => match (*value).checked_add(self.increment) {
 					None => {
-						log::error!(
+						tracing::error!(
 							"[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})",
 							value,
 							self.increment

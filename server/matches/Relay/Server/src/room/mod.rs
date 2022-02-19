@@ -108,7 +108,7 @@ impl Room {
 		let user = self.members.get_mut(&user_id);
 		match user {
 			None => {
-				log::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
+				tracing::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
 			}
 			Some(user) => {
 				self.current_member_id.replace(user_id);
@@ -142,7 +142,7 @@ impl Room {
 					}
 				}
 				_ => {
-					log::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel)
+					tracing::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel)
 				}
 			}
 		}
@@ -183,7 +183,7 @@ impl Room {
 	/// удаляем все созданные им объекты с уведомлением других пользователей
 	///
 	pub fn disconnect_user(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		log::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
+		tracing::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
 		self.current_member_id.replace(user_id);
 		match self.members.remove(&user_id) {
 			None => {}

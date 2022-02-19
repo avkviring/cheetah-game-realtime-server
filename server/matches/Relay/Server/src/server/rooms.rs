@@ -57,7 +57,7 @@ impl Rooms {
 	pub fn execute_commands(&mut self, user_and_room_id: MemberAndRoomId, commands: &[CommandWithChannel]) {
 		match self.room_by_id.get_mut(&user_and_room_id.room_id) {
 			None => {
-				log::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
+				tracing::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
 			}
 			Some(room) => {
 				room.execute_commands(user_and_room_id.member_id, commands);

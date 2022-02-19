@@ -30,7 +30,7 @@ impl TryFrom<&Configurations> for HashMap<String, relay::RoomTemplate> {
 		rooms
 			.iter()
 			.map(|(room_name, room)| {
-				log::info!("resolve room {:?}", room_name);
+				tracing::info!("resolve room {:?}", room_name);
 
 				let Room { objects } = room;
 				//  смещение для генерации id объектов

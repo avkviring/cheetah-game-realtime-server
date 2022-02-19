@@ -29,7 +29,7 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 	if std::env::var("ENABLE_AGONES").is_err() {
 		return;
 	}
-	log::info!("Agones: Starting");
+	tracing::info!("Agones: Starting");
 	match rymder::Sdk::connect(
 		None,
 		Option::Some(Duration::from_secs(2)),
@@ -38,10 +38,10 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 	.await
 	{
 		Ok((mut sdk, gameserver)) => {
-			log::info!("Agones: Connected to SDK");
+			tracing::info!("Agones: Connected to SDK");
 			// сервер готов к работе
 			sdk.mark_ready().await.unwrap();
-			log::info!("Agones: invoked sdk.mark_ready");
+			tracing::info!("Agones: invoked sdk.mark_ready");
 
 			let mut health = sdk.health_check();
 
@@ -51,7 +51,7 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 				// при создании первой комнаты - вызываем allocate
 				if !allocated && relay_server.lock().unwrap().created_room_counter > 0 {
 					sdk.allocate().await.unwrap();
-					log::info!("Agones: invoked allocated");
+					tracing::info!("Agones: invoked allocated");
 					allocated = true;
 				}
 
@@ -66,10 +66,10 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 				// подтверждаем что сервер жив
 				match health.send(()).await {
 					Ok(_) => {
-						log::info!("Agones: invoked health");
+						tracing::info!("Agones: invoked health");
 					}
 					Err(e) => {
-						log::error!("Agones: health receiver was closed {:?}", e);
+						tracing::error!("Agones: health receiver was closed {:?}", e);
 						health = sdk.health_check();
 					}
 				}
@@ -81,7 +81,7 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 			sdk.shutdown().await.unwrap();
 		}
 		Err(e) => {
-			log::error!("Agones: Fail connect {:?}", e);
+			tracing::error!("Agones: Fail connect {:?}", e);
 			panic!("Agones: Fail connect {:?}", e);
 		}
 	}

@@ -42,7 +42,7 @@ impl Storage for RedisStorage {
 			Ok(addrs) => Ok(addrs),
 			Err(e) => match e {
 				StorageError::NoRelayFound => {
-					log::info!("no relay found in allocated set. getting from ready set");
+					tracing::info!("no relay found in allocated set. getting from ready set");
 					self.srandmember(REDIS_SET_KEY_READY).await
 				}
 				_ => Err(e),
@@ -54,12 +54,12 @@ impl Storage for RedisStorage {
 	async fn update_status(&self, addrs: &Addrs, state: RelayState) -> Result<(), StorageError> {
 		match state {
 			RelayState::Ready => {
-				log::info!("adding relay to ready set {:?}", addrs);
+				tracing::info!("adding relay to ready set {:?}", addrs);
 				self.ensure_addrs_in_sets(addrs, REDIS_SET_KEY_ALLOCATED, REDIS_SET_KEY_READY)
 					.await
 			}
 			RelayState::Allocated => {
-				log::info!("adding relay to allocated set {:?}", addrs);
+				tracing::info!("adding relay to allocated set {:?}", addrs);
 				self.ensure_addrs_in_sets(addrs, REDIS_SET_KEY_READY, REDIS_SET_KEY_ALLOCATED)
 					.await
 			}
@@ -69,7 +69,7 @@ impl Storage for RedisStorage {
 
 	/// Удалить Relay из хранилища
 	async fn remove_relay(&self, addrs: &Addrs) -> Result<(), StorageError> {
-		log::info!("removing relay {:?}", addrs);
+		tracing::info!("removing relay {:?}", addrs);
 		future::try_join(
 			self.srem(addrs, REDIS_SET_KEY_ALLOCATED),
 			self.srem(addrs, REDIS_SET_KEY_READY),
@@ -84,7 +84,7 @@ impl RedisStorage {
 	/// RedisStorage использует multiplexed соединение к Redis
 	/// RedisStorage можно клонировать
 	pub async fn new(dsn: &str) -> Result<Self, StorageError> {
-		log::info!("connecting to redis: {:?}", dsn);
+		tracing::info!("connecting to redis: {:?}", dsn);
 		let client = redis::Client::open(dsn)?;
 		client
 			.get_multiplexed_tokio_connection()

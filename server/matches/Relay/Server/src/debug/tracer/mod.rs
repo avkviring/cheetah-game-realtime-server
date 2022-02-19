@@ -182,7 +182,7 @@ impl CommandTracerSessions {
 				match self.sessions.get_mut(&session_id) {
 					None => Result::Err(CommandTracerSessionsError::SessionNotFound),
 					Some(session) => {
-						log::info!("set filter {:?} {:?}", query, filter);
+						tracing::info!("set filter {:?} {:?}", query, filter);
 						session.apply_filter(filter);
 						Result::Ok(())
 					}
@@ -213,7 +213,7 @@ impl CommandTracerSessions {
 					let template = match template_from_command {
 						None => match objects.get(&object_id) {
 							None => {
-								log::error!("CommandTracer: template not found for {:?}", command);
+								tracing::error!("CommandTracer: template not found for {:?}", command);
 								None
 							}
 							Some(object) => Some(object.template_id),
@@ -254,21 +254,23 @@ impl CommandTracerSessions {
 		match task {
 			CommandTracerSessionsTask::CreateSession(sender) => {
 				let session_id = self.create_session();
-				sender.send(session_id).unwrap_or_else(|e| log::error!("send error {:?}", e));
+				sender
+					.send(session_id)
+					.unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			CommandTracerSessionsTask::SetFilter(session_id, query, sender) => {
 				let result = self.set_filter(session_id, query);
-				sender.send(result).unwrap_or_else(|e| log::error!("send error {:?}", e));
+				sender.send(result).unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			CommandTracerSessionsTask::GetCommands(session, sender) => {
 				sender
 					.send(self.drain_filtered_commands(session))
-					.unwrap_or_else(|e| log::error!("send error {:?}", e));
+					.unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			CommandTracerSessionsTask::CloseSession(session, sender) => {
 				sender
 					.send(self.close_session(session))
-					.unwrap_or_else(|e| log::error!("send error {:?}", e));
+					.unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 		}
 	}

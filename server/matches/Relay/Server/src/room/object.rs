@@ -117,7 +117,7 @@ impl GameObject {
 		match self.do_collect_create_commands(commands) {
 			Ok(_) => {}
 			Err(_) => {
-				log::error!("Collect create commands overflow {:?}", self);
+				tracing::error!("Collect create commands overflow {:?}", self);
 			}
 		}
 	}

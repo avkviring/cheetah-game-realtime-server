@@ -31,7 +31,7 @@ struct MemberSession {
 impl NetworkServer {
 	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
-		log::info!("Starting network server on {:?}", socket);
+		tracing::info!("Starting network server on {:?}", socket);
 		Result::Ok(Self {
 			sessions: Default::default(),
 			socket,
@@ -68,7 +68,7 @@ impl NetworkServer {
 			};
 			match self.sessions.get_mut(&id) {
 				None => {
-					log::error!("[network] member not found {:?}", id);
+					tracing::error!("[network] member not found {:?}", id);
 				}
 				Some(session) => {
 					if let Some(peer_address) = session.peer_address.as_ref() {
@@ -80,19 +80,23 @@ impl NetworkServer {
 						}
 
 						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
-							log::trace!("[network] server -> user({:?}) {:?}", member_id, frame);
+							tracing::trace!("[network] server -> user({:?}) {:?}", member_id, frame);
 							let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 							let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
 							match self.socket.send_to(&buffer[0..buffer_size], peer_address) {
 								Ok(size) => {
 									if size != buffer_size {
-										log::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
+										tracing::error!(
+											"[network] size mismatch in socket.send_to {:?} {:?}",
+											buffer.len(),
+											size
+										);
 									}
 								}
 								Err(e) => match e.kind() {
 									ErrorKind::WouldBlock => {}
 									_ => {
-										log::error!("[network] socket error {:?}", e);
+										tracing::error!("[network] socket error {:?}", e);
 									}
 								},
 							}
@@ -114,7 +118,7 @@ impl NetworkServer {
 						return;
 					}
 					_ => {
-						log::error!("[network] error in socket.recv_from {:?}", e);
+						tracing::error!("[network] error in socket.recv_from {:?}", e);
 					}
 				},
 			}
@@ -137,12 +141,12 @@ impl NetworkServer {
 
 				match member_and_room_id_header {
 					None => {
-						log::error!("[network] MemberAndRoomId header not found {:?}", headers);
+						tracing::error!("[network] MemberAndRoomId header not found {:?}", headers);
 					}
 					Some(user_and_room_id) => {
 						match self.sessions.get_mut(&user_and_room_id) {
 							None => {
-								log::error!("[network] user session not found {:?}", user_and_room_id);
+								tracing::error!("[network] user session not found {:?}", user_and_room_id);
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
@@ -164,7 +168,7 @@ impl NetworkServer {
 										)
 									}
 									Err(e) => {
-										log::error!("[network] error decode frame {:?}", e)
+										tracing::error!("[network] error decode frame {:?}", e)
 									}
 								}
 							}
@@ -173,7 +177,7 @@ impl NetworkServer {
 				}
 			}
 			Err(e) => {
-				log::error!("decode headers error {:?}", e);
+				tracing::error!("decode headers error {:?}", e);
 			}
 		}
 	}

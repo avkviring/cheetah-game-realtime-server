@@ -18,9 +18,9 @@ impl RelayFinder {
 	pub async fn get_random_relay_addr(&self) -> Result<Addrs, StorageError> {
 		loop {
 			let addrs = self.storage.get_random_relay_addr().await?;
-			log::debug!("probing relay {:?}", addrs);
+			tracing::debug!("probing relay {:?}", addrs);
 			if let Err(e) = self.prober.probe(addrs.grpc_internal).await {
-				log::warn!("relay {:?} probe failed: {:?}", addrs, e);
+				tracing::warn!("relay {:?} probe failed: {:?}", addrs, e);
 				self.storage.remove_relay(&addrs).await?;
 				continue;
 			}

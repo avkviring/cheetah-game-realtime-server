@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 lazy_static = "1.4.0"
-log = "0.4"
 rand = "0.8.3"
 snap = "1.0.5"
 byteorder = "1.4.3"
@@ -19,7 +18,7 @@ strum_macros = "0.23.1"
 thiserror = "1.0.30"
 hash32 = "0.2.1"
 hash32-derive = "0.1.1"
-
+tracing = "0.1.30"
 
 [dev-dependencies]
 criterion = "0.3"

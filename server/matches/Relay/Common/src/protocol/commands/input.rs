@@ -95,7 +95,7 @@ impl InCommandsCollector {
 			let option_buffer = &mut self.sequence_commands[channel_group.0 as usize];
 			let buffer = option_buffer.as_mut().unwrap();
 			if buffer.len() > SEQUENCE_COMMANDS_LIMIT {
-				log::error!("Sequence commands buffer overflow")
+				tracing::error!("Sequence commands buffer overflow")
 			} else {
 				buffer.push(SequenceApplicationCommand {
 					sequence: input_sequence,

@@ -35,7 +35,7 @@ impl OutCommandsCollector {
 	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
 		match self.create_channel(&channel_type) {
 			None => {
-				log::error!("can not create channel for {:?} {:?}", channel_type, command)
+				tracing::error!("can not create channel for {:?} {:?}", channel_type, command)
 			}
 			Some(channel) => {
 				self.commands.push_back(CommandWithChannel {
