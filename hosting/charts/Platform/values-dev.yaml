@@ -8,3 +8,5 @@ cheetah-accounts:
         enabled: false
   persistence:
     enabled: false
+global:
+  lokiUrl: http://monitoring-loki.monitoring:3100
