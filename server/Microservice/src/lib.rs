@@ -1,27 +1,43 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+use std::collections::HashMap;
 use std::net::SocketAddr;
 
-use log::LevelFilter;
 pub use tonic;
 use tonic::transport::Uri;
+use tracing_log::LogTracer;
+use tracing_subscriber::layer::SubscriberExt;
+pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
+use tracing_unwrap::ResultExt;
+
+use crate::loki::LokiLayer;
 
 pub mod jwt;
+pub mod loki;
 
 pub fn get_env(name: &str) -> String {
-	let value = std::env::var(name).unwrap_or_else(|_| panic!("Env {} dont set", name));
-	if value.trim().is_empty() {
-		panic!("Env {} is empty", name);
-	}
-	value
+	std::env::var(name).expect_or_log(format!("Env {} dont set", name).as_str())
 }
-
 pub fn init(name: &str) {
-	pretty_env_logger::formatted_timed_builder()
-		.filter_level(LevelFilter::Info)
-		.init();
+	LogTracer::builder().with_max_level(log::LevelFilter::Info).init().unwrap();
 
-	println!("start service {} ", name);
+	let fmt_layer = fmt::layer().with_target(false);
+	let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+	let subscriber = Registry::default().with(env_filter).with(fmt_layer);
+
+	if let Ok(loki_url) = std::env::var("LOKI_URL") {
+		let mut default_values = HashMap::default();
+		default_values.insert("service".to_owned(), name.to_owned());
+		default_values.insert("namespace".to_owned(), get_env("NAMESPACE"));
+		default_values.insert("hostname".to_owned(), get_env("HOSTNAME"));
+		let loki_layer = LokiLayer::new(loki_url, default_values);
+		let subscriber = subscriber.with(loki_layer);
+		tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+	} else {
+		tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+	}
+
+	tracing::info!("start service {} ", name);
 }
 
 pub fn get_internal_service_binding_addr() -> SocketAddr {
