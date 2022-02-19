@@ -27,7 +27,7 @@ impl proto::tokens_server::Tokens for TokensGrpcService {
 				refresh: tokens.refresh,
 			})),
 			Err(e) => {
-				log::error!("{:?}", e);
+				tracing::error!("{:?}", e);
 				Result::Err(tonic::Status::unauthenticated(format!("{:?}", e)))
 			}
 		}

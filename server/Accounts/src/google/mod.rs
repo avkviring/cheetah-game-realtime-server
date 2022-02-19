@@ -63,7 +63,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let token = &registry_or_login_request.google_token;
 		let token = self.parser.parse(token).await;
 		let GoogleTokenClaim { sub: google_id } = token.map_err(|err| {
-			log::error!("{:?}", err);
+			tracing::error!("{:?}", err);
 			Status::unauthenticated(format!("{:?}", err))
 		})?;
 
@@ -73,7 +73,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 
 		let tokens = self.tokens_service.create(user, device_id).await;
 		let tokens = tokens.map_err(|err| {
-			log::error!("{:?}", err);
+			tracing::error!("{:?}", err);
 			Status::internal("error")
 		})?;
 
@@ -91,7 +91,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let token = &attach_request.google_token;
 		let token = self.parser.parse(token).await;
 		let GoogleTokenClaim { sub: google_id } = token.map_err(|err| {
-			log::error!("{:?}", err);
+			tracing::error!("{:?}", err);
 			Status::internal("error")
 		})?;
 
@@ -100,7 +100,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 			.parse_player_id(request.metadata())
 			.map(UserId::from)
 			.map_err(|err| {
-				log::error!("{:?}", err);
+				tracing::error!("{:?}", err);
 				Status::unauthenticated(format!("{:?}", err))
 			})?;
 
