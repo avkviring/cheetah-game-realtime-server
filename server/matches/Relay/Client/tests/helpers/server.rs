@@ -1,7 +1,4 @@
-use std::io::Write;
 use std::net::SocketAddr;
-
-use log::LevelFilter;
 
 use cheetah_matches_relay::room::object::Field;
 use cheetah_matches_relay::room::template::config::{
@@ -69,22 +66,4 @@ impl IntegrationTestServerBuilder {
 		let room_id = server.register_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}
-}
-
-#[allow(unused)]
-fn init_logger() {
-	env_logger::builder()
-		.format(|buf, record| {
-			writeln!(
-				buf,
-				"[{}] [{}] {:?}",
-				record.level(),
-				std::thread::current().name().unwrap_or(""),
-				record.args()
-			)
-		})
-		.filter_level(LevelFilter::Info)
-		.format_timestamp(None)
-		.is_test(true)
-		.try_init();
 }

@@ -91,7 +91,7 @@ impl NetworkThreadClient {
 				Ok(_) => {}
 				Err(e) => {
 					self.running = false;
-					log::error!("[client] error send command from server {:?}", e)
+					tracing::error!("[client] error send command from server {:?}", e)
 				}
 			}
 		}

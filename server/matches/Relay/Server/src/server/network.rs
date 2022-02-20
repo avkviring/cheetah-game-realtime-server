@@ -80,7 +80,6 @@ impl NetworkServer {
 						}
 
 						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
-							tracing::trace!("[network] server -> user({:?}) {:?}", member_id, frame);
 							let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 							let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
 							match self.socket.send_to(&buffer[0..buffer_size], peer_address) {

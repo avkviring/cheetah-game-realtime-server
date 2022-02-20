@@ -84,7 +84,7 @@ impl Registry {
 		let client_id = self.client_generator_id;
 		self.clients.insert(client_id, application_thread_client);
 
-		log::info!("[registry] create client({})", client_id);
+		tracing::info!("[registry] create client({})", client_id);
 		Result::Ok(client_id)
 	}
 
