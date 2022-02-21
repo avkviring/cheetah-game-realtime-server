@@ -115,7 +115,7 @@ impl ServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender))
-			.unwrap();
+			.expect(expect_send_msg("CommandTracerSessionTask").as_str());
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(_) => Result::Ok(()),
@@ -131,7 +131,9 @@ impl ServerManager {
 
 	pub fn register_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ManagementTask::RegisterRoom(template, sender)).unwrap();
+		self.sender
+			.send(ManagementTask::RegisterRoom(template, sender))
+			.expect(expect_send_msg("RegisterRoom").as_str());
 		self.created_room_counter += 1;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(room_id) => {
@@ -149,7 +151,7 @@ impl ServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::RegisterUser(room_id, template.clone(), sender))
-			.unwrap();
+			.expect(expect_send_msg("RegisterUser").as_str());
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {
@@ -179,7 +181,9 @@ impl ServerManager {
 	}
 
 	pub fn set_time_offset(&self, duration: Duration) {
-		self.sender.send(TimeOffset(duration)).unwrap();
+		self.sender
+			.send(TimeOffset(duration))
+			.expect(expect_send_msg("TimeOffset").as_str());
 	}
 
 	pub fn join(&mut self) {
@@ -196,6 +200,10 @@ impl ServerManager {
 			Err(e) => Result::Err(format!("{:?}", e)),
 		}
 	}
+}
+
+fn expect_send_msg(task: &str) -> String {
+	format!("Can not send {} to relay thread, possible relay thread is dead", task)
 }
 
 #[cfg(test)]
