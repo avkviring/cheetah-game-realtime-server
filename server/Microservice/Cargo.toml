@@ -8,9 +8,9 @@ log = "0.4"
 jsonwebtoken = "7.2.0"
 serde = { version = "1.0.136", features = ["derive"] }
 tonic = "0.6.2"
-tracing = { version = "0.1.30" }
+tracing = { version = "0.1.31" }
 tracing-log = { version = "0.1.2" }
-tracing-subscriber = { version = "0.3.8", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
 tracing-appender = "0.2.0"
 tracing-bunyan-formatter = "0.3.2"
 tracing-unwrap = { version = "0.9.2", default-features = false }
