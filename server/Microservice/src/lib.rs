@@ -2,6 +2,9 @@
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::thread::sleep;
+use std::time::Duration;
+use std::{panic, process};
 
 pub use tonic;
 use tonic::transport::Uri;
@@ -15,10 +18,17 @@ use crate::loki::LokiLayer;
 pub mod jwt;
 pub mod loki;
 
-pub fn get_env(name: &str) -> String {
-	std::env::var(name).expect_or_log(format!("Env {} dont set", name).as_str())
-}
 pub fn init(name: &str) {
+	setup_tracer(name);
+	setup_panic_hook();
+	tracing::info!("start service {} ", name);
+}
+
+pub fn get_env(name: &str) -> String {
+	std::env::var(name).expect_or_log(format!("Env {} don't set", name).as_str())
+}
+
+fn setup_tracer(name: &str) {
 	LogTracer::builder().with_max_level(log::LevelFilter::Info).init().unwrap();
 
 	let fmt_layer = fmt::layer().with_target(false);
@@ -36,8 +46,20 @@ pub fn init(name: &str) {
 	} else {
 		tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 	}
+}
 
-	tracing::info!("start service {} ", name);
+fn setup_panic_hook() {
+	panic::set_hook(Box::new(move |panic_info| {
+		// ставим задачу на выход
+		std::thread::spawn(|| {
+			// ждем для сброса логов
+			sleep(Duration::from_secs(2));
+			// выходим
+			process::exit(1)
+		});
+		// сообщаем об ошибке
+		tracing::error!("{}", panic_info);
+	}));
 }
 
 pub fn get_internal_service_binding_addr() -> SocketAddr {
