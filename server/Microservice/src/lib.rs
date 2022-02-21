@@ -1,5 +1,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+extern crate core;
+
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::thread::sleep;

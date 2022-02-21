@@ -1,5 +1,8 @@
 use std::collections::HashMap;
+use std::sync::mpsc::{Receiver, Sender};
+use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{process, thread};
 
 use serde::Serialize;
 use tracing::field::Field;
@@ -9,9 +12,8 @@ use tracing_subscriber::layer::Context;
 use tracing_subscriber::Layer;
 
 pub(crate) struct LokiLayer {
-	url: String,
-	client: reqwest::Client,
 	default_values: HashMap<String, String>,
+	sender: Mutex<Sender<LokiRequest>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -27,11 +29,32 @@ struct LokiRequest {
 
 impl LokiLayer {
 	pub(crate) fn new<S: AsRef<str>>(url: S, default_values: HashMap<String, String>) -> Self {
-		Self {
-			url: format!("{}/loki/api/v1/push", url.as_ref()),
-			client: Default::default(),
+		let (sender, receiver) = std::sync::mpsc::channel();
+		let result = Self {
 			default_values,
-		}
+			sender: Mutex::new(sender),
+		};
+		Self::setup_loki_sender(url, receiver);
+		result
+	}
+
+	fn setup_loki_sender<S: AsRef<str>>(url: S, receiver: Receiver<LokiRequest>) {
+		let url = format!("{}/loki/api/v1/push", url.as_ref());
+		let client = reqwest::blocking::Client::new();
+		thread::spawn(move || loop {
+			match receiver.recv() {
+				Ok(request) => match client.post(url.clone()).json(&request).send() {
+					Ok(_) => {}
+					Err(e) => {
+						eprintln!("Error send to loki {:?}", e);
+					}
+				},
+				Err(e) => {
+					eprintln!("Error receive request in trace system {:?}", e);
+					process::exit(1);
+				}
+			};
+		});
 	}
 }
 
@@ -106,22 +129,24 @@ impl<S: tracing::Subscriber> Layer<S> for LokiLayer {
 			}],
 		};
 
-		let client = self.client.clone();
-		let url = self.url.clone();
-
 		// не логируем события из http клиента, а то может получиться рекурсия
 		if event.metadata().name().to_string().contains("hyper") {
 			return;
 		}
 
-		tokio::spawn(async move {
-			match client.post(url).json(&request).send().await {
+		match self.sender.lock() {
+			Ok(sender) => match sender.send(request) {
 				Ok(_) => {}
 				Err(e) => {
-					eprintln!("{:?}", e);
+					eprintln!("Error in trace system {:?}", e);
+					process::exit(1);
 				}
+			},
+			Err(e) => {
+				eprintln!("Error in trace system {:?}", e);
+				process::exit(1);
 			}
-		});
+		}
 	}
 }
 
@@ -130,14 +155,13 @@ mod tests {
 	use std::time::Duration;
 
 	use httpmock::MockServer;
-	use tokio::time::sleep;
 	use tracing_subscriber::layer::SubscriberExt;
 	use tracing_subscriber::Registry;
 
 	use crate::LokiLayer;
 
-	#[tokio::test]
-	pub async fn should_send_request() {
+	#[test]
+	pub fn should_send_request() {
 		let server = MockServer::start();
 		let http_server_mock = server.mock(|when, _then| {
 			when.method(httpmock::Method::POST).path("/loki/api/v1/push");
@@ -147,7 +171,7 @@ mod tests {
 		tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
 		tracing::info!("test");
-		sleep(Duration::from_secs(1)).await;
-		http_server_mock.assert_async().await;
+		std::thread::sleep(Duration::from_secs(1));
+		http_server_mock.assert();
 	}
 }
