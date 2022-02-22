@@ -27,6 +27,10 @@ spec:
               cpu: "0.5"
               memory: 20Mi
           imagePullPolicy: Always
+          livenessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:5000"]
+            initialDelaySeconds: 10
           securityContext:
             readOnlyRootFilesystem: true
           env:
