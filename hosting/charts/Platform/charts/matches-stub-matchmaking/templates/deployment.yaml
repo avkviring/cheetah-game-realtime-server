@@ -20,6 +20,15 @@ spec:
         - name: {{ .Chart.Name }}
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
           imagePullPolicy: Always
+          securityContext:
+            readOnlyRootFilesystem: true
+          resources:
+            limits:
+              cpu: "0.25"
+              memory: 20Mi
+            requests:
+              cpu: "0.25"
+              memory: 10Mi
           env:
             - name: "JWT_PUBLIC_KEY"
               valueFrom:

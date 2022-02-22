@@ -45,6 +45,13 @@ spec:
       containers:
         - name: "{{ .Chart.Name }}-postgresql"
           image: postgres:13.1-alpine
+          resources:
+            limits:
+              cpu: "1"
+              memory: 150Mi
+            requests:
+              cpu: "0.5"
+              memory: 150Mi
           env:
             - name: POSTGRES_USER
               valueFrom:

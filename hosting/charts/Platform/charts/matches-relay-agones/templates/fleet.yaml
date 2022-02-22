@@ -19,6 +19,15 @@ spec:
             - name: relay
               image: "docker.registry.cheetah.games/cheetah-matches-relay:{{ .Values.global.platformImageVersion }}"
               imagePullPolicy: Always
+              securityContext:
+                readOnlyRootFilesystem: true
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: 150Mi
+                requests:
+                  cpu: "0.5"
+                  memory: 150Mi
               env:
                 - name: ENABLE_AGONES
                   value: "true"
