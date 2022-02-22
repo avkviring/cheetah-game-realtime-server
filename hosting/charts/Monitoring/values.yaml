@@ -35,6 +35,9 @@ kube-prometheus-stack:
       - name: Loki
         type: loki
         url: http://monitoring-loki:3100
+    sidecar:
+      dashboards:
+        enabled: true
 loki:
   persistence:
     enabled: true
