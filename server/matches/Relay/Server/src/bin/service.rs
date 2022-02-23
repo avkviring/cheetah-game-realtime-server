@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use futures::Future;
 use tonic::transport::Server;
+use tonic_health::ServingStatus;
 
 use cheetah_matches_relay::agones::run_agones_cycle;
 use cheetah_matches_relay::debug::dump::DumpGrpcService;
@@ -18,27 +19,39 @@ use cheetah_matches_relay::server::manager::ServerManager;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	cheetah_microservice::init("matches.relay");
 	let (halt_signal, manager) = create_manager();
-	let internal_grpc_service = create_internal_grpc_server(manager.clone());
-	let admin_grpc_service = create_admin_grpc_server(manager.clone());
+	let internal_grpc_service = create_internal_grpc_server(manager.clone()).await;
+	let admin_grpc_service = create_admin_grpc_server(manager.clone()).await;
 	let agones = run_agones_cycle(halt_signal.clone(), manager.clone());
 	let (_, _, _) = futures::join!(internal_grpc_service, admin_grpc_service, agones);
 	halt_signal.store(true, Ordering::Relaxed);
 	Result::Ok(())
 }
 
-fn create_internal_grpc_server(manager: Arc<Mutex<ServerManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+async fn create_internal_grpc_server(
+	manager: Arc<Mutex<ServerManager>>,
+) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
 	let service = cheetah_matches_relay::factory::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(manager));
 	let address = cheetah_microservice::get_internal_service_binding_addr();
-	Server::builder().add_service(service).serve(address)
+	Server::builder()
+		.add_service(service)
+		.add_service(health_service)
+		.serve(address)
 }
 
-fn create_admin_grpc_server(manager: Arc<Mutex<ServerManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+async fn create_admin_grpc_server(
+	manager: Arc<Mutex<ServerManager>>,
+) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
 	let relay = admin::relay_server::RelayServer::new(RelayAdminGRPCService::new(manager.clone()));
 	let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(manager.clone()));
 	let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
 	let address = cheetah_microservice::get_admin_service_binding_addr();
 	Server::builder()
 		.accept_http1(true)
+		.add_service(tonic_web::enable(health_service))
 		.add_service(tonic_web::enable(dumper))
 		.add_service(tonic_web::enable(relay))
 		.add_service(tonic_web::enable(tracer))
