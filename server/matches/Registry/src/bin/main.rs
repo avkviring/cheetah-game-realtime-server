@@ -1,7 +1,10 @@
+use std::env;
+
+use tonic::transport::Server;
+use tonic_health::ServingStatus;
+
 use cheetah_matches_registry::proto::matches::registry::internal::registry_server::RegistryServer;
 use cheetah_matches_registry::registry::service::RegistryService;
-use std::env;
-use tonic::transport::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +24,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	let registry_service = RegistryService::new(&redis_dsn).await?;
 	let grpc_service = RegistryServer::new(registry_service);
+
+	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
+
 	Server::builder()
+		.add_service(health_service)
 		.add_service(grpc_service)
 		.serve(cheetah_microservice::get_internal_service_binding_addr())
 		.await?;

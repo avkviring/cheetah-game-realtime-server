@@ -22,6 +22,14 @@ spec:
         - name: {{ .Chart.Name }}
           image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
           imagePullPolicy: Always
+          startupProbe:
+            exec:
+              command: [ "/bin/grpc_health_probe", "-addr=:5001", "-addr=:5002" ]
+            initialDelaySeconds: 5
+          livenessProbe:
+            exec:
+              command: [ "/bin/grpc_health_probe", "-addr=:5001","-addr=:5002" ]
+            initialDelaySeconds: 10
           resources:
             limits:
               cpu: "0.25"

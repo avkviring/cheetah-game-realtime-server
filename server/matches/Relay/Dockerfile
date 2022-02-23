@@ -41,6 +41,8 @@ RUN cd server/matches/Relay/Server/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo build --
 FROM alpine:3.13.5
 # публичный игровой порт к которому подключаются клиенты
 EXPOSE 5555/udp
+COPY server/grpc_health_probe /bin/grpc_health_probe
+RUN chmod +x /bin/grpc_health_probe
 COPY --chmod=555 --from=builder /build/server/matches/Relay/Server/target/x86_64-unknown-linux-musl/release/service /service
 RUN adduser -D service
 USER service

@@ -32,6 +32,8 @@ RUN cd server/matches/Registry/ && RUSTFLAGS="$RUSTFLAGS_ARG" cargo build --offl
 # образ для запуска
 FROM alpine:3.13.5
 EXPOSE 5001/tcp 5002/tcp
+COPY server/grpc_health_probe /bin/grpc_health_probe
+RUN chmod +x /bin/grpc_health_probe
 COPY --chmod=555 --from=builder /build/server/matches/Registry/target/x86_64-unknown-linux-musl/release/cheetah-matches-registry /service
 RUN adduser -D service
 USER service
