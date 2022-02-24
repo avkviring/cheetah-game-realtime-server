@@ -26,10 +26,7 @@ namespace Tests.Matches.Pride.Helpers
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            var codecRegistry = new CodecRegistryBuilder();
-            // codecRegistry.RegisterEventCodec(DropMineEventId, new DropMineEventCodec());
-            // codecRegistry.RegisterStructureCodec(TurretsParamsFieldId, new TurretsParamsStructureCodec());
-
+            var codecRegistry = new CodecRegistryBuilder();           
             var connectorFactory = new ConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
@@ -41,7 +38,7 @@ namespace Tests.Matches.Pride.Helpers
             clientA = ConnectToRelay(ticketA.Result, codecRegistry);
             clientA.AttachToRoom();
 
-            // подключаем второрого клиента
+            // подключаем второго клиента
             var ticketB = UserHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_b");
             yield return Enumerators.Await(ticketB);
             memberB = ticketB.Result.UserId;

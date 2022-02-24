@@ -9,25 +9,37 @@
 ### Алгоритм матчинга
 
 В настоящее время реализована только заглушка - она закидывает всех пользователей в одну и ту же комнату и на один и тот
-же relay сервер. Для разных шаблонов создаются разные комнаты. В случае падения relay сервера необходимо 
-перезапустить matchmaking и registry.
+же relay сервер. Для разных шаблонов создаются разные комнаты. В случае падения relay сервера необходимо перезапустить
+matchmaking и registry.
 
 ### Пример кода
 
-```csharp
-// создаем нового пользователя
+<!---
+ Оригинал clients/Unity/Assets/Scripts/DocumentationExample.cs функция MatchmakingExample
+-->
+
+```csharp           
+// соединяемся с кластером платформы
+var clusterConnector = new ClusterConnector("some-cluster", 5000, true);
+
+// создаем пользователя - в данном примере 
+// используется авторизация по сгенеренному коду
+// использовать только в тестах
 var cookieAuthenticator = new CookieAuthenticator(clusterConnector, "user1");
 cookieAuthenticator.RemoveLocalCookie();
-var loginOrRegister = await cookieAuthenticator.LoginOrRegister();
+var authenticationResult = await cookieAuthenticator.LoginOrRegister();
+var player = authenticationResult.User;
 
-// сообщаем mm о желании попасть в битву
-var player = loginOrRegister.Player;
+// запрос на подбор битвы
 var scheduler = new MatchmakingScheduler(player);
-var ticket = await scheduler.Schedule("gubaha", UserGroup);
+var ticket = await scheduler.Schedule("roomTemplate", 777);
 
-// вход в битву
-var userPrivateKey = new CheetahBuffer(ticket.PrivateKey.ToByteArray());
-CheetahClient.CreateClient(ticket.RelayGameHost + ":" + ticket.RelayGamePort, (ushort)ticket.UserId, ticket.RoomId,
-    ref userPrivateKey, 0, out clientId);
-CheetahClient.SetCurrentClient(clientId);           
+// соединение с боевым сервером
+var client = new CheetahClient(
+    ticket.RelayGameHost,
+    ticket.RelayGamePort,
+    ticket.UserId,
+    ticket.RoomId,
+    ticket.PrivateKey.ToByteArray(),
+    new CodecRegistryBuilder().Build());           
 ```
