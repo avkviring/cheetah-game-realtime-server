@@ -1,41 +1,36 @@
 # Введение
 
-Для работы с сервисами с клиента используется [JWT](https://jwt.io) токен, который содержит id игрока.
+### Настройка среды разработки
 
-## Схема работы
+Установить пакет **games.cheetah.accounts** в Package Manager.
 
-- получаем JWT токены используя либо внешнюю систему аутентификации, либо временную регистрацию;
-- сохраняем JWT токены на клиенте и пользуемся ими для авторизации пользователя на сервере;
+### Схема использования
+
+- получаем токены используя либо внешнюю систему аутентификации, либо временную регистрацию;
+- сохраняем токены на клиенте и пользуемся ими для авторизации пользователя на сервере;
 - в такой схеме нет необходимости пользоваться внешний аутентификацией каждый раз, достаточно использовать сохраненные
   токены;
 
-## Пример кода авторизации
+<!- Оригинал - Assets/Scripts/DocumentationExample.cs функция AuthExample->
+
 
 ```csharp
-  // соединение с серверной платформой
-  var connector = new ClusterConnector("127.0.0.1", 7777, false);
-  // попытка входа с сохраненными токенами
-  var storedAuthenticator = new StoredPlayerAuthenticator();
-  var player = await storedAuthenticator.Login(connector);
-  if (player != null)
-  {   
-     return player;
-  }
-  else
-  {
-    #if UNITY_ANDROID
-      // если сохраненных токенов нет - то запускаем внешнию авторизацию
-      var androidAuthenticator = new AndroidAuthenticator(androidWebClientId);
-      var result = await androidAuthenticator.LoginOrRegister(connector);
-      var player = result.Player;
-      // сохраняем токены для использования после перезапуска приложения
-      storedAuthenticator.Store(player);
-      return player;
-    #endif
-  }
+// соединяемся с кластером платформы
+var clusterConnector = new ClusterConnector("some-cluster", 5000, true);
+        
+// попытка входа с сохраненными токенами
+var storedTokenUserAuthenticator = new StoredTokenUserAuthenticator();
+var user = await storedTokenUserAuthenticator.Login(clusterConnector);
+if (user == null)
+{
+  // если сохраненных токенов нет
+  // то запускаем внешнию авторизацию, например Cookie
+  var cookieAuthenticator = new CookieAuthenticator(clusterConnector, "user1");
+  cookieAuthenticator.RemoveLocalCookie();
+  var authenticationResult = await cookieAuthenticator.LoginOrRegister();
+  user = authenticationResult.User;
+
+  // сохраняем токены для использования после перезапуска приложения
+  storedTokenUserAuthenticator.Store(user);
+}
 ```
-
-Класс StoredPlayerAuthenticator используется для сохранения токенов авторизации между запусками приложения. Если его не
-использовать — то необходимо будет проводить Android авторизацию каждый раз при запуске.
-
-

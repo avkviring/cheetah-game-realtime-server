@@ -31,7 +31,7 @@ namespace Auth
                 // вначале используем сохраненый токен для авторизации
                 // если такой токен есть - то нам не потребуется повторный вызов
                 // внешней авторизации
-                var jwt = new JWTUserAuthenticator();
+                var jwt = new StoredTokenUserAuthenticator();
                 var user = await jwt.Login(clusterConnector);
                 if (user != null)
                 {
