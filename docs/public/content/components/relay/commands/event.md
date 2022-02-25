@@ -6,28 +6,45 @@
 Событие рассылается всем пользователя, на которых загружен объект.
 
 ```csharp
-CheetahEvent.Send(ref CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data);
+cheetahObject.SendEvent<T>(ushort eventId, ref T item)
+
 ```
 
 Событие отправляется конкретному пользователю если на него загружен объект.
 
 ```csharp
-CheetahEvent.Send(ushort targetUser, ref CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data);
+cheetahObject.SendEvent<T>(ushort eventId, uint targetUser, ref T item)
 ```
 
-#### Параметры
+### Обработка событий с сервера
 
-- objectId - объект, от имени которого рассылается сообщение, если на игрока данных объект не загружен - сообщение не
-  будет доставлено;
-- fieldId - идентификатор поля, обработка зависит от игрового кода;
-- data - бинарные данные события (максимум 255 байт)
-
-### Прием с сервера
-
-Необходимо зарегистрировать обработчик входящих события
+События по определенному полю.
 
 ```csharp
-CheetahEvent.SetListener(Listener listener);
+EventIncomeByFieldCommandCollector listener = new EventIncomeByFieldCommandCollector<SomeStructure>(client, fieldId);
+void Update() {
+  var stream = listener.GetStream();
+  for (var i = 0; i < stream.Count; i++)
+  {
+    ref var item = ref stream.GetItem(i);
+    var obj = item.cheetahObject;
+    ref var value = ref item.value;
+  }
+}
+```
+
+События по определенному полю и игровому объекту.
+
+```csharp
+EventIncomeByObjectCommandCollector listener = new EventIncomeByObjectCommandCollector<SomeStructure>(client, objectId, fieldId);
+void Update() {
+  var stream = listener.GetStream();
+  for (var i = 0; i < stream.Count; i++)
+  {
+    ref var item = ref stream.GetItem(i);
+    ref var value = ref item.value;
+  }
+}
 ```
 
 

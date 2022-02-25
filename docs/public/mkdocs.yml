@@ -36,17 +36,16 @@ nav:
       - "Битва реального времени":
           - "Введение": "components/relay/index.md"
           - "Базовые понятия":
-              - "Соединение": "components/relay/basics/connection.md"
-              - "Канал": "components/relay/basics/channel.md"
+              - "Клиент": "components/relay/basics/client.md"
               - "Комната": "components/relay/basics/room.md"
               - "Объект": "components/relay/basics/object.md"
+              - "Канал": "components/relay/basics/channel.md"
           - "Команды":
-              - "Общие принципы": "components/relay/commands/index.md"
-              - "Сериализация": "components/relay/commands/serialization.md"
               - "События": "components/relay/commands/event.md"
               - "Структуры": "components/relay/commands/structure.md"
               - "Целые числа": "components/relay/commands/long.md"
               - "Вещественные числа": "components/relay/commands/double.md"
+              - "Сериализация": "components/relay/commands/serialization.md"
           - "Конфигурация": "components/relay/configuration.md"
           - "Локальная разработка":
               - "Эмуляция параметров сети": "components/relay/develop/network.md"

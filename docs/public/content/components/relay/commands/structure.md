@@ -5,23 +5,41 @@
 ### Изменение структуры
 
 ```csharp
-CheetahStructure.Set(ref CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data);
+cheetahObject.SetStructure<T>(ushort fieldId, ref T item)
 ```
 
-#### Параметры
+### Обработка изменений структуры с сервера
 
-- objectId - объект, от имени которого рассылается сообщение, если на игрока данных объект не загружен - сообщение не
-  будет доставлено;
-- fieldId - идентификатор поля, обработка зависит от игрового кода;
-- data - бинарные данные события (максимум 255 байт)
-
-### Обработка изменения структуры
-
-Необходимо зарегистрировать обработчик.
+Изменения для определенного поля.
 
 ```csharp
-CheetahStructure.SetListener(Listener listener);
+StructureIncomeByFieldCommandCollector listener = new StructureIncomeByFieldCommandCollector<SomeStructure>(client,  fieldId);
+
+void Update() {
+ var stream = listener.GetStream();
+ for (var i = 0; i < stream.Count; i++)
+ {
+     ref var item = ref stream.GetItem(i);
+     ref var obj = ref item.cheetahObject;
+     ref var value = ref item.value;
+ }
+}
 ```
 
-Обработчик будет вызван не только для существующих объектов, но и для объектов в процессе создания.
+Изменения для пары поле плюс объект
+
+```csharp
+StructureIncomeByObjectCommandCollector listener = new StructureIncomeByObjectCommandCollector<SomeStructure>(client, objectId, fieldId);
+
+void Update() {
+ var stream = listener.GetStream();
+ for (var i = 0; i < stream.Count; i++)
+ {
+     ref var item = ref stream.GetItem(i);
+     ref var value = ref item.value;
+ }
+}
+```
+
+
 

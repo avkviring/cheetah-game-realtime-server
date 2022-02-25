@@ -4,27 +4,48 @@
 ### Установка нового значения
 
 ```csharp
-CheetahDouble.Set(ref CheetahObjectId objectId, ushort fieldId, double value);
+cheetahObject.SetDouble(ushort fieldId, double value)
 ```
-
-- value - новое значение
 
 ### Инкремент/декремент значения
 
 ```csharp
-CheetahDouble.Increment(ref CheetahObjectId objectId, ushort fieldId, double increment);
+cheetahObject.IncrementDouble(ushort fieldId, double increment)
 ```
 
-- increment - дельта изменения
+### Обработка изменений с сервера
 
-### Обработка изменения
-
-Необходимо зарегистрировать обработчик.
+Изменения для определенного поля.
 
 ```csharp
-CheetahDouble.SetListener(Listener listener);
+DoubleIncomeByFieldCommandCollector listener = new DoubleIncomeByFieldCommandCollector(client, field);
+
+void Update() {
+ var stream = listener.GetStream();
+ for (var i = 0; i < stream.Count; i++)
+ {
+     ref var item = ref stream.GetItem(i);
+     var obj = item.cheetahObject;
+     var value = item.value;
+     var creator = item.commandCreator;
+ }
+}
 ```
 
-- Обработчик будет вызван не только для существующих объектов, но и для объектов в процессе создания;
-- increment события отдельно не приходят, приходит новое значение после выполнения операции.
+Изменения для пары поле плюс объект
+
+```csharp
+DoubleIncomeByObjectCommandCollector listener = new DoubleIncomeByObjectCommandCollector(client, objectId, field);
+
+void Update() {
+ var stream = listener.GetStream();
+ for (var i = 0; i < stream.Count; i++)
+ {
+     ref var item = ref stream.GetItem(i);        
+     var value = item.value;
+     var creator = item.commandCreator;
+ }
+}
+```
+
 

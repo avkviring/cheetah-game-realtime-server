@@ -1,29 +1,30 @@
-В некоторых командах (структуры, события) используется массив байт для представления информации. Существует два способа
-формирования таких данных — непосредственно написать код, преобразующий данные в бинарный вид, или воспользоваться
-библиотекой MessagePack.
+Для отсылки сообщений и структур на сервер используются кодеки, основная задача которых получить из структуры массив
+байт и обратно.
 
-### Пример использования
+### Реестр кодеков
+
+Для подключения к серверу необходимо в метод создания клиента передать реестр кодеков.
 
 ```csharp
-
-[MessagePackObject]
-public class SomeStructure {
-    [Key(0)] public long Age { get; set; }    
-}
-
-var codecRegistry = new CodecRegistry();
-codecRegistry.RegisterStructure(FieldId, new MessagePackCodec<SomeStructure>());
-var originalMessage = new SomeStructure {Age = 100500};
-
-var buffer = new CheetahBuffer();
-codecRegistry.EncodeStructure(FieldId, originalMessage, ref buffer);
-var message = (SomeStructure) codecRegistry.DecodeStructure(FieldId, ref buffer);
+var coderRegistryBuilder = new CodecRegistryBuilder();
+// региструем кодек
+coderRegistryBuilder.Register<SomeStructure>(new SomeStructureCodec());
+// создаем реестр
+var codecRegistry = coderRegistryBuilder.Build();
 ```
 
-### Документация
+### Генерация кодеков
 
-[Официальный сайт.](https://github.com/neuecc/MessagePack-CSharp)
+Для всех структур отмеченных аннотацией [GenerateCodec] производится генерация кодеков. Для генерации кодеков 
+необходимо вызвать команду Windows/Cheetah/Generate codecs. Такие кодеки не надо отдельно регистрировать в реестре.
 
-Раздел о подключении можно пропустить, так как данная библиотека уже подключена к платформе.
 
-Следует обратить внимание на то, что для Android & iOS требуется сгенерить кодеки до этапа сборки.
+### Глобальные кодеки
+
+Кодеки, зарегистрированные таким способом будут автоматически добавлены во все новые реестры.
+
+```csharp
+CodecRegistryBuilder.RegisterDefault(factory=>new DropMineEventCodec());
+```
+
+

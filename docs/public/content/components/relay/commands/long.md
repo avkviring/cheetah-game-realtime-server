@@ -4,28 +4,19 @@
 ### Установка нового значения
 
 ```csharp
-CheetahLong.Set(ref CheetahObjectId objectId, ushort fieldId, long value);
+cheetahObject.SetLong(ushort fieldId, long value)
 ```
-
-- value - новое значение
 
 ### Инкремент/декремент значения
 
 ```csharp
-CheetahLong.Increment(ref CheetahObjectId objectId, ushort fieldId, long increment);
+cheetahObject.IncrementLong(ushort fieldId, long increment)
 ```
-
-- increment - дельта изменения
 
 ### CompareAndSet
 
 ```csharp
-CheetahLong.CompareAndSet(
-    ref CheetahObjectId objectId, 
-    ushort fieldId, 
-    long currentValue, 
-    long newValue, 
-    long resetValue)
+cheetahObject.CompareAndSet(ushort fieldId, long currentValue, long newValue, long resetValue);
 ```
 
 Применяется для определения первого клиента при выполнении одновременных действия, например, с помощью данного метода
@@ -43,13 +34,36 @@ currentUserId, 0). Выполниться только первая команд
 
 ### Обработка изменения
 
-Необходимо зарегистрировать обработчик.
+Изменения для определенного поля.
 
 ```csharp
-CheetahLong.SetListener(Listener listener);
+LongIncomeByFieldCommandCollector listener = new LongIncomeByFieldCommandCollector(client, field);
+
+void Update() {
+ var stream = listener.GetStream();
+ for (var i = 0; i < stream.Count; i++)
+ {
+     ref var item = ref stream.GetItem(i);
+     var obj = item.cheetahObject;
+     var value = item.value;
+     var creator = item.commandCreator;
+ }
+}
 ```
 
-- Обработчик будет вызван не только для существующих объектов, но и для объектов в процессе создания;
-- increment события отдельно не приходят, приходит новое значение после выполнения операции;
-- в данный обработчик также приходит результат команды CompareAndSet.
+Изменения для пары поле плюс объект
+
+```csharp
+LongIncomeByObjectCommandCollector listener = new LongIncomeByObjectCommandCollector(client, objectId, field);
+
+void Update() {
+ var stream = listener.GetStream();
+ for (var i = 0; i < stream.Count; i++)
+ {
+     ref var item = ref stream.GetItem(i);        
+     var value = item.value;
+     var creator = item.commandCreator;
+ }
+}
+```
 

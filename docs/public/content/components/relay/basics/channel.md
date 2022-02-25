@@ -12,32 +12,17 @@
 - нет гарантии доставки
 - нет гарантии порядка выполнения
 
-#### ReliableOrderedByObject
-
-- гарантия доставки
-- не выполняются предыдущие команды в рамках объекта
-
-#### UnreliableOrderedByObject
-
-- нет гарантии доставки
-- не выполняются предыдущие команды в рамках объекта
-
-#### ReliableSequenceByObject,
-
-- гарантия доставки
-- команды выполняются строго последовательно в рамках объекта
-
-#### ReliableOrderedByGroup,
+#### ReliableOrdered,
 
 - гарантия доставки
 - не выполняются предыдущие команды в рамках группы
 
-#### UnreliableOrderedByGroup
+#### UnreliableOrdered
 
 - нет гарантии доставки
 - не выполняются предыдущие команды в рамках объекта
 
-#### ReliableSequenceByGroup
+#### ReliableSequence
 
 - гарантия доставки
 - команды выполняются строго последовательно в рамках группы
@@ -50,7 +35,7 @@
 Для смены типа канала используется метод:
 
 ```csharp
-CheetahClient.SetChannelType(ChannelType channelType, ushort group)
+client.SetChannelType(channelType, group)
 ```
 
 После выполнения метода для отправки следующих команд с клиента будет использован новый тип канала.

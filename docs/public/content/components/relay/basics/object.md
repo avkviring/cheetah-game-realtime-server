@@ -31,16 +31,12 @@ id объекта созданного комнатой.
 ### Создание объекта от имени игрока
 
 ```csharp    
-CheetahObject.Create(ushort template, ulong accessGroup, ref CheetahObjectId objectId);
-... команды для заполнения данными
-CheetahObject.Created(ref CheetahObjectId objectId);
+var builder = client.NewObjectBuilder(template, accessGroup);
+builder.SetDouble(1, 100.0);
+builder.SetLong(2, 100500);
+builder.SetStructure(1, new SomeStructure());
+var cheetahObject = builder.Build();
 ```
-
-Порядок создания объекта:
-
-- создаем объект
-- заполняем его данными
-- подтверждаем окончания создания объекта
 
 Особенности:
 
@@ -48,30 +44,33 @@ CheetahObject.Created(ref CheetahObjectId objectId);
 - Сервер не сохраняет порядок установки данных для игрового объекта.
 - Сервер не посылает данную команду обратно, исключение только для объектов созданных от имени данного клиента на
   сервере.
-- Только после получения сервером команды CreatedGameObject он начнет загружаться на других клиентов;
 
 ### Создание объекта от имени комнаты
 
 Возможно только в [конфигурации комнаты.](/components/relay/configuration/room/)
 
-### Подписка на создание объекта
-
-Необходимо зарегистрировать два обработчика
+### Обработчик загружаемых на клиент объектов
 
 ```csharp
-CheetahObject.SetCreateListener(CreateListener listener);
-CheetahObject.SetCreatedListener(CreatedListener listener);
+  
+  // создаем один раз как переменную класса
+  CreatedObjectByTemplateIncomeCommands listener = new CreatedObjectByTemplateIncomeCommands(client, template);
+  
+  void Update() {
+    foreach (var objectConstructor in listener.GetStream())
+    {
+      var obj = objectConstructor.cheetahObject;
+      var damage = objectConstructor.GetDouble(100);
+    }
+  }
 ```
-
-Первый обработчик сообщает нам, что объект начинает создаваться, второй обработчик — что объект создан и все данные для
-него пришли с сервера. Данные устанавливаются на клиенте с помощью вызовов обработчиков установленных для разных типов.
 
 ## Удаление
 
 ### Удаление объекта
 
 ```csharp
-CheetahObject.Delete(ref CheetahObjectId objectId)
+cheetahObject.Delete();
 ```
 
 - Удалить объект может только создатель объекта, также удаление объекта происходит после выхода создателя из комнаты.
@@ -80,5 +79,13 @@ CheetahObject.Delete(ref CheetahObjectId objectId)
 ### Подписка на удаление объекта
 
 ```csharp
-CheetahObject.SetDeleteListener(DeleteListener objectDeleteListener)
+DeletedObjectByTemplateIncomeCommands listener = new DeletedObjectByTemplateIncomeCommands(client, template);
+
+void Update() {
+  var deleted = listener.GetStream();
+  for (var i = 0; i < deleted.Count; i++)
+  {
+    ref var obj = ref deleted.GetItem(i);
+  }
+}        
 ```
