@@ -2,7 +2,7 @@
 name = "cheetah-matches-relay-client"
 version = "0.0.1"
 authors = ["kviring <alex@kviring.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "cheetah_matches_relay_client"

@@ -20,7 +20,7 @@ jobs:
           key: rust-server-test-${{ github.sha }}
           restore-keys: |
             rust-server-test-
-      - run: rustup override set 1.58.1
+      - run: rustup override set 1.59.0
       - run: rustup component add rustfmt
       - name: Run rust test
         run: cd server/ && cargo test
