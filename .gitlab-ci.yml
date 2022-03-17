@@ -1,0 +1,5 @@
+stages:
+  - test
+include:
+  - '.gitlab/test.server.yaml'
+
