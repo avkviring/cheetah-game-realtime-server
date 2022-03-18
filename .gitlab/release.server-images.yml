@@ -10,6 +10,7 @@ release-server-images:
   image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
   stage: release
   variables:
+    version: $CI_COMMIT_TAG
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_CERTDIR: "/certs"
     DOCKER_TLS_VERIFY: 1
@@ -19,7 +20,7 @@ release-server-images:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dev.cheetah.games/cheetah/
     - docker build . -f server/${directory}/Dockerfile -t registry.dev.cheetah.games/cheetah/platform/${image}:main --build-arg "RUSTFLAGS_ARG=-Ctarget-cpu=haswell -Ctarget-feature=+avx2"
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
-    - docker push registry.dev.cheetah.games/cheetah/platform/${image}:main
+    - docker push registry.dev.cheetah.games/cheetah/platform/${image}:${version}
   parallel:
     matrix:
       - directory: Accounts
