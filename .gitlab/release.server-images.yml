@@ -21,13 +21,13 @@ release-server-images:
     matrix:
       - directory: Accounts
         image: cheetah-accounts
-#      - directory: matches/Relay
-#        image: cheetah-matches-relay
-#      - directory: matches/StubMatchmaking
-#        image: cheetah-matches-stub-matchmaking
-#      - directory: matches/StubRegistry
-#        image: cheetah-matches-stub-registry
-#      - directory: matches/Factory
-#        image: cheetah-matches-factory
-#      - directory: matches/Registry
-#        image: cheetah-matches-registry
+      - directory: matches/Relay
+        image: cheetah-matches-relay
+      - directory: matches/StubMatchmaking
+        image: cheetah-matches-stub-matchmaking
+      - directory: matches/StubRegistry
+        image: cheetah-matches-stub-registry
+      - directory: matches/Factory
+        image: cheetah-matches-factory
+      - directory: matches/Registry
+        image: cheetah-matches-registry
