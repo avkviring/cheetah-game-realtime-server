@@ -1,0 +1,33 @@
+#
+# Сборка серверных docker образов
+#
+release-server-images:
+  services:
+    - docker:19.03.12-dind
+  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
+  stage: release
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  script:
+    - sleep 5
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dev.cheetah.games/cheetah/
+    - docker build . -f server/${directory}/Dockerfile -t registry.dev.cheetah.games/cheetah/platform/${image}:main --build-arg "RUSTFLAGS_ARG=-Ctarget-cpu=haswell -Ctarget-feature=+avx2"
+    - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
+    - docker push registry.dev.cheetah.games/cheetah/platform/${image}:main
+  parallel:
+    matrix:
+      - directory: Accounts
+        image: cheetah-accounts
+#      - directory: matches/Relay
+#        image: cheetah-matches-relay
+#      - directory: matches/StubMatchmaking
+#        image: cheetah-matches-stub-matchmaking
+#      - directory: matches/StubRegistry
+#        image: cheetah-matches-stub-registry
+#      - directory: matches/Factory
+#        image: cheetah-matches-factory
+#      - directory: matches/Registry
+#        image: cheetah-matches-registry

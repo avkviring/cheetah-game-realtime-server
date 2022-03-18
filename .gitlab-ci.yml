@@ -1,6 +1,8 @@
 stages:
   - test
+  - release
 include:
-  - '.gitlab/test.server.yml'
-  - '.gitlab/test.client-meta-files.yml'
+#  - '.gitlab/test.server.yml'
+#  - '.gitlab/test.client-meta-files.yml'
+  - '.gitlab/release.server-images.yml'
 
