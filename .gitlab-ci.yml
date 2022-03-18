@@ -1,5 +1,6 @@
 stages:
   - test
 include:
-  - '.gitlab/test.server.yaml'
+  - '.gitlab/test.server.yml'
+  - '.gitlab/test.client-meta-files.yml'
 

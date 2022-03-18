@@ -1,18 +1,16 @@
+#
+# Тесты rust кода
+#
 test-server:
   services:
     - docker:19.03.12-dind
+  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
+  stage: test
   variables:
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_CERTDIR: "/certs"
     DOCKER_TLS_VERIFY: 1
     DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
-  stage: test
-  cache:
-    key: rust
-    paths:
-      - /usr/local/cargo/registry/
-      - /usr/local/cargo/git/
   script:
     - cd server/
     - cargo fetcher --url file:///root/crates/ --include-index sync
