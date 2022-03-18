@@ -4,5 +4,5 @@ stages:
 include:
 #  - '.gitlab/test.server.yml'
 #  - '.gitlab/test.client-meta-files.yml'
-  - '.gitlab/release.server-images.yml'
+#  - '.gitlab/release.server-images.yml'
 

@@ -2,6 +2,9 @@
 # Сборка серверных docker образов
 #
 release-server-images:
+  only:
+    refs:
+      - tags
   services:
     - docker:19.03.12-dind
   image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
