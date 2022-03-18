@@ -1,4 +1,4 @@
-1FROM registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4 as builder
+FROM registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4 as builder
 ARG RUSTFLAGS_ARG
 COPY . .
 RUN cd server/ && cargo fetcher --url file:///root/crates/ --include-index sync
@@ -9,7 +9,7 @@ FROM alpine:3.13.5
 EXPOSE 5000/tcp
 COPY server/grpc_health_probe /bin/grpc_health_probe
 RUN chmod +x /bin/grpc_health_probe
-COPY --from=builder /build/server/Accounts/target/x86_64-unknown-linux-musl/release/cheetah-accounts /service
+COPY --from=builder /server/target/x86_64-unknown-linux-musl/release/cheetah-accounts /service
 RUN adduser -D service
 USER service
 CMD ["/service"]
