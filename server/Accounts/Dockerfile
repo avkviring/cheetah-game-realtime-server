@@ -1,4 +1,4 @@
-FROM registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4 as builder
+1FROM registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4 as builder
 ARG RUSTFLAGS_ARG
 COPY . .
 RUN cd server/ && cargo fetcher --url file:///root/crates/ --include-index sync

@@ -1,11 +1,10 @@
-use jsonwebtoken_google::Parser;
-use tokio::sync::watch;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
 use cheetah_microservice::jwt::JWTTokenParser;
 
 use crate::cookie::CookieGrpcService;
+use crate::google::google_jwt::Parser;
 use crate::google::storage::GoogleStorage;
 use crate::google::GoogleGrpcService;
 use crate::proto::cookie_server::CookieServer;

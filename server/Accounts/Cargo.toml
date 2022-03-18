@@ -17,8 +17,7 @@ prost = "0.9.0"
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tokio-stream = { version = "0.1.8", features = ["net"] }
 async-stream = "0.3"
-jsonwebtoken = "7.2.0"
-jsonwebtoken-google = "0.1.6"
+jsonwebtoken = "8.0.1"
 serde = { version = "1.0.132", features = ["derive"] }
 cheetah-microservice = { path = "../Microservice" }
 redis = { version = "0.21.5", features = ["tokio-comp"] }
@@ -29,6 +28,11 @@ tonic-web = "0.2.0"
 sqlx = { version = "0.5.11", features = ["runtime-tokio-rustls", "postgres", "migrate", "ipnetwork", "chrono"] }
 rand = "0.8"
 tracing = "0.1.31"
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+headers = "0.3.1"
+rustls = { version = "0.20.2" }
+thiserror = "1.0.30"
+rsa = "0.5.0"
 
 
 
@@ -36,7 +40,8 @@ tracing = "0.1.31"
 testcontainers = "0.12.0"
 lazy_static = "1.4.0"
 futures = "0.3.21"
-jsonwebtoken-google = { version = "0.1.6", features = ["test-helper"] }
+httpmock = { version = "0.6.2" }
+base64 = { version = "0.13.0" }
 
 [build-dependencies]
 tonic-build = { version = "0.6.2", features = ["rustfmt"] }

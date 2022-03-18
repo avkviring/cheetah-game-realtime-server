@@ -1,8 +1,8 @@
-use jsonwebtoken_google::Parser;
 use sqlx::types::ipnetwork::IpNetwork;
 use tonic::{self, Request, Response, Status};
 
 use cheetah_microservice::jwt::JWTTokenParser;
+use google_jwt::Parser;
 
 use crate::google::storage::GoogleStorage;
 use crate::proto::SessionAndRefreshTokens;
@@ -10,7 +10,10 @@ use crate::tokens::TokensService;
 use crate::users::{UserId, UserService};
 use crate::{get_client_ip, proto};
 
+pub mod google_jwt;
 pub mod storage;
+#[cfg(test)]
+pub mod test_helper;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 struct GoogleTokenClaim {
@@ -115,15 +118,15 @@ impl proto::google_server::Google for GoogleGrpcService {
 mod test {
 	use std::time::Duration;
 
-	use jsonwebtoken_google::test_helper::TokenClaims;
-	use jsonwebtoken_google::Parser;
 	use testcontainers::clients::Cli;
 	use tonic::metadata::MetadataValue;
 	use tonic::Request;
 
 	use crate::cookie::CookieGrpcService;
+	use crate::google::google_jwt::Parser;
 	use crate::google::storage::GoogleStorage;
-	use crate::google::GoogleGrpcService;
+	use crate::google::test_helper::TokenClaims;
+	use crate::google::{test_helper, GoogleGrpcService};
 	use crate::postgresql::test::setup_postgresql_storage;
 	use crate::proto::cookie_server::Cookie;
 	use crate::proto::google_server::Google;
@@ -169,17 +172,14 @@ mod test {
 
 	fn setup_google(pool: PgPool, token_service: TokensService) -> (String, GoogleGrpcService) {
 		let (token, public_key_server) =
-			jsonwebtoken_google::test_helper::setup_public_key_server(&TokenClaims::new_with_expire(Duration::from_secs(100)));
+			test_helper::setup_public_key_server(&TokenClaims::new_with_expire(Duration::from_secs(100)));
 
 		let jwt = cheetah_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
 		let service = GoogleGrpcService::new(
 			GoogleStorage::new(pool.clone()),
 			token_service,
 			UserService::new(pool),
-			Parser::new_with_custom_cert_url(
-				jsonwebtoken_google::test_helper::CLIENT_ID,
-				public_key_server.url("/").as_str(),
-			),
+			Parser::new_with_custom_cert_url(test_helper::CLIENT_ID, public_key_server.url("/").as_str()),
 			jwt,
 		);
 		(token, service)
