@@ -6,4 +6,6 @@ include:
   - '.gitlab/test.client-meta-files.yml'
   - '.gitlab/release.server-images.yml'
   - '.gitlab/release.helm-charts.yml'
+  - '.gitlab/release.unity-packages.yml'
+
 

@@ -1,0 +1,22 @@
+release-unity-packages:
+  only:
+     refs:
+       - tags
+  stage: release
+  image: node:17.7.2-stretch-slim
+  variables:
+    version: 0.0.2
+  script:
+    - cd clients/Unity/Packages/${package}
+    - sed -i.bak "s/999.999.999/${version}/" package.json
+    - rm -f package.json.bak
+    - echo "${CI_API_V4_URL#https?}/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=\${CI_JOB_TOKEN}" > .npmrc
+    - npm publish .
+  parallel:
+    matrix:
+      - package: games.cheetah.accounts
+      - package: games.cheetah.matches.factory
+      - package: games.cheetah.matches.matchmaking
+      - package: games.cheetah.matches.registry
+      - package: games.cheetah.matches.relay.shared
+      - package: games.cheetah.platform
