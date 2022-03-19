@@ -1,43 +1,128 @@
 #
 # Сборка клиентской библиотеки для relay
 #
-release-unity-relay-build-linux:
-  #  only:
-  #    refs:
-  #      - tags
+build-relay-library-for-linux:
+  only:
+    refs:
+      - tags
   image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
   stage: release
-  variables:
-    version: $CI_COMMIT_TAG
   script:
     - cd server
-    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --release
+    - cargo fetcher --url file:///root/crates/ --include-index sync
+    - cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --release
   artifacts:
     paths:
       - server/target/release/libcheetah_matches_relay_client.so
     expire_in: 1 day
 
-release-unity-relay-build-android:
-  #  only:
-  #    refs:
-  #      - tags
-  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
-  #  stage: release
-  services:
-    - docker:19.03.12-dind
-  variables:
-    version: $CI_COMMIT_TAG
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+build-relay-library-for-android-armv7:
+  only:
+    refs:
+      - tags
+  image: registry.dev.cheetah.games/cheetah/docker-image-android-armv7-builder:1.0.4
+  stage: release
   script:
-    - rustup target add aarch64-linux-android armv7-linux-androideabi
     - cd server
-    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
-    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
+    - /.cargo/bin/cargo fetcher --url file:///root/crates/ --include-index sync
+    - /.cargo/bin/cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
   artifacts:
     paths:
       - server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so
+    expire_in: 1 day
+
+build-relay-library-for-android-aarch64:
+  only:
+    refs:
+      - tags
+  image: registry.dev.cheetah.games/cheetah/docker-image-android-aarch64-builder:1.0.0
+  stage: release
+  script:
+    - cd server
+    - /.cargo/bin/cargo fetcher --url file:///root/crates/ --include-index sync
+    - /.cargo/bin/cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
+  artifacts:
+    paths:
       - server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so
     expire_in: 1 day
+
+build-relay-library-for-windows:
+  only:
+    refs:
+      - tags
+  stage: release
+  tags:
+    - win
+  script:
+    - curl https://win.rustup.rs/x86_64 --output rustup-init.exe
+    - .\rustup-init.exe -y
+    - cd server
+    - $env:PATH+=";$env:USERPROFILE\.cargo\bin"
+    - rustup.exe toolchain install stable-x86_64-pc-windows-msvc
+    - rustup.exe default stable-x86_64-pc-windows-msvc
+    - cargo.exe build --manifest-path matches/Relay/Client/Cargo.toml
+    - cd ../
+  artifacts:
+    paths:
+      - server/target/debug/cheetah_matches_relay_client.dll
+      - server/target/debug/cheetah_matches_relay_client.pdb
+    expire_in: 1 day
+
+build-relay-library-for-macos:
+  only:
+    refs:
+      - tags
+  stage: release
+  tags:
+    - macos
+  script:
+    - cd server
+    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --release
+    - cd ../
+  artifacts:
+    paths:
+      - server/target/release/libcheetah_matches_relay_client.dylib
+    expire_in: 1 day
+
+build-relay-library-for-ios:
+  only:
+    refs:
+      - tags
+  stage: release
+  tags:
+    - macos
+  script:
+    - cd server
+    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --release --target aarch64-apple-ios
+    - cd ../
+  artifacts:
+    paths:
+      - server/target/aarch64-apple-ios/release/libcheetah_matches_relay_client.a
+    expire_in: 1 day
+
+release-unity-relay:
+  only:
+    refs:
+      - tags
+  stage: release
+  image: node:17.7.2-stretch-slim
+  needs:
+    - build-relay-library-for-linux
+    - build-relay-library-for-android-armv7
+    - build-relay-library-for-android-aarch64
+    - build-relay-library-for-windows
+    - build-relay-library-for-macos
+    - build-relay-library-for-ios
+  variables:
+    version: $CI_COMMIT_TAG
+  script:
+    - cp server/target/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
+    - cp server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/armv7/libcheetah_matches_relay_client.so
+    - cp server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/aarch64/libcheetah_matches_relay_client.so
+    - cp server/target/debug/cheetah_matches_relay_client.dll clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.dll
+    - cp server/target/debug/cheetah_matches_relay_client.pdb clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.pdb
+    - cp server/target/release/libcheetah_matches_relay_client.dylib clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.bundle
+    - cp server/target/aarch64-apple-ios/release/libcheetah_matches_relay_client.a clients/Unity/Packages/games.cheetah.matches.relay/iOS/libcheetah_matches_relay_client.a
+    - sed -i.bak "s/999.999.999/${version}/" clients/Unity/Packages/games.cheetah.matches.relay/package.json
+    - echo "${CI_API_V4_URL#https?}/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=\${CI_JOB_TOKEN}" > .npmrc
+    - npm publish clients/Unity/Packages/games.cheetah.matches.relay/

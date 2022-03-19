@@ -1,7 +1,7 @@
 release-unity-packages:
   only:
-     refs:
-       - tags
+    refs:
+      - tags
   stage: release
   image: node:17.7.2-stretch-slim
   variables:
