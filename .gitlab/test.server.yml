@@ -4,7 +4,7 @@
 test-server:
   services:
     - docker:19.03.12-dind
-  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
+  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.5
   stage: test
   variables:
     DOCKER_HOST: tcp://docker:2376
