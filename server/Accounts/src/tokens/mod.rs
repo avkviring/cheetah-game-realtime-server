@@ -143,10 +143,12 @@ impl TokensService {
 
 	pub async fn refresh(&self, refresh_token: String) -> Result<Tokens, JWTTokensServiceError> {
 		let token = JWTTokenParser::add_head(refresh_token);
+		let mut validation = Validation::new(Algorithm::ES256);
+		validation.leeway = 0;
 		match jsonwebtoken::decode::<RefreshTokenClaims>(
 			token.as_str(),
 			&DecodingKey::from_ec_pem(self.public_key.as_bytes()).unwrap(),
-			&Validation::new(Algorithm::ES256),
+			&validation,
 		) {
 			Ok(token) => {
 				let player = token.claims.user_id;
