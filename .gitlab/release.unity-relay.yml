@@ -1,0 +1,43 @@
+#
+# Сборка клиентской библиотеки для relay
+#
+release-unity-relay-build-linux:
+  #  only:
+  #    refs:
+  #      - tags
+  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
+  stage: release
+  variables:
+    version: $CI_COMMIT_TAG
+  script:
+    - cd server
+    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --release
+  artifacts:
+    paths:
+      - server/target/release/libcheetah_matches_relay_client.so
+    expire_in: 1 day
+
+release-unity-relay-build-android:
+  #  only:
+  #    refs:
+  #      - tags
+  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
+  #  stage: release
+  services:
+    - docker:19.03.12-dind
+  variables:
+    version: $CI_COMMIT_TAG
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  script:
+    - rustup target add aarch64-linux-android armv7-linux-androideabi
+    - cd server
+    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
+    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
+  artifacts:
+    paths:
+      - server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so
+      - server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so
+    expire_in: 1 day
