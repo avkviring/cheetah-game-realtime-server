@@ -5,11 +5,11 @@ build-relay-library-for-linux:
   only:
     refs:
       - tags
-  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.4
+  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.6
   stage: release
   script:
     - cd server
-    - cargo fetcher --url file:///root/crates/ --include-index sync
+    - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --release
   artifacts:
     paths:
@@ -20,11 +20,11 @@ build-relay-library-for-android-armv7:
   only:
     refs:
       - tags
-  image: registry.dev.cheetah.games/cheetah/docker-image-android-armv7-builder:1.0.4
+  image: registry.dev.cheetah.games/cheetah/docker-image-android-armv7-builder:1.0.5
   stage: release
   script:
     - cd server
-    - /.cargo/bin/cargo fetcher --url file:///root/crates/ --include-index sync
+    - /.cargo/bin/cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - /.cargo/bin/cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
   artifacts:
     paths:
@@ -35,11 +35,11 @@ build-relay-library-for-android-aarch64:
   only:
     refs:
       - tags
-  image: registry.dev.cheetah.games/cheetah/docker-image-android-aarch64-builder:1.0.0
+  image: registry.dev.cheetah.games/cheetah/docker-image-android-aarch64-builder:1.0.1
   stage: release
   script:
     - cd server
-    - /.cargo/bin/cargo fetcher --url file:///root/crates/ --include-index sync
+    - /.cargo/bin/cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - /.cargo/bin/cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
   artifacts:
     paths:

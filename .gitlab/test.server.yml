@@ -4,7 +4,7 @@
 test-server:
   services:
     - docker:19.03.12-dind
-  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.5
+  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.6
   stage: test
   variables:
     DOCKER_HOST: tcp://docker:2376
@@ -13,5 +13,5 @@ test-server:
     DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
   script:
     - cd server/
-    - cargo fetcher --url file:///root/crates/ --include-index sync
+    - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - cargo test --offline
