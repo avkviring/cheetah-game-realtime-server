@@ -5,7 +5,7 @@ build-relay-library-for-linux:
   only:
     refs:
       - tags
-  image: registry.dev.cheetah.games/cheetah/rust-builder-image:1.0.6
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
   stage: release
   script:
     - cd server
@@ -20,7 +20,7 @@ build-relay-library-for-android-armv7:
   only:
     refs:
       - tags
-  image: registry.dev.cheetah.games/cheetah/docker-image-android-armv7-builder:1.0.5
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-armv7-linux-androideabi:1.0.0
   stage: release
   script:
     - cd server
@@ -35,7 +35,7 @@ build-relay-library-for-android-aarch64:
   only:
     refs:
       - tags
-  image: registry.dev.cheetah.games/cheetah/docker-image-android-aarch64-builder:1.0.1
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-aarch64-linux-android:1.0.0
   stage: release
   script:
     - cd server

@@ -3,7 +3,7 @@ release-helm-charts:
     refs:
       - tags
   stage: release
-  image: registry.dev.cheetah.games/cheetah/docker-image-for-helm-build:1.0.1
+  image: registry.dev.cheetah.games/cheetah/images/helm-builder:1.0.0
   variables:
     version: $CI_COMMIT_TAG
   script:
