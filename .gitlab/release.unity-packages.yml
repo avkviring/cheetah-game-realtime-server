@@ -5,7 +5,7 @@ release-unity-packages:
   stage: release
   image: node:17.7.2-stretch-slim
   variables:
-    version: 0.0.2
+    version: $CI_COMMIT_TAG
   script:
     - cd clients/Unity/Packages/${package}
     - sed -i.bak "s/999.999.999/${version}/" package.json

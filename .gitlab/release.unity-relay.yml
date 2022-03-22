@@ -106,6 +106,13 @@ release-unity-relay:
       - tags
   stage: release
   image: node:17.7.2-stretch-slim
+  dependencies:
+    - build-relay-library-for-linux
+    - build-relay-library-for-android-armv7
+    - build-relay-library-for-android-aarch64
+    - build-relay-library-for-windows
+    - build-relay-library-for-macos
+    - build-relay-library-for-ios
   needs:
     - build-relay-library-for-linux
     - build-relay-library-for-android-armv7

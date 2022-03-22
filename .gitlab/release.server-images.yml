@@ -18,7 +18,7 @@ release-server-images:
   script:
     - sleep 5
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dev.cheetah.games/cheetah/
-    - docker build . -f server/${directory}/Dockerfile -t registry.dev.cheetah.games/cheetah/platform/${image}:main --build-arg "RUSTFLAGS_ARG=-Ctarget-cpu=haswell -Ctarget-feature=+avx2"
+    - docker build . -f server/${directory}/Dockerfile -t registry.dev.cheetah.games/cheetah/platform/${image}:${version} --build-arg "RUSTFLAGS_ARG=-Ctarget-cpu=haswell -Ctarget-feature=+avx2"
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
     - docker push registry.dev.cheetah.games/cheetah/platform/${image}:${version}
   parallel:
