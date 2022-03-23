@@ -1,0 +1,12 @@
+pages:
+  only:
+    refs:
+      - tags
+  stage: release
+  image: squidfunk/mkdocs-material:8.0.4
+  script:
+    - cd docs/public
+    - mkdocs build -d ../../public/
+  artifacts:
+    paths:
+      - public
