@@ -20,5 +20,4 @@ release-unity-packages:
       - package: games.cheetah.matches.registry
       - package: games.cheetah.matches.relay.shared
       - package: games.cheetah.platform
-      - package: games.cheetah.docker-remote-api
       - package: games.cheetah.play-games

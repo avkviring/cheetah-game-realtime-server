@@ -1,7 +1,5 @@
 ## Настройка нового кластера
 
-Тестировалось только на DigitalOcean.
-
 ### Установка Ingress контроллера
 
 ```
@@ -31,11 +29,3 @@ helm upgrade --namespace=system --install system .
 kubectl create namespace agones-system
 helm install agones agones/agones --set "gameservers.namespaces={...}" --namespace agones-system
 ```
-
-### Доменное имя
-
-В панели DigitalOcean связать доменное имя с созданным балансировщиком.
-
-### Настройка firewall
-
-Открыть UDP в DigitalOcean на всех нодах.

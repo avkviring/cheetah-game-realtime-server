@@ -3,12 +3,8 @@
 ### Доступ к реестру
 
 ```shell
-kubectl create secret docker-registry cheetahdockerregistry \
---namespace *** \ 
---docker-server=docker.registry.cheetah.games  \
---docker-username=***  \
---docker-password=***  \
---docker-email=***
+
+
 ```
 
 ### JWT ключи

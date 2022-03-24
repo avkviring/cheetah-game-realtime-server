@@ -6,7 +6,7 @@ RUN cd server/matches/Relay/Server && RUSTFLAGS="$RUSTFLAGS_ARG" cargo build --o
 
 # образ для запуска
 FROM alpine:3.13.5
-EXPOSE 5000/tcp
+EXPOSE 5000/tcp 5555/udp
 COPY server/grpc_health_probe /bin/grpc_health_probe
 RUN chmod +x /bin/grpc_health_probe
 COPY --from=builder /server/target/x86_64-unknown-linux-musl/release/service /service

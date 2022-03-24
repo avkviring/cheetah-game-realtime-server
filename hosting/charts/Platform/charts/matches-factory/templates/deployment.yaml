@@ -20,7 +20,7 @@ spec:
         - name: cheetahdockerregistry
       containers:
         - name: {{ .Chart.Name }}
-          image: "docker.registry.cheetah.games/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
+          image: "registry.dev.cheetah.games/cheetah/platform/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
           imagePullPolicy: Always
           startupProbe:
             exec:

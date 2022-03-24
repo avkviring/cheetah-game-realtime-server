@@ -1,6 +1,7 @@
 stages:
   - test
   - release
+  - cleanup
 include:
   - '.gitlab/release.docs.yml'
   - '.gitlab/test.server.yml'
