@@ -1,0 +1,3 @@
+cpu:
+  request: "0.01"
+  limit: "0.1"

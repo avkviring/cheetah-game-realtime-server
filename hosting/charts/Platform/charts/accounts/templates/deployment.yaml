@@ -21,10 +21,10 @@ spec:
           image: "registry.dev.cheetah.games/cheetah/platform/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
           resources:
             limits:
-              cpu: "1"
+              cpu: {{ .Values.cpu.limit }}
               memory: 40Mi
             requests:
-              cpu: "0.5"
+              cpu: {{ .Values.cpu.request }}
               memory: 20Mi
           imagePullPolicy: Always
           startupProbe:

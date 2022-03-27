@@ -27,5 +27,7 @@ helm upgrade --namespace=system --install system .
 
 ```
 kubectl create namespace agones-system
-helm install agones agones/agones --set "gameservers.namespaces={...}" --namespace agones-system
+helm install agones agones/agones --set "gameservers.namespaces={...}" --namespace agones-system 
+--set agones.ping.install=false \
+--set agones.allocator.install=false
 ```

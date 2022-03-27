@@ -32,10 +32,10 @@ spec:
             initialDelaySeconds: 10
           resources:
             limits:
-              cpu: "0.25"
+              cpu: {{ .Values.cpu.limit }}
               memory: 40Mi
             requests:
-              cpu: "0.25"
+              cpu: {{ .Values.cpu.request }}
               memory: 20Mi
           env:
             - name: TEMPLATES_PATH

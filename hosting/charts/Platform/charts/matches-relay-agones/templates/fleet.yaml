@@ -31,11 +31,11 @@ spec:
                 initialDelaySeconds: 10
               resources:
                 limits:
-                  cpu: "1"
-                  memory: 150Mi
+                  cpu: {{ .Values.cpu.limit }}
+                  memory: 100Mi
                 requests:
-                  cpu: "0.5"
-                  memory: 150Mi
+                  cpu: {{ .Values.cpu.request }}
+                  memory: 50Mi
               env:
                 - name: ENABLE_AGONES
                   value: "true"
