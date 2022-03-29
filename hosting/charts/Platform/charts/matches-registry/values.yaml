@@ -1,6 +1,6 @@
 cpu:
-  request: "0.01"
-  limit: "0.1"
+  request: "0.1"
+  limit: "1"
 replicaCount: 1
 redis:
   master:
