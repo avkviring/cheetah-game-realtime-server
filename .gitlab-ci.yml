@@ -4,7 +4,7 @@ stages:
   - cleanup
 include:
   - '.gitlab/release.docs.yml'
-  - '.gitlab/test.server.yml'
+  - '.gitlab/test.cargo-projects.yml'
   - '.gitlab/test.client-meta-files.yml'
   - '.gitlab/release.server-images.yml'
   - '.gitlab/release.helm-charts.yml'

@@ -1,13 +1,11 @@
 #
 # Тесты rust кода
 #
-test-server:
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  services:
-    - docker:20.10.14-dind
+test-cargo-projects:
+  cache:
+    key: cargo-test-cache
+    paths:
+      - server/target/
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
   stage: test
   script:

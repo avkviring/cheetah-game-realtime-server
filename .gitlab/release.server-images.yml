@@ -7,11 +7,6 @@ release-server-images:
       - tags
   variables:
     version: $CI_COMMIT_TAG
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  services:
-    - docker:20.10.14-dind
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
   stage: release
   script:

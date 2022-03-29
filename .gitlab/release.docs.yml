@@ -3,7 +3,9 @@ pages:
     refs:
       - tags
   stage: release
-  image: squidfunk/mkdocs-material:8.0.4
+  image:
+    name: squidfunk/mkdocs-material:8.0.4
+    entrypoint: ["/bin/sh", "-c"]
   script:
     - cd docs/public
     - mkdocs build -d ../../public/
