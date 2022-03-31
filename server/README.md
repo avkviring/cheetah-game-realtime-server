@@ -1,4 +1,4 @@
 # Серверные компоненты
 
-- [Авторизация](auth/README.md)
+- [Авторизация](Accounts/README.md)
 - [Матчи реального времени](matches/README.md)
