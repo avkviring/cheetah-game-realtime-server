@@ -1,9 +1,15 @@
-test-integration-build-docker-images:
+variables:
+  namespace: $CI_COMMIT_REF_SLUG
+  version: $CI_COMMIT_SHA
+  UNITY_DIR: $CI_PROJECT_DIR/clients/Unity/
+
+#
+# Сборка docker image для сервисов сервера
+#
+test-integration-build-server-images:
   only:
     refs:
       - kviring
-  variables:
-    version: $CI_COMMIT_SHA
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
   stage: test
   cache:
@@ -18,31 +24,35 @@ test-integration-build-docker-images:
     - ./package-server-images.sh
 
 
+#
+# Собираем  relay.so для Unity под Linux
+#
 test-integration-build-relay-client:
   only:
     refs:
       - kviring
-  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-gnu:1.0.2
   stage: test
   script:
+    - source $HOME/.cargo/env
     - cd server
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --release
+    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --offline --release
   artifacts:
     paths:
       - server/target/release/libcheetah_matches_relay_client.so
     expire_in: 1 day
 
 
-test-intergration-update-kubernetes-release:
+#
+# Развертываем сервер в kubernetes кластере
+#
+test-integration-install-servers-to-kubernetes:
   only:
     refs:
       - kviring
   needs:
-    - test-integration-build-docker-images
-  variables:
-    namespace: $CI_COMMIT_REF_SLUG
-    version: $CI_COMMIT_SHA
+    - test-integration-build-server-images
   image: registry.dev.cheetah.games/cheetah/images/helm-builder:1.0.2
   stage: test
   script:
@@ -53,6 +63,39 @@ test-intergration-update-kubernetes-release:
     - tar -czf rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
     - helm --kubeconfig=$kubeconfig  upgrade --debug --install ${namespace} -n ${namespace} Platform -f Platform/values-dev.yaml --set global.grpcDomain=${namespace}.stage.cheetah.games --set global.platformImageVersion=${version} --set global.roomsConfiguration=`cat rooms-configuration.tgz | openssl enc -A -base64`
     - sleep 10
+
+#
+# Запускаем тесты в Unity с сервером в kubernetes
+#
+test-integration-run-unity-with-kubernetes:
+  needs:
+    - test-integration-install-servers-to-kubernetes
+    - test-integration-build-relay-client
+  image: unityci/editor:2021.2.7f1-base-1.0.0
+  cache:
+    key: "unity-integration-test"
+    paths:
+      - $UNITY_DIR/Library/
+  variables:
+    TEST_PLATFORM: playmode
+    TESTING_TYPE: JUNIT
+  before_script:
+    - mkdir -p /root/.cache/unity3d
+    - mkdir -p /root/.local/share/unity3d/Unity/
+  script:
+    - apt-get update && apt-get install -y default-jre libsaxonb-java
+    - echo "${UNITY_LICENSE}" | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+    - echo "{\"ServerHost\":\"${namespace}.stage.cheetah.games\"}" >  $UNITY_DIR/integration-test-config.json
+    - chmod +x .gitlab/scripts/unity-test.sh
+    - cp server/target/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
+    - TEST_PLATFORM=editmode .gitlab/scripts/unity-test.sh
+    - TEST_PLATFORM=playmode .gitlab/scripts/unity-test.sh
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - $UNITY_DIR/editmode-junit-results.xml
+        - $UNITY_DIR/playmode-junit-results.xml
 
 test-integration-cleanup:
   only:
