@@ -3,9 +3,10 @@ stages:
   - release
   - cleanup
 include:
+#  - '.gitlab/test.cargo-projects.yml'
+#  - '.gitlab/test.client-meta-files.yml'
+  - '.gitlab/test.integration.yml'
   - '.gitlab/release.docs.yml'
-  - '.gitlab/test.cargo-projects.yml'
-  - '.gitlab/test.client-meta-files.yml'
   - '.gitlab/release.server-images.yml'
   - '.gitlab/release.helm-charts.yml'
   - '.gitlab/release.unity-packages.yml'

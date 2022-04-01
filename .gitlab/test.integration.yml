@@ -1,43 +1,26 @@
 test-integration-build-docker-images:
-only:
-  refs:
-    - integration-test
-    - kviring
-services:
-  - docker:19.03.12-dind
-image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
-stage: test
-variables:
-  version: $CI_COMMIT_REF_SLUG
-  DOCKER_HOST: tcp://docker:2375
-  #DOCKER_TLS_CERTDIR: "/certs"
-  DOCKER_TLS_CERTDIR: """
-  #DOCKER_TLS_VERIFY: 1
-  #DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-script:
-  - sleep 5
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dev.cheetah.games/cheetah/
-  - docker build . -f server/${directory}/Dockerfile -t registry.dev.cheetah.games/cheetah/platform/${image}:${version} --build-arg "RUSTFLAGS_ARG=-Ctarget-cpu=haswell -Ctarget-feature=+avx2"
-  - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
-  - docker push registry.dev.cheetah.games/cheetah/platform/${image}:${version}
-parallel:
-  matrix:
-    - directory: Accounts
-      image: cheetah-accounts
-    - directory: matches/Relay
-      image: cheetah-matches-relay
-    - directory: matches/StubMatchmaking
-      image: cheetah-matches-stub-matchmaking
-    - directory: matches/StubRegistry
-      image: cheetah-matches-stub-registry
-    - directory: matches/Factory
-      image: cheetah-matches-factory
-    - directory: matches/Registry
-      image: cheetah-matches-registry
+  only:
+    refs:
+      - kviring
+  variables:
+    version: $CI_COMMIT_SHA
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
+  stage: test
+  cache:
+    key: cargo-release-server-cache
+    paths:
+      - server/target/
+  script:
+    - cd server
+    - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
+    - RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --offline --release --target x86_64-unknown-linux-musl
+    - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
+    - ./package-server-images.sh
+
+
 test-integration-build-relay-client:
   only:
     refs:
-      - integration-test
       - kviring
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
   stage: test
@@ -49,43 +32,37 @@ test-integration-build-relay-client:
     paths:
       - server/target/release/libcheetah_matches_relay_client.so
     expire_in: 1 day
+
+
 test-intergration-update-kubernetes-release:
   only:
     refs:
-      - integration-test
       - kviring
   needs:
     - test-integration-build-docker-images
   variables:
     namespace: $CI_COMMIT_REF_SLUG
-    version: $CI_COMMIT_REF_SLUG
-  image: registry.dev.cheetah.games/cheetah/images/helm-builder:1.0.0
+    version: $CI_COMMIT_SHA
+  image: registry.dev.cheetah.games/cheetah/images/helm-builder:1.0.2
   stage: test
   script:
-    - helm uninstall ${namespace} -n ${namespace} || true
-    - kubectl delete --namespace ${namespace} --all deployments,statefulsets,services,pods,pvc
+    - helm --kubeconfig=$kubeconfig uninstall ${namespace} -n ${namespace} || true
+    - kubectl --kubeconfig=$kubeconfig  delete --namespace ${namespace} --all deployments,statefulsets,services,pods,pvc
     - sleep 20
     - cd hosting/charts/
     - tar -czf rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
-    - helm upgrade --debug --install ${namespace} \
-      --namespace=${namespace} \
-      Platform \
-      -f Platform/values-dev.yaml \
-      --set global.grpcDomain=${namespace}.stage.cheetah.games \
-      --set global.platformImageVersion=${version} \
-      --set global.roomsConfiguration=`cat rooms-configuration.tgz | openssl enc -A -base64` \
-      --wait=true
+    - helm --kubeconfig=$kubeconfig  upgrade --debug --install ${namespace} -n ${namespace} Platform -f Platform/values-dev.yaml --set global.grpcDomain=${namespace}.stage.cheetah.games --set global.platformImageVersion=${version} --set global.roomsConfiguration=`cat rooms-configuration.tgz | openssl enc -A -base64`
     - sleep 10
+
 test-integration-cleanup:
   only:
     refs:
-      - integration-test
       - kviring
-    image: registry.dev.cheetah.games/cheetah/images/helm-builder:1.0.0
-    stage: cleanup
-    variables:
-      namespace: $CI_COMMIT_REF_SLUG
-      version: $CI_COMMIT_REF_SLUG
-    script:
-      - helm uninstall ${namespace} -n ${namespace}
-      - kubectl delete --namespace ${namespace} --all deployments,statefulsets,services,pods,pvc
+  image: registry.dev.cheetah.games/cheetah/images/helm-builder:1.0.2
+  stage: cleanup
+  variables:
+    namespace: $CI_COMMIT_REF_SLUG
+    version: $CI_COMMIT_SHA
+  script:
+    - helm --kubeconfig=$kubeconfig  uninstall ${namespace} -n ${namespace}
+    - kubectl --kubeconfig=$kubeconfig  delete --namespace ${namespace} --all deployments,statefulsets,services,pods,pvc

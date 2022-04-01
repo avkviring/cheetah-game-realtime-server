@@ -53,7 +53,7 @@ spec:
           command:
             - 'sh'
             - '-c'
-            - 'mkdir -p /tmp/config && tar -xzf /var/lib/room-templates/configs.tgz -C /tmp/config && /service'
+            - 'mkdir -p /tmp/config && tar -xzf /var/lib/room-templates/configs.tgz -C /tmp/config && /cheetah-matches-factory'
       volumes:
         - name: room-templates
           configMap:
