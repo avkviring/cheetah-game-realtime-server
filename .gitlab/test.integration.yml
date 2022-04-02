@@ -62,12 +62,15 @@ test-integration-install-servers-to-kubernetes:
     - cd hosting/charts/
     - tar -czf rooms-configuration.tgz -C ../../server/matches/Factory/example/ .
     - helm --kubeconfig=$kubeconfig  upgrade --debug --install ${namespace} -n ${namespace} Platform -f Platform/values-dev.yaml --set global.grpcDomain=${namespace}.stage.cheetah.games --set global.platformImageVersion=${version} --set global.roomsConfiguration=`cat rooms-configuration.tgz | openssl enc -A -base64`
-    - sleep 10
+    - sleep 60
 
 #
 # Запускаем тесты в Unity с сервером в kubernetes
 #
 test-integration-run-unity-with-kubernetes:
+  only:
+    refs:
+      - kviring
   needs:
     - test-integration-install-servers-to-kubernetes
     - test-integration-build-relay-client
