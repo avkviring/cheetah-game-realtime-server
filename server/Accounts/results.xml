@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite id="0" name="cargo test #0" package="testsuite/cargo test #0" tests="33" errors="0" failures="0" hostname="localhost" timestamp="2022-04-04T00:54:33.816935+00:00" time="290.84616547">
+    <testcase name="should_parse_keys" classname="google::google_jwt::tests" time="0.027803024" />
+    <testcase name="should_expire_and_reload" classname="google::google_jwt::tests" time="4.029483728" />
+    <testcase name="should_check_duplicate" classname="cookie::storage::tests" time="7.91854904" />
+    <testcase name="should_reattach_2" classname="google::storage::tests" time="8.006409312" />
+    <testcase name="should_history" classname="google::storage::tests" time="8.059057174" />
+    <testcase name="should_linked" classname="cookie::storage::tests" time="8.124522343" />
+    <testcase name="should_attach" classname="cookie::storage::tests" time="8.257366417" />
+    <testcase name="should_reattach_1" classname="google::storage::tests" time="8.378496728" />
+    <testcase name="should_attach" classname="google::storage::tests" time="8.56805928" />
+    <testcase name="should_clear_after_timeout" classname="tokens::storage::tests" time="6.534147316" />
+    <testcase name="should_register_and_login" classname="cookie::test" time="11.909268404" />
+    <testcase name="should_validate_iss" classname="google::google_jwt::tests" time="13.125507" />
+    <testcase name="should_clear_if_so_much_user_id" classname="tokens::storage::tests" time="5.632648367" />
+    <testcase name="should_get_unset_version" classname="tokens::storage::tests" time="5.67526944" />
+    <testcase name="should_get_version" classname="tokens::storage::tests" time="5.673142107" />
+    <testcase name="should_increment_version" classname="tokens::storage::tests" time="5.776459996" />
+    <testcase name="session_token_should_correct" classname="tokens::tests" time="5.590275352" />
+    <testcase name="should_truncate_device_id" classname="tokens::storage::tests" time="5.801290875" />
+    <testcase name="should_not_login_with_wrong_cookie" classname="cookie::test" time="14.221337442" />
+    <testcase name="session_token_should_fail_if_not_correct" classname="tokens::tests" time="3.73001853" />
+    <testcase name="session_token_should_exp" classname="tokens::tests" time="6.818809632" />
+    <testcase name="should_refresh_token" classname="tokens::tests" time="4.193384867" />
+    <testcase name="should_validate_aud" classname="google::google_jwt::tests" time="16.611196149" />
+    <testcase name="should_refresh_token_can_use_once" classname="tokens::tests" time="3.558618949" />
+    <testcase name="should_refresh_token_can_invalidate_tokens" classname="tokens::tests" time="4.09315322" />
+    <testcase name="should_refresh_token_fail" classname="tokens::tests" time="3.35821285" />
+    <testcase name="should_refresh_token_different_for_players" classname="tokens::tests" time="3.611512433" />
+    <testcase name="should_create" classname="users::tests" time="4.464281288" />
+    <testcase name="should_refresh_token_exp" classname="tokens::tests" time="5.1597753" />
+    <testcase name="should_attach" classname="google::test" time="19.686660693" />
+    <testcase name="should_validate_exp" classname="google::google_jwt::tests" time="19.851954566" />
+    <testcase name="should_correct" classname="google::google_jwt::tests" time="26.128826082" />
+    <testcase name="should_register_and_login" classname="google::test" time="28.270667566" />
+  </testsuite>
+  <testsuite id="1" name="cargo test #1" package="testsuite/cargo test #1" tests="0" errors="0" failures="0" hostname="localhost" timestamp="2022-04-04T00:54:33.816935+00:00" time="0" />
+  <testsuite id="2" name="cargo test #2" package="testsuite/cargo test #2" tests="0" errors="0" failures="0" hostname="localhost" timestamp="2022-04-04T00:54:33.816935+00:00" time="0" />
+</testsuites>

@@ -6,7 +6,7 @@ variables:
 #
 # Сборка docker image для сервисов сервера
 #
-test-integration-build-server-images:
+build-server-images-for-integration-test:
   only:
     refs:
       - kviring
@@ -27,7 +27,7 @@ test-integration-build-server-images:
 #
 # Собираем  relay.so для Unity под Linux
 #
-test-integration-build-relay-client:
+build-relay-client-for-integration-test:
   only:
     refs:
       - kviring
@@ -47,12 +47,12 @@ test-integration-build-relay-client:
 #
 # Развертываем сервер в kubernetes кластере
 #
-test-integration-install-servers-to-kubernetes:
+install-servers-to-kubernetes-for-integration-test:
   only:
     refs:
       - kviring
   needs:
-    - test-integration-build-server-images
+    - build-server-images-for-integration-test
   image: registry.dev.cheetah.games/cheetah/images/helm-builder:1.0.2
   stage: test
   script:
@@ -72,8 +72,8 @@ test-integration-run-unity-with-kubernetes:
     refs:
       - kviring
   needs:
-    - test-integration-install-servers-to-kubernetes
-    - test-integration-build-relay-client
+    - install-servers-to-kubernetes-for-integration-test
+    - build-relay-client-for-integration-test
   image: unityci/editor:2021.2.7f1-base-1.0.0
   cache:
     key: "unity-integration-test"
@@ -100,7 +100,49 @@ test-integration-run-unity-with-kubernetes:
         - $UNITY_DIR/editmode-junit-results.xml
         - $UNITY_DIR/playmode-junit-results.xml
 
-test-integration-cleanup:
+
+#
+# Запускаем тесты в Unity с сервером в kubernetes
+#
+test-integration-run-unity-with-local-docker:
+  only:
+    refs:
+      - kviring
+  needs:
+    - build-server-images-for-integration-test
+    - build-relay-client-for-integration-test
+  image: registry.dev.cheetah.games/cheetah/images/unity-builder:1.0.0
+  cache:
+    key: "unity-integration-test"
+    paths:
+      - $UNITY_DIR/Library/
+  variables:
+    TEST_PLATFORM: playmode
+    TESTING_TYPE: JUNIT
+  before_script:
+    - mkdir -p /root/.cache/unity3d
+    - mkdir -p /root/.local/share/unity3d/Unity/
+  script:
+    - export CONTAINER_ID=$(docker ps -q -f "label=com.gitlab.gitlab-runner.job.id=$CI_JOB_ID" -f "label=com.gitlab.gitlab-runner.type=build")
+    - export DOCKER_MOUNT=$(docker inspect $CONTAINER_ID -f "{{range.Mounts }}{{ if eq .Destination \"/builds\" }}{{.Source }}{{end}}{{end}}" | cut -d "/" -f 6)
+    - export DOCKER_MOUNT=/var/lib/docker/volumes/$DOCKER_MOUNT/_data/
+    - echo "${UNITY_LICENSE}" | tr -d '\r' > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+    - echo "{\"ServerImageVersion\":\"${version}\",\"DockerMountDir\":\"$DOCKER_MOUNT\"}" >  $UNITY_DIR/integration-test-config.json
+    - echo "{\"Login\":\"$CI_DEPLOY_USER\",\"Password\":\"$CI_DEPLOY_PASSWORD\"}" > $UNITY_DIR/cheetah-docker-registry.json
+    - chmod +x .gitlab/scripts/unity-test.sh
+    - cp server/target/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
+    - TEST_PLATFORM=editmode .gitlab/scripts/unity-test.sh
+    - TEST_PLATFORM=playmode .gitlab/scripts/unity-test.sh
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - $UNITY_DIR/editmode-junit-results.xml
+        - $UNITY_DIR/playmode-junit-results.xml
+
+
+
+remove-kubernetes-release:
   only:
     refs:
       - kviring

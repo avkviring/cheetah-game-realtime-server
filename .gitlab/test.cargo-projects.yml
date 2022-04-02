@@ -6,9 +6,14 @@ test-cargo-projects:
     key: cargo-test-cache
     paths:
       - server/target/
-  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.2
   stage: test
   script:
     - cd server/
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - cargo test --offline
+    - cargo test --offline -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - server/results.xml

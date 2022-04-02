@@ -26,7 +26,7 @@ namespace Tests.Matches.Pride.Helpers
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            var codecRegistry = new CodecRegistryBuilder();           
+            var codecRegistry = new CodecRegistryBuilder();
             var connectorFactory = new ConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
