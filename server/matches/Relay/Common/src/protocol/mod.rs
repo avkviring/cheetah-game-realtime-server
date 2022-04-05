@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use std::time::Instant;
 
+use crate::network::client::DisconnectedReason;
 use crate::protocol::commands::input::InCommandsCollector;
 use crate::protocol::commands::output::OutCommandsCollector;
 use crate::protocol::disconnect::command::DisconnectByCommand;
@@ -46,8 +47,8 @@ pub struct Protocol {
 	pub replay_protection: FrameReplayProtection,
 	pub ack_sender: AckSender,
 	pub retransmitter: Retransmit,
-	pub disconnect_watcher: DisconnectByTimeout,
-	pub disconnect_handler: DisconnectByCommand,
+	pub disconnect_by_timeout: DisconnectByTimeout,
+	pub disconnect_by_command: DisconnectByCommand,
 	pub in_commands_collector: InCommandsCollector,
 	pub out_commands_collector: OutCommandsCollector,
 	pub rtt: RoundTripTime,
@@ -59,13 +60,13 @@ impl Protocol {
 	pub fn new(now: &Instant) -> Self {
 		Self {
 			next_frame_id: 1,
-			disconnect_watcher: DisconnectByTimeout::new(now),
+			disconnect_by_timeout: DisconnectByTimeout::new(now),
 			replay_protection: Default::default(),
 			ack_sender: Default::default(),
 			in_commands_collector: Default::default(),
 			out_commands_collector: Default::default(),
 			retransmitter: Default::default(),
-			disconnect_handler: Default::default(),
+			disconnect_by_command: Default::default(),
 			rtt: RoundTripTime::new(now),
 			keep_alive: Default::default(),
 			in_frame_counter: Default::default(),
@@ -77,11 +78,11 @@ impl Protocol {
 	///
 	pub fn on_frame_received(&mut self, frame: Frame, now: &Instant) {
 		self.in_frame_counter += 1;
-		self.disconnect_watcher.on_frame_received(now);
+		self.disconnect_by_timeout.on_frame_received(now);
 		self.retransmitter.on_frame_received(&frame, now);
 		if let Ok(replayed) = self.replay_protection.set_and_check(&frame) {
 			if !replayed {
-				self.disconnect_handler.on_frame_received(&frame);
+				self.disconnect_by_command.on_frame_received(&frame);
 				self.ack_sender.on_frame_received(&frame);
 				self.rtt.on_frame_received(&frame, now);
 				self.in_commands_collector.collect(frame);
@@ -102,7 +103,7 @@ impl Protocol {
 
 		let contains_data = self.ack_sender.contains_self_data()
 			|| self.out_commands_collector.contains_self_data()
-			|| self.disconnect_handler.contains_self_data()
+			|| self.disconnect_by_command.contains_self_data()
 			|| self.keep_alive.contains_self_data(now);
 
 		if contains_data {
@@ -111,7 +112,7 @@ impl Protocol {
 
 			self.ack_sender.build_frame(&mut frame);
 			self.out_commands_collector.build_frame(&mut frame);
-			self.disconnect_handler.build_frame(&mut frame);
+			self.disconnect_by_command.build_frame(&mut frame);
 			self.rtt.build_frame(&mut frame, now);
 			self.keep_alive.build_frame(&mut frame, now);
 			self.retransmitter.build_frame(&frame, now);
@@ -124,17 +125,23 @@ impl Protocol {
 	///
 	/// Разорвана ли связь?
 	///
-	pub fn is_disconnected(&self, now: &Instant) -> bool {
-		self.retransmitter.disconnected(now)
-			|| self.disconnect_watcher.disconnected(now)
-			|| self.disconnect_handler.disconnected()
+	pub fn is_disconnected(&self, now: &Instant) -> Option<DisconnectedReason> {
+		if self.retransmitter.disconnected(now) {
+			Some(DisconnectedReason::ByRetryLimit)
+		} else if self.disconnect_by_timeout.disconnected(now) {
+			Some(DisconnectedReason::ByTimeout)
+		} else if self.disconnect_by_command.disconnected() {
+			Some(DisconnectedReason::ByCommand)
+		} else {
+			None
+		}
 	}
 
 	///
 	/// Установлено ли соединения?
 	///
 	pub fn is_connected(&self, now: &Instant) -> bool {
-		self.in_frame_counter > 0 && !self.is_disconnected(now)
+		self.in_frame_counter > 0 && self.is_disconnected(now).is_none()
 	}
 
 	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<Frame> {

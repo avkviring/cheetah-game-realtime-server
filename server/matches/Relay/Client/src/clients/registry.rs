@@ -23,18 +23,10 @@ pub type ClientId = u16;
 /// - все методы Clients выполняются в главном потоке Unity
 ///
 ///
+#[derive(Default)]
 pub struct Registry {
 	pub clients: HashMap<ClientId, ApplicationThreadClient, FnvBuildHasher>,
 	client_generator_id: ClientId,
-}
-
-impl Default for Registry {
-	fn default() -> Self {
-		Registry {
-			clients: Default::default(),
-			client_generator_id: Default::default(),
-		}
-	}
 }
 
 impl Registry {
@@ -68,7 +60,7 @@ impl Registry {
 		)?;
 
 		let handler = thread::Builder::new()
-			.name(format!("user({:?})", member_id))
+			.name(format!("member({:?})", member_id))
 			.spawn(move || {
 				client.run();
 			})

@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+
 use std::io::{Cursor, ErrorKind};
 use std::net::SocketAddr;
 use std::time::Instant;
@@ -23,10 +24,8 @@ pub struct NetworkClient {
 	member_and_room_id: MemberAndRoomId,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
-#[repr(C)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ConnectionStatus {
-	Unknown,
 	Connecting,
 	///
 	/// Соединение установлено
@@ -35,7 +34,15 @@ pub enum ConnectionStatus {
 	///
 	/// Соединение закрыто
 	///
-	Disconnected,
+	Disconnected(DisconnectedReason),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum DisconnectedReason {
+	IOError(String),
+	ByRetryLimit,
+	ByTimeout,
+	ByCommand,
 }
 
 impl NetworkClient {
@@ -64,7 +71,7 @@ impl NetworkClient {
 	}
 
 	pub fn cycle(&mut self, now: &Instant) {
-		if self.state == ConnectionStatus::Disconnected {
+		if let ConnectionStatus::Disconnected(_) = self.state {
 			return;
 		}
 
@@ -76,8 +83,8 @@ impl NetworkClient {
 			self.state = ConnectionStatus::Connected
 		}
 
-		if self.protocol.is_disconnected(now) {
-			self.state = ConnectionStatus::Disconnected
+		if let Some(reason) = self.protocol.is_disconnected(now) {
+			self.state = ConnectionStatus::Disconnected(reason)
 		}
 	}
 
@@ -108,7 +115,7 @@ impl NetworkClient {
 					ErrorKind::WouldBlock => {}
 					_ => {
 						tracing::error!("error send {:?}", e);
-						self.state = ConnectionStatus::Disconnected;
+						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error send {:?}", e)));
 					}
 				},
 			}
@@ -124,7 +131,8 @@ impl NetworkClient {
 						ErrorKind::WouldBlock => {}
 						_ => {
 							tracing::error!("error receive {:?}", e);
-							self.state = ConnectionStatus::Disconnected;
+							self.state =
+								ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error receive {:?}", e)));
 						}
 					}
 					break;

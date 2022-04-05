@@ -93,9 +93,8 @@ impl ApplicationThreadClient {
 		self.request_to_client.send(ClientRequest::SendCommandToServer(out_command))
 	}
 
-	pub fn get_connection_status(&self, result: &mut ConnectionStatus) -> Result<(), PoisonError<MutexGuard<ConnectionStatus>>> {
-		*result = *self.state.lock()?;
-		Ok(())
+	pub fn get_connection_status(&self) -> Result<ConnectionStatus, PoisonError<MutexGuard<ConnectionStatus>>> {
+		Ok(self.state.lock()?.clone())
 	}
 
 	pub fn get_server_time(&self) -> Option<u64> {

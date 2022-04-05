@@ -43,7 +43,7 @@ impl NetworkServer {
 
 		let mut disconnected = heapless::Vec::<MemberAndRoomId, 1000>::new();
 		self.sessions.iter_mut().for_each(|(id, session)| {
-			if session.protocol.is_disconnected(now) && !disconnected.is_full() {
+			if session.protocol.is_disconnected(now).is_some() && !disconnected.is_full() {
 				if let Err(e) = rooms.user_disconnected(id) {
 					e.log_error(id.room_id, id.member_id);
 				}

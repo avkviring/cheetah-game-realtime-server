@@ -71,6 +71,7 @@ impl NetworkThreadClient {
 			self.update_state();
 			thread::sleep(Duration::from_millis(7));
 		}
+		tracing::error!("Close network_thread client");
 	}
 
 	fn update_server_time(&mut self) {
@@ -118,10 +119,11 @@ impl NetworkThreadClient {
 		while let Result::Ok(command) = self.request_from_controller.try_recv() {
 			match command {
 				ClientRequest::Close => {
-					self.udp_client.protocol.disconnect_handler.disconnect();
+					self.udp_client.protocol.disconnect_by_command.disconnect();
 					let now = Instant::now();
 					self.udp_client.cycle(&now);
 					self.running = false;
+					tracing::error!("[client] ClientRequest::Close")
 				}
 				ClientRequest::SetProtocolTimeOffsetForTest(duration) => {
 					self.protocol_time_offset_for_test = Option::Some(duration);
@@ -183,6 +185,6 @@ impl NetworkThreadClient {
 			.store(channel.send_packet_count, Ordering::Relaxed);
 		self.shared_statistics.send_size.store(channel.send_size, Ordering::Relaxed);
 		self.shared_statistics.recv_size.store(channel.recv_size, Ordering::Relaxed);
-		*self.state.lock().unwrap() = self.udp_client.state;
+		*self.state.lock().unwrap() = self.udp_client.state.clone();
 	}
 }

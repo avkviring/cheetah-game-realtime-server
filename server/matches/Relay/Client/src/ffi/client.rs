@@ -3,18 +3,53 @@ use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use cheetah_matches_relay_common::network::client::ConnectionStatus;
+use cheetah_matches_relay_common::network::client::{ConnectionStatus, DisconnectedReason};
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::clients::registry::ClientId;
 use crate::ffi::{execute, execute_with_client, BufferFFI, ClientError, LAST_ERROR};
 
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub enum ConnectionStatusFFI {
+	Connecting,
+	///
+	/// Соединение установлено
+	///
+	Connected,
+	///
+	/// Соединение закрыто
+	///
+	DisconnectedByIOError,
+	DisconnectedByRetryLimit,
+	DisconnectedByTimeout,
+	DisconnectedByCommand,
+}
+
 #[no_mangle]
-pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut ConnectionStatus) -> u8 {
+pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut ConnectionStatusFFI) -> u8 {
 	execute_with_client(client_id, |client| {
-		client
-			.get_connection_status(result)
-			.map_err(|e| ClientError::ConnectionStatusMutexError(format!("{:?}", e)))
+		let status = client
+			.get_connection_status()
+			.map_err(|e| ClientError::ConnectionStatusMutexError(format!("{:?}", e)));
+		match status {
+			Ok(status) => {
+				let ffi_status = match status {
+					ConnectionStatus::Connecting => ConnectionStatusFFI::Connecting,
+					ConnectionStatus::Connected => ConnectionStatusFFI::Connected,
+					ConnectionStatus::Disconnected(disconnect_reason) => match disconnect_reason {
+						DisconnectedReason::IOError(_) => ConnectionStatusFFI::DisconnectedByIOError,
+						DisconnectedReason::ByRetryLimit => ConnectionStatusFFI::DisconnectedByRetryLimit,
+						DisconnectedReason::ByTimeout => ConnectionStatusFFI::DisconnectedByTimeout,
+						DisconnectedReason::ByCommand => ConnectionStatusFFI::DisconnectedByCommand,
+					},
+				};
+				*result = ffi_status;
+
+				Ok(())
+			}
+			Err(e) => Err(e),
+		}
 	})
 }
 
@@ -37,7 +72,7 @@ pub extern "C" fn receive(client_id: ClientId) -> u8 {
 #[no_mangle]
 pub extern "C" fn get_server_time(client_id: ClientId, server_out_time: &mut u64) -> u8 {
 	execute_with_client(client_id, |client| {
-		*server_out_time = client.get_server_time().unwrap_or(0 as u64);
+		*server_out_time = client.get_server_time().unwrap_or(0_u64);
 		Ok(())
 	})
 }

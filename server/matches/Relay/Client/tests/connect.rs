@@ -1,11 +1,12 @@
 use std::thread;
 use std::time::Duration;
 
+use cheetah_matches_relay_client::ffi::execute_with_client;
+use cheetah_matches_relay_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_matches_relay_common::protocol::disconnect::timeout::DisconnectByTimeout;
+
 use crate::helpers::helper::IntegrationTestHelper;
 use crate::helpers::server::IntegrationTestServerBuilder;
-use cheetah_matches_relay_client::ffi::execute_with_client;
-use cheetah_matches_relay_common::network::client::ConnectionStatus;
-use cheetah_matches_relay_common::protocol::disconnect::timeout::DisconnectByTimeout;
 
 pub mod helpers;
 
@@ -17,8 +18,7 @@ fn should_connect_to_server() {
 	let client = helper.create_client(user_id, user_key);
 	helper.wait_udp();
 	execute_with_client(client, |api| {
-		let mut status = ConnectionStatus::Unknown;
-		api.get_connection_status(&mut status).unwrap();
+		let status = api.get_connection_status().unwrap();
 		assert_eq!(status, ConnectionStatus::Connected);
 		Ok(())
 	});
@@ -34,8 +34,7 @@ fn should_disconnect_when_server_closed() {
 	helper.wait_udp();
 
 	execute_with_client(client, |api| {
-		let mut status = ConnectionStatus::Unknown;
-		api.get_connection_status(&mut status).unwrap();
+		let status = api.get_connection_status().unwrap();
 		assert_eq!(status, ConnectionStatus::Connected);
 		Ok(())
 	});
@@ -49,9 +48,11 @@ fn should_disconnect_when_server_closed() {
 	thread::sleep(Duration::from_millis(100));
 
 	execute_with_client(client, |api| {
-		let mut status = ConnectionStatus::Unknown;
-		api.get_connection_status(&mut status).unwrap();
-		assert_eq!(status, ConnectionStatus::Disconnected);
+		let status = api.get_connection_status().unwrap();
+		assert!(matches!(
+			status,
+			ConnectionStatus::Disconnected(DisconnectedReason::ByTimeout)
+		));
 		Ok(())
 	});
 }

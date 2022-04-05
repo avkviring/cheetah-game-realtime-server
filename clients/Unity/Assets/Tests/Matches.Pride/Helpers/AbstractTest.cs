@@ -53,8 +53,10 @@ namespace Tests.Matches.Pride.Helpers
 
         private static CheetahClient ConnectToRelay(TicketResponse ticket, CodecRegistryBuilder codecRegistryBuilder)
         {
-            return new CheetahClient(ticket.RelayGameHost, ticket.RelayGamePort, ticket.UserId, ticket.RoomId, ticket.PrivateKey.ToByteArray(),
+            var client = new CheetahClient(ticket.RelayGameHost, ticket.RelayGamePort, ticket.UserId, ticket.RoomId, ticket.PrivateKey.ToByteArray(),
                 codecRegistryBuilder.Build());
+            client.DisableClientLog();
+            return client;
         }
 
         [TearDown]
