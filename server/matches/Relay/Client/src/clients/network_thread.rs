@@ -75,7 +75,7 @@ impl NetworkThreadClient {
 
 	fn update_server_time(&mut self) {
 		let mut server_time: MutexGuard<Option<u64>> = self.server_time.lock().unwrap();
-		match self.udp_client.protocol.rtt.remote_server_time {
+		match self.udp_client.protocol.rtt.remote_time {
 			None => {}
 			Some(time) => {
 				server_time.replace(time);

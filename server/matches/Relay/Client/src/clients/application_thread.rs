@@ -99,7 +99,7 @@ impl ApplicationThreadClient {
 	}
 
 	pub fn get_server_time(&self) -> Option<u64> {
-		self.server_time.lock().unwrap().clone()
+		*self.server_time.lock().unwrap()
 	}
 
 	pub fn set_current_channel(&mut self, channel: Channel, group: ChannelGroup) {
