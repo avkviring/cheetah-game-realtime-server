@@ -6,7 +6,7 @@ pub async fn create_postgres_pool(db: &str, user: &str, passwd: &str, host: &str
 	let uri = format!("postgres://{}:{}@{}:{}/{}", user, passwd, host, port, db);
 	let pool = PgPoolOptions::new()
 		.max_connections(5)
-		.connect_timeout(Duration::from_secs(10))
+		.connect_timeout(Duration::from_secs(20))
 		.connect(&uri)
 		.await
 		.unwrap();
