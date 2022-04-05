@@ -35,6 +35,14 @@ pub extern "C" fn receive(client_id: ClientId) -> u8 {
 }
 
 #[no_mangle]
+pub extern "C" fn get_server_time(client_id: ClientId, server_out_time: &mut u64) -> u8 {
+	execute_with_client(client_id, |client| {
+		*server_out_time = client.get_server_time().unwrap_or(0 as u64);
+		Ok(())
+	})
+}
+
+#[no_mangle]
 pub extern "C" fn set_rtt_emulation(client_id: ClientId, rtt_in_ms: u64, rtt_dispersion: f64) -> u8 {
 	execute_with_client(client_id, |client| {
 		Ok(client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)?)

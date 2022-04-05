@@ -15,7 +15,7 @@ pub mod registry;
 
 #[derive(Debug)]
 pub enum ClientRequest {
-	SetProtocolTimeOffset(Duration),
+	SetProtocolTimeOffsetForTest(Duration),
 	ConfigureRttEmulation(Duration, f64),
 	ConfigureDropEmulation(f64, Duration),
 	SendCommandToServer(C2SCommandWithChannel),

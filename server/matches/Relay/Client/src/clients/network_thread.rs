@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -23,9 +23,10 @@ pub struct NetworkThreadClient {
 	commands_from_server: Sender<CommandWithChannel>,
 	udp_client: NetworkClient,
 	request_from_controller: Receiver<ClientRequest>,
-	protocol_time_offset: Option<Duration>,
+	protocol_time_offset_for_test: Option<Duration>,
 	shared_statistics: SharedClientStatistics,
 	running: bool,
+	pub server_time: Arc<Mutex<Option<u64>>>,
 }
 
 #[derive(Debug)]
@@ -45,15 +46,17 @@ impl NetworkThreadClient {
 		receiver: Receiver<ClientRequest>,
 		start_frame_id: u64,
 		shared_statistics: SharedClientStatistics,
+		server_time: Arc<Mutex<Option<u64>>>,
 	) -> std::io::Result<NetworkThreadClient> {
 		Result::Ok(NetworkThreadClient {
 			state,
 			commands_from_server: in_commands,
 			udp_client: NetworkClient::new(false, user_private_key, member_id, room_id, server_address, start_frame_id)?,
 			request_from_controller: receiver,
-			protocol_time_offset: None,
+			protocol_time_offset_for_test: None,
 			shared_statistics,
 			running: false,
+			server_time,
 		})
 	}
 
@@ -62,10 +65,21 @@ impl NetworkThreadClient {
 		while self.running {
 			let now = self.get_now_time();
 			self.udp_client.cycle(&now);
+			self.update_server_time();
 			self.commands_from_server();
 			self.request_from_controller();
 			self.update_state();
 			thread::sleep(Duration::from_millis(7));
+		}
+	}
+
+	fn update_server_time(&mut self) {
+		let mut server_time: MutexGuard<Option<u64>> = self.server_time.lock().unwrap();
+		match self.udp_client.protocol.rtt.remote_server_time {
+			None => {}
+			Some(time) => {
+				server_time.replace(time);
+			}
 		}
 	}
 
@@ -74,7 +88,7 @@ impl NetworkThreadClient {
 	///
 	fn get_now_time(&mut self) -> Instant {
 		let now = Instant::now();
-		if let Some(offset) = self.protocol_time_offset {
+		if let Some(offset) = self.protocol_time_offset_for_test {
 			now.add(offset)
 		} else {
 			now
@@ -109,8 +123,8 @@ impl NetworkThreadClient {
 					self.udp_client.cycle(&now);
 					self.running = false;
 				}
-				ClientRequest::SetProtocolTimeOffset(duration) => {
-					self.protocol_time_offset = Option::Some(duration);
+				ClientRequest::SetProtocolTimeOffsetForTest(duration) => {
+					self.protocol_time_offset_for_test = Option::Some(duration);
 				}
 				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => {
 					self.udp_client.channel.config_emulator(|emulator| {

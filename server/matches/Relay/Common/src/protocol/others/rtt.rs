@@ -16,6 +16,7 @@ use crate::protocol::frame::Frame;
 #[derive(Debug)]
 pub struct RoundTripTime {
 	start_time: Instant,
+	pub remote_server_time: Option<u64>,
 	scheduled_response: Option<RoundTripTimeHeader>,
 	pub rtt: heapless::Deque<Duration, AVERAGE_RTT_MIN_LEN>,
 }
@@ -42,6 +43,7 @@ impl RoundTripTime {
 	pub fn new(start_time: &Instant) -> Self {
 		Self {
 			start_time: *start_time,
+			remote_server_time: None,
 			scheduled_response: None,
 			rtt: Default::default(),
 		}
@@ -84,7 +86,8 @@ impl RoundTripTime {
 		match request_header {
 			None => {}
 			Some(header) => {
-				self.scheduled_response = Option::Some(header.clone());
+				self.remote_server_time = Some(header.self_time);
+				self.scheduled_response = Some(header.clone());
 			}
 		}
 

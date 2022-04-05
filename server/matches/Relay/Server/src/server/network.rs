@@ -17,7 +17,6 @@ use crate::server::rooms::Rooms;
 pub struct NetworkServer {
 	sessions: HashMap<MemberAndRoomId, MemberSession>,
 	socket: UdpSocket,
-	halt: bool,
 }
 
 #[derive(Debug)]
@@ -35,7 +34,6 @@ impl NetworkServer {
 		Result::Ok(Self {
 			sessions: Default::default(),
 			socket,
-			halt: false,
 		})
 	}
 

@@ -46,6 +46,7 @@ impl Registry {
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
 	) -> std::io::Result<ClientId> {
+		let server_time = Arc::new(Mutex::new(Option::None));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
 		let state_cloned = state.clone();
 		let shared_statistics = SharedClientStatistics::default();
@@ -63,6 +64,7 @@ impl Registry {
 			receiver,
 			start_frame_id,
 			shared_statistics.clone(),
+			server_time.clone(),
 		)?;
 
 		let handler = thread::Builder::new()
@@ -79,6 +81,7 @@ impl Registry {
 			in_command_receiver,
 			sender,
 			shared_statistics,
+			server_time,
 		);
 		self.client_generator_id += 1;
 		let client_id = self.client_generator_id;

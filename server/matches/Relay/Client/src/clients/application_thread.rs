@@ -28,6 +28,7 @@ pub struct ApplicationThreadClient {
 	commands_from_server: Receiver<CommandWithChannel>,
 	handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
+	server_time: Arc<Mutex<Option<u64>>>,
 	request_to_client: Sender<ClientRequest>,
 	channel: ChannelType,
 	game_object_id_generator: u32,
@@ -57,12 +58,14 @@ impl ApplicationThreadClient {
 		in_commands: Receiver<CommandWithChannel>,
 		sender: Sender<ClientRequest>,
 		shared_statistics: SharedClientStatistics,
+		server_time: Arc<Mutex<Option<u64>>>,
 	) -> Self {
 		Self {
 			user_id,
 			commands_from_server: in_commands,
 			handler: Option::Some(handler),
 			state,
+			server_time,
 			request_to_client: sender,
 			channel: ChannelType::ReliableSequence(ChannelGroup(0)),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
@@ -78,7 +81,8 @@ impl ApplicationThreadClient {
 	}
 
 	pub fn set_protocol_time_offset(&mut self, time_offset: Duration) -> Result<(), SendError<ClientRequest>> {
-		self.request_to_client.send(ClientRequest::SetProtocolTimeOffset(time_offset))
+		self.request_to_client
+			.send(ClientRequest::SetProtocolTimeOffsetForTest(time_offset))
 	}
 
 	pub fn send(&mut self, command: C2SCommand) -> Result<(), SendError<ClientRequest>> {
@@ -92,6 +96,10 @@ impl ApplicationThreadClient {
 	pub fn get_connection_status(&self, result: &mut ConnectionStatus) -> Result<(), PoisonError<MutexGuard<ConnectionStatus>>> {
 		*result = *self.state.lock()?;
 		Ok(())
+	}
+
+	pub fn get_server_time(&self) -> Option<u64> {
+		self.server_time.lock().unwrap().clone()
 	}
 
 	pub fn set_current_channel(&mut self, channel: Channel, group: ChannelGroup) {
