@@ -19,7 +19,7 @@ use crate::clients::{ClientRequest, SharedClientStatistics};
 ///
 #[derive(Debug)]
 pub struct NetworkThreadClient {
-	state: Arc<Mutex<ConnectionStatus>>,
+	connection_status: Arc<Mutex<ConnectionStatus>>,
 	commands_from_server: Sender<CommandWithChannel>,
 	udp_client: NetworkClient,
 	request_from_controller: Receiver<ClientRequest>,
@@ -42,14 +42,14 @@ impl NetworkThreadClient {
 		room_id: RoomId,
 		user_private_key: UserPrivateKey,
 		in_commands: Sender<CommandWithChannel>,
-		state: Arc<Mutex<ConnectionStatus>>,
+		connection_status: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
 		start_frame_id: u64,
 		shared_statistics: SharedClientStatistics,
 		server_time: Arc<Mutex<Option<u64>>>,
 	) -> std::io::Result<NetworkThreadClient> {
 		Result::Ok(NetworkThreadClient {
-			state,
+			connection_status,
 			commands_from_server: in_commands,
 			udp_client: NetworkClient::new(false, user_private_key, member_id, room_id, server_address, start_frame_id)?,
 			request_from_controller: receiver,
@@ -185,6 +185,6 @@ impl NetworkThreadClient {
 			.store(channel.send_packet_count, Ordering::Relaxed);
 		self.shared_statistics.send_size.store(channel.send_size, Ordering::Relaxed);
 		self.shared_statistics.recv_size.store(channel.recv_size, Ordering::Relaxed);
-		*self.state.lock().unwrap() = self.udp_client.state.clone();
+		*self.connection_status.lock().unwrap() = self.udp_client.state.clone();
 	}
 }

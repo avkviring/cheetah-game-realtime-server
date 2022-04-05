@@ -3,7 +3,8 @@ use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use std::thread;
+use std::time::Duration;
+use std::{panic, thread};
 
 use fnv::FnvBuildHasher;
 
@@ -38,6 +39,15 @@ impl Registry {
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
 	) -> std::io::Result<ClientId> {
+		panic::set_hook(Box::new(move |panic_info| {
+			let msg = format!("Panic in relay client {:?}", panic_info);
+			// ставим задачу на выход
+			std::thread::spawn(move || {
+				tracing::error!("{}", msg);
+			});
+			thread::sleep(Duration::from_secs(2));
+		}));
+
 		let server_time = Arc::new(Mutex::new(Option::None));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
 		let state_cloned = state.clone();
