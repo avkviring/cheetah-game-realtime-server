@@ -59,7 +59,9 @@ pub enum Header {
 
 impl Headers {
 	pub fn add(&mut self, header: Header) {
-		self.headers.push(header).unwrap();
+		if self.headers.push(header).is_err() {
+			panic!("Headers vector overflow {:?}", self.headers)
+		}
 	}
 
 	pub fn find<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> HeaderVec<&T> {
