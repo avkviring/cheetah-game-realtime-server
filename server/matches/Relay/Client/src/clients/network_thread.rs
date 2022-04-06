@@ -71,7 +71,7 @@ impl NetworkThreadClient {
 			self.update_state();
 			thread::sleep(Duration::from_millis(7));
 		}
-		tracing::error!("Close network_thread client");
+		tracing::info!("Close network_thread client");
 	}
 
 	fn update_server_time(&mut self) {
@@ -123,7 +123,7 @@ impl NetworkThreadClient {
 					let now = Instant::now();
 					self.udp_client.cycle(&now);
 					self.running = false;
-					tracing::error!("[client] ClientRequest::Close")
+					tracing::info!("[client] ClientRequest::Close")
 				}
 				ClientRequest::SetProtocolTimeOffsetForTest(duration) => {
 					self.protocol_time_offset_for_test = Option::Some(duration);
