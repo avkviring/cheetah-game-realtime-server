@@ -18,7 +18,7 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 use crate::clients::network_thread::C2SCommandWithChannel;
 use crate::clients::{ClientRequest, SharedClientStatistics};
 use crate::ffi::channel::Channel;
-use crate::ffi::{BufferFFI, GameObjectIdFFI};
+use crate::ffi::{BufferFFI, FieldTypeFFI, GameObjectIdFFI};
 
 ///
 /// Взаимодействие с сетевым потоком клиента, через Sender
@@ -37,6 +37,7 @@ pub struct ApplicationThreadClient {
 	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)>,
 	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
 	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
+	pub listener_delete_field: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, FieldTypeFFI)>,
 	pub listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
@@ -77,6 +78,7 @@ impl ApplicationThreadClient {
 			listener_delete_object: None,
 			listener_create_object: None,
 			listener_created_object: None,
+			listener_delete_field: None,
 		}
 	}
 
@@ -165,6 +167,17 @@ impl ApplicationThreadClient {
 						if let Some(ref listener) = self.listener_delete_object {
 							let object_id = From::from(&command.object_id);
 							listener(&object_id);
+						}
+					}
+					S2CCommand::DeleteField(command) => {
+						if let Some(ref listener) = self.listener_delete_field {
+							let object_id: GameObjectIdFFI = From::from(&command.object_id);
+							listener(
+								command_with_user.creator,
+								&object_id,
+								command.field_id,
+								From::from(&command.field_type),
+							);
 						}
 					}
 				}

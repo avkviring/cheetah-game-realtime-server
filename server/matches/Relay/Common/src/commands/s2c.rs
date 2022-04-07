@@ -3,6 +3,7 @@ use std::io::Cursor;
 use strum_macros::AsRefStr;
 
 use crate::commands::types::event::EventCommand;
+use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::SetDoubleCommand;
 use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::types::long::SetLongCommand;
@@ -23,6 +24,7 @@ pub enum S2CCommand {
 	SetStructure(SetStructureCommand),
 	Event(EventCommand),
 	Delete(DeleteGameObjectCommand),
+	DeleteField(DeleteFieldCommand),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -40,6 +42,7 @@ impl S2CCommand {
 			S2CCommand::SetStructure(command) => Some(command.field_id),
 			S2CCommand::Event(command) => Some(command.field_id),
 			S2CCommand::Delete(_) => Option::None,
+			S2CCommand::DeleteField(command) => Some(command.field_id),
 		}
 	}
 
@@ -52,6 +55,7 @@ impl S2CCommand {
 			S2CCommand::SetStructure(command) => Some(command.object_id.clone()),
 			S2CCommand::Event(command) => Some(command.object_id.clone()),
 			S2CCommand::Delete(command) => Some(command.object_id.clone()),
+			S2CCommand::DeleteField(command) => Some(command.object_id.clone()),
 		}
 	}
 
@@ -64,6 +68,7 @@ impl S2CCommand {
 			S2CCommand::SetStructure(_) => Option::Some(FieldType::Structure),
 			S2CCommand::Event(_) => Option::Some(FieldType::Event),
 			S2CCommand::Delete(_) => Option::None,
+			S2CCommand::DeleteField(command) => Some(command.field_type.clone()),
 		}
 	}
 
@@ -76,6 +81,7 @@ impl S2CCommand {
 			S2CCommand::SetStructure(_) => CommandTypeId::SET_STRUCTURE,
 			S2CCommand::Event(_) => CommandTypeId::EVENT,
 			S2CCommand::Delete(_) => CommandTypeId::DELETE,
+			S2CCommand::DeleteField(_) => CommandTypeId::DELETE_FIELD,
 		}
 	}
 
@@ -88,6 +94,7 @@ impl S2CCommand {
 			S2CCommand::SetStructure(command) => command.encode(out),
 			S2CCommand::Event(command) => command.encode(out),
 			S2CCommand::Delete(_) => Ok(()),
+			S2CCommand::DeleteField(command) => command.encode(out),
 		}
 	}
 
@@ -105,6 +112,7 @@ impl S2CCommand {
 			CommandTypeId::SET_DOUBLE => S2CCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SET_STRUCTURE => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::DELETE_FIELD => S2CCommand::DeleteField(DeleteFieldCommand::decode(field_id?, object_id?, input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}

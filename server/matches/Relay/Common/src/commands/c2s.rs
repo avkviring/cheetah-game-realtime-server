@@ -3,6 +3,7 @@ use std::io::Cursor;
 use strum_macros::AsRefStr;
 
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
+use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
 use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
@@ -26,6 +27,7 @@ pub enum C2SCommand {
 	Event(EventCommand),
 	TargetEvent(TargetEventCommand),
 	Delete(DeleteGameObjectCommand),
+	DeleteField(DeleteFieldCommand),
 	///
 	/// Загрузить все объекты комнаты
 	///
@@ -49,6 +51,7 @@ impl C2SCommand {
 			C2SCommand::Delete(_) => None,
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
+			C2SCommand::DeleteField(command) => Some(command.field_id),
 		}
 	}
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
@@ -66,6 +69,7 @@ impl C2SCommand {
 			C2SCommand::Delete(command) => Some(command.object_id.clone()),
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
+			C2SCommand::DeleteField(command) => Some(command.object_id.clone()),
 		}
 	}
 
@@ -84,6 +88,7 @@ impl C2SCommand {
 			C2SCommand::Delete(_) => None,
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
+			C2SCommand::DeleteField(command) => Some(command.field_type),
 		}
 	}
 
@@ -102,6 +107,7 @@ impl C2SCommand {
 			C2SCommand::Delete(_) => CommandTypeId::DELETE,
 			C2SCommand::AttachToRoom => CommandTypeId::ATTACH_TO_ROOM,
 			C2SCommand::DetachFromRoom => CommandTypeId::DETACH_FROM_ROOM,
+			C2SCommand::DeleteField(_) => CommandTypeId::DELETE_FIELD,
 		}
 	}
 
@@ -120,6 +126,7 @@ impl C2SCommand {
 			C2SCommand::Delete(_) => Ok(()),
 			C2SCommand::AttachToRoom => Ok(()),
 			C2SCommand::DetachFromRoom => Ok(()),
+			C2SCommand::DeleteField(command) => command.encode(out),
 		}
 	}
 
@@ -149,6 +156,7 @@ impl C2SCommand {
 			CommandTypeId::SET_STRUCTURE => C2SCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::TARGET_EVENT => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::DELETE_FIELD => C2SCommand::DeleteField(DeleteFieldCommand::decode(field_id?, object_id?, input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}

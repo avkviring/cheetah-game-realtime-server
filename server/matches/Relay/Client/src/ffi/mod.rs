@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 use thiserror::Error;
 
-use cheetah_matches_relay_common::commands::CommandBuffer;
+use cheetah_matches_relay_common::commands::{CommandBuffer, FieldType};
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -168,6 +168,37 @@ impl From<&CommandBuffer> for BufferFFI {
 		let buffer = &mut result.buffer[0..source.len()];
 		buffer.copy_from_slice(source);
 		result
+	}
+}
+
+#[repr(C)]
+#[derive(Clone, Eq, PartialEq)]
+pub enum FieldTypeFFI {
+	Long,
+	Double,
+	Structure,
+	Event,
+}
+
+impl From<&FieldType> for FieldTypeFFI {
+	fn from(source: &FieldType) -> Self {
+		match source {
+			FieldType::Long => FieldTypeFFI::Long,
+			FieldType::Double => FieldTypeFFI::Double,
+			FieldType::Structure => FieldTypeFFI::Structure,
+			FieldType::Event => FieldTypeFFI::Event,
+		}
+	}
+}
+
+impl From<FieldTypeFFI> for FieldType {
+	fn from(source: FieldTypeFFI) -> Self {
+		match source {
+			FieldTypeFFI::Long => FieldType::Long,
+			FieldTypeFFI::Double => FieldType::Double,
+			FieldTypeFFI::Structure => FieldType::Structure,
+			FieldTypeFFI::Event => FieldType::Event,
+		}
 	}
 }
 

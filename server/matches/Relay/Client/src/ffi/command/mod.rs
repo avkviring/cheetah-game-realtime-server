@@ -4,6 +4,7 @@ use crate::clients::registry::ClientId;
 use crate::ffi::execute_with_client;
 
 pub mod event;
+pub mod field;
 pub mod float_value;
 pub mod long_value;
 pub mod object;

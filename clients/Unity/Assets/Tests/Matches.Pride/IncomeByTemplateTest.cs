@@ -1,6 +1,7 @@
 using System.Collections;
 using Cheetah.Matches.Relay.Income.ByObject;
 using Cheetah.Matches.Relay.Income.ByTemplate;
+using Cheetah.Matches.Relay.Types;
 using NUnit.Framework;
 using Shared;
 using Shared.Types;
@@ -97,6 +98,28 @@ namespace Tests.Matches.Pride
             var actual = eventsStream.GetItem(0);
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
             Assert.AreEqual(memberB, actual.commandCreator);
+        }
+        
+        [UnityTest]
+        public IEnumerator TestDeleteFieldIncomeCommands()
+        {
+            const ushort fieldId = 1000;
+            // слушаем создание новых объектов на втором клиенте
+            var collector = new DeletedFieldByTemplateIncomeCommands(clientB, 777);
+            // создаем объект на первом клиенте
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            createdObject.SetLong(fieldId, 5);
+            createdObject.DeleteField(fieldId, FieldType.Long);
+            // ждем отправки команды
+            yield return new WaitForSeconds(1);
+            // прием команды
+            clientB.Update();
+            // проверяем результат
+            var stream = collector.GetStream();
+            var deletedField = stream.GetItem(0);
+            Assert.AreEqual(FieldType.Long, deletedField.fieldType);
+            Assert.AreEqual(fieldId, deletedField.fieldId);
+            Assert.AreEqual(createdObject.ObjectId, deletedField.objectId);
         }
     }
 }

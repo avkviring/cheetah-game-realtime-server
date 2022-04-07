@@ -1,17 +1,17 @@
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::FieldType;
 use std::convert::AsRef;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomId;
 use cheetah_microservice::tonic::{Request, Response};
 
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
-use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, UniDirectionCommand};
+use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, TracedBothDirectionCommand};
 use crate::server::manager::ServerManager;
 
 pub struct CommandTracerGRPCService {
@@ -103,8 +103,8 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 impl From<TracedCommand> for admin::Command {
 	fn from(command: TracedCommand) -> Self {
 		let direction = match command.network_command {
-			UniDirectionCommand::C2S(_) => "c2s",
-			UniDirectionCommand::S2C(_) => "s2c",
+			TracedBothDirectionCommand::C2S(_) => "c2s",
+			TracedBothDirectionCommand::S2C(_) => "s2c",
 		};
 
 		let object_id = match command.network_command.get_object_id() {
@@ -120,8 +120,8 @@ impl From<TracedCommand> for admin::Command {
 		};
 		let template = command.template.map(|id| id as u32);
 		let command_name: String = match &command.network_command {
-			UniDirectionCommand::C2S(command) => command.as_ref().to_string(),
-			UniDirectionCommand::S2C(command) => command.as_ref().to_string(),
+			TracedBothDirectionCommand::C2S(command) => command.as_ref().to_string(),
+			TracedBothDirectionCommand::S2C(command) => command.as_ref().to_string(),
 		};
 		let field_id = command.network_command.get_field_id().map(|field_id| field_id as u32);
 		let field_type = command
@@ -152,7 +152,7 @@ impl From<TracedCommand> for admin::Command {
 
 fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
-		UniDirectionCommand::C2S(command) => match command {
+		TracedBothDirectionCommand::C2S(command) => match command {
 			C2SCommand::Create(command) => {
 				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
 			}
@@ -187,8 +187,11 @@ fn get_string_value(command: &TracedCommand) -> String {
 			C2SCommand::Delete(_) => "".to_string(),
 			C2SCommand::AttachToRoom => "".to_string(),
 			C2SCommand::DetachFromRoom => "".to_string(),
+			C2SCommand::DeleteField(command) => {
+				format!("field_type = {:?}", command.field_type)
+			}
 		},
-		UniDirectionCommand::S2C(command) => match command {
+		TracedBothDirectionCommand::S2C(command) => match command {
 			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
 			S2CCommand::Created(_) => "".to_string(),
 			S2CCommand::SetLong(command) => format!("{:?}", command.value),
@@ -196,6 +199,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 			S2CCommand::SetStructure(command) => format!("{:?}", command.structure),
 			S2CCommand::Event(command) => format!("{:?}", command.event),
 			S2CCommand::Delete(_) => "".to_string(),
+			S2CCommand::DeleteField(_) => "".to_string(),
 		},
 	}
 }
@@ -210,7 +214,7 @@ pub mod test {
 
 	use crate::debug::proto::admin;
 	use crate::debug::proto::shared;
-	use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
+	use crate::debug::tracer::{TracedCommand, TracedBothDirectionCommand};
 
 	#[test]
 	pub fn should_convert() {
@@ -218,7 +222,7 @@ pub mod test {
 			time: 1.1,
 			template: Option::Some(155),
 			user: 255,
-			network_command: UniDirectionCommand::C2S(C2SCommand::Event(EventCommand {
+			network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Room),
 				field_id: 555,
 				event: CommandBuffer::from_slice(vec![10, 20, 30].as_slice()).unwrap(),
@@ -248,7 +252,7 @@ pub mod test {
 			time: 1.1,
 			template: None,
 			user: 255,
-			network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		};
 
 		let grpc_command = admin::Command::from(command);

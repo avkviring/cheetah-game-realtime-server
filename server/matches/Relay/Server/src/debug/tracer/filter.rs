@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::debug::tracer::{TracedCommand, UniDirectionCommand};
+use crate::debug::tracer::{TracedCommand, TracedBothDirectionCommand};
 
 ///
 /// Фильтрация сетевых команд на основе правил
@@ -48,31 +48,31 @@ impl Filter {
 	}
 }
 
-impl UniDirectionCommand {
+impl TracedBothDirectionCommand {
 	fn get_direction(&self) -> RuleCommandDirection {
 		match self {
-			UniDirectionCommand::C2S(_) => RuleCommandDirection::C2S,
-			UniDirectionCommand::S2C(_) => RuleCommandDirection::S2C,
+			TracedBothDirectionCommand::C2S(_) => RuleCommandDirection::C2S,
+			TracedBothDirectionCommand::S2C(_) => RuleCommandDirection::S2C,
 		}
 	}
 	pub fn get_field_type(&self) -> Option<FieldType> {
 		match self {
-			UniDirectionCommand::C2S(command) => command.get_field_type(),
-			UniDirectionCommand::S2C(command) => command.get_field_type(),
+			TracedBothDirectionCommand::C2S(command) => command.get_field_type(),
+			TracedBothDirectionCommand::S2C(command) => command.get_field_type(),
 		}
 	}
 
 	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
-			UniDirectionCommand::C2S(command) => command.get_field_id(),
-			UniDirectionCommand::S2C(command) => command.get_field_id(),
+			TracedBothDirectionCommand::C2S(command) => command.get_field_id(),
+			TracedBothDirectionCommand::S2C(command) => command.get_field_id(),
 		}
 	}
 
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
-			UniDirectionCommand::C2S(command) => command.get_object_id(),
-			UniDirectionCommand::S2C(command) => command.get_object_id(),
+			TracedBothDirectionCommand::C2S(command) => command.get_object_id(),
+			TracedBothDirectionCommand::S2C(command) => command.get_object_id(),
 		}
 	}
 }
@@ -126,7 +126,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
-	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedCommand, UniDirectionCommand};
+	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedCommand, TracedBothDirectionCommand};
 
 	impl TracedCommand {
 		pub fn c2s() -> Self {
@@ -134,7 +134,7 @@ mod tests {
 				time: 0.0,
 				template: Option::None,
 				user: 0,
-				network_command: UniDirectionCommand::C2S(C2SCommand::Event(EventCommand {
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 0,
 					event: Default::default(),
@@ -147,7 +147,7 @@ mod tests {
 				time: 0.0,
 				template: Option::None,
 				user: 0,
-				network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {
+				network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 0,
 					event: Default::default(),
@@ -167,16 +167,16 @@ mod tests {
 
 		pub fn with_field_id(mut self, field_id: FieldId) -> Self {
 			match &self.network_command {
-				UniDirectionCommand::C2S(command) => {
+				TracedBothDirectionCommand::C2S(command) => {
 					if let C2SCommand::Event(mut event_command) = command.clone() {
 						event_command.field_id = field_id;
-						self.network_command = UniDirectionCommand::C2S(C2SCommand::Event(event_command))
+						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
 					}
 				}
-				UniDirectionCommand::S2C(command) => {
+				TracedBothDirectionCommand::S2C(command) => {
 					if let S2CCommand::Event(mut event_command) = command.clone() {
 						event_command.field_id = field_id;
-						self.network_command = UniDirectionCommand::S2C(S2CCommand::Event(event_command));
+						self.network_command = TracedBothDirectionCommand::S2C(S2CCommand::Event(event_command));
 					}
 				}
 			}
@@ -185,16 +185,16 @@ mod tests {
 
 		pub fn with_object_id(mut self, object_id: GameObjectId) -> Self {
 			match &self.network_command {
-				UniDirectionCommand::C2S(command) => {
+				TracedBothDirectionCommand::C2S(command) => {
 					if let C2SCommand::Event(mut event_command) = command.clone() {
 						event_command.object_id = object_id;
-						self.network_command = UniDirectionCommand::C2S(C2SCommand::Event(event_command))
+						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
 					}
 				}
-				UniDirectionCommand::S2C(command) => {
+				TracedBothDirectionCommand::S2C(command) => {
 					if let S2CCommand::Event(mut event_command) = command.clone() {
 						event_command.object_id = object_id;
-						self.network_command = UniDirectionCommand::S2C(S2CCommand::Event(event_command));
+						self.network_command = TracedBothDirectionCommand::S2C(S2CCommand::Event(event_command));
 					}
 				}
 			}

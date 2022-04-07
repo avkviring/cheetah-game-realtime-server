@@ -20,7 +20,10 @@ impl GameObjectTemplate {
 		let mut object = GameObject::new(id, self.template, self.groups, true);
 
 		self.fields.longs.iter().for_each(|(k, v)| object.set_long(*k, *v).unwrap());
-		self.fields.floats.iter().for_each(|(k, v)| object.set_float(*k, *v).unwrap());
+		self.fields
+			.floats
+			.iter()
+			.for_each(|(k, v)| object.set_double(*k, *v).unwrap());
 		self.fields.structures.iter().for_each(|(k, v)| {
 			object.set_structure(*k, v.as_slice()).unwrap();
 		});
@@ -69,7 +72,7 @@ mod tests {
 		assert_eq!(config_object.template, object.template_id);
 		assert_eq!(config_object.groups, object.access_groups);
 		assert_eq!(config_object.fields.longs[&0], object.get_long(&0).cloned().unwrap());
-		assert!((config_object.fields.floats[&1] - object.get_float(&1).cloned().unwrap()).abs() < 0.001);
+		assert!((config_object.fields.floats[&1] - object.get_double(&1).cloned().unwrap()).abs() < 0.001);
 		assert_eq!(config_object.fields.structures[&1], *object.get_structure(&1).unwrap());
 	}
 }

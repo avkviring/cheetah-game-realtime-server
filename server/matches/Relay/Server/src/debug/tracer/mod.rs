@@ -69,13 +69,13 @@ pub struct TracedCommand {
 	time: f64,
 	template: Option<GameObjectTemplateId>,
 	user: RoomMemberId,
-	network_command: UniDirectionCommand,
+	network_command: TracedBothDirectionCommand,
 }
 ///
 /// Хранение команд разной направленности (с сервера на клиент и с клиента на сервер)
 ///
 #[derive(Debug, Clone, PartialEq)]
-enum UniDirectionCommand {
+enum TracedBothDirectionCommand {
 	C2S(C2SCommand),
 	S2C(S2CCommand),
 }
@@ -119,7 +119,12 @@ impl Session {
 	/// Сохранение сетевой команды
 	/// - учитывается ограничение на размер буфера команд
 	///
-	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, user: RoomMemberId, network_command: UniDirectionCommand) {
+	pub fn collect(
+		&mut self,
+		template: Option<GameObjectTemplateId>,
+		user: RoomMemberId,
+		network_command: TracedBothDirectionCommand,
+	) {
 		let collected_command = TracedCommand {
 			time: Session::now(),
 			template,
@@ -202,7 +207,7 @@ impl CommandTracerSessions {
 		command: &C2SCommand,
 	) {
 		self.sessions.values_mut().for_each(|s| {
-			let network_command = UniDirectionCommand::C2S(command.clone());
+			let network_command = TracedBothDirectionCommand::C2S(command.clone());
 			let template = match network_command.get_object_id() {
 				None => Option::None,
 				Some(object_id) => {
@@ -232,7 +237,7 @@ impl CommandTracerSessions {
 	///
 	pub fn collect_s2c(&mut self, template: GameObjectTemplateId, user: RoomMemberId, command: &S2CCommand) {
 		self.sessions.values_mut().for_each(|s| {
-			let network_command = UniDirectionCommand::S2C(command.clone());
+			let network_command = TracedBothDirectionCommand::S2C(command.clone());
 			s.collect(Option::Some(template), user, network_command);
 		})
 	}
@@ -290,7 +295,9 @@ pub mod tests {
 	use cheetah_matches_relay_common::commands::types::event::EventCommand;
 	use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 
-	use crate::debug::tracer::{CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand, UniDirectionCommand};
+	use crate::debug::tracer::{
+		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand, TracedBothDirectionCommand,
+	};
 
 	#[test]
 	fn should_collect_command_without_filter() {
@@ -316,25 +323,25 @@ pub mod tests {
 					time: Session::now(),
 					template: None,
 					user: 100,
-					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: None,
 					user: 101,
-					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: None,
 					user: 102,
-					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: Some(200),
 					user: 100,
-					network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {
+					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
 						object_id: Default::default(),
 						field_id: 0,
 						event: Default::default()
@@ -372,13 +379,13 @@ pub mod tests {
 					time: Session::now(),
 					template: None,
 					user: 100,
-					network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: Some(200),
 					user: 100,
-					network_command: UniDirectionCommand::S2C(S2CCommand::Event(EventCommand {
+					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
 						object_id: Default::default(),
 						field_id: 0,
 						event: Default::default()
@@ -410,7 +417,7 @@ pub mod tests {
 				time: Session::now(),
 				template: None,
 				user: 55,
-				network_command: UniDirectionCommand::C2S(C2SCommand::AttachToRoom)
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
 			}
 		)
 	}
@@ -524,7 +531,7 @@ pub mod tests {
 				time: Session::now(),
 				template: Some(100),
 				user: 100,
-				network_command: UniDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
 					object_id: Default::default(),
 					template: 100,
 					access_groups: Default::default()

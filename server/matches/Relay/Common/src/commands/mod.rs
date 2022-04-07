@@ -1,3 +1,6 @@
+use std::io::{Cursor, ErrorKind};
+
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use thiserror::Error;
 
 use crate::protocol::codec::commands::context::CommandContextError;
@@ -27,6 +30,7 @@ impl CommandTypeId {
 	const DELETE: CommandTypeId = CommandTypeId(10);
 	const ATTACH_TO_ROOM: CommandTypeId = CommandTypeId(11);
 	const DETACH_FROM_ROOM: CommandTypeId = CommandTypeId(12);
+	const DELETE_FIELD: CommandTypeId = CommandTypeId(13);
 }
 
 ///
@@ -38,6 +42,27 @@ pub enum FieldType {
 	Double,
 	Structure,
 	Event,
+}
+impl FieldType {
+	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+		let code = match self {
+			FieldType::Long => 1,
+			FieldType::Double => 2,
+			FieldType::Structure => 3,
+			FieldType::Event => 4,
+		};
+		out.write_u8(code)
+	}
+	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+		let value = input.read_u8()?;
+		Ok(match value {
+			1 => FieldType::Long,
+			2 => FieldType::Double,
+			3 => FieldType::Structure,
+			4 => FieldType::Event,
+			_ => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("{}", value))),
+		})
+	}
 }
 
 #[derive(Error, Debug)]

@@ -20,9 +20,9 @@ pub struct GameObject {
 	/// Объект полностью создан
 	///
 	pub created: bool,
-	longs: heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT>,
-	floats: heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT>,
-	structures: heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT>,
+	pub(crate) longs: heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT>,
+	pub(crate) doubles: heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT>,
+	pub(crate) structures: heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT>,
 	compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
 
@@ -43,7 +43,7 @@ impl GameObject {
 			access_groups,
 			created,
 			longs: Default::default(),
-			floats: Default::default(),
+			doubles: Default::default(),
 			structures: Default::default(),
 			compare_and_set_owners: Default::default(),
 		}
@@ -63,14 +63,14 @@ impl GameObject {
 			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
 	}
 
-	pub fn get_floats(&self) -> &heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT> {
-		&self.floats
+	pub fn get_doubles(&self) -> &heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT> {
+		&self.doubles
 	}
-	pub fn get_float(&self, field_id: &FieldId) -> Option<&f64> {
-		self.floats.get(field_id)
+	pub fn get_double(&self, field_id: &FieldId) -> Option<&f64> {
+		self.doubles.get(field_id)
 	}
-	pub fn set_float(&mut self, field_id: FieldId, value: f64) -> Result<(), GameObjectError> {
-		self.floats
+	pub fn set_double(&mut self, field_id: FieldId, value: f64) -> Result<(), GameObjectError> {
+		self.doubles
 			.insert(field_id, value)
 			.map(|_| ())
 			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
@@ -178,7 +178,7 @@ mod tests {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
 		object.set_long(1, 100).unwrap();
-		object.set_float(2, 200.200).unwrap();
+		object.set_double(2, 200.200).unwrap();
 		object.structures.insert(1, vec![1, 2, 3]).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();

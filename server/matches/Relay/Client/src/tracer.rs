@@ -37,7 +37,7 @@ impl TracerCollector {
 		let subscriber = Registry::default().with(fmt_layer).with(TracerCollectorLayer);
 		tracing::subscriber::set_global_default(subscriber).expect("Setting default subscriber failed");
 		Self {
-			level: tracing_core::Level::Info,
+			level: tracing_core::Level::INFO,
 			items: Default::default(),
 		}
 	}

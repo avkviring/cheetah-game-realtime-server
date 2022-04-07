@@ -12,8 +12,9 @@ use crate::room::Room;
 pub mod create;
 pub mod created;
 pub mod delete;
+pub mod double;
 pub mod event;
-pub mod float;
+pub mod field;
 pub mod long;
 pub mod room;
 pub mod structure;
@@ -104,6 +105,7 @@ pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> 
 		C2SCommand::DetachFromRoom => room::detach_from_room(room, user_id),
 		C2SCommand::Created(command) => command.execute(room, user_id),
 		C2SCommand::TargetEvent(command) => command.execute(room, user_id),
+		C2SCommand::DeleteField(command) => command.execute(room, user_id),
 	}
 }
 

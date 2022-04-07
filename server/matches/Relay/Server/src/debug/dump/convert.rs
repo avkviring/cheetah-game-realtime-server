@@ -27,7 +27,7 @@ impl From<&GameObject> for admin::DumpObject {
 			groups: source.access_groups.0,
 			created: source.created,
 			longs: from(source.get_longs()),
-			floats: from(source.get_floats()),
+			floats: from(source.get_doubles()),
 			compare_and_set_owners: from(source.get_compare_and_set_owners()),
 			structures: from(source.get_structures()),
 		}

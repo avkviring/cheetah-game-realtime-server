@@ -44,6 +44,7 @@ impl BothDirectionCommand {
 				S2CCommand::Event(c) => Option::Some(&c.object_id),
 				S2CCommand::Delete(c) => Option::Some(&c.object_id),
 				S2CCommand::Created(c) => Option::Some(&c.object_id),
+				S2CCommand::DeleteField(c) => Option::Some(&c.object_id),
 			},
 			BothDirectionCommand::C2S(command) => match command {
 				C2SCommand::Create(c) => Option::Some(&c.object_id),
@@ -59,6 +60,7 @@ impl BothDirectionCommand {
 				C2SCommand::CompareAndSetLong(c) => Option::Some(&c.object_id),
 				C2SCommand::Created(c) => Option::Some(&c.object_id),
 				C2SCommand::TargetEvent(c) => Option::Some(&c.event.object_id),
+				C2SCommand::DeleteField(c) => Some(&c.object_id),
 			},
 		}
 	}
