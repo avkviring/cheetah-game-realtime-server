@@ -9,6 +9,7 @@ test-cargo-projects:
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-gnu:1.0.5
   stage: test
   script:
+    - source $HOME/.cargo/env
     - cd server/
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - cargo test --offline -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
