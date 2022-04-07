@@ -2,7 +2,11 @@
 # Тесты rust кода
 #
 test-cargo-projects:
-  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.2
+  cache:
+    key: cargo-test-cache
+    paths:
+      - server/target/
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-gnu:1.0.5
   stage: test
   script:
     - cd server/
