@@ -12,14 +12,13 @@ use crate::helpers::helper::setup;
 pub mod helpers;
 
 #[test]
-fn should_delete_field() {
+fn should_delete_field_ffi() {
 	let (helper, client1, client2) = setup(Default::default());
 	let object_id = helper.create_user_object(client1);
 	ffi::command::field::set_delete_field_listener(client2, listener);
 	ffi::command::room::attach_to_room(client2);
-
+	helper.wait_udp();
 	ffi::command::field::delete_field(client1, &object_id, 1, FieldTypeFFI::Long);
-
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
