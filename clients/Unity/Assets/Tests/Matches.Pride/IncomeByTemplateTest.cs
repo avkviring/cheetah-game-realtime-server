@@ -119,7 +119,7 @@ namespace Tests.Matches.Pride
             var deletedField = stream.GetItem(0);
             Assert.AreEqual(FieldType.Long, deletedField.fieldType);
             Assert.AreEqual(fieldId, deletedField.fieldId);
-            Assert.AreEqual(createdObject.ObjectId, deletedField.objectId);
+            Assert.AreEqual(createdObject.ObjectId, deletedField.cheetahObject.ObjectId);
         }
     }
 }
