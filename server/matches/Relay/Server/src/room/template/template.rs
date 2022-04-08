@@ -17,7 +17,7 @@ impl GameObjectTemplate {
 			panic!("0 is forbidden for game object id");
 		}
 
-		let mut object = GameObject::new(id, self.template, self.groups, true);
+		let mut object = GameObject::new(id, self.template, self.groups, true, false);
 
 		self.fields.longs.iter().for_each(|(k, v)| object.set_long(*k, *v).unwrap());
 		self.fields

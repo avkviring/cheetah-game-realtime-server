@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::load::C2SCreateGameObjectCommand;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -6,7 +6,7 @@ use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;
 
-impl ServerCommandExecutor for CreateGameObjectCommand {
+impl ServerCommandExecutor for C2SCreateGameObjectCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let user = room.get_member(&user_id)?;
 
@@ -38,14 +38,20 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 				self.object_id
 			)));
 		}
-		room.insert_object(GameObject::new(self.object_id.clone(), self.template, groups, false));
+		room.insert_object(GameObject::new(
+			self.object_id.clone(),
+			self.template,
+			groups,
+			false,
+			self.keep_after_owner_exit,
+		));
 		Ok(())
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
+	use cheetah_matches_relay_common::commands::types::load::C2SCreateGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -60,10 +66,11 @@ mod tests {
 		room.test_mark_as_connected(user_id).unwrap();
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
+			keep_after_owner_exit: false,
 		};
 		command.execute(&mut room, user_id).unwrap();
 
@@ -83,10 +90,11 @@ mod tests {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(1000));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
+			keep_after_owner_exit: false,
 		};
 
 		assert!(matches!(
@@ -103,10 +111,11 @@ mod tests {
 	fn should_not_create_when_access_group_is_wrong() {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
+			keep_after_owner_exit: false,
 		};
 
 		assert!(matches!(
@@ -124,10 +133,11 @@ mod tests {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(0, GameObjectOwner::Member(user_id));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b11),
+			keep_after_owner_exit: false,
 		};
 		assert!(matches!(
 			command.execute(&mut room, user_id),
@@ -143,14 +153,15 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let access_groups = AccessGroups(0b11);
 		let (mut room, user_id) = setup(access_groups);
-		let object = room.test_create_object(user_id, access_groups);
+		let object = room.test_create_object(user_id, access_groups, false);
 		object.template_id = 777;
 		let object_id = object.id.clone();
 		room.out_commands.clear();
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
+			keep_after_owner_exit: false,
 		};
 
 		assert!(matches!(

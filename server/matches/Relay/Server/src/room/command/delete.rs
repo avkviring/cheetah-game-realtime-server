@@ -42,7 +42,7 @@ mod tests {
 		room.test_mark_as_connected(user_a_id).unwrap();
 		room.test_mark_as_connected(user_b_id).unwrap();
 
-		let object_id = room.test_create_object(user_a_id, access_groups).id.clone();
+		let object_id = room.test_create_object(user_a_id, access_groups, false).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
@@ -64,7 +64,7 @@ mod tests {
 		let user_a = room.register_member(MemberTemplate::stub(access_groups));
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
 
-		let object_id = room.test_create_object(user_a, access_groups).id.clone();
+		let object_id = room.test_create_object(user_a, access_groups, false).id.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),

@@ -5,7 +5,7 @@ use strum_macros::AsRefStr;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::SetDoubleCommand;
-use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
+use crate::commands::types::load::{CreatedGameObjectCommand, S2CCreateGameObjectCommand};
 use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
@@ -17,7 +17,7 @@ use crate::room::RoomMemberId;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum S2CCommand {
-	Create(CreateGameObjectCommand),
+	Create(S2CCreateGameObjectCommand),
 	Created(CreatedGameObjectCommand),
 	SetLong(SetLongCommand),
 	SetDouble(SetDoubleCommand),
@@ -105,7 +105,7 @@ impl S2CCommand {
 		input: &mut Cursor<&[u8]>,
 	) -> Result<S2CCommand, CommandDecodeError> {
 		Ok(match *command_type_id {
-			CommandTypeId::CREATE => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
+			CommandTypeId::CREATE => S2CCommand::Create(S2CCreateGameObjectCommand::decode(object_id?, input)?),
 			CommandTypeId::CREATED => S2CCommand::Created(CreatedGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::DELETE => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::SET_LONG => S2CCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
@@ -122,11 +122,12 @@ impl S2CCommand {
 mod tests {
 	use std::io::Cursor;
 
+	use crate::commands::types::load::S2CCreateGameObjectCommand;
 	use crate::{
 		commands::s2c::S2CCommand,
 		commands::types::event::EventCommand,
 		commands::types::float::SetDoubleCommand,
-		commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand},
+		commands::types::load::CreatedGameObjectCommand,
 		commands::types::long::SetLongCommand,
 		commands::types::structure::SetStructureCommand,
 		commands::types::unload::DeleteGameObjectCommand,
@@ -142,7 +143,7 @@ mod tests {
 	fn should_decode_encode_create() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			S2CCommand::Create(CreateGameObjectCommand {
+			S2CCommand::Create(S2CCreateGameObjectCommand {
 				object_id: object_id.clone(),
 				template: 3,
 				access_groups: AccessGroups(5),

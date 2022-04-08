@@ -191,7 +191,7 @@ impl Room {
 				let mut objects = Vec::new();
 				self.process_objects(&mut |o| {
 					if let GameObjectOwner::Member(owner) = o.id.owner {
-						if owner == user.id {
+						if owner == user.id && !o.keep_after_owner_exit {
 							objects.push(o.id.clone());
 						}
 					}
@@ -301,10 +301,15 @@ mod tests {
 			Room::new(0, template)
 		}
 
-		pub fn test_create_object(&mut self, owner: RoomMemberId, access_groups: AccessGroups) -> &mut GameObject {
+		pub fn test_create_object(
+			&mut self,
+			owner: RoomMemberId,
+			access_groups: AccessGroups,
+			keep_after_owner_exit: bool,
+		) -> &mut GameObject {
 			self.object_id_generator += 1;
 			let id = GameObjectId::new(self.object_id_generator, GameObjectOwner::Member(owner));
-			let object = GameObject::new(id.clone(), 0, access_groups, false);
+			let object = GameObject::new(id.clone(), 0, access_groups, false, keep_after_owner_exit);
 			self.insert_object(object);
 			self.get_object_mut(&id).unwrap()
 		}
@@ -356,16 +361,18 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_a = room.register_member(MemberTemplate::stub(access_groups));
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
-		let object_a_1 = room.test_create_object(user_a, access_groups).id.clone();
-		let object_a_2 = room.test_create_object(user_a, access_groups).id.clone();
-		let object_b_1 = room.test_create_object(user_b, access_groups).id.clone();
-		let object_b_2 = room.test_create_object(user_b, access_groups).id.clone();
+		let object_a_1 = room.test_create_object(user_a, access_groups, false).id.clone();
+		let object_a_2 = room.test_create_object(user_a, access_groups, false).id.clone();
+		let object_a_3_with_keep_flag = room.test_create_object(user_a, access_groups, true).id.clone();
+		let object_b_1 = room.test_create_object(user_b, access_groups, false).id.clone();
+		let object_b_2 = room.test_create_object(user_b, access_groups, false).id.clone();
 
 		room.out_commands.clear();
 		room.disconnect_user(user_a).unwrap();
 
 		assert!(!room.contains_object(&object_a_1));
 		assert!(!room.contains_object(&object_a_2));
+		assert!(room.contains_object(&object_a_3_with_keep_flag));
 
 		assert!(room.contains_object(&object_b_1));
 		assert!(room.contains_object(&object_b_2));
@@ -491,6 +498,7 @@ mod tests {
 			0,
 			Default::default(),
 			false,
+			false,
 		));
 
 		room.insert_object(GameObject::new(
@@ -498,12 +506,14 @@ mod tests {
 			0,
 			Default::default(),
 			false,
+			false,
 		));
 
 		room.insert_object(GameObject::new(
 			GameObjectId::new(200, GameObjectOwner::Room),
 			0,
 			Default::default(),
+			false,
 			false,
 		));
 

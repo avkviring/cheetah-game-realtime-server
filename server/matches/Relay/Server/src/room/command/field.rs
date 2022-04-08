@@ -62,7 +62,7 @@ mod tests {
 	#[test]
 	fn should_command() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(user, access_groups, false);
 		let object_id = object.id.clone();
 		object.created = true;
 		object.set_long(10, 100).unwrap();
@@ -80,7 +80,7 @@ mod tests {
 
 	#[test]
 	pub fn should_delete_field() {
-		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
+		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false, false);
 
 		object.set_structure(1, &[1, 2, 3]).unwrap();
 		object.delete_field(FieldType::Structure, 1);

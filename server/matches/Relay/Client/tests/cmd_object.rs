@@ -31,8 +31,10 @@ fn test() {
 		client1,
 		1,
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
+		false,
 		&mut object_id,
 	);
+	
 	let structure_field_id = 10;
 	let structure_buffer = BufferFFI::from(vec![125]);
 	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);

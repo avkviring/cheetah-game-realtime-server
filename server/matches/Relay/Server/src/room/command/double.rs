@@ -97,7 +97,7 @@ mod tests {
 	#[test]
 	fn should_set_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(user, access_groups, false);
 		let object_id = object.id.clone();
 		object.created = true;
 		room.out_commands.clear();
@@ -117,7 +117,7 @@ mod tests {
 	fn should_increment_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
 
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(user, access_groups, false);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.out_commands.clear();
