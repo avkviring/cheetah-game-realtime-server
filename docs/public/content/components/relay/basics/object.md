@@ -61,6 +61,10 @@ var cheetahObject = builder.Build();
     {
       var obj = objectConstructor.cheetahObject;
       var damage = objectConstructor.GetDouble(100);
+      if (objectConstructor.TryGetDouble(100, var out damage)) {
+      
+      }
+      
     }
   }
 ```
