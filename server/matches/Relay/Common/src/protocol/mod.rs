@@ -83,7 +83,7 @@ impl Protocol {
 		if let Ok(replayed) = self.replay_protection.set_and_check(&frame) {
 			if !replayed {
 				self.disconnect_by_command.on_frame_received(&frame);
-				self.ack_sender.on_frame_received(&frame);
+				self.ack_sender.on_frame_received(&frame, now);
 				self.rtt.on_frame_received(&frame, now);
 				self.in_commands_collector.collect(frame);
 			}
@@ -101,7 +101,7 @@ impl Protocol {
 			}
 		}
 
-		let contains_data = self.ack_sender.contains_self_data()
+		let contains_data = self.ack_sender.contains_self_data(now)
 			|| self.out_commands_collector.contains_self_data()
 			|| self.disconnect_by_command.contains_self_data()
 			|| self.keep_alive.contains_self_data(now);
@@ -110,7 +110,7 @@ impl Protocol {
 			let mut frame = Frame::new(self.next_frame_id);
 			self.next_frame_id += 1;
 
-			self.ack_sender.build_frame(&mut frame);
+			self.ack_sender.build_out_frame(&mut frame, now);
 			self.out_commands_collector.build_frame(&mut frame);
 			self.disconnect_by_command.build_frame(&mut frame);
 			self.rtt.build_frame(&mut frame, now);

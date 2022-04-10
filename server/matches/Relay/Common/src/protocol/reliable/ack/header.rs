@@ -1,5 +1,5 @@
-use std::io::{Cursor, Read, Write};
-use std::ops::{BitAnd, Shl};
+use std::io::Cursor;
+use std::slice::Iter;
 
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::FrameId;
@@ -9,85 +9,50 @@ use crate::protocol::frame::FrameId;
 /// - содержит подтверждение для N фреймов, начиная от [start_frame_id]
 /// - N зависит от [AskFrameHeader::CAPACITY]
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct AckHeader {
-	///
-	/// id подтверждаемого пакета
-	///
-	pub start_frame_id: FrameId,
-
-	///
-	/// Битовая маска для подтверждения следующих фреймов
-	/// - каждый бит - +1 к [acked_frame_id]
-	///
-	pub(crate) frames: [u8; AckHeader::CAPACITY / 8],
+	frame_ids: heapless::Vec<FrameId, 20>,
 }
 
 impl AckHeader {
-	///
-	/// Максимальная разница между start_frame_id и frame_id
-	/// Если разница меньше - то структура может сохранить frame_id
-	///
-	pub const CAPACITY: usize = 8 * 8;
-
-	pub fn new(ack_frame_id: FrameId) -> Self {
-		Self {
-			start_frame_id: ack_frame_id,
-			frames: [0; AckHeader::CAPACITY / 8],
-		}
+	pub fn add_frame_id(&mut self, frame_id: FrameId) {
+		self.frame_ids.push(frame_id).unwrap();
 	}
 
-	///
-	/// Сохранить frame_id
-	/// - false если сохранение фреймы не возможно [AskFrameHeader::CAPACITY]
-	///
-	pub fn store_frame_id(&mut self, frame_id: u64) -> bool {
-		if frame_id < self.start_frame_id {
-			return false;
-		}
-		let offset = (frame_id - self.start_frame_id - 1) as usize;
-		if offset >= AckHeader::CAPACITY {
-			return false;
-		}
-
-		let byte_offset = offset / 8;
-		let bit_offset = offset - byte_offset * 8;
-		let byte = self.frames[byte_offset];
-		self.frames[byte_offset] = byte + 1.shl(bit_offset) as u8;
-		true
-	}
-
-	pub fn get_frames(&self) -> Vec<u64> {
-		let mut result = vec![self.start_frame_id];
-		for i in 0..AckHeader::CAPACITY {
-			let byte_offset = i / 8;
-			let bit_offset = i - byte_offset * 8;
-			let byte = self.frames[byte_offset];
-			if byte.bitand(1.shl(bit_offset) as u8) > 0 {
-				result.push(self.start_frame_id + i as u64 + 1);
-			}
-		}
-
-		result
+	pub fn get_frames(&self) -> Iter<FrameId> {
+		self.frame_ids.iter()
 	}
 
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let mut result = Self {
-			start_frame_id: input.read_variable_u64()?,
-			frames: Default::default(),
-		};
-		input.read_exact(&mut result.frames)?;
+		let size = input.read_variable_u64()?;
+		let mut result = Self::default();
+		for _ in 0..size {
+			match result.frame_ids.push(input.read_variable_u64()?) {
+				Ok(_) => {}
+				Err(_) => {
+					tracing::error!("AckHeader decode error - overflow frame_ids",);
+				}
+			}
+		}
 		Ok(result)
 	}
 
 	pub(crate) fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_variable_u64(self.start_frame_id)?;
-		out.write_all(&self.frames)
+		out.write_variable_u64(self.frame_ids.len() as u64)?;
+		for frame_id in self.get_frames() {
+			out.write_variable_u64(*frame_id)?;
+		}
+		Ok(())
+	}
+
+	pub fn is_full(&self) -> bool {
+		self.frame_ids.is_full()
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use crate::protocol::frame::FrameId;
 	use crate::protocol::reliable::ack::header::AckHeader;
 
 	#[test]
@@ -95,29 +60,13 @@ mod tests {
 	/// Проверяем сохранение списка frame_id
 	///
 	pub fn should_store_frame_id() {
-		let frame_first = 100;
-		let mut header = AckHeader::new(frame_first);
-		let offset = vec![1, 2, 3, 4, 7, 9, 15];
-		offset.iter().for_each(|i| {
-			header.store_frame_id(frame_first + i);
+		let mut header = AckHeader::default();
+		let originals = vec![1, 2, 3, 4, 7, 9, 15];
+		originals.iter().for_each(|i| {
+			header.add_frame_id(*i as FrameId);
 		});
 
-		let frames = header.get_frames();
-		assert_eq!(frames[0], 100);
-		let mut frame_index = 1;
-		offset.iter().for_each(|i| {
-			assert_eq!(frames[frame_index], 100 + i);
-			frame_index += 1;
-		});
-	}
-
-	#[test]
-	///
-	/// Проверяем сохранение большего количества фреймов чем емкость хранилища
-	///
-	pub fn should_store_frame_fail_if_not_enough_capacity() {
-		let frame_first = 100;
-		let mut header = AckHeader::new(frame_first);
-		assert!(!header.store_frame_id(frame_first + AckHeader::CAPACITY as u64 + 1))
+		let actual = header.get_frames().as_slice();
+		assert_eq!(originals, actual);
 	}
 }

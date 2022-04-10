@@ -23,7 +23,7 @@ pub struct InCommandsCollector {
 /// Применяется для исключения атаки на память сервера путем посылки с клиента никогда не
 /// завершающихся последовательностей
 ///
-const SEQUENCE_COMMANDS_LIMIT: usize = 256;
+const SEQUENCE_COMMANDS_LIMIT: usize = 1024;
 
 impl Default for InCommandsCollector {
 	fn default() -> Self {

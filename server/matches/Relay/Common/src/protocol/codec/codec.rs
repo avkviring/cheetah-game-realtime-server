@@ -171,8 +171,8 @@ pub mod tests {
 	fn should_encode_decode_frame() {
 		let mut frame = Frame::new(55);
 		let mut cipher = Cipher::new(PRIVATE_KEY);
-		frame.headers.add(Header::Ack(AckHeader::new(10)));
-		frame.headers.add(Header::Ack(AckHeader::new(15)));
+		frame.headers.add(Header::Ack(AckHeader::default()));
+		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame
 			.commands
 			.push(CommandWithChannel {

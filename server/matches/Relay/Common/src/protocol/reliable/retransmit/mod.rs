@@ -131,7 +131,7 @@ impl Retransmit {
 	pub(crate) fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
 		let ack_headers: HeaderVec<&AckHeader> = frame.headers.find(Header::predicate_ack);
 		ack_headers.iter().for_each(|ack_header| {
-			ack_header.get_frames().iter().for_each(|frame_id| {
+			ack_header.get_frames().for_each(|frame_id| {
 				self.wait_ack_frames.remove(frame_id);
 				self.statistics.on_ack_received(*frame_id, now);
 			});
@@ -145,12 +145,11 @@ impl Retransmit {
 			let original_frame_id = frame.frame_id;
 			let mut cloned_frame = frame.clone();
 			cloned_frame.commands.clear();
-			for command in frame.commands.iter() {
-				if !command.channel.is_reliable() {
-					continue;
-				}
-				cloned_frame.commands.push(command.clone()).unwrap();
-			}
+			frame
+				.commands
+				.iter()
+				.filter(|c| c.channel.is_reliable())
+				.for_each(|c| cloned_frame.commands.push(c.clone()).unwrap());
 
 			self.frames.push_back(ScheduledFrame {
 				time: *now,
@@ -363,7 +362,9 @@ mod tests {
 
 	fn create_ack_frame(frame_id: FrameId, acked_frame_id: FrameId) -> Frame {
 		let mut frame = Frame::new(frame_id);
-		frame.headers.add(Header::Ack(AckHeader::new(acked_frame_id)));
+		let mut ack_header = AckHeader::default();
+		ack_header.add_frame_id(acked_frame_id);
+		frame.headers.add(Header::Ack(ack_header));
 		frame
 	}
 }

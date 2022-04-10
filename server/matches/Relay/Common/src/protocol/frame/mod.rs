@@ -53,6 +53,6 @@ impl Frame {
 	/// Фрейм с надежной доставкой?
 	///
 	pub fn is_reliability(&self) -> bool {
-		!self.commands.is_empty()
+		self.commands.iter().any(|f| f.channel.is_reliable())
 	}
 }

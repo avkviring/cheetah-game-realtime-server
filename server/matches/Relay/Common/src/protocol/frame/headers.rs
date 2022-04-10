@@ -58,6 +58,11 @@ pub enum Header {
 }
 
 impl Headers {
+	pub fn is_full(&self) -> bool {
+		tracing::info!("is_full  {:?} {:?}", self.headers.capacity(), self.headers.len());
+		self.headers.capacity() == self.headers.len()
+	}
+
 	pub fn add(&mut self, header: Header) {
 		if self.headers.push(header).is_err() {
 			panic!("Headers vector overflow {:?}", self.headers)

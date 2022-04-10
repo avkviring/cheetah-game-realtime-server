@@ -113,10 +113,7 @@ mod tests {
 
 	#[test]
 	fn test_ack() {
-		check(vec![Header::Ack(AckHeader {
-			start_frame_id: 100,
-			frames: [55; AckHeader::CAPACITY / 8],
-		})]);
+		check(vec![Header::Ack(AckHeader::default())]);
 	}
 
 	#[test]
