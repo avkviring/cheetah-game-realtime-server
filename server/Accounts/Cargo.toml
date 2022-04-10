@@ -23,7 +23,7 @@ cheetah-microservice = { path = "../Microservice" }
 redis = { version = "0.21.5", features = ["tokio-comp"] }
 async-trait = "0.1.52"
 testcontainers = { version = "0.12.0", optional = true }
-lazy_static = { version = "1.4.0", optional = true }
+lazy_static = "1.4.0"
 tonic-web = "0.2.0"
 sqlx = { version = "0.5.11", features = ["runtime-tokio-rustls", "postgres", "migrate", "ipnetwork", "chrono"] }
 rand = "0.8"

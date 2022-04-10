@@ -31,6 +31,7 @@ cheetah-microservice = { path = "../../../Microservice" }
 tonic-web = "0.2.0"
 thiserror = "1.0.30"
 tracing = "0.1.31"
+prometheus = "0.13.0"
 
 
 [build-dependencies]
