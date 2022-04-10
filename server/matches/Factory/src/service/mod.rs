@@ -8,14 +8,13 @@ use tonic::Status;
 use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::relay::internal as relay;
 use crate::proto::matches::relay::internal::relay_client::RelayClient;
-use crate::service::configurations::Configurations;
+use crate::service::configuration::converter::error;
+use crate::service::configuration::yaml::YamlConfigurations;
 use crate::service::grpc::registry_client::RegistryClient;
-use crate::service::resolver::error;
 
 pub mod admin;
-pub mod configurations;
+pub mod configuration;
 pub mod grpc;
-pub mod resolver;
 
 pub struct FactoryService {
 	registry: RegistryClient,
@@ -24,7 +23,7 @@ pub struct FactoryService {
 }
 
 impl FactoryService {
-	pub fn new(registry: RegistryClient, configurations: &Configurations) -> Result<Self, error::Error> {
+	pub fn new(registry: RegistryClient, configurations: &YamlConfigurations) -> Result<Self, error::Error> {
 		let templates = TryFrom::try_from(configurations)?;
 		Ok(Self {
 			registry,

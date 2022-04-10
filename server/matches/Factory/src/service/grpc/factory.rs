@@ -29,8 +29,8 @@ mod tests {
 
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::{registry, relay};
-	use crate::service::configurations::test::EXAMPLE_DIR;
-	use crate::service::configurations::Configurations;
+	use crate::service::configuration::yaml::test::EXAMPLE_DIR;
+	use crate::service::configuration::yaml::YamlConfigurations;
 	use crate::service::grpc::registry_client::RegistryClient;
 	use crate::service::FactoryService;
 
@@ -86,7 +86,7 @@ mod tests {
 		let uri = stub_grpc_services().await;
 
 		let registry = RegistryClient::new(uri).await.unwrap();
-		let factory = FactoryService::new(registry, &Configurations::load(templates_directory).unwrap()).unwrap();
+		let factory = FactoryService::new(registry, &YamlConfigurations::load(templates_directory).unwrap()).unwrap();
 		let result = factory.do_create_match("gubaha".to_string()).await.unwrap();
 		assert_eq!(result.id, StubRelay::ROOM_ID);
 	}

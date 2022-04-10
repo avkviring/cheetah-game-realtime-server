@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use crate::proto::matches::relay::internal as relay;
-use crate::service::configurations::structures::{
+use crate::service::configuration::converter::error::Error;
+use crate::service::configuration::yaml::structures::{
 	Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName,
 };
-use crate::service::resolver::error::Error;
 
 ///
 /// Создаем объект для relay из конфигурации
@@ -77,11 +77,11 @@ pub mod test {
 	use rmpv::Utf8String;
 
 	use crate::proto::matches::relay::internal as relay;
-	use crate::service::configurations::structures::{
+	use crate::service::configuration::converter::error::Error;
+	use crate::service::configuration::converter::object::create_relay_object;
+	use crate::service::configuration::yaml::structures::{
 		Field, FieldType, FieldValue, GroupName, RoomObject, Template, TemplateName, TemplatePermissions,
 	};
-	use crate::service::resolver::error::Error;
-	use crate::service::resolver::object::create_relay_object;
 
 	#[test]
 	pub fn should_create_relay_object() {

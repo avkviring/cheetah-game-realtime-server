@@ -2,8 +2,8 @@ use cheetah_microservice::tonic::{Request, Response};
 
 use crate::proto::matches::factory::admin;
 use crate::proto::matches::relay::shared;
-use crate::service::configurations::structures::FieldType;
-use crate::service::configurations::Configurations;
+use crate::service::configuration::yaml::structures::FieldType;
+use crate::service::configuration::yaml::YamlConfigurations;
 
 pub struct ConfigurationsService {
 	templates: Vec<admin::TemplateInfo>,
@@ -11,7 +11,7 @@ pub struct ConfigurationsService {
 }
 
 impl ConfigurationsService {
-	pub fn new(config: &Configurations) -> ConfigurationsService {
+	pub fn new(config: &YamlConfigurations) -> ConfigurationsService {
 		ConfigurationsService {
 			templates: config
 				.templates
@@ -61,12 +61,12 @@ pub mod tests {
 	use crate::proto::matches::factory::admin;
 	use crate::proto::matches::relay::shared;
 	use crate::service::admin::ConfigurationsService;
-	use crate::service::configurations::structures::{Field, FieldType, Template};
-	use crate::service::configurations::Configurations;
+	use crate::service::configuration::yaml::structures::{Field, FieldType, Template};
+	use crate::service::configuration::yaml::YamlConfigurations;
 
 	#[test]
 	fn should_convert_templates() {
-		let conf = Configurations {
+		let conf = YamlConfigurations {
 			groups: Default::default(),
 			fields: Default::default(),
 			templates: vec![(
@@ -92,7 +92,7 @@ pub mod tests {
 
 	#[test]
 	fn should_convert_fields() {
-		let conf = Configurations {
+		let conf = YamlConfigurations {
 			groups: Default::default(),
 			fields: vec![(
 				"score".to_string(),

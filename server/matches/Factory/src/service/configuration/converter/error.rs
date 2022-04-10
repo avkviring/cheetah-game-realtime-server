@@ -1,4 +1,4 @@
-use crate::service::configurations::structures::{FieldName, GroupName, RoomName, TemplateName};
+use crate::service::configuration::yaml::structures::{FieldName, GroupName, RoomName, TemplateName};
 
 #[derive(Debug)]
 pub enum Error {

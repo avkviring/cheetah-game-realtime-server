@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 
 use crate::proto::matches::relay::internal as relay;
-use crate::service::configurations::structures::Room;
-use crate::service::configurations::Configurations;
-use crate::service::resolver::error::Error;
-use crate::service::resolver::object::create_relay_object;
-use crate::service::resolver::template::create_template_permission;
+use crate::service::configuration::converter::error::Error;
+use crate::service::configuration::converter::object::create_relay_object;
+use crate::service::configuration::converter::template::create_template_permission;
+use crate::service::configuration::yaml::structures::Room;
+use crate::service::configuration::yaml::YamlConfigurations;
 
 ///
 /// Преобразование текстовой конфигурации в grpc формат для relay сервера
@@ -17,11 +17,11 @@ mod template;
 
 const DEFAULT_OBJECT_ID_START: u32 = 1;
 
-impl TryFrom<&Configurations> for HashMap<String, relay::RoomTemplate> {
+impl TryFrom<&YamlConfigurations> for HashMap<String, relay::RoomTemplate> {
 	type Error = Error;
 
-	fn try_from(value: &Configurations) -> Result<Self, Self::Error> {
-		let Configurations {
+	fn try_from(value: &YamlConfigurations) -> Result<Self, Self::Error> {
+		let YamlConfigurations {
 			groups,
 			fields,
 			templates,
@@ -70,12 +70,12 @@ mod tests {
 	use std::convert::TryFrom;
 
 	use crate::proto::matches::relay::internal as relay;
-	use crate::service::configurations::structures::{Room, RoomObject, Template};
-	use crate::service::configurations::Configurations;
+	use crate::service::configuration::yaml::structures::{Room, RoomObject, Template};
+	use crate::service::configuration::yaml::YamlConfigurations;
 
 	#[test]
 	fn should_auto_increment_start_not_zero() {
-		let config = Configurations {
+		let config = YamlConfigurations {
 			groups: vec![("group".to_string(), 7)].into_iter().collect(),
 			fields: Default::default(),
 			templates: vec![(

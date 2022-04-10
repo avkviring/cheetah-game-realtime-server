@@ -1,7 +1,7 @@
 use std::fmt::Formatter;
 use std::path::{Path, PathBuf};
 
-use crate::service::configurations::structures::{FieldName, TemplateName};
+use crate::service::configuration::yaml::structures::{FieldName, TemplateName};
 
 pub enum Error {
 	Io(std::io::Error),

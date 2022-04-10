@@ -1,3 +1,6 @@
+///
+/// Исходная конфигурация в yaml формате
+///
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use std::fs::read_to_string;
@@ -5,8 +8,8 @@ use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 
-use crate::service::configurations::error::Error;
-use crate::service::configurations::structures::{
+use crate::service::configuration::yaml::error::Error;
+use crate::service::configuration::yaml::structures::{
 	Field, FieldName, FieldType, GroupName, Room, RoomName, SelfName, Template, TemplateName,
 };
 
@@ -17,14 +20,14 @@ pub mod structures;
 /// Загруженная информация из каталога с конфигурацией
 ///
 #[derive(Default, Debug)]
-pub struct Configurations {
+pub struct YamlConfigurations {
 	pub groups: HashMap<GroupName, u64>,
 	pub fields: HashMap<FieldName, Field>,
 	pub templates: HashMap<TemplateName, Template>,
 	pub rooms: HashMap<RoomName, Room>,
 }
 
-impl Configurations {
+impl YamlConfigurations {
 	pub fn load(root: impl Into<PathBuf>) -> Result<Self, Error> {
 		let root = root.into();
 		let groups = Self::load_group(root.clone())?;
@@ -33,7 +36,7 @@ impl Configurations {
 		let rooms = Self::load_items::<_>(root.clone(), root.join("rooms").as_path(), Path::new(""), || {
 			Some(Room { objects: vec![] })
 		})?;
-		Configurations {
+		YamlConfigurations {
 			groups,
 			fields,
 			templates,
@@ -46,7 +49,7 @@ impl Configurations {
 		self.validate_templates()?.validate_fields()
 	}
 
-	fn validate_fields(self) -> Result<Configurations, Error> {
+	fn validate_fields(self) -> Result<YamlConfigurations, Error> {
 		let mut exist_fields: HashMap<(FieldType, u16), String> = HashMap::default();
 		for (name, field) in self.fields.iter() {
 			let key = (field.r#type.clone(), field.id);
@@ -63,7 +66,7 @@ impl Configurations {
 		Result::Ok(self)
 	}
 
-	fn validate_templates(self) -> Result<Configurations, Error> {
+	fn validate_templates(self) -> Result<YamlConfigurations, Error> {
 		let mut exist_templates: HashMap<u32, String> = HashMap::default();
 		for (name, template) in self.templates.iter() {
 			if let Vacant(e) = exist_templates.entry(template.id) {
@@ -131,7 +134,7 @@ impl Configurations {
 
 				let mut count = 0;
 				let name_from_path = name.to_str().unwrap().to_string();
-				let prepared_content = Configurations::prepare_content(content);
+				let prepared_content = YamlConfigurations::prepare_content(content);
 				for document in serde_yaml::Deserializer::from_str(prepared_content.as_str()) {
 					count += 1;
 					let value = T::deserialize(document).map_err(|e| Error::Yaml {
@@ -186,11 +189,11 @@ pub mod test {
 	use include_dir::{include_dir, Dir};
 	use rmpv::{Integer, Utf8String};
 
-	use crate::service::configurations::error::Error;
-	use crate::service::configurations::structures::{
+	use crate::service::configuration::yaml::error::Error;
+	use crate::service::configuration::yaml::structures::{
 		Field, FieldType, FieldValue, PermissionField, PermissionLevel, Room, RoomObject, Template, TemplatePermissions,
 	};
-	use crate::service::configurations::Configurations;
+	use crate::service::configuration::yaml::YamlConfigurations;
 
 	pub const EXAMPLE_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/example/");
 
@@ -370,7 +373,7 @@ pub mod test {
 
 	#[test]
 	pub fn validate_unique_template_id() {
-		let configurations = Configurations {
+		let configurations = YamlConfigurations {
 			groups: Default::default(),
 			fields: Default::default(),
 			templates: vec![
@@ -409,7 +412,7 @@ pub mod test {
 
 	#[test]
 	pub fn validate_unique_field_id() {
-		let configurations = Configurations {
+		let configurations = YamlConfigurations {
 			groups: Default::default(),
 			fields: vec![
 				(
@@ -450,7 +453,7 @@ pub mod test {
 
 	#[test]
 	pub fn validate_unique_field_id_for_different_types() {
-		let configurations = Configurations {
+		let configurations = YamlConfigurations {
 			groups: Default::default(),
 			fields: vec![
 				(
@@ -479,10 +482,10 @@ pub mod test {
 		assert!(configurations.validate().is_ok())
 	}
 
-	fn setup() -> Configurations {
+	fn setup() -> YamlConfigurations {
 		let temp_dir = tempfile::tempdir().unwrap();
 		let path = temp_dir.into_path();
 		EXAMPLE_DIR.extract(path.clone()).unwrap();
-		Configurations::load(path).unwrap()
+		YamlConfigurations::load(path).unwrap()
 	}
 }
