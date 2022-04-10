@@ -1,3 +1,5 @@
+use lazy_static::lazy_static;
+use prometheus::{register_int_counter, IntCounter};
 use sqlx::PgPool;
 use tonic::{Request, Response};
 
@@ -31,6 +33,7 @@ impl proto::cookie_server::Cookie for CookieGrpcService {
 		&self,
 		request: Request<proto::RegistryRequest>,
 	) -> Result<Response<proto::RegistryResponse>, tonic::Status> {
+		COOKIE_REGISTER_COUNTER.inc();
 		let ip = get_client_ip(request.metadata());
 		let user: UserId = self.user_service.create(ip).await;
 		let cookie: String = self.storage.attach(user).await;
@@ -47,6 +50,7 @@ impl proto::cookie_server::Cookie for CookieGrpcService {
 	}
 
 	async fn login(&self, request: Request<proto::LoginRequest>) -> Result<Response<proto::LoginResponse>, tonic::Status> {
+		COOKIE_LOGIN_COUNTER.inc();
 		let request = request.get_ref();
 		match self.storage.find(&request.cookie).await {
 			FindResult::NotFound => Ok((None, proto::login_response::Status::NotFound as i32)),
@@ -65,6 +69,13 @@ impl proto::cookie_server::Cookie for CookieGrpcService {
 		.map(Response::new)
 		.map_err(|e| tonic::Status::internal(format!("{:?}", e)))
 	}
+}
+
+lazy_static! {
+	static ref COOKIE_REGISTER_COUNTER: IntCounter =
+		register_int_counter!("cookie_user_register_count", "Count register user by cookie").unwrap();
+	static ref COOKIE_LOGIN_COUNTER: IntCounter =
+		register_int_counter!("cookie_user_login_count", "Count login user by cookie").unwrap();
 }
 
 #[cfg(test)]

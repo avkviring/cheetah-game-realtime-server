@@ -519,6 +519,7 @@ dependencies = [
  "httpmock",
  "jsonwebtoken 8.0.1",
  "lazy_static",
+ "prometheus",
  "prost",
  "rand",
  "redis",
