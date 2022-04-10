@@ -1,7 +1,8 @@
-use crate::proto::matches::registry::internal as registry;
-use crate::proto::matches::registry::internal::RelayAddrs;
 use thiserror::Error;
 use tonic::transport::Uri;
+
+use crate::proto::matches::registry::internal as registry;
+use crate::proto::matches::registry::internal::RelayAddrs;
 
 #[derive(Error, Debug)]
 pub enum RegistryError {
@@ -13,6 +14,9 @@ pub enum RegistryError {
 	RpcFailed(#[from] tonic::Status),
 }
 
+///
+/// Клиент для связи по grpc с реестром
+///
 pub struct RegistryClient {
 	client: registry::registry_client::RegistryClient<tonic::transport::Channel>,
 }

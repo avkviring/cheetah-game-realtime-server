@@ -546,6 +546,8 @@ dependencies = [
  "cheetah-microservice",
  "futures",
  "include_dir",
+ "lazy_static",
+ "prometheus",
  "prost",
  "rmp-serde",
  "rmpv",

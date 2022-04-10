@@ -1,31 +1,9 @@
 use cheetah_microservice::tonic::{Request, Response, Status};
+use lazy_static::lazy_static;
+use prometheus::{register_int_counter, IntCounter};
 
 use crate::proto::matches::factory::internal as factory;
-use crate::proto::matches::relay::internal::relay_client::RelayClient;
 use crate::service::FactoryService;
-
-impl FactoryService {
-	async fn do_create_match(&self, template_name: String) -> Result<factory::CreateMatchResponse, Status> {
-		// получаем шаблон
-		let room_template = self
-			.template(&template_name)
-			.ok_or_else(|| Status::internal(format!("Template {} not found", template_name)))?;
-
-		// ищем свободный relay сервер
-		let addrs = self.registry.find_free_relay().await.unwrap();
-		let relay_grpc_addr = addrs.grpc_internal.as_ref().unwrap();
-		let relay_addr = cheetah_microservice::make_internal_srv_uri(&relay_grpc_addr.host, relay_grpc_addr.port as u16);
-		tracing::info!("Connect to relay {}", relay_addr);
-		// создаем матч на relay сервере
-		let mut connect = RelayClient::connect(relay_addr).await.unwrap();
-
-		// создаем комнату
-		Ok(factory::CreateMatchResponse {
-			id: connect.create_room(room_template).await?.into_inner().id,
-			addrs: Some(addrs),
-		})
-	}
-}
 
 #[tonic::async_trait]
 impl factory::factory_server::Factory for FactoryService {
@@ -35,6 +13,10 @@ impl factory::factory_server::Factory for FactoryService {
 	) -> Result<Response<factory::CreateMatchResponse>, Status> {
 		self.do_create_match(request.into_inner().template).await.map(Response::new)
 	}
+}
+
+lazy_static! {
+	static ref CREATE_MATCH_COUNTER: IntCounter = register_int_counter!("create_match_counter", "").unwrap();
 }
 
 #[cfg(test)]
