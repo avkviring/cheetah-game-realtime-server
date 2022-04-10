@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: cheetah
+  labels:
+    monitor: cheetah
+spec:
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      prometheus: "true"
+  podMetricsEndpoints:
+    - port: "prometheus"
+      path: /

@@ -9,9 +9,8 @@ spec:
   replicas: 1
   template:
     metadata:
-      annotations:
-        linkerd.io/inject: enabled
       labels:
+        prometheus: "true"
         app: {{ .Chart.Name }}
     spec:
       imagePullSecrets:
@@ -35,3 +34,7 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: public
+          ports:
+            - name: prometheus
+              containerPort: 3000
+              protocol: TCP

@@ -12,6 +12,9 @@ spec:
         - name: default
           containerPort: 5555
       template:
+        metadata:
+          labels:
+            prometheus: "true"
         spec:
           imagePullSecrets:
             - name: cheetahdockerregistry
@@ -54,5 +57,8 @@ spec:
                       fieldPath: metadata.namespace
                 - name: LOKI_URL
                   value: {{.Values.global.lokiUrl}}
-
+              ports:
+                - name: prometheus
+                  containerPort: 3000
+                  protocol: TCP
 

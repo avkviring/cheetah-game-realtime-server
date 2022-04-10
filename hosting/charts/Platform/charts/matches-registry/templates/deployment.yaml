@@ -12,6 +12,7 @@ spec:
       annotations:
         linkerd.io/inject: enabled
       labels:
+        prometheus: "true"
         app: {{ .Chart.Name }}
     spec:
       imagePullSecrets:
@@ -53,4 +54,7 @@ spec:
                   fieldPath: metadata.namespace
             - name: LOKI_URL
               value: {{.Values.global.lokiUrl}}
-
+          ports:
+            - name: prometheus
+              containerPort: 3000
+              protocol: TCP

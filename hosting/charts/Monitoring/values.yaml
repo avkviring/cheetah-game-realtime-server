@@ -1,6 +1,9 @@
 kube-prometheus-stack:
   prometheus:
     prometheusSpec:
+      podMonitorSelector:
+        matchLabels:
+          monitor: cheetah
       storageSpec:
         volumeClaimTemplate:
           spec:

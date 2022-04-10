@@ -16,13 +16,16 @@ pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
 use tracing_unwrap::ResultExt;
 
 use crate::loki::LokiLayer;
+use crate::prometheus::setup_prometheus;
 
 pub mod jwt;
 pub mod loki;
+pub mod prometheus;
 
 pub fn init(name: &str) {
 	setup_tracer(name);
 	setup_panic_hook();
+	setup_prometheus();
 	tracing::info!("start service {} ", name);
 }
 
@@ -33,7 +36,8 @@ pub fn get_env(name: &str) -> String {
 fn setup_tracer(name: &str) {
 	LogTracer::builder().with_max_level(log::LevelFilter::Info).init().unwrap();
 
-	let fmt_layer = fmt::layer().with_target(false);
+	let fmt_layer = fmt::layer().with_target(false).with_ansi(false);
+
 	let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 	let subscriber = Registry::default().with(env_filter).with(fmt_layer);
 
