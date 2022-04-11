@@ -94,8 +94,6 @@ impl TokenStorage {
 
 #[cfg(test)]
 pub mod tests {
-	use futures::future::err;
-	use std::io::Read;
 	use std::thread;
 	use std::time::Duration;
 

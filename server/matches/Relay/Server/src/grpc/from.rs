@@ -2,8 +2,8 @@ use rand::Rng;
 
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
-use crate::factory::proto::internal;
-use crate::factory::proto::shared;
+use crate::grpc::proto::internal;
+use crate::grpc::proto::shared;
 use crate::room::object::Field;
 use crate::room::template::config;
 

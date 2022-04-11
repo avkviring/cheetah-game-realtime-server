@@ -12,7 +12,7 @@ use cheetah_matches_relay::debug::dump::DumpGrpcService;
 use cheetah_matches_relay::debug::grpc::RelayAdminGRPCService;
 use cheetah_matches_relay::debug::proto::admin;
 use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCService;
-use cheetah_matches_relay::factory::RelayGRPCService;
+use cheetah_matches_relay::grpc::RelayGRPCService;
 use cheetah_matches_relay::server::manager::ServerManager;
 
 #[tokio::main]
@@ -32,7 +32,7 @@ async fn create_internal_grpc_server(
 ) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 	health_reporter.set_service_status("", ServingStatus::Serving).await;
-	let service = cheetah_matches_relay::factory::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(manager));
+	let service = cheetah_matches_relay::grpc::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(manager));
 	let address = cheetah_microservice::get_internal_service_binding_addr();
 	Server::builder()
 		.add_service(service)

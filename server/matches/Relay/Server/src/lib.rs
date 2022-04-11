@@ -1,6 +1,5 @@
 pub mod agones;
 pub mod debug;
-pub mod factory;
-pub mod registry;
+pub mod grpc;
 pub mod room;
 pub mod server;

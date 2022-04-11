@@ -1,6 +1,6 @@
-use crate::registry::proto::registry;
-use crate::registry::proto::registry::RelayAddrs;
-use crate::registry::proto::registry::RelayState;
+use crate::agones::proto::registry;
+use crate::agones::proto::registry::RelayAddrs;
+use crate::agones::proto::registry::RelayState;
 use tonic::transport::Uri;
 use tonic::{Request, Status};
 

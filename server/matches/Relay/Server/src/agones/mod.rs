@@ -1,15 +1,19 @@
-use rymder::GameServer;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::Duration;
+
+use rymder::GameServer;
 use thiserror::Error;
 
-use crate::registry::client::RegistryClient;
-use crate::registry::proto::registry::RelayState;
-use crate::registry::proto::registry::{Addr, RelayAddrs};
 use cheetah_microservice::tonic::codegen::Arc;
 
+use crate::agones::client::RegistryClient;
+use crate::agones::proto::registry::RelayState;
+use crate::agones::proto::registry::{Addr, RelayAddrs};
 use crate::server::manager::ServerManager;
+
+pub mod client;
+pub mod proto;
 
 #[derive(Error, Debug)]
 pub enum RegistryError {

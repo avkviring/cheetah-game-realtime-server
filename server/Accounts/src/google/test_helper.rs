@@ -4,11 +4,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use httpmock::MockServer;
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use rand::thread_rng;
-use rsa::pkcs1::der::Encodable;
-use rsa::pkcs1::ToRsaPublicKey;
 use rsa::pkcs8::ToPrivateKey;
 use rsa::{PublicKeyParts, RsaPrivateKey};
-use rustls::PrivateKey;
 use serde::{Deserialize, Serialize};
 
 use crate::google::google_jwt::Parser;
