@@ -50,7 +50,13 @@ impl<P: 'static + Atomic> GaugeByTagMeasures<P> {
 			let opts = Opts::new(self.name.clone(), self.help.as_str())
 				.const_labels([(self.tag_name.clone(), tag_value.into())].into_iter().collect());
 			let gauge = GenericGauge::<P>::with_opts(opts).unwrap();
-			prometheus::default_registry().register(Box::new(gauge.clone())).unwrap();
+			match prometheus::default_registry().register(Box::new(gauge.clone())) {
+				Ok(_) => {}
+				Err(e) => {
+					// нормальная ситуация в тестах
+					tracing::error!("{:?}", e)
+				}
+			}
 			gauge
 		});
 		op(gauge);
