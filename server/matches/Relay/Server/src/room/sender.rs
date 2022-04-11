@@ -186,36 +186,6 @@ mod tests {
 					field_type: FieldType::Long,
 				},
 				user_2,
-				Permission::Ro,
-				None,
-				|_| Ok(None),
-			)
-			.is_ok());
-
-		// RW - по-умолчанию запрещен
-		assert!(room
-			.do_action_and_send_commands(
-				&object_id,
-				Field {
-					id: field_id_1,
-					field_type: FieldType::Long,
-				},
-				user_2,
-				Permission::Rw,
-				None,
-				|_| Ok(None),
-			)
-			.is_err());
-
-		// RW - разрешен для второго поля
-		assert!(room
-			.do_action_and_send_commands(
-				&object_id,
-				Field {
-					id: field_id_2,
-					field_type: FieldType::Long,
-				},
-				user_2,
 				Permission::Rw,
 				None,
 				|_| Ok(None),

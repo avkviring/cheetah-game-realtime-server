@@ -40,7 +40,7 @@ impl PermissionManager {
 		};
 
 		for template in &permission.templates {
-			if template.rules.iter().any(|t| t.permission > Permission::Ro) {
+			if template.rules.iter().any(|t| t.permission != Permission::Ro) {
 				result.write_access_template.insert(template.template);
 			}
 			result.templates.insert(template.template, template.rules.clone());
@@ -51,7 +51,7 @@ impl PermissionManager {
 					field: field.field,
 				};
 
-				if field.rules.iter().any(|t| t.permission > Permission::Ro) {
+				if field.rules.iter().any(|t| t.permission != Permission::Ro) {
 					result.write_access_fields.insert(key.clone());
 				}
 
@@ -98,7 +98,7 @@ impl PermissionManager {
 		groups
 			.iter()
 			.find(|p| p.groups.contains_any(&user_group))
-			.map_or(&Permission::Ro, |p| &p.permission)
+			.map_or(&Permission::Rw, |p| &p.permission)
 	}
 }
 
