@@ -29,8 +29,8 @@ impl TryFrom<&YamlConfigurations> for HashMap<String, relay::RoomTemplate> {
 		} = value;
 		rooms
 			.iter()
-			.map(|(room_name, room)| {
-				tracing::info!("resolve room {:?}", room_name);
+			.map(|(template_name, room)| {
+				tracing::info!("resolve room {:?}", template_name);
 
 				let Room { objects } = room;
 				//  смещение для генерации id объектов
@@ -44,21 +44,29 @@ impl TryFrom<&YamlConfigurations> for HashMap<String, relay::RoomTemplate> {
 					.iter()
 					.enumerate()
 					.map(|(index, o)| {
-						create_relay_object(room_name, o, templates, groups, fields, auto_object_id_start + index as u32)
+						create_relay_object(
+							template_name,
+							o,
+							templates,
+							groups,
+							fields,
+							auto_object_id_start + index as u32,
+						)
 					})
 					.collect::<Result<_, Error>>()?;
 
 				let permissions = templates
 					.values()
-					.map(|template| create_template_permission(room_name, template, groups, fields))
+					.map(|template| create_template_permission(template_name, template, groups, fields))
 					.collect::<Result<_, Error>>()?;
 
 				let relay_room = relay::RoomTemplate {
+					template_name: template_name.clone(),
 					objects,
 					permissions: Some(relay::Permissions { objects: permissions }),
 				};
 
-				Ok((room_name.clone(), relay_room))
+				Ok((template_name.clone(), relay_room))
 			})
 			.collect()
 	}

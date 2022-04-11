@@ -35,6 +35,7 @@ pub mod types;
 #[derive(Debug)]
 pub struct Room {
 	pub id: RoomId,
+	pub template_name: String,
 	pub permission_manager: Rc<RefCell<PermissionManager>>,
 	pub members: HashMap<RoomMemberId, Member, FnvBuildHasher>,
 	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
@@ -79,6 +80,7 @@ impl Room {
 			user_id_generator: 0,
 			command_trace_session: Default::default(),
 			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
+			template_name: template.name.clone(),
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -96,7 +98,8 @@ impl Room {
 		F: FnMut(&RoomMemberId, &[CommandWithChannelType]),
 	{
 		for (user_id, user) in self.members.iter_mut() {
-			collector(user_id, user.out_commands.as_slice());
+			let commands = user.out_commands.as_slice();
+			collector(user_id, commands);
 			user.out_commands.clear();
 		}
 	}

@@ -10,6 +10,7 @@ use crate::room::template::config;
 impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
 		config::RoomTemplate {
+			name: source.template_name,
 			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
 			permissions: config::Permissions::from(source.permissions.unwrap_or_default()),
 		}
