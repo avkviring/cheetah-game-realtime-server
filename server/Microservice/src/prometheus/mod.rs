@@ -1,14 +1,15 @@
 use std::convert::Infallible;
 use std::net::SocketAddr;
 
+use crate::prometheus::measurer::ENABLE_PROMETHEUS;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
 use prometheus::{Encoder, TextEncoder};
 
-pub mod counter;
-pub mod gauge;
+pub mod measurer;
 
 pub(crate) fn setup_prometheus() {
+	*ENABLE_PROMETHEUS.lock().unwrap() = true;
 	tokio::spawn(async move {
 		tracing::info!("starting prometheus exporter");
 		let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

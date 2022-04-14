@@ -22,6 +22,8 @@ pub mod jwt;
 pub mod loki;
 pub mod prometheus;
 
+pub type StringId = heapless::String<20>;
+
 pub fn init(name: &str) {
 	setup_tracer(name);
 	setup_panic_hook();
