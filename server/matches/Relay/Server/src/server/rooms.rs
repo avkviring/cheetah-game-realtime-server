@@ -1,29 +1,24 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use fnv::FnvBuildHasher;
-use prometheus::{IntCounter, IntGauge};
 
-use cheetah_matches_relay_common::commands::FieldType;
-use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+use cheetah_matches_relay_common::protocol::frame::applications::CommandWithChannel;
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
-use cheetah_microservice::prometheus::measurers::{LabelFactoryFactory, MeasurersByLabel};
 
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
+use crate::server::measures::{HeaplessStatisticString, ServerMeasures};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
 	changed_rooms: heapless::FnvIndexSet<RoomId, 10_000>,
-	measure_room_count: MeasurersByLabel<String, IntGauge>,
-	measure_user_count: MeasurersByLabel<String, IntGauge>,
-	measure_object_count: MeasurersByLabel<String, IntGauge>,
-	measure_income_command_count: MeasurersByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
-	measure_outcome_command_count: MeasurersByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
+	measures: Rc<RefCell<ServerMeasures>>,
 }
 
 #[derive(Debug)]
@@ -31,50 +26,20 @@ pub enum RegisterUserError {
 	RoomNotFound,
 }
 
-impl Default for Rooms {
-	fn default() -> Self {
-		Rooms {
+impl Rooms {
+	pub fn new(measures: Rc<RefCell<ServerMeasures>>) -> Self {
+		Self {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
 			changed_rooms: Default::default(),
-			measure_room_count: MeasurersByLabel::new(
-				"room_count",
-				"Room by template",
-				prometheus::default_registry().clone(),
-				Box::new(|template| vec![("template", template.clone())]),
-			),
-			measure_user_count: MeasurersByLabel::new(
-				"user_count",
-				"User count",
-				prometheus::default_registry().clone(),
-				Box::new(|template| vec![("template", template.clone())]),
-			),
-			measure_object_count: MeasurersByLabel::new(
-				"object_count",
-				"Object count",
-				prometheus::default_registry().clone(),
-				Box::new(|template| vec![("template", template.to_string())]),
-			),
-			measure_income_command_count: MeasurersByLabel::new(
-				"income_command_counter",
-				"Income command counter",
-				prometheus::default_registry().clone(),
-				Self::measurer_label_factory(),
-			),
-			measure_outcome_command_count: MeasurersByLabel::new(
-				"outcome_command_counter",
-				"Outcome command counter",
-				prometheus::default_registry().clone(),
-				Self::measurer_label_factory(),
-			),
+			measures,
 		}
 	}
-}
 
-impl Rooms {
 	pub fn create_room(&mut self, template: RoomTemplate) -> RoomId {
 		self.room_id_generator += 1;
-		self.measure_room_count.measurer(&template.name).inc();
+		self.measures.borrow_mut().on_create_room(&template.name);
+
 		let room_id = self.room_id_generator;
 		let room = Room::new(room_id, template);
 		self.room_by_id.insert(room_id, room);
@@ -85,7 +50,7 @@ impl Rooms {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Result::Err(RegisterUserError::RoomNotFound),
 			Some(room) => {
-				self.measure_user_count.measurer(&room.template_name).inc();
+				self.measures.borrow_mut().on_user_register(&room.template_name);
 				Result::Ok(room.register_member(member_template))
 			}
 		}
@@ -100,16 +65,10 @@ impl Rooms {
 				None => {}
 				Some(room) => {
 					let room_id = room.id;
-					let template = heapless::String::<50>::from(room.template_name.as_str());
+					let template = HeaplessStatisticString::from(room.template_name.as_str());
 					room.collect_out_commands(|user_id, commands| {
 						collector(&room_id, user_id, commands);
-						commands.iter().for_each(|c| {
-							if let BothDirectionCommand::S2CWithCreator(ref c) = c.command {
-								let c = &c.command;
-								let key = (c.get_field_type(), c.get_field_id(), template.clone());
-								self.measure_outcome_command_count.measurer(&key).inc();
-							}
-						});
+						self.measures.borrow_mut().on_output_commands(&template, commands);
 					});
 				}
 			}
@@ -122,20 +81,10 @@ impl Rooms {
 				tracing::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
 			}
 			Some(room) => {
-				let prev_object_count = room.objects.len();
-
 				room.execute_commands(user_and_room_id.member_id, commands);
 				self.changed_rooms.insert(room.id).unwrap();
-
 				let template = heapless::String::<50>::from(room.template_name.as_str());
-				Self::measure_income_commands(&mut self.measure_income_command_count, commands, template.clone());
-
-				let delta_object_count = room.objects.len() - prev_object_count;
-				if delta_object_count != 0 {
-					self.measure_object_count
-						.measurer(&room.template_name)
-						.add(delta_object_count as i64);
-				}
+				self.measures.borrow_mut().on_input_commands(&template, commands);
 			}
 		}
 	}
@@ -147,40 +96,11 @@ impl Rooms {
 				member_and_room_id
 			))),
 			Some(room) => {
-				self.measure_user_count.measurer(&room.template_name).dec();
+				self.measures.borrow_mut().on_user_disconnected(&room.template_name);
 				room.disconnect_user(member_and_room_id.member_id)?;
 				self.changed_rooms.insert(member_and_room_id.room_id).unwrap();
 				Ok(())
 			}
 		}
-	}
-
-	fn measure_income_commands(
-		measurers: &mut MeasurersByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
-		commands: &[CommandWithChannel],
-		template: heapless::String<50>,
-	) {
-		commands.iter().for_each(|c| {
-			if let BothDirectionCommand::C2S(ref c) = c.both_direction_command {
-				let key = (c.get_field_type(), c.get_field_id(), template.clone());
-				measurers.measurer(&key).inc()
-			}
-		});
-	}
-	fn measurer_label_factory() -> Box<LabelFactoryFactory<(Option<FieldType>, Option<FieldId>, heapless::String<50>)>> {
-		Box::new(|(t, id, template)| {
-			vec![
-				(
-					"field_type",
-					t.map(|f| Into::<&str>::into(f).into())
-						.unwrap_or_else(|| "unknown".to_string()),
-				),
-				(
-					"field_id",
-					id.map(|f| format!("{}", f)).unwrap_or_else(|| "unknown".to_string()),
-				),
-				("template", template.to_string()),
-			]
-		})
 	}
 }

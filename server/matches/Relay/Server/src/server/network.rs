@@ -14,7 +14,7 @@ use crate::room::template::config::MemberTemplate;
 use crate::server::rooms::Rooms;
 
 #[derive(Debug)]
-pub struct NetworkServer {
+pub struct NetworkLayer {
 	sessions: HashMap<MemberAndRoomId, MemberSession>,
 	socket: UdpSocket,
 }
@@ -27,7 +27,7 @@ struct MemberSession {
 	pub protocol: Protocol,
 }
 
-impl NetworkServer {
+impl NetworkLayer {
 	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		tracing::info!("Starting network server on {:?}", socket);
@@ -197,7 +197,9 @@ impl NetworkServer {
 
 #[cfg(test)]
 mod tests {
+	use std::cell::RefCell;
 	use std::net::SocketAddr;
+	use std::rc::Rc;
 	use std::str::FromStr;
 	use std::time::Instant;
 
@@ -209,13 +211,14 @@ mod tests {
 
 	use crate::room::template::config::MemberTemplate;
 	use crate::room::Member;
-	use crate::server::network::NetworkServer;
+	use crate::server::measures::ServerMeasures;
+	use crate::server::network::NetworkLayer;
 	use crate::server::rooms::Rooms;
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
-		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
 		let buffer = [0; Frame::MAX_FRAME_SIZE];
 		let usize = 100_usize;
 		udp_server.process_in_frame(
@@ -229,8 +232,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_wrong_user() {
-		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId {
@@ -249,8 +252,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
-		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).unwrap();
@@ -268,8 +271,8 @@ mod tests {
 	///
 	#[test]
 	fn should_keep_address_from_last_frame() {
-		let mut udp_server = NetworkServer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::default();
+		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 
 		let user_template = MemberTemplate {

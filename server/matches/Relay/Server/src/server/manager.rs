@@ -13,7 +13,7 @@ use crate::debug::tracer::CommandTracerSessionsTask;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
-use crate::server::server::Server;
+use crate::server::Server;
 
 ///
 /// Управление сервером

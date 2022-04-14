@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::sync::Mutex;
 
 use prometheus::core::{Atomic, Collector, GenericGauge};
 use prometheus::{IntCounter, Opts, Registry};
