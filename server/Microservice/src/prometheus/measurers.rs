@@ -2,18 +2,15 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::Mutex;
 
-use lazy_static::lazy_static;
 use prometheus::core::{Atomic, Collector, GenericGauge};
 use prometheus::{IntCounter, Opts, Registry};
 
-lazy_static! {
-	pub(crate) static ref ENABLE_PROMETHEUS: Mutex<bool> = Mutex::new(false);
-}
+use crate::prometheus::ENABLE_PROMETHEUS;
 
 ///
 /// Доступ к prometheus измерителям по набору меток
 ///
-pub struct MeasurerByLabel<K, T>
+pub struct MeasurersByLabel<K, T>
 where
 	T: Collector,
 {
@@ -25,7 +22,7 @@ where
 }
 pub type LabelFactoryFactory<K> = dyn Fn(&K) -> Vec<(&'static str, String)>;
 
-impl<K, T: 'static> MeasurerByLabel<K, T>
+impl<K, T: 'static> MeasurersByLabel<K, T>
 where
 	K: Eq + Hash + Clone,
 	T: Collector + CollectorBuilder + Clone,
@@ -86,13 +83,13 @@ mod test {
 	use prometheus::proto::MetricFamily;
 	use prometheus::{IntCounter, Registry};
 
-	use crate::prometheus::measurer::{MeasurerByLabel, ENABLE_PROMETHEUS};
+	use crate::prometheus::measurers::{MeasurersByLabel, ENABLE_PROMETHEUS};
 
 	#[test]
 	pub fn test() {
 		*ENABLE_PROMETHEUS.lock().unwrap() = true;
 		let registry = Registry::new();
-		let mut measures = MeasurerByLabel::<u8, IntCounter>::new(
+		let mut measures = MeasurersByLabel::<u8, IntCounter>::new(
 			"name",
 			"help",
 			registry.clone(),

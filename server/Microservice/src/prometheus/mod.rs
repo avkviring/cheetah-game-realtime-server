@@ -1,12 +1,16 @@
-use std::convert::Infallible;
-use std::net::SocketAddr;
-
-use crate::prometheus::measurer::ENABLE_PROMETHEUS;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
+use lazy_static::lazy_static;
 use prometheus::{Encoder, TextEncoder};
+use std::convert::Infallible;
+use std::net::SocketAddr;
+use std::sync::Mutex;
 
-pub mod measurer;
+pub mod measurers;
+
+lazy_static! {
+	pub(crate) static ref ENABLE_PROMETHEUS: Mutex<bool> = Mutex::new(false);
+}
 
 pub(crate) fn setup_prometheus() {
 	*ENABLE_PROMETHEUS.lock().unwrap() = true;

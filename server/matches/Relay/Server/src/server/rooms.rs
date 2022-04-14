@@ -9,7 +9,7 @@ use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannel
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
-use cheetah_microservice::prometheus::measurer::{LabelFactoryFactory, MeasurerByLabel};
+use cheetah_microservice::prometheus::measurers::{LabelFactoryFactory, MeasurersByLabel};
 
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
@@ -19,10 +19,11 @@ pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
 	changed_rooms: heapless::FnvIndexSet<RoomId, 10_000>,
-	measure_room_count: MeasurerByLabel<String, IntGauge>,
-	measure_user_count: MeasurerByLabel<String, IntGauge>,
-	measure_income_command_count: MeasurerByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
-	measure_outcome_command_count: MeasurerByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
+	measure_room_count: MeasurersByLabel<String, IntGauge>,
+	measure_user_count: MeasurersByLabel<String, IntGauge>,
+	measure_object_count: MeasurersByLabel<String, IntGauge>,
+	measure_income_command_count: MeasurersByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
+	measure_outcome_command_count: MeasurersByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
 }
 
 #[derive(Debug)]
@@ -36,25 +37,31 @@ impl Default for Rooms {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
 			changed_rooms: Default::default(),
-			measure_room_count: MeasurerByLabel::new(
+			measure_room_count: MeasurersByLabel::new(
 				"room_count",
 				"Room by template",
 				prometheus::default_registry().clone(),
 				Box::new(|template| vec![("template", template.clone())]),
 			),
-			measure_user_count: MeasurerByLabel::new(
+			measure_user_count: MeasurersByLabel::new(
 				"user_count",
 				"User count",
 				prometheus::default_registry().clone(),
 				Box::new(|template| vec![("template", template.clone())]),
 			),
-			measure_income_command_count: MeasurerByLabel::new(
+			measure_object_count: MeasurersByLabel::new(
+				"object_count",
+				"Object count",
+				prometheus::default_registry().clone(),
+				Box::new(|template| vec![("template", template.to_string())]),
+			),
+			measure_income_command_count: MeasurersByLabel::new(
 				"income_command_counter",
 				"Income command counter",
 				prometheus::default_registry().clone(),
 				Self::measurer_label_factory(),
 			),
-			measure_outcome_command_count: MeasurerByLabel::new(
+			measure_outcome_command_count: MeasurersByLabel::new(
 				"outcome_command_counter",
 				"Outcome command counter",
 				prometheus::default_registry().clone(),
@@ -115,10 +122,20 @@ impl Rooms {
 				tracing::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
 			}
 			Some(room) => {
+				let prev_object_count = room.objects.len();
+
 				room.execute_commands(user_and_room_id.member_id, commands);
 				self.changed_rooms.insert(room.id).unwrap();
+
 				let template = heapless::String::<50>::from(room.template_name.as_str());
-				Self::measure_income_commands(&mut self.measure_income_command_count, commands, template);
+				Self::measure_income_commands(&mut self.measure_income_command_count, commands, template.clone());
+
+				let delta_object_count = room.objects.len() - prev_object_count;
+				if delta_object_count != 0 {
+					self.measure_object_count
+						.measurer(&room.template_name)
+						.add(delta_object_count as i64);
+				}
 			}
 		}
 	}
@@ -130,7 +147,7 @@ impl Rooms {
 				member_and_room_id
 			))),
 			Some(room) => {
-				self.measure_user_count.measurer(&room.template_name);
+				self.measure_user_count.measurer(&room.template_name).dec();
 				room.disconnect_user(member_and_room_id.member_id)?;
 				self.changed_rooms.insert(member_and_room_id.room_id).unwrap();
 				Ok(())
@@ -139,7 +156,7 @@ impl Rooms {
 	}
 
 	fn measure_income_commands(
-		measurers: &mut MeasurerByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
+		measurers: &mut MeasurersByLabel<(Option<FieldType>, Option<FieldId>, heapless::String<50>), IntCounter>,
 		commands: &[CommandWithChannel],
 		template: heapless::String<50>,
 	) {
