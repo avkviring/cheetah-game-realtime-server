@@ -696,9 +696,11 @@ dependencies = [
 name = "cheetah-microservice"
 version = "999.999.999"
 dependencies = [
+ "heapless",
  "httpmock",
  "hyper",
  "jsonwebtoken 7.2.0",
+ "lazy_static",
  "log",
  "prometheus",
  "reqwest",

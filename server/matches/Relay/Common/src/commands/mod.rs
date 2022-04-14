@@ -43,6 +43,18 @@ pub enum FieldType {
 	Structure,
 	Event,
 }
+
+impl From<FieldType> for &str {
+	fn from(source: FieldType) -> Self {
+		match source {
+			FieldType::Long => "long",
+			FieldType::Double => "double",
+			FieldType::Structure => "structure",
+			FieldType::Event => "event",
+		}
+	}
+}
+
 impl FieldType {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		let code = match self {

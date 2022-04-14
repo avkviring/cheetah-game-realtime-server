@@ -1,12 +1,11 @@
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, _member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		room.delete_object(&self.object_id)?;
 		Ok(())
 	}
@@ -18,7 +17,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 
-	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
+	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::Room;
 
