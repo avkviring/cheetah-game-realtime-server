@@ -49,10 +49,7 @@ impl Rooms {
 	pub fn register_user(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RegisterUserError> {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Result::Err(RegisterUserError::RoomNotFound),
-			Some(room) => {
-				self.measures.borrow_mut().on_user_register(&room.template_name);
-				Result::Ok(room.register_member(member_template))
-			}
+			Some(room) => Result::Ok(room.register_member(member_template)),
 		}
 	}
 
@@ -81,10 +78,25 @@ impl Rooms {
 				tracing::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
 			}
 			Some(room) => {
+				let object_count = room.objects.len();
+				let members_count = room.members.len();
 				room.execute_commands(user_and_room_id.member_id, commands);
 				self.changed_rooms.insert(room.id).unwrap();
-				let template = heapless::String::<50>::from(room.template_name.as_str());
-				self.measures.borrow_mut().on_input_commands(&template, commands);
+
+				let delta_object_count = room.objects.len() - object_count;
+				if delta_object_count > 0 {
+					self.measures
+						.borrow_mut()
+						.on_change_object_count(&room.template_name, delta_object_count as i64);
+				}
+				let delta_members_count = room.members.len() - members_count;
+				if delta_members_count > 0 {
+					self.measures
+						.borrow_mut()
+						.on_change_member_count(&room.template_name, delta_members_count as i64);
+				}
+
+				self.measures.borrow_mut().on_input_commands(&room.template_name, commands);
 			}
 		}
 	}
@@ -96,7 +108,6 @@ impl Rooms {
 				member_and_room_id
 			))),
 			Some(room) => {
-				self.measures.borrow_mut().on_user_disconnected(&room.template_name);
 				room.disconnect_user(member_and_room_id.member_id)?;
 				self.changed_rooms.insert(member_and_room_id.room_id).unwrap();
 				Ok(())
