@@ -9,41 +9,33 @@ use crate::prometheus::ENABLE_PROMETHEUS;
 ///
 /// Доступ к prometheus измерителям по набору меток
 ///
-pub struct MeasurersByLabel<K, T>
+pub struct MeasurersByLabel<K, T, OPTS>
 where
 	T: Collector,
 {
 	registry: Registry,
-	name: String,
-	help: String,
 	tools: HashMap<K, T>,
-	label_factory: Box<LabelFactoryFactory<K>>,
+	opts_factory: Box<LabelFactoryFactory<K, OPTS>>,
 }
-pub type LabelFactoryFactory<K> = dyn Fn(&K) -> Vec<(&'static str, String)>;
+pub type LabelFactoryFactory<K, OPTS> = dyn Fn(&K) -> OPTS;
 
-impl<K, T: 'static> MeasurersByLabel<K, T>
+impl<K, T: 'static, OPTS> MeasurersByLabel<K, T, OPTS>
 where
 	K: Eq + Hash + Clone,
-	T: Collector + CollectorBuilder + Clone,
+	T: Collector + CollectorBuilder<OPTS> + Clone,
 {
-	pub fn new(name: &str, help: &str, registry: Registry, label_factory: Box<LabelFactoryFactory<K>>) -> Self {
+	pub fn new(registry: &Registry, opts_factory: Box<LabelFactoryFactory<K, OPTS>>) -> Self {
 		Self {
-			registry,
-			name: name.into(),
-			help: help.into(),
+			registry: registry.clone(),
 			tools: Default::default(),
-			label_factory,
+			opts_factory,
 		}
 	}
 
 	pub fn measurer(&mut self, key: &K) -> &mut T {
 		if let None = self.tools.get(key) {
-			let labels_map: HashMap<String, String> = (self.label_factory)(key)
-				.iter()
-				.map(|(k, v)| (k.to_string(), v.to_string()))
-				.collect();
-			let opts = Opts::new(self.name.clone(), self.help.as_str()).const_labels(labels_map);
-			let measurer: T = CollectorBuilder::build(opts);
+			let opts = (self.opts_factory)(key);
+			let measurer: T = CollectorBuilder::<OPTS>::build(opts);
 			if *ENABLE_PROMETHEUS.lock().unwrap() {
 				match self.registry.register(Box::new(measurer.clone())) {
 					Ok(_) => {}
@@ -59,16 +51,17 @@ where
 		self.tools.get_mut(key).unwrap()
 	}
 }
-pub trait CollectorBuilder {
-	fn build(source: Opts) -> Self;
+pub trait CollectorBuilder<OPTS> {
+	fn build(source: OPTS) -> Self;
 }
-impl CollectorBuilder for IntCounter {
+
+impl CollectorBuilder<Opts> for IntCounter {
 	fn build(opts: Opts) -> Self {
 		IntCounter::with_opts(opts).unwrap()
 	}
 }
 
-impl<P> CollectorBuilder for GenericGauge<P>
+impl<P> CollectorBuilder<Opts> for GenericGauge<P>
 where
 	P: Atomic,
 {
@@ -80,7 +73,7 @@ where
 #[cfg(test)]
 mod test {
 	use prometheus::proto::MetricFamily;
-	use prometheus::{IntCounter, Registry};
+	use prometheus::{IntCounter, Opts, Registry};
 
 	use crate::prometheus::measurers::{MeasurersByLabel, ENABLE_PROMETHEUS};
 
@@ -88,11 +81,11 @@ mod test {
 	pub fn test() {
 		*ENABLE_PROMETHEUS.lock().unwrap() = true;
 		let registry = Registry::new();
-		let mut measures = MeasurersByLabel::<u8, IntCounter>::new(
-			"name",
-			"help",
-			registry.clone(),
-			Box::new(|key| vec![("label", key.to_string())]),
+		let mut measures = MeasurersByLabel::<u8, IntCounter, Opts>::new(
+			&registry,
+			Box::new(|key| {
+				Opts::new("name", "help").const_labels(vec![("label".to_string(), key.to_string())].into_iter().collect())
+			}),
 		);
 
 		let counter = measures.measurer(&10);

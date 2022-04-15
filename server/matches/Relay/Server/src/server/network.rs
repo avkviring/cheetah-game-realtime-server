@@ -211,14 +211,14 @@ mod tests {
 
 	use crate::room::template::config::MemberTemplate;
 	use crate::room::Member;
-	use crate::server::measures::ServerMeasures;
+	use crate::server::measurers::ServerMeasurers;
 	use crate::server::network::NetworkLayer;
 	use crate::server::rooms::Rooms;
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
 		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
 		let buffer = [0; Frame::MAX_FRAME_SIZE];
 		let usize = 100_usize;
 		udp_server.process_in_frame(
@@ -233,7 +233,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_wrong_user() {
 		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId {
@@ -253,7 +253,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
 		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).unwrap();
@@ -272,7 +272,7 @@ mod tests {
 	#[test]
 	fn should_keep_address_from_last_frame() {
 		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasures::new())));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 
 		let user_template = MemberTemplate {

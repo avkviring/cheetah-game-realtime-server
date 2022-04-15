@@ -14,12 +14,12 @@ use admin::DumpResponse;
 use crate::debug::proto::admin;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
-use crate::server::measures::ServerMeasures;
+use crate::server::measurers::ServerMeasurers;
 use crate::server::network::NetworkLayer;
 use crate::server::rooms::Rooms;
 
 pub mod manager;
-pub mod measures;
+pub mod measurers;
 pub mod network;
 pub mod rooms;
 
@@ -45,7 +45,7 @@ impl Drop for Server {
 
 impl Server {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
-		let measures = Rc::new(RefCell::new(ServerMeasures::new()));
+		let measures = Rc::new(RefCell::new(ServerMeasurers::new()));
 		Self {
 			network_layer: NetworkLayer::new(socket).unwrap(),
 			rooms: Rooms::new(measures),
