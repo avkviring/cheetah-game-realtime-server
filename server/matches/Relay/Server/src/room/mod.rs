@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::time::Instant;
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
@@ -24,6 +25,7 @@ use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
+use crate::server::measurers::ServerMeasurers;
 
 pub mod action;
 pub mod command;
@@ -32,7 +34,6 @@ pub mod sender;
 pub mod template;
 pub mod types;
 
-#[derive(Debug)]
 pub struct Room {
 	pub id: RoomId,
 	pub template_name: String,
@@ -52,6 +53,7 @@ pub struct Room {
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
 	pub out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
+	measurers: Rc<RefCell<ServerMeasurers>>,
 }
 
 #[derive(Debug)]
@@ -65,7 +67,7 @@ pub struct Member {
 }
 
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate, measurers: Rc<RefCell<ServerMeasurers>>) -> Self {
 		let mut room = Room {
 			id,
 			members: FnvHashMap::default(),
@@ -81,6 +83,7 @@ impl Room {
 			command_trace_session: Default::default(),
 			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 			template_name: template.name.clone(),
+			measurers,
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -131,18 +134,23 @@ impl Room {
 			}
 		}
 
+		let measurers = self.measurers.clone();
+		let mut measurers = measurers.borrow_mut();
 		let tracer = self.command_trace_session.clone();
 		for command_with_channel in commands {
 			match &command_with_channel.both_direction_command {
 				BothDirectionCommand::C2S(command) => {
 					self.current_channel.replace(From::from(&command_with_channel.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, command);
+
+					let instant = Instant::now();
 					match execute(command, self, user_id) {
 						Ok(_) => {}
 						Err(e) => {
-							e.log_error_with_command(command, self.id, user_id);
+							e.log_command_execute_error(command, self.id, user_id);
 						}
 					}
+					measurers.on_execute_command(command.get_field_id(), &command, instant.elapsed())
 				}
 				_ => {
 					tracing::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel)
@@ -274,7 +282,9 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
+	use std::cell::RefCell;
 	use std::collections::VecDeque;
+	use std::rc::Rc;
 
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand::SetLong;
@@ -292,16 +302,17 @@ mod tests {
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};
+	use crate::server::measurers::ServerMeasurers;
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(0, RoomTemplate::default())
+			Room::new(0, RoomTemplate::default(), Rc::new(RefCell::new(ServerMeasurers::new())))
 		}
 	}
 
 	impl Room {
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template)
+			Room::new(0, template, Rc::new(RefCell::new(ServerMeasurers::new())))
 		}
 
 		pub fn test_create_object(

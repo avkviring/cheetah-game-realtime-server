@@ -41,7 +41,7 @@ impl Rooms {
 		self.measures.borrow_mut().on_create_room(&template.name);
 
 		let room_id = self.room_id_generator;
-		let room = Room::new(room_id, template);
+		let room = Room::new(room_id, template, self.measures.clone());
 		self.room_by_id.insert(room_id, room);
 		room_id
 	}
@@ -83,20 +83,17 @@ impl Rooms {
 				room.execute_commands(user_and_room_id.member_id, commands);
 				self.changed_rooms.insert(room.id).unwrap();
 
+				let mut measures = self.measures.borrow_mut();
 				let delta_object_count = room.objects.len() - object_count;
 				if delta_object_count > 0 {
-					self.measures
-						.borrow_mut()
-						.on_change_object_count(&room.template_name, delta_object_count as i64);
+					measures.on_change_object_count(&room.template_name, delta_object_count as i64);
 				}
 				let delta_members_count = room.members.len() - members_count;
 				if delta_members_count > 0 {
-					self.measures
-						.borrow_mut()
-						.on_change_member_count(&room.template_name, delta_members_count as i64);
+					measures.on_change_member_count(&room.template_name, delta_members_count as i64);
 				}
 
-				self.measures.borrow_mut().on_input_commands(&room.template_name, commands);
+				measures.on_input_commands(&room.template_name, commands);
 			}
 		}
 	}

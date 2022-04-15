@@ -1,5 +1,8 @@
-use prometheus::{IntCounter, IntGauge, Opts};
+use std::time::Duration;
 
+use prometheus::{Histogram, HistogramOpts, IntCounter, IntGauge, Opts};
+
+use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
@@ -17,6 +20,7 @@ pub struct ServerMeasurers {
 	object_count: MeasurersByLabel<String, IntGauge, Opts>,
 	income_command_count: MeasurersByLabel<(Option<FieldType>, Option<FieldId>, HeaplessStatisticString), IntCounter, Opts>,
 	outcome_command_count: MeasurersByLabel<(Option<FieldType>, Option<FieldId>, HeaplessStatisticString), IntCounter, Opts>,
+	execution_time: MeasurersByLabel<(HeaplessStatisticString, Option<FieldId>), Histogram, HistogramOpts>,
 }
 
 impl ServerMeasurers {
@@ -52,6 +56,30 @@ impl ServerMeasurers {
 				registry,
 				Self::measurer_label_factory("outcome_command_counter", "Outcome command counter"),
 			),
+			execution_time: MeasurersByLabel::new(
+				registry,
+				Box::new(|(command, field_id)| {
+					HistogramOpts::new("command_execution_time", "command execution time")
+						.buckets(vec![
+							Duration::from_nanos(5).as_secs_f64(),
+							Duration::from_nanos(10).as_secs_f64(),
+							Duration::from_nanos(100).as_secs_f64(),
+							Duration::from_nanos(500).as_secs_f64(),
+							Duration::from_millis(1).as_secs_f64(),
+							Duration::from_millis(5).as_secs_f64(),
+							Duration::from_millis(10).as_secs_f64(),
+							Duration::from_millis(50).as_secs_f64(),
+						])
+						.const_labels(
+							vec![
+								("command".to_string(), command.to_string()),
+								("field_id".to_string(), format!("{:?}", field_id)),
+							]
+							.into_iter()
+							.collect(),
+						)
+				}),
+			),
 		}
 	}
 
@@ -85,6 +113,12 @@ impl ServerMeasurers {
 				self.income_command_count.measurer(&key).inc()
 			}
 		});
+	}
+
+	pub(crate) fn on_execute_command(&mut self, field_id: Option<FieldId>, command: &C2SCommand, duration: Duration) {
+		let name = command.as_ref();
+		let key = (HeaplessStatisticString::from(name), field_id);
+		self.execution_time.measurer(&key).observe(duration.as_secs_f64());
 	}
 
 	fn measurer_label_factory(

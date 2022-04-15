@@ -75,7 +75,7 @@ pub enum ServerCommandError {
 }
 
 impl ServerCommandError {
-	pub fn log_error_with_command(&self, command: &C2SCommand, room_id: RoomId, room_member_id: RoomMemberId) {
+	pub fn log_command_execute_error(&self, command: &C2SCommand, room_id: RoomId, room_member_id: RoomMemberId) {
 		tracing::error!(
 			"Error execute command: {:?} in room {} from client {} : {:?}",
 			command,
