@@ -45,9 +45,9 @@ impl Drop for Server {
 
 impl Server {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
-		let measures = Rc::new(RefCell::new(ServerMeasurers::new()));
+		let measures = Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry())));
 		Self {
-			network_layer: NetworkLayer::new(socket).unwrap(),
+			network_layer: NetworkLayer::new(socket, measures.clone()).unwrap(),
 			rooms: Rooms::new(measures),
 			receiver,
 			max_cycle_time: 0,

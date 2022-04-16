@@ -1,6 +1,8 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
+use std::rc::Rc;
 use std::time::Instant;
 
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
@@ -11,12 +13,13 @@ use cheetah_matches_relay_common::protocol::Protocol;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::room::template::config::MemberTemplate;
+use crate::server::measurers::ServerMeasurers;
 use crate::server::rooms::Rooms;
 
-#[derive(Debug)]
 pub struct NetworkLayer {
 	sessions: HashMap<MemberAndRoomId, MemberSession>,
 	socket: UdpSocket,
+	measurers: Rc<RefCell<ServerMeasurers>>,
 }
 
 #[derive(Debug)]
@@ -28,12 +31,13 @@ struct MemberSession {
 }
 
 impl NetworkLayer {
-	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
+	pub fn new(socket: UdpSocket, measurers: Rc<RefCell<ServerMeasurers>>) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		tracing::info!("Starting network server on {:?}", socket);
 		Result::Ok(Self {
 			sessions: Default::default(),
 			socket,
+			measurers,
 		})
 	}
 
@@ -130,6 +134,8 @@ impl NetworkLayer {
 		address: SocketAddr,
 		now: &Instant,
 	) {
+		self.measurers.borrow_mut().on_income_frame(size);
+
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_id, headers)) => {
@@ -217,8 +223,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
-		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
+		let mut udp_server = create_network_layer();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))));
 		let buffer = [0; Frame::MAX_FRAME_SIZE];
 		let usize = 100_usize;
 		udp_server.process_in_frame(
@@ -232,8 +238,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_wrong_user() {
-		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
+		let mut udp_server = create_network_layer();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let mut frame = Frame::new(0);
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId {
@@ -252,8 +258,8 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
-		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
+		let mut udp_server = create_network_layer();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 		let frame = Frame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).unwrap();
@@ -271,8 +277,8 @@ mod tests {
 	///
 	#[test]
 	fn should_keep_address_from_last_frame() {
-		let mut udp_server = NetworkLayer::new(bind_to_free_socket().unwrap().0).unwrap();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new())));
+		let mut udp_server = create_network_layer();
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))));
 		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
 
 		let user_template = MemberTemplate {
@@ -316,5 +322,13 @@ mod tests {
 			udp_server.sessions.get(&user_and_room_id).unwrap().peer_address.unwrap(),
 			addr_1
 		);
+	}
+
+	fn create_network_layer() -> NetworkLayer {
+		NetworkLayer::new(
+			bind_to_free_socket().unwrap().0,
+			Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))),
+		)
+		.unwrap()
 	}
 }

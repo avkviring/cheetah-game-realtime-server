@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-use std::hash::Hash;
-
-use prometheus::core::{Atomic, Collector, GenericGauge};
-use prometheus::{Histogram, HistogramOpts, IntCounter, Opts, Registry};
+use prometheus::core::Collector;
+use prometheus::Registry;
 
 use crate::prometheus::{MeasureBuilder, ENABLE_PROMETHEUS};
 

@@ -12,7 +12,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
-use crate::server::measurers::{HeaplessStatisticString, ServerMeasurers};
+use crate::server::measurers::{MeasureStringId, ServerMeasurers};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
@@ -62,7 +62,7 @@ impl Rooms {
 				None => {}
 				Some(room) => {
 					let room_id = room.id;
-					let template = HeaplessStatisticString::from(room.template_name.as_str());
+					let template = MeasureStringId::from(room.template_name.as_str());
 					room.collect_out_commands(|user_id, commands| {
 						collector(&room_id, user_id, commands);
 						self.measures.borrow_mut().on_output_commands(&template, commands);

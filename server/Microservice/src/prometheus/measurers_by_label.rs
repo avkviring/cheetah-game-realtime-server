@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
-use prometheus::core::{Atomic, Collector, GenericGauge};
+use prometheus::core::Collector;
 use prometheus::{Histogram, HistogramOpts, IntCounter, Opts, Registry};
 
 use crate::prometheus::{MeasureBuilder, ENABLE_PROMETHEUS};
+
+pub type IntCounterMeasurersByLabel<K> = MeasurersByLabel<K, IntCounter, Opts>;
+pub type HistogramMeasurersByLabel<K> = MeasurersByLabel<K, Histogram, HistogramOpts>;
 
 ///
 /// Доступ к prometheus измерителям по набору меток
@@ -33,7 +36,7 @@ where
 	}
 
 	pub fn measurer(&mut self, key: &K) -> &mut T {
-		if let None = self.tools.get(key) {
+		if self.tools.get(key).is_none() {
 			let opts = (self.opts_factory)(key);
 			let measurer: T = MeasureBuilder::<OPTS>::build(opts);
 			if *ENABLE_PROMETHEUS.lock().unwrap() {

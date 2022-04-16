@@ -52,9 +52,14 @@ pub fn stress_test() {
 
 	tracing::info!("result {:?} {:?}", send_inc_long_count, LONG_VALUE.lock().unwrap().as_ref());
 
-	assert!(matches!(LONG_VALUE.lock().unwrap().as_ref(),
-			Option::Some((id, field_id, value))
-			if *id== object_id  && *field_id == 1 && *value==send_inc_long_count));
+	let result = LONG_VALUE.lock();
+	let result = result.unwrap();
+	let result: Option<&(GameObjectIdFFI, FieldId, i64)> = result.as_ref();
+	assert!(result.is_some());
+	let result: &(GameObjectIdFFI, FieldId, i64) = result.unwrap();
+	assert_eq!(result.0, object_id);
+	assert_eq!(result.1, 1);
+	assert_eq!(result.2, send_inc_long_count);
 }
 
 lazy_static! {

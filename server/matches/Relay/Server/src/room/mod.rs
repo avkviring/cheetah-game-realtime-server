@@ -306,13 +306,21 @@ mod tests {
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(0, RoomTemplate::default(), Rc::new(RefCell::new(ServerMeasurers::new())))
+			Room::new(
+				0,
+				RoomTemplate::default(),
+				Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))),
+			)
 		}
 	}
 
 	impl Room {
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template, Rc::new(RefCell::new(ServerMeasurers::new())))
+			Room::new(
+				0,
+				template,
+				Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))),
+			)
 		}
 
 		pub fn test_create_object(
