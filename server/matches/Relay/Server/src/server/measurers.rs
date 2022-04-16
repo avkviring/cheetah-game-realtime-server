@@ -26,6 +26,7 @@ pub struct ServerMeasurers {
 	outcome_command_count: IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
 	execution_command_time: HistogramMeasurersByLabel<(MeasureStringId, Option<FieldId>)>,
 	input_frame_size: Histogram,
+	input_frame_time: Histogram,
 }
 
 impl ServerMeasurers {
@@ -37,12 +38,32 @@ impl ServerMeasurers {
 			income_command_count: Self::create_income_command_count_measurers(registry),
 			outcome_command_count: Self::create_outcome_command_count_measurers(registry),
 			execution_command_time: Self::create_execution_command_time_measurers(registry),
-			input_frame_size: create_and_register_measurer(
-				registry,
-				HistogramOpts::new("input_frame_size", "Input frame size")
-					.buckets(vec![100.0, 200.0, 400.0, 800.0, 1200.0, 1500.0]),
-			),
+			input_frame_size: Self::create_input_frame_size(registry),
+			input_frame_time: Self::create_and_input_frame_size(registry),
 		}
+	}
+
+	fn create_and_input_frame_size(registry: &Registry) -> Histogram {
+		create_and_register_measurer(
+			registry,
+			HistogramOpts::new("input_frame_time", "Input frame time").buckets(vec![
+				Duration::from_nanos(5).as_secs_f64(),
+				Duration::from_nanos(10).as_secs_f64(),
+				Duration::from_nanos(100).as_secs_f64(),
+				Duration::from_nanos(500).as_secs_f64(),
+				Duration::from_millis(1).as_secs_f64(),
+				Duration::from_millis(5).as_secs_f64(),
+				Duration::from_millis(10).as_secs_f64(),
+				Duration::from_millis(50).as_secs_f64(),
+			]),
+		)
+	}
+
+	fn create_input_frame_size(registry: &Registry) -> Histogram {
+		create_and_register_measurer(
+			registry,
+			HistogramOpts::new("input_frame_size", "Input frame size").buckets(vec![100.0, 200.0, 400.0, 800.0, 1200.0, 1500.0]),
+		)
 	}
 
 	fn create_execution_command_time_measurers(
@@ -160,8 +181,9 @@ impl ServerMeasurers {
 		self.execution_command_time.measurer(&key).observe(duration.as_secs_f64());
 	}
 
-	pub(crate) fn on_income_frame(&mut self, size: usize) {
-		self.input_frame_size.observe(size as f64)
+	pub(crate) fn on_income_frame(&mut self, size: usize, duration: Duration) {
+		self.input_frame_size.observe(size as f64);
+		self.input_frame_time.observe(duration.as_secs_f64());
 	}
 
 	fn network_command_measurer_label_factory(

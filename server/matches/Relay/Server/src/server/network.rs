@@ -134,8 +134,7 @@ impl NetworkLayer {
 		address: SocketAddr,
 		now: &Instant,
 	) {
-		self.measurers.borrow_mut().on_income_frame(size);
-
+		let start_time = Instant::now();
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match Frame::decode_headers(&mut cursor) {
 			Ok((frame_id, headers)) => {
@@ -183,6 +182,9 @@ impl NetworkLayer {
 				tracing::error!("decode headers error {:?}", e);
 			}
 		}
+
+		let mut measurers = self.measurers.borrow_mut();
+		measurers.on_income_frame(size, start_time.elapsed());
 	}
 
 	pub fn register_user(&mut self, now: &Instant, room_id: RoomId, user_id: RoomMemberId, template: MemberTemplate) {
