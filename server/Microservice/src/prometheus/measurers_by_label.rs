@@ -4,7 +4,7 @@ use std::hash::Hash;
 use prometheus::core::{Atomic, Collector, GenericGauge};
 use prometheus::{Histogram, HistogramOpts, IntCounter, Opts, Registry};
 
-use crate::prometheus::ENABLE_PROMETHEUS;
+use crate::prometheus::{MeasureBuilder, ENABLE_PROMETHEUS};
 
 ///
 /// Доступ к prometheus измерителям по набору меток
@@ -51,37 +51,14 @@ where
 		self.tools.get_mut(key).unwrap()
 	}
 }
-pub trait MeasureBuilder<OPTS> {
-	fn build(source: OPTS) -> Self;
-}
-
-impl MeasureBuilder<Opts> for IntCounter {
-	fn build(opts: Opts) -> Self {
-		IntCounter::with_opts(opts).unwrap()
-	}
-}
-
-impl<P> MeasureBuilder<Opts> for GenericGauge<P>
-where
-	P: Atomic,
-{
-	fn build(source: Opts) -> Self {
-		GenericGauge::<P>::with_opts(source).unwrap()
-	}
-}
-
-impl MeasureBuilder<HistogramOpts> for Histogram {
-	fn build(opts: HistogramOpts) -> Self {
-		Histogram::with_opts(opts).unwrap()
-	}
-}
 
 #[cfg(test)]
 mod test {
 	use prometheus::proto::MetricFamily;
 	use prometheus::{IntCounter, Opts, Registry};
 
-	use crate::prometheus::measurers::{MeasurersByLabel, ENABLE_PROMETHEUS};
+	use crate::prometheus::measurers_by_label::MeasurersByLabel;
+	use crate::prometheus::ENABLE_PROMETHEUS;
 
 	#[test]
 	pub fn test() {

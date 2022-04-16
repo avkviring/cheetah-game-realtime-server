@@ -1,12 +1,15 @@
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Request, Response, Server};
-use lazy_static::lazy_static;
-use prometheus::{Encoder, TextEncoder};
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Mutex;
 
-pub mod measurers;
+use hyper::service::{make_service_fn, service_fn};
+use hyper::{Body, Request, Response, Server};
+use lazy_static::lazy_static;
+use prometheus::core::{Atomic, GenericGauge};
+use prometheus::{Encoder, Histogram, HistogramOpts, IntCounter, Opts, TextEncoder};
+
+pub mod measurer;
+pub mod measurers_by_label;
 
 lazy_static! {
 	pub(crate) static ref ENABLE_PROMETHEUS: Mutex<bool> = Mutex::new(false);
@@ -34,5 +37,27 @@ async fn metrics(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
 	Ok(Response::new(output.into()))
 }
 
-#[cfg(test)]
-mod test {}
+pub trait MeasureBuilder<OPTS> {
+	fn build(source: OPTS) -> Self;
+}
+
+impl MeasureBuilder<Opts> for IntCounter {
+	fn build(opts: Opts) -> Self {
+		IntCounter::with_opts(opts).unwrap()
+	}
+}
+
+impl<P> MeasureBuilder<Opts> for GenericGauge<P>
+where
+	P: Atomic,
+{
+	fn build(source: Opts) -> Self {
+		GenericGauge::<P>::with_opts(source).unwrap()
+	}
+}
+
+impl MeasureBuilder<HistogramOpts> for Histogram {
+	fn build(opts: HistogramOpts) -> Self {
+		Histogram::with_opts(opts).unwrap()
+	}
+}

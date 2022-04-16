@@ -20,7 +20,7 @@ pub mod helpers;
 /// Тестируем работу сервера под большой нагрузкой
 ///
 #[test]
-pub fn test() {
+pub fn stress_test() {
 	init_logger();
 	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
 	let object_id = helper.create_user_object(client1);
