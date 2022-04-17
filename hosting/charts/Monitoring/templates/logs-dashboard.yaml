@@ -29,8 +29,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 27,
-      "iteration": 1645461654161,
+      "iteration": 1650186152983,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -83,10 +82,10 @@ data:
             "current": {
               "selected": true,
               "text": [
-                  "All"
+                "All"
               ],
               "value": [
-                  "$__all"
+                "$__all"
               ]
             },
             "datasource": {
@@ -110,10 +109,10 @@ data:
             "current": {
               "selected": true,
               "text": [
-                  "kviring"
+                "kviring"
               ],
               "value": [
-                  "kviring"
+                "kviring"
               ]
             },
             "datasource": {
@@ -137,10 +136,10 @@ data:
             "current": {
               "selected": true,
               "text": [
-                  "All"
+                "All"
               ],
               "value": [
-                  "$__all"
+                "$__all"
               ]
             },
             "datasource": {
@@ -189,6 +188,6 @@ data:
       "timezone": "",
       "title": "Logs",
       "uid": "nU8KCWf7z",
-      "version": 21,
+      "version": 1,
       "weekStart": ""
     }

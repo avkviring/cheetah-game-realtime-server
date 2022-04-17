@@ -75,14 +75,15 @@ impl Measurers {
 		create_and_register_measurer(
 			registry,
 			HistogramOpts::new("server_cycle_execution_time", "Server cycle execution time").buckets(vec![
-				Duration::from_nanos(5).as_secs_f64(),
-				Duration::from_nanos(10).as_secs_f64(),
-				Duration::from_nanos(100).as_secs_f64(),
-				Duration::from_nanos(500).as_secs_f64(),
+				Duration::from_micros(5).as_secs_f64(),
+				Duration::from_micros(50).as_secs_f64(),
+				Duration::from_micros(100).as_secs_f64(),
+				Duration::from_micros(500).as_secs_f64(),
 				Duration::from_millis(1).as_secs_f64(),
 				Duration::from_millis(5).as_secs_f64(),
-				Duration::from_millis(10).as_secs_f64(),
 				Duration::from_millis(50).as_secs_f64(),
+				Duration::from_millis(100).as_secs_f64(),
+				Duration::from_millis(500).as_secs_f64(),
 			]),
 		)
 	}
@@ -91,10 +92,11 @@ impl Measurers {
 		create_and_register_measurer(
 			registry,
 			HistogramOpts::new("input_frame_execution_time", "Input frame execution time").buckets(vec![
-				Duration::from_nanos(5).as_secs_f64(),
-				Duration::from_nanos(10).as_secs_f64(),
-				Duration::from_nanos(100).as_secs_f64(),
-				Duration::from_nanos(500).as_secs_f64(),
+				Duration::from_micros(10).as_secs_f64(),
+				Duration::from_micros(50).as_secs_f64(),
+				Duration::from_micros(100).as_secs_f64(),
+				Duration::from_micros(500).as_secs_f64(),
+				Duration::from_micros(900).as_secs_f64(),
 				Duration::from_millis(1).as_secs_f64(),
 				Duration::from_millis(5).as_secs_f64(),
 				Duration::from_millis(10).as_secs_f64(),
@@ -118,10 +120,11 @@ impl Measurers {
 			Box::new(|(command, field_id)| {
 				HistogramOpts::new("command_execution_time", "command execution time")
 					.buckets(vec![
-						Duration::from_nanos(5).as_secs_f64(),
-						Duration::from_nanos(10).as_secs_f64(),
-						Duration::from_nanos(100).as_secs_f64(),
-						Duration::from_nanos(500).as_secs_f64(),
+						Duration::from_micros(10).as_secs_f64(),
+						Duration::from_micros(50).as_secs_f64(),
+						Duration::from_micros(100).as_secs_f64(),
+						Duration::from_micros(500).as_secs_f64(),
+						Duration::from_micros(900).as_secs_f64(),
 						Duration::from_millis(1).as_secs_f64(),
 						Duration::from_millis(5).as_secs_f64(),
 						Duration::from_millis(10).as_secs_f64(),
