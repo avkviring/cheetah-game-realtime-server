@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use crate::proto::matches::relay::internal as relay;
 use crate::proto::matches::relay::shared;
+use crate::service::configuration::converter::error::Error;
 use crate::service::configuration::yaml::structures::{
 	Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template, TemplateName,
 };
-use crate::service::configuration::converter::error::Error;
 
 ///
 /// Создание описание прав доступа relay::GameObjectTemplatePermission из конфигурации
@@ -102,11 +102,13 @@ impl From<&FieldType> for shared::FieldType {
 pub mod test {
 	use crate::proto::matches::relay::internal as relay;
 	use crate::proto::matches::relay::shared;
+	use crate::service::configuration::converter::error::Error;
+	use crate::service::configuration::converter::template::{
+		create_permission_rule, create_permissions_field, create_template_permission,
+	};
 	use crate::service::configuration::yaml::structures::{
 		Field, FieldType, PermissionField, PermissionLevel, Template, TemplatePermissions,
 	};
-	use crate::service::configuration::converter::error::Error;
-	use crate::service::configuration::converter::template::{create_permission_rule, create_permissions_field, create_template_permission};
 
 	#[test]
 	fn should_create_template_permission() {
@@ -172,7 +174,7 @@ pub mod test {
 			&Default::default(),
 		);
 		assert!(matches!(result, 
-			Result::Err(Error::GroupNotFoundInTemplate(template_name,group_name )) 
+			Result::Err(Error::GroupNotFoundInTemplate(template_name, group_name)) 
 			if template_name==*"template" && group_name==*"groupA"));
 	}
 

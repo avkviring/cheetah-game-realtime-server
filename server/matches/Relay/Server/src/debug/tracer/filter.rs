@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
-use crate::debug::tracer::{TracedCommand, TracedBothDirectionCommand};
+use crate::debug::tracer::{TracedBothDirectionCommand, TracedCommand};
 
 ///
 /// Фильтрация сетевых команд на основе правил
@@ -126,7 +126,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
-	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedCommand, TracedBothDirectionCommand};
+	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedBothDirectionCommand, TracedCommand};
 
 	impl TracedCommand {
 		pub fn c2s() -> Self {

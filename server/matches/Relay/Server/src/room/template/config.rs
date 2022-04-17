@@ -14,7 +14,7 @@ use crate::room::object::Field;
 ///
 #[derive(Debug, Default, Clone)]
 pub struct RoomTemplate {
-	pub name:String,
+	pub name: String,
 	pub objects: Vec<GameObjectTemplate>,
 	pub permissions: Permissions,
 }

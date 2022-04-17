@@ -16,12 +16,8 @@ fn main() -> Result<(), Error> {
 	)?;
 
 	tonic_build::configure().build_client(false).compile(
-		&[
-			"../../../proto/matches/Matchmaking/matches.matchmaking.external.proto",
-		],
-		&[
-			"../../../proto/matches/Matchmaking/",
-		],
+		&["../../../proto/matches/Matchmaking/matches.matchmaking.external.proto"],
+		&["../../../proto/matches/Matchmaking/"],
 	)?;
 	Result::Ok(())
 }

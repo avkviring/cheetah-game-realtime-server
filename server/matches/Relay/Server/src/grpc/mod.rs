@@ -9,7 +9,7 @@ mod from;
 pub mod proto;
 
 ///
-/// 
+///
 ///
 pub struct RelayGRPCService {
 	pub relay_server: Arc<Mutex<ServerManager>>,

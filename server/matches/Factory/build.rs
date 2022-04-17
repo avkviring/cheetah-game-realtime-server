@@ -19,10 +19,7 @@ fn main() -> Result<(), Error> {
 			"../../../proto/matches/Registry/matches.registry.internal.proto",
 			"../../../proto/matches/Relay/matches.relay.internal.proto",
 		],
-		&[
-			"../../../proto/matches/Registry/",
-			"../../../proto/matches/Relay/",
-		],
+		&["../../../proto/matches/Registry/", "../../../proto/matches/Relay/"],
 	)?;
 
 	Result::Ok(())

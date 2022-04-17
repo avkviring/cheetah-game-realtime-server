@@ -11,7 +11,7 @@ use cheetah_microservice::tonic::{Request, Response};
 
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
-use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedCommand, TracedBothDirectionCommand};
+use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedBothDirectionCommand, TracedCommand};
 use crate::server::manager::ServerManager;
 
 pub struct CommandTracerGRPCService {
@@ -214,7 +214,7 @@ pub mod test {
 
 	use crate::debug::proto::admin;
 	use crate::debug::proto::shared;
-	use crate::debug::tracer::{TracedCommand, TracedBothDirectionCommand};
+	use crate::debug::tracer::{TracedBothDirectionCommand, TracedCommand};
 
 	#[test]
 	pub fn should_convert() {
