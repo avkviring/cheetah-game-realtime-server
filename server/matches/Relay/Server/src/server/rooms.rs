@@ -49,7 +49,13 @@ impl Rooms {
 	pub fn register_user(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RegisterUserError> {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Result::Err(RegisterUserError::RoomNotFound),
-			Some(room) => Result::Ok(room.register_member(member_template)),
+			Some(room) => {
+				let result = Result::Ok(room.register_member(member_template));
+				if result.is_ok() {
+					self.measures.borrow_mut().on_change_member_count(&room.template_name, 1);
+				}
+				result
+			}
 		}
 	}
 
@@ -79,7 +85,6 @@ impl Rooms {
 			}
 			Some(room) => {
 				let object_count = room.objects.len();
-				let members_count = room.members.len();
 				room.execute_commands(user_and_room_id.member_id, commands);
 				self.changed_rooms.insert(room.id).unwrap();
 
@@ -88,11 +93,6 @@ impl Rooms {
 				if delta_object_count > 0 {
 					measures.on_change_object_count(&room.template_name, delta_object_count as i64);
 				}
-				let delta_members_count = room.members.len() - members_count;
-				if delta_members_count > 0 {
-					measures.on_change_member_count(&room.template_name, delta_members_count as i64);
-				}
-
 				measures.on_input_commands(&room.template_name, commands);
 			}
 		}
@@ -106,6 +106,7 @@ impl Rooms {
 			))),
 			Some(room) => {
 				room.disconnect_user(member_and_room_id.member_id)?;
+				self.measures.borrow_mut().on_change_member_count(&room.template_name, -1);
 				self.changed_rooms.insert(member_and_room_id.room_id).unwrap();
 				Ok(())
 			}
