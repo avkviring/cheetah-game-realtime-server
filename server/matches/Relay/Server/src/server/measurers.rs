@@ -19,14 +19,40 @@ type RoomTemplateString = heapless::String<50>;
 /// Измерение параметров сервера - сохранение в prometheus
 ///
 pub struct Measurers {
+	///
+	/// Количество комнат на сервере
+	///
 	room_count: MeasurersByLabel<String, IntGauge, Opts>,
+	///
+	/// Количество пользователей на сервере (во всех комнатах)
+	///
 	member_count: MeasurersByLabel<String, IntGauge, Opts>,
+	///
+	/// Количество объектов на сервере (во всех комнатах)
+	///
 	object_count: MeasurersByLabel<String, IntGauge, Opts>,
+	///
+	/// Количество входящих команд
+	///
 	income_command_count: IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
+	///
+	/// Количество исходящих команд
+	///
 	outcome_command_count: IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
+	///
+	/// Время выполнение команд
+	///
 	input_command_execution_time: HistogramMeasurersByLabel<(MeasureStringId, Option<FieldId>)>,
+	///
+	/// Размер входящего фрейма
+	///
 	input_frame_size: Histogram,
+	///
+	/// Время выполнения фрейма
 	input_frame_execution_time: Histogram,
+	///
+	/// Время выполнения серверного цикла
+	///
 	server_cycle_execution_time: Histogram,
 }
 
