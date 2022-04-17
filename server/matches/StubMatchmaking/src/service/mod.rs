@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use tokio::sync::RwLock;
 use tonic::transport::Uri;
-use tonic::{Code, Request, Response};
+use tonic::{Code, Request, Response, Status};
 
+use cheetah_microservice::fmt::format;
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
@@ -39,18 +40,19 @@ impl StubMatchmakingService {
 		}
 	}
 	#[async_recursion::async_recursion]
-	async fn matchmaking(&self, ticket: TicketRequest, user_id: u64) -> TicketResponse {
+	async fn matchmaking(&self, ticket: TicketRequest, user_id: u64) -> Result<TicketResponse, String> {
 		let template = ticket.match_template.clone();
-		let match_info = self.find_or_create_match(&template).await;
+		let match_info = self.find_or_create_match(&template).await?;
 		match StubMatchmakingService::attach_user(&ticket, &match_info).await {
-			Ok(user_attach_response) => TicketResponse {
+			Ok(user_attach_response) => Ok(TicketResponse {
 				private_key: user_attach_response.private_key,
 				user_id: user_attach_response.user_id,
 				room_id: match_info.room_id,
 				relay_game_host: match_info.relay_game_host,
 				relay_game_port: match_info.relay_game_port as u32,
-			},
-			Err(_) => {
+			}),
+			Err(e) => {
+				tracing::error!("Cannot attach_user {}", e);
 				// если  такой комнаты нет - то удаляем ее из существующих
 				let mut matches = self.matches.write().await;
 				matches.remove(&template);
@@ -64,13 +66,13 @@ impl StubMatchmakingService {
 	async fn attach_user(
 		ticket: &matchmaking::external::TicketRequest,
 		match_info: &MatchInfo,
-	) -> Result<relay::internal::AttachUserResponse, ()> {
+	) -> Result<relay::internal::AttachUserResponse, String> {
 		let mut relay = relay::internal::relay_client::RelayClient::connect(cheetah_microservice::make_internal_srv_uri(
 			match_info.relay_grpc_host.as_str(),
 			match_info.relay_grpc_port,
 		))
 		.await
-		.unwrap();
+		.map_err(|e| format!("Connect to relay error {:?}", e))?;
 
 		match relay
 			.attach_user(Request::new(AttachUserRequest {
@@ -84,15 +86,13 @@ impl StubMatchmakingService {
 		{
 			Ok(user_attach_response) => Result::Ok(user_attach_response.into_inner()),
 			Err(status) => match status.code() {
-				Code::NotFound => Result::Err(()),
-				_ => {
-					panic!("relay response status {}", status)
-				}
+				Code::NotFound => Result::Err(format!("Relay server not found")),
+				e => Result::Err(format!("Relay server unknown status {:?}", e)),
 			},
 		}
 	}
 
-	async fn find_or_create_match(&self, template: &str) -> MatchInfo {
+	async fn find_or_create_match(&self, template: &str) -> Result<MatchInfo, String> {
 		let mut matches = self.matches.write().await;
 		match matches.get(template) {
 			None => {
@@ -103,13 +103,13 @@ impl StubMatchmakingService {
 						template: template.to_string(),
 					}))
 					.await
-					.unwrap()
+					.map_err(|e| format!("Create match error {:?}", e))?
 					.into_inner();
 				let match_info = create_match_info(create_match_response);
 				matches.insert(template.to_string(), match_info.clone());
-				match_info
+				Ok(match_info)
 			}
-			Some(match_info) => match_info.clone(),
+			Some(match_info) => Ok(match_info.clone()),
 		}
 	}
 }
@@ -133,8 +133,10 @@ impl Matchmaking for StubMatchmakingService {
 		match cheetah_microservice::jwt::grpc::get_player_id(request.metadata(), self.jwt_public_key.clone()) {
 			Ok(user) => {
 				let ticket_request = request.into_inner();
-				let response = self.matchmaking(ticket_request, user).await;
-				Result::Ok(Response::new(response))
+				match self.matchmaking(ticket_request, user).await {
+					Ok(response) => Result::Ok(Response::new(response)),
+					Err(e) => Result::Err(Status::new(Code::Internal, e)),
+				}
 			}
 			Err(e) => Result::Err(tonic::Status::unauthenticated(format!("{:?}", e))),
 		}
@@ -170,7 +172,8 @@ pub mod tests {
 				},
 				Default::default(),
 			)
-			.await;
+			.await
+			.unwrap();
 		assert_eq!(response.room_id, StubFactory::ROOM_ID);
 		assert_eq!(response.user_id, StubRelay::USER_ID);
 	}
@@ -190,7 +193,8 @@ pub mod tests {
 				},
 				Default::default(),
 			)
-			.await;
+			.await
+			.unwrap();
 		let response = matchmaking
 			.matchmaking(
 				TicketRequest {
@@ -199,7 +203,8 @@ pub mod tests {
 				},
 				Default::default(),
 			)
-			.await;
+			.await
+			.unwrap();
 		assert_eq!(response.room_id, StubFactory::ROOM_ID);
 	}
 	///
@@ -216,7 +221,8 @@ pub mod tests {
 				},
 				Default::default(),
 			)
-			.await;
+			.await
+			.unwrap();
 		let response_b = matchmaking
 			.matchmaking(
 				TicketRequest {
@@ -225,7 +231,8 @@ pub mod tests {
 				},
 				Default::default(),
 			)
-			.await;
+			.await
+			.unwrap();
 		assert_eq!(response_a.room_id, StubFactory::ROOM_ID);
 		assert_eq!(response_b.room_id, StubFactory::ROOM_ID + 1);
 	}
@@ -244,7 +251,8 @@ pub mod tests {
 				},
 				Default::default(),
 			)
-			.await;
+			.await
+			.unwrap();
 		let response_b = matchmaking
 			.matchmaking(
 				TicketRequest {
@@ -253,7 +261,8 @@ pub mod tests {
 				},
 				Default::default(),
 			)
-			.await;
+			.await
+			.unwrap();
 		assert_eq!(response_a.room_id, StubFactory::ROOM_ID);
 		assert_eq!(response_b.room_id, StubFactory::ROOM_ID + 1);
 	}
