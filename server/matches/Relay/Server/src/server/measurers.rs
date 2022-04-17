@@ -18,18 +18,19 @@ type RoomTemplateString = heapless::String<50>;
 ///
 /// Измерение параметров сервера - сохранение в prometheus
 ///
-pub struct ServerMeasurers {
+pub struct Measurers {
 	room_count: MeasurersByLabel<String, IntGauge, Opts>,
 	member_count: MeasurersByLabel<String, IntGauge, Opts>,
 	object_count: MeasurersByLabel<String, IntGauge, Opts>,
 	income_command_count: IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
 	outcome_command_count: IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
-	execution_command_time: HistogramMeasurersByLabel<(MeasureStringId, Option<FieldId>)>,
+	input_command_execution_time: HistogramMeasurersByLabel<(MeasureStringId, Option<FieldId>)>,
 	input_frame_size: Histogram,
-	input_frame_time: Histogram,
+	input_frame_execution_time: Histogram,
+	server_cycle_execution_time: Histogram,
 }
 
-impl ServerMeasurers {
+impl Measurers {
 	pub fn new(registry: &Registry) -> Self {
 		Self {
 			room_count: Self::create_room_count_measurers(registry),
@@ -37,16 +38,33 @@ impl ServerMeasurers {
 			object_count: Self::create_object_count_measurers(registry),
 			income_command_count: Self::create_income_command_count_measurers(registry),
 			outcome_command_count: Self::create_outcome_command_count_measurers(registry),
-			execution_command_time: Self::create_execution_command_time_measurers(registry),
+			input_command_execution_time: Self::create_execution_command_time_measurers(registry),
 			input_frame_size: Self::create_input_frame_size(registry),
-			input_frame_time: Self::create_and_input_frame_size(registry),
+			input_frame_execution_time: Self::create_input_frame_time(registry),
+			server_cycle_execution_time: Self::create_server_cycle_execution_time(registry),
 		}
 	}
 
-	fn create_and_input_frame_size(registry: &Registry) -> Histogram {
+	fn create_server_cycle_execution_time(registry: &Registry) -> Histogram {
 		create_and_register_measurer(
 			registry,
-			HistogramOpts::new("input_frame_time", "Input frame time").buckets(vec![
+			HistogramOpts::new("server_cycle_execution_time", "Server cycle execution time").buckets(vec![
+				Duration::from_nanos(5).as_secs_f64(),
+				Duration::from_nanos(10).as_secs_f64(),
+				Duration::from_nanos(100).as_secs_f64(),
+				Duration::from_nanos(500).as_secs_f64(),
+				Duration::from_millis(1).as_secs_f64(),
+				Duration::from_millis(5).as_secs_f64(),
+				Duration::from_millis(10).as_secs_f64(),
+				Duration::from_millis(50).as_secs_f64(),
+			]),
+		)
+	}
+
+	fn create_input_frame_time(registry: &Registry) -> Histogram {
+		create_and_register_measurer(
+			registry,
+			HistogramOpts::new("input_frame_execution_time", "Input frame execution time").buckets(vec![
 				Duration::from_nanos(5).as_secs_f64(),
 				Duration::from_nanos(10).as_secs_f64(),
 				Duration::from_nanos(100).as_secs_f64(),
@@ -178,12 +196,18 @@ impl ServerMeasurers {
 	pub(crate) fn on_execute_command(&mut self, field_id: Option<FieldId>, command: &C2SCommand, duration: Duration) {
 		let name = command.as_ref();
 		let key = (MeasureStringId::from(name), field_id);
-		self.execution_command_time.measurer(&key).observe(duration.as_secs_f64());
+		self.input_command_execution_time
+			.measurer(&key)
+			.observe(duration.as_secs_f64());
 	}
 
 	pub(crate) fn on_income_frame(&mut self, size: usize, duration: Duration) {
 		self.input_frame_size.observe(size as f64);
-		self.input_frame_time.observe(duration.as_secs_f64());
+		self.input_frame_execution_time.observe(duration.as_secs_f64());
+	}
+
+	pub(crate) fn on_server_cycle(&mut self, duration: Duration) {
+		self.server_cycle_execution_time.observe(duration.as_secs_f64())
 	}
 
 	fn network_command_measurer_label_factory(

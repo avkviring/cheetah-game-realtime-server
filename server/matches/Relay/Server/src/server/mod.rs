@@ -1,7 +1,6 @@
 use std::cell::RefCell;
-use std::cmp::max;
 use std::net::UdpSocket;
-use std::ops::{Add, Sub};
+use std::ops::Add;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
@@ -14,7 +13,7 @@ use admin::DumpResponse;
 use crate::debug::proto::admin;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
-use crate::server::measurers::ServerMeasurers;
+use crate::server::measurers::Measurers;
 use crate::server::network::NetworkLayer;
 use crate::server::rooms::Rooms;
 
@@ -31,10 +30,9 @@ pub struct Server {
 	network_layer: NetworkLayer,
 	pub rooms: Rooms,
 	receiver: Receiver<ManagementTask>,
-	max_cycle_time: u128,
-	avg_cycle_time: u128,
 	halt_signal: Arc<AtomicBool>,
 	time_offset: Option<Duration>,
+	measures: Rc<RefCell<Measurers>>,
 }
 
 impl Drop for Server {
@@ -45,15 +43,14 @@ impl Drop for Server {
 
 impl Server {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
-		let measures = Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry())));
+		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Self {
 			network_layer: NetworkLayer::new(socket, measures.clone()).unwrap(),
-			rooms: Rooms::new(measures),
+			rooms: Rooms::new(measures.clone()),
 			receiver,
-			max_cycle_time: 0,
-			avg_cycle_time: 0,
 			halt_signal,
 			time_offset: None,
+			measures,
 		}
 	}
 
@@ -65,7 +62,8 @@ impl Server {
 			}
 			self.network_layer.cycle(&mut self.rooms, &now);
 			self.execute_management_tasks(&now);
-			self.statistics(now);
+			self.measures.borrow_mut().on_server_cycle(now.elapsed());
+			thread::sleep(Duration::from_millis(1));
 		}
 	}
 
@@ -130,19 +128,5 @@ impl Server {
 				}
 			}
 		}
-	}
-
-	fn statistics(&mut self, start_instant: Instant) {
-		let end_instant = Instant::now();
-		let duration = end_instant.sub(start_instant).as_millis();
-		if duration < 2 {
-			thread::sleep(Duration::from_millis(1));
-		}
-		if self.avg_cycle_time == 0 {
-			self.avg_cycle_time = duration;
-		} else {
-			self.avg_cycle_time = (self.avg_cycle_time + duration) / 2;
-		}
-		self.max_cycle_time = max(self.max_cycle_time, duration);
 	}
 }

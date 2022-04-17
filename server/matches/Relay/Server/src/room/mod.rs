@@ -25,7 +25,7 @@ use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
-use crate::server::measurers::ServerMeasurers;
+use crate::server::measurers::Measurers;
 
 pub mod action;
 pub mod command;
@@ -53,7 +53,7 @@ pub struct Room {
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
 	pub out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
-	measurers: Rc<RefCell<ServerMeasurers>>,
+	measurers: Rc<RefCell<Measurers>>,
 }
 
 #[derive(Debug)]
@@ -67,7 +67,7 @@ pub struct Member {
 }
 
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate, measurers: Rc<RefCell<ServerMeasurers>>) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate, measurers: Rc<RefCell<Measurers>>) -> Self {
 		let mut room = Room {
 			id,
 			members: FnvHashMap::default(),
@@ -302,14 +302,14 @@ mod tests {
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};
-	use crate::server::measurers::ServerMeasurers;
+	use crate::server::measurers::Measurers;
 
 	impl Default for Room {
 		fn default() -> Self {
 			Room::new(
 				0,
 				RoomTemplate::default(),
-				Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))),
+				Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))),
 			)
 		}
 	}
@@ -319,7 +319,7 @@ mod tests {
 			Room::new(
 				0,
 				template,
-				Rc::new(RefCell::new(ServerMeasurers::new(prometheus::default_registry()))),
+				Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))),
 			)
 		}
 

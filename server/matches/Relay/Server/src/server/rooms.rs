@@ -12,13 +12,13 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
-use crate::server::measurers::{MeasureStringId, ServerMeasurers};
+use crate::server::measurers::{MeasureStringId, Measurers};
 
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
 	changed_rooms: heapless::FnvIndexSet<RoomId, 10_000>,
-	measures: Rc<RefCell<ServerMeasurers>>,
+	measures: Rc<RefCell<Measurers>>,
 }
 
 #[derive(Debug)]
@@ -27,7 +27,7 @@ pub enum RegisterUserError {
 }
 
 impl Rooms {
-	pub fn new(measures: Rc<RefCell<ServerMeasurers>>) -> Self {
+	pub fn new(measures: Rc<RefCell<Measurers>>) -> Self {
 		Self {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
