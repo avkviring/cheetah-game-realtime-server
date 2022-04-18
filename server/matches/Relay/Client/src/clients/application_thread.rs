@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::load::C2SCreateGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -185,19 +185,13 @@ impl ApplicationThreadClient {
 		}
 	}
 
-	pub fn create_game_object(
-		&mut self,
-		template: u16,
-		access_group: u64,
-		keep_after_owner_exit: bool,
-	) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
+	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
 		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
-		self.send(C2SCommand::Create(C2SCreateGameObjectCommand {
+		self.send(C2SCommand::Create(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,
 			access_groups: AccessGroups(access_group),
-			keep_after_owner_exit,
 		}))?;
 
 		Ok(From::from(&game_object_id))

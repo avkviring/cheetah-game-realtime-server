@@ -31,7 +31,6 @@ fn test() {
 		client1,
 		1,
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
-		false,
 		&mut object_id,
 	);
 

@@ -56,16 +56,16 @@ mod tests {
 		room.test_mark_as_connected(user_a).unwrap();
 		room.test_mark_as_connected(user_b).unwrap();
 
-		let object_a_1 = room.test_create_object(user_b, groups_a, false);
+		let object_a_1 = room.test_create_object(user_b, groups_a);
 		object_a_1.created = true;
 		let object_a_1_id = object_a_1.id.clone();
 
 		// не созданный объект - не должен загрузиться
-		room.test_create_object(user_b, groups_a, false);
+		room.test_create_object(user_b, groups_a);
 		// другая группа + созданный объект - не должен загрузиться
-		room.test_create_object(user_b, groups_b, false).created = true;
+		room.test_create_object(user_b, groups_b).created = true;
 		// другая группа - не должен загрузиться
-		room.test_create_object(user_b, groups_b, false);
+		room.test_create_object(user_b, groups_b);
 
 		attach_to_room(&mut room, user_a).unwrap();
 

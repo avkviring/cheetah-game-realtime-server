@@ -293,10 +293,10 @@ pub mod tests {
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::event::EventCommand;
-	use cheetah_matches_relay_common::commands::types::load::C2SCreateGameObjectCommand;
+	use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 
 	use crate::debug::tracer::{
-		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedBothDirectionCommand, TracedCommand,
+		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand, TracedBothDirectionCommand,
 	};
 
 	#[test]
@@ -517,11 +517,10 @@ pub mod tests {
 		tracer.collect_c2s(
 			&Default::default(),
 			100,
-			&C2SCommand::Create(C2SCreateGameObjectCommand {
+			&C2SCommand::Create(CreateGameObjectCommand {
 				object_id: Default::default(),
 				template: 100,
 				access_groups: Default::default(),
-				keep_after_owner_exit: false,
 			}),
 		);
 
@@ -532,11 +531,10 @@ pub mod tests {
 				time: Session::now(),
 				template: Some(100),
 				user: 100,
-				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Create(C2SCreateGameObjectCommand {
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
 					object_id: Default::default(),
 					template: 100,
-					access_groups: Default::default(),
-					keep_after_owner_exit: false
+					access_groups: Default::default()
 				}))
 			}]
 		)

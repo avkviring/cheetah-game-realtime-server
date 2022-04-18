@@ -47,7 +47,6 @@ impl IntegrationTestHelper {
 			client_id,
 			IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
 			IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
-			false,
 			&mut object_id,
 		);
 		ffi::command::object::created_object(client_id, &object_id);

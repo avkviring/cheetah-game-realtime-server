@@ -124,7 +124,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object_id = room.test_create_object(user_1, access_groups, false).id.clone();
+		let object_id = room.test_create_object(user_1, access_groups).id.clone();
 		(room, object_id, user_1, user_2)
 	}
 

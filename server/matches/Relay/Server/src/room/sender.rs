@@ -158,7 +158,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object(user_1, access_groups, false);
+		let object = room.test_create_object(user_1, access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 
@@ -209,7 +209,7 @@ mod tests {
 
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object(user_id, access_groups, false);
+		let object = room.test_create_object(user_id, access_groups);
 		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id.clone();
@@ -276,7 +276,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups_a));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups_b));
-		let object = room.test_create_object(user_1, access_groups_a, false);
+		let object = room.test_create_object(user_1, access_groups_a);
 		object.created = true;
 		let object_id = object.id.clone();
 		assert!(room
@@ -311,7 +311,7 @@ mod tests {
 		let user_target_id = room.register_member(MemberTemplate::stub(groups));
 
 		room.test_mark_as_connected(user_target_id).unwrap();
-		let object = room.test_create_object(user_target_id, groups, false);
+		let object = room.test_create_object(user_target_id, groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id.clone();
@@ -380,7 +380,7 @@ mod tests {
 		room.test_mark_as_connected(user_1).unwrap();
 		room.test_mark_as_connected(user_2).unwrap();
 
-		let object = room.test_create_object(user_1, access_groups, false);
+		let object = room.test_create_object(user_1, access_groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id.clone();
@@ -426,7 +426,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object(user_1, access_groups, false);
+		let object = room.test_create_object(user_1, access_groups);
 		let object_id = object.id.clone();
 		room.test_mark_as_connected(user_1).unwrap();
 		room.test_mark_as_connected(user_2).unwrap();

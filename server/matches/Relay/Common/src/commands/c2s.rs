@@ -5,7 +5,7 @@ use strum_macros::AsRefStr;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-use crate::commands::types::load::{C2SCreateGameObjectCommand, CreatedGameObjectCommand};
+use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
@@ -16,7 +16,7 @@ use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum C2SCommand {
-	Create(C2SCreateGameObjectCommand),
+	Create(CreateGameObjectCommand),
 	Created(CreatedGameObjectCommand),
 	SetLong(SetLongCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
@@ -141,7 +141,7 @@ impl C2SCommand {
 			CommandTypeId::DETACH_FROM_ROOM => C2SCommand::DetachFromRoom,
 			CommandTypeId::CREATED => C2SCommand::Created(CreatedGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::DELETE => C2SCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
-			CommandTypeId::CREATE => C2SCommand::Create(C2SCreateGameObjectCommand::decode(object_id?, input)?),
+			CommandTypeId::CREATE => C2SCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
 			CommandTypeId::SET_LONG => C2SCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::INCREMENT_LONG => {
 				C2SCommand::IncrementLongValue(IncrementLongC2SCommand::decode(object_id?, field_id?, input)?)
@@ -169,7 +169,7 @@ mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-	use crate::commands::types::load::{C2SCreateGameObjectCommand, CreatedGameObjectCommand};
+	use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 	use crate::commands::types::structure::SetStructureCommand;
 	use crate::commands::types::unload::DeleteGameObjectCommand;
@@ -193,11 +193,10 @@ mod tests {
 	fn should_decode_encode_create() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			C2SCommand::Create(C2SCreateGameObjectCommand {
+			C2SCommand::Create(CreateGameObjectCommand {
 				object_id: object_id.clone(),
 				template: 3,
 				access_groups: AccessGroups(5),
-				keep_after_owner_exit: false,
 			}),
 			CommandTypeId::CREATE,
 			Some(object_id),

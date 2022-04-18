@@ -31,14 +31,12 @@ id объекта созданного комнатой.
 ### Создание объекта от имени игрока
 
 ```csharp    
-var builder = client.NewObjectBuilder(template, accessGroup, keepAfterOwnerExit);
+var builder = client.NewObjectBuilder(template, accessGroup);
 builder.SetDouble(1, 100.0);
 builder.SetLong(2, 100500);
 builder.SetStructure(1, new SomeStructure());
 var cheetahObject = builder.Build();
 ```
-
-- keepAfterOwnerExit - не удалять объект при выходе пользователя из игры; 
 
 Особенности:
 

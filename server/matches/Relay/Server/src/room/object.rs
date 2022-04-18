@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::load::{CreatedGameObjectCommand, S2CCreateGameObjectCommand};
+use cheetah_matches_relay_common::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -16,8 +16,6 @@ pub struct GameObject {
 	pub id: GameObjectId,
 	pub template_id: GameObjectTemplateId,
 	pub access_groups: AccessGroups,
-	/// не удалять если вышел владелец
-	pub keep_after_owner_exit: bool,
 	///
 	/// Объект полностью создан
 	///
@@ -38,18 +36,11 @@ pub enum GameObjectError {
 }
 
 impl GameObject {
-	pub fn new(
-		id: GameObjectId,
-		template_id: GameObjectTemplateId,
-		access_groups: AccessGroups,
-		created: bool,
-		keep_after_owner_exit: bool,
-	) -> Self {
+	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, created: bool) -> Self {
 		Self {
 			id,
 			template_id,
 			access_groups,
-			keep_after_owner_exit,
 			created,
 			longs: Default::default(),
 			doubles: Default::default(),
@@ -134,7 +125,7 @@ impl GameObject {
 	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
 		commands.push(S2CommandWithFieldInfo {
 			field: Option::None,
-			command: S2CCommand::Create(S2CCreateGameObjectCommand {
+			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id.clone(),
 				template: self.template_id,
 				access_groups: self.access_groups,
@@ -185,7 +176,7 @@ mod tests {
 	#[test]
 	pub fn should_collect_command() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true, false);
+		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
 		object.set_long(1, 100).unwrap();
 		object.set_double(2, 200.200).unwrap();
 		object.structures.insert(1, vec![1, 2, 3]).unwrap();
@@ -219,7 +210,7 @@ mod tests {
 	#[test]
 	pub fn should_collect_command_for_not_created_object() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id.clone(), 0, Default::default(), false, false);
+		let mut object = GameObject::new(id.clone(), 0, Default::default(), false);
 		object.set_long(1, 100).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
@@ -239,7 +230,7 @@ mod tests {
 
 	#[test]
 	pub fn should_update_structure() {
-		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false, false);
+		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
 		object.set_structure(1, &[1, 2, 3]).unwrap();
 		object.set_structure(1, &[4, 5, 6, 7]).unwrap();
 		assert_eq!(*object.get_structure(&1).unwrap(), [4, 5, 6, 7])

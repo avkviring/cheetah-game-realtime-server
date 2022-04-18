@@ -26,15 +26,9 @@ pub extern "C" fn set_created_object_listener(client_id: ClientId, listener: ext
 }
 
 #[no_mangle]
-pub extern "C" fn create_object(
-	client_id: ClientId,
-	template: u16,
-	access_group: u64,
-	keep_after_owner_exit: bool,
-	result: &mut GameObjectIdFFI,
-) -> u8 {
+pub extern "C" fn create_object(client_id: ClientId, template: u16, access_group: u64, result: &mut GameObjectIdFFI) -> u8 {
 	execute_with_client(client_id, |client| {
-		let game_object_id = client.create_game_object(template, access_group, keep_after_owner_exit)?;
+		let game_object_id = client.create_game_object(template, access_group)?;
 		*result = game_object_id;
 		Ok(())
 	})
