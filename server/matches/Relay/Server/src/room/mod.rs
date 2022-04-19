@@ -39,11 +39,13 @@ pub struct Room {
 	pub template_name: String,
 	pub permission_manager: Rc<RefCell<PermissionManager>>,
 	pub members: HashMap<RoomMemberId, Member, FnvBuildHasher>,
-	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
+	pub(crate) objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ChannelType>,
 	current_member_id: Option<RoomMemberId>,
 	pub user_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
+	pub room_object_id_generator: u32,
+	pub creating_object_id_mapping: HashMap<GameObjectId, GameObjectId, FnvBuildHasher>,
 	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, CreateCommandsCollector)>>>,
 
 	#[cfg(test)]
@@ -81,6 +83,8 @@ impl Room {
 			out_commands: Default::default(),
 			user_id_generator: 0,
 			command_trace_session: Default::default(),
+			room_object_id_generator: 65536,
+			creating_object_id_mapping: Default::default(),
 			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 			template_name: template.name.clone(),
 			measurers,
@@ -91,6 +95,20 @@ impl Room {
 			room.insert_object(game_object);
 		});
 		room
+	}
+
+	///
+	/// Установить связь между временным id и постоянным для объектов
+	/// Используются для объектов в стадии создания, например если игрок создается объект для
+	/// комнаты, то он вначале выдает ему свой временный id и шлет команды заполнения объекта
+	/// данными с этим идентификатором
+	///
+	pub(crate) fn add_creating_object_id_mapping(&mut self, member_object_id: GameObjectId, room_object_id: GameObjectId) {
+		self.creating_object_id_mapping.insert(member_object_id, room_object_id);
+	}
+
+	pub(crate) fn remove_creating_object_id_mapping(&mut self, member_object_id: &GameObjectId) {
+		self.creating_object_id_mapping.remove(member_object_id);
 	}
 
 	///
@@ -221,7 +239,12 @@ impl Room {
 		self.objects.insert(object.id.clone(), object);
 	}
 
-	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
+	pub fn get_object(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
+		let object_id = match self.creating_object_id_mapping.get(object_id) {
+			None => object_id,
+			Some(mapped_object_id) => mapped_object_id,
+		};
+
 		self.objects
 			.get_mut(object_id)
 			.ok_or_else(|| ServerCommandError::GameObjectNotFound {
@@ -323,12 +346,12 @@ mod tests {
 			)
 		}
 
-		pub fn test_create_object(&mut self, owner: RoomMemberId, access_groups: AccessGroups) -> &mut GameObject {
+		pub fn test_create_object(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {
 			self.object_id_generator += 1;
-			let id = GameObjectId::new(self.object_id_generator, GameObjectOwner::Member(owner));
+			let id = GameObjectId::new(self.object_id_generator, owner);
 			let object = GameObject::new(id.clone(), 0, access_groups, false);
 			self.insert_object(object);
-			self.get_object_mut(&id).unwrap()
+			self.get_object(&id).unwrap()
 		}
 
 		pub fn test_mark_as_connected(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -372,16 +395,40 @@ mod tests {
 	}
 
 	#[test]
+	fn should_mapping_object_id() {
+		let mut room = Room::default();
+		let access_groups = AccessGroups(0b111);
+		let room_object_id = room.test_create_object(GameObjectOwner::Room, access_groups).id.clone();
+		let member_object_id = GameObjectId::new(100500, GameObjectOwner::Member(10));
+		room.add_creating_object_id_mapping(member_object_id.clone(), room_object_id.clone());
+		assert_eq!(room.get_object(&member_object_id).unwrap().id, room_object_id);
+		room.remove_creating_object_id_mapping(&member_object_id);
+		assert!(room.get_object(&member_object_id).is_err());
+	}
+
+	#[test]
 	fn should_remove_objects_when_disconnect() {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b111);
 		let mut room = Room::from_template(template);
 		let user_a = room.register_member(MemberTemplate::stub(access_groups));
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
-		let object_a_1 = room.test_create_object(user_a, access_groups).id.clone();
-		let object_a_2 = room.test_create_object(user_a, access_groups).id.clone();
-		let object_b_1 = room.test_create_object(user_b, access_groups).id.clone();
-		let object_b_2 = room.test_create_object(user_b, access_groups).id.clone();
+		let object_a_1 = room
+			.test_create_object(GameObjectOwner::Member(user_a), access_groups)
+			.id
+			.clone();
+		let object_a_2 = room
+			.test_create_object(GameObjectOwner::Member(user_a), access_groups)
+			.id
+			.clone();
+		let object_b_1 = room
+			.test_create_object(GameObjectOwner::Member(user_b), access_groups)
+			.id
+			.clone();
+		let object_b_2 = room
+			.test_create_object(GameObjectOwner::Member(user_b), access_groups)
+			.id
+			.clone();
 
 		room.out_commands.clear();
 		room.disconnect_user(user_a).unwrap();
@@ -485,7 +532,7 @@ mod tests {
 		let user1 = room.get_member_mut(&user1_id).unwrap();
 		assert_eq!(
 			user1.out_commands[0].command.get_object_id().unwrap(),
-			&GameObjectId::new(object1_template.id, GameObjectOwner::Member(user1_id))
+			GameObjectId::new(object1_template.id, GameObjectOwner::Member(user1_id))
 		);
 		user1.out_commands.clear();
 
@@ -493,7 +540,7 @@ mod tests {
 		let user1 = room.get_member_mut(&user1_id).unwrap();
 		assert_eq!(
 			user1.out_commands[1].command.get_object_id().unwrap(),
-			&GameObjectId::new(object2_template.id, GameObjectOwner::Member(user2_id))
+			GameObjectId::new(object2_template.id, GameObjectOwner::Member(user2_id))
 		);
 	}
 
@@ -571,9 +618,9 @@ mod tests {
 
 		let commands = room.test_get_user_out_commands(user2_id);
 
-		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
+		assert!(matches!(commands.get(0), Some(S2CCommand::Loading(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
-		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
+		assert!(matches!(commands.get(2), Some(S2CCommand::Loaded(_))));
 	}
 
 	#[test]

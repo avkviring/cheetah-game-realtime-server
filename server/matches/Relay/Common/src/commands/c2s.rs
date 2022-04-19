@@ -2,10 +2,12 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
+use crate::commands::types::create::{
+	C2SCreateMemberGameObjectCommand, C2SCreateRoomGameObjectCommand, C2SCreatedGameObjectCommand,
+};
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::types::unload::DeleteGameObjectCommand;
@@ -16,8 +18,9 @@ use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum C2SCommand {
-	Create(CreateGameObjectCommand),
-	Created(CreatedGameObjectCommand),
+	CreateMemberObject(C2SCreateMemberGameObjectCommand),
+	CreateRoomObject(C2SCreateRoomGameObjectCommand),
+	Created(C2SCreatedGameObjectCommand),
 	SetLong(SetLongCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
 	CompareAndSetLong(CompareAndSetLongCommand),
@@ -38,7 +41,8 @@ pub enum C2SCommand {
 impl C2SCommand {
 	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
-			C2SCommand::Create(_) => None,
+			C2SCommand::CreateMemberObject(_) => None,
+			C2SCommand::CreateRoomObject(_) => None,
 			C2SCommand::Created(_) => None,
 			C2SCommand::SetLong(command) => Some(command.field_id),
 			C2SCommand::IncrementLongValue(command) => Some(command.field_id),
@@ -56,7 +60,8 @@ impl C2SCommand {
 	}
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
-			C2SCommand::Create(command) => Some(command.object_id.clone()),
+			C2SCommand::CreateMemberObject(command) => Some(command.object_id.clone()),
+			C2SCommand::CreateRoomObject(command) => Some(command.temporary_object_id.clone()),
 			C2SCommand::Created(command) => Some(command.object_id.clone()),
 			C2SCommand::SetLong(command) => Some(command.object_id.clone()),
 			C2SCommand::IncrementLongValue(command) => Some(command.object_id.clone()),
@@ -75,7 +80,8 @@ impl C2SCommand {
 
 	pub fn get_field_type(&self) -> Option<FieldType> {
 		match self {
-			C2SCommand::Create(_) => None,
+			C2SCommand::CreateMemberObject(_) => None,
+			C2SCommand::CreateRoomObject(_) => None,
 			C2SCommand::Created(_) => None,
 			C2SCommand::SetLong(_) => Some(FieldType::Long),
 			C2SCommand::IncrementLongValue(_) => Some(FieldType::Long),
@@ -94,7 +100,8 @@ impl C2SCommand {
 
 	pub fn get_type_id(&self) -> CommandTypeId {
 		match self {
-			C2SCommand::Create(_) => CommandTypeId::CREATE,
+			C2SCommand::CreateMemberObject(_) => CommandTypeId::CREATE_MEMBER_OBJECT,
+			C2SCommand::CreateRoomObject(_) => CommandTypeId::CREATE_ROOM_OBJECT,
 			C2SCommand::Created(_) => CommandTypeId::CREATED,
 			C2SCommand::SetLong(_) => CommandTypeId::SET_LONG,
 			C2SCommand::IncrementLongValue(_) => CommandTypeId::INCREMENT_LONG,
@@ -113,7 +120,8 @@ impl C2SCommand {
 
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		match self {
-			C2SCommand::Create(command) => command.encode(out),
+			C2SCommand::CreateMemberObject(command) => command.encode(out),
+			C2SCommand::CreateRoomObject(command) => command.encode(out),
 			C2SCommand::Created(_) => Ok(()),
 			C2SCommand::SetLong(command) => command.encode(out),
 			C2SCommand::IncrementLongValue(command) => command.encode(out),
@@ -139,9 +147,14 @@ impl C2SCommand {
 		Ok(match *command_type_id {
 			CommandTypeId::ATTACH_TO_ROOM => C2SCommand::AttachToRoom,
 			CommandTypeId::DETACH_FROM_ROOM => C2SCommand::DetachFromRoom,
-			CommandTypeId::CREATED => C2SCommand::Created(CreatedGameObjectCommand { object_id: object_id? }),
+			CommandTypeId::CREATED => C2SCommand::Created(C2SCreatedGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::DELETE => C2SCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
-			CommandTypeId::CREATE => C2SCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
+			CommandTypeId::CREATE_MEMBER_OBJECT => {
+				C2SCommand::CreateMemberObject(C2SCreateMemberGameObjectCommand::decode(object_id?, input)?)
+			}
+			CommandTypeId::CREATE_ROOM_OBJECT => {
+				C2SCommand::CreateRoomObject(C2SCreateRoomGameObjectCommand::decode(object_id?, input)?)
+			}
 			CommandTypeId::SET_LONG => C2SCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::INCREMENT_LONG => {
 				C2SCommand::IncrementLongValue(IncrementLongC2SCommand::decode(object_id?, field_id?, input)?)
@@ -167,9 +180,11 @@ mod tests {
 	use std::io::Cursor;
 
 	use crate::commands::c2s::C2SCommand;
+	use crate::commands::types::create::{
+		C2SCreateMemberGameObjectCommand, C2SCreateRoomGameObjectCommand, C2SCreatedGameObjectCommand,
+	};
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-	use crate::commands::types::load::{CreateGameObjectCommand, CreatedGameObjectCommand};
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 	use crate::commands::types::structure::SetStructureCommand;
 	use crate::commands::types::unload::DeleteGameObjectCommand;
@@ -190,15 +205,31 @@ mod tests {
 	}
 
 	#[test]
-	fn should_decode_encode_create() {
+	fn should_decode_encode_create_member_object() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			C2SCommand::Create(CreateGameObjectCommand {
+			C2SCommand::CreateMemberObject(C2SCreateMemberGameObjectCommand {
 				object_id: object_id.clone(),
 				template: 3,
 				access_groups: AccessGroups(5),
 			}),
-			CommandTypeId::CREATE,
+			CommandTypeId::CREATE_MEMBER_OBJECT,
+			Some(object_id),
+			None,
+		);
+	}
+
+	#[test]
+	fn should_decode_encode_create_room_object() {
+		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
+		check(
+			C2SCommand::CreateRoomObject(C2SCreateRoomGameObjectCommand {
+				temporary_object_id: object_id.clone(),
+				template: 3,
+				access_groups: AccessGroups(5),
+				unique_create_key: None,
+			}),
+			CommandTypeId::CREATE_ROOM_OBJECT,
 			Some(object_id),
 			None,
 		);
@@ -208,7 +239,7 @@ mod tests {
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			C2SCommand::Created(CreatedGameObjectCommand {
+			C2SCommand::Created(C2SCreatedGameObjectCommand {
 				object_id: object_id.clone(),
 			}),
 			CommandTypeId::CREATED,

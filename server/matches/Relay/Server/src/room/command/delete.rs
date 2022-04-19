@@ -26,6 +26,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
@@ -42,7 +43,10 @@ mod tests {
 		room.test_mark_as_connected(user_a_id).unwrap();
 		room.test_mark_as_connected(user_b_id).unwrap();
 
-		let object_id = room.test_create_object(user_a_id, access_groups).id.clone();
+		let object_id = room
+			.test_create_object(GameObjectOwner::Member(user_a_id), access_groups)
+			.id
+			.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
@@ -51,7 +55,7 @@ mod tests {
 		room.current_member_id = Option::Some(user_a_id);
 		command.execute(&mut room, user_a_id).unwrap();
 
-		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.get_object(&object_id), Err(_)));
 		assert!(matches!(room.test_get_user_out_commands(user_a_id).pop_back(), None));
 		assert!(matches!(room.test_get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
 	}
@@ -64,7 +68,10 @@ mod tests {
 		let user_a = room.register_member(MemberTemplate::stub(access_groups));
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
 
-		let object_id = room.test_create_object(user_a, access_groups).id.clone();
+		let object_id = room
+			.test_create_object(GameObjectOwner::Member(user_a), access_groups)
+			.id
+			.clone();
 		room.out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
@@ -77,7 +84,7 @@ mod tests {
 				member_id: _
 			})
 		));
-		assert!(matches!(room.get_object_mut(&object_id), Ok(_)));
+		assert!(matches!(room.get_object(&object_id), Ok(_)));
 		assert!(matches!(room.out_commands.pop_back(), None));
 	}
 }

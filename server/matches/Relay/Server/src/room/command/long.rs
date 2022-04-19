@@ -137,7 +137,7 @@ pub fn reset_all_compare_and_set(
 	compare_and_sets_cleaners: &heapless::FnvIndexMap<(GameObjectId, FieldId), i64, 256>,
 ) -> Result<(), ServerCommandError> {
 	for ((object_id, field), reset) in compare_and_sets_cleaners {
-		match room.get_object_mut(object_id) {
+		match room.get_object(object_id) {
 			Err(_) => {
 				// нормальная ситуация для пользовательских объектов
 			}
@@ -197,6 +197,7 @@ mod tests {
 	use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::command::ServerCommandExecutor;
@@ -218,7 +219,7 @@ mod tests {
 		};
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_long(&10).unwrap(), 100);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==command));
 	}
@@ -236,7 +237,7 @@ mod tests {
 		command.clone().execute(&mut room, user).unwrap();
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_long(&10).unwrap(), 200);
 
 		let result = SetLongCommand {
@@ -277,7 +278,7 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -290,7 +291,7 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -303,7 +304,7 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
 			command3.new
 		);
 	}
@@ -341,13 +342,13 @@ mod tests {
 		};
 		command.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_long(&command.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().get_long(&command.field_id).unwrap(),
 			command.new
 		);
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_long(&command.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().get_long(&command.field_id).unwrap(),
 			command.reset
 		);
 	}
@@ -378,11 +379,7 @@ mod tests {
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room
-				.get_object_mut(&object_id)
-				.unwrap()
-				.get_long(&command_1.field_id)
-				.unwrap(),
+			*room.get_object(&object_id).unwrap().get_long(&command_1.field_id).unwrap(),
 			command_2.new
 		);
 	}
@@ -427,7 +424,7 @@ mod tests {
 		let user1_id = room.register_member(user_template_1);
 		let user2_id = room.register_member(user_template_2);
 		let user3_id = room.register_member(user_template_3);
-		let object = room.test_create_object(user3_id, access_group);
+		let object = room.test_create_object(GameObjectOwner::Member(user3_id), access_group);
 		object.created = true;
 		object.template_id = object_template;
 
@@ -440,7 +437,7 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object(user_id, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user_id), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		(room, user_id, object_id)

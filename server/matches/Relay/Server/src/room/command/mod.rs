@@ -9,7 +9,8 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 use crate::room::object::{Field, GameObjectError};
 use crate::room::Room;
 
-pub mod create;
+pub mod create_member_object;
+pub mod create_room_object;
 pub mod created;
 pub mod delete;
 pub mod double;
@@ -92,7 +93,8 @@ impl ServerCommandError {
 
 pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	match command {
-		C2SCommand::Create(command) => command.execute(room, user_id),
+		C2SCommand::CreateMemberObject(command) => command.execute(room, user_id),
+		C2SCommand::CreateRoomObject(command) => command.execute(room, user_id),
 		C2SCommand::SetLong(command) => command.execute(room, user_id),
 		C2SCommand::IncrementLongValue(command) => command.execute(room, user_id),
 		C2SCommand::CompareAndSetLong(command) => command.execute(room, user_id),
@@ -113,6 +115,7 @@ pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> 
 mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
@@ -124,7 +127,10 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object_id = room.test_create_object(user_1, access_groups).id.clone();
+		let object_id = room
+			.test_create_object(GameObjectOwner::Member(user_1), access_groups)
+			.id
+			.clone();
 		(room, object_id, user_1, user_2)
 	}
 

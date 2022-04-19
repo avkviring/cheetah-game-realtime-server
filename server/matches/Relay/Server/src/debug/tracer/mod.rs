@@ -212,7 +212,7 @@ impl CommandTracerSessions {
 				None => Option::None,
 				Some(object_id) => {
 					let template_from_command = match command {
-						C2SCommand::Create(command) => Some(command.template),
+						C2SCommand::CreateMemberObject(command) => Some(command.template),
 						_ => None,
 					};
 					let template = match template_from_command {
@@ -292,11 +292,11 @@ impl CommandTracerSessions {
 pub mod tests {
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::types::create::C2SCreateMemberGameObjectCommand;
 	use cheetah_matches_relay_common::commands::types::event::EventCommand;
-	use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
 
 	use crate::debug::tracer::{
-		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedCommand, TracedBothDirectionCommand,
+		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedBothDirectionCommand, TracedCommand,
 	};
 
 	#[test]
@@ -517,7 +517,7 @@ pub mod tests {
 		tracer.collect_c2s(
 			&Default::default(),
 			100,
-			&C2SCommand::Create(CreateGameObjectCommand {
+			&C2SCommand::CreateMemberObject(C2SCreateMemberGameObjectCommand {
 				object_id: Default::default(),
 				template: 100,
 				access_groups: Default::default(),
@@ -531,11 +531,13 @@ pub mod tests {
 				time: Session::now(),
 				template: Some(100),
 				user: 100,
-				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
-					object_id: Default::default(),
-					template: 100,
-					access_groups: Default::default()
-				}))
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::CreateMemberObject(
+					C2SCreateMemberGameObjectCommand {
+						object_id: Default::default(),
+						template: 100,
+						access_groups: Default::default()
+					}
+				))
 			}]
 		)
 	}

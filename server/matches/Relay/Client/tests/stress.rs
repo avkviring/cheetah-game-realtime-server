@@ -12,7 +12,7 @@ use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
-use crate::helpers::server::IntegrationTestServerBuilder;
+
 
 pub mod helpers;
 
@@ -22,8 +22,9 @@ pub mod helpers;
 // #[test]
 pub fn stress_test() {
 	init_logger();
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
-	let object_id = helper.create_user_object(client1);
+	let (helper, [client1, client2]) = setup(Default::default());
+
+	let object_id = helper.create_member_object(client1);
 	thread::sleep(Duration::from_millis(1000));
 
 	ffi::command::room::attach_to_room(client2);

@@ -82,7 +82,7 @@ impl PermissionManager {
 			None => {
 				let permission = match self.fields.get(&cached_key.field_key) {
 					None => match self.templates.get(&template) {
-						None => &Permission::Ro,
+						None => &Permission::Rw,
 						Some(permissions) => PermissionManager::get_permission_by_group(user_group, permissions),
 					},
 					Some(permissions) => PermissionManager::get_permission_by_group(user_group, permissions),
@@ -125,7 +125,7 @@ mod tests {
 				},
 				AccessGroups(0)
 			),
-			Permission::Ro
+			Permission::Rw
 		);
 	}
 

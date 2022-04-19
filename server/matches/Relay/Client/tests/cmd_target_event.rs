@@ -33,7 +33,7 @@ fn test() {
 	helper.wait_udp();
 
 	let mut object_id = GameObjectIdFFI::default();
-	ffi::command::object::create_object(
+	ffi::command::object::create_member_object(
 		client1,
 		1,
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,

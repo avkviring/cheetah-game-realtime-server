@@ -1,5 +1,7 @@
 use std::sync::Mutex;
 
+use lazy_static::lazy_static;
+
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
 use cheetah_matches_relay_common::constants::FieldId;
@@ -7,20 +9,19 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
 use crate::helpers::server::IntegrationTestServerBuilder;
-use lazy_static::lazy_static;
 
 pub mod helpers;
 
 #[test]
 fn test() {
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+	let (helper, [client1, client2]) = setup(IntegrationTestServerBuilder::default());
 
 	ffi::command::event::set_event_listener(client2, on_event_listener);
 	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
 	let mut object_id = GameObjectIdFFI::default();
-	ffi::command::object::create_object(
+	ffi::command::object::create_member_object(
 		client1,
 		1,
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,

@@ -153,8 +153,14 @@ impl From<TracedCommand> for admin::Command {
 fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
 		TracedBothDirectionCommand::C2S(command) => match command {
-			C2SCommand::Create(command) => {
+			C2SCommand::CreateMemberObject(command) => {
 				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
+			}
+			C2SCommand::CreateRoomObject(command) => {
+				format!(
+					"access({:?}), template({:?}), unique_create_key({:?})",
+					command.access_groups.0, command.template, command.unique_create_key
+				)
 			}
 			C2SCommand::Created(_) => "".to_string(),
 			C2SCommand::SetLong(command) => {
@@ -192,8 +198,8 @@ fn get_string_value(command: &TracedCommand) -> String {
 			}
 		},
 		TracedBothDirectionCommand::S2C(command) => match command {
-			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
-			S2CCommand::Created(_) => "".to_string(),
+			S2CCommand::Loading(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
+			S2CCommand::Loaded(_) => "".to_string(),
 			S2CCommand::SetLong(command) => format!("{:?}", command.value),
 			S2CCommand::SetDouble(command) => format!("{:?}", command.value),
 			S2CCommand::SetStructure(command) => format!("{:?}", command.structure),

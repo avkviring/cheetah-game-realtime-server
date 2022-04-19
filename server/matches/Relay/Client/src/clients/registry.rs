@@ -39,14 +39,7 @@ impl Registry {
 		user_private_key: UserPrivateKey,
 		start_frame_id: u64,
 	) -> std::io::Result<ClientId> {
-		panic::set_hook(Box::new(move |panic_info| {
-			let msg = format!("Panic in relay client {:?}", panic_info);
-			// ставим задачу на выход
-			std::thread::spawn(move || {
-				tracing::error!("{}", msg);
-			});
-			thread::sleep(Duration::from_secs(2));
-		}));
+		Self::set_panic_hook();
 
 		let server_time = Arc::new(Mutex::new(Option::None));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
@@ -91,6 +84,18 @@ impl Registry {
 
 		tracing::info!("[registry] create client({})", client_id);
 		Result::Ok(client_id)
+	}
+
+	fn set_panic_hook() {
+		let default_panic = std::panic::take_hook();
+		panic::set_hook(Box::new(move |panic_info| {
+			let msg = format!("Panic in relay client {:?}", panic_info);
+			std::thread::spawn(move || {
+				tracing::error!("{}", msg);
+			});
+			thread::sleep(Duration::from_secs(2));
+			default_panic(panic_info);
+		}))
 	}
 
 	pub fn destroy_client(&mut self, client: ClientId) -> Option<ApplicationThreadClient> {

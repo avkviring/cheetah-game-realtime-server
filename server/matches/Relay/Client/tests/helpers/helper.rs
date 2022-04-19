@@ -41,9 +41,9 @@ impl IntegrationTestHelper {
 		thread::sleep(Duration::from_millis(1000));
 	}
 
-	pub fn create_user_object(&self, client_id: ClientId) -> GameObjectIdFFI {
+	pub fn create_member_object(&self, client_id: ClientId) -> GameObjectIdFFI {
 		let mut object_id = GameObjectIdFFI::default();
-		ffi::command::object::create_object(
+		ffi::command::object::create_member_object(
 			client_id,
 			IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
 			IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
@@ -66,12 +66,13 @@ impl IntegrationTestHelper {
 	}
 }
 
-pub fn setup(builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, u16, u16) {
+pub fn setup<const N: usize>(builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, [u16; N]) {
 	let mut helper = IntegrationTestHelper::new(builder);
-	let (user1_id, user1_key) = helper.create_user();
-	let (user2_id, user2_key) = helper.create_user();
-
-	let client1 = helper.create_client(user1_id, user1_key);
-	let client2 = helper.create_client(user2_id, user2_key);
-	(helper, client1, client2)
+	let mut members = [0; N];
+	for i in 0..N {
+		let (user_id, user_key) = helper.create_user();
+		let client = helper.create_client(user_id, user_key);
+		members[i] = client;
+	}
+	(helper, members)
 }

@@ -1,5 +1,5 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::create::C2SCreateMemberGameObjectCommand;
 use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
 use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
@@ -28,7 +28,7 @@ pub fn create_object_frame() {
 		.commands
 		.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::Create(CreateGameObjectCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateMemberObject(C2SCreateMemberGameObjectCommand {
 				object_id: Default::default(),
 				template: 0,
 				access_groups: Default::default(),

@@ -17,7 +17,7 @@ pub mod helpers;
 ///
 #[test]
 fn test() {
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
 	ffi::command::object::set_create_object_listener(client2, on_object_create);
 	ffi::command::structure::set_structure_listener(client2, on_structure_listener);
@@ -27,7 +27,7 @@ fn test() {
 	helper.wait_udp();
 
 	let mut object_id = GameObjectIdFFI::default();
-	ffi::command::object::create_object(
+	ffi::command::object::create_member_object(
 		client1,
 		1,
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,

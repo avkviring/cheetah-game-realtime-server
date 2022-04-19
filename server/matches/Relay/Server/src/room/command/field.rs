@@ -54,6 +54,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::types::field::DeleteFieldCommand;
 	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;
@@ -62,7 +63,7 @@ mod tests {
 	#[test]
 	fn should_command() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		let object_id = object.id.clone();
 		object.created = true;
 		object.set_long(10, 100).unwrap();
@@ -73,7 +74,7 @@ mod tests {
 		};
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object(&object_id).unwrap();
 		assert!(object.get_long(&10).is_none());
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::DeleteField(c))) if c==command));
 	}

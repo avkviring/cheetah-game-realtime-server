@@ -10,15 +10,15 @@ use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
-use crate::helpers::server::IntegrationTestServerBuilder;
+
 
 pub mod helpers;
 
 #[test]
 fn should_drop() {
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	helper.wait_udp();
 
 	ffi::command::long_value::set_long_value_listener(client2, should_drop_listener);
@@ -53,9 +53,9 @@ extern "C" fn should_drop_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI
 
 #[test]
 fn should_rtt_emulation() {
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	helper.wait_udp();
 
 	ffi::command::long_value::set_long_value_listener(client2, should_rtt_listener);

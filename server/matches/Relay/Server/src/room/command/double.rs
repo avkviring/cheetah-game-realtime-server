@@ -90,6 +90,7 @@ impl GameObject {
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;
@@ -97,7 +98,7 @@ mod tests {
 	#[test]
 	fn should_set_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		let object_id = object.id.clone();
 		object.created = true;
 		room.out_commands.clear();
@@ -108,7 +109,7 @@ mod tests {
 		};
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_double(&10).unwrap() as u64, 100);
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==command));
 	}
@@ -117,7 +118,7 @@ mod tests {
 	fn should_increment_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
 
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.out_commands.clear();
@@ -129,7 +130,7 @@ mod tests {
 		command.clone().execute(&mut room, user).unwrap();
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_double(&10).unwrap() as u64, 200);
 
 		let result = SetDoubleCommand {

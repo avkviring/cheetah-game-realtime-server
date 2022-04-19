@@ -6,20 +6,20 @@ use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
-use crate::helpers::server::IntegrationTestServerBuilder;
+
 use lazy_static::lazy_static;
 
 pub mod helpers;
 
 #[test]
 fn test() {
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
 	ffi::command::structure::set_structure_listener(client2, on_structure_listener);
 	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	let structure_buffer = BufferFFI::from(vec![100]);
 	let structure_field_id = 10;
 	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);

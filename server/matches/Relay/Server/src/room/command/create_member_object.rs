@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::create::C2SCreateMemberGameObjectCommand;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -6,7 +6,7 @@ use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;
 
-impl ServerCommandExecutor for CreateGameObjectCommand {
+impl ServerCommandExecutor for C2SCreateMemberGameObjectCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let user = room.get_member(&user_id)?;
 
@@ -45,7 +45,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::types::load::CreateGameObjectCommand;
+	use cheetah_matches_relay_common::commands::types::create::C2SCreateMemberGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -60,7 +60,7 @@ mod tests {
 		room.test_mark_as_connected(user_id).unwrap();
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateMemberGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
@@ -68,7 +68,7 @@ mod tests {
 		command.execute(&mut room, user_id).unwrap();
 
 		assert!(matches!(
-			room.get_object_mut(&object_id),
+			room.get_object(&object_id),
 			Ok(object)
 				if object.template_id == command.template
 				&& object.access_groups == command.access_groups
@@ -83,7 +83,7 @@ mod tests {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(1000));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateMemberGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b10),
@@ -93,7 +93,7 @@ mod tests {
 			command.execute(&mut room, user_id),
 			Err(ServerCommandError::Error(_))
 		));
-		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.get_object(&object_id), Err(_)));
 	}
 
 	///
@@ -103,7 +103,7 @@ mod tests {
 	fn should_not_create_when_access_group_is_wrong() {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateMemberGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
@@ -113,7 +113,7 @@ mod tests {
 			command.execute(&mut room, user_id),
 			Err(ServerCommandError::Error(_))
 		));
-		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.get_object(&object_id), Err(_)));
 	}
 
 	///
@@ -124,7 +124,7 @@ mod tests {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(0, GameObjectOwner::Member(user_id));
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateMemberGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b11),
@@ -133,7 +133,7 @@ mod tests {
 			command.execute(&mut room, user_id),
 			Err(ServerCommandError::Error(_))
 		));
-		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.get_object(&object_id), Err(_)));
 	}
 
 	//
@@ -143,11 +143,11 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let access_groups = AccessGroups(0b11);
 		let (mut room, user_id) = setup(access_groups);
-		let object = room.test_create_object(user_id, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user_id), access_groups);
 		object.template_id = 777;
 		let object_id = object.id.clone();
 		room.out_commands.clear();
-		let command = CreateGameObjectCommand {
+		let command = C2SCreateMemberGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,
 			access_groups: AccessGroups(0b1000),
@@ -157,7 +157,7 @@ mod tests {
 			command.execute(&mut room, user_id),
 			Err(ServerCommandError::Error(_))
 		));
-		assert!(matches!(room.get_object_mut(&object_id), Ok(object) if object.template_id == 777));
+		assert!(matches!(room.get_object(&object_id), Ok(object) if object.template_id == 777));
 	}
 
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {

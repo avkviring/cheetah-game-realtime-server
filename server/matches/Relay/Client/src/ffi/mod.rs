@@ -87,7 +87,7 @@ where
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct GameObjectIdFFI {
 	id: u32,
-	room_owner: bool,
+	pub room_owner: bool,
 	user_id: RoomMemberId,
 }
 

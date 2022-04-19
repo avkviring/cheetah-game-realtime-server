@@ -13,9 +13,9 @@ pub mod helpers;
 
 #[test]
 fn should_inc() {
-	let (helper, client1, client2) = setup(Default::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
 	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
 
@@ -32,9 +32,9 @@ fn should_inc() {
 
 #[test]
 fn should_set() {
-	let (helper, client1, client2) = setup(Default::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	ffi::command::float_value::set_double_value(client1, &object_id, 1, 100.0);
 	ffi::command::float_value::set_double_value(client1, &object_id, 1, 200.0);
 

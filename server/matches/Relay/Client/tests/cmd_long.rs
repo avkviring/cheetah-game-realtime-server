@@ -1,5 +1,7 @@
 use std::sync::Mutex;
 
+use lazy_static::lazy_static;
+
 use cheetah_matches_relay::room::template::config::Permission;
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
@@ -9,15 +11,14 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
 use crate::helpers::server::IntegrationTestServerBuilder;
-use lazy_static::lazy_static;
 
 pub mod helpers;
 
 #[test]
 fn should_inc() {
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	ffi::command::long_value::inc_long_value(client1, &object_id, 1, 100);
 	ffi::command::long_value::inc_long_value(client1, &object_id, 1, 100);
 
@@ -31,9 +32,9 @@ fn should_inc() {
 
 #[test]
 fn should_set() {
-	let (helper, client1, client2) = setup(IntegrationTestServerBuilder::default());
+	let (helper, [client1, client2]) = setup(Default::default());
 
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	ffi::command::long_value::set_long_value(client1, &object_id, 1, 100);
 	ffi::command::long_value::set_long_value(client1, &object_id, 1, 200);
 
@@ -57,11 +58,11 @@ fn should_compare_and_set() {
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 		Permission::Rw,
 	);
-	let (helper, client1, client2) = setup(builder);
+	let (helper, [client1, client2]) = setup(builder);
 
 	ffi::command::long_value::set_long_value_listener(client1, listener_for_compare_and_set);
 	ffi::command::room::attach_to_room(client1);
-	let object_id = helper.create_user_object(client1);
+	let object_id = helper.create_member_object(client1);
 	helper.wait_udp();
 
 	ffi::command::room::attach_to_room(client2);

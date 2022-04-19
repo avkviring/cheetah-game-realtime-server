@@ -52,6 +52,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetEventCommand};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;
@@ -62,7 +63,7 @@ mod tests {
 	#[test]
 	pub fn should_send_event() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.out_commands.clear();
@@ -91,7 +92,7 @@ mod tests {
 		room.test_mark_as_connected(user2).unwrap();
 		room.test_mark_as_connected(user3).unwrap();
 
-		let object = room.test_create_object(user1, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user1), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.test_get_user_out_commands(user1).clear();

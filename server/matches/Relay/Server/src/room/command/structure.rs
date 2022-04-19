@@ -56,6 +56,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
+	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
@@ -68,7 +69,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
 		let user = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object(user, access_groups);
+		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 
@@ -80,7 +81,7 @@ mod tests {
 		};
 
 		command.execute(&mut room, user).unwrap();
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object(&object_id).unwrap();
 
 		assert_eq!(*object.get_structure(&100).unwrap(), command.structure.to_vec());
 		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c==command));

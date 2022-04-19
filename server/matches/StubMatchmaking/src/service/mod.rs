@@ -4,7 +4,7 @@ use tokio::sync::RwLock;
 use tonic::transport::Uri;
 use tonic::{Code, Request, Response, Status};
 
-use cheetah_microservice::fmt::format;
+
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
