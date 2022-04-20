@@ -47,7 +47,7 @@ mod tests {
 			.test_create_object(GameObjectOwner::Member(user_a_id), access_groups)
 			.id
 			.clone();
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
@@ -72,7 +72,7 @@ mod tests {
 			.test_create_object(GameObjectOwner::Member(user_a), access_groups)
 			.id
 			.clone();
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = DeleteGameObjectCommand {
 			object_id: object_id.clone(),
 		};
@@ -85,6 +85,6 @@ mod tests {
 			})
 		));
 		assert!(matches!(room.get_object(&object_id), Ok(_)));
-		assert!(matches!(room.out_commands.pop_back(), None));
+		assert!(matches!(room.test_out_commands.pop_back(), None));
 	}
 }

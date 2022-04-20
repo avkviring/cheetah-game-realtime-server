@@ -211,7 +211,7 @@ mod tests {
 	fn should_set_long_command() {
 		let (mut room, user, object_id) = setup();
 
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = SetLongCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -221,14 +221,14 @@ mod tests {
 
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_long(&10).unwrap(), 100);
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==command));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==command));
 	}
 
 	#[test]
 	fn should_increment_long_command() {
 		let (mut room, user, object_id) = setup();
 
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -246,14 +246,14 @@ mod tests {
 			value: 200,
 		};
 
-		room.out_commands.pop_back();
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==result));
+		room.test_out_commands.pop_back();
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==result));
 	}
 
 	#[test]
 	fn should_not_panic_if_overflow() {
 		let (mut room, user, object_id) = setup();
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id,
 			field_id: 10,
@@ -322,9 +322,9 @@ mod tests {
 			reset: 555,
 		};
 
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		command.execute(&mut room, user1_id).unwrap();
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c.value==command.new));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c.value==command.new));
 	}
 
 	///

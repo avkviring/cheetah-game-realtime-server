@@ -66,7 +66,7 @@ mod tests {
 		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 
 		let command = EventCommand {
 			object_id,
@@ -75,7 +75,7 @@ mod tests {
 		};
 
 		command.execute(&mut room, user).unwrap();
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
 
 	#[test]

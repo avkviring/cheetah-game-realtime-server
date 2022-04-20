@@ -146,7 +146,7 @@ mod tests {
 		let object = room.test_create_object(GameObjectOwner::Member(user_id), access_groups);
 		object.template_id = 777;
 		let object_id = object.id.clone();
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = CreateGameObjectCommand {
 			object_id: object_id.clone(),
 			template: 100,

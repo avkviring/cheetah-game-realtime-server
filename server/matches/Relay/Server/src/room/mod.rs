@@ -46,15 +46,15 @@ pub struct Room {
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	pub room_object_id_generator: u32,
 	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, CreateCommandsCollector)>>>,
+	measurers: Rc<RefCell<Measurers>>,
 
 	#[cfg(test)]
-	object_id_generator: u32,
+	test_object_id_generator: u32,
 	#[cfg(test)]
 	///
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
-	pub out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
-	measurers: Rc<RefCell<Measurers>>,
+	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 }
 
 #[derive(Debug)]
@@ -77,9 +77,9 @@ impl Room {
 			current_member_id: Default::default(),
 			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
 			#[cfg(test)]
-			object_id_generator: 0,
+			test_object_id_generator: 0,
 			#[cfg(test)]
-			out_commands: Default::default(),
+			test_out_commands: Default::default(),
 			user_id_generator: 0,
 			command_trace_session: Default::default(),
 			room_object_id_generator: 65536,
@@ -326,8 +326,8 @@ mod tests {
 		}
 
 		pub fn test_create_object(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {
-			self.object_id_generator += 1;
-			let id = GameObjectId::new(self.object_id_generator, owner);
+			self.test_object_id_generator += 1;
+			let id = GameObjectId::new(self.test_object_id_generator, owner);
 			let object = GameObject::new(id.clone(), 0, access_groups, false);
 			self.insert_object(object);
 			self.get_object(&id).unwrap()
@@ -397,7 +397,7 @@ mod tests {
 			.id
 			.clone();
 
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		room.disconnect_user(user_a).unwrap();
 
 		assert!(!room.contains_object(&object_a_1));
@@ -407,10 +407,10 @@ mod tests {
 		assert!(room.contains_object(&object_b_2));
 
 		assert!(
-			matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1)
+			matches!(room.test_out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1)
 		);
 		assert!(
-			matches!(room.out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2)
+			matches!(room.test_out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2)
 		);
 	}
 

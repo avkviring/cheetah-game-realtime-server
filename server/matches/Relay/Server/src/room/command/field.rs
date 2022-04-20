@@ -76,7 +76,7 @@ mod tests {
 
 		let object = room.get_object(&object_id).unwrap();
 		assert!(object.get_long(&10).is_none());
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::DeleteField(c))) if c==command));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::DeleteField(c))) if c==command));
 	}
 
 	#[test]

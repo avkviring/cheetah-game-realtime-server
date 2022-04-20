@@ -74,7 +74,7 @@ mod tests {
 		object.created = true;
 		let object_id = object.id.clone();
 
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = SetStructureCommand {
 			object_id: object_id.clone(),
 			field_id: 100,
@@ -85,6 +85,6 @@ mod tests {
 		let object = room.get_object(&object_id).unwrap();
 
 		assert_eq!(*object.get_structure(&100).unwrap(), command.structure.as_slice().to_vec());
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c==command));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c==command));
 	}
 }

@@ -28,7 +28,7 @@ impl Room {
 	{
 		#[cfg(test)]
 		commands.iter().for_each(|command| {
-			self.out_commands.push_front((access_groups, command.command.clone()));
+			self.test_out_commands.push_front((access_groups, command.command.clone()));
 		});
 
 		let channel_type = self

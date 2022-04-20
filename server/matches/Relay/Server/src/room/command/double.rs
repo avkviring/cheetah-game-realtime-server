@@ -101,7 +101,7 @@ mod tests {
 		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		let object_id = object.id.clone();
 		object.created = true;
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = SetDoubleCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -111,7 +111,7 @@ mod tests {
 
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_double(&10).unwrap() as u64, 100);
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==command));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==command));
 	}
 
 	#[test]
@@ -121,7 +121,7 @@ mod tests {
 		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
-		room.out_commands.clear();
+		room.test_out_commands.clear();
 		let command = IncrementDoubleC2SCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -139,7 +139,7 @@ mod tests {
 			value: 200.200,
 		};
 
-		room.out_commands.pop_back();
-		assert!(matches!(room.out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==result));
+		room.test_out_commands.pop_back();
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==result));
 	}
 }
