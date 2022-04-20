@@ -45,7 +45,6 @@ pub struct Room {
 	pub user_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	pub room_object_id_generator: u32,
-	pub creating_object_id_mapping: HashMap<GameObjectId, GameObjectId, FnvBuildHasher>,
 	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, CreateCommandsCollector)>>>,
 
 	#[cfg(test)]
@@ -84,7 +83,6 @@ impl Room {
 			user_id_generator: 0,
 			command_trace_session: Default::default(),
 			room_object_id_generator: 65536,
-			creating_object_id_mapping: Default::default(),
 			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 			template_name: template.name.clone(),
 			measurers,
@@ -95,20 +93,6 @@ impl Room {
 			room.insert_object(game_object);
 		});
 		room
-	}
-
-	///
-	/// Установить связь между временным id и постоянным для объектов
-	/// Используются для объектов в стадии создания, например если игрок создается объект для
-	/// комнаты, то он вначале выдает ему свой временный id и шлет команды заполнения объекта
-	/// данными с этим идентификатором
-	///
-	pub(crate) fn add_creating_object_id_mapping(&mut self, member_object_id: GameObjectId, room_object_id: GameObjectId) {
-		self.creating_object_id_mapping.insert(member_object_id, room_object_id);
-	}
-
-	pub(crate) fn remove_creating_object_id_mapping(&mut self, member_object_id: &GameObjectId) {
-		self.creating_object_id_mapping.remove(member_object_id);
 	}
 
 	///
@@ -240,11 +224,6 @@ impl Room {
 	}
 
 	pub fn get_object(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
-		let object_id = match self.creating_object_id_mapping.get(object_id) {
-			None => object_id,
-			Some(mapped_object_id) => mapped_object_id,
-		};
-
 		self.objects
 			.get_mut(object_id)
 			.ok_or_else(|| ServerCommandError::GameObjectNotFound {
@@ -395,18 +374,6 @@ mod tests {
 	}
 
 	#[test]
-	fn should_mapping_object_id() {
-		let mut room = Room::default();
-		let access_groups = AccessGroups(0b111);
-		let room_object_id = room.test_create_object(GameObjectOwner::Room, access_groups).id.clone();
-		let member_object_id = GameObjectId::new(100500, GameObjectOwner::Member(10));
-		room.add_creating_object_id_mapping(member_object_id.clone(), room_object_id.clone());
-		assert_eq!(room.get_object(&member_object_id).unwrap().id, room_object_id);
-		room.remove_creating_object_id_mapping(&member_object_id);
-		assert!(room.get_object(&member_object_id).is_err());
-	}
-
-	#[test]
 	fn should_remove_objects_when_disconnect() {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b111);
@@ -544,12 +511,6 @@ mod tests {
 		);
 	}
 
-	pub fn from_vec(vec: Vec<u8>) -> heapless::Vec<u8, 256> {
-		let mut result = heapless::Vec::new();
-		result.extend_from_slice(vec.as_slice()).unwrap();
-		result
-	}
-
 	#[test]
 	pub fn should_keep_order_object() {
 		let (template, user_template) = create_template();
@@ -618,9 +579,9 @@ mod tests {
 
 		let commands = room.test_get_user_out_commands(user2_id);
 
-		assert!(matches!(commands.get(0), Some(S2CCommand::Loading(_))));
+		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
-		assert!(matches!(commands.get(2), Some(S2CCommand::Loaded(_))));
+		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
 	}
 
 	#[test]

@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::create::{S2CLoadedGameObjectCommand, S2CLoadingGameObjectCommand};
+use cheetah_matches_relay_common::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -125,7 +125,7 @@ impl GameObject {
 	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
 		commands.push(S2CommandWithFieldInfo {
 			field: Option::None,
-			command: S2CCommand::Loading(S2CLoadingGameObjectCommand {
+			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id.clone(),
 				template: self.template_id,
 				access_groups: self.access_groups,
@@ -139,7 +139,7 @@ impl GameObject {
 		if self.created {
 			commands.push(S2CommandWithFieldInfo {
 				field: None,
-				command: S2CCommand::Loaded(S2CLoadedGameObjectCommand {
+				command: S2CCommand::Created(S2CreatedGameObjectCommand {
 					object_id: self.id.clone(),
 				}),
 			})?;
@@ -185,11 +185,12 @@ mod tests {
 		object.collect_create_commands(&mut commands);
 
 		assert!(matches!(&commands[0],
-			S2CommandWithFieldInfo { field: None, command:S2CCommand::Loading(c) } if c.object_id==id && c.template == object.template_id && c.access_groups == object.access_groups));
+			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template_id && c.access_groups == object.access_groups));
 
 		assert!(matches!(&commands[1],
 			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
-			if c.object_id==id && c.field_id == 1 && c.structure.to_vec() == vec![1,2,3]));
+			if c.object_id==id && c.field_id == 1 && c.structure.as_slice().to_vec() == vec![1,2,
+				3]));
 
 		assert!(matches!(&commands[2],
 			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
@@ -199,7 +200,9 @@ mod tests {
 			S2CommandWithFieldInfo { field: Some(Field { id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
 			if c.object_id==id && c.field_id == 2 && (c.value - 200.200).abs() < 0.0001));
 
-		assert!(matches!(&commands[4],S2CommandWithFieldInfo { field: None,  command: S2CCommand::Loaded(c)} if c.object_id==id));
+		assert!(
+			matches!(&commands[4],S2CommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id)
+		);
 	}
 
 	///
@@ -218,7 +221,7 @@ mod tests {
 			&commands[0],
 			S2CommandWithFieldInfo {
 				field: None,
-				command: S2CCommand::Loading(_)
+				command: S2CCommand::Create(_)
 			}
 		));
 		assert!(matches!(&commands[1],

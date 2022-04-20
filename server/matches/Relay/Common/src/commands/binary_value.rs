@@ -38,4 +38,8 @@ impl BinaryValue {
 	pub(crate) fn len(&self) -> usize {
 		self.0.len()
 	}
+
+	pub fn as_slice(&self) -> &[u8] {
+		self.0.as_slice()
+	}
 }

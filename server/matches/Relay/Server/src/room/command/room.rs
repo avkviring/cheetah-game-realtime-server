@@ -71,8 +71,8 @@ mod tests {
 		attach_to_room(&mut room, user_a).unwrap();
 
 		let mut commands = room.test_get_user_out_commands(user_a);
-		assert!(matches!(commands.pop_front(), Some(S2CCommand::Loading(c)) if c.object_id==object_a_1_id));
-		assert!(matches!(commands.pop_front(), Some(S2CCommand::Loaded(c)) if c.object_id==object_a_1_id));
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), None));
 	}
 }

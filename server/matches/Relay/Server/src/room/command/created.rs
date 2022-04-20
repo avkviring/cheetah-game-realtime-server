@@ -22,8 +22,6 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 			} else {
 				room.send_to_members(groups, template, commands.as_slice(), |user| user.id != user_id)?;
 			}
-
-			room.remove_creating_object_id_mapping(&self.object_id);
 			Ok(())
 		} else {
 			return Err(ServerCommandError::Error(format!(
@@ -38,14 +36,9 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::create::C2SCreatedGameObjectCommand;
-	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::command::tests::{setup_two_players};
+	use crate::room::command::tests::setup_two_players;
 	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-	use crate::room::template::config::RoomTemplate;
-	use crate::room::Room;
 
 	///
 	/// - Команда должна приводить к рассылки оповещения для пользователей
@@ -58,18 +51,20 @@ mod tests {
 		room.test_mark_as_connected(user2).unwrap();
 		let command = C2SCreatedGameObjectCommand {
 			object_id: object_id.clone(),
+			room_owner: false,
+			unique_key: None,
 		};
 		command.execute(&mut room, user1).unwrap();
 
 		assert!(room.test_get_user_out_commands(user1).is_empty());
 		assert!(matches!(
 			room.test_get_user_out_commands(user2).get(0),
-			Some(S2CCommand::Loading(c)) if c.object_id == object_id
+			Some(S2CCommand::Create(c)) if c.object_id == object_id
 		));
 
 		assert!(matches!(
 			room.test_get_user_out_commands(user2).get(1),
-			Some(S2CCommand::Loaded(c)) if c.object_id == object_id
+			Some(S2CCommand::Created(c)) if c.object_id == object_id
 		));
 	}
 
@@ -81,6 +76,8 @@ mod tests {
 		let (mut room, object_id, user1, _) = setup_two_players();
 		let command = C2SCreatedGameObjectCommand {
 			object_id: object_id.clone(),
+			room_owner: false,
+			unique_key: None,
 		};
 		room.out_commands.clear();
 		command.execute(&mut room, user1).unwrap();
@@ -100,30 +97,12 @@ mod tests {
 		object.created = true;
 		let command = C2SCreatedGameObjectCommand {
 			object_id: object_id.clone(),
+			room_owner: false,
+			unique_key: None,
 		};
 		room.out_commands.clear();
 
 		assert!(matches!(command.execute(&mut room, user1), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.out_commands.pop_back(), None));
-	}
-
-	///
-	/// Команда должна удалять маппинг идентификаторов объектов
-	///
-	#[test]
-	pub fn should_delete_mapping() {
-		let template = RoomTemplate::default();
-		let access_groups = AccessGroups(10);
-		let mut room = Room::from_template(template);
-		let room_object_id = room.test_create_object(GameObjectOwner::Room, access_groups).id.clone();
-		let member_object_id = GameObjectId::new(100, GameObjectOwner::Member(777));
-		room.add_creating_object_id_mapping(member_object_id.clone(), room_object_id.clone());
-		assert!(room.get_object(&member_object_id).is_ok());
-
-		let command = C2SCreatedGameObjectCommand {
-			object_id: member_object_id.clone(),
-		};
-		command.execute(&mut room, 0).unwrap();
-		assert!(room.get_object(&member_object_id).is_err());
 	}
 }

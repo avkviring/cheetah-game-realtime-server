@@ -9,8 +9,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 use crate::room::object::{Field, GameObjectError};
 use crate::room::Room;
 
-pub mod create_member_object;
-pub mod create_room_object;
+pub mod create;
 pub mod created;
 pub mod delete;
 pub mod double;
@@ -93,8 +92,7 @@ impl ServerCommandError {
 
 pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	match command {
-		C2SCommand::CreateMemberObject(command) => command.execute(room, user_id),
-		C2SCommand::CreateRoomObject(command) => command.execute(room, user_id),
+		C2SCommand::CreateGameObject(command) => command.execute(room, user_id),
 		C2SCommand::SetLong(command) => command.execute(room, user_id),
 		C2SCommand::IncrementLongValue(command) => command.execute(room, user_id),
 		C2SCommand::CompareAndSetLong(command) => command.execute(room, user_id),
@@ -105,7 +103,7 @@ pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> 
 		C2SCommand::Delete(command) => command.execute(room, user_id),
 		C2SCommand::AttachToRoom => room::attach_to_room(room, user_id),
 		C2SCommand::DetachFromRoom => room::detach_from_room(room, user_id),
-		C2SCommand::Created(command) => command.execute(room, user_id),
+		C2SCommand::CreatedGameObject(command) => command.execute(room, user_id),
 		C2SCommand::TargetEvent(command) => command.execute(room, user_id),
 		C2SCommand::DeleteField(command) => command.execute(room, user_id),
 	}

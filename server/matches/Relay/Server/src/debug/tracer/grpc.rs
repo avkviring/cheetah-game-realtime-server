@@ -153,16 +153,10 @@ impl From<TracedCommand> for admin::Command {
 fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
 		TracedBothDirectionCommand::C2S(command) => match command {
-			C2SCommand::CreateMemberObject(command) => {
+			C2SCommand::CreateGameObject(command) => {
 				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
 			}
-			C2SCommand::CreateRoomObject(command) => {
-				format!(
-					"access({:?}), template({:?}), unique_create_key({:?})",
-					command.access_groups.0, command.template, command.unique_create_key
-				)
-			}
-			C2SCommand::Created(_) => "".to_string(),
+			C2SCommand::CreatedGameObject(_) => "".to_string(),
 			C2SCommand::SetLong(command) => {
 				format!("{:?}", command.value)
 			}
@@ -185,7 +179,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 				format!("{:?}", command.structure)
 			}
 			C2SCommand::Event(command) => {
-				format!("{:?}", command.event)
+				format!("{:?}", command.event.as_slice())
 			}
 			C2SCommand::TargetEvent(command) => {
 				format!("target_user = {:?}, value = {:?}", command.target, command.event.event)
@@ -198,8 +192,8 @@ fn get_string_value(command: &TracedCommand) -> String {
 			}
 		},
 		TracedBothDirectionCommand::S2C(command) => match command {
-			S2CCommand::Loading(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
-			S2CCommand::Loaded(_) => "".to_string(),
+			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
+			S2CCommand::Created(_) => "".to_string(),
 			S2CCommand::SetLong(command) => format!("{:?}", command.value),
 			S2CCommand::SetDouble(command) => format!("{:?}", command.value),
 			S2CCommand::SetStructure(command) => format!("{:?}", command.structure),
@@ -212,9 +206,9 @@ fn get_string_value(command: &TracedCommand) -> String {
 
 #[cfg(test)]
 pub mod test {
+	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::types::event::EventCommand;
-	use cheetah_matches_relay_common::commands::CommandBuffer;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
@@ -231,7 +225,7 @@ pub mod test {
 			network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Room),
 				field_id: 555,
-				event: CommandBuffer::from_slice(vec![10, 20, 30].as_slice()).unwrap(),
+				event: BinaryValue::from(vec![10, 20, 30].as_slice()),
 			})),
 		};
 

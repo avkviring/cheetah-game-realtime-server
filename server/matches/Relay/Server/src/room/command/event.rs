@@ -49,6 +49,7 @@ impl ServerCommandExecutor for TargetEventCommand {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::event::{EventCommand, TargetEventCommand};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -57,7 +58,6 @@ mod tests {
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
-	use crate::room::tests::from_vec;
 	use crate::room::Room;
 
 	#[test]
@@ -71,7 +71,7 @@ mod tests {
 		let command = EventCommand {
 			object_id,
 			field_id: 100,
-			event: from_vec(vec![1, 2, 3, 4, 5]),
+			event: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()),
 		};
 
 		command.execute(&mut room, user).unwrap();
@@ -104,7 +104,7 @@ mod tests {
 			event: EventCommand {
 				object_id,
 				field_id: 100,
-				event: from_vec(vec![1, 2, 3, 4, 5]),
+				event: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()),
 			},
 		};
 
