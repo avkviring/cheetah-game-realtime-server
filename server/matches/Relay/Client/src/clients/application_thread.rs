@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::create::{C2SCreateMemberGameObjectCommand, C2SCreateRoomGameObjectCommand};
+use cheetah_matches_relay_common::commands::types::create::CreateGameObjectCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -117,13 +117,13 @@ impl ApplicationThreadClient {
 		while let Ok(command) = self.commands_from_server.try_recv() {
 			if let BothDirectionCommand::S2CWithCreator(command_with_user) = command.both_direction_command {
 				match command_with_user.command {
-					S2CCommand::Loading(command) => {
+					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {
 							let object_id = From::from(&command.object_id);
 							listener(&object_id, command.template);
 						}
 					}
-					S2CCommand::Loaded(command) => {
+					S2CCommand::Created(command) => {
 						if let Some(ref listener) = self.listener_created_object {
 							let object_id = From::from(&command.object_id);
 							listener(&object_id);
@@ -185,35 +185,15 @@ impl ApplicationThreadClient {
 		}
 	}
 
-	pub fn create_member_game_object(
-		&mut self,
-		template: u16,
-		access_group: u64,
-	) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
+	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
 		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
-		self.send(C2SCommand::CreateMemberObject(C2SCreateMemberGameObjectCommand {
+		self.send(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,
 			access_groups: AccessGroups(access_group),
 		}))?;
 
-		Ok(From::from(&game_object_id))
-	}
-
-	pub fn create_room_game_object(
-		&mut self,
-		template: u16,
-		access_group: u64,
-	) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
-		self.game_object_id_generator += 1;
-		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
-		self.send(C2SCommand::CreateRoomObject(C2SCreateRoomGameObjectCommand {
-			temporary_object_id: game_object_id.clone(),
-			template,
-			access_groups: AccessGroups(access_group),
-			unique_create_key: None,
-		}))?;
 		Ok(From::from(&game_object_id))
 	}
 

@@ -1,10 +1,11 @@
+use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::types::create::C2SCreatedGameObjectCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
-use crate::ffi::{execute_with_client, GameObjectIdFFI};
+use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 
 #[no_mangle]
 pub extern "C" fn set_create_object_listener(
@@ -33,27 +34,31 @@ pub extern "C" fn create_member_object(
 	result: &mut GameObjectIdFFI,
 ) -> u8 {
 	execute_with_client(client_id, |client| {
-		let game_object_id = client.create_member_game_object(template, access_group)?;
+		let game_object_id = client.create_game_object(template, access_group)?;
 		*result = game_object_id;
 		Ok(())
 	})
 }
 
 #[no_mangle]
-pub extern "C" fn create_room_object(client_id: ClientId, template: u16, access_group: u64, result: &mut GameObjectIdFFI) -> u8 {
-	execute_with_client(client_id, |client| {
-		let game_object_id = client.create_room_game_object(template, access_group)?;
-		*result = game_object_id;
-		Ok(())
-	})
-}
-
-#[no_mangle]
-pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectIdFFI) -> u8 {
+pub extern "C" fn created_object(
+	client_id: ClientId,
+	object_id: &GameObjectIdFFI,
+	room_owner: bool,
+	use_unique_key: bool,
+	unique_key: &BufferFFI,
+) -> u8 {
+	let unique_key = if use_unique_key {
+		Some(BinaryValue::from(unique_key))
+	} else {
+		None
+	};
 	send_command(
 		client_id,
-		C2SCommand::Created(C2SCreatedGameObjectCommand {
+		C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {
 			object_id: From::from(object_id),
+			room_owner,
+			unique_key,
 		}),
 	)
 }

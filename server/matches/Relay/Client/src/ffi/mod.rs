@@ -1,10 +1,11 @@
 use std::sync::mpsc::SendError;
 use std::sync::Mutex;
 
+use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use lazy_static::lazy_static;
 use thiserror::Error;
 
-use cheetah_matches_relay_common::commands::{CommandBuffer, FieldType};
+use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
@@ -152,21 +153,21 @@ impl From<Vec<u8>> for BufferFFI {
 	}
 }
 
-impl From<&BufferFFI> for CommandBuffer {
+impl From<&BufferFFI> for BinaryValue {
 	fn from(source: &BufferFFI) -> Self {
-		CommandBuffer::from_slice(&source.buffer[0..source.len as usize]).unwrap()
+		BinaryValue::from(&source.buffer[0..source.len as usize])
 	}
 }
 
-impl From<&CommandBuffer> for BufferFFI {
-	fn from(source: &CommandBuffer) -> Self {
+impl From<&BinaryValue> for BufferFFI {
+	fn from(source: &BinaryValue) -> Self {
 		let mut result = BufferFFI {
 			len: source.len() as u8,
 			pos: 0,
 			buffer: [0; BUFFER_MAX_SIZE],
 		};
 		let buffer = &mut result.buffer[0..source.len()];
-		buffer.copy_from_slice(source);
+		buffer.copy_from_slice(source.as_slice());
 		result
 	}
 }

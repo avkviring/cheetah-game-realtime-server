@@ -37,7 +37,7 @@ fn test() {
 	let structure_field_id = 10;
 	let structure_buffer = BufferFFI::from(vec![125]);
 	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
-	ffi::command::object::created_object(client1, &object_id);
+	ffi::command::object::created_object(client1, &object_id, false, false, &BufferFFI::default());
 	ffi::command::object::delete_object(client1, &object_id);
 
 	helper.wait_udp();

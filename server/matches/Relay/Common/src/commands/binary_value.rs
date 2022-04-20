@@ -35,7 +35,7 @@ impl BinaryValue {
 		out.write_all(self.0.as_slice())
 	}
 
-	pub(crate) fn len(&self) -> usize {
+	pub fn len(&self) -> usize {
 		self.0.len()
 	}
 

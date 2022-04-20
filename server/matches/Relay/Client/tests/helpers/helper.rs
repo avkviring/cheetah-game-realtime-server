@@ -10,7 +10,7 @@ use cheetah_matches_relay::server::manager::ServerManager;
 use cheetah_matches_relay_client::clients::registry::ClientId;
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::client::do_create_client;
-use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
+use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::helpers::server::IntegrationTestServerBuilder;
@@ -49,7 +49,7 @@ impl IntegrationTestHelper {
 			IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
 			&mut object_id,
 		);
-		ffi::command::object::created_object(client_id, &object_id);
+		ffi::command::object::created_object(client_id, &object_id, false, false, &BufferFFI::default());
 		object_id
 	}
 

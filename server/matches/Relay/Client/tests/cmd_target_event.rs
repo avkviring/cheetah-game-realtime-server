@@ -4,6 +4,7 @@ use lazy_static::lazy_static;
 
 use cheetah_matches_relay_client::ffi;
 use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -39,7 +40,7 @@ fn test() {
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
 		&mut object_id,
 	);
-	ffi::command::object::created_object(client1, &object_id);
+	ffi::command::object::created_object(client1, &object_id, false, false, &BufferFFI::default());
 
 	let mut event_buffer = BufferFFI::default();
 	event_buffer.len = 1;
