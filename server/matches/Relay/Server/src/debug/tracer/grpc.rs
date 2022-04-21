@@ -156,7 +156,12 @@ fn get_string_value(command: &TracedCommand) -> String {
 			C2SCommand::CreateGameObject(command) => {
 				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
 			}
-			C2SCommand::CreatedGameObject(_) => "".to_string(),
+			C2SCommand::CreatedGameObject(command) => {
+				format!(
+					"room_owner({:?}), singleton_key({:?}) ",
+					command.room_owner, command.singleton_key
+				)
+			}
 			C2SCommand::SetLong(command) => {
 				format!("{:?}", command.value)
 			}

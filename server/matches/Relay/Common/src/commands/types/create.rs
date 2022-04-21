@@ -33,7 +33,7 @@ pub struct C2SCreatedGameObjectCommand {
 	///
 	/// Если задан - то в комнате может быть только один объект с таким идентификатором
 	///
-	pub unique_key: Option<BinaryValue>,
+	pub singleton_key: Option<BinaryValue>,
 }
 
 ///
@@ -64,7 +64,7 @@ impl CreateGameObjectCommand {
 impl C2SCreatedGameObjectCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_u8(if self.room_owner { 1 } else { 0 })?;
-		match &self.unique_key {
+		match &self.singleton_key {
 			None => out.write_variable_u64(0),
 			Some(buffer) => buffer.encode(out),
 		}
@@ -76,7 +76,7 @@ impl C2SCreatedGameObjectCommand {
 		Ok(Self {
 			object_id,
 			room_owner,
-			unique_key,
+			singleton_key: unique_key,
 		})
 	}
 }

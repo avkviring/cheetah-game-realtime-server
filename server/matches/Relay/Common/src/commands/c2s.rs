@@ -216,7 +216,7 @@ mod tests {
 			C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {
 				object_id: object_id.clone(),
 				room_owner: false,
-				unique_key: None,
+				singleton_key: None,
 			}),
 			CommandTypeId::CREATED_GAME_OBJECT,
 			Some(object_id),

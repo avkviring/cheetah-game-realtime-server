@@ -63,7 +63,7 @@ mod tests {
 	#[test]
 	fn should_command() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		let object_id = object.id.clone();
 		object.created = true;
 		object.set_long(10, 100).unwrap();

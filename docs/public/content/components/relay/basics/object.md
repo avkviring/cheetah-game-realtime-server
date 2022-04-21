@@ -47,7 +47,34 @@ var cheetahObject = builder.Build();
 
 ### Создание объекта от имени комнаты
 
-Возможно только в [конфигурации комнаты.](/components/relay/configuration/room/)
+```csharp    
+var builder = client.NewRoomObjectBuilder(template, accessGroup);
+builder.SetDouble(1, 100.0);
+builder.SetLong(2, 100500);
+builder.SetStructure(1, new SomeStructure());
+builder.BuildRoomObject();
+```
+Особенности:
+ 
+- объект будет загружен на пользователя, который его создал;
+- объект автоматически не удаляется при выходе пользователя, который его создал;
+- при создании нельзя получить id созданного объекта, так как id назначается сервером после полного создания объекта;
+
+### Создание singleton объекта от имени комнаты
+
+```csharp    
+var builder = client.NewRoomObjectBuilder(template, accessGroup);
+builder.SetDouble(1, 100.0);
+builder.SetLong(2, 100500);
+builder.SetStructure(1, new SomeStructure());
+builder.BuildSingletonRoomObject(ref someSingletonKey);
+```
+
+Особенности:
+
+ - все что описано в "Создание объекта от имени комнаты"
+ - на сервере может в один и тот же момент времени существовать только один объект с ключом указанным при создании, 
+   все последующие создания объекта с таким-же ключом будут игнорироваться сервером;
 
 ### Обработчик загружаемых на клиент объектов
 

@@ -44,7 +44,7 @@ mod tests {
 		room.test_mark_as_connected(user_b_id).unwrap();
 
 		let object_id = room
-			.test_create_object(GameObjectOwner::Member(user_a_id), access_groups)
+			.test_create_object_with_created_state(GameObjectOwner::Member(user_a_id), access_groups)
 			.id
 			.clone();
 		room.test_out_commands.clear();
@@ -69,7 +69,7 @@ mod tests {
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
 
 		let object_id = room
-			.test_create_object(GameObjectOwner::Member(user_a), access_groups)
+			.test_create_object_with_not_created_state(GameObjectOwner::Member(user_a), access_groups)
 			.id
 			.clone();
 		room.test_out_commands.clear();

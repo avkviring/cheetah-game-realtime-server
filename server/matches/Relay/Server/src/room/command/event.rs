@@ -63,7 +63,7 @@ mod tests {
 	#[test]
 	pub fn should_send_event() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.test_out_commands.clear();
@@ -92,7 +92,7 @@ mod tests {
 		room.test_mark_as_connected(user2).unwrap();
 		room.test_mark_as_connected(user3).unwrap();
 
-		let object = room.test_create_object(GameObjectOwner::Member(user1), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user1), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.test_get_user_out_commands(user1).clear();

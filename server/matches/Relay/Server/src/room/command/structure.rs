@@ -70,7 +70,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
 		let user = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object(GameObjectOwner::Member(user), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 

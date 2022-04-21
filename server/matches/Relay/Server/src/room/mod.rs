@@ -7,6 +7,7 @@ use std::time::Instant;
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 
+use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
@@ -47,6 +48,7 @@ pub struct Room {
 	pub room_object_id_generator: u32,
 	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, CreateCommandsCollector)>>>,
 	measurers: Rc<RefCell<Measurers>>,
+	objects_singleton_key: HashMap<BinaryValue, GameObjectId, FnvBuildHasher>,
 
 	#[cfg(test)]
 	test_object_id_generator: u32,
@@ -86,6 +88,7 @@ impl Room {
 			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 			template_name: template.name.clone(),
 			measurers,
+			objects_singleton_key: Default::default(),
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -93,6 +96,17 @@ impl Room {
 			room.insert_object(game_object);
 		});
 		room
+	}
+
+	pub(crate) fn has_object_singleton_key(&self, value: &BinaryValue) -> bool {
+		match self.objects_singleton_key.get(value) {
+			None => false,
+			Some(object_id) => self.objects.contains_key(object_id),
+		}
+	}
+
+	pub fn set_singleton_key(&mut self, unique_key: BinaryValue, object_id: GameObjectId) {
+		self.objects_singleton_key.insert(unique_key, object_id);
 	}
 
 	///
@@ -242,23 +256,25 @@ impl Room {
 				object_id: object_id.clone(),
 			}),
 			Some(object) => {
-				self.send_to_members(
-					object.access_groups,
-					object.template_id,
-					&[S2CommandWithFieldInfo {
-						field: None,
-						command: S2CCommand::Delete(DeleteGameObjectCommand {
-							object_id: object.id.clone(),
-						}),
-					}],
-					|user| {
-						if let Some(user_id) = current_user {
-							user.id != user_id
-						} else {
-							true
-						}
-					},
-				)?;
+				if object.created {
+					self.send_to_members(
+						object.access_groups,
+						object.template_id,
+						&[S2CommandWithFieldInfo {
+							field: None,
+							command: S2CCommand::Delete(DeleteGameObjectCommand {
+								object_id: object.id.clone(),
+							}),
+						}],
+						|user| {
+							if let Some(user_id) = current_user {
+								user.id != user_id
+							} else {
+								true
+							}
+						},
+					)?;
+				}
 				Ok(object)
 			}
 		}
@@ -288,6 +304,7 @@ mod tests {
 	use std::collections::VecDeque;
 	use std::rc::Rc;
 
+	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand::SetLong;
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
@@ -325,10 +342,32 @@ mod tests {
 			)
 		}
 
-		pub fn test_create_object(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {
+		pub fn test_create_object_with_not_created_state(
+			&mut self,
+			owner: GameObjectOwner,
+			access_groups: AccessGroups,
+		) -> &mut GameObject {
+			self.test_do_create_object(owner, access_groups, false)
+		}
+
+		pub fn test_create_object_with_created_state(
+			&mut self,
+			owner: GameObjectOwner,
+			access_groups: AccessGroups,
+		) -> &mut GameObject {
+			self.test_do_create_object(owner, access_groups, true)
+		}
+
+		fn test_do_create_object(
+			&mut self,
+			owner: GameObjectOwner,
+			access_groups: AccessGroups,
+			created: bool,
+		) -> &mut GameObject {
 			self.test_object_id_generator += 1;
 			let id = GameObjectId::new(self.test_object_id_generator, owner);
-			let object = GameObject::new(id.clone(), 0, access_groups, false);
+			let mut object = GameObject::new(id.clone(), 0, access_groups, false);
+			object.created = created;
 			self.insert_object(object);
 			self.get_object(&id).unwrap()
 		}
@@ -381,19 +420,19 @@ mod tests {
 		let user_a = room.register_member(MemberTemplate::stub(access_groups));
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
 		let object_a_1 = room
-			.test_create_object(GameObjectOwner::Member(user_a), access_groups)
+			.test_create_object_with_created_state(GameObjectOwner::Member(user_a), access_groups)
 			.id
 			.clone();
 		let object_a_2 = room
-			.test_create_object(GameObjectOwner::Member(user_a), access_groups)
+			.test_create_object_with_created_state(GameObjectOwner::Member(user_a), access_groups)
 			.id
 			.clone();
 		let object_b_1 = room
-			.test_create_object(GameObjectOwner::Member(user_b), access_groups)
+			.test_create_object_with_created_state(GameObjectOwner::Member(user_b), access_groups)
 			.id
 			.clone();
 		let object_b_2 = room
-			.test_create_object(GameObjectOwner::Member(user_b), access_groups)
+			.test_create_object_with_created_state(GameObjectOwner::Member(user_b), access_groups)
 			.id
 			.clone();
 
@@ -608,6 +647,18 @@ mod tests {
 		room.collect_out_commands(|_, _| {});
 		let member = room.get_member(&member_id).unwrap();
 		assert!(member.out_commands.is_empty());
+	}
+
+	#[test]
+	fn should_check_singleton_key() {
+		let mut room = Room::default();
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Room, AccessGroups(7));
+		let object_id = object.id.clone();
+		let unique_key = BinaryValue::from([1, 2, 3, 4].as_slice());
+		room.set_singleton_key(unique_key.clone(), object_id.clone());
+		assert!(room.has_object_singleton_key(&unique_key));
+		room.delete_object(&object_id).unwrap();
+		assert!(!room.has_object_singleton_key(&unique_key));
 	}
 
 	pub fn create_template() -> (RoomTemplate, MemberTemplate) {

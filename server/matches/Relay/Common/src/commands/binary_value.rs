@@ -5,7 +5,7 @@ use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter}
 ///
 /// Бинарное значение поля
 ///
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Default, Hash, Eq)]
 pub struct BinaryValue(heapless::Vec<u8, 256>);
 
 impl From<&[u8]> for BinaryValue {

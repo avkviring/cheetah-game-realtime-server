@@ -126,7 +126,7 @@ mod tests {
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
 		let object_id = room
-			.test_create_object(GameObjectOwner::Member(user_1), access_groups)
+			.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups)
 			.id
 			.clone();
 		(room, object_id, user_1, user_2)

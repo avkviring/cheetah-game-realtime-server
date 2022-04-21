@@ -19,11 +19,20 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 			)));
 		}
 
+		let member_object_id = object.id.clone();
+
 		let object = if self.room_owner {
-			let member_object_id = object.id.clone();
-			let mut object = room.delete_object(&member_object_id)?;
-			room.room_object_id_generator += 1;
 			let new_room_object_id = GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
+
+			if let Some(unique_key) = &self.singleton_key {
+				if room.has_object_singleton_key(unique_key) {
+					room.delete_object(&member_object_id)?;
+					return Ok(());
+				}
+				room.set_singleton_key(unique_key.clone(), new_room_object_id.clone());
+			}
+			room.room_object_id_generator += 1;
+			let mut object = room.delete_object(&member_object_id)?;
 			object.id = new_room_object_id.clone();
 			room.insert_object(object);
 			room.get_object(&new_room_object_id)?
@@ -48,6 +57,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -68,7 +78,7 @@ mod tests {
 		let command = C2SCreatedGameObjectCommand {
 			object_id: object_id.clone(),
 			room_owner: false,
-			unique_key: None,
+			singleton_key: None,
 		};
 		command.execute(&mut room, user1).unwrap();
 
@@ -93,7 +103,7 @@ mod tests {
 		let command = C2SCreatedGameObjectCommand {
 			object_id: object_id.clone(),
 			room_owner: false,
-			unique_key: None,
+			singleton_key: None,
 		};
 		room.test_out_commands.clear();
 		command.execute(&mut room, user1).unwrap();
@@ -114,7 +124,7 @@ mod tests {
 		let command = C2SCreatedGameObjectCommand {
 			object_id: object_id.clone(),
 			room_owner: false,
-			unique_key: None,
+			singleton_key: None,
 		};
 		room.test_out_commands.clear();
 
@@ -122,6 +132,9 @@ mod tests {
 		assert!(matches!(room.test_out_commands.pop_back(), None));
 	}
 
+	///
+	/// Если создается объект с owner = room, то его id должен сменится на id с owner = room
+	///
 	#[test]
 	pub fn should_convert_object_to_room_object() {
 		let (mut room, user, access_groups) = setup_one_player();
@@ -136,7 +149,7 @@ mod tests {
 		let created_command = C2SCreatedGameObjectCommand {
 			object_id: member_object_id.clone(),
 			room_owner: true,
-			unique_key: None,
+			singleton_key: None,
 		};
 		created_command.execute(&mut room, user).unwrap();
 
@@ -158,5 +171,46 @@ mod tests {
 			matches!(created_command, S2CCommand::Created(ref command) if command.object_id
 			.owner==GameObjectOwner::Room)
 		);
+	}
+
+	///
+	/// Не должно быть двух объектов с владельцем Room с одним singleton_key
+	///
+	#[test]
+	pub fn should_dont_create_more_one_object_with_one_singleton_key() {
+		let (mut room, user, access_groups) = setup_one_player();
+
+		let singleton_key = Some(BinaryValue::from([1, 2, 3].as_slice()));
+
+		let member_object_id_1 = GameObjectId::new(100, GameObjectOwner::Member(user));
+		let create_command = CreateGameObjectCommand {
+			object_id: member_object_id_1.clone(),
+			template: 777,
+			access_groups,
+		};
+		create_command.execute(&mut room, user).unwrap();
+		let created_command = C2SCreatedGameObjectCommand {
+			object_id: member_object_id_1,
+			room_owner: true,
+			singleton_key: singleton_key.clone(),
+		};
+		created_command.execute(&mut room, user).unwrap();
+		room.test_out_commands.clear();
+
+		let member_object_id_2 = GameObjectId::new(101, GameObjectOwner::Member(user));
+		let create_command = CreateGameObjectCommand {
+			object_id: member_object_id_2.clone(),
+			template: 777,
+			access_groups,
+		};
+		create_command.execute(&mut room, user).unwrap();
+		let created_command = C2SCreatedGameObjectCommand {
+			object_id: member_object_id_2.clone(),
+			room_owner: true,
+			singleton_key,
+		};
+		created_command.execute(&mut room, user).unwrap();
+		assert_eq!(room.objects.len(), 1);
+		assert_eq!(room.test_out_commands.len(), 0);
 	}
 }

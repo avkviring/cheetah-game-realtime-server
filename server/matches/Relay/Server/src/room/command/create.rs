@@ -143,7 +143,7 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let access_groups = AccessGroups(0b11);
 		let (mut room, user_id) = setup(access_groups);
-		let object = room.test_create_object(GameObjectOwner::Member(user_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.template_id = 777;
 		let object_id = object.id.clone();
 		room.test_out_commands.clear();

@@ -424,7 +424,7 @@ mod tests {
 		let user1_id = room.register_member(user_template_1);
 		let user2_id = room.register_member(user_template_2);
 		let user3_id = room.register_member(user_template_3);
-		let object = room.test_create_object(GameObjectOwner::Member(user3_id), access_group);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user3_id), access_group);
 		object.created = true;
 		object.template_id = object_template;
 
@@ -437,7 +437,7 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object(GameObjectOwner::Member(user_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		(room, user_id, object_id)
