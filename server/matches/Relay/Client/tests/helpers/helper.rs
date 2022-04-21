@@ -43,13 +43,13 @@ impl IntegrationTestHelper {
 
 	pub fn create_member_object(&self, client_id: ClientId) -> GameObjectIdFFI {
 		let mut object_id = GameObjectIdFFI::default();
-		ffi::command::object::create_member_object(
+		ffi::command::object::create_object(
 			client_id,
 			IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
 			IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
 			&mut object_id,
 		);
-		ffi::command::object::created_object(client_id, &object_id, false, false, &BufferFFI::default());
+		ffi::command::object::created_object(client_id, &object_id, false, &BufferFFI::default());
 		object_id
 	}
 

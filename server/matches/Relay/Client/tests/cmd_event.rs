@@ -21,13 +21,13 @@ fn test() {
 	helper.wait_udp();
 
 	let mut object_id = GameObjectIdFFI::default();
-	ffi::command::object::create_member_object(
+	ffi::command::object::create_object(
 		client1,
 		1,
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
 		&mut object_id,
 	);
-	ffi::command::object::created_object(client1, &object_id, false, false, &BufferFFI::default());
+	ffi::command::object::created_object(client1, &object_id, false,  &BufferFFI::default());
 
 	let mut event_buffer = BufferFFI::default();
 	event_buffer.len = 1;

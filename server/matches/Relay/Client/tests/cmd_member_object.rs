@@ -27,7 +27,7 @@ fn test() {
 	helper.wait_udp();
 
 	let mut object_id = GameObjectIdFFI::default();
-	ffi::command::object::create_member_object(
+	ffi::command::object::create_object(
 		client1,
 		1,
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
@@ -37,7 +37,7 @@ fn test() {
 	let structure_field_id = 10;
 	let structure_buffer = BufferFFI::from(vec![125]);
 	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
-	ffi::command::object::created_object(client1, &object_id, false, false, &BufferFFI::default());
+	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
 	ffi::command::object::delete_object(client1, &object_id);
 
 	helper.wait_udp();
