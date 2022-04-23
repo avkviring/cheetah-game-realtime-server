@@ -5,8 +5,8 @@ cheetah-accounts:
   redis:
     master:
       tolerations:
-        - key: "stage"
-          value: "all"
+        - key: "production"
+          value: "syncario"
           operator: "Equal"
           effect: "NoSchedule"
       persistence:
@@ -17,20 +17,20 @@ cheetah-matches-registry:
   redis:
     master:
       tolerations:
-        - key: "stage"
-          value: "all"
+        - key: "production"
+          value: "syncario"
           operator: "Equal"
           effect: "NoSchedule"
 reloader:
   reloader:
     deployment:
       tolerations:
-        - key: "stage"
-          value: "all"
+        - key: "production"
+          value: "syncario"
           operator: "Equal"
           effect: "NoSchedule"
 global:
   lokiUrl: http://monitoring-loki.monitoring:3100
   tolerations:
-    key: "stage"
-    value: "all"
+    key: "production"
+    value: "syncario"

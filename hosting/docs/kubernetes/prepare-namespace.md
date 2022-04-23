@@ -3,8 +3,12 @@
 ### Доступ к реестру
 
 ```shell
-
-
+kubectl create secret docker-registry cheetahdockerregistry \
+--namespace *** \ 
+--docker-server=docker.registry.cheetah.games  \
+--docker-username=***  \
+--docker-password=***  \
+--docker-email=***
 ```
 
 ### JWT ключи
@@ -17,3 +21,10 @@ kubectl create secret generic jwt \
 --namespace *** \
 --from-file=public=public.pem \
 --from-file=private=private-pkcs8.pem
+
+
+### Добавить namespace к agones
+
+```shell
+helm upgrade my-release agones/agones --reuse-values --set "gameservers.namespaces={default,xbox,ps4}" --namespace agones-system
+```

@@ -15,6 +15,11 @@ spec:
         prometheus: "true"
         app: {{ .Chart.Name }}
     spec:
+      tolerations:
+        - key: {{.Values.global.tolerations.key}}
+          value: {{.Values.global.tolerations.value}}
+          operator: "Equal"
+          effect: "NoSchedule"
       imagePullSecrets:
         - name: cheetahdockerregistry
       containers:
