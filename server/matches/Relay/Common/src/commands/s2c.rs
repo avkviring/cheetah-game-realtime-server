@@ -3,12 +3,12 @@ use std::io::Cursor;
 use strum_macros::AsRefStr;
 
 use crate::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
+use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::SetDoubleCommand;
 use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::structure::SetStructureCommand;
-use crate::commands::types::unload::DeleteGameObjectCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
@@ -124,10 +124,12 @@ mod tests {
 
 	use crate::commands::binary_value::BinaryValue;
 	use crate::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
+	use crate::commands::types::delete::DeleteGameObjectCommand;
+	use crate::commands::CommandTypeId;
+	use crate::constants::FieldId;
 	use crate::{
 		commands::s2c::S2CCommand, commands::types::event::EventCommand, commands::types::float::SetDoubleCommand,
 		commands::types::long::SetLongCommand, commands::types::structure::SetStructureCommand,
-		commands::types::unload::DeleteGameObjectCommand, commands::CommandTypeId, constants::FieldId,
 		protocol::codec::commands::context::CommandContextError, room::access::AccessGroups, room::object::GameObjectId,
 		room::owner::GameObjectOwner,
 	};

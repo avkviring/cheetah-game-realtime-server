@@ -9,7 +9,7 @@ use indexmap::map::IndexMap;
 
 use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -21,7 +21,7 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::tracer::CommandTracerSessions;
-use crate::room::command::long::reset_all_compare_and_set;
+use crate::room::command::compare_and_set::reset_all_compare_and_set;
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};

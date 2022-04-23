@@ -9,6 +9,7 @@ use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 use crate::room::object::{Field, GameObjectError};
 use crate::room::Room;
 
+pub mod compare_and_set;
 pub mod create;
 pub mod created;
 pub mod delete;

@@ -3,12 +3,12 @@ use std::io::Cursor;
 use strum_macros::AsRefStr;
 
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
+use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::types::structure::SetStructureCommand;
-use crate::commands::types::unload::DeleteGameObjectCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
@@ -173,11 +173,11 @@ mod tests {
 	use crate::commands::binary_value::BinaryValue;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
+	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
 	use crate::commands::types::structure::SetStructureCommand;
-	use crate::commands::types::unload::DeleteGameObjectCommand;
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
 	use crate::protocol::codec::commands::context::CommandContextError;
@@ -266,7 +266,7 @@ mod tests {
 				field_id,
 				current: 100,
 				new: 101,
-				reset: 102,
+				reset: Some(102),
 			}),
 			CommandTypeId::COMPARE_AND_SET_LONG,
 			Some(object_id),

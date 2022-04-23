@@ -15,9 +15,24 @@ cheetahObject.IncrementLong(ushort fieldId, long increment)
 
 ### CompareAndSet
 
+Применяется для определения первого клиента при выполнении одновременных действия, например, с помощью данного метода
+можно определить кто первый взял бонус.
+
+
 ```csharp
-cheetahObject.CompareAndSet(ushort fieldId, long currentValue, long newValue, long resetValue);
+cheetahObject.CompareAndSet(ushort fieldId, long currentValue, long newValue);
 ```
+- currentValue - необходимое значение в поле для выполнения операции;
+- newValue - новое значение поля, если текущее значение совпадает с currentValue;
+
+
+```csharp
+cheetahObject.CompareAndSetWithReset(ushort fieldId, long currentValue, long newValue, long resetValue);
+```
+- resetValue - значение поля, при выходе игрока из битвы, если была осуществлена операция установки newValue.
+
+
+
 
 Применяется для определения первого клиента при выполнении одновременных действия, например, с помощью данного метода
 можно определить кто первый взял бонус.
@@ -25,6 +40,7 @@ cheetahObject.CompareAndSet(ushort fieldId, long currentValue, long newValue, lo
 - currentValue - необходимое значение в поле для выполнения операции;
 - newValue - новое значение поля, если текущее значение совпадает с currentValue;
 - resetValue - значение поля, при выходе игрока из битвы, если была осуществлена операция установки newValue.
+
 
 #### Пример использования
 

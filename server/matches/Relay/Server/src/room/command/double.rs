@@ -29,7 +29,7 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 			})))
 		};
 
-		room.do_action_and_send_commands(
+		room.send_command_from_action(
 			&object_id,
 			Field {
 				id: field_id,
@@ -52,7 +52,7 @@ impl ServerCommandExecutor for SetDoubleCommand {
 			object.set_double(self.field_id, self.value)?;
 			Ok(Some(S2CCommand::SetDouble(self.clone())))
 		};
-		room.do_action_and_send_commands(
+		room.send_command_from_action(
 			&object_id,
 			Field {
 				id: field_id,

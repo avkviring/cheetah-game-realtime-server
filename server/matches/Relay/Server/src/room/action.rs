@@ -19,7 +19,7 @@ impl Room {
 	/// - владелец объекта получает обновления если только данные доступны на запись другим клиентам
 	/// - владелец объекта имеет полный доступ к полям объекта, информация о правах игнорируется
 	///
-	pub fn do_action_and_send_commands<T>(
+	pub fn send_command_from_action<T>(
 		&mut self,
 		game_object_id: &GameObjectId,
 		field: Field,

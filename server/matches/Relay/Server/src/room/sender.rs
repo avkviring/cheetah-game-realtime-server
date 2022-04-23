@@ -165,7 +165,7 @@ mod tests {
 
 		// владельцу разрешены любые операции
 		assert!(room
-			.do_action_and_send_commands(
+			.send_command_from_action(
 				&object_id,
 				Field {
 					id: field_id_1,
@@ -180,7 +180,7 @@ mod tests {
 
 		// RO - по-умолчанию для всех полей
 		assert!(room
-			.do_action_and_send_commands(
+			.send_command_from_action(
 				&object_id,
 				Field {
 					id: field_id_1,
@@ -218,7 +218,7 @@ mod tests {
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		assert!(room
-			.do_action_and_send_commands(
+			.send_command_from_action(
 				&object_id,
 				Field {
 					id: field_id_1,
@@ -241,7 +241,7 @@ mod tests {
 
 		// изменяем поле, которое могут изменять другие пользователи
 		assert!(room
-			.do_action_and_send_commands(
+			.send_command_from_action(
 				&object_id,
 				Field {
 					id: field_id_2,
@@ -281,7 +281,7 @@ mod tests {
 		object.created = true;
 		let object_id = object.id.clone();
 		assert!(room
-			.do_action_and_send_commands(
+			.send_command_from_action(
 				&object_id,
 				Field {
 					id: 0,
@@ -433,7 +433,7 @@ mod tests {
 		room.test_mark_as_connected(user_2).unwrap();
 
 		assert!(room
-			.do_action_and_send_commands(
+			.send_command_from_action(
 				&object_id.clone(),
 				Field {
 					id: field_id,

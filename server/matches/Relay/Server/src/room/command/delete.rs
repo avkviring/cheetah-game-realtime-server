@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
+use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -24,7 +24,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::unload::DeleteGameObjectCommand;
+	use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 

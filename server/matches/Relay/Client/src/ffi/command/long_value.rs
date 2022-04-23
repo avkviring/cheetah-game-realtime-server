@@ -49,6 +49,7 @@ pub extern "C" fn compare_and_set_long_value(
 	field_id: FieldId,
 	current: i64,
 	new: i64,
+	has_reset: bool,
 	reset: i64,
 ) -> u8 {
 	send_command(
@@ -58,7 +59,7 @@ pub extern "C" fn compare_and_set_long_value(
 			field_id,
 			current,
 			new,
-			reset,
+			reset: if has_reset { Some(reset) } else { None },
 		}),
 	)
 }

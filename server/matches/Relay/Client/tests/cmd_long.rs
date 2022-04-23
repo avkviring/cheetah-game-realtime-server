@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use lazy_static::lazy_static;
@@ -50,7 +51,18 @@ fn should_set() {
 fn should_compare_and_set() {
 	let mut builder = IntegrationTestServerBuilder::default();
 
-	let field_id = 1;
+	let field_id_with_reset = 1;
+	let field_id = 2;
+
+	// устанавливаем RW для получения команды с сервера на клиента источника команды
+	builder.set_permission(
+		IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
+		field_id_with_reset,
+		FieldType::Long,
+		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
+		Permission::Rw,
+	);
+
 	builder.set_permission(
 		IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
 		field_id,
@@ -67,14 +79,14 @@ fn should_compare_and_set() {
 
 	ffi::command::room::attach_to_room(client2);
 	// проверяем, что установится только первое значение
-	ffi::command::long_value::compare_and_set_long_value(client2, &object_id, field_id, 0, 100, 555);
-	ffi::command::long_value::compare_and_set_long_value(client2, &object_id, field_id, 0, 200, 777);
+	ffi::command::long_value::compare_and_set_long_value(client2, &object_id, field_id_with_reset, 0, 100, true, 555);
+	ffi::command::long_value::compare_and_set_long_value(client2, &object_id, field_id, 0, 200, false, 0);
+	ffi::command::long_value::compare_and_set_long_value(client2, &object_id, field_id_with_reset, 0, 200, true, 777);
 	helper.wait_udp();
 
 	ffi::client::receive(client1);
-	assert!(
-		matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==100 )
-	);
+	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(), 100);
+	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id).unwrap(), 200);
 
 	// теперь второй клиент разрывает соединение
 	// первый наблюдает за тем что значение поменяется на reset
@@ -82,9 +94,7 @@ fn should_compare_and_set() {
 	helper.wait_udp();
 
 	ffi::client::receive(client1);
-	assert!(
-		matches!(COMPARE_AND_SET.lock().unwrap().as_ref(),Option::Some((c_field_id, value)) if *c_field_id == field_id && *value==555 )
-	);
+	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(), 555);
 }
 
 lazy_static! {
@@ -96,7 +106,7 @@ lazy_static! {
 }
 
 lazy_static! {
-	static ref COMPARE_AND_SET: Mutex<Option<(FieldId, i64)>> = Mutex::new(Default::default());
+	static ref COMPARE_AND_SET: Mutex<HashMap<FieldId, i64>> = Mutex::new(Default::default());
 }
 
 extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
@@ -108,5 +118,5 @@ extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectIdFFI, fi
 }
 
 extern "C" fn listener_for_compare_and_set(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
-	COMPARE_AND_SET.lock().unwrap().replace((field_id, value));
+	COMPARE_AND_SET.lock().unwrap().insert(field_id, value);
 }

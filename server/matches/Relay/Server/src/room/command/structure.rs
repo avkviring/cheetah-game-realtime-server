@@ -17,7 +17,7 @@ impl ServerCommandExecutor for SetStructureCommand {
 			object.set_structure(self.field_id, self.structure.as_slice())?;
 			Ok(Some(S2CCommand::SetStructure(self.clone())))
 		};
-		room.do_action_and_send_commands(
+		room.send_command_from_action(
 			&object_id,
 			Field {
 				id: field_id,

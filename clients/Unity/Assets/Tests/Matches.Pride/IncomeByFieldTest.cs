@@ -134,16 +134,19 @@ namespace Tests.Matches.Pride
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем значение
-            createdObject.CompareAndSet(HealFieldId, 0,555,0);
+            createdObject.CompareAndSet(HealFieldId, 0,555);
+            createdObject.CompareAndSetWithReset(HealFieldId, 555,1000,0);
             // ждем отправки команды
             yield return new WaitForSeconds(1);
             // прием команды
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
-            var actual = stream.GetItem(0);
-            Assert.AreEqual( 555, actual.value);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            var first = stream.GetItem(0);
+            var second = stream.GetItem(1);
+            Assert.AreEqual( 555, first.value);
+            Assert.AreEqual( 1000, second.value);
+            Assert.AreEqual(memberA, first.commandCreator);
         }
         
         [UnityTest]

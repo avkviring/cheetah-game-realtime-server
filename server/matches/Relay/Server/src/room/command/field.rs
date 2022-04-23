@@ -17,7 +17,7 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 			object.delete_field(self.field_type, self.field_id);
 			Ok(Some(S2CCommand::DeleteField(self.clone())))
 		};
-		room.do_action_and_send_commands(
+		room.send_command_from_action(
 			&object_id,
 			Field {
 				id: field_id,
