@@ -1,0 +1,59 @@
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      podMonitorSelector:
+        matchLabels:
+          monitor: cheetah
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 5Gi
+    ingress:
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        nginx.ingress.kubernetes.io/auth-type: basic
+        nginx.ingress.kubernetes.io/auth-secret: monitoring/prometheus-web-auth-secret
+        nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required'
+      ingressClassName: nginx
+      pathType: ImplementationSpecific
+      enabled: true
+  grafana:
+    adminUser: admin
+    persistence:
+      enabled: true
+      accessModes: [ "ReadWriteOnce" ]
+      size: 5Gi
+    ingress:
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      ingressClassName: nginx
+      pathType: ImplementationSpecific
+      enabled: true
+    additionalDataSources:
+      - name: Loki
+        type: loki
+        url: http://monitoring-loki:3100
+    sidecar:
+      dashboards:
+        enabled: true
+  alertmanager:
+    enabled: true
+    ingress:
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        nginx.ingress.kubernetes.io/auth-type: basic
+        nginx.ingress.kubernetes.io/auth-secret: monitoring/prometheus-web-auth-secret
+        nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required'
+      ingressClassName: nginx
+      pathType: ImplementationSpecific
+      enabled: true
+loki:
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+

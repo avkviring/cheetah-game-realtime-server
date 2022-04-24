@@ -1,6 +1,38 @@
 kube-prometheus-stack:
+  kube-state-metrics:
+    tolerations:
+      - key: "type"
+        value: "monitoring"
+        operator: "Equal"
+        effect: "NoSchedule"
+    nodeSelector:
+      type: "monitoring"
+  prometheusOperator:
+    admissionWebhooks:
+      patch:
+        tolerations:
+          - key: "type"
+            value: "monitoring"
+            operator: "Equal"
+            effect: "NoSchedule"
+        nodeSelector:
+          type: "monitoring"
+    tolerations:
+      - key: "type"
+        value: "monitoring"
+        operator: "Equal"
+        effect: "NoSchedule"
+    nodeSelector:
+      type: "monitoring"
   prometheus:
     prometheusSpec:
+      tolerations:
+        - key: "type"
+          value: "monitoring"
+          operator: "Equal"
+          effect: "NoSchedule"
+      nodeSelector:
+        type: "monitoring"
       podMonitorSelector:
         matchLabels:
           monitor: cheetah
@@ -10,7 +42,7 @@ kube-prometheus-stack:
             accessModes: [ "ReadWriteOnce" ]
             resources:
               requests:
-                storage: 5Gi
+                storage: 50Gi
     ingress:
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -21,11 +53,18 @@ kube-prometheus-stack:
       pathType: ImplementationSpecific
       enabled: true
   grafana:
+    tolerations:
+      - key: "type"
+        value: "monitoring"
+        operator: "Equal"
+        effect: "NoSchedule"
+    nodeSelector:
+      type: "monitoring"
     adminUser: admin
     persistence:
       enabled: true
       accessModes: [ "ReadWriteOnce" ]
-      size: 5Gi
+      size: 10Gi
     ingress:
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -40,6 +79,14 @@ kube-prometheus-stack:
       dashboards:
         enabled: true
   alertmanager:
+    alertmanagerSpec:
+      tolerations:
+        - key: "type"
+          value: "monitoring"
+          operator: "Equal"
+          effect: "NoSchedule"
+      nodeSelector:
+        type: "monitoring"
     enabled: true
     ingress:
       annotations:
@@ -51,8 +98,16 @@ kube-prometheus-stack:
       pathType: ImplementationSpecific
       enabled: true
 loki:
+  tolerations:
+    - key: "type"
+      value: "monitoring"
+      operator: "Equal"
+      effect: "NoSchedule"
+  nodeSelector:
+    type: "monitoring"
   persistence:
     enabled: true
     accessModes:
       - ReadWriteOnce
-    size: 5Gi
+    size: 100Gi
+
