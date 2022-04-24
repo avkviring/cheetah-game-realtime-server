@@ -18,11 +18,14 @@ spec:
         spec:
           imagePullSecrets:
             - name: cheetahdockerregistry
+          {{- with .Values.tolerations }}
           tolerations:
-            - key: {{.Values.global.tolerations.key}}
-              value: {{.Values.global.tolerations.value}}
-              operator: "Equal"
-              effect: "NoSchedule"
+              {{- toYaml . | nindent 11 }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+               {{- toYaml . | nindent 11 }}
+          {{- end }}
           containers:
             - name: relay
               image: "registry.dev.cheetah.games/cheetah/platform/cheetah-matches-relay:{{ .Values.global.platformImageVersion }}"

@@ -1,0 +1,23 @@
+cheetah-accounts:
+  redis:
+    master:
+      persistence:
+        enabled: false
+  persistence:
+    enabled: false
+cheetah-matches-registry:
+  redis:
+    master:
+reloader:
+  reloader:
+    deployment:
+cheetah-matches-relay-agones:
+  nodeSelector:
+    type: "relay"
+  tolerations:
+    - key: "type"
+      value: "relay"
+      operator: "Equal"
+      effect: "NoSchedule"
+global:
+  lokiUrl: http://monitoring-loki.monitoring:3100

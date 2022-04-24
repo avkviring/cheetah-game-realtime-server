@@ -7,7 +7,6 @@ kubectl create namespace ingress-nginx
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx --namespace=ingress-nginx --version 4.1.0 --set controller.publishService.enabled=true 
 
-
 ```
 
 ### Управление сертификатами

@@ -1,3 +1,6 @@
+#
+# Все pod с меткой prometheus: "true" опрашиваются prometheus
+#
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
