@@ -66,7 +66,7 @@ pub struct Member {
 	pub attached: bool,
 	pub template: MemberTemplate,
 	pub compare_and_sets_cleaners: heapless::FnvIndexMap<(GameObjectId, FieldId), i64, 256>,
-	pub out_commands: heapless::Vec<CommandWithChannelType, 64>,
+	pub out_commands: Vec<CommandWithChannelType>,
 }
 
 impl Room {
@@ -630,20 +630,17 @@ mod tests {
 		let member_id = room.register_member(member_template);
 		room.test_mark_as_connected(member_id.clone()).unwrap();
 		let member = room.get_member_mut(&member_id).unwrap();
-		member
-			.out_commands
-			.push(CommandWithChannelType {
-				channel_type: ChannelType::ReliableUnordered,
-				command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-					command: SetLong(SetLongCommand {
-						object_id: Default::default(),
-						field_id: 0,
-						value: 0,
-					}),
-					creator: 0,
+		member.out_commands.push(CommandWithChannelType {
+			channel_type: ChannelType::ReliableUnordered,
+			command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+				command: SetLong(SetLongCommand {
+					object_id: Default::default(),
+					field_id: 0,
+					value: 0,
 				}),
-			})
-			.unwrap();
+				creator: 0,
+			}),
+		});
 		room.collect_out_commands(|_, _| {});
 		let member = room.get_member(&member_id).unwrap();
 		assert!(member.out_commands.is_empty());

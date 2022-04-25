@@ -22,8 +22,8 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		let member_object_id = object.id.clone();
 
 		let object = if self.room_owner {
+			// создаем объект с владением комнаты
 			let new_room_object_id = GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
-
 			if let Some(unique_key) = &self.singleton_key {
 				if room.has_object_singleton_key(unique_key) {
 					room.delete_object(&member_object_id)?;

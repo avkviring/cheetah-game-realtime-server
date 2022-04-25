@@ -71,13 +71,10 @@ impl Room {
 						command: command.command.clone(),
 					};
 
-					member
-						.out_commands
-						.push(CommandWithChannelType {
-							channel_type: channel_type.clone(),
-							command: BothDirectionCommand::S2CWithCreator(command_with_user),
-						})
-						.map_err(|_| ServerCommandError::Error("Member out commands overflow".to_string()))?;
+					member.out_commands.push(CommandWithChannelType {
+						channel_type: channel_type.clone(),
+						command: BothDirectionCommand::S2CWithCreator(command_with_user),
+					})
 				}
 			}
 		}
@@ -117,13 +114,10 @@ impl Room {
 						.borrow_mut()
 						.collect_s2c(object_template, member.id, &command.command);
 
-					member
-						.out_commands
-						.push(CommandWithChannelType {
-							channel_type: channel.clone(),
-							command: BothDirectionCommand::S2CWithCreator(command_with_meta),
-						})
-						.map_err(|_| ServerCommandError::Error("Member out commands overflow".to_string()))?;
+					member.out_commands.push(CommandWithChannelType {
+						channel_type: channel.clone(),
+						command: BothDirectionCommand::S2CWithCreator(command_with_meta),
+					})
 				}
 			}
 		}
