@@ -47,10 +47,10 @@ spec:
           image: postgres:13.1-alpine
           resources:
             limits:
-              cpu: "1"
+              cpu: "0.5"
               memory: 150Mi
             requests:
-              cpu: "0.5"
+              cpu: "0.1"
               memory: 150Mi
           env:
             - name: POSTGRES_USER
@@ -83,7 +83,7 @@ spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
-            storage: 1Gi
+            storage: {{ .Values.persistence.size }}
 
   {{end}}
 

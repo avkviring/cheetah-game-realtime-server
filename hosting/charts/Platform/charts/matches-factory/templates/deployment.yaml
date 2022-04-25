@@ -34,10 +34,10 @@ spec:
           resources:
             limits:
               cpu: {{ .Values.cpu.limit }}
-              memory: 40Mi
+              memory: {{ .Values.memory.limit }}
             requests:
               cpu: {{ .Values.cpu.request }}
-              memory: 20Mi
+              memory: {{ .Values.memory.request }}
           env:
             - name: TEMPLATES_PATH
               value: /tmp/config/

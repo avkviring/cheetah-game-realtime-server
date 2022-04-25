@@ -43,10 +43,10 @@ spec:
               resources:
                 limits:
                   cpu: {{ .Values.cpu.limit }}
-                  memory: 100Mi
+                  memory: {{ .Values.memory.limit }}
                 requests:
                   cpu: {{ .Values.cpu.request }}
-                  memory: 50Mi
+                  memory: {{ .Values.memory.request }}
               env:
                 - name: ENABLE_AGONES
                   value: "true"

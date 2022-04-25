@@ -2,15 +2,30 @@ cheetah-accounts:
   redis:
     master:
       persistence:
-        enabled: false
+        enabled: true
+        size: 1G
   persistence:
-    enabled: false
+    enabled: true
+    size: 10G
+  cpu:
+    limit: 500m
+    request: 125m
+  memory:
+    request: 80Mi
+    limit: 80Mi
+cheetah-matches-factory:
+  cpu:
+    limit: 500m
+    request: 125m
 cheetah-matches-registry:
   redis:
     master:
-reloader:
-  reloader:
-    deployment:
+      persistence:
+        enabled: true
+        size: 1G
+  cpu:
+    limit: 500m
+    request: 125m
 cheetah-matches-relay-agones:
   nodeSelector:
     type: "relay"
@@ -19,5 +34,11 @@ cheetah-matches-relay-agones:
       value: "relay"
       operator: "Equal"
       effect: "NoSchedule"
+  cpu:
+    request: 600m
+    limit: 1000m
+  memory:
+    request: 300Mi
+    limit: 300Mi
 global:
   lokiUrl: http://monitoring-loki.monitoring:3100
