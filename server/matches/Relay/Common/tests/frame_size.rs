@@ -5,13 +5,13 @@ use cheetah_matches_relay_common::commands::types::structure::SetStructureComman
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::Channel;
-use cheetah_matches_relay_common::protocol::frame::Frame;
+use cheetah_matches_relay_common::protocol::frame::output::OutFrame;
 
 #[test]
 // msgpack - raw(12), compressed(5), chiper(30)
 // self - raw(7), compressed(4), chiper(25)
 pub fn empty_frame() {
-	let frame = Frame::new(100500);
+	let frame = OutFrame::new(100500);
 	let mut buffer = [0; 2048];
 	let private_key = [0; 32];
 	let _size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
@@ -23,7 +23,7 @@ pub fn empty_frame() {
 // msgpack - raw(61), compressed(40), chiper(66)
 // self - raw(21), compressed(18), chiper(39)
 pub fn create_object_frame() {
-	let mut frame = Frame::new(100500);
+	let mut frame = OutFrame::new(100500);
 	frame
 		.commands
 		.push(CommandWithChannel {

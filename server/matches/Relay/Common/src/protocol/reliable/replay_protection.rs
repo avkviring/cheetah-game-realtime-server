@@ -1,4 +1,5 @@
-use crate::protocol::frame::{Frame, FrameId};
+use crate::protocol::frame::input::InFrame;
+pub use crate::protocol::frame::FrameId;
 use crate::protocol::{MAX_FRAME_PER_SECONDS, NOT_EXIST_FRAME_ID};
 
 ///
@@ -29,7 +30,7 @@ impl FrameReplayProtection {
 	///
 	/// Отметить фрейм как принятый и проверить его статус
 	///
-	pub fn set_and_check(&mut self, frame: &Frame) -> Result<bool, ()> {
+	pub fn set_and_check(&mut self, frame: &InFrame) -> Result<bool, ()> {
 		let frame_id = frame.get_original_frame_id();
 
 		if frame_id > self.max_frame_id {
@@ -62,13 +63,13 @@ impl FrameReplayProtection {
 
 #[cfg(test)]
 mod tests {
-	use crate::protocol::frame::Frame;
+	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::reliable::replay_protection::FrameReplayProtection;
 
 	#[test]
 	fn should_protection_replay() {
 		let mut protection = FrameReplayProtection::default();
-		let frame_a = Frame::new(1000);
+		let frame_a = InFrame::new(1000);
 		assert!(!protection.set_and_check(&frame_a).unwrap());
 		assert!(protection.set_and_check(&frame_a).unwrap());
 	}
@@ -76,8 +77,8 @@ mod tests {
 	#[test]
 	fn should_disconnect_when_very_old_frame() {
 		let mut protection = FrameReplayProtection::default();
-		let frame_a = Frame::new(1000 + FrameReplayProtection::BUFFER_SIZE as u64);
-		let frame_b = Frame::new(10);
+		let frame_a = InFrame::new(1000 + FrameReplayProtection::BUFFER_SIZE as u64);
+		let frame_b = InFrame::new(10);
 		assert!(!protection.set_and_check(&frame_a).unwrap());
 		assert!(protection.set_and_check(&frame_b).is_err());
 	}
@@ -86,7 +87,7 @@ mod tests {
 	fn should_protection_replay_check_all() {
 		let mut protection = FrameReplayProtection::default();
 		for i in 1..(FrameReplayProtection::BUFFER_SIZE * 2) as u64 {
-			let frame = Frame::new(i);
+			let frame = InFrame::new(i);
 			assert!(!protection.set_and_check(&frame).unwrap());
 			assert!(protection.set_and_check(&frame).unwrap());
 		}
@@ -96,11 +97,11 @@ mod tests {
 	fn should_protection_replay_check_prev_packets() {
 		let mut protection = FrameReplayProtection::default();
 		for i in 1..FrameReplayProtection::BUFFER_SIZE as u64 {
-			let frame = Frame::new(i);
+			let frame = InFrame::new(i);
 			protection.set_and_check(&frame).unwrap();
 			if i > 2 {
 				for j in 1..i {
-					let frame = Frame::new(j);
+					let frame = InFrame::new(j);
 					assert!(protection.set_and_check(&frame).unwrap());
 				}
 			}

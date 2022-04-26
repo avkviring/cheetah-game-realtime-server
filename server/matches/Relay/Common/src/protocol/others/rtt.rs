@@ -4,7 +4,8 @@ use std::time::{Duration, Instant};
 
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::headers::Header;
-use crate::protocol::frame::Frame;
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::output::OutFrame;
 
 ///
 /// Замеры времени round-trip
@@ -49,7 +50,7 @@ impl RoundTripTime {
 		}
 	}
 
-	pub fn build_frame(&mut self, frame: &mut Frame, now: &Instant) {
+	pub fn build_frame(&mut self, frame: &mut OutFrame, now: &Instant) {
 		frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader {
 			self_time: now.duration_since(self.start_time).as_millis() as u64,
 		}));
@@ -75,7 +76,7 @@ impl RoundTripTime {
 		}
 	}
 
-	pub fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
+	pub fn on_frame_received(&mut self, frame: &InFrame, now: &Instant) {
 		// игнорируем повторно отосланные фреймы, так как они не показательны для измерения rtt
 		if frame.headers.first(Header::predicate_retransmit).is_some() {
 			return;
@@ -124,7 +125,8 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use crate::protocol::frame::headers::Header;
-	use crate::protocol::frame::Frame;
+	use crate::protocol::frame::input::InFrame;
+	use crate::protocol::frame::output::OutFrame;
 	use crate::protocol::others::rtt::{RoundTripTime, RoundTripTimeHeader, AVERAGE_RTT_MIN_LEN};
 	use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
@@ -139,13 +141,27 @@ mod tests {
 
 		let now = Instant::now();
 
-		let mut frame_a_b = Frame::new(1);
+		let mut frame_a_b = OutFrame::new(1);
 		handler_a.build_frame(&mut frame_a_b, &now);
-		handler_b.on_frame_received(&frame_a_b, &now);
+		handler_b.on_frame_received(
+			&InFrame {
+				frame_id: frame_a_b.frame_id,
+				headers: frame_a_b.headers,
+				commands: Default::default(),
+			},
+			&now,
+		);
 
-		let mut frame_b_a = Frame::new(2);
+		let mut frame_b_a = OutFrame::new(2);
 		handler_b.build_frame(&mut frame_b_a, &now);
-		handler_a.on_frame_received(&frame_b_a, &now.add(Duration::from_millis(100)));
+		handler_a.on_frame_received(
+			&InFrame {
+				frame_id: frame_b_a.frame_id,
+				headers: frame_b_a.headers,
+				commands: Default::default(),
+			},
+			&now.add(Duration::from_millis(100)),
+		);
 
 		assert!(matches!(handler_a.rtt.pop_front(), Option::Some(time) if time == Duration::from_millis(100)))
 	}
@@ -157,7 +173,7 @@ mod tests {
 	pub fn should_ignore_retransmit_frame_when_receive_response() {
 		let mut handler = RoundTripTime::new(&Instant::now());
 		let now = Instant::now();
-		let mut frame = Frame::new(10);
+		let mut frame = InFrame::new(10);
 		frame.headers.add(Header::Retransmit(RetransmitHeader {
 			original_frame_id: 0,
 			retransmit_count: 1,
@@ -177,7 +193,7 @@ mod tests {
 		let mut handler = RoundTripTime::new(&Instant::now());
 		let now = Instant::now();
 
-		let mut input_frame = Frame::new(10);
+		let mut input_frame = InFrame::new(10);
 		input_frame.headers.add(Header::Retransmit(RetransmitHeader {
 			original_frame_id: 0,
 			retransmit_count: 1,
@@ -187,7 +203,7 @@ mod tests {
 			.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&input_frame, &now);
 
-		let mut output_frame = Frame::new(10);
+		let mut output_frame = OutFrame::new(10);
 		handler.build_frame(&mut output_frame, &now);
 
 		assert!(matches!(
@@ -205,7 +221,7 @@ mod tests {
 	pub fn should_calculate_rtt_average() {
 		let mut handler = RoundTripTime::new(&Instant::now());
 		for i in 0..AVERAGE_RTT_MIN_LEN {
-			let mut frame = Frame::new(10);
+			let mut frame = InFrame::new(10);
 			frame
 				.headers
 				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
@@ -223,7 +239,7 @@ mod tests {
 	pub fn should_limit_on_length_rtt() {
 		let mut handler = RoundTripTime::new(&Instant::now());
 		for i in 0..2 * AVERAGE_RTT_MIN_LEN {
-			let mut frame = Frame::new(10);
+			let mut frame = InFrame::new(10);
 			frame
 				.headers
 				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));

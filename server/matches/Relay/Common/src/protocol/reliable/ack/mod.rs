@@ -2,7 +2,9 @@ use std::ops::Add;
 use std::time::{Duration, Instant};
 
 use crate::protocol::frame::headers::Header;
-use crate::protocol::frame::{Frame, FrameId};
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::output::OutFrame;
+use crate::protocol::frame::FrameId;
 use crate::protocol::reliable::ack::header::AckHeader;
 
 pub mod header;
@@ -48,7 +50,7 @@ impl AckSender {
 	/// повторной отсылки пакета
 	///
 	///
-	pub fn build_out_frame(&mut self, frame: &mut Frame, now: &Instant) {
+	pub fn build_out_frame(&mut self, frame: &mut OutFrame, now: &Instant) {
 		let mut header = AckHeader::default();
 		self.ack_tasks.iter_mut().for_each(|task| {
 			if *now >= task.scheduled_ack && !header.is_full() {
@@ -69,7 +71,7 @@ impl AckSender {
 		frame.headers.add(Header::Ack(header));
 	}
 
-	pub fn on_frame_received(&mut self, frame: &Frame, now: &Instant) {
+	pub fn on_frame_received(&mut self, frame: &InFrame, now: &Instant) {
 		if frame.is_reliability() {
 			if let Err(_) = self.ack_tasks.push(AckTask {
 				frame_id: frame.get_original_frame_id(),
@@ -91,7 +93,8 @@ mod tests {
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
-	use crate::protocol::frame::Frame;
+	use crate::protocol::frame::input::InFrame;
+	use crate::protocol::frame::output::OutFrame;
 	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::ack::AckSender;
 
@@ -108,7 +111,7 @@ mod tests {
 	fn should_ack() {
 		let mut now = Instant::now();
 		let mut ack_sender = AckSender::default();
-		let mut in_frame = Frame::new(10);
+		let mut in_frame = InFrame::new(10);
 		in_frame.commands.push(create_command()).unwrap();
 		ack_sender.on_frame_received(&in_frame, &now);
 
@@ -131,7 +134,7 @@ mod tests {
 	}
 
 	fn build_out_frame(now: &mut Instant, ack_sender: &mut AckSender) -> AckHeader {
-		let out_frame = &mut Frame::new(200);
+		let out_frame = &mut OutFrame::new(200);
 		ack_sender.build_out_frame(out_frame, now);
 		let header: &AckHeader = out_frame.headers.first(Header::predicate_ack).unwrap();
 		header.clone()

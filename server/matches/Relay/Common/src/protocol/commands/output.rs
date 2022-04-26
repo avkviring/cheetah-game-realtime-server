@@ -2,7 +2,8 @@ use std::collections::VecDeque;
 
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{Channel, ChannelType};
-use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
+use crate::protocol::frame::output::OutFrame;
+use crate::protocol::frame::MAX_COMMAND_IN_FRAME;
 
 ///
 /// Коллектор команд для отправки
@@ -65,7 +66,7 @@ impl OutCommandsCollector {
 		!self.commands.is_empty()
 	}
 
-	pub fn build_frame(&mut self, frame: &mut Frame) {
+	pub fn build_frame(&mut self, frame: &mut OutFrame) {
 		let mut command_count = 0;
 		while let Some(command) = self.commands.pop_front() {
 			frame.commands.push(command).unwrap();
@@ -84,7 +85,8 @@ mod tests {
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
 	use crate::protocol::frame::channel::{Channel, ChannelType};
-	use crate::protocol::frame::{Frame, MAX_COMMAND_IN_FRAME};
+	use crate::protocol::frame::output::OutFrame;
+	use crate::protocol::frame::MAX_COMMAND_IN_FRAME;
 
 	#[test]
 	pub fn test_group_sequence() {
@@ -117,7 +119,7 @@ mod tests {
 			);
 		}
 
-		let mut frame = Frame::new(0);
+		let mut frame = OutFrame::new(0);
 		output.build_frame(&mut frame);
 
 		// в коллекторе первой должна быть команда с value равным размеру фрейма

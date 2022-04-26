@@ -6,7 +6,9 @@ use crate::protocol::commands::input::InCommandsCollector;
 use crate::protocol::commands::output::OutCommandsCollector;
 use crate::protocol::disconnect::command::DisconnectByCommand;
 use crate::protocol::disconnect::timeout::DisconnectByTimeout;
-use crate::protocol::frame::{Frame, FrameId};
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::output::OutFrame;
+use crate::protocol::frame::FrameId;
 use crate::protocol::others::keep_alive::KeepAlive;
 use crate::protocol::others::rtt::RoundTripTime;
 use crate::protocol::reliable::ack::AckSender;
@@ -76,7 +78,7 @@ impl Protocol {
 	///
 	/// Обработка входящего фрейма
 	///
-	pub fn on_frame_received(&mut self, frame: Frame, now: &Instant) {
+	pub fn on_frame_received(&mut self, frame: InFrame, now: &Instant) {
 		self.in_frame_counter += 1;
 		self.disconnect_by_timeout.on_frame_received(now);
 		self.retransmitter.on_frame_received(&frame, now);
@@ -93,7 +95,7 @@ impl Protocol {
 	///
 	/// Создание фрейма для отправки
 	///
-	pub fn build_next_frame(&mut self, now: &Instant) -> Option<Frame> {
+	pub fn build_next_frame(&mut self, now: &Instant) -> Option<OutFrame> {
 		match self.get_next_retransmit_frame(now) {
 			None => {}
 			Some(frame) => {
@@ -107,7 +109,7 @@ impl Protocol {
 			|| self.keep_alive.contains_self_data(now);
 
 		if contains_data {
-			let mut frame = Frame::new(self.next_frame_id);
+			let mut frame = OutFrame::new(self.next_frame_id);
 			self.next_frame_id += 1;
 
 			self.ack_sender.build_out_frame(&mut frame, now);
@@ -144,7 +146,7 @@ impl Protocol {
 		self.in_frame_counter > 0 && self.is_disconnected(now).is_none()
 	}
 
-	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<Frame> {
+	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<OutFrame> {
 		let next_frame_id = self.next_frame_id + 1;
 		match self.retransmitter.get_retransmit_frame(now, next_frame_id) {
 			None => Option::None,

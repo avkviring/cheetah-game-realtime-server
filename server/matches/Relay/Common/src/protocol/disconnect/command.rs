@@ -1,5 +1,6 @@
 use crate::protocol::frame::headers::Header;
-use crate::protocol::frame::Frame;
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::output::OutFrame;
 
 ///
 /// Быстрое закрытие соединения по команде с удаленной стороны
@@ -33,14 +34,14 @@ impl DisconnectByCommand {
 		self.disconnecting_by_self_request && !self.disconnected_by_self
 	}
 
-	pub fn build_frame(&mut self, frame: &mut Frame) {
+	pub fn build_frame(&mut self, frame: &mut OutFrame) {
 		if self.disconnecting_by_self_request {
 			frame.headers.add(Header::Disconnect(DisconnectHeader::default()));
 			self.disconnected_by_self = true;
 		}
 	}
 
-	pub fn on_frame_received(&mut self, frame: &Frame) {
+	pub fn on_frame_received(&mut self, frame: &InFrame) {
 		let headers: Option<&DisconnectHeader> = frame.headers.first(Header::predicate_disconnect);
 		self.disconnected_by_peer = headers.is_some();
 	}
@@ -57,7 +58,8 @@ pub struct DisconnectHeader {}
 mod tests {
 	use crate::protocol::disconnect::command::DisconnectByCommand;
 	use crate::protocol::frame::headers::Header;
-	use crate::protocol::frame::Frame;
+	use crate::protocol::frame::input::InFrame;
+	use crate::protocol::frame::output::OutFrame;
 
 	#[test]
 	pub fn should_disconnect() {
@@ -72,9 +74,13 @@ mod tests {
 
 		assert!(self_handler.contains_self_data());
 
-		let mut frame = Frame::new(10);
+		let mut frame = OutFrame::new(10);
 		self_handler.build_frame(&mut frame);
-		remote_handler.on_frame_received(&frame);
+		remote_handler.on_frame_received(&InFrame {
+			frame_id: frame.frame_id,
+			headers: frame.headers,
+			commands: Default::default(),
+		});
 
 		assert!(self_handler.disconnected());
 		assert!(remote_handler.disconnected());
@@ -83,7 +89,7 @@ mod tests {
 	#[test]
 	pub fn should_not_disconnect() {
 		let mut handler = DisconnectByCommand::default();
-		let mut frame = Frame::new(10);
+		let mut frame = OutFrame::new(10);
 		handler.build_frame(&mut frame);
 		assert!(!handler.disconnected());
 		assert!(matches!(frame.headers.first(Header::predicate_disconnect), Option::None));

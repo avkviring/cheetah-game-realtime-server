@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-
 use std::io::{Cursor, ErrorKind};
 use std::net::SocketAddr;
 use std::time::Instant;
@@ -7,7 +6,8 @@ use std::time::Instant;
 use crate::network::channel::NetworkChannel;
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::headers::Header;
-use crate::protocol::frame::Frame;
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::output::OutFrame;
 use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::Protocol;
 use crate::room::{RoomId, RoomMemberId, UserPrivateKey};
@@ -19,7 +19,7 @@ pub struct NetworkClient {
 	private_key: UserPrivateKey,
 	server_address: SocketAddr,
 	pub channel: NetworkChannel,
-	out_frames: VecDeque<Frame>,
+	out_frames: VecDeque<OutFrame>,
 	from_client: bool,
 	member_and_room_id: MemberAndRoomId,
 }
@@ -139,13 +139,17 @@ impl NetworkClient {
 				}
 				Ok(size) => {
 					let mut cursor = Cursor::new(&buffer[0..size]);
-					let header = Frame::decode_headers(&mut cursor);
+					let header = InFrame::decode_headers(&mut cursor);
 					match header {
 						Ok((frame_id, headers)) => {
-							match Frame::decode_frame_commands(self.from_client, frame_id, cursor, Cipher::new(&self.private_key))
-							{
+							match InFrame::decode_frame_commands(
+								self.from_client,
+								frame_id,
+								cursor,
+								Cipher::new(&self.private_key),
+							) {
 								Ok(commands) => {
-									let frame = Frame {
+									let frame = InFrame {
 										frame_id,
 										headers,
 										commands,
@@ -166,7 +170,7 @@ impl NetworkClient {
 		}
 	}
 
-	fn on_frame_received(&mut self, now: &Instant, frame: Frame) {
+	fn on_frame_received(&mut self, now: &Instant, frame: InFrame) {
 		self.protocol.on_frame_received(frame, now);
 	}
 }

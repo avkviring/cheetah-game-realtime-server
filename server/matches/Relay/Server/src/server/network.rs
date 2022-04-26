@@ -7,7 +7,8 @@ use std::time::Instant;
 
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::headers::Header;
-use cheetah_matches_relay_common::protocol::frame::{Frame, FrameId};
+use cheetah_matches_relay_common::protocol::frame::input::InFrame;
+use cheetah_matches_relay_common::protocol::frame::{FrameId, MAX_FRAME_SIZE};
 use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_relay_common::protocol::Protocol;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
@@ -82,7 +83,7 @@ impl NetworkLayer {
 						}
 
 						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
-							let mut buffer = [0; Frame::MAX_FRAME_SIZE];
+							let mut buffer = [0; MAX_FRAME_SIZE];
 							let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
 							match self.socket.send_to(&buffer[0..buffer_size], peer_address) {
 								Ok(size) => {
@@ -109,7 +110,7 @@ impl NetworkLayer {
 	}
 
 	fn receive(&mut self, rooms: &mut Rooms, now: &Instant) {
-		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
+		let mut buffer = [0; MAX_FRAME_SIZE];
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
 			match result {
@@ -129,14 +130,14 @@ impl NetworkLayer {
 	fn process_in_frame(
 		&mut self,
 		rooms: &mut Rooms,
-		buffer: &[u8; Frame::MAX_FRAME_SIZE],
+		buffer: &[u8; MAX_FRAME_SIZE],
 		size: usize,
 		address: SocketAddr,
 		now: &Instant,
 	) {
 		let start_time = Instant::now();
 		let mut cursor = Cursor::new(&buffer[0..size]);
-		match Frame::decode_headers(&mut cursor) {
+		match InFrame::decode_headers(&mut cursor) {
 			Ok((frame_id, headers)) => {
 				let member_and_room_id_header: Option<MemberAndRoomId> =
 					headers.first(Header::predicate_member_and_room_id).cloned();
@@ -152,9 +153,9 @@ impl NetworkLayer {
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
-								match Frame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
+								match InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
 									Ok(commands) => {
-										let frame = Frame {
+										let frame = InFrame {
 											frame_id,
 											headers,
 											commands,
@@ -214,7 +215,8 @@ mod tests {
 	use cheetah_matches_relay_common::network::bind_to_free_socket;
 	use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 	use cheetah_matches_relay_common::protocol::frame::headers::Header;
-	use cheetah_matches_relay_common::protocol::frame::Frame;
+	use cheetah_matches_relay_common::protocol::frame::output::OutFrame;
+	use cheetah_matches_relay_common::protocol::frame::MAX_FRAME_SIZE;
 	use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
 
 	use crate::room::template::config::MemberTemplate;
@@ -227,7 +229,7 @@ mod tests {
 	fn should_not_panic_when_wrong_in_data() {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
-		let buffer = [0; Frame::MAX_FRAME_SIZE];
+		let buffer = [0; MAX_FRAME_SIZE];
 		let usize = 100_usize;
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -242,8 +244,8 @@ mod tests {
 	fn should_not_panic_when_wrong_user() {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
-		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
-		let mut frame = Frame::new(0);
+		let mut buffer = [0; MAX_FRAME_SIZE];
+		let mut frame = OutFrame::new(0);
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId {
 			member_id: 0,
 			room_id: 0,
@@ -262,8 +264,8 @@ mod tests {
 	fn should_not_panic_when_missing_user_header() {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
-		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
-		let frame = Frame::new(0);
+		let mut buffer = [0; MAX_FRAME_SIZE];
+		let frame = OutFrame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32]), &mut buffer).unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -281,7 +283,7 @@ mod tests {
 	fn should_keep_address_from_last_frame() {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
-		let mut buffer = [0; Frame::MAX_FRAME_SIZE];
+		let mut buffer = [0; MAX_FRAME_SIZE];
 
 		let user_template = MemberTemplate {
 			private_key: Default::default(),
@@ -298,7 +300,7 @@ mod tests {
 		};
 		udp_server.register_user(&Instant::now(), 0, user.id, user.template.clone());
 
-		let mut frame = Frame::new(100);
+		let mut frame = OutFrame::new(100);
 		let user_and_room_id = MemberAndRoomId {
 			member_id: user.id,
 			room_id: 0,
@@ -313,7 +315,7 @@ mod tests {
 
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &Instant::now());
 
-		let mut frame = Frame::new(10);
+		let mut frame = OutFrame::new(10);
 		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
 		let size = frame
 			.encode(&mut Cipher::new(&user_template.private_key), &mut buffer)

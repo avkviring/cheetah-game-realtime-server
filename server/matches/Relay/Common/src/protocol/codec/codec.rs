@@ -8,7 +8,9 @@ use crate::protocol::codec::commands::encoder::encode_commands;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::headers::Headers;
-use crate::protocol::frame::{CommandVec, Frame, FrameId};
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::output::OutFrame;
+use crate::protocol::frame::{CommandVec, FrameId, MAX_FRAME_SIZE};
 
 #[derive(Error, Debug)]
 pub enum FrameDecodeError {
@@ -43,7 +45,7 @@ pub enum FrameEncodeError {
 	},
 }
 
-impl Frame {
+impl InFrame {
 	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameId, Headers), FrameDecodeError> {
 		let frame_id = cursor.read_variable_u64()?;
 		let headers = Headers::decode_headers(cursor)?;
@@ -79,7 +81,7 @@ impl Frame {
 			.map_err(|e| FrameDecodeError::DecryptedError(format!("{:?}", e)))?;
 
 		// commands - decompress
-		let mut decompressed_buffer = [0; Frame::MAX_FRAME_SIZE];
+		let mut decompressed_buffer = [0; MAX_FRAME_SIZE];
 		let decompressed_size = packet_decompress(&vec, &mut decompressed_buffer)
 			.map_err(|e| FrameDecodeError::DecompressError(format!("{:?}", e)))?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
@@ -90,7 +92,9 @@ impl Frame {
 		decode_commands(c2s_commands, &mut cursor, &mut commands)?;
 		Ok(commands)
 	}
+}
 
+impl OutFrame {
 	///
 	/// Преобразуем Frame в набор байт для отправки через сеть
 	///
@@ -99,7 +103,7 @@ impl Frame {
 		frame_cursor.write_variable_u64(self.frame_id).unwrap();
 		self.headers.encode_headers(&mut frame_cursor).unwrap();
 
-		let mut commands_buffer = [0_u8; 4 * Frame::MAX_FRAME_SIZE];
+		let mut commands_buffer = [0_u8; 4 * MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
 		encode_commands(&self.commands, &mut commands_cursor)?;
 
@@ -117,7 +121,6 @@ impl Frame {
 		}
 
 		let commands_position = commands_cursor.position() as usize;
-		//println!("raw {}", (commands_position + frame_cursor.position() as usize));
 		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec)
 			.map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
 		if compressed_size > 1024 {
@@ -157,7 +160,8 @@ pub mod tests {
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
-	use crate::protocol::frame::Frame;
+	use crate::protocol::frame::input::InFrame;
+	use crate::protocol::frame::output::OutFrame;
 	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
@@ -169,7 +173,7 @@ pub mod tests {
 
 	#[test]
 	fn should_encode_decode_frame() {
-		let mut frame = Frame::new(55);
+		let mut frame = OutFrame::new(55);
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.headers.add(Header::Ack(AckHeader::default()));
@@ -189,14 +193,16 @@ pub mod tests {
 		let buffer = &buffer[0..size];
 
 		let mut cursor = Cursor::new(buffer);
-		let (frame_id, headers) = Frame::decode_headers(&mut cursor).unwrap();
-		let commands = Frame::decode_frame_commands(true, frame_id, cursor, cipher.clone()).unwrap();
-		let decoded_frame = Frame {
+		let (frame_id, headers) = InFrame::decode_headers(&mut cursor).unwrap();
+		let commands = InFrame::decode_frame_commands(true, frame_id, cursor, cipher.clone()).unwrap();
+		let decoded_frame = InFrame {
 			frame_id,
 			headers,
 			commands,
 		};
 
-		assert_eq!(frame, decoded_frame);
+		assert_eq!(frame.frame_id, decoded_frame.frame_id);
+		assert_eq!(frame.headers, decoded_frame.headers);
+		assert_eq!(frame.commands, decoded_frame.commands);
 	}
 }

@@ -3,7 +3,8 @@ use std::collections::BinaryHeap;
 
 use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
-use crate::protocol::frame::{Frame, FrameId};
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::FrameId;
 
 ///
 /// Коллектор входящих команд
@@ -46,7 +47,7 @@ impl InCommandsCollector {
 		self.ready_commands.as_slice()
 	}
 
-	pub fn collect(&mut self, frame: Frame) {
+	pub fn collect(&mut self, frame: InFrame) {
 		if self.is_get_ready_commands {
 			self.ready_commands.clear();
 			self.is_get_ready_commands = false;
@@ -158,7 +159,8 @@ mod tests {
 	use crate::protocol::commands::input::InCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
-	use crate::protocol::frame::{Frame, FrameId};
+	use crate::protocol::frame::input::InFrame;
+	use crate::protocol::frame::FrameId;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
 
@@ -166,7 +168,7 @@ mod tests {
 	pub fn test_clear_after_get_ready_commands() {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
-		let mut frame = Frame::new(1);
+		let mut frame = InFrame::new(1);
 		frame.commands.push(cmd_1.clone()).unwrap();
 		in_commands.collect(frame);
 		assert_eq!(in_commands.get_ready_commands(), [cmd_1]);
@@ -177,7 +179,7 @@ mod tests {
 	pub fn test_not_clear_after_collect() {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
-		let mut frame = Frame::new(1);
+		let mut frame = InFrame::new(1);
 		frame.commands.push(cmd_1.clone()).unwrap();
 		in_commands.collect(frame.clone());
 		in_commands.collect(frame);
@@ -263,7 +265,7 @@ mod tests {
 		commands: &[CommandWithChannel],
 		expect: &[CommandWithChannel],
 	) {
-		let mut frame = Frame::new(frame_id);
+		let mut frame = InFrame::new(frame_id);
 		for command in commands {
 			frame.commands.push(command.clone()).unwrap();
 		}
