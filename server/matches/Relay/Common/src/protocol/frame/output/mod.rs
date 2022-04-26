@@ -5,7 +5,7 @@ use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::commands::encoder::encode_command;
 use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::{Header, Headers};
-use crate::protocol::frame::{CommandVec, FrameId, MAX_FRAME_SIZE};
+use crate::protocol::frame::{CommandVec, FrameId};
 
 pub const MAX_ENCODED_COMMANDS_SIZE: usize = 512;
 
@@ -39,7 +39,7 @@ impl OutFrame {
 		let mut cursor = Cursor::new(self.encoded_commands.as_mut_slice());
 		cursor.set_position(self.encoded_size);
 		encode_command(&mut self.context, &command, &mut cursor).unwrap();
-		if self.encoded_size > MAX_ENCODED_COMMANDS_SIZE as u64 {
+		if cursor.position() > MAX_ENCODED_COMMANDS_SIZE as u64 {
 			self.full = true;
 			return Err(());
 		} else {

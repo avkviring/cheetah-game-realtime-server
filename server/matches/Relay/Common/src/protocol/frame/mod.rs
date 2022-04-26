@@ -12,6 +12,6 @@ pub mod output;
 /// - должен быть уникальным, даже если это повторно отсылаемый фрейм
 ///
 pub type FrameId = u64;
-pub const MAX_COMMAND_IN_FRAME: usize = 120;
+pub const MAX_COMMAND_IN_FRAME: usize = 150;
 pub type CommandVec = heapless::Vec<CommandWithChannel, MAX_COMMAND_IN_FRAME>;
 pub const MAX_FRAME_SIZE: usize = 1024;

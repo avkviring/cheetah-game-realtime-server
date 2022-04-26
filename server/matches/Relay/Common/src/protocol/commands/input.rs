@@ -12,7 +12,7 @@ use crate::protocol::frame::FrameId;
 ///
 #[derive(Debug)]
 pub struct InCommandsCollector {
-	ordered: [FrameId; 256],
+	last_frame_id_by_group: [FrameId; 256],
 	sequences: [ChannelSequence; 256],
 	sequence_commands: [Option<BinaryHeap<SequenceApplicationCommand>>; 256],
 	ready_commands: Vec<CommandWithChannel>,
@@ -24,12 +24,12 @@ pub struct InCommandsCollector {
 /// Применяется для исключения атаки на память сервера путем посылки с клиента никогда не
 /// завершающихся последовательностей
 ///
-const SEQUENCE_COMMANDS_LIMIT: usize = 1024;
+const SEQUENCE_COMMANDS_LIMIT: usize = 4096;
 
 impl Default for InCommandsCollector {
 	fn default() -> Self {
 		Self {
-			ordered: [0; 256],
+			last_frame_id_by_group: [0; 256],
 			sequences: [ChannelSequence(0); 256],
 			sequence_commands: [(); 256].map(|_| Option::None),
 			ready_commands: Default::default(),
@@ -68,7 +68,6 @@ impl InCommandsCollector {
 	fn process_sequence(&mut self, channel_group: ChannelGroup, input_sequence: ChannelSequence, command: CommandWithChannel) {
 		let mut is_ready_command = false;
 		let allow_sequence = &mut self.sequences[channel_group.0 as usize];
-
 		if input_sequence == ChannelSequence::FIRST || input_sequence == *allow_sequence {
 			self.ready_commands.push(command.clone());
 			*allow_sequence = input_sequence.next();
@@ -107,9 +106,9 @@ impl InCommandsCollector {
 	}
 
 	fn process_ordered(&mut self, channel_group: ChannelGroup, frame_id: FrameId, command: CommandWithChannel) {
-		let order = &self.ordered[channel_group.0 as usize];
+		let order = &self.last_frame_id_by_group[channel_group.0 as usize];
 		if frame_id >= *order {
-			self.ordered[channel_group.0 as usize] = frame_id;
+			self.last_frame_id_by_group[channel_group.0 as usize] = frame_id;
 			self.ready_commands.push(command);
 		}
 	}

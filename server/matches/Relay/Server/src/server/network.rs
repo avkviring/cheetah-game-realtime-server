@@ -81,7 +81,6 @@ impl NetworkLayer {
 								.out_commands_collector
 								.add_command(command.channel_type.clone(), command.command.clone());
 						}
-
 						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
 							let mut buffer = [0; MAX_FRAME_SIZE];
 							let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();

@@ -107,20 +107,12 @@ impl OutFrame {
 		unsafe {
 			vec.set_len(4096);
 		}
-
 		let compressed_size =
 			packet_compress(commands_buffer, &mut vec).map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
-		if compressed_size > 1024 {
-			panic!(
-				"frame size({:?}) after compress is more than 1024, frame  {:#?}",
-				compressed_size, self
-			)
-		}
 		unsafe {
 			vec.set_len(compressed_size);
 		}
 
-		//println!("compressed {}", compressed_size);
 		let frame_position = frame_cursor.position() as usize;
 		cipher
 			.encrypt(
@@ -132,7 +124,6 @@ impl OutFrame {
 
 		frame_cursor.write_all(&vec)?;
 
-		//println!("chiper {}", frame_cursor.position());
 		Ok(frame_cursor.position() as usize)
 	}
 }

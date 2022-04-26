@@ -8,8 +8,6 @@ pub struct InFrame {
 	pub commands: CommandVec,
 }
 impl InFrame {
-	pub const MAX_COMMAND_COUNT: usize = 64;
-
 	pub fn new(frame_id: FrameId) -> Self {
 		Self {
 			frame_id,

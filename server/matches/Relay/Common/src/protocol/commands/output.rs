@@ -69,7 +69,8 @@ impl OutCommandsCollector {
 	pub fn build_frame(&mut self, frame: &mut OutFrame) {
 		let mut command_count = 0;
 		while let Some(command) = self.commands.pop_front() {
-			if let Err(()) = frame.add_command(command) {
+			if let Err(()) = frame.add_command(command.clone()) {
+				self.commands.push_front(command);
 				break;
 			}
 			command_count += 1;
@@ -82,13 +83,17 @@ impl OutCommandsCollector {
 
 #[cfg(test)]
 mod tests {
+	use std::collections::VecDeque;
+
+	use crate::commands::binary_value::BinaryValue;
 	use crate::commands::c2s::C2SCommand;
+	use crate::commands::types::event::EventCommand;
 	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
 	use crate::protocol::frame::channel::{Channel, ChannelType};
 	use crate::protocol::frame::output::OutFrame;
-	use crate::protocol::frame::MAX_COMMAND_IN_FRAME;
+	use crate::protocol::frame::{MAX_COMMAND_IN_FRAME, MAX_FRAME_SIZE};
 
 	#[test]
 	pub fn test_group_sequence() {
@@ -108,7 +113,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_split_commands() {
+	pub fn should_split_commands_by_count() {
 		let mut output = OutCommandsCollector::default();
 		for i in 0..2 * MAX_COMMAND_IN_FRAME {
 			output.add_command(
@@ -147,5 +152,34 @@ mod tests {
 				if value == i as i64
 			));
 		}
+	}
+
+	#[test]
+	pub fn should_split_commands_by_size() {
+		let mut output = OutCommandsCollector::default();
+		for i in 0..MAX_FRAME_SIZE {
+			output.add_command(
+				ChannelType::ReliableSequence(ChannelGroup(100)),
+				BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
+					object_id: Default::default(),
+					field_id: 1,
+					event: BinaryValue::from([1, 2, 3, 4].as_slice()),
+				})),
+			);
+		}
+		let output_commands = output.commands.clone();
+		let mut frames_commands = VecDeque::new();
+
+		loop {
+			let mut first_frame = OutFrame::new(0);
+			output.build_frame(&mut first_frame);
+			let iter = first_frame.get_commands();
+			if iter.len() == 0 {
+				break;
+			}
+			iter.for_each(|c| frames_commands.push_back(c.clone()));
+		}
+
+		assert_eq!(output_commands, frames_commands)
 	}
 }
