@@ -69,7 +69,9 @@ impl OutCommandsCollector {
 	pub fn build_frame(&mut self, frame: &mut OutFrame) {
 		let mut command_count = 0;
 		while let Some(command) = self.commands.pop_front() {
-			frame.add_command(command);
+			if let Err(()) = frame.add_command(command) {
+				break;
+			}
 			command_count += 1;
 			if command_count == MAX_COMMAND_IN_FRAME {
 				break;

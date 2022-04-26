@@ -9,18 +9,22 @@ mod header;
 
 #[cfg(test)]
 mod tests {
+	use std::io::Cursor;
+
+	use byteorder::WriteBytesExt;
+
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use crate::commands::types::float::SetDoubleCommand;
 	use crate::commands::types::long::SetLongCommand;
+	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::codec::commands::decoder::decode_commands;
-	use crate::protocol::codec::commands::encoder::encode_commands;
+	use crate::protocol::codec::commands::encoder::encode_command;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::CommandVec;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
-	use std::io::Cursor;
 
 	#[test]
 	fn test_c2s() {
@@ -76,7 +80,11 @@ mod tests {
 		let mut buffer = [0_u8; 64];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let commands = CommandVec::from_slice(commands.as_slice()).unwrap();
-		encode_commands(&commands, &mut cursor).unwrap();
+		let mut context = CommandContext::default();
+		cursor.write_u8(commands.len() as u8).unwrap();
+		for command in &commands {
+			encode_command(&mut context, command, &mut cursor).unwrap();
+		}
 		let write_position = cursor.position();
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
 		let mut readed = CommandVec::new();

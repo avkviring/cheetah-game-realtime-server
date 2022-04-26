@@ -4,7 +4,6 @@ use thiserror::Error;
 
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::commands::decoder::{decode_commands, CommandsDecoderError};
-use crate::protocol::codec::commands::encoder::encode_commands;
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::protocol::frame::headers::Headers;
@@ -102,27 +101,15 @@ impl OutFrame {
 		let mut frame_cursor = Cursor::new(out);
 		frame_cursor.write_variable_u64(self.frame_id).unwrap();
 		self.headers.encode_headers(&mut frame_cursor).unwrap();
-
-		let mut commands_buffer = [0_u8; 4 * MAX_FRAME_SIZE];
-		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-		self.get_commands_buffer(&mut commands_cursor);
-
-		if commands_cursor.position() > 1024 {
-			panic!(
-				"frame size({:?}) is more than 1024, frame  {:#?}",
-				commands_cursor.position(),
-				self
-			)
-		}
+		let commands_buffer = self.get_commands_buffer();
 
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
 		unsafe {
 			vec.set_len(4096);
 		}
 
-		let commands_position = commands_cursor.position() as usize;
-		let compressed_size = packet_compress(&commands_buffer[0..commands_position], &mut vec)
-			.map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
+		let compressed_size =
+			packet_compress(commands_buffer, &mut vec).map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
 		if compressed_size > 1024 {
 			panic!(
 				"frame size({:?}) after compress is more than 1024, frame  {:#?}",

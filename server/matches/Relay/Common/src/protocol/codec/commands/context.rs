@@ -18,7 +18,7 @@ use crate::room::RoomMemberId;
 /// Контекст команд - записывает/читает дельту изменений между командами, тем самым сокращаем
 /// трафик, например при создании и загрузки данных объекта
 ///
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CommandContext {
 	object_id: Option<GameObjectId>,
 	field_id: Option<FieldId>,
