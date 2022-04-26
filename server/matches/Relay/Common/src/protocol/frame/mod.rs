@@ -14,9 +14,7 @@ pub mod output;
 pub type FrameId = u64;
 
 /// максимальное количество возможных команд в Frame
-/// на самом деле ограничения работают только по размеру, но даже если команда будет один байт -
-/// то их не может быть больше 512
-pub const CAPACITY_COMMANDS_IN_FRAME: usize = 512;
+pub const CAPACITY_COMMANDS_IN_FRAME: usize = 127;
 
 pub type CommandVec = heapless::Vec<CommandWithChannel, CAPACITY_COMMANDS_IN_FRAME>;
 pub const MAX_FRAME_SIZE: usize = 1024;

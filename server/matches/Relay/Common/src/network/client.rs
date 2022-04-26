@@ -149,11 +149,7 @@ impl NetworkClient {
 								Cipher::new(&self.private_key),
 							) {
 								Ok(commands) => {
-									let frame = InFrame {
-										frame_id,
-										headers,
-										commands,
-									};
+									let frame = InFrame::new(frame_id, headers, commands);
 									self.on_frame_received(now, frame);
 								}
 								Err(e) => {

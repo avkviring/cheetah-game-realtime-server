@@ -154,11 +154,7 @@ impl NetworkLayer {
 								let private_key = &session.private_key;
 								match InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
 									Ok(commands) => {
-										let frame = InFrame {
-											frame_id,
-											headers,
-											commands,
-										};
+										let frame = InFrame::new(frame_id, headers, commands);
 										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.frame_id;

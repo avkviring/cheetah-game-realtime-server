@@ -34,23 +34,23 @@ impl OutFrame {
 		}
 	}
 
-	pub fn add_command(&mut self, command: CommandWithChannel) -> Result<(), ()> {
-		if self.full {
-			return Err(());
+	pub fn add_command(&mut self, command: CommandWithChannel) -> bool {
+		if self.full || self.commands.is_full() {
+			return false;
 		}
 		let mut cursor = Cursor::new(self.encoded_commands.as_mut_slice());
 		cursor.set_position(self.encoded_size);
 		encode_command(&mut self.context, &command, &mut cursor).unwrap();
 		if cursor.position() > MAX_ENCODED_COMMANDS_SIZE as u64 {
 			self.full = true;
-			return Err(());
+			return false;
 		} else {
 			self.contains_reliability_command = self.contains_reliability_command || command.channel.is_reliable();
 			self.encoded_size = cursor.position();
 			self.commands.push(command).unwrap();
 			self.encoded_commands[0] = self.commands.len() as u8;
 		}
-		Ok(())
+		true
 	}
 
 	pub fn get_commands(&self) -> Iter<'_, CommandWithChannel> {

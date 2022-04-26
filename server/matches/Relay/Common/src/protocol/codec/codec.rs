@@ -155,16 +155,14 @@ pub mod tests {
 		let mut cipher = Cipher::new(PRIVATE_KEY);
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.headers.add(Header::Ack(AckHeader::default()));
-		frame
-			.add_command(CommandWithChannel {
-				channel: Channel::ReliableUnordered,
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
-					object_id: GameObjectId::new(100, GameObjectOwner::Member(200)),
-					field_id: 78,
-					value: 155,
-				})),
-			})
-			.unwrap();
+		frame.add_command(CommandWithChannel {
+			channel: Channel::ReliableUnordered,
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+				object_id: GameObjectId::new(100, GameObjectOwner::Member(200)),
+				field_id: 78,
+				value: 155,
+			})),
+		});
 		let mut buffer = [0; 1024];
 		let size = frame.encode(&mut cipher, &mut buffer).unwrap();
 		let buffer = &buffer[0..size];
@@ -172,14 +170,10 @@ pub mod tests {
 		let mut cursor = Cursor::new(buffer);
 		let (frame_id, headers) = InFrame::decode_headers(&mut cursor).unwrap();
 		let commands = InFrame::decode_frame_commands(true, frame_id, cursor, cipher.clone()).unwrap();
-		let decoded_frame = InFrame {
-			frame_id,
-			headers,
-			commands,
-		};
+		let decoded_frame = InFrame::new(frame_id, headers, commands);
 
 		assert_eq!(frame.frame_id, decoded_frame.frame_id);
 		assert_eq!(frame.headers, decoded_frame.headers);
-		assert_eq!(frame.get_commands().as_slice(), decoded_frame.commands.as_slice());
+		assert_eq!(frame.get_commands().as_slice(), decoded_frame.get_commands().as_slice());
 	}
 }

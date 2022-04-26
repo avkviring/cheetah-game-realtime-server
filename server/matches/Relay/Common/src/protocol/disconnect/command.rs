@@ -76,11 +76,7 @@ mod tests {
 
 		let mut frame = OutFrame::new(10);
 		self_handler.build_frame(&mut frame);
-		remote_handler.on_frame_received(&InFrame {
-			frame_id: frame.frame_id,
-			headers: frame.headers,
-			commands: Default::default(),
-		});
+		remote_handler.on_frame_received(&InFrame::new(frame.frame_id, frame.headers, Default::default()));
 
 		assert!(self_handler.disconnected());
 		assert!(remote_handler.disconnected());

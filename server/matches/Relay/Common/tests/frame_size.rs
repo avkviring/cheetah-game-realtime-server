@@ -24,36 +24,30 @@ pub fn empty_frame() {
 // self - raw(21), compressed(18), chiper(39)
 pub fn create_object_frame() {
 	let mut frame = OutFrame::new(100500);
-	frame
-		.add_command(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
-				object_id: Default::default(),
-				template: 0,
-				access_groups: Default::default(),
-			})),
-		})
-		.unwrap();
-	frame
-		.add_command(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
-				object_id: Default::default(),
-				field_id: 30,
-				structure: Default::default(),
-			})),
-		})
-		.unwrap();
-	frame
-		.add_command(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
-				object_id: Default::default(),
-				field_id: 55,
-				value: 100,
-			})),
-		})
-		.unwrap();
+	frame.add_command(CommandWithChannel {
+		channel: Channel::ReliableUnordered,
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
+			object_id: Default::default(),
+			template: 0,
+			access_groups: Default::default(),
+		})),
+	});
+	frame.add_command(CommandWithChannel {
+		channel: Channel::ReliableUnordered,
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
+			object_id: Default::default(),
+			field_id: 30,
+			structure: Default::default(),
+		})),
+	});
+	frame.add_command(CommandWithChannel {
+		channel: Channel::ReliableUnordered,
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			object_id: Default::default(),
+			field_id: 55,
+			value: 100,
+		})),
+	});
 
 	let mut buffer = [0; 2048];
 	let private_key = [0; 32];

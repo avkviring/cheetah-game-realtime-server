@@ -63,13 +63,14 @@ impl FrameReplayProtection {
 
 #[cfg(test)]
 mod tests {
+	use crate::commands::c2s::C2SCommand::Delete;
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::reliable::replay_protection::FrameReplayProtection;
 
 	#[test]
 	fn should_protection_replay() {
 		let mut protection = FrameReplayProtection::default();
-		let frame_a = InFrame::new(1000);
+		let frame_a = InFrame::new(1000, Default::default(), Default::default());
 		assert!(!protection.set_and_check(&frame_a).unwrap());
 		assert!(protection.set_and_check(&frame_a).unwrap());
 	}
@@ -77,8 +78,12 @@ mod tests {
 	#[test]
 	fn should_disconnect_when_very_old_frame() {
 		let mut protection = FrameReplayProtection::default();
-		let frame_a = InFrame::new(1000 + FrameReplayProtection::BUFFER_SIZE as u64);
-		let frame_b = InFrame::new(10);
+		let frame_a = InFrame::new(
+			1000 + FrameReplayProtection::BUFFER_SIZE as u64,
+			Default::default(),
+			Default::default(),
+		);
+		let frame_b = InFrame::new(10, Default::default(), Default::default());
 		assert!(!protection.set_and_check(&frame_a).unwrap());
 		assert!(protection.set_and_check(&frame_b).is_err());
 	}
@@ -87,7 +92,7 @@ mod tests {
 	fn should_protection_replay_check_all() {
 		let mut protection = FrameReplayProtection::default();
 		for i in 1..(FrameReplayProtection::BUFFER_SIZE * 2) as u64 {
-			let frame = InFrame::new(i);
+			let frame = InFrame::new(i, Default::default(), Default::default());
 			assert!(!protection.set_and_check(&frame).unwrap());
 			assert!(protection.set_and_check(&frame).unwrap());
 		}
@@ -97,11 +102,11 @@ mod tests {
 	fn should_protection_replay_check_prev_packets() {
 		let mut protection = FrameReplayProtection::default();
 		for i in 1..FrameReplayProtection::BUFFER_SIZE as u64 {
-			let frame = InFrame::new(i);
+			let frame = InFrame::new(i, Default::default(), Default::default());
 			protection.set_and_check(&frame).unwrap();
 			if i > 2 {
 				for j in 1..i {
-					let frame = InFrame::new(j);
+					let frame = InFrame::new(j, Default::default(), Default::default());
 					assert!(protection.set_and_check(&frame).unwrap());
 				}
 			}

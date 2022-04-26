@@ -67,7 +67,7 @@ impl OutCommandsCollector {
 
 	pub fn build_frame(&mut self, frame: &mut OutFrame) {
 		while let Some(command) = self.commands.pop_front() {
-			if let Err(()) = frame.add_command(command.clone()) {
+			if !frame.add_command(command.clone()) {
 				self.commands.push_front(command);
 				break;
 			}

@@ -22,28 +22,16 @@ impl Channel {
 			let frame_a = peer_a.build_next_frame(&now);
 			if let Some(frame_a) = frame_a {
 				if self.allow(i as u64) {
-					peer_b.on_frame_received(
-						InFrame {
-							commands: CommandVec::from_iter(frame_a.get_commands().cloned()),
-							frame_id: frame_a.frame_id,
-							headers: frame_a.headers,
-						},
-						&now,
-					)
+					let commands = CommandVec::from_iter(frame_a.get_commands().cloned());
+					peer_b.on_frame_received(InFrame::new(frame_a.frame_id, frame_a.headers, commands), &now)
 				}
 			}
 
 			let frame_b = peer_b.build_next_frame(&now);
 			if let Some(frame_b) = frame_b {
 				if self.allow(i as u64) {
-					peer_a.on_frame_received(
-						InFrame {
-							commands: CommandVec::from_iter(frame_b.get_commands().cloned()),
-							frame_id: frame_b.frame_id,
-							headers: frame_b.headers,
-						},
-						&now,
-					)
+					let commands = CommandVec::from_iter(frame_b.get_commands().cloned());
+					peer_a.on_frame_received(InFrame::new(frame_b.frame_id, frame_b.headers, commands), &now)
 				}
 			}
 

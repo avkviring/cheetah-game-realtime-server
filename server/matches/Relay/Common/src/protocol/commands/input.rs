@@ -54,7 +54,7 @@ impl InCommandsCollector {
 		}
 
 		let frame_id = frame.frame_id;
-		frame.commands.into_iter().for_each(|c| {
+		frame.get_commands().cloned().for_each(|c| {
 			match c.channel {
 				Channel::ReliableUnordered | Channel::UnreliableUnordered => self.ready_commands.push(c),
 				Channel::ReliableOrdered(group) | Channel::UnreliableOrdered(group) => {
@@ -167,8 +167,7 @@ mod tests {
 	pub fn test_clear_after_get_ready_commands() {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
-		let mut frame = InFrame::new(1);
-		frame.commands.push(cmd_1.clone()).unwrap();
+		let mut frame = InFrame::new(1, Default::default(), [cmd_1.clone()].into_iter().collect());
 		in_commands.collect(frame);
 		assert_eq!(in_commands.get_ready_commands(), [cmd_1]);
 		assert_eq!(in_commands.get_ready_commands(), []);
@@ -178,8 +177,7 @@ mod tests {
 	pub fn test_not_clear_after_collect() {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
-		let mut frame = InFrame::new(1);
-		frame.commands.push(cmd_1.clone()).unwrap();
+		let mut frame = InFrame::new(1, Default::default(), [cmd_1.clone()].into_iter().collect());
 		in_commands.collect(frame.clone());
 		in_commands.collect(frame);
 		assert_eq!(in_commands.get_ready_commands(), [cmd_1.clone(), cmd_1]);
@@ -264,10 +262,7 @@ mod tests {
 		commands: &[CommandWithChannel],
 		expect: &[CommandWithChannel],
 	) {
-		let mut frame = InFrame::new(frame_id);
-		for command in commands {
-			frame.commands.push(command.clone()).unwrap();
-		}
+		let mut frame = InFrame::new(frame_id, Default::default(), commands.iter().cloned().collect());
 		in_commands.collect(frame);
 		assert_eq!(in_commands.get_ready_commands(), expect);
 	}
