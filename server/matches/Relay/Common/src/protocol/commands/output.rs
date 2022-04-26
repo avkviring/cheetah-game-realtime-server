@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{Channel, ChannelType};
 use crate::protocol::frame::output::OutFrame;
-use crate::protocol::frame::MAX_COMMAND_IN_FRAME;
 
 ///
 /// Коллектор команд для отправки
@@ -67,14 +66,9 @@ impl OutCommandsCollector {
 	}
 
 	pub fn build_frame(&mut self, frame: &mut OutFrame) {
-		let mut command_count = 0;
 		while let Some(command) = self.commands.pop_front() {
 			if let Err(()) = frame.add_command(command.clone()) {
 				self.commands.push_front(command);
-				break;
-			}
-			command_count += 1;
-			if command_count == MAX_COMMAND_IN_FRAME {
 				break;
 			}
 		}
@@ -88,12 +82,11 @@ mod tests {
 	use crate::commands::binary_value::BinaryValue;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
-	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
 	use crate::protocol::frame::channel::{Channel, ChannelType};
 	use crate::protocol::frame::output::OutFrame;
-	use crate::protocol::frame::{MAX_COMMAND_IN_FRAME, MAX_FRAME_SIZE};
+	use crate::protocol::frame::MAX_FRAME_SIZE;
 
 	#[test]
 	pub fn test_group_sequence() {
@@ -110,48 +103,6 @@ mod tests {
 			if sequence.0==1));
 		assert!(matches!(output.commands[2].channel, Channel::ReliableSequence(_,sequence)
 			if sequence.0==2));
-	}
-
-	#[test]
-	pub fn should_split_commands_by_count() {
-		let mut output = OutCommandsCollector::default();
-		for i in 0..2 * MAX_COMMAND_IN_FRAME {
-			output.add_command(
-				ChannelType::ReliableSequence(ChannelGroup(100)),
-				BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
-					object_id: Default::default(),
-					field_id: 1,
-					value: i as i64,
-				})),
-			);
-		}
-
-		let mut frame = OutFrame::new(0);
-		output.build_frame(&mut frame);
-
-		// в коллекторе первой должна быть команда с value равным размеру фрейма
-		assert!(matches!(
-			output.commands.pop_front().unwrap().both_direction_command,
-			BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
-					object_id: _,
-					field_id: _,
-					value,
-				}))
-			if value == MAX_COMMAND_IN_FRAME as i64
-		));
-
-		// проверяем как собран фрейм
-		for i in 0..MAX_COMMAND_IN_FRAME {
-			assert!(matches!(
-				frame.get_commands().as_slice()[i].both_direction_command,
-				BothDirectionCommand::C2S( C2SCommand::SetLong(SetLongCommand {
-						object_id: _,
-						field_id: _,
-						value,
-					}))
-				if value == i as i64
-			));
-		}
 	}
 
 	#[test]

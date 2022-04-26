@@ -8,7 +8,7 @@ use fnv::FnvBuildHasher;
 use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
-use crate::protocol::frame::{FrameId, MAX_COMMAND_IN_FRAME};
+use crate::protocol::frame::{FrameId, CAPACITY_COMMANDS_IN_FRAME};
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
@@ -76,8 +76,8 @@ pub struct ScheduledFrame {
 impl Default for Retransmit {
 	fn default() -> Self {
 		Self {
-			frames: VecDeque::with_capacity(MAX_COMMAND_IN_FRAME),
-			wait_ack_frames: HashSet::with_capacity_and_hasher(MAX_COMMAND_IN_FRAME, FnvBuildHasher::default()),
+			frames: VecDeque::with_capacity(CAPACITY_COMMANDS_IN_FRAME),
+			wait_ack_frames: HashSet::with_capacity_and_hasher(CAPACITY_COMMANDS_IN_FRAME, FnvBuildHasher::default()),
 			max_retransmit_count: Default::default(),
 			ack_wait_duration: Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC),
 			statistics: Default::default(),
@@ -143,7 +143,7 @@ impl Retransmit {
 	/// Фрейм отослан - запоминаем для повтора
 	///
 	pub fn build_frame(&mut self, frame: &OutFrame, now: &Instant) {
-		if frame.is_reliability() {
+		if frame.contains_reliability_command() {
 			let original_frame_id = frame.frame_id;
 			let mut reliable_frame = OutFrame::new(original_frame_id);
 			reliable_frame.headers = frame.headers.clone();
