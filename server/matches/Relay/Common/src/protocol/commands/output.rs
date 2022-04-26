@@ -69,7 +69,7 @@ impl OutCommandsCollector {
 	pub fn build_frame(&mut self, frame: &mut OutFrame) {
 		let mut command_count = 0;
 		while let Some(command) = self.commands.pop_front() {
-			frame.commands.push(command).unwrap();
+			frame.add_command(command);
 			command_count += 1;
 			if command_count == MAX_COMMAND_IN_FRAME {
 				break;
@@ -136,7 +136,7 @@ mod tests {
 		// проверяем как собран фрейм
 		for i in 0..MAX_COMMAND_IN_FRAME {
 			assert!(matches!(
-				frame.commands[i].both_direction_command,
+				frame.get_commands().as_slice()[i].both_direction_command,
 				BothDirectionCommand::C2S( C2SCommand::SetLong(SetLongCommand {
 						object_id: _,
 						field_id: _,

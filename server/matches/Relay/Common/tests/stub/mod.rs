@@ -5,6 +5,7 @@ use rand::rngs::OsRng;
 use rand::Rng;
 
 use cheetah_matches_relay_common::protocol::frame::input::InFrame;
+use cheetah_matches_relay_common::protocol::frame::CommandVec;
 use cheetah_matches_relay_common::protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC;
 use cheetah_matches_relay_common::protocol::Protocol;
 
@@ -23,9 +24,9 @@ impl Channel {
 				if self.allow(i as u64) {
 					peer_b.on_frame_received(
 						InFrame {
+							commands: CommandVec::from_iter(frame_a.get_commands().cloned()),
 							frame_id: frame_a.frame_id,
 							headers: frame_a.headers,
-							commands: frame_a.commands,
 						},
 						&now,
 					)
@@ -37,9 +38,9 @@ impl Channel {
 				if self.allow(i as u64) {
 					peer_a.on_frame_received(
 						InFrame {
+							commands: CommandVec::from_iter(frame_b.get_commands().cloned()),
 							frame_id: frame_b.frame_id,
 							headers: frame_b.headers,
-							commands: frame_b.commands,
 						},
 						&now,
 					)

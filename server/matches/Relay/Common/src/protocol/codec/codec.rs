@@ -105,7 +105,7 @@ impl OutFrame {
 
 		let mut commands_buffer = [0_u8; 4 * MAX_FRAME_SIZE];
 		let mut commands_cursor = Cursor::new(&mut commands_buffer[..]);
-		encode_commands(&self.commands, &mut commands_cursor)?;
+		self.get_commands_buffer(&mut commands_cursor);
 
 		if commands_cursor.position() > 1024 {
 			panic!(
@@ -178,8 +178,7 @@ pub mod tests {
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame
-			.commands
-			.push(CommandWithChannel {
+			.add_command(CommandWithChannel {
 				channel: Channel::ReliableUnordered,
 				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: GameObjectId::new(100, GameObjectOwner::Member(200)),
@@ -203,6 +202,6 @@ pub mod tests {
 
 		assert_eq!(frame.frame_id, decoded_frame.frame_id);
 		assert_eq!(frame.headers, decoded_frame.headers);
-		assert_eq!(frame.commands, decoded_frame.commands);
+		assert_eq!(frame.get_commands().as_slice(), decoded_frame.commands.as_slice());
 	}
 }

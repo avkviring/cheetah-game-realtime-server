@@ -145,18 +145,17 @@ impl Retransmit {
 	pub fn build_frame(&mut self, frame: &OutFrame, now: &Instant) {
 		if frame.is_reliability() {
 			let original_frame_id = frame.frame_id;
-			let mut cloned_frame = frame.clone();
-			cloned_frame.commands.clear();
+			let mut reliable_frame = OutFrame::new(original_frame_id);
+			reliable_frame.headers = frame.headers.clone();
 			frame
-				.commands
-				.iter()
+				.get_commands()
 				.filter(|c| c.channel.is_reliable())
-				.for_each(|c| cloned_frame.commands.push(c.clone()).unwrap());
+				.for_each(|c| reliable_frame.add_command(c.clone()).unwrap());
 
 			self.frames.push_back(ScheduledFrame {
 				time: *now,
 				original_frame_id,
-				frame: cloned_frame,
+				frame: reliable_frame,
 				retransmit_count: 0,
 			});
 
@@ -324,8 +323,7 @@ mod tests {
 		let mut handler = Retransmit::default();
 		let mut frame = OutFrame::new(0);
 		frame
-			.commands
-			.push(CommandWithChannel {
+			.add_command(CommandWithChannel {
 				channel: Channel::UnreliableUnordered,
 				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			})
@@ -339,20 +337,19 @@ mod tests {
 				event: Default::default(),
 			})),
 		};
-		frame.commands.push(reliable_command.clone()).unwrap();
+		frame.add_command(reliable_command.clone()).unwrap();
 		let now = Instant::now();
 		handler.build_frame(&frame, &now);
 		let now = now.add(handler.ack_wait_duration);
 		assert!(matches!(handler.get_retransmit_frame(&now,2), 
 			Option::Some(frame) 
-			if *frame.commands.as_slice()==[reliable_command]));
+			if *frame.get_commands().as_slice()==[reliable_command]));
 	}
 
 	fn create_reliability_frame(frame_id: FrameId) -> OutFrame {
 		let mut frame = OutFrame::new(frame_id);
 		frame
-			.commands
-			.push(CommandWithChannel {
+			.add_command(CommandWithChannel {
 				channel: Channel::ReliableUnordered,
 				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			})
