@@ -53,8 +53,9 @@ impl NetworkClient {
 		room_id: RoomId,
 		server_address: SocketAddr,
 		start_frame_id: u64,
+		start_application_time: &Instant,
 	) -> std::io::Result<NetworkClient> {
-		let mut protocol = Protocol::new(&Instant::now());
+		let mut protocol = Protocol::new(&Instant::now(), start_application_time);
 		protocol.next_frame_id = start_frame_id;
 		let channel = NetworkChannel::new()?;
 

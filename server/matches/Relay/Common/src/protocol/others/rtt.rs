@@ -16,7 +16,7 @@ use crate::protocol::frame::output::OutFrame;
 ///
 #[derive(Debug)]
 pub struct RoundTripTime {
-	start_time: Instant,
+	start_application_time: Instant,
 	pub remote_time: Option<u64>,
 	scheduled_response: Option<RoundTripTimeHeader>,
 	pub rtt: heapless::Deque<Duration, AVERAGE_RTT_MIN_LEN>,
@@ -41,9 +41,9 @@ impl RoundTripTimeHeader {
 }
 
 impl RoundTripTime {
-	pub fn new(start_time: &Instant) -> Self {
+	pub fn new(start_application_time: &Instant) -> Self {
 		Self {
-			start_time: *start_time,
+			start_application_time: *start_application_time,
 			remote_time: None,
 			scheduled_response: None,
 			rtt: Default::default(),
@@ -52,7 +52,7 @@ impl RoundTripTime {
 
 	pub fn build_frame(&mut self, frame: &mut OutFrame, now: &Instant) {
 		frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader {
-			self_time: now.duration_since(self.start_time).as_millis() as u64,
+			self_time: now.duration_since(self.start_application_time).as_millis() as u64,
 		}));
 
 		match &self.scheduled_response {
@@ -107,7 +107,7 @@ impl RoundTripTime {
 			None => {}
 			Some(header) => {
 				let header_time = header.self_time;
-				let current_time = now.duration_since(self.start_time).as_millis() as u64;
+				let current_time = now.duration_since(self.start_application_time).as_millis() as u64;
 				if current_time >= header_time {
 					if self.rtt.is_full() {
 						self.rtt.pop_front();

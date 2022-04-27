@@ -51,7 +51,15 @@ impl NetworkThreadClient {
 		Result::Ok(NetworkThreadClient {
 			connection_status,
 			commands_from_server: in_commands,
-			udp_client: NetworkClient::new(false, user_private_key, member_id, room_id, server_address, start_frame_id)?,
+			udp_client: NetworkClient::new(
+				false,
+				user_private_key,
+				member_id,
+				room_id,
+				server_address,
+				start_frame_id,
+				&Instant::now(),
+			)?,
 			request_from_controller: receiver,
 			protocol_time_offset_for_test: None,
 			shared_statistics,

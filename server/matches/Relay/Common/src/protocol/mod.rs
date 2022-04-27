@@ -59,7 +59,7 @@ pub struct Protocol {
 }
 
 impl Protocol {
-	pub fn new(now: &Instant) -> Self {
+	pub fn new(now: &Instant, start_application_time: &Instant) -> Self {
 		Self {
 			next_frame_id: 1,
 			disconnect_by_timeout: DisconnectByTimeout::new(now),
@@ -69,7 +69,7 @@ impl Protocol {
 			out_commands_collector: Default::default(),
 			retransmitter: Default::default(),
 			disconnect_by_command: Default::default(),
-			rtt: RoundTripTime::new(now),
+			rtt: RoundTripTime::new(start_application_time),
 			keep_alive: Default::default(),
 			in_frame_counter: Default::default(),
 		}
