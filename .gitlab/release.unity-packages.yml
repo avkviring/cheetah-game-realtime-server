@@ -21,3 +21,4 @@ release-unity-packages:
       - package: games.cheetah.matches.relay.shared
       - package: games.cheetah.platform
       - package: games.cheetah.play-games
+      - package: games.cheetah.statistics.events
