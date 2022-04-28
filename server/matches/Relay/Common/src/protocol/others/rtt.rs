@@ -41,6 +41,11 @@ impl RoundTripTimeHeader {
 }
 
 impl RoundTripTime {
+	///
+	/// [start_application_time] - время одинаковое для всех протоколов в прошлом, используется
+	/// для передачи времени на удаленную сторону, для клиентской стороны может быть равным
+	/// Instant::now(), для серверной - время создания комнаты
+	///
 	pub fn new(start_application_time: &Instant) -> Self {
 		Self {
 			start_application_time: *start_application_time,
