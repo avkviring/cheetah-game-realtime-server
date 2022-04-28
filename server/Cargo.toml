@@ -9,4 +9,6 @@ members = [
     "matches/Relay/Macro",
     "matches/Relay/Common",
     "matches/Relay/Client",
-    "matches/Relay/Server"]
+    "matches/Relay/Server",
+    "statistics/EventReceiver"
+]
