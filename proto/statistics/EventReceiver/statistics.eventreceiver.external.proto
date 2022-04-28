@@ -1,0 +1,41 @@
+syntax = "proto3";
+package cheetah.statistics.eventreceiver;
+option csharp_namespace = "Cheetah.Statistics.EventReceiver.GRPC";
+
+service EventReceiver {
+  /**
+    Сохранить событие на сервере
+   */
+  rpc SendEvent(EventRequest) returns (EventResponse);
+
+  /**
+  Сохранить лог на сервере
+   */
+  rpc SendLog(LogRequest) returns (LogResponse);
+}
+
+message EventRequest {
+  uint64 time = 1;
+  map<string, string> labels = 2;
+  string value = 3;
+}
+message EventResponse {
+
+}
+
+message LogRequest {
+  uint64 time = 1;
+  map<string, string> labels = 2;
+  string value = 3;
+  enum Level {
+    DEBUG = 0;
+    INFO = 1;
+    WARNING = 2;
+    ERROR = 3;
+  }
+  Level level = 4;
+
+}
+message LogResponse {
+
+}
