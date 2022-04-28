@@ -719,13 +719,17 @@ dependencies = [
 name = "cheetah-statistics-event-receiver"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
  "cheetah-microservice",
  "httpmock",
+ "prost",
  "reqwest",
  "serde",
  "tokio",
  "tonic",
  "tonic-build",
+ "tonic-health",
+ "tonic-web",
 ]
 
 [[package]]

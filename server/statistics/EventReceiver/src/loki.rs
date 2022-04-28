@@ -25,7 +25,7 @@ impl Loki {
 		}
 	}
 
-	pub async fn send_to_loki(&self, tags: HashMap<String, String>, time: Duration, value: &str) {
+	pub async fn send_to_loki(&self, tags: HashMap<String, String>, time: Duration, value: &str) -> Result<(), String> {
 		let client = reqwest::Client::new();
 
 		let request = LokiRequest {
@@ -34,11 +34,10 @@ impl Loki {
 				values: vec![[time.as_nanos().to_string(), value.to_owned()]],
 			}],
 		};
+
 		match client.post(self.url.clone()).json(&request).send().await {
-			Ok(_) => {}
-			Err(e) => {
-				eprintln!("Error send to loki {:?}", e);
-			}
+			Ok(_) => Ok(()),
+			Err(e) => Err(format!("Error send to loki {:?}", e)),
 		}
 	}
 }
@@ -52,7 +51,7 @@ mod tests {
 	use crate::loki::Loki;
 
 	#[tokio::test]
-	pub async fn should_send_request() {
+	pub async fn should_send_event() {
 		let server = MockServer::start();
 		let http_server_mock = server.mock(|when, _then| {
 			when.method(httpmock::Method::POST).path("/loki/api/v1/push");
@@ -60,7 +59,8 @@ mod tests {
 		let loki_layer = Loki::new(server.base_url().as_str());
 		loki_layer
 			.send_to_loki(Default::default(), Duration::from_secs(0), "hello")
-			.await;
+			.await
+			.unwrap();
 		std::thread::sleep(Duration::from_secs(1));
 		http_server_mock.assert();
 	}
