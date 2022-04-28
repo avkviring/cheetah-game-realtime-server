@@ -13,7 +13,7 @@ bins+=("matches/StubMatchmaking/Dockerfile:cheetah-matches-stub-matchmaking")
 bins+=("matches/StubRegistry/Dockerfile:cheetah-matches-stub-registry")
 bins+=("matches/Factory/Dockerfile:cheetah-matches-factory")
 bins+=("matches/Registry/Dockerfile:cheetah-matches-registry")
-bins+=("statistics/EventReceiver/Dockerfile:cheetah-statistics-event-receiver")
+bins+=("statistics/Events/Dockerfile:cheetah-statistics-events")
 
 rm -rf /tmp/context/
 mkdir /tmp/context/

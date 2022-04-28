@@ -1,10 +1,10 @@
 [package]
-name = "cheetah-statistics-event-receiver"
+name = "cheetah-statistics-events"
 version = "0.0.0"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-statistics-event-receiver"
+name = "cheetah-statistics-events"
 path = "src/bin/service.rs"
 
 [dependencies]

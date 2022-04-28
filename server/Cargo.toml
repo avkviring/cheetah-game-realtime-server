@@ -10,5 +10,5 @@ members = [
     "matches/Relay/Common",
     "matches/Relay/Client",
     "matches/Relay/Server",
-    "statistics/EventReceiver"
+    "statistics/Events"
 ]

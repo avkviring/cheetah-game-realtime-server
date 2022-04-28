@@ -4,7 +4,7 @@ EXPOSE 5000/tcp
 EXPOSE 3000/tcp
 COPY grpc_health_probe /bin/grpc_health_probe
 RUN chmod +x /bin/grpc_health_probe
-COPY cheetah-statistics-event-receiver /cheetah-statistics-event-receiver
+COPY cheetah-statistics-events /cheetah-statistics-events
 RUN adduser -D service
 USER service
-CMD ["/cheetah-statistics-event-receiver"]
+CMD ["/cheetah-statistics-events"]

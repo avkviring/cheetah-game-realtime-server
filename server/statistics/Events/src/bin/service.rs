@@ -3,9 +3,8 @@ extern crate core;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
-use cheetah_statistics_event_receiver::proto;
-use cheetah_statistics_event_receiver::service::EventReceiverService;
-use proto::event_receiver_server::EventReceiverServer;
+use cheetah_statistics_events::proto::event_receiver_server::EventReceiverServer;
+use cheetah_statistics_events::service::EventReceiverService;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

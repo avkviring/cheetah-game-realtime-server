@@ -1,6 +1,6 @@
 syntax = "proto3";
-package cheetah.statistics.eventreceiver;
-option csharp_namespace = "Cheetah.Statistics.EventReceiver.GRPC";
+package cheetah.statistics.events;
+option csharp_namespace = "Cheetah.Statistics.Events.GRPC";
 
 service EventReceiver {
   /**

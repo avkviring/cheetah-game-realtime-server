@@ -716,7 +716,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-statistics-event-receiver"
+name = "cheetah-statistics-events"
 version = "0.0.0"
 dependencies = [
  "async-trait",
