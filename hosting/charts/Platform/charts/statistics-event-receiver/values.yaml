@@ -1,0 +1,22 @@
+cpu:
+  request: "0.1"
+  limit: "1"
+replicaCount: 1
+redis:
+  master:
+    persistence:
+      enabled: false
+      size: 1Gi
+  architecture: standalone
+  fullnameOverride: cheetah-registry-redis
+  auth:
+    existingSecret: cheetah-registry-redis-password
+    existingSecretPasswordKey: password
+  cluster:
+    enabled: false
+  volumePermissions:
+    enabled: true
+  securityContext:
+    enabled: true
+    fsGroup: 1001
+    runAsUser: 1001

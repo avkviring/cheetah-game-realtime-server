@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cheetah-statistics-event-receiver
+description: cheetah-statistics-event-receiver
+type: application
+version: "999.999.999"
+appVersion: "999.999.999"
