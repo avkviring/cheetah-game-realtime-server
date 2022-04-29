@@ -1,55 +1,37 @@
-use crate::loki::Loki;
-use crate::proto;
-use crate::proto::{EventRequest, EventResponse, LogRequest, LogResponse};
 use std::time::Duration;
+
 use tonic::{Code, Request, Response, Status};
 
-pub struct EventReceiverService {
+use crate::loki::Loki;
+use crate::proto;
+use crate::proto::{EventRequest, EventResponse};
+
+pub struct EventsService {
 	loki: Loki,
+	namespace: String,
 }
 
-impl EventReceiverService {
-	pub fn new(loki_url: &str) -> Self {
+impl EventsService {
+	pub fn new(loki_url: &str, namespace: &str) -> Self {
 		Self {
 			loki: Loki::new(loki_url),
+			namespace: namespace.to_owned(),
 		}
 	}
 }
 
 #[tonic::async_trait]
-impl proto::event_receiver_server::EventReceiver for EventReceiverService {
+impl proto::events_server::Events for EventsService {
 	async fn send_event(&self, request: Request<EventRequest>) -> Result<Response<EventResponse>, Status> {
 		let request = request.into_inner();
 		let mut labels = request.labels.clone();
+		labels.insert("namespace".to_owned(), self.namespace.clone());
+		labels.insert("source".to_owned(), "client".to_owned());
 		labels.insert("type".to_owned(), "event".to_owned());
-		labels.insert("create_time".to_owned(), request.time.to_string());
-		self.loki
-			.send_to_loki(request.labels, Duration::from_millis(request.time), request.value.as_str())
-			.await
-			.map(|_| Response::new(EventResponse {}))
-			.map_err(|e| Status::new(Code::Internal, e))
-	}
-
-	async fn send_log(&self, request: Request<LogRequest>) -> Result<Response<LogResponse>, Status> {
-		let request = request.into_inner();
-		let mut labels = request.labels.clone();
-		labels.insert("type".to_owned(), "log".to_owned());
-		labels.insert("create_time".to_owned(), request.time.to_string());
-		labels.insert(
-			"level".to_owned(),
-			match request.level {
-				0 => "debug",
-				1 => "info",
-				2 => "warning",
-				3 => "error",
-				_ => "unknown",
-			}
-			.to_owned(),
-		);
 		self.loki
 			.send_to_loki(labels, Duration::from_millis(request.time), request.value.as_str())
 			.await
-			.map(|_| Response::new(LogResponse {}))
+			.map(|_| Response::new(EventResponse {}))
 			.map_err(|e| Status::new(Code::Internal, e))
 	}
 }

@@ -34,7 +34,7 @@ impl Loki {
 				values: vec![[time.as_nanos().to_string(), value.to_owned()]],
 			}],
 		};
-
+		tracing::info!("send to loki {:?}", request);
 		match client.post(self.url.clone()).json(&request).send().await {
 			Ok(_) => Ok(()),
 			Err(e) => Err(format!("Error send to loki {:?}", e)),

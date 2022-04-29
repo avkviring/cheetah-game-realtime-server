@@ -730,6 +730,7 @@ dependencies = [
  "tonic-build",
  "tonic-health",
  "tonic-web",
+ "tracing",
 ]
 
 [[package]]

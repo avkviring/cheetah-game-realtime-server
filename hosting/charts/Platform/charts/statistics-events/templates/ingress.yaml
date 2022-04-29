@@ -12,7 +12,7 @@ spec:
       http:
         paths:
           - pathType: Prefix
-            path: /cheetah.statistics.eventreceiver.*
+            path: /cheetah.statistics.events.*
             backend:
               service:
                 name: "{{ .Chart.Name }}-external"
