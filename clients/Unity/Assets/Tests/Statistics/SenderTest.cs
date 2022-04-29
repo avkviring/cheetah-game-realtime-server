@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Cheetah.Platform;
 using Cheetah.Statistics.Events;
 using NUnit.Framework;
@@ -21,6 +22,10 @@ namespace Tests.Statistics
 
             var sender = new EventsSender(clusterConnector);
             sender.SendEvent("test");
+            sender.SendEvent("play", new Dictionary<string, string>()
+            {
+                ["user"] = "Петя"
+            });
         }
 
         [UnityTest]

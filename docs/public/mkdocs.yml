@@ -53,3 +53,4 @@ nav:
               - "Логирование": "components/relay/develop/logger.md"
               - "Панель сетевых команд" : "components/relay/develop/commands-panel.md"
               - "Просмотр состояния сервера": "components/relay/develop/dump-panel.md"
+      - "Статистика": "components/statistics/index.md"

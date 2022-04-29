@@ -27,7 +27,6 @@ impl proto::events_server::Events for EventsService {
 		let mut labels = request.labels.clone();
 		labels.insert("namespace".to_owned(), self.namespace.clone());
 		labels.insert("source".to_owned(), "client".to_owned());
-		labels.insert("type".to_owned(), "event".to_owned());
 		self.loki
 			.send_to_loki(labels, Duration::from_millis(request.time), request.value.as_str())
 			.await
