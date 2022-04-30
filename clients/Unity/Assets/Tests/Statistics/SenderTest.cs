@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cheetah.Platform;
@@ -19,10 +20,10 @@ namespace Tests.Statistics
             var connectorFactory = new ConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
-
-            var sender = new EventsSender(clusterConnector);
-            sender.SendEvent("test");
-            sender.SendEvent("play", new Dictionary<string, string>()
+            var session = new StatisticsSession(clusterConnector);
+            var eventsSender = new EventsSender(session);
+            eventsSender.Send("test");
+            eventsSender.Send("play", new Dictionary<string, string>()
             {
                 ["user"] = "Петя"
             });
@@ -34,10 +35,11 @@ namespace Tests.Statistics
             var connectorFactory = new ConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
-
-            var sender = new LogsSender(clusterConnector);
-            sender.SendLog(LogType.Error, "it is error", "some stack trace");
-            Debug.LogWarning("it is warning");
+            var session = new StatisticsSession(clusterConnector);
+            new UnityDebugLogSender(session);
+            LogAssert.ignoreFailingMessages = true;
+            Debug.LogError("it is error");
+            Debug.LogException(new NullReferenceException());
         }
 
         [TearDown]

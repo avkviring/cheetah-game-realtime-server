@@ -45,6 +45,8 @@ fn setup_tracer(name: &str) {
 
 	if let Ok(loki_url) = std::env::var("LOKI_URL") {
 		let mut default_values = HashMap::default();
+		default_values.insert("source".to_owned(), "server".to_owned());
+		default_values.insert("type".to_owned(), "log".to_owned());
 		default_values.insert("service".to_owned(), name.to_owned());
 		default_values.insert("namespace".to_owned(), get_env("NAMESPACE"));
 		default_values.insert("hostname".to_owned(), get_env("HOSTNAME"));

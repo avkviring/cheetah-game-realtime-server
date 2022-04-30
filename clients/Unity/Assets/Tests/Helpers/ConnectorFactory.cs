@@ -36,7 +36,7 @@ namespace Tests.Helpers
                 ClusterConnector = CreateLocalConnector();
 #endif
 
-#if UNITY_IOS                
+#if UNITY_IOS
                 ClusterConnector = CreateLocalConnector();
 #endif
             }
@@ -68,7 +68,8 @@ namespace Tests.Helpers
         private static ClusterConnector CreateLocalConnector()
         {
             //return new ClusterConnector("api.syncario.production.cheetah.games", 443, true);
-            // return new ClusterConnector("kviring.stage.cheetah.games", 443, true);
+           //return new ClusterConnector("kviring.stage.cheetah.games", 443, true);
+            //return new ClusterConnector("syncario-stage3.stage.cheetah.games", 443, true);
             return new ClusterConnector("127.0.0.1", 7777, false);
         }
     }

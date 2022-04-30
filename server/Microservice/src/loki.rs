@@ -101,7 +101,7 @@ impl<S: tracing::Subscriber> Layer<S> for LokiLayer {
 		let mut message_visitor = ValueVisitor::new("message");
 		event.record(&mut message_visitor);
 		let mut values = values_visitor.values;
-		values.insert("level".to_string(), event.metadata().level().to_string());
+		values.insert("level".to_string(), event.metadata().level().to_string().to_lowercase());
 		for (k, v) in self.default_values.iter() {
 			values.insert(k.to_owned(), v.to_owned());
 		}
