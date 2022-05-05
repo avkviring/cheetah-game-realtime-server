@@ -540,6 +540,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "cheetah-liveops-client-version"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "cheetah-microservice",
+ "httpmock",
+ "prost",
+ "reqwest",
+ "serde",
+ "tokio",
+ "tonic",
+ "tonic-build",
+ "tonic-health",
+ "tonic-web",
+ "tracing",
+]
+
+[[package]]
 name = "cheetah-matches-factory"
 version = "999.999.999"
 dependencies = [

@@ -1,0 +1,27 @@
+[package]
+name = "cheetah-liveops-client-version"
+version = "0.0.0"
+edition = "2021"
+
+[[bin]]
+name = "cheetah-liveops-client-version"
+path = "src/bin/service.rs"
+
+[dependencies]
+cheetah-microservice = { path = "../../Microservice" }
+serde = { version = "1.0.136", features = ["derive"] }
+tokio = "1.17.0"
+tonic = "0.6.2"
+tonic-health = "0.5.0"
+prost = "0.9.0"
+reqwest = { version = "0.11.9", features = ["json", "rustls"], default-features = false }
+async-trait = "0.1.52"
+tonic-web = "0.2.0"
+tracing = "0.1.31"
+
+[dev-dependencies]
+httpmock = "0.6.6"
+
+[build-dependencies]
+tonic-build = { version = "0.6.2", features = ["rustfmt"] }
+
