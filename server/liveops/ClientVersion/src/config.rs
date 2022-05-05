@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
@@ -32,7 +33,7 @@ mod date {
 		if s.trim() == "never" {
 			Ok(Utc::now().add(Duration::days(365 * 50)))
 		} else {
-			Utc.datetime_from_str(&s, FORMAT).map_err(|e| {
+			Utc.datetime_from_str(&s, FORMAT).map_err(|_| {
 				serde::de::Error::custom(format!(
 					"Invalid date format \"{}\", must be \
 				{}",
@@ -44,7 +45,7 @@ mod date {
 }
 
 impl Config {
-	pub fn new<T>(content: &T) -> serde_yaml::Result<Self>
+	pub fn new<T>(content: T) -> serde_yaml::Result<Self>
 	where
 		T: Borrow<str>,
 	{
@@ -55,17 +56,22 @@ impl Config {
 			serde_yaml::from_str::<Config>(content)
 		}
 	}
+
+	pub fn to_versions(self) -> HashMap<String, DateTime<Utc>> {
+		self.versions.into_iter().map(|v| (v.version, v.expiration)).collect()
+	}
 }
 
 #[cfg(test)]
 mod test {
-	use crate::config::Config;
 	use chrono::{Datelike, Timelike};
+
+	use crate::config::Config;
 
 	#[test]
 	fn should_parse_empty() {
 		let content = r#""#;
-		let config = Config::new(&content);
+		let config = Config::new(content);
 		assert!(config.unwrap().versions.is_empty())
 	}
 	#[test]
@@ -73,7 +79,7 @@ mod test {
 		let content = r#"
 			versions:
 		"#;
-		let config = Config::new(&content);
+		let config = Config::new(content);
 		assert!(config.unwrap().versions.is_empty())
 	}
 
@@ -85,7 +91,7 @@ mod test {
 				  expiration: never
 		"#
 		.replace("\t", " ");
-		let config = Config::new(&content);
+		let config = Config::new(content);
 		assert_eq!(config.unwrap().versions.len(), 1)
 	}
 
@@ -97,7 +103,7 @@ mod test {
 				  expiration: 223234
 		"#
 		.replace('\t', " ");
-		let config = Config::new(&content);
+		let config = Config::new(content);
 		assert!(config.is_err())
 	}
 
@@ -109,9 +115,9 @@ mod test {
 				  expiration: 2021-12-10 15:17
 		"#
 		.replace('\t', " ");
-		let config = Config::new(&content).unwrap();
-		assert_eq!(config.versions.len(), 1);
-		let expiration = &config.versions.get(0).unwrap().expiration;
+		let config = Config::new(content).unwrap();
+		let versions = config.to_versions();
+		let expiration = versions.get("1.0.0").unwrap();
 		assert_eq!(expiration.year(), 2021);
 		assert_eq!(expiration.month(), 12);
 		assert_eq!(expiration.day(), 10);

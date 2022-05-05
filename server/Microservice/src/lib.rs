@@ -13,7 +13,6 @@ use tonic::transport::Uri;
 use tracing_log::LogTracer;
 use tracing_subscriber::layer::SubscriberExt;
 pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
-use tracing_unwrap::ResultExt;
 
 use crate::loki::LokiLayer;
 use crate::prometheus::setup_prometheus;
@@ -32,7 +31,7 @@ pub fn init(name: &str) {
 }
 
 pub fn get_env(name: &str) -> String {
-	std::env::var(name).expect_or_log(format!("Env {} don't set", name).as_str())
+	std::env::var(name).unwrap_or_else(|_| panic!("Env {} don't set", name))
 }
 
 fn setup_tracer(name: &str) {
