@@ -58,7 +58,7 @@ mod tests {
 	#[tokio::test]
 	async fn should_not_expired() {
 		let service = Service::new(
-			vec![("0.0.1".to_owned(), Utc::now().to_owned().add(Duration::days(1)))]
+			vec![("0.0.1".to_owned(), Utc::now().add(Duration::days(1)))]
 				.into_iter()
 				.collect(),
 		);

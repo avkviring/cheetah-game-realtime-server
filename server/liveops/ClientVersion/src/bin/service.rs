@@ -3,10 +3,6 @@ extern crate core;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
-use cheetah_statistics_events::proto;
-use cheetah_statistics_events::service::EventsService;
-use proto::events_server::EventsServer;
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	cheetah_microservice::init("liveops-client-version");
