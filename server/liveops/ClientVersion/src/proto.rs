@@ -1,1 +1,1 @@
-tonic::include_proto!("cheetah.statistics.events");
+tonic::include_proto!("cheetah.liveops.client.version");
