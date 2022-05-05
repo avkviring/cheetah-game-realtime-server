@@ -1,0 +1,17 @@
+syntax = "proto3";
+package cheetah.liveops.client.version;
+option csharp_namespace = "Cheetah.LiveOps.ClientVersion.GRPC";
+
+service ClientVersion {
+  /**
+    Получит время действия определенной клиентской версии
+   */
+  rpc GetVersionExpiration(VersionExpirationRequest) returns (VersionExpirationResponse);
+}
+
+message VersionExpirationRequest {
+  string version = 1;
+}
+message VersionExpirationResponse {
+  uint64 time = 1;
+}
