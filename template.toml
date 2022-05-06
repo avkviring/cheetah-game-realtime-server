@@ -1,0 +1,5 @@
+[variables]
+unity_project = "liveops.client.version"
+unity_namespace = "LiveOps.ClientVersion"
+server_group = "liveops"
+server_project = "ClientVersion"
