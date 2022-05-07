@@ -195,7 +195,7 @@ pub mod test {
 	};
 	use crate::service::configuration::yaml::YamlConfigurations;
 
-	pub const EXAMPLE_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/example/");
+	pub const EXAMPLE_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/example/rooms/");
 
 	#[test]
 	pub fn should_load_groups() {
