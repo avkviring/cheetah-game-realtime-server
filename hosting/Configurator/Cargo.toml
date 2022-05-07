@@ -1,0 +1,27 @@
+[package]
+name = "hosting-configurator"
+version = "0.0.0"
+edition = "2021"
+description = "Утилита для создания ConfigMap из каталога с конфигурацией"
+
+[[bin]]
+name = "cheetah-hosting-configurator"
+path = "src/bin/configurator.rs"
+
+
+[dependencies.uuid]
+version = "1.0.0"
+features = ["v4"]
+
+[dependencies.tar]
+version = "0.4.38"
+
+[dependencies.deflate]
+version = "1.0.0"
+features = ["gzip"]
+
+[dependencies.base64]
+version = "0.13.0"
+
+[dependencies.itertools]
+version = "0.10.3"

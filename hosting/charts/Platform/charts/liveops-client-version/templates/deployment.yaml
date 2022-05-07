@@ -45,7 +45,17 @@ spec:
                   fieldPath: metadata.namespace
             - name: LOKI_URL
               value: {{.Values.global.lokiUrl}}
+            - name: CONFIG_FILE
+              value: /tmp/config/versions.yaml
+          volumeMounts:
+            - mountPath: /tmp/config/
+              readOnly: true
+              name: configurations
           ports:
             - name: prometheus
               containerPort: 3000
               protocol: TCP
+      volumes:
+        - name: configurations
+          configMap:
+            name: "cheetah-liveops-client-version-versions"

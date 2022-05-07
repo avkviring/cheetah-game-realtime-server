@@ -1,8 +1,0 @@
-# пример конфигурации шаблонов комнат для фабрики
-# в реальном проекте должна использоваться другая config-map
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: "rooms-configuration"
-binaryData:
-  configs.tgz: {{.Values.global.roomsConfiguration}}

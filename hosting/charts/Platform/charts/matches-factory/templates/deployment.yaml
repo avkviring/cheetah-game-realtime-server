@@ -54,7 +54,7 @@ spec:
           command:
             - 'sh'
             - '-c'
-            - 'mkdir -p /tmp/config && tar -xzf /var/lib/room-templates/configs.tgz -C /tmp/config && /cheetah-matches-factory'
+            - 'mkdir -p /tmp/config && tar -xzf /var/lib/room-templates/rooms.tgz -C /tmp/config && /cheetah-matches-factory'
           ports:
             - name: prometheus
               containerPort: 3000
@@ -62,4 +62,4 @@ spec:
       volumes:
         - name: room-templates
           configMap:
-            name: "rooms-configuration"
+            name: "cheetah-matches-factory-rooms"
