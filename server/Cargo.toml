@@ -11,5 +11,5 @@ members = [
     "matches/Relay/Client",
     "matches/Relay/Server",
     "statistics/Events",
-    "liveops/ClientVersion"
+    "system/Compatibility"
 ]

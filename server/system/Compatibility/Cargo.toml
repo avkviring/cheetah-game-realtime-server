@@ -1,10 +1,10 @@
 [package]
-name = "cheetah-liveops-client-version"
+name = "cheetah-system-compatibility"
 version = "0.0.0"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-liveops-client-version"
+name = "cheetah-system-compatibility"
 path = "src/bin/service.rs"
 
 [dependencies]

@@ -14,7 +14,7 @@ bins+=("matches/StubRegistry/Dockerfile:cheetah-matches-stub-registry")
 bins+=("matches/Factory/Dockerfile:cheetah-matches-factory")
 bins+=("matches/Registry/Dockerfile:cheetah-matches-registry")
 bins+=("statistics/Events/Dockerfile:cheetah-statistics-events")
-bins+=("liveops/ClientVersion/Dockerfile:cheetah-liveops-client-version")
+bins+=("system/Compatibility/Dockerfile:cheetah-system-compatibility")
 
 
 rm -rf /tmp/context/
