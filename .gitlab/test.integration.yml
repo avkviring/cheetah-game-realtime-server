@@ -60,7 +60,9 @@ install-servers-to-kubernetes-for-integration-test:
     - kubectl --kubeconfig=$kubeconfig  delete --namespace ${namespace} --all deployments,statefulsets,services,pods,pvc
     - sleep 20
     - cd hosting/charts/
-    - cargo run --manifest-path ../Configurator/Cargo.toml ../example-config Platform/templates/
+    - ssh-keyscan -t rsa gitlab.dev.cheetah.games >> ~/.ssh/known_hosts
+    - helm plugin install git@gitlab.dev.cheetah.games:cheetah/tools/helm-plugin-config-creator.git
+    - helm cheetah-config-creator ../example-config Platform/templates/
     - helm --kubeconfig=$kubeconfig  upgrade --debug --install ${namespace} -n ${namespace} Platform -f Platform/values-dev.yaml --set global.grpcDomain=${namespace}.stage.cheetah.games --set global.platformImageVersion=${version}
     - sleep 60
 
