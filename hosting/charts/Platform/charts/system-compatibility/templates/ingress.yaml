@@ -12,7 +12,7 @@ spec:
       http:
         paths:
           - pathType: Prefix
-            path: /cheetah.liveops.client-version.*
+            path: /cheetah.system.compatibility.*
             backend:
               service:
                 name: "{{ .Chart.Name }}-external"
