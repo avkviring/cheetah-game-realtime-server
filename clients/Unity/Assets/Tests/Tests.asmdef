@@ -10,6 +10,7 @@
     "games.cheetah.matches.relay",
     "games.cheetah.matches.matchmaking",
     "games.cheetah.statistics.events",
+    "games.cheetah.system.compatibility",
     "Shared"
   ],
   "allowUnsafeCode": false,
