@@ -10,10 +10,12 @@ release-unity-packages:
     cd clients/Unity/Packages/
     for package in  $(ls -d */)
     do
+    if [[ $package != "games.cheetah.matches.relay/" ]]; then
       cd  $package
       sed -i.bak "s/999.999.999/${version}/" package.json
       rm -f package.json.bak
       echo "${CI_API_V4_URL#https?}/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=\${CI_JOB_TOKEN}" > .npmrc
       npm publish .
       cd ../
+    fi
     done
