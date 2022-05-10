@@ -2,6 +2,8 @@
 # Тесты rust кода
 #
 test-cargo-projects:
+  except:
+    - tags
   cache:
     key: cargo-test-cache
     paths:

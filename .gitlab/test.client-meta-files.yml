@@ -3,6 +3,8 @@
 # так как библиотеки не хранятся в git, то Unity все время удаляет данные файлы
 #
 test-client-meta-file:
+  except:
+    - tags
   image: ubuntu:22.04
   stage: test
   script:
