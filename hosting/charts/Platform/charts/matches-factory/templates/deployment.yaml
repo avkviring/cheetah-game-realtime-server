@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
   annotations:
-    configmap.reloader.stakater.com/reload: "{{ .Values.global.roomTemplates}}"
+    configmap.reloader.stakater.com/reload: "cheetah-matches-factory-rooms"
 spec:
   selector:
     matchLabels:

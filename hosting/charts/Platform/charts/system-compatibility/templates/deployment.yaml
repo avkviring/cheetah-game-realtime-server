@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
+  annotations:
+    configmap.reloader.stakater.com/reload: "cheetah-system-compatibility-versions"
 spec:
   selector:
     matchLabels:
