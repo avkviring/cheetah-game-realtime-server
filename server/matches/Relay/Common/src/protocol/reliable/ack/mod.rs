@@ -90,7 +90,7 @@ mod tests {
 	use std::time::Instant;
 
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::c2s::C2SCommand::DeleteField;
+	
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
@@ -112,7 +112,7 @@ mod tests {
 	fn should_ack() {
 		let mut now = Instant::now();
 		let mut ack_sender = AckSender::default();
-		let mut in_frame = InFrame::new(10, Default::default(), [create_command()].into_iter().collect());
+		let in_frame = InFrame::new(10, Default::default(), [create_command()].into_iter().collect());
 		ack_sender.on_frame_received(&in_frame, &now);
 
 		for _ in 0..AckSender::MAX_ACK_FOR_FRAME {

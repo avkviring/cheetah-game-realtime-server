@@ -63,7 +63,7 @@ impl FrameReplayProtection {
 
 #[cfg(test)]
 mod tests {
-	use crate::commands::c2s::C2SCommand::Delete;
+	
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::reliable::replay_protection::FrameReplayProtection;
 

@@ -108,7 +108,7 @@ mod tests {
 	#[test]
 	pub fn should_split_commands_by_size() {
 		let mut output = OutCommandsCollector::default();
-		for i in 0..MAX_FRAME_SIZE {
+		for _i in 0..MAX_FRAME_SIZE {
 			output.add_command(
 				ChannelType::ReliableSequence(ChannelGroup(100)),
 				BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
