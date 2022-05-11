@@ -4,7 +4,6 @@ use tokio::sync::RwLock;
 use tonic::transport::Uri;
 use tonic::{Code, Request, Response, Status};
 
-
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
@@ -67,12 +66,13 @@ impl StubMatchmakingService {
 		ticket: &matchmaking::external::TicketRequest,
 		match_info: &MatchInfo,
 	) -> Result<relay::internal::AttachUserResponse, String> {
-		let mut relay = relay::internal::relay_client::RelayClient::connect(cheetah_microservice::make_internal_srv_uri(
-			match_info.relay_grpc_host.as_str(),
-			match_info.relay_grpc_port,
-		))
-		.await
-		.map_err(|e| format!("Connect to relay error {:?}", e))?;
+		let mut relay =
+			relay::internal::relay_client::RelayClient::connect(cheetah_libraries_microservice::make_internal_srv_uri(
+				match_info.relay_grpc_host.as_str(),
+				match_info.relay_grpc_port,
+			))
+			.await
+			.map_err(|e| format!("Connect to relay error {:?}", e))?;
 
 		match relay
 			.attach_user(Request::new(AttachUserRequest {
@@ -130,7 +130,7 @@ fn create_match_info(create_match_response: CreateMatchResponse) -> MatchInfo {
 #[tonic::async_trait]
 impl Matchmaking for StubMatchmakingService {
 	async fn matchmaking(&self, request: Request<TicketRequest>) -> Result<tonic::Response<TicketResponse>, tonic::Status> {
-		match cheetah_microservice::jwt::grpc::get_player_id(request.metadata(), self.jwt_public_key.clone()) {
+		match cheetah_libraries_microservice::jwt::grpc::get_player_id(request.metadata(), self.jwt_public_key.clone()) {
 			Ok(user) => {
 				let ticket_request = request.into_inner();
 				match self.matchmaking(ticket_request, user).await {
@@ -288,7 +288,7 @@ pub mod tests {
 		});
 
 		let matchmaking = StubMatchmakingService::new(
-			cheetah_microservice::make_internal_srv_uri(
+			cheetah_libraries_microservice::make_internal_srv_uri(
 				stub_grpc_service_addr.ip().to_string().as_str(),
 				stub_grpc_service_addr.port(),
 			),

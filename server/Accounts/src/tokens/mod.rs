@@ -4,7 +4,7 @@ use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use cheetah_microservice::jwt::{JWTTokenParser, SessionTokenClaims};
+use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenClaims};
 
 use crate::tokens::storage::TokenStorage;
 use crate::users::UserId;
@@ -179,7 +179,7 @@ pub mod tests {
 	use testcontainers::images::redis::Redis;
 	use testcontainers::{images, Container, Docker};
 
-	use cheetah_microservice::jwt::{JWTTokenParser, SessionTokenError};
+	use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenError};
 
 	use crate::tokens::storage::TokenStorage;
 	use crate::tokens::{JWTTokensServiceError, TokensService};

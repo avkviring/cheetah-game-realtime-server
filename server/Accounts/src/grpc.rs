@@ -1,7 +1,7 @@
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
-use cheetah_microservice::jwt::JWTTokenParser;
+use cheetah_libraries_microservice::jwt::JWTTokenParser;
 
 use crate::cookie::CookieGrpcService;
 use crate::google::google_jwt::Parser;
@@ -42,7 +42,7 @@ pub async fn run_grpc_server(
 	health_reporter.set_serving::<TokensServer<TokensGrpcService>>().await;
 	health_reporter.set_serving::<CookieServer<CookieGrpcService>>().await;
 
-	let external_addr = cheetah_microservice::get_external_service_binding_addr();
+	let external_addr = cheetah_libraries_microservice::get_external_service_binding_addr();
 
 	let builder = Server::builder()
 		.accept_http1(true)

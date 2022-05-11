@@ -17,7 +17,7 @@ use cheetah_matches_relay::server::manager::ServerManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	cheetah_microservice::init("matches.relay");
+	cheetah_libraries_microservice::init("matches.relay");
 	let (halt_signal, manager) = create_manager();
 	let internal_grpc_service = create_internal_grpc_server(manager.clone()).await;
 	let admin_grpc_service = create_admin_grpc_server(manager.clone()).await;
@@ -33,7 +33,7 @@ async fn create_internal_grpc_server(
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 	health_reporter.set_service_status("", ServingStatus::Serving).await;
 	let service = cheetah_matches_relay::grpc::proto::internal::relay_server::RelayServer::new(RelayGRPCService::new(manager));
-	let address = cheetah_microservice::get_internal_service_binding_addr();
+	let address = cheetah_libraries_microservice::get_internal_service_binding_addr();
 	Server::builder()
 		.add_service(service)
 		.add_service(health_service)
@@ -48,7 +48,7 @@ async fn create_admin_grpc_server(
 	let relay = admin::relay_server::RelayServer::new(RelayAdminGRPCService::new(manager.clone()));
 	let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(manager.clone()));
 	let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
-	let address = cheetah_microservice::get_admin_service_binding_addr();
+	let address = cheetah_libraries_microservice::get_admin_service_binding_addr();
 	Server::builder()
 		.accept_http1(true)
 		.add_service(tonic_web::enable(health_service))

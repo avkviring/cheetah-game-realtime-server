@@ -105,7 +105,7 @@ mod test {
 		let register_response = result.unwrap();
 		let register_response = register_response.get_ref();
 
-		let jwt = cheetah_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
 		let register_user_id = jwt
 			.get_user_id(register_response.tokens.as_ref().unwrap().session.to_owned())
 			.unwrap();

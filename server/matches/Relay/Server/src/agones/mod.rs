@@ -5,7 +5,7 @@ use std::time::Duration;
 use rymder::GameServer;
 use thiserror::Error;
 
-use cheetah_microservice::tonic::codegen::Arc;
+use cheetah_libraries_microservice::tonic::codegen::Arc;
 
 use crate::agones::client::RegistryClient;
 use crate::agones::proto::registry::RelayState;
@@ -93,7 +93,7 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 
 async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), RegistryError> {
 	// todo(v.zakharov): do not reconnect every time
-	let registry_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
+	let registry_url = cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
 	let client = RegistryClient::new(registry_url).await.map_err(RegistryError::from)?;
 
 	let status = gs.status.as_ref().ok_or(RegistryError::InvalidGameServerStatus(
@@ -116,8 +116,8 @@ async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), Regis
 			port: port.into(),
 		}),
 		grpc_internal: Some(Addr {
-			host: cheetah_microservice::get_env("POD_IP"),
-			port: cheetah_microservice::get_internal_service_port() as u32,
+			host: cheetah_libraries_microservice::get_env("POD_IP"),
+			port: cheetah_libraries_microservice::get_internal_service_port() as u32,
 		}),
 	};
 

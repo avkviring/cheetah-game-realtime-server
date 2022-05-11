@@ -512,7 +512,7 @@ dependencies = [
  "async-stream",
  "async-trait",
  "base64 0.13.0",
- "cheetah-microservice",
+ "cheetah-libraries-microservice",
  "chrono",
  "futures",
  "headers",
@@ -540,10 +540,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "cheetah-libraries-microservice"
+version = "999.999.999"
+dependencies = [
+ "heapless",
+ "httpmock",
+ "hyper",
+ "jsonwebtoken 7.2.0",
+ "lazy_static",
+ "log",
+ "prometheus",
+ "reqwest",
+ "serde",
+ "tokio",
+ "tonic",
+ "tracing",
+ "tracing-appender",
+ "tracing-bunyan-formatter",
+ "tracing-log",
+ "tracing-subscriber",
+ "tracing-unwrap",
+]
+
+[[package]]
 name = "cheetah-matches-factory"
 version = "999.999.999"
 dependencies = [
- "cheetah-microservice",
+ "cheetah-libraries-microservice",
  "futures",
  "include_dir",
  "lazy_static",
@@ -569,7 +592,7 @@ name = "cheetah-matches-registry"
 version = "999.999.999"
 dependencies = [
  "async-trait",
- "cheetah-microservice",
+ "cheetah-libraries-microservice",
  "futures",
  "lazy_static",
  "pin-project",
@@ -591,8 +614,8 @@ dependencies = [
 name = "cheetah-matches-relay"
 version = "0.1.0"
 dependencies = [
+ "cheetah-libraries-microservice",
  "cheetah-matches-relay-common",
- "cheetah-microservice",
  "fnv",
  "futures",
  "heapless",
@@ -670,7 +693,7 @@ name = "cheetah-matches-stub-matchmaking"
 version = "999.999.999"
 dependencies = [
  "async-recursion",
- "cheetah-microservice",
+ "cheetah-libraries-microservice",
  "prost",
  "tokio",
  "tokio-stream",
@@ -684,7 +707,7 @@ dependencies = [
 name = "cheetah-matches-stub-registry"
 version = "999.999.999"
 dependencies = [
- "cheetah-microservice",
+ "cheetah-libraries-microservice",
  "prost",
  "tokio",
  "tonic",
@@ -693,34 +716,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-microservice"
-version = "999.999.999"
-dependencies = [
- "heapless",
- "httpmock",
- "hyper",
- "jsonwebtoken 7.2.0",
- "lazy_static",
- "log",
- "prometheus",
- "reqwest",
- "serde",
- "tokio",
- "tonic",
- "tracing",
- "tracing-appender",
- "tracing-bunyan-formatter",
- "tracing-log",
- "tracing-subscriber",
- "tracing-unwrap",
-]
-
-[[package]]
 name = "cheetah-statistics-events"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "cheetah-microservice",
+ "cheetah-libraries-microservice",
  "httpmock",
  "prost",
  "reqwest",
@@ -738,7 +738,7 @@ name = "cheetah-system-compatibility"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "cheetah-microservice",
+ "cheetah-libraries-microservice",
  "chrono",
  "prost",
  "serde",

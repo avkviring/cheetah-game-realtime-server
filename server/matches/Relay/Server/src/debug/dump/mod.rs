@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use cheetah_microservice::tonic::{Request, Response};
+use cheetah_libraries_microservice::tonic::{Request, Response};
 
 use crate::debug::proto::admin;
 use crate::server::manager::ServerManager;

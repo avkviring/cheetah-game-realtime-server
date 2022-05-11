@@ -1,4 +1,4 @@
-use cheetah_microservice::tonic::{Request, Response};
+use cheetah_libraries_microservice::tonic::{Request, Response};
 
 use crate::proto::matches::factory::admin;
 use crate::proto::matches::relay::shared;

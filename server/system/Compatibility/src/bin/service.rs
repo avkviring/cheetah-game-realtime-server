@@ -11,8 +11,8 @@ use cheetah_system_compatibility::service::Service;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	cheetah_microservice::init("system-compatibility");
-	let config_file = cheetah_microservice::get_env("CONFIG_FILE");
+	cheetah_libraries_microservice::init("system-compatibility");
+	let config_file = cheetah_libraries_microservice::get_env("CONFIG_FILE");
 	run_grpc_server(config_file.as_str()).await;
 	Ok(())
 }
@@ -30,7 +30,7 @@ pub async fn run_grpc_server(config_file: &str) {
 		.accept_http1(true)
 		.add_service(tonic_web::enable(health_service))
 		.add_service(tonic_web::enable(grpc_service))
-		.serve(cheetah_microservice::get_external_service_binding_addr())
+		.serve(cheetah_libraries_microservice::get_external_service_binding_addr())
 		.await
 		.unwrap();
 }

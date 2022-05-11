@@ -1,4 +1,4 @@
-use cheetah_microservice::tonic::{Request, Response, Status};
+use cheetah_libraries_microservice::tonic::{Request, Response, Status};
 use lazy_static::lazy_static;
 use prometheus::{register_int_counter, IntCounter};
 
@@ -118,7 +118,10 @@ mod tests {
 				.await
 		});
 
-		cheetah_microservice::make_internal_srv_uri(&stub_grpc_service_addr.ip().to_string(), stub_grpc_service_addr.port())
+		cheetah_libraries_microservice::make_internal_srv_uri(
+			&stub_grpc_service_addr.ip().to_string(),
+			stub_grpc_service_addr.port(),
+		)
 	}
 
 	// Подготовка шаблонов в каталоге

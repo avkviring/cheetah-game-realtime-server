@@ -1,7 +1,7 @@
 use sqlx::types::ipnetwork::IpNetwork;
 use tonic::{self, Request, Response, Status};
 
-use cheetah_microservice::jwt::JWTTokenParser;
+use cheetah_libraries_microservice::jwt::JWTTokenParser;
 use google_jwt::Parser;
 
 use crate::google::storage::GoogleStorage;
@@ -164,7 +164,7 @@ mod test {
 		assert!(result_1.registered_player);
 		assert!(!result_2.registered_player);
 
-		let jwt = cheetah_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
 		let user_1 = jwt.get_user_id(result_1.tokens.as_ref().unwrap().session.clone()).unwrap();
 		let user_2 = jwt.get_user_id(result_2.tokens.as_ref().unwrap().session.clone()).unwrap();
 		assert_eq!(user_1, user_2);
@@ -174,7 +174,7 @@ mod test {
 		let (token, public_key_server) =
 			test_helper::setup_public_key_server(&TokenClaims::new_with_expire(Duration::from_secs(100)));
 
-		let jwt = cheetah_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
 		let service = GoogleGrpcService::new(
 			GoogleStorage::new(pool.clone()),
 			token_service,
@@ -222,7 +222,7 @@ mod test {
 		let google_login_result = google_login_response.unwrap();
 		let google_login_result = google_login_result.get_ref();
 
-		let jwt = cheetah_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
 		let cookie_user_id = jwt
 			.get_user_id(cookie_registry_result.tokens.as_ref().unwrap().session.to_string())
 			.unwrap();

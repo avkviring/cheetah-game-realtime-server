@@ -8,10 +8,10 @@ use cheetah_matches_registry::registry::service::RegistryService;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	cheetah_microservice::init("matches.registry");
+	cheetah_libraries_microservice::init("matches.registry");
 
-	let redis_host = cheetah_microservice::get_env("REDIS_HOST");
-	let redis_port: u16 = cheetah_microservice::get_env("REDIS_PORT").parse().unwrap();
+	let redis_host = cheetah_libraries_microservice::get_env("REDIS_HOST");
+	let redis_port: u16 = cheetah_libraries_microservice::get_env("REDIS_PORT").parse().unwrap();
 	let redis_auth = env::var("REDIS_AUTH").ok();
 	let redis_dsn = match redis_auth {
 		Some(ref password) => {
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	Server::builder()
 		.add_service(health_service)
 		.add_service(grpc_service)
-		.serve(cheetah_microservice::get_internal_service_binding_addr())
+		.serve(cheetah_libraries_microservice::get_internal_service_binding_addr())
 		.await?;
 	Result::Ok(())
 }
