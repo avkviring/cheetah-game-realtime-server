@@ -5,7 +5,6 @@ use cheetah_matches_relay_client::ffi;
 
 use crate::helpers::helper::setup;
 
-
 pub mod helpers;
 
 #[test]

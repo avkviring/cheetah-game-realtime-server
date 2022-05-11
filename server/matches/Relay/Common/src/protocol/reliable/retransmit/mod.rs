@@ -5,10 +5,10 @@ use std::time::{Duration, Instant};
 
 use fnv::FnvBuildHasher;
 
-use crate::protocol::frame::{CAPACITY_COMMANDS_IN_FRAME, FrameId};
 use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
+use crate::protocol::frame::{FrameId, CAPACITY_COMMANDS_IN_FRAME};
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
@@ -147,10 +147,9 @@ impl Retransmit {
 			let original_frame_id = frame.frame_id;
 			let mut reliable_frame = OutFrame::new(original_frame_id);
 			reliable_frame.headers = frame.headers.clone();
-			frame
-				.get_commands()
-				.filter(|c| c.channel.is_reliable())
-				.for_each(|c| {reliable_frame.add_command(c.clone());});
+			frame.get_commands().filter(|c| c.channel.is_reliable()).for_each(|c| {
+				reliable_frame.add_command(c.clone());
+			});
 
 			self.frames.push_back(ScheduledFrame {
 				time: *now,
@@ -179,10 +178,10 @@ mod tests {
 	use crate::commands::types::event::EventCommand;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
-	use crate::protocol::frame::FrameId;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::frame::output::OutFrame;
+	use crate::protocol::frame::FrameId;
 	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::retransmit::{Retransmit, RETRANSMIT_LIMIT};
 
@@ -322,11 +321,10 @@ mod tests {
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = Retransmit::default();
 		let mut frame = OutFrame::new(0);
-		frame
-			.add_command(CommandWithChannel {
-				channel: Channel::UnreliableUnordered,
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-			});
+		frame.add_command(CommandWithChannel {
+			channel: Channel::UnreliableUnordered,
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+		});
 
 		let reliable_command = CommandWithChannel {
 			channel: Channel::ReliableUnordered,
@@ -347,11 +345,10 @@ mod tests {
 
 	fn create_reliability_frame(frame_id: FrameId) -> OutFrame {
 		let mut frame = OutFrame::new(frame_id);
-		frame
-			.add_command(CommandWithChannel {
-				channel: Channel::ReliableUnordered,
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-			});
+		frame.add_command(CommandWithChannel {
+			channel: Channel::ReliableUnordered,
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+		});
 		frame
 	}
 

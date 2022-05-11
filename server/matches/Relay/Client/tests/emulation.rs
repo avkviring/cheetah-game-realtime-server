@@ -11,7 +11,6 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
 
-
 pub mod helpers;
 
 #[test]

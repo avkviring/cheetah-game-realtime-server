@@ -90,7 +90,7 @@ mod tests {
 	use std::time::Instant;
 
 	use crate::commands::c2s::C2SCommand;
-	
+
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;

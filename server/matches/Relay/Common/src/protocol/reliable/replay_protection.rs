@@ -63,7 +63,7 @@ impl FrameReplayProtection {
 
 #[cfg(test)]
 mod tests {
-	
+
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::reliable::replay_protection::FrameReplayProtection;
 

@@ -27,7 +27,7 @@ fn test() {
 		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
 		&mut object_id,
 	);
-	ffi::command::object::created_object(client1, &object_id, false,  &BufferFFI::default());
+	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
 
 	let mut event_buffer = BufferFFI::default();
 	event_buffer.len = 1;
