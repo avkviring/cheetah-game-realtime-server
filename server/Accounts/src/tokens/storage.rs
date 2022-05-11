@@ -97,9 +97,8 @@ pub mod tests {
 	use std::thread;
 	use std::time::Duration;
 
-	use testcontainers::clients::Cli;
 	use testcontainers::images::redis::Redis;
-	use testcontainers::{clients, images, Container, Docker};
+	use testcontainers::{clients, images, Container};
 
 	use crate::tokens::storage::TokenStorage;
 	use crate::users::UserId;
@@ -180,9 +179,9 @@ pub mod tests {
 		static ref CLI: clients::Cli = Default::default();
 	}
 
-	pub async fn stub_storage<'a>() -> (Container<'a, Cli, Redis>, TokenStorage) {
+	pub async fn stub_storage<'a>() -> (Container<'a, Redis>, TokenStorage) {
 		let node = (*CLI).run(images::redis::Redis::default());
-		let port = node.get_host_port(6379).unwrap();
+		let port = node.get_host_port(6379);
 		(node, TokenStorage::new("127.0.0.1", port, Option::None, 1).await.unwrap())
 	}
 }

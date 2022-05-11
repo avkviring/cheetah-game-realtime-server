@@ -177,7 +177,7 @@ pub mod tests {
 
 	use testcontainers::clients::Cli;
 	use testcontainers::images::redis::Redis;
-	use testcontainers::{images, Container, Docker};
+	use testcontainers::{images, Container};
 
 	use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenError};
 
@@ -227,7 +227,7 @@ BTeGSzANXGlEzutd9IIm6/inl0ahRANCAARVUc1crGhQ2Shf2Gc4mlLPorYoN+KD
 FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 -----END PRIVATE KEY-----";
 
-	pub async fn stub_token_service<'a>(session_exp: u64, refresh_exp: u64) -> (Container<'a, Cli, Redis>, TokensService) {
+	pub async fn stub_token_service<'a>(session_exp: u64, refresh_exp: u64) -> (Container<'a, Redis>, TokensService) {
 		let (node, storage) = stub_storage(refresh_exp + 1).await;
 
 		let service = TokensService::new_with_storage(
@@ -244,9 +244,9 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		static ref CLI: Cli = Default::default();
 
 	}
-	async fn stub_storage<'a>(time_of_life_in_sec: u64) -> (Container<'a, Cli, Redis>, TokenStorage) {
+	async fn stub_storage<'a>(time_of_life_in_sec: u64) -> (Container<'a, Redis>, TokenStorage) {
 		let node = (*CLI).run(images::redis::Redis::default());
-		let port = node.get_host_port(6379).unwrap();
+		let port = node.get_host_port(6379);
 		(
 			node,
 			TokenStorage::new("127.0.0.1", port, Option::None, time_of_life_in_sec)

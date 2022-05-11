@@ -20,19 +20,16 @@ pub mod test {
 
 	use testcontainers::clients::Cli;
 	use testcontainers::images::postgres::Postgres;
-	use testcontainers::{Container, Docker};
+	use testcontainers::{Container, Image};
 
 	use crate::postgresql::create_postgres_pool;
 	use crate::PgPool;
 
-	pub async fn setup_postgresql_storage(cli: &Cli) -> (PgPool, Container<'_, Cli, Postgres>) {
-		let mut env = HashMap::default();
-		env.insert("POSTGRES_USER".to_owned(), "authentication".to_owned());
-		env.insert("POSTGRES_PASSWORD".to_owned(), "passwd".to_owned());
-		let image = Postgres::default().with_version(13).with_env_vars(env);
+	pub async fn setup_postgresql_storage(cli: &Cli) -> (PgPool, Container<'_, Postgres>) {
+		let image = Postgres::default();
 		let node = cli.run(image);
-		let port = node.get_host_port(5432).unwrap();
-		let pool = create_postgres_pool("authentication", "authentication", "passwd", "127.0.0.1", port).await;
+		let port = node.get_host_port(5432);
+		let pool = create_postgres_pool("postgres", "postgres", "", "127.0.0.1", port).await;
 		(pool, node)
 	}
 }
