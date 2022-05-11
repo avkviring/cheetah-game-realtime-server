@@ -8,7 +8,6 @@ test-cargo-projects:
     key: cargo-test-cache-v1
     paths:
       - server/target/
-    policy: pull
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.2
   stage: test
   script:
