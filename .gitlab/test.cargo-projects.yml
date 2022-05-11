@@ -12,7 +12,6 @@ test-cargo-projects:
   stage: test
   script:
     - cd server/
-    - du -d 0 -h target
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - CARGO_INCREMENTAL=0 cargo test --offline -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
     - du -d 0 -h target
