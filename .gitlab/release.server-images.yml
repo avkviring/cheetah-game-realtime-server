@@ -10,7 +10,7 @@ release-server-images:
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
   stage: release
   cache:
-    key: cargo-release-server-cache
+    key: cargo-release-server-cache-v1
     paths:
       - server/target/
   script:

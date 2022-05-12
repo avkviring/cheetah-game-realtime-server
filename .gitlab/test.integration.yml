@@ -7,15 +7,13 @@ variables:
 # Сборка docker image для сервисов сервера
 #
 build-server-images-for-integration-test:
+  variables:
+    GIT_CLEAN_FLAGS: "none"
   only:
     refs:
       - kviring
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.0
   stage: test
-  cache:
-    key: cargo-release-server-cache
-    paths:
-      - server/target/
   script:
     - cd server
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync

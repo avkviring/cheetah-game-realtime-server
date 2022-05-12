@@ -6,17 +6,12 @@ test-cargo-projects:
     GIT_CLEAN_FLAGS: "none"
   except:
     - tags
-#  cache:
-#    key: cargo-test-cache-v1
-#    paths:
-#      - server/target/
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.2
   stage: test
   script:
     - cd server/
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - CARGO_INCREMENTAL=0 cargo test --offline -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
-    - du -d 0 -h target
   artifacts:
     when: always
     reports:
