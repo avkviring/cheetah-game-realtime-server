@@ -2,12 +2,14 @@
 # Тесты rust кода
 #
 test-cargo-projects:
+  variables:
+    GIT_CLEAN_FLAGS: "none"
   except:
     - tags
-  cache:
-    key: cargo-test-cache-v1
-    paths:
-      - server/target/
+#  cache:
+#    key: cargo-test-cache-v1
+#    paths:
+#      - server/target/
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.2
   stage: test
   script:
