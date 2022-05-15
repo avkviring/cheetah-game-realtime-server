@@ -11,5 +11,6 @@ members = [
     "matches/Relay/Client",
     "matches/Relay/Server",
     "statistics/Events",
-    "system/Compatibility"
+    "system/Compatibility",
+    "libraries/YDB"
 ]

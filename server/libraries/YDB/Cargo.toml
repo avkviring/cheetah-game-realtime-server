@@ -1,0 +1,21 @@
+[package]
+name = "cheetah-libraries-ydb"
+version = "999.999.999"
+edition = "2021"
+
+[dependencies]
+ydb = "0.1.1"
+testcontainers = "0.13.0"
+tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
+
+[features]
+test_container = []
+
+
+[dev-dependencies]
+log = "0.4"
+simple_logger = "2.1.0"
+tracing = { version = "0.1.31" }
+tracing-log = { version = "0.1.2" }
+cheetah-libraries-ydb = { path = ".", features = ["test_container"] }
+
