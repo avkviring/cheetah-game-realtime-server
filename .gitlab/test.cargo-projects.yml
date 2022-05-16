@@ -6,7 +6,7 @@ test-cargo-projects:
     GIT_CLEAN_FLAGS: "none"
   except:
     - tags
-  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.2
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.4
   stage: test
   script:
     - cd server/
