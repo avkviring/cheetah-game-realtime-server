@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use testcontainers::core::WaitFor;
-use testcontainers::Image;
+use testcontainers::{clients, Container, Image};
+use ydb::{Client, ClientBuilder, StaticDiscovery};
 
 ///
 /// Yandex Data Base образ для интеграционных тестов
@@ -49,27 +50,33 @@ impl Image for YDBImage {
 	}
 }
 
+lazy_static::lazy_static! {
+	static ref CLI: clients::Cli = Default::default();
+}
+
+pub async fn ydb_run_and_connect_for_test() -> (Container<'static, YDBImage>, Client) {
+	let node = CLI.run(YDBImage::default());
+	let port = node.get_host_port(YDBImage::GRPC_PORT);
+	let url = format!("grpc://{}:{}?database=local", "127.0.0.1", port);
+	let discovery = StaticDiscovery::from_str(url.as_str()).unwrap();
+	let client = ClientBuilder::from_str(url)
+		.unwrap()
+		.with_discovery(discovery)
+		.client()
+		.unwrap();
+	client.wait().await.unwrap();
+	(node, client)
+}
+
 #[cfg(test)]
 mod tests {
-	use testcontainers::clients;
-	use ydb::{ClientBuilder, Query, StaticDiscovery};
+	use ydb::Query;
 
-	use crate::test_container::YDBImage;
+	use crate::test_container::ydb_run_and_connect_for_test;
 
 	#[tokio::test]
 	async fn should_create_docker_and_connect() {
-		let cli: clients::Cli = Default::default();
-		let node = cli.run(YDBImage::default());
-		let port = node.get_host_port(YDBImage::GRPC_PORT);
-		let url = format!("grpc://{}:{}?database=local", "127.0.0.1", port);
-		let discovery = StaticDiscovery::from_str(url.as_str()).unwrap();
-		let client = ClientBuilder::from_str(url)
-			.unwrap()
-			.with_discovery(discovery)
-			.client()
-			.unwrap();
-		client.wait().await.unwrap();
-
+		let (_node, client) = ydb_run_and_connect_for_test().await;
 		let table_client = client.table_client();
 		let value: i32 = table_client
 			.retry_transaction(|mut t| async move {

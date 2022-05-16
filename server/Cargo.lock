@@ -621,6 +621,7 @@ name = "cheetah-libraries-ydb"
 version = "999.999.999"
 dependencies = [
  "cheetah-libraries-ydb",
+ "lazy_static",
  "log",
  "simple_logger",
  "testcontainers 0.13.0",

@@ -7,9 +7,10 @@ edition = "2021"
 ydb = "0.1.1"
 testcontainers = "0.13.0"
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
+lazy_static = { version = "1.4.0", optional = true }
 
 [features]
-test_container = []
+test_container = ["lazy_static"]
 
 
 [dev-dependencies]
