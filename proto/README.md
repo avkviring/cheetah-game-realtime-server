@@ -5,4 +5,4 @@
 
 ## ADR
 
-[Использование grpc](../docs/adr/002-use-grpc-for-api.md)
+[Использование grpc](../docs/adr/shared/0001-use-grpc-for-api.md)
