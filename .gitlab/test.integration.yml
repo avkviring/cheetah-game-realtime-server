@@ -17,7 +17,7 @@ build-server-images-for-integration-test:
   script:
     - cd server
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --offline --release --target x86_64-unknown-linux-musl
+    - RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
     - ./package-server-images.sh
 
@@ -35,7 +35,7 @@ build-relay-client-for-integration-test:
     - source $HOME/.cargo/env
     - cd server
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --offline --release
+    - cargo build --manifest-path matches/Relay/Client/Cargo.toml --release
   artifacts:
     paths:
       - server/target/release/libcheetah_matches_relay_client.so

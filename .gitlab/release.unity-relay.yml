@@ -10,7 +10,7 @@ build-relay-library-for-linux:
   script:
     - cd server
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --release
+    - cargo build  --manifest-path matches/Relay/Client/Cargo.toml --release
   artifacts:
     paths:
       - server/target/release/libcheetah_matches_relay_client.so
@@ -25,7 +25,7 @@ build-relay-library-for-android-armv7:
   script:
     - cd server
     - /.cargo/bin/cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - /.cargo/bin/cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
+    - /.cargo/bin/cargo build  --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
   artifacts:
     paths:
       - server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so
@@ -40,7 +40,7 @@ build-relay-library-for-android-aarch64:
   script:
     - cd server
     - /.cargo/bin/cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - /.cargo/bin/cargo build --offline --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
+    - /.cargo/bin/cargo build  --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
   artifacts:
     paths:
       - server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so

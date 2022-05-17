@@ -4952,7 +4952,7 @@ dependencies = [
 [[package]]
 name = "ydb"
 version = "0.1.1"
-source = "git+https://github.com/avkviring/ydb-rs-sdk.git#250645ee3cfbfe031a237623a55999eae2a0f151"
+source = "git+https://github.com/avkviring/ydb-rs-sdk.git#08920b6f3e8c01be885e7980d73c8e635e70bbad"
 dependencies = [
  "async-trait",
  "derivative",
@@ -4981,7 +4981,7 @@ dependencies = [
 [[package]]
 name = "ydb-grpc"
 version = "0.0.7"
-source = "git+https://github.com/avkviring/ydb-rs-sdk.git#250645ee3cfbfe031a237623a55999eae2a0f151"
+source = "git+https://github.com/avkviring/ydb-rs-sdk.git#08920b6f3e8c01be885e7980d73c8e635e70bbad"
 dependencies = [
  "pbjson",
  "pbjson-build",
@@ -4999,7 +4999,7 @@ dependencies = [
 [[package]]
 name = "ydb-grpc-helpers"
 version = "0.0.7"
-source = "git+https://github.com/avkviring/ydb-rs-sdk.git#250645ee3cfbfe031a237623a55999eae2a0f151"
+source = "git+https://github.com/avkviring/ydb-rs-sdk.git#08920b6f3e8c01be885e7980d73c8e635e70bbad"
 
 [[package]]
 name = "zeroize"

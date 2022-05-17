@@ -16,6 +16,6 @@ release-server-images:
   script:
     - cd server
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --offline --release --target x86_64-unknown-linux-musl
+    - RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
     - ./package-server-images.sh

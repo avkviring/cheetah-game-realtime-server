@@ -11,7 +11,7 @@ test-cargo-projects:
   script:
     - cd server/
     - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - CARGO_INCREMENTAL=0 cargo test --offline -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
+    - CARGO_INCREMENTAL=0 cargo test -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
   artifacts:
     when: always
     reports:
