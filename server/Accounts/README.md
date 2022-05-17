@@ -1,4 +1,4 @@
-# Cerberus
+# Accounts
 
 - Создание и обновление JWT токена для авторизации внутри платформы;
 - все данные сохраняются в Redis;
@@ -12,14 +12,12 @@ sequenceDiagram
     participant AS as Authentication Service
     participant CS as Cerberus Service
     С -->> +AS: Android|iOS|etc токен пользователя,        
-    AS -->> +CS: Запрос платформенного токена по id пользователя        
-    CS -->> -AS: Платформенный токен
     AS -->> -С: Платформенный токен
     С -->> Other services: Платформенный токен
 ```
 
 ## Клиент
-- games.cheetah.cerberus
+- games.cheetah.accounts
 
 
 ## Время жизни токенов
@@ -42,4 +40,3 @@ openssl ec -in private.pem -pubout -out public.pem
 cat private-pkcs8.pem | base64 
 cat public.pem | base64
 ```
-
