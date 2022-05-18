@@ -4866,8 +4866,9 @@ dependencies = [
 
 [[package]]
 name = "ydb"
-version = "0.1.1"
-source = "git+https://github.com/avkviring/ydb-rs-sdk.git#2dbaf90fd76a9e4ccaf5dad33fcdf1dbc679586a"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1de85b1aeac6c7d607919fcdeccfdfa2ef439c9ca123fd339d656ebf103ec35e"
 dependencies = [
  "async-trait",
  "derivative",
@@ -4896,7 +4897,8 @@ dependencies = [
 [[package]]
 name = "ydb-grpc"
 version = "0.0.7"
-source = "git+https://github.com/avkviring/ydb-rs-sdk.git#2dbaf90fd76a9e4ccaf5dad33fcdf1dbc679586a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "545e87d171e18f1f8c292af4da08df8bd17abff4bf228bc59509ca6b10e4b381"
 dependencies = [
  "pbjson",
  "pbjson-build",
@@ -4914,7 +4916,8 @@ dependencies = [
 [[package]]
 name = "ydb-grpc-helpers"
 version = "0.0.7"
-source = "git+https://github.com/avkviring/ydb-rs-sdk.git#2dbaf90fd76a9e4ccaf5dad33fcdf1dbc679586a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "673bd91af6e3f5ef7e5ad0258c2d8667679b4d402f22e2f85f56d8093322f917"
 
 [[package]]
 name = "zeroize"

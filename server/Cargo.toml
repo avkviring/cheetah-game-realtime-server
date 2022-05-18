@@ -14,7 +14,3 @@ members = [
     "system/Compatibility",
     "libraries/YDB"
 ]
-
-[patch.crates-io]
-ydb = { git = "https://github.com/avkviring/ydb-rs-sdk.git"  }
-#ydb = { path = '/Users/kviring/Documents/gitlab.dev.cheetah.games/cheetah/forks/ydb-rs-sdk/ydb' }

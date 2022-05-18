@@ -6,7 +6,7 @@ pub mod test {
 
 	#[tokio::test]
 	pub async fn test() {
-		// let (node, client) = ydb_run_and_connect_for_test().await;
+		let (node, client) = ydb_run_and_connect_for_test().await;
 		// client
 		// 	.table_client()
 		// 	.retry_transaction(|mut t| async move {
@@ -15,5 +15,12 @@ pub mod test {
 		// 	})
 		// 	.await
 		// 	.unwrap();
+
+		// let directories = client
+		// 	.directory_client()
+		// 	.list_directory("/local/some/".to_owned())
+		// 	.await
+		// 	.unwrap();
+		// directories.iter().any(|t| t.name = "");
 	}
 }
