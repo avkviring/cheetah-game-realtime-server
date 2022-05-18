@@ -1,6 +1,6 @@
-use byteorder::ReadBytesExt;
 use std::io::Cursor;
 
+use byteorder::ReadBytesExt;
 use thiserror::Error;
 
 use crate::commands::c2s::C2SCommand;
@@ -11,18 +11,21 @@ use crate::protocol::codec::commands::context::{CommandContext, CommandContextEr
 use crate::protocol::codec::commands::header::CommandHeader;
 use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use crate::protocol::frame::channel::Channel;
-use crate::protocol::frame::CommandVec;
 
 ///
 /// Преобразование массива байт в список команд
 ///
-pub fn decode_commands(from_client: bool, input: &mut Cursor<&[u8]>, out: &mut CommandVec) -> Result<(), CommandsDecoderError> {
+pub fn decode_commands(
+	from_client: bool,
+	input: &mut Cursor<&[u8]>,
+	out: &mut Vec<CommandWithChannel>,
+) -> Result<(), CommandsDecoderError> {
 	let length = input.read_u8()?;
 	let mut context = CommandContext::default();
 	for _ in 0..length {
 		let header = context.read_next(input)?;
 		let command = decode_command(from_client, input, &header, &context)?;
-		out.push(command).map_err(|_| CommandsDecoderError::CommandCountOverflow)?;
+		out.push(command);
 	}
 	Ok(())
 }
@@ -80,6 +83,4 @@ pub enum CommandsDecoderError {
 		#[from]
 		source: CommandContextError,
 	},
-	#[error("CommandCountOverflow")]
-	CommandCountOverflow,
 }

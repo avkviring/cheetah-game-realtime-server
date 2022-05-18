@@ -5,7 +5,7 @@ use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::commands::encoder::encode_command;
 use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::{Header, Headers};
-use crate::protocol::frame::{CommandVec, FrameId};
+use crate::protocol::frame::FrameId;
 
 pub const MAX_ENCODED_COMMANDS_SIZE: usize = 512;
 
@@ -13,7 +13,7 @@ pub const MAX_ENCODED_COMMANDS_SIZE: usize = 512;
 pub struct OutFrame {
 	pub frame_id: FrameId,
 	pub headers: Headers,
-	commands: CommandVec,
+	commands: Vec<CommandWithChannel>,
 	context: CommandContext,
 	encoded_size: u64,
 	encoded_commands: [u8; MAX_ENCODED_COMMANDS_SIZE * 2],
@@ -35,7 +35,7 @@ impl OutFrame {
 	}
 
 	pub fn add_command(&mut self, command: CommandWithChannel) -> bool {
-		if self.full || self.commands.is_full() {
+		if self.full {
 			return false;
 		}
 		let mut cursor = Cursor::new(self.encoded_commands.as_mut_slice());
@@ -47,7 +47,7 @@ impl OutFrame {
 		} else {
 			self.contains_reliability_command = self.contains_reliability_command || command.channel.is_reliable();
 			self.encoded_size = cursor.position();
-			self.commands.push(command).unwrap();
+			self.commands.push(command);
 			self.encoded_commands[0] = self.commands.len() as u8;
 		}
 		true

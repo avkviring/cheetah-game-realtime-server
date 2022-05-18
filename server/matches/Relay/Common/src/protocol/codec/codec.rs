@@ -6,10 +6,11 @@ use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::commands::decoder::{decode_commands, CommandsDecoderError};
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::Headers;
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
-use crate::protocol::frame::{CommandVec, FrameId, MAX_FRAME_SIZE};
+use crate::protocol::frame::{FrameId, MAX_FRAME_SIZE};
 
 #[derive(Error, Debug)]
 pub enum FrameDecodeError {
@@ -64,7 +65,7 @@ impl InFrame {
 		frame_id: FrameId,
 		cursor: Cursor<&[u8]>,
 		mut cipher: Cipher,
-	) -> Result<CommandVec, FrameDecodeError> {
+	) -> Result<Vec<CommandWithChannel>, FrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -87,7 +88,7 @@ impl InFrame {
 
 		let mut cursor = Cursor::new(decompressed_buffer);
 
-		let mut commands = CommandVec::new();
+		let mut commands = Default::default();
 		decode_commands(c2s_commands, &mut cursor, &mut commands)?;
 		Ok(commands)
 	}

@@ -2,17 +2,17 @@ use std::slice::Iter;
 
 use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::{Header, Headers};
-use crate::protocol::frame::{CommandVec, FrameId};
+use crate::protocol::frame::FrameId;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct InFrame {
 	pub frame_id: FrameId,
 	pub headers: Headers,
-	commands: CommandVec,
+	commands: Vec<CommandWithChannel>,
 	contains_reliability_command: bool,
 }
 impl InFrame {
-	pub fn new(frame_id: FrameId, headers: Headers, commands: CommandVec) -> Self {
+	pub fn new(frame_id: FrameId, headers: Headers, commands: Vec<CommandWithChannel>) -> Self {
 		let contains_reliability_command = commands.iter().any(|f| f.channel.is_reliable());
 		Self {
 			frame_id,

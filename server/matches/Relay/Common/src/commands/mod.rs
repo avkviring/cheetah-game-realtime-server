@@ -32,6 +32,7 @@ impl CommandTypeId {
 	const ATTACH_TO_ROOM: CommandTypeId = CommandTypeId(11);
 	const DETACH_FROM_ROOM: CommandTypeId = CommandTypeId(12);
 	const DELETE_FIELD: CommandTypeId = CommandTypeId(13);
+	const COMPARE_AND_SET_STRUCTURE: CommandTypeId = CommandTypeId(14);
 }
 
 ///

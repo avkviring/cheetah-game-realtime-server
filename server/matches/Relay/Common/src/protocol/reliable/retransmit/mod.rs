@@ -8,7 +8,7 @@ use fnv::FnvBuildHasher;
 use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
-use crate::protocol::frame::{FrameId, CAPACITY_COMMANDS_IN_FRAME};
+use crate::protocol::frame::FrameId;
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
@@ -76,8 +76,8 @@ pub struct ScheduledFrame {
 impl Default for Retransmit {
 	fn default() -> Self {
 		Self {
-			frames: VecDeque::with_capacity(CAPACITY_COMMANDS_IN_FRAME),
-			wait_ack_frames: HashSet::with_capacity_and_hasher(CAPACITY_COMMANDS_IN_FRAME, FnvBuildHasher::default()),
+			frames: Default::default(),
+			wait_ack_frames: Default::default(),
 			max_retransmit_count: Default::default(),
 			ack_wait_duration: Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC),
 			statistics: Default::default(),

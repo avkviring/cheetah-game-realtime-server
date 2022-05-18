@@ -22,7 +22,6 @@ mod tests {
 	use crate::protocol::codec::commands::encoder::encode_command;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
-	use crate::protocol::frame::CommandVec;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
 
@@ -79,7 +78,6 @@ mod tests {
 	fn check(from_client: bool, commands: Vec<CommandWithChannel>) {
 		let mut buffer = [0_u8; 64];
 		let mut cursor = Cursor::new(buffer.as_mut());
-		let commands = CommandVec::from_slice(commands.as_slice()).unwrap();
 		let mut context = CommandContext::default();
 		cursor.write_u8(commands.len() as u8).unwrap();
 		for command in &commands {
@@ -87,7 +85,7 @@ mod tests {
 		}
 		let write_position = cursor.position();
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
-		let mut readed = CommandVec::new();
+		let mut readed = Default::default();
 		decode_commands(from_client, &mut read_cursor, &mut readed).unwrap();
 		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(commands, readed);

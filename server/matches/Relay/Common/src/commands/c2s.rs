@@ -8,7 +8,7 @@ use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-use crate::commands::types::structure::SetStructureCommand;
+use crate::commands::types::structure::{CompareAndSetStructureCommand, SetStructureCommand};
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
@@ -24,6 +24,7 @@ pub enum C2SCommand {
 	SetDouble(SetDoubleCommand),
 	IncrementDouble(IncrementDoubleC2SCommand),
 	SetStructure(SetStructureCommand),
+	CompareAndSetStructure(CompareAndSetStructureCommand),
 	Event(EventCommand),
 	TargetEvent(TargetEventCommand),
 	Delete(DeleteGameObjectCommand),
@@ -52,6 +53,7 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.field_id),
+			C2SCommand::CompareAndSetStructure(command) => Some(command.field_id),
 		}
 	}
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
@@ -70,6 +72,7 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.object_id.clone()),
+			C2SCommand::CompareAndSetStructure(command) => Some(command.object_id.clone()),
 		}
 	}
 
@@ -89,6 +92,7 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.field_type),
+			C2SCommand::CompareAndSetStructure(_) => Some(FieldType::Structure),
 		}
 	}
 
@@ -108,6 +112,7 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => CommandTypeId::ATTACH_TO_ROOM,
 			C2SCommand::DetachFromRoom => CommandTypeId::DETACH_FROM_ROOM,
 			C2SCommand::DeleteField(_) => CommandTypeId::DELETE_FIELD,
+			C2SCommand::CompareAndSetStructure(_) => CommandTypeId::COMPARE_AND_SET_STRUCTURE,
 		}
 	}
 
@@ -127,6 +132,7 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => Ok(()),
 			C2SCommand::DetachFromRoom => Ok(()),
 			C2SCommand::DeleteField(command) => command.encode(out),
+			C2SCommand::CompareAndSetStructure(command) => command.encode(out),
 		}
 	}
 
