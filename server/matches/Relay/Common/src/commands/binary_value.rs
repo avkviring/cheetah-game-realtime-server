@@ -13,6 +13,7 @@ impl From<&[u8]> for BinaryValue {
 		BinaryValue(heapless::Vec::<u8, 256>::from_slice(source).unwrap())
 	}
 }
+
 impl BinaryValue {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let mut result = BinaryValue { 0: Default::default() };

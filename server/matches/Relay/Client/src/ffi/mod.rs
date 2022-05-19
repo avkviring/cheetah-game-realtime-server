@@ -127,7 +127,7 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 const BUFFER_MAX_SIZE: usize = 255;
 
 #[repr(C)]
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct BufferFFI {
 	pub len: u8,
 	pub pos: u8, // используется в C#

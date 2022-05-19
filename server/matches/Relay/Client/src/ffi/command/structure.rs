@@ -1,4 +1,3 @@
-use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::types::structure::{SetStructureCommand, CompareAndSetStructureCommand};
 use cheetah_matches_relay_common::constants::FieldId;
