@@ -184,10 +184,12 @@ pub fn reset_all_compare_and_set(
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
+use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::long::CompareAndSetLongCommand;
 	use cheetah_matches_relay_common::commands::FieldType;
-	use cheetah_matches_relay_common::constants::FieldId;
+	use cheetah_matches_relay_common::commands::types::structure::CompareAndSetStructureCommand;
+use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -204,7 +206,7 @@ mod tests {
 	/// Проверяем что при выполнении нескольких команд соблюдаются гарантии CompareAndSet
 	///
 	#[test]
-	fn should_compare_and_set() {
+	fn should_compare_and_set_long() {
 		let (mut room, user1_id, _, object_id, field_id) = setup();
 		let command1 = CompareAndSetLongCommand {
 			object_id: object_id.clone(),
@@ -243,6 +245,49 @@ mod tests {
 		assert_eq!(
 			*room.get_object(&object_id).unwrap().get_long(&command1.field_id).unwrap(),
 			command3.new
+		);
+	}
+
+	#[test]
+	fn should_compare_and_set_structure() {
+		let (mut room, user1_id, _, object_id, field_id) = setup();
+		let command1 = CompareAndSetStructureCommand {
+			object_id: object_id.clone(),
+			field_id,
+			current: vec![0, 1].as_slice().into(),
+			new: vec![1, 0, 0].as_slice().into(),
+			reset: None,
+		};
+		command1.execute(&mut room, user1_id).unwrap();
+		assert_eq!(
+			*room.get_object(&object_id).unwrap().get_structure(&command1.field_id).unwrap(),
+			command1.new.as_slice()
+		);
+
+		let command2 = CompareAndSetStructureCommand {
+			object_id: object_id.clone(),
+			field_id: command1.field_id,
+			current: vec![0, 1].as_slice().into(),
+			new: vec![2, 0, 0].as_slice().into(),
+			reset: None,
+		};
+		command2.execute(&mut room, user1_id).unwrap();
+		assert_eq!(
+			*room.get_object(&object_id).unwrap().get_structure(&command1.field_id).unwrap(),
+			command1.new.as_slice()
+		);
+
+		let command3 = CompareAndSetStructureCommand {
+			object_id: object_id.clone(),
+			field_id: command1.field_id,
+			current: command1.new,
+			new: vec![3, 0, 0].as_slice().into(),
+			reset: None,
+		};
+		command3.execute(&mut room, user1_id).unwrap();
+		assert_eq!(
+			*room.get_object(&object_id).unwrap().get_structure(&command1.field_id).unwrap(),
+			command3.new.as_slice()
 		);
 	}
 
