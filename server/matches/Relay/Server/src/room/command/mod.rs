@@ -100,6 +100,7 @@ pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> 
 		C2SCommand::SetDouble(command) => command.execute(room, user_id),
 		C2SCommand::IncrementDouble(command) => command.execute(room, user_id),
 		C2SCommand::SetStructure(command) => command.execute(room, user_id),
+		C2SCommand::CompareAndSetStructure(command) => command.execute(room, user_id),
 		C2SCommand::Event(command) => command.execute(room, user_id),
 		C2SCommand::Delete(command) => command.execute(room, user_id),
 		C2SCommand::AttachToRoom => room::attach_to_room(room, user_id),

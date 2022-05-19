@@ -174,6 +174,12 @@ fn get_string_value(command: &TracedCommand) -> String {
 					command.new, command.current, command.reset
 				)
 			}
+			C2SCommand::CompareAndSetStructure(command) => {
+				format!(
+					"new = {:?}, current = {:?}, reset = {:?}",
+					command.new, command.current, command.reset
+				)
+			},
 			C2SCommand::SetDouble(command) => {
 				format!("{:?}", command.value)
 			}
