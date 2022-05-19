@@ -42,19 +42,19 @@ pub extern "C" fn compare_and_set_structure(
 	client_id: ClientId,
 	object_id: &GameObjectIdFFI,
 	field_id: FieldId,
-	current: &BinaryValue,
-	new: &BinaryValue,
+	current: &BufferFFI,
+	new: &BufferFFI,
 	has_reset: bool,
-	reset: &BinaryValue,
+	reset: &BufferFFI,
 ) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand {
-			current: current.to_owned(),
+			current: current.into(),
 			field_id,
-			new: new.to_owned(),
+			new: new.into(),
 			object_id: object_id.into(),
-			reset: if has_reset { Some(reset.to_owned()) } else { None },
+			reset: if has_reset { Some(reset.into()) } else { None },
 		}),
 	)
 }
