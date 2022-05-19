@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-use crate::debug::proto::admin;
+use crate::debug::proto::admin::{self, compare_and_sets_cleaners::Reset};
 use crate::room::object::GameObject;
 use crate::room::{Member, Room};
 use crate::room::command::compare_and_set::ResetValue;
@@ -56,9 +56,10 @@ impl From<&Member> for admin::DumpUser {
 						GameObjectOwner::Member(id) => id as u32,
 					},
 					field_id: *field_id as u32,
-					reset: match *value {
-						ResetValue::Long(value) => value,
-						ResetValue::Structure(_) => todo!(),
+					reset: match value {
+						ResetValue::Long(value) => Some(Reset::LongValue(*value)),
+						ResetValue::Structure(value) =>
+							Some(Reset::StructureValue(value.as_slice().into())),
 					},
 				})
 				.collect(),
