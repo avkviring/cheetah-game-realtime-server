@@ -1,5 +1,6 @@
+use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
+use cheetah_matches_relay_common::commands::types::structure::{SetStructureCommand, CompareAndSetStructureCommand};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -29,9 +30,31 @@ pub extern "C" fn set_structure(
 	send_command(
 		client_id,
 		C2SCommand::SetStructure(SetStructureCommand {
-			object_id: From::from(object_id),
+			object_id: object_id.into(),
 			field_id,
-			structure: From::from(structure),
+			structure: structure.into(),
+		}),
+	)
+}
+
+#[no_mangle]
+pub extern "C" fn compare_and_set_structure(
+	client_id: ClientId,
+	object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	current: &BinaryValue,
+	new: &BinaryValue,
+	has_reset: bool,
+	reset: &BinaryValue,
+) -> u8 {
+	send_command(
+		client_id,
+		C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand {
+			current: current.to_owned(),
+			field_id,
+			new: new.to_owned(),
+			object_id: object_id.into(),
+			reset: if has_reset { Some(reset.to_owned()) } else { None },
 		}),
 	)
 }
