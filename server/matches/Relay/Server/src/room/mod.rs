@@ -21,7 +21,7 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::tracer::CommandTracerSessions;
-use crate::room::command::compare_and_set::reset_all_compare_and_set;
+use crate::room::command::compare_and_set::{reset_all_compare_and_set, ResetValue};
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
@@ -59,13 +59,14 @@ pub struct Room {
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 }
 
+
 #[derive(Debug)]
 pub struct Member {
 	pub id: RoomMemberId,
 	pub connected: bool,
 	pub attached: bool,
 	pub template: MemberTemplate,
-	pub compare_and_sets_cleaners: heapless::FnvIndexMap<(GameObjectId, FieldId), i64, 256>,
+	pub compare_and_set_cleaners: heapless::FnvIndexMap<(GameObjectId, FieldId), ResetValue, 256>,
 	pub out_commands: Vec<CommandWithChannelType>,
 }
 
@@ -186,7 +187,7 @@ impl Room {
 			connected: false,
 			attached: false,
 			template,
-			compare_and_sets_cleaners: Default::default(),
+			compare_and_set_cleaners: Default::default(),
 			out_commands: Default::default(),
 		};
 		self.members.insert(user_id, user);
@@ -227,7 +228,7 @@ impl Room {
 				for id in objects {
 					self.delete_object(&id)?;
 				}
-				reset_all_compare_and_set(self, user.id, &user.compare_and_sets_cleaners)?;
+				reset_all_compare_and_set(self, user.id, &user.compare_and_set_cleaners)?;
 			}
 		};
 		Ok(())

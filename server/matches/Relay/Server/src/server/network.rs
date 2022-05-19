@@ -292,7 +292,7 @@ mod tests {
 			connected: false,
 			attached: false,
 			template: user_template.clone(),
-			compare_and_sets_cleaners: Default::default(),
+			compare_and_set_cleaners: Default::default(),
 			out_commands: Default::default(),
 		};
 		udp_server.register_user(&Instant::now(), 0, user.id, user.template.clone());

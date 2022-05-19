@@ -6,6 +6,8 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use crate::debug::proto::admin;
 use crate::room::object::GameObject;
 use crate::room::{Member, Room};
+use crate::room::command::compare_and_set::ResetValue;
+
 
 impl From<&Room> for admin::DumpResponse {
 	fn from(room: &Room) -> Self {
@@ -45,7 +47,7 @@ impl From<&Member> for admin::DumpUser {
 			groups: user.template.groups.0,
 			attached: user.attached,
 			compare_and_set_cleaners: user
-				.compare_and_sets_cleaners
+				.compare_and_set_cleaners
 				.iter()
 				.map(|((object_id, field_id), value)| admin::CompareAndSetsCleaners {
 					game_object_id: object_id.id,
@@ -54,7 +56,10 @@ impl From<&Member> for admin::DumpUser {
 						GameObjectOwner::Member(id) => id as u32,
 					},
 					field_id: *field_id as u32,
-					reset: *value,
+					reset: match *value {
+						ResetValue::Long(value) => value,
+						ResetValue::Structure(_) => todo!(),
+					},
 				})
 				.collect(),
 		}
