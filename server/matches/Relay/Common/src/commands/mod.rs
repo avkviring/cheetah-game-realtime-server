@@ -40,10 +40,10 @@ impl CommandTypeId {
 ///
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum FieldType {
-	Long,
-	Double,
-	Structure,
-	Event,
+	Long = 1,
+	Double = 2,
+	Structure = 3,
+	Event = 4,
 }
 
 impl From<FieldType> for &str {
@@ -59,12 +59,7 @@ impl From<FieldType> for &str {
 
 impl FieldType {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		let code = match self {
-			FieldType::Long => 1,
-			FieldType::Double => 2,
-			FieldType::Structure => 3,
-			FieldType::Event => 4,
-		};
+		let code: u8 = *self as u8;
 		out.write_u8(code)
 	}
 	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
