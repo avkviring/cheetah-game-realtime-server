@@ -103,6 +103,7 @@ impl C2SCommand {
 			C2SCommand::SetLong(_) => CommandTypeId::SET_LONG,
 			C2SCommand::IncrementLongValue(_) => CommandTypeId::INCREMENT_LONG,
 			C2SCommand::CompareAndSetLong(_) => CommandTypeId::COMPARE_AND_SET_LONG,
+			C2SCommand::CompareAndSetStructure(_) => CommandTypeId::COMPARE_AND_SET_STRUCTURE,
 			C2SCommand::SetDouble(_) => CommandTypeId::SET_DOUBLE,
 			C2SCommand::IncrementDouble(_) => CommandTypeId::INCREMENT_DOUBLE,
 			C2SCommand::SetStructure(_) => CommandTypeId::SET_STRUCTURE,
@@ -112,7 +113,6 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => CommandTypeId::ATTACH_TO_ROOM,
 			C2SCommand::DetachFromRoom => CommandTypeId::DETACH_FROM_ROOM,
 			C2SCommand::DeleteField(_) => CommandTypeId::DELETE_FIELD,
-			C2SCommand::CompareAndSetStructure(_) => CommandTypeId::COMPARE_AND_SET_STRUCTURE,
 		}
 	}
 
@@ -158,6 +158,9 @@ impl C2SCommand {
 			}
 			CommandTypeId::COMPARE_AND_SET_LONG => {
 				C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::decode(object_id?, field_id?, input)?)
+			},
+			CommandTypeId::COMPARE_AND_SET_STRUCTURE => {
+				C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand::decode(object_id?, field_id?, input)?)
 			}
 			CommandTypeId::SET_DOUBLE => C2SCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::INCREMENT_DOUBLE => {
@@ -183,7 +186,7 @@ mod tests {
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-	use crate::commands::types::structure::SetStructureCommand;
+	use crate::commands::types::structure::{SetStructureCommand, CompareAndSetStructureCommand};
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
 	use crate::protocol::codec::commands::context::CommandContextError;
@@ -275,6 +278,24 @@ mod tests {
 				reset: Some(102),
 			}),
 			CommandTypeId::COMPARE_AND_SET_LONG,
+			Some(object_id),
+			Some(field_id),
+		);
+	}
+
+	#[test]
+	fn should_decode_encode_compare_and_set_structure() {
+		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
+		let field_id = 77;
+		check(
+			C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand {
+				object_id: object_id.clone(),
+				field_id,
+				current: vec![100].as_slice().into(),
+				new: vec![101].as_slice().into(),
+				reset: Some(vec![102].as_slice().into()),
+			}),
+			CommandTypeId::COMPARE_AND_SET_STRUCTURE,
 			Some(object_id),
 			Some(field_id),
 		);

@@ -154,9 +154,9 @@ pub fn reset_all_compare_and_set(
 				if let Some(owner) = object.get_compare_and_set_owner(field) {
 					if *owner == user_id {
 						let command: [S2CommandWithFieldInfo; 1];
-						match *reset {
+						match reset {
 							ResetValue::Long(value) => {
-								object.set_long(*field, value)?;
+								object.set_long(*field, *value)?;
 								command = [S2CommandWithFieldInfo {
 									field: Some(Field {
 										id: *field,
@@ -165,15 +165,31 @@ pub fn reset_all_compare_and_set(
 									command: S2CCommand::SetLong(SetLongCommand {
 										object_id: object_id.clone(),
 										field_id: *field,
-										value,
+										value: *value,
 									}),
 								}];
 							},
-							_ => {  todo!(); }
+							ResetValue::Structure(structure) => {
+								object.set_structure(*field, structure.as_slice())?;
+								command = [S2CommandWithFieldInfo {
+									field: Some(Field {
+										id: *field,
+										field_type: FieldType::Structure,
+									}),
+									command: S2CCommand::SetStructure(SetStructureCommand {
+										object_id: object_id.clone(),
+										field_id: *field,
+										structure: structure.to_owned(),
+									})
+								}];
+							},
 						}
 						let groups = object.access_groups;
 						let template = object.template_id;
-						room.send_to_members(groups, template, &command, |_| true)?
+						room.send_to_members(
+							groups, template,
+							&command, |_| true
+						)?
 					}
 				}
 			}
@@ -184,12 +200,11 @@ pub fn reset_all_compare_and_set(
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
+	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::long::CompareAndSetLongCommand;
 	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::commands::types::structure::CompareAndSetStructureCommand;
-use cheetah_matches_relay_common::constants::FieldId;
+	use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
