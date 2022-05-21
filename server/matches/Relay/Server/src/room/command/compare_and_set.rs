@@ -6,7 +6,7 @@ use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
 use cheetah_matches_relay_common::commands::types::{
 	long::{CompareAndSetLongCommand, SetLongCommand},
-	structure::{CompareAndSetStructureCommand},
+	structure::CompareAndSetStructureCommand,
 };
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::FieldId;
@@ -17,6 +17,8 @@ use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
+
+pub type CASCleanersStore = heapless::LinearMap<FieldType, heapless::FnvIndexMap<(GameObjectId, FieldId), ResetValue, 256>, 2>;
 
 #[derive(Debug)]
 pub enum ResetValue {
@@ -63,17 +65,15 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 		)?;
 
 		if is_field_changed.take() {
+			let m = room.get_member_mut(&user_id)?;
+			let cl = m.compare_and_set_cleaners.get_mut(&FieldType::Long).unwrap();
 			match self.reset {
 				None => {
-					room.get_member_mut(&user_id)?
-						.compare_and_set_cleaners
-						.remove(&(object_id, field_id));
+					cl.remove(&(object_id, field_id));
 				}
 				Some(reset_value) => {
-					room.get_member_mut(&user_id)?
-						.compare_and_set_cleaners
-						.insert((object_id, field_id), ResetValue::Long(reset_value))
-						.map_err(|_| ServerCommandError::Error("Overflow compare and sets cleaners".to_string()))?;
+					cl.insert((object_id, field_id), ResetValue::Long(reset_value))
+						.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners Overflow".to_string()))?;
 				}
 			}
 		}
@@ -121,16 +121,14 @@ impl ServerCommandExecutor for CompareAndSetStructureCommand {
 		)?;
 
 		if is_field_changed.take() {
-			match self.reset.clone() {
+			let m = room.get_member_mut(&user_id)?;
+			let cl = m.compare_and_set_cleaners.get_mut(&FieldType::Structure).unwrap();
+			match &self.reset {
 				None => {
-					room.get_member_mut(&user_id)?
-						.compare_and_set_cleaners
-						.remove(&(object_id, field_id));
+					cl.remove(&(object_id, field_id));
 				}
 				Some(reset_value) => {
-					room.get_member_mut(&user_id)?
-						.compare_and_set_cleaners
-						.insert((object_id, field_id), ResetValue::Structure(reset_value))
+					cl.insert((object_id, field_id), ResetValue::Structure(reset_value.to_owned()))
 						.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners overflow".to_string()))?;
 				}
 			}
@@ -143,67 +141,90 @@ impl ServerCommandExecutor for CompareAndSetStructureCommand {
 pub fn reset_all_compare_and_set(
 	room: &mut Room,
 	user_id: RoomMemberId,
-	compare_and_set_cleaners: &heapless::FnvIndexMap<(GameObjectId, FieldId), ResetValue, 256>,
+	compare_and_set_cleaners: &CASCleanersStore,
 ) -> Result<(), ServerCommandError> {
-	for ((object_id, field), reset) in compare_and_set_cleaners {
-		match room.get_object(object_id) {
-			Err(_) => {
-				// нормальная ситуация для пользовательских объектов
-			}
-			Ok(object) => {
-				if let Some(owner) = object.get_compare_and_set_owner(field) {
-					if *owner == user_id {
-						let command: [S2CommandWithFieldInfo; 1];
-						match reset {
-							ResetValue::Long(value) => {
-								object.set_long(*field, *value)?;
-								command = [S2CommandWithFieldInfo {
-									field: Some(Field {
-										id: *field,
-										field_type: FieldType::Long,
-									}),
-									command: S2CCommand::SetLong(SetLongCommand {
-										object_id: object_id.clone(),
-										field_id: *field,
-										value: *value,
-									}),
-								}];
-							},
-							ResetValue::Structure(structure) => {
-								object.set_structure(*field, structure.as_slice())?;
-								command = [S2CommandWithFieldInfo {
-									field: Some(Field {
-										id: *field,
-										field_type: FieldType::Structure,
-									}),
-									command: S2CCommand::SetStructure(SetStructureCommand {
-										object_id: object_id.clone(),
-										field_id: *field,
-										structure: structure.to_owned(),
-									})
-								}];
-							},
-						}
-						let groups = object.access_groups;
-						let template = object.template_id;
-						room.send_to_members(
-							groups, template,
-							&command, |_| true
-						)?
-					}
+	for store in compare_and_set_cleaners.values() {
+		for ((object_id, field), reset) in store {
+			apply_reset(room, user_id, object_id, *field, reset)?;
+		}
+	}
+
+	Ok(())
+}
+
+pub fn apply_reset(
+	room: &mut Room,
+	user_id: RoomMemberId,
+	object_id: &GameObjectId,
+	field: FieldId,
+	reset: &ResetValue,
+) -> Result<(), ServerCommandError> {
+	match room.get_object(&object_id) {
+		Err(_) => {
+			// нормальная ситуация для пользовательских объектов
+		}
+		Ok(object) => {
+			if let Some(owner) = object.get_compare_and_set_owner(&field) {
+				if *owner == user_id {
+					let command = match &reset {
+						ResetValue::Long(value) => reset_long_value(object, field, *value),
+						ResetValue::Structure(structure) => reset_structure(object, field, structure),
+					}?;
+					let groups = object.access_groups;
+					let template = object.template_id;
+					room.send_to_members(groups, template, &[command], |_| true)?;
 				}
 			}
 		}
-	}
+	};
+
 	Ok(())
+}
+
+fn reset_long_value(object: &mut GameObject, field: FieldId, value: i64) -> Result<S2CommandWithFieldInfo, ServerCommandError> {
+	object.set_long(field, value)?;
+	let command = S2CommandWithFieldInfo {
+		field: Some(Field {
+			id: field,
+			field_type: FieldType::Long,
+		}),
+		command: S2CCommand::SetLong(SetLongCommand {
+			object_id: object.id.to_owned(),
+			field_id: field,
+			value,
+		}),
+	};
+
+	Ok(command)
+}
+
+fn reset_structure(
+	object: &mut GameObject,
+	field: FieldId,
+	structure: &BinaryValue,
+) -> Result<S2CommandWithFieldInfo, ServerCommandError> {
+	object.set_structure(field, structure.as_slice())?;
+	let command = S2CommandWithFieldInfo {
+		field: Some(Field {
+			id: field,
+			field_type: FieldType::Long,
+		}),
+		command: S2CCommand::SetStructure(SetStructureCommand {
+			object_id: object.id.to_owned(),
+			field_id: field,
+			structure: structure.to_owned(),
+		}),
+	};
+
+	Ok(command)
 }
 
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::long::CompareAndSetLongCommand;
-	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::commands::types::structure::CompareAndSetStructureCommand;
+	use cheetah_matches_relay_common::commands::FieldType;
 	use cheetah_matches_relay_common::constants::FieldId;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -275,7 +296,11 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_structure(&command1.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_structure(&command1.field_id)
+				.unwrap(),
 			command1.new.as_slice()
 		);
 
@@ -288,7 +313,11 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_structure(&command1.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_structure(&command1.field_id)
+				.unwrap(),
 			command1.new.as_slice()
 		);
 
@@ -301,7 +330,11 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_structure(&command1.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_structure(&command1.field_id)
+				.unwrap(),
 			command3.new.as_slice()
 		);
 	}

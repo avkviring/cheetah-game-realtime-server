@@ -4,13 +4,14 @@ use std::fmt::Debug;
 use std::rc::Rc;
 use std::time::Instant;
 
+use cheetah_matches_relay_common::commands::FieldType;
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 
 use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
-use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_relay_common::constants::{GameObjectTemplateId};
 use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
@@ -21,12 +22,14 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::tracer::CommandTracerSessions;
-use crate::room::command::compare_and_set::{reset_all_compare_and_set, ResetValue};
+use crate::room::command::compare_and_set::{reset_all_compare_and_set};
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::server::measurers::Measurers;
+
+use self::command::compare_and_set::CASCleanersStore;
 
 pub mod action;
 pub mod command;
@@ -59,15 +62,31 @@ pub struct Room {
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 }
 
-
 #[derive(Debug)]
 pub struct Member {
 	pub id: RoomMemberId,
 	pub connected: bool,
 	pub attached: bool,
 	pub template: MemberTemplate,
-	pub compare_and_set_cleaners: heapless::FnvIndexMap<(GameObjectId, FieldId), ResetValue, 256>,
+	pub compare_and_set_cleaners: CASCleanersStore,
 	pub out_commands: Vec<CommandWithChannelType>,
+}
+
+impl Default for Member {
+	fn default() -> Self {
+		let mut cas_cleaners = heapless::LinearMap::new();
+		cas_cleaners.insert(FieldType::Long, Default::default()).unwrap();
+		cas_cleaners.insert(FieldType::Structure, Default::default()).unwrap();
+
+		Self {
+			id: Default::default(),
+			connected: Default::default(),
+			attached: Default::default(),
+			template: Default::default(),
+			compare_and_set_cleaners: cas_cleaners,
+			out_commands: Default::default(),
+		}
+	}
 }
 
 impl Room {

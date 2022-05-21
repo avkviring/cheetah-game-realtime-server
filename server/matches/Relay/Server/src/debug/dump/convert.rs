@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-use crate::debug::proto::admin::{self, compare_and_sets_cleaners::Reset};
+use crate::debug::proto::admin::{self, compare_and_set_cleaners::Reset};
 use crate::room::object::GameObject;
 use crate::room::{Member, Room};
 use crate::room::command::compare_and_set::ResetValue;
@@ -49,19 +49,23 @@ impl From<&Member> for admin::DumpUser {
 			compare_and_set_cleaners: user
 				.compare_and_set_cleaners
 				.iter()
-				.map(|((object_id, field_id), value)| admin::CompareAndSetsCleaners {
-					game_object_id: object_id.id,
-					game_object_owner_user: match object_id.owner {
-						GameObjectOwner::Room => u32::MAX,
-						GameObjectOwner::Member(id) => id as u32,
-					},
-					field_id: *field_id as u32,
-					reset: match value {
-						ResetValue::Long(value) => Some(Reset::LongValue(*value)),
-						ResetValue::Structure(value) =>
-							Some(Reset::StructureValue(value.as_slice().into())),
-					},
+				.map(|(_, cleaner_map)| { 
+					cleaner_map.iter()
+						.map(|((object_id, field_id), value)| admin::CompareAndSetCleaners {
+							game_object_id: object_id.id,
+							game_object_owner_user: match object_id.owner {
+								GameObjectOwner::Room => u32::MAX,
+								GameObjectOwner::Member(id) => id as u32,
+							},
+							field_id: *field_id as u32,
+							reset: match value {
+								ResetValue::Long(value) => Some(Reset::LongValue(*value)),
+								ResetValue::Structure(value) =>
+									Some(Reset::StructureValue(value.as_slice().into())),
+							},
+						})
 				})
+				.flatten()
 				.collect(),
 		}
 	}
