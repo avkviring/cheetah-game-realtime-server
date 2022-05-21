@@ -96,6 +96,7 @@ impl ValueVisitor {
 		}
 	}
 }
+
 impl<'a> Visit for ValueVisitor {
 	fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
 		if field.name() == self.name {
@@ -119,28 +120,32 @@ mod tests {
 
 	#[test]
 	fn should_collect_trace() {
-		let lock = setup(LogLevel::Error);
+		let _lock = setup(LogLevel::Error);
 		tracing::error!("some error");
-		assert!(contains("some error in matches/Relay/Client/src/tracer.rs:"));
-		drop(lock)
+		
+		let mut error = "";
+		if cfg!(windows) {
+			error = "some error in matches\\Relay\\Client\\src\\tracer.rs:";
+		} else if cfg!(unix) {
+			error = "some error in matches/Relay/Client/src/tracer.rs:";
+		}
+		assert!(contains(error));
 	}
 
 	#[test]
 	fn should_not_collect_trace_if_wrong_level() {
-		let lock = setup(LogLevel::Error);
+		let _lock = setup(LogLevel::Error);
 		let msg = "should_not_collect_trace_if_wrong_level";
 		tracing::info!("{}", msg);
 		assert!(!contains(msg));
-		drop(lock)
 	}
 
 	#[test]
 	fn should_set_level() {
-		let lock = setup(LogLevel::Info);
+		let _lock = setup(LogLevel::Info);
 		let msg = "should_set_level";
 		tracing::info!("{}", msg);
 		assert!(contains(msg));
-		drop(lock)
 	}
 
 	fn setup(log_level: LogLevel) -> LockResult<MutexGuard<'static, ()>> {

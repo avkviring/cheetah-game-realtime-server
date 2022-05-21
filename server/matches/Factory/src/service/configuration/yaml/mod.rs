@@ -31,11 +31,20 @@ impl YamlConfigurations {
 	pub fn load(root: impl Into<PathBuf>) -> Result<Self, Error> {
 		let root = root.into();
 		let groups = Self::load_group(root.clone())?;
-		let fields = Self::load_items::<_>(root.clone(), root.join("fields").as_path(), Path::new(""), || None)?;
-		let templates = Self::load_items::<_>(root.clone(), root.join("templates").as_path(), Path::new(""), || None)?;
-		let rooms = Self::load_items::<_>(root.clone(), root.join("rooms").as_path(), Path::new(""), || {
-			Some(Room { objects: vec![] })
-		})?;
+		let fields = Self::load_items::<_>(
+			root.clone(), root.join("fields").as_path(),
+			Path::new(""), || None
+		)?;
+		let templates = Self::load_items::<_>(
+			root.clone(), root.join("templates").as_path(),
+			Path::new(""), || None
+		)?;
+		let rooms = Self::load_items::<_>(
+			root.clone(), root.join("rooms").as_path(), Path::new(""), 
+			|| {
+				Some(Room { objects: vec![] })
+			}
+		)?;
 		YamlConfigurations {
 			groups,
 			fields,
@@ -133,7 +142,7 @@ impl YamlConfigurations {
 				let content = read_to_string(&path)?;
 
 				let mut count = 0;
-				let name_from_path = name.to_str().unwrap().to_string();
+				let name_from_path = name.to_str().unwrap().to_string().replace('\\', "/");
 				let prepared_content = YamlConfigurations::prepare_content(content);
 				for document in serde_yaml::Deserializer::from_str(prepared_content.as_str()) {
 					count += 1;
