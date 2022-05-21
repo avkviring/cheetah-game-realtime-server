@@ -41,10 +41,10 @@ message  DumpUser {
   uint32 id = 1;
   uint64 groups = 2;
   bool attached = 3;
-  repeated CompareAndSetsCleaners compare_and_set_cleaners = 4;
+  repeated CompareAndSetCleaners compare_and_set_cleaners = 4;
 }
 
-message CompareAndSetsCleaners {
+message CompareAndSetCleaners {
   uint32 game_object_id = 1;
   uint32 game_object_owner_user = 2;
   uint32 field_id = 3;
