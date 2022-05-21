@@ -107,6 +107,7 @@ impl<'a> Visit for ValueVisitor {
 
 #[cfg(test)]
 mod tests {
+	use std::path::{PathBuf};
 	use std::sync::{LockResult, Mutex, MutexGuard};
 
 	use lazy_static::lazy_static;
@@ -123,13 +124,14 @@ mod tests {
 		let _lock = setup(LogLevel::Error);
 		tracing::error!("some error");
 		
-		let mut error = "";
-		if cfg!(windows) {
-			error = "some error in matches\\Relay\\Client\\src\\tracer.rs:";
-		} else if cfg!(unix) {
-			error = "some error in matches/Relay/Client/src/tracer.rs:";
+		let mut path = PathBuf::new();
+		for v in ["matches", "Relay", "Client", "src", "tracer.rs"] {
+			path.push(v);
 		}
-		assert!(contains(error));
+		let view_path = path.display();
+		let error = format!("some error in {view_path}");
+
+		assert!(contains(&error));
 	}
 
 	#[test]
