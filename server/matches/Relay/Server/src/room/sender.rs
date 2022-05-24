@@ -7,7 +7,7 @@ use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
-use crate::room::object::S2CommandWithFieldInfo;
+use crate::room::object::S2CCommandWithFieldInfo;
 use crate::room::template::config::Permission;
 use crate::room::{Member, Room};
 
@@ -20,7 +20,7 @@ impl Room {
 		&mut self,
 		access_groups: AccessGroups,
 		object_template: GameObjectTemplateId,
-		commands: &[S2CommandWithFieldInfo],
+		commands: &[S2CCommandWithFieldInfo],
 		filter: T,
 	) -> Result<(), ServerCommandError>
 	where
@@ -86,7 +86,7 @@ impl Room {
 		&mut self,
 		user_id: &RoomMemberId,
 		object_template: GameObjectTemplateId,
-		commands: &[S2CommandWithFieldInfo],
+		commands: &[S2CCommandWithFieldInfo],
 	) -> Result<(), ServerCommandError> {
 		let command_trace_session = self.command_trace_session.clone();
 		let permission_manager_rc = self.permission_manager.clone();
@@ -133,7 +133,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{Field, S2CommandWithFieldInfo};
+	use crate::room::object::{Field, S2CCommandWithFieldInfo};
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
 	use crate::room::Room;
 
@@ -312,7 +312,7 @@ mod tests {
 		let object_id = object.id.clone();
 
 		let commands = vec![
-			S2CommandWithFieldInfo {
+			S2CCommandWithFieldInfo {
 				field: Some(Field {
 					id: deny_field_id,
 					field_type: FieldType::Long,
@@ -323,7 +323,7 @@ mod tests {
 					value: 0,
 				}),
 			},
-			S2CommandWithFieldInfo {
+			S2CCommandWithFieldInfo {
 				field: Some(Field {
 					id: allow_field_id,
 					field_type: FieldType::Long,
@@ -381,7 +381,7 @@ mod tests {
 		let object_id = object.id.clone();
 
 		let commands = [
-			S2CommandWithFieldInfo {
+			S2CCommandWithFieldInfo {
 				field: Some(Field {
 					id: allow_field_id,
 					field_type,
@@ -392,7 +392,7 @@ mod tests {
 					value: 0,
 				}),
 			},
-			S2CommandWithFieldInfo {
+			S2CCommandWithFieldInfo {
 				field: Some(Field {
 					id: deny_field_id,
 					field_type,

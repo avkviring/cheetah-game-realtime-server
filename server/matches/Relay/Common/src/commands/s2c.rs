@@ -202,7 +202,7 @@ mod tests {
 			S2CCommand::SetStructure(SetStructureCommand {
 				object_id: object_id.clone(),
 				field_id,
-				structure: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
+				value: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 			}),
 			CommandTypeId::SET_STRUCTURE,
 			Some(object_id),

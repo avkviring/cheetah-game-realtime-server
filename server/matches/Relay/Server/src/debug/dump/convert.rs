@@ -3,11 +3,12 @@ use std::collections::HashMap;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-use crate::debug::proto::admin::{self, compare_and_set_cleaners::Reset};
+use crate::debug::proto::admin;
+use crate::debug::proto::shared::game_object_field::Value;
+use crate::debug::proto::shared::GameObjectField;
+use crate::room::field::FieldValue;
 use crate::room::object::GameObject;
 use crate::room::{Member, Room};
-use crate::room::command::compare_and_set::ResetValue;
-
 
 impl From<&Room> for admin::DumpResponse {
 	fn from(room: &Room) -> Self {
@@ -28,10 +29,8 @@ impl From<&GameObject> for admin::DumpObject {
 			template: source.template_id as u32,
 			groups: source.access_groups.0,
 			created: source.created,
-			longs: from(source.get_longs()),
-			floats: from(source.get_doubles()),
+			fields: from(source.fields()),
 			compare_and_set_owners: from(source.get_compare_and_set_owners()),
-			structures: from(source.get_structures()),
 		}
 	}
 }
@@ -49,23 +48,25 @@ impl From<&Member> for admin::DumpUser {
 			compare_and_set_cleaners: user
 				.compare_and_set_cleaners
 				.iter()
-				.map(|(_, cleaner_map)| { 
-					cleaner_map.iter()
-						.map(|((object_id, field_id), value)| admin::CompareAndSetCleaners {
-							game_object_id: object_id.id,
-							game_object_owner_user: match object_id.owner {
-								GameObjectOwner::Room => u32::MAX,
-								GameObjectOwner::Member(id) => id as u32,
-							},
-							field_id: *field_id as u32,
-							reset: match value {
-								ResetValue::Long(value) => Some(Reset::LongValue(*value)),
-								ResetValue::Structure(value) =>
-									Some(Reset::StructureValue(value.as_slice().into())),
-							},
-						})
+				.map(|((object_id, field_id, _), value)| admin::CompareAndSetCleaner {
+					game_object_id: object_id.id,
+					game_object_owner_user: match object_id.owner {
+						GameObjectOwner::Room => u32::MAX,
+						GameObjectOwner::Member(id) => id as u32,
+					},
+					field_id: *field_id as u32,
+					value: match value {
+						FieldValue::Long(v) => Some(GameObjectField {
+							value: Some(Value::Long(*v)),
+						}),
+						FieldValue::Double(v) => Some(GameObjectField {
+							value: Some(Value::Double(*v)),
+						}),
+						FieldValue::Structure(s) => Some(GameObjectField {
+							value: Some(Value::Structure(s.to_owned())),
+						}),
+					},
 				})
-				.flatten()
 				.collect(),
 		}
 	}

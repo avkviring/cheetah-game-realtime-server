@@ -46,14 +46,22 @@ pub enum FieldType {
 	Event = 4,
 }
 
-impl From<FieldType> for &str {
-	fn from(source: FieldType) -> Self {
-		match source {
+impl hash32::Hash for FieldType {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: hash32::Hasher {
+		(*self as u8).hash(state);
+    }
+}
+
+impl ToString for FieldType {
+	fn to_string(&self) -> String {
+		match self {
 			FieldType::Long => "long",
 			FieldType::Double => "double",
 			FieldType::Structure => "structure",
 			FieldType::Event => "event",
-		}
+		}.into()
 	}
 }
 
@@ -62,6 +70,7 @@ impl FieldType {
 		let code: u8 = *self as u8;
 		out.write_u8(code)
 	}
+
 	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let value = input.read_u8()?;
 		Ok(match value {

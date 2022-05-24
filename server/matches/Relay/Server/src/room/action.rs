@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
-use crate::room::object::{Field, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{Field, GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -83,7 +83,7 @@ impl Room {
 				let groups = object.access_groups;
 				let template = object.template_id;
 
-				let commands_with_field = S2CommandWithFieldInfo {
+				let commands_with_field = S2CCommandWithFieldInfo {
 					field: Some(field),
 					command,
 				};

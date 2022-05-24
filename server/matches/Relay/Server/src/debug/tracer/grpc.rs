@@ -187,7 +187,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 				format!("{:?}", command.increment)
 			}
 			C2SCommand::SetStructure(command) => {
-				format!("{:?}", command.structure)
+				format!("{:?}", command.value)
 			}
 			C2SCommand::Event(command) => {
 				format!("{:?}", command.event.as_slice())
@@ -207,7 +207,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 			S2CCommand::Created(_) => "".to_string(),
 			S2CCommand::SetLong(command) => format!("{:?}", command.value),
 			S2CCommand::SetDouble(command) => format!("{:?}", command.value),
-			S2CCommand::SetStructure(command) => format!("{:?}", command.structure),
+			S2CCommand::SetStructure(command) => format!("{:?}", command.value),
 			S2CCommand::Event(command) => format!("{:?}", command.event),
 			S2CCommand::Delete(_) => "".to_string(),
 			S2CCommand::DeleteField(_) => "".to_string(),

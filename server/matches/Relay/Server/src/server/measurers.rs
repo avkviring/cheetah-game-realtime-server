@@ -250,7 +250,7 @@ impl Measurers {
 				vec![
 					(
 						"field_type".to_string(),
-						t.map(|f| Into::<&str>::into(f).into())
+						t.map(|f| f.to_string())
 							.unwrap_or_else(|| "unknown".to_string()),
 					),
 					(

@@ -2,10 +2,14 @@ use rand::Rng;
 
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
+use crate::debug::proto::shared::game_object_field::Value as ValueD;
+use crate::debug::proto::shared::GameObjectField as GameObjectFieldD;
 use crate::grpc::proto::internal;
 use crate::grpc::proto::shared;
+use crate::room::field::FieldValue;
 use crate::room::object::Field;
 use crate::room::template::config;
+
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
@@ -33,19 +37,33 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			id: source.id,
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),
-			fields: config::GameObjectFieldsTemplate::from(source.fields.unwrap_or_default()),
+			fields: source.fields.into_iter().map(|(k, v)| (k as u16, v.into())).collect(),
 		}
 	}
 }
 
-impl From<internal::GameObjectFieldsTemplate> for config::GameObjectFieldsTemplate {
-	fn from(source: internal::GameObjectFieldsTemplate) -> Self {
-		config::GameObjectFieldsTemplate {
-			longs: source.longs.into_iter().map(|(k, v)| (k as u16, v)).collect(),
-			floats: source.floats.into_iter().map(|(k, v)| (k as u16, v)).collect(),
-			structures: source.structures.into_iter().map(|(k, v)| (k as u16, v)).collect(),
+impl From<shared::GameObjectField> for FieldValue {
+	fn from(field: shared::GameObjectField) -> Self {
+		let value = field.value.expect("No value found in the GameObjectField");
+		match value {
+			shared::game_object_field::Value::Double(v) => FieldValue::Double(v),
+			shared::game_object_field::Value::Long(v) => FieldValue::Long(v),
+			shared::game_object_field::Value::Structure(s) => FieldValue::Structure(s),
 		}
 	}
+}
+
+// TODO: избавиться от дублирующихся типов и убрать это.
+impl From<FieldValue> for GameObjectFieldD {
+    fn from(value: FieldValue) -> Self {
+		let value_d = match value {
+			FieldValue::Double(v) => ValueD::Double(v),
+			FieldValue::Long(v) => ValueD::Long(v),
+			FieldValue::Structure(s) => ValueD::Structure(s),
+		};
+
+		GameObjectFieldD { value: Some(value_d) }
+    }
 }
 
 impl From<internal::Permissions> for config::Permissions {

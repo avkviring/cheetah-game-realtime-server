@@ -7,6 +7,7 @@ use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::UserPrivateKey;
 
+use crate::room::field::FieldValue;
 use crate::room::object::Field;
 
 ///
@@ -31,14 +32,7 @@ pub struct GameObjectTemplate {
 	pub id: u32,
 	pub template: GameObjectTemplateId,
 	pub groups: AccessGroups,
-	pub fields: GameObjectFieldsTemplate,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct GameObjectFieldsTemplate {
-	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
-	pub floats: HashMap<FieldId, f64, FnvBuildHasher>,
-	pub structures: HashMap<FieldId, Vec<u8>, FnvBuildHasher>,
+	pub fields: HashMap<FieldId, FieldValue, FnvBuildHasher>,
 }
 
 #[derive(Debug, Default, Clone)]

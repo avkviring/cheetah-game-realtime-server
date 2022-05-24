@@ -148,7 +148,7 @@ impl ApplicationThreadClient {
 								command_with_user.creator,
 								&object_id,
 								command.field_id,
-								&From::from(&command.structure),
+								&From::from(&command.value),
 							);
 						}
 					}

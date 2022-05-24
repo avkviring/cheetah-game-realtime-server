@@ -4,7 +4,7 @@ use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
+use crate::room::object::{Field, GameObject};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -63,26 +63,6 @@ impl ServerCommandExecutor for SetDoubleCommand {
 			Option::None,
 			action,
 		)
-	}
-}
-
-impl GameObject {
-	pub fn floats_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
-		for (field_id, v) in self.get_doubles() {
-			let command = S2CommandWithFieldInfo {
-				field: Option::Some(Field {
-					id: *field_id,
-					field_type: FieldType::Double,
-				}),
-				command: S2CCommand::SetDouble(SetDoubleCommand {
-					object_id: self.id.clone(),
-					field_id: *field_id,
-					value: *v,
-				}),
-			};
-			commands.push(command)?;
-		}
-		Ok(())
 	}
 }
 

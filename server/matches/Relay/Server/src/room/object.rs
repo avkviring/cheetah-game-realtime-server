@@ -8,6 +8,13 @@ use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
+use crate::room::field::FieldValue;
+
+const TYPE_COUNT: usize = 3;
+pub const MAX_FIELD_COUNT: usize = 64;
+type FieldIndex = heapless::FnvIndexMap<FieldId, FieldValue, { MAX_FIELD_COUNT * TYPE_COUNT }>;
+pub type CreateCommandsCollector = heapless::Vec<S2CCommandWithFieldInfo, 255>;
+
 ///
 /// Игровой объект - логическая группировка игровых данных
 ///
@@ -20,18 +27,13 @@ pub struct GameObject {
 	/// Объект полностью создан
 	///
 	pub created: bool,
-	pub(crate) longs: heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT>,
-	pub(crate) doubles: heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT>,
-	pub(crate) structures: heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT>,
+	fields: FieldIndex,
 	compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
 
-pub const MAX_FIELD_COUNT: usize = 64;
-pub type CreateCommandsCollector = heapless::Vec<S2CommandWithFieldInfo, 255>;
-
 #[derive(Error, Debug)]
 pub enum GameObjectError {
-	#[error("Field count overflow in game object {:?} with template {:?}", .0,.1)]
+	#[error("Field count overflow in game object {:?} with template {:?}", .0, .1)]
 	FieldCountOverflow(GameObjectId, GameObjectTemplateId),
 }
 
@@ -42,58 +44,79 @@ impl GameObject {
 			template_id,
 			access_groups,
 			created,
-			longs: Default::default(),
-			doubles: Default::default(),
-			structures: Default::default(),
+			fields: Default::default(),
 			compare_and_set_owners: Default::default(),
 		}
 	}
 
-	pub fn get_longs(&self) -> &heapless::FnvIndexMap<FieldId, i64, MAX_FIELD_COUNT> {
-		&self.longs
+	pub fn delete_field(&mut self, field_id: FieldId) {
+		self.fields.remove(&field_id);
 	}
+
+	pub(crate) fn fields(&self) -> &FieldIndex {
+		&self.fields
+	}
+
+	pub fn field(&self, field_id: &FieldId) -> Option<&FieldValue> {
+		self.fields.get(field_id)
+	}
+
+	pub fn set_field(&mut self, field_id: FieldId, value: &FieldValue) -> Result<(), GameObjectError> {
+		self.fields
+			.insert(field_id, value.to_owned())
+			.map(|_| ())
+			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.to_owned(), self.template_id))
+	}
+
 	pub fn get_long(&self, field_id: &FieldId) -> Option<&i64> {
-		self.longs.get(field_id)
+		let f = self.field(field_id)?;
+		if let FieldValue::Long(v) = f {
+			Some(v)
+		} else {
+			panic!("The requested field was not of type long")
+		}
 	}
 
 	pub fn set_long(&mut self, field_id: FieldId, value: i64) -> Result<(), GameObjectError> {
-		self.longs
-			.insert(field_id, value)
-			.map(|_| ())
-			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
+		self.set_field(field_id, &FieldValue::Long(value))
 	}
 
-	pub fn get_doubles(&self) -> &heapless::FnvIndexMap<FieldId, f64, MAX_FIELD_COUNT> {
-		&self.doubles
-	}
 	pub fn get_double(&self, field_id: &FieldId) -> Option<&f64> {
-		self.doubles.get(field_id)
-	}
-	pub fn set_double(&mut self, field_id: FieldId, value: f64) -> Result<(), GameObjectError> {
-		self.doubles
-			.insert(field_id, value)
-			.map(|_| ())
-			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
+		let f = self.field(field_id)?;
+		if let FieldValue::Double(v) = f {
+			Some(v)
+		} else {
+			panic!("The requested field was not of type double")
+		}
 	}
 
-	pub fn get_structures(&self) -> &heapless::FnvIndexMap<FieldId, Vec<u8>, MAX_FIELD_COUNT> {
-		&self.structures
+	pub fn set_double(&mut self, field_id: FieldId, value: f64) -> Result<(), GameObjectError> {
+		self.set_field(field_id, &FieldValue::Double(value))
 	}
 
 	pub fn get_structure(&self, field_id: &FieldId) -> Option<&Vec<u8>> {
-		self.structures.get(field_id)
+		let f = self.field(field_id)?;
+		if let FieldValue::Structure(s) = f {
+			Some(s)
+		} else {
+			panic!("The requested field was not of type structure");
+		}
 	}
 
 	pub fn set_structure(&mut self, field_id: FieldId, structure: &[u8]) -> Result<(), GameObjectError> {
-		match self.structures.get_mut(&field_id) {
-			Some(vec) => {
-				vec.clear();
-				vec.extend_from_slice(structure);
+		match self.fields.get_mut(&field_id) {
+			Some(field_value) => {
+				if let FieldValue::Structure(vec) = field_value {
+					vec.clear();
+					vec.extend_from_slice(structure);
+				} else {
+					panic!("The provided value was of type structure");
+				}
 				Ok(())
 			}
 			None => self
-				.structures
-				.insert(field_id, structure.to_vec())
+				.fields
+				.insert(field_id, FieldValue::Structure(structure.into()))
 				.map(|_| ())
 				.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id)),
 		}
@@ -102,6 +125,7 @@ impl GameObject {
 	pub fn get_compare_and_set_owners(&self) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
 		&self.compare_and_set_owners
 	}
+
 	pub fn get_compare_and_set_owner(&self, field_id: &FieldId) -> Option<&RoomMemberId> {
 		self.compare_and_set_owners.get(field_id)
 	}
@@ -114,16 +138,13 @@ impl GameObject {
 	}
 
 	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector) {
-		match self.do_collect_create_commands(commands) {
-			Ok(_) => {}
-			Err(_) => {
-				tracing::error!("Collect create commands overflow {:?}", self);
-			}
+		if let Err(_) = self.do_collect_create_commands(commands) {
+			tracing::error!("Collect create commands overflow {:?}", self);
 		}
 	}
 
-	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CommandWithFieldInfo> {
-		commands.push(S2CommandWithFieldInfo {
+	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
+		commands.push(S2CCommandWithFieldInfo {
 			field: Option::None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id.clone(),
@@ -132,12 +153,10 @@ impl GameObject {
 			}),
 		})?;
 
-		self.structures_to_commands(commands)?;
-		self.longs_to_commands(commands)?;
-		self.floats_to_commands(commands)?;
+		self.fields_to_commands(commands)?;
 
 		if self.created {
-			commands.push(S2CommandWithFieldInfo {
+			commands.push(S2CCommandWithFieldInfo {
 				field: None,
 				command: S2CCommand::Created(S2CreatedGameObjectCommand {
 					object_id: self.id.clone(),
@@ -146,10 +165,24 @@ impl GameObject {
 		}
 		Ok(())
 	}
+
+	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
+		for (field_id, v) in self.fields() {
+			let command = S2CCommandWithFieldInfo {
+				field: Option::Some(Field {
+					id: *field_id,
+					field_type: v.get_type(),
+				}),
+				command: v.s2c_set_command(self.id.clone(), *field_id),
+			};
+			commands.push(command)?;
+		}
+		Ok(())
+	}
 }
 
 #[derive(Debug)]
-pub struct S2CommandWithFieldInfo {
+pub struct S2CCommandWithFieldInfo {
 	pub field: Option<Field>,
 	pub command: S2CCommand,
 }
@@ -168,7 +201,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{CreateCommandsCollector, Field, GameObject, S2CommandWithFieldInfo};
+	use crate::room::object::{CreateCommandsCollector, Field, FieldValue, GameObject, S2CCommandWithFieldInfo};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -179,29 +212,28 @@ mod tests {
 		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
 		object.set_long(1, 100).unwrap();
 		object.set_double(2, 200.200).unwrap();
-		object.structures.insert(1, vec![1, 2, 3]).unwrap();
+		object.fields.insert(3, FieldValue::Structure(vec![1, 2, 3])).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
 
 		assert!(matches!(&commands[0],
-			S2CommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template_id && c.access_groups == object.access_groups));
+			S2CCommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template_id && c.access_groups == object.access_groups));
 
 		assert!(matches!(&commands[1],
-			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
-			if c.object_id==id && c.field_id == 1 && c.structure.as_slice().to_vec() == vec![1,2,
-				3]));
-
-		assert!(matches!(&commands[2],
-			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
+			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id == 1 && c.value == 100));
 
-		assert!(matches!(&commands[3],
-			S2CommandWithFieldInfo { field: Some(Field { id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
+		assert!(matches!(&commands[2],
+			S2CCommandWithFieldInfo { field: Some(Field { id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
 			if c.object_id==id && c.field_id == 2 && (c.value - 200.200).abs() < 0.0001));
 
+		assert!(matches!(&commands[3],
+			S2CCommandWithFieldInfo { field: Some(Field { id: 3, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
+			if c.object_id==id && c.field_id == 3 && c.value.as_slice().to_vec() == vec![1,2,3]));
+
 		assert!(
-			matches!(&commands[4],S2CommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id)
+			matches!(&commands[4], S2CCommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id)
 		);
 	}
 
@@ -219,13 +251,13 @@ mod tests {
 		assert_eq!(commands.len(), 2);
 		assert!(matches!(
 			&commands[0],
-			S2CommandWithFieldInfo {
+			S2CCommandWithFieldInfo {
 				field: None,
 				command: S2CCommand::Create(_)
 			}
 		));
 		assert!(matches!(&commands[1],
-			S2CommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
+			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
 			if c.object_id==id && c.field_id== 1 && c.value == 100));
 	}
 

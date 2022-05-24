@@ -31,7 +31,7 @@ pub extern "C" fn set_structure(
 		C2SCommand::SetStructure(SetStructureCommand {
 			object_id: object_id.into(),
 			field_id,
-			structure: structure.into(),
+			value: structure.into(),
 		}),
 	)
 }

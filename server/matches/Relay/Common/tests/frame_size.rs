@@ -37,7 +37,7 @@ pub fn create_object_frame() {
 		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
 			object_id: Default::default(),
 			field_id: 30,
-			structure: Default::default(),
+			value: Default::default(),
 		})),
 	});
 	frame.add_command(CommandWithChannel {
