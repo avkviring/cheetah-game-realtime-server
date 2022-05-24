@@ -13,8 +13,8 @@ use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::room::object::{Field, GameObject, S2CCommandWithFieldInfo};
 use crate::room::field::FieldValue;
+use crate::room::object::{Field, GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -22,117 +22,91 @@ pub type CASCleanersStore = heapless::FnvIndexMap<(GameObjectId, FieldId, FieldT
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let object_id = self.object_id.clone();
-		let field_id = self.field_id;
-		let is_field_changed = Rc::new(RefCell::new(false));
-		let action = |object: &mut GameObject| {
-			let allow = match object.get_long(&self.field_id) {
-				None => true,
-				Some(value) => *value == self.current,
-			};
-			if allow {
-				*is_field_changed.borrow_mut() = true;
-				object.set_long(self.field_id, self.new)?;
-				if self.reset.is_some() {
-					object.set_compare_and_set_owner(self.field_id, user_id)?;
-				}
-				Ok(Some(S2CCommand::SetLong(SetLongCommand {
-					object_id: self.object_id.clone(),
-					field_id: self.field_id,
-					value: self.new,
-				})))
-			} else {
-				Ok(None)
-			}
-		};
-
-		room.send_command_from_action(
-			&object_id,
-			Field {
-				id: field_id,
-				field_type: FieldType::Long,
-			},
+		perform_compare_and_set(
+			room,
 			user_id,
-			Permission::Rw,
-			Option::None,
-			action,
-		)?;
-
-		if is_field_changed.take() {
-			let m = room.get_member_mut(&user_id)?;
-			let cls = &mut m.compare_and_set_cleaners;
-			match self.reset {
-				None => {
-					cls.remove(&(object_id, field_id, FieldType::Long));
-				}
-				Some(reset_value) => {
-					cls.insert((object_id, field_id, FieldType::Long), FieldValue::Long(reset_value))
-						.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners Overflow".to_string()))?;
-				}
-			}
-		}
-
-		Ok(())
+			self.object_id.to_owned(),
+			self.field_id,
+			FieldValue::Long(self.current),
+			FieldValue::Long(self.new),
+			self.reset
+				.as_ref()
+				.and_then(|r| Some(FieldValue::Long(*r))),
+		)
 	}
 }
 
 impl ServerCommandExecutor for CompareAndSetStructureCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let object_id = self.object_id.clone();
-		let field_id = self.field_id;
-		let is_field_changed = Rc::new(RefCell::new(false));
-		let action = |object: &mut GameObject| {
-			let allow = match object.get_structure(&self.field_id) {
-				None => true,
-				Some(value) => value == self.current.as_slice(),
-			};
-			if allow {
-				*is_field_changed.borrow_mut() = true;
-				object.set_structure(self.field_id, self.new.as_slice())?;
-				if self.reset.is_some() {
-					object.set_compare_and_set_owner(self.field_id, user_id)?;
-				}
-				Ok(Some(S2CCommand::SetStructure(SetStructureCommand {
-					object_id: self.object_id.clone(),
-					field_id: self.field_id,
-					value: self.new.clone(),
-				})))
-			} else {
-				Ok(None)
-			}
-		};
-
-		room.send_command_from_action(
-			&object_id,
-			Field {
-				id: field_id,
-				field_type: FieldType::Structure,
-			},
+		perform_compare_and_set(
+			room,
 			user_id,
-			Permission::Rw,
-			Option::None,
-			action,
-		)?;
+			self.object_id.to_owned(),
+			self.field_id,
+			FieldValue::Structure(self.current.as_slice().into()),
+			FieldValue::Structure(self.new.as_slice().into()),
+			self.reset
+				.as_ref()
+				.and_then(|r| Some(FieldValue::Structure(r.as_slice().into()))),
+		)
+	}
+}
 
-		if is_field_changed.take() {
-			let m = room.get_member_mut(&user_id)?;
-			let cls = &mut m.compare_and_set_cleaners;
-			match &self.reset {
-				None => {
-					cls.remove(&(object_id, field_id, FieldType::Structure));
-				}
-				Some(reset_value) => {
-					cls.insert(
-						(object_id, field_id, FieldType::Structure),
-						FieldValue::Structure(reset_value.as_slice().into()),
-					)
+pub fn perform_compare_and_set(
+	room: &mut Room,
+	user_id: RoomMemberId,
+	object_id: GameObjectId,
+	field_id: u16,
+	current: FieldValue,
+	new: FieldValue,
+	reset: Option<FieldValue>,
+) -> Result<(), ServerCommandError> {
+	let field_type = current.get_type();
+	let is_field_changed = Rc::new(RefCell::new(false));
+	let action = |object: &mut GameObject| {
+		let allow = match object.field(&field_id) {
+			None => true,
+			Some(value) => *value == current,
+		};
+		if allow {
+			*is_field_changed.borrow_mut() = true;
+			object.set_field(field_id, new.to_owned())?;
+			if reset.is_some() {
+				object.set_compare_and_set_owner(field_id, user_id)?;
+			}
+			Ok(Some(new.s2c_set_command(object.id.to_owned(), field_id)))
+		} else {
+			Ok(None)
+		}
+	};
+
+	room.send_command_from_action(
+		&object_id,
+		Field {
+			id: field_id,
+			field_type,
+		},
+		user_id,
+		Permission::Rw,
+		Option::None,
+		action,
+	)?;
+
+	if is_field_changed.take() {
+		let m = room.get_member_mut(&user_id)?;
+		let cls = &mut m.compare_and_set_cleaners;
+		match &reset {
+			None => {
+				cls.remove(&(object_id, field_id, field_type));
+			}
+			Some(reset_value) => {
+				cls.insert((object_id, field_id, field_type), reset_value.to_owned())
 					.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners overflow".to_string()))?;
-				}
 			}
 		}
-
-		Ok(())
 	}
+
+	Ok(())
 }
 
 pub fn reset_all_compare_and_set(
@@ -164,7 +138,7 @@ pub fn apply_reset(
 					let command = match &reset {
 						FieldValue::Long(value) => reset_long_value(object, field, *value),
 						FieldValue::Structure(structure) => reset_structure(object, field, structure),
-						_ => panic!("{:?} does not support CompareAndSet", reset.get_type().to_string())
+						_ => panic!("{:?} does not support CompareAndSet", reset.get_type().to_string()),
 					}?;
 					let groups = object.access_groups;
 					let template = object.template_id;

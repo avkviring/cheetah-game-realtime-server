@@ -61,7 +61,7 @@ impl GameObject {
 		self.fields.get(field_id)
 	}
 
-	pub fn set_field(&mut self, field_id: FieldId, value: &FieldValue) -> Result<(), GameObjectError> {
+	pub fn set_field(&mut self, field_id: FieldId, value: FieldValue) -> Result<(), GameObjectError> {
 		self.fields
 			.insert(field_id, value.to_owned())
 			.map(|_| ())
@@ -78,7 +78,7 @@ impl GameObject {
 	}
 
 	pub fn set_long(&mut self, field_id: FieldId, value: i64) -> Result<(), GameObjectError> {
-		self.set_field(field_id, &FieldValue::Long(value))
+		self.set_field(field_id, FieldValue::Long(value))
 	}
 
 	pub fn get_double(&self, field_id: &FieldId) -> Option<&f64> {
@@ -91,7 +91,7 @@ impl GameObject {
 	}
 
 	pub fn set_double(&mut self, field_id: FieldId, value: f64) -> Result<(), GameObjectError> {
-		self.set_field(field_id, &FieldValue::Double(value))
+		self.set_field(field_id, FieldValue::Double(value))
 	}
 
 	pub fn get_structure(&self, field_id: &FieldId) -> Option<&Vec<u8>> {

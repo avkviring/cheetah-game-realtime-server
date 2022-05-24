@@ -21,8 +21,9 @@ impl GameObjectTemplate {
 
 		let mut object = GameObject::new(id, self.template, self.groups, true);
 
-		self.fields.iter()
-			.for_each(|(k, v)| object.set_field(*k, v).unwrap());
+		self.fields
+			.iter()
+			.for_each(|(k, v)| object.set_field(*k, v.to_owned()).unwrap());
 
 		object
 	}
@@ -32,7 +33,7 @@ impl GameObjectTemplate {
 mod tests {
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::{template::config::GameObjectTemplate, field::FieldValue};
+	use crate::room::{field::FieldValue, template::config::GameObjectTemplate};
 
 	#[test]
 	#[should_panic]
