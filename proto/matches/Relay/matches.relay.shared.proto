@@ -9,3 +9,10 @@ enum FieldType {
   Event = 3;
 }
 
+message GameObjectField {
+  oneof Value {
+    int64 long = 1;
+    double double = 2;
+    bytes structure = 3; 
+  }
+}

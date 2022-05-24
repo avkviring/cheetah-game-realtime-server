@@ -41,17 +41,14 @@ message  DumpUser {
   uint32 id = 1;
   uint64 groups = 2;
   bool attached = 3;
-  repeated CompareAndSetCleaners compare_and_set_cleaners = 4;
+  repeated CompareAndSetCleaner compare_and_set_cleaners = 4;
 }
 
-message CompareAndSetCleaners {
+message CompareAndSetCleaner {
   uint32 game_object_id = 1;
   uint32 game_object_owner_user = 2;
   uint32 field_id = 3;
-  oneof reset {
-    int64 long_value = 4;
-    bytes structure_value = 5;
-  }
+  cheetah.matches.relay.shared.GameObjectField value = 4;
 }
 
 message DumpObject {
@@ -60,9 +57,7 @@ message DumpObject {
   uint32 template = 3;
   bool created = 4;
   optional uint32 owner_user_id = 5;
-  map<uint32, int64> longs = 6;
-  map<uint32, double> floats = 7;
-  map<uint32, bytes> structures = 8;
+  map<uint32, cheetah.matches.relay.shared.GameObjectField> fields = 6; 
   map<uint32, int64> compare_and_set_owners = 9;
 }
 

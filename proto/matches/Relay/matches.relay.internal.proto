@@ -109,12 +109,5 @@ message GameObjectTemplate {
   uint32 id = 1;
   uint32 template = 2;
   uint64 groups = 3;
-  GameObjectFieldsTemplate fields = 4;
+  map<uint32, cheetah.matches.relay.shared.GameObjectField> fields = 4;
 }
-
-message GameObjectFieldsTemplate {
-  map<uint32, int64> longs = 1;
-  map<uint32, double> floats = 2;
-  map<uint32, bytes> structures = 3;
-}
-
