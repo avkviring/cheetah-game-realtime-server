@@ -18,35 +18,28 @@ cheetahObject.IncrementLong(ushort fieldId, long increment)
 Применяется для определения первого клиента при выполнении одновременных действия, например, с помощью данного метода
 можно определить кто первый взял бонус.
 
-
 ```csharp
-cheetahObject.CompareAndSet(ushort fieldId, long currentValue, long newValue);
+cheetahObject.CompareAndSetLong(ushort fieldId, long currentValue, long newValue);
 ```
+
 - currentValue - необходимое значение в поле для выполнения операции;
 - newValue - новое значение поля, если текущее значение совпадает с currentValue;
 
-
 ```csharp
-cheetahObject.CompareAndSetWithReset(ushort fieldId, long currentValue, long newValue, long resetValue);
+cheetahObject.CompareAndSetLongWithReset(ushort fieldId, long currentValue, long newValue, long resetValue);
 ```
-- resetValue - значение поля, при выходе игрока из битвы, если была осуществлена операция установки newValue.
 
-
-
-
-Применяется для определения первого клиента при выполнении одновременных действия, например, с помощью данного метода
-можно определить кто первый взял бонус.
-
-- currentValue - необходимое значение в поле для выполнения операции;
-- newValue - новое значение поля, если текущее значение совпадает с currentValue;
-- resetValue - значение поля, при выходе игрока из битвы, если была осуществлена операция установки newValue.
-
+- resetValue — значение поля при выходе игрока из битвы, если была осуществлена операция установки newValue.
+- currentValue — необходимое значение в поле для выполнения операции;
+- newValue — новое значение поля, если текущее значение совпадает с currentValue;
+- resetValue — значение поля, при выходе игрока из битвы, если была осуществлена операция установки newValue.
 
 #### Пример использования
 
-Допустим нам надо определить кто первый бонус, для этого все клиенты посылаются команду CompareAndSet(objectId, 0,
-currentUserId, 0). Выполниться только первая команда, так как currentValue после нее будет уже не ноль и другие команды
-не смогут переписать значение поля.
+Допустим нам надо определить кто первый взял бонус. Для этого все клиенты посылают команду CompareAndSetLong
+с одинаковым значением currentValue.
+Выполнится только первая обработанная команда, так как currentValue после нее будет уже отличаться от исходного,
+и другие команды не смогут переписать значение поля.
 
 ### Обработка изменения
 
@@ -82,4 +75,3 @@ void Update() {
  }
 }
 ```
-
