@@ -57,7 +57,7 @@ message DumpObject {
   uint32 template = 3;
   bool created = 4;
   optional uint32 owner_user_id = 5;
-  map<uint32, cheetah.matches.relay.shared.GameObjectField> fields = 6; 
+  map<uint64, cheetah.matches.relay.shared.GameObjectField> fields = 6; 
   map<uint32, int64> compare_and_set_owners = 9;
 }
 
