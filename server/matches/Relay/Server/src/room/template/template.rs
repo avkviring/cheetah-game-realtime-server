@@ -23,7 +23,7 @@ impl GameObjectTemplate {
 
 		self.fields
 			.iter()
-			.for_each(|(k, v)| object.set_field(*k, v.to_owned()).unwrap());
+			.for_each(|(&(k, t), v)| object.set_field(k, t, v.to_owned()).unwrap());
 
 		object
 	}
@@ -31,7 +31,7 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_relay_common::{room::owner::GameObjectOwner, commands::FieldType};
 
 	use crate::room::{field::FieldValue, template::config::GameObjectTemplate};
 
@@ -56,17 +56,17 @@ mod tests {
 			fields: Default::default(),
 		};
 
-		config_object.fields.insert(0, FieldValue::Long(100));
-		config_object.fields.insert(1, FieldValue::Double(105.105));
-		config_object.fields.insert(2, FieldValue::Structure(vec![1]));
+		config_object.fields.insert((0, FieldType::Long), FieldValue::Long(100));
+		config_object.fields.insert((1, FieldType::Double), FieldValue::Double(105.105));
+		config_object.fields.insert((2, FieldType::Structure), FieldValue::Structure(vec![1]));
 
 		let object = config_object.clone().to_root_game_object();
 		assert_eq!(config_object.id, object.id.id);
 		assert!(matches!(object.id.owner, GameObjectOwner::Room));
 		assert_eq!(config_object.template, object.template_id);
 		assert_eq!(config_object.groups, object.access_groups);
-		assert_eq!(config_object.fields[&0], *object.field(&0).unwrap());
-		assert_eq!(config_object.fields[&1], *object.field(&1).unwrap());
-		assert_eq!(config_object.fields[&2], *object.field(&2).unwrap());
+		assert_eq!(config_object.fields[&(0, FieldType::Long)], *object.field(0, FieldType::Long).unwrap());
+		assert_eq!(config_object.fields[&(1, FieldType::Double)], *object.field(1, FieldType::Double).unwrap());
+		assert_eq!(config_object.fields[&(2, FieldType::Structure)], *object.field(2, FieldType::Structure).unwrap());
 	}
 }

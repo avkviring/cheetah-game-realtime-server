@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use cheetah_matches_relay_common::commands::FieldType;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
@@ -32,7 +33,7 @@ pub struct GameObjectTemplate {
 	pub id: u32,
 	pub template: GameObjectTemplateId,
 	pub groups: AccessGroups,
-	pub fields: HashMap<FieldId, FieldValue, FnvBuildHasher>,
+	pub fields: HashMap<(FieldId, FieldType), FieldValue, FnvBuildHasher>,
 }
 
 #[derive(Debug, Default, Clone)]

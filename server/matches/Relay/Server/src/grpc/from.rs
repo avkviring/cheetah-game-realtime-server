@@ -3,12 +3,14 @@ use rand::Rng;
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
 use crate::debug::proto::shared::game_object_field::Value as ValueD;
-use crate::debug::proto::shared::GameObjectField as GameObjectFieldD;
+use crate::debug::proto::shared::GameObjectField as GameObjectFieldDebug;
 use crate::grpc::proto::internal;
 use crate::grpc::proto::shared;
 use crate::room::field::FieldValue;
 use crate::room::object::Field;
 use crate::room::template::config;
+
+use super::proto::shared::GameObjectField;
 
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
@@ -37,13 +39,16 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			id: source.id,
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),
-			fields: source.fields.into_iter().map(|(k, v)| (k as u16, v.into())).collect(),
+			fields: source.fields.into_iter().map(|(k, v)| {
+				let field_value: FieldValue = v.into();
+				((k as u16, field_value.get_type()), field_value)
+			}).collect(),
 		}
 	}
 }
 
-impl From<shared::GameObjectField> for FieldValue {
-	fn from(field: shared::GameObjectField) -> Self {
+impl From<GameObjectField> for FieldValue {
+	fn from(field: GameObjectField) -> Self {
 		let value = field.value.expect("No value found in the GameObjectField");
 		match value {
 			shared::game_object_field::Value::Double(v) => FieldValue::Double(v),
@@ -54,7 +59,7 @@ impl From<shared::GameObjectField> for FieldValue {
 }
 
 // TODO: избавиться от дублирующихся типов и убрать это.
-impl From<FieldValue> for GameObjectFieldD {
+impl From<FieldValue> for GameObjectFieldDebug {
     fn from(value: FieldValue) -> Self {
 		let value_d = match value {
 			FieldValue::Double(v) => ValueD::Double(v),
@@ -62,7 +67,7 @@ impl From<FieldValue> for GameObjectFieldD {
 			FieldValue::Structure(s) => ValueD::Structure(s),
 		};
 
-		GameObjectFieldD { value: Some(value_d) }
+		GameObjectFieldDebug { value: Some(value_d) }
     }
 }
 

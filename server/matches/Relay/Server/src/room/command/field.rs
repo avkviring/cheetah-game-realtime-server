@@ -12,7 +12,7 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 		let action = |object: &mut GameObject| {
-			object.delete_field(self.field_id);
+			object.delete_field(self.field_id, self.field_type);
 			Ok(Some(S2CCommand::DeleteField(self.clone())))
 		};
 		room.send_command_from_action(
@@ -56,7 +56,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
-		assert!(object.get_long(&10).is_none());
+		assert!(object.get_long(10).is_none());
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::DeleteField(c))) if c==command));
 	}
 
@@ -65,16 +65,16 @@ mod tests {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
 
 		object.set_structure(1, &[1, 2, 3]).unwrap();
-		object.delete_field(1);
+		object.delete_field(1, FieldType::Structure);
 
 		object.set_double(2, 10.0).unwrap();
-		object.delete_field(2);
+		object.delete_field(2, FieldType::Double);
 
 		object.set_long(3, 20).unwrap();
-		object.delete_field(3);
+		object.delete_field(3, FieldType::Long);
 
-		assert!(object.get_structure(&1).is_none());
-		assert!(object.get_double(&2).is_none());
-		assert!(object.get_long(&3).is_none());
+		assert!(object.get_structure(1).is_none());
+		assert!(object.get_double(2).is_none());
+		assert!(object.get_long(3).is_none());
 	}
 }

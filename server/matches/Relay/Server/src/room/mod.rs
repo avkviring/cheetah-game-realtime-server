@@ -321,7 +321,7 @@ mod tests {
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::field::FieldValue;
-use crate::room::object::GameObject;
+	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};
 	use crate::server::measurers::Measurers;
@@ -606,8 +606,12 @@ use crate::room::object::GameObject;
 		let object1_template = user1_template.configure_object(1, 100, groups);
 		let allow_field_id = 5;
 		let deny_field_id = 10;
-		object1_template.fields.insert(allow_field_id, FieldValue::Long(555));
-		object1_template.fields.insert(deny_field_id, FieldValue::Long(111));
+		object1_template
+			.fields
+			.insert((allow_field_id, FieldType::Long), FieldValue::Long(555));
+		object1_template
+			.fields
+			.insert((deny_field_id, FieldType::Long), FieldValue::Long(111));
 		template
 			.permissions
 			.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);

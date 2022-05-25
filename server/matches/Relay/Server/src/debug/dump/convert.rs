@@ -29,7 +29,16 @@ impl From<&GameObject> for admin::DumpObject {
 			template: source.template_id as u32,
 			groups: source.access_groups.0,
 			created: source.created,
-			fields: from(source.fields()),
+			fields: source
+				.fields()
+				.iter()
+				.map(|(&(k, t), v)| {
+					let mut key = k as u64;
+					key <<= 31;
+					key |= t as u64;
+					(key, v.to_owned().into())
+				})
+				.collect(),
 			compare_and_set_owners: from(source.get_compare_and_set_owners()),
 		}
 	}
