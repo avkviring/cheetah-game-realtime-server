@@ -31,13 +31,8 @@ impl From<&GameObject> for admin::DumpObject {
 			created: source.created,
 			fields: source
 				.fields()
-				.iter()
-				.map(|(&(k, t), v)| {
-					let mut key = k as u64;
-					key <<= 31;
-					key |= t as u64;
-					(key, v.to_owned().into())
-				})
+				.values()
+				.map(|v| v.to_owned().into())
 				.collect(),
 			compare_and_set_owners: from(source.get_compare_and_set_owners()),
 		}
