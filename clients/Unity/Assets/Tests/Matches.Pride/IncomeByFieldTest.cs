@@ -85,6 +85,43 @@ namespace Tests.Matches.Pride
             Assert.AreEqual(turretsParams.Speed, turretsParamsStructure.Speed);
             Assert.AreEqual(memberA, actual.commandCreator);
         }
+
+        [UnityTest]
+        public IEnumerator TestCompareAndSetStructureIncomeCommands()
+        {
+            // слушаем события определенного типа
+            var collector = new StructureIncomeByFieldCommandCollector<TurretsParamsStructure>(clientB, TurretsParamsFieldId);
+            
+            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var turretParamsA = new TurretsParamsStructure()
+            {
+                Damage = 2,
+                Speed = 130
+            };
+
+            var turretParamsB = turretParamsA;
+            turretParamsB.Speed = 100;
+
+            var turretParamsC = turretParamsB;
+            turretParamsC.Damage = 5;
+
+            createdObject.SetStructure(TurretsParamsFieldId, ref turretParamsA);
+            createdObject.CompareAndSetStructure(TurretsParamsFieldId, ref turretParamsA, ref turretParamsB);
+            createdObject.CompareAndSetStructureWithReset(TurretsParamsFieldId, ref turretParamsB, ref turretParamsC, ref turretParamsA);
+
+            // ждем отправки команды
+            yield return new WaitForSeconds(1);
+            // прием команды
+            clientB.Update();
+
+            // проверяем результат
+            var stream = collector.GetStream();
+            var first = stream.GetItem(1);
+            var second = stream.GetItem(2);
+            Assert.AreEqual(100, first.value.Speed);
+            Assert.AreEqual(5, second.value.Damage);
+            Assert.AreEqual(memberA, first.commandCreator);
+        }
         
         [UnityTest]
         public IEnumerator TestLongIncomeCommands()
@@ -134,8 +171,8 @@ namespace Tests.Matches.Pride
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
             // изменяем значение
-            createdObject.CompareAndSet(HealFieldId, 0,555);
-            createdObject.CompareAndSetWithReset(HealFieldId, 555,1000,0);
+            createdObject.CompareAndSetLong(HealFieldId, 0,555);
+            createdObject.CompareAndSetLongWithReset(HealFieldId, 555,1000,0);
             // ждем отправки команды
             yield return new WaitForSeconds(1);
             // прием команды
