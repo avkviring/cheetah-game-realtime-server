@@ -23,7 +23,7 @@ impl GameObjectTemplate {
 
 		self.fields
 			.iter()
-			.for_each(|(&(k, t), v)| object.set_field(k, t, v.to_owned()).unwrap());
+			.for_each(|(&(k, _), v)| object.set_field_wrapped(k, v.to_owned()).unwrap());
 
 		object
 	}
@@ -31,7 +31,7 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::{room::owner::GameObjectOwner, commands::FieldType};
+	use cheetah_matches_relay_common::{commands::FieldType, room::owner::GameObjectOwner};
 
 	use crate::room::{field::FieldValue, template::config::GameObjectTemplate};
 
@@ -57,16 +57,29 @@ mod tests {
 		};
 
 		config_object.fields.insert((0, FieldType::Long), FieldValue::Long(100));
-		config_object.fields.insert((1, FieldType::Double), FieldValue::Double(105.105));
-		config_object.fields.insert((2, FieldType::Structure), FieldValue::Structure(vec![1]));
+		config_object
+			.fields
+			.insert((1, FieldType::Double), FieldValue::Double(105.105));
+		config_object
+			.fields
+			.insert((2, FieldType::Structure), FieldValue::Structure(vec![1]));
 
 		let object = config_object.clone().to_root_game_object();
 		assert_eq!(config_object.id, object.id.id);
 		assert!(matches!(object.id.owner, GameObjectOwner::Room));
 		assert_eq!(config_object.template, object.template_id);
 		assert_eq!(config_object.groups, object.access_groups);
-		assert_eq!(config_object.fields[&(0, FieldType::Long)], *object.field(0, FieldType::Long).unwrap());
-		assert_eq!(config_object.fields[&(1, FieldType::Double)], *object.field(1, FieldType::Double).unwrap());
-		assert_eq!(config_object.fields[&(2, FieldType::Structure)], *object.field(2, FieldType::Structure).unwrap());
+
+		let config_value: &i64 = config_object.fields[&(0, FieldType::Long)].as_ref();
+		let object_value: &i64 = object.field(0).unwrap();
+		assert_eq!(*config_value, *object_value);
+
+		let config_value: &f64 = config_object.fields[&(1, FieldType::Double)].as_ref();
+		let object_value: &f64 = object.field(1).unwrap();
+		assert_eq!(*config_value, *object_value);
+
+		let config_value: &Vec<u8> = config_object.fields[&(2, FieldType::Structure)].as_ref();
+		let object_value: &Vec<u8> = object.field(2).unwrap();
+		assert_eq!(*config_value, *object_value);
 	}
 }

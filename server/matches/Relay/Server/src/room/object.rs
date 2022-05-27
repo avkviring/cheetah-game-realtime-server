@@ -2,13 +2,14 @@ use thiserror::Error;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
-use cheetah_matches_relay_common::commands::FieldType;
+use cheetah_matches_relay_common::commands::{FieldType, ToFieldType};
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::field::FieldValue;
+
 
 const TYPE_COUNT: usize = 3;
 pub const MAX_FIELD_COUNT: usize = 64;
@@ -57,69 +58,34 @@ impl GameObject {
 		&self.fields
 	}
 
-	pub fn field(&self, field_id: FieldId, field_type: FieldType) -> Option<&FieldValue> {
+	pub fn field<'a, T: 'a>(&'a self, field_id: FieldId) -> Option<&'a T>
+		where
+			FieldValue: AsRef<T>,
+			T: ToFieldType
+	{
+		let field_type = T::to_field_type();
+		self.fields.get(&(field_id, field_type)).map(|v| v.as_ref())
+	}
+
+	pub fn field_wrapped(&self, field_id: FieldId, field_type: FieldType) -> Option<&FieldValue> {
 		self.fields.get(&(field_id, field_type))
 	}
 
-	pub fn set_field(&mut self, field_id: FieldId, field_type: FieldType, value: FieldValue) -> Result<(), GameObjectError> {
+	pub fn set_field<T>(&mut self, field_id: FieldId, value: T) -> Result<(), GameObjectError>
+		where
+			FieldValue: From<T>,
+			T: ToFieldType,
+	{
+		let field_value = value.into();
+		self.set_field_wrapped(field_id, field_value)
+	}
+
+	pub fn set_field_wrapped(&mut self, field_id: FieldId, value: FieldValue) -> Result<(), GameObjectError> {
+		let field_type = value.field_type();
 		self.fields
 			.insert((field_id, field_type), value)
 			.map(|_| ())
 			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.to_owned(), self.template_id))
-	}
-
-	pub fn get_long(&self, field_id: FieldId) -> Option<&i64> {
-		let f = self.field(field_id, FieldType::Long)?;
-		if let FieldValue::Long(v) = f {
-			Some(v)
-		} else {
-			panic!("The requested field was not of type long")
-		}
-	}
-
-	pub fn set_long(&mut self, field_id: FieldId, value: i64) -> Result<(), GameObjectError> {
-		self.set_field(field_id, FieldType::Long, FieldValue::Long(value))
-	}
-
-	pub fn get_double(&self, field_id: FieldId) -> Option<&f64> {
-		let f = self.field(field_id, FieldType::Double)?;
-		if let FieldValue::Double(v) = f {
-			Some(v)
-		} else {
-			panic!("The requested field was not of type double")
-		}
-	}
-
-	pub fn set_double(&mut self, field_id: FieldId, value: f64) -> Result<(), GameObjectError> {
-		self.set_field(field_id, FieldType::Double, FieldValue::Double(value))
-	}
-
-	pub fn get_structure(&self, field_id: FieldId) -> Option<&Vec<u8>> {
-		let f = self.field(field_id, FieldType::Structure)?;
-		if let FieldValue::Structure(s) = f {
-			Some(s)
-		} else {
-			panic!("The requested field was not of type structure");
-		}
-	}
-
-	pub fn set_structure(&mut self, field_id: FieldId, structure: &[u8]) -> Result<(), GameObjectError> {
-		match self.fields.get_mut(&(field_id, FieldType::Structure)) {
-			Some(field_value) => {
-				if let FieldValue::Structure(vec) = field_value {
-					vec.clear();
-					vec.extend_from_slice(structure);
-				} else {
-					panic!("The provided value was of type structure");
-				}
-				Ok(())
-			}
-			None => self
-				.fields
-				.insert((field_id, FieldType::Structure), FieldValue::Structure(structure.into()))
-				.map(|_| ())
-				.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id)),
-		}
 	}
 
 	pub fn get_compare_and_set_owners(&self) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
@@ -210,8 +176,8 @@ mod tests {
 	pub fn should_collect_command() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
-		object.set_long(1, 100).unwrap();
-		object.set_double(2, 200.200).unwrap();
+		object.set_field(1, 100).unwrap();
+		object.set_field(2, 200.200).unwrap();
 		object
 			.fields
 			.insert((1, FieldType::Structure), FieldValue::Structure(vec![1, 2, 3]))
@@ -247,7 +213,7 @@ mod tests {
 	pub fn should_collect_command_for_not_created_object() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id.clone(), 0, Default::default(), false);
-		object.set_long(1, 100).unwrap();
+		object.set_field(1, 100).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
@@ -267,8 +233,10 @@ mod tests {
 	#[test]
 	pub fn should_update_structure() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
-		object.set_structure(1, &[1, 2, 3]).unwrap();
-		object.set_structure(1, &[4, 5, 6, 7]).unwrap();
-		assert_eq!(*object.get_structure(1).unwrap(), [4, 5, 6, 7])
+		object.set_field(1, [1, 2, 3].as_ref()).unwrap();
+		object.set_field(1, [4, 5, 6, 7].as_ref()).unwrap();
+
+		let s: &Vec<u8> = object.field(1).unwrap();
+		assert_eq!(*s, [4, 5, 6, 7])
 	}
 }

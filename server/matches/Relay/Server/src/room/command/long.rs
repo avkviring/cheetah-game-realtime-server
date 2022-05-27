@@ -11,7 +11,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementLongC2SCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let action = |object: &mut GameObject| {
-			let value = match object.get_long(self.field_id) {
+			let value = match object.field::<i64>(self.field_id) {
 				Some(value) => match (*value).checked_add(self.increment) {
 					None => {
 						tracing::error!(
@@ -22,12 +22,12 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 						*value
 					}
 					Some(result) => {
-						object.set_long(self.field_id, result)?;
+						object.set_field(self.field_id, result)?;
 						result
 					}
 				},
 				None => {
-					object.set_long(self.field_id, self.increment)?;
+					object.set_field(self.field_id, self.increment)?;
 					self.increment
 				}
 			};
@@ -57,7 +57,7 @@ impl ServerCommandExecutor for SetLongCommand {
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
-			object.set_long(self.field_id, self.value)?;
+			object.set_field(self.field_id, self.value)?;
 			Ok(Some(S2CCommand::SetLong(self.clone())))
 		};
 
@@ -102,7 +102,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
-		assert_eq!(*object.get_long(10).unwrap(), 100);
+		assert_eq!(*object.field::<i64>(10).unwrap(), 100);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==command));
 	}
 
@@ -120,7 +120,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
-		assert_eq!(*object.get_long(10).unwrap(), 200);
+		assert_eq!(*object.field::<i64>(10).unwrap(), 200);
 
 		let result = SetLongCommand {
 			object_id: object_id.clone(),

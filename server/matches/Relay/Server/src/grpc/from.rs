@@ -41,7 +41,7 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			groups: AccessGroups(source.groups),
 			fields: source.fields.into_iter().map(|(k, v)| {
 				let field_value: FieldValue = v.into();
-				((k as u16, field_value.get_type()), field_value)
+				((k as u16, field_value.field_type()), field_value)
 			}).collect(),
 		}
 	}

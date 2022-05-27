@@ -1,10 +1,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
 use cheetah_matches_relay_common::commands::types::{
-	long::{CompareAndSetLongCommand, SetLongCommand},
+	long::{CompareAndSetLongCommand},
 	structure::CompareAndSetStructureCommand,
 };
 use cheetah_matches_relay_common::commands::FieldType;
@@ -61,16 +59,16 @@ pub fn perform_compare_and_set(
 	new: FieldValue,
 	reset: Option<FieldValue>,
 ) -> Result<(), ServerCommandError> {
-	let field_type = current.get_type();
+	let field_type = current.field_type();
 	let is_field_changed = Rc::new(RefCell::new(false));
 	let action = |object: &mut GameObject| {
-		let allow = match object.field(field_id, field_type) {
+		let allow = match object.field_wrapped(field_id, field_type) {
 			None => true,
 			Some(value) => *value == current,
 		};
 		if allow {
 			*is_field_changed.borrow_mut() = true;
-			object.set_field(field_id, field_type, new.to_owned())?;
+			object.set_field_wrapped(field_id, new.to_owned())?;
 			if reset.is_some() {
 				object.set_compare_and_set_owner(field_id, user_id)?;
 			}
@@ -135,11 +133,7 @@ pub fn apply_reset(
 		Ok(object) => {
 			if let Some(owner) = object.get_compare_and_set_owner(&field) {
 				if *owner == user_id {
-					let command = match &reset {
-						FieldValue::Long(value) => reset_long_value(object, field, *value),
-						FieldValue::Structure(structure) => reset_structure(object, field, structure),
-						_ => panic!("{:?} does not support CompareAndSet", reset.get_type().to_string()),
-					}?;
+					let command = reset_value(object, field, reset)?;
 					let groups = object.access_groups;
 					let template = object.template_id;
 					room.send_to_members(groups, template, &[command], |_| true)?;
@@ -151,39 +145,14 @@ pub fn apply_reset(
 	Ok(())
 }
 
-fn reset_long_value(object: &mut GameObject, field: FieldId, value: i64) -> Result<S2CCommandWithFieldInfo, ServerCommandError> {
-	object.set_long(field, value)?;
+fn reset_value(object: &mut GameObject, field_id: FieldId, value: &FieldValue) -> Result<S2CCommandWithFieldInfo, ServerCommandError> {
+	object.set_field_wrapped(field_id, value.to_owned())?;
 	let command = S2CCommandWithFieldInfo {
 		field: Some(Field {
-			id: field,
-			field_type: FieldType::Long,
+			id: field_id,
+			field_type: value.field_type()
 		}),
-		command: S2CCommand::SetLong(SetLongCommand {
-			object_id: object.id.to_owned(),
-			field_id: field,
-			value,
-		}),
-	};
-
-	Ok(command)
-}
-
-fn reset_structure(
-	object: &mut GameObject,
-	field: FieldId,
-	structure: &[u8],
-) -> Result<S2CCommandWithFieldInfo, ServerCommandError> {
-	object.set_structure(field, structure)?;
-	let command = S2CCommandWithFieldInfo {
-		field: Some(Field {
-			id: field,
-			field_type: FieldType::Long,
-		}),
-		command: S2CCommand::SetStructure(SetStructureCommand {
-			object_id: object.id.to_owned(),
-			field_id: field,
-			value: structure.into(),
-		}),
+		command: value.s2c_set_command(object.id.to_owned(), field_id)
 	};
 
 	Ok(command)
@@ -223,7 +192,7 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_long(command1.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -236,7 +205,7 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_long(command1.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -249,7 +218,7 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_long(command1.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().field::<i64>(command1.field_id).unwrap(),
 			command3.new
 		);
 	}
@@ -269,7 +238,7 @@ mod tests {
 			*room
 				.get_object(&object_id)
 				.unwrap()
-				.get_structure(command1.field_id)
+				.field::<Vec<u8>>(command1.field_id)
 				.unwrap(),
 			command1.new.as_slice()
 		);
@@ -286,7 +255,7 @@ mod tests {
 			*room
 				.get_object(&object_id)
 				.unwrap()
-				.get_structure(command1.field_id)
+				.field::<Vec<u8>>(command1.field_id)
 				.unwrap(),
 			command1.new.as_slice()
 		);
@@ -303,7 +272,7 @@ mod tests {
 			*room
 				.get_object(&object_id)
 				.unwrap()
-				.get_structure(command1.field_id)
+				.field::<Vec<u8>>(command1.field_id)
 				.unwrap(),
 			command3.new.as_slice()
 		);
@@ -346,13 +315,13 @@ mod tests {
 		};
 		command.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_long(command.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().field::<i64>(command.field_id).unwrap(),
 			command.new
 		);
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_long(command.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().field::<i64>(command.field_id).unwrap(),
 			command.reset.unwrap()
 		);
 	}
@@ -383,9 +352,9 @@ mod tests {
 		.execute(&mut room, user1_id)
 		.unwrap();
 
-		assert_eq!(*room.get_object(&object_id).unwrap().get_long(field_id).unwrap(), 200);
+		assert_eq!(*room.get_object(&object_id).unwrap().field::<i64>(field_id).unwrap(), 200);
 		room.disconnect_user(user1_id).unwrap();
-		assert_eq!(*room.get_object(&object_id).unwrap().get_long(field_id).unwrap(), 200);
+		assert_eq!(*room.get_object(&object_id).unwrap().field::<i64>(field_id).unwrap(), 200);
 	}
 
 	///
@@ -414,7 +383,7 @@ mod tests {
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_long(command_1.field_id).unwrap(),
+			*room.get_object(&object_id).unwrap().field::<i64>(command_1.field_id).unwrap(),
 			command_2.new
 		);
 	}

@@ -83,6 +83,34 @@ impl FieldType {
 	}
 }
 
+pub trait ToFieldType {
+	fn to_field_type() -> FieldType;
+}
+
+impl ToFieldType for i64 {
+    fn to_field_type() -> FieldType {
+		FieldType::Long
+    }
+}
+
+impl ToFieldType for f64 {
+	fn to_field_type() -> FieldType {
+		FieldType::Double
+	}
+}
+
+impl ToFieldType for Vec<u8> {
+	fn to_field_type() -> FieldType {
+		FieldType::Structure
+	}
+}
+
+impl ToFieldType for &[u8] {
+	fn to_field_type() -> FieldType {
+		FieldType::Structure
+	}
+}
+
 #[derive(Error, Debug)]
 pub enum CommandDecodeError {
 	#[error("Unknown type {:?}.",.0)]

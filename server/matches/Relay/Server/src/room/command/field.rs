@@ -47,7 +47,7 @@ mod tests {
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		let object_id = object.id.clone();
 		object.created = true;
-		object.set_long(10, 100).unwrap();
+		object.set_field(10, 100).unwrap();
 		let command = DeleteFieldCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
@@ -56,7 +56,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
-		assert!(object.get_long(10).is_none());
+		assert!(object.field::<i64>(10).is_none());
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::DeleteField(c))) if c==command));
 	}
 
@@ -64,17 +64,17 @@ mod tests {
 	pub fn should_delete_field() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
 
-		object.set_structure(1, &[1, 2, 3]).unwrap();
+		object.set_field(1, [1, 2, 3].as_ref()).unwrap();
 		object.delete_field(1, FieldType::Structure);
 
-		object.set_double(2, 10.0).unwrap();
+		object.set_field(2, 10.0).unwrap();
 		object.delete_field(2, FieldType::Double);
 
-		object.set_long(3, 20).unwrap();
+		object.set_field(3, 20).unwrap();
 		object.delete_field(3, FieldType::Long);
 
-		assert!(object.get_structure(1).is_none());
-		assert!(object.get_double(2).is_none());
-		assert!(object.get_long(3).is_none());
+		assert!(object.field::<Vec<u8>>(1).is_none());
+		assert!(object.field::<f64>(2).is_none());
+		assert!(object.field::<i64>(3).is_none());
 	}
 }
