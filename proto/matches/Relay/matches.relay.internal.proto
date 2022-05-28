@@ -109,5 +109,5 @@ message GameObjectTemplate {
   uint32 id = 1;
   uint32 template = 2;
   uint64 groups = 3;
-  map<uint32, cheetah.matches.relay.shared.GameObjectField> fields = 4;
+  repeated cheetah.matches.relay.shared.GameObjectField fields = 4;
 }

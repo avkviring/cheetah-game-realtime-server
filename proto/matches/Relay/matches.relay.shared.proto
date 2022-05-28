@@ -10,7 +10,12 @@ enum FieldType {
 }
 
 message GameObjectField {
-  oneof Value {
+  uint32 id = 1;
+  FieldValue value = 2;
+}
+
+message FieldValue {
+  oneof Variant {
     int64 long = 1;
     double double = 2;
     bytes structure = 3; 

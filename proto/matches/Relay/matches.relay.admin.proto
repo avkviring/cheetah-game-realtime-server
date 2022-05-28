@@ -48,7 +48,7 @@ message CompareAndSetCleaner {
   uint32 game_object_id = 1;
   uint32 game_object_owner_user = 2;
   uint32 field_id = 3;
-  cheetah.matches.relay.shared.GameObjectField value = 4;
+  cheetah.matches.relay.shared.FieldValue value = 4;
 }
 
 message DumpObject {
