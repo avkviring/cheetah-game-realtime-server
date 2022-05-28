@@ -12,6 +12,7 @@ use crate::service::configuration::yaml::YamlConfigurations;
 /// Преобразование текстовой конфигурации в grpc формат для relay сервера
 ///
 pub mod error;
+mod from;
 mod object;
 mod template;
 

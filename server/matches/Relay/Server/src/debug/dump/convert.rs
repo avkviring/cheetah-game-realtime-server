@@ -4,7 +4,6 @@ use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 use crate::debug::proto::admin;
-use crate::debug::proto::shared::game_object_field::Value;
 use crate::debug::proto::shared::GameObjectField;
 use crate::room::field::FieldValue;
 use crate::room::object::GameObject;
@@ -31,8 +30,11 @@ impl From<&GameObject> for admin::DumpObject {
 			created: source.created,
 			fields: source
 				.fields()
-				.values()
-				.map(|v| v.to_owned().into())
+				.iter()
+				.map(|((id, _), v)| GameObjectField {
+					id: *id as u32,
+					value: Some(v.to_owned().into()),
+				})
 				.collect(),
 			compare_and_set_owners: from(source.get_compare_and_set_owners()),
 		}
@@ -59,17 +61,7 @@ impl From<&Member> for admin::DumpUser {
 						GameObjectOwner::Member(id) => id as u32,
 					},
 					field_id: *field_id as u32,
-					value: match value {
-						FieldValue::Long(v) => Some(GameObjectField {
-							value: Some(Value::Long(*v)),
-						}),
-						FieldValue::Double(v) => Some(GameObjectField {
-							value: Some(Value::Double(*v)),
-						}),
-						FieldValue::Structure(s) => Some(GameObjectField {
-							value: Some(Value::Structure(s.to_owned())),
-						}),
-					},
+					value: Some(value.to_owned().into()),
 				})
 				.collect(),
 		}

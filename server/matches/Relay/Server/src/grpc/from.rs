@@ -2,15 +2,12 @@ use rand::Rng;
 
 use cheetah_matches_relay_common::room::access::AccessGroups;
 
-use crate::debug::proto::shared::game_object_field::Value as ValueD;
-use crate::debug::proto::shared::GameObjectField as GameObjectFieldDebug;
+use crate::debug::proto::shared::{FieldValue as GRPCFieldValueDebug, field_value::Variant as VariantDebug};
 use crate::grpc::proto::internal;
-use crate::grpc::proto::shared;
+use crate::grpc::proto::shared::{self, FieldValue as GRPCFieldValue, field_value::Variant};
 use crate::room::field::FieldValue;
 use crate::room::object::Field;
 use crate::room::template::config;
-
-use super::proto::shared::GameObjectField;
 
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
@@ -39,35 +36,34 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			id: source.id,
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),
-			fields: source.fields.into_iter().map(|(k, v)| {
-				let field_value: FieldValue = v.into();
-				((k as u16, field_value.field_type()), field_value)
+			fields: source.fields.into_iter().map(|f| {
+				let field_value: FieldValue = f.value.expect("Field with no value").into();
+				((f.id as u16, field_value.field_type()), field_value)
 			}).collect(),
 		}
 	}
 }
 
-impl From<GameObjectField> for FieldValue {
-	fn from(field: GameObjectField) -> Self {
-		let value = field.value.expect("No value found in the GameObjectField");
-		match value {
-			shared::game_object_field::Value::Double(v) => FieldValue::Double(v),
-			shared::game_object_field::Value::Long(v) => FieldValue::Long(v),
-			shared::game_object_field::Value::Structure(s) => FieldValue::Structure(s),
+impl From<GRPCFieldValue> for FieldValue {
+	fn from(field: GRPCFieldValue) -> Self {
+		let variant = field.variant.expect("FieldValue was empty");
+		match variant {
+			Variant::Double(v) => FieldValue::Double(v),
+			Variant::Long(v) => FieldValue::Long(v),
+			Variant::Structure(s) => FieldValue::Structure(s),
 		}
 	}
 }
 
-// TODO: избавиться от дублирующихся типов и убрать это.
-impl From<FieldValue> for GameObjectFieldDebug {
+impl From<FieldValue> for GRPCFieldValueDebug {
     fn from(value: FieldValue) -> Self {
 		let value_d = match value {
-			FieldValue::Double(v) => ValueD::Double(v),
-			FieldValue::Long(v) => ValueD::Long(v),
-			FieldValue::Structure(s) => ValueD::Structure(s),
+			FieldValue::Double(v) => VariantDebug::Double(v),
+			FieldValue::Long(v) => VariantDebug::Long(v),
+			FieldValue::Structure(s) => VariantDebug::Structure(s),
 		};
 
-		GameObjectFieldDebug { value: Some(value_d) }
+		GRPCFieldValueDebug { variant: Some(value_d) }
     }
 }
 

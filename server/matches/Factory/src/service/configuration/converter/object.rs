@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::proto::matches::relay::internal as relay;
-use crate::proto::matches::relay::shared::{game_object_field, GameObjectField};
+use crate::proto::matches::relay::shared::GameObjectField;
 use crate::service::configuration::converter::error::Error;
 use crate::service::configuration::yaml::structures::{
 	Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName,
@@ -26,7 +26,7 @@ pub fn create_relay_object(
 		.get(&room_object.group)
 		.ok_or_else(|| Error::ObjectGroupNotFound(room_name.clone(), room_object.group.clone()))?;
 
-	let mut relay_fields = HashMap::new();
+	let mut relay_fields = Vec::with_capacity(room_object.values.len());
 	for value in &room_object.values {
 		let field = name_to_field
 			.get(&value.field)
@@ -37,27 +37,30 @@ pub fn create_relay_object(
 					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
 				})?;
 				let f = GameObjectField {
-					value: Some(game_object_field::Value::Long(value)),
+					id: field.id as u32,
+					value: Some(value.into()),
 				};
-				relay_fields.insert(field.id as u32, f);
+				relay_fields.push(f);
 			}
 			FieldType::Double => {
 				let value = value.value.as_f64().ok_or_else(|| {
 					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
 				})?;
 				let f = GameObjectField {
-					value: Some(game_object_field::Value::Double(value)),
+					id: field.id as u32,
+					value: Some(value.into()),
 				};
-				relay_fields.insert(field.id as u32, f);
+				relay_fields.push(f);
 			}
 			FieldType::Struct => {
 				let value = rmp_serde::to_vec(&value.value).map_err(|_| {
 					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
 				})?;
 				let f = GameObjectField {
-					value: Some(game_object_field::Value::Structure(value)),
+					id: field.id as u32,
+					value: Some(value.into()),
 				};
-				relay_fields.insert(field.id as u32, f);
+				relay_fields.push(f);
 			}
 			FieldType::Event => {
 				return Err(Error::EventValueNotSupported(room_name.to_string(), value.field.clone()));
@@ -83,7 +86,6 @@ pub mod test {
 	use rmpv::Utf8String;
 
 	use crate::proto::matches::relay::internal as relay;
-	use crate::proto::matches::relay::shared::game_object_field::Value;
 	use crate::proto::matches::relay::shared::GameObjectField;
 	use crate::service::configuration::converter::error::Error;
 	use crate::service::configuration::converter::object::create_relay_object;
@@ -124,7 +126,7 @@ pub mod test {
 					"healing",
 					Field {
 						name: None,
-						id: 57,
+						id: 55,
 						r#type: FieldType::Double,
 					},
 				),
@@ -143,30 +145,29 @@ pub mod test {
 		assert_eq!(object.template, 200);
 		assert_eq!(object.id, 100);
 		assert_eq!(object.groups, 4);
+		assert_eq!(object.fields.len(), 3);
 		assert_eq!(
 			object.fields,
 			[
 				(
-					55,
 					GameObjectField {
-						value: Some(Value::Long(100))
+						id: 55,
+						value: Some(100.into()),
 					}
 				),
 				(
-					57,
 					GameObjectField {
-						value: Some(Value::Double(3.1))
+						id: 55,
+						value: Some(3.1.into())
 					}
 				),
 				(
-					59,
 					GameObjectField {
-						value: Some(Value::Structure(vec![129, 161, 102, 161, 97]))
+						id: 59,
+						value: Some(vec![129, 161, 102, 161, 97].into())
 					}
 				)
 			]
-			.into_iter()
-			.collect()
 		);
 	}
 
@@ -236,13 +237,11 @@ pub mod test {
 		assert_eq!(
 			result.fields,
 			[(
-				55,
 				GameObjectField {
-					value: Some(Value::Double(123.0))
+					id: 55,
+					value: Some(123.0.into()),
 				}
-			),]
-			.into_iter()
-			.collect()
+			)]
 		)
 	}
 
