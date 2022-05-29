@@ -21,18 +21,15 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::tracer::CommandTracerSessions;
-use crate::room::command::compare_and_set::reset_all_compare_and_set;
+use crate::room::command::compare_and_set::{reset_all_compare_and_set, CASCleanersStore};
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::server::measurers::Measurers;
 
-use self::command::compare_and_set::CASCleanersStore;
-
 pub mod action;
 pub mod command;
-pub mod field;
 pub mod object;
 pub mod sender;
 pub mod template;
@@ -311,7 +308,7 @@ mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand::SetLong;
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
-	use cheetah_matches_relay_common::commands::FieldType;
+	use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 	use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use cheetah_matches_relay_common::protocol::frame::channel::{Channel, ChannelType};
@@ -320,7 +317,6 @@ mod tests {
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
-	use crate::room::field::FieldValue;
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};

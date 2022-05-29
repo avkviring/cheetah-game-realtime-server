@@ -7,8 +7,8 @@ use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::UserPrivateKey;
+use cheetah_matches_relay_common::commands::FieldValue;
 
-use crate::room::field::FieldValue;
 use crate::room::object::Field;
 
 ///

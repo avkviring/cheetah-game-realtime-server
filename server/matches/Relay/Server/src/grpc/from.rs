@@ -1,11 +1,13 @@
 use rand::Rng;
 
-use cheetah_matches_relay_common::room::access::AccessGroups;
+use cheetah_matches_relay_common::{
+	room::access::AccessGroups,
+	commands::FieldValue
+};
 
 use crate::debug::proto::shared::{FieldValue as GRPCFieldValueDebug, field_value::Variant as VariantDebug};
 use crate::grpc::proto::internal;
 use crate::grpc::proto::shared::{self, FieldValue as GRPCFieldValue, field_value::Variant};
-use crate::room::field::FieldValue;
 use crate::room::object::Field;
 use crate::room::template::config;
 

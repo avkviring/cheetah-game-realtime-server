@@ -2,14 +2,11 @@ use thiserror::Error;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
-use cheetah_matches_relay_common::commands::{FieldType, ToFieldType};
+use cheetah_matches_relay_common::commands::{field_type::ToFieldType, FieldType, FieldValue};
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
-
-use crate::room::field::FieldValue;
-
 
 const TYPE_COUNT: usize = 3;
 pub const MAX_FIELD_COUNT: usize = 64;
@@ -59,9 +56,9 @@ impl GameObject {
 	}
 
 	pub fn get_field<'a, T: 'a>(&'a self, field_id: FieldId) -> Option<&'a T>
-		where
-			FieldValue: AsRef<T>,
-			T: ToFieldType
+	where
+		FieldValue: AsRef<T>,
+		T: ToFieldType,
 	{
 		let field_type = T::to_field_type();
 		self.fields.get(&(field_id, field_type)).map(|v| v.as_ref())
@@ -72,9 +69,9 @@ impl GameObject {
 	}
 
 	pub fn set_field<T>(&mut self, field_id: FieldId, value: T) -> Result<(), GameObjectError>
-		where
-			FieldValue: From<T>,
-			T: ToFieldType,
+	where
+		FieldValue: From<T>,
+		T: ToFieldType,
 	{
 		let field_value = value.into();
 		self.set_field_wrapped(field_id, field_value)
@@ -139,7 +136,7 @@ impl GameObject {
 					id: field_id,
 					field_type: field_type,
 				}),
-				command: v.s2c_set_command(self.id.clone(), field_id),
+				command: S2CCommand::new_set_command(v.to_owned(), self.id.to_owned(), field_id),
 			};
 			commands.push(command)?;
 		}

@@ -1,17 +1,16 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use cheetah_matches_relay_common::commands::types::{
-	long::{CompareAndSetLongCommand},
-	structure::CompareAndSetStructureCommand,
+use cheetah_matches_relay_common::commands::{
+	s2c::S2CCommand,
+	types::{long::CompareAndSetLongCommand, structure::CompareAndSetStructureCommand},
 };
-use cheetah_matches_relay_common::commands::FieldType;
+use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::room::field::FieldValue;
 use crate::room::object::{Field, GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
@@ -27,9 +26,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			self.field_id,
 			FieldValue::Long(self.current),
 			FieldValue::Long(self.new),
-			self.reset
-				.as_ref()
-				.and_then(|r| Some(FieldValue::Long(*r))),
+			self.reset.as_ref().and_then(|r| Some(FieldValue::Long(*r))),
 		)
 	}
 }
@@ -72,7 +69,7 @@ pub fn perform_compare_and_set(
 			if reset.is_some() {
 				object.set_compare_and_set_owner(field_id, user_id)?;
 			}
-			Ok(Some(new.s2c_set_command(object.id.to_owned(), field_id)))
+			Ok(Some(S2CCommand::new_set_command(new, object.id.to_owned(), field_id)))
 		} else {
 			Ok(None)
 		}
@@ -145,14 +142,18 @@ pub fn apply_reset(
 	Ok(())
 }
 
-fn reset_value(object: &mut GameObject, field_id: FieldId, value: &FieldValue) -> Result<S2CCommandWithFieldInfo, ServerCommandError> {
+fn reset_value(
+	object: &mut GameObject,
+	field_id: FieldId,
+	value: &FieldValue,
+) -> Result<S2CCommandWithFieldInfo, ServerCommandError> {
 	object.set_field_wrapped(field_id, value.to_owned())?;
 	let command = S2CCommandWithFieldInfo {
 		field: Some(Field {
 			id: field_id,
-			field_type: value.field_type()
+			field_type: value.field_type(),
 		}),
-		command: value.s2c_set_command(object.id.to_owned(), field_id)
+		command: S2CCommand::new_set_command(value.to_owned(), object.id.to_owned(), field_id),
 	};
 
 	Ok(command)
@@ -192,7 +193,11 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(command1.field_id)
+				.unwrap(),
 			command1.new
 		);
 
@@ -205,7 +210,11 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(command1.field_id)
+				.unwrap(),
 			command1.new
 		);
 
@@ -218,7 +227,11 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(command1.field_id)
+				.unwrap(),
 			command3.new
 		);
 	}
@@ -315,13 +328,21 @@ mod tests {
 		};
 		command.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(command.field_id)
+				.unwrap(),
 			command.new
 		);
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(command.field_id)
+				.unwrap(),
 			command.reset.unwrap()
 		);
 	}
@@ -383,7 +404,11 @@ mod tests {
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command_1.field_id).unwrap(),
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(command_1.field_id)
+				.unwrap(),
 			command_2.new
 		);
 	}

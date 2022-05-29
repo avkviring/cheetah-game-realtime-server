@@ -31,9 +31,9 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::{commands::FieldType, room::owner::GameObjectOwner};
+	use cheetah_matches_relay_common::{commands::{FieldType, FieldValue}, room::owner::GameObjectOwner};
 
-	use crate::room::{field::FieldValue, template::config::GameObjectTemplate};
+	use crate::room::{template::config::GameObjectTemplate};
 
 	#[test]
 	#[should_panic]

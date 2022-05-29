@@ -1,7 +1,6 @@
 use std::io::Cursor;
 
-use strum_macros::AsRefStr;
-
+use crate::commands::field_value::FieldValue;
 use crate::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
@@ -14,6 +13,7 @@ use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
+use strum_macros::AsRefStr;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum S2CCommand {
@@ -32,16 +32,37 @@ pub struct S2CCommandWithCreator {
 	pub command: S2CCommand,
 	pub creator: RoomMemberId,
 }
+
 impl S2CCommand {
+	pub fn new_set_command(value: FieldValue, object_id: GameObjectId, field_id: u16) -> S2CCommand {
+		match value {
+			FieldValue::Long(v) => S2CCommand::SetLong(SetLongCommand {
+				field_id,
+				object_id,
+				value: v,
+			}),
+			FieldValue::Double(v) => S2CCommand::SetDouble(SetDoubleCommand {
+				object_id,
+				field_id,
+				value: v,
+			}),
+			FieldValue::Structure(v) => S2CCommand::SetStructure(SetStructureCommand {
+				object_id,
+				field_id,
+				value: v.as_slice().into(),
+			}),
+		}
+	}
+
 	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
-			S2CCommand::Create(_) => Option::None,
-			S2CCommand::Created(_) => Option::None,
+			S2CCommand::Create(_) => None,
+			S2CCommand::Created(_) => None,
 			S2CCommand::SetLong(command) => Some(command.field_id),
 			S2CCommand::SetDouble(command) => Some(command.field_id),
 			S2CCommand::SetStructure(command) => Some(command.field_id),
 			S2CCommand::Event(command) => Some(command.field_id),
-			S2CCommand::Delete(_) => Option::None,
+			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_id),
 		}
 	}
@@ -61,13 +82,13 @@ impl S2CCommand {
 
 	pub fn get_field_type(&self) -> Option<FieldType> {
 		match self {
-			S2CCommand::Create(_) => Option::None,
-			S2CCommand::Created(_) => Option::None,
-			S2CCommand::SetLong(_) => Option::Some(FieldType::Long),
-			S2CCommand::SetDouble(_) => Option::Some(FieldType::Double),
-			S2CCommand::SetStructure(_) => Option::Some(FieldType::Structure),
-			S2CCommand::Event(_) => Option::Some(FieldType::Event),
-			S2CCommand::Delete(_) => Option::None,
+			S2CCommand::Create(_) => None,
+			S2CCommand::Created(_) => None,
+			S2CCommand::SetLong(_) => Some(FieldType::Long),
+			S2CCommand::SetDouble(_) => Some(FieldType::Double),
+			S2CCommand::SetStructure(_) => Some(FieldType::Structure),
+			S2CCommand::Event(_) => Some(FieldType::Event),
+			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_type.clone()),
 		}
 	}
