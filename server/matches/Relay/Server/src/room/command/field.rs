@@ -56,7 +56,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
-		assert!(object.field::<i64>(10).is_none());
+		assert!(object.get_field::<i64>(10).is_none());
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::DeleteField(c))) if c==command));
 	}
 
@@ -73,8 +73,8 @@ mod tests {
 		object.set_field(3, 20).unwrap();
 		object.delete_field(3, FieldType::Long);
 
-		assert!(object.field::<Vec<u8>>(1).is_none());
-		assert!(object.field::<f64>(2).is_none());
-		assert!(object.field::<i64>(3).is_none());
+		assert!(object.get_field::<Vec<u8>>(1).is_none());
+		assert!(object.get_field::<f64>(2).is_none());
+		assert!(object.get_field::<i64>(3).is_none());
 	}
 }

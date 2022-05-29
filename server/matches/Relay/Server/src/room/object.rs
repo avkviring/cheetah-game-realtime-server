@@ -58,7 +58,7 @@ impl GameObject {
 		&self.fields
 	}
 
-	pub fn field<'a, T: 'a>(&'a self, field_id: FieldId) -> Option<&'a T>
+	pub fn get_field<'a, T: 'a>(&'a self, field_id: FieldId) -> Option<&'a T>
 		where
 			FieldValue: AsRef<T>,
 			T: ToFieldType
@@ -67,7 +67,7 @@ impl GameObject {
 		self.fields.get(&(field_id, field_type)).map(|v| v.as_ref())
 	}
 
-	pub fn field_wrapped(&self, field_id: FieldId, field_type: FieldType) -> Option<&FieldValue> {
+	pub fn get_field_wrapped(&self, field_id: FieldId, field_type: FieldType) -> Option<&FieldValue> {
 		self.fields.get(&(field_id, field_type))
 	}
 
@@ -236,7 +236,7 @@ mod tests {
 		object.set_field(1, [1, 2, 3].as_ref()).unwrap();
 		object.set_field(1, [4, 5, 6, 7].as_ref()).unwrap();
 
-		let s: &Vec<u8> = object.field(1).unwrap();
+		let s: &Vec<u8> = object.get_field(1).unwrap();
 		assert_eq!(*s, [4, 5, 6, 7])
 	}
 }

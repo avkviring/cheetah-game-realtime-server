@@ -14,7 +14,7 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
-			let value = if let Some(value) = object.field(field_id) {
+			let value = if let Some(value) = object.get_field(field_id) {
 				let new_value = value + self.increment;
 				object.set_field(field_id, new_value)?;
 				new_value
@@ -90,7 +90,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
-		assert_eq!(*object.field::<f64>(10).unwrap() as u64, 100);
+		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 100);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) if c==command));
 	}
 
@@ -111,7 +111,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
-		assert_eq!(*object.field::<f64>(10).unwrap() as u64, 200);
+		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 200);
 
 		let result = SetDoubleCommand {
 			object_id: object_id.clone(),

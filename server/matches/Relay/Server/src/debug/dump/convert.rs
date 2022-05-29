@@ -5,7 +5,6 @@ use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
 use crate::debug::proto::admin;
 use crate::debug::proto::shared::GameObjectField;
-use crate::room::field::FieldValue;
 use crate::room::object::GameObject;
 use crate::room::{Member, Room};
 

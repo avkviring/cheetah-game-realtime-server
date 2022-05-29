@@ -62,7 +62,7 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 		let object = room.get_object(&object_id).unwrap();
 
-		assert_eq!(*object.field::<Vec<u8>>(100).unwrap(), command.value.as_slice().to_vec());
+		assert_eq!(*object.get_field::<Vec<u8>>(100).unwrap(), command.value.as_slice().to_vec());
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c==command));
 	}
 }

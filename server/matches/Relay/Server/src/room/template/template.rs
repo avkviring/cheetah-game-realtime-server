@@ -71,15 +71,15 @@ mod tests {
 		assert_eq!(config_object.groups, object.access_groups);
 
 		let config_value: &i64 = config_object.fields[&(0, FieldType::Long)].as_ref();
-		let object_value: &i64 = object.field(0).unwrap();
+		let object_value: &i64 = object.get_field(0).unwrap();
 		assert_eq!(*config_value, *object_value);
 
 		let config_value: &f64 = config_object.fields[&(1, FieldType::Double)].as_ref();
-		let object_value: &f64 = object.field(1).unwrap();
+		let object_value: &f64 = object.get_field(1).unwrap();
 		assert_eq!(*config_value, *object_value);
 
 		let config_value: &Vec<u8> = config_object.fields[&(2, FieldType::Structure)].as_ref();
-		let object_value: &Vec<u8> = object.field(2).unwrap();
+		let object_value: &Vec<u8> = object.get_field(2).unwrap();
 		assert_eq!(*config_value, *object_value);
 	}
 }
