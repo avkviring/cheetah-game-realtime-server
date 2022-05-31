@@ -187,8 +187,8 @@ mod tests {
 			S2CCommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template_id && c.access_groups == object.access_groups));
 
 		assert!(matches!(&commands[1],
-			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetLong(c)}
-			if c.object_id==id && c.field_id == 1 && c.value == 100));
+			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetField(c)}
+			if c.object_id==id && c.field_id == 1 && c.value == 100.into()));
 
 		assert!(matches!(&commands[2],
 			S2CCommandWithFieldInfo { field: Some(Field { id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
@@ -223,8 +223,8 @@ mod tests {
 			}
 		));
 		assert!(matches!(&commands[1],
-			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetLong(c)}
-			if c.object_id==id && c.field_id== 1 && c.value == 100));
+			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetField(c)}
+			if c.object_id==id && c.field_id== 1 && c.value == 100.into()));
 	}
 
 	#[test]

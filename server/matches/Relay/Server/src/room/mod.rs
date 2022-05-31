@@ -305,10 +305,9 @@ mod tests {
 
 	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-	use cheetah_matches_relay_common::commands::s2c::S2CCommand::SetLong;
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-	use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
-	use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
+	use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 	use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
 	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use cheetah_matches_relay_common::protocol::frame::channel::{Channel, ChannelType};
@@ -622,7 +621,7 @@ mod tests {
 		let commands = room.test_get_user_out_commands(user2_id);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
-		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
+		assert!(matches!(commands.get(1), Some(S2CCommand::SetField(command)) if command.field_id == allow_field_id));
 		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
 	}
 
@@ -636,10 +635,10 @@ mod tests {
 		member.out_commands.push(CommandWithChannelType {
 			channel_type: ChannelType::ReliableUnordered,
 			command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-				command: SetLong(SetLongCommand {
+				command: S2CCommand::SetField(SetFieldCommand {
 					object_id: Default::default(),
 					field_id: 0,
-					value: 0,
+					value: 0.into(),
 				}),
 				creator: 0,
 			}),

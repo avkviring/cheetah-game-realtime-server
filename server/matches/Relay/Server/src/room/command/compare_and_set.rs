@@ -308,8 +308,8 @@ mod tests {
 		room.test_out_commands.clear();
 		command.execute(&mut room, user1_id).unwrap();
 		assert!(
-			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if
-			c.value==command.new)
+			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if
+			c.value==command.new.into())
 		);
 	}
 

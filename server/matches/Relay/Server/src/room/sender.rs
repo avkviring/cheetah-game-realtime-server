@@ -128,8 +128,7 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-	use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
-	use cheetah_matches_relay_common::commands::FieldType;
+	use cheetah_matches_relay_common::commands::{types::field::SetFieldCommand, FieldType};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
@@ -222,10 +221,10 @@ mod tests {
 				Permission::Rw,
 				Option::None,
 				|_| {
-					Ok(Some(S2CCommand::SetLong(SetLongCommand {
+					Ok(Some(S2CCommand::SetField(SetFieldCommand {
 						object_id: object_id.clone(),
 						field_id: field_id_1,
-						value: 0,
+						value: 0.into(),
 					})))
 				},
 			)
@@ -245,10 +244,10 @@ mod tests {
 				Permission::Rw,
 				Option::None,
 				|_| {
-					Ok(Some(S2CCommand::SetLong(SetLongCommand {
+					Ok(Some(S2CCommand::SetField(SetFieldCommand {
 						object_id: object_id.clone(),
 						field_id: field_id_2,
-						value: 0,
+						value: 0.into(),
 					})))
 				},
 			)
@@ -256,7 +255,7 @@ mod tests {
 
 		assert!(matches!(
 			room.test_get_user_out_commands(user_id).get(0),
-			Option::Some(S2CCommand::SetLong(_))
+			Option::Some(S2CCommand::SetField(_))
 		));
 	}
 
@@ -317,10 +316,10 @@ mod tests {
 					id: deny_field_id,
 					field_type: FieldType::Long,
 				}),
-				command: S2CCommand::SetLong(SetLongCommand {
+				command: S2CCommand::SetField(SetFieldCommand {
 					object_id: object_id.clone(),
 					field_id: deny_field_id,
-					value: 0,
+					value: 0.into(),
 				}),
 			},
 			S2CCommandWithFieldInfo {
@@ -328,10 +327,10 @@ mod tests {
 					id: allow_field_id,
 					field_type: FieldType::Long,
 				}),
-				command: S2CCommand::SetLong(SetLongCommand {
+				command: S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: allow_field_id,
-					value: 100,
+					value: 100.into(),
 				}),
 			},
 		];
@@ -342,7 +341,7 @@ mod tests {
 		let command = out_commands.get(0);
 
 		assert!(
-			matches!(command, Some(S2CCommandWithCreator{creator, command: S2CCommand::SetLong
+			matches!(command, Some(S2CCommandWithCreator{creator, command: S2CCommand::SetField
 				(command)}) if command.field_id == allow_field_id && *creator == user_source_id)
 		);
 		assert_eq!(out_commands.len(), 1);
@@ -386,10 +385,10 @@ mod tests {
 					id: allow_field_id,
 					field_type,
 				}),
-				command: S2CCommand::SetLong(SetLongCommand {
+				command: S2CCommand::SetField(SetFieldCommand {
 					object_id: object_id.clone(),
 					field_id: allow_field_id,
-					value: 0,
+					value: 0.into(),
 				}),
 			},
 			S2CCommandWithFieldInfo {
@@ -397,10 +396,10 @@ mod tests {
 					id: deny_field_id,
 					field_type,
 				}),
-				command: S2CCommand::SetLong(SetLongCommand {
+				command: S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: deny_field_id,
-					value: 155,
+					value: 155.into(),
 				}),
 			},
 		];
@@ -409,7 +408,7 @@ mod tests {
 			.unwrap();
 
 		let commands = room.test_get_user_out_commands(user_2);
-		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetLong(c)) if c.field_id == allow_field_id));
+		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetField(c)) if c.field_id == allow_field_id));
 		assert_eq!(commands.len(), 1);
 	}
 
@@ -437,10 +436,10 @@ mod tests {
 				Permission::Rw,
 				Option::None,
 				|_| {
-					Ok(Some(S2CCommand::SetLong(SetLongCommand {
+					Ok(Some(S2CCommand::SetField(SetFieldCommand {
 						object_id,
 						field_id: 100,
-						value: 200,
+						value: 200.into(),
 					})))
 				},
 			)

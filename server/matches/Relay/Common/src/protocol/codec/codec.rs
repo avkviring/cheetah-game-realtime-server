@@ -134,8 +134,8 @@ pub mod tests {
 	use std::io::Cursor;
 
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::types::long::SetLongCommand;
-	use crate::protocol::codec::cipher::Cipher;
+	use crate::commands::types::field::SetFieldCommand;
+use crate::protocol::codec::cipher::Cipher;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
@@ -158,10 +158,10 @@ pub mod tests {
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.add_command(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Member(200)),
 				field_id: 78,
-				value: 155,
+				value: 155.into(),
 			})),
 		});
 		let mut buffer = [0; 1024];

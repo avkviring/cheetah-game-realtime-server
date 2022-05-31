@@ -157,12 +157,6 @@ impl ApplicationThreadClient {
 							}
 						}
 					},
-					S2CCommand::SetLong(command) => {
-						if let Some(ref listener) = self.listener_long_value {
-							let object_id = (&command.object_id).into();
-							listener(command_with_user.creator, &object_id, command.field_id, command.value);
-						}
-					}
 					S2CCommand::SetDouble(command) => {
 						if let Some(ref listener) = self.listener_float_value {
 							let object_id = (&command.object_id).into();

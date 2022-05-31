@@ -7,18 +7,20 @@ use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
+use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 use crate::commands::types::structure::{CompareAndSetStructureCommand, SetStructureCommand};
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 
+use super::types::field::SetFieldCommand;
+
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum C2SCommand {
 	CreateGameObject(CreateGameObjectCommand),
 	CreatedGameObject(C2SCreatedGameObjectCommand),
-	SetLong(SetLongCommand),
+	SetLong(SetFieldCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
 	CompareAndSetLong(CompareAndSetLongCommand),
 	SetDouble(SetDoubleCommand),
@@ -152,7 +154,7 @@ impl C2SCommand {
 			CommandTypeId::CREATE_GAME_OBJECT => {
 				C2SCommand::CreateGameObject(CreateGameObjectCommand::decode(object_id?, input)?)
 			}
-			CommandTypeId::SET_LONG => C2SCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::SET_LONG => C2SCommand::SetLong(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
 			CommandTypeId::INCREMENT_LONG => {
 				C2SCommand::IncrementLongValue(IncrementLongC2SCommand::decode(object_id?, field_id?, input)?)
 			}
@@ -184,8 +186,9 @@ mod tests {
 	use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
-	use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
+	use crate::commands::types::field::SetFieldCommand;
+use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
+	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 	use crate::commands::types::structure::{CompareAndSetStructureCommand, SetStructureCommand};
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
@@ -238,10 +241,10 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetLong(SetLongCommand {
+			C2SCommand::SetLong(SetFieldCommand {
 				object_id: object_id.clone(),
 				field_id,
-				value: 100,
+				value: 100.into(),
 			}),
 			CommandTypeId::SET_LONG,
 			Some(object_id),

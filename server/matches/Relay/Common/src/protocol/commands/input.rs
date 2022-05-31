@@ -154,8 +154,8 @@ impl Ord for SequenceApplicationCommand {
 #[cfg(test)]
 mod tests {
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::types::long::SetLongCommand;
-	use crate::protocol::commands::input::InCommandsCollector;
+	use crate::commands::types::field::SetFieldCommand;
+use crate::protocol::commands::input::InCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::input::InFrame;
@@ -273,10 +273,10 @@ mod tests {
 	fn create_test_object_command(channel: Channel, object_id: u32, content: i64) -> CommandWithChannel {
 		CommandWithChannel {
 			channel,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
 				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
 				field_id: 0,
-				value: content,
+				value: content.into(),
 			})),
 		}
 	}

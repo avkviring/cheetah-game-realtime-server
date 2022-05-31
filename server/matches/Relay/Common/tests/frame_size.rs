@@ -1,6 +1,6 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_matches_relay_common::commands::types::long::SetLongCommand;
+use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
 use cheetah_matches_relay_common::commands::types::structure::SetStructureCommand;
 use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
@@ -42,10 +42,10 @@ pub fn create_object_frame() {
 	});
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
-		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
 			object_id: Default::default(),
 			field_id: 55,
-			value: 100,
+			value: 100.into(),
 		})),
 	});
 

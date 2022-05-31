@@ -206,7 +206,6 @@ fn get_string_value(command: &TracedCommand) -> String {
 			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
 			S2CCommand::Created(_) => "".to_string(),
 			S2CCommand::SetField(command) => format!("{:?}", command.value),
-			S2CCommand::SetLong(command) => format!("{:?}", command.value),
 			S2CCommand::SetDouble(command) => format!("{:?}", command.value),
 			S2CCommand::SetStructure(command) => format!("{:?}", command.value),
 			S2CCommand::Event(command) => format!("{:?}", command.event),

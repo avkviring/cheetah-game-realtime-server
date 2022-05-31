@@ -1,5 +1,6 @@
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
+use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_relay_common::commands::types::long::{IncrementLongC2SCommand};
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -31,10 +32,10 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 					self.increment
 				}
 			};
-			Ok(Some(S2CCommand::SetLong(SetLongCommand {
+			Ok(Some(S2CCommand::SetField(SetFieldCommand {
 				object_id: self.object_id.clone(),
 				field_id: self.field_id,
-				value,
+				value: value.into(),
 			})))
 		};
 		room.send_command_from_action(
@@ -51,14 +52,14 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 	}
 }
 
-impl ServerCommandExecutor for SetLongCommand {
+impl ServerCommandExecutor for SetFieldCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
-			object.set_field(self.field_id, self.value)?;
-			Ok(Some(S2CCommand::SetLong(self.clone())))
+			object.set_field_wrapped(self.field_id, self.value.to_owned())?;
+			Ok(Some(S2CCommand::SetField(self.clone())))
 		};
 
 		room.send_command_from_action(
@@ -78,7 +79,8 @@ impl ServerCommandExecutor for SetLongCommand {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
+	use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
+	use cheetah_matches_relay_common::commands::types::long::{IncrementLongC2SCommand};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -94,16 +96,16 @@ mod tests {
 		let (mut room, user, object_id) = setup();
 
 		room.test_out_commands.clear();
-		let command = SetLongCommand {
+		let command = SetFieldCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
-			value: 100,
+			value: 100.into(),
 		};
 		command.execute(&mut room, user).unwrap();
 
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 100);
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==command));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
 	}
 
 	#[test]
@@ -122,14 +124,14 @@ mod tests {
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 200);
 
-		let result = SetLongCommand {
+		let result = SetFieldCommand {
 			object_id: object_id.clone(),
 			field_id: 10,
-			value: 200,
+			value: 200.into(),
 		};
 
 		room.test_out_commands.pop_back();
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if c==result));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result));
 	}
 
 	#[test]

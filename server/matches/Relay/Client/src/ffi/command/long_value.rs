@@ -1,5 +1,6 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
+use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_relay_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -22,10 +23,10 @@ pub extern "C" fn set_long_value_listener(
 pub extern "C" fn set_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::SetLong(SetLongCommand {
+		C2SCommand::SetLong(SetFieldCommand {
 			object_id: From::from(object_id),
 			field_id,
-			value,
+			value: value.into(),
 		}),
 	)
 }

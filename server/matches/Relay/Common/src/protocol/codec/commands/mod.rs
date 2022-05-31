@@ -16,8 +16,8 @@ mod tests {
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+	use crate::commands::types::field::SetFieldCommand;
 	use crate::commands::types::float::SetDoubleCommand;
-	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::codec::commands::decoder::decode_commands;
 	use crate::protocol::codec::commands::encoder::encode_command;
@@ -39,10 +39,10 @@ mod tests {
 		});
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
 				object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
 				field_id: 15,
-				value: 16,
+				value: 16.into(),
 			})),
 		});
 		check(true, commands);
@@ -65,10 +65,10 @@ mod tests {
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
 			both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-				command: S2CCommand::SetLong(SetLongCommand {
+				command: S2CCommand::SetField(SetFieldCommand {
 					object_id: Default::default(),
 					field_id: 5,
-					value: 1,
+					value: 1.into(),
 				}),
 				creator: 57,
 			}),
