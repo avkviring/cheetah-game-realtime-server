@@ -7,6 +7,7 @@ pub mod decoder;
 pub mod encoder;
 mod header;
 
+
 #[cfg(test)]
 mod tests {
 	use std::io::Cursor;

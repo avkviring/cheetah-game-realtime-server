@@ -158,7 +158,7 @@ impl C2SCommand {
 			}
 			CommandTypeId::COMPARE_AND_SET_LONG => {
 				C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::decode(object_id?, field_id?, input)?)
-			},
+			}
 			CommandTypeId::COMPARE_AND_SET_STRUCTURE => {
 				C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand::decode(object_id?, field_id?, input)?)
 			}
@@ -169,7 +169,7 @@ impl C2SCommand {
 			CommandTypeId::SET_STRUCTURE => C2SCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::TARGET_EVENT => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::DELETE_FIELD => C2SCommand::DeleteField(DeleteFieldCommand::decode(field_id?, object_id?, input)?),
+			CommandTypeId::DELETE_FIELD => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
@@ -186,7 +186,7 @@ mod tests {
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand, SetLongCommand};
-	use crate::commands::types::structure::{SetStructureCommand, CompareAndSetStructureCommand};
+	use crate::commands::types::structure::{CompareAndSetStructureCommand, SetStructureCommand};
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
 	use crate::protocol::codec::commands::context::CommandContextError;

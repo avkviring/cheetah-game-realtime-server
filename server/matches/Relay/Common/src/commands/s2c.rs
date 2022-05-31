@@ -1,10 +1,10 @@
 use std::io::Cursor;
 
 use crate::commands::field_value::FieldValue;
-use crate::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
+use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
-use crate::commands::types::field::DeleteFieldCommand;
+use crate::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
 use crate::commands::types::float::SetDoubleCommand;
 use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::structure::SetStructureCommand;
@@ -18,7 +18,8 @@ use strum_macros::AsRefStr;
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum S2CCommand {
 	Create(CreateGameObjectCommand),
-	Created(S2CreatedGameObjectCommand),
+	Created(GameObjectCreatedS2CCommand),
+	SetField(SetFieldCommand),
 	SetLong(SetLongCommand),
 	SetDouble(SetDoubleCommand),
 	SetStructure(SetStructureCommand),
@@ -58,6 +59,7 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(_) => None,
 			S2CCommand::Created(_) => None,
+			S2CCommand::SetField(command) => Some(command.field_id),
 			S2CCommand::SetLong(command) => Some(command.field_id),
 			S2CCommand::SetDouble(command) => Some(command.field_id),
 			S2CCommand::SetStructure(command) => Some(command.field_id),
@@ -71,6 +73,7 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(command) => Some(command.object_id.clone()),
 			S2CCommand::Created(command) => Some(command.object_id.clone()),
+			S2CCommand::SetField(command) => Some(command.object_id.clone()),
 			S2CCommand::SetLong(command) => Some(command.object_id.clone()),
 			S2CCommand::SetDouble(command) => Some(command.object_id.clone()),
 			S2CCommand::SetStructure(command) => Some(command.object_id.clone()),
@@ -84,6 +87,7 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(_) => None,
 			S2CCommand::Created(_) => None,
+			S2CCommand::SetField(command) => Some(command.value.field_type()),
 			S2CCommand::SetLong(_) => Some(FieldType::Long),
 			S2CCommand::SetDouble(_) => Some(FieldType::Double),
 			S2CCommand::SetStructure(_) => Some(FieldType::Structure),
@@ -97,6 +101,7 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(_) => CommandTypeId::CREATE_GAME_OBJECT,
 			S2CCommand::Created(_) => CommandTypeId::CREATED_GAME_OBJECT,
+			S2CCommand::SetField(_) => CommandTypeId::SET_FIELD,
 			S2CCommand::SetLong(_) => CommandTypeId::SET_LONG,
 			S2CCommand::SetDouble(_) => CommandTypeId::SET_DOUBLE,
 			S2CCommand::SetStructure(_) => CommandTypeId::SET_STRUCTURE,
@@ -110,6 +115,7 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(command) => command.encode(out),
 			S2CCommand::Created(_) => Ok(()),
+			S2CCommand::SetField(command) => command.encode(out),
 			S2CCommand::SetLong(command) => command.encode(out),
 			S2CCommand::SetDouble(command) => command.encode(out),
 			S2CCommand::SetStructure(command) => command.encode(out),
@@ -127,13 +133,13 @@ impl S2CCommand {
 	) -> Result<S2CCommand, CommandDecodeError> {
 		Ok(match *command_type_id {
 			CommandTypeId::CREATE_GAME_OBJECT => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
-			CommandTypeId::CREATED_GAME_OBJECT => S2CCommand::Created(S2CreatedGameObjectCommand { object_id: object_id? }),
+			CommandTypeId::CREATED_GAME_OBJECT => S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: object_id? }),
 			CommandTypeId::DELETE => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::SET_LONG => S2CCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SET_DOUBLE => S2CCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SET_STRUCTURE => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::DELETE_FIELD => S2CCommand::DeleteField(DeleteFieldCommand::decode(field_id?, object_id?, input)?),
+			CommandTypeId::DELETE_FIELD => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
@@ -144,7 +150,7 @@ mod tests {
 	use std::io::Cursor;
 
 	use crate::commands::binary_value::BinaryValue;
-	use crate::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
+	use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
@@ -174,7 +180,7 @@ mod tests {
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			S2CCommand::Created(S2CreatedGameObjectCommand {
+			S2CCommand::Created(GameObjectCreatedS2CCommand {
 				object_id: object_id.clone(),
 			}),
 			CommandTypeId::CREATED_GAME_OBJECT,

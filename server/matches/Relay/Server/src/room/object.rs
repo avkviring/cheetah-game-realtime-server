@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::create::{CreateGameObjectCommand, S2CreatedGameObjectCommand};
+use cheetah_matches_relay_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use cheetah_matches_relay_common::commands::{field_type::ToFieldType, FieldType, FieldValue};
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -121,7 +121,7 @@ impl GameObject {
 		if self.created {
 			commands.push(S2CCommandWithFieldInfo {
 				field: None,
-				command: S2CCommand::Created(S2CreatedGameObjectCommand {
+				command: S2CCommand::Created(GameObjectCreatedS2CCommand {
 					object_id: self.id.clone(),
 				}),
 			})?;

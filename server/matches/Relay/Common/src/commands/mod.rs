@@ -3,9 +3,9 @@ use thiserror::Error;
 use crate::protocol::codec::commands::context::CommandContextError;
 
 pub mod binary_value;
-mod field_value;
-pub mod field_type;
 pub mod c2s;
+pub mod field_type;
+mod field_value;
 pub mod s2c;
 pub mod types;
 
@@ -34,6 +34,7 @@ impl CommandTypeId {
 	const DETACH_FROM_ROOM: CommandTypeId = CommandTypeId(12);
 	const DELETE_FIELD: CommandTypeId = CommandTypeId(13);
 	const COMPARE_AND_SET_STRUCTURE: CommandTypeId = CommandTypeId(14);
+	const SET_FIELD: CommandTypeId = CommandTypeId(15);
 }
 
 #[derive(Error, Debug)]

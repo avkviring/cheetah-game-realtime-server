@@ -1,4 +1,13 @@
-use crate::commands::FieldType;
+use std::io::Cursor;
+
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+
+use crate::{
+	commands::FieldType,
+	protocol::codec::variable_int::{VariableIntReader, VariableIntWriter},
+};
+
+use super::{binary_value::BinaryValue, field_type::ToFieldType};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum FieldValue {
@@ -17,56 +26,79 @@ impl FieldValue {
 	}
 }
 
+impl FieldValue {
+	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+		match self {
+			FieldValue::Long(v) => out.write_variable_i64(*v),
+			FieldValue::Double(v) => out.write_f64::<BigEndian>(*v),
+			FieldValue::Structure(v) => {
+				let bv: BinaryValue = v.as_slice().into();
+				bv.encode(out)
+			}
+		}
+	}
+
+	pub fn decode<T: Into<Self> + ToFieldType>(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+		let field_type = T::to_field_type();
+		Ok(match field_type {
+			FieldType::Long => input.read_variable_i64()?.into(),
+			FieldType::Double => input.read_f64::<BigEndian>()?.into(),
+			FieldType::Structure => BinaryValue::decode(input)?.as_slice().into(),
+			FieldType::Event => panic!("Event type is not supported"),
+		})
+	}
+}
+
 impl From<i64> for FieldValue {
-    fn from(value: i64) -> Self {
+	fn from(value: i64) -> Self {
 		FieldValue::Long(value)
-    }
+	}
 }
 
 impl From<f64> for FieldValue {
-    fn from(value: f64) -> Self {
+	fn from(value: f64) -> Self {
 		FieldValue::Double(value)
-    }
+	}
 }
 
 impl From<&[u8]> for FieldValue {
-    fn from(value: &[u8]) -> Self {
+	fn from(value: &[u8]) -> Self {
 		FieldValue::Structure(value.into())
-    }
+	}
 }
 
 impl From<Vec<u8>> for FieldValue {
-    fn from(vec: Vec<u8>) -> Self {
+	fn from(vec: Vec<u8>) -> Self {
 		vec.as_slice().into()
-    }
+	}
 }
 
 impl AsRef<f64> for FieldValue {
-    fn as_ref(&self) -> &f64 {
+	fn as_ref(&self) -> &f64 {
 		if let FieldValue::Double(v) = self {
 			v
 		} else {
 			panic!("FieldValue had unexpected variant, expected FieldValue::Double")
 		}
-    }
+	}
 }
 
 impl AsRef<i64> for FieldValue {
-    fn as_ref(&self) -> &i64 {
+	fn as_ref(&self) -> &i64 {
 		if let FieldValue::Long(v) = self {
 			v
 		} else {
 			panic!("FieldValue had unexpected variant, expected FieldValue::Long")
 		}
-    }
+	}
 }
 
 impl AsRef<Vec<u8>> for FieldValue {
-    fn as_ref(&self) -> &Vec<u8> {
+	fn as_ref(&self) -> &Vec<u8> {
 		if let FieldValue::Structure(v) = self {
 			v
 		} else {
 			panic!("FieldValue had unexpected variant, expected FieldValue::Structure")
 		}
-    }
+	}
 }
