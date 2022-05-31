@@ -83,6 +83,7 @@ test-integration-run-unity-with-kubernetes:
     - echo "{\"ServerHost\":\"${namespace}.stage.cheetah.games\"}" >  $UNITY_DIR/integration-test-config.json
     - chmod +x .gitlab/scripts/unity-test.sh
     - cp libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
+    - cd proto && ./generate-unity-grpc.sh && cd ../
     - TEST_PLATFORM=editmode .gitlab/scripts/unity-test.sh
     - TEST_PLATFORM=playmode .gitlab/scripts/unity-test.sh
   artifacts:
@@ -117,6 +118,7 @@ test-integration-run-unity-with-local-docker:
     - echo "{\"Login\":\"$CI_DEPLOY_USER\",\"Password\":\"$CI_DEPLOY_PASSWORD\"}" > $UNITY_DIR/cheetah-docker-registry.json
     - chmod +x .gitlab/scripts/unity-test.sh
     - cp libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
+    - cd proto && ./generate-unity-grpc.sh && cd ../
     - TEST_PLATFORM=editmode .gitlab/scripts/unity-test.sh
     - TEST_PLATFORM=playmode .gitlab/scripts/unity-test.sh
   artifacts:
