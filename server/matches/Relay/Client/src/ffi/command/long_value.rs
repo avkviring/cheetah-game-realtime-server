@@ -20,10 +20,15 @@ pub extern "C" fn set_long_value_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn set_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) -> u8 {
+pub extern "C" fn set_long_value(
+	client_id: ClientId,
+	object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	value: i64,
+) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::SetLong(SetFieldCommand {
+		C2SCommand::SetField(SetFieldCommand {
 			object_id: From::from(object_id),
 			field_id,
 			value: value.into(),
@@ -32,7 +37,12 @@ pub extern "C" fn set_long_value(client_id: ClientId, object_id: &GameObjectIdFF
 }
 
 #[no_mangle]
-pub extern "C" fn inc_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: i64) -> u8 {
+pub extern "C" fn inc_long_value(
+	client_id: ClientId,
+	object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	increment: i64,
+) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::IncrementLongValue(IncrementLongC2SCommand {

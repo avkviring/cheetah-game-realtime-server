@@ -30,7 +30,7 @@ pub extern "C" fn set_structure(
 ) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::SetStructure(SetFieldCommand {
+		C2SCommand::SetField(SetFieldCommand {
 			object_id: object_id.into(),
 			field_id,
 			value: BinaryValue::from(structure).as_slice().into(),

@@ -33,7 +33,7 @@ pub fn create_object_frame() {
 	});
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
-		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetFieldCommand {
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
 			object_id: Default::default(),
 			field_id: 30,
 			value: [0].as_ref().into(),
@@ -41,7 +41,7 @@ pub fn create_object_frame() {
 	});
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
-		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
 			object_id: Default::default(),
 			field_id: 55,
 			value: 100.into(),

@@ -154,7 +154,10 @@ fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
 		TracedBothDirectionCommand::C2S(command) => match command {
 			C2SCommand::CreateGameObject(command) => {
-				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
+				format!(
+					"access({:?}), template({:?}) ",
+					command.access_groups.0, command.template
+				)
 			}
 			C2SCommand::CreatedGameObject(command) => {
 				format!(
@@ -162,7 +165,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 					command.room_owner, command.singleton_key
 				)
 			}
-			C2SCommand::SetLong(command) => {
+			C2SCommand::SetField(command) => {
 				format!("{:?}", command.value)
 			}
 			C2SCommand::IncrementLongValue(command) => {
@@ -180,14 +183,8 @@ fn get_string_value(command: &TracedCommand) -> String {
 					command.new, command.current, command.reset
 				)
 			}
-			C2SCommand::SetDouble(command) => {
-				format!("{:?}", command.value)
-			}
 			C2SCommand::IncrementDouble(command) => {
 				format!("{:?}", command.increment)
-			}
-			C2SCommand::SetStructure(command) => {
-				format!("{:?}", command.value)
 			}
 			C2SCommand::Event(command) => {
 				format!("{:?}", command.event.as_slice())
@@ -203,7 +200,10 @@ fn get_string_value(command: &TracedCommand) -> String {
 			}
 		},
 		TracedBothDirectionCommand::S2C(command) => match command {
-			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
+			S2CCommand::Create(command) => format!(
+				"access({:?}), template({:?}) ",
+				command.access_groups.0, command.template
+			),
 			S2CCommand::Created(_) => "".to_string(),
 			S2CCommand::SetField(command) => format!("{:?}", command.value),
 			S2CCommand::Event(command) => format!("{:?}", command.event),

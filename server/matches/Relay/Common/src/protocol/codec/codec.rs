@@ -108,8 +108,8 @@ impl OutFrame {
 		unsafe {
 			vec.set_len(4096);
 		}
-		let compressed_size =
-			packet_compress(commands_buffer, &mut vec).map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
+		let compressed_size = packet_compress(commands_buffer, &mut vec)
+			.map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
 		unsafe {
 			vec.set_len(compressed_size);
 		}
@@ -135,7 +135,7 @@ pub mod tests {
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::field::SetFieldCommand;
-use crate::protocol::codec::cipher::Cipher;
+	use crate::protocol::codec::cipher::Cipher;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;
@@ -146,8 +146,8 @@ use crate::protocol::codec::cipher::Cipher;
 	use crate::room::owner::GameObjectOwner;
 
 	const PRIVATE_KEY: &[u8; 32] = &[
-		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f,
-		0x9e, 0x27, 0xad, 0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10, 0xe4, 0x94,
+		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a,
+		0xa0, 0x9f, 0x9e, 0x27, 0xad, 0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10, 0xe4, 0x94,
 	];
 
 	#[test]
@@ -158,7 +158,7 @@ use crate::protocol::codec::cipher::Cipher;
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.add_command(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Member(200)),
 				field_id: 78,
 				value: 155.into(),

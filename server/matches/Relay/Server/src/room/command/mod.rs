@@ -87,19 +87,22 @@ impl ServerCommandError {
 	}
 
 	pub fn log_error(&self, room_id: RoomId, room_member_id: RoomMemberId) {
-		tracing::error!("Error in room {:?} for client {:?} : {:?}", room_id, room_member_id, self);
+		tracing::error!(
+			"Error in room {:?} for client {:?} : {:?}",
+			room_id,
+			room_member_id,
+			self
+		);
 	}
 }
 
 pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	match command {
 		C2SCommand::CreateGameObject(command) => command.execute(room, user_id),
-		C2SCommand::SetLong(command) => command.execute(room, user_id),
+		C2SCommand::SetField(command) => command.execute(room, user_id),
 		C2SCommand::IncrementLongValue(command) => command.execute(room, user_id),
 		C2SCommand::CompareAndSetLong(command) => command.execute(room, user_id),
-		C2SCommand::SetDouble(command) => command.execute(room, user_id),
 		C2SCommand::IncrementDouble(command) => command.execute(room, user_id),
-		C2SCommand::SetStructure(command) => command.execute(room, user_id),
 		C2SCommand::CompareAndSetStructure(command) => command.execute(room, user_id),
 		C2SCommand::Event(command) => command.execute(room, user_id),
 		C2SCommand::Delete(command) => command.execute(room, user_id),

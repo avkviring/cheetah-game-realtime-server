@@ -65,7 +65,12 @@ impl InCommandsCollector {
 		});
 	}
 
-	fn process_sequence(&mut self, channel_group: ChannelGroup, input_sequence: ChannelSequence, command: CommandWithChannel) {
+	fn process_sequence(
+		&mut self,
+		channel_group: ChannelGroup,
+		input_sequence: ChannelSequence,
+		command: CommandWithChannel,
+	) {
 		let mut is_ready_command = false;
 		let allow_sequence = &mut self.sequences[channel_group.0 as usize];
 		if input_sequence == ChannelSequence::FIRST || input_sequence == *allow_sequence {
@@ -155,8 +160,10 @@ impl Ord for SequenceApplicationCommand {
 mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::field::SetFieldCommand;
-use crate::protocol::commands::input::InCommandsCollector;
-	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
+	use crate::protocol::commands::input::InCommandsCollector;
+	use crate::protocol::frame::applications::{
+		BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel,
+	};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::frame::FrameId;
@@ -273,7 +280,7 @@ use crate::protocol::commands::input::InCommandsCollector;
 	fn create_test_object_command(channel: Channel, object_id: u32, content: i64) -> CommandWithChannel {
 		CommandWithChannel {
 			channel,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
 				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
 				field_id: 0,
 				value: content.into(),

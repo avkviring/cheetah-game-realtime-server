@@ -1,4 +1,5 @@
 use std::io::Cursor;
+use std::process::Command;
 
 use strum_macros::AsRefStr;
 
@@ -15,6 +16,7 @@ use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 
 use super::types::field::SetFieldCommand;
+use super::FieldValue;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum C2SCommand {
@@ -22,9 +24,7 @@ pub enum C2SCommand {
 	CreatedGameObject(C2SCreatedGameObjectCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
 	CompareAndSetLong(CompareAndSetLongCommand),
-	SetLong(SetFieldCommand),
-	SetDouble(SetFieldCommand),
-	SetStructure(SetFieldCommand),
+	SetField(SetFieldCommand),
 	IncrementDouble(IncrementDoubleC2SCommand),
 	CompareAndSetStructure(CompareAndSetStructureCommand),
 	Event(EventCommand),
@@ -43,31 +43,27 @@ impl C2SCommand {
 		match self {
 			C2SCommand::CreateGameObject(_) => None,
 			C2SCommand::CreatedGameObject(_) => None,
-			C2SCommand::SetLong(command) => Some(command.field_id),
+			C2SCommand::SetField(command) => Some(command.field_id),
 			C2SCommand::IncrementLongValue(command) => Some(command.field_id),
 			C2SCommand::CompareAndSetLong(command) => Some(command.field_id),
-			C2SCommand::SetDouble(command) => Some(command.field_id),
+			C2SCommand::CompareAndSetStructure(command) => Some(command.field_id),
 			C2SCommand::IncrementDouble(command) => Some(command.field_id),
-			C2SCommand::SetStructure(command) => Some(command.field_id),
 			C2SCommand::Event(command) => Some(command.field_id),
 			C2SCommand::TargetEvent(command) => Some(command.event.field_id),
 			C2SCommand::Delete(_) => None,
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.field_id),
-			C2SCommand::CompareAndSetStructure(command) => Some(command.field_id),
 		}
 	}
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
 			C2SCommand::CreateGameObject(command) => Some(command.object_id.clone()),
 			C2SCommand::CreatedGameObject(command) => Some(command.object_id.clone()),
-			C2SCommand::SetLong(command) => Some(command.object_id.clone()),
+			C2SCommand::SetField(command) => Some(command.object_id.clone()),
 			C2SCommand::IncrementLongValue(command) => Some(command.object_id.clone()),
 			C2SCommand::CompareAndSetLong(command) => Some(command.object_id.clone()),
-			C2SCommand::SetDouble(command) => Some(command.object_id.clone()),
 			C2SCommand::IncrementDouble(command) => Some(command.object_id.clone()),
-			C2SCommand::SetStructure(command) => Some(command.object_id.clone()),
 			C2SCommand::Event(command) => Some(command.object_id.clone()),
 			C2SCommand::TargetEvent(command) => Some(command.event.object_id.clone()),
 			C2SCommand::Delete(command) => Some(command.object_id.clone()),
@@ -82,12 +78,10 @@ impl C2SCommand {
 		match self {
 			C2SCommand::CreateGameObject(_) => None,
 			C2SCommand::CreatedGameObject(_) => None,
-			C2SCommand::SetLong(_) => Some(FieldType::Long),
+			C2SCommand::SetField(command) => Some(command.value.field_type()),
 			C2SCommand::IncrementLongValue(_) => Some(FieldType::Long),
 			C2SCommand::CompareAndSetLong(_) => Some(FieldType::Long),
-			C2SCommand::SetDouble(_) => Some(FieldType::Double),
 			C2SCommand::IncrementDouble(_) => Some(FieldType::Double),
-			C2SCommand::SetStructure(_) => Some(FieldType::Structure),
 			C2SCommand::Event(_) => Some(FieldType::Event),
 			C2SCommand::TargetEvent(_) => Some(FieldType::Event),
 			C2SCommand::Delete(_) => None,
@@ -102,13 +96,15 @@ impl C2SCommand {
 		match self {
 			C2SCommand::CreateGameObject(_) => CommandTypeId::CREATE_GAME_OBJECT,
 			C2SCommand::CreatedGameObject(_) => CommandTypeId::CREATED_GAME_OBJECT,
-			C2SCommand::SetLong(_) => CommandTypeId::SET_LONG,
+			C2SCommand::SetField(command) => match command.value {
+				FieldValue::Long(_) => CommandTypeId::SET_LONG,
+				FieldValue::Double(_) => CommandTypeId::SET_DOUBLE,
+				FieldValue::Structure(_) => CommandTypeId::SET_STRUCTURE,
+			},
 			C2SCommand::IncrementLongValue(_) => CommandTypeId::INCREMENT_LONG,
 			C2SCommand::CompareAndSetLong(_) => CommandTypeId::COMPARE_AND_SET_LONG,
 			C2SCommand::CompareAndSetStructure(_) => CommandTypeId::COMPARE_AND_SET_STRUCTURE,
-			C2SCommand::SetDouble(_) => CommandTypeId::SET_DOUBLE,
 			C2SCommand::IncrementDouble(_) => CommandTypeId::INCREMENT_DOUBLE,
-			C2SCommand::SetStructure(_) => CommandTypeId::SET_STRUCTURE,
 			C2SCommand::Event(_) => CommandTypeId::EVENT,
 			C2SCommand::TargetEvent(_) => CommandTypeId::TARGET_EVENT,
 			C2SCommand::Delete(_) => CommandTypeId::DELETE,
@@ -122,12 +118,10 @@ impl C2SCommand {
 		match self {
 			C2SCommand::CreateGameObject(command) => command.encode(out),
 			C2SCommand::CreatedGameObject(command) => command.encode(out),
-			C2SCommand::SetLong(command) => command.encode(out),
+			C2SCommand::SetField(command) => command.encode(out),
 			C2SCommand::IncrementLongValue(command) => command.encode(out),
 			C2SCommand::CompareAndSetLong(command) => command.encode(out),
-			C2SCommand::SetDouble(command) => command.encode(out),
 			C2SCommand::IncrementDouble(command) => command.encode(out),
-			C2SCommand::SetStructure(command) => command.encode(out),
 			C2SCommand::Event(command) => command.encode(out),
 			C2SCommand::TargetEvent(command) => command.encode(out),
 			C2SCommand::Delete(_) => Ok(()),
@@ -166,14 +160,22 @@ impl C2SCommand {
 			CommandTypeId::COMPARE_AND_SET_STRUCTURE => {
 				C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand::decode(object_id?, field_id?, input)?)
 			}
-			CommandTypeId::SET_DOUBLE => C2SCommand::SetDouble(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
-			CommandTypeId::SET_LONG => C2SCommand::SetLong(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
+			CommandTypeId::SET_DOUBLE => {
+				C2SCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?)
+			}
+			CommandTypeId::SET_LONG => {
+				C2SCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?)
+			}
 			CommandTypeId::SET_STRUCTURE => {
-				C2SCommand::SetStructure(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?)
+				C2SCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?)
 			}
 			CommandTypeId::EVENT => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::TARGET_EVENT => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::DELETE_FIELD => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::TARGET_EVENT => {
+				C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?)
+			}
+			CommandTypeId::DELETE_FIELD => {
+				C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?)
+			}
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
@@ -243,7 +245,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetLong(SetFieldCommand {
+			C2SCommand::SetField(SetFieldCommand {
 				object_id: object_id.clone(),
 				field_id,
 				value: 100.into(),
@@ -311,7 +313,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetDouble(SetFieldCommand {
+			C2SCommand::SetField(SetFieldCommand {
 				object_id: object_id.clone(),
 				field_id,
 				value: 3.15.into(),
@@ -343,7 +345,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetStructure(SetFieldCommand {
+			C2SCommand::SetField(SetFieldCommand {
 				object_id: object_id.clone(),
 				field_id,
 				value: vec![1, 2, 3, 4].into(),
@@ -402,16 +404,21 @@ mod tests {
 		);
 	}
 
-	fn check(excepted: C2SCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {
+	fn check(
+		expected: C2SCommand,
+		command_type_id: CommandTypeId,
+		object_id: Option<GameObjectId>,
+		field_id: Option<FieldId>,
+	) {
 		let object_id = object_id.ok_or(CommandContextError::ContextNotContainsObjectId);
 		let field_id = field_id.ok_or(CommandContextError::ContextNotContainsFieldId);
 		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
-		excepted.encode(&mut cursor).unwrap();
+		expected.encode(&mut cursor).unwrap();
 		let write_position = cursor.position();
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
 		let actual = C2SCommand::decode(&command_type_id, object_id, field_id, &mut read_cursor).unwrap();
 		assert_eq!(write_position, read_cursor.position());
-		assert_eq!(excepted, actual);
+		assert_eq!(expected, actual);
 	}
 }

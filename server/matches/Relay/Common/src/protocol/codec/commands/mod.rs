@@ -19,7 +19,9 @@ mod tests {
 	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::codec::commands::decoder::decode_commands;
 	use crate::protocol::codec::commands::encoder::encode_command;
-	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
+	use crate::protocol::frame::applications::{
+		BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel,
+	};
 	use crate::protocol::frame::channel::Channel;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
@@ -29,7 +31,7 @@ mod tests {
 		let mut commands = Vec::new();
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetFieldCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
 				object_id: Default::default(),
 				field_id: 10,
 				value: 1.5.into(),
@@ -37,7 +39,7 @@ mod tests {
 		});
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetFieldCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
 				object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
 				field_id: 15,
 				value: 16.into(),
