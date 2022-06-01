@@ -36,12 +36,7 @@ fn test() {
 
 	let structure_field_id = 10;
 	let structure_buffer = BufferFFI::from(vec![125]);
-	ffi::command::structure::set_structure(
-		client1,
-		&object_id,
-		structure_field_id,
-		&structure_buffer,
-	);
+	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
 	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
 	ffi::command::object::delete_object(client1, &object_id);
 
@@ -49,15 +44,12 @@ fn test() {
 	ffi::client::receive(client2);
 
 	assert!(matches!(CREATE_OBJECT_ID.lock().unwrap().as_ref(),Option::Some(id) if *id==object_id));
-	assert!(
-		matches!(STRUCTURE.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == structure_field_id && *buffer == structure_buffer )
-	);
-	assert!(
-		matches!(CREATED_OBJECT_ID.lock().unwrap().as_ref(),Option::Some(id) if *id==object_id)
-	);
-	assert!(
-		matches!(DELETED_OBJECT_ID.lock().unwrap().as_ref(),Option::Some(id) if *id==object_id)
-	);
+	assert!(matches!(
+		STRUCTURE.lock().unwrap().as_ref(), Option::Some((field_id, buffer))
+			if *field_id == structure_field_id && *buffer == structure_buffer
+	));
+	assert!(matches!(CREATED_OBJECT_ID.lock().unwrap().as_ref(), Option::Some(id) if *id==object_id));
+	assert!(matches!(DELETED_OBJECT_ID.lock().unwrap().as_ref(), Option::Some(id) if *id==object_id));
 }
 
 lazy_static! {
@@ -75,24 +67,15 @@ lazy_static! {
 }
 
 extern "C" fn on_object_create(object_id: &GameObjectIdFFI, _: u16) {
-	CREATE_OBJECT_ID
-		.lock()
-		.unwrap()
-		.replace((*object_id).clone());
+	CREATE_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
 
 extern "C" fn on_object_created(object_id: &GameObjectIdFFI) {
-	CREATED_OBJECT_ID
-		.lock()
-		.unwrap()
-		.replace((*object_id).clone());
+	CREATED_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
 
 extern "C" fn on_object_delete(object_id: &GameObjectIdFFI) {
-	DELETED_OBJECT_ID
-		.lock()
-		.unwrap()
-		.replace((*object_id).clone());
+	DELETED_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
 extern "C" fn on_structure_listener(
 	_: RoomMemberId,
@@ -100,8 +83,5 @@ extern "C" fn on_structure_listener(
 	field_id: FieldId,
 	buffer: &BufferFFI,
 ) {
-	STRUCTURE
-		.lock()
-		.unwrap()
-		.replace((field_id, (*buffer).clone()));
+	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

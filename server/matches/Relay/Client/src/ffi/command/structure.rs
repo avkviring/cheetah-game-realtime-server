@@ -1,3 +1,4 @@
+use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
 use cheetah_matches_relay_common::commands::types::structure::CompareAndSetStructureCommand;
@@ -32,7 +33,7 @@ pub extern "C" fn set_structure(
 		C2SCommand::SetStructure(SetFieldCommand {
 			object_id: object_id.into(),
 			field_id,
-			value: structure.buffer.as_ref().into(),
+			value: BinaryValue::from(structure).as_slice().into(),
 		}),
 	)
 }
