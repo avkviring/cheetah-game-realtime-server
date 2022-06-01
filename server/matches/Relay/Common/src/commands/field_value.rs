@@ -49,6 +49,16 @@ impl FieldValue {
 	}
 }
 
+impl Into<f64> for FieldValue {
+	fn into(self) -> f64 {
+		if let FieldValue::Double(v) = self {
+			v
+		} else {
+			panic!("Type mismatch: FieldValue contained wrong type");
+		}
+	}
+}
+
 impl From<i64> for FieldValue {
 	fn from(value: i64) -> Self {
 		FieldValue::Long(value)

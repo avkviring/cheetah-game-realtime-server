@@ -1,5 +1,6 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
+use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_relay_common::commands::types::float::IncrementDoubleC2SCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -22,10 +23,10 @@ pub extern "C" fn set_double_value_listener(
 pub extern "C" fn set_double_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::SetDouble(SetDoubleCommand {
+		C2SCommand::SetDouble(SetFieldCommand {
 			object_id: From::from(object_id),
 			field_id,
-			value,
+			value: value.into(),
 		}),
 	)
 }

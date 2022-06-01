@@ -6,9 +6,9 @@ use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObje
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::DeleteFieldCommand;
-use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
+use crate::commands::types::float::IncrementDoubleC2SCommand;
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
-use crate::commands::types::structure::{CompareAndSetStructureCommand, SetStructureCommand};
+use crate::commands::types::structure::CompareAndSetStructureCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
@@ -20,12 +20,12 @@ use super::types::field::SetFieldCommand;
 pub enum C2SCommand {
 	CreateGameObject(CreateGameObjectCommand),
 	CreatedGameObject(C2SCreatedGameObjectCommand),
-	SetLong(SetFieldCommand),
 	IncrementLongValue(IncrementLongC2SCommand),
 	CompareAndSetLong(CompareAndSetLongCommand),
-	SetDouble(SetDoubleCommand),
+	SetLong(SetFieldCommand),
+	SetDouble(SetFieldCommand),
+	SetStructure(SetFieldCommand),
 	IncrementDouble(IncrementDoubleC2SCommand),
-	SetStructure(SetStructureCommand),
 	CompareAndSetStructure(CompareAndSetStructureCommand),
 	Event(EventCommand),
 	TargetEvent(TargetEventCommand),
@@ -154,9 +154,11 @@ impl C2SCommand {
 			CommandTypeId::CREATE_GAME_OBJECT => {
 				C2SCommand::CreateGameObject(CreateGameObjectCommand::decode(object_id?, input)?)
 			}
-			CommandTypeId::SET_LONG => C2SCommand::SetLong(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
 			CommandTypeId::INCREMENT_LONG => {
 				C2SCommand::IncrementLongValue(IncrementLongC2SCommand::decode(object_id?, field_id?, input)?)
+			}
+			CommandTypeId::INCREMENT_DOUBLE => {
+				C2SCommand::IncrementDouble(IncrementDoubleC2SCommand::decode(object_id?, field_id?, input)?)
 			}
 			CommandTypeId::COMPARE_AND_SET_LONG => {
 				C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::decode(object_id?, field_id?, input)?)
@@ -164,11 +166,11 @@ impl C2SCommand {
 			CommandTypeId::COMPARE_AND_SET_STRUCTURE => {
 				C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand::decode(object_id?, field_id?, input)?)
 			}
-			CommandTypeId::SET_DOUBLE => C2SCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::INCREMENT_DOUBLE => {
-				C2SCommand::IncrementDouble(IncrementDoubleC2SCommand::decode(object_id?, field_id?, input)?)
+			CommandTypeId::SET_DOUBLE => C2SCommand::SetDouble(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
+			CommandTypeId::SET_LONG => C2SCommand::SetLong(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
+			CommandTypeId::SET_STRUCTURE => {
+				C2SCommand::SetStructure(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?)
 			}
-			CommandTypeId::SET_STRUCTURE => C2SCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::EVENT => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::TARGET_EVENT => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DELETE_FIELD => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
@@ -187,9 +189,9 @@ mod tests {
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::field::SetFieldCommand;
-use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
+	use crate::commands::types::float::IncrementDoubleC2SCommand;
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
-	use crate::commands::types::structure::{CompareAndSetStructureCommand, SetStructureCommand};
+	use crate::commands::types::structure::CompareAndSetStructureCommand;
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
 	use crate::protocol::codec::commands::context::CommandContextError;
@@ -309,10 +311,10 @@ use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand}
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetDouble(SetDoubleCommand {
+			C2SCommand::SetDouble(SetFieldCommand {
 				object_id: object_id.clone(),
 				field_id,
-				value: 3.15,
+				value: 3.15.into(),
 			}),
 			CommandTypeId::SET_DOUBLE,
 			Some(object_id),
@@ -341,10 +343,10 @@ use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand}
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetStructure(SetStructureCommand {
+			C2SCommand::SetStructure(SetFieldCommand {
 				object_id: object_id.clone(),
 				field_id,
-				value: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
+				value: vec![1, 2, 3, 4].into(),
 			}),
 			CommandTypeId::SET_STRUCTURE,
 			Some(object_id),

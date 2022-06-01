@@ -1,7 +1,9 @@
 use thiserror::Error;
 
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
+use cheetah_matches_relay_common::commands::types::create::{
+	CreateGameObjectCommand, GameObjectCreatedS2CCommand,
+};
 use cheetah_matches_relay_common::commands::{field_type::ToFieldType, FieldType, FieldValue};
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -10,7 +12,8 @@ use cheetah_matches_relay_common::room::RoomMemberId;
 
 const TYPE_COUNT: usize = 3;
 pub const MAX_FIELD_COUNT: usize = 64;
-type FieldIndex = heapless::FnvIndexMap<(FieldId, FieldType), FieldValue, { MAX_FIELD_COUNT * TYPE_COUNT }>;
+type FieldIndex =
+	heapless::FnvIndexMap<(FieldId, FieldType), FieldValue, { MAX_FIELD_COUNT * TYPE_COUNT }>;
 pub type CreateCommandsCollector = heapless::Vec<S2CCommandWithFieldInfo, 255>;
 
 ///
@@ -36,7 +39,12 @@ pub enum GameObjectError {
 }
 
 impl GameObject {
-	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, created: bool) -> Self {
+	pub fn new(
+		id: GameObjectId,
+		template_id: GameObjectTemplateId,
+		access_groups: AccessGroups,
+		created: bool,
+	) -> Self {
 		Self {
 			id,
 			template_id,
@@ -64,7 +72,11 @@ impl GameObject {
 		self.fields.get(&(field_id, field_type)).map(|v| v.as_ref())
 	}
 
-	pub fn get_field_wrapped(&self, field_id: FieldId, field_type: FieldType) -> Option<&FieldValue> {
+	pub fn get_field_wrapped(
+		&self,
+		field_id: FieldId,
+		field_type: FieldType,
+	) -> Option<&FieldValue> {
 		self.fields.get(&(field_id, field_type))
 	}
 
@@ -77,7 +89,11 @@ impl GameObject {
 		self.set_field_wrapped(field_id, field_value)
 	}
 
-	pub fn set_field_wrapped(&mut self, field_id: FieldId, value: FieldValue) -> Result<(), GameObjectError> {
+	pub fn set_field_wrapped(
+		&mut self,
+		field_id: FieldId,
+		value: FieldValue,
+	) -> Result<(), GameObjectError> {
 		let field_type = value.field_type();
 		self.fields
 			.insert((field_id, field_type), value)
@@ -85,7 +101,9 @@ impl GameObject {
 			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.to_owned(), self.template_id))
 	}
 
-	pub fn get_compare_and_set_owners(&self) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
+	pub fn get_compare_and_set_owners(
+		&self,
+	) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
 		&self.compare_and_set_owners
 	}
 
@@ -93,7 +111,11 @@ impl GameObject {
 		self.compare_and_set_owners.get(field_id)
 	}
 
-	pub fn set_compare_and_set_owner(&mut self, field_id: FieldId, value: RoomMemberId) -> Result<(), GameObjectError> {
+	pub fn set_compare_and_set_owner(
+		&mut self,
+		field_id: FieldId,
+		value: RoomMemberId,
+	) -> Result<(), GameObjectError> {
 		self.compare_and_set_owners
 			.insert(field_id, value)
 			.map(|_| ())
@@ -106,7 +128,10 @@ impl GameObject {
 		}
 	}
 
-	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
+	fn do_collect_create_commands(
+		&self,
+		commands: &mut CreateCommandsCollector,
+	) -> Result<(), S2CCommandWithFieldInfo> {
 		commands.push(S2CCommandWithFieldInfo {
 			field: Option::None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
@@ -129,7 +154,10 @@ impl GameObject {
 		Ok(())
 	}
 
-	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
+	fn fields_to_commands(
+		&self,
+		commands: &mut CreateCommandsCollector,
+	) -> Result<(), S2CCommandWithFieldInfo> {
 		for (&(field_id, field_type), v) in self.fields() {
 			let command = S2CCommandWithFieldInfo {
 				field: Option::Some(Field {
@@ -164,7 +192,9 @@ mod tests {
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{CreateCommandsCollector, Field, FieldValue, GameObject, S2CCommandWithFieldInfo};
+	use crate::room::object::{
+		CreateCommandsCollector, Field, FieldValue, GameObject, S2CCommandWithFieldInfo,
+	};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -177,30 +207,64 @@ mod tests {
 		object.set_field(2, 200.200).unwrap();
 		object
 			.fields
-			.insert((1, FieldType::Structure), FieldValue::Structure(vec![1, 2, 3]))
+			.insert(
+				(1, FieldType::Structure),
+				FieldValue::Structure(vec![1, 2, 3]),
+			)
 			.unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
 
-		assert!(matches!(&commands[0],
-			S2CCommandWithFieldInfo { field: None, command:S2CCommand::Create(c) } if c.object_id==id && c.template == object.template_id && c.access_groups == object.access_groups));
+		assert!(matches!(
+			&commands[0],
+			S2CCommandWithFieldInfo { field: None, command:S2CCommand::Create(c) }
+			if c.object_id==id
+			&& c.template == object.template_id
+			&& c.access_groups == object.access_groups
+		));
 
-		assert!(matches!(&commands[1],
-			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command: S2CCommand::SetField(c)}
-			if c.object_id==id && c.field_id == 1 && c.value == 100.into()));
+		assert!(matches!(
+			&commands[1],
+			S2CCommandWithFieldInfo {
+				field: Some(Field { id: 1, field_type: FieldType::Long }),
+				command: S2CCommand::SetField(c)
+			}
+			if c.object_id==id && c.field_id == 1 && c.value == 100.into()
+		));
 
-		assert!(matches!(&commands[2],
-			S2CCommandWithFieldInfo { field: Some(Field { id: 2, field_type: FieldType::Double }),  command: S2CCommand::SetDouble(c)}
-			if c.object_id==id && c.field_id == 2 && (c.value - 200.200).abs() < 0.0001));
+		assert!({
+			if let S2CCommandWithFieldInfo {
+				field: Some(Field {
+					id: 2,
+					field_type: FieldType::Double,
+				}),
+				command: S2CCommand::SetField(c),
+			} = &commands[2]
+			{
+				let v: f64 = c.to_owned().value.into();
+				let values_close = (v - 200.200).abs() < 0.0001;
+				c.object_id == id && c.field_id == 2 && values_close
+			} else {
+				false
+			}
+		});
 
-		assert!(matches!(&commands[3],
-			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Structure }), command:S2CCommand::SetStructure(c) }
-			if c.object_id==id && c.field_id == 1 && c.value.as_slice().to_vec() == vec![1,2,3]));
+		assert!(matches!(
+			&commands[3],
+			S2CCommandWithFieldInfo {
+				field: Some(Field { id: 1, field_type: FieldType::Structure }),
+				command: S2CCommand::SetField(c)
+			}
+			if c.object_id==id && c.field_id == 1 && c.value == vec![1,2,3].into()
+		));
 
-		assert!(
-			matches!(&commands[4], S2CCommandWithFieldInfo { field: None,  command: S2CCommand::Created(c)} if c.object_id==id)
-		);
+		assert!(matches!(
+			&commands[4],
+			S2CCommandWithFieldInfo {
+				 field: None,  command: S2CCommand::Created(c)
+			}
+			if c.object_id == id));
 	}
 
 	///

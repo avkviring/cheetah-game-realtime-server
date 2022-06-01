@@ -10,12 +10,6 @@ use crate::room::object::GameObjectId;
 /// Обновить структуру в обьекте
 /// - C->S, S->C
 ///
-#[derive(Debug, Clone, PartialEq)]
-pub struct SetStructureCommand {
-	pub object_id: GameObjectId,
-	pub field_id: FieldId,
-	pub value: BinaryValue,
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CompareAndSetStructureCommand {
@@ -24,21 +18,6 @@ pub struct CompareAndSetStructureCommand {
 	pub current: BinaryValue,
 	pub new: BinaryValue,
 	pub reset: Option<BinaryValue>,
-}
-
-impl SetStructureCommand {
-	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		self.value.encode(out)
-	}
-
-	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let structure = BinaryValue::decode(input)?;
-		Ok(Self {
-			object_id,
-			field_id,
-			value: structure,
-		})
-	}
 }
 
 impl CompareAndSetStructureCommand {

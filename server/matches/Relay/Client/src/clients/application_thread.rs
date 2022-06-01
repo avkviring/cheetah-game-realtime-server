@@ -3,10 +3,10 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use cheetah_matches_relay_common::commands::FieldValue;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::create::CreateGameObjectCommand;
+use cheetah_matches_relay_common::commands::FieldValue;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::network::client::ConnectionStatus;
 use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -130,50 +130,26 @@ impl ApplicationThreadClient {
 							listener(&object_id);
 						}
 					}
-					S2CCommand::SetField(command) => {
-						match command.value {
-							FieldValue::Long(v) => {
-								if let Some(ref listener) = self.listener_long_value {
-									let object_id = (&command.object_id).into();
-									listener(command_with_user.creator, &object_id, command.field_id, v);
-								}
-							},
-							FieldValue::Double(v) => {
-								if let Some(ref listener) = self.listener_float_value {
-									let object_id = (&command.object_id).into();
-									listener(command_with_user.creator, &object_id, command.field_id, v);
-								}
-							},
-							FieldValue::Structure(s) => {
-								if let Some(ref listener) = self.listener_structure {
-									let object_id = (&command.object_id).into();
-									listener(
-										command_with_user.creator,
-										&object_id,
-										command.field_id,
-										&s.into()
-									);
-								}
+					S2CCommand::SetField(command) => match command.value {
+						FieldValue::Long(v) => {
+							if let Some(ref listener) = self.listener_long_value {
+								let object_id = (&command.object_id).into();
+								listener(command_with_user.creator, &object_id, command.field_id, v);
+							}
+						}
+						FieldValue::Double(v) => {
+							if let Some(ref listener) = self.listener_float_value {
+								let object_id = (&command.object_id).into();
+								listener(command_with_user.creator, &object_id, command.field_id, v);
+							}
+						}
+						FieldValue::Structure(s) => {
+							if let Some(ref listener) = self.listener_structure {
+								let object_id = (&command.object_id).into();
+								listener(command_with_user.creator, &object_id, command.field_id, &s.into());
 							}
 						}
 					},
-					S2CCommand::SetDouble(command) => {
-						if let Some(ref listener) = self.listener_float_value {
-							let object_id = (&command.object_id).into();
-							listener(command_with_user.creator, &object_id, command.field_id, command.value);
-						}
-					}
-					S2CCommand::SetStructure(command) => {
-						if let Some(ref listener) = self.listener_structure {
-							let object_id = (&command.object_id).into();
-							listener(
-								command_with_user.creator,
-								&object_id,
-								command.field_id,
-								&From::from(&command.value),
-							);
-						}
-					}
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);

@@ -20,6 +20,7 @@ pub struct OutFrame {
 	full: bool,
 	contains_reliability_command: bool,
 }
+
 impl OutFrame {
 	pub fn new(frame_id: FrameId) -> Self {
 		Self {

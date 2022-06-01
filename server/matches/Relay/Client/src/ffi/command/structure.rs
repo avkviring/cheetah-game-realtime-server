@@ -1,5 +1,6 @@
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::structure::{CompareAndSetStructureCommand, SetStructureCommand};
+use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_relay_common::commands::types::structure::CompareAndSetStructureCommand;
 use cheetah_matches_relay_common::constants::FieldId;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -28,10 +29,10 @@ pub extern "C" fn set_structure(
 ) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::SetStructure(SetStructureCommand {
+		C2SCommand::SetStructure(SetFieldCommand {
 			object_id: object_id.into(),
 			field_id,
-			value: structure.into(),
+			value: structure.buffer.as_ref().into(),
 		}),
 	)
 }

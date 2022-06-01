@@ -7,7 +7,6 @@ pub mod decoder;
 pub mod encoder;
 mod header;
 
-
 #[cfg(test)]
 mod tests {
 	use std::io::Cursor;
@@ -17,7 +16,6 @@ mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use crate::commands::types::field::SetFieldCommand;
-	use crate::commands::types::float::SetDoubleCommand;
 	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::codec::commands::decoder::decode_commands;
 	use crate::protocol::codec::commands::encoder::encode_command;
@@ -31,10 +29,10 @@ mod tests {
 		let mut commands = Vec::new();
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetDoubleCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetFieldCommand {
 				object_id: Default::default(),
 				field_id: 10,
-				value: 1.5,
+				value: 1.5.into(),
 			})),
 		});
 		commands.push(CommandWithChannel {
@@ -54,10 +52,10 @@ mod tests {
 		commands.push(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
 			both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-				command: S2CCommand::SetDouble(SetDoubleCommand {
+				command: S2CCommand::SetField(SetFieldCommand {
 					object_id: Default::default(),
 					field_id: 10,
-					value: 1.5,
+					value: 1.5.into(),
 				}),
 				creator: 55,
 			}),
