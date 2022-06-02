@@ -93,7 +93,12 @@ impl RedisStorage {
 			.map_err(StorageError::from)
 	}
 
-	async fn ensure_addrs_in_sets(&self, addrs: &Addrs, remove_from: &str, add_to: &str) -> Result<(), StorageError> {
+	async fn ensure_addrs_in_sets(
+		&self,
+		addrs: &Addrs,
+		remove_from: &str,
+		add_to: &str,
+	) -> Result<(), StorageError> {
 		future::try_join(self.srem(addrs, remove_from), self.sadd(addrs, add_to))
 			.await
 			.map(|_| ())
@@ -116,7 +121,12 @@ impl RedisStorage {
 	}
 
 	async fn srandmember(&self, key: &str) -> Result<Addrs, StorageError> {
-		let res: Vec<u8> = self.conn.clone().srandmember(key).await.map_err(StorageError::from)?;
+		let res: Vec<u8> = self
+			.conn
+			.clone()
+			.srandmember(key)
+			.await
+			.map_err(StorageError::from)?;
 		if res.is_empty() {
 			return Err(StorageError::NoRelayFound);
 		}
@@ -151,8 +161,14 @@ pub mod tests {
 			game: SocketAddr::from_str("127.0.0.1:80").unwrap(),
 			grpc_internal: SocketAddr::from_str("127.0.0.2:90").unwrap(),
 		};
-		storage.update_status(&want, RelayState::Ready).await.unwrap();
-		storage.update_status(&want, RelayState::NotReady).await.unwrap();
+		storage
+			.update_status(&want, RelayState::Ready)
+			.await
+			.unwrap();
+		storage
+			.update_status(&want, RelayState::NotReady)
+			.await
+			.unwrap();
 		let res = storage.get_random_relay_addr().await;
 
 		assert!(matches!(res, Err(StorageError::NoRelayFound)))
@@ -166,7 +182,10 @@ pub mod tests {
 			grpc_internal: SocketAddr::from_str("127.0.0.2:90").unwrap(),
 		};
 
-		storage.update_status(&want, RelayState::Ready).await.unwrap();
+		storage
+			.update_status(&want, RelayState::Ready)
+			.await
+			.unwrap();
 		let got = storage.get_random_relay_addr().await.unwrap();
 
 		assert_eq!(got, want)
@@ -179,6 +198,11 @@ pub mod tests {
 	async fn stub_storage<'a>() -> (Container<'a, Cli, Redis>, RedisStorage) {
 		let node = (*CLI).run(Redis::default());
 		let port = node.get_host_port(6379).unwrap();
-		(node, RedisStorage::new(&format!("redis://127.0.0.1:{}", port)).await.unwrap())
+		(
+			node,
+			RedisStorage::new(&format!("redis://127.0.0.1:{}", port))
+				.await
+				.unwrap(),
+		)
 	}
 }

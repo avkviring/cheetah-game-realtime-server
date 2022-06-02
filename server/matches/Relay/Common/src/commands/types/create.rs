@@ -72,7 +72,8 @@ impl C2SCreatedGameObjectCommand {
 
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let room_owner = input.read_u8()? == 1;
-		let unique_key = BinaryValue::decode(input).map(|v| if v.len() != 0 { Some(v) } else { None })?;
+		let unique_key =
+			BinaryValue::decode(input).map(|v| if v.len() != 0 { Some(v) } else { None })?;
 		Ok(Self {
 			object_id,
 			room_owner,

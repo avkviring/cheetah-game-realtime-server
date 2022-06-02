@@ -4,7 +4,9 @@ use crate::commands::CommandTypeId;
 use crate::constants::FieldId;
 use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::context::CommandContext;
-use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
+use crate::protocol::frame::applications::{
+	BothDirectionCommand, ChannelGroup, CommandWithChannel,
+};
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
 
@@ -38,7 +40,12 @@ fn get_channel_info(command: &CommandWithChannel) -> (ChannelType, Option<Channe
 }
 fn get_command_info(
 	command: &CommandWithChannel,
-) -> (Option<GameObjectId>, Option<FieldId>, CommandTypeId, Option<RoomMemberId>) {
+) -> (
+	Option<GameObjectId>,
+	Option<FieldId>,
+	CommandTypeId,
+	Option<RoomMemberId>,
+) {
 	match &command.both_direction_command {
 		BothDirectionCommand::S2CWithCreator(command_with_creator) => (
 			command_with_creator.command.get_object_id(),

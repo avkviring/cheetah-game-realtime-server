@@ -80,7 +80,11 @@ pub fn stress_test() {
 	thread::sleep(Duration::from_millis(2000));
 	ffi::client::receive(client2);
 
-	tracing::info!("result {:?} {:?}", send_inc_long_count, LONG_VALUE.lock().unwrap().as_ref());
+	tracing::info!(
+		"result {:?} {:?}",
+		send_inc_long_count,
+		LONG_VALUE.lock().unwrap().as_ref()
+	);
 
 	let result = LONG_VALUE.lock();
 	let result = result.unwrap();
@@ -93,9 +97,18 @@ pub fn stress_test() {
 }
 
 lazy_static! {
-	static ref LONG_VALUE: Mutex<Option<(GameObjectIdFFI, FieldId, i64)>> = Mutex::new(Default::default());
+	static ref LONG_VALUE: Mutex<Option<(GameObjectIdFFI, FieldId, i64)>> =
+		Mutex::new(Default::default());
 }
 
-extern "C" fn listener(_: RoomMemberId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
-	LONG_VALUE.lock().unwrap().replace(((*object_id).clone(), field_id, value));
+extern "C" fn listener(
+	_: RoomMemberId,
+	object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	value: i64,
+) {
+	LONG_VALUE
+		.lock()
+		.unwrap()
+		.replace(((*object_id).clone(), field_id, value));
 }

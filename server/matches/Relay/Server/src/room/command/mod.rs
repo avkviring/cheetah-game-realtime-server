@@ -76,7 +76,12 @@ pub enum ServerCommandError {
 }
 
 impl ServerCommandError {
-	pub fn log_command_execute_error(&self, command: &C2SCommand, room_id: RoomId, room_member_id: RoomMemberId) {
+	pub fn log_command_execute_error(
+		&self,
+		command: &C2SCommand,
+		room_id: RoomId,
+		room_member_id: RoomMemberId,
+	) {
 		tracing::error!(
 			"Error execute command: {:?} in room {} from client {} : {:?}",
 			command,
@@ -96,7 +101,11 @@ impl ServerCommandError {
 	}
 }
 
-pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+pub fn execute(
+	command: &C2SCommand,
+	room: &mut Room,
+	user_id: RoomMemberId,
+) -> Result<(), ServerCommandError> {
 	match command {
 		C2SCommand::CreateGameObject(command) => command.execute(room, user_id),
 		C2SCommand::SetField(command) => command.execute(room, user_id),
@@ -131,7 +140,10 @@ mod tests {
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
 		let object_id = room
-			.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups)
+			.test_create_object_with_not_created_state(
+				GameObjectOwner::Member(user_1),
+				access_groups,
+			)
 			.id
 			.clone();
 		(room, object_id, user_1, user_2)

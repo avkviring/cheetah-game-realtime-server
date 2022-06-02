@@ -4,7 +4,8 @@ use crate::proto::matches::relay::internal as relay;
 use crate::proto::matches::relay::shared;
 use crate::service::configuration::converter::error::Error;
 use crate::service::configuration::yaml::structures::{
-	Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template, TemplateName,
+	Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template,
+	TemplateName,
 };
 
 ///
@@ -19,14 +20,23 @@ pub fn create_template_permission(
 		.permissions
 		.groups
 		.iter()
-		.map(|(group, permission)| create_permission_rule(template_name, name_to_groups, group, permission))
+		.map(|(group, permission)| {
+			create_permission_rule(template_name, name_to_groups, group, permission)
+		})
 		.collect::<Result<_, Error>>()?;
 
 	let fields = template
 		.permissions
 		.fields
 		.iter()
-		.map(|permission_field| create_permissions_field(template_name, name_to_groups, name_to_field, permission_field))
+		.map(|permission_field| {
+			create_permissions_field(
+				template_name,
+				name_to_groups,
+				name_to_field,
+				permission_field,
+			)
+		})
 		.collect::<Result<_, Error>>()?;
 
 	Result::Ok(relay::GameObjectTemplatePermission {
@@ -45,12 +55,14 @@ fn create_permissions_field(
 	let rules = permission_field
 		.groups
 		.iter()
-		.map(|(group, permission)| create_permission_rule(template_name, name_to_groups, group, permission))
+		.map(|(group, permission)| {
+			create_permission_rule(template_name, name_to_groups, group, permission)
+		})
 		.collect::<Result<_, Error>>()?;
 
-	let field = name_to_field
-		.get(&permission_field.field)
-		.ok_or_else(|| Error::FieldNotExistsForTemplate(template_name.clone(), permission_field.field.clone()))?;
+	let field = name_to_field.get(&permission_field.field).ok_or_else(|| {
+		Error::FieldNotExistsForTemplate(template_name.clone(), permission_field.field.clone())
+	})?;
 
 	Result::Ok(relay::PermissionField {
 		id: field.id as u32,
@@ -117,10 +129,14 @@ pub mod test {
 			&Template {
 				id: 155,
 				permissions: TemplatePermissions {
-					groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+					groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)]
+						.into_iter()
+						.collect(),
 					fields: vec![PermissionField {
 						field: "score".to_string(),
-						groups: vec![("groupA".to_string(), PermissionLevel::ReadWrite)].into_iter().collect(),
+						groups: vec![("groupA".to_string(), PermissionLevel::ReadWrite)]
+							.into_iter()
+							.collect(),
 					}],
 				},
 			},
@@ -166,7 +182,9 @@ pub mod test {
 			&Template {
 				id: 155,
 				permissions: TemplatePermissions {
-					groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+					groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)]
+						.into_iter()
+						.collect(),
 					fields: Default::default(),
 				},
 			},
@@ -202,10 +220,22 @@ pub mod test {
 
 	#[test]
 	fn should_convert_field_type() {
-		assert_eq!(shared::FieldType::from(&FieldType::Long), shared::FieldType::Long);
-		assert_eq!(shared::FieldType::from(&FieldType::Struct), shared::FieldType::Structure);
-		assert_eq!(shared::FieldType::from(&FieldType::Double), shared::FieldType::Double);
-		assert_eq!(shared::FieldType::from(&FieldType::Event), shared::FieldType::Event);
+		assert_eq!(
+			shared::FieldType::from(&FieldType::Long),
+			shared::FieldType::Long
+		);
+		assert_eq!(
+			shared::FieldType::from(&FieldType::Struct),
+			shared::FieldType::Structure
+		);
+		assert_eq!(
+			shared::FieldType::from(&FieldType::Double),
+			shared::FieldType::Double
+		);
+		assert_eq!(
+			shared::FieldType::from(&FieldType::Event),
+			shared::FieldType::Event
+		);
 	}
 
 	#[test]
@@ -241,7 +271,9 @@ pub mod test {
 			.collect(),
 			&PermissionField {
 				field: "score".to_string(),
-				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)]
+					.into_iter()
+					.collect(),
 			},
 		);
 		let result = result.unwrap();
@@ -264,7 +296,9 @@ pub mod test {
 			&Default::default(),
 			&PermissionField {
 				field: "score".to_string(),
-				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)]
+					.into_iter()
+					.collect(),
 			},
 		);
 		assert!(matches!(result,
@@ -280,7 +314,9 @@ pub mod test {
 			&Default::default(),
 			&PermissionField {
 				field: "score".to_string(),
-				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)].into_iter().collect(),
+				groups: vec![("groupA".to_string(), PermissionLevel::ReadOnly)]
+					.into_iter()
+					.collect(),
 			},
 		);
 		assert!(matches!(result,

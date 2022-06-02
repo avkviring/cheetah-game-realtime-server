@@ -49,8 +49,9 @@ impl Registry {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
 		let client = NetworkThreadClient::new(
-			SocketAddr::from_str(server_address.as_str())
-				.map_err(|e| std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{:?}", e)))?,
+			SocketAddr::from_str(server_address.as_str()).map_err(|e| {
+				std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{:?}", e))
+			})?,
 			member_id,
 			room_id,
 			user_private_key,

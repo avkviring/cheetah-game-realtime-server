@@ -12,7 +12,9 @@ use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_matches_relay_common::constants::GameObjectTemplateId;
 use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
+use cheetah_matches_relay_common::protocol::frame::applications::{
+	BothDirectionCommand, ChannelGroup, CommandWithChannel,
+};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 #[cfg(test)]
 use cheetah_matches_relay_common::room::access::AccessGroups;
@@ -76,7 +78,9 @@ impl Room {
 			objects: Default::default(),
 			current_channel: Default::default(),
 			current_member_id: Default::default(),
-			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
+			permission_manager: Rc::new(RefCell::new(PermissionManager::new(
+				&template.permissions,
+			))),
 			#[cfg(test)]
 			test_object_id_generator: 0,
 			#[cfg(test)]
@@ -129,7 +133,11 @@ impl Room {
 		let user = self.members.get_mut(&user_id);
 		match user {
 			None => {
-				tracing::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
+				tracing::error!(
+					"[room({:?})] user({:?}) not found for input frame",
+					self.id,
+					user_id
+				);
 			}
 			Some(user) => {
 				self.current_member_id.replace(user_id);
@@ -138,7 +146,8 @@ impl Room {
 				user.connected = true;
 
 				if connected_now {
-					self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
+					self.current_channel
+						.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
 					let user_id = user.id;
 					let template = user.template.clone();
 					if let Err(e) = self.on_user_connect(user_id, template) {
@@ -155,8 +164,11 @@ impl Room {
 		for command_with_channel in commands {
 			match &command_with_channel.both_direction_command {
 				BothDirectionCommand::C2S(command) => {
-					self.current_channel.replace(From::from(&command_with_channel.channel));
-					tracer.borrow_mut().collect_c2s(&self.objects, user_id, command);
+					self.current_channel
+						.replace(From::from(&command_with_channel.channel));
+					tracer
+						.borrow_mut()
+						.collect_c2s(&self.objects, user_id, command);
 
 					let instant = Instant::now();
 					match execute(command, self, user_id) {
@@ -165,10 +177,18 @@ impl Room {
 							e.log_command_execute_error(command, self.id, user_id);
 						}
 					}
-					measurers.on_execute_command(command.get_field_id(), &command, instant.elapsed())
+					measurers.on_execute_command(
+						command.get_field_id(),
+						&command,
+						instant.elapsed(),
+					)
 				}
 				_ => {
-					tracing::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel)
+					tracing::error!(
+						"[room({:?})] receive unsupported command {:?}",
+						self.id,
+						command_with_channel
+					)
 				}
 			}
 		}
@@ -198,7 +218,10 @@ impl Room {
 			.ok_or_else(|| ServerCommandError::MemberNotFound(member_id.clone()))
 	}
 
-	pub fn get_member_mut(&mut self, member_id: &RoomMemberId) -> Result<&mut Member, ServerCommandError> {
+	pub fn get_member_mut(
+		&mut self,
+		member_id: &RoomMemberId,
+	) -> Result<&mut Member, ServerCommandError> {
 		self.members
 			.get_mut(member_id)
 			.ok_or_else(|| ServerCommandError::MemberNotFound(member_id.clone()))
@@ -236,7 +259,10 @@ impl Room {
 		self.objects.insert(object.id.clone(), object);
 	}
 
-	pub fn get_object(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
+	pub fn get_object(
+		&mut self,
+		object_id: &GameObjectId,
+	) -> Result<&mut GameObject, ServerCommandError> {
 		self.objects
 			.get_mut(object_id)
 			.ok_or_else(|| ServerCommandError::GameObjectNotFound {
@@ -248,7 +274,10 @@ impl Room {
 		self.objects.contains_key(object_id)
 	}
 
-	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Result<GameObject, ServerCommandError> {
+	pub fn delete_object(
+		&mut self,
+		object_id: &GameObjectId,
+	) -> Result<GameObject, ServerCommandError> {
 		let current_user = self.current_member_id;
 		match self.objects.shift_remove(object_id) {
 			None => Err(ServerCommandError::GameObjectNotFound {
@@ -283,7 +312,11 @@ impl Room {
 		self.objects.iter().for_each(|(_, o)| f(o));
 	}
 
-	fn on_user_connect(&mut self, user_id: RoomMemberId, template: MemberTemplate) -> Result<(), ServerCommandError> {
+	fn on_user_connect(
+		&mut self,
+		user_id: RoomMemberId,
+		template: MemberTemplate,
+	) -> Result<(), ServerCommandError> {
 		for object_template in template.objects {
 			let object = object_template.create_user_game_object(user_id);
 			let mut commands = CreateCommandsCollector::new();
@@ -307,9 +340,11 @@ mod tests {
 	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
-use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
+	use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 	use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
-	use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+	use cheetah_matches_relay_common::protocol::frame::applications::{
+		BothDirectionCommand, CommandWithChannel,
+	};
 	use cheetah_matches_relay_common::protocol::frame::channel::{Channel, ChannelType};
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
@@ -317,7 +352,9 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
 	use crate::room::object::GameObject;
-	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
+	use crate::room::template::config::{
+		GameObjectTemplate, MemberTemplate, Permission, RoomTemplate,
+	};
 	use crate::room::{Room, ServerCommandError};
 	use crate::server::measurers::Measurers;
 
@@ -370,7 +407,10 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 			self.get_object(&id).unwrap()
 		}
 
-		pub fn test_mark_as_connected(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		pub fn test_mark_as_connected(
+			&mut self,
+			user_id: RoomMemberId,
+		) -> Result<(), ServerCommandError> {
 			let member = self.get_member_mut(&user_id)?;
 			member.connected = true;
 			member.attached = true;
@@ -391,7 +431,10 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 				.collect()
 		}
 
-		pub fn test_get_user_out_commands_with_meta(&self, user_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
+		pub fn test_get_user_out_commands_with_meta(
+			&self,
+			user_id: RoomMemberId,
+		) -> VecDeque<S2CCommandWithCreator> {
 			self.get_member(&user_id)
 				.unwrap()
 				.out_commands
@@ -463,9 +506,10 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 		template.objects = vec![object_template.clone()];
 
 		let room = Room::from_template(template);
-		assert!(room
-			.objects
-			.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::Room)));
+		assert!(room.objects.contains_key(&GameObjectId::new(
+			object_template.id,
+			GameObjectOwner::Room
+		)));
 	}
 
 	#[test]
@@ -485,9 +529,10 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(user_template);
 		room.execute_commands(user_id, &[]);
-		assert!(room
-			.objects
-			.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::Member(user_id))));
+		assert!(room.objects.contains_key(&GameObjectId::new(
+			object_template.id,
+			GameObjectOwner::Member(user_id)
+		)));
 	}
 
 	///
@@ -580,7 +625,8 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 		});
 		assert_eq!(order, "1005200");
 
-		room.delete_object(&GameObjectId::new(100, GameObjectOwner::Room)).unwrap();
+		room.delete_object(&GameObjectId::new(100, GameObjectOwner::Room))
+			.unwrap();
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
@@ -607,21 +653,28 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 		object1_template
 			.fields
 			.insert((deny_field_id, FieldType::Long), FieldValue::Long(111));
-		template
-			.permissions
-			.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
+		template.permissions.set_permission(
+			100,
+			&deny_field_id,
+			FieldType::Long,
+			&groups,
+			Permission::Deny,
+		);
 
 		let mut room = Room::from_template(template);
 		let user1_id = room.register_member(user1_template.clone());
 		let user2 = MemberTemplate::stub(groups);
 		let user2_id = room.register_member(user2);
 		room.test_mark_as_connected(user2_id).unwrap();
-		room.on_user_connect(user1_id, user1_template.clone()).unwrap();
+		room.on_user_connect(user1_id, user1_template.clone())
+			.unwrap();
 
 		let commands = room.test_get_user_out_commands(user2_id);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
-		assert!(matches!(commands.get(1), Some(S2CCommand::SetField(command)) if command.field_id == allow_field_id));
+		assert!(
+			matches!(commands.get(1), Some(S2CCommand::SetField(command)) if command.field_id == allow_field_id)
+		);
 		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
 	}
 
@@ -651,7 +704,8 @@ use cheetah_matches_relay_common::commands::{FieldType, FieldValue};
 	#[test]
 	fn should_check_singleton_key() {
 		let mut room = Room::default();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Room, AccessGroups(7));
+		let object =
+			room.test_create_object_with_not_created_state(GameObjectOwner::Room, AccessGroups(7));
 		let object_id = object.id.clone();
 		let unique_key = BinaryValue::from([1, 2, 3, 4].as_slice());
 		room.set_singleton_key(unique_key.clone(), object_id.clone());

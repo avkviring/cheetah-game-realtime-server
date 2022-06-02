@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use cheetah_matches_relay_common::commands::FieldType;
 use fnv::FnvBuildHasher;
 
+use cheetah_matches_relay_common::commands::FieldValue;
 use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_relay_common::room::access::AccessGroups;
 use cheetah_matches_relay_common::room::object::GameObjectId;
 use cheetah_matches_relay_common::room::UserPrivateKey;
-use cheetah_matches_relay_common::commands::FieldValue;
 
 use crate::room::object::Field;
 
@@ -76,7 +76,10 @@ impl MemberTemplate {
 	pub fn validate(self) -> Result<MemberTemplate, UserTemplateError> {
 		for object in &self.objects {
 			if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
-				return Result::Err(UserTemplateError::UserObjectHasWrongId(self.private_key, object.id));
+				return Result::Err(UserTemplateError::UserObjectHasWrongId(
+					self.private_key,
+					object.id,
+				));
 			}
 		}
 		Result::Ok(self)
@@ -92,8 +95,8 @@ mod tests {
 
 	use crate::room::object::Field;
 	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField,
-		Permissions, UserTemplateError,
+		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate,
+		Permission, PermissionField, Permissions, UserTemplateError,
 	};
 
 	impl MemberTemplate {
@@ -133,20 +136,28 @@ mod tests {
 			access_group: &AccessGroups,
 			permission: Permission,
 		) {
-			let template_permission = match self.templates.iter_mut().find(|t| t.template == template) {
-				None => {
-					let template_permission = GameObjectTemplatePermission {
-						template,
-						rules: vec![],
-						fields: vec![],
-					};
-					self.templates.push(template_permission);
-					self.templates.iter_mut().find(|t| t.template == template).unwrap()
-				}
-				Some(template) => template,
-			};
+			let template_permission =
+				match self.templates.iter_mut().find(|t| t.template == template) {
+					None => {
+						let template_permission = GameObjectTemplatePermission {
+							template,
+							rules: vec![],
+							fields: vec![],
+						};
+						self.templates.push(template_permission);
+						self.templates
+							.iter_mut()
+							.find(|t| t.template == template)
+							.unwrap()
+					}
+					Some(template) => template,
+				};
 
-			let permission_field = match template_permission.fields.iter_mut().find(|f| f.field.id == *field_id) {
+			let permission_field = match template_permission
+				.fields
+				.iter_mut()
+				.find(|f| f.field.id == *field_id)
+			{
 				None => {
 					let permission_field = PermissionField {
 						field: Field {

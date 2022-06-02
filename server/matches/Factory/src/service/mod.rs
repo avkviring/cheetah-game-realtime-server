@@ -23,7 +23,10 @@ pub struct FactoryService {
 }
 
 impl FactoryService {
-	pub fn new(registry: RegistryClient, configurations: &YamlConfigurations) -> Result<Self, error::Error> {
+	pub fn new(
+		registry: RegistryClient,
+		configurations: &YamlConfigurations,
+	) -> Result<Self, error::Error> {
 		let templates = TryFrom::try_from(configurations)?;
 		Ok(Self {
 			registry,
@@ -43,8 +46,10 @@ impl FactoryService {
 		// ищем свободный relay сервер
 		let addrs = self.registry.find_free_relay().await.unwrap();
 		let relay_grpc_addr = addrs.grpc_internal.as_ref().unwrap();
-		let relay_addr =
-			cheetah_libraries_microservice::make_internal_srv_uri(&relay_grpc_addr.host, relay_grpc_addr.port as u16);
+		let relay_addr = cheetah_libraries_microservice::make_internal_srv_uri(
+			&relay_grpc_addr.host,
+			relay_grpc_addr.port as u16,
+		);
 		// создаем матч на relay сервере
 		let mut connect = RelayClient::connect(relay_addr).await.unwrap();
 
@@ -63,10 +68,15 @@ impl FactoryService {
 		let mut lock_counters = self.prometheus_counters.lock();
 		let counters = lock_counters.as_mut().unwrap();
 		let counter = counters.entry(template_name.into()).or_insert_with(|| {
-			let opts = Opts::new("create_match_counter", "New match counter")
-				.const_labels([("template".into(), template_name.into())].into_iter().collect());
+			let opts = Opts::new("create_match_counter", "New match counter").const_labels(
+				[("template".into(), template_name.into())]
+					.into_iter()
+					.collect(),
+			);
 			let counter = IntCounter::with_opts(opts).unwrap();
-			prometheus::default_registry().register(Box::new(counter.clone())).unwrap();
+			prometheus::default_registry()
+				.register(Box::new(counter.clone()))
+				.unwrap();
 			counter
 		});
 		counter.inc();

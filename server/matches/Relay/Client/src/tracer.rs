@@ -32,10 +32,16 @@ pub struct Trace {
 
 impl TracerCollector {
 	fn setup() -> Self {
-		LogTracer::builder().with_max_level(log::LevelFilter::Info).init().unwrap();
+		LogTracer::builder()
+			.with_max_level(log::LevelFilter::Info)
+			.init()
+			.unwrap();
 		let fmt_layer = fmt::layer().with_target(false);
-		let subscriber = Registry::default().with(fmt_layer).with(TracerCollectorLayer);
-		tracing::subscriber::set_global_default(subscriber).expect("Setting default subscriber failed");
+		let subscriber = Registry::default()
+			.with(fmt_layer)
+			.with(TracerCollectorLayer);
+		tracing::subscriber::set_global_default(subscriber)
+			.expect("Setting default subscriber failed");
 		Self {
 			level: tracing_core::Level::INFO,
 			items: Default::default(),
@@ -107,7 +113,7 @@ impl<'a> Visit for ValueVisitor {
 
 #[cfg(test)]
 mod tests {
-	use std::path::{PathBuf};
+	use std::path::PathBuf;
 	use std::sync::{LockResult, Mutex, MutexGuard};
 
 	use lazy_static::lazy_static;
@@ -123,7 +129,7 @@ mod tests {
 	fn should_collect_trace() {
 		let _lock = setup(LogLevel::Error);
 		tracing::error!("some error");
-		
+
 		let mut path = PathBuf::new();
 		for v in ["matches", "Relay", "Client", "src", "tracer.rs"] {
 			path.push(v);

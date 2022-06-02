@@ -15,7 +15,8 @@ use crate::room::object::{Field, GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
-pub type CASCleanersStore = heapless::FnvIndexMap<(GameObjectId, FieldId, FieldType), FieldValue, 256>;
+pub type CASCleanersStore =
+	heapless::FnvIndexMap<(GameObjectId, FieldId, FieldType), FieldValue, 256>;
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -69,7 +70,11 @@ pub fn perform_compare_and_set(
 			if reset.is_some() {
 				object.set_compare_and_set_owner(field_id, user_id)?;
 			}
-			Ok(Some(S2CCommand::new_set_command(new, object.id.to_owned(), field_id)))
+			Ok(Some(S2CCommand::new_set_command(
+				new,
+				object.id.to_owned(),
+				field_id,
+			)))
 		} else {
 			Ok(None)
 		}
@@ -96,7 +101,9 @@ pub fn perform_compare_and_set(
 			}
 			Some(reset_value) => {
 				cls.insert((object_id, field_id, field_type), reset_value.to_owned())
-					.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners overflow".to_string()))?;
+					.map_err(|_| {
+						ServerCommandError::Error("CompareAndSetCleaners overflow".to_string())
+					})?;
 			}
 		}
 	}
@@ -174,7 +181,8 @@ mod tests {
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::object::Field;
 	use crate::room::template::config::{
-		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
+		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission,
+		PermissionField, RoomTemplate,
 	};
 	use crate::room::Room;
 
@@ -373,9 +381,23 @@ mod tests {
 		.execute(&mut room, user1_id)
 		.unwrap();
 
-		assert_eq!(*room.get_object(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
+		assert_eq!(
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(field_id)
+				.unwrap(),
+			200
+		);
 		room.disconnect_user(user1_id).unwrap();
-		assert_eq!(*room.get_object(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
+		assert_eq!(
+			*room
+				.get_object(&object_id)
+				.unwrap()
+				.get_field::<i64>(field_id)
+				.unwrap(),
+			200
+		);
 	}
 
 	///
@@ -435,25 +457,31 @@ mod tests {
 
 		let object_template = 10;
 		let object_field = 50;
-		template.permissions.templates.push(GameObjectTemplatePermission {
-			template: object_template,
-			rules: vec![],
-			fields: vec![PermissionField {
-				field: Field {
-					id: object_field,
-					field_type: FieldType::Long,
-				},
-				rules: vec![GroupsPermissionRule {
-					groups: access_group,
-					permission: Permission::Rw,
+		template
+			.permissions
+			.templates
+			.push(GameObjectTemplatePermission {
+				template: object_template,
+				rules: vec![],
+				fields: vec![PermissionField {
+					field: Field {
+						id: object_field,
+						field_type: FieldType::Long,
+					},
+					rules: vec![GroupsPermissionRule {
+						groups: access_group,
+						permission: Permission::Rw,
+					}],
 				}],
-			}],
-		});
+			});
 		let mut room = Room::from_template(template);
 		let user1_id = room.register_member(user_template_1);
 		let user2_id = room.register_member(user_template_2);
 		let user3_id = room.register_member(user_template_3);
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user3_id), access_group);
+		let object = room.test_create_object_with_not_created_state(
+			GameObjectOwner::Member(user3_id),
+			access_group,
+		);
 		object.created = true;
 		object.template_id = object_template;
 

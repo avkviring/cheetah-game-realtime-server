@@ -47,7 +47,10 @@ mod tests {
 	pub fn should_disconnect_after_timeout() {
 		let now = Instant::now();
 		let handler = DisconnectByTimeout::new(&now);
-		assert!(handler.disconnected(&now.add(DisconnectByTimeout::TIMEOUT).add(Duration::from_millis(1))));
+		assert!(handler.disconnected(
+			&now.add(DisconnectByTimeout::TIMEOUT)
+				.add(Duration::from_millis(1))
+		));
 	}
 
 	///
@@ -58,7 +61,8 @@ mod tests {
 		let now = Instant::now();
 		let mut handler = DisconnectByTimeout::new(&now);
 		handler.on_frame_received(&now);
-		assert!(!handler.disconnected(&now.add(DisconnectByTimeout::TIMEOUT - Duration::from_millis(1))));
+		assert!(!handler
+			.disconnected(&now.add(DisconnectByTimeout::TIMEOUT - Duration::from_millis(1))));
 	}
 
 	///
@@ -69,6 +73,8 @@ mod tests {
 		let now = Instant::now();
 		let mut handler = DisconnectByTimeout::new(&now);
 		handler.on_frame_received(&now);
-		assert!(handler.disconnected(&now.add(DisconnectByTimeout::TIMEOUT + Duration::from_millis(1))));
+		assert!(
+			handler.disconnected(&now.add(DisconnectByTimeout::TIMEOUT + Duration::from_millis(1)))
+		);
 	}
 }

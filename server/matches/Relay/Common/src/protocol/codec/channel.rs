@@ -58,9 +58,10 @@ impl Channel {
 			ChannelType::UNRELIABLE_UNORDERED => Channel::UnreliableUnordered,
 			ChannelType::RELIABLE_ORDERED => Channel::ReliableOrdered(channel_group?),
 			ChannelType::UNRELIABLE_ORDERED => Channel::UnreliableOrdered(channel_group?),
-			ChannelType::RELIABLE_SEQUENCE => {
-				Channel::ReliableSequence(channel_group?, ChannelSequence(input.read_variable_u64()? as u32))
-			}
+			ChannelType::RELIABLE_SEQUENCE => Channel::ReliableSequence(
+				channel_group?,
+				ChannelSequence(input.read_variable_u64()? as u32),
+			),
 			_ => return Err(CommandChannelDecodeError::UnknownType(*channel_type)),
 		})
 	}
@@ -136,7 +137,11 @@ mod tests {
 		);
 	}
 
-	fn check(original: Channel, channel_type: ChannelType, channel_group_id: Result<ChannelGroup, CommandContextError>) {
+	fn check(
+		original: Channel,
+		channel_type: ChannelType,
+		channel_group_id: Result<ChannelGroup, CommandContextError>,
+	) {
 		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		original.encode(&mut cursor).unwrap();

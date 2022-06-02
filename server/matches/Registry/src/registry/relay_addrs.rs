@@ -23,9 +23,15 @@ impl TryFrom<Option<RelayAddrs>> for Addrs {
 	fn try_from(val: Option<RelayAddrs>) -> Result<Self, Self::Error> {
 		let addrs = val.ok_or(AddrsError::MalformedAddrs)?;
 		let game = addrs.game.ok_or(AddrsError::MalformedAddrs)?.try_into()?;
-		let grpc_internal = addrs.grpc_internal.ok_or(AddrsError::MalformedAddrs)?.try_into()?;
+		let grpc_internal = addrs
+			.grpc_internal
+			.ok_or(AddrsError::MalformedAddrs)?
+			.try_into()?;
 
-		Ok(Addrs { game, grpc_internal })
+		Ok(Addrs {
+			game,
+			grpc_internal,
+		})
 	}
 }
 

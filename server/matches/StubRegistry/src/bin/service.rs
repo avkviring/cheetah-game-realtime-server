@@ -9,17 +9,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	cheetah_libraries_microservice::init("matches.stub-registry");
 
 	let registry_service = RegistryService {
-		relay_grpc_host: cheetah_libraries_microservice::get_env("MATCHES_RELAY_INTERNAL_GRPC_HOST"),
-		relay_grpc_port: cheetah_libraries_microservice::get_env("MATCHES_RELAY_INTERNAL_GRPC_PORT")
-			.parse()
-			.unwrap(),
-		relay_game_host: cheetah_libraries_microservice::get_env("MATCHES_RELAY_EXTERNAL_GAME_HOST"),
-		relay_game_port: cheetah_libraries_microservice::get_env("MATCHES_RELAY_EXTERNAL_GAME_PORT")
-			.parse()
-			.unwrap(),
+		relay_grpc_host: cheetah_libraries_microservice::get_env(
+			"MATCHES_RELAY_INTERNAL_GRPC_HOST",
+		),
+		relay_grpc_port: cheetah_libraries_microservice::get_env(
+			"MATCHES_RELAY_INTERNAL_GRPC_PORT",
+		)
+		.parse()
+		.unwrap(),
+		relay_game_host: cheetah_libraries_microservice::get_env(
+			"MATCHES_RELAY_EXTERNAL_GAME_HOST",
+		),
+		relay_game_port: cheetah_libraries_microservice::get_env(
+			"MATCHES_RELAY_EXTERNAL_GAME_PORT",
+		)
+		.parse()
+		.unwrap(),
 	};
 
-	let grpc_service = cheetah_matches_stub_registry::proto::internal::registry_server::RegistryServer::new(registry_service);
+	let grpc_service =
+		cheetah_matches_stub_registry::proto::internal::registry_server::RegistryServer::new(
+			registry_service,
+		);
 	Server::builder()
 		.add_service(grpc_service)
 		.serve(cheetah_libraries_microservice::get_internal_service_binding_addr())
@@ -58,7 +69,10 @@ impl Registry for RegistryService {
 	async fn update_relay_status(
 		&self,
 		_request: tonic::Request<cheetah_matches_stub_registry::proto::internal::RelayStatusUpdate>,
-	) -> Result<tonic::Response<cheetah_matches_stub_registry::proto::internal::UpdateRelayStatusResponse>, Status> {
+	) -> Result<
+		tonic::Response<cheetah_matches_stub_registry::proto::internal::UpdateRelayStatusResponse>,
+		Status,
+	> {
 		Ok(tonic::Response::new(
 			cheetah_matches_stub_registry::proto::internal::UpdateRelayStatusResponse::default(),
 		))

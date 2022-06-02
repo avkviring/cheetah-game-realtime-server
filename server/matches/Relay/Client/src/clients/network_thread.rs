@@ -8,7 +8,9 @@ use std::time::{Duration, Instant};
 
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_matches_relay_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+use cheetah_matches_relay_common::protocol::frame::applications::{
+	BothDirectionCommand, CommandWithChannel,
+};
 use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
@@ -108,7 +110,11 @@ impl NetworkThreadClient {
 	/// Обработка команд с сервера
 	///
 	fn commands_from_server(&mut self) {
-		let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_ready_commands();
+		let in_commands_from_protocol = self
+			.udp_client
+			.protocol
+			.in_commands_collector
+			.get_ready_commands();
 		for command in in_commands_from_protocol {
 			match self.commands_from_server.send(command.clone()) {
 				Ok(_) => {}
@@ -150,10 +156,10 @@ impl NetworkThreadClient {
 					self.udp_client.channel.reset_emulator();
 				}
 				ClientRequest::SendCommandToServer(command) => {
-					self.udp_client
-						.protocol
-						.out_commands_collector
-						.add_command(command.channel_type, BothDirectionCommand::C2S(command.command));
+					self.udp_client.protocol.out_commands_collector.add_command(
+						command.channel_type,
+						BothDirectionCommand::C2S(command.command),
+					);
 				}
 			}
 		}
@@ -168,7 +174,11 @@ impl NetworkThreadClient {
 			.current_frame_id
 			.store(protocol.next_frame_id, Ordering::Relaxed);
 		self.shared_statistics.rtt_in_ms.store(
-			protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64,
+			protocol
+				.rtt
+				.get_rtt()
+				.unwrap_or_else(|| Duration::from_millis(0))
+				.as_millis() as u64,
 			Ordering::Relaxed,
 		);
 		self.shared_statistics.average_retransmit_frames.store(
@@ -180,7 +190,11 @@ impl NetworkThreadClient {
 			Ordering::Relaxed,
 		);
 		self.shared_statistics.rtt_in_ms.store(
-			protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64,
+			protocol
+				.rtt
+				.get_rtt()
+				.unwrap_or_else(|| Duration::from_millis(0))
+				.as_millis() as u64,
 			Ordering::Relaxed,
 		);
 
@@ -191,8 +205,12 @@ impl NetworkThreadClient {
 		self.shared_statistics
 			.send_packet_count
 			.store(channel.send_packet_count, Ordering::Relaxed);
-		self.shared_statistics.send_size.store(channel.send_size, Ordering::Relaxed);
-		self.shared_statistics.recv_size.store(channel.recv_size, Ordering::Relaxed);
+		self.shared_statistics
+			.send_size
+			.store(channel.send_size, Ordering::Relaxed);
+		self.shared_statistics
+			.recv_size
+			.store(channel.recv_size, Ordering::Relaxed);
 		*self.connection_status.lock().unwrap() = self.udp_client.state.clone();
 	}
 }

@@ -1,4 +1,6 @@
-use crate::service::configuration::yaml::structures::{FieldName, GroupName, RoomName, TemplateName};
+use crate::service::configuration::yaml::structures::{
+	FieldName, GroupName, RoomName, TemplateName,
+};
 
 #[derive(Debug)]
 pub enum Error {
@@ -37,7 +39,11 @@ impl std::fmt::Display for Error {
 				)
 			}
 			Error::EventValueNotSupported(room_name, field_name) => {
-				write!(f, "Set value for event {} not supported in room {}", field_name, room_name)
+				write!(
+					f,
+					"Set value for event {} not supported in room {}",
+					field_name, room_name
+				)
 			}
 		}
 	}

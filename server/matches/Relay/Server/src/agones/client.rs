@@ -15,12 +15,20 @@ impl RegistryClient {
 		Ok(Self { client })
 	}
 
-	pub async fn update_relay_status(&self, addrs: RelayAddrs, state: RelayState) -> Result<(), Status> {
+	pub async fn update_relay_status(
+		&self,
+		addrs: RelayAddrs,
+		state: RelayState,
+	) -> Result<(), Status> {
 		let req = Request::new(registry::RelayStatusUpdate {
 			addrs: Some(addrs),
 			state: state as i32,
 		});
 
-		self.client.clone().update_relay_status(req).await.map(|_| ())
+		self.client
+			.clone()
+			.update_relay_status(req)
+			.await
+			.map(|_| ())
 	}
 }

@@ -11,12 +11,15 @@ impl factory::factory_server::Factory for FactoryService {
 		&self,
 		request: Request<factory::CreateMatchRequest>,
 	) -> Result<Response<factory::CreateMatchResponse>, Status> {
-		self.do_create_match(request.into_inner().template).await.map(Response::new)
+		self.do_create_match(request.into_inner().template)
+			.await
+			.map(Response::new)
 	}
 }
 
 lazy_static! {
-	static ref CREATE_MATCH_COUNTER: IntCounter = register_int_counter!("create_match_counter", "").unwrap();
+	static ref CREATE_MATCH_COUNTER: IntCounter =
+		register_int_counter!("create_match_counter", "").unwrap();
 }
 
 #[cfg(test)]
@@ -86,7 +89,11 @@ mod tests {
 		let uri = stub_grpc_services().await;
 
 		let registry = RegistryClient::new(uri).await.unwrap();
-		let factory = FactoryService::new(registry, &YamlConfigurations::load(templates_directory).unwrap()).unwrap();
+		let factory = FactoryService::new(
+			registry,
+			&YamlConfigurations::load(templates_directory).unwrap(),
+		)
+		.unwrap();
 		let result = factory.do_create_match("gubaha".to_string()).await.unwrap();
 		assert_eq!(result.id, StubRelay::ROOM_ID);
 	}
@@ -112,9 +119,13 @@ mod tests {
 		let stub_relay = StubRelay {};
 		tokio::spawn(async move {
 			Server::builder()
-				.add_service(registry::internal::registry_server::RegistryServer::new(stub_registry))
+				.add_service(registry::internal::registry_server::RegistryServer::new(
+					stub_registry,
+				))
 				.add_service(relay::internal::relay_server::RelayServer::new(stub_relay))
-				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(stub_grpc_service_tcp))
+				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
+					stub_grpc_service_tcp,
+				))
 				.await
 		});
 

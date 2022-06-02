@@ -16,7 +16,11 @@ impl DeleteFieldCommand {
 		self.field_type.encode(out)
 	}
 
-	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+	pub fn decode(
+		object_id: GameObjectId,
+		field_id: FieldId,
+		input: &mut Cursor<&[u8]>,
+	) -> std::io::Result<Self> {
 		Ok(DeleteFieldCommand {
 			field_id,
 			object_id,

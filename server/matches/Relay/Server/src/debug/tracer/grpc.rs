@@ -11,7 +11,9 @@ use cheetah_matches_relay_common::room::RoomId;
 
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
-use crate::debug::tracer::{CommandTracerSessionsTask, SessionId, TracedBothDirectionCommand, TracedCommand};
+use crate::debug::tracer::{
+	CommandTracerSessionsTask, SessionId, TracedBothDirectionCommand, TracedCommand,
+};
 use crate::server::manager::ServerManager;
 
 pub struct CommandTracerGRPCService {
@@ -20,7 +22,9 @@ pub struct CommandTracerGRPCService {
 
 impl CommandTracerGRPCService {
 	pub fn new(relay_server: Arc<Mutex<ServerManager>>) -> Self {
-		Self { manager: relay_server }
+		Self {
+			manager: relay_server,
+		}
 	}
 
 	///
@@ -53,9 +57,16 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	) -> Result<Response<admin::CreateSessionResponse>, tonic::Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let task = CommandTracerSessionsTask::CreateSession(sender);
-		self.execute_task(request.get_ref().room as RoomId, task, receiver, |session_id| {
-			Result::Ok(Response::new(admin::CreateSessionResponse { id: session_id as u32 }))
-		})
+		self.execute_task(
+			request.get_ref().room as RoomId,
+			task,
+			receiver,
+			|session_id| {
+				Result::Ok(Response::new(admin::CreateSessionResponse {
+					id: session_id as u32,
+				}))
+			},
+		)
 	}
 
 	async fn set_filter(
@@ -64,11 +75,20 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	) -> Result<Response<admin::SetFilterResponse>, tonic::Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = CommandTracerSessionsTask::SetFilter(request.session as SessionId, request.filter.clone(), sender);
-		self.execute_task(request.room as RoomId, task, receiver, |result| match result {
-			Ok(_) => Result::Ok(Response::new(admin::SetFilterResponse {})),
-			Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-		})
+		let task = CommandTracerSessionsTask::SetFilter(
+			request.session as SessionId,
+			request.filter.clone(),
+			sender,
+		);
+		self.execute_task(
+			request.room as RoomId,
+			task,
+			receiver,
+			|result| match result {
+				Ok(_) => Result::Ok(Response::new(admin::SetFilterResponse {})),
+				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
+			},
+		)
 	}
 
 	async fn get_commands(
@@ -78,12 +98,17 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = CommandTracerSessionsTask::GetCommands(request.session as SessionId, sender);
-		self.execute_task(request.room as RoomId, task, receiver, |result| match result {
-			Ok(commands) => Result::Ok(Response::new(admin::GetCommandsResponse {
-				commands: commands.into_iter().map(admin::Command::from).collect(),
-			})),
-			Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-		})
+		self.execute_task(
+			request.room as RoomId,
+			task,
+			receiver,
+			|result| match result {
+				Ok(commands) => Result::Ok(Response::new(admin::GetCommandsResponse {
+					commands: commands.into_iter().map(admin::Command::from).collect(),
+				})),
+				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
+			},
+		)
 	}
 
 	async fn close_session(
@@ -93,10 +118,15 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = CommandTracerSessionsTask::CloseSession(request.session as SessionId, sender);
-		self.execute_task(request.room as RoomId, task, receiver, |result| match result {
-			Ok(_) => Result::Ok(Response::new(admin::CloseSessionResponse {})),
-			Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-		})
+		self.execute_task(
+			request.room as RoomId,
+			task,
+			receiver,
+			|result| match result {
+				Ok(_) => Result::Ok(Response::new(admin::CloseSessionResponse {})),
+				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
+			},
+		)
 	}
 }
 
@@ -123,7 +153,10 @@ impl From<TracedCommand> for admin::Command {
 			TracedBothDirectionCommand::C2S(command) => command.as_ref().to_string(),
 			TracedBothDirectionCommand::S2C(command) => command.as_ref().to_string(),
 		};
-		let field_id = command.network_command.get_field_id().map(|field_id| field_id as u32);
+		let field_id = command
+			.network_command
+			.get_field_id()
+			.map(|field_id| field_id as u32);
 		let field_type = command
 			.network_command
 			.get_field_type()
@@ -190,7 +223,10 @@ fn get_string_value(command: &TracedCommand) -> String {
 				format!("{:?}", command.event.as_slice())
 			}
 			C2SCommand::TargetEvent(command) => {
-				format!("target_user = {:?}, value = {:?}", command.target, command.event.event)
+				format!(
+					"target_user = {:?}, value = {:?}",
+					command.target, command.event.event
+				)
 			}
 			C2SCommand::Delete(_) => "".to_string(),
 			C2SCommand::AttachToRoom => "".to_string(),

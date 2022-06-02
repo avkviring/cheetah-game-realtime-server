@@ -120,10 +120,17 @@ fn reduce(mut source_tokens: Vec<Token>) -> Result<Token, ParseError> {
 /// преобразуется в Rule:And(rule_1,rule_2, rule_3)
 ///
 
-fn reduce_token(source_tokens: &mut Vec<Token>, dest_tokens: &mut Vec<Token>, token: &Token) -> Result<Token, ParseError> {
+fn reduce_token(
+	source_tokens: &mut Vec<Token>,
+	dest_tokens: &mut Vec<Token>,
+	token: &Token,
+) -> Result<Token, ParseError> {
 	let left = get_rule(dest_tokens.remove(dest_tokens.len() - 1))?;
 	let right = get_rule(source_tokens.remove(0))?;
-	let rules = vec![left, right].into_iter().flat_map(|r| token.expand(r)).collect();
+	let rules = vec![left, right]
+		.into_iter()
+		.flat_map(|r| token.expand(r))
+		.collect();
 	Result::Ok(Token::Rule(token.create_rule(rules)))
 }
 
@@ -189,7 +196,9 @@ fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 }
 
 fn to_id(value: String) -> Result<u64, ParseError> {
-	value.parse().map_err(|_| ParseError::ValueFormatError(value))
+	value
+		.parse()
+		.map_err(|_| ParseError::ValueFormatError(value))
 }
 
 ///
@@ -343,7 +352,10 @@ mod test {
 		let result = parse(query).unwrap();
 		assert_eq!(
 			result,
-			Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55)])
+			Rule::OrRule(vec![
+				Rule::Direction(RuleCommandDirection::C2S),
+				Rule::User(55)
+			])
 		)
 	}
 	#[test]
@@ -366,7 +378,10 @@ mod test {
 		let result = parse(query).unwrap();
 		assert_eq!(
 			result,
-			Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S)])
+			Rule::AndRule(vec![
+				Rule::User(55),
+				Rule::Direction(RuleCommandDirection::C2S)
+			])
 		)
 	}
 	#[test]
@@ -401,14 +416,18 @@ mod test {
 	#[test]
 	fn should_fail_when_wrong_field() {
 		let query = "wrong=555";
-		assert!(matches!(parse(query), Result::Err(ParseError::UnknownField(value)) if 
-			value=="wrong"));
+		assert!(
+			matches!(parse(query), Result::Err(ParseError::UnknownField(value)) if 
+			value=="wrong")
+		);
 	}
 	#[test]
 	fn should_fail_when_wrong_value() {
 		let query = "id=ttt";
-		assert!(matches!(parse(query), Result::Err(ParseError::ValueFormatError(value)) if 
-			value=="ttt"));
+		assert!(
+			matches!(parse(query), Result::Err(ParseError::ValueFormatError(value)) if 
+			value=="ttt")
+		);
 	}
 
 	#[test]
@@ -423,7 +442,9 @@ mod test {
 	#[test]
 	fn should_fail_when_wrong_operation() {
 		let query = "id=1 & template=5";
-		assert!(matches!(parse(query), Result::Err(ParseError::ValueFormatError(value)) if 
-			value=="1&template=5"));
+		assert!(
+			matches!(parse(query), Result::Err(ParseError::ValueFormatError(value)) if 
+			value=="1&template=5")
+		);
 	}
 }

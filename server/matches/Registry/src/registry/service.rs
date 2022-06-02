@@ -1,6 +1,7 @@
 use crate::proto::matches::registry::internal::registry_server::Registry;
 use crate::proto::matches::registry::internal::{
-	FindFreeRelayRequest, FindFreeRelayResponse, RelayState, RelayStatusUpdate, UpdateRelayStatusResponse,
+	FindFreeRelayRequest, FindFreeRelayResponse, RelayState, RelayStatusUpdate,
+	UpdateRelayStatusResponse,
 };
 use crate::registry::relay_finder::RelayFinder;
 use crate::registry::relay_prober::ReconnectProber;
@@ -22,8 +23,11 @@ pub struct RegistryService {
 
 impl RegistryService {
 	pub async fn new(redis_dsn: &str) -> Result<RegistryService, RegistryError> {
-		let storage = RedisStorage::new(redis_dsn).await.map_err(RegistryError::from)?;
-		let free_relay_provider = RelayFinder::new(Box::new(storage.clone()), Box::new(ReconnectProber {}));
+		let storage = RedisStorage::new(redis_dsn)
+			.await
+			.map_err(RegistryError::from)?;
+		let free_relay_provider =
+			RelayFinder::new(Box::new(storage.clone()), Box::new(ReconnectProber {}));
 		let registry_service = RegistryService {
 			storage: Box::new(storage),
 			free_relay_provider,
@@ -34,15 +38,24 @@ impl RegistryService {
 
 #[tonic::async_trait]
 impl Registry for RegistryService {
-	async fn find_free_relay(&self, _request: Request<FindFreeRelayRequest>) -> Result<Response<FindFreeRelayResponse>, Status> {
-		let addrs = self.free_relay_provider.get_random_relay_addr().await.map_err(|err| {
-			match err {
-				StorageError::NoRelayFound => tracing::warn!("could not find free relay"),
-				StorageError::MalformedValue(ref e) => tracing::error!("storage value corrupted: {:?}", e),
-				StorageError::RedisError(ref e) => tracing::warn!("redis error: {:?}", e),
-			};
-			Status::unavailable(format!("Error: {:?}", err))
-		})?;
+	async fn find_free_relay(
+		&self,
+		_request: Request<FindFreeRelayRequest>,
+	) -> Result<Response<FindFreeRelayResponse>, Status> {
+		let addrs = self
+			.free_relay_provider
+			.get_random_relay_addr()
+			.await
+			.map_err(|err| {
+				match err {
+					StorageError::NoRelayFound => tracing::warn!("could not find free relay"),
+					StorageError::MalformedValue(ref e) => {
+						tracing::error!("storage value corrupted: {:?}", e)
+					}
+					StorageError::RedisError(ref e) => tracing::warn!("redis error: {:?}", e),
+				};
+				Status::unavailable(format!("Error: {:?}", err))
+			})?;
 
 		Ok(Response::new(FindFreeRelayResponse {
 			addrs: Some(addrs.into()),

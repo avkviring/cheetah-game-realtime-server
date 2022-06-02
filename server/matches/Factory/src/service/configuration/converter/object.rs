@@ -34,7 +34,11 @@ pub fn create_relay_object(
 		match field.r#type {
 			FieldType::Long => {
 				let value = value.value.as_i64().ok_or_else(|| {
-					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
+					Error::WrongFormatForFieldValue(
+						room_name.clone(),
+						value.field.clone(),
+						value.value.to_string(),
+					)
 				})?;
 				let f = GameObjectField {
 					id: field.id as u32,
@@ -44,7 +48,11 @@ pub fn create_relay_object(
 			}
 			FieldType::Double => {
 				let value = value.value.as_f64().ok_or_else(|| {
-					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
+					Error::WrongFormatForFieldValue(
+						room_name.clone(),
+						value.field.clone(),
+						value.value.to_string(),
+					)
 				})?;
 				let f = GameObjectField {
 					id: field.id as u32,
@@ -54,7 +62,11 @@ pub fn create_relay_object(
 			}
 			FieldType::Struct => {
 				let value = rmp_serde::to_vec(&value.value).map_err(|_| {
-					Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string())
+					Error::WrongFormatForFieldValue(
+						room_name.clone(),
+						value.field.clone(),
+						value.value.to_string(),
+					)
 				})?;
 				let f = GameObjectField {
 					id: field.id as u32,
@@ -63,7 +75,10 @@ pub fn create_relay_object(
 				relay_fields.push(f);
 			}
 			FieldType::Event => {
-				return Err(Error::EventValueNotSupported(room_name.to_string(), value.field.clone()));
+				return Err(Error::EventValueNotSupported(
+					room_name.to_string(),
+					value.field.clone(),
+				));
 			}
 		}
 	}
@@ -90,7 +105,8 @@ pub mod test {
 	use crate::service::configuration::converter::error::Error;
 	use crate::service::configuration::converter::object::create_relay_object;
 	use crate::service::configuration::yaml::structures::{
-		Field, FieldType, FieldValue, GroupName, RoomObject, Template, TemplateName, TemplatePermissions,
+		Field, FieldType, FieldValue, GroupName, RoomObject, Template, TemplateName,
+		TemplatePermissions,
 	};
 
 	#[test]
@@ -149,24 +165,18 @@ pub mod test {
 		assert_eq!(
 			object.fields,
 			[
-				(
-					GameObjectField {
-						id: 55,
-						value: Some(100.into()),
-					}
-				),
-				(
-					GameObjectField {
-						id: 55,
-						value: Some(3.1.into())
-					}
-				),
-				(
-					GameObjectField {
-						id: 59,
-						value: Some(vec![129, 161, 102, 161, 97].into())
-					}
-				)
+				(GameObjectField {
+					id: 55,
+					value: Some(100.into()),
+				}),
+				(GameObjectField {
+					id: 55,
+					value: Some(3.1.into())
+				}),
+				(GameObjectField {
+					id: 59,
+					value: Some(vec![129, 161, 102, 161, 97].into())
+				})
 			]
 		);
 	}
@@ -236,12 +246,10 @@ pub mod test {
 		let result = result.unwrap();
 		assert_eq!(
 			result.fields,
-			[(
-				GameObjectField {
-					id: 55,
-					value: Some(123.0.into()),
-				}
-			)]
+			[(GameObjectField {
+				id: 55,
+				value: Some(123.0.into()),
+			})]
 		)
 	}
 
@@ -323,7 +331,10 @@ pub mod test {
 		));
 	}
 
-	fn setup(field_values: Vec<FieldValue>, fields: Vec<(&str, Field)>) -> Result<relay::GameObjectTemplate, Error> {
+	fn setup(
+		field_values: Vec<FieldValue>,
+		fields: Vec<(&str, Field)>,
+	) -> Result<relay::GameObjectTemplate, Error> {
 		create_relay_object(
 			&"room".to_string(),
 			&RoomObject {
@@ -334,7 +345,10 @@ pub mod test {
 			},
 			&setup_templates(),
 			&setup_groups(),
-			&fields.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
+			&fields
+				.into_iter()
+				.map(|(k, v)| (k.to_string(), v))
+				.collect(),
 			0,
 		)
 	}

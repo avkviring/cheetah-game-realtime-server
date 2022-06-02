@@ -22,5 +22,8 @@ pub fn bind_to_free_socket() -> std::io::Result<(UdpSocket, SocketAddr)> {
 	}
 
 	tracing::error!("[bind_to_free_socket] cannot find free socket");
-	Result::Err(std::io::Error::new(ErrorKind::AddrInUse, "Check all ports in 2048..8912"))
+	Result::Err(std::io::Error::new(
+		ErrorKind::AddrInUse,
+		"Check all ports in 2048..8912",
+	))
 }

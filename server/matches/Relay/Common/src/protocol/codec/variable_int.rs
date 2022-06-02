@@ -90,7 +90,11 @@ impl VariableIntReader for Cursor<&[u8]> {
 
 	fn read_variable_i64(&mut self) -> std::io::Result<i64> {
 		let unsigned = self.read_variable_u64()?;
-		Ok(if unsigned % 2 == 0 { unsigned / 2 } else { !(unsigned / 2) } as i64)
+		Ok(if unsigned % 2 == 0 {
+			unsigned / 2
+		} else {
+			!(unsigned / 2)
+		} as i64)
 	}
 }
 
@@ -98,7 +102,9 @@ impl VariableIntReader for Cursor<&[u8]> {
 mod test {
 	use std::io::Cursor;
 
-	use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter, U8_MAX, U9_MARKER};
+	use crate::protocol::codec::variable_int::{
+		VariableIntReader, VariableIntWriter, U8_MAX, U9_MARKER,
+	};
 
 	#[test]
 	fn test_u64() {

@@ -21,7 +21,12 @@ impl<'a> Cipher<'a> {
 		Self { private_key }
 	}
 
-	pub fn encrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), Error> {
+	pub fn encrypt(
+		&mut self,
+		buffer: &mut Vec<u8, 4096>,
+		ad: &[u8],
+		nonce: [u8; 8],
+	) -> Result<(), Error> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
@@ -31,7 +36,12 @@ impl<'a> Cipher<'a> {
 		Result::Ok(())
 	}
 
-	pub fn decrypt(&mut self, buffer: &mut Vec<u8, 4096>, ad: &[u8], nonce: [u8; 8]) -> Result<(), Error> {
+	pub fn decrypt(
+		&mut self,
+		buffer: &mut Vec<u8, 4096>,
+		ad: &[u8],
+		nonce: [u8; 8],
+	) -> Result<(), Error> {
 		let mut nonce_buffer = [0; 12];
 		nonce_buffer[0..8].copy_from_slice(&nonce);
 		let key = Key::from_slice(self.private_key);
@@ -49,8 +59,9 @@ mod tests {
 	use crate::protocol::codec::cipher::Cipher;
 
 	const PRIVATE_KEY: &[u8; 32] = &[
-		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f,
-		0x9e, 0x27, 0xad, 0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10, 0xe4, 0x94,
+		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b,
+		0x05, 0x03, 0x4a, 0xa0, 0x9f, 0x9e, 0x27, 0xad, 0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10,
+		0xe4, 0x94,
 	];
 	const ORIGINAL: [u8; 10] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	const NONCE: [u8; 8] = [0; 8];
@@ -75,7 +86,10 @@ mod tests {
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 
-		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(_)));
+		assert!(matches!(
+			cipher.decrypt(&mut buffer, &OTHER_AD, NONCE),
+			Result::Err(_)
+		));
 	}
 
 	#[test]
@@ -85,6 +99,9 @@ mod tests {
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		buffer[0] = 0;
-		assert!(matches!(cipher.decrypt(&mut buffer, &AD, NONCE), Result::Err(_)));
+		assert!(matches!(
+			cipher.decrypt(&mut buffer, &AD, NONCE),
+			Result::Err(_)
+		));
 	}
 }

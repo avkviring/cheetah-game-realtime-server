@@ -44,7 +44,10 @@ mod tests {
 		room.test_mark_as_connected(user_b_id).unwrap();
 
 		let object_id = room
-			.test_create_object_with_created_state(GameObjectOwner::Member(user_a_id), access_groups)
+			.test_create_object_with_created_state(
+				GameObjectOwner::Member(user_a_id),
+				access_groups,
+			)
 			.id
 			.clone();
 		room.test_out_commands.clear();
@@ -56,8 +59,13 @@ mod tests {
 		command.execute(&mut room, user_a_id).unwrap();
 
 		assert!(matches!(room.get_object(&object_id), Err(_)));
-		assert!(matches!(room.test_get_user_out_commands(user_a_id).pop_back(), None));
-		assert!(matches!(room.test_get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
+		assert!(matches!(
+			room.test_get_user_out_commands(user_a_id).pop_back(),
+			None
+		));
+		assert!(
+			matches!(room.test_get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command)
+		);
 	}
 
 	#[test]
@@ -69,7 +77,10 @@ mod tests {
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
 
 		let object_id = room
-			.test_create_object_with_not_created_state(GameObjectOwner::Member(user_a), access_groups)
+			.test_create_object_with_not_created_state(
+				GameObjectOwner::Member(user_a),
+				access_groups,
+			)
 			.id
 			.clone();
 		room.test_out_commands.clear();

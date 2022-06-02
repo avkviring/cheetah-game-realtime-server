@@ -23,7 +23,8 @@ mod tests {
 		let compressed_size = packet_compress(&original, &mut compressed).unwrap();
 
 		let mut decompressed = [0; 100];
-		let decompressed_size = packet_decompress(&compressed[0..compressed_size], &mut decompressed).unwrap();
+		let decompressed_size =
+			packet_decompress(&compressed[0..compressed_size], &mut decompressed).unwrap();
 		assert_eq!(original.as_slice(), &decompressed[0..decompressed_size])
 	}
 }

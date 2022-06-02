@@ -47,6 +47,11 @@ lazy_static! {
 	static ref EVENT: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_event_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_event_listener(
+	_: RoomMemberId,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	buffer: &BufferFFI,
+) {
 	EVENT.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

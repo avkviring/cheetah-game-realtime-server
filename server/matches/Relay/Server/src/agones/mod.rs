@@ -29,7 +29,10 @@ pub enum RegistryError {
 /// Взаимодействие с AGONES SDK
 /// Если Agones  не запущен - то relay будет остановлен
 ///
-pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mutex<ServerManager>>) {
+pub async fn run_agones_cycle(
+	halt_signal: Arc<AtomicBool>,
+	relay_server: Arc<Mutex<ServerManager>>,
+) {
 	if std::env::var("ENABLE_AGONES").is_err() {
 		return;
 	}
@@ -61,10 +64,14 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 
 				if allocated {
 					// todo(v.zakharov): handle error
-					notify_registry(&gameserver, RelayState::Allocated).await.unwrap();
+					notify_registry(&gameserver, RelayState::Allocated)
+						.await
+						.unwrap();
 				} else {
 					// todo(v.zakharov): handle error
-					notify_registry(&gameserver, RelayState::Ready).await.unwrap();
+					notify_registry(&gameserver, RelayState::Ready)
+						.await
+						.unwrap();
 				}
 
 				// подтверждаем что сервер жив
@@ -81,7 +88,9 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 				tokio::time::sleep(Duration::from_secs(2)).await;
 			}
 			// todo(v.zakharov): handle error
-			notify_registry(&gameserver, RelayState::NotReady).await.unwrap();
+			notify_registry(&gameserver, RelayState::NotReady)
+				.await
+				.unwrap();
 			sdk.shutdown().await.unwrap();
 		}
 		Err(e) => {
@@ -93,22 +102,27 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, relay_server: Arc<Mu
 
 async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), RegistryError> {
 	// todo(v.zakharov): do not reconnect every time
-	let registry_url = cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
-	let client = RegistryClient::new(registry_url).await.map_err(RegistryError::from)?;
+	let registry_url =
+		cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
+	let client = RegistryClient::new(registry_url)
+		.await
+		.map_err(RegistryError::from)?;
 
-	let status = gs.status.as_ref().ok_or(RegistryError::InvalidGameServerStatus(
-		"could not find status in GameServer".to_string(),
-	))?;
+	let status = gs
+		.status
+		.as_ref()
+		.ok_or(RegistryError::InvalidGameServerStatus(
+			"could not find status in GameServer".to_string(),
+		))?;
 	let host = status.address;
-	let port =
-		status
-			.ports
-			.iter()
-			.find(|p| p.name == "default")
-			.map(|p| p.port)
-			.ok_or(RegistryError::InvalidGameServerStatus(
-				"could not find port default in GameServer Status".to_string(),
-			))?;
+	let port = status
+		.ports
+		.iter()
+		.find(|p| p.name == "default")
+		.map(|p| p.port)
+		.ok_or(RegistryError::InvalidGameServerStatus(
+			"could not find port default in GameServer Status".to_string(),
+		))?;
 
 	let addrs = RelayAddrs {
 		game: Some(Addr {
@@ -121,5 +135,8 @@ async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), Regis
 		}),
 	};
 
-	client.update_relay_status(addrs, state).await.map_err(RegistryError::from)
+	client
+		.update_relay_status(addrs, state)
+		.await
+		.map_err(RegistryError::from)
 }

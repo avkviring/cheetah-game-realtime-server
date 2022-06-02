@@ -1,22 +1,24 @@
 use rand::Rng;
 
-use cheetah_matches_relay_common::{
-	room::access::AccessGroups,
-	commands::FieldValue
-};
+use cheetah_matches_relay_common::{commands::FieldValue, room::access::AccessGroups};
 
-use crate::debug::proto::shared::{FieldValue as GRPCFieldValueDebug, field_value::Variant as VariantDebug};
+use crate::debug::proto::shared::{
+	field_value::Variant as VariantDebug, FieldValue as GRPCFieldValueDebug,
+};
 use crate::grpc::proto::internal;
-use crate::grpc::proto::shared::{self, FieldValue as GRPCFieldValue, field_value::Variant};
+use crate::grpc::proto::shared::{self, field_value::Variant, FieldValue as GRPCFieldValue};
 use crate::room::object::Field;
 use crate::room::template::config;
-
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
 		config::RoomTemplate {
 			name: source.template_name,
-			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
+			objects: source
+				.objects
+				.into_iter()
+				.map(config::GameObjectTemplate::from)
+				.collect(),
 			permissions: config::Permissions::from(source.permissions.unwrap_or_default()),
 		}
 	}
@@ -27,7 +29,11 @@ impl From<internal::UserTemplate> for config::MemberTemplate {
 		config::MemberTemplate {
 			private_key: rand::thread_rng().gen::<[u8; 32]>(),
 			groups: AccessGroups(source.groups),
-			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
+			objects: source
+				.objects
+				.into_iter()
+				.map(config::GameObjectTemplate::from)
+				.collect(),
 		}
 	}
 }
@@ -38,10 +44,14 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			id: source.id,
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),
-			fields: source.fields.into_iter().map(|f| {
-				let field_value: FieldValue = f.value.expect("Field with no value").into();
-				((f.id as u16, field_value.field_type()), field_value)
-			}).collect(),
+			fields: source
+				.fields
+				.into_iter()
+				.map(|f| {
+					let field_value: FieldValue = f.value.expect("Field with no value").into();
+					((f.id as u16, field_value.field_type()), field_value)
+				})
+				.collect(),
 		}
 	}
 }
@@ -58,15 +68,17 @@ impl From<GRPCFieldValue> for FieldValue {
 }
 
 impl From<FieldValue> for GRPCFieldValueDebug {
-    fn from(value: FieldValue) -> Self {
+	fn from(value: FieldValue) -> Self {
 		let value_d = match value {
 			FieldValue::Double(v) => VariantDebug::Double(v),
 			FieldValue::Long(v) => VariantDebug::Long(v),
 			FieldValue::Structure(s) => VariantDebug::Structure(s),
 		};
 
-		GRPCFieldValueDebug { variant: Some(value_d) }
-    }
+		GRPCFieldValueDebug {
+			variant: Some(value_d),
+		}
+	}
 }
 
 impl From<internal::Permissions> for config::Permissions {
@@ -85,8 +97,16 @@ impl From<internal::GameObjectTemplatePermission> for config::GameObjectTemplate
 	fn from(source: internal::GameObjectTemplatePermission) -> Self {
 		config::GameObjectTemplatePermission {
 			template: source.template as u16,
-			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
-			fields: source.fields.into_iter().map(config::PermissionField::from).collect(),
+			rules: source
+				.rules
+				.into_iter()
+				.map(config::GroupsPermissionRule::from)
+				.collect(),
+			fields: source
+				.fields
+				.into_iter()
+				.map(config::PermissionField::from)
+				.collect(),
 		}
 	}
 }
@@ -133,7 +153,11 @@ impl From<internal::PermissionField> for config::PermissionField {
 				id: source.id as u16,
 				field_type,
 			},
-			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
+			rules: source
+				.rules
+				.into_iter()
+				.map(config::GroupsPermissionRule::from)
+				.collect(),
 		}
 	}
 }

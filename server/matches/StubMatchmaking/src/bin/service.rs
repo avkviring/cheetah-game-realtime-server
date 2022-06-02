@@ -6,7 +6,8 @@ use cheetah_matches_stub_matchmaking::service::StubMatchmakingService;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	cheetah_libraries_microservice::init("matches.stubmatchmaking");
-	let factory_url = cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_FACTORY");
+	let factory_url =
+		cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_FACTORY");
 	let jwt_public_key = cheetah_libraries_microservice::get_env("JWT_PUBLIC_KEY");
 	let service = StubMatchmakingService::new(factory_url, jwt_public_key);
 	let grpc_service = matchmaking::external::matchmaking_server::MatchmakingServer::new(service);

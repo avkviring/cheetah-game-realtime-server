@@ -30,7 +30,11 @@ impl EventCommand {
 		self.event.encode(out)
 	}
 
-	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+	pub fn decode(
+		object_id: GameObjectId,
+		field_id: FieldId,
+		input: &mut Cursor<&[u8]>,
+	) -> std::io::Result<Self> {
 		Ok(Self {
 			object_id,
 			field_id,
@@ -45,7 +49,11 @@ impl TargetEventCommand {
 		self.event.encode(out)
 	}
 
-	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+	pub fn decode(
+		object_id: GameObjectId,
+		field_id: FieldId,
+		input: &mut Cursor<&[u8]>,
+	) -> std::io::Result<Self> {
 		let target = input.read_variable_u64()? as RoomMemberId;
 
 		Ok(Self {

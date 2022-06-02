@@ -29,7 +29,11 @@ pub struct ServerManager {
 
 pub enum ManagementTask {
 	RegisterRoom(RoomTemplate, Sender<RoomId>),
-	RegisterUser(RoomId, MemberTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
+	RegisterUser(
+		RoomId,
+		MemberTemplate,
+		Sender<Result<RoomMemberId, RegisterUserError>>,
+	),
 	///
 	/// Смещение текущего времени для тестирования
 	///
@@ -114,7 +118,9 @@ impl ServerManager {
 	) -> Result<(), CommandTracerSessionTaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
-			.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender))
+			.send(ManagementTask::CommandTracerSessionTask(
+				room_id, task, sender,
+			))
 			.expect(expect_send_msg("CommandTracerSessionTask").as_str());
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
@@ -129,7 +135,10 @@ impl ServerManager {
 		self.halt_signal.clone()
 	}
 
-	pub fn register_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
+	pub fn register_room(
+		&mut self,
+		template: RoomTemplate,
+	) -> Result<RoomId, RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::RegisterRoom(template, sender))
@@ -147,15 +156,27 @@ impl ServerManager {
 		}
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, RegisterUserRequestError> {
+	pub fn register_user(
+		&mut self,
+		room_id: RoomId,
+		template: MemberTemplate,
+	) -> Result<RoomMemberId, RegisterUserRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
-			.send(ManagementTask::RegisterUser(room_id, template.clone(), sender))
+			.send(ManagementTask::RegisterUser(
+				room_id,
+				template.clone(),
+				sender,
+			))
 			.expect(expect_send_msg("RegisterUser").as_str());
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {
-					tracing::info!("[server] create user({:?}) in room ({:?})", user_id, room_id);
+					tracing::info!(
+						"[server] create user({:?}) in room ({:?})",
+						user_id,
+						room_id
+					);
 					Result::Ok(user_id)
 				}
 				Err(e) => {
@@ -203,7 +224,10 @@ impl ServerManager {
 }
 
 fn expect_send_msg(task: &str) -> String {
-	format!("Can not send {} to relay thread, possible relay thread is dead", task)
+	format!(
+		"Can not send {} to relay thread, possible relay thread is dead",
+		task
+	)
 }
 
 #[cfg(test)]

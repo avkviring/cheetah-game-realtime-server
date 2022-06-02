@@ -19,7 +19,12 @@ pub extern "C" fn set_event_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn send_event(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, event: &BufferFFI) -> u8 {
+pub extern "C" fn send_event(
+	client_id: ClientId,
+	object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	event: &BufferFFI,
+) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::Event(EventCommand {

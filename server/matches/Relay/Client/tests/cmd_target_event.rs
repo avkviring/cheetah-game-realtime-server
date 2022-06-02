@@ -46,7 +46,13 @@ fn test() {
 	event_buffer.buffer[0] = 100;
 	let event_field_id = 10;
 
-	ffi::command::event::send_target_event(client1, user2_id, &object_id, event_field_id, &event_buffer);
+	ffi::command::event::send_target_event(
+		client1,
+		user2_id,
+		&object_id,
+		event_field_id,
+		&event_buffer,
+	);
 	helper.wait_udp();
 
 	ffi::client::receive(client3);
@@ -62,6 +68,11 @@ lazy_static! {
 	static ref EVENT: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_event_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_event_listener(
+	_: RoomMemberId,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	buffer: &BufferFFI,
+) {
 	EVENT.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

@@ -16,7 +16,9 @@ impl From<&[u8]> for BinaryValue {
 
 impl BinaryValue {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let mut result = BinaryValue { 0: Default::default() };
+		let mut result = BinaryValue {
+			0: Default::default(),
+		};
 		let size = input.read_variable_u64()? as usize;
 		if size > result.0.capacity() {
 			return Err(Error::new(

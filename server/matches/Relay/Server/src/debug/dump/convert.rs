@@ -10,8 +10,16 @@ use crate::room::{Member, Room};
 
 impl From<&Room> for admin::DumpResponse {
 	fn from(room: &Room) -> Self {
-		let users = room.members.iter().map(|(_k, u)| admin::DumpUser::from(u)).collect();
-		let objects = room.objects.iter().map(|(_k, o)| admin::DumpObject::from(o)).collect();
+		let users = room
+			.members
+			.iter()
+			.map(|(_k, u)| admin::DumpUser::from(u))
+			.collect();
+		let objects = room
+			.objects
+			.iter()
+			.map(|(_k, o)| admin::DumpObject::from(o))
+			.collect();
 		Self { users, objects }
 	}
 }
@@ -40,8 +48,13 @@ impl From<&GameObject> for admin::DumpObject {
 	}
 }
 
-fn from<IN: Clone, OUT: From<IN>, const N: usize>(source: &heapless::FnvIndexMap<FieldId, IN, N>) -> HashMap<u32, OUT> {
-	source.iter().map(|(k, v)| (*k as u32, OUT::from(v.clone()))).collect()
+fn from<IN: Clone, OUT: From<IN>, const N: usize>(
+	source: &heapless::FnvIndexMap<FieldId, IN, N>,
+) -> HashMap<u32, OUT> {
+	source
+		.iter()
+		.map(|(k, v)| (*k as u32, OUT::from(v.clone())))
+		.collect()
 }
 
 impl From<&Member> for admin::DumpUser {
@@ -53,15 +66,17 @@ impl From<&Member> for admin::DumpUser {
 			compare_and_set_cleaners: user
 				.compare_and_set_cleaners
 				.iter()
-				.map(|((object_id, field_id, _), value)| admin::CompareAndSetCleaner {
-					game_object_id: object_id.id,
-					game_object_owner_user: match object_id.owner {
-						GameObjectOwner::Room => u32::MAX,
-						GameObjectOwner::Member(id) => id as u32,
+				.map(
+					|((object_id, field_id, _), value)| admin::CompareAndSetCleaner {
+						game_object_id: object_id.id,
+						game_object_owner_user: match object_id.owner {
+							GameObjectOwner::Room => u32::MAX,
+							GameObjectOwner::Member(id) => id as u32,
+						},
+						field_id: *field_id as u32,
+						value: Some(value.to_owned().into()),
 					},
-					field_id: *field_id as u32,
-					value: Some(value.to_owned().into()),
-				})
+				)
 				.collect(),
 		}
 	}

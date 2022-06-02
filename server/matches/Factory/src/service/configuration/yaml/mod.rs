@@ -32,18 +32,22 @@ impl YamlConfigurations {
 		let root = root.into();
 		let groups = Self::load_group(root.clone())?;
 		let fields = Self::load_items::<_>(
-			root.clone(), root.join("fields").as_path(),
-			Path::new(""), || None
+			root.clone(),
+			root.join("fields").as_path(),
+			Path::new(""),
+			|| None,
 		)?;
 		let templates = Self::load_items::<_>(
-			root.clone(), root.join("templates").as_path(),
-			Path::new(""), || None
+			root.clone(),
+			root.join("templates").as_path(),
+			Path::new(""),
+			|| None,
 		)?;
 		let rooms = Self::load_items::<_>(
-			root.clone(), root.join("rooms").as_path(), Path::new(""), 
-			|| {
-				Some(Room { objects: vec![] })
-			}
+			root.clone(),
+			root.join("rooms").as_path(),
+			Path::new(""),
+			|| Some(Room { objects: vec![] }),
 		)?;
 		YamlConfigurations {
 			groups,
@@ -93,7 +97,11 @@ impl YamlConfigurations {
 
 	fn load_group(root: PathBuf) -> Result<HashMap<GroupName, u64>, Error> {
 		let yaml = root.join("groups.yaml");
-		let group_file = if yaml.exists() { yaml } else { root.join("groups.yml") };
+		let group_file = if yaml.exists() {
+			yaml
+		} else {
+			root.join("groups.yml")
+		};
 		let content = read_to_string(group_file.clone()).map_err(|_| Error::GroupFileNotFound)?;
 		serde_yaml::from_str::<_>(content.as_ref()).map_err(|e| Error::Yaml {
 			global_root: root.clone(),
@@ -132,11 +140,15 @@ impl YamlConfigurations {
 
 			if entry_type.is_dir() {
 				let prefix = prefix.join(name);
-				let sub_entities = Self::load_items(global_root.clone(), &entry.path(), &prefix, default_factory)?;
+				let sub_entities =
+					Self::load_items(global_root.clone(), &entry.path(), &prefix, default_factory)?;
 				sub_entities.into_iter().for_each(|(k, v)| {
 					result.insert(k, v);
 				});
-			} else if let Some(name) = name.strip_suffix(".yaml").or_else(|| name.strip_suffix(".yml")) {
+			} else if let Some(name) = name
+				.strip_suffix(".yaml")
+				.or_else(|| name.strip_suffix(".yml"))
+			{
 				let name = prefix.join(name);
 				let path = entry.path();
 				let content = read_to_string(&path)?;
@@ -159,7 +171,12 @@ impl YamlConfigurations {
 					let key = format!("{}{}", name_from_path, name_from_item);
 					match result.insert(key.clone(), value) {
 						None => {}
-						Some(_) => return Err(Error::NameAlreadyExists { name: key, file: path }),
+						Some(_) => {
+							return Err(Error::NameAlreadyExists {
+								name: key,
+								file: path,
+							})
+						}
 					}
 				}
 				// файл пустой - необходимо создать структуру по-умолчанию
@@ -200,7 +217,8 @@ pub mod test {
 
 	use crate::service::configuration::yaml::error::Error;
 	use crate::service::configuration::yaml::structures::{
-		Field, FieldType, FieldValue, PermissionField, PermissionLevel, Room, RoomObject, Template, TemplatePermissions,
+		Field, FieldType, FieldValue, PermissionField, PermissionLevel, Room, RoomObject, Template,
+		TemplatePermissions,
 	};
 	use crate::service::configuration::yaml::YamlConfigurations;
 
@@ -304,7 +322,9 @@ pub mod test {
 							groups: Default::default(),
 							fields: vec![PermissionField {
 								field: "characteristic/damage".to_string(),
-								groups: vec![("bot".to_string(), PermissionLevel::Deny)].into_iter().collect()
+								groups: vec![("bot".to_string(), PermissionLevel::Deny)]
+									.into_iter()
+									.collect()
 							}]
 						}
 					}
@@ -322,7 +342,9 @@ pub mod test {
 							.collect(),
 							fields: vec![PermissionField {
 								field: "user/score".to_string(),
-								groups: vec![("bot".to_string(), PermissionLevel::ReadWrite)].into_iter().collect(),
+								groups: vec![("bot".to_string(), PermissionLevel::ReadWrite)]
+									.into_iter()
+									.collect(),
 							}]
 						}
 					}

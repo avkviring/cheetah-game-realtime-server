@@ -50,8 +50,16 @@ impl std::fmt::Display for Error {
 		match self {
 			Error::Io(err) => write!(f, "IO: {:?}", err),
 			Error::GroupFileNotFound => write!(f, "File groups.yaml or groups.yml not found"),
-			Error::Yaml { global_root, file, e } => {
-				let local_file = file.clone().strip_prefix(global_root.as_path()).unwrap().to_path_buf();
+			Error::Yaml {
+				global_root,
+				file,
+				e,
+			} => {
+				let local_file = file
+					.clone()
+					.strip_prefix(global_root.as_path())
+					.unwrap()
+					.to_path_buf();
 				write_yaml_error(f, &local_file, e)
 			}
 			Error::TemplateWithSameIdAlreadyExists { id, exist, current } => {

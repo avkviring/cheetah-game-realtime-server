@@ -40,10 +40,16 @@ impl PermissionManager {
 		};
 
 		for template in &permission.templates {
-			if template.rules.iter().any(|t| t.permission != Permission::Ro) {
+			if template
+				.rules
+				.iter()
+				.any(|t| t.permission != Permission::Ro)
+			{
 				result.write_access_template.insert(template.template);
 			}
-			result.templates.insert(template.template, template.rules.clone());
+			result
+				.templates
+				.insert(template.template, template.rules.clone());
 
 			for field in &template.fields {
 				let key = PermissionFieldKey {
@@ -67,10 +73,17 @@ impl PermissionManager {
 	///
 	pub fn has_write_access(&mut self, template: GameObjectTemplateId, field: Field) -> bool {
 		self.write_access_template.contains(&template)
-			|| self.write_access_fields.contains(&PermissionFieldKey { template, field })
+			|| self
+				.write_access_fields
+				.contains(&PermissionFieldKey { template, field })
 	}
 
-	pub fn get_permission(&mut self, template: GameObjectTemplateId, field: Field, user_group: AccessGroups) -> Permission {
+	pub fn get_permission(
+		&mut self,
+		template: GameObjectTemplateId,
+		field: Field,
+		user_group: AccessGroups,
+	) -> Permission {
 		let field_key = PermissionFieldKey { template, field };
 
 		let cached_key = PermissionCachedFieldKey {
@@ -83,9 +96,13 @@ impl PermissionManager {
 				let permission = match self.fields.get(&cached_key.field_key) {
 					None => match self.templates.get(&template) {
 						None => &Permission::Rw,
-						Some(permissions) => PermissionManager::get_permission_by_group(user_group, permissions),
+						Some(permissions) => {
+							PermissionManager::get_permission_by_group(user_group, permissions)
+						}
 					},
-					Some(permissions) => PermissionManager::get_permission_by_group(user_group, permissions),
+					Some(permissions) => {
+						PermissionManager::get_permission_by_group(user_group, permissions)
+					}
 				};
 				self.cache.insert(cached_key, *permission);
 				*permission
@@ -94,7 +111,10 @@ impl PermissionManager {
 		}
 	}
 
-	fn get_permission_by_group(user_group: AccessGroups, groups: &[GroupsPermissionRule]) -> &Permission {
+	fn get_permission_by_group(
+		user_group: AccessGroups,
+		groups: &[GroupsPermissionRule],
+	) -> &Permission {
 		groups
 			.iter()
 			.find(|p| p.groups.contains_any(&user_group))
@@ -109,7 +129,8 @@ mod tests {
 
 	use crate::room::object::Field;
 	use crate::room::template::config::{
-		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions,
+		GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField,
+		Permissions,
 	};
 	use crate::room::template::permission::PermissionManager;
 

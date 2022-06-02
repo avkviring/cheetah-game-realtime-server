@@ -94,8 +94,15 @@ pub enum CommandTracerSessionsError {
 ///
 pub enum CommandTracerSessionsTask {
 	CreateSession(Sender<SessionId>),
-	SetFilter(SessionId, String, Sender<Result<(), CommandTracerSessionsError>>),
-	GetCommands(SessionId, Sender<Result<Vec<TracedCommand>, CommandTracerSessionsError>>),
+	SetFilter(
+		SessionId,
+		String,
+		Sender<Result<(), CommandTracerSessionsError>>,
+	),
+	GetCommands(
+		SessionId,
+		Sender<Result<Vec<TracedCommand>, CommandTracerSessionsError>>,
+	),
 	CloseSession(SessionId, Sender<Result<(), CommandTracerSessionsError>>),
 }
 
@@ -161,7 +168,12 @@ impl Session {
 	///
 	pub fn apply_filter(&mut self, filter: Filter) {
 		let filter = filter;
-		self.filtered_commands = self.commands.iter().filter(|c| filter.filter(c)).cloned().collect();
+		self.filtered_commands = self
+			.commands
+			.iter()
+			.filter(|c| filter.filter(c))
+			.cloned()
+			.collect();
 		self.filter = Option::Some(filter);
 	}
 }
@@ -180,7 +192,11 @@ impl CommandTracerSessions {
 	///
 	/// Установить фильтр для сессии
 	///
-	pub fn set_filter(&mut self, session_id: SessionId, query: String) -> Result<(), CommandTracerSessionsError> {
+	pub fn set_filter(
+		&mut self,
+		session_id: SessionId,
+		query: String,
+	) -> Result<(), CommandTracerSessionsError> {
 		match parse(query.as_ref()) {
 			Ok(rule) => {
 				let filter = Filter::new(rule);
@@ -218,7 +234,10 @@ impl CommandTracerSessions {
 					let template = match template_from_command {
 						None => match objects.get(&object_id) {
 							None => {
-								tracing::error!("CommandTracer: template not found for {:?}", command);
+								tracing::error!(
+									"CommandTracer: template not found for {:?}",
+									command
+								);
 								None
 							}
 							Some(object) => Some(object.template_id),
@@ -235,7 +254,12 @@ impl CommandTracerSessions {
 	///
 	/// Сохранить s2c команду в сессии
 	///
-	pub fn collect_s2c(&mut self, template: GameObjectTemplateId, user: RoomMemberId, command: &S2CCommand) {
+	pub fn collect_s2c(
+		&mut self,
+		template: GameObjectTemplateId,
+		user: RoomMemberId,
+		command: &S2CCommand,
+	) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = TracedBothDirectionCommand::S2C(command.clone());
 			s.collect(Option::Some(template), user, network_command);
@@ -245,7 +269,10 @@ impl CommandTracerSessions {
 	///
 	/// Получить команды из сессии, полученные команды удаляются их отфильтрованных команд
 	///
-	pub fn drain_filtered_commands(&mut self, session: SessionId) -> Result<Vec<TracedCommand>, CommandTracerSessionsError> {
+	pub fn drain_filtered_commands(
+		&mut self,
+		session: SessionId,
+	) -> Result<Vec<TracedCommand>, CommandTracerSessionsError> {
 		match self.sessions.get_mut(&session) {
 			None => Result::Err(CommandTracerSessionsError::SessionNotFound),
 			Some(session) => Result::Ok(session.filtered_commands.drain(0..).collect()),
@@ -265,7 +292,9 @@ impl CommandTracerSessions {
 			}
 			CommandTracerSessionsTask::SetFilter(session_id, query, sender) => {
 				let result = self.set_filter(session_id, query);
-				sender.send(result).unwrap_or_else(|e| tracing::error!("send error {:?}", e));
+				sender
+					.send(result)
+					.unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			CommandTracerSessionsTask::GetCommands(session, sender) => {
 				sender
@@ -296,7 +325,8 @@ pub mod tests {
 	use cheetah_matches_relay_common::commands::types::event::EventCommand;
 
 	use crate::debug::tracer::{
-		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedBothDirectionCommand, TracedCommand,
+		CommandTracerSessions, CommandTracerSessionsTask, Session, TracedBothDirectionCommand,
+		TracedCommand,
 	};
 
 	#[test]
@@ -341,11 +371,13 @@ pub mod tests {
 					time: Session::now(),
 					template: Some(200),
 					user: 100,
-					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
-						object_id: Default::default(),
-						field_id: 0,
-						event: Default::default()
-					}))
+					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(
+						EventCommand {
+							object_id: Default::default(),
+							field_id: 0,
+							event: Default::default()
+						}
+					))
 				}
 			]
 		);
@@ -369,7 +401,9 @@ pub mod tests {
 				event: Default::default(),
 			}),
 		);
-		tracer.set_filter(session_id, "(user=100)".to_string()).unwrap();
+		tracer
+			.set_filter(session_id, "(user=100)".to_string())
+			.unwrap();
 
 		let commands = tracer.drain_filtered_commands(session_id).unwrap();
 		assert_eq!(
@@ -385,11 +419,13 @@ pub mod tests {
 					time: Session::now(),
 					template: Some(200),
 					user: 100,
-					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
-						object_id: Default::default(),
-						field_id: 0,
-						event: Default::default()
-					}))
+					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(
+						EventCommand {
+							object_id: Default::default(),
+							field_id: 0,
+							event: Default::default()
+						}
+					))
 				}
 			]
 		);
@@ -469,7 +505,11 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.execute_task(CommandTracerSessionsTask::SetFilter(session_id, "(8=55)".to_string(), sender));
+		tracer.execute_task(CommandTracerSessionsTask::SetFilter(
+			session_id,
+			"(8=55)".to_string(),
+			sender,
+		));
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => assert!(false),
@@ -531,11 +571,13 @@ pub mod tests {
 				time: Session::now(),
 				template: Some(100),
 				user: 100,
-				network_command: TracedBothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
-					object_id: Default::default(),
-					template: 100,
-					access_groups: Default::default()
-				}))
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::CreateGameObject(
+					CreateGameObjectCommand {
+						object_id: Default::default(),
+						template: 100,
+						access_groups: Default::default()
+					}
+				))
 			}]
 		)
 	}

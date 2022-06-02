@@ -56,14 +56,18 @@ impl RoundTripTime {
 	}
 
 	pub fn build_frame(&mut self, frame: &mut OutFrame, now: &Instant) {
-		frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader {
-			self_time: now.duration_since(self.start_application_time).as_millis() as u64,
-		}));
+		frame
+			.headers
+			.add(Header::RoundTripTimeRequest(RoundTripTimeHeader {
+				self_time: now.duration_since(self.start_application_time).as_millis() as u64,
+			}));
 
 		match &self.scheduled_response {
 			None => {}
 			Some(header) => {
-				frame.headers.add(Header::RoundTripTimeResponse(header.clone()));
+				frame
+					.headers
+					.add(Header::RoundTripTimeResponse(header.clone()));
 				self.scheduled_response = None
 			}
 		}
@@ -88,7 +92,9 @@ impl RoundTripTime {
 		}
 
 		// запрос на измерение от удаленной стороны
-		let request_header: Option<&RoundTripTimeHeader> = frame.headers.first(Header::predicate_round_trip_time_request);
+		let request_header: Option<&RoundTripTimeHeader> = frame
+			.headers
+			.first(Header::predicate_round_trip_time_request);
 		match request_header {
 			None => {}
 			Some(header) => {
@@ -107,17 +113,22 @@ impl RoundTripTime {
 		}
 
 		// нам пришло наше же измерение от удаленной стороны
-		let response_header: Option<&RoundTripTimeHeader> = frame.headers.first(Header::predicate_round_trip_time_response);
+		let response_header: Option<&RoundTripTimeHeader> = frame
+			.headers
+			.first(Header::predicate_round_trip_time_response);
 		match response_header {
 			None => {}
 			Some(header) => {
 				let header_time = header.self_time;
-				let current_time = now.duration_since(self.start_application_time).as_millis() as u64;
+				let current_time =
+					now.duration_since(self.start_application_time).as_millis() as u64;
 				if current_time >= header_time {
 					if self.rtt.is_full() {
 						self.rtt.pop_front();
 					}
-					self.rtt.push_back(Duration::from_millis(current_time - header_time)).unwrap();
+					self.rtt
+						.push_back(Duration::from_millis(current_time - header_time))
+						.unwrap();
 				}
 			}
 		}
@@ -148,7 +159,10 @@ mod tests {
 
 		let mut frame_a_b = OutFrame::new(1);
 		handler_a.build_frame(&mut frame_a_b, &now);
-		handler_b.on_frame_received(&InFrame::new(frame_a_b.frame_id, frame_a_b.headers, Default::default()), &now);
+		handler_b.on_frame_received(
+			&InFrame::new(frame_a_b.frame_id, frame_a_b.headers, Default::default()),
+			&now,
+		);
 
 		let mut frame_b_a = OutFrame::new(2);
 		handler_b.build_frame(&mut frame_b_a, &now);
@@ -157,7 +171,9 @@ mod tests {
 			&now.add(Duration::from_millis(100)),
 		);
 
-		assert!(matches!(handler_a.rtt.pop_front(), Option::Some(time) if time == Duration::from_millis(100)))
+		assert!(
+			matches!(handler_a.rtt.pop_front(), Option::Some(time) if time == Duration::from_millis(100))
+		)
 	}
 
 	#[test]
@@ -174,7 +190,9 @@ mod tests {
 		}));
 		frame
 			.headers
-			.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 100 }));
+			.add(Header::RoundTripTimeResponse(RoundTripTimeHeader {
+				self_time: 100,
+			}));
 		handler.on_frame_received(&frame, &now);
 		assert!(handler.rtt.is_empty(), "{}", true);
 	}
@@ -188,20 +206,26 @@ mod tests {
 		let now = Instant::now();
 
 		let mut input_frame = InFrame::new(10, Default::default(), Default::default());
-		input_frame.headers.add(Header::Retransmit(RetransmitHeader {
-			original_frame_id: 0,
-			retransmit_count: 1,
-		}));
 		input_frame
 			.headers
-			.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
+			.add(Header::Retransmit(RetransmitHeader {
+				original_frame_id: 0,
+				retransmit_count: 1,
+			}));
+		input_frame
+			.headers
+			.add(Header::RoundTripTimeRequest(RoundTripTimeHeader {
+				self_time: 100,
+			}));
 		handler.on_frame_received(&input_frame, &now);
 
 		let mut output_frame = OutFrame::new(10);
 		handler.build_frame(&mut output_frame, &now);
 
 		assert!(matches!(
-			output_frame.headers.first(Header::predicate_round_trip_time_response),
+			output_frame
+				.headers
+				.first(Header::predicate_round_trip_time_response),
 			Option::None
 		));
 	}
@@ -218,7 +242,9 @@ mod tests {
 			let mut frame = InFrame::new(10, Default::default(), Default::default());
 			frame
 				.headers
-				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
+				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader {
+					self_time: i as u64,
+				}));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, &now);
 		}
@@ -236,7 +262,9 @@ mod tests {
 			let mut frame = InFrame::new(10, Default::default(), Default::default());
 			frame
 				.headers
-				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
+				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader {
+					self_time: i as u64,
+				}));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, &now);
 		}

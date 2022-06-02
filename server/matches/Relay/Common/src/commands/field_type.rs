@@ -15,11 +15,12 @@ pub enum FieldType {
 }
 
 impl hash32::Hash for FieldType {
-    fn hash<H>(&self, state: &mut H)
-    where
-        H: hash32::Hasher {
+	fn hash<H>(&self, state: &mut H)
+	where
+		H: hash32::Hasher,
+	{
 		(*self as u8).hash(state);
-    }
+	}
 }
 
 impl ToString for FieldType {
@@ -29,7 +30,8 @@ impl ToString for FieldType {
 			FieldType::Double => "double",
 			FieldType::Structure => "structure",
 			FieldType::Event => "event",
-		}.into()
+		}
+		.into()
 	}
 }
 
@@ -46,7 +48,12 @@ impl FieldType {
 			2 => FieldType::Double,
 			3 => FieldType::Structure,
 			4 => FieldType::Event,
-			_ => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("{}", value))),
+			_ => {
+				return Err(std::io::Error::new(
+					ErrorKind::InvalidData,
+					format!("{}", value),
+				))
+			}
 		})
 	}
 }
@@ -56,9 +63,9 @@ pub trait ToFieldType {
 }
 
 impl ToFieldType for i64 {
-    fn to_field_type() -> FieldType {
+	fn to_field_type() -> FieldType {
 		FieldType::Long
-    }
+	}
 }
 
 impl ToFieldType for f64 {

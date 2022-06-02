@@ -126,7 +126,9 @@ mod tests {
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
 	use cheetah_matches_relay_common::room::RoomMemberId;
 
-	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedBothDirectionCommand, TracedCommand};
+	use crate::debug::tracer::filter::{
+		Filter, Rule, RuleCommandDirection, TracedBothDirectionCommand, TracedCommand,
+	};
 
 	impl TracedCommand {
 		pub fn c2s() -> Self {
@@ -170,13 +172,15 @@ mod tests {
 				TracedBothDirectionCommand::C2S(command) => {
 					if let C2SCommand::Event(mut event_command) = command.clone() {
 						event_command.field_id = field_id;
-						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
+						self.network_command =
+							TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
 					}
 				}
 				TracedBothDirectionCommand::S2C(command) => {
 					if let S2CCommand::Event(mut event_command) = command.clone() {
 						event_command.field_id = field_id;
-						self.network_command = TracedBothDirectionCommand::S2C(S2CCommand::Event(event_command));
+						self.network_command =
+							TracedBothDirectionCommand::S2C(S2CCommand::Event(event_command));
 					}
 				}
 			}
@@ -188,13 +192,15 @@ mod tests {
 				TracedBothDirectionCommand::C2S(command) => {
 					if let C2SCommand::Event(mut event_command) = command.clone() {
 						event_command.object_id = object_id;
-						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
+						self.network_command =
+							TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
 					}
 				}
 				TracedBothDirectionCommand::S2C(command) => {
 					if let S2CCommand::Event(mut event_command) = command.clone() {
 						event_command.object_id = object_id;
-						self.network_command = TracedBothDirectionCommand::S2C(S2CCommand::Event(event_command));
+						self.network_command =
+							TracedBothDirectionCommand::S2C(S2CCommand::Event(event_command));
 					}
 				}
 			}
@@ -246,27 +252,51 @@ mod tests {
 	#[test]
 	fn should_filter_by_room_owner() {
 		let filter = Filter::new(Rule::RoomOwner);
-		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
-		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Member(100)))));
+		assert!(filter.filter(
+			&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))
+		));
+		assert!(!filter.filter(
+			&TracedCommand::c2s()
+				.with_object_id(GameObjectId::new(50, GameObjectOwner::Member(100)))
+		));
 	}
 	#[test]
 	fn should_filter_by_user_owner() {
 		let filter = Filter::new(Rule::UserOwner(55));
-		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Member(55)))));
-		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
+		assert!(filter.filter(
+			&TracedCommand::c2s()
+				.with_object_id(GameObjectId::new(50, GameObjectOwner::Member(55)))
+		));
+		assert!(!filter.filter(
+			&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))
+		));
 	}
 	#[test]
 	fn should_filter_by_object_id() {
 		let filter = Filter::new(Rule::ObjectId(100));
-		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Member(55)))));
-		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
-		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(70, GameObjectOwner::Member(55)))));
-		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Room))));
+		assert!(filter.filter(
+			&TracedCommand::c2s()
+				.with_object_id(GameObjectId::new(100, GameObjectOwner::Member(55)))
+		));
+		assert!(filter.filter(
+			&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))
+		));
+		assert!(!filter.filter(
+			&TracedCommand::c2s()
+				.with_object_id(GameObjectId::new(70, GameObjectOwner::Member(55)))
+		));
+		assert!(!filter.filter(
+			&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Room))
+		));
 	}
 
 	#[test]
 	fn should_filter_or() {
-		let filter = Filter::new(Rule::OrRule(vec![Rule::Template(100), Rule::Template(55), Rule::User(55)]));
+		let filter = Filter::new(Rule::OrRule(vec![
+			Rule::Template(100),
+			Rule::Template(55),
+			Rule::User(55),
+		]));
 		assert!(filter.filter(&TracedCommand::c2s().with_template(100).with_user(55)));
 		assert!(filter.filter(&TracedCommand::c2s().with_template(55).with_user(100)));
 	}

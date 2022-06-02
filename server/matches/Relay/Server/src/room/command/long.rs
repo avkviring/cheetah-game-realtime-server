@@ -1,6 +1,6 @@
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
-use cheetah_matches_relay_common::commands::types::long::{IncrementLongC2SCommand};
+use cheetah_matches_relay_common::commands::types::long::IncrementLongC2SCommand;
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::room::RoomMemberId;
 
@@ -80,7 +80,7 @@ impl ServerCommandExecutor for SetFieldCommand {
 mod tests {
 	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 	use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
-	use cheetah_matches_relay_common::commands::types::long::{IncrementLongC2SCommand};
+	use cheetah_matches_relay_common::commands::types::long::IncrementLongC2SCommand;
 	use cheetah_matches_relay_common::room::access::AccessGroups;
 	use cheetah_matches_relay_common::room::object::GameObjectId;
 	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
@@ -105,7 +105,9 @@ mod tests {
 
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 100);
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
+		assert!(
+			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command)
+		);
 	}
 
 	#[test]
@@ -131,7 +133,9 @@ mod tests {
 		};
 
 		room.test_out_commands.pop_back();
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result));
+		assert!(
+			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result)
+		);
 	}
 
 	#[test]
@@ -152,7 +156,10 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(
+			GameObjectOwner::Member(user_id),
+			access_groups,
+		);
 		object.created = true;
 		let object_id = object.id.clone();
 		(room, user_id, object_id)

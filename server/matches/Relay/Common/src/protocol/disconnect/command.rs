@@ -36,7 +36,9 @@ impl DisconnectByCommand {
 
 	pub fn build_frame(&mut self, frame: &mut OutFrame) {
 		if self.disconnecting_by_self_request {
-			frame.headers.add(Header::Disconnect(DisconnectHeader::default()));
+			frame
+				.headers
+				.add(Header::Disconnect(DisconnectHeader::default()));
 			self.disconnected_by_self = true;
 		}
 	}
@@ -76,7 +78,11 @@ mod tests {
 
 		let mut frame = OutFrame::new(10);
 		self_handler.build_frame(&mut frame);
-		remote_handler.on_frame_received(&InFrame::new(frame.frame_id, frame.headers, Default::default()));
+		remote_handler.on_frame_received(&InFrame::new(
+			frame.frame_id,
+			frame.headers,
+			Default::default(),
+		));
 
 		assert!(self_handler.disconnected());
 		assert!(remote_handler.disconnected());
@@ -88,6 +94,9 @@ mod tests {
 		let mut frame = OutFrame::new(10);
 		handler.build_frame(&mut frame);
 		assert!(!handler.disconnected());
-		assert!(matches!(frame.headers.first(Header::predicate_disconnect), Option::None));
+		assert!(matches!(
+			frame.headers.first(Header::predicate_disconnect),
+			Option::None
+		));
 	}
 }

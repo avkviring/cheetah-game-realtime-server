@@ -39,7 +39,11 @@ impl StubMatchmakingService {
 		}
 	}
 	#[async_recursion::async_recursion]
-	async fn matchmaking(&self, ticket: TicketRequest, user_id: u64) -> Result<TicketResponse, String> {
+	async fn matchmaking(
+		&self,
+		ticket: TicketRequest,
+		user_id: u64,
+	) -> Result<TicketResponse, String> {
 		let template = ticket.match_template.clone();
 		let match_info = self.find_or_create_match(&template).await?;
 		match StubMatchmakingService::attach_user(&ticket, &match_info).await {
@@ -66,13 +70,14 @@ impl StubMatchmakingService {
 		ticket: &matchmaking::external::TicketRequest,
 		match_info: &MatchInfo,
 	) -> Result<relay::internal::AttachUserResponse, String> {
-		let mut relay =
-			relay::internal::relay_client::RelayClient::connect(cheetah_libraries_microservice::make_internal_srv_uri(
+		let mut relay = relay::internal::relay_client::RelayClient::connect(
+			cheetah_libraries_microservice::make_internal_srv_uri(
 				match_info.relay_grpc_host.as_str(),
 				match_info.relay_grpc_port,
-			))
-			.await
-			.map_err(|e| format!("Connect to relay error {:?}", e))?;
+			),
+		)
+		.await
+		.map_err(|e| format!("Connect to relay error {:?}", e))?;
 
 		match relay
 			.attach_user(Request::new(AttachUserRequest {
@@ -96,7 +101,9 @@ impl StubMatchmakingService {
 		let mut matches = self.matches.write().await;
 		match matches.get(template) {
 			None => {
-				let mut factory = FactoryClient::connect(self.factory_service_uri.clone()).await.unwrap();
+				let mut factory = FactoryClient::connect(self.factory_service_uri.clone())
+					.await
+					.unwrap();
 
 				let create_match_response = factory
 					.create_match(Request::new(CreateMatchRequest {
@@ -129,8 +136,14 @@ fn create_match_info(create_match_response: CreateMatchResponse) -> MatchInfo {
 
 #[tonic::async_trait]
 impl Matchmaking for StubMatchmakingService {
-	async fn matchmaking(&self, request: Request<TicketRequest>) -> Result<tonic::Response<TicketResponse>, tonic::Status> {
-		match cheetah_libraries_microservice::jwt::grpc::get_player_id(request.metadata(), self.jwt_public_key.clone()) {
+	async fn matchmaking(
+		&self,
+		request: Request<TicketRequest>,
+	) -> Result<tonic::Response<TicketResponse>, tonic::Status> {
+		match cheetah_libraries_microservice::jwt::grpc::get_player_id(
+			request.metadata(),
+			self.jwt_public_key.clone(),
+		) {
 			Ok(user) => {
 				let ticket_request = request.into_inner();
 				match self.matchmaking(ticket_request, user).await {
@@ -281,9 +294,13 @@ pub mod tests {
 		};
 		tokio::spawn(async move {
 			Server::builder()
-				.add_service(factory::internal::factory_server::FactoryServer::new(stub_factory))
+				.add_service(factory::internal::factory_server::FactoryServer::new(
+					stub_factory,
+				))
 				.add_service(relay::internal::relay_server::RelayServer::new(stub_relay))
-				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(stub_grpc_service_tcp))
+				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
+					stub_grpc_service_tcp,
+				))
 				.await
 		});
 

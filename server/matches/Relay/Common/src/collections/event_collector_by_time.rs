@@ -35,8 +35,15 @@ pub struct EventCollectorByTime<T: Debug, N: ArrayLength<T>> {
 	position: usize,
 }
 
-impl<T: Copy + PartialEq + AddAssign<T> + Int + Debug, N: ArrayLength<T>> EventCollectorByTime<T, N> {
-	pub fn new(current_value: T, default_value: T, unset_cell_value: T, aggregation_time: Duration) -> Self {
+impl<T: Copy + PartialEq + AddAssign<T> + Int + Debug, N: ArrayLength<T>>
+	EventCollectorByTime<T, N>
+{
+	pub fn new(
+		current_value: T,
+		default_value: T,
+		unset_cell_value: T,
+		aggregation_time: Duration,
+	) -> Self {
 		Self {
 			default_value,
 			current_value,
@@ -159,7 +166,9 @@ mod tests {
 		collector.on_event(&now);
 		collector.on_event(&now);
 		collector.on_event(&now);
-		assert!(matches!(collector.get_sum_and_count(&now.add(duration)), Option::Some((sum, count)) if sum == 3 && count == 1));
+		assert!(
+			matches!(collector.get_sum_and_count(&now.add(duration)), Option::Some((sum, count)) if sum == 3 && count == 1)
+		);
 	}
 
 	///
@@ -175,7 +184,9 @@ mod tests {
 		now.add_assign(duration);
 		collector.on_event(&now);
 		collector.on_event(&now);
-		assert!(matches!(collector.get_sum_and_count(&now.add(duration)), Option::Some((sum, count)) if sum == 5 && count == 2));
+		assert!(
+			matches!(collector.get_sum_and_count(&now.add(duration)), Option::Some((sum, count)) if sum == 5 && count == 2)
+		);
 	}
 
 	fn setup() -> (EventCollectorByTime<u8, U8>, Duration) {

@@ -31,9 +31,12 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::{commands::{FieldType, FieldValue}, room::owner::GameObjectOwner};
+	use cheetah_matches_relay_common::{
+		commands::{FieldType, FieldValue},
+		room::owner::GameObjectOwner,
+	};
 
-	use crate::room::{template::config::GameObjectTemplate};
+	use crate::room::template::config::GameObjectTemplate;
 
 	#[test]
 	#[should_panic]
@@ -56,7 +59,9 @@ mod tests {
 			fields: Default::default(),
 		};
 
-		config_object.fields.insert((0, FieldType::Long), FieldValue::Long(100));
+		config_object
+			.fields
+			.insert((0, FieldType::Long), FieldValue::Long(100));
 		config_object
 			.fields
 			.insert((1, FieldType::Double), FieldValue::Double(105.105));

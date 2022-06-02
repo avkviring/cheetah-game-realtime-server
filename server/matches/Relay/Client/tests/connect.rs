@@ -42,7 +42,8 @@ fn should_disconnect_when_server_closed() {
 	drop(helper);
 
 	execute_with_client(client, |api| {
-		api.set_protocol_time_offset(DisconnectByTimeout::TIMEOUT).unwrap();
+		api.set_protocol_time_offset(DisconnectByTimeout::TIMEOUT)
+			.unwrap();
 		Ok(())
 	});
 	thread::sleep(Duration::from_millis(100));

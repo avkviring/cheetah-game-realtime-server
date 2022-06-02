@@ -48,11 +48,15 @@ impl IntegrationTestServerBuilder {
 			.iter_mut()
 			.find(|tp| tp.template == template)
 		{
-			None => self.template.permissions.templates.push(GameObjectTemplatePermission {
-				template,
-				rules: Default::default(),
-				fields: vec![field],
-			}),
+			None => self
+				.template
+				.permissions
+				.templates
+				.push(GameObjectTemplatePermission {
+					template,
+					rules: Default::default(),
+					fields: vec![field],
+				}),
 			Some(template) => {
 				template.fields.push(field);
 			}

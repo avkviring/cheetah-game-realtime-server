@@ -29,7 +29,11 @@ pub struct S2CCommandWithCreator {
 }
 
 impl S2CCommand {
-	pub fn new_set_command(value: FieldValue, object_id: GameObjectId, field_id: u16) -> S2CCommand {
+	pub fn new_set_command(
+		value: FieldValue,
+		object_id: GameObjectId,
+		field_id: u16,
+	) -> S2CCommand {
 		S2CCommand::SetField(SetFieldCommand {
 			field_id,
 			object_id,
@@ -103,16 +107,32 @@ impl S2CCommand {
 		input: &mut Cursor<&[u8]>,
 	) -> Result<S2CCommand, CommandDecodeError> {
 		Ok(match *command_type_id {
-			CommandTypeId::CREATE_GAME_OBJECT => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
-			CommandTypeId::CREATED_GAME_OBJECT => S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: object_id? }),
-			CommandTypeId::DELETE => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
-			CommandTypeId::SET_LONG => S2CCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
-			CommandTypeId::SET_DOUBLE => S2CCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
-			CommandTypeId::SET_STRUCTURE => {
-				S2CCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?)
+			CommandTypeId::CREATE_GAME_OBJECT => {
+				S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?)
 			}
-			CommandTypeId::EVENT => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::DELETE_FIELD => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::CREATED_GAME_OBJECT => {
+				S2CCommand::Created(GameObjectCreatedS2CCommand {
+					object_id: object_id?,
+				})
+			}
+			CommandTypeId::DELETE => S2CCommand::Delete(DeleteGameObjectCommand {
+				object_id: object_id?,
+			}),
+			CommandTypeId::SET_LONG => S2CCommand::SetField(SetFieldCommand::decode::<i64>(
+				object_id?, field_id?, input,
+			)?),
+			CommandTypeId::SET_DOUBLE => S2CCommand::SetField(SetFieldCommand::decode::<f64>(
+				object_id?, field_id?, input,
+			)?),
+			CommandTypeId::SET_STRUCTURE => S2CCommand::SetField(
+				SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?,
+			),
+			CommandTypeId::EVENT => {
+				S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?)
+			}
+			CommandTypeId::DELETE_FIELD => {
+				S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?)
+			}
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
@@ -129,8 +149,9 @@ mod tests {
 	use crate::commands::CommandTypeId;
 	use crate::constants::FieldId;
 	use crate::{
-		commands::s2c::S2CCommand, commands::types::event::EventCommand, protocol::codec::commands::context::CommandContextError,
-		room::access::AccessGroups, room::object::GameObjectId, room::owner::GameObjectOwner,
+		commands::s2c::S2CCommand, commands::types::event::EventCommand,
+		protocol::codec::commands::context::CommandContextError, room::access::AccessGroups,
+		room::object::GameObjectId, room::owner::GameObjectOwner,
 	};
 
 	#[test]
@@ -238,7 +259,12 @@ mod tests {
 		);
 	}
 
-	fn check(expected: S2CCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {
+	fn check(
+		expected: S2CCommand,
+		command_type_id: CommandTypeId,
+		object_id: Option<GameObjectId>,
+		field_id: Option<FieldId>,
+	) {
 		let object_id = object_id.ok_or(CommandContextError::ContextNotContainsObjectId);
 		let field_id = field_id.ok_or(CommandContextError::ContextNotContainsFieldId);
 		let mut buffer = [0_u8; 100];
@@ -246,7 +272,8 @@ mod tests {
 		expected.encode(&mut cursor).unwrap();
 		let write_position = cursor.position();
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
-		let actual = S2CCommand::decode(&command_type_id, object_id, field_id, &mut read_cursor).unwrap();
+		let actual =
+			S2CCommand::decode(&command_type_id, object_id, field_id, &mut read_cursor).unwrap();
 
 		assert_eq!(write_position, read_cursor.position());
 		assert_eq!(expected, actual);

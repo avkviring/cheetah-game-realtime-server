@@ -56,11 +56,15 @@ impl InCommandsCollector {
 		let frame_id = frame.frame_id;
 		frame.get_commands().cloned().for_each(|c| {
 			match c.channel {
-				Channel::ReliableUnordered | Channel::UnreliableUnordered => self.ready_commands.push(c),
+				Channel::ReliableUnordered | Channel::UnreliableUnordered => {
+					self.ready_commands.push(c)
+				}
 				Channel::ReliableOrdered(group) | Channel::UnreliableOrdered(group) => {
 					self.process_ordered(group, frame_id, c);
 				}
-				Channel::ReliableSequence(channel_id, sequence) => self.process_sequence(channel_id, sequence, c),
+				Channel::ReliableSequence(channel_id, sequence) => {
+					self.process_sequence(channel_id, sequence, c)
+				}
 			};
 		});
 	}
@@ -95,7 +99,8 @@ impl InCommandsCollector {
 
 		if !is_ready_command {
 			if self.sequence_commands[channel_group.0 as usize].is_none() {
-				self.sequence_commands[channel_group.0 as usize] = Option::Some(BinaryHeap::default());
+				self.sequence_commands[channel_group.0 as usize] =
+					Option::Some(BinaryHeap::default());
 			}
 			let option_buffer = &mut self.sequence_commands[channel_group.0 as usize];
 			let buffer = option_buffer.as_mut().unwrap();
@@ -110,7 +115,12 @@ impl InCommandsCollector {
 		}
 	}
 
-	fn process_ordered(&mut self, channel_group: ChannelGroup, frame_id: FrameId, command: CommandWithChannel) {
+	fn process_ordered(
+		&mut self,
+		channel_group: ChannelGroup,
+		frame_id: FrameId,
+		command: CommandWithChannel,
+	) {
 		let order = &self.last_frame_id_by_group[channel_group.0 as usize];
 		if frame_id >= *order {
 			self.last_frame_id_by_group[channel_group.0 as usize] = frame_id;
@@ -229,12 +239,30 @@ mod tests {
 	pub fn test_group_sequence() {
 		let mut in_commands = InCommandsCollector::default();
 
-		let cmd_1 = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(0)), 1);
-		let cmd_2 = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(1)), 2);
-		let cmd_3 = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(2)), 3);
-		let cmd_4 = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(3)), 4);
-		let cmd_5 = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(4)), 5);
-		let cmd_6 = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(5)), 5);
+		let cmd_1 = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(0)),
+			1,
+		);
+		let cmd_2 = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(1)),
+			2,
+		);
+		let cmd_3 = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(2)),
+			3,
+		);
+		let cmd_4 = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(3)),
+			4,
+		);
+		let cmd_5 = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(4)),
+			5,
+		);
+		let cmd_6 = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(5)),
+			5,
+		);
 
 		assert(3, &mut in_commands, &[cmd_3.clone()], &[]);
 		assert(1, &mut in_commands, &[cmd_1.clone()], &[cmd_1]);
@@ -248,12 +276,30 @@ mod tests {
 	pub fn test_group_sequence_with_different_group() {
 		let mut in_commands = InCommandsCollector::default();
 
-		let cmd_1_a = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(0)), 1);
-		let cmd_1_b = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(1)), 2);
-		let cmd_1_c = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(2)), 3);
-		let cmd_2_a = create_test_command(Channel::ReliableSequence(ChannelGroup(2), ChannelSequence(0)), 4);
-		let cmd_2_b = create_test_command(Channel::ReliableSequence(ChannelGroup(2), ChannelSequence(1)), 5);
-		let cmd_2_c = create_test_command(Channel::ReliableSequence(ChannelGroup(2), ChannelSequence(2)), 6);
+		let cmd_1_a = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(0)),
+			1,
+		);
+		let cmd_1_b = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(1)),
+			2,
+		);
+		let cmd_1_c = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(2)),
+			3,
+		);
+		let cmd_2_a = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(2), ChannelSequence(0)),
+			4,
+		);
+		let cmd_2_b = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(2), ChannelSequence(1)),
+			5,
+		);
+		let cmd_2_c = create_test_command(
+			Channel::ReliableSequence(ChannelGroup(2), ChannelSequence(2)),
+			6,
+		);
 
 		assert(1, &mut in_commands, &[cmd_1_a.clone()], &[cmd_1_a]);
 		assert(6, &mut in_commands, &[cmd_2_b.clone()], &[]);
@@ -269,7 +315,11 @@ mod tests {
 		commands: &[CommandWithChannel],
 		expect: &[CommandWithChannel],
 	) {
-		let frame = InFrame::new(frame_id, Default::default(), commands.iter().cloned().collect());
+		let frame = InFrame::new(
+			frame_id,
+			Default::default(),
+			commands.iter().cloned().collect(),
+		);
 		in_commands.collect(frame);
 		assert_eq!(in_commands.get_ready_commands(), expect);
 	}
@@ -277,14 +327,20 @@ mod tests {
 		create_test_object_command(channel, 0, content)
 	}
 
-	fn create_test_object_command(channel: Channel, object_id: u32, content: i64) -> CommandWithChannel {
+	fn create_test_object_command(
+		channel: Channel,
+		object_id: u32,
+		content: i64,
+	) -> CommandWithChannel {
 		CommandWithChannel {
 			channel,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
-				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
-				field_id: 0,
-				value: content.into(),
-			})),
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(
+				SetFieldCommand {
+					object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
+					field_id: 0,
+					value: content.into(),
+				},
+			)),
 		}
 	}
 }

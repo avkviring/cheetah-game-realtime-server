@@ -23,7 +23,10 @@ impl RelayGRPCService {
 
 #[tonic::async_trait]
 impl crate::grpc::proto::internal::relay_server::Relay for RelayGRPCService {
-	async fn create_room(&self, request: tonic::Request<RoomTemplate>) -> Result<Response<CreateRoomResponse>, Status> {
+	async fn create_room(
+		&self,
+		request: tonic::Request<RoomTemplate>,
+	) -> Result<Response<CreateRoomResponse>, Status> {
 		let mut server = self.relay_server.lock().unwrap();
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
 		match server.register_room(template) {
@@ -32,7 +35,10 @@ impl crate::grpc::proto::internal::relay_server::Relay for RelayGRPCService {
 		}
 	}
 
-	async fn attach_user(&self, request: Request<AttachUserRequest>) -> Result<Response<AttachUserResponse>, Status> {
+	async fn attach_user(
+		&self,
+		request: Request<AttachUserRequest>,
+	) -> Result<Response<AttachUserResponse>, Status> {
 		let mut server = self.relay_server.lock().unwrap();
 		let request = request.into_inner();
 		let template = crate::room::template::config::MemberTemplate::from(request.user.unwrap());

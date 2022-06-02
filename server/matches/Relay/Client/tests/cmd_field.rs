@@ -48,17 +48,31 @@ fn should_allow_fields_with_different_types_but_same_id() {
 }
 
 lazy_static! {
-	static ref DELETED_FIELD: Mutex<Option<(FieldId, FieldTypeFFI)>> = Mutex::new(Default::default());
+	static ref DELETED_FIELD: Mutex<Option<(FieldId, FieldTypeFFI)>> =
+		Mutex::new(Default::default());
 }
 
 lazy_static! {
 	static ref SET_FIELDS: Mutex<Vec<FieldId>> = Mutex::new(Default::default());
 }
 
-extern "C" fn delete_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, field_type: FieldTypeFFI) {
-	DELETED_FIELD.lock().unwrap().replace((field_id, field_type));
+extern "C" fn delete_listener(
+	_: RoomMemberId,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	field_type: FieldTypeFFI,
+) {
+	DELETED_FIELD
+		.lock()
+		.unwrap()
+		.replace((field_id, field_type));
 }
 
-extern "C" fn set_listener<T>(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, _: T) {
+extern "C" fn set_listener<T>(
+	_: RoomMemberId,
+	_object_id: &GameObjectIdFFI,
+	field_id: FieldId,
+	_: T,
+) {
 	SET_FIELDS.lock().unwrap().push(field_id);
 }
