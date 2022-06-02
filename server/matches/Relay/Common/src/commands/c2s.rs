@@ -1,22 +1,18 @@
 use std::io::Cursor;
-use std::process::Command;
 
 use strum_macros::AsRefStr;
 
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
-use crate::commands::types::field::DeleteFieldCommand;
+use crate::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
 use crate::commands::types::float::IncrementDoubleC2SCommand;
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 use crate::commands::types::structure::CompareAndSetStructureCommand;
-use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
+use crate::commands::{CommandDecodeError, CommandTypeId, FieldType, FieldValue};
 use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
-
-use super::types::field::SetFieldCommand;
-use super::FieldValue;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 pub enum C2SCommand {
