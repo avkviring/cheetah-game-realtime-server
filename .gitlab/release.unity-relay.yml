@@ -2,6 +2,7 @@
 # Сборка клиентской библиотеки для relay
 #
 build-relay-library-for-linux:
+  extends: .rust-cache
   only:
     refs:
       - tags
@@ -9,41 +10,45 @@ build-relay-library-for-linux:
   stage: release
   script:
     - cd server
-    - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - cargo build  --manifest-path matches/Relay/Client/Cargo.toml --release
+    - cp /runners-cache/target/release/libcheetah_matches_relay_client.so ../libcheetah_matches_relay_client.so.linux
   artifacts:
     paths:
-      - server/target/release/libcheetah_matches_relay_client.so
+      - libcheetah_matches_relay_client.so.linux
     expire_in: 1 day
 
 build-relay-library-for-android-armv7:
+  extends: .rust-cache
   only:
     refs:
       - tags
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-armv7-linux-androideabi:1.0.0
   stage: release
   script:
+    - export PATH=$PATH:/.cargo/bin/
     - cd server
-    - /.cargo/bin/cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - /.cargo/bin/cargo build  --manifest-path matches/Relay/Client/Cargo.toml --target armv7-linux-androideabi --release
+    - cp /runners-cache/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so ../libcheetah_matches_relay_client.so.armv7
   artifacts:
     paths:
-      - server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so
+      - libcheetah_matches_relay_client.so.armv7
     expire_in: 1 day
 
 build-relay-library-for-android-aarch64:
+  extends: .rust-cache
   only:
     refs:
       - tags
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-aarch64-linux-android:1.0.0
   stage: release
   script:
+    - export PATH=$PATH:/.cargo/bin/
     - cd server
-    - /.cargo/bin/cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - /.cargo/bin/cargo build  --manifest-path matches/Relay/Client/Cargo.toml --target aarch64-linux-android --release
+    - cp /runners-cache/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so ../libcheetah_matches_relay_client.so.aarch64
   artifacts:
     paths:
-      - server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so
+      - libcheetah_matches_relay_client.so.aarch64
     expire_in: 1 day
 
 build-relay-library-for-windows:
@@ -123,9 +128,9 @@ release-unity-relay:
   variables:
     version: $CI_COMMIT_TAG
   script:
-    - cp server/target/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
-    - cp server/target/armv7-linux-androideabi/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/armv7/libcheetah_matches_relay_client.so
-    - cp server/target/aarch64-linux-android/release/libcheetah_matches_relay_client.so clients/Unity/Packages/games.cheetah.matches.relay/Android/aarch64/libcheetah_matches_relay_client.so
+    - cp libcheetah_matches_relay_client.so.linux clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.so
+    - cp libcheetah_matches_relay_client.so.armv7 clients/Unity/Packages/games.cheetah.matches.relay/Android/armv7/libcheetah_matches_relay_client.so
+    - cp libcheetah_matches_relay_client.so.aarch64 clients/Unity/Packages/games.cheetah.matches.relay/Android/aarch64/libcheetah_matches_relay_client.so
     - cp server/target/debug/cheetah_matches_relay_client.dll clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.dll
     - cp server/target/debug/cheetah_matches_relay_client.pdb clients/Unity/Packages/games.cheetah.matches.relay/x86_64/cheetah_matches_relay_client.pdb
     - cp server/target/release/libcheetah_matches_relay_client.dylib clients/Unity/Packages/games.cheetah.matches.relay/x86_64/libcheetah_matches_relay_client.bundle

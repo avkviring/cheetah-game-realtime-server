@@ -3,6 +3,7 @@ stages:
   - release
   - cleanup
 include:
+  - '.gitlab/shared.yml'
   - '.gitlab/test.cargo-projects.yml'
   - '.gitlab/test.client-meta-files.yml'
   - '.gitlab/test.integration.yml'

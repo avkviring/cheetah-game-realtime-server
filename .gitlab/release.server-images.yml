@@ -2,6 +2,9 @@
 # Сборка серверных docker образов
 #
 release-server-images:
+  extends:
+    - .rust-cache
+    - .docker-dind-tls
   only:
     refs:
       - tags
@@ -15,7 +18,7 @@ release-server-images:
       - server/target/
   script:
     - cd server
-    - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
     - RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
+    - ln -s /runners-cache/target/ target
     - ./package-server-images.sh

@@ -2,16 +2,16 @@
 # Тесты rust кода
 #
 test-cargo-projects:
-  variables:
-    GIT_CLEAN_FLAGS: "none"
+  extends:
+    - .rust-cache
+    - .docker-dind-tls
   except:
     - tags
-  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.4
+  image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.8
   stage: test
   script:
-    - cd server/
-    - cargo fetcher --url file:///`pwd`/../.cache/crates/ --include-index sync
-    - CARGO_INCREMENTAL=0 cargo test -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
+    - cd server
+    - cargo test -- -Z unstable-options --format json --report-time | cargo2junit > results.xml
   artifacts:
     when: always
     reports:

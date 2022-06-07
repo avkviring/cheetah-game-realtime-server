@@ -1,0 +1,39 @@
+#
+# Кеширирование сборки rust проектов
+#  - директория runners-cache монтируется с node и может использоваться как быстрый кеш для сборок
+#
+.rust-cache:
+  before_script:
+    - mkdir -p /runners-cache/target/
+    - export CARGO_TARGET_DIR=/runners-cache/target/
+    - mkdir -p /runners-cache/cargo/
+    - export CARGO_HOME=/runners-cache/cargo/
+
+
+#
+# Бранчи для которых включены интеграционные тесты
+#
+.integration-branches:
+  only:
+    refs:
+      - kviring
+      - flaamjab
+
+#
+# Использование docker-in-docker
+#
+.docker-dind-tls:
+  services:
+    - docker:19.03.12-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+
+.docker-dind-no-tls:
+  services:
+    - docker:19.03.12-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
