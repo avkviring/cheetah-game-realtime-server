@@ -21,8 +21,7 @@ namespace Tests.Helpers
         /// Версия образов сервисов локального сервера
         /// </summary>
         [CanBeNull] public string ServerImageVersion;
-
-        [CanBeNull] public string DockerMountDir;
+        
 
         [CanBeNull]
         public static IntegrationTestConfigurator Load()
@@ -31,7 +30,6 @@ namespace Tests.Helpers
             if (!File.Exists(fileName)) return null;
             var json = Encoding.Default.GetString(File.ReadAllBytes(fileName));
             var integrationTestConfigurator = JsonUtility.FromJson<IntegrationTestConfigurator>(json);
-            DockerContainerBuilder.DockerMountDir = integrationTestConfigurator.DockerMountDir;
             return integrationTestConfigurator;
         }
     }
