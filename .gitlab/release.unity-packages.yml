@@ -1,9 +1,11 @@
 release-unity-packages:
+  extends:
+    - .docker-dind-tls
   only:
     refs:
       - tags
   stage: release
-  image: node:17.7.2-stretch-slim
+  image: registry.dev.cheetah.games/cheetah/images/unity-builder:1.0.1
   variables:
     version: $CI_COMMIT_TAG
   script: |-
