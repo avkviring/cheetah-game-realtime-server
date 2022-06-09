@@ -199,11 +199,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 				)
 			}
 			C2SCommand::SetField(command) => {
-				format!(
-					"{:?} (type: {})",
-					command.value,
-					command.value.field_type().to_string()
-				)
+				format!("{:?}", command.value)
 			}
 			C2SCommand::IncrementLongValue(command) => {
 				format!("{:?}", command.increment)

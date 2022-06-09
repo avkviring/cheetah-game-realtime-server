@@ -67,10 +67,11 @@ test-integration-run-unity-with-kubernetes:
   extends:
     - .rust-cache
     - .integration-branches
+    - .docker-dind-tls
   needs:
     - install-servers-to-kubernetes-for-integration-test
     - build-relay-client-for-integration-test
-  image: unityci/editor:2021.2.7f1-base-1.0.0
+  image: registry.dev.cheetah.games/cheetah/images/unity-builder:1.0.0
   variables:
     TEST_PLATFORM: playmode
     TESTING_TYPE: JUNIT
