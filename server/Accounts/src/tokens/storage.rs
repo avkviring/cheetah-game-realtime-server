@@ -1,187 +1,153 @@
-use redis::aio::MultiplexedConnection;
-pub use redis::{AsyncCommands, Commands, ConnectionLike, ErrorKind, RedisError, RedisResult};
+use std::ops::Add;
+use std::time::Duration;
 
-use crate::users::UserId;
+use uuid::Uuid;
+use ydb::{TableClient, YdbOrCustomerError};
+
+use cheetah_libraries_ydb::{query, update};
+
+use crate::users::user::User;
 
 ///
-/// Хранение данных по токенам обновления в Redis.
 ///
-/// hmap[user_id][device_id] = token_seq
 ///
 #[derive(Clone)]
 pub struct TokenStorage {
+	ydb_table_client: TableClient,
 	///
 	/// Время жизни данных для пользователя
 	///
-	time_of_life_in_sec: u64,
-	redis: MultiplexedConnection,
+	ttl: Duration,
 }
-
 impl TokenStorage {
-	///
-	/// Максимальный размер device_id для исключения атаки на размер базы данных в Redis
-	///
-	const DEVICE_ID_MAX_LEN: usize = 16;
+	pub fn new(ydb_table_client: TableClient, ttl: Duration) -> Self {
+		Self { ydb_table_client, ttl }
+	}
 
-	///
-	/// Количество устройств пользователя, для исключения атак на размер базы данных в Redis
-	///
-	const COUNT_DEVICES_PER_USER: usize = 32;
+	pub async fn create_new_linked_uuid(
+		&self,
+		user: &User,
+		device: &str,
+		create_at: &Duration,
+	) -> Result<Uuid, YdbOrCustomerError> {
+		let token_uuid = Uuid::new_v4();
+		update!(
+			self.ydb_table_client,
+			query!(
+				"upsert into tokens(user, device, token_uuid, create_at) values ($user,$device,$token_uuid,$create_at)",
+				user=>user,
+				device=>device,
+				create_at=>create_at,
+				token_uuid=>token_uuid
+			)
+		)
+		.await?;
+		Ok(token_uuid)
+	}
 
-	pub async fn new(host: &str, port: u16, auth: Option<String>, time_of_life_in_sec: u64) -> Result<Self, String> {
-		let url = match auth {
-			Option::Some(ref password) => {
-				format!("redis://:{}@{}:{}", password, host, port)
-			}
-			Option::None => {
-				format!("redis://{}:{}", host, port)
-			}
-		};
+	pub(crate) async fn is_linked(
+		&self,
+		user: &User,
+		device: &str,
+		token_uuid: &Uuid,
+		now: Duration,
+	) -> Result<bool, YdbOrCustomerError> {
+		self.ydb_table_client
+			.retry_transaction(|mut t| async move {
+				let query = query!(
+					"select create_at from tokens where user=$user and device=$device and token_uuid=$token_uuid",
+					user=>user,
+					device=>device,
+					token_uuid=>token_uuid
+				);
+				let result = t.query(query).await?.into_only_result().unwrap().rows().any(|mut row| {
+					let time: Option<Duration> = row.remove_field_by_name("create_at").unwrap().try_into().unwrap();
+					time.unwrap().add(self.ttl) >= now
+				});
+				t.query(query!(
+					"delete from tokens where user=$user and device=$device and token_uuid=$token_uuid",
+					user=>user,
+					device=>device,
+					token_uuid=>token_uuid
+				))
+				.await?;
+				t.commit().await?;
 
-		let redis = redis::Client::open(url)
-			.unwrap()
-			.get_multiplexed_tokio_connection()
+				Ok(result)
+			})
 			.await
-			.unwrap();
-		redis
-			.clone()
-			.set::<String, String, ()>("test".to_string(), "value".to_string())
-			.await
-			.unwrap();
-
-		Ok(Self {
-			time_of_life_in_sec,
-			redis,
-		})
-	}
-
-	fn make_key(user_id: UserId) -> String {
-		format!("r:{}", i64::from(user_id))
-	}
-
-	fn normalize_device_id(device_id: &str) -> String {
-		if device_id.len() > TokenStorage::DEVICE_ID_MAX_LEN {
-			device_id[0..TokenStorage::DEVICE_ID_MAX_LEN].to_string()
-		} else {
-			device_id.to_owned()
-		}
-	}
-
-	pub(crate) async fn new_version(&self, user: UserId, device_id: &str) -> Result<u64, RedisError> {
-		let key = TokenStorage::make_key(user);
-		let device_id = TokenStorage::normalize_device_id(device_id);
-		let mut connection = self.redis.clone();
-		let len: usize = connection.hlen(&key).await?;
-		if len > TokenStorage::COUNT_DEVICES_PER_USER {
-			connection.del::<&String, usize>(&key).await?;
-		}
-		let result = connection.hincr(&key, device_id, 1_u64).await?;
-
-		connection.expire(&key, self.time_of_life_in_sec as usize).await?;
-
-		Result::Ok(result)
-	}
-
-	pub(crate) async fn get_version(&self, user_id: UserId, device_id: &str) -> Result<u64, RedisError> {
-		let key = TokenStorage::make_key(user_id);
-		let device_id = TokenStorage::normalize_device_id(device_id);
-		let mut connection = self.redis.clone();
-		connection.expire(&key, self.time_of_life_in_sec as usize).await?;
-		let result: Result<Option<u64>, RedisError> = connection.hget(key, device_id).await;
-		result.map(|v| v.unwrap_or(0))
 	}
 }
 
 #[cfg(test)]
 pub mod tests {
-	use std::thread;
-	use std::time::Duration;
+	use std::sync::Arc;
+	use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-	use testcontainers::images::redis::Redis;
-	use testcontainers::{clients, images, Container};
+	use uuid::Uuid;
+
+	use cheetah_libraries_ydb::test_container::YDBTestInstance;
 
 	use crate::tokens::storage::TokenStorage;
-	use crate::users::UserId;
+	use crate::users::user::User;
+	use crate::ydb::test::setup_ydb;
 
 	#[tokio::test]
-	async fn should_increment_version() {
-		let (_node, storage) = stub_storage().await;
-
-		let user_id = UserId::from(123u64);
+	async fn should_create_different_uuid() {
+		let (storage, _instance) = setup().await;
+		let user = User::default();
 		let device = "device";
-		let version_1 = storage.new_version(user_id, device);
-		let version_2 = storage.new_version(user_id, device);
-		let (version_1, version_2) = futures::join!(version_1, version_2);
-		assert_ne!(version_1.unwrap(), version_2.unwrap());
+		let now = Duration::default();
+		let uuid_1 = storage.create_new_linked_uuid(&user, device, &now).await.unwrap();
+		let uuid_2 = storage.create_new_linked_uuid(&user, device, &now).await.unwrap();
+
+		assert_ne!(uuid_1, uuid_2);
 	}
 
 	#[tokio::test]
-	async fn should_get_version() {
-		let (_node, storage) = stub_storage().await;
+	async fn should_is_linked_return_true_when_linked() {
+		let (storage, _instance) = setup().await;
 
-		let user_id = UserId::from(123u64);
+		let user = User::default();
 		let device = "device".to_owned();
-		let version_1 = storage.new_version(user_id, &device).await;
-		let version_2 = storage.get_version(user_id, &device).await;
-		assert_eq!(version_1.unwrap(), version_2.unwrap())
+		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+		let version_1 = storage.create_new_linked_uuid(&user, &device, &now).await.unwrap();
+		let linked = storage.is_linked(&user, &device, &version_1, now).await.unwrap();
+
+		assert!(linked);
 	}
 
 	#[tokio::test]
-	async fn should_get_unset_version() {
-		let (_node, storage) = stub_storage().await;
-		let user_id = UserId::from(123u64);
+	async fn should_is_linked_return_false_when_not_linked() {
+		let (storage, _instance) = setup().await;
+
+		let user = User::default();
 		let device = "device".to_owned();
-		let version = storage.get_version(user_id, &device).await;
-		assert_eq!(version.unwrap(), 0)
+		let linked = storage
+			.is_linked(&user, &device, &Uuid::new_v4(), Duration::default())
+			.await
+			.unwrap();
+
+		assert!(!linked);
 	}
 
 	#[tokio::test]
-	async fn should_clear_after_timeout() {
-		let (_node, storage) = stub_storage().await;
-		let user_id = UserId::from(123u64);
-		let device = "device".to_owned();
-		storage.new_version(user_id, &device).await.unwrap();
-		thread::sleep(Duration::from_secs(2));
-		let version = storage.get_version(user_id, &device).await;
-		assert_eq!(version.unwrap(), 0)
-	}
-
-	#[tokio::test]
-	async fn should_clear_if_so_much_user_id() {
-		let (_node, storage) = stub_storage().await;
-		let user_id = UserId::from(123u64);
+	async fn should_is_linked_return_false_when_expired() {
+		let (storage, _instance) = setup().await;
+		let user = User::default();
 		let device = "device".to_owned();
 
-		storage.new_version(user_id, &device).await.unwrap();
-		for i in 0..TokenStorage::COUNT_DEVICES_PER_USER + 1 {
-			let device_i = format!("device-{}", i);
-			storage.new_version(user_id, &device_i).await.unwrap();
-		}
+		let now = Duration::from_secs(0);
+		let uuid = storage.create_new_linked_uuid(&user, &device, &now).await.unwrap();
 
-		let version = storage.get_version(user_id, &device).await;
-		assert_eq!(version.unwrap(), 0)
+		let now = Duration::from_secs(100);
+		let linked = storage.is_linked(&user, &device, &uuid, now).await.unwrap();
+		assert!(!linked)
 	}
 
-	#[tokio::test]
-	async fn should_truncate_device_id() {
-		let (_node, storage) = stub_storage().await;
-		let user_id = UserId::from(123u64);
-		let device_long_name = "012345678901234567890123456789".to_owned();
-		let device_short_name = device_long_name[0..TokenStorage::DEVICE_ID_MAX_LEN].to_owned();
-
-		storage.new_version(user_id, &device_long_name).await.unwrap();
-
-		let version = storage.get_version(user_id, &device_short_name).await;
-		assert_eq!(version.unwrap(), 1)
-	}
-
-	lazy_static::lazy_static! {
-		static ref CLI: clients::Cli = Default::default();
-	}
-
-	pub async fn stub_storage<'a>() -> (Container<'a, Redis>, TokenStorage) {
-		let node = (*CLI).run(images::redis::Redis::default());
-		let port = node.get_host_port(6379);
-		(node, TokenStorage::new("127.0.0.1", port, Option::None, 1).await.unwrap())
+	async fn setup() -> (TokenStorage, Arc<YDBTestInstance>) {
+		let (ydb, instance) = setup_ydb().await;
+		let storage = TokenStorage::new(ydb.table_client(), Duration::from_secs(10));
+		(storage, instance)
 	}
 }

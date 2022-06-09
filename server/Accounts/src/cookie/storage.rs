@@ -1,153 +1,102 @@
-use sqlx::PgPool;
+use thiserror::Error;
+use uuid::Uuid;
+use ydb::{Bytes, TableClient, YdbOrCustomerError};
 
-use crate::users::UserId;
+use cheetah_libraries_ydb::{is_unique_violation_error, query, select, update};
 
-#[derive(Debug)]
-enum AttachError {
+use crate::cookie::cookie::Cookie;
+use crate::users::user::User;
+
+#[derive(Debug, Error)]
+pub enum AttachError {
+	#[error("UniqueViolation")]
 	UniqueViolation,
-	Query(sqlx::Error),
+	#[error("Other {0}")]
+	Other(String),
 }
 
-pub enum FindResult {
-	NotFound,
-	Player(UserId),
-	Linked,
-}
 pub struct CookieStorage {
-	pool: PgPool,
+	ydb_table_client: TableClient,
 }
 
 impl CookieStorage {
-	pub fn new(pool: PgPool) -> Self {
-		Self { pool }
+	pub fn new(ydb_table_client: TableClient) -> Self {
+		Self { ydb_table_client }
 	}
 
-	pub async fn attach(&self, user: UserId) -> String {
-		use rand::distributions::Alphanumeric;
-		use rand::rngs::OsRng;
-		use rand::Rng;
-
+	pub async fn attach(&self, user: User) -> Result<Cookie, AttachError> {
 		loop {
-			let cookie: String = OsRng.sample_iter(&Alphanumeric).take(128).map(char::from).collect();
-
+			let cookie = Cookie(Uuid::new_v4());
 			match self.do_attach(user, &cookie).await {
-				Ok(_) => break cookie,
+				Ok(_) => return Ok(cookie),
 				Err(AttachError::UniqueViolation) => continue,
-				Err(err) => panic!("{:?}", err),
+				Err(err) => return Err(err),
 			}
 		}
 	}
 
-	async fn do_attach(&self, user: UserId, cookie: &str) -> Result<(), AttachError> {
-		let mut tx = self.pool.begin().await.unwrap();
+	async fn do_attach(&self, user: User, cookie: &Cookie) -> Result<(), AttachError> {
+		let result = update!(
+			self.ydb_table_client,
+			query!(
+				"insert into cookie_users (cookie,user) values($cookie, $user)", 
+				cookie=>cookie,
+				user=>user)
+		)
+		.await;
 
-		let result: Result<_, sqlx::Error> = sqlx::query("insert into cookie_users (user_id,cookie) values($1,$2)")
-			.bind(user as UserId)
-			.bind(cookie)
-			.execute(&mut tx)
-			.await;
-
-		tx.commit().await.unwrap();
-
-		result.map(|_| ()).map_err(|err| match err {
-			sqlx::Error::Database(err) if matches!(err.code().as_deref(), Some("23505")) => AttachError::UniqueViolation,
-			err => AttachError::Query(err),
+		result.map_err(|e| {
+			if is_unique_violation_error(&e) {
+				AttachError::UniqueViolation
+			} else {
+				AttachError::Other(format!("{:?}", e))
+			}
 		})
 	}
 
-	pub async fn find(&self, cookie: &str) -> FindResult {
-		sqlx::query_as("select user_id, linked from cookie_users where cookie=$1")
-			.bind(cookie)
-			.fetch_optional(&self.pool)
-			.await
-			.unwrap()
-			.map_or(FindResult::NotFound, |(user, linked)| {
-				if linked {
-					FindResult::Linked
-				} else {
-					FindResult::Player(user)
-				}
-			})
-	}
-
-	pub async fn link_cookie(&self, user: UserId) {
-		sqlx::query("update cookie_users set linked=true where user_id=$1")
-			.bind(user)
-			.fetch_optional(&self.pool)
-			.await
-			.unwrap();
-	}
-
-	pub async fn _mark_cookie_as_linked(user: UserId, tx: &mut sqlx::Transaction<'_, sqlx::Postgres>) {
-		sqlx::query("update cookie_users set linked=true where user_id=$1")
-			.bind(user)
-			.execute(tx)
-			.await
-			.unwrap();
+	pub async fn find(&self, cookie: &Cookie) -> Result<Option<User>, YdbOrCustomerError> {
+		let result: Vec<User> = select!(
+			self.ydb_table_client,
+			query!("select user from cookie_users where cookie=$cookie", cookie=>cookie),
+			user => Bytes)
+		.await?;
+		Ok(result.into_iter().last())
 	}
 }
 
 #[cfg(test)]
 pub mod tests {
-	use std::str::FromStr;
-
-	use sqlx::types::ipnetwork::IpNetwork;
-	use testcontainers::clients::Cli;
-
-	use crate::cookie::storage::{AttachError, CookieStorage, FindResult};
-	use crate::postgresql::test::setup_postgresql_storage;
-	use crate::users::UserService;
+	use crate::cookie::cookie::Cookie;
+	use crate::cookie::storage::{AttachError, CookieStorage};
+	use crate::users::service::UserService;
+	use crate::ydb::test::setup_ydb;
 
 	#[tokio::test]
 	pub async fn should_attach() {
-		let cli = Cli::default();
-		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let user_service = UserService::new(pool.clone());
-		let cookie_storage = CookieStorage::new(pool.clone());
+		let (ydb_client, _instance) = setup_ydb().await;
+		let user_service = UserService::new(ydb_client.table_client());
+		let cookie_storage = CookieStorage::new(ydb_client.table_client());
 
-		let ip = IpNetwork::from_str("127.0.0.1").unwrap();
+		let user_a = user_service.create().await.unwrap();
+		let user_b = user_service.create().await.unwrap();
 
-		let user_a = user_service.create(ip).await.into();
-		let user_b = user_service.create(ip).await.into();
+		let cookie_a = cookie_storage.attach(user_a).await.unwrap();
+		let cookie_b = cookie_storage.attach(user_b).await.unwrap();
 
-		let cookie_a = cookie_storage.attach(user_a).await;
-		let cookie_b = cookie_storage.attach(user_b).await;
-
-		assert!(matches!(cookie_storage.find( &cookie_a).await,
-                FindResult::Player(user) if user == user_a));
-		assert!(matches!(cookie_storage.find( &cookie_b).await,
-            FindResult::Player(user) if user == user_b));
-	}
-
-	#[tokio::test]
-	pub async fn should_linked() {
-		let cli = Cli::default();
-		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let user_service = UserService::new(pool.clone());
-		let cookie_storage = CookieStorage::new(pool.clone());
-
-		let ip = IpNetwork::from_str("127.0.0.1").unwrap();
-
-		let user = user_service.create(ip).await.into();
-		let cookie = cookie_storage.attach(user).await;
-
-		cookie_storage.link_cookie(user).await;
-
-		assert!(matches!(cookie_storage.find(&cookie).await, FindResult::Linked));
+		assert_eq!(cookie_storage.find(&cookie_a).await.unwrap().unwrap(), user_a);
+		assert_eq!(cookie_storage.find(&cookie_b).await.unwrap().unwrap(), user_b);
 	}
 
 	#[tokio::test]
 	pub async fn should_check_duplicate() {
-		let cli = Cli::default();
-		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let user_service = UserService::new(pool.clone());
-		let cookie_storage = CookieStorage::new(pool.clone());
+		let (ydb_client, _instance) = setup_ydb().await;
+		let user_service = UserService::new(ydb_client.table_client());
+		let cookie_storage = CookieStorage::new(ydb_client.table_client());
 
-		let ip = IpNetwork::from_str("127.0.0.1").unwrap();
-		let user = user_service.create(ip).await.into();
-		assert!(cookie_storage.do_attach(user, "cookie").await.is_ok());
+		let user = user_service.create().await.unwrap();
+		assert!(cookie_storage.do_attach(user, &Cookie::from(1u128)).await.is_ok());
 		assert!(matches!(
-			cookie_storage.do_attach(user, "cookie").await,
+			cookie_storage.do_attach(user, &Cookie::from(1u128)).await,
 			Err(AttachError::UniqueViolation)
 		));
 	}

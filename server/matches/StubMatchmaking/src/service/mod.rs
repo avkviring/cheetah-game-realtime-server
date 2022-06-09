@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use tokio::sync::RwLock;
 use tonic::transport::Uri;
 use tonic::{Code, Request, Response, Status};
+use uuid::Uuid;
 
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
@@ -42,7 +43,7 @@ impl StubMatchmakingService {
 	async fn matchmaking(
 		&self,
 		ticket: TicketRequest,
-		user_id: u64,
+		user_id: Uuid,
 	) -> Result<TicketResponse, String> {
 		let template = ticket.match_template.clone();
 		let match_info = self.find_or_create_match(&template).await?;
@@ -140,7 +141,7 @@ impl Matchmaking for StubMatchmakingService {
 		&self,
 		request: Request<TicketRequest>,
 	) -> Result<tonic::Response<TicketResponse>, tonic::Status> {
-		match cheetah_libraries_microservice::jwt::grpc::get_player_id(
+		match cheetah_libraries_microservice::jwt::grpc::get_user_uuid(
 			request.metadata(),
 			self.jwt_public_key.clone(),
 		) {

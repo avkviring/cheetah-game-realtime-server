@@ -1,14 +1,14 @@
-use sqlx::types::ipnetwork::IpNetwork;
 use tonic::{self, Request, Response, Status};
 
 use cheetah_libraries_microservice::jwt::JWTTokenParser;
 use google_jwt::Parser;
 
 use crate::google::storage::GoogleStorage;
+use crate::proto;
 use crate::proto::SessionAndRefreshTokens;
 use crate::tokens::TokensService;
-use crate::users::{UserId, UserService};
-use crate::{get_client_ip, proto};
+use crate::users::service::UserService;
+use crate::users::user::User;
 
 pub mod google_jwt;
 pub mod storage;
@@ -45,13 +45,14 @@ impl GoogleGrpcService {
 		}
 	}
 
-	async fn get_or_create_user(&self, ip: IpNetwork, google_id: &str) -> Result<(UserId, bool), Status> {
-		if let Some(user) = self.storage.find(google_id).await {
-			Ok((user, false))
-		} else {
-			let user = self.users_service.create(ip).await;
-			self.storage.attach(user, google_id, ip).await;
-			Ok((user, true))
+	async fn get_or_create_user(&self, google_id: &str) -> anyhow::Result<(User, bool)> {
+		match self.storage.find(google_id).await? {
+			None => {
+				let user = self.users_service.create().await?;
+				self.storage.attach(user, google_id).await?;
+				Ok((user, true))
+			}
+			Some(user) => Ok((user, false)),
 		}
 	}
 }
@@ -65,28 +66,28 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let registry_or_login_request = request.get_ref();
 		let token = &registry_or_login_request.google_token;
 		let token = self.parser.parse(token).await;
-		let GoogleTokenClaim { sub: google_id } = token.map_err(|err| {
-			tracing::error!("{:?}", err);
-			Status::unauthenticated(format!("{:?}", err))
-		})?;
+		let GoogleTokenClaim { sub: google_id } = token.map_err(|err| Status::unauthenticated(format!("{:?}", err)))?;
 
-		let ip = get_client_ip(request.metadata());
-		let (user, registered_player) = self.get_or_create_user(ip, &google_id).await?;
-		let device_id = &registry_or_login_request.device_id;
+		match self.get_or_create_user(&google_id).await {
+			Ok((user, registered_user)) => {
+				let device_id = &registry_or_login_request.device_id;
 
-		let tokens = self.tokens_service.create(user, device_id).await;
-		let tokens = tokens.map_err(|err| {
-			tracing::error!("{:?}", err);
-			Status::internal("error")
-		})?;
+				let tokens = self.tokens_service.create(user, device_id).await;
+				let tokens = tokens.map_err(|err| {
+					tracing::error!("{:?}", err);
+					Status::internal("error")
+				})?;
 
-		Ok(Response::new(proto::RegisterOrLoginResponse {
-			registered_player,
-			tokens: Some(SessionAndRefreshTokens {
-				session: tokens.session,
-				refresh: tokens.refresh,
-			}),
-		}))
+				Ok(Response::new(proto::RegisterOrLoginResponse {
+					registered_player: registered_user,
+					tokens: Some(SessionAndRefreshTokens {
+						session: tokens.session,
+						refresh: tokens.refresh,
+					}),
+				}))
+			}
+			Err(e) => Err(Status::internal(format!("{}", e))),
+		}
 	}
 
 	async fn attach(&self, request: Request<proto::AttachRequest>) -> Result<Response<proto::AttachResponse>, Status> {
@@ -100,15 +101,12 @@ impl proto::google_server::Google for GoogleGrpcService {
 
 		let user = self
 			.jwt_token_parser
-			.parse_player_id(request.metadata())
-			.map(UserId::from)
-			.map_err(|err| {
-				tracing::error!("{:?}", err);
-				Status::unauthenticated(format!("{:?}", err))
-			})?;
+			.parse_user_uuid(request.metadata())
+			.map(User::try_from)
+			.map_err(|err| Status::unauthenticated(format!("{:?}", err)))?
+			.map_err(|err| Status::internal(format!("{:?}", err)))?;
 
-		let ip = get_client_ip(request.metadata());
-		self.storage.attach(user, &google_id, ip).await;
+		self.storage.attach(user, &google_id).await.unwrap();
 
 		Ok(Response::new(proto::AttachResponse {}))
 	}
@@ -118,30 +116,28 @@ impl proto::google_server::Google for GoogleGrpcService {
 mod test {
 	use std::time::Duration;
 
-	use testcontainers::clients::Cli;
 	use tonic::metadata::MetadataValue;
 	use tonic::Request;
+	use ydb::TableClient;
 
-	use crate::cookie::CookieGrpcService;
+	use crate::cookie::service::CookieService;
 	use crate::google::google_jwt::Parser;
 	use crate::google::storage::GoogleStorage;
 	use crate::google::test_helper::TokenClaims;
 	use crate::google::{test_helper, GoogleGrpcService};
-	use crate::postgresql::test::setup_postgresql_storage;
 	use crate::proto::cookie_server::Cookie;
 	use crate::proto::google_server::Google;
 	use crate::proto::{AttachRequest, RegisterOrLoginRequest, RegistryRequest};
 	use crate::tokens::tests::{stub_token_service, PUBLIC_KEY};
 	use crate::tokens::TokensService;
-	use crate::users::UserService;
-	use crate::PgPool;
+	use crate::users::service::UserService;
+	use crate::ydb::test::setup_ydb;
 
 	#[tokio::test]
 	async fn should_register_and_login() {
-		let cli = Cli::default();
-		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let (_node, token_service) = stub_token_service(1, 100).await;
-		let (google_user_token, google_service) = setup_google(pool, token_service);
+		let (ydb_client, _instance) = setup_ydb().await;
+		let (_node, token_service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let (google_user_token, google_service) = setup_google(ydb_client.table_client(), token_service);
 
 		let response_1 = google_service
 			.register_or_login(Request::new(RegisterOrLoginRequest {
@@ -165,20 +161,20 @@ mod test {
 		assert!(!result_2.registered_player);
 
 		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
-		let user_1 = jwt.get_user_id(result_1.tokens.as_ref().unwrap().session.clone()).unwrap();
-		let user_2 = jwt.get_user_id(result_2.tokens.as_ref().unwrap().session.clone()).unwrap();
+		let user_1 = jwt.get_user_uuid(result_1.tokens.as_ref().unwrap().session.clone()).unwrap();
+		let user_2 = jwt.get_user_uuid(result_2.tokens.as_ref().unwrap().session.clone()).unwrap();
 		assert_eq!(user_1, user_2);
 	}
 
-	fn setup_google(pool: PgPool, token_service: TokensService) -> (String, GoogleGrpcService) {
+	fn setup_google(ydb_table_client: TableClient, token_service: TokensService) -> (String, GoogleGrpcService) {
 		let (token, public_key_server) =
 			test_helper::setup_public_key_server(&TokenClaims::new_with_expire(Duration::from_secs(100)));
 
 		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
 		let service = GoogleGrpcService::new(
-			GoogleStorage::new(pool.clone()),
+			GoogleStorage::new(ydb_table_client.clone()),
 			token_service,
-			UserService::new(pool),
+			UserService::new(ydb_table_client),
 			Parser::new_with_custom_cert_url(test_helper::CLIENT_ID, public_key_server.url("/").as_str()),
 			jwt,
 		);
@@ -187,11 +183,14 @@ mod test {
 
 	#[tokio::test]
 	async fn should_attach() {
-		let cli = Cli::default();
-		let (pool, _node) = setup_postgresql_storage(&cli).await;
-		let (_node, token_service) = stub_token_service(1, 100).await;
-		let (google_user_token, google_service) = setup_google(pool.clone(), token_service.clone());
-		let service = CookieGrpcService::new(pool.clone(), token_service, UserService::new(pool.clone()));
+		let (ydb_client, _instance) = setup_ydb().await;
+		let (_node, token_service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let (google_user_token, google_service) = setup_google(ydb_client.table_client(), token_service.clone());
+		let service = CookieService::new(
+			ydb_client.table_client(),
+			token_service,
+			UserService::new(ydb_client.table_client()),
+		);
 		let cookie_registry_response = service
 			.register(Request::new(RegistryRequest {
 				device_id: "some-device".to_string(),
@@ -224,11 +223,11 @@ mod test {
 
 		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
 		let cookie_user_id = jwt
-			.get_user_id(cookie_registry_result.tokens.as_ref().unwrap().session.to_string())
+			.get_user_uuid(cookie_registry_result.tokens.as_ref().unwrap().session.to_string())
 			.unwrap();
 
 		let google_user_id = jwt
-			.get_user_id(google_login_result.tokens.as_ref().unwrap().session.to_string())
+			.get_user_uuid(google_login_result.tokens.as_ref().unwrap().session.to_string())
 			.unwrap();
 
 		assert_eq!(cookie_user_id, google_user_id);

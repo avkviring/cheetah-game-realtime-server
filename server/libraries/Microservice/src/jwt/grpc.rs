@@ -1,4 +1,5 @@
 use tonic::metadata::MetadataMap;
+use uuid::Uuid;
 
 use crate::jwt::grpc::AuthorizationError::*;
 use crate::jwt::SessionTokenError;
@@ -12,7 +13,7 @@ pub enum AuthorizationError {
 ///
 /// Получить id пользователя из jwt токена в заголовке grpc запроса
 ///
-pub fn get_player_id(metadata: &MetadataMap, public_key: String) -> Result<u64, AuthorizationError> {
+pub fn get_user_uuid(metadata: &MetadataMap, public_key: String) -> Result<Uuid, AuthorizationError> {
 	match metadata.get("authorization") {
 		None => Result::Err(MissingHeader),
 		Some(value) => {
@@ -22,7 +23,7 @@ pub fn get_player_id(metadata: &MetadataMap, public_key: String) -> Result<u64, 
 				Result::Err(WrongHeader)
 			} else {
 				let token = splitted.get(1).unwrap().to_string();
-				let result = crate::jwt::JWTTokenParser::new(public_key).get_user_id(token);
+				let result = crate::jwt::JWTTokenParser::new(public_key).get_user_uuid(token);
 				result.map_err(AuthorizationError::Token)
 			}
 		}
@@ -30,8 +31,8 @@ pub fn get_player_id(metadata: &MetadataMap, public_key: String) -> Result<u64, 
 }
 
 impl super::JWTTokenParser {
-	/// Получить id пользователя из jwt токена из заголовков gRPC запроса
-	pub fn parse_player_id(&self, metadata: &MetadataMap) -> Result<u64, AuthorizationError> {
+	/// Получить uuid пользователя из jwt токена из заголовков gRPC запроса
+	pub fn parse_user_uuid(&self, metadata: &MetadataMap) -> Result<Uuid, AuthorizationError> {
 		let value = metadata.get("authorization").ok_or(MissingHeader)?;
 		let value = value.to_str().unwrap().to_string();
 		let splitted: Vec<_> = value.split(' ').collect();
@@ -39,7 +40,7 @@ impl super::JWTTokenParser {
 			Err(WrongHeader)
 		} else {
 			let token = splitted.get(1).unwrap().to_string();
-			let result = self.get_user_id(token);
+			let result = self.get_user_uuid(token);
 			result.map_err(AuthorizationError::Token)
 		}
 	}
@@ -51,8 +52,9 @@ mod tests {
 	use serde::Deserialize;
 	use serde::Serialize;
 	use tonic::metadata::{MetadataMap, MetadataValue};
+	use uuid::Uuid;
 
-	use crate::jwt::grpc::{get_player_id, AuthorizationError};
+	use crate::jwt::grpc::{get_user_uuid, AuthorizationError};
 	use crate::jwt::SessionTokenError;
 
 	pub const PUBLIC_KEY: &str = "-----BEGIN PUBLIC KEY-----
@@ -70,7 +72,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	fn should_missing_header() {
 		let metadata = MetadataMap::new();
 		assert!(matches!(
-			get_player_id(&metadata, PUBLIC_KEY.to_string()),
+			get_user_uuid(&metadata, PUBLIC_KEY.to_string()),
 			Result::Err(AuthorizationError::MissingHeader)
 		));
 	}
@@ -80,7 +82,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		let mut metadata = MetadataMap::new();
 		metadata.insert("authorization", MetadataValue::from_str("wrong_authorization").unwrap());
 		assert!(matches!(
-			get_player_id(&metadata, PUBLIC_KEY.to_string()),
+			get_user_uuid(&metadata, PUBLIC_KEY.to_string()),
 			Result::Err(AuthorizationError::WrongHeader)
 		));
 	}
@@ -94,7 +96,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
         );
 
 		assert!(matches!(
-			get_player_id(&metadata, PUBLIC_KEY.to_string()),
+			get_user_uuid(&metadata, PUBLIC_KEY.to_string()),
 			Result::Err(AuthorizationError::Token(SessionTokenError::InvalidSignature))
 		));
 	}
@@ -102,7 +104,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	#[derive(Serialize, Deserialize)]
 	struct TokenClaims {
 		pub exp: usize,
-		pub player: u64,
+		pub user: Uuid,
 	}
 
 	#[test]
@@ -111,7 +113,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 			&Header::new(Algorithm::ES256),
 			&TokenClaims {
 				exp: usize::MAX,
-				player: 10,
+				user: Uuid::new_v4(),
 			},
 			&EncodingKey::from_ec_pem(PRIVATE_KEY.as_bytes()).unwrap(),
 		)
@@ -124,6 +126,6 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 			"authorization",
 			MetadataValue::from_str(format!("Bear {}", token).as_str()).unwrap(),
 		);
-		assert!(matches!(get_player_id(&metadata, PUBLIC_KEY.to_string()), Result::Ok(_)));
+		assert!(matches!(get_user_uuid(&metadata, PUBLIC_KEY.to_string()), Result::Ok(_)));
 	}
 }

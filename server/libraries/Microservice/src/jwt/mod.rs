@@ -1,6 +1,7 @@
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 pub mod grpc;
 
@@ -18,7 +19,7 @@ pub struct JWTTokenParser {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionTokenClaims {
 	pub exp: usize,
-	pub player: u64,
+	pub user: Uuid,
 }
 
 #[derive(Debug)]
@@ -32,14 +33,14 @@ impl JWTTokenParser {
 		Self { public_key }
 	}
 
-	pub fn get_user_id(&self, token: String) -> Result<u64, SessionTokenError> {
+	pub fn get_user_uuid(&self, token: String) -> Result<Uuid, SessionTokenError> {
 		let token = JWTTokenParser::add_head(token);
 		match jsonwebtoken::decode::<SessionTokenClaims>(
 			token.as_str(),
 			&DecodingKey::from_ec_pem(self.public_key.as_bytes()).unwrap(),
 			&Validation::new(Algorithm::ES256),
 		) {
-			Ok(token) => Result::Ok(token.claims.player),
+			Ok(token) => Result::Ok(token.claims.user),
 			Err(error) => match error.kind() {
 				ErrorKind::ExpiredSignature => Result::Err(SessionTokenError::Expired),
 				_ => Result::Err(SessionTokenError::InvalidSignature),

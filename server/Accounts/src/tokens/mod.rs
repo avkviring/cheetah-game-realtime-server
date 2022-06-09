@@ -1,13 +1,16 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
+use uuid::Uuid;
+use ydb::TableClient;
 
 use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenClaims};
 
 use crate::tokens::storage::TokenStorage;
-use crate::users::UserId;
+use crate::users::user::User;
 
 pub mod grpc;
 pub mod storage;
@@ -15,9 +18,9 @@ pub mod storage;
 #[derive(Debug, Serialize, Deserialize)]
 struct RefreshTokenClaims {
 	exp: usize,
-	user_id: UserId,
+	user: User,
 	device_id: String,
-	version: u64,
+	uuid: Uuid,
 }
 
 #[derive(Debug)]
@@ -26,41 +29,40 @@ pub struct Tokens {
 	pub refresh: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum JWTTokensServiceError {
+	#[error("InvalidSignature")]
 	InvalidSignature,
+
+	#[error("Expired")]
 	Expired,
+
+	#[error("InvalidId")]
 	InvalidId,
+
+	#[error("StorageError {0}")]
 	StorageError(String),
 }
 
 #[derive(Clone)]
 pub struct TokensService {
-	session_exp_in_sec: u64,
-	refresh_exp_in_sec: u64,
+	session_exp: Duration,
+	refresh_exp: Duration,
 	private_key: String,
 	public_key: String,
 	storage: TokenStorage,
 }
 
 const HOUR_IN_SEC: u64 = 60 * 60;
-const SESSION_EXP_IN_SEC: u64 = 10 * HOUR_IN_SEC;
-const REFRESH_EXP_IN_SEC: u64 = 30 * 24 * HOUR_IN_SEC;
+const SESSION_EXP: Duration = Duration::from_secs(10 * HOUR_IN_SEC);
+const REFRESH_EXP: Duration = Duration::from_secs(30 * 24 * HOUR_IN_SEC);
 
 impl TokensService {
-	pub async fn new(
-		private_key: String,
-		public_key: String,
-		redis_host: &str,
-		redis_port: u16,
-		redis_auth: Option<String>,
-	) -> Self {
-		let storage = TokenStorage::new(redis_host, redis_port, redis_auth, REFRESH_EXP_IN_SEC + HOUR_IN_SEC)
-			.await
-			.unwrap();
+	pub async fn new(ydb_table: TableClient, private_key: String, public_key: String) -> Self {
+		let storage = TokenStorage::new(ydb_table, REFRESH_EXP);
 		Self {
-			session_exp_in_sec: SESSION_EXP_IN_SEC,
-			refresh_exp_in_sec: REFRESH_EXP_IN_SEC,
+			session_exp: SESSION_EXP,
+			refresh_exp: REFRESH_EXP,
 			private_key,
 			public_key,
 			storage,
@@ -70,39 +72,40 @@ impl TokensService {
 	pub fn new_with_storage(
 		private_key: String,
 		public_key: String,
-		session_exp_in_sec: u64,
-		refresh_exp_in_sec: u64,
+		session_exp: Duration,
+		refresh_exp: Duration,
 		storage: TokenStorage,
 	) -> Self {
 		Self {
-			session_exp_in_sec,
-			refresh_exp_in_sec,
+			session_exp,
+			refresh_exp,
 			private_key,
 			public_key,
 			storage,
 		}
 	}
 
-	pub async fn create(&self, user: UserId, device_id: &str) -> Result<Tokens, JWTTokensServiceError> {
+	pub async fn create(&self, user: User, device_id: &str) -> Result<Tokens, JWTTokensServiceError> {
 		Result::Ok(Tokens {
-			session: self.create_session_token(user),
+			session: self.create_session_token(&user),
 			refresh: self.create_refresh_token(user, device_id).await?,
 		})
 	}
 
-	async fn create_refresh_token(&self, user_id: UserId, device_id: &str) -> Result<String, JWTTokensServiceError> {
-		let version = self
+	async fn create_refresh_token(&self, user: User, device_id: &str) -> Result<String, JWTTokensServiceError> {
+		let now = TokensService::now();
+
+		let uuid = self
 			.storage
-			.new_version(user_id, &device_id)
+			.create_new_linked_uuid(&user, device_id, &now)
 			.await
 			.map_err(|e| JWTTokensServiceError::StorageError(format!("{:?}", e)))?;
 
-		let timestamp = TokensService::get_time_stamp();
 		let claims = RefreshTokenClaims {
-			exp: (timestamp + self.refresh_exp_in_sec) as usize,
-			user_id,
+			exp: (now.as_secs() + self.refresh_exp.as_secs()) as usize,
+			user,
 			device_id: device_id.to_owned(),
-			version,
+			uuid,
 		};
 		let token = encode(
 			&Header::new(Algorithm::ES256),
@@ -113,11 +116,11 @@ impl TokensService {
 		Result::Ok(TokensService::remove_head(token))
 	}
 
-	fn create_session_token(&self, user: UserId) -> String {
-		let timestamp = TokensService::get_time_stamp();
+	fn create_session_token(&self, user: &User) -> String {
+		let timestamp = TokensService::now();
 		let claims = SessionTokenClaims {
-			exp: (timestamp + self.session_exp_in_sec) as usize,
-			player: u64::from(user),
+			exp: (timestamp.as_secs() + self.session_exp.as_secs()) as usize,
+			user: user.0,
 		};
 
 		let token = encode(
@@ -129,11 +132,8 @@ impl TokensService {
 		TokensService::remove_head(token)
 	}
 
-	fn get_time_stamp() -> u64 {
-		SystemTime::now()
-			.duration_since(UNIX_EPOCH)
-			.expect("Time went backwards")
-			.as_secs()
+	fn now() -> Duration {
+		SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards")
 	}
 
 	fn remove_head(token: String) -> String {
@@ -151,15 +151,24 @@ impl TokensService {
 			&validation,
 		) {
 			Ok(token) => {
-				let player = token.claims.user_id;
+				let user = token.claims.user;
 				let device_id = token.claims.device_id;
-				if self.storage.get_version(player, &device_id).await.unwrap() == token.claims.version {
-					Result::Ok(Tokens {
-						session: self.create_session_token(player),
-						refresh: self.create_refresh_token(player, &device_id).await?,
-					})
-				} else {
-					Result::Err(JWTTokensServiceError::InvalidId)
+				match self
+					.storage
+					.is_linked(&user, &device_id, &token.claims.uuid, TokensService::now())
+					.await
+				{
+					Ok(linked) => {
+						if linked {
+							Result::Ok(Tokens {
+								session: self.create_session_token(&user),
+								refresh: self.create_refresh_token(user, &device_id).await?,
+							})
+						} else {
+							Result::Err(JWTTokensServiceError::InvalidId)
+						}
+					}
+					Err(e) => Result::Err(JWTTokensServiceError::StorageError(format!("{}", e))),
 				}
 			}
 			Err(error) => match error.kind() {
@@ -172,47 +181,47 @@ impl TokensService {
 
 #[cfg(test)]
 pub mod tests {
+	use std::ops::Add;
+	use std::sync::Arc;
 	use std::thread;
 	use std::time::Duration;
 
-	use testcontainers::clients::Cli;
-	use testcontainers::images::redis::Redis;
-	use testcontainers::{images, Container};
-
 	use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenError};
+	use cheetah_libraries_ydb::test_container::YDBTestInstance;
 
 	use crate::tokens::storage::TokenStorage;
 	use crate::tokens::{JWTTokensServiceError, TokensService};
-	use crate::users::UserId;
+	use crate::users::user::User;
+	use crate::ydb::test::setup_ydb;
 
 	#[tokio::test]
 	async fn session_token_should_correct() {
-		let (_node, service) = stub_token_service(1, 1).await;
-		let user_id = UserId::from(123u64);
-		let tokens = service.create(user_id, "some-device-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let user = User::default();
+		let tokens = service.create(user, "some-device-id").await.unwrap();
 
 		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
-		let user_id_from_token = UserId::from(parser.get_user_id(tokens.session).unwrap());
+		let user_id_from_token = User(parser.get_user_uuid(tokens.session).unwrap());
 
-		assert_eq!(user_id, user_id_from_token)
+		assert_eq!(user, user_id_from_token)
 	}
 
 	#[tokio::test]
 	async fn session_token_should_exp() {
-		let (_node, service) = stub_token_service(1, 1).await;
-		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
 		thread::sleep(Duration::from_secs(2));
 		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
-		let user_id_from_token = parser.get_user_id(tokens.session);
+		let user_id_from_token = parser.get_user_uuid(tokens.session);
 		assert!(matches!(user_id_from_token, Result::Err(SessionTokenError::Expired)))
 	}
 
 	#[tokio::test]
 	async fn session_token_should_fail_if_not_correct() {
-		let (_node, service) = stub_token_service(1, 1).await;
-		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service.create(1u128.into(), "some-device-id").await.unwrap();
 		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
-		let user_id_from_token = parser.get_user_id(tokens.session.replace("IzfQ", "ccoY"));
+		let user_id_from_token = parser.get_user_uuid(tokens.session.replace("ey", "e1"));
 		assert!(matches!(user_id_from_token, Result::Err(SessionTokenError::InvalidSignature)))
 	}
 
@@ -227,9 +236,9 @@ BTeGSzANXGlEzutd9IIm6/inl0ahRANCAARVUc1crGhQ2Shf2Gc4mlLPorYoN+KD
 FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 -----END PRIVATE KEY-----";
 
-	pub async fn stub_token_service<'a>(session_exp: u64, refresh_exp: u64) -> (Container<'a, Redis>, TokensService) {
-		let (node, storage) = stub_storage(refresh_exp + 1).await;
-
+	pub async fn stub_token_service<'a>(session_exp: Duration, refresh_exp: Duration) -> (Arc<YDBTestInstance>, TokensService) {
+		let (ydb, instance) = setup_ydb().await;
+		let storage = TokenStorage::new(ydb.table_client(), refresh_exp.clone().add(Duration::from_secs(1)));
 		let service = TokensService::new_with_storage(
 			PRIVATE_KEY.to_string(),
 			PUBLIC_KEY.to_string(),
@@ -237,45 +246,31 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 			refresh_exp,
 			storage,
 		);
-		(node, service)
-	}
-
-	lazy_static::lazy_static! {
-		static ref CLI: Cli = Default::default();
-
-	}
-	async fn stub_storage<'a>(time_of_life_in_sec: u64) -> (Container<'a, Redis>, TokenStorage) {
-		let node = (*CLI).run(images::redis::Redis::default());
-		let port = node.get_host_port(6379);
-		(
-			node,
-			TokenStorage::new("127.0.0.1", port, Option::None, time_of_life_in_sec)
-				.await
-				.unwrap(),
-		)
+		(instance, service)
 	}
 
 	#[tokio::test]
 	async fn should_refresh_token_different_for_players() {
-		let (_node, service) = stub_token_service(1, 100).await;
-		let tokens_for_player_a = service.create(UserId::from(123u64), "some-devicea-id").await.unwrap();
-		let tokens_for_player_b = service.create(UserId::from(124u64), "some-deviceb-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let tokens_for_player_a = service.create(User::default(), "some-devicea-id").await.unwrap();
+		let tokens_for_player_b = service.create(User::default(), "some-deviceb-id").await.unwrap();
 		assert_ne!(tokens_for_player_a.refresh, tokens_for_player_b.refresh)
 	}
 
 	#[tokio::test]
 	async fn should_refresh_token() {
-		let (_node, service) = stub_token_service(1, 100).await;
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 
-		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
+		let user = User::default();
+		let tokens = service.create(user.clone(), "some-device-id").await.unwrap();
 
 		let new_tokens = service.refresh(tokens.refresh.clone()).await.unwrap();
 		// проверяем что это действительно новые токены
 		assert_ne!(tokens.session, new_tokens.session);
 		assert_ne!(tokens.refresh, new_tokens.refresh);
 		// проверяем работоспособность новых токенов
-		let get_player_id_result = JWTTokenParser::new(PUBLIC_KEY.to_owned()).get_user_id(new_tokens.session);
-		assert!(matches!(get_player_id_result, Result::Ok(player) if player==123));
+		let get_user_uuid = JWTTokenParser::new(PUBLIC_KEY.to_owned()).get_user_uuid(new_tokens.session);
+		assert!(matches!(get_user_uuid, Result::Ok(uuid) if uuid==user.0));
 
 		// проверяем что новый refresh токен валидный
 		service.refresh(new_tokens.refresh.clone()).await.unwrap();
@@ -286,8 +281,8 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_exp() {
-		let (_node, service) = stub_token_service(1, 1).await;
-		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
 		thread::sleep(Duration::from_secs(2));
 		let result = service.refresh(tokens.refresh).await;
 		assert!(matches!(result, Result::Err(JWTTokensServiceError::Expired)));
@@ -298,8 +293,8 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_fail() {
-		let (_node, service) = stub_token_service(1, 1).await;
-		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
 		assert!(matches!(
 			service.refresh(tokens.refresh.replace("eyJleHA", "eyJleHB")).await,
 			Result::Err(JWTTokensServiceError::InvalidSignature)
@@ -311,8 +306,8 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_use_once() {
-		let (_node, service) = stub_token_service(1, 1).await;
-		let tokens = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
 		service.refresh(tokens.refresh.clone()).await.unwrap();
 		assert!(matches!(
 			service.refresh(tokens.refresh).await,
@@ -325,9 +320,9 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_invalidate_tokens() {
-		let (_node, service) = stub_token_service(1, 1).await;
-		let tokens_a = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
-		let tokens_b = service.create(UserId::from(123u64), "some-device-id").await.unwrap();
+		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens_a = service.create(1u128.into(), "some-device-id").await.unwrap();
+		let tokens_b = service.create(1u128.into(), "some-device-id").await.unwrap();
 		service.refresh(tokens_b.refresh.clone()).await.unwrap();
 		assert!(matches!(
 			service.refresh(tokens_a.refresh).await,

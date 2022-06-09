@@ -20,6 +20,7 @@ prometheus = "0.13.0"
 hyper = "0.14.18"
 heapless = "0.7.10"
 lazy_static = "1.4.0"
+uuid = { version = "1.0.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
 httpmock = "0.6.6"

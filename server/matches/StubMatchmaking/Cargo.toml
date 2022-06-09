@@ -16,6 +16,7 @@ async-recursion = "1.0.0"
 tokio-stream = { version = "0.1.8", features = ["net"] }
 tonic-web = "0.2.0"
 tracing = "0.1.31"
+uuid = { version = "1.0.0", features = ["v4", "serde"] }
 
 [build-dependencies]
 tonic-build = "0.6.2"

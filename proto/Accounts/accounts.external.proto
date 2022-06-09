@@ -58,12 +58,6 @@ message LoginRequest {
 }
 message LoginResponse {
   SessionAndRefreshTokens tokens = 1;
-  Status status = 2;
-  enum Status {
-    OK = 0;
-    NOT_FOUND = 1;
-    LINKED = 2;
-  }
 }
 
 message RegisterOrLoginRequest {
