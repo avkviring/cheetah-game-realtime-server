@@ -13,7 +13,6 @@ use crate::helpers::helper::setup;
 
 pub mod helpers;
 
-#[test]
 fn should_drop() {
 	let (helper, [client1, client2]) = setup(Default::default());
 
