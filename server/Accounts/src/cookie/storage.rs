@@ -83,8 +83,14 @@ pub mod tests {
 		let cookie_a = cookie_storage.attach(user_a).await.unwrap();
 		let cookie_b = cookie_storage.attach(user_b).await.unwrap();
 
-		assert_eq!(cookie_storage.find(&cookie_a).await.unwrap().unwrap(), user_a);
-		assert_eq!(cookie_storage.find(&cookie_b).await.unwrap().unwrap(), user_b);
+		assert_eq!(
+			cookie_storage.find(&cookie_a).await.unwrap().unwrap(),
+			user_a
+		);
+		assert_eq!(
+			cookie_storage.find(&cookie_b).await.unwrap().unwrap(),
+			user_b
+		);
 	}
 
 	#[tokio::test]
@@ -94,7 +100,10 @@ pub mod tests {
 		let cookie_storage = CookieStorage::new(ydb_client.table_client());
 
 		let user = user_service.create().await.unwrap();
-		assert!(cookie_storage.do_attach(user, &Cookie::from(1u128)).await.is_ok());
+		assert!(cookie_storage
+			.do_attach(user, &Cookie::from(1u128))
+			.await
+			.is_ok());
 		assert!(matches!(
 			cookie_storage.do_attach(user, &Cookie::from(1u128)).await,
 			Err(AttachError::UniqueViolation)

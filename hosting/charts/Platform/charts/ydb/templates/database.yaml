@@ -1,0 +1,15 @@
+apiVersion: ydb.tech/v1alpha1
+kind: Database
+metadata:
+  name: {{ .Chart.Name }}-database
+spec:
+  image:
+    name: cr.yandex/crptqonuodf51kdj7a7d/ydb:22.2.22
+  nodes: 1
+  domain: Root
+  resources:
+    storageUnits:
+      - count: 1
+        unitKind: ssd
+  storageClusterRef:
+    name: {{ .Chart.Name }}-storage

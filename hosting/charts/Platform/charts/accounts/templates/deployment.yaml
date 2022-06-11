@@ -49,25 +49,12 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: private
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Chart.Name }}-postgresql"
-                  key: user
-            - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Chart.Name }}-postgresql"
-                  key: user
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Chart.Name }}-postgresql"
-                  key: password
-            - name: POSTGRES_HOST
-              value: "$(CHEETAH_ACCOUNTS_POSTGRESQL_SERVICE_HOST)"
-            - name: POSTGRES_PORT
-              value: "$(CHEETAH_ACCOUNTS_POSTGRESQL_SERVICE_PORT)"
+            - name: YDB_HOST
+              value: "$(YDB_DATABASE_GRPC_SERVICE_HOST)"
+            - name: YDB_NAMESPACE
+              value: "/Root/ydb-database/"
+            - name: YDB_PORT
+              value: "$(YDB_DATABASE_GRPC_SERVICE_PORT)"
             - name: "REDIS_HOST"
               value: "$(CHEETAH_ACCOUNTS_REDIS_MASTER_SERVICE_HOST)"
             - name: "REDIS_PORT"

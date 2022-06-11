@@ -1,5 +1,8 @@
-use ydb::{YdbError, YdbOrCustomerError};
+use include_dir::Dir;
+use ydb::{Client, ClientBuilder, StaticDiscovery, YdbError, YdbOrCustomerError};
 use ydb_grpc::ydb_proto::status_ids::StatusCode;
+
+use crate::migration::Migrator;
 
 pub mod converters;
 pub mod migration;
@@ -63,6 +66,49 @@ pub fn is_unique_violation_error(result: &YdbOrCustomerError) -> bool {
 		if status.operation_status().unwrap() == StatusCode::PreconditionFailed)
 }
 
+pub async fn connect_to_ydb_and_prepare_schema<'a>(namespace:&str,
+												   db: &str,
+												   host: &str,
+												   port: u16,
+												   migration_sql_dir: &Dir<'a>
+) -> Client {
+	let connection_url = format!("grpc://{}:{}", host, port);
+	let db = format!("{}/{}", namespace, db);
+	create_db(connection_url.as_str(), namespace, db.as_str()).await;
+	let mut client = create_client(connection_url.as_str(), db.as_str()).await;
+	Migrator::new_from_dir(migration_sql_dir)
+		.migrate(&mut client)
+		.await
+		.unwrap();
+	client
+}
+
+async fn create_client(connection_url: &str, db: &str) -> Client {
+	let discovery = StaticDiscovery::from_str(connection_url).unwrap();
+	let client = ClientBuilder::from_str(connection_url)
+		.unwrap()
+		.with_database(db)
+		.with_discovery(discovery)
+		.client()
+		.unwrap();
+	client.wait().await.unwrap();
+	client
+}
+
+
+async fn create_db(connection_url: &str, root_namespace:&str, db: &str) {
+	{
+		let client = create_client(connection_url, root_namespace).await;
+		client.wait().await.unwrap();
+		client
+			.scheme_client()
+			.make_directory(db.to_owned())
+			.await
+			.unwrap();
+	}
+}
+
+
 #[cfg(test)]
 pub mod tests {
 	use include_dir::include_dir;
@@ -73,7 +119,7 @@ pub mod tests {
 	#[tokio::test]
 	async fn should_create_query() {
 		let (_node, mut client) = get_or_create_ydb_instance("should_create_query").await;
-		let mut migrator = Migrator::new_from_dir(include_dir!("$CARGO_MANIFEST_DIR/test-migration"));
+		let mut migrator = Migrator::new_from_dir(&include_dir!("$CARGO_MANIFEST_DIR/test-migration"));
 		migrator.migrate(&mut client).await.unwrap();
 
 		let id = 124;

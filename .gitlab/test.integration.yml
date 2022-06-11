@@ -54,12 +54,9 @@ install-servers-to-kubernetes-for-integration-test:
   script:
     - helm --kubeconfig=$kubeconfig uninstall ${namespace} -n ${namespace} || true
     - kubectl --kubeconfig=$kubeconfig  delete --namespace ${namespace} --all deployments,statefulsets,services,pods,pvc
-    - sleep 20
     - cd hosting/charts/
     - helm cheetah-config-creator ../example-config Platform/templates/
-    - helm --kubeconfig=$kubeconfig  upgrade --debug --install ${namespace} -n ${namespace} Platform -f Platform/values-dev.yaml --set global.grpcDomain=${namespace}.stage.cheetah.games --set global.platformImageVersion=${version}
-    - sleep 60
-
+    - helm --kubeconfig=$kubeconfig  upgrade --debug --install ${namespace} -n ${namespace} Platform -f Platform/values-dev.yaml --set global.grpcDomain=${namespace}.stage.cheetah.games --set global.platformImageVersion=${version}   --wait-for-jobs --wait
 #
 # Запускаем тесты в Unity с сервером в kubernetes
 #
