@@ -604,6 +604,7 @@ dependencies = [
 name = "cheetah-libraries-ydb"
 version = "999.999.999"
 dependencies = [
+ "cheetah-libraries-microservice",
  "cheetah-libraries-ydb",
  "include_dir",
  "lazy_static",

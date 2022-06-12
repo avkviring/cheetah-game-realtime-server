@@ -12,6 +12,7 @@ lazy_static = { version = "1.4.0", optional = true }
 sha2 = "0.10.2"
 include_dir = "0.7.2"
 uuid = { version = "1.0.0", features = ["v4", "serde"] }
+cheetah-libraries-microservice = { path = "../Microservice" }
 
 
 [features]

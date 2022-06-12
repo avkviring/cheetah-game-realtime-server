@@ -1,8 +1,7 @@
-use ydb::{TableClient, YdbOrCustomerError};
-
-use cheetah_libraries_ydb::{is_unique_violation_error, query, update};
-
 use crate::users::user::User;
+use cheetah_libraries_ydb::error::is_unique_violation_error;
+use cheetah_libraries_ydb::{query, update};
+use ydb::{TableClient, YdbOrCustomerError};
 
 #[derive(Clone)]
 pub struct UserService {
@@ -64,11 +63,19 @@ pub mod tests {
 					.unwrap()
 					.rows()
 					.map(|mut row| {
-						let uuid: Option<ydb::Bytes> = row.remove_field_by_name("user").unwrap().try_into().unwrap();
+						let uuid: Option<ydb::Bytes> = row
+							.remove_field_by_name("user")
+							.unwrap()
+							.try_into()
+							.unwrap();
 						let uuid = Into::<Vec<u8>>::into(uuid.unwrap());
 						let uuid = Uuid::from_slice(uuid.as_slice()).unwrap();
 
-						let date: Option<Duration> = row.remove_field_by_name("create_date").unwrap().try_into().unwrap();
+						let date: Option<Duration> = row
+							.remove_field_by_name("create_date")
+							.unwrap()
+							.try_into()
+							.unwrap();
 						(uuid, date.unwrap())
 					})
 					.collect())
