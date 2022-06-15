@@ -1,0 +1,32 @@
+syntax = "proto3";
+package cheetah.userstore.external;
+
+service Update {
+    rpc SetInt(SetIntRequest) returns (UpdateReply);
+}
+
+enum UpdateStatus {
+    OK = 0;
+    ERROR = 1;
+}
+
+message UpdateReply {
+    UpdateStatus status = 1;
+}
+
+message SetIntRequest {
+    string fieldName = 1;
+    sint64 value = 2;
+}
+
+service Fetch {
+    rpc GetInt(GetIntRequest) returns (GetIntReply);
+}
+
+message GetIntRequest {
+    string fieldName = 1;
+}
+
+message GetIntReply {
+    sint64 value = 1;
+}

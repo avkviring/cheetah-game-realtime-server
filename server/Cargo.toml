@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "libraries/Microservice",
     "Accounts",
+    "UserStore",
     "matches/Factory",
     "matches/Registry",
     "matches/StubMatchmaking",
