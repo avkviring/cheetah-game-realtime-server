@@ -72,7 +72,7 @@ impl YdbClientBuilder {
 				.scheme_client()
 				.make_directory(name.to_owned())
 				.await
-				.unwrap();
+				.unwrap_or_else(|e| tracing::warn!("skip create db {:?}", e))
 		}
 	}
 }
