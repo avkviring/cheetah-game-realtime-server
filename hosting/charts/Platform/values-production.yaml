@@ -40,5 +40,7 @@ cheetah-matches-relay-agones:
   memory:
     request: 300Mi
     limit: 300Mi
+ydb:
+  storage: disk
 global:
   lokiUrl: http://monitoring-loki.monitoring:3100

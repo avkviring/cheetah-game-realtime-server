@@ -6,8 +6,8 @@ cheetah-accounts:
     master:
       persistence:
         enabled: false
-  persistence:
-    enabled: false
+ydb:
+  storage: memory
 reloader:
   reloader:
     deployment:

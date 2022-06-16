@@ -1,9 +1,10 @@
+{{- if eq .Values.storage "memory"}}
 apiVersion: ydb.tech/v1alpha1
 kind: Storage
 metadata:
   name: {{ .Chart.Name }}-storage
 spec:
-  dataStore: []
+  dataStore: [ ]
   image:
     name: cr.yandex/crptqonuodf51kdj7a7d/ydb:22.2.22
   nodes: 1
@@ -89,3 +90,4 @@ spec:
               pdisk_category: 1
               storage_pool_kind: ssd
           profile_id: 0
+{{- end}}
