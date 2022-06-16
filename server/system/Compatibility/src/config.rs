@@ -58,7 +58,10 @@ impl Config {
 	}
 
 	pub fn to_versions(self) -> HashMap<String, DateTime<Utc>> {
-		self.versions.into_iter().map(|v| (v.version, v.expiration)).collect()
+		self.versions
+			.into_iter()
+			.map(|v| (v.version, v.expiration))
+			.collect()
 	}
 }
 

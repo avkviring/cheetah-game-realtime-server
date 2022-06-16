@@ -70,7 +70,11 @@ mod test {
 		let mut measures = MeasurersByLabel::<u8, IntCounter, Opts>::new(
 			&registry,
 			Box::new(|key| {
-				Opts::new("name", "help").const_labels(vec![("label".to_string(), key.to_string())].into_iter().collect())
+				Opts::new("name", "help").const_labels(
+					vec![("label".to_string(), key.to_string())]
+						.into_iter()
+						.collect(),
+				)
 			}),
 		);
 

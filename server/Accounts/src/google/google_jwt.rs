@@ -66,7 +66,10 @@ impl Parser {
 						let aud = vec![self.client_id.to_owned()];
 						let mut validation = Validation::new(Algorithm::RS256);
 						validation.set_audience(&aud);
-						validation.set_issuer(&["https://accounts.google.com".to_string(), "accounts.google.com".to_string()]);
+						validation.set_issuer(&[
+							"https://accounts.google.com".to_string(),
+							"accounts.google.com".to_string(),
+						]);
 						validation.validate_exp = true;
 						validation.validate_nbf = false;
 						let result = jsonwebtoken::decode::<T>(token, &key, &validation);
@@ -198,14 +201,20 @@ mod tests {
 			when.method(httpmock::Method::GET).path("/");
 
 			then.status(200)
-				.header("cache-control", "public, max-age=24920, must-revalidate, no-transform")
+				.header(
+					"cache-control",
+					"public, max-age=24920, must-revalidate, no-transform",
+				)
 				.header("Content-Type", "application/json; charset=UTF-8")
 				.body(resp);
 		});
 		let mut provider = GooglePublicKeyProvider::new(server.url("/").as_str());
 
 		assert!(matches!(provider.get_key(kid).await, Result::Ok(_)));
-		assert!(matches!(provider.get_key("missing-key").await, Result::Err(_)));
+		assert!(matches!(
+			provider.get_key("missing-key").await,
+			Result::Err(_)
+		));
 	}
 
 	#[tokio::test]
@@ -219,20 +228,29 @@ mod tests {
 		let mut server_mock = server.mock(|when, then| {
 			when.method(httpmock::Method::GET).path("/");
 			then.status(200)
-				.header("cache-control", "public, max-age=3, must-revalidate, no-transform")
+				.header(
+					"cache-control",
+					"public, max-age=3, must-revalidate, no-transform",
+				)
 				.header("Content-Type", "application/json; charset=UTF-8")
 				.body("{\"keys\":[]}");
 		});
 
 		let mut provider = GooglePublicKeyProvider::new(server.url("/").as_str());
 		let key_result = provider.get_key(kid).await;
-		assert!(matches!(key_result, Result::Err(GoogleKeyProviderError::KeyNotFound)));
+		assert!(matches!(
+			key_result,
+			Result::Err(GoogleKeyProviderError::KeyNotFound)
+		));
 
 		server_mock.delete();
 		let _server_mock = server.mock(|when, then| {
 			when.method(httpmock::Method::GET).path("/");
 			then.status(200)
-				.header("cache-control", "public, max-age=3, must-revalidate, no-transform")
+				.header(
+					"cache-control",
+					"public, max-age=3, must-revalidate, no-transform",
+				)
 				.header("Content-Type", "application/json; charset=UTF-8")
 				.body(resp);
 		});
@@ -257,15 +275,17 @@ mod tests {
 		let (token, validator, _server) = setup(&claims);
 		let result = validator.parse::<TokenClaims>(token.as_str()).await;
 
-		assert!(if let ParserError::WrongToken(error) = result.err().unwrap() {
-			if let ErrorKind::ExpiredSignature = error.into_kind() {
-				true
+		assert!(
+			if let ParserError::WrongToken(error) = result.err().unwrap() {
+				if let ErrorKind::ExpiredSignature = error.into_kind() {
+					true
+				} else {
+					false
+				}
 			} else {
 				false
 			}
-		} else {
-			false
-		});
+		);
 	}
 
 	#[tokio::test]
@@ -274,15 +294,17 @@ mod tests {
 		claims.iss = "https://some.com".to_owned();
 		let (token, validator, _server) = setup(&claims);
 		let result = validator.parse::<TokenClaims>(token.as_str()).await;
-		assert!(if let ParserError::WrongToken(error) = result.err().unwrap() {
-			if let ErrorKind::InvalidIssuer = error.into_kind() {
-				true
+		assert!(
+			if let ParserError::WrongToken(error) = result.err().unwrap() {
+				if let ErrorKind::InvalidIssuer = error.into_kind() {
+					true
+				} else {
+					false
+				}
 			} else {
 				false
 			}
-		} else {
-			false
-		});
+		);
 	}
 
 	#[tokio::test]
@@ -291,14 +313,16 @@ mod tests {
 		claims.aud = "other-id".to_owned();
 		let (token, validator, _server) = setup(&claims);
 		let result = validator.parse::<TokenClaims>(token.as_str()).await;
-		assert!(if let ParserError::WrongToken(error) = result.err().unwrap() {
-			if let ErrorKind::InvalidAudience = error.into_kind() {
-				true
+		assert!(
+			if let ParserError::WrongToken(error) = result.err().unwrap() {
+				if let ErrorKind::InvalidAudience = error.into_kind() {
+					true
+				} else {
+					false
+				}
 			} else {
 				false
 			}
-		} else {
-			false
-		});
+		);
 	}
 }

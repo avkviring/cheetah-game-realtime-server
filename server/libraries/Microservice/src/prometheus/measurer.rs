@@ -36,7 +36,11 @@ mod test {
 		let registry = Registry::new();
 		let counter = create_and_register_measurer::<IntCounter, _>(
 			&registry,
-			Opts::new("name", "help").const_labels(vec![("label".to_string(), "value".to_string())].into_iter().collect()),
+			Opts::new("name", "help").const_labels(
+				vec![("label".to_string(), "value".to_string())]
+					.into_iter()
+					.collect(),
+			),
 		);
 
 		counter.inc();

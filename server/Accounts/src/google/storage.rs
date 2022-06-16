@@ -42,14 +42,19 @@ impl GoogleStorage {
 		self.ydb_table_client
 			.retry_transaction(|mut t| async move {
 				let query_result = t
-					.query(query!("select * from google_users where google_id=$google_id", 
-						google_id=>google_id))
+					.query(
+						query!("select * from google_users where google_id=$google_id", 
+						google_id=>google_id),
+					)
 					.await?;
 				match query_result.into_only_row() {
 					Ok(mut row) => {
-						let user_uuid: Option<Bytes> = row.remove_field_by_name("user")?.try_into()?;
+						let user_uuid: Option<Bytes> =
+							row.remove_field_by_name("user")?.try_into()?;
 						let user_uuid: Vec<u8> = user_uuid.unwrap().into();
-						Ok(Some(User::from(Uuid::from_slice(user_uuid.as_slice()).unwrap())))
+						Ok(Some(User::from(
+							Uuid::from_slice(user_uuid.as_slice()).unwrap(),
+						)))
 					}
 					Err(_) => Ok(None),
 				}
@@ -79,12 +84,28 @@ pub mod tests {
 
 		let user_a = user_service.create().await.unwrap();
 		let user_b = user_service.create().await.unwrap();
-		google_storage.attach(user_a, "a@kviring.com").await.unwrap();
-		google_storage.attach(user_b, "b@kviring.com").await.unwrap();
+		google_storage
+			.attach(user_a, "a@kviring.com")
+			.await
+			.unwrap();
+		google_storage
+			.attach(user_b, "b@kviring.com")
+			.await
+			.unwrap();
 
-		assert_eq!(google_storage.find("a@kviring.com").await.unwrap().unwrap(), user_a);
-		assert_eq!(google_storage.find("b@kviring.com").await.unwrap().unwrap(), user_b);
-		assert!(google_storage.find("c@kviring.com").await.unwrap().is_none());
+		assert_eq!(
+			google_storage.find("a@kviring.com").await.unwrap().unwrap(),
+			user_a
+		);
+		assert_eq!(
+			google_storage.find("b@kviring.com").await.unwrap().unwrap(),
+			user_b
+		);
+		assert!(google_storage
+			.find("c@kviring.com")
+			.await
+			.unwrap()
+			.is_none());
 	}
 
 	#[tokio::test]
@@ -109,9 +130,21 @@ pub mod tests {
 				.unwrap()
 				.rows()
 				.map(|mut row| {
-					let duration: Option<Duration> = row.remove_field_by_name("time").unwrap().try_into().unwrap();
-					let user_uuid: Option<Bytes> = row.remove_field_by_name("user").unwrap().try_into().unwrap();
-					let google_id: Option<String> = row.remove_field_by_name("google_id").unwrap().try_into().unwrap();
+					let duration: Option<Duration> = row
+						.remove_field_by_name("time")
+						.unwrap()
+						.try_into()
+						.unwrap();
+					let user_uuid: Option<Bytes> = row
+						.remove_field_by_name("user")
+						.unwrap()
+						.try_into()
+						.unwrap();
+					let google_id: Option<String> = row
+						.remove_field_by_name("google_id")
+						.unwrap()
+						.try_into()
+						.unwrap();
 					let user_uuid: Vec<u8> = user_uuid.unwrap().into();
 					(
 						duration.unwrap(),
@@ -144,13 +177,28 @@ pub mod tests {
 		let user_b = user_service.create().await.unwrap();
 		let user_c = user_service.create().await.unwrap();
 
-		google_storage.attach(user_a, "a@kviring.com").await.unwrap();
-		google_storage.attach(user_b, "a@kviring.com").await.unwrap();
-		google_storage.attach(user_c, "c@kviring.com").await.unwrap();
+		google_storage
+			.attach(user_a, "a@kviring.com")
+			.await
+			.unwrap();
+		google_storage
+			.attach(user_b, "a@kviring.com")
+			.await
+			.unwrap();
+		google_storage
+			.attach(user_c, "c@kviring.com")
+			.await
+			.unwrap();
 
-		assert_eq!(google_storage.find("a@kviring.com").await.unwrap().unwrap(), user_b);
+		assert_eq!(
+			google_storage.find("a@kviring.com").await.unwrap().unwrap(),
+			user_b
+		);
 		// проверяем что данные других пользователей не изменились
-		assert_eq!(google_storage.find("c@kviring.com").await.unwrap().unwrap(), user_c);
+		assert_eq!(
+			google_storage.find("c@kviring.com").await.unwrap().unwrap(),
+			user_c
+		);
 	}
 
 	/// Перепривязка google_id для пользователя
@@ -161,16 +209,39 @@ pub mod tests {
 		let google_storage = GoogleStorage::new(ydb_client.table_client());
 
 		let user_a = user_service.create().await.unwrap();
-		google_storage.attach(user_a, "a@kviring.com").await.unwrap();
-		google_storage.attach(user_a, "aa@kviring.com").await.unwrap();
+		google_storage
+			.attach(user_a, "a@kviring.com")
+			.await
+			.unwrap();
+		google_storage
+			.attach(user_a, "aa@kviring.com")
+			.await
+			.unwrap();
 
 		let user_b = user_service.create().await.unwrap();
-		google_storage.attach(user_b, "c@kviring.com").await.unwrap();
+		google_storage
+			.attach(user_b, "c@kviring.com")
+			.await
+			.unwrap();
 
-		assert!(google_storage.find("a@kviring.com").await.unwrap().is_none());
-		assert_eq!(google_storage.find("aa@kviring.com").await.unwrap().unwrap(), user_a);
+		assert!(google_storage
+			.find("a@kviring.com")
+			.await
+			.unwrap()
+			.is_none());
+		assert_eq!(
+			google_storage
+				.find("aa@kviring.com")
+				.await
+				.unwrap()
+				.unwrap(),
+			user_a
+		);
 
 		// проверяем что данные другого пользователя не удалены
-		assert_eq!(google_storage.find("c@kviring.com").await.unwrap().unwrap(), user_b);
+		assert_eq!(
+			google_storage.find("c@kviring.com").await.unwrap().unwrap(),
+			user_b
+		);
 	}
 }

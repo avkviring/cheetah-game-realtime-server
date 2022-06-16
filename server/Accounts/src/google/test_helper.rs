@@ -33,7 +33,11 @@ impl TokenClaims {
 		Self {
 			email: EMAIL.to_owned(),
 			aud: CLIENT_ID.to_owned(),
-			exp: SystemTime::now().add(expire).duration_since(UNIX_EPOCH).unwrap().as_secs(),
+			exp: SystemTime::now()
+				.add(expire)
+				.duration_since(UNIX_EPOCH)
+				.unwrap()
+				.as_secs(),
 			iss: "https://accounts.google.com".to_owned(),
 			sub: SUB.to_owned(),
 		}
@@ -60,7 +64,8 @@ pub fn setup_public_key_server(claims: &TokenClaims) -> (String, MockServer) {
 	header.kid = Some(KID.to_owned());
 	header.typ = Some("JWT".to_owned());
 	let bits = 2048;
-	let private_key = RsaPrivateKey::new(&mut thread_rng(), bits).expect("failed to generate a key");
+	let private_key =
+		RsaPrivateKey::new(&mut thread_rng(), bits).expect("failed to generate a key");
 	let der = private_key.to_pkcs8_der().unwrap().to_pem();
 	let key = EncodingKey::from_rsa_pem(der.as_bytes()).unwrap();
 	let token = jsonwebtoken::encode::<TokenClaims>(&header, &claims, &key).unwrap();
@@ -76,7 +81,10 @@ pub fn setup_public_key_server(claims: &TokenClaims) -> (String, MockServer) {
 		when.method(httpmock::Method::GET).path("/");
 
 		then.status(200)
-			.header("cache-control", "public, max-age=24920, must-revalidate, no-transform")
+			.header(
+				"cache-control",
+				"public, max-age=24920, must-revalidate, no-transform",
+			)
 			.header("Content-Type", "application/json; charset=UTF-8")
 			.body(resp);
 	});

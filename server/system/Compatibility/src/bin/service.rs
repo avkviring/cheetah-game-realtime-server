@@ -20,11 +20,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 pub async fn run_grpc_server(config_file: &str) {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 
-	health_reporter.set_service_status("", ServingStatus::Serving).await;
+	health_reporter
+		.set_service_status("", ServingStatus::Serving)
+		.await;
 	let config_content = fs::read_to_string(config_file).unwrap();
 	let config = Config::new(config_content).unwrap();
 	let grpc_service = CompatibilityCheckerServer::new(Service::new(config.to_versions()));
-	health_reporter.set_serving::<CompatibilityCheckerServer<Service>>().await;
+	health_reporter
+		.set_serving::<CompatibilityCheckerServer<Service>>()
+		.await;
 
 	Server::builder()
 		.accept_http1(true)

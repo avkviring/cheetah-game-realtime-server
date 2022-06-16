@@ -25,7 +25,12 @@ impl Loki {
 		}
 	}
 
-	pub async fn send_to_loki(&self, tags: HashMap<String, String>, time: Duration, value: &str) -> Result<(), String> {
+	pub async fn send_to_loki(
+		&self,
+		tags: HashMap<String, String>,
+		time: Duration,
+		value: &str,
+	) -> Result<(), String> {
 		let client = reqwest::Client::new();
 
 		let request = LokiRequest {
@@ -53,7 +58,8 @@ mod tests {
 	pub async fn should_send_event() {
 		let server = MockServer::start();
 		let http_server_mock = server.mock(|when, _then| {
-			when.method(httpmock::Method::POST).path("/loki/api/v1/push");
+			when.method(httpmock::Method::POST)
+				.path("/loki/api/v1/push");
 		});
 		let loki_layer = Loki::new(server.base_url().as_str());
 		loki_layer

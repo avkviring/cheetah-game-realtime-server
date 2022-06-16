@@ -21,7 +21,10 @@ pub struct TokenStorage {
 }
 impl TokenStorage {
 	pub fn new(ydb_table_client: TableClient, ttl: Duration) -> Self {
-		Self { ydb_table_client, ttl }
+		Self {
+			ydb_table_client,
+			ttl,
+		}
 	}
 
 	pub async fn create_new_linked_uuid(
@@ -60,10 +63,20 @@ impl TokenStorage {
 					device=>device,
 					token_uuid=>token_uuid
 				);
-				let result = t.query(query).await?.into_only_result().unwrap().rows().any(|mut row| {
-					let time: Option<Duration> = row.remove_field_by_name("create_at").unwrap().try_into().unwrap();
-					time.unwrap().add(self.ttl) >= now
-				});
+				let result = t
+					.query(query)
+					.await?
+					.into_only_result()
+					.unwrap()
+					.rows()
+					.any(|mut row| {
+						let time: Option<Duration> = row
+							.remove_field_by_name("create_at")
+							.unwrap()
+							.try_into()
+							.unwrap();
+						time.unwrap().add(self.ttl) >= now
+					});
 				t.query(query!(
 					"delete from tokens where user=$user and device=$device and token_uuid=$token_uuid",
 					user=>user,
@@ -98,8 +111,14 @@ pub mod tests {
 		let user = User::default();
 		let device = "device";
 		let now = Duration::default();
-		let uuid_1 = storage.create_new_linked_uuid(&user, device, &now).await.unwrap();
-		let uuid_2 = storage.create_new_linked_uuid(&user, device, &now).await.unwrap();
+		let uuid_1 = storage
+			.create_new_linked_uuid(&user, device, &now)
+			.await
+			.unwrap();
+		let uuid_2 = storage
+			.create_new_linked_uuid(&user, device, &now)
+			.await
+			.unwrap();
 
 		assert_ne!(uuid_1, uuid_2);
 	}
@@ -111,8 +130,14 @@ pub mod tests {
 		let user = User::default();
 		let device = "device".to_owned();
 		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-		let version_1 = storage.create_new_linked_uuid(&user, &device, &now).await.unwrap();
-		let linked = storage.is_linked(&user, &device, &version_1, now).await.unwrap();
+		let version_1 = storage
+			.create_new_linked_uuid(&user, &device, &now)
+			.await
+			.unwrap();
+		let linked = storage
+			.is_linked(&user, &device, &version_1, now)
+			.await
+			.unwrap();
 
 		assert!(linked);
 	}
@@ -138,7 +163,10 @@ pub mod tests {
 		let device = "device".to_owned();
 
 		let now = Duration::from_secs(0);
-		let uuid = storage.create_new_linked_uuid(&user, &device, &now).await.unwrap();
+		let uuid = storage
+			.create_new_linked_uuid(&user, &device, &now)
+			.await
+			.unwrap();
 
 		let now = Duration::from_secs(100);
 		let linked = storage.is_linked(&user, &device, &uuid, now).await.unwrap();

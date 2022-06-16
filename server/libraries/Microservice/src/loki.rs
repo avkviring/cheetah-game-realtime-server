@@ -66,8 +66,10 @@ pub struct ValuesVisitor {
 impl<'a> Visit for ValuesVisitor {
 	fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
 		if field.name() != "message" {
-			self.values
-				.insert(field.name().to_string().replace(".", "_"), format!("{:?}", value));
+			self.values.insert(
+				field.name().to_string().replace(".", "_"),
+				format!("{:?}", value),
+			);
 		}
 	}
 }
@@ -101,7 +103,10 @@ impl<S: tracing::Subscriber> Layer<S> for LokiLayer {
 		let mut message_visitor = ValueVisitor::new("message");
 		event.record(&mut message_visitor);
 		let mut values = values_visitor.values;
-		values.insert("level".to_string(), event.metadata().level().to_string().to_lowercase());
+		values.insert(
+			"level".to_string(),
+			event.metadata().level().to_string().to_lowercase(),
+		);
 		for (k, v) in self.default_values.iter() {
 			values.insert(k.to_owned(), v.to_owned());
 		}
@@ -119,13 +124,18 @@ impl<S: tracing::Subscriber> Layer<S> for LokiLayer {
 		}
 
 		let start = SystemTime::now();
-		let since_start = start.duration_since(UNIX_EPOCH).expect("cant get duration since");
+		let since_start = start
+			.duration_since(UNIX_EPOCH)
+			.expect("cant get duration since");
 		let time_ns = since_start.as_nanos().to_string();
 
 		let request = LokiRequest {
 			streams: vec![LokiStream {
 				stream: values,
-				values: vec![[time_ns, message_visitor.result.unwrap_or_else(|| "".to_string())]],
+				values: vec![[
+					time_ns,
+					message_visitor.result.unwrap_or_else(|| "".to_string()),
+				]],
 			}],
 		};
 
@@ -164,11 +174,13 @@ mod tests {
 	pub fn should_send_request() {
 		let server = MockServer::start();
 		let http_server_mock = server.mock(|when, _then| {
-			when.method(httpmock::Method::POST).path("/loki/api/v1/push");
+			when.method(httpmock::Method::POST)
+				.path("/loki/api/v1/push");
 		});
 		let loki_layer = LokiLayer::new(server.base_url(), Default::default());
 		let subscriber = Registry::default().with(loki_layer);
-		tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+		tracing::subscriber::set_global_default(subscriber)
+			.expect("setting default subscriber failed");
 
 		tracing::info!("test");
 		std::thread::sleep(Duration::from_secs(1));

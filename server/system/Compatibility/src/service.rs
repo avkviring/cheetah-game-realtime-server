@@ -26,7 +26,8 @@ impl proto::compatibility_checker_server::CompatibilityChecker for Service {
 		let status = match self.versions.get(&request_version) {
 			None => proto::check_compatibility_response::Status::Unsupported,
 			Some(expired) => {
-				let remaining = (expired.timestamp_millis() - Utc::now().timestamp_millis()) / (1000 * 60 * 60);
+				let remaining =
+					(expired.timestamp_millis() - Utc::now().timestamp_millis()) / (1000 * 60 * 60);
 				match remaining {
 					0..=4 => proto::check_compatibility_response::Status::PlanningUnsupportedSoon,
 					5..=24 => proto::check_compatibility_response::Status::PlanningUnsupportedAfterSomeHours,
@@ -34,7 +35,9 @@ impl proto::compatibility_checker_server::CompatibilityChecker for Service {
 				}
 			}
 		};
-		Ok(Response::new(CheckCompatibilityResponse { status: status as i32 }))
+		Ok(Response::new(CheckCompatibilityResponse {
+			status: status as i32,
+		}))
 	}
 }
 

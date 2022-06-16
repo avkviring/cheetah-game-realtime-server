@@ -24,11 +24,19 @@ pub async fn run_grpc_server(
 ) {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 
-	health_reporter.set_service_status("", ServingStatus::Serving).await;
-	let token_service = TokensService::new(ydb_table_client.clone(), jwt_private_key, jwt_public_key.clone()).await;
+	health_reporter
+		.set_service_status("", ServingStatus::Serving)
+		.await;
+	let token_service = TokensService::new(
+		ydb_table_client.clone(),
+		jwt_private_key,
+		jwt_public_key.clone(),
+	)
+	.await;
 	let user_service = UserService::new(ydb_table_client.clone());
 
-	let token_grpc_service = proto::tokens_server::TokensServer::new(TokensGrpcService::new(token_service.clone()));
+	let token_grpc_service =
+		proto::tokens_server::TokensServer::new(TokensGrpcService::new(token_service.clone()));
 	let cookie_grpc_service = proto::cookie_server::CookieServer::new(CookieService::new(
 		ydb_table_client.clone(),
 		token_service.clone(),
@@ -37,8 +45,12 @@ pub async fn run_grpc_server(
 
 	// если мы здесь - то соединение к базе установлены, все параметры заданы
 	// то есть мы можем сказать что сервисы тоже готовы
-	health_reporter.set_serving::<TokensServer<TokensGrpcService>>().await;
-	health_reporter.set_serving::<CookieServer<CookieService>>().await;
+	health_reporter
+		.set_serving::<TokensServer<TokensGrpcService>>()
+		.await;
+	health_reporter
+		.set_serving::<CookieServer<CookieService>>()
+		.await;
 
 	let external_addr = cheetah_libraries_microservice::get_external_service_binding_addr();
 
@@ -57,7 +69,9 @@ pub async fn run_grpc_server(
 			JWTTokenParser::new(jwt_public_key),
 		));
 
-		health_reporter.set_serving::<GoogleServer<GoogleGrpcService>>().await;
+		health_reporter
+			.set_serving::<GoogleServer<GoogleGrpcService>>()
+			.await;
 		let builder = builder.add_service(tonic_web::enable(google_grpc_service));
 		builder.serve(external_addr).await.unwrap();
 	} else {

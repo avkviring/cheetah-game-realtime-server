@@ -85,14 +85,22 @@ impl TokensService {
 		}
 	}
 
-	pub async fn create(&self, user: User, device_id: &str) -> Result<Tokens, JWTTokensServiceError> {
+	pub async fn create(
+		&self,
+		user: User,
+		device_id: &str,
+	) -> Result<Tokens, JWTTokensServiceError> {
 		Result::Ok(Tokens {
 			session: self.create_session_token(&user),
 			refresh: self.create_refresh_token(user, device_id).await?,
 		})
 	}
 
-	async fn create_refresh_token(&self, user: User, device_id: &str) -> Result<String, JWTTokensServiceError> {
+	async fn create_refresh_token(
+		&self,
+		user: User,
+		device_id: &str,
+	) -> Result<String, JWTTokensServiceError> {
 		let now = TokensService::now();
 
 		let uuid = self
@@ -133,7 +141,9 @@ impl TokensService {
 	}
 
 	fn now() -> Duration {
-		SystemTime::now().duration_since(UNIX_EPOCH).expect("Time went backwards")
+		SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.expect("Time went backwards")
 	}
 
 	fn remove_head(token: String) -> String {
@@ -196,7 +206,8 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn session_token_should_correct() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let user = User::default();
 		let tokens = service.create(user, "some-device-id").await.unwrap();
 
@@ -208,21 +219,35 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn session_token_should_exp() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
-		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service
+			.create(User::default(), "some-device-id")
+			.await
+			.unwrap();
 		thread::sleep(Duration::from_secs(2));
 		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
 		let user_id_from_token = parser.get_user_uuid(tokens.session);
-		assert!(matches!(user_id_from_token, Result::Err(SessionTokenError::Expired)))
+		assert!(matches!(
+			user_id_from_token,
+			Result::Err(SessionTokenError::Expired)
+		))
 	}
 
 	#[tokio::test]
 	async fn session_token_should_fail_if_not_correct() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
-		let tokens = service.create(1u128.into(), "some-device-id").await.unwrap();
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service
+			.create(1u128.into(), "some-device-id")
+			.await
+			.unwrap();
 		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
 		let user_id_from_token = parser.get_user_uuid(tokens.session.replace("ey", "e1"));
-		assert!(matches!(user_id_from_token, Result::Err(SessionTokenError::InvalidSignature)))
+		assert!(matches!(
+			user_id_from_token,
+			Result::Err(SessionTokenError::InvalidSignature)
+		))
 	}
 
 	pub const PUBLIC_KEY: &str = "-----BEGIN PUBLIC KEY-----
@@ -236,9 +261,15 @@ BTeGSzANXGlEzutd9IIm6/inl0ahRANCAARVUc1crGhQ2Shf2Gc4mlLPorYoN+KD
 FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 -----END PRIVATE KEY-----";
 
-	pub async fn stub_token_service<'a>(session_exp: Duration, refresh_exp: Duration) -> (Arc<YDBTestInstance>, TokensService) {
+	pub async fn stub_token_service<'a>(
+		session_exp: Duration,
+		refresh_exp: Duration,
+	) -> (Arc<YDBTestInstance>, TokensService) {
 		let (ydb, instance) = setup_ydb().await;
-		let storage = TokenStorage::new(ydb.table_client(), refresh_exp.clone().add(Duration::from_secs(1)));
+		let storage = TokenStorage::new(
+			ydb.table_client(),
+			refresh_exp.clone().add(Duration::from_secs(1)),
+		);
 		let service = TokensService::new_with_storage(
 			PRIVATE_KEY.to_string(),
 			PUBLIC_KEY.to_string(),
@@ -251,25 +282,37 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 
 	#[tokio::test]
 	async fn should_refresh_token_different_for_players() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
-		let tokens_for_player_a = service.create(User::default(), "some-devicea-id").await.unwrap();
-		let tokens_for_player_b = service.create(User::default(), "some-deviceb-id").await.unwrap();
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let tokens_for_player_a = service
+			.create(User::default(), "some-devicea-id")
+			.await
+			.unwrap();
+		let tokens_for_player_b = service
+			.create(User::default(), "some-deviceb-id")
+			.await
+			.unwrap();
 		assert_ne!(tokens_for_player_a.refresh, tokens_for_player_b.refresh)
 	}
 
 	#[tokio::test]
 	async fn should_refresh_token() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 
 		let user = User::default();
-		let tokens = service.create(user.clone(), "some-device-id").await.unwrap();
+		let tokens = service
+			.create(user.clone(), "some-device-id")
+			.await
+			.unwrap();
 
 		let new_tokens = service.refresh(tokens.refresh.clone()).await.unwrap();
 		// проверяем что это действительно новые токены
 		assert_ne!(tokens.session, new_tokens.session);
 		assert_ne!(tokens.refresh, new_tokens.refresh);
 		// проверяем работоспособность новых токенов
-		let get_user_uuid = JWTTokenParser::new(PUBLIC_KEY.to_owned()).get_user_uuid(new_tokens.session);
+		let get_user_uuid =
+			JWTTokenParser::new(PUBLIC_KEY.to_owned()).get_user_uuid(new_tokens.session);
 		assert!(matches!(get_user_uuid, Result::Ok(uuid) if uuid==user.0));
 
 		// проверяем что новый refresh токен валидный
@@ -281,11 +324,18 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_exp() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
-		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service
+			.create(User::default(), "some-device-id")
+			.await
+			.unwrap();
 		thread::sleep(Duration::from_secs(2));
 		let result = service.refresh(tokens.refresh).await;
-		assert!(matches!(result, Result::Err(JWTTokensServiceError::Expired)));
+		assert!(matches!(
+			result,
+			Result::Err(JWTTokensServiceError::Expired)
+		));
 	}
 
 	///
@@ -293,10 +343,16 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_fail() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
-		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service
+			.create(User::default(), "some-device-id")
+			.await
+			.unwrap();
 		assert!(matches!(
-			service.refresh(tokens.refresh.replace("eyJleHA", "eyJleHB")).await,
+			service
+				.refresh(tokens.refresh.replace("eyJleHA", "eyJleHB"))
+				.await,
 			Result::Err(JWTTokensServiceError::InvalidSignature)
 		));
 	}
@@ -306,8 +362,12 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_use_once() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
-		let tokens = service.create(User::default(), "some-device-id").await.unwrap();
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens = service
+			.create(User::default(), "some-device-id")
+			.await
+			.unwrap();
 		service.refresh(tokens.refresh.clone()).await.unwrap();
 		assert!(matches!(
 			service.refresh(tokens.refresh).await,
@@ -320,9 +380,16 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_invalidate_tokens() {
-		let (_node, service) = stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
-		let tokens_a = service.create(1u128.into(), "some-device-id").await.unwrap();
-		let tokens_b = service.create(1u128.into(), "some-device-id").await.unwrap();
+		let (_node, service) =
+			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
+		let tokens_a = service
+			.create(1u128.into(), "some-device-id")
+			.await
+			.unwrap();
+		let tokens_b = service
+			.create(1u128.into(), "some-device-id")
+			.await
+			.unwrap();
 		service.refresh(tokens_b.refresh.clone()).await.unwrap();
 		assert!(matches!(
 			service.refresh(tokens_a.refresh).await,

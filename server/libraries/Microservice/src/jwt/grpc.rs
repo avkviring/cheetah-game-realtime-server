@@ -13,7 +13,10 @@ pub enum AuthorizationError {
 ///
 /// Получить id пользователя из jwt токена в заголовке grpc запроса
 ///
-pub fn get_user_uuid(metadata: &MetadataMap, public_key: String) -> Result<Uuid, AuthorizationError> {
+pub fn get_user_uuid(
+	metadata: &MetadataMap,
+	public_key: String,
+) -> Result<Uuid, AuthorizationError> {
 	match metadata.get("authorization") {
 		None => Result::Err(MissingHeader),
 		Some(value) => {
@@ -80,7 +83,10 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	#[test]
 	fn should_wrong_header() {
 		let mut metadata = MetadataMap::new();
-		metadata.insert("authorization", MetadataValue::from_str("wrong_authorization").unwrap());
+		metadata.insert(
+			"authorization",
+			MetadataValue::from_str("wrong_authorization").unwrap(),
+		);
 		assert!(matches!(
 			get_user_uuid(&metadata, PUBLIC_KEY.to_string()),
 			Result::Err(AuthorizationError::WrongHeader)
@@ -97,7 +103,9 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 
 		assert!(matches!(
 			get_user_uuid(&metadata, PUBLIC_KEY.to_string()),
-			Result::Err(AuthorizationError::Token(SessionTokenError::InvalidSignature))
+			Result::Err(AuthorizationError::Token(
+				SessionTokenError::InvalidSignature
+			))
 		));
 	}
 
@@ -126,6 +134,9 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 			"authorization",
 			MetadataValue::from_str(format!("Bear {}", token).as_str()).unwrap(),
 		);
-		assert!(matches!(get_user_uuid(&metadata, PUBLIC_KEY.to_string()), Result::Ok(_)));
+		assert!(matches!(
+			get_user_uuid(&metadata, PUBLIC_KEY.to_string()),
+			Result::Ok(_)
+		));
 	}
 }
