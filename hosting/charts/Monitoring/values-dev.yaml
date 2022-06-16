@@ -10,7 +10,7 @@ kube-prometheus-stack:
             accessModes: [ "ReadWriteOnce" ]
             resources:
               requests:
-                storage: 5Gi
+                storage: 20Gi
     ingress:
       annotations:
         cert-manager.io/cluster-issuer: "letsencrypt-prod"
