@@ -8,9 +8,11 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::{panic, process};
 
+use log::{trace, Level};
 pub use tonic;
 use tonic::transport::Uri;
 use tracing_log::LogTracer;
+use tracing_subscriber::filter::Directive;
 use tracing_subscriber::layer::SubscriberExt;
 pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
 
@@ -24,7 +26,11 @@ pub mod prometheus;
 pub type StringId = heapless::String<20>;
 
 pub fn init(name: &str) {
-	setup_tracer(name);
+	init_with_trace_level(name, tracing::Level::INFO)
+}
+
+pub fn init_with_trace_level(name: &str, trace_level: tracing::Level) {
+	setup_tracer(name, trace_level);
 	setup_panic_hook();
 	setup_prometheus();
 	tracing::info!("start service {} ", name);
@@ -35,20 +41,16 @@ pub fn get_env(name: &str) -> String {
 }
 
 pub fn get_env_or_default(name: &str, default: &str) -> String {
-	std::env::var(name).unwrap_or(default.to_owned())
+	std::env::var(name).unwrap_or_else(|_| default.to_owned())
 }
 
-fn setup_tracer(name: &str) {
-	LogTracer::builder()
-		.with_max_level(log::LevelFilter::Info)
-		.init()
-		.unwrap();
+fn setup_tracer(name: &str, trace_level: tracing::Level) {
+	LogTracer::builder().init().unwrap();
 
 	let fmt_layer = fmt::layer().with_target(false).with_ansi(false);
 
-	let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+	let env_filter = EnvFilter::from_default_env().add_directive(Directive::from(trace_level));
 	let subscriber = Registry::default().with(env_filter).with(fmt_layer);
-
 	if let Ok(loki_url) = std::env::var("LOKI_URL") {
 		let mut default_values = HashMap::default();
 		default_values.insert("source".to_owned(), "server".to_owned());
