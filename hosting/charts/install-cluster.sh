@@ -1,17 +1,15 @@
 #!/bin/bash
-
 #
-# Подготовка production кластера, установка необходимых сервисов (кроме собственно игры)
+# Подготовка кластера, установка необходимых сервисов (кроме собственно игры)
 #
-KUBE_CONFIG=/Users/kviring/Documents/.kube/syncario-prod.yaml
 
 # set default storage class
 # kubectl patch storageclass fast.ru-2c  -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
 # install nginx
-kubectl --kubeconfig=$KUBE_CONFIG create namespace ingress-nginx
+kubectl create namespace ingress-nginx
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-(helm --kubeconfig=$KUBE_CONFIG upgrade \
+(helm upgrade \
 --install nginx-ingress ingress-nginx/ingress-nginx \
 --namespace=ingress-nginx \
 --version 4.1.0 \
@@ -34,15 +32,18 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 )
 
 # install cert-manager
-kubectl --kubeconfig=$KUBE_CONFIG create namespace cert-manager
+kubectl create namespace cert-manager
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
-helm --kubeconfig=$KUBE_CONFIG upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.5.0 --set installCRDs=true
+helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.5.0 --set installCRDs=true
 
 
 # install agones
-kubectl --kubeconfig=$KUBE_CONFIG create namespace production
-kubectl --kubeconfig=$KUBE_CONFIG create namespace agones-system
-helm --kubeconfig=$KUBE_CONFIG upgrade --install agones agones/agones --set "gameservers.namespaces={production}" --namespace agones-system --set agones.ping.install=false --set agones.allocator.install=false
+kubectl create namespace production
+kubectl create namespace agones-system
+helm upgrade --install agones agones/agones --set "gameservers.namespaces={production}" --namespace agones-system --set agones.ping.install=false --set agones.allocator.install=false
 
 
+# install ydb
+kubectl create ns ydb
+helm install ydb-operator ydb/operator -n ydb
