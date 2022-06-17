@@ -8,7 +8,7 @@ variables:
 #
 build-server-images-for-integration-test:
   extends:
-    - .rust-cache
+    - .rust-cache-x86_64-unknown-linux-musl
     - .integration-branches
     - .docker-dind-tls
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-musl:1.0.8
@@ -17,7 +17,7 @@ build-server-images-for-integration-test:
     - cd server
     - RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" CARGO_INCREMENTAL=0 cargo build --release --target x86_64-unknown-linux-musl
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD registry.dev.cheetah.games/cheetah/
-    - ln -s /runners-cache/target/ target
+    - ln -s $CARGO_TARGET_DIR target
     - ./package-server-images.sh
 
 #
@@ -25,7 +25,7 @@ build-server-images-for-integration-test:
 #
 build-relay-client-for-integration-test:
   extends:
-    - .rust-cache
+    - .rust-cache-x86_64-unknown-linux-gnu
     - .integration-branches
   image: registry.dev.cheetah.games/cheetah/images/rust-builder-x86_64-unknown-linux-gnu:1.0.2
   stage: test
@@ -33,7 +33,7 @@ build-relay-client-for-integration-test:
     - source $HOME/.cargo/env
     - cd server
     - CARGO_INCREMENTAL=0 cargo build --manifest-path matches/Relay/Client/Cargo.toml --release
-    - cp /runners-cache/target/release/libcheetah_matches_relay_client.so ../libcheetah_matches_relay_client.so
+    - cp $CARGO_TARGET_DIR/release/libcheetah_matches_relay_client.so ../libcheetah_matches_relay_client.so
   artifacts:
     paths:
       - libcheetah_matches_relay_client.so
@@ -45,7 +45,6 @@ build-relay-client-for-integration-test:
 #
 install-servers-to-kubernetes-for-integration-test:
   extends:
-    - .rust-cache
     - .integration-branches
   needs:
     - build-server-images-for-integration-test
@@ -60,7 +59,6 @@ install-servers-to-kubernetes-for-integration-test:
 #
 test-integration-run-unity-with-kubernetes:
   extends:
-    - .rust-cache
     - .integration-branches
     - .docker-dind-tls
   needs:

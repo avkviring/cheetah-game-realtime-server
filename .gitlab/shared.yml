@@ -2,12 +2,33 @@
 # Кеширирование сборки rust проектов
 #  - директория runners-cache монтируется с node и может использоваться как быстрый кеш для сборок
 #
-.rust-cache:
+.rust-cache-x86_64-unknown-linux-gnu:
   before_script:
-    - mkdir -p /runners-cache/target/
-    - export CARGO_TARGET_DIR=/runners-cache/target/
-    - mkdir -p /runners-cache/cargo/
-    - export CARGO_HOME=/runners-cache/cargo/
+    - mkdir -p /runners-cache/rust/x86_64-unknown-linux-gnu/target/
+    - mkdir -p /runners-cache/rust/x86_64-unknown-linux-gnu/cargo/
+    - export CARGO_TARGET_DIR=/runners-cache/rust/x86_64-unknown-linux-gnu/target/
+    - export CARGO_HOME=/runners-cache/rust/x86_64-unknown-linux-gnu/cargo/
+
+.rust-cache-x86_64-unknown-linux-musl:
+  before_script:
+    - mkdir -p /runners-cache/rust/x86_64-unknown-linux-musl/target/
+    - mkdir -p /runners-cache/rust/x86_64-unknown-linux-musl/cargo/
+    - export CARGO_TARGET_DIR=/runners-cache/rust/x86_64-unknown-linux-musl/target/
+    - export CARGO_HOME=/runners-cache/rust/x86_64-unknown-linux-musl/cargo/
+
+.rust-cache-armv7-linux-androideabi:
+  before_script:
+    - mkdir -p /runners-cache/rust/armv7-linux-androideabi/target/
+    - mkdir -p /runners-cache/rust/armv7-linux-androideabi/cargo/
+    - export CARGO_TARGET_DIR=/runners-cache/rust/armv7-linux-androideabi/target/
+    - export CARGO_HOME=/runners-cache/rust/armv7-linux-androideabi/cargo/
+
+.rust-cache-aarch64-linux-android:
+  before_script:
+    - mkdir -p /runners-cache/rust/aarch64-linux-android/target/
+    - mkdir -p /runners-cache/rust/aarch64-linux-android/cargo/
+    - export CARGO_TARGET_DIR=/runners-cache/rust/aarch64-linux-android/target/
+    - export CARGO_HOME=/runners-cache/rust/aarch64-linux-android/cargo/
 
 
 #

@@ -3,7 +3,7 @@
 #
 test-cargo-projects:
   extends:
-    - .rust-cache
+    - .rust-cache-x86_64-unknown-linux-musl
     - .docker-dind-tls
   except:
     - tags
