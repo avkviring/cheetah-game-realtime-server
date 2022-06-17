@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: documentation
+spec:
+  selector:
+    matchLabels:
+      app: documentation
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        prometheus: "true"
+        app: documentation
+    spec:
+      imagePullSecrets:
+        - name: cheetahdockerregistry
+      containers:
+        - name: documentation
+          image: "registry.dev.cheetah.games/cheetah/platform/user-portal:{{ .Values.global.platformImageVersion }}"
