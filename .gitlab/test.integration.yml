@@ -64,7 +64,7 @@ test-integration-run-unity-with-kubernetes:
   needs:
     - install-servers-to-kubernetes-for-integration-test
     - build-relay-client-for-integration-test
-  image: registry.dev.cheetah.games/cheetah/images/unity-builder:1.0.1
+  image: registry.dev.cheetah.games/cheetah/images/unity-builder:1.0.2
   variables:
     TEST_PLATFORM: playmode
     TESTING_TYPE: JUNIT
@@ -98,7 +98,7 @@ test-integration-run-unity-with-local-docker:
   needs:
     - build-server-images-for-integration-test
     - build-relay-client-for-integration-test
-  image: registry.dev.cheetah.games/cheetah/images/unity-builder:1.0.1
+  image: registry.dev.cheetah.games/cheetah/images/unity-builder:1.0.2
   cache:
     key: "unity-integration-test"
     paths:
