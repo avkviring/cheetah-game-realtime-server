@@ -1,6 +1,10 @@
 kube-prometheus-stack:
   prometheus:
     prometheusSpec:
+      additionalScrapeConfigsSecret:
+        enabled: true
+        name: prometheus-additional-scrape-configs
+        key: additional.yaml
       podMonitorSelector:
         matchLabels:
           monitor: cheetah
