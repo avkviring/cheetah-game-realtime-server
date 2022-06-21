@@ -33,9 +33,6 @@ kube-prometheus-stack:
           effect: "NoSchedule"
       nodeSelector:
         type: "monitoring"
-      podMonitorSelector:
-        matchLabels:
-          monitor: cheetah
       storageSpec:
         volumeClaimTemplate:
           spec:
@@ -43,15 +40,6 @@ kube-prometheus-stack:
             resources:
               requests:
                 storage: 50Gi
-    ingress:
-      annotations:
-        cert-manager.io/cluster-issuer: "letsencrypt-prod"
-        nginx.ingress.kubernetes.io/auth-type: basic
-        nginx.ingress.kubernetes.io/auth-secret: monitoring/prometheus-web-auth-secret
-        nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required'
-      ingressClassName: nginx
-      pathType: ImplementationSpecific
-      enabled: true
   grafana:
     tolerations:
       - key: "type"
@@ -60,24 +48,10 @@ kube-prometheus-stack:
         effect: "NoSchedule"
     nodeSelector:
       type: "monitoring"
-    adminUser: admin
     persistence:
       enabled: true
       accessModes: [ "ReadWriteOnce" ]
       size: 10Gi
-    ingress:
-      annotations:
-        cert-manager.io/cluster-issuer: "letsencrypt-prod"
-      ingressClassName: nginx
-      pathType: ImplementationSpecific
-      enabled: true
-    additionalDataSources:
-      - name: Loki
-        type: loki
-        url: http://monitoring-loki:3100
-    sidecar:
-      dashboards:
-        enabled: true
   alertmanager:
     alertmanagerSpec:
       tolerations:
@@ -87,16 +61,6 @@ kube-prometheus-stack:
           effect: "NoSchedule"
       nodeSelector:
         type: "monitoring"
-    enabled: true
-    ingress:
-      annotations:
-        cert-manager.io/cluster-issuer: "letsencrypt-prod"
-        nginx.ingress.kubernetes.io/auth-type: basic
-        nginx.ingress.kubernetes.io/auth-secret: monitoring/prometheus-web-auth-secret
-        nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required'
-      ingressClassName: nginx
-      pathType: ImplementationSpecific
-      enabled: true
 loki:
   tolerations:
     - key: "type"
