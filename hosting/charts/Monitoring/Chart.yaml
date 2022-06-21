@@ -4,8 +4,8 @@ version: 1.0.0
 
 dependencies:
   - name: kube-prometheus-stack
-    version: "32.2.0"
+    version: "36.0.2"
     repository: "https://prometheus-community.github.io/helm-charts"
   - name: loki
-    version: "2.9.1"
+    version: "2.12.2"
     repository: "https://grafana.github.io/helm-charts"
