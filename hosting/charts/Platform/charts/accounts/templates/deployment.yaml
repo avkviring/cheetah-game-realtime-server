@@ -50,11 +50,11 @@ spec:
                   name: jwt
                   key: private
             - name: YDB_HOST
-              value: "$(YDB_DATABASE_GRPC_SERVICE_HOST)"
+              value: "$({{ .Release.Namespace | upper }}_YDB_DATABASE_GRPC_SERVICE_HOST)"
             - name: YDB_NAMESPACE
-              value: "/Root/ydb-database/"
+              value: "/Root/{{ .Release.Namespace }}-ydb-database/"
             - name: YDB_PORT
-              value: "$(YDB_DATABASE_GRPC_SERVICE_PORT)"
+              value: "$({{ .Release.Namespace | upper }}_YDB_DATABASE_GRPC_SERVICE_PORT)"
             - name: "REDIS_HOST"
               value: "$(CHEETAH_ACCOUNTS_REDIS_MASTER_SERVICE_HOST)"
             - name: "REDIS_PORT"
