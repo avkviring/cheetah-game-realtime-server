@@ -11,6 +11,13 @@ spec:
       resources:
         requests:
           storage: 80Gi
+  resources:
+    limits:
+      cpu: 1
+      memory: 512Mi
+    requests:
+      cpu: 1
+      memory: 512Mi
   image:
     name: cr.yandex/crptqonuodf51kdj7a7d/ydb:22.2.22
   nodes: 1

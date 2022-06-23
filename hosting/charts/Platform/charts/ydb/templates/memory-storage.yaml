@@ -5,6 +5,9 @@ metadata:
   name: {{ .Release.Namespace }}-{{ .Chart.Name }}-storage
 spec:
   dataStore: [ ]
+  resources:
+    limits:
+      cpu: 200m
   image:
     name: cr.yandex/crptqonuodf51kdj7a7d/ydb:22.2.22
   nodes: 1

@@ -8,6 +8,8 @@ spec:
   nodes: 1
   domain: Root
   resources:
+    containerResources:
+        {{- .Values.database.resoures | toYaml | nindent 5 }}
     storageUnits:
       - count: 1
         unitKind: ssd
