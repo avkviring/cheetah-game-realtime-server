@@ -1,4 +1,6 @@
-## Выкладка платформы в kubernetes для локальных тестов
+# Выкладка платформы в kubernetes для локальных тестов
+# Внимание - удаляет текущий релиз со всеми сохраненным данными
+
 helm cheetah-config-creator ../example-config Platform/templates/
 helm -n $1 uninstall $1
 kubectl delete --namespace $1 --all database,storage,deployments,statefulsets,services,pods,pvc

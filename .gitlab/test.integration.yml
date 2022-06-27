@@ -47,7 +47,7 @@ install-servers-to-kubernetes-for-integration-test:
   script:
     - cd hosting/charts/
     - export KUBECONFIG=$kubeconfig
-    - ./update-dev.sh ${namespace} ${version}
+    - ./reinstall-stage.sh ${namespace} ${version}
 #
 # Запускаем тесты в Unity с сервером в kubernetes
 #

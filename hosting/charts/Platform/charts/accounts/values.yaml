@@ -7,6 +7,8 @@ memory:
   limit: 40Mi
 redis:
   master:
+    podAnnotations:
+      linkerd.io/inject: enabled
     persistence:
       enabled: false
       size: 1Gi

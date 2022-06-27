@@ -44,3 +44,6 @@ kube-prometheus-stack:
       ingressClassName: nginx
       pathType: ImplementationSpecific
       enabled: true
+loki:
+  podAnnotations:
+    linkerd.io/inject: enabled
