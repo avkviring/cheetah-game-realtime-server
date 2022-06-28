@@ -1,7 +1,12 @@
-use crate::ydb::{FIELD_NAME, FIELD_VALUE, LONG_TABLE, USER};
+use cheetah_libraries_ydb::converters::YDBValueConverter;
 use cheetah_libraries_ydb::{query, update};
 use uuid::Uuid;
-use ydb::{TableClient, YdbOrCustomerError};
+use ydb::TableClient;
+
+use crate::ydb::numeric::Num;
+use crate::ydb::table::{ToDbTable, C_FIELD_NAME, C_FIELD_VALUE, C_USER};
+use crate::ydb::{primitive::Primitive, Error};
+
 pub struct YDBUpdate {
 	client: TableClient,
 }
@@ -11,59 +16,116 @@ impl YDBUpdate {
 		Self { client }
 	}
 
-	pub async fn set_int(
+	pub async fn set<T: Primitive + ToDbTable + YDBValueConverter>(
 		&self,
 		user: &Uuid,
 		field_name: &str,
-		field_value: i64,
-	) -> Result<(), YdbOrCustomerError> {
-		let query = format!(
-			"upsert into {} ({}, {}, {}) values (${}, ${}, ${})",
-			LONG_TABLE, USER, FIELD_NAME, FIELD_VALUE, USER, FIELD_NAME, FIELD_VALUE
-		);
-
-		let q = query.as_str();
-		let _ = update!(
+		value: &T,
+	) -> Result<(), Error> {
+		let q = self.upsert_query(T::to_db_table());
+		let q = q.as_str();
+		update!(
 			self.client,
-			query!(q, user_uuid => user, field_name => field_name, value => field_value)
+			query!(q, user_uuid => user, field_name => field_name, value => value)
 		)
-		.await?;
+		.await
+		.map_err(|e| e.into())
+	}
 
-		Ok(())
+	pub async fn increment<T: Num + ToDbTable + YDBValueConverter>(
+		&self,
+		user: &Uuid,
+		field_name: &str,
+		value: &T,
+	) -> Result<(), Error> {
+		let q = self.increment_query(T::to_db_table());
+		let q = q.as_str();
+		update!(
+			self.client,
+			query!(q, user_uuid => user, field_name => field_name, increment => value)
+		)
+		.await
+		.map_err(|e| e.into())
+	}
+
+	fn upsert_query(&self, table: &str) -> String {
+		format!(
+			"upsert into {} ({}, {}, {}) values (${}, ${}, ${})",
+			table, C_USER, C_FIELD_NAME, C_FIELD_VALUE, C_USER, C_FIELD_NAME, C_FIELD_VALUE
+		)
+	}
+
+	fn increment_query(&self, table: &str) -> String {
+		format!(
+			"update {} set {} = {} + ${} where {} = ${} and {} = ${}",
+			table,
+			C_FIELD_VALUE,
+			C_FIELD_VALUE,
+			"increment",
+			C_USER,
+			C_USER,
+			C_FIELD_NAME,
+			C_FIELD_NAME,
+		)
 	}
 }
 
 #[cfg(test)]
 mod test {
-	use crate::ydb::LONG_TABLE;
+	use std::sync::Arc;
+
+	use crate::ydb::{table::LONG_TABLE, DB_NAME, MIGRATIONS_DIR};
 
 	use super::YDBUpdate;
 	use cheetah_libraries_ydb::migration::Migrator;
-	use cheetah_libraries_ydb::test_container as ydb_test;
+	use cheetah_libraries_ydb::test_container::{self as ydb_test, YDBTestInstance};
 	use cheetah_libraries_ydb::{query, select};
-	use include_dir::include_dir;
 	use uuid::Uuid;
+	use ydb::Client;
 
 	#[tokio::test]
-	async fn test_set_int() {
-		let (_instance, client) = ydb_test::get_or_create_ydb_instance("userstore").await;
+	async fn test_set_long() {
+		let (_instance, client) = setup_db().await;
+
 		let update = YDBUpdate::new(client.table_client());
-		let mut m = Migrator::new_from_dir(&include_dir!("$CARGO_MANIFEST_DIR/migrations"));
-		m.migrate(&client).await.unwrap();
-
 		let user_id = Uuid::new_v4();
-		update
-			.set_int(&user_id, "points".into(), 666)
-			.await
-			.unwrap();
+		update.set(&user_id, "points".into(), &666).await.unwrap();
 
-		let tc = client.table_client();
 		let res: Vec<i64> =
-			select!(tc, query!(format!("select value from {}", LONG_TABLE)), value => i64)
+			select!(client.table_client(), query!(format!("select value from {}", LONG_TABLE)), value => i64)
 				.await
 				.unwrap();
 
 		assert_eq!(res.len(), 1);
 		assert_eq!(res[0], 666);
+	}
+
+	#[tokio::test]
+	async fn test_increment() {
+		let (_instance, client) = setup_db().await;
+
+		let update = YDBUpdate::new(client.table_client());
+		let user = Uuid::new_v4();
+		let field_name = "incrementable";
+
+		update.set(&user, field_name, &128).await.unwrap();
+
+		update.increment(&user, field_name, &-55).await.unwrap();
+
+		let res: Vec<i64> =
+			select!(client.table_client(), query!(format!("select value from {}", LONG_TABLE)), value => i64)
+				.await
+				.unwrap();
+
+		assert_eq!(res.len(), 1);
+		assert_eq!(res[0], 73);
+	}
+
+	async fn setup_db() -> (Arc<YDBTestInstance>, Client) {
+		let (instance, client) = ydb_test::get_or_create_ydb_instance(DB_NAME).await;
+		let mut m = Migrator::new_from_dir(&MIGRATIONS_DIR);
+		m.migrate(&client).await.unwrap();
+
+		(instance, client)
 	}
 }

@@ -2,7 +2,8 @@ syntax = "proto3";
 package cheetah.userstore.external;
 
 service Update {
-    rpc SetInt(SetIntRequest) returns (UpdateReply);
+    rpc SetLong(SetLongRequest) returns (UpdateReply);
+    rpc SetDouble(SetDoubleRequest) returns (UpdateReply);
 }
 
 enum UpdateStatus {
@@ -14,19 +15,33 @@ message UpdateReply {
     UpdateStatus status = 1;
 }
 
-message SetIntRequest {
+message SetLongRequest {
     string fieldName = 1;
     sint64 value = 2;
 }
 
-service Fetch {
-    rpc GetInt(GetIntRequest) returns (GetIntReply);
+message SetDoubleRequest {
+    string fieldName = 1;
+    double value = 2;
 }
 
-message GetIntRequest {
+service Fetch {
+    rpc GetLong(GetLongRequest) returns (GetLongReply);
+    rpc GetDouble(GetDoubleRequest) returns (GetDoubleReply);
+}
+
+message GetLongRequest {
     string fieldName = 1;
 }
 
-message GetIntReply {
+message GetLongReply {
     sint64 value = 1;
+}
+
+message GetDoubleRequest {
+    string fieldName = 1;
+}
+
+message GetDoubleReply {
+    double value = 1;
 }

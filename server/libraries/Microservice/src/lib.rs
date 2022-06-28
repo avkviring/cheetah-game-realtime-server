@@ -32,7 +32,7 @@ pub fn init_with_trace_level(name: &str, trace_level: tracing::Level) {
 }
 
 pub fn get_env(name: &str) -> String {
-	std::env::var(name).unwrap_or_else(|_| panic!("Env {} don't set", name))
+	std::env::var(name).unwrap_or_else(|_| panic!("Env {} is not set", name))
 }
 
 pub fn get_env_or_default(name: &str, default: &str) -> String {

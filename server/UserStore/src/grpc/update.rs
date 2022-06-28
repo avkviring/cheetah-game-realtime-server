@@ -1,8 +1,11 @@
-use crate::grpc::userstore::{update_server::Update, SetIntRequest, UpdateReply};
+use crate::grpc::userstore::{
+	update_server::Update, SetDoubleRequest, SetLongRequest, UpdateReply,
+};
 use crate::ydb::YDBUpdate;
-use cheetah_libraries_microservice::jwt::grpc::get_user_uuid;
 use tonic::{Request, Response, Status};
 use ydb::TableClient;
+
+use super::unwrap_request;
 
 pub struct UpdateService {
 	update: YDBUpdate,
@@ -20,25 +23,29 @@ impl UpdateService {
 
 #[tonic::async_trait]
 impl Update for UpdateService {
-	async fn set_int(
+	async fn set_long(
 		&self,
-		request: Request<SetIntRequest>,
+		request: Request<SetLongRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
-		let r = get_user_uuid(request.metadata(), self.jwt_public_key.clone());
-		if let Err(_) = r {
-			return Err(Status::permission_denied("Unauthorized"));
+		match unwrap_request(request, self.jwt_public_key.clone()) {
+			Err(_) => Err(Status::permission_denied("")),
+			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
+				Ok(_) => Ok(Response::new(UpdateReply::default())),
+				Err(e) => Err(e.to_status(&args.field_name)),
+			},
 		}
+	}
 
-		let user_id = r.unwrap();
-		let args = request.into_inner();
-		let r = self
-			.update
-			.set_int(&user_id, &args.field_name, args.value)
-			.await;
-		if let Err(e) = r {
-			return Err(Status::unknown(e.to_string()));
+	async fn set_double(
+		&self,
+		request: Request<SetDoubleRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		match unwrap_request(request, self.jwt_public_key.clone()) {
+			Err(_) => Err(Status::permission_denied("")),
+			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
+				Ok(_) => Ok(Response::new(UpdateReply::default())),
+				Err(e) => Err(e.to_status(&args.field_name)),
+			},
 		}
-
-		Ok(Response::new(UpdateReply::default()))
 	}
 }
