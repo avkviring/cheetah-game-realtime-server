@@ -47,6 +47,7 @@ nav:
               - "Вещественные числа": "components/relay/commands/double.md"
               - "Сериализация": "components/relay/commands/serialization.md"
               - "Удаление поля": "components/relay/commands/delete_field.md"
+              - "CompareAndSet": "components/relay/commands/compare_and_set.md"
           - "Конфигурация": "components/relay/configuration.md"
           - "Локальная разработка":
               - "Эмуляция параметров сети": "components/relay/develop/network.md"
