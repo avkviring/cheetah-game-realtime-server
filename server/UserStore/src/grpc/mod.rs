@@ -17,6 +17,13 @@ pub struct Service {
 }
 
 impl Service {
+	pub fn new(ydb_client: Client, jwt_public_key: String) -> Self {
+		Self {
+			ydb_client,
+			jwt_public_key,
+		}
+	}
+
 	pub async fn serve(&self, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
 		let update_service =
 			UpdateService::new(self.ydb_client.table_client(), self.jwt_public_key.clone());

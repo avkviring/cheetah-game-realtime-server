@@ -795,10 +795,11 @@ dependencies = [
 
 [[package]]
 name = "cheetah-userstore"
-version = "0.1.0"
+version = "999.999.999"
 dependencies = [
  "cheetah-libraries-microservice",
  "cheetah-libraries-ydb",
+ "include_dir",
  "prost 0.9.0",
  "tokio",
  "tonic 0.6.2",
