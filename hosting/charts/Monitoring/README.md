@@ -4,3 +4,4 @@
 - Prometheus
 - Loki
 - AlertManager
+- Настройка для linkerd

@@ -1,7 +1,0 @@
-apiVersion: v1
-data:
-  additional.yaml:  |-
-    {{.Files.Get "assets/additional-scrape-configs.yaml" | b64enc }}
-kind: Secret
-metadata:
-  name: prometheus-additional-scrape-configs

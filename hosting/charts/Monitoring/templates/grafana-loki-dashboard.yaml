@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: logs-dashboard
+  name: grafana-loki-dashboard
   labels:
     grafana_dashboard: "1"
 data:
-  logs-dashboard.json: >
+  loki-dashboard.json: >
     {
       "annotations": {
         "list": [

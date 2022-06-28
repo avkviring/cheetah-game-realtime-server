@@ -5,6 +5,7 @@
 - [kubernetes](docs/kubernetes/README.md) - управление хостингом;
 - agones - запуск и масштабирование игровых серверов;
 - helm - управление kubernetes пакетами. Документация по пакетам в каталогах с пакетами (../charts/)
+- [linkerd](docs/linkerd/README.md) - network mesh (http://linkerd.io)
 
 ## Разработка
 
