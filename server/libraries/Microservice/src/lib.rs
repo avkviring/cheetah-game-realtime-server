@@ -8,7 +8,6 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::{panic, process};
 
-use log::{trace, Level};
 pub use tonic;
 use tonic::transport::Uri;
 use tracing_log::LogTracer;
@@ -22,6 +21,7 @@ use crate::prometheus::setup_prometheus;
 pub mod jwt;
 pub mod loki;
 pub mod prometheus;
+pub mod trace;
 
 pub type StringId = heapless::String<20>;
 
