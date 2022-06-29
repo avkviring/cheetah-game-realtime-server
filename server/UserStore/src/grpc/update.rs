@@ -1,11 +1,11 @@
-use crate::grpc::userstore::{
-	update_server::Update, SetDoubleRequest, SetLongRequest, UpdateReply,
-};
-use crate::ydb::YDBUpdate;
 use tonic::{Request, Response, Status};
 use ydb::TableClient;
 
-use super::unwrap_request;
+use crate::grpc::unwrap_request;
+use crate::grpc::userstore::{
+	update_server::Update, SetDoubleRequest, SetLongRequest, SetStringRequest, UpdateReply,
+};
+use crate::ydb::YDBUpdate;
 
 pub struct UpdateService {
 	update: YDBUpdate,
@@ -28,8 +28,25 @@ impl Update for UpdateService {
 		request: Request<SetLongRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
-			Err(_) => Err(Status::permission_denied("")),
+			Err(e) => Err(e),
 			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
+				Ok(_) => Ok(Response::new(UpdateReply::default())),
+				Err(e) => Err(e.to_status(&args.field_name)),
+			},
+		}
+	}
+
+	async fn increment_long(
+		&self,
+		request: Request<SetLongRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		match unwrap_request(request, self.jwt_public_key.clone()) {
+			Err(e) => Err(e),
+			Ok((user, args)) => match self
+				.update
+				.increment(&user, &args.field_name, &args.value)
+				.await
+			{
 				Ok(_) => Ok(Response::new(UpdateReply::default())),
 				Err(e) => Err(e.to_status(&args.field_name)),
 			},
@@ -41,7 +58,37 @@ impl Update for UpdateService {
 		request: Request<SetDoubleRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
+			Err(e) => Err(e),
+			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
+				Ok(_) => Ok(Response::new(UpdateReply::default())),
+				Err(e) => Err(e.to_status(&args.field_name)),
+			},
+		}
+	}
+
+	async fn increment_double(
+		&self,
+		request: Request<SetDoubleRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Err(_) => Err(Status::permission_denied("")),
+			Ok((user, args)) => match self
+				.update
+				.increment(&user, &args.field_name, &args.value)
+				.await
+			{
+				Ok(_) => Ok(Response::new(UpdateReply::default())),
+				Err(e) => Err(e.to_status(&args.field_name)),
+			},
+		}
+	}
+
+	async fn set_string(
+		&self,
+		request: Request<SetStringRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		match unwrap_request(request, self.jwt_public_key.clone()) {
+			Err(e) => Err(e),
 			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
 				Ok(_) => Ok(Response::new(UpdateReply::default())),
 				Err(e) => Err(e.to_status(&args.field_name)),

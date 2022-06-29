@@ -10,4 +10,11 @@ create table user_double_value (
     field_name Utf8,
     value Double,
     primary key (user_uuid, field_name)
-)
+);
+
+create table user_string_value (
+    user_uuid String,
+    field_name Utf8,
+    value Utf8,
+    primary key (user_uuid, field_name)
+);

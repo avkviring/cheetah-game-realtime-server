@@ -1,6 +1,7 @@
 use crate::grpc::unwrap_request;
 use crate::grpc::userstore::{
 	fetch_server::Fetch, GetDoubleReply, GetDoubleRequest, GetLongReply, GetLongRequest,
+	GetStringReply, GetStringRequest,
 };
 use crate::ydb::YDBFetch;
 use tonic::{Request, Response, Status};
@@ -42,6 +43,19 @@ impl Fetch for FetchService {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Ok((user, args)) => match self.fetch.get(&user, &args.field_name).await {
 				Ok(value) => Ok(Response::new(GetDoubleReply { value })),
+				Err(e) => Err(e.to_status(&args.field_name)),
+			},
+			Err(e) => Err(e),
+		}
+	}
+
+	async fn get_string(
+		&self,
+		request: Request<GetStringRequest>,
+	) -> Result<Response<GetStringReply>, Status> {
+		match unwrap_request(request, self.jwt_public_key.clone()) {
+			Ok((user, args)) => match self.fetch.get(&user, &args.field_name).await {
+				Ok(value) => Ok(Response::new(GetStringReply { value })),
 				Err(e) => Err(e.to_status(&args.field_name)),
 			},
 			Err(e) => Err(e),

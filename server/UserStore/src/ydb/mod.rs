@@ -63,6 +63,26 @@ mod test {
 		assert_eq!(expected_value, actual_value);
 	}
 
+	#[tokio::test]
+	async fn test_get_string() {
+		let (_instance, client) = setup_ydb().await;
+
+		let user = Uuid::new_v4();
+		let field_name = "displayname";
+		let expected_value = "Potet";
+
+		let update = YDBUpdate::new(client.table_client());
+		update
+			.set(&user, field_name, &expected_value)
+			.await
+			.unwrap();
+
+		let fetch = YDBFetch::new(client.table_client());
+		let actual_value: String = fetch.get(&user, field_name).await.unwrap();
+
+		assert_eq!(expected_value, actual_value);
+	}
+
 	async fn setup_ydb() -> (Arc<YDBTestInstance>, Client) {
 		let (_instance, client) = ydb_test::get_or_create_ydb_instance(DB_NAME).await;
 
