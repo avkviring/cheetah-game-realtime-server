@@ -1,6 +1,10 @@
 use tonic::{self, Request, Response, Status};
 
 use cheetah_libraries_microservice::jwt::JWTTokenParser;
+use cheetah_libraries_microservice::trace::{
+	trace_error_and_convert_to_internal_tonic_status,
+	trace_error_and_convert_to_unauthenticated_tonic_status,
+};
 use google_jwt::Parser;
 
 use crate::google::storage::GoogleStorage;
@@ -67,28 +71,25 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let token = &registry_or_login_request.google_token;
 		let token = self.parser.parse(token).await;
 		let GoogleTokenClaim { sub: google_id } =
-			token.map_err(|err| Status::unauthenticated(format!("{:?}", err)))?;
+			token.map_err(trace_error_and_convert_to_unauthenticated_tonic_status)?;
 
-		match self.get_or_create_user(&google_id).await {
-			Ok((user, registered_user)) => {
-				let device_id = &registry_or_login_request.device_id;
+		let (user, registered_user) = self
+			.get_or_create_user(&google_id)
+			.await
+			.map_err(trace_error_and_convert_to_internal_tonic_status)?;
 
-				let tokens = self.tokens_service.create(user, device_id).await;
-				let tokens = tokens.map_err(|err| {
-					tracing::error!("{:?}", err);
-					Status::internal("error")
-				})?;
+		let device_id = &registry_or_login_request.device_id;
 
-				Ok(Response::new(proto::RegisterOrLoginResponse {
-					registered_player: registered_user,
-					tokens: Some(SessionAndRefreshTokens {
-						session: tokens.session,
-						refresh: tokens.refresh,
-					}),
-				}))
-			}
-			Err(e) => Err(Status::internal(format!("{}", e))),
-		}
+		let tokens = self.tokens_service.create(user, device_id).await;
+		let tokens = tokens.map_err(trace_error_and_convert_to_internal_tonic_status)?;
+
+		Ok(Response::new(proto::RegisterOrLoginResponse {
+			registered_player: registered_user,
+			tokens: Some(SessionAndRefreshTokens {
+				session: tokens.session,
+				refresh: tokens.refresh,
+			}),
+		}))
 	}
 
 	async fn attach(
@@ -98,17 +99,16 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let attach_request = request.get_ref();
 		let token = &attach_request.google_token;
 		let token = self.parser.parse(token).await;
-		let GoogleTokenClaim { sub: google_id } = token.map_err(|err| {
-			tracing::error!("{:?}", err);
-			Status::internal("error")
-		})?;
+		let GoogleTokenClaim { sub: google_id } =
+			token.map_err(trace_error_and_convert_to_internal_tonic_status)?;
 
-		let user = self
+		let uuid = self
 			.jwt_token_parser
 			.parse_user_uuid(request.metadata())
-			.map(User::try_from)
-			.map_err(|err| Status::unauthenticated(format!("{:?}", err)))?
-			.map_err(|err| Status::internal(format!("{:?}", err)))?;
+			.map_err(trace_error_and_convert_to_unauthenticated_tonic_status)?;
+
+		let user =
+			User::try_from(uuid).map_err(trace_error_and_convert_to_internal_tonic_status)?;
 
 		self.storage.attach(user, &google_id).await.unwrap();
 
@@ -219,7 +219,7 @@ mod test {
 		let cookie_registry_result = cookie_registry_response.unwrap();
 		let cookie_registry_result = cookie_registry_result.get_ref();
 
-		let mut request = tonic::Request::new(AttachRequest {
+		let mut request = Request::new(AttachRequest {
 			google_token: google_user_token.clone(),
 			device_id: "some-device-id".to_owned(),
 		});

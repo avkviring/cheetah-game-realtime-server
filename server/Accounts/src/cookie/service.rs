@@ -1,6 +1,7 @@
+use cheetah_libraries_microservice::trace::trace_error_and_convert_to_internal_tonic_status;
 use lazy_static::lazy_static;
 use prometheus::{register_int_counter, IntCounter};
-use tonic::{Request, Response};
+use tonic::{Request, Response, Status};
 use uuid::Uuid;
 use ydb::TableClient;
 
@@ -77,9 +78,8 @@ impl proto::cookie_server::Cookie for CookieService {
 	async fn register(
 		&self,
 		request: Request<proto::RegistryRequest>,
-	) -> Result<Response<proto::RegistryResponse>, tonic::Status> {
+	) -> Result<Response<proto::RegistryResponse>, Status> {
 		COOKIE_REGISTER_COUNTER.inc();
-
 		self.do_register(&request.get_ref().device_id)
 			.await
 			.map(|(tokens, cookie)| {
@@ -88,22 +88,22 @@ impl proto::cookie_server::Cookie for CookieService {
 					cookie: cookie.0.to_string(),
 				})
 			})
-			.map_err(|e| tonic::Status::internal(format!("{:?}", e)))
+			.map_err(trace_error_and_convert_to_internal_tonic_status)
 	}
 
 	async fn login(
 		&self,
-		request: Request<proto::LoginRequest>,
-	) -> Result<Response<proto::LoginResponse>, tonic::Status> {
+		request: Request<LoginRequest>,
+	) -> Result<Response<proto::LoginResponse>, Status> {
 		COOKIE_LOGIN_COUNTER.inc();
 		let request = request.get_ref();
 		let uuid = Uuid::try_from(request.cookie.as_str())
-			.map_err(|e| tonic::Status::internal(format!("{}", e)))?;
+			.map_err(trace_error_and_convert_to_internal_tonic_status)?;
 		let result = self
 			.do_login(request, Cookie::from(uuid))
 			.await
 			.map(|tokens| Response::new(proto::LoginResponse { tokens }))
-			.map_err(|e| tonic::Status::internal(format!("{}", e)))?;
+			.map_err(trace_error_and_convert_to_internal_tonic_status)?;
 		Ok(result)
 	}
 }

@@ -90,7 +90,7 @@ impl TokensService {
 		user: User,
 		device_id: &str,
 	) -> Result<Tokens, JWTTokensServiceError> {
-		Result::Ok(Tokens {
+		Ok(Tokens {
 			session: self.create_session_token(&user),
 			refresh: self.create_refresh_token(user, device_id).await?,
 		})
