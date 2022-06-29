@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use tonic::{Code, Request, Response, Status};
+use tonic::{Request, Response, Status};
 
 use cheetah_libraries_microservice::trace::trace_error_and_convert_to_internal_tonic_status;
 

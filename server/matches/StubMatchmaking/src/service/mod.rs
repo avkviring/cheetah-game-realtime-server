@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use tokio::sync::RwLock;
 use tonic::transport::Uri;
-use tonic::{Code, Request, Response, Status};
+use tonic::{Code, Request, Response};
 use uuid::Uuid;
 
 use cheetah_libraries_microservice::trace::{
@@ -72,7 +72,7 @@ impl StubMatchmakingService {
 	}
 
 	async fn attach_user(
-		ticket: &matchmaking::external::TicketRequest,
+		ticket: &TicketRequest,
 		match_info: &MatchInfo,
 	) -> Result<relay::internal::AttachUserResponse, String> {
 		let mut relay = relay::internal::relay_client::RelayClient::connect(
@@ -87,17 +87,17 @@ impl StubMatchmakingService {
 		match relay
 			.attach_user(Request::new(AttachUserRequest {
 				room_id: match_info.room_id,
-				user: Option::Some(relay::internal::UserTemplate {
+				user: Some(relay::internal::UserTemplate {
 					groups: ticket.user_groups,
 					objects: Default::default(),
 				}),
 			}))
 			.await
 		{
-			Ok(user_attach_response) => Result::Ok(user_attach_response.into_inner()),
+			Ok(user_attach_response) => Ok(user_attach_response.into_inner()),
 			Err(status) => match status.code() {
-				Code::NotFound => Result::Err(format!("Relay server not found")),
-				e => Result::Err(format!("Relay server unknown status {:?}", e)),
+				Code::NotFound => Err(format!("Relay server not found")),
+				e => Err(format!("Relay server unknown status {:?}", e)),
 			},
 		}
 	}
@@ -144,7 +144,7 @@ impl Matchmaking for StubMatchmakingService {
 	async fn matchmaking(
 		&self,
 		request: Request<TicketRequest>,
-	) -> Result<tonic::Response<TicketResponse>, tonic::Status> {
+	) -> Result<Response<TicketResponse>, tonic::Status> {
 		match cheetah_libraries_microservice::jwt::grpc::get_user_uuid(
 			request.metadata(),
 			self.jwt_public_key.clone(),
@@ -152,11 +152,11 @@ impl Matchmaking for StubMatchmakingService {
 			Ok(user) => {
 				let ticket_request = request.into_inner();
 				match self.matchmaking(ticket_request, user).await {
-					Ok(response) => Result::Ok(Response::new(response)),
-					Err(e) => Result::Err(trace_error_and_convert_to_internal_tonic_status(e)),
+					Ok(response) => Ok(Response::new(response)),
+					Err(e) => Err(trace_error_and_convert_to_internal_tonic_status(e)),
 				}
 			}
-			Err(e) => Result::Err(trace_error_and_convert_to_unauthenticated_tonic_status(e)),
+			Err(e) => Err(trace_error_and_convert_to_unauthenticated_tonic_status(e)),
 		}
 	}
 }
@@ -333,11 +333,11 @@ pub mod tests {
 		async fn create_match(
 			&self,
 			_request: Request<CreateMatchRequest>,
-		) -> Result<tonic::Response<CreateMatchResponse>, tonic::Status> {
+		) -> Result<Response<CreateMatchResponse>, Status> {
 			let mut sequence = self.room_sequence.write().await;
 			let current_seq = *sequence;
 			*sequence += 1;
-			Result::Ok(Response::new(CreateMatchResponse {
+			Ok(Response::new(CreateMatchResponse {
 				addrs: Some(RelayAddrs {
 					// not used
 					game: Some(Addr {
@@ -365,21 +365,21 @@ pub mod tests {
 		async fn create_room(
 			&self,
 			_request: Request<relay::internal::RoomTemplate>,
-		) -> Result<tonic::Response<relay::internal::CreateRoomResponse>, tonic::Status> {
+		) -> Result<Response<relay::internal::CreateRoomResponse>, Status> {
 			todo!()
 		}
 
 		async fn attach_user(
 			&self,
-			_request: tonic::Request<AttachUserRequest>,
-		) -> Result<tonic::Response<AttachUserResponse>, tonic::Status> {
+			_request: Request<AttachUserRequest>,
+		) -> Result<Response<AttachUserResponse>, Status> {
 			let mut fail = self.fail_when_zero.write().await;
 			let current = *fail;
 			*fail -= 1;
 			if current == 0 {
-				Result::Err(Status::not_found(""))
+				Err(Status::not_found(""))
 			} else {
-				Result::Ok(Response::new(AttachUserResponse {
+				Ok(Response::new(AttachUserResponse {
 					user_id: StubRelay::USER_ID,
 					private_key: vec![],
 				}))
