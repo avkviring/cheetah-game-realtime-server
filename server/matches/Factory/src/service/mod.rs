@@ -5,6 +5,8 @@ use std::sync::Mutex;
 use prometheus::{IntCounter, Opts};
 use tonic::Status;
 
+use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status_with_full_message;
+
 use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::relay::internal as relay;
 use crate::proto::matches::relay::internal::relay_client::RelayClient;
@@ -39,9 +41,12 @@ impl FactoryService {
 		self.prometheus_increment_create_match_counter(template_name.as_str());
 
 		// получаем шаблон
-		let room_template = self
-			.template(&template_name)
-			.ok_or_else(|| Status::internal(format!("Template {} not found", template_name)))?;
+		let room_template = self.template(&template_name).ok_or_else(|| {
+			trace_and_convert_to_tonic_internal_status_with_full_message(format!(
+				"Template {} not found",
+				template_name
+			))
+		})?;
 
 		// ищем свободный relay сервер
 		let addrs = self.registry.find_free_relay().await.unwrap();

@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
+use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status_with_full_message;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::FieldType;
@@ -39,13 +40,15 @@ impl CommandTracerGRPCService {
 		converter: fn(T) -> Result<Response<V>, tonic::Status>,
 	) -> Result<Response<V>, tonic::Status> {
 		let manager = self.manager.lock().unwrap();
-		match manager.execute_command_trace_sessions_task(room_id, task) {
-			Ok(_) => match receiver.recv_timeout(Duration::from_millis(100)) {
-				Ok(result) => converter(result),
-				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-			},
-			Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-		}
+
+		manager
+			.execute_command_trace_sessions_task(room_id, task)
+			.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)?;
+
+		let result = receiver
+			.recv_timeout(Duration::from_millis(100))
+			.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)?;
+		converter(result)
 	}
 }
 
@@ -62,7 +65,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			task,
 			receiver,
 			|session_id| {
-				Result::Ok(Response::new(admin::CreateSessionResponse {
+				Ok(Response::new(admin::CreateSessionResponse {
 					id: session_id as u32,
 				}))
 			},
@@ -80,15 +83,11 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			request.filter.clone(),
 			sender,
 		);
-		self.execute_task(
-			request.room as RoomId,
-			task,
-			receiver,
-			|result| match result {
-				Ok(_) => Result::Ok(Response::new(admin::SetFilterResponse {})),
-				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-			},
-		)
+		self.execute_task(request.room as RoomId, task, receiver, |result| {
+			result
+				.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)
+				.map(|_| Response::new(admin::SetFilterResponse {}))
+		})
 	}
 
 	async fn get_commands(
@@ -98,17 +97,15 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = CommandTracerSessionsTask::GetCommands(request.session as SessionId, sender);
-		self.execute_task(
-			request.room as RoomId,
-			task,
-			receiver,
-			|result| match result {
-				Ok(commands) => Result::Ok(Response::new(admin::GetCommandsResponse {
-					commands: commands.into_iter().map(admin::Command::from).collect(),
-				})),
-				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-			},
-		)
+		self.execute_task(request.room as RoomId, task, receiver, |result| {
+			result
+				.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)
+				.map(|commands| {
+					Response::new(admin::GetCommandsResponse {
+						commands: commands.into_iter().map(admin::Command::from).collect(),
+					})
+				})
+		})
 	}
 
 	async fn close_session(
@@ -118,15 +115,11 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = CommandTracerSessionsTask::CloseSession(request.session as SessionId, sender);
-		self.execute_task(
-			request.room as RoomId,
-			task,
-			receiver,
-			|result| match result {
-				Ok(_) => Result::Ok(Response::new(admin::CloseSessionResponse {})),
-				Err(e) => Result::Err(tonic::Status::internal(format!("{:?}", e))),
-			},
-		)
+		self.execute_task(request.room as RoomId, task, receiver, |result| {
+			result
+				.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)
+				.map(|_| Response::new(admin::CloseSessionResponse {}))
+		})
 	}
 }
 
@@ -265,7 +258,7 @@ pub mod test {
 	pub fn should_convert() {
 		let command = TracedCommand {
 			time: 1.1,
-			template: Option::Some(155),
+			template: Some(155),
 			user: 255,
 			network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Room),
@@ -283,10 +276,10 @@ pub mod test {
 				command: "Event".to_string(),
 				object_id: "root(100)".to_string(),
 				user_id: 255,
-				template: Option::Some(155),
+				template: Some(155),
 				value: "[10, 20, 30]".to_string(),
-				field_id: Option::Some(555),
-				field_type: Option::Some(shared::FieldType::Event as i32)
+				field_id: Some(555),
+				field_type: Some(shared::FieldType::Event as i32)
 			}
 		)
 	}
@@ -309,10 +302,10 @@ pub mod test {
 				command: "AttachToRoom".to_string(),
 				object_id: "none".to_string(),
 				user_id: 255,
-				template: Option::None,
+				template: None,
 				value: "".to_string(),
-				field_id: Option::None,
-				field_type: Option::None
+				field_id: None,
+				field_type: None
 			}
 		)
 	}

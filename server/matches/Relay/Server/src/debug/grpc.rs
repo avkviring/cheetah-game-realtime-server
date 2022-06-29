@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
+use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status_with_full_message;
 
 use crate::debug::proto::admin;
 use crate::server::manager::ServerManager;
@@ -21,9 +22,9 @@ impl admin::relay_server::Relay for RelayAdminGRPCService {
 		_request: Request<admin::GetRoomsRequest>,
 	) -> Result<Response<admin::GetRoomsResponse>, tonic::Status> {
 		let manager = self.manager.lock().unwrap();
-		match manager.get_rooms() {
-			Ok(rooms) => Result::Ok(Response::new(admin::GetRoomsResponse { rooms })),
-			Err(e) => Result::Err(tonic::Status::internal(e)),
-		}
+		manager
+			.get_rooms()
+			.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)
+			.map(|rooms| Response::new(admin::GetRoomsResponse { rooms }))
 	}
 }
