@@ -2,6 +2,8 @@ use std::time::Duration;
 
 use tonic::{Code, Request, Response, Status};
 
+use cheetah_libraries_microservice::trace::trace_error_and_convert_to_internal_tonic_status;
+
 use crate::loki::Loki;
 use crate::proto;
 use crate::proto::{EventRequest, EventResponse};
@@ -38,6 +40,6 @@ impl proto::events_server::Events for EventsService {
 			)
 			.await
 			.map(|_| Response::new(EventResponse {}))
-			.map_err(|e| Status::new(Code::Internal, e))
+			.map_err(trace_error_and_convert_to_internal_tonic_status)
 	}
 }
