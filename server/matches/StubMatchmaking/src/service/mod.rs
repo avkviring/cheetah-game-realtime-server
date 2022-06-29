@@ -5,6 +5,10 @@ use tonic::transport::Uri;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
+use cheetah_libraries_microservice::trace::{
+	trace_error_and_convert_to_internal_tonic_status,
+	trace_error_and_convert_to_unauthenticated_tonic_status,
+};
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
@@ -149,10 +153,10 @@ impl Matchmaking for StubMatchmakingService {
 				let ticket_request = request.into_inner();
 				match self.matchmaking(ticket_request, user).await {
 					Ok(response) => Result::Ok(Response::new(response)),
-					Err(e) => Result::Err(Status::new(Code::Internal, e)),
+					Err(e) => Result::Err(trace_error_and_convert_to_internal_tonic_status(e)),
 				}
 			}
-			Err(e) => Result::Err(tonic::Status::unauthenticated(format!("{:?}", e))),
+			Err(e) => Result::Err(trace_error_and_convert_to_unauthenticated_tonic_status(e)),
 		}
 	}
 }
