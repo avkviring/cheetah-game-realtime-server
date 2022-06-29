@@ -15,7 +15,7 @@
 
 - [Тестирование](docs/private/test.md)
 - [Документирование](docs/README.md)
-- [Проверочные листы для разных ситуаций](docs/private/checklists/README.md)
+- [Архитектура микросервисов](docs/private/microservice.md)
 - [Наименование commit](CONTRIBUTING.md)
 
 ## Шаблон микросервиса
