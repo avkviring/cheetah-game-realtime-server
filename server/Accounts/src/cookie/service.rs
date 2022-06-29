@@ -1,4 +1,4 @@
-use cheetah_libraries_microservice::trace::trace_error_and_convert_to_internal_tonic_status;
+use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status;
 use lazy_static::lazy_static;
 use prometheus::{register_int_counter, IntCounter};
 use tonic::{Request, Response, Status};
@@ -88,7 +88,7 @@ impl proto::cookie_server::Cookie for CookieService {
 					cookie: cookie.0.to_string(),
 				})
 			})
-			.map_err(trace_error_and_convert_to_internal_tonic_status)
+			.map_err(trace_and_convert_to_tonic_internal_status)
 	}
 
 	async fn login(
@@ -98,12 +98,12 @@ impl proto::cookie_server::Cookie for CookieService {
 		COOKIE_LOGIN_COUNTER.inc();
 		let request = request.get_ref();
 		let uuid = Uuid::try_from(request.cookie.as_str())
-			.map_err(trace_error_and_convert_to_internal_tonic_status)?;
+			.map_err(trace_and_convert_to_tonic_internal_status)?;
 		let result = self
 			.do_login(request, Cookie::from(uuid))
 			.await
 			.map(|tokens| Response::new(proto::LoginResponse { tokens }))
-			.map_err(trace_error_and_convert_to_internal_tonic_status)?;
+			.map_err(trace_and_convert_to_tonic_internal_status)?;
 		Ok(result)
 	}
 }

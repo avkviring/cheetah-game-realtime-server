@@ -1,4 +1,4 @@
-use cheetah_libraries_microservice::trace::trace_error_and_convert_to_unauthenticated_tonic_status;
+use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_unauthenticated_status;
 use proto::RefreshTokenRequest;
 
 use crate::proto;
@@ -26,7 +26,7 @@ impl proto::tokens_server::Tokens for TokensGrpcService {
 			.service
 			.refresh(request.token.clone())
 			.await
-			.map_err(trace_error_and_convert_to_unauthenticated_tonic_status)?;
+			.map_err(trace_and_convert_to_tonic_unauthenticated_status)?;
 
 		Ok(tonic::Response::new(SessionAndRefreshTokens {
 			session: tokens.session,

@@ -2,8 +2,8 @@ use tonic::{self, Request, Response, Status};
 
 use cheetah_libraries_microservice::jwt::JWTTokenParser;
 use cheetah_libraries_microservice::trace::{
-	trace_error_and_convert_to_internal_tonic_status,
-	trace_error_and_convert_to_unauthenticated_tonic_status,
+	trace_and_convert_to_tonic_internal_status,
+	trace_and_convert_to_tonic_unauthenticated_status,
 };
 use google_jwt::Parser;
 
@@ -71,17 +71,17 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let token = &registry_or_login_request.google_token;
 		let token = self.parser.parse(token).await;
 		let GoogleTokenClaim { sub: google_id } =
-			token.map_err(trace_error_and_convert_to_unauthenticated_tonic_status)?;
+			token.map_err(trace_and_convert_to_tonic_unauthenticated_status)?;
 
 		let (user, registered_user) = self
 			.get_or_create_user(&google_id)
 			.await
-			.map_err(trace_error_and_convert_to_internal_tonic_status)?;
+			.map_err(trace_and_convert_to_tonic_internal_status)?;
 
 		let device_id = &registry_or_login_request.device_id;
 
 		let tokens = self.tokens_service.create(user, device_id).await;
-		let tokens = tokens.map_err(trace_error_and_convert_to_internal_tonic_status)?;
+		let tokens = tokens.map_err(trace_and_convert_to_tonic_internal_status)?;
 
 		Ok(Response::new(proto::RegisterOrLoginResponse {
 			registered_player: registered_user,
@@ -100,15 +100,15 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let token = &attach_request.google_token;
 		let token = self.parser.parse(token).await;
 		let GoogleTokenClaim { sub: google_id } =
-			token.map_err(trace_error_and_convert_to_internal_tonic_status)?;
+			token.map_err(trace_and_convert_to_tonic_internal_status)?;
 
 		let uuid = self
 			.jwt_token_parser
 			.parse_user_uuid(request.metadata())
-			.map_err(trace_error_and_convert_to_unauthenticated_tonic_status)?;
+			.map_err(trace_and_convert_to_tonic_unauthenticated_status)?;
 
 		let user =
-			User::try_from(uuid).map_err(trace_error_and_convert_to_internal_tonic_status)?;
+			User::try_from(uuid).map_err(trace_and_convert_to_tonic_internal_status)?;
 
 		self.storage.attach(user, &google_id).await.unwrap();
 
