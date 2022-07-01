@@ -1,10 +1,7 @@
 use tonic::{self, Request, Response, Status};
 
 use cheetah_libraries_microservice::jwt::JWTTokenParser;
-use cheetah_libraries_microservice::trace::{
-	trace_and_convert_to_tonic_internal_status,
-	trace_and_convert_to_tonic_unauthenticated_status,
-};
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 use google_jwt::Parser;
 
 use crate::google::storage::GoogleStorage;
@@ -59,6 +56,17 @@ impl GoogleGrpcService {
 			Some(user) => Ok((user, false)),
 		}
 	}
+
+	async fn parse_google_id(&self, token: &String) -> Result<String, Status> {
+		let GoogleTokenClaim { sub: google_id } = self
+			.parser
+			.parse(token)
+			.await
+			.trace_and_map_err(format!("Parse google id {}", token), |_| {
+				Status::internal("")
+			})?;
+		Ok(google_id)
+	}
 }
 
 #[tonic::async_trait]
@@ -69,19 +77,22 @@ impl proto::google_server::Google for GoogleGrpcService {
 	) -> Result<Response<proto::RegisterOrLoginResponse>, Status> {
 		let registry_or_login_request = request.get_ref();
 		let token = &registry_or_login_request.google_token;
-		let token = self.parser.parse(token).await;
-		let GoogleTokenClaim { sub: google_id } =
-			token.map_err(trace_and_convert_to_tonic_unauthenticated_status)?;
+		let google_id = self.parse_google_id(token).await?;
 
 		let (user, registered_user) = self
 			.get_or_create_user(&google_id)
 			.await
-			.map_err(trace_and_convert_to_tonic_internal_status)?;
+			.trace_and_map_err(format!("Google get or create user {}", token), |_| {
+				Status::internal("")
+			})?;
 
 		let device_id = &registry_or_login_request.device_id;
 
-		let tokens = self.tokens_service.create(user, device_id).await;
-		let tokens = tokens.map_err(trace_and_convert_to_tonic_internal_status)?;
+		let tokens = self
+			.tokens_service
+			.create(user, device_id)
+			.await
+			.trace_and_map_err("Create token for user", |_| Status::internal(""))?;
 
 		Ok(Response::new(proto::RegisterOrLoginResponse {
 			registered_player: registered_user,
@@ -98,17 +109,19 @@ impl proto::google_server::Google for GoogleGrpcService {
 	) -> Result<Response<proto::AttachResponse>, Status> {
 		let attach_request = request.get_ref();
 		let token = &attach_request.google_token;
-		let token = self.parser.parse(token).await;
-		let GoogleTokenClaim { sub: google_id } =
-			token.map_err(trace_and_convert_to_tonic_internal_status)?;
+		let google_id = self.parse_google_id(token).await?;
 
-		let uuid = self
+		let user_uuid = self
 			.jwt_token_parser
 			.parse_user_uuid(request.metadata())
-			.map_err(trace_and_convert_to_tonic_unauthenticated_status)?;
+			.trace_and_map_err(format!("Parse jwt token {:?}", request.metadata()), |_| {
+				Status::internal("")
+			})?;
 
-		let user =
-			User::try_from(uuid).map_err(trace_and_convert_to_tonic_internal_status)?;
+		let user = User::try_from(user_uuid)
+			.trace_and_map_err(format!("Convert uuid to user {:?}", user_uuid), |_| {
+				Status::internal("")
+			})?;
 
 		self.storage.attach(user, &google_id).await.unwrap();
 

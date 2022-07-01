@@ -1,59 +1,30 @@
 use std::fmt::Debug;
 
-use tonic::Status;
 use tracing::error;
 
-///
-/// Использовать для внешних запросов, не раскрываем информацию об ошибке клиенту
-///
-#[track_caller]
-pub fn trace_and_convert_to_tonic_internal_status<T>(error: T) -> Status
-where
-	T: Debug,
-{
-	trace(error);
-	Status::internal("internal error")
+pub trait ResultErrorTracer<T, E> {
+	fn trace_and_map_err<M, F, OutError>(self, details: M, f: F) -> Result<T, OutError>
+	where
+		F: FnOnce(String) -> OutError,
+		M: Into<String>;
 }
 
-///
-/// Использовать для внешних запросов, не раскрываем информацию об ошибке клиенту
-///
-#[track_caller]
-pub fn trace_and_convert_to_tonic_unauthenticated_status<T>(error: T) -> Status
+impl<T, E> ResultErrorTracer<T, E> for Result<T, E>
 where
-	T: Debug,
+	E: Debug,
 {
-	trace(error);
-	Status::unauthenticated("unauthenticated error")
-}
-
-///
-/// Использовать для  внутренних запросов, раскрываем информацию об ошибке клиенту
-///
-#[track_caller]
-pub fn trace_and_convert_to_tonic_internal_status_with_full_message<T>(error: T) -> Status
-where
-	T: Debug,
-{
-	Status::internal(trace(error))
-}
-
-///
-/// Использовать для  внутренних запросов, раскрываем информацию об ошибке клиенту
-///
-#[track_caller]
-pub fn trace_and_convert_to_tonic_unauthenticated_status_with_full_message<T>(error: T) -> Status
-where
-	T: Debug,
-{
-	Status::unauthenticated(trace(error))
-}
-
-fn trace<T>(error: T) -> String
-where
-	T: Debug,
-{
-	let msg = format!("{} {:?}", std::panic::Location::caller(), error);
-	error!("{}", msg);
-	msg
+	fn trace_and_map_err<M, F, OutError>(self, details: M, f: F) -> Result<T, OutError>
+	where
+		F: FnOnce(String) -> OutError,
+		M: Into<String>,
+	{
+		match self {
+			Ok(v) => Ok(v),
+			Err(e) => {
+				let msg = format!("{} {:?}", details.into(), e);
+				error!("{}", msg);
+				Err(f(msg))
+			}
+		}
+	}
 }

@@ -2,8 +2,10 @@ use std::convert::AsRef;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use tonic::Status;
+
 use cheetah_libraries_microservice::tonic::{Request, Response};
-use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status_with_full_message;
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::FieldType;
@@ -13,7 +15,7 @@ use cheetah_matches_relay_common::room::RoomId;
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
 use crate::debug::tracer::{
-	CommandTracerSessionsTask, SessionId, TracedBothDirectionCommand, TracedCommand,
+	SessionId, TracedBothDirectionCommand, TracedCommand, TracerSessionCommand,
 };
 use crate::server::manager::ServerManager;
 
@@ -32,23 +34,30 @@ impl CommandTracerGRPCService {
 	/// Выполнить задачу в relay сервере (в другом потоке), дождаться результата и преобразовать
 	/// его в нужный для grpc формат
 	///
-	pub fn execute_task<T, V>(
+	pub fn execute_task<TaskResult, GrpcType>(
 		&self,
 		room_id: RoomId,
-		task: CommandTracerSessionsTask,
-		receiver: std::sync::mpsc::Receiver<T>,
-		converter: fn(T) -> Result<Response<V>, tonic::Status>,
-	) -> Result<Response<V>, tonic::Status> {
+		task: TracerSessionCommand,
+		receiver: std::sync::mpsc::Receiver<TaskResult>,
+		converter: fn(TaskResult) -> Result<GrpcType, Status>,
+	) -> Result<Response<GrpcType>, Status> {
 		let manager = self.manager.lock().unwrap();
 
 		manager
-			.execute_command_trace_sessions_task(room_id, task)
-			.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)?;
+			.execute_command_trace_sessions_task(room_id, task.clone())
+			.trace_and_map_err(
+				format!("Schedule tracer command {} {:?}", room_id, task),
+				Status::internal,
+			)?;
 
 		let result = receiver
 			.recv_timeout(Duration::from_millis(100))
-			.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)?;
-		converter(result)
+			.trace_and_map_err(
+				format!("Wait tracer command {} {:?}", room_id, task),
+				Status::internal,
+			)?;
+
+		converter(result).map(Response::new)
 	}
 }
 
@@ -57,17 +66,17 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn create_session(
 		&self,
 		request: Request<admin::CreateSessionRequest>,
-	) -> Result<Response<admin::CreateSessionResponse>, tonic::Status> {
+	) -> Result<Response<admin::CreateSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		let task = CommandTracerSessionsTask::CreateSession(sender);
+		let task = TracerSessionCommand::CreateSession(sender);
 		self.execute_task(
 			request.get_ref().room as RoomId,
 			task,
 			receiver,
 			|session_id| {
-				Ok(Response::new(admin::CreateSessionResponse {
+				Ok(admin::CreateSessionResponse {
 					id: session_id as u32,
-				}))
+				})
 			},
 		)
 	}
@@ -75,35 +84,31 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn set_filter(
 		&self,
 		request: Request<admin::SetFilterRequest>,
-	) -> Result<Response<admin::SetFilterResponse>, tonic::Status> {
+	) -> Result<Response<admin::SetFilterResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = CommandTracerSessionsTask::SetFilter(
+		let task = TracerSessionCommand::SetFilter(
 			request.session as SessionId,
 			request.filter.clone(),
 			sender,
 		);
-		self.execute_task(request.room as RoomId, task, receiver, |result| {
-			result
-				.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)
-				.map(|_| Response::new(admin::SetFilterResponse {}))
+		self.execute_task(request.room as RoomId, task, receiver, |_| {
+			Ok(admin::SetFilterResponse {})
 		})
 	}
 
 	async fn get_commands(
 		&self,
 		request: Request<admin::GetCommandsRequest>,
-	) -> Result<Response<admin::GetCommandsResponse>, tonic::Status> {
+	) -> Result<Response<admin::GetCommandsResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = CommandTracerSessionsTask::GetCommands(request.session as SessionId, sender);
+		let task = TracerSessionCommand::GetCommands(request.session as SessionId, sender);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
-				.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)
-				.map(|commands| {
-					Response::new(admin::GetCommandsResponse {
-						commands: commands.into_iter().map(admin::Command::from).collect(),
-					})
+				.trace_and_map_err("Get commands for trace", Status::internal)
+				.map(|commands| admin::GetCommandsResponse {
+					commands: commands.into_iter().map(admin::Command::from).collect(),
 				})
 		})
 	}
@@ -111,14 +116,14 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn close_session(
 		&self,
 		request: Request<admin::CloseSessionRequest>,
-	) -> Result<Response<admin::CloseSessionResponse>, tonic::Status> {
+	) -> Result<Response<admin::CloseSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = CommandTracerSessionsTask::CloseSession(request.session as SessionId, sender);
+		let task = TracerSessionCommand::CloseSession(request.session as SessionId, sender);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
-				.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)
-				.map(|_| Response::new(admin::CloseSessionResponse {}))
+				.trace_and_map_err("Close tracer session", Status::internal)
+				.map(|_| admin::CloseSessionResponse {})
 		})
 	}
 }

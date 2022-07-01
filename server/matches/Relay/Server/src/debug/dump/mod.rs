@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
 
+use tonic::Status;
+
 use cheetah_libraries_microservice::tonic::{Request, Response};
-use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status_with_full_message;
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 
 use crate::debug::proto::admin;
 use crate::server::manager::ServerManager;
@@ -23,11 +25,11 @@ impl admin::dump_server::Dump for DumpGrpcService {
 	async fn dump(
 		&self,
 		request: Request<admin::DumpRequest>,
-	) -> Result<Response<admin::DumpResponse>, tonic::Status> {
+	) -> Result<Response<admin::DumpResponse>, Status> {
 		let manager = self.manager.lock().unwrap();
 		let dump = manager
 			.dump(request.get_ref().room)
-			.map_err(trace_and_convert_to_tonic_internal_status_with_full_message)?;
+			.trace_and_map_err("Dump room", Status::internal)?;
 		Ok(Response::new(dump))
 	}
 }

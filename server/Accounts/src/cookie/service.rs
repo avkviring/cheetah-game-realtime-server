@@ -1,9 +1,10 @@
-use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status;
 use lazy_static::lazy_static;
 use prometheus::{register_int_counter, IntCounter};
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 use ydb::TableClient;
+
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 
 use crate::cookie::cookie::Cookie;
 use crate::cookie::storage::CookieStorage;
@@ -80,7 +81,8 @@ impl proto::cookie_server::Cookie for CookieService {
 		request: Request<proto::RegistryRequest>,
 	) -> Result<Response<proto::RegistryResponse>, Status> {
 		COOKIE_REGISTER_COUNTER.inc();
-		self.do_register(&request.get_ref().device_id)
+		let device_id = &request.get_ref().device_id;
+		self.do_register(device_id)
 			.await
 			.map(|(tokens, cookie)| {
 				Response::new(proto::RegistryResponse {
@@ -88,7 +90,10 @@ impl proto::cookie_server::Cookie for CookieService {
 					cookie: cookie.0.to_string(),
 				})
 			})
-			.map_err(trace_and_convert_to_tonic_internal_status)
+			.trace_and_map_err(
+				format!("Cookie register with device_id {}", device_id),
+				|_| Status::internal(""),
+			)
 	}
 
 	async fn login(
@@ -97,13 +102,18 @@ impl proto::cookie_server::Cookie for CookieService {
 	) -> Result<Response<proto::LoginResponse>, Status> {
 		COOKIE_LOGIN_COUNTER.inc();
 		let request = request.get_ref();
-		let uuid = Uuid::try_from(request.cookie.as_str())
-			.map_err(trace_and_convert_to_tonic_internal_status)?;
+		let cookie = request.cookie.as_str();
+		let uuid = Uuid::try_from(cookie)
+			.trace_and_map_err(format!("Convert cookie to uuid {}", cookie), |_| {
+				Status::internal("")
+			})?;
 		let result = self
 			.do_login(request, Cookie::from(uuid))
 			.await
 			.map(|tokens| Response::new(proto::LoginResponse { tokens }))
-			.map_err(trace_and_convert_to_tonic_internal_status)?;
+			.trace_and_map_err(format!("Login by cookie {}", uuid), |_| {
+				Status::internal("")
+			})?;
 		Ok(result)
 	}
 }

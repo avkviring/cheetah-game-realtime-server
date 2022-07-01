@@ -2,13 +2,10 @@ use std::collections::HashMap;
 
 use tokio::sync::RwLock;
 use tonic::transport::Uri;
-use tonic::{Code, Request, Response};
+use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
-use cheetah_libraries_microservice::trace::{
-	trace_and_convert_to_tonic_internal_status,
-	trace_and_convert_to_tonic_unauthenticated_status,
-};
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
@@ -144,20 +141,20 @@ impl Matchmaking for StubMatchmakingService {
 	async fn matchmaking(
 		&self,
 		request: Request<TicketRequest>,
-	) -> Result<Response<TicketResponse>, tonic::Status> {
-		match cheetah_libraries_microservice::jwt::grpc::get_user_uuid(
+	) -> Result<Response<TicketResponse>, Status> {
+		let user = cheetah_libraries_microservice::jwt::grpc::get_user_uuid(
 			request.metadata(),
 			self.jwt_public_key.clone(),
-		) {
-			Ok(user) => {
-				let ticket_request = request.into_inner();
-				match self.matchmaking(ticket_request, user).await {
-					Ok(response) => Ok(Response::new(response)),
-					Err(e) => Err(trace_and_convert_to_tonic_internal_status(e)),
-				}
-			}
-			Err(e) => Err(trace_and_convert_to_tonic_unauthenticated_status(e)),
-		}
+		)
+		.trace_and_map_err(format!("Get user uuid {:?}", request.metadata()), |_| {
+			Status::unauthenticated("")
+		})?;
+
+		let ticket_request = request.into_inner();
+		self.matchmaking(ticket_request, user)
+			.await
+			.trace_and_map_err("Matchmaking error", |_| Status::internal(""))
+			.map(Response::new)
 	}
 }
 

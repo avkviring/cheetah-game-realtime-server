@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use prometheus::{IntCounter, Opts};
 use tonic::Status;
 
-use cheetah_libraries_microservice::trace::trace_and_convert_to_tonic_internal_status_with_full_message;
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 
 use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::relay::internal as relay;
@@ -41,26 +41,42 @@ impl FactoryService {
 		self.prometheus_increment_create_match_counter(template_name.as_str());
 
 		// получаем шаблон
-		let room_template = self.template(&template_name).ok_or_else(|| {
-			trace_and_convert_to_tonic_internal_status_with_full_message(format!(
-				"Template {} not found",
-				template_name
-			))
-		})?;
+		let room_template = self.template(&template_name).ok_or(()).trace_and_map_err(
+			format!("Template {} not found", template_name),
+			Status::internal,
+		)?;
 
 		// ищем свободный relay сервер
-		let addrs = self.registry.find_free_relay().await.unwrap();
+		let addrs = self
+			.registry
+			.find_free_relay()
+			.await
+			.trace_and_map_err("Find free relay server", Status::internal)?;
+
 		let relay_grpc_addr = addrs.grpc_internal.as_ref().unwrap();
 		let relay_addr = cheetah_libraries_microservice::make_internal_srv_uri(
 			&relay_grpc_addr.host,
 			relay_grpc_addr.port as u16,
 		);
 		// создаем матч на relay сервере
-		let mut connect = RelayClient::connect(relay_addr).await.unwrap();
+		let mut relay_client = RelayClient::connect(relay_addr.clone())
+			.await
+			.trace_and_map_err(
+				format!("Create RelayClient connection to {:?}", relay_addr),
+				Status::internal,
+			)?;
 
 		// создаем комнату
 		Ok(CreateMatchResponse {
-			id: connect.create_room(room_template).await?.into_inner().id,
+			id: relay_client
+				.create_room(room_template.clone())
+				.await
+				.trace_and_map_err(
+					format!("Create Room with template {}", room_template.template_name),
+					Status::internal,
+				)?
+				.into_inner()
+				.id,
 			addrs: Some(addrs),
 		})
 	}

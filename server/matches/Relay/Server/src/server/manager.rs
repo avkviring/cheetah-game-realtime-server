@@ -9,7 +9,7 @@ use std::time::Duration;
 use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
-use crate::debug::tracer::CommandTracerSessionsTask;
+use crate::debug::tracer::TracerSessionCommand;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
@@ -51,7 +51,7 @@ pub enum ManagementTask {
 	/// Выполнить задачу для трассировщика команд
 	CommandTracerSessionTask(
 		RoomId,
-		CommandTracerSessionsTask,
+		TracerSessionCommand,
 		Sender<Result<(), CommandTracerSessionTaskError>>,
 	),
 }
@@ -91,7 +91,7 @@ impl ServerManager {
 			})
 			.unwrap();
 		Self {
-			handler: Option::Some(handler),
+			handler: Some(handler),
 			sender,
 			halt_signal: cloned_halt_signal,
 			created_room_counter: 0,
@@ -102,8 +102,8 @@ impl ServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender.send(ManagementTask::GetRooms(sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(rooms) => Result::Ok(rooms),
-			Err(e) => Result::Err(format!("{:?}", e)),
+			Ok(rooms) => Ok(rooms),
+			Err(e) => Err(format!("{:?}", e)),
 		}
 	}
 
@@ -114,7 +114,7 @@ impl ServerManager {
 	pub fn execute_command_trace_sessions_task(
 		&self,
 		room_id: RoomId,
-		task: CommandTracerSessionsTask,
+		task: TracerSessionCommand,
 	) -> Result<(), CommandTracerSessionTaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
@@ -124,10 +124,10 @@ impl ServerManager {
 			.expect(expect_send_msg("CommandTracerSessionTask").as_str());
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
-				Ok(_) => Result::Ok(()),
-				Err(e) => Result::Err(e),
+				Ok(_) => Ok(()),
+				Err(e) => Err(e),
 			},
-			Err(_e) => Result::Err(CommandTracerSessionTaskError::RecvTimeoutError),
+			Err(_e) => Err(CommandTracerSessionTaskError::RecvTimeoutError),
 		}
 	}
 
@@ -147,11 +147,11 @@ impl ServerManager {
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(room_id) => {
 				tracing::info!("[server] create room({:?})", room_id);
-				Result::Ok(room_id)
+				Ok(room_id)
 			}
 			Err(e) => {
 				tracing::error!("[server] fail create room");
-				Result::Err(RegisterRoomRequestError::ChannelError(e))
+				Err(RegisterRoomRequestError::ChannelError(e))
 			}
 		}
 	}
@@ -177,7 +177,7 @@ impl ServerManager {
 						user_id,
 						room_id
 					);
-					Result::Ok(user_id)
+					Ok(user_id)
 				}
 				Err(e) => {
 					tracing::error!(
@@ -186,7 +186,7 @@ impl ServerManager {
 						room_id,
 						e
 					);
-					Result::Err(RegisterUserRequestError::Error(e))
+					Err(RegisterUserRequestError::Error(e))
 				}
 			},
 			Err(e) => {
@@ -196,7 +196,7 @@ impl ServerManager {
 					room_id,
 					e
 				);
-				Result::Err(RegisterUserRequestError::ChannelError(e))
+				Err(RegisterUserRequestError::ChannelError(e))
 			}
 		}
 	}
@@ -216,9 +216,9 @@ impl ServerManager {
 		match self.sender.send(ManagementTask::Dump(room_id, sender)) {
 			Ok(_) => match receiver.recv() {
 				Ok(result) => result,
-				Err(e) => Result::Err(format!("{:?}", e)),
+				Err(e) => Err(format!("{:?}", e)),
 			},
-			Err(e) => Result::Err(format!("{:?}", e)),
+			Err(e) => Err(format!("{:?}", e)),
 		}
 	}
 }
