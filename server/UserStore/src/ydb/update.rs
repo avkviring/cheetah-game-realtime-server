@@ -4,7 +4,7 @@ use uuid::Uuid;
 use ydb::TableClient;
 
 use crate::ydb::numeric::Num;
-use crate::ydb::table::{ToDbTable, C_FIELD_NAME, C_FIELD_VALUE, C_USER};
+use crate::ydb::table::{ToDbTable, COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
 use crate::ydb::{primitive::Primitive, Error};
 
 pub struct YDBUpdate {
@@ -51,7 +51,13 @@ impl YDBUpdate {
 	fn upsert_query(&self, table: &str) -> String {
 		format!(
 			"upsert into {} ({}, {}, {}) values (${}, ${}, ${})",
-			table, C_USER, C_FIELD_NAME, C_FIELD_VALUE, C_USER, C_FIELD_NAME, C_FIELD_VALUE
+			table,
+			COLUMN_USER,
+			COLUMN_FIELD_NAME,
+			COLUMN_FIELD_VALUE,
+			COLUMN_USER,
+			COLUMN_FIELD_NAME,
+			COLUMN_FIELD_VALUE
 		)
 	}
 
@@ -59,13 +65,13 @@ impl YDBUpdate {
 		format!(
 			"update {} set {} = {} + ${} where {} = ${} and {} = ${}",
 			table,
-			C_FIELD_VALUE,
-			C_FIELD_VALUE,
+			COLUMN_FIELD_VALUE,
+			COLUMN_FIELD_VALUE,
 			"increment",
-			C_USER,
-			C_USER,
-			C_FIELD_NAME,
-			C_FIELD_NAME,
+			COLUMN_USER,
+			COLUMN_USER,
+			COLUMN_FIELD_NAME,
+			COLUMN_FIELD_NAME,
 		)
 	}
 }

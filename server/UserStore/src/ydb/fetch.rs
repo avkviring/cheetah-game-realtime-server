@@ -5,7 +5,7 @@ use cheetah_libraries_ydb::{query, select};
 use uuid::Uuid;
 use ydb::{TableClient, Value, YdbOrCustomerError};
 
-use crate::ydb::table::{ToDbTable, C_FIELD_NAME, C_FIELD_VALUE, C_USER};
+use crate::ydb::table::{ToDbTable, COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
 use crate::ydb::{primitive::Primitive, Error};
 
 pub struct YDBFetch {
@@ -39,7 +39,12 @@ impl YDBFetch {
 	fn query(&self, table: &str) -> String {
 		format!(
 			"select {} from {} where {} = ${} and {} = ${}",
-			C_FIELD_VALUE, table, C_USER, C_USER, C_FIELD_NAME, C_FIELD_NAME
+			COLUMN_FIELD_VALUE,
+			table,
+			COLUMN_USER,
+			COLUMN_USER,
+			COLUMN_FIELD_NAME,
+			COLUMN_FIELD_NAME
 		)
 	}
 

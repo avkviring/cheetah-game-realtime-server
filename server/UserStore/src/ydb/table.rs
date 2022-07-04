@@ -1,6 +1,6 @@
-pub static C_USER: &str = "user_uuid";
-pub static C_FIELD_NAME: &str = "field_name";
-pub static C_FIELD_VALUE: &str = "value";
+pub static COLUMN_USER: &str = "user_uuid";
+pub static COLUMN_FIELD_NAME: &str = "field_name";
+pub static COLUMN_FIELD_VALUE: &str = "value";
 
 pub static LONG_TABLE: &str = "user_long_value";
 pub static DOUBLE_TABLE: &str = "user_double_value";
