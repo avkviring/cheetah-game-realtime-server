@@ -1,10 +1,14 @@
-use crate::proto::matches::relay::internal::relay_client::RelayClient;
-use async_trait::async_trait;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::time::Duration;
+
+use async_trait::async_trait;
 use thiserror::Error;
 use tonic::transport::Endpoint;
+use tonic::Request;
+
+use crate::proto::matches::relay::internal::relay_client::RelayClient;
+use crate::proto::matches::relay::internal::ProbeRequest;
 
 #[async_trait]
 pub trait RelayProber: Send + Sync {
@@ -14,7 +18,10 @@ pub trait RelayProber: Send + Sync {
 #[derive(Error, Debug)]
 pub enum ProbeError {
 	#[error(transparent)]
-	Error(#[from] tonic::transport::Error),
+	TransportError(#[from] tonic::transport::Error),
+
+	#[error(transparent)]
+	GrpcErrorStatus(#[from] tonic::Status),
 }
 
 pub struct ReconnectProber {}
@@ -25,9 +32,15 @@ impl RelayProber for ReconnectProber {
 	async fn probe(&self, addr: SocketAddr) -> Result<(), ProbeError> {
 		let mut builder = Endpoint::from_str(&format!("http://{}", addr)).unwrap();
 		builder = builder.connect_timeout(Duration::from_secs(1));
-		RelayClient::connect(builder)
+		let mut client = RelayClient::connect(builder)
 			.await
-			.map(|_| ())
-			.map_err(ProbeError::from)
+			.map_err(ProbeError::from)?;
+
+		client
+			.probe(Request::new(ProbeRequest {}))
+			.await
+			.map_err(ProbeError::from)?;
+
+		Ok(())
 	}
 }

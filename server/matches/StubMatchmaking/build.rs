@@ -1,6 +1,15 @@
 use std::io::Error;
 
 fn main() -> Result<(), Error> {
+	println!(
+		"cargo:rerun-if-changed=../../../proto/matches/Factory/matches.factory.internal.proto"
+	);
+	println!("cargo:rerun-if-changed=../../../proto/matches/Relay/matches.relay.internal.proto");
+	println!(
+		"cargo:rerun-if-changed=../../../proto/matches/Registry/matches.registry.internal.proto"
+	);
+	println!("cargo:rerun-if-changed=../../../proto/matches/Matchmaking/matches.matchmaking.external.proto");
+
 	tonic_build::configure().compile(
 		&[
 			"../../../proto/matches/Factory/matches.factory.internal.proto",
@@ -19,5 +28,5 @@ fn main() -> Result<(), Error> {
 		&["../../../proto/matches/Matchmaking/matches.matchmaking.external.proto"],
 		&["../../../proto/matches/Matchmaking/"],
 	)?;
-	Result::Ok(())
+	Ok(())
 }

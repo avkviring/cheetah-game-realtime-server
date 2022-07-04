@@ -174,6 +174,7 @@ pub mod tests {
 	use crate::proto::matches::matchmaking;
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::relay;
+	use crate::proto::matches::relay::internal::{ProbeRequest, ProbeResponse};
 	use crate::service::StubMatchmakingService;
 
 	#[tokio::test]
@@ -381,6 +382,13 @@ pub mod tests {
 					private_key: vec![],
 				}))
 			}
+		}
+
+		async fn probe(
+			&self,
+			request: Request<ProbeRequest>,
+		) -> Result<Response<ProbeResponse>, Status> {
+			Ok(Response::new(ProbeResponse {}))
 		}
 	}
 }

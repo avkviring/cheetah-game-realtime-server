@@ -12,6 +12,11 @@ service Relay {
     Присоединить пользователя к комнате, после этого комната будет ожидать udp соединения
    */
   rpc AttachUser(AttachUserRequest) returns(AttachUserResponse);
+
+  /**
+    Проверить живой ли сервер
+   */
+  rpc Probe(ProbeRequest) returns (ProbeResponse);
 }
 
 message CreateRoomResponse {
@@ -110,4 +115,11 @@ message GameObjectTemplate {
   uint32 template = 2;
   uint64 groups = 3;
   repeated cheetah.matches.relay.shared.GameObjectField fields = 4;
+}
+
+message ProbeRequest {
+
+}
+message ProbeResponse {
+
 }

@@ -18,12 +18,13 @@ impl RelayFinder {
 	pub async fn get_random_relay_addr(&self) -> Result<Addrs, StorageError> {
 		loop {
 			let addrs = self.storage.get_random_relay_addr().await?;
-			tracing::debug!("probing relay {:?}", addrs);
+			tracing::info!("probing relay {:?}", addrs);
 			if let Err(e) = self.prober.probe(addrs.grpc_internal).await {
 				tracing::warn!("relay {:?} probe failed: {:?}", addrs, e);
 				self.storage.remove_relay(&addrs).await?;
 				continue;
 			}
+			tracing::info!("relay {:?} probe ok", addrs);
 			return Ok(addrs);
 		}
 	}
@@ -31,16 +32,18 @@ impl RelayFinder {
 
 #[cfg(test)]
 mod tests {
+	use std::net::SocketAddr;
+	use std::str::FromStr;
+
+	use testcontainers::clients::Cli;
+	use testcontainers::images::redis::Redis;
+	use testcontainers::{Container, Docker};
+
 	use crate::proto::matches::registry::internal::RelayState;
 	use crate::registry::relay_addrs::Addrs;
 	use crate::registry::relay_finder::RelayFinder;
 	use crate::registry::relay_prober::ReconnectProber;
 	use crate::registry::storage::{RedisStorage, Storage, StorageError};
-	use std::net::SocketAddr;
-	use std::str::FromStr;
-	use testcontainers::clients::Cli;
-	use testcontainers::images::redis::Redis;
-	use testcontainers::{Container, Docker};
 
 	#[tokio::test]
 	async fn test_no_relay_found() {

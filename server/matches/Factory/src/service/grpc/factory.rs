@@ -1,6 +1,7 @@
-use cheetah_libraries_microservice::tonic::{Request, Response, Status};
 use lazy_static::lazy_static;
 use prometheus::{register_int_counter, IntCounter};
+
+use cheetah_libraries_microservice::tonic::{Request, Response, Status};
 
 use crate::proto::matches::factory::internal as factory;
 use crate::service::FactoryService;
@@ -31,6 +32,7 @@ mod tests {
 	use tonic::{Request, Response, Status};
 
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
+	use crate::proto::matches::relay::internal::{ProbeRequest, ProbeResponse};
 	use crate::proto::matches::{registry, relay};
 	use crate::service::configuration::yaml::test::EXAMPLE_DIR;
 	use crate::service::configuration::yaml::YamlConfigurations;
@@ -54,8 +56,8 @@ mod tests {
 
 		async fn update_relay_status(
 			&self,
-			_: tonic::Request<registry::internal::RelayStatusUpdate>,
-		) -> Result<tonic::Response<registry::internal::UpdateRelayStatusResponse>, tonic::Status> {
+			_: Request<registry::internal::RelayStatusUpdate>,
+		) -> Result<Response<registry::internal::UpdateRelayStatusResponse>, Status> {
 			unimplemented!()
 		}
 	}
@@ -69,17 +71,24 @@ mod tests {
 		async fn create_room(
 			&self,
 			_request: Request<relay::internal::RoomTemplate>,
-		) -> Result<tonic::Response<relay::internal::CreateRoomResponse>, tonic::Status> {
-			Ok(tonic::Response::new(relay::internal::CreateRoomResponse {
+		) -> Result<Response<relay::internal::CreateRoomResponse>, Status> {
+			Ok(Response::new(relay::internal::CreateRoomResponse {
 				id: StubRelay::ROOM_ID,
 			}))
 		}
 
 		async fn attach_user(
 			&self,
-			_request: tonic::Request<relay::internal::AttachUserRequest>,
-		) -> Result<tonic::Response<relay::internal::AttachUserResponse>, tonic::Status> {
+			_request: Request<relay::internal::AttachUserRequest>,
+		) -> Result<Response<relay::internal::AttachUserResponse>, Status> {
 			unimplemented!()
+		}
+
+		async fn probe(
+			&self,
+			_request: Request<ProbeRequest>,
+		) -> Result<Response<ProbeResponse>, Status> {
+			Ok(Response::new(ProbeResponse {}))
 		}
 	}
 

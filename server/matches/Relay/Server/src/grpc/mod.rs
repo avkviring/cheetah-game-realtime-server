@@ -62,4 +62,11 @@ impl relay_server::Relay for RelayGRPCService {
 				})
 			})
 	}
+
+	async fn probe(
+		&self,
+		_request: Request<ProbeRequest>,
+	) -> Result<Response<ProbeResponse>, Status> {
+		Ok(Response::new(ProbeResponse {}))
+	}
 }
