@@ -1,5 +1,6 @@
 syntax = "proto3";
-package cheetah.userstore.external;
+package cheetah.userstore;
+option csharp_namespace = "Cheetah.Userstore.GRPC";
 
 service Update {
     rpc SetLong(SetLongRequest) returns (UpdateReply);
@@ -12,10 +13,6 @@ service Update {
 enum UpdateStatus {
     OK = 0;
     ERROR = 1;
-}
-
-message UpdateReply {
-    UpdateStatus status = 1;
 }
 
 message SetLongRequest {
@@ -33,6 +30,10 @@ message SetStringRequest {
     string value = 2;
 }
 
+message UpdateReply {
+    UpdateStatus status = 1;
+}
+
 service Fetch {
     rpc GetLong(GetLongRequest) returns (GetLongReply);
     rpc GetDouble(GetDoubleRequest) returns (GetDoubleReply);
@@ -43,20 +44,20 @@ message GetLongRequest {
     string fieldName = 1;
 }
 
-message GetLongReply {
-    sint64 value = 1;
-}
-
 message GetDoubleRequest {
     string fieldName = 1;
 }
 
-message GetDoubleReply {
-    double value = 1;
-}
-
 message GetStringRequest {
     string fieldName = 1;
+}
+
+message GetLongReply {
+    sint64 value = 1;
+}
+
+message GetDoubleReply {
+    double value = 1;
 }
 
 message GetStringReply {
