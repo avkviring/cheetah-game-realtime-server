@@ -47,14 +47,14 @@ impl CommandTracerGRPCService {
 			.execute_command_trace_sessions_task(room_id, task.clone())
 			.trace_and_map_err(
 				format!("Schedule tracer command {} {:?}", room_id, task),
-				Status::internal,
+				|_| Status::internal(""),
 			)?;
 
 		let result = receiver
 			.recv_timeout(Duration::from_millis(100))
 			.trace_and_map_err(
 				format!("Wait tracer command {} {:?}", room_id, task),
-				Status::internal,
+				|_| Status::internal(""),
 			)?;
 
 		converter(result).map(Response::new)
@@ -106,7 +106,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let task = TracerSessionCommand::GetCommands(request.session as SessionId, sender);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
-				.trace_and_map_err("Get commands for trace", Status::internal)
+				.trace_and_map_err("Get commands for trace", |_| Status::internal(""))
 				.map(|commands| admin::GetCommandsResponse {
 					commands: commands.into_iter().map(admin::Command::from).collect(),
 				})
@@ -122,7 +122,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let task = TracerSessionCommand::CloseSession(request.session as SessionId, sender);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
-				.trace_and_map_err("Close tracer session", Status::internal)
+				.trace_and_map_err("Close tracer session", |_| Status::internal(""))
 				.map(|_| admin::CloseSessionResponse {})
 		})
 	}

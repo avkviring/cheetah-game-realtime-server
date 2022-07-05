@@ -5,7 +5,7 @@ use tracing::error;
 pub trait ResultErrorTracer<T, E> {
 	fn trace_and_map_err<M, F, OutError>(self, details: M, f: F) -> Result<T, OutError>
 	where
-		F: FnOnce(String) -> OutError,
+		F: FnOnce(E) -> OutError,
 		M: Into<String>;
 }
 
@@ -15,7 +15,7 @@ where
 {
 	fn trace_and_map_err<M, F, OutError>(self, details: M, f: F) -> Result<T, OutError>
 	where
-		F: FnOnce(String) -> OutError,
+		F: FnOnce(E) -> OutError,
 		M: Into<String>,
 	{
 		match self {
@@ -23,7 +23,7 @@ where
 			Err(e) => {
 				let msg = format!("{} {:?}", details.into(), e);
 				error!("{}", msg);
-				Err(f(msg))
+				Err(f(e))
 			}
 		}
 	}

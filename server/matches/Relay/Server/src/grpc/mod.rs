@@ -36,7 +36,7 @@ impl relay_server::Relay for RelayGRPCService {
 			.register_room(template)
 			.trace_and_map_err(
 				format!("Create room with template {}", template_name),
-				Status::internal,
+				|_| Status::internal(""),
 			)
 			.map(|id| Response::new(CreateRoomResponse { id }))
 	}
@@ -51,10 +51,9 @@ impl relay_server::Relay for RelayGRPCService {
 		let private_key = template.private_key;
 		server
 			.register_user(request.room_id, template)
-			.trace_and_map_err(
-				format!("Attach user to room {}", request.room_id),
-				Status::internal,
-			)
+			.trace_and_map_err(format!("Attach user to room {}", request.room_id), |_| {
+				Status::internal("")
+			})
 			.map(|user_id| {
 				Response::new(AttachUserResponse {
 					user_id: user_id as u32,
