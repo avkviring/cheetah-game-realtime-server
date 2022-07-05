@@ -70,16 +70,12 @@ fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uui
 	}
 }
 
-enum ErrorCode {
-	FieldNotFound = 0,
-}
-
 impl YdbError {
 	pub fn to_status(&self, field_name: &str) -> Status {
 		match self {
 			Self::NoSuchField => {
 				let mut mp = MetadataMap::with_capacity(2);
-				mp.append("code", (ErrorCode::FieldNotFound as i32).into());
+				mp.append("code", "err_field_not_found".parse().unwrap());
 				Status::with_metadata(
 					Code::Unavailable,
 					format!("The requested field {} cannot be found", field_name),
