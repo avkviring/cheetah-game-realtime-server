@@ -1,3 +1,4 @@
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 use cheetah_libraries_ydb::converters::YDBValueConverter;
 use cheetah_libraries_ydb::{query, update};
 use uuid::Uuid;
@@ -29,7 +30,7 @@ impl YDBUpdate {
 			query!(q, user_uuid => user, field_name => field_name, value => value)
 		)
 		.await
-		.map_err(|e| e.into())
+		.trace_and_map_err("Set operation failed", |e| e.into())
 	}
 
 	pub async fn increment<T: Num + ToDbTable + YDBValueConverter>(
@@ -45,7 +46,7 @@ impl YDBUpdate {
 			query!(q, user_uuid => user, field_name => field_name, increment => value)
 		)
 		.await
-		.map_err(|e| e.into())
+		.trace_and_map_err("Increment operation failed", |e| e.into())
 	}
 
 	fn upsert_query(&self, table: &str) -> String {

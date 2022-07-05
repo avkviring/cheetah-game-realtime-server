@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use cheetah_libraries_microservice::trace::ResultErrorTracer;
 use cheetah_libraries_ydb::converters::YDBValueConverter;
 use cheetah_libraries_ydb::{query, select};
 use uuid::Uuid;
@@ -52,6 +53,8 @@ impl YDBFetch {
 		&self,
 		query_result: Result<Vec<T>, YdbOrCustomerError>,
 	) -> Result<T, Error> {
-		query_result.map(|v| v[0].clone()).map_err(|e| e.into())
+		query_result
+			.map(|v| v[0].clone())
+			.trace_and_map_err(format!("Fetch operation failed"), |e| e.into())
 	}
 }
