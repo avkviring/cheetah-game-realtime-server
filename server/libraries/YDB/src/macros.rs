@@ -47,3 +47,33 @@ macro_rules! query {
 			ydb::Query::new(format!("{}\n{}",query, $sql)).with_params(params)
 	}};
 }
+
+#[cfg(test)]
+pub mod tests {
+	use crate::migration::Migrator;
+	use crate::test_container::get_or_create_ydb_instance;
+	use crate::{query, select, update};
+	use include_dir::include_dir;
+
+	#[tokio::test]
+	async fn should_create_query() {
+		let (_node, mut client) = get_or_create_ydb_instance("should_create_query").await;
+		let mut migrator =
+			Migrator::new_from_dir(&include_dir!("$CARGO_MANIFEST_DIR/test-migration"));
+		migrator.migrate(&mut client).await.unwrap();
+
+		let id = 124;
+		update!(
+			client.table_client(),
+			query!("insert into a (id) values($id)", id=>id)
+		)
+		.await
+		.unwrap();
+
+		let result: Vec<i32> = select!(client.table_client(), query!("select * from a"), id=>i32)
+			.await
+			.unwrap();
+
+		assert!(result.iter().any(|v| *v == id));
+	}
+}
