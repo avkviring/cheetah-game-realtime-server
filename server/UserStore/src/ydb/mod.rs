@@ -13,7 +13,7 @@ use ydb::{YdbError, YdbOrCustomerError};
 static MIGRATIONS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
 
 #[allow(dead_code)]
-static DB_NAME: &str = "userstore";
+pub const DB_NAME: &str = "userstore";
 
 #[derive(Debug)]
 pub enum Error {

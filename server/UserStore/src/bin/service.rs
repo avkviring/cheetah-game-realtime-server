@@ -1,13 +1,13 @@
 use cheetah_libraries_microservice::get_env;
 use cheetah_libraries_ydb::builder::YdbClientBuilder;
-use cheetah_userstore::Service;
+use cheetah_userstore::{Service, DB_NAME};
 use include_dir::include_dir;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let jwt_public_key = get_env("JWT_PUBLIC_KEY");
 
-	let ydb_client = YdbClientBuilder::new_from_env("userstore")
+	let ydb_client = YdbClientBuilder::new_from_env(DB_NAME)
 		.prepare_schema_and_build_client(&include_dir!("$CARGO_MANIFEST_DIR/migrations"))
 		.await;
 

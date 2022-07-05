@@ -34,13 +34,23 @@ impl Service {
 	pub async fn serve(&self, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
 		init("userstore");
 
+		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
+
 		let update_service =
 			UpdateService::new(self.ydb_client.table_client(), self.jwt_public_key.clone());
+		health_reporter
+			.set_serving::<UpdateServer<UpdateService>>()
+			.await;
+
 		let fetch_service =
 			FetchService::new(self.ydb_client.table_client(), self.jwt_public_key.clone());
+		health_reporter
+			.set_serving::<FetchServer<FetchService>>()
+			.await;
 
 		Server::builder()
 			.accept_http1(true)
+			.add_service(tonic_web::enable(health_service))
 			.add_service(tonic_web::enable(UpdateServer::new(update_service)))
 			.add_service(tonic_web::enable(FetchServer::new(fetch_service)))
 			.serve(addr)

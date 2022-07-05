@@ -1,6 +1,6 @@
 syntax = "proto3";
 package cheetah.userstore;
-option csharp_namespace = "Cheetah.Userstore.GRPC";
+option csharp_namespace = "Cheetah.UserStore.GRPC";
 
 service Update {
     rpc SetLong(SetLongRequest) returns (UpdateReply);
