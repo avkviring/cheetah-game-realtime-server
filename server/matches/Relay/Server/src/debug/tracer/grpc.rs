@@ -5,7 +5,7 @@ use std::time::Duration;
 use tonic::Status;
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::trace::Trace;
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::s2c::S2CCommand;
 use cheetah_matches_relay_common::commands::FieldType;
@@ -45,17 +45,13 @@ impl CommandTracerGRPCService {
 
 		manager
 			.execute_command_trace_sessions_task(room_id, task.clone())
-			.trace_and_map_msg(
-				format!("Schedule tracer command {} {:?}", room_id, task),
-				Status::internal,
-			)?;
+			.trace_err(format!("Schedule tracer command {} {:?}", room_id, task))
+			.map_err(Status::internal)?;
 
 		let result = receiver
 			.recv_timeout(Duration::from_millis(100))
-			.trace_and_map_msg(
-				format!("Wait tracer command {} {:?}", room_id, task),
-				Status::internal,
-			)?;
+			.trace_err(format!("Wait tracer command {} {:?}", room_id, task))
+			.map_err(Status::internal)?;
 
 		converter(result).map(Response::new)
 	}
@@ -106,7 +102,8 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let task = TracerSessionCommand::GetCommands(request.session as SessionId, sender);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
-				.trace_and_map_msg("Get commands for trace", Status::internal)
+				.trace_err("Get commands for trace")
+				.map_err(Status::internal)
 				.map(|commands| admin::GetCommandsResponse {
 					commands: commands.into_iter().map(admin::Command::from).collect(),
 				})
@@ -122,7 +119,8 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let task = TracerSessionCommand::CloseSession(request.session as SessionId, sender);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
-				.trace_and_map_msg("Close tracer session", Status::internal)
+				.trace_err("Close tracer session")
+				.map_err(Status::internal)
 				.map(|_| admin::CloseSessionResponse {})
 		})
 	}

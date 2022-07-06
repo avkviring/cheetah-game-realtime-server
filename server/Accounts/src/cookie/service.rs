@@ -4,7 +4,7 @@ use tonic::{Request, Response, Status};
 use uuid::Uuid;
 use ydb::TableClient;
 
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::trace::Trace;
 
 use crate::cookie::cookie::Cookie;
 use crate::cookie::storage::CookieStorage;
@@ -90,10 +90,8 @@ impl proto::cookie_server::Cookie for CookieService {
 					cookie: cookie.0.to_string(),
 				})
 			})
-			.trace_and_map_msg(
-				format!("Cookie register with device_id {}", device_id),
-				|_| Status::internal(""),
-			)
+			.trace_err(format!("Cookie register with device_id {}", device_id))
+			.map_err(|_| Status::internal(""))
 	}
 
 	async fn login(
@@ -104,16 +102,14 @@ impl proto::cookie_server::Cookie for CookieService {
 		let request = request.get_ref();
 		let cookie = request.cookie.as_str();
 		let uuid = Uuid::try_from(cookie)
-			.trace_and_map_msg(format!("Convert cookie to uuid {}", cookie), |_| {
-				Status::internal("")
-			})?;
+			.trace_err(format!("Convert cookie to uuid {}", cookie))
+			.map_err(|_| Status::internal(""))?;
 		let result = self
 			.do_login(request, Cookie::from(uuid))
 			.await
 			.map(|tokens| Response::new(proto::LoginResponse { tokens }))
-			.trace_and_map_msg(format!("Login by cookie {}", uuid), |_| {
-				Status::internal("")
-			})?;
+			.trace_err(format!("Login by cookie {}", uuid))
+			.map_err(|_| Status::internal(""))?;
 		Ok(result)
 	}
 }

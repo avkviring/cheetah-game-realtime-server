@@ -1,6 +1,6 @@
 use tonic::Status;
 
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::trace::Trace;
 use proto::RefreshTokenRequest;
 
 use crate::proto;
@@ -28,9 +28,8 @@ impl proto::tokens_server::Tokens for TokensGrpcService {
 			.service
 			.refresh(request.token.clone())
 			.await
-			.trace_and_map_msg(format!("Refresh jwt tokens {}", request.token), |_| {
-				Status::internal("")
-			})?;
+			.trace_err(format!("Refresh jwt tokens {}", request.token))
+			.map_err(|_| Status::internal(""))?;
 
 		Ok(tonic::Response::new(SessionAndRefreshTokens {
 			session: tokens.session,

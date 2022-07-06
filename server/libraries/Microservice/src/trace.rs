@@ -2,34 +2,21 @@ use std::fmt::Debug;
 
 use tracing::error;
 
-pub trait ResultErrorTracer<T, E> {
-	fn trace_and_map_msg<M, O, F>(self, details: M, op: O) -> Result<T, F>
-	where
-		O: FnOnce(String) -> F,
-		M: Debug;
+pub trait Trace<T> {
+	fn trace_err(self, details: impl Debug) -> Result<T, String>;
 }
 
-impl<T, E> ResultErrorTracer<T, E> for Result<T, E>
-where
-	E: Debug,
-{
-	fn trace_and_map_msg<M, O, F>(self, details: M, op: O) -> Result<T, F>
-	where
-		O: FnOnce(String) -> F,
-		M: Debug,
-	{
+impl<T, E: Debug> Trace<T> for Result<T, E> {
+	fn trace_err(self, details: impl Debug) -> Result<T, String> {
 		match self {
 			Ok(v) => Ok(v),
-			Err(e) => {
-				let msg = trace(&details, &e);
-				Err(op(msg))
-			}
+			Err(e) => Err(trace(details, e)),
 		}
 	}
 }
 
-pub fn trace<M: Debug, E: Debug>(details: &M, error: &E) -> String {
-	let msg = format!("{:?} {:?}", details, error);
+pub fn trace(details: impl Debug, object: impl Debug) -> String {
+	let msg = format!("{:?} {:?}", details, object);
 	error!("{}", msg);
 	msg
 }

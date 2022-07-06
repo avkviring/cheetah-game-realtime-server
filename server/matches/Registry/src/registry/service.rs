@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use thiserror::Error;
 use tonic::{Request, Response, Status};
 
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::trace::Trace;
 
 use crate::proto::matches::registry::internal::registry_server::Registry;
 use crate::proto::matches::registry::internal::{
@@ -50,7 +50,8 @@ impl Registry for RegistryService {
 			.free_relay_provider
 			.get_random_relay_addr()
 			.await
-			.trace_and_map_msg("Get random relay addr", Status::internal)?;
+			.trace_err("Get random relay addr")
+			.map_err(Status::internal)?;
 
 		Ok(Response::new(FindFreeRelayResponse {
 			addrs: Some(addrs.into()),
@@ -66,18 +67,21 @@ impl Registry for RegistryService {
 		let addrs = msg
 			.addrs
 			.try_into()
-			.trace_and_map_msg("Get relay addr from message", Status::internal)?;
+			.trace_err("Get relay addr from message")
+			.map_err(Status::internal)?;
 
 		let msg_state = msg.state;
 
 		let state = RelayState::from_i32(msg_state)
 			.ok_or(())
-			.trace_and_map_msg("Get relayState from i32", Status::internal)?;
+			.trace_err("Get relayState from i32")
+			.map_err(Status::internal)?;
 
 		self.storage
 			.update_status(&addrs, state)
 			.await
-			.trace_and_map_msg("Update relay status", Status::internal)?;
+			.trace_err("Update relay status")
+			.map_err(Status::internal)?;
 
 		Ok(Response::new(UpdateRelayStatusResponse::default()))
 	}

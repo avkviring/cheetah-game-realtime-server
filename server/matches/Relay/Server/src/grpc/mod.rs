@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use tonic::{Request, Response, Status};
 
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::trace::Trace;
 
 use crate::grpc::proto::internal::*;
 use crate::server::manager::ServerManager;
@@ -34,10 +34,8 @@ impl relay_server::Relay for RelayGRPCService {
 		let template_name = template.name.clone();
 		server
 			.register_room(template)
-			.trace_and_map_msg(
-				format!("Create room with template {}", template_name),
-				Status::internal,
-			)
+			.trace_err(format!("Create room with template {}", template_name))
+			.map_err(Status::internal)
 			.map(|id| Response::new(CreateRoomResponse { id }))
 	}
 
@@ -51,10 +49,8 @@ impl relay_server::Relay for RelayGRPCService {
 		let private_key = template.private_key;
 		server
 			.register_user(request.room_id, template)
-			.trace_and_map_msg(
-				format!("Attach user to room {}", request.room_id),
-				Status::internal,
-			)
+			.trace_err(format!("Attach user to room {}", request.room_id))
+			.map_err(Status::internal)
 			.map(|user_id| {
 				Response::new(AttachUserResponse {
 					user_id: user_id as u32,

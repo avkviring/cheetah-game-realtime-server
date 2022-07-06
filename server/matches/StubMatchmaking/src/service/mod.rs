@@ -5,7 +5,7 @@ use tonic::transport::Uri;
 use tonic::{Code, Request, Response, Status};
 use uuid::Uuid;
 
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::trace::Trace;
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
@@ -146,14 +146,14 @@ impl Matchmaking for StubMatchmakingService {
 			request.metadata(),
 			self.jwt_public_key.clone(),
 		)
-		.trace_and_map_msg(format!("Get user uuid {:?}", request.metadata()), |_| {
-			Status::unauthenticated("")
-		})?;
+		.trace_err(format!("Get user uuid {:?}", request.metadata()))
+		.map_err(|_| Status::unauthenticated(""))?;
 
 		let ticket_request = request.into_inner();
 		self.matchmaking(ticket_request, user)
 			.await
-			.trace_and_map_msg("Matchmaking error", |_| Status::internal(""))
+			.trace_err("Matchmaking error")
+			.map_err(|_| Status::internal(""))
 			.map(Response::new)
 	}
 }

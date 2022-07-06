@@ -1,7 +1,8 @@
 use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tonic::{self, Request, Response, Status};
 
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::jwt::JWTTokenParser;
+use cheetah_libraries_microservice::trace::Trace;
 use google_jwt::Parser;
 
 use crate::google::storage::GoogleStorage;
@@ -62,9 +63,8 @@ impl GoogleGrpcService {
 			.parser
 			.parse(token)
 			.await
-			.trace_and_map_msg(format!("Parse google id {}", token), |_| {
-				Status::internal("")
-			})?;
+			.trace_err(format!("Parse google id {}", token))
+			.map_err(|_| Status::internal(""))?;
 		Ok(google_id)
 	}
 }
@@ -82,9 +82,8 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let (user, registered_user) = self
 			.get_or_create_user(&google_id)
 			.await
-			.trace_and_map_msg(format!("Google get or create user {}", token), |_| {
-				Status::internal("")
-			})?;
+			.trace_err(format!("Google get or create user {}", token))
+			.map_err(|_| Status::internal(""))?;
 
 		let device_id = &registry_or_login_request.device_id;
 
@@ -92,7 +91,8 @@ impl proto::google_server::Google for GoogleGrpcService {
 			.tokens_service
 			.create(user, device_id)
 			.await
-			.trace_and_map_msg("Create token for user", |_| Status::internal(""))?;
+			.trace_err("Create token for user")
+			.map_err(|_| Status::internal(""))?;
 
 		Ok(Response::new(proto::RegisterOrLoginResponse {
 			registered_player: registered_user,
@@ -114,14 +114,12 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let user_uuid = self
 			.jwt_token_parser
 			.parse_user_uuid(request.metadata())
-			.trace_and_map_msg(format!("Parse jwt token {:?}", request.metadata()), |_| {
-				Status::internal("")
-			})?;
+			.trace_err(format!("Parse jwt token {:?}", request.metadata()))
+			.map_err(|_| Status::internal(""))?;
 
 		let user = User::try_from(user_uuid)
-			.trace_and_map_msg(format!("Convert uuid to user {:?}", user_uuid), |_| {
-				Status::internal("")
-			})?;
+			.trace_err(format!("Convert uuid to user {:?}", user_uuid))
+			.map_err(|_| Status::internal(""))?;
 
 		self.storage.attach(user, &google_id).await.unwrap();
 

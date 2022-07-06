@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use tonic::Status;
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
-use cheetah_libraries_microservice::trace::ResultErrorTracer;
+use cheetah_libraries_microservice::trace::Trace;
 
 use crate::debug::proto::admin;
 use crate::server::manager::ServerManager;
@@ -29,7 +29,8 @@ impl admin::dump_server::Dump for DumpGrpcService {
 		let manager = self.manager.lock().unwrap();
 		let dump = manager
 			.dump(request.get_ref().room)
-			.trace_and_map_msg("Dump room", Status::internal)?;
+			.trace_err("Failed to make a room dump")
+			.map_err(Status::internal)?;
 		Ok(Response::new(dump))
 	}
 }
