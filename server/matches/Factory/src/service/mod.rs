@@ -41,19 +41,17 @@ impl FactoryService {
 		self.prometheus_increment_create_match_counter(template_name.as_str());
 
 		// получаем шаблон
-		let room_template = self
-			.template(&template_name)
-			.ok_or(())
-			.trace_and_map_err(format!("Template {} not found", template_name), |_| {
-				Status::internal("")
-			})?;
+		let room_template = self.template(&template_name).ok_or(()).trace_and_map_err(
+			format!("Template {} not found", template_name),
+			Status::internal,
+		)?;
 
 		// ищем свободный relay сервер
 		let addrs = self
 			.registry
 			.find_free_relay()
 			.await
-			.trace_and_map_err("Find free relay server", |_| Status::internal(""))?;
+			.trace_and_map_err("Find free relay server", Status::internal)?;
 
 		let relay_grpc_addr = addrs.grpc_internal.as_ref().unwrap();
 		let relay_addr = cheetah_libraries_microservice::make_internal_srv_uri(
@@ -65,7 +63,7 @@ impl FactoryService {
 			.await
 			.trace_and_map_err(
 				format!("Create RelayClient connection to {:?}", relay_addr),
-				|_| Status::internal(""),
+				Status::internal,
 			)?;
 
 		// создаем комнату
@@ -75,7 +73,7 @@ impl FactoryService {
 				.await
 				.trace_and_map_err(
 					format!("Create Room with template {}", room_template.template_name),
-					|_| Status::internal(""),
+					Status::internal,
 				)?
 				.into_inner()
 				.id,

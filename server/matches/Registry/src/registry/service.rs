@@ -50,7 +50,7 @@ impl Registry for RegistryService {
 			.free_relay_provider
 			.get_random_relay_addr()
 			.await
-			.trace_and_map_err("Get random relay addr", |_| Status::internal(""))?;
+			.trace_and_map_err("Get random relay addr", Status::internal)?;
 
 		Ok(Response::new(FindFreeRelayResponse {
 			addrs: Some(addrs.into()),
@@ -66,18 +66,18 @@ impl Registry for RegistryService {
 		let addrs = msg
 			.addrs
 			.try_into()
-			.trace_and_map_err("Get relay addr from message", |_| Status::internal(""))?;
+			.trace_and_map_err("Get relay addr from message", Status::internal)?;
 
 		let msg_state = msg.state;
 
 		let state = RelayState::from_i32(msg_state)
 			.ok_or(())
-			.trace_and_map_err("Get relayState from i32", |_| Status::internal(""))?;
+			.trace_and_map_err("Get relayState from i32", Status::internal)?;
 
 		self.storage
 			.update_status(&addrs, state)
 			.await
-			.trace_and_map_err("Update relay status", |_| Status::internal(""))?;
+			.trace_and_map_err("Update relay status", Status::internal)?;
 
 		Ok(Response::new(UpdateRelayStatusResponse::default()))
 	}
