@@ -1,16 +1,18 @@
 mod fetch;
 mod update;
 mod userstore {
-	tonic::include_proto!("cheetah.userstore.external");
+	tonic::include_proto!("cheetah.userstore");
 }
 
 use cheetah_libraries_microservice::jwt::grpc::get_user_uuid;
 use cheetah_libraries_microservice::{init, trace::trace};
 use std::{error::Error, net::SocketAddr};
-use tonic::{metadata::MetadataMap, transport::Server, Code, Request, Status};
+use tonic::Response;
+use tonic::{transport::Server, Request, Status};
 use tonic_web;
 use update::UpdateService;
 use userstore::update_server::UpdateServer;
+use userstore::Status as UserStoreStatus;
 use uuid::Uuid;
 use ydb::Client;
 
@@ -74,18 +76,10 @@ fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uui
 }
 
 impl YdbError {
-	pub fn to_status(&self, field_name: &str) -> Status {
+	pub fn lift<R>(self, f: impl FnOnce(UserStoreStatus) -> R) -> Result<Response<R>, Status> {
 		match self {
-			Self::NoSuchField => {
-				let mut mp = MetadataMap::with_capacity(2);
-				mp.append("code", "err_field_not_found".parse().unwrap());
-				Status::with_metadata(
-					Code::Unavailable,
-					format!("The requested field {} cannot be found", field_name),
-					mp,
-				)
-			}
-			Self::DatabaseError(_) => Status::internal(""),
+			Self::FieldNotFound => Ok(Response::new(f(UserStoreStatus::ErrFieldNotFound))),
+			Self::DatabaseError(_) => Err(Status::internal("")),
 		}
 	}
 }

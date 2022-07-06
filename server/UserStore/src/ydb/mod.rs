@@ -19,14 +19,14 @@ pub const DB_NAME: &str = "userstore";
 
 #[derive(Debug)]
 pub enum Error {
-	NoSuchField,
+	FieldNotFound,
 	DatabaseError(YdbOrCustomerError),
 }
 
 impl From<YdbOrCustomerError> for Error {
 	fn from(e: YdbOrCustomerError) -> Self {
 		match e {
-			YdbOrCustomerError::YDB(YdbError::NoRows) => Error::NoSuchField,
+			YdbOrCustomerError::YDB(YdbError::NoRows) => Error::FieldNotFound,
 			_ => Error::DatabaseError(e),
 		}
 	}

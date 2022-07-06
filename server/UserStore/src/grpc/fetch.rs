@@ -1,7 +1,7 @@
 use crate::grpc::unwrap_request;
 use crate::grpc::userstore::{
 	fetch_server::Fetch, GetDoubleReply, GetDoubleRequest, GetLongReply, GetLongRequest,
-	GetStringReply, GetStringRequest,
+	GetStringReply, GetStringRequest, Status as UserStoreStatus,
 };
 use crate::ydb::YDBFetch;
 use cheetah_libraries_microservice::trace::trace;
@@ -30,8 +30,14 @@ impl Fetch for FetchService {
 	) -> Result<Response<GetLongReply>, Status> {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Ok((user, args)) => match self.fetch.get(&user, &args.field_name).await {
-				Ok(value) => Ok(Response::new(GetLongReply { value })),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Ok(value) => Ok(Response::new(GetLongReply {
+					value,
+					status: UserStoreStatus::Ok as i32,
+				})),
+				Err(e) => e.lift(|s| GetLongReply {
+					status: s as i32,
+					value: 0,
+				}),
 			},
 			Err(e) => Err(e),
 		}
@@ -43,10 +49,16 @@ impl Fetch for FetchService {
 	) -> Result<Response<GetDoubleReply>, Status> {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Ok((user, args)) => match self.fetch.get(&user, &args.field_name).await {
-				Ok(value) => Ok(Response::new(GetDoubleReply { value })),
+				Ok(value) => Ok(Response::new(GetDoubleReply {
+					value,
+					status: UserStoreStatus::Ok as i32,
+				})),
 				Err(e) => {
 					trace("Fetch::get_double failed", &e);
-					Err(e.to_status(&args.field_name))
+					e.lift(|s| GetDoubleReply {
+						status: s as i32,
+						value: 0.0,
+					})
 				}
 			},
 			Err(e) => Err(e),
@@ -59,10 +71,16 @@ impl Fetch for FetchService {
 	) -> Result<Response<GetStringReply>, Status> {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Ok((user, args)) => match self.fetch.get(&user, &args.field_name).await {
-				Ok(value) => Ok(Response::new(GetStringReply { value })),
+				Ok(value) => Ok(Response::new(GetStringReply {
+					value,
+					status: UserStoreStatus::Ok as i32,
+				})),
 				Err(e) => {
 					trace("Fetch::get_string failed", &e);
-					Err(e.to_status(&args.field_name))
+					e.lift(|s| GetStringReply {
+						status: s as i32,
+						value: "".into(),
+					})
 				}
 			},
 			Err(s) => Err(s),

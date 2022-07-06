@@ -10,9 +10,10 @@ service Update {
     rpc SetString(SetStringRequest) returns (UpdateReply);
 }
 
-enum UpdateStatus {
+enum Status {
     OK = 0;
-    ERROR = 1;
+    ERR_FIELD_NOT_FOUND = 1;
+    UNKNOWN_ERROR = 2;
 }
 
 message SetLongRequest {
@@ -31,7 +32,7 @@ message SetStringRequest {
 }
 
 message UpdateReply {
-    UpdateStatus status = 1;
+    Status status = 1;
 }
 
 service Fetch {
@@ -53,13 +54,16 @@ message GetStringRequest {
 }
 
 message GetLongReply {
-    sint64 value = 1;
+    Status status = 1;
+    sint64 value = 2;
 }
 
 message GetDoubleReply {
-    double value = 1;
+    Status status = 1;
+    double value = 2;
 }
 
 message GetStringReply {
-    string value = 1;
+    Status status = 1;
+    string value = 2;
 }
