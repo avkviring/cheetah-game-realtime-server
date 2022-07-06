@@ -51,18 +51,20 @@ impl std::error::Error for Error {
 mod test {
 	use std::sync::Arc;
 
-	use crate::ydb::MIGRATIONS_DIR;
 	use cheetah_libraries_ydb::migration::Migrator;
 	use cheetah_libraries_ydb::test_container as ydb_test;
 	use cheetah_libraries_ydb::test_container::YDBTestInstance;
+	use serial_test::serial;
 	use uuid::Uuid;
 	use ydb::Client;
 
+	use crate::ydb::MIGRATIONS_DIR;
 	use crate::ydb::{YDBFetch, YDBUpdate, DB_NAME};
 
 	#[tokio::test]
+	#[serial]
 	async fn test_get_double() {
-		let (_instance, client) = setup_ydb().await;
+		let (_instance, client) = ydb_instance().await;
 
 		let user = Uuid::new_v4();
 		let field_name = "cringebar";
@@ -81,8 +83,9 @@ mod test {
 	}
 
 	#[tokio::test]
+	#[serial]
 	async fn test_get_string() {
-		let (_instance, client) = setup_ydb().await;
+		let (_instance, client) = ydb_instance().await;
 
 		let user = Uuid::new_v4();
 		let field_name = "displayname";
@@ -100,7 +103,7 @@ mod test {
 		assert_eq!(expected_value, actual_value);
 	}
 
-	async fn setup_ydb() -> (Arc<YDBTestInstance>, Client) {
+	async fn ydb_instance() -> (Arc<YDBTestInstance>, Client) {
 		let (_instance, client) = ydb_test::get_or_create_ydb_instance(DB_NAME).await;
 
 		let mut m = Migrator::new_from_dir(&MIGRATIONS_DIR);

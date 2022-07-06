@@ -80,16 +80,18 @@ impl YDBUpdate {
 mod test {
 	use std::sync::Arc;
 
-	use crate::ydb::{table::LONG_TABLE, DB_NAME, MIGRATIONS_DIR};
-
 	use super::YDBUpdate;
 	use cheetah_libraries_ydb::migration::Migrator;
 	use cheetah_libraries_ydb::test_container::{self as ydb_test, YDBTestInstance};
 	use cheetah_libraries_ydb::{query, select};
+	use serial_test::serial;
 	use uuid::Uuid;
 	use ydb::Client;
 
+	use crate::ydb::{table::LONG_TABLE, DB_NAME, MIGRATIONS_DIR};
+
 	#[tokio::test]
+	#[serial]
 	async fn test_set_long() {
 		let (_instance, client) = setup_db().await;
 
@@ -108,6 +110,7 @@ mod test {
 	}
 
 	#[tokio::test]
+	#[serial]
 	async fn test_increment() {
 		let (_instance, client) = setup_db().await;
 
