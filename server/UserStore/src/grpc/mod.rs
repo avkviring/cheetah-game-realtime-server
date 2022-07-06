@@ -62,7 +62,7 @@ impl Service {
 
 fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uuid, T), Status> {
 	match get_user_uuid(request.metadata(), jwt_public_key) {
-		Err(_) => Err(Status::unknown("")),
+		Err(_) => Err(Status::permission_denied("")),
 		Ok(user) => {
 			let args = request.into_inner();
 			Ok((user, args))

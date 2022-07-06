@@ -90,7 +90,7 @@ impl proto::cookie_server::Cookie for CookieService {
 					cookie: cookie.0.to_string(),
 				})
 			})
-			.trace_and_map_err(
+			.trace_and_map_msg(
 				format!("Cookie register with device_id {}", device_id),
 				|_| Status::internal(""),
 			)
@@ -104,14 +104,14 @@ impl proto::cookie_server::Cookie for CookieService {
 		let request = request.get_ref();
 		let cookie = request.cookie.as_str();
 		let uuid = Uuid::try_from(cookie)
-			.trace_and_map_err(format!("Convert cookie to uuid {}", cookie), |_| {
+			.trace_and_map_msg(format!("Convert cookie to uuid {}", cookie), |_| {
 				Status::internal("")
 			})?;
 		let result = self
 			.do_login(request, Cookie::from(uuid))
 			.await
 			.map(|tokens| Response::new(proto::LoginResponse { tokens }))
-			.trace_and_map_err(format!("Login by cookie {}", uuid), |_| {
+			.trace_and_map_msg(format!("Login by cookie {}", uuid), |_| {
 				Status::internal("")
 			})?;
 		Ok(result)

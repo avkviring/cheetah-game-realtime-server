@@ -29,7 +29,7 @@ impl admin::dump_server::Dump for DumpGrpcService {
 		let manager = self.manager.lock().unwrap();
 		let dump = manager
 			.dump(request.get_ref().room)
-			.trace_and_map_err("Dump room", Status::internal)?;
+			.trace_and_map_msg("Dump room", Status::internal)?;
 		Ok(Response::new(dump))
 	}
 }

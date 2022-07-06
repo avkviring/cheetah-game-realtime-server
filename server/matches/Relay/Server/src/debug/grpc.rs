@@ -26,7 +26,7 @@ impl admin::relay_server::Relay for RelayAdminGRPCService {
 		let manager = self.manager.lock().unwrap();
 		manager
 			.get_rooms()
-			.trace_and_map_err("Get rooms", Status::internal)
+			.trace_and_map_msg("Get rooms", Status::internal)
 			.map(|rooms| Response::new(admin::GetRoomsResponse { rooms }))
 	}
 }

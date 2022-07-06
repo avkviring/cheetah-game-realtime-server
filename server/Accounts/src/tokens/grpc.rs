@@ -28,7 +28,7 @@ impl proto::tokens_server::Tokens for TokensGrpcService {
 			.service
 			.refresh(request.token.clone())
 			.await
-			.trace_and_map_err(format!("Refresh jwt tokens {}", request.token), |_| {
+			.trace_and_map_msg(format!("Refresh jwt tokens {}", request.token), |_| {
 				Status::internal("")
 			})?;
 

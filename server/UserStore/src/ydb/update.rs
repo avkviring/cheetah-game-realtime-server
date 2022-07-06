@@ -96,7 +96,8 @@ mod test {
 
 		let update = YDBUpdate::new(client.table_client());
 		let user_id = Uuid::new_v4();
-		update.set(&user_id, "points".into(), &666).await.unwrap();
+		let value = 666;
+		update.set(&user_id, "points".into(), &value).await.unwrap();
 
 		let res: Vec<i64> =
 			select!(client.table_client(), query!(format!("select value from {}", LONG_TABLE)), value => i64)
@@ -104,7 +105,7 @@ mod test {
 				.unwrap();
 
 		assert_eq!(res.len(), 1);
-		assert_eq!(res[0], 666);
+		assert_eq!(res[0], value);
 	}
 
 	#[tokio::test]

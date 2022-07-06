@@ -40,7 +40,7 @@ impl proto::events_server::Events for EventsService {
 			)
 			.await
 			.map(|_| Response::new(EventResponse {}))
-			.trace_and_map_err(
+			.trace_and_map_msg(
 				format!("Error send event to loki {}", request.value),
 				|_| Status::internal(""),
 			)

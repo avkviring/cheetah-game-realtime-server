@@ -142,16 +142,18 @@ impl Matchmaking for StubMatchmakingService {
 		&self,
 		request: Request<TicketRequest>,
 	) -> Result<Response<TicketResponse>, Status> {
-		let user = jwt_tonic_user_uuid::JWTUserTokenParser::new(self.jwt_public_key.clone())
-			.get_user_uuid_from_grpc(request.metadata())
-			.trace_and_map_err(format!("Get user uuid {:?}", request.metadata()), |_| {
-				Status::unauthenticated("")
-			})?;
+		let user = cheetah_libraries_microservice::jwt::grpc::get_user_uuid(
+			request.metadata(),
+			self.jwt_public_key.clone(),
+		)
+		.trace_and_map_msg(format!("Get user uuid {:?}", request.metadata()), |_| {
+			Status::unauthenticated("")
+		})?;
 
 		let ticket_request = request.into_inner();
 		self.matchmaking(ticket_request, user)
 			.await
-			.trace_and_map_err("Matchmaking error", |_| Status::internal(""))
+			.trace_and_map_msg("Matchmaking error", |_| Status::internal(""))
 			.map(Response::new)
 	}
 }

@@ -62,7 +62,7 @@ impl GoogleGrpcService {
 			.parser
 			.parse(token)
 			.await
-			.trace_and_map_err(format!("Parse google id {}", token), |_| {
+			.trace_and_map_msg(format!("Parse google id {}", token), |_| {
 				Status::internal("")
 			})?;
 		Ok(google_id)
@@ -82,7 +82,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 		let (user, registered_user) = self
 			.get_or_create_user(&google_id)
 			.await
-			.trace_and_map_err(format!("Google get or create user {}", token), |_| {
+			.trace_and_map_msg(format!("Google get or create user {}", token), |_| {
 				Status::internal("")
 			})?;
 
@@ -92,7 +92,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 			.tokens_service
 			.create(user, device_id)
 			.await
-			.trace_and_map_err("Create token for user", |_| Status::internal(""))?;
+			.trace_and_map_msg("Create token for user", |_| Status::internal(""))?;
 
 		Ok(Response::new(proto::RegisterOrLoginResponse {
 			registered_player: registered_user,
@@ -113,13 +113,13 @@ impl proto::google_server::Google for GoogleGrpcService {
 
 		let user_uuid = self
 			.jwt_token_parser
-			.get_user_uuid_from_grpc(request.metadata())
-			.trace_and_map_err(format!("Parse jwt token {:?}", request.metadata()), |_| {
+			.parse_user_uuid(request.metadata())
+			.trace_and_map_msg(format!("Parse jwt token {:?}", request.metadata()), |_| {
 				Status::internal("")
 			})?;
 
 		let user = User::try_from(user_uuid)
-			.trace_and_map_err(format!("Convert uuid to user {:?}", user_uuid), |_| {
+			.trace_and_map_msg(format!("Convert uuid to user {:?}", user_uuid), |_| {
 				Status::internal("")
 			})?;
 
