@@ -4,6 +4,7 @@ use crate::grpc::userstore::{
 	GetStringReply, GetStringRequest,
 };
 use crate::ydb::YDBFetch;
+use cheetah_libraries_microservice::trace::trace;
 use tonic::{Request, Response, Status};
 use ydb::TableClient;
 
@@ -43,7 +44,10 @@ impl Fetch for FetchService {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Ok((user, args)) => match self.fetch.get(&user, &args.field_name).await {
 				Ok(value) => Ok(Response::new(GetDoubleReply { value })),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Err(e) => {
+					trace("Fetch::get_double failed", &e);
+					Err(e.to_status(&args.field_name))
+				}
 			},
 			Err(e) => Err(e),
 		}
@@ -56,9 +60,12 @@ impl Fetch for FetchService {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Ok((user, args)) => match self.fetch.get(&user, &args.field_name).await {
 				Ok(value) => Ok(Response::new(GetStringReply { value })),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Err(e) => {
+					trace("Fetch::get_string failed", &e);
+					Err(e.to_status(&args.field_name))
+				}
 			},
-			Err(e) => Err(e),
+			Err(s) => Err(s),
 		}
 	}
 }

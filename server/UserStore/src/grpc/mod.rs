@@ -4,8 +4,8 @@ mod userstore {
 	tonic::include_proto!("cheetah.userstore.external");
 }
 
-use cheetah_libraries_microservice::init;
 use cheetah_libraries_microservice::jwt::grpc::get_user_uuid;
+use cheetah_libraries_microservice::{init, trace::trace};
 use std::{error::Error, net::SocketAddr};
 use tonic::{metadata::MetadataMap, transport::Server, Code, Request, Status};
 use tonic_web;
@@ -62,7 +62,10 @@ impl Service {
 
 fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uuid, T), Status> {
 	match get_user_uuid(request.metadata(), jwt_public_key) {
-		Err(_) => Err(Status::permission_denied("")),
+		Err(e) => {
+			trace("Unauthorized access attempt", e);
+			Err(Status::permission_denied(""))
+		}
 		Ok(user) => {
 			let args = request.into_inner();
 			Ok((user, args))

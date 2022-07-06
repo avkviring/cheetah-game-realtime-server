@@ -4,6 +4,8 @@ mod primitive;
 mod table;
 mod update;
 
+use std::fmt::Display;
+
 pub use fetch::YDBFetch;
 use include_dir::{include_dir, Dir};
 pub use update::YDBUpdate;
@@ -26,6 +28,21 @@ impl From<YdbOrCustomerError> for Error {
 		match e {
 			YdbOrCustomerError::YDB(YdbError::NoRows) => Error::NoSuchField,
 			_ => Error::DatabaseError(e),
+		}
+	}
+}
+
+impl Display for Error {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_fmt(format_args!("{:?}", self))
+	}
+}
+
+impl std::error::Error for Error {
+	fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+		match self {
+			Error::DatabaseError(e) => Some(e),
+			_ => None,
 		}
 	}
 }

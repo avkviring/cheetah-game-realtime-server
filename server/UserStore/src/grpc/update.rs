@@ -6,6 +6,7 @@ use crate::grpc::userstore::{
 	update_server::Update, SetDoubleRequest, SetLongRequest, SetStringRequest, UpdateReply,
 };
 use crate::ydb::YDBUpdate;
+use cheetah_libraries_microservice::trace::trace;
 
 pub struct UpdateService {
 	update: YDBUpdate,
@@ -31,7 +32,10 @@ impl Update for UpdateService {
 			Err(e) => Err(e),
 			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
 				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Err(e) => {
+					trace("Update::set_long failed", &e);
+					Err(e.to_status(&args.field_name))
+				}
 			},
 		}
 	}
@@ -48,7 +52,10 @@ impl Update for UpdateService {
 				.await
 			{
 				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Err(e) => {
+					trace("Update::increment_long failed", &e);
+					Err(e.to_status(&args.field_name))
+				}
 			},
 		}
 	}
@@ -61,7 +68,10 @@ impl Update for UpdateService {
 			Err(e) => Err(e),
 			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
 				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Err(e) => {
+					trace("Update::set_double failed", &e);
+					Err(e.to_status(&args.field_name))
+				}
 			},
 		}
 	}
@@ -78,7 +88,10 @@ impl Update for UpdateService {
 				.await
 			{
 				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Err(e) => {
+					trace("Update::increment_double failed", &e);
+					Err(e.to_status(&args.field_name))
+				}
 			},
 		}
 	}
@@ -91,7 +104,10 @@ impl Update for UpdateService {
 			Err(e) => Err(e),
 			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
 				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => Err(e.to_status(&args.field_name)),
+				Err(e) => {
+					trace("Update::set_string failed", &e);
+					Err(e.to_status(&args.field_name))
+				}
 			},
 		}
 	}
