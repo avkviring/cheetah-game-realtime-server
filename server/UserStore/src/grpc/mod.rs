@@ -80,7 +80,7 @@ fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uui
 impl YdbError {
 	pub fn lift<R>(self, f: impl FnOnce(UserStoreStatus) -> R) -> Result<Response<R>, Status> {
 		match self {
-			Self::FieldNotFound => Ok(Response::new(f(UserStoreStatus::ErrFieldNotFound))),
+			Self::FieldNotFound => Ok(Response::new(f(UserStoreStatus::FieldNotFound))),
 			Self::DatabaseError(_) => Err(Status::internal("")),
 		}
 	}
