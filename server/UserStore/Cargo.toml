@@ -22,7 +22,6 @@ include_dir = "0.7.2"
 [dev-dependencies]
 uuid = { version = "1.0.0", features = ["v4"] }
 cheetah-libraries-ydb = { path = "../libraries/YDB", features = ["test_container"] }
-serial_test = "0.8.0"
 
 [build-dependencies]
 tonic-build = "0.6.2"

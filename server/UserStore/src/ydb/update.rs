@@ -84,16 +84,14 @@ mod test {
 	use cheetah_libraries_ydb::migration::Migrator;
 	use cheetah_libraries_ydb::test_container::{self as ydb_test, YDBTestInstance};
 	use cheetah_libraries_ydb::{query, select};
-	use serial_test::serial;
 	use uuid::Uuid;
 	use ydb::Client;
 
-	use crate::ydb::{table::LONG_TABLE, DB_NAME, MIGRATIONS_DIR};
+	use crate::ydb::{table::LONG_TABLE, MIGRATIONS_DIR};
 
 	#[tokio::test]
-	#[serial]
 	async fn test_set_long() {
-		let (_instance, client) = setup_db().await;
+		let (_instance, client) = setup_db("test_set_long").await;
 
 		let update = YDBUpdate::new(client.table_client());
 		let user_id = Uuid::new_v4();
@@ -110,9 +108,8 @@ mod test {
 	}
 
 	#[tokio::test]
-	#[serial]
 	async fn test_increment() {
-		let (_instance, client) = setup_db().await;
+		let (_instance, client) = setup_db("test_increment").await;
 
 		let update = YDBUpdate::new(client.table_client());
 		let user = Uuid::new_v4();
@@ -131,8 +128,8 @@ mod test {
 		assert_eq!(res[0], 73);
 	}
 
-	async fn setup_db() -> (Arc<YDBTestInstance>, Client) {
-		let (instance, client) = ydb_test::get_or_create_ydb_instance(DB_NAME).await;
+	async fn setup_db(db_name: &str) -> (Arc<YDBTestInstance>, Client) {
+		let (instance, client) = ydb_test::get_or_create_ydb_instance(db_name).await;
 		let mut m = Migrator::new_from_dir(&MIGRATIONS_DIR);
 		m.migrate(&client).await.unwrap();
 

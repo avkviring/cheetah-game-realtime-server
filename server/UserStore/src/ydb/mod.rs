@@ -54,17 +54,15 @@ mod test {
 	use cheetah_libraries_ydb::migration::Migrator;
 	use cheetah_libraries_ydb::test_container as ydb_test;
 	use cheetah_libraries_ydb::test_container::YDBTestInstance;
-	use serial_test::serial;
 	use uuid::Uuid;
 	use ydb::Client;
 
 	use crate::ydb::MIGRATIONS_DIR;
-	use crate::ydb::{YDBFetch, YDBUpdate, DB_NAME};
+	use crate::ydb::{YDBFetch, YDBUpdate};
 
 	#[tokio::test]
-	#[serial]
 	async fn test_get_double() {
-		let (_instance, client) = ydb_instance().await;
+		let (_instance, client) = ydb_instance("test_get_double").await;
 
 		let user = Uuid::new_v4();
 		let field_name = "cringebar";
@@ -83,9 +81,8 @@ mod test {
 	}
 
 	#[tokio::test]
-	#[serial]
 	async fn test_get_string() {
-		let (_instance, client) = ydb_instance().await;
+		let (_instance, client) = ydb_instance("test_get_string").await;
 
 		let user = Uuid::new_v4();
 		let field_name = "displayname";
@@ -103,8 +100,8 @@ mod test {
 		assert_eq!(expected_value, actual_value);
 	}
 
-	async fn ydb_instance() -> (Arc<YDBTestInstance>, Client) {
-		let (_instance, client) = ydb_test::get_or_create_ydb_instance(DB_NAME).await;
+	async fn ydb_instance(db_name: &str) -> (Arc<YDBTestInstance>, Client) {
+		let (_instance, client) = ydb_test::get_or_create_ydb_instance(db_name).await;
 
 		let mut m = Migrator::new_from_dir(&MIGRATIONS_DIR);
 		m.migrate(&client).await.unwrap();
