@@ -54,16 +54,22 @@ message GetStringRequest {
 }
 
 message GetLongReply {
-    Status status = 1;
-    sint64 value = 2;
+    oneof Result {
+        Status status = 1;
+        sint64 value = 2;
+    }
 }
 
 message GetDoubleReply {
-    Status status = 1;
-    double value = 2;
+    oneof Result {
+        Status status = 1;
+        double value = 2;
+    }
 }
 
 message GetStringReply {
-    Status status = 1;
-    string value = 2;
+    oneof Result {
+        Status status = 1;
+        string value = 2;
+    }
 }

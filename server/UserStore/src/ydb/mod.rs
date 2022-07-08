@@ -1,6 +1,6 @@
 mod fetch;
 mod numeric;
-mod primitive;
+pub mod primitive;
 mod table;
 mod update;
 

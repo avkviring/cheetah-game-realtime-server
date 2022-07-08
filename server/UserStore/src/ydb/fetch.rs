@@ -1,11 +1,10 @@
 use std::fmt::Debug;
 
-use cheetah_libraries_ydb::converters::YDBValueConverter;
 use cheetah_libraries_ydb::{query, select};
 use uuid::Uuid;
 use ydb::{TableClient, Value, YdbOrCustomerError};
 
-use crate::ydb::table::{ToDbTable, COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
+use crate::ydb::table::{COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
 use crate::ydb::{primitive::Primitive, Error};
 
 pub struct YDBFetch {
@@ -19,7 +18,7 @@ impl YDBFetch {
 
 	pub async fn get<T>(&self, user: &Uuid, field_name: &str) -> Result<T, Error>
 	where
-		T: Primitive + YDBValueConverter + ToDbTable,
+		T: Primitive,
 		Option<T>: TryFrom<Value>,
 		<Option<T> as TryFrom<Value>>::Error: Debug,
 	{

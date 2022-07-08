@@ -1,4 +1,6 @@
 mod fetch;
+mod reply;
+mod request;
 mod update;
 mod userstore {
 	tonic::include_proto!("cheetah.userstore");
