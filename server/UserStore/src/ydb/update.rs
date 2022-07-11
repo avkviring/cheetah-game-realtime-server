@@ -78,20 +78,17 @@ impl Update {
 
 #[cfg(test)]
 mod test {
-	use std::sync::Arc;
 
 	use super::Update;
-	use cheetah_libraries_ydb::migration::Migrator;
-	use cheetah_libraries_ydb::test_container::{self as ydb_test, YDBTestInstance};
 	use cheetah_libraries_ydb::{query, select};
 	use uuid::Uuid;
-	use ydb::Client;
 
-	use crate::ydb::{table::LONG_TABLE, MIGRATIONS_DIR};
+	use crate::ydb::table::LONG_TABLE;
+	use crate::ydb::test::ydb_instance;
 
 	#[tokio::test]
 	async fn test_set_long() {
-		let (_instance, client) = setup_db("test_set_long").await;
+		let (_instance, client) = ydb_instance("test_set_long").await;
 
 		let update = Update::new(client.table_client());
 		let user_id = Uuid::new_v4();
@@ -109,7 +106,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_increment() {
-		let (_instance, client) = setup_db("test_increment").await;
+		let (_instance, client) = ydb_instance("test_increment").await;
 
 		let update = Update::new(client.table_client());
 		let user = Uuid::new_v4();
@@ -128,11 +125,14 @@ mod test {
 		assert_eq!(res[0], 73);
 	}
 
-	async fn setup_db(db_name: &str) -> (Arc<YDBTestInstance>, Client) {
-		let (instance, client) = ydb_test::get_or_create_ydb_instance(db_name).await;
-		let mut m = Migrator::new_from_dir(&MIGRATIONS_DIR);
-		m.migrate(&client).await.unwrap();
+	#[tokio::test]
+	async fn test_increment_missing_field() {
+		let (_instance, client) = ydb_instance("test_increment_missing_field").await;
 
-		(instance, client)
+		let update = Update::new(client.table_client());
+		let user = Uuid::new_v4();
+		let field_name = "missing";
+
+		update.increment(&user, field_name, &487).await.unwrap();
 	}
 }

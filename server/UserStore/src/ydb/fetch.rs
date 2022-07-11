@@ -51,6 +51,38 @@ impl Fetch {
 		&self,
 		query_result: Result<Vec<T>, YdbOrCustomerError>,
 	) -> Result<T, Error> {
-		query_result.map(|v| v[0].clone()).map_err(|e| e.into())
+		match query_result {
+			Ok(v) => {
+				if v.is_empty() {
+					Err(Error::FieldNotFound)
+				} else {
+					Ok(v[0].clone())
+				}
+			}
+			Err(e) => Err(e.into()),
+		}
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use uuid::Uuid;
+
+	use super::Fetch;
+	use crate::ydb::{test::ydb_instance, Error};
+
+	#[tokio::test]
+	async fn test_fetch_missing_field_fails() {
+		let (_instance, client) = ydb_instance("test_fetch_missing_field_fails").await;
+
+		let fetch = Fetch::new(client.table_client());
+		let user = Uuid::new_v4();
+
+		let result = fetch.get::<i64>(&user, "missing").await;
+		match result {
+			Err(Error::FieldNotFound) => return,
+			Err(other) => panic!("Expected Error::FieldNotFound, found {}", other),
+			other => panic!("Expected error, found {:?}", other),
+		}
 	}
 }

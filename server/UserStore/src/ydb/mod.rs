@@ -110,7 +110,7 @@ mod test {
 		assert_eq!(expected_value, actual_value);
 	}
 
-	async fn ydb_instance(db_name: &str) -> (Arc<YDBTestInstance>, Client) {
+	pub async fn ydb_instance(db_name: &str) -> (Arc<YDBTestInstance>, Client) {
 		let (_instance, client) = ydb_test::get_or_create_ydb_instance(db_name).await;
 
 		let mut m = Migrator::new_from_dir(&MIGRATIONS_DIR);
