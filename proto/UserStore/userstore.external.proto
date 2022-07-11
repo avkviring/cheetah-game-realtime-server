@@ -3,11 +3,8 @@ package cheetah.userstore;
 option csharp_namespace = "Cheetah.UserStore.GRPC";
 
 service Update {
-    rpc SetLong(SetLongRequest) returns (UpdateReply);
-    rpc IncrementLong(SetLongRequest) returns (UpdateReply);
-    rpc SetDouble(SetDoubleRequest) returns (UpdateReply);
-    rpc IncrementDouble(SetDoubleRequest) returns (UpdateReply);
-    rpc SetString(SetStringRequest) returns (UpdateReply);
+    rpc Set(SetRequest) returns (UpdateReply);
+    rpc Increment(IncrementRequest) returns (UpdateReply);
 }
 
 enum Status {
@@ -16,19 +13,35 @@ enum Status {
     INTERNAL_ERROR = 2;
 }
 
-message SetLongRequest {
-    string fieldName = 1;
-    sint64 value = 2;
+message PrimitiveValue {
+    oneof pr {
+       sint64 long = 2;
+       double double = 3;
+       string string = 4;
+    };
 }
 
-message SetDoubleRequest {
-    string fieldName = 1;
-    double value = 2;
+message NumericValue {
+    oneof number {
+        sint64 long = 1;
+        double double = 2;
+    }
 }
 
-message SetStringRequest {
+enum PrimitiveType {
+    LONG = 0;
+    DOUBLE = 1;
+    STRING = 2;
+}
+
+message SetRequest {
     string fieldName = 1;
-    string value = 2;
+    PrimitiveValue value = 2;
+}
+
+message IncrementRequest {
+    string fieldName = 1;
+    NumericValue value = 2;
 }
 
 message UpdateReply {
@@ -36,40 +49,17 @@ message UpdateReply {
 }
 
 service Fetch {
-    rpc GetLong(GetLongRequest) returns (GetLongReply);
-    rpc GetDouble(GetDoubleRequest) returns (GetDoubleReply);
-    rpc GetString(GetStringRequest) returns (GetStringReply);
+    rpc Get(FetchRequest) returns (FetchReply);
 }
 
-message GetLongRequest {
+message FetchRequest {
     string fieldName = 1;
+    PrimitiveType datatype = 2;
 }
 
-message GetDoubleRequest {
-    string fieldName = 1;
-}
-
-message GetStringRequest {
-    string fieldName = 1;
-}
-
-message GetLongReply {
-    oneof Result {
-        Status status = 1;
-        sint64 value = 2;
-    }
-}
-
-message GetDoubleReply {
-    oneof Result {
-        Status status = 1;
-        double value = 2;
-    }
-}
-
-message GetStringReply {
-    oneof Result {
-        Status status = 1;
-        string value = 2;
-    }
+message FetchReply {
+   oneof result {
+       Status status = 1;
+       PrimitiveValue value = 2; 
+   } 
 }
