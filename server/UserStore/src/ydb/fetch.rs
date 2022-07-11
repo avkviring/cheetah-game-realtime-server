@@ -5,20 +5,20 @@ use uuid::Uuid;
 use ydb::{TableClient, Value, YdbOrCustomerError};
 
 use crate::ydb::table::{COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
-use crate::ydb::{primitive::Primitive, Error};
+use crate::ydb::{primitive::PrimitiveValue, Error};
 
-pub struct YDBFetch {
+pub struct Fetch {
 	client: TableClient,
 }
 
-impl YDBFetch {
+impl Fetch {
 	pub fn new(client: TableClient) -> Self {
 		Self { client }
 	}
 
 	pub async fn get<T>(&self, user: &Uuid, field_name: &str) -> Result<T, Error>
 	where
-		T: Primitive,
+		T: PrimitiveValue,
 		Option<T>: TryFrom<Value>,
 		<Option<T> as TryFrom<Value>>::Error: Debug,
 	{

@@ -1,114 +1,90 @@
+use ::ydb::TableClient;
+use cheetah_libraries_microservice::trace::trace_err;
 use tonic::{Request, Response, Status};
-use ydb::TableClient;
+use uuid::Uuid;
 
 use crate::grpc::unwrap_request;
 use crate::grpc::userstore::{
-	update_server::Update, SetDoubleRequest, SetLongRequest, SetStringRequest, UpdateReply,
+	numeric_value, primitive_value, update_server::Update, IncrementRequest, SetRequest,
+	UpdateReply,
 };
-use crate::ydb::YDBUpdate;
-use cheetah_libraries_microservice::trace::trace;
+use crate::ydb;
 
 pub struct UpdateService {
-	update: YDBUpdate,
+	update: ydb::Update,
 	jwt_public_key: String,
 }
 
 impl UpdateService {
 	pub fn new(client: TableClient, jwt_public_key: String) -> Self {
 		Self {
-			update: YDBUpdate::new(client),
+			update: ydb::Update::new(client),
 			jwt_public_key,
+		}
+	}
+
+	async fn set_wrapped(&self, user: &Uuid, args: SetRequest) -> Result<(), ydb::Error> {
+		let field_name = &args.field_name;
+		match args.value {
+			Some(v) => match v.pr {
+				Some(primitive_value::Pr::Long(v)) => self.update.set(user, field_name, &v).await,
+				Some(primitive_value::Pr::Double(v)) => self.update.set(user, field_name, &v).await,
+				Some(primitive_value::Pr::String(v)) => self.update.set(user, field_name, &v).await,
+				None => panic!("Unknown variant of primitive_value::Pr"),
+			},
+			None => panic!("Empty field 'value'"),
+		}
+	}
+
+	async fn increment_wrapped(
+		&self,
+		user: &Uuid,
+		args: IncrementRequest,
+	) -> Result<(), ydb::Error> {
+		let field_name = &args.field_name;
+		match args.value {
+			Some(v) => match v.number {
+				Some(numeric_value::Number::Long(v)) => {
+					self.update.increment(user, field_name, &v).await
+				}
+				Some(numeric_value::Number::Double(v)) => {
+					self.update.increment(user, field_name, &v).await
+				}
+				None => panic!("Unknown variant of numeric_value::Number"),
+			},
+			None => panic!("Empty field 'value'"),
+		}
+	}
+
+	fn respond(&self, result: Result<(), ydb::Error>) -> Result<Response<UpdateReply>, Status> {
+		match result {
+			Ok(_) => Ok(Response::new(UpdateReply::default())),
+			Err(e) => {
+				if e.is_server_side() {
+					trace_err("Update operation failed", &e);
+				}
+				e.lift(|s| UpdateReply { status: s as i32 })
+			}
 		}
 	}
 }
 
 #[tonic::async_trait]
 impl Update for UpdateService {
-	async fn set_long(
+	async fn increment(
 		&self,
-		request: Request<SetLongRequest>,
+		request: Request<IncrementRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Err(s) => Err(s),
-			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
-				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => {
-					trace("Update::set_long failed", &e);
-					e.lift(|s| UpdateReply { status: s as i32 })
-				}
-			},
+			Ok((user, args)) => self.respond(self.increment_wrapped(&user, args).await),
 		}
 	}
 
-	async fn increment_long(
-		&self,
-		request: Request<SetLongRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
+	async fn set(&self, request: Request<SetRequest>) -> Result<Response<UpdateReply>, Status> {
 		match unwrap_request(request, self.jwt_public_key.clone()) {
 			Err(s) => Err(s),
-			Ok((user, args)) => match self
-				.update
-				.increment(&user, &args.field_name, &args.value)
-				.await
-			{
-				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => {
-					trace("Update::increment_long failed", &e);
-					e.lift(|s| UpdateReply { status: s as i32 })
-				}
-			},
-		}
-	}
-
-	async fn set_double(
-		&self,
-		request: Request<SetDoubleRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
-		match unwrap_request(request, self.jwt_public_key.clone()) {
-			Err(s) => Err(s),
-			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
-				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => {
-					trace("Update::set_double failed", &e);
-					e.lift(|s| UpdateReply { status: s as i32 })
-				}
-			},
-		}
-	}
-
-	async fn increment_double(
-		&self,
-		request: Request<SetDoubleRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
-		match unwrap_request(request, self.jwt_public_key.clone()) {
-			Err(s) => Err(s),
-			Ok((user, args)) => match self
-				.update
-				.increment(&user, &args.field_name, &args.value)
-				.await
-			{
-				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => {
-					trace("Update::increment_double failed", &e);
-					e.lift(|s| UpdateReply { status: s as i32 })
-				}
-			},
-		}
-	}
-
-	async fn set_string(
-		&self,
-		request: Request<SetStringRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
-		match unwrap_request(request, self.jwt_public_key.clone()) {
-			Err(s) => Err(s),
-			Ok((user, args)) => match self.update.set(&user, &args.field_name, &args.value).await {
-				Ok(_) => Ok(Response::new(UpdateReply::default())),
-				Err(e) => {
-					trace("Update::set_string failed", &e);
-					e.lift(|s| UpdateReply { status: s as i32 })
-				}
-			},
+			Ok((user, args)) => self.respond(self.set_wrapped(&user, args).await),
 		}
 	}
 }

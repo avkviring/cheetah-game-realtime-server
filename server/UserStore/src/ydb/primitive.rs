@@ -1,9 +1,9 @@
 use crate::ydb::table::ToDbTable;
 use cheetah_libraries_ydb::converters::YDBValueConverter;
 
-pub trait Primitive: Sized + Clone + YDBValueConverter + ToDbTable {}
+pub trait PrimitiveValue: Sized + Clone + YDBValueConverter + ToDbTable {}
 
-impl Primitive for i64 {}
-impl Primitive for f64 {}
-impl Primitive for &str {}
-impl Primitive for String {}
+impl PrimitiveValue for i64 {}
+impl PrimitiveValue for f64 {}
+impl PrimitiveValue for &str {}
+impl PrimitiveValue for String {}

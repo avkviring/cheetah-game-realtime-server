@@ -1,20 +1,19 @@
 mod fetch;
 mod reply;
-mod request;
 mod update;
+mod value;
 mod userstore {
 	tonic::include_proto!("cheetah.userstore");
 }
 
 use cheetah_libraries_microservice::jwt::grpc::get_user_uuid;
-use cheetah_libraries_microservice::{init, trace::trace};
+use cheetah_libraries_microservice::{init, trace::trace_err};
 use std::{error::Error, net::SocketAddr};
 use tonic::Response;
 use tonic::{transport::Server, Request, Status};
 use tonic_web;
 use update::UpdateService;
 use userstore::update_server::UpdateServer;
-use userstore::Status as UserStoreStatus;
 use uuid::Uuid;
 use ydb::Client;
 
@@ -67,7 +66,7 @@ impl Service {
 fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uuid, T), Status> {
 	match get_user_uuid(request.metadata(), jwt_public_key) {
 		Err(e) => {
-			trace("Unauthorized access attempt", e);
+			trace_err("Unauthorized access attempt", e);
 			Err(Status::permission_denied(""))
 		}
 		Ok(user) => {
@@ -78,9 +77,9 @@ fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uui
 }
 
 impl YdbError {
-	pub fn lift<R>(self, f: impl FnOnce(UserStoreStatus) -> R) -> Result<Response<R>, Status> {
+	pub fn lift<R>(self, f: impl FnOnce(userstore::Status) -> R) -> Result<Response<R>, Status> {
 		match self {
-			Self::FieldNotFound => Ok(Response::new(f(UserStoreStatus::FieldNotFound))),
+			Self::FieldNotFound => Ok(Response::new(f(userstore::Status::FieldNotFound))),
 			Self::DatabaseError(_) => Err(Status::internal("")),
 		}
 	}

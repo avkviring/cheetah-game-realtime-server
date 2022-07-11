@@ -5,18 +5,18 @@ use ydb::TableClient;
 
 use crate::ydb::numeric::Num;
 use crate::ydb::table::{ToDbTable, COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
-use crate::ydb::{primitive::Primitive, Error};
+use crate::ydb::{primitive::PrimitiveValue, Error};
 
-pub struct YDBUpdate {
+pub struct Update {
 	client: TableClient,
 }
 
-impl YDBUpdate {
+impl Update {
 	pub fn new(client: TableClient) -> Self {
 		Self { client }
 	}
 
-	pub async fn set<T: Primitive + ToDbTable + YDBValueConverter>(
+	pub async fn set<T: PrimitiveValue + ToDbTable + YDBValueConverter>(
 		&self,
 		user: &Uuid,
 		field_name: &str,
@@ -80,7 +80,7 @@ impl YDBUpdate {
 mod test {
 	use std::sync::Arc;
 
-	use super::YDBUpdate;
+	use super::Update;
 	use cheetah_libraries_ydb::migration::Migrator;
 	use cheetah_libraries_ydb::test_container::{self as ydb_test, YDBTestInstance};
 	use cheetah_libraries_ydb::{query, select};
@@ -93,7 +93,7 @@ mod test {
 	async fn test_set_long() {
 		let (_instance, client) = setup_db("test_set_long").await;
 
-		let update = YDBUpdate::new(client.table_client());
+		let update = Update::new(client.table_client());
 		let user_id = Uuid::new_v4();
 		let value = 666;
 		update.set(&user_id, "points".into(), &value).await.unwrap();
@@ -111,7 +111,7 @@ mod test {
 	async fn test_increment() {
 		let (_instance, client) = setup_db("test_increment").await;
 
-		let update = YDBUpdate::new(client.table_client());
+		let update = Update::new(client.table_client());
 		let user = Uuid::new_v4();
 		let field_name = "incrementable";
 

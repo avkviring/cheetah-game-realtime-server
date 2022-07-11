@@ -1,14 +1,14 @@
 mod fetch;
 mod numeric;
-pub mod primitive;
+mod primitive;
 mod table;
 mod update;
 
 use std::fmt::Display;
 
-pub use fetch::YDBFetch;
+pub use fetch::Fetch;
 use include_dir::{include_dir, Dir};
-pub use update::YDBUpdate;
+pub use update::Update;
 use ydb::{YdbError, YdbOrCustomerError};
 
 #[allow(dead_code)]
@@ -21,6 +21,16 @@ pub const DB_NAME: &str = "userstore";
 pub enum Error {
 	FieldNotFound,
 	DatabaseError(YdbOrCustomerError),
+}
+
+impl Error {
+	pub fn is_server_side(&self) -> bool {
+		if let Error::DatabaseError(_) = self {
+			true
+		} else {
+			false
+		}
+	}
 }
 
 impl From<YdbOrCustomerError> for Error {
@@ -58,7 +68,7 @@ mod test {
 	use ydb::Client;
 
 	use crate::ydb::MIGRATIONS_DIR;
-	use crate::ydb::{YDBFetch, YDBUpdate};
+	use crate::ydb::{Fetch, Update};
 
 	#[tokio::test]
 	async fn test_get_double() {
@@ -68,13 +78,13 @@ mod test {
 		let field_name = "cringebar";
 		let expected_value = 666.666;
 
-		let update = YDBUpdate::new(client.table_client());
+		let update = Update::new(client.table_client());
 		update
 			.set(&user, field_name, &expected_value)
 			.await
 			.unwrap();
 
-		let fetch = YDBFetch::new(client.table_client());
+		let fetch = Fetch::new(client.table_client());
 		let actual_value: f64 = fetch.get(&user, field_name).await.unwrap();
 
 		assert_eq!(expected_value, actual_value);
@@ -88,13 +98,13 @@ mod test {
 		let field_name = "displayname";
 		let expected_value = "Potet";
 
-		let update = YDBUpdate::new(client.table_client());
+		let update = Update::new(client.table_client());
 		update
 			.set(&user, field_name, &expected_value)
 			.await
 			.unwrap();
 
-		let fetch = YDBFetch::new(client.table_client());
+		let fetch = Fetch::new(client.table_client());
 		let actual_value: String = fetch.get(&user, field_name).await.unwrap();
 
 		assert_eq!(expected_value, actual_value);
