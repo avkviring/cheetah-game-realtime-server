@@ -1,7 +1,7 @@
 use include_dir::include_dir;
 
 use cheetah_accounts::grpc::run_grpc_server;
-use cheetah_libraries_ydb::builder::YdbClientBuilder;
+use ydb_steroids::builder::YdbClientBuilder;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

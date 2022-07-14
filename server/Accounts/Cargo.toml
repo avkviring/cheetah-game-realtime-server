@@ -20,7 +20,7 @@ async-stream = "0.3"
 jsonwebtoken = "8.0.1"
 serde = { version = "1.0.132", features = ["derive"] }
 cheetah-libraries-microservice = { path = "../libraries/Microservice" }
-cheetah-libraries-ydb = { path = "../libraries/YDB" }
+ydb-steroids = { version = "0.1.2", features = ["uuid"] }
 ydb = "0.2.0"
 async-trait = "0.1.52"
 lazy_static = "1.4.0"
@@ -45,7 +45,7 @@ lazy_static = "1.4.0"
 futures = "0.3.21"
 httpmock = { version = "0.6.2" }
 base64 = { version = "0.13.0" }
-cheetah-libraries-ydb = { path = "../libraries/YDB", features = ["test_container"] }
+ydb-steroids = { version = "0.1.2", features = ["test_container"] }
 
 [build-dependencies]
 tonic-build = { version = "0.6.2", features = ["rustfmt"] }

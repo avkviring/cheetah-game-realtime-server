@@ -1,5 +1,5 @@
-use cheetah_libraries_ydb::converters::YDBValueConverter;
 use uuid::Uuid;
+use ydb_steroids::converters::YDBValueConverter;
 
 pub struct Cookie(pub Uuid);
 

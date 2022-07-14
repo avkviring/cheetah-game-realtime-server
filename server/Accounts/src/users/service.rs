@@ -1,7 +1,7 @@
 use crate::users::user::User;
-use cheetah_libraries_ydb::error::is_unique_violation_error;
-use cheetah_libraries_ydb::{query, update};
 use ydb::{TableClient, YdbOrCustomerError};
+use ydb_steroids::error::is_unique_violation_error;
+use ydb_steroids::{query, update};
 
 #[derive(Clone)]
 pub struct UserService {

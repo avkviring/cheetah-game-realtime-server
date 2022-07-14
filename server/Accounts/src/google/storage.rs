@@ -1,7 +1,7 @@
 use uuid::Uuid;
 use ydb::{Bytes, TableClient, YdbOrCustomerError};
 
-use cheetah_libraries_ydb::{query, update};
+use ydb_steroids::{query, update};
 
 use crate::users::user::User;
 

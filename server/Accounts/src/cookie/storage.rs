@@ -1,8 +1,8 @@
-use cheetah_libraries_ydb::error::is_unique_violation_error;
-use cheetah_libraries_ydb::{query, select, update};
 use thiserror::Error;
 use uuid::Uuid;
 use ydb::{Bytes, TableClient, YdbOrCustomerError};
+use ydb_steroids::error::is_unique_violation_error;
+use ydb_steroids::{query, select, update};
 
 use crate::cookie::cookie::Cookie;
 use crate::users::user::User;

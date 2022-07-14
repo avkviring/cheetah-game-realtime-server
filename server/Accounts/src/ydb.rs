@@ -14,8 +14,8 @@ pub mod test {
 	use uuid::Uuid;
 	use ydb::Client;
 
-	use cheetah_libraries_ydb::builder::YdbClientBuilder;
-	use cheetah_libraries_ydb::test_container::{get_or_create_ydb_instance, YDBTestInstance};
+	use ydb_steroids::builder::YdbClientBuilder;
+	use ydb_steroids::test_container::{get_or_create_ydb_instance, YDBTestInstance};
 
 	pub async fn setup_ydb() -> (Client, Arc<YDBTestInstance>) {
 		let db = Uuid::new_v4().to_string();

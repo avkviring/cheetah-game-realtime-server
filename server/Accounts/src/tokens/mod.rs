@@ -121,7 +121,7 @@ impl TokensService {
 			&EncodingKey::from_ec_pem(self.private_key.as_bytes()).unwrap(),
 		)
 		.unwrap();
-		Result::Ok(TokensService::remove_head(token))
+		Ok(TokensService::remove_head(token))
 	}
 
 	fn create_session_token(&self, user: &User) -> String {
@@ -170,20 +170,20 @@ impl TokensService {
 				{
 					Ok(linked) => {
 						if linked {
-							Result::Ok(Tokens {
+							Ok(Tokens {
 								session: self.create_session_token(&user),
 								refresh: self.create_refresh_token(user, &device_id).await?,
 							})
 						} else {
-							Result::Err(JWTTokensServiceError::InvalidId)
+							Err(JWTTokensServiceError::InvalidId)
 						}
 					}
-					Err(e) => Result::Err(JWTTokensServiceError::StorageError(format!("{}", e))),
+					Err(e) => Err(JWTTokensServiceError::StorageError(format!("{}", e))),
 				}
 			}
 			Err(error) => match error.kind() {
-				ErrorKind::ExpiredSignature => Result::Err(JWTTokensServiceError::Expired),
-				_ => Result::Err(JWTTokensServiceError::InvalidSignature),
+				ErrorKind::ExpiredSignature => Err(JWTTokensServiceError::Expired),
+				_ => Err(JWTTokensServiceError::InvalidSignature),
 			},
 		}
 	}
@@ -197,7 +197,7 @@ pub mod tests {
 	use std::time::Duration;
 
 	use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenError};
-	use cheetah_libraries_ydb::test_container::YDBTestInstance;
+	use ydb_steroids::test_container::YDBTestInstance;
 
 	use crate::tokens::storage::TokenStorage;
 	use crate::tokens::{JWTTokensServiceError, TokensService};

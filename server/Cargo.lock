@@ -548,7 +548,6 @@ dependencies = [
  "async-trait",
  "base64 0.13.0",
  "cheetah-libraries-microservice",
- "cheetah-libraries-ydb",
  "chrono",
  "futures",
  "headers",
@@ -574,6 +573,7 @@ dependencies = [
  "tracing",
  "uuid",
  "ydb",
+ "ydb-steroids",
 ]
 
 [[package]]
@@ -598,26 +598,6 @@ dependencies = [
  "tracing-subscriber",
  "tracing-unwrap",
  "uuid",
-]
-
-[[package]]
-name = "cheetah-libraries-ydb"
-version = "999.999.999"
-dependencies = [
- "cheetah-libraries-microservice",
- "cheetah-libraries-ydb",
- "include_dir",
- "lazy_static",
- "log",
- "sha2 0.10.2",
- "simple_logger",
- "testcontainers 0.13.0",
- "tokio",
- "tracing",
- "tracing-log",
- "uuid",
- "ydb",
- "ydb-grpc",
 ]
 
 [[package]]
@@ -851,17 +831,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8ad8cef104ac57b68b89df3208164d228503abbdce70f6880ffa3d970e7443a"
 dependencies = [
  "cc",
-]
-
-[[package]]
-name = "colored"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3616f750b84d8f0de8a58bda93e08e2a81ad3f523089b05f1dffecab48c6cbd"
-dependencies = [
- "atty",
- "lazy_static",
- "winapi",
 ]
 
 [[package]]
@@ -3418,19 +3387,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple_logger"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c75a9723083573ace81ad0cdfc50b858aa3c366c48636edb4109d73122a0c0ea"
-dependencies = [
- "atty",
- "colored",
- "log",
- "time 0.3.7",
- "winapi",
-]
-
-[[package]]
 name = "siphasher"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4589,6 +4545,23 @@ name = "ydb-grpc-helpers"
 version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "673bd91af6e3f5ef7e5ad0258c2d8667679b4d402f22e2f85f56d8093322f917"
+
+[[package]]
+name = "ydb-steroids"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de5fea9e33cca6d3d9384f6fad4f495311ca7a94082b68e1becb7f727ec0d624"
+dependencies = [
+ "include_dir",
+ "lazy_static",
+ "sha2 0.10.2",
+ "testcontainers 0.13.0",
+ "tokio",
+ "tracing",
+ "uuid",
+ "ydb",
+ "ydb-grpc",
+]
 
 [[package]]
 name = "zeroize"

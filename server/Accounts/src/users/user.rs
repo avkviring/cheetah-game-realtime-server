@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use cheetah_libraries_ydb::converters::YDBValueConverter;
+use ydb_steroids::converters::YDBValueConverter;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq)]
 pub struct User(pub(crate) Uuid);

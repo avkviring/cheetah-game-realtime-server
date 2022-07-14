@@ -4,7 +4,7 @@ use std::time::Duration;
 use uuid::Uuid;
 use ydb::{TableClient, YdbOrCustomerError};
 
-use cheetah_libraries_ydb::{query, update};
+use ydb_steroids::{query, update};
 
 use crate::users::user::User;
 
@@ -99,7 +99,7 @@ pub mod tests {
 
 	use uuid::Uuid;
 
-	use cheetah_libraries_ydb::test_container::YDBTestInstance;
+	use ydb_steroids::test_container::YDBTestInstance;
 
 	use crate::tokens::storage::TokenStorage;
 	use crate::users::user::User;

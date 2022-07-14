@@ -12,5 +12,4 @@ members = [
     "matches/Relay/Server",
     "statistics/Events",
     "system/Compatibility",
-    "libraries/YDB"
 ]
