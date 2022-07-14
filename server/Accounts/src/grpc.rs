@@ -2,7 +2,7 @@ use tonic::transport::Server;
 use tonic_health::ServingStatus;
 use ydb::TableClient;
 
-use cheetah_libraries_microservice::jwt::JWTTokenParser;
+use jwt_tonic_user_uuid::JWTUserTokenParser;
 
 use crate::cookie::service::CookieService;
 use crate::google::google_jwt::Parser;
@@ -66,7 +66,7 @@ pub async fn run_grpc_server(
 			token_service.clone(),
 			user_service.clone(),
 			Parser::new(&google_client_id),
-			JWTTokenParser::new(jwt_public_key),
+			JWTUserTokenParser::new(jwt_public_key),
 		));
 
 		health_reporter

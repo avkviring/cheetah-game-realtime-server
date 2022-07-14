@@ -1,6 +1,6 @@
+use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tonic::{self, Request, Response, Status};
 
-use cheetah_libraries_microservice::jwt::JWTTokenParser;
 use cheetah_libraries_microservice::trace::ResultErrorTracer;
 use google_jwt::Parser;
 
@@ -26,7 +26,7 @@ pub struct GoogleGrpcService {
 	tokens_service: TokensService,
 	users_service: UserService,
 	parser: Parser,
-	jwt_token_parser: JWTTokenParser,
+	jwt_token_parser: JWTUserTokenParser,
 }
 
 impl GoogleGrpcService {
@@ -35,7 +35,7 @@ impl GoogleGrpcService {
 		tokens_service: TokensService,
 		users_service: UserService,
 		parser: Parser,
-		jwt_token_parser: JWTTokenParser,
+		jwt_token_parser: JWTUserTokenParser,
 	) -> Self {
 		Self {
 			storage,
@@ -113,7 +113,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 
 		let user_uuid = self
 			.jwt_token_parser
-			.parse_user_uuid(request.metadata())
+			.get_user_uuid_from_grpc(request.metadata())
 			.trace_and_map_err(format!("Parse jwt token {:?}", request.metadata()), |_| {
 				Status::internal("")
 			})?;
@@ -179,7 +179,7 @@ mod test {
 		assert!(result_1.registered_player);
 		assert!(!result_2.registered_player);
 
-		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
 		let user_1 = jwt
 			.get_user_uuid(result_1.tokens.as_ref().unwrap().session.clone())
 			.unwrap();
@@ -197,7 +197,7 @@ mod test {
 			&TokenClaims::new_with_expire(Duration::from_secs(100)),
 		);
 
-		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
 		let service = GoogleGrpcService::new(
 			GoogleStorage::new(ydb_table_client.clone()),
 			token_service,
@@ -257,7 +257,7 @@ mod test {
 		let google_login_result = google_login_response.unwrap();
 		let google_login_result = google_login_result.get_ref();
 
-		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
 		let cookie_user_id = jwt
 			.get_user_uuid(
 				cookie_registry_result

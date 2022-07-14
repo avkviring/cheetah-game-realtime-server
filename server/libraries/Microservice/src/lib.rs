@@ -16,10 +16,6 @@ use tracing_subscriber::filter::Directive;
 use tracing_subscriber::layer::SubscriberExt;
 pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
 
-use crate::prometheus::setup_prometheus;
-
-pub mod jwt;
-pub mod prometheus;
 pub mod trace;
 
 pub type StringId = heapless::String<20>;
@@ -31,7 +27,7 @@ pub fn init(name: &str) {
 pub fn init_with_trace_level(name: &str, trace_level: tracing::Level) {
 	setup_tracer(name, trace_level);
 	setup_panic_hook();
-	setup_prometheus();
+	prometheus_measures_exporter::start_prometheus_exporter();
 	tracing::info!("start service {} ", name);
 }
 

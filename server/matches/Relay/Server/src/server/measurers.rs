@@ -1,11 +1,11 @@
 use std::time::Duration;
 
 use prometheus::{Histogram, HistogramOpts, IntCounter, IntGauge, Opts, Registry};
-
-use cheetah_libraries_microservice::prometheus::measurer::create_and_register_measurer;
-use cheetah_libraries_microservice::prometheus::measurers_by_label::{
+use prometheus_measures_exporter::measurer::create_and_register_measurer;
+use prometheus_measures_exporter::measurers_by_label::{
 	HistogramMeasurersByLabel, IntCounterMeasurersByLabel, LabelFactoryFactory, MeasurersByLabel,
 };
+
 use cheetah_matches_relay_common::commands::c2s::C2SCommand;
 use cheetah_matches_relay_common::commands::FieldType;
 use cheetah_matches_relay_common::constants::FieldId;

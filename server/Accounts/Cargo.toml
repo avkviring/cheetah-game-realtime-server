@@ -36,7 +36,7 @@ prometheus = "0.13.0"
 uuid = { version = "1.0.0", features = ["v4", "serde"] }
 include_dir = "0.7.2"
 anyhow = "1.0.57"
-
+jwt-tonic-user-uuid = "0.0.1"
 
 
 [dev-dependencies]

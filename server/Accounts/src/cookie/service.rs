@@ -159,7 +159,7 @@ mod test {
 		let register_response = result.unwrap();
 		let register_response = register_response.get_ref();
 
-		let jwt = cheetah_libraries_microservice::jwt::JWTTokenParser::new(PUBLIC_KEY.to_string());
+		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
 		let register_user_uuid = jwt
 			.get_user_uuid(
 				register_response

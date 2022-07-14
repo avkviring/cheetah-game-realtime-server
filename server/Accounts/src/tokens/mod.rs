@@ -7,7 +7,7 @@ use thiserror::Error;
 use uuid::Uuid;
 use ydb::TableClient;
 
-use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenClaims};
+use jwt_tonic_user_uuid::{JWTUserTokenParser, SessionTokenClaims};
 
 use crate::tokens::storage::TokenStorage;
 use crate::users::user::User;
@@ -152,7 +152,7 @@ impl TokensService {
 	}
 
 	pub async fn refresh(&self, refresh_token: String) -> Result<Tokens, JWTTokensServiceError> {
-		let token = JWTTokenParser::add_head(refresh_token);
+		let token = JWTUserTokenParser::add_head(refresh_token);
 		let mut validation = Validation::new(Algorithm::ES256);
 		validation.leeway = 0;
 		match jsonwebtoken::decode::<RefreshTokenClaims>(
@@ -196,7 +196,7 @@ pub mod tests {
 	use std::thread;
 	use std::time::Duration;
 
-	use cheetah_libraries_microservice::jwt::{JWTTokenParser, SessionTokenError};
+	use jwt_tonic_user_uuid::{JWTUserTokenParser, SessionTokenError};
 	use ydb_steroids::test_container::YDBTestInstance;
 
 	use crate::tokens::storage::TokenStorage;
@@ -211,7 +211,7 @@ pub mod tests {
 		let user = User::default();
 		let tokens = service.create(user, "some-device-id").await.unwrap();
 
-		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
+		let parser = JWTUserTokenParser::new(PUBLIC_KEY.to_owned());
 		let user_id_from_token = User(parser.get_user_uuid(tokens.session).unwrap());
 
 		assert_eq!(user, user_id_from_token)
@@ -226,7 +226,7 @@ pub mod tests {
 			.await
 			.unwrap();
 		thread::sleep(Duration::from_secs(2));
-		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
+		let parser = JWTUserTokenParser::new(PUBLIC_KEY.to_owned());
 		let user_id_from_token = parser.get_user_uuid(tokens.session);
 		assert!(matches!(
 			user_id_from_token,
@@ -242,7 +242,7 @@ pub mod tests {
 			.create(1u128.into(), "some-device-id")
 			.await
 			.unwrap();
-		let parser = JWTTokenParser::new(PUBLIC_KEY.to_owned());
+		let parser = JWTUserTokenParser::new(PUBLIC_KEY.to_owned());
 		let user_id_from_token = parser.get_user_uuid(tokens.session.replace("ey", "e1"));
 		assert!(matches!(
 			user_id_from_token,
@@ -312,7 +312,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		assert_ne!(tokens.refresh, new_tokens.refresh);
 		// проверяем работоспособность новых токенов
 		let get_user_uuid =
-			JWTTokenParser::new(PUBLIC_KEY.to_owned()).get_user_uuid(new_tokens.session);
+			JWTUserTokenParser::new(PUBLIC_KEY.to_owned()).get_user_uuid(new_tokens.session);
 		assert!(matches!(get_user_uuid, Result::Ok(uuid) if uuid==user.0));
 
 		// проверяем что новый refresh токен валидный
