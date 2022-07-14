@@ -11,15 +11,14 @@ use std::{panic, process};
 pub use tonic;
 use tonic::transport::Uri;
 use tracing_log::LogTracer;
+use tracing_loki_layer::LokiLayer;
 use tracing_subscriber::filter::Directive;
 use tracing_subscriber::layer::SubscriberExt;
 pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
 
-use crate::loki::LokiLayer;
 use crate::prometheus::setup_prometheus;
 
 pub mod jwt;
-pub mod loki;
 pub mod prometheus;
 pub mod trace;
 

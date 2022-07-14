@@ -581,7 +581,6 @@ name = "cheetah-libraries-microservice"
 version = "999.999.999"
 dependencies = [
  "heapless",
- "httpmock",
  "hyper",
  "jsonwebtoken 7.2.0",
  "lazy_static",
@@ -595,6 +594,7 @@ dependencies = [
  "tracing-appender",
  "tracing-bunyan-formatter",
  "tracing-log",
+ "tracing-loki-layer",
  "tracing-subscriber",
  "tracing-unwrap",
  "uuid",
@@ -4061,6 +4061,18 @@ dependencies = [
  "lazy_static",
  "log",
  "tracing-core",
+]
+
+[[package]]
+name = "tracing-loki-layer"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bca0a131164b217667abcbb2b342c2820be832298e18184ff8cda656266dcc8"
+dependencies = [
+ "reqwest",
+ "serde",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
