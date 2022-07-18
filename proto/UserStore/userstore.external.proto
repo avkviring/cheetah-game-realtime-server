@@ -3,45 +3,27 @@ package cheetah.userstore;
 option csharp_namespace = "Cheetah.UserStore.GRPC";
 
 service Update {
-    rpc Set(SetRequest) returns (UpdateReply);
-    rpc Increment(IncrementRequest) returns (UpdateReply);
+    rpc SetDouble(SetDoubleRequest) returns (UpdateReply);
+    rpc SetLong(SetLongRequest) returns (UpdateReply);
+    rpc SetString(SetStringRequest) returns (UpdateReply);
+
+    rpc IncrementDouble(SetDoubleRequest) returns (UpdateReply);
+    rpc IncrementLong(SetLongRequest) returns (UpdateReply);
 }
 
-enum Status {
-    OK = 0;
-    FIELD_NOT_FOUND = 1;
-    INTERNAL_ERROR = 2;
-}
-
-message PrimitiveValue {
-    oneof pr {
-       sint64 long = 2;
-       double double = 3;
-       string string = 4;
-    };
-}
-
-message NumericValue {
-    oneof number {
-        sint64 long = 1;
-        double double = 2;
-    }
-}
-
-enum PrimitiveType {
-    LONG = 0;
-    DOUBLE = 1;
-    STRING = 2;
-}
-
-message SetRequest {
+message SetDoubleRequest {
     string fieldName = 1;
-    PrimitiveValue value = 2;
+    double value = 2;
 }
 
-message IncrementRequest {
+message SetLongRequest {
     string fieldName = 1;
-    NumericValue value = 2;
+    sint64 value = 2;
+}
+
+message SetStringRequest {
+    string fieldName = 1;
+    string value = 2;
 }
 
 message UpdateReply {
@@ -49,17 +31,46 @@ message UpdateReply {
 }
 
 service Fetch {
-    rpc Get(FetchRequest) returns (FetchReply);
+    rpc Double(FetchDoubleRequest) returns (FetchDoubleReply);
+    rpc Long(FetchLongRequest) returns (FetchLongReply);
+    rpc String(FetchStringRequest) returns (FetchStringReply);
 }
 
-message FetchRequest {
+message FetchDoubleRequest {
     string fieldName = 1;
-    PrimitiveType datatype = 2;
 }
 
-message FetchReply {
-   oneof result {
-       Status status = 1;
-       PrimitiveValue value = 2; 
-   } 
+message FetchLongRequest {
+    string fieldName = 1;
+}
+
+message FetchStringRequest {
+    string fieldName = 1;
+}
+
+message FetchDoubleReply {
+    oneof result {
+        Status status = 1;
+        double value = 2;
+    }
+}
+
+message FetchLongReply {
+    oneof result {
+        Status status = 1;
+        sint64 value = 2;
+    }
+}
+
+message FetchStringReply {
+    oneof result {
+        Status status = 1;
+        string value = 2;
+    }
+}
+
+enum Status {
+    OK = 0;
+    FIELD_NOT_FOUND = 1;
+    INTERNAL_ERROR = 2;
 }
