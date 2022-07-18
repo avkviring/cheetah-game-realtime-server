@@ -63,8 +63,8 @@ impl Service {
 	}
 }
 
-fn unwrap_request<T>(request: Request<T>, jwt_public_key: String) -> Result<(Uuid, T), Status> {
-	match get_user_uuid(request.metadata(), jwt_public_key) {
+fn verify_credentials<T>(request: Request<T>, jwt_public_key: &str) -> Result<(Uuid, T), Status> {
+	match get_user_uuid(request.metadata(), jwt_public_key.to_string()) {
 		Err(e) => {
 			trace_err("Unauthorized access attempt", e);
 			Err(Status::permission_denied(""))

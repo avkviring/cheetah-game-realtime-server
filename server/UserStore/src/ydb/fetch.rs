@@ -4,8 +4,12 @@ use cheetah_libraries_ydb::{query, select};
 use uuid::Uuid;
 use ydb::{TableClient, Value, YdbOrCustomerError};
 
-use crate::ydb::table::{COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
-use crate::ydb::{primitive::PrimitiveValue, Error};
+use crate::ydb::{
+	table::{
+		COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER, DOUBLE_TABLE, LONG_TABLE, STRING_TABLE,
+	},
+	Error,
+};
 
 pub struct Fetch {
 	client: TableClient,
@@ -16,13 +20,13 @@ impl Fetch {
 		Self { client }
 	}
 
-	pub async fn get<T>(&self, user: &Uuid, field_name: &str) -> Result<T, Error>
+	async fn get<T>(&self, user: &Uuid, field_name: &str, table_name: &str) -> Result<T, Error>
 	where
-		T: PrimitiveValue,
+		T: Clone,
 		Option<T>: TryFrom<Value>,
 		<Option<T> as TryFrom<Value>>::Error: Debug,
 	{
-		let q = self.query(T::to_db_table());
+		let q = self.query(table_name);
 		let q = q.as_str();
 
 		let result: Result<Vec<T>, _> = select!(
@@ -32,7 +36,19 @@ impl Fetch {
 		)
 		.await;
 
-		self.finalize(result)
+		self.final_result(result)
+	}
+
+	pub async fn get_double(&self, user: &Uuid, field_name: &str) -> Result<f64, Error> {
+		self.get::<f64>(user, field_name, DOUBLE_TABLE).await
+	}
+
+	pub async fn get_long(&self, user: &Uuid, field_name: &str) -> Result<i64, Error> {
+		self.get::<i64>(user, field_name, LONG_TABLE).await
+	}
+
+	pub async fn get_string(&self, user: &Uuid, field_name: &str) -> Result<String, Error> {
+		self.get::<String>(user, field_name, STRING_TABLE).await
 	}
 
 	fn query(&self, table: &str) -> String {
@@ -47,7 +63,7 @@ impl Fetch {
 		)
 	}
 
-	fn finalize<T: Clone>(
+	fn final_result<T: Clone>(
 		&self,
 		query_result: Result<Vec<T>, YdbOrCustomerError>,
 	) -> Result<T, Error> {
@@ -78,7 +94,7 @@ mod test {
 		let fetch = Fetch::new(client.table_client());
 		let user = Uuid::new_v4();
 
-		let result = fetch.get::<i64>(&user, "missing").await;
+		let result = fetch.get_long(&user, "missing").await;
 		match result {
 			Err(Error::FieldNotFound) => return,
 			Err(other) => panic!("Expected Error::FieldNotFound, found {}", other),

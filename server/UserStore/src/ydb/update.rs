@@ -1,11 +1,14 @@
+use std::ops::Add;
+
 use cheetah_libraries_ydb::converters::YDBValueConverter;
 use cheetah_libraries_ydb::{query, update};
 use uuid::Uuid;
 use ydb::TableClient;
 
-use crate::ydb::numeric::Num;
-use crate::ydb::table::{ToDbTable, COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER};
-use crate::ydb::{primitive::PrimitiveValue, Error};
+use crate::ydb::table::{
+	ydb_type_to_table_name, COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER,
+};
+use crate::ydb::Error;
 
 pub struct Update {
 	client: TableClient,
@@ -16,33 +19,38 @@ impl Update {
 		Self { client }
 	}
 
-	pub async fn set<T: PrimitiveValue + ToDbTable + YDBValueConverter>(
+	pub async fn set<T: YDBValueConverter>(
 		&self,
 		user: &Uuid,
 		field_name: &str,
 		value: &T,
 	) -> Result<(), Error> {
-		let q = self.upsert_query(T::to_db_table());
-		let q = q.as_str();
-		update!(
-			self.client,
-			query!(q, user_uuid => user, field_name => field_name, value => value)
-		)
-		.await
-		.map_err(|e| e.into())
+		let table = ydb_type_to_table_name(value.get_type_name());
+		self.update(user, field_name, value, &self.increment_query(table))
+			.await
 	}
 
-	pub async fn increment<T: Num + ToDbTable + YDBValueConverter>(
+	pub async fn increment<T: YDBValueConverter + Add>(
 		&self,
 		user: &Uuid,
 		field_name: &str,
 		value: &T,
 	) -> Result<(), Error> {
-		let q = self.increment_query(T::to_db_table());
-		let q = q.as_str();
+		let table = ydb_type_to_table_name(value.get_type_name());
+		self.update(user, field_name, value, &self.upsert_query(table))
+			.await
+	}
+
+	async fn update<T: YDBValueConverter>(
+		&self,
+		user: &Uuid,
+		field_name: &str,
+		value: &T,
+		query: &str,
+	) -> Result<(), Error> {
 		update!(
 			self.client,
-			query!(q, user_uuid => user, field_name => field_name, increment => value)
+			query!(query, user_uuid => user, field_name => field_name, increment => value)
 		)
 		.await
 		.map_err(|e| e.into())
@@ -112,9 +120,12 @@ mod test {
 		let user = Uuid::new_v4();
 		let field_name = "incrementable";
 
-		update.set(&user, field_name, &128).await.unwrap();
+		update.set::<i64>(&user, field_name, &128).await.unwrap();
 
-		update.increment(&user, field_name, &-55).await.unwrap();
+		update
+			.increment::<i64>(&user, field_name, &-55)
+			.await
+			.unwrap();
 
 		let res: Vec<i64> =
 			select!(client.table_client(), query!(format!("select value from {}", LONG_TABLE)), value => i64)

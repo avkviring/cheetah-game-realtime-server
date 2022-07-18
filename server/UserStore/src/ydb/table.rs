@@ -6,30 +6,11 @@ pub static LONG_TABLE: &str = "user_long_value";
 pub static DOUBLE_TABLE: &str = "user_double_value";
 pub static STRING_TABLE: &str = "user_string_value";
 
-pub trait ToDbTable {
-	fn to_db_table() -> &'static str;
-}
-
-impl ToDbTable for i64 {
-	fn to_db_table() -> &'static str {
-		LONG_TABLE
-	}
-}
-
-impl ToDbTable for f64 {
-	fn to_db_table() -> &'static str {
-		DOUBLE_TABLE
-	}
-}
-
-impl ToDbTable for &str {
-	fn to_db_table() -> &'static str {
-		STRING_TABLE
-	}
-}
-
-impl ToDbTable for String {
-	fn to_db_table() -> &'static str {
-		STRING_TABLE
+pub fn ydb_type_to_table_name(typ: &str) -> &'static str {
+	match typ {
+		"Int64" => LONG_TABLE,
+		"Double" => DOUBLE_TABLE,
+		"String" => STRING_TABLE,
+		t => panic!("Value of YDB type {} cannot be stored in UserStore", t),
 	}
 }

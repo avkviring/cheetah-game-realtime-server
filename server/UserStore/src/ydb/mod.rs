@@ -1,6 +1,4 @@
 mod fetch;
-mod numeric;
-mod primitive;
 mod table;
 mod update;
 
@@ -85,7 +83,7 @@ mod test {
 			.unwrap();
 
 		let fetch = Fetch::new(client.table_client());
-		let actual_value: f64 = fetch.get(&user, field_name).await.unwrap();
+		let actual_value = fetch.get_double(&user, field_name).await.unwrap();
 
 		assert_eq!(expected_value, actual_value);
 	}
@@ -105,7 +103,7 @@ mod test {
 			.unwrap();
 
 		let fetch = Fetch::new(client.table_client());
-		let actual_value: String = fetch.get(&user, field_name).await.unwrap();
+		let actual_value = fetch.get_string(&user, field_name).await.unwrap();
 
 		assert_eq!(expected_value, actual_value);
 	}

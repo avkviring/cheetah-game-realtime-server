@@ -1,13 +1,13 @@
+use std::future::Future;
+
 use ::ydb::TableClient;
 use cheetah_libraries_microservice::trace::trace_err;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use crate::grpc::unwrap_request;
-use crate::grpc::userstore::{
-	numeric_value, primitive_value, update_server::Update, IncrementRequest, SetRequest,
-	UpdateReply,
-};
+use crate::grpc::userstore::{update_server::Update, SetDoubleRequest, UpdateReply};
+use crate::grpc::userstore::{SetLongRequest, SetStringRequest};
+use crate::grpc::verify_credentials;
 use crate::ydb;
 
 pub struct UpdateService {
@@ -23,40 +23,10 @@ impl UpdateService {
 		}
 	}
 
-	async fn set_wrapped(&self, user: &Uuid, args: SetRequest) -> Result<(), ydb::Error> {
-		let field_name = &args.field_name;
-		match args.value {
-			Some(v) => match v.pr {
-				Some(primitive_value::Pr::Long(v)) => self.update.set(user, field_name, &v).await,
-				Some(primitive_value::Pr::Double(v)) => self.update.set(user, field_name, &v).await,
-				Some(primitive_value::Pr::String(v)) => self.update.set(user, field_name, &v).await,
-				None => panic!("Unknown variant of primitive_value::Pr"),
-			},
-			None => panic!("Empty field 'value'"),
-		}
-	}
-
-	async fn increment_wrapped(
+	fn new_response(
 		&self,
-		user: &Uuid,
-		args: IncrementRequest,
-	) -> Result<(), ydb::Error> {
-		let field_name = &args.field_name;
-		match args.value {
-			Some(v) => match v.number {
-				Some(numeric_value::Number::Long(v)) => {
-					self.update.increment(user, field_name, &v).await
-				}
-				Some(numeric_value::Number::Double(v)) => {
-					self.update.increment(user, field_name, &v).await
-				}
-				None => panic!("Unknown variant of numeric_value::Number"),
-			},
-			None => panic!("Empty field 'value'"),
-		}
-	}
-
-	fn respond(&self, result: Result<(), ydb::Error>) -> Result<Response<UpdateReply>, Status> {
+		result: Result<(), ydb::Error>,
+	) -> Result<Response<UpdateReply>, Status> {
 		match result {
 			Ok(_) => Ok(Response::new(UpdateReply::default())),
 			Err(e) => {
@@ -67,24 +37,75 @@ impl UpdateService {
 			}
 		}
 	}
+
+	async fn process_request<T, Fut>(
+		&self,
+		request: Request<T>,
+		op: impl FnOnce(Uuid, T) -> Fut,
+	) -> Result<Response<UpdateReply>, Status>
+	where
+		Fut: Future<Output = Result<(), ydb::Error>>,
+	{
+		match verify_credentials(request, &self.jwt_public_key) {
+			Err(s) => Err(s),
+			Ok((user, args)) => self.new_response(op(user, args).await),
+		}
+	}
 }
 
 #[tonic::async_trait]
 impl Update for UpdateService {
-	async fn increment(
+	async fn increment_double(
 		&self,
-		request: Request<IncrementRequest>,
+		request: Request<SetDoubleRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
-		match unwrap_request(request, self.jwt_public_key.clone()) {
-			Err(s) => Err(s),
-			Ok((user, args)) => self.respond(self.increment_wrapped(&user, args).await),
-		}
+		self.process_request(request, |user, args| async move {
+			self.update
+				.increment(&user, &args.field_name, &args.value)
+				.await
+		})
+		.await
 	}
 
-	async fn set(&self, request: Request<SetRequest>) -> Result<Response<UpdateReply>, Status> {
-		match unwrap_request(request, self.jwt_public_key.clone()) {
-			Err(s) => Err(s),
-			Ok((user, args)) => self.respond(self.set_wrapped(&user, args).await),
-		}
+	async fn increment_long(
+		&self,
+		request: Request<SetLongRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		self.process_request(request, |user, args| async move {
+			self.update
+				.increment(&user, &args.field_name, &args.value)
+				.await
+		})
+		.await
+	}
+
+	async fn set_long(
+		&self,
+		request: Request<SetLongRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		self.process_request(request, |user, args| async move {
+			self.update.set(&user, &args.field_name, &args.value).await
+		})
+		.await
+	}
+
+	async fn set_double(
+		&self,
+		request: Request<SetDoubleRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		self.process_request(request, |user, args| async move {
+			self.update.set(&user, &args.field_name, &args.value).await
+		})
+		.await
+	}
+
+	async fn set_string(
+		&self,
+		request: Request<SetStringRequest>,
+	) -> Result<Response<UpdateReply>, Status> {
+		self.process_request(request, |user, args| async move {
+			self.update.set(&user, &args.field_name, &args.value).await
+		})
+		.await
 	}
 }
