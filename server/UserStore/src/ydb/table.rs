@@ -8,9 +8,10 @@ pub static STRING_TABLE: &str = "user_string_value";
 
 pub fn ydb_type_to_table_name(typ: &str) -> &'static str {
 	match typ {
+		"Int32" => LONG_TABLE,
 		"Int64" => LONG_TABLE,
 		"Double" => DOUBLE_TABLE,
-		"String" => STRING_TABLE,
+		"Utf8" => STRING_TABLE,
 		t => panic!("Value of YDB type {} cannot be stored in UserStore", t),
 	}
 }

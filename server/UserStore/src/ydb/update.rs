@@ -26,7 +26,7 @@ impl Update {
 		value: &T,
 	) -> Result<(), Error> {
 		let table = ydb_type_to_table_name(value.get_type_name());
-		self.update(user, field_name, value, &self.increment_query(table))
+		self.update(user, field_name, value, &self.upsert_query(table))
 			.await
 	}
 
@@ -37,7 +37,7 @@ impl Update {
 		value: &T,
 	) -> Result<(), Error> {
 		let table = ydb_type_to_table_name(value.get_type_name());
-		self.update(user, field_name, value, &self.upsert_query(table))
+		self.update(user, field_name, value, &self.increment_query(table))
 			.await
 	}
 
@@ -50,7 +50,7 @@ impl Update {
 	) -> Result<(), Error> {
 		update!(
 			self.client,
-			query!(query, user_uuid => user, field_name => field_name, increment => value)
+			query!(query, user_uuid => user, field_name => field_name, value => value, increment => value)
 		)
 		.await
 		.map_err(|e| e.into())
