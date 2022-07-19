@@ -95,10 +95,6 @@ mod test {
 		let user = Uuid::new_v4();
 
 		let result = fetch.get_long(&user, "missing").await;
-		match result {
-			Err(Error::FieldNotFound) => return,
-			Err(other) => panic!("Expected Error::FieldNotFound, found {}", other),
-			other => panic!("Expected error, found {:?}", other),
-		}
+		assert!(matches!(result, Err(Error::FieldNotFound)));
 	}
 }
