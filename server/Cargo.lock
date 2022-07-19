@@ -798,8 +798,8 @@ name = "cheetah-userstore"
 version = "999.999.999"
 dependencies = [
  "cheetah-libraries-microservice",
- "cheetah-libraries-ydb",
  "include_dir",
+ "jwt-tonic-user-uuid",
  "prost 0.9.0",
  "tokio",
  "tonic 0.6.2",
@@ -808,6 +808,7 @@ dependencies = [
  "tonic-web",
  "uuid",
  "ydb",
+ "ydb-steroids",
 ]
 
 [[package]]

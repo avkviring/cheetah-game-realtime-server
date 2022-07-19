@@ -1,9 +1,9 @@
 use std::ops::Add;
 
-use cheetah_libraries_ydb::converters::YDBValueConverter;
-use cheetah_libraries_ydb::{query, update};
 use uuid::Uuid;
 use ydb::TableClient;
+use ydb_steroids::converters::YDBValueConverter;
+use ydb_steroids::{query, update};
 
 use crate::ydb::table::{
 	ydb_type_to_table_name, COLUMN_FIELD_NAME, COLUMN_FIELD_VALUE, COLUMN_USER,
@@ -88,8 +88,8 @@ impl Update {
 mod test {
 
 	use super::Update;
-	use cheetah_libraries_ydb::{query, select};
 	use uuid::Uuid;
+	use ydb_steroids::{query, select};
 
 	use crate::ydb::table::LONG_TABLE;
 	use crate::ydb::test::ydb_instance;

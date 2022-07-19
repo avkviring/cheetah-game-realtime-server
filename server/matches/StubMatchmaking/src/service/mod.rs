@@ -8,6 +8,7 @@ use uuid::Uuid;
 use cheetah_libraries_microservice::trace::Trace;
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
+use jwt_tonic_user_uuid::JWTUserTokenParser;
 use matchmaking::external::matchmaking_server::Matchmaking;
 use matchmaking::external::{TicketRequest, TicketResponse};
 use relay::internal::AttachUserRequest;
@@ -142,12 +143,10 @@ impl Matchmaking for StubMatchmakingService {
 		&self,
 		request: Request<TicketRequest>,
 	) -> Result<Response<TicketResponse>, Status> {
-		let user = cheetah_libraries_microservice::jwt::grpc::get_user_uuid(
-			request.metadata(),
-			self.jwt_public_key.clone(),
-		)
-		.trace_err(format!("Get user uuid {:?}", request.metadata()))
-		.map_err(|_| Status::unauthenticated(""))?;
+		let user = JWTUserTokenParser::new(self.jwt_public_key.clone())
+			.get_user_uuid_from_grpc(request.metadata())
+			.trace_err(format!("Get user uuid {:?}", request.metadata()))
+			.map_err(|_| Status::unauthenticated(""))?;
 
 		let ticket_request = request.into_inner();
 		self.matchmaking(ticket_request, user)
@@ -386,7 +385,7 @@ pub mod tests {
 
 		async fn probe(
 			&self,
-			request: Request<ProbeRequest>,
+			_request: Request<ProbeRequest>,
 		) -> Result<Response<ProbeResponse>, Status> {
 			Ok(Response::new(ProbeResponse {}))
 		}

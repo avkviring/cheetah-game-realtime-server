@@ -59,11 +59,11 @@ impl std::error::Error for Error {
 mod test {
 	use std::sync::Arc;
 
-	use cheetah_libraries_ydb::migration::Migrator;
-	use cheetah_libraries_ydb::test_container as ydb_test;
-	use cheetah_libraries_ydb::test_container::YDBTestInstance;
 	use uuid::Uuid;
 	use ydb::Client;
+	use ydb_steroids::migration::Migrator;
+	use ydb_steroids::test_container as ydb_test;
+	use ydb_steroids::test_container::YDBTestInstance;
 
 	use crate::ydb::MIGRATIONS_DIR;
 	use crate::ydb::{Fetch, Update};

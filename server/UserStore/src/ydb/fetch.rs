@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
-use cheetah_libraries_ydb::{query, select};
 use uuid::Uuid;
 use ydb::{TableClient, Value, YdbOrCustomerError};
+use ydb_steroids::{query, select};
 
 use crate::ydb::{
 	table::{

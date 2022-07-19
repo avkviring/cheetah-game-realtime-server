@@ -6,8 +6,8 @@ mod userstore {
 	tonic::include_proto!("cheetah.userstore");
 }
 
-use cheetah_libraries_microservice::jwt::grpc::get_user_uuid;
 use cheetah_libraries_microservice::{init, trace::trace_err};
+use jwt_tonic_user_uuid::JWTUserTokenParser;
 use std::{error::Error, net::SocketAddr};
 use tonic::Response;
 use tonic::{transport::Server, Request, Status};
@@ -64,7 +64,8 @@ impl Service {
 }
 
 fn verify_credentials<T>(request: Request<T>, jwt_public_key: &str) -> Result<(Uuid, T), Status> {
-	match get_user_uuid(request.metadata(), jwt_public_key.to_string()) {
+	let parser = JWTUserTokenParser::new(jwt_public_key.to_string());
+	match parser.get_user_uuid_from_grpc(request.metadata()) {
 		Err(e) => {
 			trace_err("Unauthorized access attempt", e);
 			Err(Status::permission_denied(""))

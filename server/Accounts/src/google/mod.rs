@@ -1,7 +1,6 @@
 use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tonic::{self, Request, Response, Status};
 
-use cheetah_libraries_microservice::jwt::JWTTokenParser;
 use cheetah_libraries_microservice::trace::Trace;
 use google_jwt::Parser;
 
@@ -113,7 +112,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 
 		let user_uuid = self
 			.jwt_token_parser
-			.parse_user_uuid(request.metadata())
+			.get_user_uuid_from_grpc(request.metadata())
 			.trace_err(format!("Parse jwt token {:?}", request.metadata()))
 			.map_err(|_| Status::internal(""))?;
 

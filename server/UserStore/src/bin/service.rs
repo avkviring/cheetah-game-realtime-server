@@ -1,7 +1,7 @@
 use cheetah_libraries_microservice::get_env;
-use cheetah_libraries_ydb::builder::YdbClientBuilder;
 use cheetah_userstore::{Service, DB_NAME};
 use include_dir::include_dir;
+use ydb_steroids::builder::YdbClientBuilder;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
