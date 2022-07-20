@@ -8,7 +8,7 @@ fn main() -> Result<(), Error> {
 	println!(
 		"cargo:rerun-if-changed=../proto/matches/Registry/matches.registry.internal.proto"
 	);
-	println!("cargo:rerun-if-changed=../proto/matches/Relay/matches.relay.internal.proto");
+	println!("cargo:rerun-if-changed=../proto/matches/Realtime/matches.relay.internal.proto");
 
 	tonic_build::configure().build_client(false).compile(
 		&[
@@ -18,7 +18,7 @@ fn main() -> Result<(), Error> {
 		&[
 			"../proto/",
 			"../../Registry/proto/",
-			"../../Relay/proto/",
+			"../../Realtime/proto/",
 		],
 	)?;
 
@@ -26,11 +26,11 @@ fn main() -> Result<(), Error> {
 	tonic_build::configure().compile(
 		&[
 			"../../Registry/proto/matches.registry.internal.proto",
-			"../../Relay/proto/matches.relay.internal.proto",
+			"../../Realtime/proto/matches.relay.internal.proto",
 		],
 		&[
 			"../../Registry/proto/",
-			"../../Relay/proto/",
+			"../../Realtime/proto/",
 		],
 	)?;
 

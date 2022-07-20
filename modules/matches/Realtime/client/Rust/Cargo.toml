@@ -10,7 +10,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
 lazy_static = "1.4.0"
-cheetah-matches-relay-common = { path = "../Common" }
+cheetah-matches-relay-common = { path = "../../common/Common" }
 widestring = "0.5.1"
 fnv = "1.0.7"
 heapless = { version = "0.7.8", features = ["serde"] }
@@ -22,6 +22,6 @@ tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
 
 
 [dev-dependencies]
-cheetah-matches-relay = { path = "../Server" }
+cheetah-matches-relay = { path = "../../server/" }
 easybench = "1.0.0"
 rand = "0.8.3"

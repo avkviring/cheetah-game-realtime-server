@@ -11,8 +11,8 @@ fn main() -> Result<(), Error> {
     )?;
 
     tonic_build::configure().build_server(false).compile(
-        &["../../Relay/proto/matches.relay.internal.proto"],
-        &["../../Relay/proto/"],
+        &["../../Realtime/proto/matches.relay.internal.proto"],
+        &["../../Realtime/proto/"],
     )?;
 
     Ok(())
