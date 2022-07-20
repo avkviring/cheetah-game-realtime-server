@@ -11,7 +11,7 @@ path = "src/bin/service.rs"
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tonic = "0.6.2"
 prost = "0.9.0"
-cheetah-libraries-microservice = { path = "../../libraries/Microservice" }
+cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
 tracing = "0.1.31"
 
 [build-dependencies]

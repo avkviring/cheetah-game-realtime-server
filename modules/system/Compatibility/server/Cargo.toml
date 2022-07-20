@@ -8,7 +8,7 @@ name = "cheetah-system-compatibility"
 path = "src/bin/service.rs"
 
 [dependencies]
-cheetah-libraries-microservice = { path = "../../libraries/Microservice" }
+cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
 serde = { version = "1.0.136", features = ["derive"] }
 tokio = "1.17.0"
 tonic = "0.6.2"
