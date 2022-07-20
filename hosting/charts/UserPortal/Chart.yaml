@@ -1,6 +1,0 @@
-apiVersion: v2
-name: UserPortal
-description: UserPortal
-type: application
-version: 999.999.999
-appVersion: "999.999.999"
