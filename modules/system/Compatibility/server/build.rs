@@ -5,7 +5,7 @@ fn main() -> Result<(), Error> {
 		.build_server(true)
 		.build_client(false)
 		.compile(
-			&["../../../proto/system/Compatibility/system.compatibility.external.proto"],
-			&["../../../proto/system/Compatibility/"],
+			&["../proto/system.compatibility.external.proto"],
+			&["../proto/"],
 		)
 }

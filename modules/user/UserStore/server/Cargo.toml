@@ -16,7 +16,7 @@ tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 ydb = "0.2.0"
 ydb-steroids = { version = "0.1.2", features = ["uuid"] }
 jwt-tonic-user-uuid = "0.0.1"
-cheetah-libraries-microservice = { path = "../../libraries/Microservice" }
+cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
 uuid = "1.0.0"
 include_dir = "0.7.2"
 
