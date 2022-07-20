@@ -4,7 +4,7 @@ fn main() -> Result<(), Error> {
 	println!(
 		"cargo:rerun-if-changed=../../Factory/proto/matches.factory.internal.proto"
 	);
-	println!("cargo:rerun-if-changed=../../Realtime/proto/matches.relay.internal.proto");
+	println!("cargo:rerun-if-changed=../../Realtime/proto/matches.realtime.internal.proto");
 	println!(
 		"cargo:rerun-if-changed=../../Registry/proto/matches.registry.internal.proto"
 	);
@@ -13,7 +13,7 @@ fn main() -> Result<(), Error> {
 	tonic_build::configure().compile(
 		&[
 			"../../Factory/proto/matches.factory.internal.proto",
-			"../../Realtime/proto/matches.relay.internal.proto",
+			"../../Realtime/proto/matches.realtime.internal.proto",
 			"../../Registry/proto/matches.registry.internal.proto",
 		],
 		&[
