@@ -1,0 +1,28 @@
+.controller-fold-out {
+    border-bottom-color: var(--unity-colors-inspector_titlebar-border);
+    border-bottom-width: 1px;
+}
+
+.controller-fold-out > #unity-content {
+    margin: 7px;
+}
+
+.controller-fold-out > .unity-toggle {
+    -unity-font-style: bold;
+    padding: 2px;
+    background-color: var(--unity-colors-inspector_titlebar-background);
+    margin: -1px;
+    border-color: var(--unity-colors-inspector_titlebar-border);
+    border-bottom-width: 1px;
+    border-top-width: 1px;
+}
+
+.controller-fold-out > .unity-toggle:checked {
+    border-bottom-color: var(--unity-colors-inspector_titlebar-border_accent);
+    border-bottom-width: 1px;
+}
+
+.controller-fold-out > .unity-toggle:hover {
+    background-color: var(--unity-colors-inspector_titlebar-background-hover);
+    margin: -1px;
+}

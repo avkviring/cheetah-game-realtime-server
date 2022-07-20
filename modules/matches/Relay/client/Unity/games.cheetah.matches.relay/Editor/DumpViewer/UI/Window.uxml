@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True" xmlns:uie="UnityEditor.UIElements" class="main">
+    <ui:Style src="Styles.uss"/>
+    <uie:Toolbar>
+        <ui:Toggle text="Auto refresh" name="auto-refresh" class="toolbar-button"/>
+        <Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector.RoomsSelector
+            name="room-selector"
+            storageKey="cheetah_relay_debug_viewer_rooms_selector"
+
+        />
+        <uie:ToolbarButton text="Dump" name="dump-button" class="toolbar-button"/>
+        <uie:ToolbarToggle name="objectsTab" text="Objects" class="toolbar-toggle"/>
+        <uie:ToolbarToggle name="usersTab" text="Users" class="toolbar-toggle"/>
+        <Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator.StatusIndicator name="status"/>
+        <uie:ToolbarButton text="Export" name="export" class="toolbar-button"/>
+        <uie:ToolbarButton text="Help" name="help" class="help-button"/>
+    </uie:Toolbar>
+    <ui:ScrollView class="content" name="tabs-content"/>
+</ui:UXML>

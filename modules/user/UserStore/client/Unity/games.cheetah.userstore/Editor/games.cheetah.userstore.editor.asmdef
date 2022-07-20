@@ -1,0 +1,16 @@
+{
+  "name": "games.cheetah.userstore.editor",
+  "rootNamespace": "Cheetah.UserStore",
+  "references": [
+    "games.cheetah.platform",
+    "games.cheetah.userstore"
+  ],
+  "includePlatforms": [
+    "Editor"
+   ],
+  "allowUnsafeCode": true,
+  "overrideReferences": true,
+  "autoReferenced": true,
+  "versionDefines": [],
+  "noEngineReferences": false
+}

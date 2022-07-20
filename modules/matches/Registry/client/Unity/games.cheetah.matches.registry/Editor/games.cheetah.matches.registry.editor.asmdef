@@ -1,0 +1,21 @@
+{
+  "name": "games.cheetah.matches.registry.editor",
+  "rootNamespace": "Cheetah.Matches.Registry",
+  "references": [
+    "games.cheetah.platform.editor",
+    "games.cheetah.matches.relay.editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,17 @@
+{
+  "name": "games.cheetah.accounts",
+  "rootNamespace": "Cheetah.Accounts",
+  "references": [
+    "games.cheetah.play-games",
+    "games.cheetah.platform"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

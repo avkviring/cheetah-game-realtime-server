@@ -1,0 +1,17 @@
+{
+  "name": "games.cheetah.matches.matchmaking",
+  "rootNamespace": "Cheetah.Matches.Matchmaking",
+  "references": [
+    "games.cheetah.accounts",
+    "games.cheetah.platform"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

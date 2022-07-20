@@ -1,0 +1,38 @@
+using System.Runtime.InteropServices;
+using Cheetah.Matches.Relay.Types;
+
+namespace Cheetah.Matches.Relay.Internal.FFI
+{
+    internal static class ObjectFFI
+    {
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void CreateListener(ref CheetahObjectId objectId, ushort template);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void CreatedListener(ref CheetahObjectId objectId);
+
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_create_object_listener")]
+        public static extern byte SetCreateListener(ushort clientId, CreateListener listener);
+
+
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_created_object_listener")]
+        public static extern byte SetCreatedListener(ushort clientId, CreatedListener listener);
+
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_object")]
+        public static extern byte CreateObject(ushort clientId, ushort template, ulong accessGroup, ref CheetahObjectId objectId);
+        
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "created_object")]
+        public static extern byte Created(ushort clientId, ref CheetahObjectId objectId, bool roomOwner, ref CheetahBuffer singletonKey);
+
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void DeleteListener(ref CheetahObjectId objectId);
+
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_delete_object_listener")]
+        public static extern byte SetDeleteListener(ushort clientId, DeleteListener objectDeleteListener);
+
+
+        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "delete_object")]
+        public static extern byte Delete(ushort clientId, ref CheetahObjectId objectId);
+    }
+}

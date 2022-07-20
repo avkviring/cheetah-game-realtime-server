@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" cheetah="Cheetah.Platform.Editor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True" schemaLocation="Cheetah.Platform.Editor.UIElements ">
+    <ui:Toggle name="show_info_logs" label="Show info log" value="true" style="margin-left: 3px; margin-right: 3px; margin-top: 3px; margin-bottom: 3px; height: 15px; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
+    <Cheetah.Platform.Editor.UIElements.NetworkAddressElement name="address" title="Platform network address" default-host="127.0.0.1" default-port="7777" store-key="cheetah.platform.network.address" />
+</ui:UXML>

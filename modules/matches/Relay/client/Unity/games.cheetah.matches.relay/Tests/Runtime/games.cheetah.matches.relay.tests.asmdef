@@ -1,0 +1,27 @@
+{
+  "name": "games.cheetah.matches.relay.tests",
+  "rootNamespace": "Cheetah.Matches.Relay",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "games.cheetah.matches.relay",
+    "games.cheetah.unity.messagepack",
+    "MessagePack"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [
+    "LinuxStandalone64"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "System.Memory.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

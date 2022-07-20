@@ -1,0 +1,16 @@
+{
+  "name": "games.cheetah.system.compatibility",
+  "version": "999.999.999",
+  "displayName": "games.cheetah.system.compatibility",
+  "description": "Events",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "type": "library",
+  "author": "https://cheetah.games",
+  "hideInEditor": false,
+  "publishConfig": {
+    "registry": "https://gitlab.dev.cheetah.games/api/v4/projects/10/packages/npm/"
+  }
+}
+
+

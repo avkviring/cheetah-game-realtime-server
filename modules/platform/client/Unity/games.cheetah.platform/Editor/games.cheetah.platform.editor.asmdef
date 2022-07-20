@@ -1,0 +1,20 @@
+{
+  "name": "games.cheetah.platform.editor",
+  "rootNamespace": "Cheetah.Platform",
+  "references": [
+    "games.cheetah.platform"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

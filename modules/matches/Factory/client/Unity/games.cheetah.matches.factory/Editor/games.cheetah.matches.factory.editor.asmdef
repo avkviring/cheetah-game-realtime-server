@@ -1,0 +1,22 @@
+{
+  "name": "games.cheetah.matches.factory.editor",
+  "rootNamespace": "Cheetah.Matches.Factory",
+  "references": [
+    "games.cheetah.platform",
+    "games.cheetah.platform.editor",
+    "games.cheetah.matches.relay.shared"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

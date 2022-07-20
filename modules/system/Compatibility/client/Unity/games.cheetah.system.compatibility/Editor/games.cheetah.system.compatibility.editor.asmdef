@@ -1,0 +1,16 @@
+{
+  "name": "games.cheetah.system.compatibility.editor",
+  "rootNamespace": "Cheetah.System.Compatibility",
+  "references": [
+    "games.cheetah.platform",
+    "games.cheetah.platform.editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": true,
+  "autoReferenced": true,
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,34 @@
+{
+  "name": "games.cheetah.matches.matchmaking",
+  "version": "999.999.999",
+  "displayName": "games.cheetah.matches.matchmaking",
+  "description": "Matchmaking service",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "dependencies": {
+    "games.cheetah.platform": "999.999.999",
+    "games.cheetah.accounts": "999.999.999",
+    "games.cheetah.matches.factory": "999.999.999",
+    "games.cheetah.matches.registry": "999.999.999"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:cheetah-game/platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cheetah-game/platform/issues"
+  },
+  "keywords": [
+    "unity",
+    "unity3d",
+    "cheetah",
+    "platform",
+    "Matchmaking"
+  ],
+  "hideInEditor": false,
+  "type": "library",
+  "author": "https://cheetah.games",
+  "publishConfig": {
+    "registry": "https://gitlab.dev.cheetah.games/api/v4/projects/10/packages/npm/"
+  }
+}
