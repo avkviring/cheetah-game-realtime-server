@@ -6,7 +6,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
+use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
@@ -232,7 +232,7 @@ fn expect_send_msg(task: &str) -> String {
 
 #[cfg(test)]
 mod test {
-	use cheetah_matches_relay_common::network::bind_to_free_socket;
+	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
 	use crate::room::template::config::RoomTemplate;
 	use crate::server::manager::ServerManager;

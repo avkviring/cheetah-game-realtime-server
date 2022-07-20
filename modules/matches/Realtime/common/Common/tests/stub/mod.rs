@@ -4,9 +4,9 @@ use std::time::{Duration, Instant};
 use rand::rngs::OsRng;
 use rand::Rng;
 
-use cheetah_matches_relay_common::protocol::frame::input::InFrame;
-use cheetah_matches_relay_common::protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC;
-use cheetah_matches_relay_common::protocol::Protocol;
+use cheetah_matches_realtime_common::protocol::frame::input::InFrame;
+use cheetah_matches_realtime_common::protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC;
+use cheetah_matches_realtime_common::protocol::Protocol;
 
 #[derive(Default)]
 pub struct Channel {

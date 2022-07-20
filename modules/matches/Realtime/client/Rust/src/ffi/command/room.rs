@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;

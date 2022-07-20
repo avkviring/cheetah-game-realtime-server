@@ -1,9 +1,9 @@
-use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
-use cheetah_matches_relay_common::commands::types::structure::CompareAndSetStructureCommand;
-use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_realtime_common::commands::types::structure::CompareAndSetStructureCommand;
+use cheetah_matches_realtime_common::constants::FieldId;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;

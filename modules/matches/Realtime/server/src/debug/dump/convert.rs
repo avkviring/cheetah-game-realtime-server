@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+use cheetah_matches_realtime_common::constants::FieldId;
+use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 use crate::debug::proto::admin;
 use crate::debug::proto::shared::GameObjectField;

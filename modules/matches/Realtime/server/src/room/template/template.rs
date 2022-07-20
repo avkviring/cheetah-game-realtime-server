@@ -1,6 +1,6 @@
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::room::object::GameObjectId;
+use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::object::GameObject;
 use crate::room::template::config::GameObjectTemplate;
@@ -31,7 +31,7 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::{
+	use cheetah_matches_realtime_common::{
 		commands::{FieldType, FieldValue},
 		room::owner::GameObjectOwner,
 	};

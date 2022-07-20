@@ -1,14 +1,14 @@
 use std::sync::mpsc::SendError;
 use std::sync::Mutex;
 
-use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
+use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 use lazy_static::lazy_static;
 use thiserror::Error;
 
-use cheetah_matches_relay_common::commands::FieldType;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::FieldType;
+use cheetah_matches_realtime_common::room::object::GameObjectId;
+use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::clients::application_thread::ApplicationThreadClient;
 use crate::clients::registry::{ClientId, Registry};
@@ -205,8 +205,8 @@ impl From<FieldTypeFFI> for FieldType {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::room::object::GameObjectId;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 	use crate::ffi::GameObjectIdFFI;
 

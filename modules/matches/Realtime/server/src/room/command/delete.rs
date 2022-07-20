@@ -1,6 +1,6 @@
-use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::types::delete::DeleteGameObjectCommand;
+use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::Room;
@@ -23,10 +23,10 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
-	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+	use cheetah_matches_realtime_common::commands::types::delete::DeleteGameObjectCommand;
+	use cheetah_matches_realtime_common::room::access::AccessGroups;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};

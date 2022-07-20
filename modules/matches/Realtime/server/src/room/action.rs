@@ -1,7 +1,7 @@
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::room::object::GameObjectId;
+use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::{Field, GameObject, S2CCommandWithFieldInfo};

@@ -5,13 +5,13 @@ use std::time::Duration;
 use rand::rngs::OsRng;
 use rand::RngCore;
 
-use cheetah_matches_relay::room::template::config::MemberTemplate;
-use cheetah_matches_relay::server::manager::ServerManager;
-use cheetah_matches_relay_client::clients::registry::ClientId;
-use cheetah_matches_relay_client::ffi;
-use cheetah_matches_relay_client::ffi::client::do_create_client;
-use cheetah_matches_relay_client::ffi::{BufferFFI, GameObjectIdFFI};
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+use cheetah_matches_realtime::room::template::config::MemberTemplate;
+use cheetah_matches_realtime::server::manager::ServerManager;
+use cheetah_matches_realtime_client::clients::registry::ClientId;
+use cheetah_matches_realtime_client::ffi;
+use cheetah_matches_realtime_client::ffi::client::do_create_client;
+use cheetah_matches_realtime_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::helpers::server::IntegrationTestServerBuilder;
 

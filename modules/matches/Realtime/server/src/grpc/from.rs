@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use cheetah_matches_relay_common::{commands::FieldValue, room::access::AccessGroups};
+use cheetah_matches_realtime_common::{commands::FieldValue, room::access::AccessGroups};
 
 use crate::debug::proto::shared::{
 	field_value::Variant as VariantDebug, FieldValue as GRPCFieldValueDebug,
@@ -140,10 +140,10 @@ impl From<internal::PermissionField> for config::PermissionField {
 		let structure = shared::FieldType::Structure as i32;
 
 		let field_type = match source.r#type {
-			x if x == event => cheetah_matches_relay_common::commands::FieldType::Event,
-			x if x == double => cheetah_matches_relay_common::commands::FieldType::Double,
-			x if x == long => cheetah_matches_relay_common::commands::FieldType::Long,
-			x if x == structure => cheetah_matches_relay_common::commands::FieldType::Structure,
+			x if x == event => cheetah_matches_realtime_common::commands::FieldType::Event,
+			x if x == double => cheetah_matches_realtime_common::commands::FieldType::Double,
+			x if x == long => cheetah_matches_realtime_common::commands::FieldType::Long,
+			x if x == structure => cheetah_matches_realtime_common::commands::FieldType::Structure,
 			_ => {
 				panic!("Enum field_type unrecognized {}", source.r#type)
 			}

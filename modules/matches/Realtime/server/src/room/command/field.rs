@@ -1,6 +1,6 @@
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::commands::types::field::DeleteFieldCommand;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::commands::types::field::DeleteFieldCommand;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::{Field, GameObject};
@@ -31,11 +31,11 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::field::DeleteFieldCommand;
-	use cheetah_matches_relay_common::commands::FieldType;
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+	use cheetah_matches_realtime_common::commands::types::field::DeleteFieldCommand;
+	use cheetah_matches_realtime_common::commands::FieldType;
+	use cheetah_matches_realtime_common::room::object::GameObjectId;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::tests::setup_one_player;
 	use crate::room::command::ServerCommandExecutor;

@@ -1,5 +1,5 @@
-use cheetah_matches_relay_client::ffi;
-use cheetah_matches_relay_client::ffi::BufferFFI;
+use cheetah_matches_realtime_client::ffi;
+use cheetah_matches_realtime_client::ffi::BufferFFI;
 
 #[test]
 pub fn should_last_error() {

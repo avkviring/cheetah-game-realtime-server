@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-use cheetah_matches_relay_client::ffi;
+use cheetah_matches_realtime_client::ffi;
 
 use crate::helpers::helper::setup;
 

@@ -4,10 +4,10 @@ use std::rc::Rc;
 
 use fnv::FnvBuildHasher;
 
-use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_matches_relay_common::protocol::frame::applications::CommandWithChannel;
-use cheetah_matches_relay_common::protocol::others::user_id::MemberAndRoomId;
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
+use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
+use cheetah_matches_realtime_common::protocol::frame::applications::CommandWithChannel;
+use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};

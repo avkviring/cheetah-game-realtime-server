@@ -1,10 +1,10 @@
 use thiserror::Error;
 
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::room::access::AccessGroups;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId};
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
+use cheetah_matches_realtime_common::room::access::AccessGroups;
+use cheetah_matches_realtime_common::room::object::GameObjectId;
+use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::room::object::{Field, GameObjectError};
 use crate::room::Room;
@@ -125,10 +125,10 @@ pub fn execute(
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-	use cheetah_matches_relay_common::room::RoomMemberId;
+	use cheetah_matches_realtime_common::room::access::AccessGroups;
+	use cheetah_matches_realtime_common::room::object::GameObjectId;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::room::RoomMemberId;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::Room;

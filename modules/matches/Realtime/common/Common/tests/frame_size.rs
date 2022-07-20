@@ -1,12 +1,12 @@
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
-use cheetah_matches_relay_common::protocol::codec::cipher::Cipher;
-use cheetah_matches_relay_common::protocol::frame::applications::{
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
+use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_realtime_common::protocol::codec::cipher::Cipher;
+use cheetah_matches_realtime_common::protocol::frame::applications::{
 	BothDirectionCommand, CommandWithChannel,
 };
-use cheetah_matches_relay_common::protocol::frame::channel::Channel;
-use cheetah_matches_relay_common::protocol::frame::output::OutFrame;
+use cheetah_matches_realtime_common::protocol::frame::channel::Channel;
+use cheetah_matches_realtime_common::protocol::frame::output::OutFrame;
 
 #[test]
 // msgpack - raw(12), compressed(5), chiper(30)

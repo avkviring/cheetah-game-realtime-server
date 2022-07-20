@@ -1,5 +1,5 @@
 [package]
-name = "cheetah-matches-relay-common"
+name = "cheetah-matches-realtime-common"
 version = "0.1.0"
 authors = ["Kviring Aleksey <alex@kviring.com>"]
 edition = "2021"
@@ -10,7 +10,7 @@ rand = "0.8.3"
 snap = "1.0.5"
 byteorder = "1.4.3"
 chacha20poly1305 = { version = "0.9.0", features = ["heapless","reduced-round"] }
-cheetah-matches-relay-macro = { path = "../Macro/" }
+cheetah-matches-realtime-macro = { path = "../Macro/" }
 generic-array = "0.14.5"
 heapless = { version = "0.7.8"}
 fnv = "1.0.7"

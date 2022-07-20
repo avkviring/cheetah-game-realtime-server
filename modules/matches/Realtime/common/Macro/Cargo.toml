@@ -1,5 +1,5 @@
 [package]
-name = "cheetah-matches-relay-macro"
+name = "cheetah-matches-realtime-macro"
 version = "0.1.0"
 authors = ["Kviring Aleksey <alex@kviring.com>"]
 edition = "2021"

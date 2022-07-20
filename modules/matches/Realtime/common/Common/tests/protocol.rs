@@ -1,9 +1,9 @@
 use std::time::Instant;
 
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::protocol::frame::applications::BothDirectionCommand;
-use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
-use cheetah_matches_relay_common::protocol::Protocol;
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::protocol::frame::applications::BothDirectionCommand;
+use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
+use cheetah_matches_realtime_common::protocol::Protocol;
 
 use crate::stub::Channel;
 

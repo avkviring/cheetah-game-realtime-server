@@ -1,12 +1,12 @@
-use cheetah_matches_relay_common::commands::s2c::S2CCommandWithCreator;
-use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_matches_relay_common::protocol::frame::applications::{
+use cheetah_matches_realtime_common::commands::s2c::S2CCommandWithCreator;
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
+use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
+use cheetah_matches_realtime_common::protocol::frame::applications::{
 	BothDirectionCommand, ChannelGroup,
 };
-use cheetah_matches_relay_common::protocol::frame::channel::ChannelType;
-use cheetah_matches_relay_common::room::access::AccessGroups;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
+use cheetah_matches_realtime_common::room::access::AccessGroups;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::S2CCommandWithFieldInfo;
@@ -138,10 +138,10 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-	use cheetah_matches_relay_common::commands::{types::field::SetFieldCommand, FieldType};
-	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_realtime_common::commands::{types::field::SetFieldCommand, FieldType};
+	use cheetah_matches_realtime_common::room::access::AccessGroups;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 	use crate::room::object::{Field, S2CCommandWithFieldInfo};
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};

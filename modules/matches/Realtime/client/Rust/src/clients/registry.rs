@@ -8,8 +8,8 @@ use std::{panic, thread};
 
 use fnv::FnvBuildHasher;
 
-use cheetah_matches_relay_common::network::client::ConnectionStatus;
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+use cheetah_matches_realtime_common::network::client::ConnectionStatus;
+use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::clients::application_thread::ApplicationThreadClient;
 use crate::clients::network_thread::NetworkThreadClient;

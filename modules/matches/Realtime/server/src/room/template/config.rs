@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use cheetah_matches_relay_common::commands::FieldType;
+use cheetah_matches_realtime_common::commands::FieldType;
 use fnv::FnvBuildHasher;
 
-use cheetah_matches_relay_common::commands::FieldValue;
-use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
-use cheetah_matches_relay_common::room::access::AccessGroups;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::UserPrivateKey;
+use cheetah_matches_realtime_common::commands::FieldValue;
+use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_realtime_common::room::access::AccessGroups;
+use cheetah_matches_realtime_common::room::object::GameObjectId;
+use cheetah_matches_realtime_common::room::UserPrivateKey;
 
 use crate::room::object::Field;
 
@@ -88,10 +88,10 @@ impl MemberTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::FieldType;
-	use cheetah_matches_relay_common::constants::{FieldId, GameObjectTemplateId};
-	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::object::GameObjectId;
+	use cheetah_matches_realtime_common::commands::FieldType;
+	use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+	use cheetah_matches_realtime_common::room::access::AccessGroups;
+	use cheetah_matches_realtime_common::room::object::GameObjectId;
 
 	use crate::room::object::Field;
 	use crate::room::template::config::{

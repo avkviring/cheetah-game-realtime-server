@@ -627,34 +627,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-matches-registry"
-version = "999.999.999"
-dependencies = [
- "async-trait",
- "cheetah-libraries-microservice",
- "futures",
- "lazy_static",
- "pin-project",
- "pin-project-internal",
- "prost 0.9.0",
- "redis",
- "serde",
- "serde_json",
- "testcontainers 0.12.0",
- "thiserror",
- "tokio",
- "tonic 0.6.2",
- "tonic-build 0.6.2",
- "tonic-health",
- "tracing",
-]
-
-[[package]]
-name = "cheetah-matches-relay"
+name = "cheetah-matches-realtime"
 version = "0.1.0"
 dependencies = [
  "cheetah-libraries-microservice",
- "cheetah-matches-relay-common",
+ "cheetah-matches-realtime-common",
  "fnv",
  "futures",
  "heapless",
@@ -679,11 +656,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-matches-relay-client"
+name = "cheetah-matches-realtime-client"
 version = "0.0.1"
 dependencies = [
- "cheetah-matches-relay",
- "cheetah-matches-relay-common",
+ "cheetah-matches-realtime",
+ "cheetah-matches-realtime-common",
  "easybench",
  "fnv",
  "heapless",
@@ -698,12 +675,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-matches-relay-common"
+name = "cheetah-matches-realtime-common"
 version = "0.1.0"
 dependencies = [
  "byteorder",
  "chacha20poly1305",
- "cheetah-matches-relay-macro",
+ "cheetah-matches-realtime-macro",
  "criterion",
  "fnv",
  "generic-array",
@@ -719,13 +696,36 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-matches-relay-macro"
+name = "cheetah-matches-realtime-macro"
 version = "0.1.0"
 dependencies = [
  "Inflector",
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "cheetah-matches-registry"
+version = "999.999.999"
+dependencies = [
+ "async-trait",
+ "cheetah-libraries-microservice",
+ "futures",
+ "lazy_static",
+ "pin-project",
+ "pin-project-internal",
+ "prost 0.9.0",
+ "redis",
+ "serde",
+ "serde_json",
+ "testcontainers 0.12.0",
+ "thiserror",
+ "tokio",
+ "tonic 0.6.2",
+ "tonic-build 0.6.2",
+ "tonic-health",
+ "tracing",
 ]
 
 [[package]]

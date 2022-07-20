@@ -2,10 +2,10 @@ use std::sync::Mutex;
 
 use lazy_static::lazy_static;
 
-use cheetah_matches_relay_client::ffi;
-use cheetah_matches_relay_client::ffi::GameObjectIdFFI;
-use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_client::ffi;
+use cheetah_matches_realtime_client::ffi::GameObjectIdFFI;
+use cheetah_matches_realtime_common::constants::FieldId;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
 

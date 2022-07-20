@@ -1,9 +1,9 @@
 use std::thread;
 use std::time::Duration;
 
-use cheetah_matches_relay_client::ffi::execute_with_client;
-use cheetah_matches_relay_common::network::client::{ConnectionStatus, DisconnectedReason};
-use cheetah_matches_relay_common::protocol::disconnect::timeout::DisconnectByTimeout;
+use cheetah_matches_realtime_client::ffi::execute_with_client;
+use cheetah_matches_realtime_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_matches_realtime_common::protocol::disconnect::timeout::DisconnectByTimeout;
 
 use crate::helpers::helper::IntegrationTestHelper;
 use crate::helpers::server::IntegrationTestServerBuilder;

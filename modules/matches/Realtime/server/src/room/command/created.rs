@@ -1,7 +1,7 @@
-use cheetah_matches_relay_common::commands::types::create::C2SCreatedGameObjectCommand;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::types::create::C2SCreatedGameObjectCommand;
+use cheetah_matches_realtime_common::room::object::GameObjectId;
+use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::CreateCommandsCollector;
@@ -60,13 +60,13 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
-	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::create::{
+	use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
+	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+	use cheetah_matches_realtime_common::commands::types::create::{
 		C2SCreatedGameObjectCommand, CreateGameObjectCommand,
 	};
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::room::object::GameObjectId;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::tests::{setup_one_player, setup_two_players};
 	use crate::room::command::{ServerCommandError, ServerCommandExecutor};

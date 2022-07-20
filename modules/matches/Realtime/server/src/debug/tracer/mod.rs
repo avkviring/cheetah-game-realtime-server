@@ -6,11 +6,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use fnv::FnvBuildHasher;
 use indexmap::IndexMap;
 
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-use cheetah_matches_relay_common::constants::GameObjectTemplateId;
-use cheetah_matches_relay_common::room::object::GameObjectId;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
+use cheetah_matches_realtime_common::room::object::GameObjectId;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::debug::tracer::filter::Filter;
 use crate::debug::tracer::parser::parse;
@@ -320,10 +320,10 @@ impl CommandTracerSessions {
 
 #[cfg(test)]
 pub mod tests {
-	use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::create::CreateGameObjectCommand;
-	use cheetah_matches_relay_common::commands::types::event::EventCommand;
+	use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+	use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
+	use cheetah_matches_realtime_common::commands::types::event::EventCommand;
 
 	use crate::debug::tracer::{
 		CommandTracerSessions, Session, TracedBothDirectionCommand, TracedCommand,

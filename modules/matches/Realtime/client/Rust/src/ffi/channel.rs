@@ -1,4 +1,4 @@
-use cheetah_matches_relay_common::protocol::frame::applications::ChannelGroup;
+use cheetah_matches_realtime_common::protocol::frame::applications::ChannelGroup;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::execute_with_client;

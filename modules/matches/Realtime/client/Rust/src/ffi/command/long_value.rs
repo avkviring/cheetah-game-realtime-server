@@ -1,10 +1,10 @@
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
-use cheetah_matches_relay_common::commands::types::long::{
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
+use cheetah_matches_realtime_common::commands::types::long::{
 	CompareAndSetLongCommand, IncrementLongC2SCommand,
 };
-use cheetah_matches_relay_common::constants::FieldId;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::constants::FieldId;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;

@@ -7,13 +7,13 @@ use futures::Future;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
-use cheetah_matches_relay::agones::run_agones_cycle;
-use cheetah_matches_relay::debug::dump::DumpGrpcService;
-use cheetah_matches_relay::debug::grpc::RelayAdminGRPCService;
-use cheetah_matches_relay::debug::proto::admin;
-use cheetah_matches_relay::debug::tracer::grpc::CommandTracerGRPCService;
-use cheetah_matches_relay::grpc::RelayGRPCService;
-use cheetah_matches_relay::server::manager::ServerManager;
+use cheetah_matches_realtime::agones::run_agones_cycle;
+use cheetah_matches_realtime::debug::dump::DumpGrpcService;
+use cheetah_matches_realtime::debug::grpc::RelayAdminGRPCService;
+use cheetah_matches_realtime::debug::proto::admin;
+use cheetah_matches_realtime::debug::tracer::grpc::CommandTracerGRPCService;
+use cheetah_matches_realtime::grpc::RelayGRPCService;
+use cheetah_matches_realtime::server::manager::ServerManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,7 +34,7 @@ async fn create_internal_grpc_server(
 	health_reporter
 		.set_service_status("", ServingStatus::Serving)
 		.await;
-	let service = cheetah_matches_relay::grpc::proto::internal::relay_server::RelayServer::new(
+	let service = cheetah_matches_realtime::grpc::proto::internal::relay_server::RelayServer::new(
 		RelayGRPCService::new(manager),
 	);
 	let address = cheetah_libraries_microservice::get_internal_service_binding_addr();

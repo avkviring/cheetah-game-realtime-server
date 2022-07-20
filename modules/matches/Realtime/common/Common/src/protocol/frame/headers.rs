@@ -1,4 +1,4 @@
-use cheetah_matches_relay_macro::EnumMatchPredicates;
+use cheetah_matches_realtime_macro::EnumMatchPredicates;
 
 use crate::protocol::disconnect::command::DisconnectHeader;
 use crate::protocol::others::rtt::RoundTripTimeHeader;

@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::s2c::S2CCommand;
-	use cheetah_matches_relay_common::commands::types::field::SetFieldCommand;
-	use cheetah_matches_relay_common::commands::FieldType;
-	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+	use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
+	use cheetah_matches_realtime_common::commands::FieldType;
+	use cheetah_matches_realtime_common::room::access::AccessGroups;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};

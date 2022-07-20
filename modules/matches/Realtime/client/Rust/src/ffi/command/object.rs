@@ -1,7 +1,7 @@
-use cheetah_matches_relay_common::commands::binary_value::BinaryValue;
-use cheetah_matches_relay_common::commands::c2s::C2SCommand;
-use cheetah_matches_relay_common::commands::types::create::C2SCreatedGameObjectCommand;
-use cheetah_matches_relay_common::commands::types::delete::DeleteGameObjectCommand;
+use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
+use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::types::create::C2SCreatedGameObjectCommand;
+use cheetah_matches_realtime_common::commands::types::delete::DeleteGameObjectCommand;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;

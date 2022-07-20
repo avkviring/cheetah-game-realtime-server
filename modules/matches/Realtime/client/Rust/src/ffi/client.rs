@@ -3,8 +3,8 @@ use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use cheetah_matches_relay_common::network::client::{ConnectionStatus, DisconnectedReason};
-use cheetah_matches_relay_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+use cheetah_matches_realtime_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId, UserPrivateKey};
 
 use crate::clients::registry::ClientId;
 use crate::ffi::{execute, execute_with_client, BufferFFI, ClientError, LAST_ERROR};

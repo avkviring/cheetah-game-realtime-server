@@ -1,6 +1,6 @@
-use cheetah_matches_relay_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_matches_relay_common::room::owner::GameObjectOwner;
-use cheetah_matches_relay_common::room::RoomMemberId;
+use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
+use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
+use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
@@ -52,10 +52,10 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_matches_relay_common::commands::types::create::CreateGameObjectCommand;
-	use cheetah_matches_relay_common::room::access::AccessGroups;
-	use cheetah_matches_relay_common::room::object::GameObjectId;
-	use cheetah_matches_relay_common::room::owner::GameObjectOwner;
+	use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
+	use cheetah_matches_realtime_common::room::access::AccessGroups;
+	use cheetah_matches_realtime_common::room::object::GameObjectId;
+	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
 	use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
