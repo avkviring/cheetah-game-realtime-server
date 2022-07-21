@@ -215,7 +215,7 @@ mod tests {
 		};
 		create_command.execute(&mut room, user).unwrap();
 		let created_command = C2SCreatedGameObjectCommand {
-			object_id: member_object_id_2.clone(),
+			object_id: member_object_id_2,
 			room_owner: true,
 			singleton_key,
 		};

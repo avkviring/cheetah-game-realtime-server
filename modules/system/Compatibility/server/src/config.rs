@@ -93,7 +93,7 @@ mod test {
 				- version: 1.0.0
 				  expiration: never
 		"#
-		.replace("\t", " ");
+		.replace('\t', " ");
 		let config = Config::new(content);
 		assert_eq!(config.unwrap().versions.len(), 1)
 	}

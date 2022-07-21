@@ -179,7 +179,7 @@ impl Room {
 					}
 					measurers.on_execute_command(
 						command.get_field_id(),
-						&command,
+						command,
 						instant.elapsed(),
 					)
 				}
@@ -214,8 +214,7 @@ impl Room {
 
 	pub fn get_member(&self, member_id: &RoomMemberId) -> Result<&Member, ServerCommandError> {
 		self.members
-			.get(member_id)
-			.ok_or_else(|| ServerCommandError::MemberNotFound(member_id.clone()))
+			.get(member_id).ok_or(ServerCommandError::MemberNotFound(*member_id))
 	}
 
 	pub fn get_member_mut(
@@ -223,8 +222,7 @@ impl Room {
 		member_id: &RoomMemberId,
 	) -> Result<&mut Member, ServerCommandError> {
 		self.members
-			.get_mut(member_id)
-			.ok_or_else(|| ServerCommandError::MemberNotFound(member_id.clone()))
+			.get_mut(member_id).ok_or(ServerCommandError::MemberNotFound(*member_id))
 	}
 
 	///
@@ -422,12 +420,10 @@ mod tests {
 				.unwrap()
 				.out_commands
 				.iter()
-				.map(|c| &c.command)
-				.map(|c| match c {
+				.map(|c| &c.command).filter_map(|c| match c {
 					BothDirectionCommand::S2CWithCreator(c) => Some(c.command.clone()),
 					BothDirectionCommand::C2S(_) => None,
 				})
-				.flatten()
 				.collect()
 		}
 
@@ -439,12 +435,10 @@ mod tests {
 				.unwrap()
 				.out_commands
 				.iter()
-				.map(|c| &c.command)
-				.map(|c| match c {
+				.map(|c| &c.command).filter_map(|c| match c {
 					BothDirectionCommand::S2CWithCreator(c) => Some(c.clone()),
 					BothDirectionCommand::C2S(_) => None,
 				})
-				.flatten()
 				.collect()
 		}
 
@@ -683,7 +677,7 @@ mod tests {
 		let mut room = Room::default();
 		let member_template = MemberTemplate::stub(AccessGroups(8));
 		let member_id = room.register_member(member_template);
-		room.test_mark_as_connected(member_id.clone()).unwrap();
+		room.test_mark_as_connected(member_id).unwrap();
 		let member = room.get_member_mut(&member_id).unwrap();
 		member.out_commands.push(CommandWithChannelType {
 			channel_type: ChannelType::ReliableUnordered,
