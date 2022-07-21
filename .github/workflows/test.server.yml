@@ -26,5 +26,11 @@ jobs:
             rust-
       - name: Test
         run: cd modules/ && cargo build
+      - name: Lint cargo fmt
+        run: cd modules/ && cargo fmt --all -- --check
+      - name: Lint cargo clippy
+        run: cd modules/ && cargo clippy -- -D warnings
+      - name: Test
+        run: cd modules/ && cargo test
 
 
