@@ -14,6 +14,7 @@ pub mod network_thread;
 pub mod registry;
 
 #[derive(Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClientRequest {
 	SetProtocolTimeOffsetForTest(Duration),
 	ConfigureRttEmulation(Duration, f64),

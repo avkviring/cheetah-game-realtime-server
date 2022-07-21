@@ -150,6 +150,7 @@ pub struct Statistics {
 }
 
 #[no_mangle]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
 	member_id: RoomMemberId,
