@@ -75,6 +75,7 @@ pub struct TracedCommand {
 /// Хранение команд разной направленности (с сервера на клиент и с клиента на сервер)
 ///
 #[derive(Debug, Clone, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 enum TracedBothDirectionCommand {
 	C2S(C2SCommand),
 	S2C(S2CCommand),

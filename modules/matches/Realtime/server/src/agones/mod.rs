@@ -39,8 +39,8 @@ pub async fn run_agones_cycle(
 	tracing::info!("Agones: Starting");
 	match rymder::Sdk::connect(
 		None,
-		Option::Some(Duration::from_secs(2)),
-		Option::Some(Duration::from_secs(2)),
+		Some(Duration::from_secs(2)),
+		Some(Duration::from_secs(2)),
 	)
 	.await
 	{
@@ -108,21 +108,20 @@ async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), Regis
 		.await
 		.map_err(RegistryError::from)?;
 
-	let status = gs
-		.status
-		.as_ref()
-		.ok_or(RegistryError::InvalidGameServerStatus(
-			"could not find status in GameServer".to_string(),
-		))?;
+	let status = gs.status.as_ref().ok_or_else(|| {
+		RegistryError::InvalidGameServerStatus("could not find status in GameServer".to_string())
+	})?;
 	let host = status.address;
 	let port = status
 		.ports
 		.iter()
 		.find(|p| p.name == "default")
 		.map(|p| p.port)
-		.ok_or(RegistryError::InvalidGameServerStatus(
-			"could not find port default in GameServer Status".to_string(),
-		))?;
+		.ok_or_else(|| {
+			RegistryError::InvalidGameServerStatus(
+				"could not find port default in GameServer Status".to_string(),
+			)
+		})?;
 
 	let addrs = RelayAddrs {
 		game: Some(Addr {
