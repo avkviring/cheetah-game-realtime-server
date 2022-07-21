@@ -1,0 +1,31 @@
+#
+# Unit тесты серверных компонентов
+#
+name: Server tests
+on:
+  push:
+    branches: [ "main","github-action" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  server-unit-test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.2
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            /modules/target/
+          key: rust-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            rust-
+      - name: Test
+        run: cd modules/ && cargo build
+
+
