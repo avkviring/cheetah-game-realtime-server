@@ -31,7 +31,7 @@ jobs:
       - name: Lint cargo clippy
         run: cd modules/ && cargo clippy -- -D warnings
       - name: Lint udeps
-        run: cd modules/ && cargo udeps
+        run: cd modules/ && cargo +nightly udeps
       - name: Test
         run: cd modules/ && cargo test
 
