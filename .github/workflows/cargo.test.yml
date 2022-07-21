@@ -1,14 +1,11 @@
-#
-# Unit тесты серверных компонентов
-#
-name: Server tests
+name: cargo test
 on:
   push:
     branches: [ "main","github-action" ]
   pull_request:
     branches: [ "main" ]
 jobs:
-  server-unit-test:
+  rust-test:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
@@ -21,17 +18,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             modules/target/
-          key: rust-${{ hashFiles('**/Cargo.lock') }}
+          key: rust-test-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            rust-
-      - name: Build
-        run: cd modules/ && cargo build
-      - name: Lint cargo fmt
-        run: cd modules/ && cargo fmt --all -- --check
-      - name: Lint cargo clippy
-        run: cd modules/ && cargo clippy -- -D warnings
-      - name: Lint udeps
-        run: cd modules/ && cargo +nightly udeps
+            rust-test-
       - name: Test
         run: cd modules/ && cargo test
 
