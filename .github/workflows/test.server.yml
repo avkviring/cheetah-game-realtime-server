@@ -17,11 +17,10 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            /modules/target/
+            modules/target/
           key: rust-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-
