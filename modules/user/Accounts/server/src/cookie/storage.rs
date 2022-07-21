@@ -4,7 +4,7 @@ use ydb::{Bytes, TableClient, YdbOrCustomerError};
 use ydb_steroids::error::is_unique_violation_error;
 use ydb_steroids::{query, select, update};
 
-use crate::cookie::cookie::Cookie;
+use crate::cookie::Cookie;
 use crate::users::user::User;
 
 #[derive(Debug, Error)]
@@ -66,8 +66,8 @@ impl CookieStorage {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::cookie::cookie::Cookie;
 	use crate::cookie::storage::{AttachError, CookieStorage};
+	use crate::cookie::Cookie;
 	use crate::users::service::UserService;
 	use crate::ydb::test::setup_ydb;
 

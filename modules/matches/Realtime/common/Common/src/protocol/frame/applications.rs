@@ -20,6 +20,7 @@ pub struct CommandWithChannel {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum BothDirectionCommand {
 	S2CWithCreator(S2CCommandWithCreator),
 	C2S(C2SCommand),

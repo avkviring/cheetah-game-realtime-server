@@ -3,14 +3,13 @@ extern crate core;
 use std::collections::HashMap;
 use std::time::Instant;
 
+use headers::Header;
 use jsonwebtoken::errors::Error;
 use jsonwebtoken::DecodingKey;
 use jsonwebtoken::{Algorithm, Validation};
+use reqwest::header::{HeaderMap, CACHE_CONTROL};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-
-use headers::Header;
-use reqwest::header::{HeaderMap, CACHE_CONTROL};
 use thiserror::Error;
 
 ///
@@ -132,7 +131,7 @@ impl GooglePublicKeyProvider {
 	pub async fn reload(&mut self) -> Result<(), GoogleKeyProviderError> {
 		match reqwest::get(&self.url).await {
 			Ok(r) => {
-				let expiration_time = GooglePublicKeyProvider::parse_expiration_time(&r.headers());
+				let expiration_time = GooglePublicKeyProvider::parse_expiration_time(r.headers());
 				match r.json::<GoogleKeys>().await {
 					Ok(google_keys) => {
 						self.keys.clear();
@@ -151,10 +150,7 @@ impl GooglePublicKeyProvider {
 
 	fn parse_expiration_time(header_map: &HeaderMap) -> Option<Instant> {
 		match headers::CacheControl::decode(&mut header_map.get_all(CACHE_CONTROL).iter()) {
-			Ok(header) => match header.max_age() {
-				None => None,
-				Some(max_age) => Some(Instant::now() + max_age),
-			},
+			Ok(header) => header.max_age().map(|max_age| Instant::now() + max_age),
 			Err(_) => None,
 		}
 	}
@@ -174,7 +170,7 @@ impl GooglePublicKeyProvider {
 		match self.keys.get(&kid.to_owned()) {
 			None => Result::Err(GoogleKeyProviderError::KeyNotFound),
 			Some(key) => DecodingKey::from_rsa_components(key.n.as_str(), key.e.as_str())
-				.map_err(|e| GoogleKeyProviderError::CreateKeyError(e)),
+				.map_err(GoogleKeyProviderError::CreateKeyError),
 		}
 	}
 }
@@ -183,11 +179,11 @@ impl GooglePublicKeyProvider {
 mod tests {
 	use std::time::Duration;
 
+	use httpmock::MockServer;
 	use jsonwebtoken::errors::ErrorKind;
 
 	use crate::google::google_jwt::{GoogleKeyProviderError, GooglePublicKeyProvider, ParserError};
 	use crate::google::test_helper::{setup, TokenClaims};
-	use httpmock::MockServer;
 
 	#[tokio::test]
 	async fn should_parse_keys() {

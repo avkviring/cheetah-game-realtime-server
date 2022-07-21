@@ -1,13 +1,14 @@
+use std::fmt::Display;
+
+use include_dir::{include_dir, Dir};
+use ydb::{YdbError, YdbOrCustomerError};
+
+pub use fetch::Fetch;
+pub use update::Update;
+
 mod fetch;
 mod table;
 mod update;
-
-use std::fmt::Display;
-
-pub use fetch::Fetch;
-use include_dir::{include_dir, Dir};
-pub use update::Update;
-use ydb::{YdbError, YdbOrCustomerError};
 
 #[allow(dead_code)]
 static MIGRATIONS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
@@ -23,11 +24,7 @@ pub enum Error {
 
 impl Error {
 	pub fn is_server_side(&self) -> bool {
-		if let Error::DatabaseError(_) = self {
-			true
-		} else {
-			false
-		}
+		matches!(self, Error::DatabaseError(_))
 	}
 }
 

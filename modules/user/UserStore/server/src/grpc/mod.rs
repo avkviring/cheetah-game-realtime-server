@@ -1,3 +1,19 @@
+use std::{error::Error, net::SocketAddr};
+
+use jwt_tonic_user_uuid::JWTUserTokenParser;
+use tonic::Response;
+use tonic::{transport::Server, Request, Status};
+use uuid::Uuid;
+use ydb::Client;
+
+use cheetah_libraries_microservice::{init, trace::trace_err};
+use update::UpdateService;
+use userstore::update_server::UpdateServer;
+
+use crate::ydb::Error as YdbError;
+
+use self::{fetch::FetchService, userstore::fetch_server::FetchServer};
+
 mod fetch;
 mod reply;
 mod update;
@@ -5,21 +21,6 @@ mod value;
 mod userstore {
 	tonic::include_proto!("cheetah.userstore");
 }
-
-use cheetah_libraries_microservice::{init, trace::trace_err};
-use jwt_tonic_user_uuid::JWTUserTokenParser;
-use std::{error::Error, net::SocketAddr};
-use tonic::Response;
-use tonic::{transport::Server, Request, Status};
-use tonic_web;
-use update::UpdateService;
-use userstore::update_server::UpdateServer;
-use uuid::Uuid;
-use ydb::Client;
-
-use crate::ydb::Error as YdbError;
-
-use self::{fetch::FetchService, userstore::fetch_server::FetchServer};
 
 pub struct Service {
 	ydb_client: Client,
