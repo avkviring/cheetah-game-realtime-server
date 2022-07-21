@@ -601,7 +601,7 @@ dependencies = [
  "rymder",
  "serde",
  "serde_json",
- "strum_macros 0.23.1",
+ "strum_macros 0.24.2",
  "thiserror",
  "tokio",
  "tokio-stream",
@@ -647,7 +647,7 @@ dependencies = [
  "lazy_static",
  "rand",
  "snap",
- "strum_macros 0.23.1",
+ "strum_macros 0.24.2",
  "thiserror",
  "tracing",
 ]
@@ -3541,11 +3541,11 @@ dependencies = [
 
 [[package]]
 name = "strum_macros"
-version = "0.23.1"
+version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bb0dc7ee9c15cea6199cde9a127fa16a4c5819af85395457ad72d68edc85a38"
+checksum = "4faebde00e8ff94316c01800f9054fd2ba77d30d9e922541913051d1d978918b"
 dependencies = [
- "heck 0.3.3",
+ "heck 0.4.0",
  "proc-macro2",
  "quote",
  "rustversion",
