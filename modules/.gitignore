@@ -1,2 +1,6 @@
 target
 **/*.rs.bk
+**/Unity/**/Editor/GRPC/*.cs
+**/Unity/**/Editor/GRPC/*.cs.meta
+**/Unity/**/Runtime/GRPC/*.cs
+**/Unity/**/Runtime/GRPC/*.cs.meta
