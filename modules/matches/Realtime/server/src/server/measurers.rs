@@ -249,8 +249,8 @@ impl Measurers {
 		});
 	}
 
-	pub(crate) fn on_input_commands(&mut self, template: &String, commands: &[CommandWithChannel]) {
-		let template = MeasureStringId::from(template.as_str());
+	pub(crate) fn on_input_commands(&mut self, template: &str, commands: &[CommandWithChannel]) {
+		let template = MeasureStringId::from(template);
 		commands.iter().for_each(|c| {
 			if let BothDirectionCommand::C2S(ref c) = c.both_direction_command {
 				let key = (c.get_field_type(), c.get_field_id(), template.clone());
@@ -283,6 +283,7 @@ impl Measurers {
 			.observe(duration.as_secs_f64())
 	}
 
+	#[allow(clippy::type_complexity)]
 	fn network_command_measurer_label_factory(
 		name: &str,
 		help: &str,

@@ -123,7 +123,7 @@ impl GameObject {
 	}
 
 	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector) {
-		if let Err(_) = self.do_collect_create_commands(commands) {
+		if self.do_collect_create_commands(commands).is_err() {
 			tracing::error!("Collect create commands overflow {:?}", self);
 		}
 	}
