@@ -72,14 +72,19 @@ impl AckSender {
 	}
 
 	pub fn on_frame_received(&mut self, frame: &InFrame, now: &Instant) {
-		if frame.contains_reliability_command() {
-			if let Err(_) = self.ack_tasks.push(AckTask {
+		if !frame.contains_reliability_command() {
+			return;
+		}
+		if self
+			.ack_tasks
+			.push(AckTask {
 				frame_id: frame.get_original_frame_id(),
 				ack_count: 0,
 				scheduled_ack: *now,
-			}) {
-				tracing::error!("AckSender overflow ack_tasks",);
-			}
+			})
+			.is_err()
+		{
+			tracing::error!("AckSender overflow ack_tasks",);
 		}
 	}
 }
@@ -90,7 +95,6 @@ mod tests {
 	use std::time::Instant;
 
 	use crate::commands::c2s::C2SCommand;
-
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
 	use crate::protocol::frame::headers::Header;

@@ -16,9 +16,7 @@ impl From<&[u8]> for BinaryValue {
 
 impl BinaryValue {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let mut result = BinaryValue {
-			0: Default::default(),
-		};
+		let mut result = BinaryValue(Default::default());
 		let size = input.read_variable_u64()? as usize;
 		if size > result.0.capacity() {
 			return Err(Error::new(
@@ -38,6 +36,7 @@ impl BinaryValue {
 		out.write_all(self.0.as_slice())
 	}
 
+	#[allow(clippy::len_without_is_empty)]
 	pub fn len(&self) -> usize {
 		self.0.len()
 	}

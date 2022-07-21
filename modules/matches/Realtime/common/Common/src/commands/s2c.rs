@@ -13,6 +13,7 @@ use crate::room::RoomMemberId;
 use strum_macros::AsRefStr;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
+#[allow(clippy::large_enum_variant)]
 pub enum S2CCommand {
 	Create(CreateGameObjectCommand),
 	Created(GameObjectCreatedS2CCommand),
@@ -70,7 +71,7 @@ impl S2CCommand {
 			S2CCommand::SetField(command) => Some(command.value.field_type()),
 			S2CCommand::Event(_) => Some(FieldType::Event),
 			S2CCommand::Delete(_) => None,
-			S2CCommand::DeleteField(command) => Some(command.field_type.clone()),
+			S2CCommand::DeleteField(command) => Some(command.field_type),
 		}
 	}
 

@@ -23,7 +23,7 @@ mod date {
 	use chrono::{DateTime, Duration, TimeZone, Utc};
 	use serde::{Deserialize, Deserializer};
 
-	const FORMAT: &'static str = "%Y-%m-%d %H:%M";
+	const FORMAT: &str = "%Y-%m-%d %H:%M";
 
 	pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
 	where

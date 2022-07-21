@@ -49,9 +49,9 @@ impl FieldValue {
 	}
 }
 
-impl Into<f64> for FieldValue {
-	fn into(self) -> f64 {
-		if let FieldValue::Double(v) = self {
+impl From<FieldValue> for f64 {
+	fn from(from: FieldValue) -> Self {
+		if let FieldValue::Double(v) = from {
 			v
 		} else {
 			panic!("Type mismatch: FieldValue contained wrong type");

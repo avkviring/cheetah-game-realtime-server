@@ -82,7 +82,7 @@ fn write_yaml_error(f: &mut Formatter, file: &Path, err: &serde_yaml::Error) -> 
 	write!(
 		f,
 		"Error in file {}. Wrong format {:?}: {:?}",
-		file.display().to_string(),
+		file.display(),
 		err.location().map(|loc| (loc.line(), loc.column())),
 		err
 	)

@@ -6,8 +6,8 @@ use ydb::TableClient;
 
 use cheetah_libraries_microservice::trace::Trace;
 
-use crate::cookie::cookie::Cookie;
 use crate::cookie::storage::CookieStorage;
+use crate::cookie::Cookie;
 use crate::proto;
 use crate::proto::{LoginRequest, SessionAndRefreshTokens};
 use crate::tokens::TokensService;

@@ -93,6 +93,7 @@ impl CommandContext {
 	/// реальная запись будет осуществлена только если данные поменялись в сравнении с предыдущей
 	/// командой
 	///
+	#[allow(clippy::too_many_arguments)]
 	pub(crate) fn write_next(
 		&mut self,
 		object_id: Option<GameObjectId>,
