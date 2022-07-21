@@ -1,0 +1,26 @@
+name: cargo fmt
+on:
+  push:
+    branches: [ "main","github-action" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  cargo-fmt:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            modules/target/
+          key: rust-fmt-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            rust-fmt-
+      - name: Lint cargo fmt
+        run: cd modules/ && cargo fmt --all -- --check
+
