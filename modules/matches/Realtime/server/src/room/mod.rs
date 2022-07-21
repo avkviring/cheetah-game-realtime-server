@@ -177,11 +177,7 @@ impl Room {
 							e.log_command_execute_error(command, self.id, user_id);
 						}
 					}
-					measurers.on_execute_command(
-						command.get_field_id(),
-						command,
-						instant.elapsed(),
-					)
+					measurers.on_execute_command(command.get_field_id(), command, instant.elapsed())
 				}
 				_ => {
 					tracing::error!(
@@ -214,7 +210,8 @@ impl Room {
 
 	pub fn get_member(&self, member_id: &RoomMemberId) -> Result<&Member, ServerCommandError> {
 		self.members
-			.get(member_id).ok_or(ServerCommandError::MemberNotFound(*member_id))
+			.get(member_id)
+			.ok_or(ServerCommandError::MemberNotFound(*member_id))
 	}
 
 	pub fn get_member_mut(
@@ -222,7 +219,8 @@ impl Room {
 		member_id: &RoomMemberId,
 	) -> Result<&mut Member, ServerCommandError> {
 		self.members
-			.get_mut(member_id).ok_or(ServerCommandError::MemberNotFound(*member_id))
+			.get_mut(member_id)
+			.ok_or(ServerCommandError::MemberNotFound(*member_id))
 	}
 
 	///
@@ -420,7 +418,8 @@ mod tests {
 				.unwrap()
 				.out_commands
 				.iter()
-				.map(|c| &c.command).filter_map(|c| match c {
+				.map(|c| &c.command)
+				.filter_map(|c| match c {
 					BothDirectionCommand::S2CWithCreator(c) => Some(c.command.clone()),
 					BothDirectionCommand::C2S(_) => None,
 				})
@@ -435,7 +434,8 @@ mod tests {
 				.unwrap()
 				.out_commands
 				.iter()
-				.map(|c| &c.command).filter_map(|c| match c {
+				.map(|c| &c.command)
+				.filter_map(|c| match c {
 					BothDirectionCommand::S2CWithCreator(c) => Some(c.clone()),
 					BothDirectionCommand::C2S(_) => None,
 				})

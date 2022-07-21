@@ -121,7 +121,7 @@ impl ServerManager {
 			.send(ManagementTask::CommandTracerSessionTask(
 				room_id, task, sender,
 			))
-			.unwrap_or_else(|_| { panic!("{}", expect_send_msg("CommandTracerSessionTask")) });
+			.unwrap_or_else(|_| panic!("{}", expect_send_msg("CommandTracerSessionTask")));
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(_) => Ok(()),
@@ -142,7 +142,7 @@ impl ServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::RegisterRoom(template, sender))
-			.unwrap_or_else(|_| { panic!("{}", expect_send_msg("RegisterRoom")) });
+			.unwrap_or_else(|_| panic!("{}", expect_send_msg("RegisterRoom")));
 		self.created_room_counter += 1;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(room_id) => {
@@ -168,7 +168,7 @@ impl ServerManager {
 				template.clone(),
 				sender,
 			))
-			.unwrap_or_else(|_| { panic!("{}", expect_send_msg("RegisterUser")) });
+			.unwrap_or_else(|_| panic!("{}", expect_send_msg("RegisterUser")));
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {
@@ -204,7 +204,7 @@ impl ServerManager {
 	pub fn set_time_offset(&self, duration: Duration) {
 		self.sender
 			.send(TimeOffset(duration))
-			.unwrap_or_else(|_| { panic!("{}", expect_send_msg("TimeOffset")) });
+			.unwrap_or_else(|_| panic!("{}", expect_send_msg("TimeOffset")));
 	}
 
 	pub fn join(&mut self) {
