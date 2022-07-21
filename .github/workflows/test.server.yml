@@ -11,7 +11,7 @@ jobs:
   server-unit-test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.2
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.3
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v3
@@ -24,12 +24,14 @@ jobs:
           key: rust-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-
-      - name: Test
+      - name: Build
         run: cd modules/ && cargo build
       - name: Lint cargo fmt
         run: cd modules/ && cargo fmt --all -- --check
       - name: Lint cargo clippy
         run: cd modules/ && cargo clippy -- -D warnings
+      - name: Lint udeps
+        run: cd modules/ && cargo udeps
       - name: Test
         run: cd modules/ && cargo test
 
