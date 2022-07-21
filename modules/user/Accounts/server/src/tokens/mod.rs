@@ -268,7 +268,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		let (ydb, instance) = setup_ydb().await;
 		let storage = TokenStorage::new(
 			ydb.table_client(),
-			refresh_exp.clone().add(Duration::from_secs(1)),
+			refresh_exp.add(Duration::from_secs(1)),
 		);
 		let service = TokensService::new_with_storage(
 			PRIVATE_KEY.to_string(),
@@ -302,7 +302,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 
 		let user = User::default();
 		let tokens = service
-			.create(user.clone(), "some-device-id")
+			.create(user, "some-device-id")
 			.await
 			.unwrap();
 

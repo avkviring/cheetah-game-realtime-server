@@ -51,7 +51,7 @@ impl TokenClaims {
 }
 
 pub fn setup(claims: &TokenClaims) -> (String, Parser, MockServer) {
-	let (token, server) = setup_public_key_server(&claims);
+	let (token, server) = setup_public_key_server(claims);
 	(
 		token,
 		Parser::new_with_custom_cert_url(CLIENT_ID, server.url("/").as_str()),
@@ -68,7 +68,7 @@ pub fn setup_public_key_server(claims: &TokenClaims) -> (String, MockServer) {
 		RsaPrivateKey::new(&mut thread_rng(), bits).expect("failed to generate a key");
 	let der = private_key.to_pkcs8_der().unwrap().to_pem();
 	let key = EncodingKey::from_rsa_pem(der.as_bytes()).unwrap();
-	let token = jsonwebtoken::encode::<TokenClaims>(&header, &claims, &key).unwrap();
+	let token = jsonwebtoken::encode::<TokenClaims>(&header, claims, &key).unwrap();
 	let n = base64::encode_config(private_key.n().to_bytes_be(), base64::URL_SAFE_NO_PAD);
 	let e = base64::encode_config(private_key.e().to_bytes_be(), base64::URL_SAFE_NO_PAD);
 	let resp = format!(

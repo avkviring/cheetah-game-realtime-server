@@ -162,7 +162,7 @@ impl GameObject {
 			let command = S2CCommandWithFieldInfo {
 				field: Option::Some(Field {
 					id: field_id,
-					field_type: field_type,
+					field_type,
 				}),
 				command: S2CCommand::new_set_command(v.to_owned(), self.id.to_owned(), field_id),
 			};

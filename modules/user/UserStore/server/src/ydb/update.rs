@@ -101,7 +101,7 @@ mod test {
 		let update = Update::new(client.table_client());
 		let user_id = Uuid::new_v4();
 		let value = 666;
-		update.set(&user_id, "points".into(), &value).await.unwrap();
+		update.set(&user_id, "points", &value).await.unwrap();
 
 		let res: Vec<i64> =
 			select!(client.table_client(), query!(format!("select value from {}", LONG_TABLE)), value => i64)
