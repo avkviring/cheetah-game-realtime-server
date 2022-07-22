@@ -1,7 +1,6 @@
 name: cargo clippy
 on:
   push:
-    branches: [ "main","github-action" ]
   pull_request:
     branches: [ "main" ]
 jobs:
@@ -14,13 +13,13 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
+            $CARGO_HOME/registry/index/
+            $CARGO_HOME/registry/cache/
+            $CARGO_HOME/git/db/
             modules/target/
-          key: rust-clippy-${{ hashFiles('**/Cargo.lock') }}
+          key: rust-clippy-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            rust-clippy-
+            rust-clippy-v1-
       - name: Lint cargo clippy
         run: cd modules/ && cargo clippy -- -D warnings
 
