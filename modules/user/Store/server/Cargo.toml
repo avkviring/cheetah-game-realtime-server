@@ -1,10 +1,10 @@
 [package]
-name = "cheetah-userstore"
+name = "cheetah-user-store"
 version = "999.999.999"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-user-store"
+name = "cheetah-user-userstore-server"
 path = "src/bin/service.rs"
 
 [dependencies]

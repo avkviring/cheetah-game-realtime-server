@@ -1,5 +1,5 @@
 use cheetah_libraries_microservice::get_env;
-use cheetah_userstore::{Service, DB_NAME};
+use cheetah_user_store::{Service, DB_NAME};
 use include_dir::include_dir;
 use ydb_steroids::builder::YdbClientBuilder;
 

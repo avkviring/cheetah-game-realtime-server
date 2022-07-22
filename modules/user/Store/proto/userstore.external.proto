@@ -1,6 +1,6 @@
 syntax = "proto3";
 package cheetah.userstore;
-option csharp_namespace = "Cheetah.UserStore.GRPC";
+option csharp_namespace = "Cheetah.User.Store.GRPC";
 
 service Update {
     rpc SetDouble(SetDoubleRequest) returns (UpdateReply);

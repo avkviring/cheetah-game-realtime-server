@@ -1,10 +1,10 @@
 [package]
-name = "cheetah-accounts"
+name = "cheetah-user-accounts"
 version = "0.0.0"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-accounts"
+name = "cheetah-user-accounts-server"
 path = "src/bin/service.rs"
 
 
