@@ -1,0 +1,190 @@
+name: publish unity packages
+on: 
+  release:
+    types: [ published ]
+env:
+  MANIFEST_PATH: modules/matches/Realtime/client/Rust/Cargo.toml
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            modules/target
+          key: cargo-macos-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build Client
+        run: cargo build --manifest-path $MANIFEST_PATH --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-build
+          path: |
+            modules/target/release/libcheetah_matches_realtime_client.dylib
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            modules/target
+          key: cargo-ios-${{ hashFiles('**/Cargo.lock') }}
+      - run: rustup target add aarch64-apple-ios
+      - name: Build Client
+        run: cargo build --manifest-path $MANIFEST_PATH --target aarch64-apple-ios --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-build
+          path: |
+            modules/target/aarch64-apple-ios/release/libcheetah_matches_realtime_client.a
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            modules/target
+          key: cargo-linux-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build Client
+        run: cargo build --manifest-path $MANIFEST_PATH --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-build
+          path: |
+            modules/target/release/libcheetah_matches_realtime_client.so
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            modules/target
+          key: cargo-android-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Cross
+        run: cargo install --version 0.2.4 cross
+      - name: Build Android armv7-linux-androideabi
+        run: cross build --manifest-path $MANIFEST_PATH --target armv7-linux-androideabi --release
+      - name: Build Android aarch64-linux-android
+        run: cross build --manifest-path $MANIFEST_PATH --target aarch64-linux-android --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-build
+          path: |
+            modules/target/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so
+            modules/target/aarch64-linux-android/release/libcheetah_matches_realtime_client.so
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            modules/target
+          key: cargo-windows-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build windows
+        run: cargo build --manifest-path $env:MANIFEST_PATH
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: |
+            modules/target/debug/*.dll
+            modules/target/debug/*.pdb
+  publish-unity-packages:
+    needs: [build-macos, build-ios, build-linux, build-android, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Generate GRPC Implementations
+        run: |
+          cd modules
+          ./generate-unity-grpc.sh
+      - name: Generate Unity Meta Files for Generated Scripts
+        run: |
+          generated_scripts=$(find -regex '.*/Unity/.*\(Editor\|Runtime\)/GRPC.*.cs')
+          for f in $generated_scripts; do
+            project_part=$(basename $(dirname $(dirname $f)))
+            file_name=$(basename $f)
+
+          echo "fileFormatVersion: 2
+          guid: $(uuidgen --md5 -n @url -N Unity/$project_part/$file_name | tr -d '-')
+          MonoImporter:
+            externalObjects: {}
+            serializedVersion: 2
+            defaultReferences: []
+            executionOrder: 0
+            icon: {instanceID: 0}
+            userData: 
+            assetBundleName: 
+            assetBundleVariant: 
+          " > $f.meta
+
+          done
+      - uses: actions/download-artifact@v3
+        with:
+          name: ios-build
+          path: ios-build
+      - uses: actions/download-artifact@v3
+        with:
+          name: macos-build
+          path: macos-build
+      - uses: actions/download-artifact@v3
+        with:
+          name: linux-build
+          path: linux-build
+      - uses: actions/download-artifact@v3
+        with:
+          name: android-build
+          path: android-build
+      - uses: actions/download-artifact@v3
+        with:
+          name: windows-build
+          path: windows-build
+      - name: Copy Libraries into Realtime Matches Package
+        run: |
+          package_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime
+          
+          mkdir $package_path/iOS
+          mkdir $package_path/x86_64
+          mkdir -p $package_path/Android/armv7
+          mkdir -p $package_path/Android/aarch64
+
+          cp macos-build/libcheetah_matches_realtime_client.dylib $package_path/x86_64/libcheetah_matches_relay_client.bundle
+          cp linux-build/libcheetah_matches_realtime_client.so -t $package_path/x86_64
+          cp windows-build/cheetah_matches_realtime_client.dll -t $package_path/x86_64
+          cp windows-build/cheetah_matches_realtime_client.pdb -t $package_path/x86_64
+          cp ios-build/libcheetah_matches_realtime_client.a -t $package_path/iOS
+          cp android-build/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so -t $package_path/Android/armv7
+          cp android-build/aarch64-linux-android/release/libcheetah_matches_realtime_client.so -t $package_path/Android/aarch64
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          registry-url: 'https://npm.cheetah.games'
+          scope: ''
+      - name: Publish Packages
+        run: |
+          package_files=$(find -regex '.*/Unity/.*/package.json')
+          for f in $package_files; do
+            sed -i 's/OWNER/${{ github.repository_owner }}/' $f
+            sed -i 's/999.999.999/${{ github.event.release.tag_name }}/' $f
+            npm publish $(dirname $f)
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}

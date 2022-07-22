@@ -11,10 +11,8 @@
     "games.cheetah.matches.factory": "999.999.999",
     "games.cheetah.matches.registry": "999.999.999"
   },
+  "repository": "github:@OWNER/platform",
   "hideInEditor": false,
   "type": "library",
-  "author": "https://cheetah.games",
-  "publishConfig": {
-    "registry": "https://gitlab.dev.cheetah.games/api/v4/projects/10/packages/npm/"
-  }
+  "author": "https://cheetah.games"
 }
