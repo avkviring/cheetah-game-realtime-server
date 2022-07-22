@@ -1,9 +1,6 @@
 name: cargo udeps
 on:
   push:
-    branches: [ "main","github-action" ]
-  pull_request:
-    branches: [ "main" ]
 jobs:
   cargo-udeps:
     runs-on: ubuntu-latest
@@ -14,13 +11,13 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
+            $CARGO_HOME/cargo/registry/index/
+            $CARGO_HOME/cargo/registry/cache/
+            $CARGO_HOME/cargo/git/db/
             modules/target/
-          key: rust-udeps-${{ hashFiles('**/Cargo.lock') }}
+          key: rust-udeps-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            rust-udeps-
+            rust-udeps-v1-
       - name: Lint udeps
         run: cd modules/ && cargo +nightly udeps
 
