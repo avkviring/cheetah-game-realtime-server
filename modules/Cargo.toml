@@ -2,7 +2,7 @@
 members = [
     "libraries/Microservice",
     "user/Accounts/server",
-    "user/UserStore/server",
+    "user/Store/server",
     "matches/Factory/server",
     "matches/Registry/server",
     "matches/StubMatchmaking/server",

@@ -540,44 +540,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-accounts"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "async-stream",
- "async-trait",
- "base64 0.13.0",
- "cheetah-libraries-microservice",
- "chrono",
- "futures",
- "headers",
- "httpmock",
- "include_dir",
- "jsonwebtoken 8.0.1",
- "jwt-tonic-user-uuid",
- "lazy_static",
- "prometheus",
- "prost 0.9.0",
- "rand",
- "reqwest",
- "rsa",
- "rustls",
- "serde",
- "testcontainers 0.13.0",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tonic 0.6.2",
- "tonic-build 0.6.2",
- "tonic-health",
- "tonic-web",
- "tracing",
- "uuid",
- "ydb",
- "ydb-steroids",
-]
-
-[[package]]
 name = "cheetah-libraries-microservice"
 version = "999.999.999"
 dependencies = [
@@ -789,7 +751,45 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-userstore"
+name = "cheetah-user-accounts"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-stream",
+ "async-trait",
+ "base64 0.13.0",
+ "cheetah-libraries-microservice",
+ "chrono",
+ "futures",
+ "headers",
+ "httpmock",
+ "include_dir",
+ "jsonwebtoken 8.0.1",
+ "jwt-tonic-user-uuid",
+ "lazy_static",
+ "prometheus",
+ "prost 0.9.0",
+ "rand",
+ "reqwest",
+ "rsa",
+ "rustls",
+ "serde",
+ "testcontainers 0.13.0",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tonic 0.6.2",
+ "tonic-build 0.6.2",
+ "tonic-health",
+ "tonic-web",
+ "tracing",
+ "uuid",
+ "ydb",
+ "ydb-steroids",
+]
+
+[[package]]
+name = "cheetah-user-store"
 version = "999.999.999"
 dependencies = [
  "cheetah-libraries-microservice",
