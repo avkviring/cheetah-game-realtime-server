@@ -12,7 +12,5 @@
   "hideInEditor": false,
   "type": "library",
   "author": "https://cheetah.games",
-  "publishConfig": {
-    "registry": "https://gitlab.dev.cheetah.games/api/v4/projects/10/packages/npm/"
-  }
+  "repository": "github:@OWNER/platform"
 }
