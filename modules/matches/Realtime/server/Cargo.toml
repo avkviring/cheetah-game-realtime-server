@@ -5,7 +5,7 @@ authors = ["kviring <alex@kviring.com>"]
 edition = "2021"
 
 [[bin]]
-name = "server"
+name = "cheetah-matches-realtime-server"
 path = "src/bin/service.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
