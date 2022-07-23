@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-system-compatibility"
+name = "cheetah-system-compatibility-server"
 path = "src/bin/service.rs"
 
 [dependencies]

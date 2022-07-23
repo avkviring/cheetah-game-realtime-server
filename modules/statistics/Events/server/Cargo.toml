@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-statistics-events"
+name = "cheetah-statistics-events-server"
 path = "src/bin/service.rs"
 
 [dependencies]

@@ -4,7 +4,7 @@ version = "999.999.999"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-matches-registry"
+name = "cheetah-matches-registry-server"
 path = "src/bin/main.rs"
 
 [dependencies]
