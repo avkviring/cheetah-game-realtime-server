@@ -1,6 +1,6 @@
 use include_dir::include_dir;
 
-use cheetah_accounts::grpc::run_grpc_server;
+use cheetah_user_accounts::grpc::run_grpc_server;
 use ydb_steroids::builder::YdbClientBuilder;
 
 #[tokio::main]

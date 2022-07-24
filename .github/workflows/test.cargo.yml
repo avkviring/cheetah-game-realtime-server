@@ -1,0 +1,23 @@
+name: cargo test
+on:
+  push:
+jobs:
+  cargo-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            modules/target/
+          key: rust-test-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            rust-test-
+      - name: Test
+        run: cd modules/ && cargo test
+
+
+

@@ -1,10 +1,10 @@
 [package]
-name = "cheetah-accounts"
+name = "cheetah-user-accounts"
 version = "0.0.0"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-accounts"
+name = "cheetah-user-accounts-server"
 path = "src/bin/service.rs"
 
 
@@ -31,7 +31,6 @@ reqwest = { version = "0.11", default-features = false, features = ["json", "rus
 headers = "0.3.1"
 rustls = { version = "0.20.2" }
 thiserror = "1.0.30"
-rsa = "0.5.0"
 prometheus = "0.13.0"
 uuid = { version = "1.0.0", features = ["v4", "serde"] }
 include_dir = "0.7.2"
@@ -46,6 +45,7 @@ futures = "0.3.21"
 httpmock = { version = "0.6.2" }
 base64 = { version = "0.13.0" }
 ydb-steroids = { version = "0.1.2", features = ["test_container"] }
+rsa = "0.5.0"
 
 [build-dependencies]
 tonic-build = { version = "0.6.2", features = ["rustfmt"] }

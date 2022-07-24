@@ -4,7 +4,7 @@ version = "999.999.999"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-matches-stub-registry"
+name = "cheetah-matches-stubregistry-server"
 path = "src/bin/service.rs"
 
 [dependencies]

@@ -30,6 +30,7 @@ impl FrameReplayProtection {
 	///
 	/// Отметить фрейм как принятый и проверить его статус
 	///
+	#[allow(clippy::result_unit_err)]
 	pub fn set_and_check(&mut self, frame: &InFrame) -> Result<bool, ()> {
 		let frame_id = frame.get_original_frame_id();
 
@@ -63,7 +64,6 @@ impl FrameReplayProtection {
 
 #[cfg(test)]
 mod tests {
-
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::reliable::replay_protection::FrameReplayProtection;
 

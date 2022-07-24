@@ -51,7 +51,9 @@ impl ServerCommandExecutor for TargetEventCommand {
 mod tests {
 	use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
-	use cheetah_matches_realtime_common::commands::types::event::{EventCommand, TargetEventCommand};
+	use cheetah_matches_realtime_common::commands::types::event::{
+		EventCommand, TargetEventCommand,
+	};
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 

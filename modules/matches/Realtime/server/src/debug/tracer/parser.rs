@@ -26,7 +26,7 @@ enum Op {
 /// Парсер запросов вида name=value, с поддержкой &&, ||,()
 ///
 pub fn parse(query: &str) -> Result<Rule, ParseError> {
-	let query = query.replace(" ", "");
+	let query = query.replace(' ', "");
 	if query.is_empty() {
 		Result::Ok(Rule::True)
 	} else {
@@ -227,8 +227,8 @@ fn get_field(query: String) -> Result<(String, Op, String), ParseError> {
 /// Получить значение поле и урезанную исходную строку
 ///
 fn get_value(query: String) -> (String, String) {
-	let and_op = query.find("&&").unwrap_or_else(|| query.len());
-	let or_op = query.find("||").unwrap_or_else(|| query.len());
+	let and_op = query.find("&&").unwrap_or(query.len());
+	let or_op = query.find("||").unwrap_or(query.len());
 	let position = min(and_op, or_op);
 	(query[..position].to_string(), query[position..].to_string())
 }

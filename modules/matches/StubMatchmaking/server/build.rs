@@ -1,13 +1,9 @@
 use std::io::Error;
 
 fn main() -> Result<(), Error> {
-	println!(
-		"cargo:rerun-if-changed=../../Factory/proto/matches.factory.internal.proto"
-	);
+	println!("cargo:rerun-if-changed=../../Factory/proto/matches.factory.internal.proto");
 	println!("cargo:rerun-if-changed=../../Realtime/proto/matches.realtime.internal.proto");
-	println!(
-		"cargo:rerun-if-changed=../../Registry/proto/matches.registry.internal.proto"
-	);
+	println!("cargo:rerun-if-changed=../../Registry/proto/matches.registry.internal.proto");
 	println!("cargo:rerun-if-changed=../proto/matches.matchmaking.external.proto");
 
 	tonic_build::configure().compile(

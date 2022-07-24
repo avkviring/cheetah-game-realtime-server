@@ -1,0 +1,24 @@
+name: cargo udeps
+on:
+  push:
+jobs:
+  cargo-udeps:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v3
+        with:
+          path: |
+            $CARGO_HOME/cargo/registry/index/
+            $CARGO_HOME/cargo/registry/cache/
+            $CARGO_HOME/cargo/git/db/
+            modules/target/
+          key: rust-udeps-v1-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            rust-udeps-v1-
+      - name: Lint udeps
+        run: cd modules/ && cargo +nightly udeps
+
+

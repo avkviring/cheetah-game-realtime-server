@@ -15,6 +15,7 @@ use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
+#[allow(clippy::large_enum_variant)]
 pub enum C2SCommand {
 	CreateGameObject(CreateGameObjectCommand),
 	CreatedGameObject(C2SCreatedGameObjectCommand),

@@ -94,7 +94,7 @@ impl StubMatchmakingService {
 		{
 			Ok(user_attach_response) => Ok(user_attach_response.into_inner()),
 			Err(status) => match status.code() {
-				Code::NotFound => Err(format!("Relay server not found")),
+				Code::NotFound => Err("Relay server not found".to_string()),
 				e => Err(format!("Relay server unknown status {:?}", e)),
 			},
 		}

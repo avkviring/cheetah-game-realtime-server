@@ -206,7 +206,7 @@ impl YamlConfigurations {
 	}
 
 	fn prepare_content(content: String) -> String {
-		content.replace("\u{feff}", "")
+		content.replace('\u{feff}', "")
 	}
 }
 

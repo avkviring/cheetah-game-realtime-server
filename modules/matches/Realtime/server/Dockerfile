@@ -1,11 +1,12 @@
 # образ для запуска
 FROM alpine:3.13.5
+LABEL org.opencontainers.image.source="https://github.com/cheetah-game-platform/platform"
 EXPOSE 5000/tcp
 EXPOSE 5555/udp
 EXPOSE 3000/tcp
 COPY grpc_health_probe /bin/grpc_health_probe
 RUN chmod +x /bin/grpc_health_probe
-COPY cheetah-matches-relay /cheetah-matches-relay
+COPY cheetah-matches-realtime-server /cheetah-matches-realtime-server
 RUN adduser -D service
 USER service
-CMD ["/cheetah-matches-relay"]
+CMD ["/cheetah-matches-realtime-server"]

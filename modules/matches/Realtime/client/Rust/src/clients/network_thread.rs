@@ -38,6 +38,7 @@ pub struct C2SCommandWithChannel {
 }
 
 impl NetworkThreadClient {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		server_address: SocketAddr,
 		member_id: RoomMemberId,

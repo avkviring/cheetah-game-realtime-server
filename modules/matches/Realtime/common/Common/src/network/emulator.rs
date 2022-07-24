@@ -60,7 +60,7 @@ impl NetworkLatencyEmulator {
 	/// Получаем данные из сокета и решаем отдавать ли их или использовать очередь для эмуляции характеристик сети
 	///
 	pub fn schedule_in(&mut self, now: &Instant, buffer: &[u8]) {
-		if !self.is_drop_time(now) {
+		if !self.check_drop_time(now) {
 			let time = self.get_schedule_time(now);
 			self.in_queue.push(BinaryFrame {
 				time,
@@ -91,7 +91,7 @@ impl NetworkLatencyEmulator {
 	/// Сохраняем данные для отправки, реальная отправка происходит с учетом всех характеристик эмулируемой сети
 	///
 	pub fn schedule_out(&mut self, now: &Instant, buffer: &[u8], addr: SocketAddr) {
-		if !self.is_drop_time(now) {
+		if !self.check_drop_time(now) {
 			let time = self.get_schedule_time(now);
 			self.out_queue.push(BinaryFrame {
 				time,
@@ -132,7 +132,7 @@ impl NetworkLatencyEmulator {
 		time
 	}
 
-	fn is_drop_time(&mut self, now: &Instant) -> bool {
+	fn check_drop_time(&mut self, now: &Instant) -> bool {
 		if let Some(drop_time) = &self.drop_start {
 			if drop_time.add(self.drop_time.unwrap_or_else(|| Duration::from_millis(0))) > *now {
 				return true;
@@ -308,15 +308,15 @@ mod tests {
 		};
 
 		let now = Instant::now();
-		emulator.is_drop_time(&now);
+		emulator.check_drop_time(&now);
 		// проверяем установки времени эмуляции
 		assert!(matches!(emulator.drop_start, Some(time) if time == now));
 
 		// мы в зоне отказа сети, даже если вероятность отказа 0
 		emulator.drop_probability = Some(0.0);
-		assert!(emulator.is_drop_time(&now));
+		assert!(emulator.check_drop_time(&now));
 		// выходим из зоны отказа сети
-		assert!(!emulator.is_drop_time(&now.add(drop_time)));
+		assert!(!emulator.check_drop_time(&now.add(drop_time)));
 	}
 
 	#[test]

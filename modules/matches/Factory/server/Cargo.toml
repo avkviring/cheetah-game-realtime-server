@@ -4,7 +4,7 @@ version = "999.999.999"
 edition = "2021"
 
 [[bin]]
-name = "cheetah-matches-factory"
+name = "cheetah-matches-factory-server"
 path = "src/bin/service.rs"
 
 [lib]

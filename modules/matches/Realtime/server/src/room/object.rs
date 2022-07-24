@@ -123,7 +123,7 @@ impl GameObject {
 	}
 
 	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector) {
-		if let Err(_) = self.do_collect_create_commands(commands) {
+		if self.do_collect_create_commands(commands).is_err() {
 			tracing::error!("Collect create commands overflow {:?}", self);
 		}
 	}
@@ -162,7 +162,7 @@ impl GameObject {
 			let command = S2CCommandWithFieldInfo {
 				field: Option::Some(Field {
 					id: field_id,
-					field_type: field_type,
+					field_type,
 				}),
 				command: S2CCommand::new_set_command(v.to_owned(), self.id.to_owned(), field_id),
 			};

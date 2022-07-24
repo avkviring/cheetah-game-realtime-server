@@ -1,40 +1,27 @@
 #!/bin/bash
 project_dir=$(pwd)/../
+client_dir_from_protodir=../client
 
-for f in $(find . -name "*.external.proto"); do
-  dir=$(dirname $f)
-  file=$(basename $f)
-  echo "$dir ::: $file"
-  unity_project=games.cheetah.$(echo $file | sed 's/.external.proto//g')
-  docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/$dir akviring/protoc:latest \
-    protoc \
-    --proto_path=. \
-    --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-    --grpc_out=/tmp/source/clients/Unity/Packages/$unity_project/Runtime/GRPC \
-    --csharp_out=/tmp/source/clients/Unity/Packages/$unity_project/Runtime/GRPC \
-    $file
-done
+generate_unity_grpc_files () {
+  suffix=$1
+  project_part=$2
+  for f in $(find . -type f -name *$suffix); do
+    protodir=$(dirname $f)
+    protofile=$(basename $f)
+    unity_project=games.cheetah.$(echo $protofile | sed "s/$suffix//")
+    grpc_out_path=$protodir/$client_dir_from_protodir/Unity/$unity_project/$project_part/GRPC
+    echo "$protodir ::: $protofile"
+    docker run --rm -v$project_dir:/tmp/source -w /tmp/source/modules akviring/protoc:latest \
+      protoc \
+      --proto_path=$protodir \
+      --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
+      --grpc_out=$grpc_out_path \
+      --csharp_out=$grpc_out_path \
+      --experimental_allow_proto3_optional \
+      $protofile
+  done
+}
 
-for f in $(find . -name "*.admin.proto"); do
-  dir=$(dirname $f)
-  file=$(basename $f)
-  echo "$dir ::: $file"
-  unity_project=games.cheetah.$(echo $file | sed 's/.admin.proto//g')
-  docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/$dir akviring/protoc:latest \
-    protoc \
-    --proto_path=. \
-    --experimental_allow_proto3_optional \
-    --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-    --grpc_out=/tmp/source/clients/Unity/Packages/$unity_project/Editor/GRPC \
-    --csharp_out=/tmp/source/clients/Unity/Packages/$unity_project/Editor/GRPC \
-    $file
-done
-
-docker run --rm -v$project_dir:/tmp/source -w /tmp/source/proto/matches/Relay akviring/protoc:latest \
-  protoc \
-  --proto_path=. \
-  --experimental_allow_proto3_optional \
-  --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-  --grpc_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.relay.shared/Runtime/GRPC \
-  --csharp_out=/tmp/source/clients/Unity/Packages/games.cheetah.matches.relay.shared/Runtime/GRPC \
-  matches.relay.shared.proto
+generate_unity_grpc_files .external.proto Runtime
+generate_unity_grpc_files .admin.proto Editor
+generate_unity_grpc_files .shared.proto Runtime

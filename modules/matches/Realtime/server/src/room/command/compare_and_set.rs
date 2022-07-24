@@ -27,7 +27,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			self.field_id,
 			FieldValue::Long(self.current),
 			FieldValue::Long(self.new),
-			self.reset.as_ref().and_then(|r| Some(FieldValue::Long(*r))),
+			self.reset.as_ref().map(|r| FieldValue::Long(*r)),
 		)
 	}
 }
@@ -43,7 +43,7 @@ impl ServerCommandExecutor for CompareAndSetStructureCommand {
 			FieldValue::Structure(self.new.as_slice().into()),
 			self.reset
 				.as_ref()
-				.and_then(|r| Some(FieldValue::Structure(r.as_slice().into()))),
+				.map(|r| FieldValue::Structure(r.as_slice().into())),
 		)
 	}
 }
@@ -130,7 +130,7 @@ pub fn apply_reset(
 	field: FieldId,
 	reset: &FieldValue,
 ) -> Result<(), ServerCommandError> {
-	match room.get_object(&object_id) {
+	match room.get_object(object_id) {
 		Err(_) => {
 			// нормальная ситуация для пользовательских объектов
 		}

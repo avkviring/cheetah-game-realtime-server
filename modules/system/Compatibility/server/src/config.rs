@@ -23,7 +23,7 @@ mod date {
 	use chrono::{DateTime, Duration, TimeZone, Utc};
 	use serde::{Deserialize, Deserializer};
 
-	const FORMAT: &'static str = "%Y-%m-%d %H:%M";
+	const FORMAT: &str = "%Y-%m-%d %H:%M";
 
 	pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
 	where
@@ -93,7 +93,7 @@ mod test {
 				- version: 1.0.0
 				  expiration: never
 		"#
-		.replace("\t", " ");
+		.replace('\t', " ");
 		let config = Config::new(content);
 		assert_eq!(config.unwrap().versions.len(), 1)
 	}

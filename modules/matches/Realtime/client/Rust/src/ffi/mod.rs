@@ -1,10 +1,10 @@
 use std::sync::mpsc::SendError;
 use std::sync::Mutex;
 
-use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 use lazy_static::lazy_static;
 use thiserror::Error;
 
+use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
@@ -20,6 +20,7 @@ pub mod command;
 pub mod logs;
 
 #[derive(Error, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum ClientError {
 	#[error("Create client error {}",.0)]
 	CreateClientError(String),
@@ -79,7 +80,7 @@ where
 	F: FnOnce(&mut ApplicationThreadClient) -> Result<R, ClientError>,
 {
 	execute(|registry| match registry.clients.get_mut(&client_id) {
-		None => Result::Err(ClientError::ClientNotFound(client_id)),
+		None => Err(ClientError::ClientNotFound(client_id)),
 		Some(client_api) => action(client_api),
 	})
 }
@@ -146,8 +147,10 @@ impl Default for BufferFFI {
 
 impl From<Vec<u8>> for BufferFFI {
 	fn from(source: Vec<u8>) -> Self {
-		let mut buffer = BufferFFI::default();
-		buffer.len = source.len() as u8;
+		let mut buffer = BufferFFI {
+			len: source.len() as u8,
+			..Default::default()
+		};
 		buffer.buffer[0..source.len()].copy_from_slice(source.as_slice());
 		buffer
 	}
