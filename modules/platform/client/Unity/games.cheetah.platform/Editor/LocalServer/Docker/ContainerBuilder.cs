@@ -21,7 +21,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         private readonly IList<string> Env = new List<string>();
         private HealthConfig healthConfig;
         private readonly IList<PortMapping> portBindingsConfig = new List<PortMapping>();
-        private readonly IDictionary<string, string> VolumeMappings = new Dictionary<string, string>();        
+        private readonly IDictionary<string, string> VolumeMappings = new Dictionary<string, string>();
 
 
         public DockerContainerBuilder(string name, DockerImage image)
@@ -105,7 +105,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         {
             VolumeMappings[externalPath] = internalPath;
         }
-        
+
         public void AddVolumeContentMappings(string content, string internalPath)
         {
             var directory = Path.GetFullPath(Path.Combine(Path.Combine(Path.Combine(Application.dataPath, "../Temp/"), Name),
@@ -139,12 +139,13 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
 
         public static DockerImage From(string repo, string image, string tag)
         {
-            return new DockerImage
+            var dockerImage = new DockerImage
             {
                 Name = image,
                 Tag = tag,
                 Repo = repo
             };
+            return dockerImage;
         }
 
         public static DockerImage From(string reference)

@@ -1,7 +1,5 @@
 using System;
-using Cheetah.Platform.Editor.LocalServer.CheetahRegistry;
 using Cheetah.Platform.Editor.LocalServer.Docker;
-using Cheetah.Platform.Editor.LocalServer.Runner;
 using Cheetah.Platform.Editor.LocalServer.Window.Errors;
 using UnityEditor;
 using UnityEngine;
@@ -14,7 +12,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
     /// </summary>
     public class LocalServerWindow : EditorWindow, IDockerProgressListener
     {
-        private readonly DockerServerRunner _runner;
+        private readonly PlatformInDockerRunner _runner;
         private VisualElement controlPanelVisualElement;
         private VisualElement errorPanel;
         private ProgressBar progressBar;
@@ -23,7 +21,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
 
         public LocalServerWindow()
         {
-            _runner = new DockerServerRunner(CheetahRegistrySettingsFromPrefs.Instance);
+            _runner = new PlatformInDockerRunner();
         }
 
         private void OnDestroy()
@@ -188,10 +186,6 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
             if (e is DockerConnectException)
             {
                 errorPanel.Add(new DockerSetupDialog());
-            }
-            else
-            {
-                if (e is CheetahRegistryAuthException) errorPanel.Add(new CheetahDockerRegistryAuthExceptionUI());
             }
         }
     }

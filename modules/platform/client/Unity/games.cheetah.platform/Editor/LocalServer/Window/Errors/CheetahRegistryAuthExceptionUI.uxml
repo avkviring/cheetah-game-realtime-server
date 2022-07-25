@@ -1,8 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements"
-         editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
-    <ui:VisualElement style="margin-left: 5px; margin-right: 5px; margin-top: 5px; margin-bottom: 5px;padding-bottom: 5px;">
-        <ui:HelpBox message-type="Warning" text="Ошибка авторизации в реестре образов. Проверьте настройки."
-                    style="min-width: 100%; justify-content: flex-start; flex-grow: 1; border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; max-width: 100%;"/>
-        <ui:VisualElement name="panel" style="padding-top: 10px;"/>
-    </ui:VisualElement>
-</ui:UXML>

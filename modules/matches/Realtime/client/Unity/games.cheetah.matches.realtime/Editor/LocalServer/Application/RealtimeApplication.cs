@@ -4,7 +4,7 @@ using Cheetah.Platform.Editor.LocalServer.Docker;
 
 namespace Cheetah.Matches.Realtime.Editor.LocalServer.Application
 {
-    public class RelayApplication : PlatformApplication
+    public class RealtimeApplication : PlatformApplication
     {
 
         public interface IConfig
@@ -15,12 +15,12 @@ namespace Cheetah.Matches.Realtime.Editor.LocalServer.Application
 
         public readonly IConfig Config;
 
-        public const string AppName = "cheetah-matches-relay";
+        public const string AppName = "matches-realtime";
 
-        public RelayApplication(IConfig config) : base("cheetah-matches-relay")
+        public RealtimeApplication(IConfig config) : base(AppName)
         {
             Config = config;
-            AdminGrpcServices.Add("Cheetah.Matches.Realtime.admin");
+            AdminGrpcServices.Add("cheetah.matches.realtime.admin");
         }
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
