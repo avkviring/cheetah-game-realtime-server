@@ -1,5 +1,5 @@
 using System.Collections;
-using Cheetah.Accounts.Cookie;
+using Cheetah.User.Accounts.Cookie;
 using Cheetah.Platform;
 using NUnit.Framework;
 using Tests.Helpers;

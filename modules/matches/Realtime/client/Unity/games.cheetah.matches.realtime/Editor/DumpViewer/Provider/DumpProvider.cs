@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Provider
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Provider
 {
     public interface DumpProvider
     {

@@ -1,10 +1,10 @@
 {
   "name": "games.cheetah.matches.factory.editor",
-  "rootNamespace": "Cheetah.Matches.Factory",
+  "rootNamespace": "Cheetah.Matches.Factory.Editor",
   "references": [
     "games.cheetah.platform",
     "games.cheetah.platform.editor",
-    "games.cheetah.matches.relay.shared"
+    "games.cheetah.matches.realtime.shared"
   ],
   "includePlatforms": [
     "Editor"

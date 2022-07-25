@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using Cheetah.Matches.Relay.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects.Query
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects.Query
 {
     /// <summary>
     /// Правило фильтрации игрового объекта

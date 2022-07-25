@@ -1,0 +1,17 @@
+{
+  "name": "games.cheetah.matches.realtime.shared",
+  "version": "999.999.999",
+  "displayName": "games.cheetah.realtime.shared",
+  "description": "Shared library for relay server",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "dependencies": {
+    "games.cheetah.platform": "999.999.999"
+  },
+  "hideInEditor": false,
+  "type": "library",
+  "author": "https://cheetah.games",
+  "publishConfig": {
+    "registry": "https://gitlab.dev.cheetah.games/api/v4/projects/10/packages/npm/"
+  }
+}

@@ -1,23 +1,23 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True" class="main">
     <uie:Toolbar>
-        <Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector.RoomsSelector
+        <Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.RoomsSelector
             name="room-selector"
             storageKey="cheetah_relay_network_commands_rooms_selector"
         />
         <uie:ToolbarButton text="Pause" name="pause" class="toolbar-button"/>
         <uie:ToolbarButton text="Clear" name="clear" class="toolbar-button" style=" border-left-width: 0;"/>
-        <Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator.StatusIndicator name="status"/>
+        <Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator.StatusIndicator name="status"/>
         <uie:ToolbarButton text="Export" name="export" class="toolbar-button"/>
         <uie:ToolbarMenu text="Columns" name="colummenu"/>
         <uie:ToolbarButton text="Help" name="help" class="toolbar-button"/>
     </uie:Toolbar>
     <ui:VisualElement class="search-field-container">
-        <Cheetah.Matches.Relay.Editor.UIElements.HistoryTextField.HistoryTextField picking-mode="Ignore"
+        <Cheetah.Matches.Realtime.Editor.UIElements.HistoryTextField.HistoryTextField picking-mode="Ignore"
                                                                                    name="searchField"
                                                                                    storageKey="cheetah_relay_network_commands_query"
         />
     </ui:VisualElement>
     <ui:VisualElement class="commands-table-container">
-        <Cheetah.Matches.Relay.Editor.UIElements.Table.TableElement class="commands-table" name="commands-table"/>
+        <Cheetah.Matches.Realtime.Editor.UIElements.Table.TableElement class="commands-table" name="commands-table"/>
     </ui:VisualElement>
 </ui:UXML>

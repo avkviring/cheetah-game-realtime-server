@@ -1,9 +1,9 @@
 {
   "name": "games.cheetah.matches.registry.editor",
-  "rootNamespace": "Cheetah.Matches.Registry",
+  "rootNamespace": "Cheetah.Matches.Registry.Editor",
   "references": [
     "games.cheetah.platform.editor",
-    "games.cheetah.matches.relay.editor"
+    "games.cheetah.matches.realtime.editor"
   ],
   "includePlatforms": [
     "Editor"

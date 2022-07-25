@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Codec
+namespace Cheetah.Matches.Realtime.Codec
 {
     /// <summary>
     /// Преобразование данных в бинарный поток и обратно, отличается от Codec тем, что не требует reference и предназначен непосредственно для работы с буфером

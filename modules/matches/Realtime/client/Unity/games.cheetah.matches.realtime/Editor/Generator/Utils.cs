@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace Cheetah.Matches.Relay.Editor.Generator
+namespace Cheetah.Matches.Realtime.Editor.Generator
 {
     public static class Utils
     {

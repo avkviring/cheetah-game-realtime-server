@@ -1,12 +1,12 @@
-using Cheetah.Accounts;
-using Cheetah.Accounts.Cookie;
+using Cheetah.Matches.Matchmaking;
+using Cheetah.Matches.Realtime;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Platform;
+using Cheetah.User.Accounts;
+using Cheetah.User.Accounts.Cookie;
 #if UNITY_ANDROID
 using Cheetah.Accounts.Google;
 #endif
-using Cheetah.Matches.Matchmaking;
-using Cheetah.Matches.Relay;
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Platform;
 
 /// <summary>
 /// Примеры для документации, если в процессе рефакторинга в этом классе есть изменения - то их необходимо перенести в документацию

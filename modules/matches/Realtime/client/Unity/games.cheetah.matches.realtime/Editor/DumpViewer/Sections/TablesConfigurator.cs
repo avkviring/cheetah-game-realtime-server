@@ -1,9 +1,9 @@
 using Cheetah.Matches.Factory.Editor.Configurations;
-using Cheetah.Matches.Relay.Editor.DumpViewer.TypesExtension;
-using Cheetah.Matches.Relay.Editor.GRPC;
-using Cheetah.Matches.Relay.Editor.UIElements.Table;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.TypesExtension;
+using Cheetah.Matches.Realtime.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.UIElements.Table;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Sections
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections
 {
     public class TablesConfigurator
     {

@@ -1,9 +1,9 @@
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Internal.Plugin.Routers.ByField;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByField;
+using Cheetah.Matches.Realtime.Types;
 using UnityEngine;
 
-namespace Cheetah.Matches.Relay.Income.ByField
+namespace Cheetah.Matches.Realtime.Income.ByField
 {
     /// <summary>
     /// Поток событий с сервера, сбрасывается каждый кадр

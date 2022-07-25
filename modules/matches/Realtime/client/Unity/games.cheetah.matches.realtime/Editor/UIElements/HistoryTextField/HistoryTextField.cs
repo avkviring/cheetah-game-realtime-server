@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.UIElements.HistoryTextField
+namespace Cheetah.Matches.Realtime.Editor.UIElements.HistoryTextField
 {
     /// <summary>
     /// Текстовое полей с поддержкой истории
@@ -48,7 +48,7 @@ namespace Cheetah.Matches.Relay.Editor.UIElements.HistoryTextField
         public HistoryTextField()
         {
             var uiAsset =
-                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.cheetah.matches.relay/Editor/UIElements/HistoryTextField/HistoryTextField.uxml");
+                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/UIElements/HistoryTextField/HistoryTextField.uxml");
             uiAsset.CloneTree(this);
 
             textField = this.Q<TextField>("textField");

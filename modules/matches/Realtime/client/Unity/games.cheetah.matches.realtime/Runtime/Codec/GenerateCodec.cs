@@ -1,6 +1,6 @@
 using System;
 
-namespace Cheetah.Matches.Relay.Codec {
+namespace Cheetah.Matches.Realtime.Codec {
     /// <summary>
     /// Для структуры, помеченной этим полем, необходимо автоматически создать кодек
     /// </summary>

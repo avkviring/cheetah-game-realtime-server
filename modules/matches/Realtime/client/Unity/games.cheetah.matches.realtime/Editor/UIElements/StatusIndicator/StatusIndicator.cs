@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator
+namespace Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator
 {
     public class StatusIndicator : VisualElement
     {
@@ -17,7 +17,7 @@ namespace Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator
         public StatusIndicator()
         {
             var uiAsset =
-                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.cheetah.matches.relay/Editor/UIElements/StatusIndicator/StatusIndicator.uxml");
+                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/UIElements/StatusIndicator/StatusIndicator.uxml");
             uiAsset.CloneTree(this);
         }
         public enum MessageType

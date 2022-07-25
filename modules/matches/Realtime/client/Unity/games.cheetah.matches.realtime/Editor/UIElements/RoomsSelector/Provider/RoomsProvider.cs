@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector.Provider
+namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider
 {
     public interface RoomsProvider
     {

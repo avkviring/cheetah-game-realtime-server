@@ -8,19 +8,6 @@
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "2.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com:cheetah-game/platform.git"
-  },
-  "bugs": {
-    "url": "https://github.com/cheetah-game/platform/issues"
-  },
-  "keywords": [
-    "unity",
-    "unity3d",
-    "cheetah",
-    "platform"
-  ],
   "hideInEditor": false,
   "type": "library",
   "author": "https://cheetah.games",

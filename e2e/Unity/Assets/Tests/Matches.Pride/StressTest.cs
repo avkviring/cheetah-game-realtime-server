@@ -1,5 +1,5 @@
 using System.Collections;
-using Cheetah.Matches.Relay.Income.ByTemplate;
+using Cheetah.Matches.Realtime.Income.ByTemplate;
 using NUnit.Framework;
 using Shared;
 using Tests.Matches.Pride.Helpers;

@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Linq;
-using Cheetah.Matches.Relay.Income.ByTemplate;
+using Cheetah.Matches.Realtime.Income.ByTemplate;
 using NUnit.Framework;
 using Shared;
 using Shared.Types;

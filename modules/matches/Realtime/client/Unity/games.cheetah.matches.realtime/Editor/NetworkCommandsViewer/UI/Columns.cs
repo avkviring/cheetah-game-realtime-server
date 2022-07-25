@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cheetah.Matches.Factory.Editor.Configurations;
-using Cheetah.Matches.Relay.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
 using UnityEditor;
 
-namespace Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.UI
+namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI
 {
     /// <summary>
     /// Список столбцов таблицы, управление видимостью.

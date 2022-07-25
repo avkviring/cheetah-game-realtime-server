@@ -1,7 +1,7 @@
 using System;
-using Cheetah.Matches.Relay.Codec;
+using Cheetah.Matches.Realtime.Codec;
 
-namespace Cheetah.Matches.Relay.Editor.Generator.Fields.Array.Exceptions
+namespace Cheetah.Matches.Realtime.Editor.Generator.Fields.Array.Exceptions
 {
     public class MissingArraySizeFieldAttributeException : Exception
     {

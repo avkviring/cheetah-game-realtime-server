@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
-using Cheetah.Accounts.GRPC;
+using Cheetah.User.Accounts.GRPC;
 using Cheetah.Platform;
 using UnityEngine;
 
-namespace Cheetah.Accounts.Cookie
+namespace Cheetah.User.Accounts.Cookie
 {
     /// <summary>
     /// Авторизация по коду, который хранится на клиенте

@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
 using Cheetah.Platform;
 using UnityEditor;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Provider
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Provider
 {
     /// <summary>
     /// Провайдер команд с реального сервера

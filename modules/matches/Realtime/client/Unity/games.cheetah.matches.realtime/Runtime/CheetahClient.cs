@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Internal;
-using Cheetah.Matches.Relay.Internal.FFI;
-using Cheetah.Matches.Relay.Internal.Plugin;
-using Cheetah.Matches.Relay.Logger;
-using Cheetah.Matches.Relay.Types;
-using Cheetah.Matches.Relay.Types.Object;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Internal;
+using Cheetah.Matches.Realtime.Internal.FFI;
+using Cheetah.Matches.Realtime.Internal.Plugin;
+using Cheetah.Matches.Realtime.Logger;
+using Cheetah.Matches.Realtime.Types;
+using Cheetah.Matches.Realtime.Types.Object;
 using UnityEngine;
 
-namespace Cheetah.Matches.Relay
+namespace Cheetah.Matches.Realtime
 {
     /// <summary>
     /// Клиент Relay сервера

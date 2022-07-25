@@ -1,7 +1,7 @@
 using System.Collections;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.TypesExtension
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.TypesExtension
 {
     public class FieldItemIdComparator : IComparer
     {

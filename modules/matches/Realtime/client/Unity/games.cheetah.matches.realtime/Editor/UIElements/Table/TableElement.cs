@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.UIElements.Table
+namespace Cheetah.Matches.Realtime.Editor.UIElements.Table
 {
     /// <summary>
     /// Табличное отображение текстовых данных
@@ -49,7 +49,7 @@ namespace Cheetah.Matches.Relay.Editor.UIElements.Table
         public TableElement()
         {
             var uiAsset =
-                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.cheetah.matches.relay/Editor/UIElements/Table/TableElement.uxml");
+                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/UIElements/Table/TableElement.uxml");
             uiAsset.CloneTree(this);
             table = this.Q<ListView>("table");
             table.makeItem = CreateRow;

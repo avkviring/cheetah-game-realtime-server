@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Shared.GRPC;
+using Cheetah.Matches.Realtime.Shared.GRPC;
 using JetBrains.Annotations;
 
 namespace Cheetah.Matches.Factory.Editor.Configurations

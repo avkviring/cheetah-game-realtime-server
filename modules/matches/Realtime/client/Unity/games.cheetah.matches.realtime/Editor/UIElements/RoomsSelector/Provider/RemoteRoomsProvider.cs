@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
 using Cheetah.Platform;
 using UnityEditor;
 
-namespace Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector.Provider
+namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider
 {
     public class RemoteRoomsProvider : RoomsProvider
     {

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Internal.Plugin;
-using Cheetah.Matches.Relay.Types.Object;
+using Cheetah.Matches.Realtime.Internal.Plugin;
+using Cheetah.Matches.Realtime.Types.Object;
 
-namespace Cheetah.Matches.Relay.Income.ByTemplate
+namespace Cheetah.Matches.Realtime.Income.ByTemplate
 {
     /// <summary>
     /// Поток событий создания игровых объектов с определенным типом шаблона, сбрасывается каждый кадр

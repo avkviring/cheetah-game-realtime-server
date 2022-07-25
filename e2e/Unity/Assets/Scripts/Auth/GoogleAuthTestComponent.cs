@@ -1,4 +1,4 @@
-using Cheetah.Accounts;
+using Cheetah.User.Accounts;
 #if UNITY_ANDROID
 using Cheetah.Accounts.Google;
 #endif

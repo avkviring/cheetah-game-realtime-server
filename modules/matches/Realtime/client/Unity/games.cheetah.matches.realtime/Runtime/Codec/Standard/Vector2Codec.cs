@@ -1,8 +1,8 @@
-using Cheetah.Matches.Relay.Codec.Formatter;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Codec.Formatter;
+using Cheetah.Matches.Realtime.Types;
 using UnityEngine;
 
-namespace Cheetah.Matches.Relay.Codec.Standard
+namespace Cheetah.Matches.Realtime.Codec.Standard
 {
     public class Vector2Codec : Codec<Vector2>
     {

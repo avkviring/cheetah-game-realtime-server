@@ -3,7 +3,7 @@ using Cheetah.Platform.Editor.LocalServer;
 using Cheetah.Platform.Editor.LocalServer.Applications;
 using UnityEditor;
 
-namespace Cheetah.Accounts.Editor.LocalServer
+namespace Cheetah.User.Accounts.Editor.LocalServer
 {
     [InitializeOnLoad]
     public static class Registrar

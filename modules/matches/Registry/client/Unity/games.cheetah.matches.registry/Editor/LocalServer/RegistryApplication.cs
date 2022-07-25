@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Editor.LocalServer.Application;
+using Cheetah.Matches.Realtime.Editor.LocalServer.Application;
 using Cheetah.Platform.Editor.LocalServer;
 using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Docker;

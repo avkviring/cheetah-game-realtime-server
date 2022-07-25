@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Cheetah.Matches.Relay.Types
+namespace Cheetah.Matches.Realtime.Types
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct CheetahObjectId

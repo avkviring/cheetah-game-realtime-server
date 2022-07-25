@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects.Query
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects.Query
 {
     public class Parser
     {

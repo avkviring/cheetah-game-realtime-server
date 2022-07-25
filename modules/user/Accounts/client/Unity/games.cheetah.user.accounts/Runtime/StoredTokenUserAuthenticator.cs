@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
-using Cheetah.Accounts.GRPC;
+using Cheetah.User.Accounts.GRPC;
 using Cheetah.Platform;
 using Grpc.Core;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Cheetah.Accounts
+namespace Cheetah.User.Accounts
 {
     public class StoredTokenUserAuthenticator
     {

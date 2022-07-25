@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Codec.Formatter
+namespace Cheetah.Matches.Realtime.Codec.Formatter
 {
     public sealed class StringFormatter : Formatter<string>, ArrayFormatter<string>
     {

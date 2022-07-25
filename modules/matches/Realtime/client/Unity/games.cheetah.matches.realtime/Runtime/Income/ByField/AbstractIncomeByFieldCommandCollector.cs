@@ -1,8 +1,8 @@
 using System;
-using Cheetah.Matches.Relay.Internal;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Income.ByField
+namespace Cheetah.Matches.Realtime.Income.ByField
 {
     public class AbstractIncomeByFieldCommandCollector<T> : IDisposable
     {

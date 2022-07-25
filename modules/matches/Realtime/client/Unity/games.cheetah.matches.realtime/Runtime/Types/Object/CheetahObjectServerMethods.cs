@@ -1,7 +1,7 @@
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Internal.FFI;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Internal.FFI;
 
-namespace Cheetah.Matches.Relay.Types.Object
+namespace Cheetah.Matches.Realtime.Types.Object
 {
     /// <summary>
     /// Команды изменения состояния объекта на сервере

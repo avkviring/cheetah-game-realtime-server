@@ -1,9 +1,9 @@
 using System;
 using System.Text;
-using Cheetah.Matches.Relay.Internal.FFI;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal.FFI;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Internal
+namespace Cheetah.Matches.Realtime.Internal
 {
     public static class ResultChecker
     {

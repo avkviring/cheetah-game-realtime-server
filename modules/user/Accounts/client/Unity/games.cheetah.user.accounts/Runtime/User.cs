@@ -1,7 +1,7 @@
 using Cheetah.Platform;
 using Grpc.Core;
 
-namespace Cheetah.Accounts
+namespace Cheetah.User.Accounts
 {
     public class User
     {

@@ -1,4 +1,4 @@
-namespace Cheetah.Matches.Relay.Internal.FFI
+namespace Cheetah.Matches.Realtime.Internal.FFI
 {
     internal static class Const
     {

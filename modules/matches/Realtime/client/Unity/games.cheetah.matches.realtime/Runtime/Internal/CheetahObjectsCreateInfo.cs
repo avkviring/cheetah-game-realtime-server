@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Internal.Plugin.Routers.FFI;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Internal
+namespace Cheetah.Matches.Realtime.Internal
 {
     /// <summary>
     /// Информация о шаблоне и этапе создания игровых объектов

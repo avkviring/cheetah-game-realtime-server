@@ -1,4 +1,4 @@
-using Cheetah.Matches.Relay.Codec;
+using Cheetah.Matches.Realtime.Codec;
 
 namespace Shared.Types
 {

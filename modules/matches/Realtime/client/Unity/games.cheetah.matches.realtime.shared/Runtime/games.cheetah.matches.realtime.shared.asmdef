@@ -1,0 +1,15 @@
+{
+  "name": "games.cheetah.matches.realtime.shared",
+  "rootNamespace": "Cheetah.Matches.Realtime.Shared",
+  "references": [
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

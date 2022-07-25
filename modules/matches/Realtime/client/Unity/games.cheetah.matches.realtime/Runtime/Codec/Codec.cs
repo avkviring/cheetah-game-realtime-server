@@ -1,6 +1,6 @@
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Codec
+namespace Cheetah.Matches.Realtime.Codec
 {
     /// <summary>
     /// Интерфейс сериализации объектов для взаимодействия между клиентом и сервером

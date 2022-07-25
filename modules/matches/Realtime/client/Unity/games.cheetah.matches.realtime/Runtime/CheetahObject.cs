@@ -1,8 +1,8 @@
-using Cheetah.Matches.Relay.Internal;
-using Cheetah.Matches.Relay.Internal.FFI;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal;
+using Cheetah.Matches.Realtime.Internal.FFI;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay
+namespace Cheetah.Matches.Realtime
 {
     /// <summary>
     /// Сетевой игровой объект

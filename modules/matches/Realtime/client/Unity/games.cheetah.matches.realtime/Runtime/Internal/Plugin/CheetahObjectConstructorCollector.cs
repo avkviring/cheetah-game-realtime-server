@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Internal.Plugin.Routers.FFI;
-using Cheetah.Matches.Relay.Types;
-using Cheetah.Matches.Relay.Types.Object;
+using Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI;
+using Cheetah.Matches.Realtime.Types;
+using Cheetah.Matches.Realtime.Types.Object;
 
-namespace Cheetah.Matches.Relay.Internal.Plugin
+namespace Cheetah.Matches.Realtime.Internal.Plugin
 {
     /// <summary>
     /// Сбор инормации о создаваемых объектох

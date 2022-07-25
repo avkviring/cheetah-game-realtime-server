@@ -2,7 +2,7 @@
   "name": "games.cheetah.matches.matchmaking",
   "rootNamespace": "Cheetah.Matches.Matchmaking",
   "references": [
-    "games.cheetah.accounts",
+    "games.cheetah.user.accounts",
     "games.cheetah.platform"
   ],
   "allowUnsafeCode": true,

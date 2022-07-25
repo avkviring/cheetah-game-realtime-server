@@ -1,9 +1,9 @@
 using System;
 using AOT;
-using Cheetah.Matches.Relay.Internal.FFI;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal.FFI;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Internal.Plugin.Routers.FFI
+namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI
 {
     public class EventCommandRouter : Plugin
     {

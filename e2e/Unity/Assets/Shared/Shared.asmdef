@@ -4,9 +4,9 @@
   "references": [
     "games.cheetah.platform.editor",
     "games.cheetah.platform",
-    "games.cheetah.accounts",
+    "games.cheetah.user.accounts",
     "games.cheetah.matches.matchmaking",
-    "games.cheetah.matches.relay"
+    "games.cheetah.matches.realtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

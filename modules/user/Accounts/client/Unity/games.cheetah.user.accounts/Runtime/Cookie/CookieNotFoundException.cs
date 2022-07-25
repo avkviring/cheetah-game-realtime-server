@@ -1,6 +1,6 @@
 using System;
 
-namespace Cheetah.Accounts.Cookie
+namespace Cheetah.User.Accounts.Cookie
 {
     public class CookieNotFoundException : Exception
     {

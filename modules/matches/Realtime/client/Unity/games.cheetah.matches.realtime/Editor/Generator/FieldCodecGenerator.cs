@@ -1,6 +1,6 @@
 using System;
 
-namespace Cheetah.Matches.Relay.Editor.Generator
+namespace Cheetah.Matches.Realtime.Editor.Generator
 {
     ///
     /// Генератор кодека для поля структуры
