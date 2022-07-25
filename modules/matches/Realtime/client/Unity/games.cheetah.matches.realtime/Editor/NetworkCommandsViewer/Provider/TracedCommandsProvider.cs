@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
 
-namespace Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.Provider
+namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.Provider
 {
 #pragma warning disable 1998
     public abstract class TracedCommandsProvider

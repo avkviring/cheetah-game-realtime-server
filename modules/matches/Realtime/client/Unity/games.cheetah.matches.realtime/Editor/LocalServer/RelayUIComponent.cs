@@ -1,11 +1,11 @@
-using Cheetah.Matches.Relay.Editor.LocalServer.Application;
+using Cheetah.Matches.Realtime.Editor.LocalServer.Application;
 using Cheetah.Platform.Editor.LocalServer;
 using Cheetah.Platform.Editor.LocalServer.Runner;
 using Cheetah.Platform.Editor.UIElements;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.LocalServer
+namespace Cheetah.Matches.Realtime.Editor.LocalServer
 {
     public class RelayApplicationsConfigurator : IApplicationsConfigurator, RelayApplication.IConfig
     {
@@ -20,7 +20,7 @@ namespace Cheetah.Matches.Relay.Editor.LocalServer
         public VisualElement CreateUI()
         {
             var ui = AssetDatabase
-                .LoadAssetAtPath<VisualTreeAsset>("Packages/games.cheetah.matches.relay/Editor/LocalServer/UI.uxml")
+                .LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/LocalServer/UI.uxml")
                 .Instantiate();
             address = ui.Q<NetworkAddressElement>("address");
 

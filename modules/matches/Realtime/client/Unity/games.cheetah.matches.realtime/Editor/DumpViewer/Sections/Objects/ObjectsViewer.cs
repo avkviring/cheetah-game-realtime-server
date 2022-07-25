@@ -4,17 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Cheetah.Matches.Factory.Editor.Configurations;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects.Query;
-using Cheetah.Matches.Relay.Editor.DumpViewer.TypesExtension;
-using Cheetah.Matches.Relay.Editor.GRPC;
-using Cheetah.Matches.Relay.Editor.UIElements.HistoryTextField;
-using Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator;
-using Cheetah.Matches.Relay.Editor.UIElements.Table;
-using Cheetah.Matches.Relay.Shared.GRPC;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects.Query;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.TypesExtension;
+using Cheetah.Matches.Realtime.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.UIElements.HistoryTextField;
+using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
+using Cheetah.Matches.Realtime.Editor.UIElements.Table;
+using Cheetah.Matches.Realtime.Shared.GRPC;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects
 {
     public class ObjectsViewer : VisualElement
     {
@@ -42,7 +42,7 @@ namespace Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects
             this.statusIndicator = statusIndicator;
             this.configurationsProvider = configurationsProvider;
             var uiAsset =
-                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.cheetah.matches.relay/Editor/DumpViewer/Sections/Objects/Panel.uxml");
+                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/DumpViewer/Sections/Objects/Panel.uxml");
             uiAsset.CloneTree(this);
 
 

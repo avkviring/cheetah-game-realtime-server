@@ -1,9 +1,9 @@
 using System;
-using Cheetah.Matches.Relay.Internal;
-using Cheetah.Matches.Relay.Internal.Plugin.Routers.ByTemplate;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal;
+using Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByTemplate;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Income.ByTemplate
+namespace Cheetah.Matches.Realtime.Income.ByTemplate
 {
     public class DeletedFieldByTemplateIncomeCommands : IDisposable
     {

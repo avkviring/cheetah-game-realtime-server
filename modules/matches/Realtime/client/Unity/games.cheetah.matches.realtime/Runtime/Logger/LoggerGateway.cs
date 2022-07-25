@@ -2,7 +2,7 @@ using System;
 using AOT;
 using UnityEngine;
 
-namespace Cheetah.Matches.Relay.Logger
+namespace Cheetah.Matches.Realtime.Logger
 {
     /**
      * Отбражение логов с клиента в Unity консоле

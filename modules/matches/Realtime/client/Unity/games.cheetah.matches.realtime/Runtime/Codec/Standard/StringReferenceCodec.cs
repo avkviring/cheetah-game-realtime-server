@@ -1,8 +1,8 @@
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Codec.Formatter;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Codec.Formatter;
 
 // ReSharper disable once CheckNamespace
-namespace Cheetah.Matches.Relay.Types
+namespace Cheetah.Matches.Realtime.Types
 {
     public class StringReferenceCodec : Codec<StringReference>
     {

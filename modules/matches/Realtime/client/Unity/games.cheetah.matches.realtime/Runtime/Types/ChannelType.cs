@@ -1,4 +1,4 @@
-namespace Cheetah.Matches.Relay.Types
+namespace Cheetah.Matches.Realtime.Types
 {
     /// <summary>
     /// Тип канала для отправки команд

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Internal.Plugin.Routers.ByField
+namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByField
 {
     /// <summary>
     /// Маршрутизация события по типу поля

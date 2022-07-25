@@ -1,8 +1,8 @@
 using System.Threading.Tasks;
-using Cheetah.Accounts.Cookie;
 using Cheetah.Matches.Matchmaking;
 using Cheetah.Matches.Matchmaking.GRPC;
 using Cheetah.Platform;
+using Cheetah.User.Accounts.Cookie;
 
 namespace Shared
 {

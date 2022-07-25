@@ -4,5 +4,5 @@ fn main() -> Result<(), Error> {
 	tonic_build::configure()
 		.build_client(false)
 		.build_server(true)
-		.compile(&["../proto/userstore.external.proto"], &["../proto/"])
+		.compile(&["../proto/user.store.external.proto"], &["../proto/"])
 }

@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector.Provider;
+using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector
+namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector
 {
     public class RoomsSelector : VisualElement
     {
@@ -40,7 +40,7 @@ namespace Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector
         {
             var uiAsset =
                 AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
-                    "Packages/games.cheetah.matches.relay/Editor/UIElements/RoomsSelector/RoomsSelector.uxml");
+                    "Packages/games.Cheetah.Matches.Realtime/Editor/UIElements/RoomsSelector/RoomsSelector.uxml");
             uiAsset.CloneTree(this);
 
             menu = new ToolbarMenu();

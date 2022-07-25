@@ -1,8 +1,7 @@
 using System;
 using Grpc.Core;
-using Cheetah.UserStore.GRPC;
 
-namespace Cheetah.UserStore
+namespace Cheetah.User.Store
 {
     /// <summary>Перечисление возможных ошибочных ситуаций.</summary>
     public enum Status
@@ -30,7 +29,7 @@ namespace Cheetah.UserStore
             Status = status;
         }
 
-        static internal UserStoreException FromRpcException(RpcException e)
+        internal static UserStoreException FromRpcException(RpcException e)
         {
             switch (e.StatusCode)
             {
@@ -41,11 +40,11 @@ namespace Cheetah.UserStore
             }
         }
 
-        static internal UserStoreException FromGrpcStatus(GRPC.Status status)
+        internal static UserStoreException FromGrpcStatus(User.Store.GRPC.Status status)
         {
             switch (status)
             {
-                case GRPC.Status.FieldNotFound:
+                case User.Store.GRPC.Status.FieldNotFound:
                     return new UserStoreException("Field not found", null, Status.FieldNotFound);
                 default:
                     return new UserStoreException("Internal server error", null, Status.InternalServerError);

@@ -1,7 +1,7 @@
-using Cheetah.Matches.Relay.Internal.Plugin.Routers.ByObjectId;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByObjectId;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Income.ByObject
+namespace Cheetah.Matches.Realtime.Income.ByObject
 {
     public class DeleteFieldIncomeByObjectCommandCollector : AbstractIncomeByObjectCommandCollector<FieldType>
     {

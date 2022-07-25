@@ -1,12 +1,11 @@
 {
-  "name": "games.cheetah.accounts",
+  "name": "games.cheetah.user.accounts",
   "version": "999.999.999",
-  "displayName": "games.cheetah.accounts",
+  "displayName": "games.cheetah.user.accounts",
   "description": "Accounts manager",
   "unity": "2019.1",
   "unityRelease": "0b5",
   "dependencies": {
-    "games.cheetah.play-games": "999.999.999",
     "games.cheetah.platform": "999.999.999"
   },
   "repository": {

@@ -1,0 +1,24 @@
+{
+  "name": "games.cheetah.matches.realtime.editor",
+  "rootNamespace": "Cheetah.Matches.Realtime.Editor",
+  "references": [
+    "games.cheetah.platform.editor",
+    "games.cheetah.platform",
+    "games.cheetah.matches.factory.editor",
+    "games.cheetah.matches.realtime.shared",
+    "games.cheetah.matches.realtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

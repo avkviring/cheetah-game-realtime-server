@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Editor.GRPC;
-using Cheetah.Matches.Relay.Shared.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
+using Cheetah.Matches.Realtime.Shared.GRPC;
 using Google.Protobuf;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Provider
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Provider
 {
 #pragma warning disable 1998
     public class TestDumpProvider : DumpProvider

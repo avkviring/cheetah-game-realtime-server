@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Editor.Generator.Fields.Array.Exceptions;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Editor.Generator.Fields.Array.Exceptions;
 using JetBrains.Annotations;
 
-namespace Cheetah.Matches.Relay.Editor.Generator.Fields.Array
+namespace Cheetah.Matches.Realtime.Editor.Generator.Fields.Array
 {
     public class FormatterArrayFieldGenerator : FieldCodecGenerator
     {

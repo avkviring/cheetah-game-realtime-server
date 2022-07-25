@@ -1,8 +1,8 @@
 using System;
 using System.Runtime.CompilerServices;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Codec.Formatter
+namespace Cheetah.Matches.Realtime.Codec.Formatter
 {
     public sealed class VariableSizeULongFormatter : Formatter<ulong>, FixedArrayFormatter<ulong>, ArrayFormatter<ulong>
     {

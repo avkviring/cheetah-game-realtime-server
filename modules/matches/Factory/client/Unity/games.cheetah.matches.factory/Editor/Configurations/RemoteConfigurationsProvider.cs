@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cheetah.Matches.Factory.Editor.GRPC;
-using Cheetah.Matches.Relay.Shared.GRPC;
+using Cheetah.Matches.Realtime.Shared.GRPC;
 using Cheetah.Platform;
 using JetBrains.Annotations;
 using UnityEditor;

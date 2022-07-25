@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cheetah.Matches.Relay.Codec
+namespace Cheetah.Matches.Realtime.Codec
 {
     public class CodecRegistry
     {

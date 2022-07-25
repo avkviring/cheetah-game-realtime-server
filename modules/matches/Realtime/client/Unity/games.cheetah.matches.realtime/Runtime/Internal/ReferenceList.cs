@@ -1,7 +1,7 @@
 using System;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Internal
+namespace Cheetah.Matches.Realtime.Internal
 {
     public class ReferenceList<T> : ReadonlyReferenceList<T> where T : struct
     {

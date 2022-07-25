@@ -1,7 +1,7 @@
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.UI.Controller
+namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI.Controller
 {
     /**
      * Меню включения/выключения столбцов

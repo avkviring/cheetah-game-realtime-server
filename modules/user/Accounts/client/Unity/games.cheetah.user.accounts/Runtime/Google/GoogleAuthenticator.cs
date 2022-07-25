@@ -1,13 +1,13 @@
 #if UNITY_ANDROID
 using System.Threading.Tasks;
-using Cheetah.Accounts.GRPC;
+using Cheetah.User.Accounts.GRPC;
 using Cheetah.Platform;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using Grpc.Core;
 using UnityEngine;
 
-namespace Cheetah.Accounts.Google
+namespace Cheetah.User.Accounts.Google
 {
     public class GoogleAuthenticator
     {

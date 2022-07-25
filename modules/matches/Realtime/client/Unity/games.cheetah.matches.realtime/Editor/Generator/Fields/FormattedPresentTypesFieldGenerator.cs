@@ -1,7 +1,7 @@
 #nullable enable
-using Cheetah.Matches.Relay.Codec;
+using Cheetah.Matches.Realtime.Codec;
 
-namespace Cheetah.Matches.Relay.Editor.Generator.Fields
+namespace Cheetah.Matches.Realtime.Editor.Generator.Fields
 {
     /// <summary>
     /// Типы для которых определены formatter-s

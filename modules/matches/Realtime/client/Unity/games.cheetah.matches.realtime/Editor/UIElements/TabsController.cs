@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.UIElements
+namespace Cheetah.Matches.Realtime.Editor.UIElements
 {
     /// <summary>
     /// Управления переключением Tab

@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Cheetah.Matches.Factory.Editor.Configurations;
-using Cheetah.Matches.Relay.Editor.GRPC;
-using Cheetah.Matches.Relay.Editor.UIElements.Table;
+using Cheetah.Matches.Realtime.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.UIElements.Table;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Users
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Users
 {
     public class UsersViewer : VisualElement
     {
@@ -23,7 +23,7 @@ namespace Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Users
         {
             this.configurationsProvider = configurationsProvider;
             var uiAsset =
-                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.cheetah.matches.relay/Editor/DumpViewer/Sections/Users/Panel.uxml");
+                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/DumpViewer/Sections/Users/Panel.uxml");
             uiAsset.CloneTree(this);
 
             selectedUserIdLabel = this.Q<Label>("item-user-id");

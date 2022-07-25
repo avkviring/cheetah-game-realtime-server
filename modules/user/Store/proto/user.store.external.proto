@@ -1,0 +1,76 @@
+syntax = "proto3";
+package cheetah.user.store;
+option csharp_namespace = "Cheetah.User.Store.GRPC";
+
+service Update {
+    rpc SetDouble(SetDoubleRequest) returns (UpdateReply);
+    rpc SetLong(SetLongRequest) returns (UpdateReply);
+    rpc SetString(SetStringRequest) returns (UpdateReply);
+
+    rpc IncrementDouble(SetDoubleRequest) returns (UpdateReply);
+    rpc IncrementLong(SetLongRequest) returns (UpdateReply);
+}
+
+message SetDoubleRequest {
+    string fieldName = 1;
+    double value = 2;
+}
+
+message SetLongRequest {
+    string fieldName = 1;
+    sint64 value = 2;
+}
+
+message SetStringRequest {
+    string fieldName = 1;
+    string value = 2;
+}
+
+message UpdateReply {
+    Status status = 1;
+}
+
+service Fetch {
+    rpc Double(FetchDoubleRequest) returns (FetchDoubleReply);
+    rpc Long(FetchLongRequest) returns (FetchLongReply);
+    rpc String(FetchStringRequest) returns (FetchStringReply);
+}
+
+message FetchDoubleRequest {
+    string fieldName = 1;
+}
+
+message FetchLongRequest {
+    string fieldName = 1;
+}
+
+message FetchStringRequest {
+    string fieldName = 1;
+}
+
+message FetchDoubleReply {
+    oneof result {
+        Status status = 1;
+        double value = 2;
+    }
+}
+
+message FetchLongReply {
+    oneof result {
+        Status status = 1;
+        sint64 value = 2;
+    }
+}
+
+message FetchStringReply {
+    oneof result {
+        Status status = 1;
+        string value = 2;
+    }
+}
+
+enum Status {
+    OK = 0;
+    FIELD_NOT_FOUND = 1;
+    INTERNAL_ERROR = 2;
+}

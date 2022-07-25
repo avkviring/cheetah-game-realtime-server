@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.Provider;
-using Cheetah.Matches.Relay.Editor.UIElements.HistoryTextField;
-using Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator;
+using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.Provider;
+using Cheetah.Matches.Realtime.Editor.UIElements.HistoryTextField;
+using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
 using Grpc.Core;
 
-namespace Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.UI.Controller
+namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI.Controller
 {
     public class SearchFieldController
     {

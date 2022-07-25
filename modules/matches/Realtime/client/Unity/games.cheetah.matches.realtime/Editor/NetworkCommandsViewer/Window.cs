@@ -2,14 +2,14 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Cheetah.Matches.Factory.Editor.Configurations;
-using Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.Provider;
-using Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.UI;
-using Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.UI.Controller;
-using Cheetah.Matches.Relay.Editor.UIElements.HistoryTextField;
-using Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector;
-using Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector.Provider;
-using Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator;
-using Cheetah.Matches.Relay.Editor.UIElements.Table;
+using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.Provider;
+using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI;
+using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI.Controller;
+using Cheetah.Matches.Realtime.Editor.UIElements.HistoryTextField;
+using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector;
+using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider;
+using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
+using Cheetah.Matches.Realtime.Editor.UIElements.Table;
 using Cheetah.Platform.Editor.Connector;
 using Grpc.Core;
 using UnityEditor;
@@ -17,7 +17,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.NetworkCommandsViewer
+namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
 {
     /// <summary>
     /// Панель просмотра сетевых команд с сервера
@@ -29,8 +29,8 @@ namespace Cheetah.Matches.Relay.Editor.NetworkCommandsViewer
         /// </summary>
         private const bool RemoteProviders = true;
 
-        private const string PathToStyleSheet = "Packages/games.cheetah.matches.relay/Editor/NetworkCommandsViewer/UI/Styles.uss";
-        private const string PathToUxml = "Packages/games.cheetah.matches.relay/Editor/NetworkCommandsViewer/UI/Window.uxml";
+        private const string PathToStyleSheet = "Packages/games.Cheetah.Matches.Realtime/Editor/NetworkCommandsViewer/UI/Styles.uss";
+        private const string PathToUxml = "Packages/games.Cheetah.Matches.Realtime/Editor/NetworkCommandsViewer/UI/Window.uxml";
         private const int UpdateTime = 60 / 2;
         private const int ErrorUpdateTime = 60;
 

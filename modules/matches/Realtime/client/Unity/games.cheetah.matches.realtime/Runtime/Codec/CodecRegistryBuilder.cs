@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Codec.Formatter;
-using Cheetah.Matches.Relay.Codec.Standard;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Codec.Formatter;
+using Cheetah.Matches.Realtime.Codec.Standard;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Codec
+namespace Cheetah.Matches.Realtime.Codec
 {
     /**
      * Builder для создания реестра кодеков

@@ -3,14 +3,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Cheetah.Matches.Factory.Editor.Configurations;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Provider;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Users;
-using Cheetah.Matches.Relay.Editor.GRPC;
-using Cheetah.Matches.Relay.Editor.UIElements;
-using Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector;
-using Cheetah.Matches.Relay.Editor.UIElements.RoomsSelector.Provider;
-using Cheetah.Matches.Relay.Editor.UIElements.StatusIndicator;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Provider;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Users;
+using Cheetah.Matches.Realtime.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.UIElements;
+using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector;
+using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider;
+using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
 using Cheetah.Platform.Editor.Connector;
 using Grpc.Core;
 using UnityEditor;
@@ -18,7 +18,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer
 {
     /// <summary>
     /// Панель просмотра сетевых команд с сервера
@@ -30,7 +30,7 @@ namespace Cheetah.Matches.Relay.Editor.DumpViewer
         /// </summary>
         private const bool RemoteProviders = true;
 
-        private const string PathToUxml = "Packages/games.cheetah.matches.relay/Editor/DumpViewer/UI/Window.uxml";
+        private const string PathToUxml = "Packages/games.Cheetah.Matches.Realtime/Editor/DumpViewer/UI/Window.uxml";
         private const int UpdateTime = 60 / 2;
         private const int ErrorUpdateTime = 60;
 

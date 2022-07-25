@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
-using Grpc.Core;
 using Cheetah.Platform;
-using Cheetah.UserStore.GRPC;
+using Cheetah.User.Store.GRPC;
+using Grpc.Core;
 
-namespace Cheetah.UserStore
+namespace Cheetah.User.Store
 {
     /// <summary>Объект, предоставляющий доступ к функциям
     /// доступа к данным в пользовательском хранилище.</summary>
@@ -85,11 +85,11 @@ namespace Cheetah.UserStore
             }
         }
 
-        private async Task<T> ExecuteFetch<T>(Func<GRPC.Fetch.FetchClient, Task<T>> func)
+        private async Task<T> ExecuteFetch<T>(Func<User.Store.GRPC.Fetch.FetchClient, Task<T>> func)
         {
             return await _connector.DoRequest(async channel =>
             {
-                var client = new GRPC.Fetch.FetchClient(channel);
+                var client = new User.Store.GRPC.Fetch.FetchClient(channel);
                 try
                 {
                     return await func(client);

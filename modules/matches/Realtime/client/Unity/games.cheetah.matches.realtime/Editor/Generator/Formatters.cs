@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Codec.Formatter;
+using Cheetah.Matches.Realtime.Codec.Formatter;
 using JetBrains.Annotations;
 
-namespace Cheetah.Matches.Relay.Editor.Generator
+namespace Cheetah.Matches.Realtime.Editor.Generator
 {
     public class Formatters
     {

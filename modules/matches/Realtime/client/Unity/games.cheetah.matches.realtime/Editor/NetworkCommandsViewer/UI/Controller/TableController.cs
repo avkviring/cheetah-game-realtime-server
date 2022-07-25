@@ -1,9 +1,9 @@
 using Cheetah.Matches.Factory.Editor.Configurations;
-using Cheetah.Matches.Relay.Editor.GRPC;
-using Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.Provider;
-using Cheetah.Matches.Relay.Editor.UIElements.Table;
+using Cheetah.Matches.Realtime.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.Provider;
+using Cheetah.Matches.Realtime.Editor.UIElements.Table;
 
-namespace Cheetah.Matches.Relay.Editor.NetworkCommandsViewer.UI.Controller
+namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI.Controller
 {
     public class TableController
     {

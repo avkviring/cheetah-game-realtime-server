@@ -1,14 +1,13 @@
 using System.Threading.Tasks;
-using Cheetah.Accounts;
 using Cheetah.Matches.Matchmaking.GRPC;
 
 namespace Cheetah.Matches.Matchmaking
 {
     public class MatchmakingScheduler
     {
-        private readonly User user;
+        private readonly User.Accounts.User user;
 
-        public MatchmakingScheduler(User user)
+        public MatchmakingScheduler(User.Accounts.User user)
         {
             this.user = user;
         }

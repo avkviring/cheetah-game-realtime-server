@@ -1,7 +1,7 @@
 using System.Collections;
-using Cheetah.Matches.Relay.Editor.GRPC;
+using Cheetah.Matches.Realtime.Editor.GRPC;
 
-namespace Cheetah.Matches.Relay.Editor.DumpViewer.TypesExtension
+namespace Cheetah.Matches.Realtime.Editor.DumpViewer.TypesExtension
 {
     internal class DumpUserIdComparator : IComparer
     {

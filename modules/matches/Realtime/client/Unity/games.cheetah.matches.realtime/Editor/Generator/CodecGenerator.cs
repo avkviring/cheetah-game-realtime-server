@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Cheetah.Matches.Relay.Editor.Generator.Fields;
-using Cheetah.Matches.Relay.Editor.Generator.Fields.Array;
-using static Cheetah.Matches.Relay.Editor.Generator.Utils;
+using Cheetah.Matches.Realtime.Editor.Generator.Fields;
+using Cheetah.Matches.Realtime.Editor.Generator.Fields.Array;
+using static Cheetah.Matches.Realtime.Editor.Generator.Utils;
 
-namespace Cheetah.Matches.Relay.Editor.Generator
+namespace Cheetah.Matches.Realtime.Editor.Generator
 {
     internal class CodecGenerator
     {
@@ -127,9 +127,9 @@ namespace Cheetah.Matches.Relay.Editor.Generator
         private string GenerateUsing()
         {
             var result = new StringBuilder();
-            result.AppendLine("using Cheetah.Matches.Relay.Codec;");
-            result.AppendLine("using Cheetah.Matches.Relay.Codec.Formatter;");
-            result.AppendLine("using Cheetah.Matches.Relay.Types;");
+            result.AppendLine("using Cheetah.Matches.Realtime.Codec;");
+            result.AppendLine("using Cheetah.Matches.Realtime.Codec.Formatter;");
+            result.AppendLine("using Cheetah.Matches.Realtime.Types;");
             result.AppendLine("using UnityEngine;");
             if (type.Namespace != null)
             {

@@ -2,7 +2,7 @@ using Cheetah.Platform.Editor.LocalServer;
 using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 
-namespace Cheetah.Matches.Relay.Editor.LocalServer.Application
+namespace Cheetah.Matches.Realtime.Editor.LocalServer.Application
 {
     public class RelayApplication : PlatformApplication
     {
@@ -20,7 +20,7 @@ namespace Cheetah.Matches.Relay.Editor.LocalServer.Application
         public RelayApplication(IConfig config) : base("cheetah-matches-relay")
         {
             Config = config;
-            AdminGrpcServices.Add("cheetah.matches.relay.admin");
+            AdminGrpcServices.Add("Cheetah.Matches.Realtime.admin");
         }
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)

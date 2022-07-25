@@ -1,7 +1,7 @@
 using System.Collections;
 using Cheetah.Matches.Matchmaking.GRPC;
-using Cheetah.Matches.Relay;
-using Cheetah.Matches.Relay.Codec;
+using Cheetah.Matches.Realtime;
+using Cheetah.Matches.Realtime.Codec;
 using Cheetah.Platform;
 using NUnit.Framework;
 using Shared;

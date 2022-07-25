@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Cheetah.Matches.Relay.Internal.Plugin.Routers.ByTemplate.Abstract
+namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByTemplate.Abstract
 {
     /// <summary>
     /// Маршуртизация события по типу шаблона (только для событий жизненного цикла объекта)

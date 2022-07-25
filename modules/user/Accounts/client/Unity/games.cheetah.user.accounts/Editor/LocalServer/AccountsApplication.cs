@@ -1,8 +1,7 @@
-using Cheetah.Android.Editor;
 using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 
-namespace Cheetah.Accounts.Editor.LocalServer
+namespace Cheetah.User.Accounts.Editor.LocalServer
 {
     public class AccountsApplication : PlatformApplication
     {
@@ -22,11 +21,11 @@ namespace Cheetah.Accounts.Editor.LocalServer
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {
             base.ConfigureDockerContainerBuilder(builder);
-            var appId = GooglePlayGamesSettings.GetOrCreateSettings().AppId;
-            if (appId.Trim().Length > 0)
-            {
-                builder.AddEnv("AUTH_GOOGLE_CLIENT_ID", appId);
-            }
+            // var appId = GooglePlayGamesSettings.GetOrCreateSettings().AppId;
+            // if (appId.Trim().Length > 0)
+            // {
+            //     builder.AddEnv("AUTH_GOOGLE_CLIENT_ID", appId);
+            // }
             builder.AddEnv(JwtKeys.PublicName, JwtKeys.PublicValue);
             builder.AddEnv(JwtKeys.PrivateName, JwtKeys.PrivateValue);
             builder.AddEnv("REDIS_HOST", RedisName);

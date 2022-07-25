@@ -3,13 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Cheetah.Matches.Relay.Codec;
+using Cheetah.Matches.Realtime.Codec;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
 using Assembly = UnityEditor.Compilation.Assembly;
 
-namespace Cheetah.Matches.Relay.Editor.Generator
+namespace Cheetah.Matches.Realtime.Editor.Generator
 {
     public static class CodecsGenerator
     {

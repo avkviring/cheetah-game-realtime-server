@@ -2,7 +2,7 @@
 using System;
 using GooglePlayGames.BasicApi;
 
-namespace Cheetah.Accounts.Google
+namespace Cheetah.User.Accounts.Google
 {
     public class GoogleAuthenticateException : Exception
     {

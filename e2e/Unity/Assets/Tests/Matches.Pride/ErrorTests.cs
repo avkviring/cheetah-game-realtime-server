@@ -1,6 +1,6 @@
-using Cheetah.Matches.Relay;
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Internal;
+using Cheetah.Matches.Realtime;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Internal;
 using NUnit.Framework;
 
 namespace Tests.Matches.Pride

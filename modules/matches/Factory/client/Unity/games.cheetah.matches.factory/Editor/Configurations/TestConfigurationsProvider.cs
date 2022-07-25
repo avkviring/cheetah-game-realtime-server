@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using Cheetah.Matches.Relay.Shared;
-using Cheetah.Matches.Relay.Shared.GRPC;
+using Cheetah.Matches.Realtime.Shared;
+using Cheetah.Matches.Realtime.Shared.GRPC;
 
 namespace Cheetah.Matches.Factory.Editor.Configurations
 {

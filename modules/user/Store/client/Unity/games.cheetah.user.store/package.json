@@ -1,16 +1,13 @@
 {
-  "name": "games.cheetah.userstore",
+  "name": "games.cheetah.user.store",
   "version": "999.999.999",
-  "displayName": "games.cheetah.userstore",
+  "displayName": "games.cheetah.user.store",
   "description": "Events",
   "unity": "2019.1",
   "unityRelease": "0b5",
   "type": "library",
   "author": "https://cheetah.games",
-  "hideInEditor": false,
-  "publishConfig": {
-    "registry": "https://gitlab.dev.cheetah.games/api/v4/projects/10/packages/npm/"
-  }
+  "hideInEditor": false
 }
 
 

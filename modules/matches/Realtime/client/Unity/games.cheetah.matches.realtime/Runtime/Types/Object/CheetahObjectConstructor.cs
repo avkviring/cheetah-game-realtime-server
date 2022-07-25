@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Codec;
+using Cheetah.Matches.Realtime.Codec;
 
-namespace Cheetah.Matches.Relay.Types.Object
+namespace Cheetah.Matches.Realtime.Types.Object
 {
     /// <summary>
     /// Информация о созданном объекте

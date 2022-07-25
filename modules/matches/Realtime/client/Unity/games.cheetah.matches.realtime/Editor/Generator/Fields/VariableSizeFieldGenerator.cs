@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.CompilerServices;
-using Cheetah.Matches.Relay.Codec;
+using Cheetah.Matches.Realtime.Codec;
 using JetBrains.Annotations;
 
-namespace Cheetah.Matches.Relay.Editor.Generator.Fields
+namespace Cheetah.Matches.Realtime.Editor.Generator.Fields
 {
     public class VariableSizeFieldGenerator : FieldCodecGenerator
     {

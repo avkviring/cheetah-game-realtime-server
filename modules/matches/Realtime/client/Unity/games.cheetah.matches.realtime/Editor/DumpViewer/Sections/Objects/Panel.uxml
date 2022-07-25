@@ -1,8 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True" class="main">
     <ui:Style src="Styles.uss"/>
-    <Cheetah.Matches.Relay.Editor.UIElements.HistoryTextField.HistoryTextField class="query" name="query"/>
+    <Cheetah.Matches.Realtime.Editor.UIElements.HistoryTextField.HistoryTextField class="query" name="query"/>
     <ui:VisualElement class="info">
-        <Cheetah.Matches.Relay.Editor.UIElements.Table.TableElement class="objects" name="objects"/>
+        <Cheetah.Matches.Realtime.Editor.UIElements.Table.TableElement class="objects" name="objects"/>
 
         <ui:VisualElement class="right-panel">
             <ui:VisualElement class="item-block">
@@ -10,9 +10,9 @@
                 <ui:Label name="item-object-id" text="unselect"/>
             </ui:VisualElement>
             <ui:Label text="Поля объекта" class="h1"/>
-            <Cheetah.Matches.Relay.Editor.UIElements.Table.TableElement class="fields" name="fields"/>
+            <Cheetah.Matches.Realtime.Editor.UIElements.Table.TableElement class="fields" name="fields"/>
             <ui:Label text="Игроки в группе объекта" class="h1"/>
-            <Cheetah.Matches.Relay.Editor.UIElements.Table.TableElement class="users" name="users"/>
+            <Cheetah.Matches.Realtime.Editor.UIElements.Table.TableElement class="users" name="users"/>
             
         </ui:VisualElement>
     </ui:VisualElement>

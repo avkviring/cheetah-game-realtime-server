@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-using Cheetah.Matches.Relay.Internal.FFI;
+using Cheetah.Matches.Realtime.Internal.FFI;
 
-namespace Cheetah.Matches.Relay.Logger
+namespace Cheetah.Matches.Realtime.Logger
 {
     public static class LoggerExternals
     {

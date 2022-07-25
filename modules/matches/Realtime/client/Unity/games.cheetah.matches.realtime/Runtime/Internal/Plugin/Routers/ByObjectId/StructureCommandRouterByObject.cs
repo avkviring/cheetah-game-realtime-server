@@ -1,7 +1,7 @@
-using Cheetah.Matches.Relay.Internal.Plugin.Routers.FFI;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI;
+using Cheetah.Matches.Realtime.Types;
 
-namespace Cheetah.Matches.Relay.Internal.Plugin.Routers.ByObjectId
+namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByObjectId
 {
     public class StructureCommandRouterByObject : AbstractRouterByObject<CheetahBuffer>
     {

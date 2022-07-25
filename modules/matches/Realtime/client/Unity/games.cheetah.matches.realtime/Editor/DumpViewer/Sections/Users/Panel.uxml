@@ -1,14 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True" class="main">
     <ui:Style src="Styles.uss"/>
-    <Cheetah.Matches.Relay.Editor.UIElements.Table.TableElement class="users" name="users"/>
+    <Cheetah.Matches.Realtime.Editor.UIElements.Table.TableElement class="users" name="users"/>
     <ui:VisualElement class="right-panel">
         <ui:VisualElement class="item-block">
             <ui:Label text="Игрок:" class="item-caption"/>
             <ui:Label name="item-user-id" text="unselect"/>
         </ui:VisualElement>
         <ui:Label text="Созданные объекты" class="h1"/>
-        <Cheetah.Matches.Relay.Editor.UIElements.Table.TableElement class="created-objects" name="created-objects"/>
+        <Cheetah.Matches.Realtime.Editor.UIElements.Table.TableElement class="created-objects" name="created-objects"/>
         <ui:Label text="Объекты в группе игрока" class="h1"/>
-        <Cheetah.Matches.Relay.Editor.UIElements.Table.TableElement class="groups-objects" name="groups-objects"/>
+        <Cheetah.Matches.Realtime.Editor.UIElements.Table.TableElement class="groups-objects" name="groups-objects"/>
     </ui:VisualElement>
 </ui:UXML>

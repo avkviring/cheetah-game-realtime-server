@@ -1,11 +1,11 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using Cheetah.Matches.Relay.Codec.Formatter;
-using Cheetah.Matches.Relay.Internal.FFI;
+using Cheetah.Matches.Realtime.Codec.Formatter;
+using Cheetah.Matches.Realtime.Internal.FFI;
 using UnityEngine;
 
-namespace Cheetah.Matches.Relay.Types
+namespace Cheetah.Matches.Realtime.Types
 {
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct CheetahBuffer

@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace Cheetah.Matches.Relay.Editor.Generator.Fields
+namespace Cheetah.Matches.Realtime.Editor.Generator.Fields
 {
     public class CodecFieldGenerator : FieldCodecGenerator
     {

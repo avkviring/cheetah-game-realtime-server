@@ -1,5 +1,5 @@
 #if UNITY_ANDROID
-namespace Cheetah.Accounts.Google
+namespace Cheetah.User.Accounts.Google
 {
     /// <summary>
     /// Результат авторизации

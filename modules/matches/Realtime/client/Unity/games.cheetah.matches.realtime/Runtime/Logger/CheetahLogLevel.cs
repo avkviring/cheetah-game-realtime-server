@@ -1,4 +1,4 @@
-namespace Cheetah.Matches.Relay.Logger
+namespace Cheetah.Matches.Realtime.Logger
 {
     public enum CheetahLogLevel
     {

@@ -1,4 +1,4 @@
-namespace Cheetah.Matches.Relay.Internal.Plugin
+namespace Cheetah.Matches.Realtime.Internal.Plugin
 {
     internal interface Plugin
     {

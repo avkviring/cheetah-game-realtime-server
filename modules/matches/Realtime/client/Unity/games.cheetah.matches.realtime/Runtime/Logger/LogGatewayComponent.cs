@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Cheetah.Matches.Relay.Logger
+namespace Cheetah.Matches.Realtime.Logger
 {
     /**
      * Перенаправляет ошибки из нативной части клиента и сервера в консоль Unity    
