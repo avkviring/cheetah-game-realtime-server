@@ -6,24 +6,21 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Cheetah.Platform.Editor.LocalServer.Applications;
-using Cheetah.Platform.Editor.LocalServer.CheetahRegistry;
-using Cheetah.Platform.Editor.LocalServer.Docker;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using UnityEditor;
 using UnityEngine;
 
-namespace Cheetah.Platform.Editor.LocalServer.Runner
+namespace Cheetah.Platform.Editor.LocalServer.Docker
 {
     /// <summary>
     ///     Запускаем серверные приложения в docker
     /// </summary>
-    public class DockerServerRunner : IDisposable
+    public class PlatformInDockerRunner : IDisposable
     {
         public delegate void ChangeStatus(Status status);
 
         private const string unityProjectId = "cheetah";
-        private readonly CheetahRegistrySettings RegistrySettings;
 
         private Status _status;
 
@@ -32,9 +29,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Runner
         private readonly DockerLogWatcher logWatcher;
 
 
-        public DockerServerRunner(CheetahRegistrySettings registrySettings)
+        public PlatformInDockerRunner()
         {
-            RegistrySettings = registrySettings;
             Status = Status.Unknown;
             
             DockerClientConfiguration dockerClientConfiguration;
@@ -123,7 +119,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Runner
             {
                 Debug.LogException(e);
                 Status = Status.Fail;
-                throw e;
+                throw;
             }
             catch (Exception e)
             {
@@ -186,11 +182,6 @@ namespace Cheetah.Platform.Editor.LocalServer.Runner
 
                 Status = Status.Started;
             }
-            catch (CheetahRegistryAuthException)
-            {
-                Status = Status.Fail;
-                throw;
-            }
             catch (HttpRequestException e)
             {
                 Status = Status.Disconnected;
@@ -213,7 +204,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Runner
                 {
                     // ожидаем получание логов
                     await Task.Delay(DockerLogWatcher.FetchTime.Add(DockerLogWatcher.FetchTime));
-                    await Remove(docker, progressListener);
+                   // await Remove(docker, progressListener);
                     Status = Status.Fail;
                 }
             }
@@ -236,7 +227,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Runner
 
         private async Task<string> Launch(ServerApplication serverApplication, string networkId, IDockerProgressListener progressListener)
         {
-            await ImagePull(serverApplication.DockerImage, serverApplication.IsPrivateRepository, progressListener, serverApplication.Name);
+            await ImagePull(serverApplication.DockerImage, progressListener, serverApplication.Name);
             var dockerContainerBuilder = new DockerContainerBuilder(serverApplication.Name, serverApplication.DockerImage);
             if (serverApplication.YDBEnabled) serverApplication.ConfigureYDBEnv(dockerContainerBuilder);
             serverApplication.ConfigureDockerContainerBuilder(dockerContainerBuilder);
@@ -250,7 +241,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Runner
             return createContainerResponse.ID;
         }
 
-        private async Task ImagePull(DockerImage dockerImage, bool shouldLoginInRepository, IDockerProgressListener progressListener, string title)
+        private async Task ImagePull(DockerImage dockerImage, IDockerProgressListener progressListener, string title)
         {
             var listImagesParameters = new ImagesListParameters
             {
@@ -266,13 +257,12 @@ namespace Cheetah.Platform.Editor.LocalServer.Runner
             {
                 return;
             }
-
-            var authConfig = shouldLoginInRepository ? await new CheetachDockerRegistry(RegistrySettings).CheckAndGetEncodedConfig() : null;
+            
             await docker.Images.CreateImageAsync(new ImagesCreateParameters
                 {
                     FromImage = dockerImage.Ref
                 },
-                authConfig,
+                null,
                 new ImageCreateProgress(progressListener, title));
         }
 

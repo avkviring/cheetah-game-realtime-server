@@ -1,13 +1,13 @@
 using Cheetah.Matches.Realtime.Editor.LocalServer.Application;
 using Cheetah.Platform.Editor.LocalServer;
-using Cheetah.Platform.Editor.LocalServer.Runner;
+using Cheetah.Platform.Editor.LocalServer.Docker;
 using Cheetah.Platform.Editor.UIElements;
 using UnityEditor;
 using UnityEngine.UIElements;
 
 namespace Cheetah.Matches.Realtime.Editor.LocalServer
 {
-    public class RelayApplicationsConfigurator : IApplicationsConfigurator, RelayApplication.IConfig
+    public class RelayApplicationsConfigurator : IApplicationsConfigurator, RealtimeApplication.IConfig
     {
         private NetworkAddressElement address;
 

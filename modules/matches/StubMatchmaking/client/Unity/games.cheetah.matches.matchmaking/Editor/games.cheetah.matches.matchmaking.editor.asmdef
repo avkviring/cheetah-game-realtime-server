@@ -1,6 +1,6 @@
 {
   "name": "games.cheetah.matches.matchmaking.editor",
-  "rootNamespace": "Cheetah.Matches.Matchmaking",
+  "rootNamespace": "Cheetah.Matches.Matchmaking.Editor",
   "references": [
     "games.cheetah.platform.editor",
     "games.cheetah.matches.factory.editor"

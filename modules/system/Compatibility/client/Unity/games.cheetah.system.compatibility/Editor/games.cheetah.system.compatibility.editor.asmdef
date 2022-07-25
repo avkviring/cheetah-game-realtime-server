@@ -1,6 +1,6 @@
 {
   "name": "games.cheetah.system.compatibility.editor",
-  "rootNamespace": "Cheetah.System.Compatibility",
+  "rootNamespace": "Cheetah.System.Compatibility.Editor",
   "references": [
     "games.cheetah.platform",
     "games.cheetah.platform.editor"

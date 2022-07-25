@@ -1,4 +1,3 @@
-using Cheetah.Platform.Editor.LocalServer.CheetahRegistry;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 using JetBrains.Annotations;
 using UnityEditor.PackageManager;
@@ -19,16 +18,14 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
         [CanBeNull] public static string ImageVersion;
 
         public override DockerImage DockerImage => DockerImage.From(
-            CheetachDockerRegistry.URL,
+            "ghcr.io/cheetah-game-platform/platform",
             Name,
             ImageVersion ?? PackageInfo.FindForAssembly(GetType().Assembly).version);
 
 
-        public override bool IsPrivateRepository => true;
-
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {
-            builder.AddCommand("/" + Name);
+            builder.AddCommand("/cheetah-" + Name + "-server");
         }
 
         public override LogItem? ConvertToLogItem(string log)

@@ -23,13 +23,7 @@ namespace Cheetah.Platform.Editor.LocalServer
         /// Docker образ приложения
         /// </summary>
         public virtual DockerImage DockerImage { get; }
-
-
-        /// <summary>
-        /// Если репозиторий приватный - то необходимо провести авторизацию
-        /// </summary>
-        public virtual bool IsPrivateRepository { get; }
-
+        
         protected ServerApplication(string name)
         {
             Name = name;

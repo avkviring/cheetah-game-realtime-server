@@ -6,12 +6,12 @@ namespace Cheetah.Matches.Factory.Editor.LocalServer.Factory
 {
     public class FactoryApplication : PlatformApplication
     {
-        public const string AppName = "cheetah-matches-factory";
+        public const string AppName = "matches-factory";
         private readonly string roomsConfigPath = ConfigurationPaths.MakeHostedDataPath("matches-factory/rooms/");
 
         public FactoryApplication() : base(AppName)
         {
-            Dependencies.Add("cheetah-matches-stub-registry");
+            Dependencies.Add("matches-stubregistry");
             AdminGrpcServices.Add("cheetah.matches.factory.admin");
         }
 

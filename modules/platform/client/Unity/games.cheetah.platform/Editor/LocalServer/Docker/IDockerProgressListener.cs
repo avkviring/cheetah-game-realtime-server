@@ -1,4 +1,4 @@
-namespace Cheetah.Platform.Editor.LocalServer.Runner
+namespace Cheetah.Platform.Editor.LocalServer.Docker
 {
     /// <summary>
     ///     Оповещение об измении прогресса запуска/останова контейнеров

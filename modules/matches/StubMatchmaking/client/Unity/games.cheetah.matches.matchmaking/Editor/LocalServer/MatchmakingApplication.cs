@@ -6,7 +6,7 @@ namespace Cheetah.Matches.Matchmaking.Editor.LocalServer
 {
     public class MatchmakingApplication : PlatformApplication
     {
-        public MatchmakingApplication() : base("cheetah-matches-stub-matchmaking")
+        public MatchmakingApplication() : base("matches-stubmatchmaking")
         {
             ExternalGrpcServices.Add("cheetah.matches.matchmaking");
             Dependencies.Add(FactoryApplication.AppName);

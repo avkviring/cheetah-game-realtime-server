@@ -15,7 +15,7 @@ namespace Cheetah.Matches.Realtime.Editor.LocalServer
                 "relay",
                 new List<ServerApplication>
                 {
-                    new RelayApplication(configuration)
+                    new RealtimeApplication(configuration)
                 },
                 new List<IApplicationsConfigurator> {configuration}
             );

@@ -1,6 +1,6 @@
 {
   "name": "games.cheetah.platform.editor",
-  "rootNamespace": "Cheetah.Platform",
+  "rootNamespace": "Cheetah.Platform.Editor",
   "references": [
     "games.cheetah.platform"
   ],

@@ -5,7 +5,7 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
 {
     public class AccountsApplication : PlatformApplication
     {
-        public const string AppName = "cheetah-accounts";
+        public const string AppName = "user-accounts";
 
         private string RedisName;
 

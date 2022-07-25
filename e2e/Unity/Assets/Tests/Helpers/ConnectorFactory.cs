@@ -1,10 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using Cheetah.Platform;
+using Cheetah.Platform.Editor.LocalServer.Docker;
 #if UNITY_EDITOR
-using Cheetah.Platform.Editor.LocalServer.CheetahRegistry;
 using Cheetah.Platform.Editor.LocalServer.Applications;
-using Cheetah.Platform.Editor.LocalServer.Runner;
 #endif
 
 namespace Tests.Helpers
@@ -50,7 +49,7 @@ namespace Tests.Helpers
                 {
 #if UNITY_EDITOR
                     PlatformApplication.ImageVersion = testConfiguration.ServerImageVersion;
-                    var dockerRunner = new DockerServerRunner(CheetahRegistrySettingsFromConfig.Load());
+                    var dockerRunner = new PlatformInDockerRunner();
                     await dockerRunner.DeterminationState();
                     if (dockerRunner.Status != Status.Started)
                     {
@@ -67,9 +66,6 @@ namespace Tests.Helpers
 
         private static ClusterConnector CreateLocalConnector()
         {
-            //return new ClusterConnector("api.syncario.production.cheetah.games", 443, true);
-           //return new ClusterConnector("kviring.stage.cheetah.games", 443, true);
-            //return new ClusterConnector("syncario-stage3.stage.cheetah.games", 443, true);
             return new ClusterConnector("127.0.0.1", 7777, false);
         }
     }

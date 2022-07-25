@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using Cheetah.Platform.Editor.LocalServer.Runner;
 using Docker.DotNet.Models;
 
 namespace Cheetah.Platform.Editor.LocalServer.Docker
