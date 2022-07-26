@@ -12,14 +12,14 @@ pin-project = "1.0.10"
 pin-project-internal = "1.0.10"
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tonic = "0.6.2"
-tonic-health = "0.5.0"
+tonic-health = "0.6.0"
 prost = "0.9.0"
 cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
 thiserror = "1.0"
 redis = { version = "0.21.4", features = ["tokio-comp"] }
 futures = "0.3.19"
 async-trait = "0.1.52"
-serde = { version = "1.0.132", features = ["derive"] }
+serde = { version = "1.0.140", features = ["derive"] }
 serde_json = "1.0.79"
 tracing = "0.1.31"
 
