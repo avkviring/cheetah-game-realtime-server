@@ -8,7 +8,7 @@ name = "cheetah-matches-registry-server"
 path = "src/bin/main.rs"
 
 [dependencies]
-pin-project = "1.0.10"
+pin-project = "1.0.11"
 pin-project-internal = "1.0.10"
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tonic = "0.6.2"
