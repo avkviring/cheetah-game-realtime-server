@@ -19,7 +19,7 @@ namespace Cheetah.Matches.Factory.Editor.LocalServer.Factory
         {
             base.ConfigureDockerContainerBuilder(builder);
             builder.AddEnv("TEMPLATES_PATH", "/tmp/");
-            builder.AddEnv("CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST", "cheetah-matches-stub-registry");
+            builder.AddEnv("CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST", "matches-stubregistry");
             builder.AddEnv("CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_PORT", InternalGrpcPort.ToString());
             builder.AddVolumeMappings(roomsConfigPath, "/tmp/");
         }
