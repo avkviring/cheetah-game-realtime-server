@@ -21,7 +21,7 @@ jsonwebtoken = "8.0.1"
 serde = { version = "1.0.140", features = ["derive"] }
 cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
 ydb-steroids = { version = "0.1.2", features = ["uuid"] }
-ydb = "0.2.0"
+ydb = "0.4.0"
 async-trait = "0.1.52"
 lazy_static = "1.4.0"
 tonic-web = "0.2.0"

@@ -497,6 +497,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cast"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
+
+[[package]]
 name = "castaway"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -784,7 +790,7 @@ dependencies = [
  "tonic-web",
  "tracing",
  "uuid",
- "ydb",
+ "ydb 0.4.0",
  "ydb-steroids",
 ]
 
@@ -802,7 +808,7 @@ dependencies = [
  "tonic-health",
  "tonic-web",
  "uuid",
- "ydb",
+ "ydb 0.4.0",
  "ydb-steroids",
 ]
 
@@ -917,12 +923,12 @@ dependencies = [
 
 [[package]]
 name = "criterion"
-version = "0.3.5"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1604dafd25fba2fe2d5895a9da139f8dc9b319a5fe5354ca137cbbce4e178d10"
+checksum = "b01d6de93b2b6c65e17c634a26653a29d107b3c98c607c765bf38d041531cd8f"
 dependencies = [
  "atty",
- "cast",
+ "cast 0.3.0",
  "clap",
  "criterion-plot",
  "csv",
@@ -947,7 +953,7 @@ version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d00996de9f2f7559f7f4dc286073197f83e92256a59ed395f9aac01fe717da57"
 dependencies = [
- "cast",
+ "cast 0.2.7",
  "itertools",
 ]
 
@@ -4531,7 +4537,37 @@ dependencies = [
  "tracing-subscriber",
  "tracing-test",
  "url",
- "ydb-grpc",
+ "ydb-grpc 0.0.7",
+]
+
+[[package]]
+name = "ydb"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14a8d26d60f80de6e49d54b34849283a550ce7fbd5928423c83926b2d84875f1"
+dependencies = [
+ "async-trait",
+ "derivative",
+ "http",
+ "itertools",
+ "mockall",
+ "num",
+ "once_cell",
+ "prost 0.10.3",
+ "prost-types 0.10.1",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "strum",
+ "tokio",
+ "tonic 0.7.2",
+ "tower",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-test",
+ "url",
+ "ydb-grpc 0.0.8",
 ]
 
 [[package]]
@@ -4539,6 +4575,25 @@ name = "ydb-grpc"
 version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "545e87d171e18f1f8c292af4da08df8bd17abff4bf228bc59509ca6b10e4b381"
+dependencies = [
+ "pbjson",
+ "pbjson-build",
+ "pbjson-types",
+ "prost 0.10.3",
+ "prost-build 0.10.3",
+ "prost-types 0.10.1",
+ "serde",
+ "tonic 0.7.2",
+ "tonic-build 0.7.2",
+ "walkdir",
+ "ydb-grpc-helpers",
+]
+
+[[package]]
+name = "ydb-grpc"
+version = "0.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d1d904e57cb1a0895118fccbe0d947d8c5860b4688d22ffde062a1851509207"
 dependencies = [
  "pbjson",
  "pbjson-build",
@@ -4572,8 +4627,8 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
- "ydb",
- "ydb-grpc",
+ "ydb 0.2.0",
+ "ydb-grpc 0.0.7",
 ]
 
 [[package]]
