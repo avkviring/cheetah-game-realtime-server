@@ -52,7 +52,9 @@ async fn create_internal_grpc_server(
 
 	let registry_url =
 		cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
-	let registry = RegistryClient::new(registry_url).await.unwrap();
+	let registry = RegistryClient::new(registry_url.clone())
+		.await
+		.unwrap_or_else(|_| panic!("Can not connect to {:?}", registry_url));
 	let service = FactoryService::new(registry, configurations).unwrap();
 	Server::builder()
 		.add_service(health_service)

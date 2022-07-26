@@ -204,7 +204,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 {
                     // ожидаем получание логов
                     await Task.Delay(DockerLogWatcher.FetchTime.Add(DockerLogWatcher.FetchTime));
-                   // await Remove(docker, progressListener);
+                    await Remove(docker, progressListener);
                     Status = Status.Fail;
                 }
             }
