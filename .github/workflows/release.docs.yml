@@ -1,6 +1,5 @@
 name: Release documentation site
 on:
-  push:
   release:
     types: [ published ]
 jobs:
