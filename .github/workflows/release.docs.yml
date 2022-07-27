@@ -1,0 +1,13 @@
+name: Release documentation site
+on:
+  push:
+  release:
+    types: [ published ]
+jobs:
+  user-documentation:
+    runs-on: ubuntu-latest
+    container:
+      image: squidfunk/mkdocs-material:8.0.4
+    steps:
+      - uses: actions/checkout@v2
+      - run: cd docs/application/ && mkdocs gh-deploy --force
