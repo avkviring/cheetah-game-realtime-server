@@ -2,10 +2,12 @@ theme:
   name: material
   language: ru
   features:
+    - navigation.top
     - navigation.instant
-    - navigation.sections
   palette:
-    primary: blue grey
+    scheme: slate
+    primary: amber
+repo_url: https://github.com/cheetah-game-platform/platform
 site_name: Cheetah Game Platform
 docs_dir: content
 markdown_extensions:
@@ -19,6 +21,8 @@ markdown_extensions:
 plugins:
   - search:
       lang: ru
+extra_css:
+  - extra/extra.css
 nav:
   - "Введение": "index.md"
   - "Unity":
@@ -33,7 +37,7 @@ nav:
         - "Данные": "modules/user/store/index.md"
       - "Матчи":
         - "Выбор матча": "modules/matches/matchmaking/index.md"
-        - "Матчи реального времени":
+        - "Матч":
             - "Введение": "modules/matches/realtime/index.md"
             - "Базовые понятия":
                 - "Клиент": "modules/matches/realtime/basics/client.md"
