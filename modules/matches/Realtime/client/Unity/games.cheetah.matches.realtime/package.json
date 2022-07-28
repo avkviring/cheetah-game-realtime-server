@@ -5,7 +5,7 @@
   "description": "Realtime battle server.",
   "unity": "2019.1",
   "unityRelease": "0b5",
-  "repository": "github:@OWNER/platform",
+  "repository": "github:cheetah-game-platform/platform",
   "dependencies": {
     "games.cheetah.platform": "999.999.999",
     "games.cheetah.matches.factory": "999.999.999"

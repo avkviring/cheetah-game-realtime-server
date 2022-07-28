@@ -4,10 +4,11 @@ for f in $generated_scripts; do
     project_part=$(basename $(dirname $(dirname $f)))
     file_name=$(basename $f)
     
-    echo '  for $f...'
+    guid=$(uuidgen --md5 -n @url -N Unity/$project_part/$file_name | tr -d '-')
+    echo "  for $(basename $f) (guid: $guid)..."
 
 echo "fileFormatVersion: 2
-guid: $(uuidgen --md5 -n @url -N Unity/$project_part/$file_name | tr -d '-')
+guid: $guid
 MonoImporter:
 externalObjects: {}
 serializedVersion: 2

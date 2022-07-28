@@ -24,5 +24,5 @@ jobs:
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
       - name: Build image
-        run: cd modules/ && version=${{ github.event.release.tag_name }} ./package-server-images.sh
+        run: version=${{ github.event.release.tag_name }} scripts/package-server-images.sh
 
