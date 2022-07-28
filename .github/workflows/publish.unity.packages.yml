@@ -140,20 +140,22 @@ jobs:
           path: windows-build
       - name: Copy Libraries into Realtime Matches Package
         run: |
-          package_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime
-          
-          mkdir $package_path/iOS
-          mkdir $package_path/x86_64
-          mkdir -p $package_path/Android/armv7
-          mkdir -p $package_path/Android/aarch64
+          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library
+          mkdir -p $lib_path
 
-          cp macos-build/libcheetah_matches_realtime_client.dylib $package_path/x86_64/libcheetah_matches_relay_client.bundle
-          cp linux-build/libcheetah_matches_realtime_client.so -t $package_path/x86_64
-          cp windows-build/cheetah_matches_realtime_client.dll -t $package_path/x86_64
-          cp windows-build/cheetah_matches_realtime_client.pdb -t $package_path/x86_64
-          cp ios-build/libcheetah_matches_realtime_client.a -t $package_path/iOS
-          cp android-build/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so -t $package_path/Android/armv7
-          cp android-build/aarch64-linux-android/release/libcheetah_matches_realtime_client.so -t $package_path/Android/aarch64
+          cp macos-build/libcheetah_matches_realtime_client.dylib $lib_path/macos.bundle
+
+          cp linux-build/libcheetah_matches_realtime_client.so $lib_path/linux.so
+
+          cp windows-build/cheetah_matches_realtime_client.dll $lib_path/windows.dll
+          cp windows-build/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
+
+          cp ios-build/libcheetah_matches_realtime_client.a $lib_path/ios.a
+
+          cp android-build/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so \
+            $lib_path/android-arm7.so
+          cp android-build/aarch64-linux-android/release/libcheetah_matches_realtime_client.so \
+            $lib_path/android-aarch64.so
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
