@@ -1,8 +1,8 @@
-name: cargo udeps
+name: test.cargo-udeps
 on:
   push:
 jobs:
-  cargo-udeps:
+  test-cargo-udeps:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4

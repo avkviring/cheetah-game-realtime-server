@@ -1,8 +1,8 @@
-name: cargo test
+name: test.cargo-test
 on:
   push:
 jobs:
-  cargo-test:
+  test-cargo-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
