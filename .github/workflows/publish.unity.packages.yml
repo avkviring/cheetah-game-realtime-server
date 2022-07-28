@@ -113,30 +113,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Generate GRPC Implementations
-        run: |
-          cd modules
-          ./generate-unity-grpc.sh
+        run: ./generate-unity-grpc.sh
+        working-directory: modules
       - name: Generate Unity Meta Files for Generated Scripts
-        run: |
-          generated_scripts=$(find -regex '.*/Unity/.*\(Editor\|Runtime\)/GRPC.*.cs')
-          for f in $generated_scripts; do
-            project_part=$(basename $(dirname $(dirname $f)))
-            file_name=$(basename $f)
-
-          echo "fileFormatVersion: 2
-          guid: $(uuidgen --md5 -n @url -N Unity/$project_part/$file_name | tr -d '-')
-          MonoImporter:
-            externalObjects: {}
-            serializedVersion: 2
-            defaultReferences: []
-            executionOrder: 0
-            icon: {instanceID: 0}
-            userData: 
-            assetBundleName: 
-            assetBundleVariant: 
-          " > $f.meta
-
-          done
+        run: ./generate-unity-grpc-meta.sh
+        working-directory: modules
       - uses: actions/download-artifact@v3
         with:
           name: ios-build
