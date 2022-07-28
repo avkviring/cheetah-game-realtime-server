@@ -113,11 +113,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Generate GRPC Implementations
-        run: ./generate-unity-grpc.sh
-        working-directory: modules
+        run: scripts/generate-unity-grpc.sh
       - name: Generate Unity Meta Files for Generated Scripts
-        run: ./generate-unity-grpc-meta.sh
-        working-directory: modules
+        run: scripts/generate-unity-grpc-meta.sh
       - uses: actions/download-artifact@v3
         with:
           name: ios-build
@@ -165,7 +163,6 @@ jobs:
         run: |
           package_files=$(find -regex '.*/Unity/.*/package.json')
           for f in $package_files; do
-            sed -i 's/OWNER/${{ github.repository_owner }}/' $f
             sed -i 's/999.999.999/${{ github.event.release.tag_name }}/' $f
             npm publish $(dirname $f)
           done

@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:OWNER/platform.git"
+    "url": "git+ssh://git@github.com:cheetah-game-platform/platform.git"
   },
   "bugs": {
     "url": "https://github.com/cheetah-game/platform/issues"
