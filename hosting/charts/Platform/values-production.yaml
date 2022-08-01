@@ -26,7 +26,7 @@ cheetah-matches-registry:
   cpu:
     limit: 500m
     request: 125m
-cheetah-matches-relay-agones:
+cheetah-matches-realtime-agones:
   nodeSelector:
     type: "relay"
   tolerations:

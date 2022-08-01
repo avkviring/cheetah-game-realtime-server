@@ -1,6 +1,6 @@
 apiVersion: v2
-name: cheetah-matches-relay-agones
-description: cheetah-matches-relay-agones
+name: cheetah-matches-realime-agones
+description: cheetah-matches-realtime-agones
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"
