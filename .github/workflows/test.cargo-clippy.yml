@@ -1,6 +1,9 @@
 name: test.cargo-clippy
 on:
   push:
+    paths:
+      - 'modules/**'
+  pull_request:
 jobs:
   test-cargo-clippy:
     runs-on: ubuntu-latest

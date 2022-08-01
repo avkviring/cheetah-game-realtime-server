@@ -1,6 +1,9 @@
 name: test.cargo-udeps
 on:
   push:
+    paths:
+      - 'modules/**'
+  pull_request:
 jobs:
   test-cargo-udeps:
     runs-on: ubuntu-latest

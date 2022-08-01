@@ -1,6 +1,9 @@
 name: test.cargo-test
 on:
   push:
+    paths:
+      - 'modules/**'
+  pull_request:
 jobs:
   test-cargo-test:
     runs-on: ubuntu-latest
