@@ -13,7 +13,7 @@ path = "src/bin/service.rs"
 
 [dependencies]
 rand = "0.8.5"
-indexmap = { version = "1.8.0" }
+indexmap = { version = "1.9.1" }
 cheetah-matches-realtime-common = { path = "../common/Common/" }
 fnv = "1.0.7"
 serde = { version = "1.0.140", features = ["derive", "rc"] }
