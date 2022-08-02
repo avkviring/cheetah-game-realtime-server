@@ -1,0 +1,79 @@
+#
+# Интеграционный тест
+#
+name: e2 -  untiy with docker
+on:
+  push:
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v3
+        with:
+          path: |
+            $CARGO_HOME/registry/index/
+            $CARGO_HOME/registry/cache/
+            $CARGO_HOME/git/db/
+            modules/target/
+          key: rust-build-images-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            rust-build-images-
+      - name: Build servers
+        run: cd modules/ && RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+      - name: Build images
+        run: version=${{ github.sha }} scripts/package-server-images.sh
+  build-realtime-client-so:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-gnu-old-glib:0.0.5
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Client
+        run: |
+          cargo build --manifest-path modules/matches/Realtime/client/Rust/Cargo.toml --release
+          mv modules/target/release/libcheetah_matches_realtime_client.so modules/target/release/linux.so
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux.so
+          path: |
+            modules/target/release/linux.so
+  integration-docker-test:
+    runs-on: ubuntu-latest
+    needs:
+      - build-images
+      - build-realtime-client-so
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2.1.7
+        with:
+          path: |
+            e2e/Unity/Library
+          key: integration-docker-test-${{ github.sha }}
+          restore-keys: |
+            integration-docker-test-
+      - uses: actions/download-artifact@v2
+        with:
+          name: linux.so
+          path: modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library/
+      - name: Generate GRPC Implementations
+        run: scripts/generate-unity-grpc.sh
+      - name: Generate Unity Meta Files for Generated Scripts
+        run: scripts/generate-unity-grpc-meta.sh
+      - name: Configure integration-test-config.json
+        run: echo '{"ServerImageVersion":"${{ github.sha }}"}' > e2e/Unity/integration-test-config.json
+      - uses: cheetah-game-platform/unity-test-runner@main
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: e2e/Unity/
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          testMode: All
+          useHostNetwork: true
+

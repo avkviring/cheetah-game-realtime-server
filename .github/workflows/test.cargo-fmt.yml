@@ -1,11 +1,6 @@
 name: test.cargo-fmt
 on:
   push:
-    paths:
-      - 'modules/**'
-  pull_request:
-    paths-ignore:
-      - 'modules/**'
 jobs:
   test-cargo-fmt:
     runs-on: ubuntu-latest
