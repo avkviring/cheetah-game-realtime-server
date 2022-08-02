@@ -15,11 +15,9 @@ spec:
         prometheus: "true"
         app: {{ .Chart.Name }}
     spec:
-      imagePullSecrets:
-        - name: cheetahdockerregistry
       containers:
         - name: {{ .Chart.Name }}
-          image: "registry.dev.cheetah.games/cheetah/platform/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
+          image: "ghcr.io/cheetah-game-platform/platform/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
           imagePullPolicy: Always
           securityContext:
             readOnlyRootFilesystem: true
