@@ -16,6 +16,18 @@ jobs:
           sed -i.bak "s/999.999.999/$version/" $(find . -name Chart.yaml)
           sed -i.bak "s/999.999.999/$version/" $(find . -name values.yaml)
           sed -i.bak "s/IMAGES_VERSION/$version/" $(find . -name values.yaml)
+      - name: Copy Platform Services Charts into Platform
+        run: |
+          charts=$(find modules -name Chart.yaml)
+          platform_dir=hosting/charts/Platform
+          for ch in $charts; do
+            name=$(echo $ch \
+              | sed 's/^modules\///' \
+              | sed 's/\/chart\/Chart.yaml$//' \
+              | tr [:upper:] [:lower:] | tr / -
+            )
+            cp -r $ch $platform_dir/$name
+          done
       - name: Publish
         run: |
           helm version
@@ -24,6 +36,7 @@ jobs:
           helm package .
 
           echo ${{ secrets.GITHUB_TOKEN }} | helm registry login https://ghcr.io -u $ --password-stdin
+          cat ~/.config/helm/registry/config.json
 
           repo=oci://ghcr.io/${{ github.repository_owner }} 
           echo "Pushing to $repo..."
