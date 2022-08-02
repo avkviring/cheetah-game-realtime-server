@@ -103,7 +103,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
 
         public void AddVolumeMappings(string externalPath, string internalPath)
         {
-            VolumeMappings[externalPath] = internalPath;
+            VolumeMappings[CorrectForGithubAction(externalPath)] = internalPath;
         }
 
         public void AddVolumeContentMappings(string content, string internalPath)
@@ -126,6 +126,16 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         public void AddCommand(string command)
         {
             commands.Add(command);
+        }
+
+        /// <summary>
+        /// Так как в github action используется docker in docker - то требуется коррекция пути
+        /// </summary>
+        /// <param name="externalPath"></param>
+        /// <returns></returns>
+        private static string CorrectForGithubAction(string externalPath)
+        {
+            return externalPath.Replace("/github/workspace/", "/home/runner/work/platform/platform/");
         }
     }
 

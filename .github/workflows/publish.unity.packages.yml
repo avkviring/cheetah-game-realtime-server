@@ -9,13 +9,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v3.0.5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            modules/target
-          key: cargo-macos-${{ hashFiles('**/Cargo.lock') }}
       - name: Build Client
         run: cargo build --manifest-path $MANIFEST_PATH --release
       - name: Upload Artifact
@@ -28,13 +21,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v3.0.5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            modules/target
-          key: cargo-ios-${{ hashFiles('**/Cargo.lock') }}
       - run: rustup target add aarch64-apple-ios
       - name: Build Client
         run: cargo build --manifest-path $MANIFEST_PATH --target aarch64-apple-ios --release
@@ -48,13 +34,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v3.0.5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            modules/target
-          key: cargo-linux-${{ hashFiles('**/Cargo.lock') }}
       - name: Build Client
         run: cargo build --manifest-path $MANIFEST_PATH --release
       - name: Upload Artifact
@@ -67,13 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v3.0.5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            modules/target
-          key: cargo-android-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Cross
         run: cargo install --version 0.2.4 cross
       - name: Build Android armv7-linux-androideabi
