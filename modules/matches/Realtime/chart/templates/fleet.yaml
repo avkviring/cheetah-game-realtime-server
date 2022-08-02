@@ -18,8 +18,6 @@ spec:
           annotations:
             linkerd.io/inject: enabled
         spec:
-          imagePullSecrets:
-            - name: cheetahdockerregistry
           {{- with .Values.tolerations }}
           tolerations:
               {{- toYaml . | nindent 11 }}
@@ -30,7 +28,7 @@ spec:
           {{- end }}
           containers:
             - name: relay
-              image: "registry.dev.cheetah.games/cheetah/platform/cheetah-matches-relay:{{ .Values.global.platformImageVersion }}"
+              image: "ghcr.io/cheetah-game-platform/platform/cheetah-matches-relay:{{ .Values.global.platformImageVersion }}"
               imagePullPolicy: Always
               securityContext:
                 readOnlyRootFilesystem: true
