@@ -4,6 +4,8 @@ on:
     paths:
       - 'modules/**'
   pull_request:
+    paths-ignore:
+      - 'modules/**'
 jobs:
   test-cargo-test:
     runs-on: ubuntu-latest
