@@ -20,7 +20,7 @@ redis = { version = "0.21.4", features = ["tokio-comp"] }
 futures = "0.3.19"
 async-trait = "0.1.52"
 serde = { version = "1.0.140", features = ["derive"] }
-serde_json = "1.0.79"
+serde_json = "1.0.82"
 tracing = "0.1.31"
 
 [dev-dependencies]
