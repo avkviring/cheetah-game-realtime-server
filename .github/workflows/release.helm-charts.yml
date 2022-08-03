@@ -22,7 +22,7 @@ jobs:
 
           echo ${{ secrets.GITHUB_TOKEN }} | helm registry login https://ghcr.io -u $ --password-stdin
 
-          repo=oci://ghcr.io/${{ github.repository_owner }} 
+          repo=oci://ghcr.io/${{ github.repository_owner }}/charts
           echo "Publishing charts to $repo..."
 
           charts=$(find modules -name Chart.yaml)
