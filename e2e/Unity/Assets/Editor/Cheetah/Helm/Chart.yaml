@@ -1,0 +1,32 @@
+apiVersion: v2
+name: platform
+description: Platform
+type: application
+version: 999.999.999
+appVersion: "999.999.999"
+
+dependencies:
+  - name: reloader
+    version: "0.0.97"
+    repository: "https://stakater.github.io/stakater-charts"
+  - name: cheetah-user-accounts
+    version: "999.999.999"
+    repository: "file://../../../../../../modules/user/Accounts/chart/"
+  - name: cheetah-matches-factory
+    version: "999.999.999"
+    repository: "file://../../../../../../modules/matches/Factory/chart/"
+  - name: cheetah-matches-registry
+    version: "999.999.999"
+    repository: "file://../../../../../../modules/matches/Registry/chart/"
+  - name: cheetah-matches-stubmatchmaking
+    version: "999.999.999"
+    repository: "file://../../../../../../modules/matches/StubMatchmaking/chart/"
+  - name: cheetah-matches-realtime
+    version: "999.999.999"
+    repository: "file://../../../../../../modules/matches/Realtime/chart/"
+  - name: cheetah-statistics-events
+    version: "999.999.999"
+    repository: "file://../../../../../../modules/statistics/Events/chart/"
+  - name: cheetah-system-compatibility
+    version: "999.999.999"
+    repository: "file://../../../../../../modules/system/Compatibility/chart/"         
