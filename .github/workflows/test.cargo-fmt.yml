@@ -1,6 +1,9 @@
 name: test.cargo-fmt
 on:
-  push:
+  pull_request:
+    types:
+      - synchronize
+      - opened
 jobs:
   test-cargo-fmt:
     runs-on: ubuntu-latest

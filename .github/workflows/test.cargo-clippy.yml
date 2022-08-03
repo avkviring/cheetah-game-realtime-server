@@ -1,6 +1,9 @@
 name: test.cargo-clippy
 on:
-  push:
+  pull_request:
+    types:
+      - synchronize
+      - opened
 jobs:
   test-cargo-clippy:
     runs-on: ubuntu-latest
