@@ -1,6 +1,6 @@
 apiVersion: v2
-name: cheetah-matches-stub-matchmaking
-description: cheetah-matches-stub-matchmaking
+name: cheetah-matches-stubmatchmaking
+description: cheetah-matches-stubmatchmaking
 type: application
 version: "999.999.999"
 appVersion: "999.999.999"
