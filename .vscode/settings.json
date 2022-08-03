@@ -1,0 +1,4 @@
+{
+    "omnisharp.useGlobalMono": "always",
+    "omnisharp.useModernNet": false
+}
