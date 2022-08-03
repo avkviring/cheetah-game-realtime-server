@@ -123,7 +123,7 @@ jobs:
           cp ios-build/libcheetah_matches_realtime_client.a $lib_path/ios.a
 
           cp android-build/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so \
-            $lib_path/android-arm7.so
+            $lib_path/android-armv7.so
           cp android-build/aarch64-linux-android/release/libcheetah_matches_realtime_client.so \
             $lib_path/android-aarch64.so
       - uses: actions/setup-node@v3
