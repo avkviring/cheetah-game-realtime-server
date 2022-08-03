@@ -1,9 +1,0 @@
-dependencies:
-- name: reloader
-  repository: https://stakater.github.io/stakater-charts
-  version: v0.0.97
-- name: agones
-  repository: https://agones.dev/chart/stable
-  version: 1.18.0
-digest: sha256:042dfaa62ff6665ffa54e8325c86474f62c67dd697a9f87374b8093a0cc4b419
-generated: "2021-11-05T08:19:10.85113+03:00"
