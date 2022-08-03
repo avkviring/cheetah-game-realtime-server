@@ -1,6 +1,6 @@
 # Настройка namespace
 
-### Доступ к реестру
+## Доступ к реестру
 
 ```shell
 kubectl create secret docker-registry cheetahdockerregistry \
@@ -11,7 +11,7 @@ kubectl create secret docker-registry cheetahdockerregistry \
 --docker-email=***
 ```
 
-### JWT ключи
+## JWT ключи
 
 ```shell
 openssl ecparam -name prime256v1 -genkey -out private.pem
