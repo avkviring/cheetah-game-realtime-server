@@ -164,6 +164,12 @@
         "com.unity.nuget.newtonsoft-json": "2.0.0"
       }
     },
+    "games.cheetah.play-games": {
+      "version": "file:../../../modules/libraries/GooglePlay/Client/Unity/games.cheetah.play-games",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "games.cheetah.statistics.events": {
       "version": "file:../../../modules/statistics/Events/client/Unity/games.cheetah.statistics.events",
       "depth": 0,
@@ -181,7 +187,7 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999"
+        "games.cheetah.play-games": "999.999.999"
       }
     },
     "games.cheetah.user.store": {

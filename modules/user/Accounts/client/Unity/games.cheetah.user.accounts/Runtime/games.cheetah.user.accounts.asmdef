@@ -2,7 +2,8 @@
   "name": "games.cheetah.user.accounts",
   "rootNamespace": "Cheetah.User.Accounts",
   "references": [
-    "games.cheetah.platform"
+    "games.cheetah.platform",
+    "games.cheetah.play-games"
   ],
   "allowUnsafeCode": true,
   "overrideReferences": false,

@@ -6,7 +6,7 @@
   "unity": "2019.1",
   "unityRelease": "0b5",
   "dependencies": {
-    "games.cheetah.platform": "999.999.999"
+    "games.cheetah.play-games": "999.999.999"
   },
   "repository": {
     "type": "git",
