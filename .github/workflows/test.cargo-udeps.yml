@@ -1,6 +1,9 @@
 name: test.cargo-udeps
 on:
-  push:
+  pull_request:
+    types:
+      - synchronize
+      - opened
 jobs:
   test-cargo-udeps:
     runs-on: ubuntu-latest

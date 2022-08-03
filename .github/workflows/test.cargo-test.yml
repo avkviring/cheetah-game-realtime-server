@@ -1,6 +1,9 @@
 name: test.cargo-test
 on:
-  push:
+  pull_request:
+    types:
+      - synchronize
+      - opened
 jobs:
   test-cargo-test:
     runs-on: ubuntu-latest
