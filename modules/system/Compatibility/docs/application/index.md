@@ -2,7 +2,7 @@
 
 Пакет **games.cheetah.system.compatibility**.
 
-### Проверка совместимости
+## Проверка совместимости
 
 ```csharp
 var connectorFactory = new ConnectorFactory();
@@ -36,7 +36,7 @@ var status = await checker.Check("0.0.1");
 }
 ```
 
-### Конфигурирование сервера
+## Конфигурирование сервера
 
 Файл Editor/Cheetah/Production/system-compatibility/versions.yaml
 

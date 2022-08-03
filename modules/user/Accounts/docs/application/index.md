@@ -1,6 +1,6 @@
 # Введение
 
-### Настройка среды разработки
+## Настройка среды разработки
 
 Установить пакет **games.cheetah.accounts** в Package Manager.
 
@@ -12,7 +12,6 @@
   токены;
 
 <!- Оригинал - Assets/Scripts/DocumentationExample.cs функция AuthExample->
-
 
 ```csharp
 // соединяемся с кластером платформы
