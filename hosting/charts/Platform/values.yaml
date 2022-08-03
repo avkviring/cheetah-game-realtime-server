@@ -1,3 +1,0 @@
-global:
-  grpcDomain: test.dev.cheetah.games
-  platformImageVersion: IMAGES_VERSION
