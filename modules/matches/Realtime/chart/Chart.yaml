@@ -1,5 +1,5 @@
 apiVersion: v2
-name: cheetah-matches-realime-agones
+name: cheetah-matches-realtime-agones
 description: cheetah-matches-realtime-agones
 type: application
 version: "999.999.999"
