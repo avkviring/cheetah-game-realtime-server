@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "ghcr.io/cheetah-game-platform/platform/{{ .Chart.Name }}:{{ .Values.global.platformImageVersion }}"
+          image: "ghcr.io/cheetah-game-platform/platform/{{ .Chart.Name }}:{{ .Chart.Version }}"
           imagePullPolicy: Always
           securityContext:
             readOnlyRootFilesystem: true

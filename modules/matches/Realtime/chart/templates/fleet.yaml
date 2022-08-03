@@ -28,7 +28,7 @@ spec:
           {{- end }}
           containers:
             - name: relay
-              image: "ghcr.io/cheetah-game-platform/platform/cheetah-matches-realtime:{{ .Values.global.platformImageVersion }}"
+              image: "ghcr.io/cheetah-game-platform/platform/cheetah-matches-realtime:{{ .Chart.Version }}"
               imagePullPolicy: Always
               securityContext:
                 readOnlyRootFilesystem: true
