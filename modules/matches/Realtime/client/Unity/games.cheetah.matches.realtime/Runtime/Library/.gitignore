@@ -1,4 +1,5 @@
 *.so
 *.dll
+*.pdb
 *.bundle
 *.a
