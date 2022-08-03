@@ -1,0 +1,43 @@
+#
+# Тестируем сборки под разные платформы
+#
+name: test build unity client
+on:
+  pull_request:
+    types:
+      - synchronize
+      - opened
+jobs:
+  test-build-unity-client:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform:
+#          - StandaloneOSX
+#          - StandaloneWindows
+#          - StandaloneWindows64
+          - StandaloneLinux64
+          - iOS
+          - Android
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2.1.7
+        with:
+          path: |
+            e2e/Unity/Library
+          key: test-build-${{ matrix.targetPlatform }}-unity-client-${{ github.sha }}
+          restore-keys: |
+            test-build-${{ matrix.targetPlatform }}-unity-client-
+      - name: Generate GRPC Implementations
+        run: scripts/generate-unity-grpc.sh
+      - name: Generate Unity Meta Files for Generated Scripts
+        run: scripts/generate-unity-grpc-meta.sh
+      - uses: game-ci/unity-builder@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: e2e/Unity/
+          targetPlatform: ${{ matrix.targetPlatform }}
+
+

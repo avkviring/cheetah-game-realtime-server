@@ -4,19 +4,20 @@ namespace Cheetah.Matches.Realtime.Internal.FFI
     {
 #if UNITY_ANDROID
         public const string Library = "android-amrv7";
-#endif
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+#elif UNITY_STANDALONE_WIN
         public const string Library = "win";
-#endif
-#if UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
-  public const string Library = "linux";
-#endif
-#if UNITY_STANDALONE_OSX
+#elif UNITY_STANDALONE_LINUX
+        public const string Library = "linux";
+#elif UNITY_STANDALONE_OSX
         public const string Library = "macos";
-#endif
-#if UNITY_IOS
+#elif UNITY_IOS
         public const string Library = "__Internal";
+#elif UNITY_EDITOR_WIN
+        public const string Library = "win";
+#elif UNITY_EDITOR_LINUX
+        public const string Library = "linux";            
 #endif
+
         public const ushort MaxSizeStruct = 255;
         public const ushort MaxFields = 255;
     }
