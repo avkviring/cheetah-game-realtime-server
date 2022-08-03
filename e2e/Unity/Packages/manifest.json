@@ -9,6 +9,7 @@
     "com.unity.timeline": "1.6.4",
     "com.unity.ugui": "1.0.0",
     "com.unity.visualscripting": "1.7.8",
+    "games.cheetah.play-games": "file:../../../modules/libraries/GooglePlay/Client/Unity/games.cheetah.play-games",
     "games.cheetah.matches.factory": "file:../../../modules/matches/Factory/client/Unity/games.cheetah.matches.factory",
     "games.cheetah.matches.matchmaking": "file:../../../modules/matches/StubMatchmaking/client/Unity/games.cheetah.matches.matchmaking",
     "games.cheetah.matches.realtime": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime",

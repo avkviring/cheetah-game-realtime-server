@@ -5,7 +5,7 @@ using Cheetah.Platform;
 using Cheetah.User.Accounts;
 using Cheetah.User.Accounts.Cookie;
 #if UNITY_ANDROID
-using Cheetah.Accounts.Google;
+using Cheetah.User.Accounts.Google;
 #endif
 
 /// <summary>
