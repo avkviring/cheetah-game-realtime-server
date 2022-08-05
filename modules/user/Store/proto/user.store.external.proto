@@ -1,5 +1,5 @@
 syntax = "proto3";
-package cheetah.user.store;
+package cheetah.userstore.external;
 option csharp_namespace = "Cheetah.User.Store.GRPC";
 
 service Update {
