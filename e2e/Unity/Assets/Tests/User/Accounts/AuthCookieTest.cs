@@ -5,7 +5,7 @@ using NUnit.Framework;
 using Tests.Helpers;
 using UnityEngine.TestTools;
 
-namespace Tests.Accounts
+namespace Tests.User.Accounts
 {
     public class AuthCookieTest
     {
