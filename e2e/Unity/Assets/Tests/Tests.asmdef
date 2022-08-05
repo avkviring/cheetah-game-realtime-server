@@ -1,28 +1,31 @@
 {
-  "name": "Tests",
-  "rootNamespace": "",
-  "references": [
-    "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner",
-    "games.cheetah.platform.editor",
-    "games.cheetah.platform",
-    "games.cheetah.user.accounts",
-    "games.cheetah.matches.realtime",
-    "games.cheetah.matches.matchmaking",
-    "games.cheetah.statistics.events",
-    "games.cheetah.system.compatibility",
-    "Shared"
-  ],
-  "allowUnsafeCode": false,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "nunit.framework.dll",
-    "Google.Protobuf.dll"
-  ],
-  "autoReferenced": false,
-  "defineConstraints": [
-    "UNITY_INCLUDE_TESTS"
-  ],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Tests",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "games.cheetah.platform.editor",
+        "games.cheetah.platform",
+        "games.cheetah.user.accounts",
+        "games.cheetah.user.store",
+        "games.cheetah.matches.realtime",
+        "games.cheetah.matches.matchmaking",
+        "games.cheetah.statistics.events",
+        "games.cheetah.system.compatibility",
+        "Shared"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "Google.Protobuf.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
