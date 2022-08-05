@@ -63,18 +63,18 @@ namespace Cheetah.Platform.Editor.LocalServer.GrpcProxy
                 AddMapping(mapping, mappings, 5002);
             }
 
-            var config = $@"
+            string config = $@"
             events {{}}
             http {{
-                     log_format main $status $request;
-                     error_log /dev/stderr error;
-                     access_log /dev/stdout main;
-                     server {{
-                            listen 80;
-                            {mappings}
-                     }}
+                log_format main $status $request;
+                error_log /dev/stderr error;
+                access_log /dev/stdout main;
+                server {{
+                    listen 80;
+                    {mappings}
                 }}
-";
+            }} ";
+
             builder.AddVolumeContentMappings(config, "/etc/nginx/nginx.conf");
         }
 
