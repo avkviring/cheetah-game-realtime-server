@@ -22,7 +22,7 @@ namespace Cheetah.User.Store
         /// <para>Если поле не существует, то оно будет создано.</para>
         /// </summary>
         /// <exception cref="UserStoreException"/>
-        public async void SetLong(string fieldName, long value)
+        public async Task SetLong(string fieldName, long value)
         {
             var request = new SetLongRequest { FieldName = fieldName, Value = value };
             await ExecuteUpdate(async client => { await client.SetLongAsync(request); });
@@ -33,7 +33,7 @@ namespace Cheetah.User.Store
         /// <para>Если поле не существует, то оно будет создано.</para>
         /// </summary>
         /// <exception cref="UserStoreException"/>
-        public async void SetDouble(string fieldName, double value)
+        public async Task SetDouble(string fieldName, double value)
         {
             var request = new SetDoubleRequest { FieldName = fieldName, Value = value };
             await ExecuteUpdate(async client => { await client.SetDoubleAsync(request); });
@@ -44,7 +44,7 @@ namespace Cheetah.User.Store
         /// <para>Если поле не существует, то оно будет создано.</para>
         /// </summary>
         /// <exception cref="UserStoreException"/>
-        public async void SetString(string fieldName, string value)
+        public async Task SetString(string fieldName, string value)
         {
             var request = new SetStringRequest { FieldName = fieldName, Value = value };
             await ExecuteUpdate(async client => { await client.SetStringAsync(request); });
@@ -55,7 +55,7 @@ namespace Cheetah.User.Store
         /// </summary>
         /// <remarks>В случае если поле не найдено метод не возвращает ошибку.</remarks>
         /// <exception cref="UserStoreException"/>
-        public async void IncrementLong(string fieldName, long value)
+        public async Task IncrementLong(string fieldName, long value)
         {
             var request = new SetLongRequest { FieldName = fieldName, Value = value };
             await ExecuteUpdate(async client => { await client.IncrementLongAsync(request); });
@@ -66,7 +66,7 @@ namespace Cheetah.User.Store
         /// </summary>
         /// <remarks>В случае если поле не найдено метод не возвращает ошибку.</remarks>
         /// <exception cref="UserStoreException"/>
-        public async void IncrementDouble(string fieldName, double value)
+        public async Task IncrementDouble(string fieldName, double value)
         {
             var request = new SetDoubleRequest { FieldName = fieldName, Value = value };
             await ExecuteUpdate(async client => { await client.IncrementDoubleAsync(request); });
