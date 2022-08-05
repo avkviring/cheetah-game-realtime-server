@@ -11,9 +11,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
     {
         protected const ushort InternalGrpcPort = 5001;
 
-        protected PlatformApplication(string name) : base(name)
-        {
-        }
+        protected PlatformApplication(string name) : base(name) { }
 
         [CanBeNull] public static string ImageVersion;
 

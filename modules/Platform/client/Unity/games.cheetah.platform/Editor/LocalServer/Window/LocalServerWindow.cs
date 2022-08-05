@@ -64,7 +64,6 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
             GetWindow(typeof(LocalServerWindow), false, "Cheetah Local Server");
         }
 
-
         private void SetupControlPanel()
         {
             controlPanelVisualElement = rootVisualElement.Q<VisualElement>("ControlPanel");

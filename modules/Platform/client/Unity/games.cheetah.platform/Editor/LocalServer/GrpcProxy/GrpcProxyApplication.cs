@@ -30,7 +30,6 @@ namespace Cheetah.Platform.Editor.LocalServer.GrpcProxy
 
         public override DockerImage DockerImage => DockerImage.From("nginx:1.19.8");
 
-
         public override LogItem? ConvertToLogItem(string log)
         {
             return new LogItem
@@ -48,7 +47,6 @@ namespace Cheetah.Platform.Editor.LocalServer.GrpcProxy
             return LogItemType.Info;
         }
 
-
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {
             builder.AddPortMapping(Protocol.Tcp, 80, Config.Host, Config.Port);
@@ -59,7 +57,7 @@ namespace Cheetah.Platform.Editor.LocalServer.GrpcProxy
             {
                 AddMapping(mapping, mappings, 5000);
             }
-            
+
             foreach (var mapping in adminGrpcMappings)
             {
                 AddMapping(mapping, mappings, 5002);
@@ -90,14 +88,14 @@ namespace Cheetah.Platform.Editor.LocalServer.GrpcProxy
         public override string GetCreateContainerErrorMessage(Exception e)
         {
             return
-                "Возможно адрес/порт заданы неправильно или уже используются.\nУказать новый адрес/порт можно в разделе Services.";
+                "Возможно адрес/порт заданы неправильно или уже используются.\n"
+                + "Указать новый адрес/порт можно в разделе Services.";
         }
 
         public override void ConfigureFromApplications(IList<ServerApplication> applications)
         {
             Dependencies.Clear();
-            
-            
+
             externalGrpcMappings.Clear();
             adminGrpcMappings.Clear();
 
@@ -105,7 +103,6 @@ namespace Cheetah.Platform.Editor.LocalServer.GrpcProxy
             {
                 CollectGrpcServices(application, application.ExternalGrpcServices, externalGrpcMappings);
                 CollectGrpcServices(application, application.AdminGrpcServices, adminGrpcMappings);
-                
             }
         }
 

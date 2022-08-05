@@ -1,0 +1,16 @@
+{
+    "name": "games.cheetah.user.store.editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:216e2bad432944a9978223d9987b82c3"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
