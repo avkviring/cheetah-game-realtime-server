@@ -14,7 +14,7 @@ using UnityEngine;
 namespace Cheetah.Platform.Editor.LocalServer.Docker
 {
     /// <summary>
-    ///     Запускаем серверные приложения в docker
+    /// Запускаем серверные приложения в Docker
     /// </summary>
     public class PlatformInDockerRunner : IDisposable
     {
@@ -32,7 +32,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         public PlatformInDockerRunner()
         {
             Status = Status.Unknown;
-            
+
             DockerClientConfiguration dockerClientConfiguration;
             try
             {
@@ -44,11 +44,10 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 dockerClientConfiguration = new DockerClientConfiguration();
             }
             docker = dockerClientConfiguration.CreateClient();
-            
-            
+
             logWatcher = new DockerLogWatcher(docker);
             AssemblyReloadEvents.beforeAssemblyReload += Dispose;
-            
+
             var taskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
             Task.Factory.StartNew(
                 async () => { await DeterminationState(); },
@@ -66,7 +65,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 OnStatusChange?.Invoke(_status);
             }
         }
-        
+
 
         public void Dispose()
         {
@@ -99,8 +98,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                     },
                     All = true
                 });
-                
-                
+
+
                 foreach (var existContainer in existContainers)
                 {
                     var label = existContainer.Labels[DockerContainerBuilder.DockerNameLabel];
@@ -112,7 +111,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                                 logWatcher.WatchLogs(existContainer.ID, serverApplication);
                             }
                 }
-                
+
                 Status = serverApplications.Any() ? Status.Stopped : Status.Started;
             }
             catch (HttpRequestException e)
@@ -146,7 +145,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 var progress = 0;
                 var serverApplications = Registry.GetApplications();
                 await LaunchYDB(progressListener, serverApplications, progress, network);
-                var deltaProgress = 90  / serverApplications.Count; // 10 процентов - на запуск nginx
+                var deltaProgress = 90 / serverApplications.Count; // 10 процентов - на запуск nginx
                 var done = false;
                 var launched = new HashSet<string>();
                 while (!done)
@@ -208,7 +207,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                     Status = Status.Fail;
                 }
             }
-            
+
             await Task.Delay(TimeSpan.FromSeconds(10));
         }
 
@@ -257,11 +256,11 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             {
                 return;
             }
-            
+
             await docker.Images.CreateImageAsync(new ImagesCreateParameters
-                {
-                    FromImage = dockerImage.Ref
-                },
+            {
+                FromImage = dockerImage.Ref
+            },
                 null,
                 new ImageCreateProgress(progressListener, title));
         }

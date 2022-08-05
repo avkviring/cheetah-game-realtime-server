@@ -9,6 +9,7 @@ namespace Cheetah.Platform.Editor.LocalServer
     /// Серверное приложение
     /// 
     /// - конфигурация для запуска приложения в Docker
+    ///
     /// - методы для работы с приложением
     ///  
     /// </summary>
@@ -23,7 +24,7 @@ namespace Cheetah.Platform.Editor.LocalServer
         /// Docker образ приложения
         /// </summary>
         public virtual DockerImage DockerImage { get; }
-        
+
         protected ServerApplication(string name)
         {
             Name = name;
@@ -42,7 +43,7 @@ namespace Cheetah.Platform.Editor.LocalServer
         }
 
         /// <summary>
-        /// Конфигурация для запуска docker контейнера
+        /// Конфигурация для запуска Docker контейнера
         /// </summary>
         /// <returns></returns>
         public virtual void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
@@ -57,7 +58,7 @@ namespace Cheetah.Platform.Editor.LocalServer
 
 
         /// <summary>
-        /// Преобразование лога из docker контейнера в лог для Unity
+        /// Преобразование лога из Docker контейнера в лог для Unity
         /// - определения канала для лога (Error, Info, ...)
         /// - фильтрация лога 
         /// </summary>
@@ -89,7 +90,6 @@ namespace Cheetah.Platform.Editor.LocalServer
         public readonly ISet<string> ExternalGrpcServices = new HashSet<string>();
 
         public readonly ISet<string> AdminGrpcServices = new HashSet<string>();
-
 
         public bool YDBEnabled { get; protected set; }
 

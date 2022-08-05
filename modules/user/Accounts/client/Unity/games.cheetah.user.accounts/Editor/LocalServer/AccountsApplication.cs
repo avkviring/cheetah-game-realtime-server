@@ -17,7 +17,6 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
             Dependencies.Add(redisName);
         }
 
-
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {
             base.ConfigureDockerContainerBuilder(builder);
