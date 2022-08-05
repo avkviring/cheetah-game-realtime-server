@@ -1,2 +1,0 @@
-- [Подготовка namespace](prepare-namespace.md)
-- [Подготовка production кластера](prepare-production-kubernetes-cluster.md)

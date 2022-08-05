@@ -62,3 +62,6 @@ nav:
         - "Сбор событий": "modules/statistics/events/index.md"
       - "Системные":
         - "Совместимость клиента и сервера": "modules/system/compatibility/index.md"
+  - "Хостинг":
+      - "Настройка кластера": "hosting/setup-cluster.md"
+
