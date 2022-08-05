@@ -11,10 +11,12 @@ namespace Cheetah.User.Store
     public class Update
     {
         private readonly ClusterConnector _connector;
+        private readonly Accounts.User _user;
 
-        public Update(ClusterConnector connector)
+        public Update(ClusterConnector connector, Accounts.User user)
         {
             _connector = connector;
+            _user = user;
         }
 
         /// <summary>
@@ -25,7 +27,10 @@ namespace Cheetah.User.Store
         public async Task SetLong(string fieldName, long value)
         {
             var request = new SetLongRequest { FieldName = fieldName, Value = value };
-            await ExecuteUpdate(async client => { await client.SetLongAsync(request); });
+            await ExecuteUpdate(async client =>
+            {
+                await client.SetLongAsync(request, _user.CreateAuthMetadata());
+            });
         }
 
         /// <summary>
@@ -47,7 +52,10 @@ namespace Cheetah.User.Store
         public async Task SetString(string fieldName, string value)
         {
             var request = new SetStringRequest { FieldName = fieldName, Value = value };
-            await ExecuteUpdate(async client => { await client.SetStringAsync(request); });
+            await ExecuteUpdate(async client =>
+            {
+                await client.SetStringAsync(request, _user.CreateAuthMetadata());
+            });
         }
 
         /// <summary>
@@ -58,7 +66,10 @@ namespace Cheetah.User.Store
         public async Task IncrementLong(string fieldName, long value)
         {
             var request = new SetLongRequest { FieldName = fieldName, Value = value };
-            await ExecuteUpdate(async client => { await client.IncrementLongAsync(request); });
+            await ExecuteUpdate(async client =>
+            {
+                await client.IncrementLongAsync(request, _user.CreateAuthMetadata());
+            });
         }
 
         /// <summary>
@@ -69,7 +80,10 @@ namespace Cheetah.User.Store
         public async Task IncrementDouble(string fieldName, double value)
         {
             var request = new SetDoubleRequest { FieldName = fieldName, Value = value };
-            await ExecuteUpdate(async client => { await client.IncrementDoubleAsync(request); });
+            await ExecuteUpdate(async client =>
+            {
+                await client.IncrementDoubleAsync(request, _user.CreateAuthMetadata());
+            });
         }
 
         private async Task ExecuteUpdate(Func<User.Store.GRPC.Update.UpdateClient, Task> func)

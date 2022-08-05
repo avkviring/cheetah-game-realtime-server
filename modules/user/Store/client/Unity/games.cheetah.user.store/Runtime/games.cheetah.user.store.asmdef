@@ -1,16 +1,19 @@
 {
-  "name": "games.cheetah.user.store",
-  "rootNamespace": "Cheetah.User.Store",
-  "references": [
-    "games.cheetah.platform"
-  ],
-  "allowUnsafeCode": true,
-  "overrideReferences": false,
-  "precompiledReferences": [
-    ""
-  ],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "games.cheetah.user.store",
+    "rootNamespace": "Cheetah.User.Store",
+    "references": [
+        "games.cheetah.platform",
+        "games.cheetah.user.accounts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        ""
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

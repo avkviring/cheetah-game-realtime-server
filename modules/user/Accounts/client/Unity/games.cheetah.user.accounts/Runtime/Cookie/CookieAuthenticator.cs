@@ -27,7 +27,7 @@ namespace Cheetah.User.Accounts.Cookie
         }
 
         /// <summary>
-        /// Создать игрока или войти под существующем
+        /// Создать игрока или войти под существующим
         /// </summary>
         /// <exception cref="CookieNotFoundException">
         ///     На сервере нет игрока для данного cookie, например, при потере базы данных

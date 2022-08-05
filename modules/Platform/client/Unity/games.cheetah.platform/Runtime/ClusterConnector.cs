@@ -32,7 +32,8 @@ namespace Cheetah.Platform
                 address, new GrpcChannelOptions
                 {
                     HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
-                });
+                }
+            );
         }
 
         private async Task Reconnect()

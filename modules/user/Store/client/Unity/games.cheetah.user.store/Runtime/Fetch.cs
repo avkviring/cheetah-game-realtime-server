@@ -11,12 +11,13 @@ namespace Cheetah.User.Store
     public class Fetch
     {
         private readonly ClusterConnector _connector;
+        private readonly Accounts.User _user;
 
-        public Fetch(ClusterConnector connector)
+        public Fetch(ClusterConnector connector, Accounts.User user)
         {
             _connector = connector;
+            _user = user;
         }
-
 
         /// <summary>
         /// <para>Извлекает значение поля <paramref name="fieldName"/> из хранилища.</para>
@@ -28,7 +29,7 @@ namespace Cheetah.User.Store
             var request = new FetchDoubleRequest { FieldName = fieldName };
             var result = await ExecuteFetch(async client =>
             {
-                return await client.DoubleAsync(request);
+                return await client.DoubleAsync(request, _user.CreateAuthMetadata());
             });
 
             switch (result.ResultCase)
@@ -40,7 +41,6 @@ namespace Cheetah.User.Store
             }
         }
 
-
         /// <summary>
         /// <para>Извлекает значение поля <paramref name="fieldName"/> из хранилища.</para>
         /// </summary>
@@ -51,7 +51,7 @@ namespace Cheetah.User.Store
             var request = new FetchLongRequest { FieldName = fieldName };
             var result = await ExecuteFetch(async client =>
             {
-                return await client.LongAsync(request);
+                return await client.LongAsync(request, _user.CreateAuthMetadata());
             });
 
             switch (result.ResultCase)
@@ -73,7 +73,7 @@ namespace Cheetah.User.Store
             var request = new FetchStringRequest { FieldName = fieldName };
             var result = await ExecuteFetch(async client =>
             {
-                return await client.StringAsync(request);
+                return await client.StringAsync(request, _user.CreateAuthMetadata());
             });
 
             switch (result.ResultCase)
