@@ -28,7 +28,7 @@ spec:
           {{- end }}
           containers:
             - name: relay
-              image: "ghcr.io/cheetah-game-platform/platform/cheetah-matches-realtime:{{ .Chart.Version }}"
+              image: "ghcr.io/cheetah-game-platform/platform/matches-realtime:{{ .Chart.Version }}"
               imagePullPolicy: Always
               securityContext:
                 readOnlyRootFilesystem: true
@@ -55,16 +55,12 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: status.podIP
-                - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST
-                  value: "$(CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_HOST)"
-                - name: CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_PORT
-                  value: "$(CHEETAH_MATCHES_REGISTRY_INTERNAL_SERVICE_PORT)"
                 - name: NAMESPACE
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
                 - name: LOKI_URL
-                  value: {{.Values.global.lokiUrl}}
+                  value: {{.Values.lokiUrl}}
               ports:
                 - name: prometheus
                   containerPort: 3000
