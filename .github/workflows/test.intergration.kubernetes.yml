@@ -30,7 +30,7 @@ jobs:
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
       - name: Build images
-        run: version=900.0.2 scripts/package-server-images.sh
+        run: version=999.999.999 scripts/package-server-images.sh
   build-realtime-client-so:
     runs-on: ubuntu-latest
     container:

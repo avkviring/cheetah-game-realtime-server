@@ -2,7 +2,6 @@
 # Интеграционный тест
 #
 name: e2e -  untiy with docker
-concurrency: e2e-docker
 on:
   pull_request:
     types:
@@ -30,7 +29,7 @@ jobs:
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
       - name: Build images
-        run: version=900.0.1 scripts/package-server-images.sh
+        run: version=999.999.998 scripts/package-server-images.sh
   build-realtime-client-so:
     runs-on: ubuntu-latest
     container:
@@ -71,7 +70,7 @@ jobs:
       - name: Generate Unity Meta Files for Generated Scripts
         run: scripts/generate-unity-grpc-meta.sh
       - name: Configure integration-test-config.json
-        run: echo '{"ServerImageVersion":"900.0.1"}' > e2e/Unity/integration-test-config.json
+        run: echo '{"ServerImageVersion":"999.999.998"}' > e2e/Unity/integration-test-config.json
       - uses: cheetah-game-platform/unity-test-runner@main
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
