@@ -49,8 +49,8 @@ jobs:
             modules/target/release/linux.so
   deploy-servers:
     runs-on: ubuntu-latest
-#    needs:
-#      - build-images
+    needs:
+      - build-images
     container:
       image: ghcr.io/cheetah-game-platform/kubernetes-control-image:1.2.1
     steps:
