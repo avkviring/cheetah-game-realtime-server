@@ -4,17 +4,13 @@ metadata:
   name: {{ .Chart.Name }}-ingress
   annotations:
     kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
     cert-manager.io/cluster-issuer: "letsencrypt"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
     - host: {{ .Values.grpcDomain }}
-      http:
-        paths:
-          - pathType: Prefix
-            path: /cheetah.statistics.events.*
-            backend:
-              service:
-                name: "{{ .Chart.Name }}-external"
-                port:
-                  number: 5000
+  tls:
+    - hosts:
+        - {{ .Values.grpcDomain }}
+      secretName: grpc-ingress

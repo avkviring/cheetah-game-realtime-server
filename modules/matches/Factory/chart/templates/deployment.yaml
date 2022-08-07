@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "ghcr.io/cheetah-game-platform/platform/{{ .Chart.Name }}:{{ .Chart.Version }}"
+          image: "ghcr.io/cheetah-game-platform/platform/matches-factory:{{ .Chart.Version }}"
           imagePullPolicy: Always
           startupProbe:
             exec:
@@ -44,7 +44,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: LOKI_URL
-              value: {{.Values.global.lokiUrl}}
+              value: {{.Values.lokiUrl}}
           volumeMounts:
             - mountPath: /var/lib/room-templates/
               readOnly: true
@@ -52,7 +52,7 @@ spec:
           command:
             - 'sh'
             - '-c'
-            - 'mkdir -p /tmp/config && tar -xzf /var/lib/room-templates/rooms.tgz -C /tmp/config && /cheetah-matches-factory'
+            - 'mkdir -p /tmp/config && tar -xzf /var/lib/room-templates/rooms.tgz -C /tmp/config && /cheetah-matches-factory-server'
           ports:
             - name: prometheus
               containerPort: 3000

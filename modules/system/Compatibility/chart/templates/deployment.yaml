@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "ghcr.io/cheetah-game-platform/platform/{{ .Chart.Name }}:{{ .Chart.Version }}"
+          image: "ghcr.io/cheetah-game-platform/platform/system-compatibility:{{ .Chart.Version }}"
           imagePullPolicy: Always
           securityContext:
             readOnlyRootFilesystem: true
@@ -44,7 +44,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: LOKI_URL
-              value: {{.Values.global.lokiUrl}}
+              value: {{.Values.lokiUrl}}
             - name: CONFIG_FILE
               value: /tmp/config/versions.yaml
           volumeMounts:

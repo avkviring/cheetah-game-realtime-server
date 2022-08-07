@@ -8,7 +8,7 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
-    - host: {{ .Values.global.grpcDomain }}
+    - host: {{ .Values.grpcDomain }}
       http:
         paths:
           - pathType: Prefix
