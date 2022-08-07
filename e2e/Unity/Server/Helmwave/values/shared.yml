@@ -1,0 +1,2 @@
+grpcDomain: stage1.stage.cheetah.games
+lokiUrl: http://monitoring-loki.system:3100
