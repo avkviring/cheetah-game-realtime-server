@@ -50,7 +50,7 @@ namespace Tests.Helpers
 #if UNITY_EDITOR
                     PlatformApplication.ImageVersion = testConfiguration.ServerImageVersion;
                     var dockerRunner = new PlatformInDockerRunner();
-                    await dockerRunner.DeterminationState();
+                    await dockerRunner.ResolveState();
                     if (dockerRunner.Status != Status.Started)
                     {
                         await dockerRunner.Restart(new StubDockerProgressListener());

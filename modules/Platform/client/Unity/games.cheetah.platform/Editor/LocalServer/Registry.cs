@@ -8,7 +8,8 @@ namespace Cheetah.Platform.Editor.LocalServer
     /// </summary>
     public static class Registry
     {
-        private static readonly IDictionary<string, IList<ServerApplication>> Applications = new Dictionary<string, IList<ServerApplication>>();
+        private static readonly IDictionary<string, IList<ServerApplication>> Applications =
+            new Dictionary<string, IList<ServerApplication>>();
 
         private static readonly IDictionary<string, IList<IApplicationsConfigurator>> Configurators =
             new Dictionary<string, IList<IApplicationsConfigurator>>();
