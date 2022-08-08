@@ -1,8 +1,8 @@
 {
     "name": "games.cheetah.user.store.editor",
-    "rootNamespace": "",
+    "rootNamespace": "Cheetah.User.Store.Editor",
     "references": [
-        "GUID:216e2bad432944a9978223d9987b82c3"
+        "games.cheetah.platform.editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
