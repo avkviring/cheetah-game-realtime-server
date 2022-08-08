@@ -1,4 +1,4 @@
-name: release-helm-charts
+name: release.helm-charts
 on:
   release:
     types: [ published ]

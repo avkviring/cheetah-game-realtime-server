@@ -1,4 +1,4 @@
-name: Release documentation site
+name: release.docs
 on:
   release:
     types: [ published ]

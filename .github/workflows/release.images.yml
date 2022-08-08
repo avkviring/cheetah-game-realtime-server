@@ -1,4 +1,4 @@
-name: release docker image
+name: release.images
 on:
   release:
     types: [ published ]

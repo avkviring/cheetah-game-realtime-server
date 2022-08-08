@@ -1,7 +1,7 @@
 #
 # Интеграционный тест
 #
-name: e2e -  untiy with kubernetes
+name: test.integration.kubernetes
 concurrency: e2e-kubernetes
 on:
   pull_request:

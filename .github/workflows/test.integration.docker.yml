@@ -1,7 +1,7 @@
 #
 # Интеграционный тест
 #
-name: e2e -  untiy with docker
+name: test.integration.docker
 on:
   pull_request:
     types:

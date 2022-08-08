@@ -1,4 +1,4 @@
-name: publish unity packages
+name: release.unity.packages
 on: 
   release:
     types: [ published ]
