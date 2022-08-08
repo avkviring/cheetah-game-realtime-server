@@ -1,6 +1,5 @@
-create table users
+create table cheetah_user_account_users
 (
-	user   String,
-	create_date Timestamp,
-	PRIMARY KEY (user)
-);
+	user_uuid   uuid primary key not null,
+	create_date timestamp default CURRENT_TIMESTAMP not null
+)

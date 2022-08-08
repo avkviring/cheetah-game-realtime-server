@@ -1,18 +1,19 @@
 -- привязка пользователя к google
-create table google_users
+create table cheetah_user_accounts_google
 (
-	user      String,
-	google_id Utf8,
-	INDEX user GLOBAL ON (user),
-	PRIMARY KEY (google_id)
+	user_uuid uuid primary key not null,
+	google_id varchar(255) not null
 );
+
+create unique index cheetah_user_accounts_google_googl_id_index on cheetah_user_accounts_google (google_id);
 
 -- история привязки пользователей
 -- для разбора ситуаций угона
-create table google_users_history
+create table cheetah_user_accounts_google_users_history
 (
-	user      String,
-	google_id Utf8,
-	time      timestamp,
-	PRIMARY KEY (user, google_id, time)
+	user_uuid uuid not null,
+	google_id varchar(255) not null,
+	time      timestamp default CURRENT_TIMESTAMP not null
 );
+
+create unique index cheetah_user_accounts_google_users_history_google_id_index on cheetah_user_accounts_google (google_id);
