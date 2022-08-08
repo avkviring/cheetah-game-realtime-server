@@ -20,8 +20,6 @@ async-stream = "0.3"
 jsonwebtoken = "8.0.1"
 serde = { version = "1.0.140", features = ["derive"] }
 cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
-ydb-steroids = { version = "0.1.2", features = ["uuid"] }
-ydb = "0.2.0"
 async-trait = "0.1.52"
 lazy_static = "1.4.0"
 tonic-web = "0.2.0"
@@ -36,6 +34,7 @@ uuid = { version = "1.0.0", features = ["v4", "serde"] }
 include_dir = "0.7.2"
 anyhow = "1.0.57"
 jwt-tonic-user-uuid = "0.0.1"
+sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid","migrate"] }
 
 
 [dev-dependencies]
@@ -44,7 +43,6 @@ lazy_static = "1.4.0"
 futures = "0.3.21"
 httpmock = { version = "0.6.2" }
 base64 = { version = "0.13.0" }
-ydb-steroids = { version = "0.1.2", features = ["test_container"] }
 rsa = "0.5.0"
 
 [build-dependencies]
