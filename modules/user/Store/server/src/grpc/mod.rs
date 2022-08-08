@@ -19,7 +19,7 @@ mod reply;
 mod update;
 mod value;
 mod userstore {
-	tonic::include_proto!("cheetah.user.store");
+	tonic::include_proto!("cheetah.userstore.external");
 }
 
 pub struct Service {
