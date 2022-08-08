@@ -32,14 +32,14 @@ namespace Tests.User.Store
         [UnityTest]
         public IEnumerator TestSet()
         {
-            var update = new Update(_clusterConnector, _user);
+            var update = new Updater(_clusterConnector, _user);
 
             string field = "pet";
             string fieldValue = "Archie";
 
             yield return Enumerators.Await(update.SetString(field, fieldValue));
 
-            var fetch = new Fetch(_clusterConnector, _user);
+            var fetch = new Fetcher(_clusterConnector, _user);
             var fetchTask = fetch.TryGetString(field);
             yield return Enumerators.Await(fetchTask);
 
@@ -50,7 +50,7 @@ namespace Tests.User.Store
         [UnityTest]
         public IEnumerator TestIncrement()
         {
-            var update = new Update(_clusterConnector, _user);
+            var update = new Updater(_clusterConnector, _user);
 
             string field = "rage_score";
             long fieldValue = 9999;
@@ -59,7 +59,7 @@ namespace Tests.User.Store
             yield return Enumerators.Await(update.SetLong(field, fieldValue));
             yield return Enumerators.Await(update.IncrementLong(field, incrementValue));
 
-            var fetch = new Fetch(_clusterConnector, _user);
+            var fetch = new Fetcher(_clusterConnector, _user);
             var fetchTask = fetch.TryGetLong(field);
             yield return Enumerators.Await(fetchTask);
 

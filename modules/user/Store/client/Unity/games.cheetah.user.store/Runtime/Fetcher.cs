@@ -8,12 +8,12 @@ namespace Cheetah.User.Store
 {
     /// <summary>Объект, предоставляющий доступ к функциям
     /// доступа к данным в пользовательском хранилище.</summary>
-    public class Fetch
+    public class Fetcher
     {
         private readonly ClusterConnector _connector;
         private readonly Accounts.User _user;
 
-        public Fetch(ClusterConnector connector, Accounts.User user)
+        public Fetcher(ClusterConnector connector, Accounts.User user)
         {
             _connector = connector;
             _user = user;

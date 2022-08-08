@@ -8,12 +8,12 @@ namespace Cheetah.User.Store
 {
     /// <summary>Объект, предоставляющий доступ к функциям обновления
     /// пользовательского хранилища.</summary>
-    public class Update
+    public class Updater
     {
         private readonly ClusterConnector _connector;
         private readonly Accounts.User _user;
 
-        public Update(ClusterConnector connector, Accounts.User user)
+        public Updater(ClusterConnector connector, Accounts.User user)
         {
             _connector = connector;
             _user = user;
