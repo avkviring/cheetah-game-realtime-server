@@ -72,7 +72,7 @@ pub mod tests {
 
 	use crate::users::service::UserService;
 	use crate::users::user::User;
-	use crate::ydb::test::setup_ydb;
+	use crate::postgres::test::setup_ydb;
 
 	use super::GoogleStorage;
 

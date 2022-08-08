@@ -2,9 +2,6 @@ use std::ops::Add;
 use std::time::Duration;
 
 use uuid::Uuid;
-use ydb::{TableClient, YdbOrCustomerError};
-
-use ydb_steroids::{query, update};
 
 use crate::users::user::User;
 
@@ -101,9 +98,9 @@ pub mod tests {
 
 	use ydb_steroids::test_container::YDBTestInstance;
 
+	use crate::postgres::test::setup_ydb;
 	use crate::tokens::storage::TokenStorage;
 	use crate::users::user::User;
-	use crate::ydb::test::setup_ydb;
 
 	#[tokio::test]
 	async fn should_create_different_uuid() {

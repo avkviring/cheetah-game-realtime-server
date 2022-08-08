@@ -135,7 +135,7 @@ mod test {
 	use crate::proto::{LoginRequest, RegistryRequest};
 	use crate::tokens::tests::{stub_token_service, PUBLIC_KEY};
 	use crate::users::service::UserService;
-	use crate::ydb::test::setup_ydb;
+	use crate::postgres::test::setup_ydb;
 
 	#[tokio::test]
 	async fn should_register_and_login() {
