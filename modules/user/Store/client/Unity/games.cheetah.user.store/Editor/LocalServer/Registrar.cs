@@ -10,7 +10,7 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
     {
         static Registrar()
         {
-            Registry.Register("userstore", CreateApplications());
+            Registry.Register("user.store", CreateApplications());
         }
 
         private static IList<ServerApplication> CreateApplications()

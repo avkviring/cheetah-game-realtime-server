@@ -19,7 +19,7 @@ mod reply;
 mod update;
 mod value;
 mod userstore {
-	tonic::include_proto!("cheetah.userstore.external");
+	tonic::include_proto!("cheetah.user.store.external");
 }
 
 pub struct Service {
@@ -36,7 +36,7 @@ impl Service {
 	}
 
 	pub async fn serve(&self, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
-		init("userstore");
+		init("user.store");
 
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 
