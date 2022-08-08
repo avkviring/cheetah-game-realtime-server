@@ -1,7 +1,7 @@
 #
 # Тестируем сборки под разные платформы
 #
-name: test build unity client
+name: test.unity.build
 on:
   pull_request:
     types:
