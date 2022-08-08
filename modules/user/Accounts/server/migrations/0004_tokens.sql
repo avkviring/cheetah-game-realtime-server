@@ -1,9 +1,7 @@
--- привязка пользователя к google
-create table tokens
+create table cheetah_user_accounts_tokens
 (
-	user   String,
-	device Utf8,
-	token_uuid  String,
-	create_at Timestamp,
-	PRIMARY KEY (user, device)
+	user_uuid uuid primary key not null,
+	device    varchar(255),
+	token     uuid,
+	create_at timestamp default CURRENT_TIMESTAMP not null
 )
