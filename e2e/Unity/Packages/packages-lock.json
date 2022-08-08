@@ -157,7 +157,7 @@
       }
     },
     "games.cheetah.platform": {
-      "version": "file:../../../modules/platform/client/Unity/games.cheetah.platform",
+      "version": "file:../../../modules/Platform/client/Unity/games.cheetah.platform",
       "depth": 0,
       "source": "local",
       "dependencies": {

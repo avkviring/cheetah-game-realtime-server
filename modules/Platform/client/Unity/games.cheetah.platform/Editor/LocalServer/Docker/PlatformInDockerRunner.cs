@@ -50,7 +50,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
 
             var taskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
             Task.Factory.StartNew(
-                async () => { await DeterminationState(); },
+                async () => { await ResolveState(); },
                 CancellationToken.None,
                 TaskCreationOptions.None,
                 taskScheduler);
@@ -80,7 +80,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         ///     - проверяем все ли контейнеры запущены
         /// </summary>
         /// <returns></returns>
-        public async Task DeterminationState()
+        public async Task ResolveState()
         {
             if (Status != Status.Unknown) return;
 
