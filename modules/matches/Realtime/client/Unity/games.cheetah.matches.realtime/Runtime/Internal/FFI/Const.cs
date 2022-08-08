@@ -3,7 +3,7 @@ namespace Cheetah.Matches.Realtime.Internal.FFI
     internal static class Const
     {
 #if UNITY_ANDROID
-        public const string Library = "android-amrv7";
+        public const string Library = "android-armv7";
 #elif UNITY_STANDALONE_WIN
         public const string Library = "win";
 #elif UNITY_STANDALONE_LINUX
