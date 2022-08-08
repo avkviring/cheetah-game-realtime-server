@@ -1,8 +1,9 @@
+use jwt_tonic_user_uuid::JWTUserTokenParser;
+use sqlx::PgPool;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
-use ydb::TableClient;
 
-use jwt_tonic_user_uuid::JWTUserTokenParser;
+use ydb::TableClient;
 
 use crate::cookie::service::CookieService;
 use crate::google::google_jwt::Parser;
@@ -19,7 +20,7 @@ use crate::users::service::UserService;
 pub async fn run_grpc_server(
 	jwt_public_key: String,
 	jwt_private_key: String,
-	ydb_table_client: TableClient,
+	pg_pool: PgPool,
 	google_client_id: Option<String>,
 ) {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
@@ -27,18 +28,14 @@ pub async fn run_grpc_server(
 	health_reporter
 		.set_service_status("", ServingStatus::Serving)
 		.await;
-	let token_service = TokensService::new(
-		ydb_table_client.clone(),
-		jwt_private_key,
-		jwt_public_key.clone(),
-	)
-	.await;
-	let user_service = UserService::new(ydb_table_client.clone());
+	let token_service =
+		TokensService::new(pg_pool.clone(), jwt_private_key, jwt_public_key.clone()).await;
+	let user_service = UserService::new(pg_pool.clone());
 
 	let token_grpc_service =
 		proto::tokens_server::TokensServer::new(TokensGrpcService::new(token_service.clone()));
 	let cookie_grpc_service = proto::cookie_server::CookieServer::new(CookieService::new(
-		ydb_table_client.clone(),
+		pg_pool.clone(),
 		token_service.clone(),
 		user_service.clone(),
 	));
@@ -62,7 +59,7 @@ pub async fn run_grpc_server(
 
 	if let Some(google_client_id) = google_client_id {
 		let google_grpc_service = proto::google_server::GoogleServer::new(GoogleGrpcService::new(
-			GoogleStorage::new(ydb_table_client),
+			GoogleStorage::new(pg_pool),
 			token_service.clone(),
 			user_service.clone(),
 			Parser::new(&google_client_id),

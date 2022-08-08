@@ -69,7 +69,7 @@ pub mod tests {
 	use crate::cookie::storage::{AttachError, CookieStorage};
 	use crate::cookie::Cookie;
 	use crate::users::service::UserService;
-	use crate::ydb::test::setup_ydb;
+	use crate::postgres::test::setup_ydb;
 
 	#[tokio::test]
 	pub async fn should_attach() {

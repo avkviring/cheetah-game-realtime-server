@@ -202,7 +202,7 @@ pub mod tests {
 	use crate::tokens::storage::TokenStorage;
 	use crate::tokens::{JWTTokensServiceError, TokensService};
 	use crate::users::user::User;
-	use crate::ydb::test::setup_ydb;
+	use crate::postgres::test::setup_ydb;
 
 	#[tokio::test]
 	async fn session_token_should_correct() {
