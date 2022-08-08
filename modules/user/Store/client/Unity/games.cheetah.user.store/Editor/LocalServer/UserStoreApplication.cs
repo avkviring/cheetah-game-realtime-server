@@ -10,7 +10,7 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
         public UserStoreApplication() : base(AppName)
         {
             YDBEnabled = true;
-            ExternalGrpcServices.Add("cheetah.userstore");
+            ExternalGrpcServices.Add("cheetah.user.store");
         }
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
