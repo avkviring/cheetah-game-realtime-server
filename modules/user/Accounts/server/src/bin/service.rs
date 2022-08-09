@@ -1,7 +1,3 @@
-
-
-
-
 use cheetah_user_accounts::grpc::run_grpc_server;
 use cheetah_user_accounts::postgres::create_postgres_pool;
 

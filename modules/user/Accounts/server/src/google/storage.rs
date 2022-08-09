@@ -1,7 +1,6 @@
 use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
 
-
 use crate::users::user::User;
 
 pub struct GoogleStorage {
@@ -51,13 +50,9 @@ impl GoogleStorage {
 
 #[cfg(test)]
 pub mod tests {
-	
 
-	
 	use sqlx::Row;
-	
 
-	
 	use crate::postgres::test::setup_postgresql;
 	use crate::users::service::UserService;
 	use crate::users::user::User;

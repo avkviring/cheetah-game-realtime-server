@@ -1,11 +1,9 @@
-
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
 use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
-
 
 use crate::users::user::User;
 
@@ -78,14 +76,13 @@ pub mod tests {
 	use std::ops::Add;
 	use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-	
 	use testcontainers::images::postgres::Postgres;
 	use testcontainers::Container;
 	use uuid::Uuid;
 
 	use crate::postgres::test::setup_postgresql;
 	use crate::tokens::storage::TokenStorage;
-	
+
 	use crate::users::user::User;
 
 	#[tokio::test]
