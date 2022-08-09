@@ -542,6 +542,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cheetah-libraries-postgresql"
+version = "999.999.999"
+dependencies = [
+ "cheetah-libraries-microservice",
+ "sqlx",
+]
+
+[[package]]
 name = "cheetah-matches-factory"
 version = "999.999.999"
 dependencies = [
@@ -742,6 +750,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.0",
  "cheetah-libraries-microservice",
+ "cheetah-libraries-postgresql",
  "chrono",
  "futures",
  "headers",
@@ -778,6 +787,7 @@ dependencies = [
  "include_dir",
  "jwt-tonic-user-uuid",
  "prost",
+ "sqlx",
  "tokio",
  "tonic",
  "tonic-build",
