@@ -1,0 +1,10 @@
+[package]
+name = "cheetah-libraries-postgresql"
+version = "999.999.999"
+edition = "2021"
+
+[dependencies]
+sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "migrate", "chrono"] }
+cheetah-libraries-microservice = { path = "../../Microservice" }
+
+
