@@ -265,7 +265,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 		refresh_exp: Duration,
 	) -> (TokensService, Container<'static, Postgres>) {
 		let (pg_pool, instance) = setup_postgresql().await;
-		let storage = TokenStorage::new(pg_pool.clone(), refresh_exp.add(Duration::from_secs(1)));
+		let storage = TokenStorage::new(pg_pool, refresh_exp.add(Duration::from_secs(1)));
 		let service = TokensService::new_with_storage(
 			PRIVATE_KEY.to_string(),
 			PUBLIC_KEY.to_string(),

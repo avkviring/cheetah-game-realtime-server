@@ -22,7 +22,7 @@ pub async fn create_postgres_pool(
 
 #[cfg(test)]
 pub mod test {
-	use std::collections::HashMap;
+	
 
 	use sqlx::PgPool;
 	use testcontainers::clients::Cli;
