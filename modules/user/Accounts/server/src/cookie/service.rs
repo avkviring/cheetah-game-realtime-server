@@ -1,8 +1,8 @@
 use lazy_static::lazy_static;
 use prometheus::{register_int_counter, IntCounter};
+use sqlx::PgPool;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
-use ydb::TableClient;
 
 use cheetah_libraries_microservice::trace::Trace;
 
@@ -21,13 +21,9 @@ pub struct CookieService {
 }
 
 impl CookieService {
-	pub fn new(
-		ydb_table_client: TableClient,
-		token_service: TokensService,
-		user_service: UserService,
-	) -> Self {
+	pub fn new(pg_pool: PgPool, token_service: TokensService, user_service: UserService) -> Self {
 		Self {
-			storage: CookieStorage::new(ydb_table_client),
+			storage: CookieStorage::new(pg_pool),
 			token_service,
 			user_service,
 		}
@@ -131,21 +127,21 @@ mod test {
 	use tonic::Request;
 
 	use crate::cookie::service::CookieService;
+	use crate::postgres::test::setup_postgresql;
 	use crate::proto::cookie_server::Cookie;
 	use crate::proto::{LoginRequest, RegistryRequest};
 	use crate::tokens::tests::{stub_token_service, PUBLIC_KEY};
 	use crate::users::service::UserService;
-	use crate::postgres::test::setup_ydb;
 
 	#[tokio::test]
 	async fn should_register_and_login() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let (_node, token_service) =
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let (token_service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 		let service = CookieService::new(
-			ydb_client.table_client(),
+			pg_pool.clone(),
 			token_service,
-			UserService::new(ydb_client.table_client()),
+			UserService::new(pg_pool.clone()),
 		);
 		let result = service
 			.register(Request::new(RegistryRequest {
@@ -185,14 +181,10 @@ mod test {
 
 	#[tokio::test]
 	async fn should_not_login_with_wrong_cookie() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let (_node, token_service) =
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let (token_service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
-		let service = CookieService::new(
-			ydb_client.table_client(),
-			token_service,
-			UserService::new(ydb_client.table_client()),
-		);
+		let service = CookieService::new(pg_pool.clone(), token_service, UserService::new(pg_pool));
 		let login_result = service
 			.login(Request::new(LoginRequest {
 				cookie: "88c56aca-7111-4c80-b49d-86ebb3d2f697".to_string(),

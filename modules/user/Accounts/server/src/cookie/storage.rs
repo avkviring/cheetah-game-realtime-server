@@ -1,81 +1,52 @@
+use sqlx::{PgPool, Row};
 use thiserror::Error;
 use uuid::Uuid;
-use ydb::{Bytes, TableClient, YdbOrCustomerError};
-use ydb_steroids::error::is_unique_violation_error;
-use ydb_steroids::{query, select, update};
 
 use crate::cookie::Cookie;
 use crate::users::user::User;
 
-#[derive(Debug, Error)]
-pub enum AttachError {
-	#[error("UniqueViolation")]
-	UniqueViolation,
-	#[error("Other {0}")]
-	Other(String),
-}
-
 pub struct CookieStorage {
-	ydb_table_client: TableClient,
+	pg_pool: PgPool,
 }
 
 impl CookieStorage {
-	pub fn new(ydb_table_client: TableClient) -> Self {
-		Self { ydb_table_client }
+	pub fn new(pg_pool: PgPool) -> Self {
+		Self { pg_pool }
 	}
 
-	pub async fn attach(&self, user: User) -> Result<Cookie, AttachError> {
-		loop {
-			let cookie = Cookie(Uuid::new_v4());
-			match self.do_attach(user, &cookie).await {
-				Ok(_) => return Ok(cookie),
-				Err(AttachError::UniqueViolation) => continue,
-				Err(err) => return Err(err),
-			}
-		}
+	pub async fn attach(&self, user: User) -> Result<Cookie, sqlx::Error> {
+		let cookie = Cookie(Uuid::new_v4());
+		sqlx::query("insert into cheetah_user_accounts_cookie (cookie,user_uuid) values($1, $2)")
+			.bind(cookie.0)
+			.bind(user.0)
+			.execute(&self.pg_pool)
+			.await?;
+		Ok(cookie)
 	}
 
-	async fn do_attach(&self, user: User, cookie: &Cookie) -> Result<(), AttachError> {
-		let result = update!(
-			self.ydb_table_client,
-			query!(
-				"insert into cookie_users (cookie,user) values($cookie, $user)", 
-				cookie=>cookie,
-				user=>user)
+	pub async fn find(&self, cookie: &Cookie) -> Result<Option<User>, sqlx::Error> {
+		Ok(
+			sqlx::query("select user_uuid from cheetah_user_accounts_cookie where cookie=$1")
+				.bind(cookie.0)
+				.fetch_optional(&self.pg_pool)
+				.await?
+				.map(|r| User(r.get(0))),
 		)
-		.await;
-
-		result.map_err(|e| {
-			if is_unique_violation_error(&e) {
-				AttachError::UniqueViolation
-			} else {
-				AttachError::Other(format!("{:?}", e))
-			}
-		})
-	}
-
-	pub async fn find(&self, cookie: &Cookie) -> Result<Option<User>, YdbOrCustomerError> {
-		let result: Vec<User> = select!(
-			self.ydb_table_client,
-			query!("select user from cookie_users where cookie=$cookie", cookie=>cookie),
-			user => Bytes)
-		.await?;
-		Ok(result.into_iter().last())
 	}
 }
 
 #[cfg(test)]
 pub mod tests {
-	use crate::cookie::storage::{AttachError, CookieStorage};
+	use crate::cookie::storage::CookieStorage;
 	use crate::cookie::Cookie;
+	use crate::postgres::test::setup_postgresql;
 	use crate::users::service::UserService;
-	use crate::postgres::test::setup_ydb;
 
 	#[tokio::test]
 	pub async fn should_attach() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let user_service = UserService::new(ydb_client.table_client());
-		let cookie_storage = CookieStorage::new(ydb_client.table_client());
+		let (pg_pool, _container) = setup_postgresql().await;
+		let user_service = UserService::new(pg_pool.clone());
+		let cookie_storage = CookieStorage::new(pg_pool);
 
 		let user_a = user_service.create().await.unwrap();
 		let user_b = user_service.create().await.unwrap();
@@ -91,22 +62,5 @@ pub mod tests {
 			cookie_storage.find(&cookie_b).await.unwrap().unwrap(),
 			user_b
 		);
-	}
-
-	#[tokio::test]
-	pub async fn should_check_duplicate() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let user_service = UserService::new(ydb_client.table_client());
-		let cookie_storage = CookieStorage::new(ydb_client.table_client());
-
-		let user = user_service.create().await.unwrap();
-		assert!(cookie_storage
-			.do_attach(user, &Cookie::from(1u128))
-			.await
-			.is_ok());
-		assert!(matches!(
-			cookie_storage.do_attach(user, &Cookie::from(1u128)).await,
-			Err(AttachError::UniqueViolation)
-		));
 	}
 }
