@@ -3,8 +3,6 @@ use sqlx::PgPool;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
-use ydb::TableClient;
-
 use crate::cookie::service::CookieService;
 use crate::google::google_jwt::Parser;
 use crate::google::storage::GoogleStorage;

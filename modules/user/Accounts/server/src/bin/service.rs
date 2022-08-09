@@ -4,7 +4,6 @@ use include_dir::include_dir;
 
 use cheetah_user_accounts::grpc::run_grpc_server;
 use cheetah_user_accounts::postgres::create_postgres_pool;
-use ydb_steroids::builder::YdbClientBuilder;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
