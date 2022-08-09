@@ -1,8 +1,12 @@
-use std::ops::Add;
-use std::time::Duration;
+use std::ops::{Add, Sub};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use sqlx::postgres::PgRow;
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
+use crate::tokens::TokensService;
 use crate::users::user::User;
 
 ///
@@ -10,38 +14,35 @@ use crate::users::user::User;
 ///
 #[derive(Clone)]
 pub struct TokenStorage {
-	ydb_table_client: TableClient,
+	pg_pool: PgPool,
 	///
 	/// Время жизни данных для пользователя
 	///
 	ttl: Duration,
 }
 impl TokenStorage {
-	pub fn new(ydb_table_client: TableClient, ttl: Duration) -> Self {
-		Self {
-			ydb_table_client,
-			ttl,
-		}
+	pub fn new(pg_pool: PgPool, ttl: Duration) -> Self {
+		Self { pg_pool, ttl }
 	}
 
 	pub async fn create_new_linked_uuid(
 		&self,
 		user: &User,
 		device: &str,
-		create_at: &Duration,
-	) -> Result<Uuid, YdbOrCustomerError> {
+	) -> Result<Uuid, sqlx::Error> {
 		let token_uuid = Uuid::new_v4();
-		update!(
-			self.ydb_table_client,
-			query!(
-				"upsert into tokens(user, device, token_uuid, create_at) values ($user,$device,$token_uuid,$create_at)",
-				user=>user,
-				device=>device,
-				create_at=>create_at,
-				token_uuid=>token_uuid
-			)
-		)
-		.await?;
+		// удаляем старую привязку
+		sqlx::query("delete from cheetah_user_accounts_tokens where user_uuid=$1 and device=$2")
+			.bind(user.0)
+			.bind(device)
+			.execute(&self.pg_pool)
+			.await?;
+
+		sqlx::query("insert into cheetah_user_accounts_tokens (user_uuid, device, token) values ($1, $2,$3)")
+			.bind(user.0)
+			.bind(device)
+			.bind(token_uuid)
+			.execute(&self.pg_pool).await?;
 		Ok(token_uuid)
 	}
 
@@ -50,56 +51,41 @@ impl TokenStorage {
 		user: &User,
 		device: &str,
 		token_uuid: &Uuid,
-		now: Duration,
-	) -> Result<bool, YdbOrCustomerError> {
-		self.ydb_table_client
-			.retry_transaction(|mut t| async move {
-				let query = query!(
-					"select create_at from tokens where user=$user and device=$device and token_uuid=$token_uuid",
-					user=>user,
-					device=>device,
-					token_uuid=>token_uuid
-				);
-				let result = t
-					.query(query)
-					.await?
-					.into_only_result()
-					.unwrap()
-					.rows()
-					.any(|mut row| {
-						let time: Option<Duration> = row
-							.remove_field_by_name("create_at")
-							.unwrap()
-							.try_into()
-							.unwrap();
-						time.unwrap().add(self.ttl) >= now
-					});
-				t.query(query!(
-					"delete from tokens where user=$user and device=$device and token_uuid=$token_uuid",
-					user=>user,
-					device=>device,
-					token_uuid=>token_uuid
-				))
-				.await?;
-				t.commit().await?;
+		now: SystemTime,
+	) -> Result<bool, sqlx::Error> {
+		let result: Option<PgRow> = sqlx::query(
+			"select create_at from cheetah_user_accounts_tokens where user_uuid=$1 and device=$2 and token=$3",
+		)
+		.bind(user.0)
+		.bind(device)
+		.bind(token_uuid)
+		.fetch_optional(&self.pg_pool)
+		.await?;
 
-				Ok(result)
-			})
-			.await
+		Ok(match result {
+			None => false,
+			Some(row) => {
+				let created_at: NaiveDateTime = row.get(0);
+				created_at.timestamp_millis() as u128 + self.ttl.as_millis()
+					> now.duration_since(UNIX_EPOCH).unwrap().as_millis()
+			}
+		})
 	}
 }
 
 #[cfg(test)]
 pub mod tests {
-	use std::sync::Arc;
+	use std::ops::Add;
 	use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+	use rustls::internal::msgs::enums::AlertDescription::DecompressionFailure;
+	use testcontainers::images::postgres::Postgres;
+	use testcontainers::Container;
 	use uuid::Uuid;
 
-	use ydb_steroids::test_container::YDBTestInstance;
-
-	use crate::postgres::test::setup_ydb;
+	use crate::postgres::test::setup_postgresql;
 	use crate::tokens::storage::TokenStorage;
+	use crate::tokens::TokensService;
 	use crate::users::user::User;
 
 	#[tokio::test]
@@ -107,15 +93,8 @@ pub mod tests {
 		let (storage, _instance) = setup().await;
 		let user = User::default();
 		let device = "device";
-		let now = Duration::default();
-		let uuid_1 = storage
-			.create_new_linked_uuid(&user, device, &now)
-			.await
-			.unwrap();
-		let uuid_2 = storage
-			.create_new_linked_uuid(&user, device, &now)
-			.await
-			.unwrap();
+		let uuid_1 = storage.create_new_linked_uuid(&user, device).await.unwrap();
+		let uuid_2 = storage.create_new_linked_uuid(&user, device).await.unwrap();
 
 		assert_ne!(uuid_1, uuid_2);
 	}
@@ -128,11 +107,11 @@ pub mod tests {
 		let device = "device".to_owned();
 		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 		let version_1 = storage
-			.create_new_linked_uuid(&user, &device, &now)
+			.create_new_linked_uuid(&user, &device)
 			.await
 			.unwrap();
 		let linked = storage
-			.is_linked(&user, &device, &version_1, now)
+			.is_linked(&user, &device, &version_1, SystemTime::now())
 			.await
 			.unwrap();
 
@@ -146,7 +125,7 @@ pub mod tests {
 		let user = User::default();
 		let device = "device".to_owned();
 		let linked = storage
-			.is_linked(&user, &device, &Uuid::new_v4(), Duration::default())
+			.is_linked(&user, &device, &Uuid::new_v4(), SystemTime::now())
 			.await
 			.unwrap();
 
@@ -159,20 +138,22 @@ pub mod tests {
 		let user = User::default();
 		let device = "device".to_owned();
 
-		let now = Duration::from_secs(0);
 		let uuid = storage
-			.create_new_linked_uuid(&user, &device, &now)
+			.create_new_linked_uuid(&user, &device)
 			.await
 			.unwrap();
 
-		let now = Duration::from_secs(100);
-		let linked = storage.is_linked(&user, &device, &uuid, now).await.unwrap();
+		let offset = Duration::from_secs(100);
+		let linked = storage
+			.is_linked(&user, &device, &uuid, SystemTime::now().add(offset))
+			.await
+			.unwrap();
 		assert!(!linked)
 	}
 
-	async fn setup() -> (TokenStorage, Arc<YDBTestInstance>) {
-		let (ydb, instance) = setup_ydb().await;
-		let storage = TokenStorage::new(ydb.table_client(), Duration::from_secs(10));
+	async fn setup() -> (TokenStorage, Container<'static, Postgres>) {
+		let (pg_pool, instance) = setup_postgresql().await;
+		let storage = TokenStorage::new(pg_pool.clone(), Duration::from_secs(10));
 		(storage, instance)
 	}
 }

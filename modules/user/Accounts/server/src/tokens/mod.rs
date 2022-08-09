@@ -2,12 +2,11 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use jwt_tonic_user_uuid::{JWTUserTokenParser, SessionTokenClaims};
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use thiserror::Error;
 use uuid::Uuid;
-use ydb::TableClient;
-
-use jwt_tonic_user_uuid::{JWTUserTokenParser, SessionTokenClaims};
 
 use crate::tokens::storage::TokenStorage;
 use crate::users::user::User;
@@ -58,8 +57,8 @@ const SESSION_EXP: Duration = Duration::from_secs(10 * HOUR_IN_SEC);
 const REFRESH_EXP: Duration = Duration::from_secs(30 * 24 * HOUR_IN_SEC);
 
 impl TokensService {
-	pub async fn new(ydb_table: TableClient, private_key: String, public_key: String) -> Self {
-		let storage = TokenStorage::new(ydb_table, REFRESH_EXP);
+	pub async fn new(pg_pool: PgPool, private_key: String, public_key: String) -> Self {
+		let storage = TokenStorage::new(pg_pool, REFRESH_EXP);
 		Self {
 			session_exp: SESSION_EXP,
 			refresh_exp: REFRESH_EXP,
@@ -105,7 +104,7 @@ impl TokensService {
 
 		let uuid = self
 			.storage
-			.create_new_linked_uuid(&user, device_id, &now)
+			.create_new_linked_uuid(&user, device_id)
 			.await
 			.map_err(|e| JWTTokensServiceError::StorageError(format!("{:?}", e)))?;
 
@@ -165,7 +164,7 @@ impl TokensService {
 				let device_id = token.claims.device_id;
 				match self
 					.storage
-					.is_linked(&user, &device_id, &token.claims.uuid, TokensService::now())
+					.is_linked(&user, &device_id, &token.claims.uuid, SystemTime::now())
 					.await
 				{
 					Ok(linked) => {
@@ -178,7 +177,7 @@ impl TokensService {
 							Err(JWTTokensServiceError::InvalidId)
 						}
 					}
-					Err(e) => Err(JWTTokensServiceError::StorageError(format!("{}", e))),
+					Err(e) => Err(JWTTokensServiceError::StorageError(format!("{:?}", e))),
 				}
 			}
 			Err(error) => match error.kind() {
@@ -192,21 +191,21 @@ impl TokensService {
 #[cfg(test)]
 pub mod tests {
 	use std::ops::Add;
-	use std::sync::Arc;
 	use std::thread;
 	use std::time::Duration;
 
 	use jwt_tonic_user_uuid::{JWTUserTokenParser, SessionTokenError};
-	use ydb_steroids::test_container::YDBTestInstance;
+	use testcontainers::images::postgres::Postgres;
+	use testcontainers::Container;
 
+	use crate::postgres::test::setup_postgresql;
 	use crate::tokens::storage::TokenStorage;
 	use crate::tokens::{JWTTokensServiceError, TokensService};
 	use crate::users::user::User;
-	use crate::postgres::test::setup_ydb;
 
 	#[tokio::test]
 	async fn session_token_should_correct() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let user = User::default();
 		let tokens = service.create(user, "some-device-id").await.unwrap();
@@ -219,7 +218,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn session_token_should_exp() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let tokens = service
 			.create(User::default(), "some-device-id")
@@ -236,7 +235,7 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn session_token_should_fail_if_not_correct() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let tokens = service
 			.create(1u128.into(), "some-device-id")
@@ -264,10 +263,9 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	pub async fn stub_token_service<'a>(
 		session_exp: Duration,
 		refresh_exp: Duration,
-	) -> (Arc<YDBTestInstance>, TokensService) {
-		let (ydb, instance) = setup_ydb().await;
-		let storage =
-			TokenStorage::new(ydb.table_client(), refresh_exp.add(Duration::from_secs(1)));
+	) -> (TokensService, Container<'static, Postgres>) {
+		let (pg_pool, instance) = setup_postgresql().await;
+		let storage = TokenStorage::new(pg_pool.clone(), refresh_exp.add(Duration::from_secs(1)));
 		let service = TokensService::new_with_storage(
 			PRIVATE_KEY.to_string(),
 			PUBLIC_KEY.to_string(),
@@ -275,12 +273,12 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 			refresh_exp,
 			storage,
 		);
-		(instance, service)
+		(service, instance)
 	}
 
 	#[tokio::test]
 	async fn should_refresh_token_different_for_players() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 		let tokens_for_player_a = service
 			.create(User::default(), "some-devicea-id")
@@ -295,7 +293,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 
 	#[tokio::test]
 	async fn should_refresh_token() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 
 		let user = User::default();
@@ -319,7 +317,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_exp() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let tokens = service
 			.create(User::default(), "some-device-id")
@@ -338,7 +336,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_fail() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let tokens = service
 			.create(User::default(), "some-device-id")
@@ -357,7 +355,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_use_once() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let tokens = service
 			.create(User::default(), "some-device-id")
@@ -375,7 +373,7 @@ FpJe74Uik/faq9wOBk9nTW2OcaM7KzI/FGhloy7932seLe6Vtx6hjBL5
 	///
 	#[tokio::test]
 	async fn should_refresh_token_can_invalidate_tokens() {
-		let (_node, service) =
+		let (service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(1)).await;
 		let tokens_a = service
 			.create(1u128.into(), "some-device-id")
