@@ -130,30 +130,29 @@ impl proto::google_server::Google for GoogleGrpcService {
 mod test {
 	use std::time::Duration;
 
+	use sqlx::PgPool;
 	use tonic::metadata::MetadataValue;
 	use tonic::Request;
-	use ydb::TableClient;
 
 	use crate::cookie::service::CookieService;
 	use crate::google::google_jwt::Parser;
 	use crate::google::storage::GoogleStorage;
 	use crate::google::test_helper::TokenClaims;
 	use crate::google::{test_helper, GoogleGrpcService};
+	use crate::postgres::test::setup_postgresql;
 	use crate::proto::cookie_server::Cookie;
 	use crate::proto::google_server::Google;
 	use crate::proto::{AttachRequest, RegisterOrLoginRequest, RegistryRequest};
 	use crate::tokens::tests::{stub_token_service, PUBLIC_KEY};
 	use crate::tokens::TokensService;
 	use crate::users::service::UserService;
-	use crate::postgres::test::setup_ydb;
 
 	#[tokio::test]
 	async fn should_register_and_login() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let (_node, token_service) =
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let (token_service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
-		let (google_user_token, google_service) =
-			setup_google(ydb_client.table_client(), token_service);
+		let (google_user_token, google_service) = setup_google(pg_pool, token_service);
 
 		let response_1 = google_service
 			.register_or_login(Request::new(RegisterOrLoginRequest {
@@ -186,19 +185,16 @@ mod test {
 		assert_eq!(user_1, user_2);
 	}
 
-	fn setup_google(
-		ydb_table_client: TableClient,
-		token_service: TokensService,
-	) -> (String, GoogleGrpcService) {
+	fn setup_google(pg_pool: PgPool, token_service: TokensService) -> (String, GoogleGrpcService) {
 		let (token, public_key_server) = test_helper::setup_public_key_server(
 			&TokenClaims::new_with_expire(Duration::from_secs(100)),
 		);
 
 		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
 		let service = GoogleGrpcService::new(
-			GoogleStorage::new(ydb_table_client.clone()),
+			GoogleStorage::new(pg_pool.clone()),
 			token_service,
-			UserService::new(ydb_table_client),
+			UserService::new(pg_pool),
 			Parser::new_with_custom_cert_url(
 				test_helper::CLIENT_ID,
 				public_key_server.url("/").as_str(),
@@ -210,17 +206,14 @@ mod test {
 
 	#[tokio::test]
 	async fn should_attach() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let (_node, token_service) =
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let (token_service, _node) =
 			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 		let (google_user_token, google_service) =
-			setup_google(ydb_client.table_client(), token_service.clone());
-		let service = CookieService::new(
-			ydb_client.table_client(),
-			token_service,
-			UserService::new(ydb_client.table_client()),
-		);
-		let cookie_registry_response = service
+			setup_google(pg_pool.clone(), token_service.clone());
+		let cookie_service =
+			CookieService::new(pg_pool.clone(), token_service, UserService::new(pg_pool));
+		let cookie_registry_response = cookie_service
 			.register(Request::new(RegistryRequest {
 				device_id: "some-device".to_string(),
 			}))

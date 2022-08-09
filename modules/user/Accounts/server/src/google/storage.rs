@@ -1,65 +1,51 @@
+use sqlx::postgres::PgRow;
+use sqlx::{Error, PgPool, Row};
 use uuid::Uuid;
-use ydb::{Bytes, TableClient, YdbOrCustomerError};
-
-use ydb_steroids::{query, update};
 
 use crate::users::user::User;
 
 pub struct GoogleStorage {
-	ydb_table_client: TableClient,
+	pg_pool: PgPool,
 }
 
 impl GoogleStorage {
-	pub fn new(ydb_table_client: TableClient) -> Self {
-		Self { ydb_table_client }
+	pub fn new(pg_pool: PgPool) -> Self {
+		Self { pg_pool }
 	}
 
-	pub async fn attach(&self, user: User, google_id: &str) -> Result<(), YdbOrCustomerError> {
-		update!(
-			self.ydb_table_client,
-			query!(
-				"delete from google_users where user=$user or google_id=$google_id",
-				user=>user,
-				google_id=>google_id
-			)
+	pub async fn attach(&self, user: User, google_id: &str) -> Result<(), sqlx::Error> {
+		sqlx::query("delete from cheetah_user_accounts_google where user_uuid=$1 or google_id=$2")
+			.bind(user.0)
+			.bind(google_id)
+			.execute(&self.pg_pool)
+			.await?;
+
+		sqlx::query(
+			"insert into cheetah_user_accounts_google (user_uuid, google_id) values($1, $2)",
 		)
+		.bind(user.0)
+		.bind(google_id)
+		.execute(&self.pg_pool)
 		.await?;
 
-		self.ydb_table_client
-			.retry_transaction(|mut t| async move {
-				let q = r#"
-					insert into google_users (user, google_id) values($user, $google_id);
-					insert into google_users_history (user, google_id, time) values($user,$google_id, CurrentUtcDatetime());
-				"#;
-				t.query(query!(q, user=>user, google_id=>google_id)).await?;
-				t.commit().await?;
-				Ok(())
-			})
-			.await
+		sqlx::query(
+			"insert into cheetah_user_accounts_google_users_history (user_uuid, google_id) values($1,$2)",
+		)
+		.bind(user.0)
+		.bind(google_id)
+		.execute(&self.pg_pool)
+		.await?;
+
+		Ok(())
 	}
 
-	pub async fn find(&self, google_id: &str) -> Result<Option<User>, YdbOrCustomerError> {
-		self.ydb_table_client
-			.retry_transaction(|mut t| async move {
-				let query_result = t
-					.query(
-						query!("select * from google_users where google_id=$google_id", 
-						google_id=>google_id),
-					)
-					.await?;
-				match query_result.into_only_row() {
-					Ok(mut row) => {
-						let user_uuid: Option<Bytes> =
-							row.remove_field_by_name("user")?.try_into()?;
-						let user_uuid: Vec<u8> = user_uuid.unwrap().into();
-						Ok(Some(User::from(
-							Uuid::from_slice(user_uuid.as_slice()).unwrap(),
-						)))
-					}
-					Err(_) => Ok(None),
-				}
-			})
-			.await
+	pub async fn find(&self, google_id: &str) -> Result<Option<User>, sqlx::Error> {
+		let result: Option<PgRow> =
+			sqlx::query("select * from cheetah_user_accounts_google where google_id=$1")
+				.bind(google_id)
+				.fetch_optional(&self.pg_pool)
+				.await?;
+		Ok(result.map(|row| User(row.get(0))))
 	}
 }
 
@@ -67,20 +53,22 @@ impl GoogleStorage {
 pub mod tests {
 	use std::time::Duration;
 
+	use sqlx::postgres::PgRow;
+	use sqlx::Row;
 	use uuid::Uuid;
-	use ydb::{Bytes, Query};
 
+	use crate::google::test_helper::setup;
+	use crate::postgres::test::setup_postgresql;
 	use crate::users::service::UserService;
 	use crate::users::user::User;
-	use crate::postgres::test::setup_ydb;
 
 	use super::GoogleStorage;
 
 	#[tokio::test]
 	pub async fn should_attach() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let user_service = UserService::new(ydb_client.table_client());
-		let google_storage = GoogleStorage::new(ydb_client.table_client());
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let user_service = UserService::new(pg_pool.clone());
+		let google_storage = GoogleStorage::new(pg_pool);
 
 		let user_a = user_service.create().await.unwrap();
 		let user_b = user_service.create().await.unwrap();
@@ -110,68 +98,39 @@ pub mod tests {
 
 	#[tokio::test]
 	pub async fn should_history() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let user_service = UserService::new(ydb_client.table_client());
-		let google_storage = GoogleStorage::new(ydb_client.table_client());
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let user_service = UserService::new(pg_pool.clone());
+		let google_storage = GoogleStorage::new(pg_pool.clone());
 
 		let user = user_service.create().await.unwrap();
 		google_storage.attach(user, "a@kviring.com").await.unwrap();
 		google_storage.attach(user, "b@kviring.com").await.unwrap();
 
-		let result: Vec<(Duration, User, String)> = ydb_client
-			.table_client()
-			.retry_transaction(|mut t| async move {
-				Ok(t.query(Query::new(
-					"select time, user, google_id from google_users_history order by time",
-				))
-				.await
-				.unwrap()
-				.into_only_result()
-				.unwrap()
-				.rows()
-				.map(|mut row| {
-					let duration: Option<Duration> = row
-						.remove_field_by_name("time")
-						.unwrap()
-						.try_into()
-						.unwrap();
-					let user_uuid: Option<Bytes> = row
-						.remove_field_by_name("user")
-						.unwrap()
-						.try_into()
-						.unwrap();
-					let google_id: Option<String> = row
-						.remove_field_by_name("google_id")
-						.unwrap()
-						.try_into()
-						.unwrap();
-					let user_uuid: Vec<u8> = user_uuid.unwrap().into();
-					(
-						duration.unwrap(),
-						Uuid::from_slice(user_uuid.as_slice()).unwrap().into(),
-						google_id.unwrap(),
-					)
-				})
-				.collect())
-			})
-			.await
-			.unwrap();
+		let result:Vec<(User, String)> = sqlx::query(
+			"select user_uuid, google_id from cheetah_user_accounts_google_users_history order by created_at",
+		)
+		.fetch_all(&pg_pool)
+		.await
+		.unwrap()
+			.iter()
+			.map(|row| (User(row.get(0)), row.get(1)))
+			.collect();
 
 		let i1 = result.get(0).unwrap();
-		assert_eq!(i1.1, user);
-		assert_eq!(i1.2, "a@kviring.com".to_owned());
+		assert_eq!(i1.0, user);
+		assert_eq!(i1.1, "a@kviring.com".to_owned());
 
 		let i2 = result.get(1).unwrap();
-		assert_eq!(i2.1, user);
-		assert_eq!(i2.2, "b@kviring.com".to_owned());
+		assert_eq!(i2.0, user);
+		assert_eq!(i2.1, "b@kviring.com".to_owned());
 	}
 
 	/// Перепривязка google_id от одного пользователя к другому
 	#[tokio::test]
 	pub async fn should_reattach_1() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let user_service = UserService::new(ydb_client.table_client());
-		let google_storage = GoogleStorage::new(ydb_client.table_client());
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let user_service = UserService::new(pg_pool.clone());
+		let google_storage = GoogleStorage::new(pg_pool);
 
 		let user_a = user_service.create().await.unwrap();
 		let user_b = user_service.create().await.unwrap();
@@ -204,9 +163,9 @@ pub mod tests {
 	/// Перепривязка google_id для пользователя
 	#[tokio::test]
 	pub async fn should_reattach_2() {
-		let (ydb_client, _instance) = setup_ydb().await;
-		let user_service = UserService::new(ydb_client.table_client());
-		let google_storage = GoogleStorage::new(ydb_client.table_client());
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let user_service = UserService::new(pg_pool.clone());
+		let google_storage = GoogleStorage::new(pg_pool);
 
 		let user_a = user_service.create().await.unwrap();
 		google_storage
