@@ -1,12 +1,12 @@
-use std::ops::{Add, Sub};
+
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{NaiveDateTime};
 use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-use crate::tokens::TokensService;
+
 use crate::users::user::User;
 
 ///
@@ -78,14 +78,14 @@ pub mod tests {
 	use std::ops::Add;
 	use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-	use rustls::internal::msgs::enums::AlertDescription::DecompressionFailure;
+	
 	use testcontainers::images::postgres::Postgres;
 	use testcontainers::Container;
 	use uuid::Uuid;
 
 	use crate::postgres::test::setup_postgresql;
 	use crate::tokens::storage::TokenStorage;
-	use crate::tokens::TokensService;
+	
 	use crate::users::user::User;
 
 	#[tokio::test]
@@ -105,7 +105,7 @@ pub mod tests {
 
 		let user = User::default();
 		let device = "device".to_owned();
-		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+		let _now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
 		let version_1 = storage
 			.create_new_linked_uuid(&user, &device)
 			.await
@@ -153,7 +153,7 @@ pub mod tests {
 
 	async fn setup() -> (TokenStorage, Container<'static, Postgres>) {
 		let (pg_pool, instance) = setup_postgresql().await;
-		let storage = TokenStorage::new(pg_pool.clone(), Duration::from_secs(10));
+		let storage = TokenStorage::new(pg_pool, Duration::from_secs(10));
 		(storage, instance)
 	}
 }

@@ -1,6 +1,6 @@
-use std::fmt::format;
 
-use include_dir::include_dir;
+
+
 
 use cheetah_user_accounts::grpc::run_grpc_server;
 use cheetah_user_accounts::postgres::create_postgres_pool;
@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		cheetah_libraries_microservice::get_env("POSTGRES_HOST").as_str(),
 		db_port
 			.parse()
-			.expect(format!("POSTGRES_PORT is wrong {:?}", db_port).as_str()),
+			.unwrap_or_else(|_| panic!("POSTGRES_PORT is wrong {:?}", db_port)),
 	)
 	.await;
 

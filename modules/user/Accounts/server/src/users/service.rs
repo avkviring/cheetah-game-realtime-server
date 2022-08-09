@@ -24,9 +24,9 @@ impl UserService {
 
 #[cfg(test)]
 pub mod tests {
-	use std::time::Duration;
+	
 
-	use sqlx::postgres::PgRow;
+	
 	use sqlx::Row;
 	use uuid::Uuid;
 

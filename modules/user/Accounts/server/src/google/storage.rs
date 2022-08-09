@@ -1,6 +1,6 @@
 use sqlx::postgres::PgRow;
-use sqlx::{Error, PgPool, Row};
-use uuid::Uuid;
+use sqlx::{PgPool, Row};
+
 
 use crate::users::user::User;
 
@@ -51,13 +51,13 @@ impl GoogleStorage {
 
 #[cfg(test)]
 pub mod tests {
-	use std::time::Duration;
+	
 
-	use sqlx::postgres::PgRow;
+	
 	use sqlx::Row;
-	use uuid::Uuid;
+	
 
-	use crate::google::test_helper::setup;
+	
 	use crate::postgres::test::setup_postgresql;
 	use crate::users::service::UserService;
 	use crate::users::user::User;
