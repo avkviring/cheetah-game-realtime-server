@@ -38,7 +38,7 @@ impl CookieStorage {
 #[cfg(test)]
 pub mod tests {
 	use crate::cookie::storage::CookieStorage;
-	
+
 	use crate::postgres::test::setup_postgresql;
 	use crate::users::service::UserService;
 

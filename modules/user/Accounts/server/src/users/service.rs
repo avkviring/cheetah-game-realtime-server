@@ -24,9 +24,7 @@ impl UserService {
 
 #[cfg(test)]
 pub mod tests {
-	
 
-	
 	use sqlx::Row;
 	use uuid::Uuid;
 
