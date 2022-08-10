@@ -755,7 +755,6 @@ dependencies = [
  "futures",
  "headers",
  "httpmock",
- "include_dir",
  "jsonwebtoken 8.0.1",
  "jwt-tonic-user-uuid",
  "lazy_static",
@@ -784,10 +783,13 @@ name = "cheetah-user-store"
 version = "999.999.999"
 dependencies = [
  "cheetah-libraries-microservice",
+ "cheetah-libraries-postgresql",
  "include_dir",
  "jwt-tonic-user-uuid",
+ "lazy_static",
  "prost",
  "sqlx",
+ "testcontainers 0.13.0",
  "tokio",
  "tonic",
  "tonic-build",

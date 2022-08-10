@@ -1,116 +1,95 @@
 use std::fmt::Display;
 
 use include_dir::{include_dir, Dir};
-use ydb::{YdbError, YdbOrCustomerError};
 
-pub use fetch::Fetch;
-pub use update::Update;
+pub use fetcher::Fetcher;
+pub use updater::Updater;
 
-mod fetch;
-mod table;
-mod update;
+mod double;
+mod fetcher;
+mod long;
+mod string;
+mod updater;
 
-#[allow(dead_code)]
-static MIGRATIONS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
+pub static COLUMN_USER: &str = "user_uuid";
+pub static COLUMN_FIELD_NAME: &str = "field_name";
+pub static COLUMN_FIELD_VALUE: &str = "value";
 
-#[allow(dead_code)]
-pub const DB_NAME: &str = "userstore";
-
-#[derive(Debug)]
-pub enum Error {
-	FieldNotFound,
-	DatabaseError(YdbOrCustomerError),
-}
-
-impl Error {
-	pub fn is_server_side(&self) -> bool {
-		matches!(self, Error::DatabaseError(_))
-	}
-}
-
-impl From<YdbOrCustomerError> for Error {
-	fn from(e: YdbOrCustomerError) -> Self {
-		match e {
-			YdbOrCustomerError::YDB(YdbError::NoRows) => Error::FieldNotFound,
-			_ => Error::DatabaseError(e),
-		}
-	}
-}
-
-impl Display for Error {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		f.write_fmt(format_args!("{:?}", self))
-	}
-}
-
-impl std::error::Error for Error {
-	fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-		match self {
-			Error::DatabaseError(e) => Some(e),
-			_ => None,
-		}
-	}
+pub trait TableName {
+	fn table_name() -> &'static str;
 }
 
 #[cfg(test)]
 mod test {
-	use std::sync::Arc;
+	use std::fmt::Debug;
+	use std::ops::Add;
 
+	use sqlx::Postgres;
 	use uuid::Uuid;
-	use ydb::Client;
-	use ydb_steroids::migration::Migrator;
-	use ydb_steroids::test_container as ydb_test;
-	use ydb_steroids::test_container::YDBTestInstance;
 
-	use crate::ydb::MIGRATIONS_DIR;
-	use crate::ydb::{Fetch, Update};
+	use crate::postgres::test::setup_postgresql;
+	use crate::storage::{Fetcher, TableName, Updater};
 
-	#[tokio::test]
-	async fn test_get_double() {
-		let (_instance, client) = ydb_instance("test_get_double").await;
+	pub async fn do_test_increment<T>(expected_value: T)
+	where
+		T: TableName,
+		T: Copy,
+		T: Add<Output = T>,
+		T: PartialEq<T>,
+		T: Debug,
+		T: for<'r> sqlx::Encode<'r, Postgres> + sqlx::Type<Postgres> + Send,
+		T: for<'r> sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
+	{
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let updater = Updater::new(pg_pool.clone());
+		let fetcher = Fetcher::new(pg_pool.clone());
 
-		let user = Uuid::new_v4();
-		let field_name = "cringebar";
-		let expected_value = 666.666;
+		let user_id = Uuid::new_v4();
 
-		let update = Update::new(client.table_client());
-		update
-			.set(&user, field_name, &expected_value)
+		updater
+			.set(&user_id, "points", expected_value)
 			.await
 			.unwrap();
 
-		let fetch = Fetch::new(client.table_client());
-		let actual_value = fetch.get_double(&user, field_name).await.unwrap();
-
-		assert_eq!(expected_value, actual_value);
-	}
-
-	#[tokio::test]
-	async fn test_get_string() {
-		let (_instance, client) = ydb_instance("test_get_string").await;
-
-		let user = Uuid::new_v4();
-		let field_name = "displayname";
-		let expected_value = "Potet";
-
-		let update = Update::new(client.table_client());
-		update
-			.set(&user, field_name, &expected_value)
+		updater
+			.increment(&user_id, "points", expected_value)
 			.await
 			.unwrap();
 
-		let fetch = Fetch::new(client.table_client());
-		let actual_value = fetch.get_string(&user, field_name).await.unwrap();
-
-		assert_eq!(expected_value, actual_value);
+		let actual_value: T = fetcher.get(&user_id, "points").await.unwrap().unwrap();
+		assert_eq!(expected_value + expected_value, actual_value)
 	}
 
-	pub async fn ydb_instance(db_name: &str) -> (Arc<YDBTestInstance>, Client) {
-		let (_instance, client) = ydb_test::get_or_create_ydb_instance(db_name).await;
+	pub async fn do_test_set<T>(expected_value_a: T, expected_value_b: T)
+	where
+		T: TableName,
+		T: Clone,
+		T: PartialEq<T>,
+		T: Debug,
+		T: for<'r> sqlx::Encode<'r, Postgres> + sqlx::Type<Postgres> + Send,
+		T: for<'r> sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,
+	{
+		let (pg_pool, _instance) = setup_postgresql().await;
+		let updater = Updater::new(pg_pool.clone());
+		let fetcher = Fetcher::new(pg_pool.clone());
 
-		let mut m = Migrator::new_from_dir(&MIGRATIONS_DIR);
-		m.migrate(&client).await.unwrap();
+		let user_id = Uuid::new_v4();
 
-		(_instance, client)
+		updater
+			.set(&user_id, "points", expected_value_a.clone())
+			.await
+			.unwrap();
+
+		let actual_value: T = fetcher.get(&user_id, "points").await.unwrap().unwrap();
+		assert_eq!(expected_value_a, actual_value);
+
+		// проверяем двойную установку для тестирования upsert
+		updater
+			.set(&user_id, "points", expected_value_b.clone())
+			.await
+			.unwrap();
+
+		let actual_value: T = fetcher.get(&user_id, "points").await.unwrap().unwrap();
+		assert_eq!(expected_value_b, actual_value)
 	}
 }

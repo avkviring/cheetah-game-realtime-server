@@ -1,26 +1,27 @@
 use std::future::Future;
 
-use ::ydb::TableClient;
-use cheetah_libraries_microservice::trace::trace_err;
+use sqlx::PgPool;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
+
+use cheetah_libraries_microservice::trace::trace_err;
 
 use crate::grpc::userstore::{
 	self, fetch_server::Fetch, FetchDoubleReply, FetchDoubleRequest, FetchLongReply,
 	FetchLongRequest, FetchStringReply, FetchStringRequest,
 };
 use crate::grpc::verify_credentials;
-use crate::ydb;
+use crate::storage;
 
 pub struct FetchService {
-	fetch: ydb::Fetch,
+	fetcher: storage::Fetcher,
 	jwt_public_key: String,
 }
 
 impl FetchService {
-	pub fn new(client: TableClient, jwt_public_key: String) -> Self {
+	pub fn new(pg_pool: PgPool, jwt_public_key: String) -> Self {
 		Self {
-			fetch: ydb::Fetch::new(client),
+			fetcher: storage::Fetcher::new(pg_pool),
 			jwt_public_key,
 		}
 	}
@@ -31,18 +32,19 @@ impl FetchService {
 		op: Op,
 	) -> Result<Response<R>, Status>
 	where
-		R: From<userstore::Status> + From<V>,
+		R: From<userstore::FetchStatus> + From<V>,
 		Op: FnOnce(Uuid, T) -> Fut,
-		Fut: Future<Output = Result<V, ydb::Error>>,
+		Fut: Future<Output = Result<Option<V>, sqlx::Error>>,
 	{
 		match verify_credentials(request, &self.jwt_public_key) {
 			Ok((user, args)) => match op(user, args).await {
-				Ok(value) => Ok(Response::new(value.into())),
+				Ok(value) => match value {
+					None => Ok(Response::new(userstore::FetchStatus::FieldNotFound.into())),
+					Some(value) => Ok(Response::new(value.into())),
+				},
 				Err(e) => {
-					if e.is_server_side() {
-						trace_err("Fetch operation failed", &e);
-					}
-					e.lift(|s| s.into())
+					trace_err("Fetch operation failed", &e);
+					Err(Status::internal("Internal error"))
 				}
 			},
 			Err(e) => Err(e),
@@ -57,7 +59,7 @@ impl Fetch for FetchService {
 		request: Request<FetchDoubleRequest>,
 	) -> Result<Response<FetchDoubleReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.fetch.get_double(&user, &args.field_name).await
+			self.fetcher.get::<f64>(&user, &args.field_name).await
 		})
 		.await
 	}
@@ -67,7 +69,7 @@ impl Fetch for FetchService {
 		request: Request<FetchLongRequest>,
 	) -> Result<Response<FetchLongReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.fetch.get_long(&user, &args.field_name).await
+			self.fetcher.get::<i64>(&user, &args.field_name).await
 		})
 		.await
 	}
@@ -77,7 +79,7 @@ impl Fetch for FetchService {
 		request: Request<FetchStringRequest>,
 	) -> Result<Response<FetchStringReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.fetch.get_string(&user, &args.field_name).await
+			self.fetcher.get::<String>(&user, &args.field_name).await
 		})
 		.await
 	}
