@@ -37,6 +37,9 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
           env:
+            {{- range $item := .Values.env }}
+            - {{- $item | toYaml | nindent 13 }}
+            {{- end }}
             - name: "JWT_PUBLIC_KEY"
               valueFrom:
                 secretKeyRef:
@@ -47,12 +50,6 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: private
-            - name: YDB_HOST
-              value: "$({{ .Release.Namespace | upper | replace "-" "_" }}_YDB_DATABASE_GRPC_SERVICE_HOST)"
-            - name: YDB_NAMESPACE
-              value: "/Root/{{ .Release.Namespace}}-ydb-database/"
-            - name: YDB_PORT
-              value: "$({{ .Release.Namespace | upper | replace "-" "_" }}_YDB_DATABASE_GRPC_SERVICE_PORT)"
             - name: "REDIS_HOST"
               value: "$(CHEETAH_ACCOUNTS_REDIS_MASTER_SERVICE_HOST)"
             - name: "REDIS_PORT"

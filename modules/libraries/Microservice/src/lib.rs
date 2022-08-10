@@ -74,6 +74,7 @@ fn setup_panic_hook() {
 		});
 		// сообщаем об ошибке
 		tracing::error!("{}", panic_info);
+		println!("panic {}", panic_info);
 	}));
 }
 
