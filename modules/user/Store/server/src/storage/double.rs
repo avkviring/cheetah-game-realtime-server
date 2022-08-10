@@ -1,6 +1,6 @@
-use uuid::Uuid;
 
-use crate::storage::{Fetcher, TableName};
+
+use crate::storage::{TableName};
 
 impl TableName for f64 {
 	fn table_name() -> &'static str {
