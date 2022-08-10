@@ -2,7 +2,7 @@ use std::{error::Error, net::SocketAddr};
 
 use jwt_tonic_user_uuid::JWTUserTokenParser;
 use sqlx::PgPool;
-use tonic::Response;
+
 use tonic::{transport::Server, Request, Status};
 use uuid::Uuid;
 
