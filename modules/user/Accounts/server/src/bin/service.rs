@@ -4,7 +4,6 @@ use cheetah_user_accounts::grpc::run_grpc_server;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	cheetah_libraries_microservice::init("accounts");
-
 	let pg_pool = create_postgresql_pool_from_env().await;
 	sqlx::migrate!().run(&pg_pool).await.unwrap();
 

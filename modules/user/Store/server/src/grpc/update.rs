@@ -1,39 +1,38 @@
 use std::future::Future;
 
-use ::ydb::TableClient;
-use cheetah_libraries_microservice::trace::trace_err;
+use sqlx::PgPool;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
+
+use cheetah_libraries_microservice::trace::trace_err;
 
 use crate::grpc::userstore::{update_server::Update, SetDoubleRequest, UpdateReply};
 use crate::grpc::userstore::{SetLongRequest, SetStringRequest};
 use crate::grpc::verify_credentials;
-use crate::ydb;
+use crate::storage;
 
 pub struct UpdateService {
-	update: ydb::Update,
+	updater: storage::Updater,
 	jwt_public_key: String,
 }
 
 impl UpdateService {
-	pub fn new(client: TableClient, jwt_public_key: String) -> Self {
+	pub fn new(pg_pool: PgPool, jwt_public_key: String) -> Self {
 		Self {
-			update: ydb::Update::new(client),
+			updater: storage::Updater::new(pg_pool),
 			jwt_public_key,
 		}
 	}
 
 	fn new_response(
 		&self,
-		result: Result<(), ydb::Error>,
+		result: Result<(), sqlx::Error>,
 	) -> Result<Response<UpdateReply>, Status> {
 		match result {
 			Ok(_) => Ok(Response::new(UpdateReply::default())),
 			Err(e) => {
-				if e.is_server_side() {
-					trace_err("Update operation failed", &e);
-				}
-				e.lift(|s| UpdateReply { status: s as i32 })
+				trace_err("Update operation failed", &e);
+				Err(Status::internal("Internal error"))
 			}
 		}
 	}
@@ -44,7 +43,7 @@ impl UpdateService {
 		op: impl FnOnce(Uuid, T) -> Fut,
 	) -> Result<Response<UpdateReply>, Status>
 	where
-		Fut: Future<Output = Result<(), ydb::Error>>,
+		Fut: Future<Output = Result<(), sqlx::Error>>,
 	{
 		match verify_credentials(request, &self.jwt_public_key) {
 			Err(s) => Err(s),
@@ -60,8 +59,8 @@ impl Update for UpdateService {
 		request: Request<SetDoubleRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.update
-				.increment(&user, &args.field_name, &args.value)
+			self.updater
+				.increment(&user, &args.field_name, args.value)
 				.await
 		})
 		.await
@@ -72,8 +71,8 @@ impl Update for UpdateService {
 		request: Request<SetLongRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.update
-				.increment(&user, &args.field_name, &args.value)
+			self.updater
+				.increment(&user, &args.field_name, args.value)
 				.await
 		})
 		.await
@@ -84,7 +83,7 @@ impl Update for UpdateService {
 		request: Request<SetLongRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.update.set(&user, &args.field_name, &args.value).await
+			self.updater.set(&user, &args.field_name, args.value).await
 		})
 		.await
 	}
@@ -94,7 +93,7 @@ impl Update for UpdateService {
 		request: Request<SetDoubleRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.update.set(&user, &args.field_name, &args.value).await
+			self.updater.set(&user, &args.field_name, args.value).await
 		})
 		.await
 	}
@@ -104,7 +103,7 @@ impl Update for UpdateService {
 		request: Request<SetStringRequest>,
 	) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.update.set(&user, &args.field_name, &args.value).await
+			self.updater.set(&user, &args.field_name, args.value).await
 		})
 		.await
 	}

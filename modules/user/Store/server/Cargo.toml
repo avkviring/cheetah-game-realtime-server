@@ -15,11 +15,16 @@ prost = "0.9.0"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 jwt-tonic-user-uuid = "0.0.1"
 cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
+cheetah-libraries-postgresql = { path = "../../../libraries/rust/Postgresql" }
 uuid = "1.0.0"
 include_dir = "0.7.2"
+sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "migrate"] }
+
 
 [dev-dependencies]
 uuid = { version = "1.0.0", features = ["v4"] }
+testcontainers = "0.13.0"
+lazy_static = "1.4.0"
 
 [build-dependencies]
 tonic-build = "0.6.2"
