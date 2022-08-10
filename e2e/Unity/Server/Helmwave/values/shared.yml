@@ -1,2 +1,23 @@
 grpcDomain: stage1.stage.cheetah.games
-lokiUrl: http://monitoring-loki.system:3100
+lokiUrl: http://loki.system:3100
+
+env:
+  - name: "POSTGRES_PORT"  
+    value: "5432"
+  - name: "POSTGRES_DB"    
+    valueFrom:
+      secretKeyRef:
+        name: postgresql
+        key: user
+  - name: "POSTGRES_HOST"
+    value: "postgresql"
+  - name: "POSTGRES_USER"    
+    valueFrom:
+      secretKeyRef:
+        name: postgresql
+        key: user
+  - name: "POSTGRES_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: postgresql
+        key: password    

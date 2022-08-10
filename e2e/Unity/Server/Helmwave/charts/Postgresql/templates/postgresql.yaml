@@ -1,0 +1,88 @@
+{{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Chart.Name)) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Chart.Name }}
+type: Opaque
+  {{ if $secret}}
+immutable: true
+data:
+  user: {{ $secret.data.user }}
+  password: {{ $secret.data.password }}
+  {{ else }}
+stringData:
+  user: platform
+  password: {{ uuidv4 | quote }}
+  {{ end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  replicas: 1
+  serviceName: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: postgres:13.1-alpine
+          resources:
+            limits:
+              cpu: "1"
+              memory: 150Mi
+            requests:
+              cpu: "0.5"
+              memory: 150Mi
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/db/
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: {{ .Chart.Name }}
+      {{if not .Values.persistence.enabled}}
+      volumes:
+        - name: {{ .Chart.Name }}
+          emptyDir:
+            sizeLimit: 100Mi
+            medium: Memory
+  {{end}}
+  {{if .Values.persistence.enabled}}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Chart.Name }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 8Gi
+  {{end}}
+

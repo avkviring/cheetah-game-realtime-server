@@ -8,6 +8,11 @@ version: 0.20.1
     - values/shared.yml
 
 releases:
+  - name: postgresql
+    chart: charts/Postgresql
+    <<: *options
+    values:
+      - values/postgresql.yml
   - name: config
     chart: charts/Config
     <<: *options
@@ -30,6 +35,7 @@ releases:
     <<: *options
     depends_on:
       - platform@stage1
+      - postgresql@stage1
   - name: matches-registry
     chart: ../../../../modules/matches/Registry/chart/
     <<: *options
