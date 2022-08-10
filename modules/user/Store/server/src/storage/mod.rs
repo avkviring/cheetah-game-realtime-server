@@ -1,7 +1,3 @@
-
-
-
-
 pub use fetcher::Fetcher;
 pub use updater::Updater;
 

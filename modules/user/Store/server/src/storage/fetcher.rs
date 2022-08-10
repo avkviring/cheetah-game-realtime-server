@@ -1,6 +1,3 @@
-
-
-
 use sqlx::{PgPool, Postgres, Row};
 use uuid::Uuid;
 

@@ -1,6 +1,4 @@
-
-
-use crate::storage::{TableName};
+use crate::storage::TableName;
 
 impl TableName for String {
 	fn table_name() -> &'static str {
