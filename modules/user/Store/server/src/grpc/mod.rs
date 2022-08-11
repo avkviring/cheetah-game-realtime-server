@@ -2,11 +2,11 @@ use std::{error::Error, net::SocketAddr};
 
 use jwt_tonic_user_uuid::JWTUserTokenParser;
 use sqlx::PgPool;
-
 use tonic::{transport::Server, Request, Status};
+use tonic_health::ServingStatus;
 use uuid::Uuid;
 
-use cheetah_libraries_microservice::{init, trace::trace_err};
+use cheetah_libraries_microservice::trace::trace_err;
 use update::UpdateService;
 use userstore::update_server::UpdateServer;
 
@@ -34,11 +34,14 @@ impl Service {
 	}
 
 	pub async fn serve(&self, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
-		init("user.store");
-
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 
 		let update_service = UpdateService::new(self.pg_pool.clone(), self.jwt_public_key.clone());
+
+		health_reporter
+			.set_service_status("", ServingStatus::Serving)
+			.await;
+
 		health_reporter
 			.set_serving::<UpdateServer<UpdateService>>()
 			.await;

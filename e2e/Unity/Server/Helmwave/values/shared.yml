@@ -1,2 +1,2 @@
-grpcDomain: stage1.stage.cheetah.games
+grpcDomain: stage1.stage-a.cheetah.games
 lokiUrl: http://loki.system:3100

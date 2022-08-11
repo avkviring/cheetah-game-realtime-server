@@ -24,9 +24,10 @@ pub async fn create_postgres_pool(
 ) -> PgPool {
 	use std::time::Duration;
 	let uri = format!("postgres://{}:{}@{}:{}/{}", user, passwd, host, port, db);
+	println!("connect to {:?}", uri);
 	PgPoolOptions::new()
 		.max_connections(5)
-		.acquire_timeout(Duration::from_secs(1))
+		.acquire_timeout(Duration::from_secs(10))
 		.connect(&uri)
 		.await
 		.unwrap()
