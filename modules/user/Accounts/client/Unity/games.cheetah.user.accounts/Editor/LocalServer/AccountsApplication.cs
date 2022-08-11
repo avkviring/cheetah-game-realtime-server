@@ -11,8 +11,8 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
 
         public AccountsApplication(string redisName) : base(AppName)
         {
-            YDBEnabled = true;
             RedisName = redisName;
+            EnablePostgreSQL("user_accounts");
             ExternalGrpcServices.Add("cheetah.accounts");
             Dependencies.Add(redisName);
         }
@@ -20,6 +20,7 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {
             base.ConfigureDockerContainerBuilder(builder);
+            base.ConfigurePostgresEnv(builder);
             // var appId = GooglePlayGamesSettings.GetOrCreateSettings().AppId;
             // if (appId.Trim().Length > 0)
             // {

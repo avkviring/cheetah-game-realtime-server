@@ -144,7 +144,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
 
                 var progress = 0;
                 var serverApplications = Registry.GetApplications();
-                await LaunchYDB(progressListener, serverApplications, progress, network);
+                await LaunchPostgresql(progressListener, serverApplications, progress, network);
                 var deltaProgress = 90 / serverApplications.Count; // 10 процентов - на запуск nginx
                 var done = false;
                 var launched = new HashSet<string>();
@@ -203,7 +203,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 {
                     // ожидаем получание логов
                     await Task.Delay(DockerLogWatcher.FetchTime.Add(DockerLogWatcher.FetchTime));
-                    await Remove(docker, progressListener);
+                    //await Remove(docker, progressListener);
                     Status = Status.Fail;
                 }
             }
@@ -211,15 +211,15 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             await Task.Delay(TimeSpan.FromSeconds(10));
         }
 
-        private async Task LaunchYDB(IDockerProgressListener progressListener, List<ServerApplication> serverApplications, int progress,
+        private async Task LaunchPostgresql(IDockerProgressListener progressListener, List<ServerApplication> serverApplications, int progress,
             NetworksCreateResponse network)
         {
-            var applicationWithPostgresql = serverApplications.FindAll(app => app.YDBEnabled);
+            var applicationWithPostgresql = serverApplications.FindAll(app => app.PostgresDatabase!=null).Select(a=>a.PostgresDatabase).ToList();
             if (applicationWithPostgresql.Count > 0)
             {
                 progressListener.SetProgressTitle("starting yandex database");
                 progressListener.SetProgress(progress);
-                await Launch(new YandexDBApplication(), network.ID, progressListener);
+                await Launch(new PostgreSqlApplication(applicationWithPostgresql), network.ID, progressListener);
             }
         }
 
@@ -228,8 +228,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         {
             await ImagePull(serverApplication.DockerImage, progressListener, serverApplication.Name);
             var dockerContainerBuilder = new DockerContainerBuilder(serverApplication.Name, serverApplication.DockerImage);
-            if (serverApplication.YDBEnabled) serverApplication.ConfigureYDBEnv(dockerContainerBuilder);
             serverApplication.ConfigureDockerContainerBuilder(dockerContainerBuilder);
+            if (serverApplication.PostgresDatabase!=null) serverApplication.ConfigurePostgresEnv(dockerContainerBuilder);
 
             var createContainerResponse =
                 await docker.Containers.CreateContainerAsync(dockerContainerBuilder.BuildDockerConfig(networkId, unityProjectId));

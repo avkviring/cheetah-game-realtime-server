@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 using JetBrains.Annotations;
 
@@ -25,9 +26,17 @@ namespace Cheetah.Platform.Editor.LocalServer
         /// </summary>
         public virtual DockerImage DockerImage { get; }
 
+        [CanBeNull] public string PostgresDatabase { get; internal set; }
+
         protected ServerApplication(string name)
         {
             Name = name;
+        }
+
+
+        public void EnablePostgreSQL(string database)
+        {
+            PostgresDatabase = database;
         }
 
 
@@ -50,10 +59,13 @@ namespace Cheetah.Platform.Editor.LocalServer
         {
         }
 
-        internal void ConfigureYDBEnv(DockerContainerBuilder builder)
+        public void ConfigurePostgresEnv(DockerContainerBuilder builder)
         {
-            builder.AddEnv("YDB_HOST", "ydb");
-            builder.AddEnv("YDB_PORT", "2136");
+            builder.AddEnv("POSTGRES_HOST", PostgreSqlApplication.Host);
+            builder.AddEnv("POSTGRES_PORT", "5432");
+            builder.AddEnv("POSTGRES_DB", PostgresDatabase);
+            builder.AddEnv("POSTGRES_USER", PostgreSqlApplication.User);
+            builder.AddEnv("POSTGRES_PASSWORD", PostgreSqlApplication.Password);
         }
 
 
@@ -90,8 +102,6 @@ namespace Cheetah.Platform.Editor.LocalServer
         public readonly ISet<string> ExternalGrpcServices = new HashSet<string>();
 
         public readonly ISet<string> AdminGrpcServices = new HashSet<string>();
-
-        public bool YDBEnabled { get; protected set; }
 
         public struct LogItem
         {

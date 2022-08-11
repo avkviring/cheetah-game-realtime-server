@@ -50,15 +50,6 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: private
-            - name: "REDIS_HOST"
-              value: "$(CHEETAH_ACCOUNTS_REDIS_MASTER_SERVICE_HOST)"
-            - name: "REDIS_PORT"
-              value: "$(CHEETAH_ACCOUNTS_REDIS_MASTER_SERVICE_PORT)"
-            - name: "REDIS_AUTH"
-              valueFrom:
-                secretKeyRef:
-                  name: cheetah-accounts-redis-password
-                  key: password
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
