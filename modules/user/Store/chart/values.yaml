@@ -1,0 +1,31 @@
+replicaCount: 1
+cpu:
+  request: "0.1"
+  limit: "1"
+memory:
+  request: 20Mi
+  limit: 40Mi
+internalPostgresql:
+  enable: true
+  persistence:
+    enabled: false
+env:
+  - name: "POSTGRES_PORT"
+    value: "5432"
+  - name: "POSTGRES_DB"
+    valueFrom:
+      secretKeyRef:
+        name: cheetah-user-store-postgresql
+        key: user
+  - name: "POSTGRES_HOST"
+    value: "cheetah-user-store-postgresql"
+  - name: "POSTGRES_USER"
+    valueFrom:
+      secretKeyRef:
+        name: cheetah-user-store-postgresql
+        key: user
+  - name: "POSTGRES_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: cheetah-user-store-postgresql
+        key: password

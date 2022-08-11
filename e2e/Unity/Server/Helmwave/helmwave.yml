@@ -7,7 +7,7 @@ version: 0.20.1
   values:
     - values/shared.yml
 
-releases:  
+releases:
   - name: config
     chart: charts/Config
     <<: *options
@@ -29,7 +29,12 @@ releases:
     chart: ../../../../modules/user/Accounts/chart/
     <<: *options
     depends_on:
-      - platform@stage1      
+      - platform@stage1
+  - name: user-store
+    chart: ../../../../modules/user/Store/chart/
+    <<: *options
+    depends_on:
+      - platform@stage1
   - name: matches-registry
     chart: ../../../../modules/matches/Registry/chart/
     <<: *options
