@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "ghcr.io/cheetah-game-platform/platform/user-accounts:{{ .Chart.Version }}"
+          image: "ghcr.io/cheetah-game-platform/platform/user-store:{{ .Chart.Version }}"
           resources:
             limits:
               cpu: {{ .Values.cpu.limit }}
