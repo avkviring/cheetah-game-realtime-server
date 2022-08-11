@@ -1,4 +1,5 @@
 using System;
+using Cheetah.User.Store.GRPC;
 using Grpc.Core;
 
 namespace Cheetah.User.Store
@@ -40,11 +41,11 @@ namespace Cheetah.User.Store
             }
         }
 
-        internal static UserStoreException FromGrpcStatus(User.Store.GRPC.Status status)
+        internal static UserStoreException FromGrpcStatus(FetchStatus status)
         {
             switch (status)
             {
-                case User.Store.GRPC.Status.FieldNotFound:
+                case FetchStatus.FieldNotFound:
                     return new UserStoreException("Field not found", null, Status.FieldNotFound);
                 default:
                     return new UserStoreException("Internal server error", null, Status.InternalServerError);
