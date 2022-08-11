@@ -1,8 +1,9 @@
-{{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Chart.Name)) }}
+{{ if .Values.internalPostgresql.enable}}
+{{ $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-postgresql" .Chart.Name)) }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Chart.Name }}
+  name: "{{ .Chart.Name }}-postgresql"
 type: Opaque
   {{ if $secret}}
 immutable: true
@@ -11,17 +12,17 @@ data:
   password: {{ $secret.data.password }}
   {{ else }}
 stringData:
-  user: platform
+  user: authentication
   password: {{ uuidv4 | quote }}
   {{ end }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Chart.Name }}
+  name: "{{ .Chart.Name }}-postgresql"
 spec:
   selector:
-    app: {{ .Chart.Name }}
+    app: "{{ .Chart.Name }}-postgresql"
   ports:
     - protocol: TCP
       port: 5432
@@ -30,20 +31,20 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Chart.Name }}
+  name: "{{ .Chart.Name }}-postgresql"
 spec:
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}
+      app: "{{ .Chart.Name }}-postgresql"
   replicas: 1
-  serviceName: {{ .Chart.Name }}
+  serviceName: "{{ .Chart.Name }}-postgresql"
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}
+        app: "{{ .Chart.Name }}-postgresql"
     spec:
       containers:
-        - name: {{ .Chart.Name }}
+        - name: "{{ .Chart.Name }}-postgresql"
           image: postgres:13.1-alpine
           resources:
             limits:
@@ -56,33 +57,33 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Chart.Name }}
+                  name: "{{ .Chart.Name }}-postgresql"
                   key: user
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Chart.Name }}
+                  name: "{{ .Chart.Name }}-postgresql"
                   key: password
             - name: PGDATA
               value: /var/lib/postgresql/data/db/
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: {{ .Chart.Name }}
-      {{if not .Values.persistence.enabled}}
+              name: "{{ .Chart.Name }}-postgresql"
+      {{if not .Values.internalPostgresql.persistence.enabled}}
       volumes:
-        - name: {{ .Chart.Name }}
+        - name: "{{ .Chart.Name }}-postgresql"
           emptyDir:
             sizeLimit: 100Mi
             medium: Memory
   {{end}}
-  {{if .Values.persistence.enabled}}
+  {{if .Values.internalPostgresql.persistence.enabled}}
   volumeClaimTemplates:
     - metadata:
-        name: {{ .Chart.Name }}
+        name: "{{ .Chart.Name }}-postgresql"
       spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
-            storage: 8Gi
+            storage: 1Gi
   {{end}}
-
+  {{end}}

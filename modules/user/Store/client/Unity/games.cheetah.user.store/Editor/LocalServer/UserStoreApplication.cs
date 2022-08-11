@@ -1,7 +1,7 @@
 using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 
-namespace Cheetah.User.Accounts.Editor.LocalServer
+namespace Cheetah.User.Store.Editor.LocalServer
 {
     public class UserStoreApplication : PlatformApplication
     {
@@ -9,13 +9,14 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
 
         public UserStoreApplication() : base(AppName)
         {
-            YDBEnabled = true;
             ExternalGrpcServices.Add("cheetah.user.store");
+            EnablePostgreSQL("user_store");
         }
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {
             base.ConfigureDockerContainerBuilder(builder);
+            base.ConfigurePostgresEnv(builder);
             builder.AddEnv(JwtKeys.PublicName, JwtKeys.PublicValue);
         }
     }
