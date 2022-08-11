@@ -217,7 +217,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             var applicationWithPostgresql = serverApplications.FindAll(app => app.PostgresDatabase!=null).Select(a=>a.PostgresDatabase).ToList();
             if (applicationWithPostgresql.Count > 0)
             {
-                progressListener.SetProgressTitle("starting yandex database");
+                progressListener.SetProgressTitle("starting postgresql database");
                 progressListener.SetProgress(progress);
                 await Launch(new PostgreSqlApplication(applicationWithPostgresql), network.ID, progressListener);
             }

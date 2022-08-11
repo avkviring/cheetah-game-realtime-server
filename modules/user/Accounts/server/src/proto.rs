@@ -1,1 +1,1 @@
-tonic::include_proto!("cheetah.accounts.external");
+tonic::include_proto!("cheetah.user.accounts.external");

@@ -12,7 +12,7 @@ spec:
       http:
         paths:
           - pathType: Prefix
-            path: /cheetah.accounts.*
+            path: /cheetah.user.accounts.*
             backend:
               service:
                 name: "{{ .Chart.Name }}-external"

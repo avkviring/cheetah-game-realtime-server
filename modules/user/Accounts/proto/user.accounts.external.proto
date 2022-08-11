@@ -1,6 +1,6 @@
 // API для обновления токенов - используется игровыми клиентами
 syntax = "proto3";
-package cheetah.accounts.external;
+package cheetah.user.accounts.external;
 option csharp_namespace = "Cheetah.User.Accounts.GRPC";
 
 service Tokens {

@@ -13,7 +13,7 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
         {
             RedisName = redisName;
             EnablePostgreSQL("user_accounts");
-            ExternalGrpcServices.Add("cheetah.accounts");
+            ExternalGrpcServices.Add("cheetah.user.accounts");
             Dependencies.Add(redisName);
         }
 
