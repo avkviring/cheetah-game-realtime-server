@@ -85,7 +85,7 @@ jobs:
       - name: Generate Unity Meta Files for Generated Scripts
         run: scripts/generate-unity-grpc-meta.sh
       - name: Configure integration-test-config.json
-        run: echo "{\"ServerHost\":\"stage1.stage.cheetah.games\"}" >  e2e/Unity/integration-test-config.json
+        run: echo "{\"ServerHost\":\"stage1.stage-a.cheetah.games\"}" >  e2e/Unity/integration-test-config.json
       - uses: cheetah-game-platform/unity-test-runner@main
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
