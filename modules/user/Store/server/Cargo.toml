@@ -17,7 +17,6 @@ jwt-tonic-user-uuid = "0.0.1"
 cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
 cheetah-libraries-postgresql = { path = "../../../libraries/rust/Postgresql" }
 uuid = "1.0.0"
-include_dir = "0.7.2"
 sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "migrate"] }
 
 

@@ -784,7 +784,6 @@ version = "999.999.999"
 dependencies = [
  "cheetah-libraries-microservice",
  "cheetah-libraries-postgresql",
- "include_dir",
  "jwt-tonic-user-uuid",
  "lazy_static",
  "prost",
