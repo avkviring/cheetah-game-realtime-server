@@ -632,7 +632,7 @@ dependencies = [
  "criterion",
  "fnv",
  "generic-array",
- "hash32",
+ "hash32 0.3.1",
  "hash32-derive",
  "heapless",
  "lazy_static",
@@ -1491,6 +1491,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hash32"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47d60b12902ba28e2730cd37e95b8c9223af2808df9e902d4df49588d1470606"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "hash32-derive"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1551,7 +1560,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d076121838e03f862871315477528debffdb7462fb229216ecef91b1a3eb31eb"
 dependencies = [
  "atomic-polyfill",
- "hash32",
+ "hash32 0.2.1",
  "serde",
  "spin 0.9.2",
  "stable_deref_trait",
