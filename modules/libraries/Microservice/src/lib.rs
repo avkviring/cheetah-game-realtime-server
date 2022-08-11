@@ -72,9 +72,9 @@ fn setup_panic_hook() {
 			// выходим
 			process::exit(1)
 		});
+		println!("panic {}", panic_info);
 		// сообщаем об ошибке
 		tracing::error!("{}", panic_info);
-		println!("panic {}", panic_info);
 	}));
 }
 
