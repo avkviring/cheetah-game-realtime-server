@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Cheetah.Platform.Editor.LocalServer;
-using Cheetah.Platform.Editor.LocalServer.Applications;
-using Cheetah.User.Store.Editor;
 using UnityEditor;
 
 namespace Cheetah.User.Store.Editor.LocalServer

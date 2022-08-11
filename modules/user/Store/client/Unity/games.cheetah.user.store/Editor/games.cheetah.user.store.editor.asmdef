@@ -4,8 +4,9 @@
     "references": [
         "games.cheetah.platform.editor"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
