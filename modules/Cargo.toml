@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "libraries/Microservice",
+    "libraries/rust/Microservice",
     "libraries/rust/Postgresql",
     "user/Accounts/server",
     "user/Store/server",
