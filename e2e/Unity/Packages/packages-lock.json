@@ -191,7 +191,7 @@
       }
     },
     "games.cheetah.play-games": {
-      "version": "file:../../../modules/libraries/GooglePlay/Client/Unity/games.cheetah.play-games",
+      "version": "file:../../../modules/libraries/unity/games.cheetah.play-games",
       "depth": 0,
       "source": "local",
       "dependencies": {}
