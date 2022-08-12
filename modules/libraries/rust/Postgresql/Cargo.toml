@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "migrate", "chrono"] }
-cheetah-libraries-microservice = { path = "../../Microservice" }
+cheetah-libraries-microservice = { path = "../Microservice" }
 
 

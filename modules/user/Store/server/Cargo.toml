@@ -14,7 +14,7 @@ tonic-web = "0.2.0"
 prost = "0.9.0"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 jwt-tonic-user-uuid = "0.0.1"
-cheetah-libraries-microservice = { path = "../../../libraries/Microservice" }
+cheetah-libraries-microservice = { path = "../../../libraries/rust/Microservice" }
 cheetah-libraries-postgresql = { path = "../../../libraries/rust/Postgresql" }
 uuid = "1.0.0"
 sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "migrate"] }
