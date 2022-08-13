@@ -133,7 +133,7 @@ jobs:
           scope: ''
       - name: Publish Packages
         run: |
-          package_files=$(find modules -name 'package.json.meta')
+          package_files=$(find modules -name 'package.json')
           for f in $package_files; do
             sed -i 's/999.999.999/${{ github.event.release.tag_name }}/' $f
             npm publish $(dirname $f)
