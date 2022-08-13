@@ -30,9 +30,7 @@ jobs:
           restore-keys: |
             test-build-${{ matrix.targetPlatform }}-unity-client-
       - name: Generate GRPC Implementations
-        run: scripts/generate-unity-grpc.sh
-      - name: Generate Unity Meta Files for Generated Scripts
-        run: scripts/generate-unity-grpc-meta.sh
+        run: scripts/generators/grpc/unity.sh
       - uses: game-ci/unity-builder@v2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}

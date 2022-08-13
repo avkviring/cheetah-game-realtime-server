@@ -85,9 +85,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Generate GRPC Implementations
-        run: scripts/generate-unity-grpc.sh
-      - name: Generate Unity Meta Files for Generated Scripts
-        run: scripts/generate-unity-grpc-meta.sh
+        run: scripts/generators/grpc/unity.sh
       - uses: actions/download-artifact@v3
         with:
           name: ios-build

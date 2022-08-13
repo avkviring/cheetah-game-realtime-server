@@ -1,7 +1,7 @@
 #/bin/bash
 
 # macOS prepare
-if [[ ($OSTYPE == 'darwin') && !(-f /usr/local/bin/musl-gcc) ]]; then
+if [[ ($OSTYPE == 'darwin'*) && !(-f /usr/local/bin/musl-gcc) ]]; then
     brew install filosottile/musl-cross/musl-cross
     ln -s /usr/local/opt/musl-cross/bin/x86_64-linux-musl-gcc /usr/local/bin/musl-gcc
 fi

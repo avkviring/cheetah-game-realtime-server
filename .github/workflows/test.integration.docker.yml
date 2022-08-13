@@ -66,9 +66,7 @@ jobs:
           name: linux.so
           path: modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library/
       - name: Generate GRPC Implementations
-        run: scripts/generate-unity-grpc.sh
-      - name: Generate Unity Meta Files for Generated Scripts
-        run: scripts/generate-unity-grpc-meta.sh
+        run: scripts/generators/grpc/unity.sh
       - name: Configure integration-test-config.json
         run: echo '{"ServerImageVersion":"999.999.998"}' > e2e/Unity/integration-test-config.json
       - uses: cheetah-game-platform/unity-test-runner@main

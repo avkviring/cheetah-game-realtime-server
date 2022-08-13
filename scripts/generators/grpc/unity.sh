@@ -1,23 +1,7 @@
 #!/bin/bash
 
-project_dir=$(pwd)
-client_dir_from_protodir=../client
-
-run_protoc() {
-    protofile=$1
-    protodir=$2
-    grpc_out_path=$3
-
-    mkdir -p $grpc_out_path
-    docker run --rm -v$project_dir:/tmp/source -w /tmp/source akviring/protoc:latest \
-      protoc \
-      --proto_path=$protodir \
-      --plugin=protoc-gen-grpc=/usr/bin/grpc_csharp_plugin \
-      --grpc_out=$grpc_out_path \
-      --csharp_out=$grpc_out_path \
-      --experimental_allow_proto3_optional \
-      $protofile
-}
+source scripts/generators/grpc/common.sh
+source scripts/common/macos.sh
 
 generate_unity_grpc_files() {
   suffix=$1
@@ -36,8 +20,34 @@ generate_unity_grpc_files() {
   done
 }
 
+generate_meta_files() {
+  generated_scripts=$(find . -type f -name '*.cs' | grep '.*/Unity/.*\(Editor\|Runtime\)/GRPC.*.cs')
+  echo 'Creating Unity .meta files'
+  for f in $generated_scripts; do
+    project_part=$(basename $(dirname $(dirname $f)))
+    file_name=$(basename $f)
+    guid=$(uuidgen --md5 -n @url -N Unity/$project_part/$file_name | tr -d '-')
+    echo "  for $(basename $f) (guid: $guid)..."
+    echo "fileFormatVersion: 2
+guid: $guid
+MonoImporter:
+externalObjects: {}
+serializedVersion: 2
+defaultReferences: []
+executionOrder: 0
+icon: {instanceID: 0}
+userData:
+assetBundleName:
+assetBundleVariant:
+" >$f.meta
+
+  done
+}
+
 generate_unity_grpc_files .external.proto Runtime
 echo
 generate_unity_grpc_files .admin.proto Editor
 echo
 generate_unity_grpc_files .shared.proto Runtime
+
+generate_meta_files

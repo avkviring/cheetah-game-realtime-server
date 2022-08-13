@@ -4,3 +4,4 @@ target
 **/Unity/**/Editor/GRPC/*.cs.meta
 **/Unity/**/Runtime/GRPC/*.cs
 **/Unity/**/Runtime/GRPC/*.cs.meta
+**/client/csharp/*.grpc
