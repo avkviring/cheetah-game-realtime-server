@@ -18,7 +18,7 @@ namespace Cheetah.Matches.Realtime.Internal
         {
         }
 
-        internal ref T Add()
+        public ref T Add()
         {
             if (Count == items.Length - 1)
             {
@@ -30,7 +30,7 @@ namespace Cheetah.Matches.Realtime.Internal
             return ref items[Count++];
         }
 
-        internal void Clear()
+        public void Clear()
         {
             Count = 0;
         }

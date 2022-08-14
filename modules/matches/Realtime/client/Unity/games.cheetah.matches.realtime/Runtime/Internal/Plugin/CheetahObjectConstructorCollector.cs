@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI;
 using Cheetah.Matches.Realtime.Types;
-using Cheetah.Matches.Realtime.Types.Object;
 
 namespace Cheetah.Matches.Realtime.Internal.Plugin
 {

@@ -6,7 +6,6 @@ using Cheetah.Matches.Realtime.Internal.FFI;
 using Cheetah.Matches.Realtime.Internal.Plugin;
 using Cheetah.Matches.Realtime.Logger;
 using Cheetah.Matches.Realtime.Types;
-using Cheetah.Matches.Realtime.Types.Object;
 using UnityEngine;
 
 namespace Cheetah.Matches.Realtime
@@ -16,9 +15,9 @@ namespace Cheetah.Matches.Realtime
     /// </summary>
     public class CheetahClient
     {
-        internal readonly CodecRegistry CodecRegistry;
+        public readonly CodecRegistry CodecRegistry;
         internal readonly ushort Id;
-        internal event Action BeforeUpdateHook;
+        public event Action BeforeUpdateHook;
         private readonly Dictionary<Type, object> plugins = new Dictionary<Type, object>();
         private readonly CheetahObjectsCreateInfo objectsCreateInfo;
         private bool enableClientLog = true;
@@ -72,7 +71,7 @@ namespace Cheetah.Matches.Realtime
             return statistics;
         }
 
-        internal T GetPlugin<T>() where T : Plugin, new()
+        public T GetPlugin<T>() where T : Plugin, new()
         {
             if (plugins.TryGetValue(typeof(T), out var plugin))
             {
