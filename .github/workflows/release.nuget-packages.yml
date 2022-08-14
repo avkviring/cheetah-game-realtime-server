@@ -1,0 +1,18 @@
+name: release.nuget.packages
+on:
+  release:
+    types: [ published ]
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  VERSION: ${{ github.event.release.tag_name }}
+jobs:
+  publish-nuget-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Generate nuget packages
+        run: scripts/generators/grpc/csharp.sh
+      - name: Add github source
+        run: dotnet nuget add source  --username avkviring --password $GITHUB_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/cheetah-game-platform/index.json"
+      - name: Publish Packages
+        run: scripts/release/nuget-packages.sh
