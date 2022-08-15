@@ -32,8 +32,8 @@ impl Interceptor for JwtAuthInterceptor {
 				Err(Status::permission_denied(""))
 			}
 			Ok(uuid) => {
-				let mut md = request.metadata_mut();
-				store_user_uuid(&mut md, &uuid);
+				let md = request.metadata_mut();
+				store_user_uuid(md, &uuid);
 				Ok(request)
 			}
 		}
