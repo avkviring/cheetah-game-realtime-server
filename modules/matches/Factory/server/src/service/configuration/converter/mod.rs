@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-use crate::proto::matches::relay::internal as relay;
+use crate::proto::matches::realtime::internal as relay;
 use crate::service::configuration::converter::error::Error;
 use crate::service::configuration::converter::object::create_relay_object;
 use crate::service::configuration::converter::template::create_template_permission;
@@ -82,7 +82,7 @@ mod tests {
 	use std::collections::HashMap;
 	use std::convert::TryFrom;
 
-	use crate::proto::matches::relay::internal as relay;
+	use crate::proto::matches::realtime::internal as relay;
 	use crate::service::configuration::yaml::structures::{Room, RoomObject, Template};
 	use crate::service::configuration::yaml::YamlConfigurations;
 

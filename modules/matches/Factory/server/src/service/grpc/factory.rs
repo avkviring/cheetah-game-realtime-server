@@ -31,9 +31,11 @@ mod tests {
 	use tonic::transport::{Server, Uri};
 	use tonic::{Request, Response, Status};
 
+	use realtime::internal;
+
+	use crate::proto::matches::realtime::internal::{ProbeRequest, ProbeResponse};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
-	use crate::proto::matches::relay::internal::{ProbeRequest, ProbeResponse};
-	use crate::proto::matches::{registry, relay};
+	use crate::proto::matches::{realtime, registry};
 	use crate::service::configuration::yaml::test::EXAMPLE_DIR;
 	use crate::service::configuration::yaml::YamlConfigurations;
 	use crate::service::grpc::registry_client::RegistryClient;
@@ -62,25 +64,32 @@ mod tests {
 		}
 	}
 
-	struct StubRelay {}
-	impl StubRelay {
+	struct StubRealtime {}
+	impl StubRealtime {
 		pub const ROOM_ID: u64 = 555;
 	}
 	#[tonic::async_trait]
-	impl relay::internal::relay_server::Relay for StubRelay {
+	impl internal::realtime_server::Realtime for StubRealtime {
 		async fn create_room(
 			&self,
-			_request: Request<relay::internal::RoomTemplate>,
-		) -> Result<Response<relay::internal::CreateRoomResponse>, Status> {
-			Ok(Response::new(relay::internal::CreateRoomResponse {
-				id: StubRelay::ROOM_ID,
+			_request: Request<internal::RoomTemplate>,
+		) -> Result<Response<internal::CreateRoomResponse>, Status> {
+			Ok(Response::new(internal::CreateRoomResponse {
+				id: StubRealtime::ROOM_ID,
 			}))
 		}
 
-		async fn attach_user(
+		async fn create_member(
 			&self,
-			_request: Request<relay::internal::AttachUserRequest>,
-		) -> Result<Response<relay::internal::AttachUserResponse>, Status> {
+			_request: Request<internal::CreateMemberRequest>,
+		) -> Result<Response<internal::CreateMemberResponse>, Status> {
+			unimplemented!()
+		}
+
+		async fn create_super_member(
+			&self,
+			_request: Request<internal::CreateSuperMemberRequest>,
+		) -> Result<Response<internal::CreateMemberResponse>, Status> {
 			unimplemented!()
 		}
 
@@ -104,7 +113,7 @@ mod tests {
 		)
 		.unwrap();
 		let result = factory.do_create_match("gubaha".to_string()).await.unwrap();
-		assert_eq!(result.id, StubRelay::ROOM_ID);
+		assert_eq!(result.id, StubRealtime::ROOM_ID);
 	}
 
 	async fn stub_grpc_services() -> Uri {
@@ -125,13 +134,13 @@ mod tests {
 			},
 		};
 
-		let stub_relay = StubRelay {};
+		let stub_relay = StubRealtime {};
 		tokio::spawn(async move {
 			Server::builder()
 				.add_service(registry::internal::registry_server::RegistryServer::new(
 					stub_registry,
 				))
-				.add_service(relay::internal::relay_server::RelayServer::new(stub_relay))
+				.add_service(internal::realtime_server::RealtimeServer::new(stub_relay))
 				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
 					stub_grpc_service_tcp,
 				))

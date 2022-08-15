@@ -1,12 +1,12 @@
 syntax = "proto3";
-package cheetah.matches.relay.admin;
+package cheetah.matches.realtime.admin;
 option csharp_namespace = "Cheetah.Matches.Realtime.Editor.GRPC";
 
 import public "matches.realtime.shared.proto";
 /**
  Общие команды для получения информации и управления сервером
  */
-service Relay {
+service Realtime {
   /**
   Получить список комнат
  */
@@ -48,7 +48,7 @@ message CompareAndSetCleaner {
   uint32 game_object_id = 1;
   uint32 game_object_owner_user = 2;
   uint32 field_id = 3;
-  cheetah.matches.relay.shared.FieldValue value = 4;
+  cheetah.matches.realtime.shared.FieldValue value = 4;
 }
 
 message DumpObject {
@@ -57,7 +57,7 @@ message DumpObject {
   uint32 template = 3;
   bool created = 4;
   optional uint32 owner_user_id = 5;
-  repeated cheetah.matches.relay.shared.GameObjectField fields = 6;
+  repeated cheetah.matches.realtime.shared.GameObjectField fields = 6;
   map<uint32, int64> compare_and_set_owners = 9;
 }
 
@@ -121,7 +121,7 @@ message Command {
   uint32 user_id = 5;
   optional uint32 template = 6;
   optional uint32 field_id = 7;
-  optional cheetah.matches.relay.shared.FieldType field_type = 8;
+  optional cheetah.matches.realtime.shared.FieldType field_type = 8;
   string value = 9;
 }
 

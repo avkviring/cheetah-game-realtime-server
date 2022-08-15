@@ -8,17 +8,17 @@ use cheetah_libraries_microservice::trace::Trace;
 use crate::debug::proto::admin;
 use crate::server::manager::ServerManager;
 
-pub struct RelayAdminGRPCService {
+pub struct RealtimeAdminGRPCService {
 	pub manager: Arc<Mutex<ServerManager>>,
 }
-impl RelayAdminGRPCService {
+impl RealtimeAdminGRPCService {
 	pub fn new(manager: Arc<Mutex<ServerManager>>) -> Self {
 		Self { manager }
 	}
 }
 
 #[tonic::async_trait]
-impl admin::relay_server::Relay for RelayAdminGRPCService {
+impl admin::realtime_server::Realtime for RealtimeAdminGRPCService {
 	async fn get_rooms(
 		&self,
 		_request: Request<admin::GetRoomsRequest>,

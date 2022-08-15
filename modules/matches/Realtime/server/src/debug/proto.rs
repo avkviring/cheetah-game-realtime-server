@@ -1,6 +1,6 @@
 pub mod admin {
-	tonic::include_proto!("cheetah.matches.relay.admin");
+	tonic::include_proto!("cheetah.matches.realtime.admin");
 }
 pub mod shared {
-	tonic::include_proto!("cheetah.matches.relay.shared");
+	tonic::include_proto!("cheetah.matches.realtime.shared");
 }

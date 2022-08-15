@@ -64,6 +64,7 @@ impl IntegrationTestHelper {
 		let mut private_key = [0; 32];
 		OsRng.fill_bytes(&mut private_key);
 		let user_template = MemberTemplate {
+			super_member: false,
 			private_key,
 			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
