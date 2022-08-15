@@ -528,6 +528,7 @@ version = "999.999.999"
 dependencies = [
  "heapless",
  "hyper",
+ "jwt-tonic-user-uuid",
  "lazy_static",
  "log",
  "prometheus-measures-exporter",
@@ -539,6 +540,7 @@ dependencies = [
  "tracing-log",
  "tracing-loki-layer",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -784,7 +786,6 @@ version = "999.999.999"
 dependencies = [
  "cheetah-libraries-microservice",
  "cheetah-libraries-postgresql",
- "jwt-tonic-user-uuid",
  "lazy_static",
  "prost",
  "sqlx",

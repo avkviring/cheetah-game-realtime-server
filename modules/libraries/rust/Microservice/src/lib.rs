@@ -1,5 +1,8 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub mod auth;
+pub mod trace;
+
 extern crate core;
 
 use std::collections::HashMap;
@@ -15,8 +18,6 @@ use tracing_loki_layer::LokiLayer;
 use tracing_subscriber::filter::Directive;
 use tracing_subscriber::layer::SubscriberExt;
 pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
-
-pub mod trace;
 
 pub type StringId = heapless::String<20>;
 

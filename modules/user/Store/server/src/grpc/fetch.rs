@@ -1,5 +1,6 @@
 use std::future::Future;
 
+use cheetah_libraries_microservice::auth::load_user_uuid;
 use sqlx::PgPool;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
@@ -10,19 +11,16 @@ use crate::grpc::userstore::{
 	self, fetch_server::Fetch, FetchDoubleReply, FetchDoubleRequest, FetchLongReply,
 	FetchLongRequest, FetchStringReply, FetchStringRequest,
 };
-use crate::grpc::verify_credentials;
 use crate::storage;
 
 pub struct FetchService {
 	fetcher: storage::Fetcher,
-	jwt_public_key: String,
 }
 
 impl FetchService {
-	pub fn new(pg_pool: PgPool, jwt_public_key: String) -> Self {
+	pub fn new(pg_pool: PgPool) -> Self {
 		Self {
 			fetcher: storage::Fetcher::new(pg_pool),
-			jwt_public_key,
 		}
 	}
 
@@ -36,18 +34,17 @@ impl FetchService {
 		Op: FnOnce(Uuid, T) -> Fut,
 		Fut: Future<Output = Result<Option<V>, sqlx::Error>>,
 	{
-		match verify_credentials(request, &self.jwt_public_key) {
-			Ok((user, args)) => match op(user, args).await {
-				Ok(value) => match value {
-					None => Ok(Response::new(userstore::FetchStatus::FieldNotFound.into())),
-					Some(value) => Ok(Response::new(value.into())),
-				},
-				Err(e) => {
-					trace_err("Fetch operation failed", &e);
-					Err(Status::internal("Internal error"))
-				}
+		let user = load_user_uuid(&request.metadata());
+		let args = request.into_inner();
+		match op(user, args).await {
+			Ok(value) => match value {
+				None => Ok(Response::new(userstore::FetchStatus::FieldNotFound.into())),
+				Some(value) => Ok(Response::new(value.into())),
 			},
-			Err(e) => Err(e),
+			Err(e) => {
+				trace_err("Fetch operation failed", &e);
+				Err(Status::internal("Internal error"))
+			}
 		}
 	}
 }
