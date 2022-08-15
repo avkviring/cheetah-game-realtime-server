@@ -8,10 +8,16 @@ service Relay {
     Создать комнату
    */
   rpc CreateRoom(RoomTemplate) returns(CreateRoomResponse);
+
   /**
     Присоединить пользователя к комнате, после этого комната будет ожидать udp соединения
    */
   rpc AttachUser(AttachUserRequest) returns(AttachUserResponse);
+
+  /**
+    Создать супер пользователя, для него отключены проверки всех прав
+   */
+  rpc CreateSuperMember(CreateSuperMemberRequest) returns(AttachUserResponse);
 
   /**
     Проверить живой ли сервер
@@ -26,6 +32,10 @@ message CreateRoomResponse {
 message AttachUserRequest {
   uint64 room_id = 1;
   UserTemplate user = 2;
+}
+
+message CreateSuperMemberRequest {
+  uint64 room_id = 1;
 }
 
 message  AttachUserResponse {

@@ -17,6 +17,5 @@ fn main() -> Result<(), Error> {
 		&["../../Registry/proto/matches.registry.internal.proto"],
 		&["../../Registry/proto/"],
 	)?;
-
 	Ok(())
 }

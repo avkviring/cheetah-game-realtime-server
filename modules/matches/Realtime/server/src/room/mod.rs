@@ -515,11 +515,8 @@ mod tests {
 			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
-		let user_template = MemberTemplate {
-			private_key: Default::default(),
-			groups: AccessGroups(55),
-			objects: vec![object_template.clone()],
-		};
+		let user_template =
+			MemberTemplate::new_member(AccessGroups(55), vec![object_template.clone()]);
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(user_template);
 		room.execute_commands(user_id, &[]);
@@ -541,11 +538,8 @@ mod tests {
 			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
-		let user1_template = MemberTemplate {
-			private_key: Default::default(),
-			groups: AccessGroups(55),
-			objects: vec![object1_template.clone()],
-		};
+		let user1_template =
+			MemberTemplate::new_member(AccessGroups(55), vec![object1_template.clone()]);
 
 		let object2_template = GameObjectTemplate {
 			id: 200,
@@ -553,11 +547,8 @@ mod tests {
 			groups: AccessGroups(55),
 			fields: Default::default(),
 		};
-		let user2_template = MemberTemplate {
-			private_key: Default::default(),
-			groups: AccessGroups(55),
-			objects: vec![object2_template.clone()],
-		};
+		let user2_template =
+			MemberTemplate::new_member(AccessGroups(55), vec![object2_template.clone()]);
 
 		let mut room = Room::from_template(template);
 		let user1_id = room.register_member(user1_template);
@@ -710,11 +701,7 @@ mod tests {
 
 	pub fn create_template() -> (RoomTemplate, MemberTemplate) {
 		let template = RoomTemplate::default();
-		let user_template = MemberTemplate {
-			private_key: Default::default(),
-			groups: AccessGroups(55),
-			objects: Default::default(),
-		};
+		let user_template = MemberTemplate::new_member(AccessGroups(55), Default::default());
 		(template, user_template)
 	}
 }

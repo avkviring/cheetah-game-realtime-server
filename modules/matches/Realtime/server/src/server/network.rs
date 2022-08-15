@@ -36,7 +36,7 @@ impl NetworkLayer {
 	pub fn new(socket: UdpSocket, measurers: Rc<RefCell<Measurers>>) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		tracing::info!("Starting network server on {:?}", socket);
-		Result::Ok(Self {
+		Ok(Self {
 			sessions: Default::default(),
 			socket,
 			measurers,
@@ -315,11 +315,7 @@ mod tests {
 		))));
 		let mut buffer = [0; MAX_FRAME_SIZE];
 
-		let user_template = MemberTemplate {
-			private_key: Default::default(),
-			groups: Default::default(),
-			objects: Default::default(),
-		};
+		let user_template = MemberTemplate::new_member(Default::default(), Default::default());
 		let user = Member {
 			id: 100,
 			connected: false,

@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use cheetah_matches_realtime_common::commands::FieldType;
 use fnv::FnvBuildHasher;
+use rand::Rng;
 
+use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::commands::FieldValue;
 use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_realtime_common::room::access::AccessGroups;
@@ -23,6 +24,11 @@ pub struct RoomTemplate {
 
 #[derive(Debug, Default, Clone)]
 pub struct MemberTemplate {
+	///
+	/// Пользователь для которого игнорируются все настройки безопасности
+	/// Обычно под данным пользователем подключаются плагины
+	///
+	pub super_member: bool,
 	pub private_key: UserPrivateKey,
 	pub groups: AccessGroups,
 	pub objects: Vec<GameObjectTemplate>,
@@ -73,16 +79,33 @@ pub enum UserTemplateError {
 }
 
 impl MemberTemplate {
+	pub fn new_member(groups: AccessGroups, objects: Vec<GameObjectTemplate>) -> Self {
+		MemberTemplate::new(false, groups, objects)
+	}
+
+	pub fn new_super_member() -> Self {
+		MemberTemplate::new(true, AccessGroups::super_group(), Default::default())
+	}
+
+	fn new(super_member: bool, groups: AccessGroups, objects: Vec<GameObjectTemplate>) -> Self {
+		MemberTemplate {
+			super_member,
+			private_key: rand::thread_rng().gen::<[u8; 32]>(),
+			groups,
+			objects,
+		}
+	}
+
 	pub fn validate(self) -> Result<MemberTemplate, UserTemplateError> {
 		for object in &self.objects {
 			if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
-				return Result::Err(UserTemplateError::UserObjectHasWrongId(
+				return Err(UserTemplateError::UserObjectHasWrongId(
 					self.private_key,
 					object.id,
 				));
 			}
 		}
-		Result::Ok(self)
+		Ok(self)
 	}
 }
 
@@ -101,11 +124,7 @@ mod tests {
 
 	impl MemberTemplate {
 		pub fn stub(access_group: AccessGroups) -> Self {
-			MemberTemplate {
-				private_key: [5; 32],
-				groups: access_group,
-				objects: Default::default(),
-			}
+			MemberTemplate::new_member(access_group, Default::default())
 		}
 
 		pub fn configure_object(
@@ -185,17 +204,13 @@ mod tests {
 
 	#[test]
 	fn should_validate_fail_when_user_object_has_wrong_id() {
-		let template = MemberTemplate {
-			private_key: [5; 32],
+		let objects = vec![GameObjectTemplate {
+			id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
+			template: 0b100,
 			groups: AccessGroups(0b1111),
-			objects: vec![GameObjectTemplate {
-				id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
-				template: 0b100,
-				groups: AccessGroups(0b1111),
-				fields: Default::default(),
-			}],
-		};
-
+			fields: Default::default(),
+		}];
+		let template = MemberTemplate::new_member(AccessGroups(0b1111), objects);
 		assert!(matches!(
 			template.validate(),
 			Result::Err(UserTemplateError::UserObjectHasWrongId(_, _))

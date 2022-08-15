@@ -88,7 +88,7 @@ pub fn perform_compare_and_set(
 		},
 		user_id,
 		Permission::Rw,
-		Option::None,
+		None,
 		action,
 	)?;
 
@@ -438,22 +438,9 @@ mod tests {
 	fn setup() -> (Room, RoomMemberId, RoomMemberId, GameObjectId, FieldId) {
 		let access_group = AccessGroups(55);
 		let mut template = RoomTemplate::default();
-		let user_template_1 = MemberTemplate {
-			private_key: Default::default(),
-			groups: access_group,
-			objects: Default::default(),
-		};
-		let user_template_2 = MemberTemplate {
-			private_key: Default::default(),
-			groups: access_group,
-			objects: Default::default(),
-		};
-
-		let user_template_3 = MemberTemplate {
-			private_key: Default::default(),
-			groups: access_group,
-			objects: Default::default(),
-		};
+		let user_template_1 = MemberTemplate::new_member(access_group, Default::default());
+		let user_template_2 = MemberTemplate::new_member(access_group, Default::default());
+		let user_template_3 = MemberTemplate::new_member(access_group, Default::default());
 
 		let object_template = 10;
 		let object_field = 50;

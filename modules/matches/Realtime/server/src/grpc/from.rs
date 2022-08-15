@@ -1,5 +1,3 @@
-use rand::Rng;
-
 use cheetah_matches_realtime_common::{commands::FieldValue, room::access::AccessGroups};
 
 use crate::debug::proto::shared::{
@@ -26,15 +24,14 @@ impl From<internal::RoomTemplate> for config::RoomTemplate {
 
 impl From<internal::UserTemplate> for config::MemberTemplate {
 	fn from(source: internal::UserTemplate) -> Self {
-		config::MemberTemplate {
-			private_key: rand::thread_rng().gen::<[u8; 32]>(),
-			groups: AccessGroups(source.groups),
-			objects: source
+		config::MemberTemplate::new_member(
+			AccessGroups(source.groups),
+			source
 				.objects
 				.into_iter()
 				.map(config::GameObjectTemplate::from)
 				.collect(),
-		}
+		)
 	}
 }
 
