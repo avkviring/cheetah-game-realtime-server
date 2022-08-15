@@ -50,20 +50,3 @@ pub fn load_user_uuid(metadata: &MetadataMap) -> Uuid {
 	let uuid_str = uuid.to_str().unwrap();
 	Uuid::from_str(uuid_str).unwrap()
 }
-
-// pub fn verify_credentials<T>(
-// 	request: Request<T>,
-// 	jwt_public_key: &str,
-// ) -> Result<(Uuid, T), Status> {
-// 	let parser = JWTUserTokenParser::new(jwt_public_key.to_string());
-// 	match parser.get_user_uuid_from_grpc(request.metadata()) {
-// 		Err(e) => {
-// 			trace_err("Unauthorized access attempt", e);
-// 			Err(Status::permission_denied(""))
-// 		}
-// 		Ok(user) => {
-// 			let args = request.into_inner();
-// 			Ok((user, args))
-// 		}
-// 	}
-// }
