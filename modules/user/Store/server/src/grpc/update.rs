@@ -43,7 +43,7 @@ impl UpdateService {
 	where
 		Fut: Future<Output = Result<(), sqlx::Error>>,
 	{
-		let user = load_user_uuid(&request.metadata());
+		let user = load_user_uuid(request.metadata());
 		let args = request.into_inner();
 		self.new_response(op(user, args).await)
 	}

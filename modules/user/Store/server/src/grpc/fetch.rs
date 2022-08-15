@@ -34,7 +34,7 @@ impl FetchService {
 		Op: FnOnce(Uuid, T) -> Fut,
 		Fut: Future<Output = Result<Option<V>, sqlx::Error>>,
 	{
-		let user = load_user_uuid(&request.metadata());
+		let user = load_user_uuid(request.metadata());
 		let args = request.into_inner();
 		match op(user, args).await {
 			Ok(value) => match value {
