@@ -7,6 +7,15 @@ use std::ops::{BitAnd, Shl};
 pub struct AccessGroups(pub u64);
 
 impl AccessGroups {
+	///
+	/// Группа для максимальных прав
+	///
+	pub fn super_group() -> AccessGroups {
+		AccessGroups(u64::MAX)
+	}
+}
+
+impl AccessGroups {
 	pub fn contains_group(&self, group: u8) -> bool {
 		let bits = 1_u64.shl(group as u64);
 		self.0.bitand(bits) == bits

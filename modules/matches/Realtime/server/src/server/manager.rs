@@ -38,17 +38,8 @@ pub enum ManagementTask {
 	/// Смещение текущего времени для тестирования
 	///
 	TimeOffset(Duration),
-
-	///
-	/// Скопировать состояние сервера для отладки
-	///
 	Dump(RoomId, Sender<Result<admin::DumpResponse, String>>),
-	///
-	/// Запросить список комнат
-	///
 	GetRooms(Sender<Vec<RoomId>>),
-	///
-	/// Выполнить задачу для трассировщика команд
 	CommandTracerSessionTask(
 		RoomId,
 		TracerSessionCommand,
