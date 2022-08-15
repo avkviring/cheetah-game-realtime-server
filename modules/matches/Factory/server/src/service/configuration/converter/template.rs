@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::proto::matches::relay::internal as relay;
-use crate::proto::matches::relay::shared;
+use crate::proto::matches::realtime::internal as relay;
+use crate::proto::matches::realtime::shared;
 use crate::service::configuration::converter::error::Error;
 use crate::service::configuration::yaml::structures::{
 	Field, FieldName, FieldType, GroupName, PermissionField, PermissionLevel, Template,
@@ -112,8 +112,8 @@ impl From<&FieldType> for shared::FieldType {
 
 #[cfg(test)]
 pub mod test {
-	use crate::proto::matches::relay::internal as relay;
-	use crate::proto::matches::relay::shared;
+	use crate::proto::matches::realtime::internal as relay;
+	use crate::proto::matches::realtime::shared;
 	use crate::service::configuration::converter::error::Error;
 	use crate::service::configuration::converter::template::{
 		create_permission_rule, create_permissions_field, create_template_permission,

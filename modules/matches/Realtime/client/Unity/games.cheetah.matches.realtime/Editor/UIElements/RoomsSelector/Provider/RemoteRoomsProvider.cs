@@ -21,7 +21,7 @@ namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider
         {
             var result = await connector.DoRequest(async (channel) =>
             {
-                var client = new GRPC.Relay.RelayClient(channel);
+                var client = new GRPC.Realtime.RealtimeClient(channel);
                 return await client.GetRoomsAsync(new GetRoomsRequest());
             });
             return result.Rooms.ToList();

@@ -8,8 +8,8 @@ use tonic::Status;
 use cheetah_libraries_microservice::trace::Trace;
 
 use crate::proto::matches::factory::internal::CreateMatchResponse;
-use crate::proto::matches::relay::internal as relay;
-use crate::proto::matches::relay::internal::relay_client::RelayClient;
+use crate::proto::matches::realtime::internal as realtime;
+use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
 use crate::service::configuration::converter::error;
 use crate::service::configuration::yaml::YamlConfigurations;
 use crate::service::grpc::registry_client::RegistryClient;
@@ -20,7 +20,7 @@ pub mod grpc;
 
 pub struct FactoryService {
 	registry: RegistryClient,
-	templates: HashMap<String, relay::RoomTemplate>,
+	templates: HashMap<String, realtime::RoomTemplate>,
 	prometheus_counters: Mutex<HashMap<String, IntCounter>>,
 }
 
@@ -61,7 +61,7 @@ impl FactoryService {
 			relay_grpc_addr.port as u16,
 		);
 		// создаем матч на relay сервере
-		let mut relay_client = RelayClient::connect(relay_addr.clone())
+		let mut relay_client = RealtimeClient::connect(relay_addr.clone())
 			.await
 			.trace_err("Create RelayClient connection to {:?}")
 			.map_err(Status::internal)?;
@@ -82,7 +82,7 @@ impl FactoryService {
 		})
 	}
 
-	pub fn template(&self, template: &str) -> Option<relay::RoomTemplate> {
+	pub fn template(&self, template: &str) -> Option<realtime::RoomTemplate> {
 		self.templates.get(template).cloned()
 	}
 

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::proto::matches::relay::internal as relay;
-use crate::proto::matches::relay::shared::GameObjectField;
+use crate::proto::matches::realtime::internal as relay;
+use crate::proto::matches::realtime::shared::GameObjectField;
 use crate::service::configuration::converter::error::Error;
 use crate::service::configuration::yaml::structures::{
 	Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName,
@@ -100,8 +100,8 @@ pub mod test {
 
 	use rmpv::Utf8String;
 
-	use crate::proto::matches::relay::internal as relay;
-	use crate::proto::matches::relay::shared::GameObjectField;
+	use crate::proto::matches::realtime::internal as relay;
+	use crate::proto::matches::realtime::shared::GameObjectField;
 	use crate::service::configuration::converter::error::Error;
 	use crate::service::configuration::converter::object::create_relay_object;
 	use crate::service::configuration::yaml::structures::{

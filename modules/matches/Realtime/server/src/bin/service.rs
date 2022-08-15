@@ -9,7 +9,7 @@ use tonic_health::ServingStatus;
 
 use cheetah_matches_realtime::agones::run_agones_cycle;
 use cheetah_matches_realtime::debug::dump::DumpGrpcService;
-use cheetah_matches_realtime::debug::grpc::RelayAdminGRPCService;
+use cheetah_matches_realtime::debug::grpc::RealtimeAdminGRPCService;
 use cheetah_matches_realtime::debug::proto::admin;
 use cheetah_matches_realtime::debug::tracer::grpc::CommandTracerGRPCService;
 use cheetah_matches_realtime::grpc::RelayGRPCService;
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let agones = run_agones_cycle(halt_signal.clone(), manager.clone());
 	let (_, _, _) = futures::join!(internal_grpc_service, admin_grpc_service, agones);
 	halt_signal.store(true, Ordering::Relaxed);
-	Result::Ok(())
+	Ok(())
 }
 
 async fn create_internal_grpc_server(
@@ -34,9 +34,10 @@ async fn create_internal_grpc_server(
 	health_reporter
 		.set_service_status("", ServingStatus::Serving)
 		.await;
-	let service = cheetah_matches_realtime::grpc::proto::internal::relay_server::RelayServer::new(
-		RelayGRPCService::new(manager),
-	);
+	let service =
+		cheetah_matches_realtime::grpc::proto::internal::realtime_server::RealtimeServer::new(
+			RelayGRPCService::new(manager),
+		);
 	let address = cheetah_libraries_microservice::get_internal_service_binding_addr();
 	Server::builder()
 		.add_service(service)
@@ -51,7 +52,8 @@ async fn create_admin_grpc_server(
 	health_reporter
 		.set_service_status("", ServingStatus::Serving)
 		.await;
-	let relay = admin::relay_server::RelayServer::new(RelayAdminGRPCService::new(manager.clone()));
+	let relay =
+		admin::realtime_server::RealtimeServer::new(RealtimeAdminGRPCService::new(manager.clone()));
 	let tracer = admin::command_tracer_server::CommandTracerServer::new(
 		CommandTracerGRPCService::new(manager.clone()),
 	);

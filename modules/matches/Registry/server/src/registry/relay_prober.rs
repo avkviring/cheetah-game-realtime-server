@@ -7,8 +7,8 @@ use thiserror::Error;
 use tonic::transport::Endpoint;
 use tonic::Request;
 
-use crate::proto::matches::relay::internal::relay_client::RelayClient;
-use crate::proto::matches::relay::internal::ProbeRequest;
+use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
+use crate::proto::matches::realtime::internal::ProbeRequest;
 
 #[async_trait]
 pub trait RelayProber: Send + Sync {
@@ -32,7 +32,7 @@ impl RelayProber for ReconnectProber {
 	async fn probe(&self, addr: SocketAddr) -> Result<(), ProbeError> {
 		let mut builder = Endpoint::from_str(&format!("http://{}", addr)).unwrap();
 		builder = builder.connect_timeout(Duration::from_secs(1));
-		let mut client = RelayClient::connect(builder)
+		let mut client = RealtimeClient::connect(builder)
 			.await
 			.map_err(ProbeError::from)?;
 

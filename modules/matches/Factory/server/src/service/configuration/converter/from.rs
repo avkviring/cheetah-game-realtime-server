@@ -1,4 +1,4 @@
-use crate::proto::matches::relay::shared::{field_value::Variant, FieldValue};
+use crate::proto::matches::realtime::shared::{field_value::Variant, FieldValue};
 
 impl From<i64> for FieldValue {
 	fn from(value: i64) -> Self {

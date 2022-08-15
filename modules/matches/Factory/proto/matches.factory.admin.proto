@@ -29,7 +29,7 @@ message TemplateInfo {
 
 message FieldInfo {
   uint32  id = 1;
-  cheetah.matches.relay.shared.FieldType type = 2;
+  cheetah.matches.realtime.shared.FieldType type = 2;
   string name = 3;
 }
 

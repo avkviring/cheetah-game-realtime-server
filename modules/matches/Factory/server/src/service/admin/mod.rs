@@ -1,7 +1,7 @@
 use cheetah_libraries_microservice::tonic::{Request, Response};
 
 use crate::proto::matches::factory::admin;
-use crate::proto::matches::relay::shared;
+use crate::proto::matches::realtime::shared;
 use crate::service::configuration::yaml::structures::FieldType;
 use crate::service::configuration::yaml::YamlConfigurations;
 
@@ -59,7 +59,7 @@ impl admin::configurations_server::Configurations for ConfigurationsService {
 #[cfg(test)]
 pub mod tests {
 	use crate::proto::matches::factory::admin;
-	use crate::proto::matches::relay::shared;
+	use crate::proto::matches::realtime::shared;
 	use crate::service::admin::ConfigurationsService;
 	use crate::service::configuration::yaml::structures::{Field, FieldType, Template};
 	use crate::service::configuration::yaml::YamlConfigurations;

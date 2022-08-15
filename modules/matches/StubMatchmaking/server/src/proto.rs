@@ -9,13 +9,13 @@ pub mod matches {
 			tonic::include_proto!("cheetah.matches.factory.internal");
 		}
 	}
-	pub mod relay {
+	pub mod realtime {
 		pub mod shared {
-			tonic::include_proto!("cheetah.matches.relay.shared");
+			tonic::include_proto!("cheetah.matches.realtime.shared");
 		}
 
 		pub mod internal {
-			tonic::include_proto!("cheetah.matches.relay.internal");
+			tonic::include_proto!("cheetah.matches.realtime.internal");
 		}
 	}
 

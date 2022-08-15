@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tokio::sync::RwLock;
 use tonic::transport::Uri;
 use tonic::{Code, Request, Response, Status};
@@ -8,15 +9,14 @@ use uuid::Uuid;
 use cheetah_libraries_microservice::trace::Trace;
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
-use jwt_tonic_user_uuid::JWTUserTokenParser;
 use matchmaking::external::matchmaking_server::Matchmaking;
 use matchmaking::external::{TicketRequest, TicketResponse};
-use relay::internal::AttachUserRequest;
+use realtime::internal::CreateMemberRequest;
 
 use crate::proto::matches::factory;
 use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::matchmaking;
-use crate::proto::matches::relay;
+use crate::proto::matches::realtime;
 
 pub struct StubMatchmakingService {
 	pub jwt_public_key: String,
@@ -72,8 +72,8 @@ impl StubMatchmakingService {
 	async fn attach_user(
 		ticket: &TicketRequest,
 		match_info: &MatchInfo,
-	) -> Result<relay::internal::AttachUserResponse, String> {
-		let mut relay = relay::internal::relay_client::RelayClient::connect(
+	) -> Result<realtime::internal::CreateMemberResponse, String> {
+		let mut relay = realtime::internal::realtime_client::RealtimeClient::connect(
 			cheetah_libraries_microservice::make_internal_srv_uri(
 				match_info.relay_grpc_host.as_str(),
 				match_info.relay_grpc_port,
@@ -83,9 +83,9 @@ impl StubMatchmakingService {
 		.map_err(|e| format!("Connect to relay error {:?}", e))?;
 
 		match relay
-			.attach_user(Request::new(AttachUserRequest {
+			.create_member(Request::new(CreateMemberRequest {
 				room_id: match_info.room_id,
-				user: Some(relay::internal::UserTemplate {
+				user: Some(realtime::internal::UserTemplate {
 					groups: ticket.user_groups,
 					objects: Default::default(),
 				}),
@@ -167,13 +167,15 @@ pub mod tests {
 	use factory::internal::factory_server::Factory;
 	use factory::internal::{CreateMatchRequest, CreateMatchResponse};
 	use matchmaking::external::TicketRequest;
-	use relay::internal::{AttachUserRequest, AttachUserResponse};
+	use realtime::internal::CreateMemberResponse;
 
 	use crate::proto::matches::factory;
 	use crate::proto::matches::matchmaking;
+	use crate::proto::matches::realtime;
+	use crate::proto::matches::realtime::internal::{
+		CreateMemberRequest, CreateSuperMemberRequest, ProbeRequest, ProbeResponse,
+	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
-	use crate::proto::matches::relay;
-	use crate::proto::matches::relay::internal::{ProbeRequest, ProbeResponse};
 	use crate::service::StubMatchmakingService;
 
 	#[tokio::test]
@@ -299,7 +301,9 @@ pub mod tests {
 				.add_service(factory::internal::factory_server::FactoryServer::new(
 					stub_factory,
 				))
-				.add_service(relay::internal::relay_server::RelayServer::new(stub_relay))
+				.add_service(realtime::internal::realtime_server::RealtimeServer::new(
+					stub_relay,
+				))
 				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
 					stub_grpc_service_tcp,
 				))
@@ -358,29 +362,36 @@ pub mod tests {
 		pub const USER_ID: u32 = 777;
 	}
 	#[tonic::async_trait]
-	impl relay::internal::relay_server::Relay for StubRelay {
+	impl realtime::internal::realtime_server::Realtime for StubRelay {
 		async fn create_room(
 			&self,
-			_request: Request<relay::internal::RoomTemplate>,
-		) -> Result<Response<relay::internal::CreateRoomResponse>, Status> {
+			_request: Request<realtime::internal::RoomTemplate>,
+		) -> Result<Response<realtime::internal::CreateRoomResponse>, Status> {
 			todo!()
 		}
 
-		async fn attach_user(
+		async fn create_member(
 			&self,
-			_request: Request<AttachUserRequest>,
-		) -> Result<Response<AttachUserResponse>, Status> {
+			_request: Request<CreateMemberRequest>,
+		) -> Result<Response<CreateMemberResponse>, Status> {
 			let mut fail = self.fail_when_zero.write().await;
 			let current = *fail;
 			*fail -= 1;
 			if current == 0 {
 				Err(Status::not_found(""))
 			} else {
-				Ok(Response::new(AttachUserResponse {
+				Ok(Response::new(CreateMemberResponse {
 					user_id: StubRelay::USER_ID,
 					private_key: vec![],
 				}))
 			}
+		}
+
+		async fn create_super_member(
+			&self,
+			_request: Request<CreateSuperMemberRequest>,
+		) -> Result<Response<CreateMemberResponse>, Status> {
+			todo!()
 		}
 
 		async fn probe(
