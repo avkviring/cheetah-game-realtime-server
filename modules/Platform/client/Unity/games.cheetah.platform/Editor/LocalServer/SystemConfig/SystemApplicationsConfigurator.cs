@@ -18,8 +18,8 @@ namespace Cheetah.Platform.Editor.LocalServer.SharedConfig
         public string Host => address?.Host ?? "127.0.0.1";
         public int Port => address?.Port ?? 7777;
 
-        public bool KeepFailedContainers => keepFailedContainersUI.value;
-        public bool ShowInfoLogs => showInfoLogsUI.value;
+        public bool KeepFailedContainers => keepFailedContainersUI?.value ?? false;
+        public bool ShowInfoLogs => showInfoLogsUI?.value ?? false;
 
         private NetworkAddressElement address;
         private Toggle keepFailedContainersUI;
