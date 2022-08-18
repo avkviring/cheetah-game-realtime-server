@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Cheetah.Platform;
 using Cheetah.Platform.Editor.LocalServer.Docker;
+using Cheetah.Platform.Editor.LocalServer.SharedConfig;
 #if UNITY_EDITOR
 using Cheetah.Platform.Editor.LocalServer.Applications;
 #endif
@@ -49,7 +50,7 @@ namespace Tests.Helpers
                 {
 #if UNITY_EDITOR
                     PlatformApplication.ImageVersion = testConfiguration.ServerImageVersion;
-                    var dockerRunner = new PlatformInDockerRunner();
+                    var dockerRunner = new PlatformInDockerRunner(new SystemApplicationsConfigurator());
                     await dockerRunner.ResolveState();
                     if (dockerRunner.Status != Status.Started)
                     {
