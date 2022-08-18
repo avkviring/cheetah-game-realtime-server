@@ -18,13 +18,14 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         /// </summary>
         public static TimeSpan FetchTime = TimeSpan.FromSeconds(2);
 
-        public static bool ShowInfoLogs = false;
+        private readonly bool showInfoLogs = false;
         private static volatile bool running = true;
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private DockerClient dockerClient;
 
-        public DockerLogWatcher(DockerClient dockerClient)
+        public DockerLogWatcher(DockerClient dockerClient, bool showInfoLogs)
         {
+            this.showInfoLogs = showInfoLogs;
             this.dockerClient = dockerClient;
         }
 
@@ -100,7 +101,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             }
         }
 
-        private static void ProcessLog(ServerApplication serverApplication, string log)
+        private void ProcessLog(ServerApplication serverApplication, string log)
         {
             if (log.Trim().Length == 0)
             {
@@ -115,17 +116,17 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             switch (logValue.ItemType)
             {
                 case ServerApplication.LogItemType.Info:
-                    if (ShowInfoLogs)
+                    if (showInfoLogs)
                     {
-                        // Debug.Log(message);
+                        Debug.Log(message);
                     }
 
                     break;
                 case ServerApplication.LogItemType.Error:
-                    // Debug.LogError(message);
+                    Debug.LogError(message);
                     break;
                 case ServerApplication.LogItemType.Message:
-                    // Debug.Log(message);
+                    Debug.Log(message);
                     break;
             }
         }

@@ -6,7 +6,7 @@
                           style="height: auto; flex-direction: row; align-items: center; padding-left: 15px; padding-right: 15px; padding-top: 15px; padding-bottom: 15px;">
             <ui:Button text="Start" name="start" style="width: 100px; height: 30px;"/>
             <ui:Button text="Stop" name="stop" style="width: 100px; height: 30px;"/>
-            <uie:ProgressBar title="progress" name="progress" focusable="false" usage-hints="None" style="flex-grow: 1;"/>
+            <uie:ProgressBar title="" name="progress" focusable="false" usage-hints="None" style="flex-grow: 1;"/>
         </ui:VisualElement>
         <ui:VisualElement name="error"/>
         <ui:ScrollView name="content" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Auto"
