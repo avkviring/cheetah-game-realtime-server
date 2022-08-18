@@ -7,7 +7,7 @@ namespace Cheetah.System.Compatibility.Editor.LocalServer
 {
     public class CompatibilityApplication : PlatformApplication
     {
-        private readonly string configurationPath = ConfigurationPaths.MakeHostedDataPath("system-compatibility/");
+        private readonly string configurationPath = PlatformConfiguration.MakeHostedDataPath("system-compatibility/");
 
         public CompatibilityApplication() : base("system-compatibility")
         {
