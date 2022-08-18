@@ -1,3 +1,4 @@
+use std::any::type_name;
 ///
 /// Исходная конфигурация в yaml формате
 ///
@@ -76,7 +77,7 @@ impl YamlConfigurations {
 				});
 			}
 		}
-		Result::Ok(self)
+		Ok(self)
 	}
 
 	fn validate_templates(self) -> Result<YamlConfigurations, Error> {
@@ -92,7 +93,7 @@ impl YamlConfigurations {
 				});
 			}
 		}
-		Result::Ok(self)
+		Ok(self)
 	}
 
 	fn load_group(root: PathBuf) -> Result<HashMap<GroupName, u64>, Error> {
@@ -104,6 +105,7 @@ impl YamlConfigurations {
 		};
 		let content = read_to_string(group_file.clone()).map_err(|_| Error::GroupFileNotFound)?;
 		serde_yaml::from_str::<_>(content.as_ref()).map_err(|e| Error::Yaml {
+			message: "Cannot read group information".to_string(),
 			global_root: root.clone(),
 			file: group_file.clone(),
 			e,
@@ -159,6 +161,7 @@ impl YamlConfigurations {
 				for document in serde_yaml::Deserializer::from_str(prepared_content.as_str()) {
 					count += 1;
 					let value = T::deserialize(document).map_err(|e| Error::Yaml {
+						message: format!("Cannot read {}", type_name::<T>()),
 						global_root: global_root.clone(),
 						file: path.clone(),
 						e,
