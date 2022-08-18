@@ -7,12 +7,13 @@ namespace Cheetah.Matches.Factory.Editor.LocalServer.Factory
     public class FactoryApplication : PlatformApplication
     {
         public const string AppName = "matches-factory";
-        private readonly string roomsConfigPath = ConfigurationPaths.MakeHostedDataPath("matches-factory/rooms/");
+        private readonly string roomsConfigPath = PlatformConfiguration.MakeHostedDataPath("matches-factory/rooms/");
 
         public FactoryApplication() : base(AppName)
         {
             Dependencies.Add("matches-stubregistry");
             AdminGrpcServices.Add("cheetah.matches.factory.admin");
+            PlatformConfiguration.InitConfigDirectoryIfNotExists("games.cheetah.matches.factory", "matches-factory/");
         }
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
