@@ -153,6 +153,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 var deltaProgress = 100 / serverApplications.Count; 
                 var done = false;
                 var launched = new HashSet<string>();
+                var clonedServerApplications = new List<ServerApplication>(serverApplications);
                 while (!done)
                 {
                     done = true;
@@ -183,8 +184,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                         return;
                     }
                 }
-                
-                await Launch(new GrpcProxyApplication(systemApplicationsConfigurator), network.ID, progressListener);
+
+                await LaunchGrpcProxy(progressListener, clonedServerApplications, network);
 
                 Status = Status.Started;
             }
@@ -214,6 +215,12 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                     Status = Status.Fail;
                 }
             }
+        }
+
+        private async Task LaunchGrpcProxy(IDockerProgressListener progressListener, List<ServerApplication> serverApplications, NetworksCreateResponse network)
+        {
+            var grpcProxyApplication = new GrpcProxyApplication(systemApplicationsConfigurator, serverApplications);
+            await Launch(grpcProxyApplication, network.ID, progressListener);
         }
 
         private async Task LaunchPostgresql(IDockerProgressListener progressListener, List<ServerApplication> serverApplications, int progress,
