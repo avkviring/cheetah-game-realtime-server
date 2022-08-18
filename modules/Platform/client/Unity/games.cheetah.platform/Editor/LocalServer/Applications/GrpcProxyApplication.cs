@@ -4,7 +4,7 @@ using System.Text;
 using Cheetah.Platform.Editor.Connector;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 
-namespace Cheetah.Platform.Editor.LocalServer.GrpcProxy
+namespace Cheetah.Platform.Editor.LocalServer.Applications
 {
     /// <summary>
     /// Контейнер для проксирования GPRC запросов к сервисам

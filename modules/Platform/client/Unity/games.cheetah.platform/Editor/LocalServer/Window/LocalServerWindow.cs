@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Cheetah.Platform.Editor.LocalServer.Docker;
+using Cheetah.Platform.Editor.LocalServer.SharedConfig;
 using Cheetah.Platform.Editor.LocalServer.Window.Errors;
 using UnityEditor;
 using UnityEngine;
@@ -12,21 +14,18 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
     /// </summary>
     public class LocalServerWindow : EditorWindow, IDockerProgressListener
     {
-        private readonly PlatformInDockerRunner _runner;
+        private PlatformInDockerRunner platformRunner;
         private VisualElement controlPanelVisualElement;
         private VisualElement errorPanel;
         private ProgressBar progressBar;
         private Button restartButton;
         private Button stopButton;
-
-        public LocalServerWindow()
-        {
-            _runner = new PlatformInDockerRunner();
-        }
+        readonly SystemApplicationsConfigurator systemConfigurator = new();
+        
 
         private void OnDestroy()
         {
-            _runner.OnStatusChange -= UpdateStatus;
+            platformRunner.OnStatusChange -= UpdateStatus;
         }
 
         private void CreateGUI()
@@ -38,8 +37,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
                 rootVisualElement.Clear();
                 rootVisualElement.Add(uiAsset.Instantiate());
                 SetupControlPanel();
-                _runner.OnStatusChange += UpdateStatus;
-                UpdateStatus(_runner.Status);
+                
             }
             catch (Exception e)
             {
@@ -75,8 +73,10 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
             errorPanel = controlPanelVisualElement.Q<VisualElement>("error");
 
             var content = rootVisualElement.Q<ScrollView>("content");
-
-            foreach (var configurator in Registry.GetConfigurators())
+            var configurations = new List<IApplicationsConfigurator>();
+            configurations.Add(systemConfigurator);
+            configurations.AddRange(Registry.GetConfigurators());
+            foreach (var configurator in configurations)
             {
                 var foldout =
                     AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.cheetah.platform/Editor/LocalServer/Window/LocalServerWindow.uxml")
@@ -91,10 +91,12 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
 
         private async void OnStartClick(ClickEvent evt)
         {
+            platformRunner = new PlatformInDockerRunner(systemConfigurator);
+            platformRunner.OnStatusChange += UpdateStatus;
             errorPanel.Clear();
             try
             {
-                await _runner.Restart(this);
+                await platformRunner.Restart(this);
             }
             catch (Exception e)
             {
@@ -106,7 +108,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Window
         {
             try
             {
-                await _runner.Stop(this);
+                await platformRunner.Stop(this);
             }
             catch (Exception e)
             {

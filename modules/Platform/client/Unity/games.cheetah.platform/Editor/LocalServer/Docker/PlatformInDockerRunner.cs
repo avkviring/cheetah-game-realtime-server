@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Cheetah.Platform.Editor.LocalServer.Applications;
+using Cheetah.Platform.Editor.LocalServer.SharedConfig;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using UnityEditor;
@@ -27,10 +28,13 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
         private readonly DockerClient docker;
 
         private readonly DockerLogWatcher logWatcher;
+        
+        private readonly SystemApplicationsConfigurator systemApplicationsConfigurator;
 
 
-        public PlatformInDockerRunner()
+        public PlatformInDockerRunner(SystemApplicationsConfigurator systemApplicationsConfigurator)
         {
+            this.systemApplicationsConfigurator = systemApplicationsConfigurator;
             Status = Status.Unknown;
 
             DockerClientConfiguration dockerClientConfiguration;
@@ -45,7 +49,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             }
             docker = dockerClientConfiguration.CreateClient();
 
-            logWatcher = new DockerLogWatcher(docker);
+            logWatcher = new DockerLogWatcher(docker, systemApplicationsConfigurator.ShowInfoLogs);
             AssemblyReloadEvents.beforeAssemblyReload += Dispose;
 
             var taskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
@@ -145,7 +149,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 var progress = 0;
                 var serverApplications = Registry.GetApplications();
                 await LaunchPostgresql(progressListener, serverApplications, progress, network);
-                var deltaProgress = 90 / serverApplications.Count; // 10 процентов - на запуск nginx
+                
+                var deltaProgress = 100 / serverApplications.Count; 
                 var done = false;
                 var launched = new HashSet<string>();
                 while (!done)
@@ -178,6 +183,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                         return;
                     }
                 }
+                
+                await Launch(new GrpcProxyApplication(systemApplicationsConfigurator), network.ID, progressListener);
 
                 Status = Status.Started;
             }
@@ -194,21 +201,19 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             catch (Exception)
             {
                 Status = Status.Fail;
-                await Task.Delay(DockerLogWatcher.FetchTime.Add(DockerLogWatcher.FetchTime));
                 throw;
             }
             finally
             {
                 if (Status == Status.Fail)
                 {
-                    // ожидаем получание логов
-                    await Task.Delay(DockerLogWatcher.FetchTime.Add(DockerLogWatcher.FetchTime));
-                    await Remove(docker, progressListener);
+                    if (!systemApplicationsConfigurator.KeepFailedContainers)
+                    {
+                        await Remove(docker, progressListener);
+                    }
                     Status = Status.Fail;
                 }
             }
-
-            await Task.Delay(TimeSpan.FromSeconds(10));
         }
 
         private async Task LaunchPostgresql(IDockerProgressListener progressListener, List<ServerApplication> serverApplications, int progress,
