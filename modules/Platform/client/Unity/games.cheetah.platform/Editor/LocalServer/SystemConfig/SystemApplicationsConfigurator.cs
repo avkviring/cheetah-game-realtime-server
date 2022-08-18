@@ -11,7 +11,7 @@ namespace Cheetah.Platform.Editor.LocalServer.SharedConfig
     /// - хост/порт для grpc/http прокси
     /// - включение INFO логов для сервисов
     /// </summary>
-    public class SystemApplicationsConfigurator : IApplicationsConfigurator, GrpcProxyApplication.IConfig
+    public class SystemApplicationsConfigurator : IApplicationsConfigurator, GrpcProxyApplicationConfig
     {
         private const string ShowInfoLogsPrefsKey = "cheetah.platform.microservice.show_info_logs";
         public string Title => "System settings";

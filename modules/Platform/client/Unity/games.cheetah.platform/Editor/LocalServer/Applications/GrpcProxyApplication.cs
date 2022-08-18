@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Cheetah.Platform.Editor.Connector;
 using Cheetah.Platform.Editor.LocalServer.Docker;
+using UnityEngine;
 
 namespace Cheetah.Platform.Editor.LocalServer.Applications
 {
@@ -15,17 +16,16 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
         private readonly Dictionary<string, string> adminGrpcMappings = new();
 
 
-        public interface IConfig
-        {
-            public string Host { get; }
-            public int Port { get; }
-        }
+        private GrpcProxyApplicationConfig Config;
 
-        private IConfig Config;
-
-        public GrpcProxyApplication(IConfig config) : base("grpc_proxy")
+        public GrpcProxyApplication(GrpcProxyApplicationConfig config, IList<ServerApplication> applications) : base("grpc_proxy")
         {
             Config = config;
+            foreach (var application in applications)
+            {
+                CollectGrpcServices(application, application.ExternalGrpcServices, externalGrpcMappings);
+                CollectGrpcServices(application, application.AdminGrpcServices, adminGrpcMappings);
+            }
         }
 
         public override DockerImage DockerImage => DockerImage.From("nginx:1.19.8");
@@ -92,20 +92,6 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
                 + "Указать новый адрес/порт можно в разделе Services.";
         }
 
-        public override void ConfigureFromApplications(IList<ServerApplication> applications)
-        {
-            Dependencies.Clear();
-
-            externalGrpcMappings.Clear();
-            adminGrpcMappings.Clear();
-
-            foreach (var application in applications)
-            {
-                CollectGrpcServices(application, application.ExternalGrpcServices, externalGrpcMappings);
-                CollectGrpcServices(application, application.AdminGrpcServices, adminGrpcMappings);
-            }
-        }
-
         private void CollectGrpcServices(
             ServerApplication application,
             ICollection<string> services,
@@ -116,11 +102,13 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
             {
                 mapping[service] = application.Name;
             }
-
-            if (services.Count > 0)
-            {
-                Dependencies.Add(application.Name);
-            }
+            
         }
+    }
+
+    public interface GrpcProxyApplicationConfig
+    {
+        public string Host { get; }
+        public int Port { get; }
     }
 }
