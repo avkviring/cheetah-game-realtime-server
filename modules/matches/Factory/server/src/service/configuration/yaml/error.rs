@@ -6,6 +6,7 @@ use crate::service::configuration::yaml::structures::{FieldName, TemplateName};
 pub enum Error {
 	Io(std::io::Error),
 	Yaml {
+		message: String,
 		global_root: PathBuf,
 		file: PathBuf,
 		e: serde_yaml::Error,
@@ -51,6 +52,7 @@ impl std::fmt::Display for Error {
 			Error::Io(err) => write!(f, "IO: {:?}", err),
 			Error::GroupFileNotFound => write!(f, "File groups.yaml or groups.yml not found"),
 			Error::Yaml {
+				message,
 				global_root,
 				file,
 				e,
@@ -60,7 +62,7 @@ impl std::fmt::Display for Error {
 					.strip_prefix(global_root.as_path())
 					.unwrap()
 					.to_path_buf();
-				write_yaml_error(f, &local_file, e)
+				write_yaml_error(f, message, &local_file, e)
 			}
 			Error::TemplateWithSameIdAlreadyExists { id, exist, current } => {
 				write!(f, "Templates {} and {} has same id {} ", exist, current, id)
@@ -78,10 +80,16 @@ impl std::fmt::Display for Error {
 	}
 }
 
-fn write_yaml_error(f: &mut Formatter, file: &Path, err: &serde_yaml::Error) -> std::fmt::Result {
+fn write_yaml_error(
+	f: &mut Formatter,
+	message: &String,
+	file: &Path,
+	err: &serde_yaml::Error,
+) -> std::fmt::Result {
 	write!(
 		f,
-		"Error in file {}. Wrong format {:?}: {:?}",
+		"{} in file {}. Wrong format {:?}: {:?}",
+		message,
 		file.display(),
 		err.location().map(|loc| (loc.line(), loc.column())),
 		err
