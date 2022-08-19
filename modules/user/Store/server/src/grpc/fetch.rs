@@ -5,7 +5,7 @@ use sqlx::PgPool;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use cheetah_libraries_microservice::trace::trace_err;
+use cheetah_libraries_microservice::trace;
 
 use crate::grpc::userstore::{
 	self, fetch_server::Fetch, FetchDoubleReply, FetchDoubleRequest, FetchLongReply,
@@ -42,7 +42,7 @@ impl FetchService {
 				Some(value) => Ok(Response::new(value.into())),
 			},
 			Err(e) => {
-				trace_err("Fetch operation failed", &e);
+				trace::err("Fetch operation failed", &e);
 				Err(Status::internal("Internal error"))
 			}
 		}
