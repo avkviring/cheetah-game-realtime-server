@@ -33,7 +33,7 @@ impl Service {
 	pub async fn serve(&self, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 
-		let update_service = UpdateService::new(self.pg_pool.clone());
+		let updater_service = UpdateService::new(self.pg_pool.clone());
 
 		health_reporter
 			.set_service_status("", ServingStatus::Serving)
@@ -43,21 +43,22 @@ impl Service {
 			.set_serving::<UpdateServer<UpdateService>>()
 			.await;
 
-		let fetch_service = FetchService::new(self.pg_pool.clone());
+		let fetcher_service = FetchService::new(self.pg_pool.clone());
 		health_reporter
 			.set_serving::<FetchServer<FetchService>>()
 			.await;
 
 		let auth_interceptor = JwtAuthInterceptor::new(self.jwt_public_key.to_owned());
-		let update_server =
-			UpdateServer::with_interceptor(update_service, auth_interceptor.clone());
-		let fetch_server = FetchServer::with_interceptor(fetch_service, auth_interceptor.clone());
+		let updater_server =
+			UpdateServer::with_interceptor(updater_service, auth_interceptor.clone());
+		let fetcher_server =
+			FetchServer::with_interceptor(fetcher_service, auth_interceptor.clone());
 
 		Server::builder()
 			.accept_http1(true)
 			.add_service(tonic_web::enable(health_service))
-			.add_service(tonic_web::enable(update_server))
-			.add_service(tonic_web::enable(fetch_server))
+			.add_service(tonic_web::enable(updater_server))
+			.add_service(tonic_web::enable(fetcher_server))
 			.serve(addr)
 			.await?;
 
