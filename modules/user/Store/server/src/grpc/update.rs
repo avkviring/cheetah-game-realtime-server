@@ -5,7 +5,7 @@ use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
 use cheetah_libraries_microservice::auth::load_user_uuid;
-use cheetah_libraries_microservice::trace::trace_err;
+use cheetah_libraries_microservice::trace;
 
 use crate::grpc::userstore::{update_server::Update, SetDoubleRequest, UpdateReply};
 use crate::grpc::userstore::{SetLongRequest, SetStringRequest};
@@ -29,7 +29,7 @@ impl UpdateService {
 		match result {
 			Ok(_) => Ok(Response::new(UpdateReply::default())),
 			Err(e) => {
-				trace_err("Update operation failed", &e);
+				trace::err("Update operation failed", &e);
 				Err(Status::internal("Internal error"))
 			}
 		}
