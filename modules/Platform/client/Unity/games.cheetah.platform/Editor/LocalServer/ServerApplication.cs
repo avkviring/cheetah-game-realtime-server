@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 using JetBrains.Annotations;
+using UnityEditor.PackageManager;
 
 namespace Cheetah.Platform.Editor.LocalServer
 {
@@ -16,25 +17,36 @@ namespace Cheetah.Platform.Editor.LocalServer
     /// </summary>
     public abstract class ServerApplication
     {
+        private readonly string dockerImageReference;
+
         /// <summary>
         /// Уникальное имя приложения
         /// </summary>
-        public string Name { get; }
+        public string ContainerName { get; }
+
+        protected virtual string DockerImageVersion => PackageInfo.FindForAssembly(GetType().Assembly).version;
 
         /// <summary>
         /// Docker образ приложения
         /// </summary>
-        public virtual DockerImage DockerImage { get; }
+        public DockerImage DockerImage => DockerImage.From(dockerImageReference + ":" + DockerImageVersion);
 
-        [CanBeNull] public string PostgresDatabase { get; internal set; }
+        [CanBeNull] public string PostgresDatabase { get; private set; }
 
-        protected ServerApplication(string name)
+        protected ServerApplication(string containerName, string dockerImageReference)
         {
-            Name = name;
+            this.dockerImageReference = dockerImageReference;
+            ContainerName = containerName;
+        }
+
+        protected ServerApplication(string containerName, Func<Type, string> dockerImageReferenceBuilder)
+        {
+            dockerImageReference = dockerImageReferenceBuilder.Invoke(GetType());
+            ContainerName = containerName;
         }
 
 
-        public void EnablePostgreSQL(string database)
+        protected void EnablePostgreSql(string database)
         {
             PostgresDatabase = database;
         }
@@ -76,7 +88,17 @@ namespace Cheetah.Platform.Editor.LocalServer
         /// </summary>
         /// <param name="log"></param>
         /// <returns>null - лог не будет отображен в консоле Unity</returns>
-        public abstract LogItem? ConvertToLogItem(string log);
+        public virtual LogItem? ConvertToLogItem(string log)
+        {
+            var upperLog = log.ToUpper();
+            return new LogItem
+            {
+                Log = log.Replace("INFO - ", "").Replace("ERROR - ", ""),
+                ItemType = upperLog.Contains("FATAL") || upperLog.Contains("ERROR") || upperLog.Contains("PANICKED")
+                    ? LogItemType.Error
+                    : LogItemType.Info
+            };
+        }
 
 
         /// <summary>
@@ -102,6 +124,7 @@ namespace Cheetah.Platform.Editor.LocalServer
         public readonly ISet<string> ExternalGrpcServices = new HashSet<string>();
 
         public readonly ISet<string> AdminGrpcServices = new HashSet<string>();
+
 
         public struct LogItem
         {

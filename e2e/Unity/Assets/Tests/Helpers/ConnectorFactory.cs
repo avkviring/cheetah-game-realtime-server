@@ -32,7 +32,7 @@ namespace Tests.Helpers
             if (testConfiguration == null)
             {
 #if UNITY_EDITOR
-                PlatformApplication.ImageVersion = null;
+                PlatformApplication.StaticPlatformImageVersion = null;
                 ClusterConnector = CreateLocalConnector();
 #endif
 
@@ -49,7 +49,7 @@ namespace Tests.Helpers
                 else
                 {
 #if UNITY_EDITOR
-                    PlatformApplication.ImageVersion = testConfiguration.ServerImageVersion;
+                    PlatformApplication.StaticPlatformImageVersion = testConfiguration.ServerImageVersion;
                     var dockerRunner = new PlatformInDockerRunner(new SystemApplicationsConfigurator());
                     await dockerRunner.ResolveState();
                     if (dockerRunner.Status != Status.Started)

@@ -8,11 +8,10 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
     /// </summary>
     public class RedisApplication : ServerApplication
     {
-        public RedisApplication(string prefix) : base(prefix + "-redis")
+        public RedisApplication(string prefix) : base(prefix + "-redis", "redis:6.2.1")
         {
         }
 
-        public override DockerImage DockerImage => DockerImage.From("redis:6.2.1");
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {

@@ -7,14 +7,12 @@ namespace Cheetah.Matches.Factory.Editor.LocalServer.Factory
     public class FactoryApplication : PlatformApplication
     {
         public const string ServerName = "matches-factory";
-        private const string PackageId = "games.cheetah.matches.factory";
         private readonly string roomsConfigPath = ConfigurationUtils.GetPathToConfigDirectory(ServerName);
 
         public FactoryApplication() : base(ServerName)
         {
             Dependencies.Add("matches-stubregistry");
             AdminGrpcServices.Add("cheetah.matches.factory.admin");
-            ConfigurationUtils.InitConfigDirectoryIfNotExists(PackageId, ServerName);
         }
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)

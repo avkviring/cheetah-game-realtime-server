@@ -16,7 +16,7 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
         private static IList<ServerApplication> CreateApplications()
         {
             var redis = new RedisApplication(AccountsApplication.AppName);
-            var service = new AccountsApplication(redis.Name);
+            var service = new AccountsApplication(redis.ContainerName);
             IList<ServerApplication> result = new List<ServerApplication>();
             result.Add(service);
             result.Add(redis);

@@ -15,13 +15,15 @@ namespace Cheetah.Platform.Editor.Configuration
             return Path.GetFullPath(Path.Combine(Application.dataPath, "../", ConfigurationSettings.GetOrCreateSettings().Directory, serverName));
         }
 
-        public static void InitConfigDirectoryIfNotExists(string unityPackageId, string serverName)
+        public static void InitConfigDirectoryIfNotExists(string packageAssetPath, string serverName)
         {
-            var fullDestinationPath = GetPathToConfigDirectory(serverName);
-            if (Directory.Exists(fullDestinationPath)) return;
-            Directory.CreateDirectory(fullDestinationPath);
-            var sourcePath = Path.GetFullPath("Packages/" + unityPackageId + "/ConfigTemplates/");
-            CopyDirectory(sourcePath, fullDestinationPath);
+            var destinationPath = GetPathToConfigDirectory(serverName);
+            if (Directory.Exists(destinationPath)) return;
+            var sourcePath = Path.GetFullPath(packageAssetPath + "/ConfigTemplates/");
+            if (!Directory.Exists(sourcePath)) return;
+
+            Directory.CreateDirectory(destinationPath);
+            CopyDirectory(sourcePath, destinationPath);
         }
 
         private static void CopyDirectory(string sourceDir, string destinationDir)

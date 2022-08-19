@@ -12,7 +12,7 @@ namespace Cheetah.User.Accounts.Editor.LocalServer
         public AccountsApplication(string redisName) : base(AppName)
         {
             RedisName = redisName;
-            EnablePostgreSQL("user_accounts");
+            EnablePostgreSql("user_accounts");
             ExternalGrpcServices.Add("cheetah.user.accounts");
             Dependencies.Add(redisName);
         }

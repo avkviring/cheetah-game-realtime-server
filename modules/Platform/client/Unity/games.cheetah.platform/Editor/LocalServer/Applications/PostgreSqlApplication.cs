@@ -14,12 +14,10 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
         public const string Password = "password";
         private readonly List<string> databases;
 
-        public PostgreSqlApplication(List<string> databases) : base(Host)
+        public PostgreSqlApplication(List<string> databases) : base(Host, "postgres:13.1-alpine")
         {
             this.databases = databases;
         }
-
-        public override DockerImage DockerImage => DockerImage.From("postgres:13.1-alpine");
 
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)

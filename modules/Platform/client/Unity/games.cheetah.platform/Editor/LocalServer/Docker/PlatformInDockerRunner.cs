@@ -90,7 +90,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
 
             try
             {
-                var serverApplications = Registry.GetApplications().ToDictionary(c => c.Name);
+                var serverApplications = Registry.GetApplications().ToDictionary(c => c.ContainerName);
                 var existContainers = await docker.Containers.ListContainersAsync(new ContainersListParameters
                 {
                     Filters = new Dictionary<string, IDictionary<string, bool>>
@@ -170,7 +170,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                     {
                         await Launch(serverApplication, network.ID, progressListener);
                         serverApplications.Remove(serverApplication);
-                        launched.Add(serverApplication.Name);
+                        launched.Add(serverApplication.ContainerName);
                         done = false;
                         progress += deltaProgress;
                     }
@@ -238,8 +238,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
 
         private async Task<string> Launch(ServerApplication serverApplication, string networkId, IDockerProgressListener progressListener)
         {
-            await ImagePull(serverApplication.DockerImage, progressListener, serverApplication.Name);
-            var dockerContainerBuilder = new DockerContainerBuilder(serverApplication.Name, serverApplication.DockerImage);
+            await ImagePull(serverApplication.DockerImage, progressListener, serverApplication.ContainerName);
+            var dockerContainerBuilder = new DockerContainerBuilder(serverApplication.ContainerName, serverApplication.DockerImage);
             serverApplication.ConfigureDockerContainerBuilder(dockerContainerBuilder);
             if (serverApplication.PostgresDatabase!=null) serverApplication.ConfigurePostgresEnv(dockerContainerBuilder);
 
@@ -247,8 +247,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
                 await docker.Containers.CreateContainerAsync(dockerContainerBuilder.BuildDockerConfig(networkId, unityProjectId));
             logWatcher.WatchLogs(createContainerResponse.ID, serverApplication);
             var containerStarted = await docker.Containers.StartContainerAsync(createContainerResponse.ID, new ContainerStartParameters());
-            if (!containerStarted) throw new Exception("Container " + serverApplication.Name + " starting fail");
-            await WaitingForLaunch.Wait(docker, createContainerResponse.ID, serverApplication.Name);
+            if (!containerStarted) throw new Exception("Container " + serverApplication.ContainerName + " starting fail");
+            await WaitingForLaunch.Wait(docker, createContainerResponse.ID, serverApplication.ContainerName);
             return createContainerResponse.ID;
         }
 
