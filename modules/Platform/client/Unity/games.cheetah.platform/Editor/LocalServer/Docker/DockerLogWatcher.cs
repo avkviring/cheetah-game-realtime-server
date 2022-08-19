@@ -112,7 +112,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             if (logItem == null) return;
 
             var logValue = logItem.Value;
-            var message = "[" + serverApplication.Name + "]: " + logValue.Log;
+            var message = "[" + serverApplication.ContainerName + "]: " + logValue.Log;
             switch (logValue.ItemType)
             {
                 case ServerApplication.LogItemType.Info:

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using Cheetah.Platform.Editor.Connector;
 using Cheetah.Platform.Editor.LocalServer.Docker;
-using UnityEngine;
 
 namespace Cheetah.Platform.Editor.LocalServer.Applications
 {
@@ -18,7 +17,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
 
         private GrpcProxyApplicationConfig Config;
 
-        public GrpcProxyApplication(GrpcProxyApplicationConfig config, IList<ServerApplication> applications) : base("grpc_proxy")
+        public GrpcProxyApplication(GrpcProxyApplicationConfig config, IList<ServerApplication> applications) : base("grpc_proxy", "nginx:1.19.8")
         {
             Config = config;
             foreach (var application in applications)
@@ -28,7 +27,6 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
             }
         }
 
-        public override DockerImage DockerImage => DockerImage.From("nginx:1.19.8");
 
         public override LogItem? ConvertToLogItem(string log)
         {
@@ -100,9 +98,8 @@ namespace Cheetah.Platform.Editor.LocalServer.Applications
         {
             foreach (var service in services)
             {
-                mapping[service] = application.Name;
+                mapping[service] = application.ContainerName;
             }
-            
         }
     }
 

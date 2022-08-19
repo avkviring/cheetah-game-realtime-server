@@ -10,7 +10,7 @@ namespace Cheetah.User.Store.Editor.LocalServer
         public UserStoreApplication() : base(AppName)
         {
             ExternalGrpcServices.Add("cheetah.user.store");
-            EnablePostgreSQL("user_store");
+            EnablePostgreSql("user_store");
         }
 
         public override void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
