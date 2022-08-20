@@ -26,10 +26,10 @@ pub struct StubMatchmakingService {
 
 #[derive(Clone)]
 pub struct MatchInfo {
-	pub relay_grpc_host: String,
-	pub relay_grpc_port: u16,
-	pub relay_game_host: String,
-	pub relay_game_port: u16,
+	pub realtime_server_grpc_host: String,
+	pub realtime_server_grpc_port: u16,
+	pub realtime_server_host: String,
+	pub realtime_server_port: u16,
 	pub room_id: u64,
 }
 
@@ -50,12 +50,12 @@ impl StubMatchmakingService {
 		let template = ticket.match_template.clone();
 		let match_info = self.find_or_create_match(&template).await?;
 		match StubMatchmakingService::attach_user(&ticket, &match_info).await {
-			Ok(user_attach_response) => Ok(TicketResponse {
-				private_key: user_attach_response.private_key,
-				user_id: user_attach_response.user_id,
+			Ok(member_attach_response) => Ok(TicketResponse {
+				private_key: member_attach_response.private_key,
+				member_id: member_attach_response.user_id,
 				room_id: match_info.room_id,
-				relay_game_host: match_info.relay_game_host,
-				relay_game_port: match_info.relay_game_port as u32,
+				realtime_server_host: match_info.realtime_server_host,
+				realtime_server_port: match_info.realtime_server_port as u32,
 			}),
 			Err(e) => {
 				tracing::error!("Cannot attach_user {}", e);
@@ -75,8 +75,8 @@ impl StubMatchmakingService {
 	) -> Result<realtime::internal::CreateMemberResponse, String> {
 		let mut relay = realtime::internal::realtime_client::RealtimeClient::connect(
 			cheetah_libraries_microservice::make_internal_srv_uri(
-				match_info.relay_grpc_host.as_str(),
-				match_info.relay_grpc_port,
+				match_info.realtime_server_grpc_host.as_str(),
+				match_info.realtime_server_grpc_port,
 			),
 		)
 		.await
@@ -129,10 +129,10 @@ fn create_match_info(create_match_response: CreateMatchResponse) -> MatchInfo {
 	let grpc_addr = addrs.grpc_internal.unwrap();
 	let game_addr = addrs.game.unwrap();
 	MatchInfo {
-		relay_grpc_host: grpc_addr.host,
-		relay_grpc_port: grpc_addr.port as u16,
-		relay_game_host: game_addr.host,
-		relay_game_port: game_addr.port as u16,
+		realtime_server_grpc_host: grpc_addr.host,
+		realtime_server_grpc_port: grpc_addr.port as u16,
+		realtime_server_host: game_addr.host,
+		realtime_server_port: game_addr.port as u16,
 		room_id: create_match_response.id,
 	}
 }
@@ -192,7 +192,7 @@ pub mod tests {
 			.await
 			.unwrap();
 		assert_eq!(response.room_id, StubFactory::ROOM_ID);
-		assert_eq!(response.user_id, StubRelay::USER_ID);
+		assert_eq!(response.member_id, StubRelay::MEMBER_ID);
 	}
 
 	///
@@ -359,7 +359,7 @@ pub mod tests {
 		pub fail_when_zero: RwLock<i8>,
 	}
 	impl StubRelay {
-		pub const USER_ID: u32 = 777;
+		pub const MEMBER_ID: u32 = 777;
 	}
 	#[tonic::async_trait]
 	impl realtime::internal::realtime_server::Realtime for StubRelay {
@@ -381,7 +381,7 @@ pub mod tests {
 				Err(Status::not_found(""))
 			} else {
 				Ok(Response::new(CreateMemberResponse {
-					user_id: StubRelay::USER_ID,
+					user_id: StubRelay::MEMBER_ID,
 					private_key: vec![],
 				}))
 			}
