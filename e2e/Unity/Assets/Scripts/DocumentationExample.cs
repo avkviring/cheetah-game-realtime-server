@@ -81,9 +81,9 @@ public class DocumentationExample
 
         // соединение с боевым сервером
         var client = new CheetahClient(
-            ticket.RelayGameHost,
-            ticket.RelayGamePort,
-            ticket.UserId,
+            ticket.RealtimeServerHost,
+            ticket.RealtimeServerPort,
+            ticket.MemberId,
             ticket.RoomId,
             ticket.PrivateKey.ToByteArray(),
             new CodecRegistryBuilder().Build());

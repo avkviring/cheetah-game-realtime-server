@@ -34,12 +34,12 @@ var player = authenticationResult.User;
 var scheduler = new MatchmakingScheduler(player);
 var ticket = await scheduler.Schedule("roomTemplate", 777);
 
-// соединение с боевым сервером
+ // соединение с боевым сервером
 var client = new CheetahClient(
-    ticket.RelayGameHost,
-    ticket.RelayGamePort,
-    ticket.UserId,
+    ticket.RealtimeServerHost,
+    ticket.RealtimeServerPort,
+    ticket.MemberId,
     ticket.RoomId,
     ticket.PrivateKey.ToByteArray(),
-    new CodecRegistryBuilder().Build());           
+    new CodecRegistryBuilder().Build());  
 ```

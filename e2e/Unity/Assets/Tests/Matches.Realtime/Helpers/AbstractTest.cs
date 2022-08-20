@@ -34,14 +34,14 @@ namespace Tests.Matches.Realtime.Helpers
             // подключаем первого клиента
             var ticketA = UserHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_a");
             yield return Enumerators.Await(ticketA);
-            memberA = ticketA.Result.UserId;
+            memberA = ticketA.Result.MemberId;
             clientA = ConnectToRelay(ticketA.Result, codecRegistry);
             clientA.AttachToRoom();
 
             // подключаем второго клиента
             var ticketB = UserHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_b");
             yield return Enumerators.Await(ticketB);
-            memberB = ticketB.Result.UserId;
+            memberB = ticketB.Result.MemberId;
             clientB = ConnectToRelay(ticketB.Result, codecRegistry);
             clientB.AttachToRoom();
 
@@ -53,7 +53,7 @@ namespace Tests.Matches.Realtime.Helpers
 
         private static CheetahClient ConnectToRelay(TicketResponse ticket, CodecRegistryBuilder codecRegistryBuilder)
         {
-            var client = new CheetahClient(ticket.RelayGameHost, ticket.RelayGamePort, ticket.UserId, ticket.RoomId, ticket.PrivateKey.ToByteArray(),
+            var client = new CheetahClient(ticket.RealtimeServerHost, ticket.RealtimeServerPort, ticket.MemberId, ticket.RoomId, ticket.PrivateKey.ToByteArray(),
                 codecRegistryBuilder.Build());
             client.DisableClientLog();
             return client;

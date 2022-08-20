@@ -16,8 +16,8 @@ message TicketRequest {
 
 message TicketResponse {
   bytes private_key = 1;
-  uint32 user_id = 2;
+  uint32 member_id = 2;
   uint64 room_id = 3;
-  string relay_game_host = 4;
-  uint32 relay_game_port = 5;
+  string realtime_server_host = 4;
+  uint32 realtime_server_port = 5;
 }
