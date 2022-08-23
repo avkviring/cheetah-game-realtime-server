@@ -1,9 +1,10 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use futures::Future;
+use tokio::sync::Mutex;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
@@ -12,7 +13,7 @@ use cheetah_matches_realtime::debug::dump::DumpGrpcService;
 use cheetah_matches_realtime::debug::grpc::RealtimeAdminGRPCService;
 use cheetah_matches_realtime::debug::proto::admin;
 use cheetah_matches_realtime::debug::tracer::grpc::CommandTracerGRPCService;
-use cheetah_matches_realtime::grpc::RelayGRPCService;
+use cheetah_matches_realtime::grpc::RealtimeInternalService;
 use cheetah_matches_realtime::server::manager::ServerManager;
 
 #[tokio::main]
@@ -36,7 +37,7 @@ async fn create_internal_grpc_server(
 		.await;
 	let service =
 		cheetah_matches_realtime::grpc::proto::internal::realtime_server::RealtimeServer::new(
-			RelayGRPCService::new(manager),
+			RealtimeInternalService::new(manager),
 		);
 	let address = cheetah_libraries_microservice::get_internal_service_binding_addr();
 	Server::builder()

@@ -1,9 +1,9 @@
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
 use std::time::Duration;
 
 use rymder::GameServer;
 use thiserror::Error;
+use tokio::sync::Mutex;
 
 use cheetah_libraries_microservice::tonic::codegen::Arc;
 
@@ -31,7 +31,7 @@ pub enum RegistryError {
 ///
 pub async fn run_agones_cycle(
 	halt_signal: Arc<AtomicBool>,
-	relay_server: Arc<Mutex<ServerManager>>,
+	server_manager: Arc<Mutex<ServerManager>>,
 ) {
 	if std::env::var("ENABLE_AGONES").is_err() {
 		return;
@@ -56,7 +56,7 @@ pub async fn run_agones_cycle(
 
 			while !halt_signal.load(Ordering::Relaxed) {
 				// при создании первой комнаты - вызываем allocate
-				if !allocated && relay_server.lock().unwrap().created_room_counter > 0 {
+				if !allocated && server_manager.lock().await.created_room_counter > 0 {
 					sdk.allocate().await.unwrap();
 					tracing::info!("Agones: invoked allocated");
 					allocated = true;
