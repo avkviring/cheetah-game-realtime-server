@@ -1,5 +1,6 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
+use tokio::sync::Mutex;
 use tonic::Status;
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
@@ -23,7 +24,7 @@ impl admin::realtime_server::Realtime for RealtimeAdminGRPCService {
 		&self,
 		_request: Request<admin::GetRoomsRequest>,
 	) -> Result<Response<admin::GetRoomsResponse>, Status> {
-		let manager = self.manager.lock().unwrap();
+		let manager = self.manager.lock().await;
 		manager
 			.get_rooms()
 			.trace_err("Get rooms")

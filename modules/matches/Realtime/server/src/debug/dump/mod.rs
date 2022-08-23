@@ -1,5 +1,6 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
+use tokio::sync::Mutex;
 use tonic::Status;
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
@@ -26,7 +27,7 @@ impl admin::dump_server::Dump for DumpGrpcService {
 		&self,
 		request: Request<admin::DumpRequest>,
 	) -> Result<Response<admin::DumpResponse>, Status> {
-		let manager = self.manager.lock().unwrap();
+		let manager = self.manager.lock().await;
 		let dump = manager
 			.dump(request.get_ref().room)
 			.trace_err("Failed to make a room dump")

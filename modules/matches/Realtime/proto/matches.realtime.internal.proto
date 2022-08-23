@@ -7,7 +7,7 @@ service Realtime {
   /**
     Создать комнату
    */
-  rpc CreateRoom(RoomTemplate) returns(CreateRoomResponse);
+  rpc CreateRoom(RoomTemplate) returns(RoomIdResponse);
 
   /**
     Присоединить пользователя к комнате, после этого комната будет ожидать udp соединения
@@ -23,11 +23,29 @@ service Realtime {
     Проверить живой ли сервер
    */
   rpc Probe(ProbeRequest) returns (ProbeResponse);
+
+  /**
+    Отслеживание операций создания комнаты, при первом вызове отсылаются и уже созданные комнаты.
+   */
+  rpc WatchCreatedRoomEvent(EmptyRequest) returns (stream RoomIdResponse);
 }
 
-message CreateRoomResponse {
-  uint64 id = 1;
+
+/**
+ * Запрос без параметров
+ */
+message EmptyRequest {
+
 }
+
+
+/**
+ * Ответ с идентификатором комнаты
+ */
+message RoomIdResponse {
+  uint64 room_id = 1;
+}
+
 
 message CreateMemberRequest {
   uint64 room_id = 1;

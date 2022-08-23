@@ -1,7 +1,8 @@
 use std::convert::AsRef;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
+use tokio::sync::Mutex;
 use tonic::Status;
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
@@ -34,14 +35,14 @@ impl CommandTracerGRPCService {
 	/// Выполнить задачу в relay сервере (в другом потоке), дождаться результата и преобразовать
 	/// его в нужный для grpc формат
 	///
-	pub fn execute_task<TaskResult, GrpcType>(
+	pub async fn execute_task<TaskResult, GrpcType>(
 		&self,
 		room_id: RoomId,
 		task: TracerSessionCommand,
 		receiver: std::sync::mpsc::Receiver<TaskResult>,
 		converter: fn(TaskResult) -> Result<GrpcType, Status>,
 	) -> Result<Response<GrpcType>, Status> {
-		let manager = self.manager.lock().unwrap();
+		let manager = self.manager.lock().await;
 
 		manager
 			.execute_command_trace_sessions_task(room_id, task.clone())
@@ -75,6 +76,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 				})
 			},
 		)
+		.await
 	}
 
 	async fn set_filter(
@@ -91,6 +93,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		self.execute_task(request.room as RoomId, task, receiver, |_| {
 			Ok(admin::SetFilterResponse {})
 		})
+		.await
 	}
 
 	async fn get_commands(
@@ -108,6 +111,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 					commands: commands.into_iter().map(admin::Command::from).collect(),
 				})
 		})
+		.await
 	}
 
 	async fn close_session(
@@ -123,6 +127,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 				.map_err(Status::internal)
 				.map(|_| admin::CloseSessionResponse {})
 		})
+		.await
 	}
 }
 
