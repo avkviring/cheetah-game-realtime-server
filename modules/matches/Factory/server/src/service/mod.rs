@@ -77,7 +77,7 @@ impl FactoryService {
 				))
 				.map_err(Status::internal)?
 				.into_inner()
-				.id,
+				.room_id,
 			addrs: Some(addrs),
 		})
 	}
