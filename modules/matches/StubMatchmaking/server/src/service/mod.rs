@@ -161,6 +161,7 @@ impl Matchmaking for StubMatchmakingService {
 pub mod tests {
 	use tokio::net::TcpListener;
 	use tokio::sync::RwLock;
+	use tokio_stream::wrappers::ReceiverStream;
 	use tonic::transport::Server;
 	use tonic::{Request, Response, Status};
 
@@ -173,7 +174,8 @@ pub mod tests {
 	use crate::proto::matches::matchmaking;
 	use crate::proto::matches::realtime;
 	use crate::proto::matches::realtime::internal::{
-		CreateMemberRequest, CreateSuperMemberRequest, ProbeRequest, ProbeResponse,
+		CreateMemberRequest, CreateSuperMemberRequest, EmptyRequest, ProbeRequest, ProbeResponse,
+		RoomIdResponse,
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::service::StubMatchmakingService;
@@ -192,7 +194,7 @@ pub mod tests {
 			.await
 			.unwrap();
 		assert_eq!(response.room_id, StubFactory::ROOM_ID);
-		assert_eq!(response.member_id, StubRelay::MEMBER_ID);
+		assert_eq!(response.member_id, StubRealtimeService::MEMBER_ID);
 	}
 
 	///
@@ -293,7 +295,7 @@ pub mod tests {
 			relay_grpc_port: stub_grpc_service_addr.port(),
 			room_sequence: RwLock::new(0),
 		};
-		let stub_relay = StubRelay {
+		let stub_relay = StubRealtimeService {
 			fail_when_zero: RwLock::new(fail_create_user),
 		};
 		tokio::spawn(async move {
@@ -355,18 +357,18 @@ pub mod tests {
 		}
 	}
 
-	struct StubRelay {
+	struct StubRealtimeService {
 		pub fail_when_zero: RwLock<i8>,
 	}
-	impl StubRelay {
+	impl StubRealtimeService {
 		pub const MEMBER_ID: u32 = 777;
 	}
 	#[tonic::async_trait]
-	impl realtime::internal::realtime_server::Realtime for StubRelay {
+	impl realtime::internal::realtime_server::Realtime for StubRealtimeService {
 		async fn create_room(
 			&self,
 			_request: Request<realtime::internal::RoomTemplate>,
-		) -> Result<Response<realtime::internal::CreateRoomResponse>, Status> {
+		) -> Result<Response<realtime::internal::RoomIdResponse>, Status> {
 			todo!()
 		}
 
@@ -381,7 +383,7 @@ pub mod tests {
 				Err(Status::not_found(""))
 			} else {
 				Ok(Response::new(CreateMemberResponse {
-					user_id: StubRelay::MEMBER_ID,
+					user_id: StubRealtimeService::MEMBER_ID,
 					private_key: vec![],
 				}))
 			}
@@ -399,6 +401,15 @@ pub mod tests {
 			_request: Request<ProbeRequest>,
 		) -> Result<Response<ProbeResponse>, Status> {
 			Ok(Response::new(ProbeResponse {}))
+		}
+
+		type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
+
+		async fn watch_created_room_event(
+			&self,
+			_request: Request<EmptyRequest>,
+		) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
+			todo!()
 		}
 	}
 }

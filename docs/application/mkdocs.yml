@@ -30,38 +30,39 @@ nav:
       - "Запуск локального сервера": "unity/local-server.md"
   - "Модули":
       - "Аккаунт":
-        - "Аутентификация":
-            - "Введение": "modules/user/accounts/index.md"
-            - "Временная регистрация": "modules/user/accounts/cookie.md"
-            - "Google": "modules/user/accounts/google.md"
-        - "Данные": "modules/user/store/index.md"
+          - "Аутентификация":
+              - "Введение": "modules/user/accounts/index.md"
+              - "Временная регистрация": "modules/user/accounts/cookie.md"
+              - "Google": "modules/user/accounts/google.md"
+          - "Данные": "modules/user/store/index.md"
       - "Матчи":
-        - "Выбор матча": "modules/matches/matchmaking/index.md"
-        - "Матч":
-            - "Введение": "modules/matches/realtime/index.md"
-            - "Базовые понятия":
-                - "Клиент": "modules/matches/realtime/basics/client.md"
-                - "Комната": "modules/matches/realtime/basics/room.md"
-                - "Объект": "modules/matches/realtime/basics/object.md"
-                - "Канал": "modules/matches/realtime/basics/channel.md"
-            - "Команды":
-                - "События": "modules/matches/realtime/commands/event.md"
-                - "Структуры": "modules/matches/realtime/commands/structure.md"
-                - "Целые числа": "modules/matches/realtime/commands/long.md"
-                - "Вещественные числа": "modules/matches/realtime/commands/double.md"
-                - "Сериализация": "modules/matches/realtime/commands/serialization.md"
-                - "Удаление поля": "modules/matches/realtime/commands/delete_field.md"
-                - "CompareAndSet": "modules/matches/realtime/commands/compare_and_set.md"
-            - "Конфигурация": "modules/matches/realtime/configuration.md"
-            - "Локальная разработка":
-                - "Эмуляция параметров сети": "modules/matches/realtime/develop/network.md"
-                - "Логирование": "modules/matches/realtime/develop/logger.md"
-                - "Панель сетевых команд": "modules/matches/realtime/develop/commands-panel.md"
-                - "Просмотр состояния сервера": "modules/matches/realtime/develop/dump-panel.md"
+          - "Выбор матча": "modules/matches/matchmaking/index.md"
+          - "Матч":
+              - "Введение": "modules/matches/realtime/index.md"
+              - "Базовые понятия":
+                  - "Клиент": "modules/matches/realtime/basics/client.md"
+                  - "Комната": "modules/matches/realtime/basics/room.md"
+                  - "Объект": "modules/matches/realtime/basics/object.md"
+                  - "Канал": "modules/matches/realtime/basics/channel.md"
+              - "Команды":
+                  - "События": "modules/matches/realtime/commands/event.md"
+                  - "Структуры": "modules/matches/realtime/commands/structure.md"
+                  - "Целые числа": "modules/matches/realtime/commands/long.md"
+                  - "Вещественные числа": "modules/matches/realtime/commands/double.md"
+                  - "Сериализация": "modules/matches/realtime/commands/serialization.md"
+                  - "Удаление поля": "modules/matches/realtime/commands/delete_field.md"
+                  - "CompareAndSet": "modules/matches/realtime/commands/compare_and_set.md"
+              - "Конфигурация": "modules/matches/realtime/configuration.md"
+              - "Локальная разработка":
+                  - "Эмуляция параметров сети": "modules/matches/realtime/develop/network.md"
+                  - "Логирование": "modules/matches/realtime/develop/logger.md"
+                  - "Панель сетевых команд": "modules/matches/realtime/develop/commands-panel.md"
+                  - "Просмотр состояния сервера": "modules/matches/realtime/develop/dump-panel.md"
+              - "Плагины": "modules/matches/realtime/plugins/index.md"
       - "Статистика":
-        - "Сбор событий": "modules/statistics/events/index.md"
+          - "Сбор событий": "modules/statistics/events/index.md"
       - "Системные":
-        - "Совместимость клиента и сервера": "modules/system/compatibility/index.md"
+          - "Совместимость клиента и сервера": "modules/system/compatibility/index.md"
   - "Хостинг":
       - "Настройка кластера": "hosting/setup-cluster.md"
 

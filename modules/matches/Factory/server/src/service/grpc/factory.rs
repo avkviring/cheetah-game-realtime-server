@@ -28,12 +28,15 @@ mod tests {
 	use std::path::PathBuf;
 
 	use tokio::net::TcpListener;
+	use tokio_stream::wrappers::ReceiverStream;
 	use tonic::transport::{Server, Uri};
 	use tonic::{Request, Response, Status};
 
 	use realtime::internal;
 
-	use crate::proto::matches::realtime::internal::{ProbeRequest, ProbeResponse};
+	use crate::proto::matches::realtime::internal::{
+		EmptyRequest, ProbeRequest, ProbeResponse, RoomIdResponse,
+	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::{realtime, registry};
 	use crate::service::configuration::yaml::test::EXAMPLE_DIR;
@@ -64,18 +67,18 @@ mod tests {
 		}
 	}
 
-	struct StubRealtime {}
-	impl StubRealtime {
+	struct StubRealtimeService {}
+	impl StubRealtimeService {
 		pub const ROOM_ID: u64 = 555;
 	}
 	#[tonic::async_trait]
-	impl internal::realtime_server::Realtime for StubRealtime {
+	impl internal::realtime_server::Realtime for StubRealtimeService {
 		async fn create_room(
 			&self,
 			_request: Request<internal::RoomTemplate>,
-		) -> Result<Response<internal::CreateRoomResponse>, Status> {
-			Ok(Response::new(internal::CreateRoomResponse {
-				id: StubRealtime::ROOM_ID,
+		) -> Result<Response<internal::RoomIdResponse>, Status> {
+			Ok(Response::new(internal::RoomIdResponse {
+				room_id: StubRealtimeService::ROOM_ID,
 			}))
 		}
 
@@ -99,6 +102,15 @@ mod tests {
 		) -> Result<Response<ProbeResponse>, Status> {
 			Ok(Response::new(ProbeResponse {}))
 		}
+
+		type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
+
+		async fn watch_created_room_event(
+			&self,
+			request: Request<EmptyRequest>,
+		) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
+			todo!()
+		}
 	}
 
 	#[tokio::test]
@@ -113,7 +125,7 @@ mod tests {
 		)
 		.unwrap();
 		let result = factory.do_create_match("gubaha".to_string()).await.unwrap();
-		assert_eq!(result.id, StubRealtime::ROOM_ID);
+		assert_eq!(result.id, StubRealtimeService::ROOM_ID);
 	}
 
 	async fn stub_grpc_services() -> Uri {
@@ -134,7 +146,7 @@ mod tests {
 			},
 		};
 
-		let stub_relay = StubRealtime {};
+		let stub_relay = StubRealtimeService {};
 		tokio::spawn(async move {
 			Server::builder()
 				.add_service(registry::internal::registry_server::RegistryServer::new(
