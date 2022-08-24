@@ -10,13 +10,13 @@ use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
 use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::Protocol;
-use crate::room::{RoomId, RoomMemberId, UserPrivateKey};
+use crate::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 #[derive(Debug)]
 pub struct NetworkClient {
 	pub state: ConnectionStatus,
 	pub protocol: Protocol,
-	private_key: UserPrivateKey,
+	private_key: MemberPrivateKey,
 	server_address: SocketAddr,
 	pub channel: NetworkChannel,
 	out_frames: VecDeque<OutFrame>,
@@ -48,7 +48,7 @@ pub enum DisconnectedReason {
 impl NetworkClient {
 	pub fn new(
 		from_client: bool,
-		private_key: UserPrivateKey,
+		private_key: MemberPrivateKey,
 		member_id: RoomMemberId,
 		room_id: RoomId,
 		server_address: SocketAddr,
@@ -59,7 +59,7 @@ impl NetworkClient {
 		protocol.next_frame_id = start_frame_id;
 		let channel = NetworkChannel::new()?;
 
-		Result::Ok(NetworkClient {
+		Ok(NetworkClient {
 			state: ConnectionStatus::Connecting,
 			protocol,
 			private_key,

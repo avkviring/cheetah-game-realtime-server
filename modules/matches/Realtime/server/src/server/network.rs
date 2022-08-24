@@ -11,7 +11,7 @@ use cheetah_matches_realtime_common::protocol::frame::input::InFrame;
 use cheetah_matches_realtime_common::protocol::frame::{FrameId, MAX_FRAME_SIZE};
 use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::protocol::Protocol;
-use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::room::template::config::MemberTemplate;
 use crate::server::measurers::Measurers;
@@ -27,7 +27,7 @@ pub struct NetworkLayer {
 #[derive(Debug)]
 struct MemberSession {
 	peer_address: Option<SocketAddr>,
-	private_key: UserPrivateKey,
+	private_key: MemberPrivateKey,
 	max_receive_frame_id: FrameId,
 	pub protocol: Protocol,
 }
@@ -273,7 +273,7 @@ mod tests {
 			room_id: 0,
 		}));
 		let size = frame
-			.encode(&mut Cipher::new(&[0; 32]), &mut buffer)
+			.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer)
 			.unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,
@@ -293,7 +293,7 @@ mod tests {
 		let mut buffer = [0; MAX_FRAME_SIZE];
 		let frame = OutFrame::new(0);
 		let size = frame
-			.encode(&mut Cipher::new(&[0; 32]), &mut buffer)
+			.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer)
 			.unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,

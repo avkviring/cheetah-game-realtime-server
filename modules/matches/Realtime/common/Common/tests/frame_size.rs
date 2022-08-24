@@ -15,7 +15,8 @@ pub fn empty_frame() {
 	let frame = OutFrame::new(100500);
 	let mut buffer = [0; 2048];
 	let private_key = [0; 32];
-	let _size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
+	let key = private_key.as_slice().into();
+	let _size = frame.encode(&mut Cipher::new(&key), &mut buffer);
 	//println!("{}", size);
 	// 30 байт
 }
@@ -54,6 +55,7 @@ pub fn create_object_frame() {
 
 	let mut buffer = [0; 2048];
 	let private_key = [0; 32];
-	let _size = frame.encode(&mut Cipher::new(&private_key), &mut buffer);
+	let key = private_key.as_slice().into();
+	let _size = frame.encode(&mut Cipher::new(&key), &mut buffer);
 	//println!("{}", size);
 }

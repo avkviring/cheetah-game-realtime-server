@@ -58,7 +58,7 @@ impl InFrame {
 	) -> Result<(FrameId, Headers), FrameDecodeError> {
 		let frame_id = cursor.read_variable_u64()?;
 		let headers = Headers::decode_headers(cursor)?;
-		Result::Ok((frame_id, headers))
+		Ok((frame_id, headers))
 	}
 
 	///
@@ -155,7 +155,7 @@ pub mod tests {
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
 
-	const PRIVATE_KEY: &[u8; 32] = &[
+	const PRIVATE_KEY: &[u8] = &[
 		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b,
 		0x05, 0x03, 0x4a, 0xa0, 0x9f, 0x9e, 0x27, 0xad, 0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10,
 		0xe4, 0x94,
@@ -164,7 +164,8 @@ pub mod tests {
 	#[test]
 	fn should_encode_decode_frame() {
 		let mut frame = OutFrame::new(55);
-		let mut cipher = Cipher::new(PRIVATE_KEY);
+		let key = PRIVATE_KEY.into();
+		let mut cipher = Cipher::new(&key);
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.add_command(CommandWithChannel {

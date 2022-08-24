@@ -12,7 +12,7 @@ use cheetah_matches_realtime_common::protocol::frame::applications::{
 	BothDirectionCommand, CommandWithChannel,
 };
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
-use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::clients::{ClientRequest, SharedClientStatistics};
 
@@ -43,7 +43,7 @@ impl NetworkThreadClient {
 		server_address: SocketAddr,
 		member_id: RoomMemberId,
 		room_id: RoomId,
-		user_private_key: UserPrivateKey,
+		user_private_key: MemberPrivateKey,
 		in_commands: Sender<CommandWithChannel>,
 		connection_status: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
@@ -51,7 +51,7 @@ impl NetworkThreadClient {
 		shared_statistics: SharedClientStatistics,
 		server_time: Arc<Mutex<Option<u64>>>,
 	) -> std::io::Result<NetworkThreadClient> {
-		Result::Ok(NetworkThreadClient {
+		Ok(NetworkThreadClient {
 			connection_status,
 			commands_from_server: in_commands,
 			udp_client: NetworkClient::new(
@@ -131,7 +131,7 @@ impl NetworkThreadClient {
 	/// Обработка команд из контроллера
 	///
 	fn request_from_controller(&mut self) {
-		while let Result::Ok(command) = self.request_from_controller.try_recv() {
+		while let Ok(command) = self.request_from_controller.try_recv() {
 			match command {
 				ClientRequest::Close => {
 					self.udp_client.protocol.disconnect_by_command.disconnect();
@@ -141,7 +141,7 @@ impl NetworkThreadClient {
 					tracing::info!("[client] ClientRequest::Close")
 				}
 				ClientRequest::SetProtocolTimeOffsetForTest(duration) => {
-					self.protocol_time_offset_for_test = Option::Some(duration);
+					self.protocol_time_offset_for_test = Some(duration);
 				}
 				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => {
 					self.udp_client.channel.config_emulator(|emulator| {

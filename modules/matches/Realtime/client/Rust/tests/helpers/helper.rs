@@ -2,16 +2,13 @@ use std::net::SocketAddr;
 use std::thread;
 use std::time::Duration;
 
-use rand::rngs::OsRng;
-use rand::RngCore;
-
 use cheetah_matches_realtime::room::template::config::MemberTemplate;
 use cheetah_matches_realtime::server::manager::ServerManager;
 use cheetah_matches_realtime_client::clients::registry::ClientId;
 use cheetah_matches_realtime_client::ffi;
 use cheetah_matches_realtime_client::ffi::client::do_create_client;
 use cheetah_matches_realtime_client::ffi::{BufferFFI, GameObjectIdFFI};
-use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::helpers::server::IntegrationTestServerBuilder;
 
@@ -31,7 +28,7 @@ impl IntegrationTestHelper {
 		}
 	}
 
-	pub fn create_client(&self, user_id: RoomMemberId, user_key: UserPrivateKey) -> ClientId {
+	pub fn create_client(&self, user_id: RoomMemberId, user_key: MemberPrivateKey) -> ClientId {
 		let mut client: ClientId = 0;
 		do_create_client(
 			self.socket_addr.to_string(),
@@ -60,12 +57,11 @@ impl IntegrationTestHelper {
 		object_id
 	}
 
-	pub fn create_user(&mut self) -> (RoomMemberId, UserPrivateKey) {
-		let mut private_key = [0; 32];
-		OsRng.fill_bytes(&mut private_key);
+	pub fn create_user(&mut self) -> (RoomMemberId, MemberPrivateKey) {
+		let private_key = MemberPrivateKey::new_random();
 		let user_template = MemberTemplate {
 			super_member: false,
-			private_key,
+			private_key: private_key.clone(),
 			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
 		};

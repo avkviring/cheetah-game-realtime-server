@@ -4,7 +4,7 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use cheetah_matches_realtime_common::network::client::{ConnectionStatus, DisconnectedReason};
-use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId, UserPrivateKey};
+use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::clients::registry::ClientId;
 use crate::ffi::{execute, execute_with_client, BufferFFI, ClientError, LAST_ERROR};
@@ -166,7 +166,7 @@ pub unsafe extern "C" fn create_client(
 		server_address,
 		member_id,
 		room_id,
-		&user_private_key,
+		&user_private_key.as_slice().into(),
 		start_frame_id,
 		out_client_id,
 	)
@@ -176,7 +176,7 @@ pub fn do_create_client(
 	server_address: String,
 	member_id: RoomMemberId,
 	room_id: RoomId,
-	user_private_key: &UserPrivateKey,
+	user_private_key: &MemberPrivateKey,
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
@@ -185,7 +185,7 @@ pub fn do_create_client(
 			server_address,
 			member_id,
 			room_id,
-			*user_private_key,
+			user_private_key.clone(),
 			start_frame_id,
 		) {
 			Ok(client_id) => {

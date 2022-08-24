@@ -1,14 +1,13 @@
 use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
-use rand::Rng;
 
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::commands::FieldValue;
 use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
-use cheetah_matches_realtime_common::room::UserPrivateKey;
+use cheetah_matches_realtime_common::room::MemberPrivateKey;
 
 use crate::room::object::Field;
 
@@ -29,7 +28,7 @@ pub struct MemberTemplate {
 	/// Обычно под данным пользователем подключаются плагины
 	///
 	pub super_member: bool,
-	pub private_key: UserPrivateKey,
+	pub private_key: MemberPrivateKey,
 	pub groups: AccessGroups,
 	pub objects: Vec<GameObjectTemplate>,
 }
@@ -75,7 +74,7 @@ pub enum Permission {
 
 #[derive(Debug)]
 pub enum UserTemplateError {
-	UserObjectHasWrongId(UserPrivateKey, u32),
+	UserObjectHasWrongId(MemberPrivateKey, u32),
 }
 
 impl MemberTemplate {
@@ -87,10 +86,16 @@ impl MemberTemplate {
 		MemberTemplate::new(true, AccessGroups::super_group(), Default::default())
 	}
 
+	pub fn new_super_member_with_key(key: MemberPrivateKey) -> Self {
+		let mut member = Self::new_super_member();
+		member.private_key = key;
+		member
+	}
+
 	fn new(super_member: bool, groups: AccessGroups, objects: Vec<GameObjectTemplate>) -> Self {
 		MemberTemplate {
 			super_member,
-			private_key: rand::thread_rng().gen::<[u8; 32]>(),
+			private_key: MemberPrivateKey::new_random(),
 			groups,
 			objects,
 		}
