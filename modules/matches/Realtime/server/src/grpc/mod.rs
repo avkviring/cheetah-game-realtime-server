@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use tokio::sync::mpsc;
 use tokio::sync::Mutex;
+use tokio::sync::{mpsc, MutexGuard};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
@@ -21,6 +21,8 @@ pub struct RealtimeInternalService {
 	pub server_manager: Arc<Mutex<ServerManager>>,
 }
 
+const SUPER_MEMBER_KEY_ENV: &str = "SUPER_MEMBER_KEY";
+
 impl RealtimeInternalService {
 	pub fn new(server_manager: Arc<Mutex<ServerManager>>) -> Self {
 		RealtimeInternalService { server_manager }
@@ -34,14 +36,24 @@ impl RealtimeInternalService {
 		let mut server = self.server_manager.lock().await;
 		server
 			.register_user(room_id, template.clone())
-			.trace_err(format!("Register plugin user to room {}", room_id))
+			.trace_err(format!("Register member to room {}", room_id))
 			.map_err(Status::internal)
 			.map(|user_id| {
 				Response::new(CreateMemberResponse {
 					user_id: user_id as u32,
-					private_key: template.private_key.to_vec(),
+					private_key: template.private_key.into(),
 				})
 			})
+	}
+
+	fn create_super_member_if_need(server: &mut MutexGuard<ServerManager>, room_id: RoomId) {
+		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
+			let key_from_env_bytes = key_from_env.as_bytes();
+			let key = key_from_env_bytes.into();
+			server
+				.register_user(room_id, MemberTemplate::new_super_member_with_key(key))
+				.unwrap();
+		}
 	}
 }
 
@@ -54,11 +66,13 @@ impl Realtime for RealtimeInternalService {
 		let mut server = self.server_manager.lock().await;
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
 		let template_name = template.name.clone();
-		server
+		let room_id = server
 			.register_room(template)
 			.trace_err(format!("Create room with template {}", template_name))
-			.map_err(Status::internal)
-			.map(|id| Response::new(RoomIdResponse { room_id: id }))
+			.map_err(Status::internal)?;
+
+		Self::create_super_member_if_need(&mut server, room_id);
+		Ok(Response::new(RoomIdResponse { room_id }))
 	}
 
 	async fn create_member(
@@ -129,7 +143,7 @@ mod test {
 
 	use crate::grpc::proto::internal::realtime_server::Realtime;
 	use crate::grpc::proto::internal::{EmptyRequest, RoomIdResponse};
-	use crate::grpc::RealtimeInternalService;
+	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::RoomTemplate;
 	use crate::server::manager::ServerManager;
 
@@ -163,5 +177,23 @@ mod test {
 
 		let actual = response.try_next().await;
 		assert_eq!(actual.unwrap().unwrap().room_id, second_room_id);
+	}
+
+	#[tokio::test]
+	async fn test_create_super_member() {
+		let server_manager = Arc::new(Mutex::new(ServerManager::new(
+			bind_to_free_socket().unwrap().0,
+		)));
+
+		std::env::set_var(SUPER_MEMBER_KEY_ENV, "some-key");
+		let service = RealtimeInternalService::new(server_manager.clone());
+		let room_id = service
+			.create_room(Request::new(Default::default()))
+			.await
+			.unwrap()
+			.into_inner();
+
+		let dump_response = server_manager.lock().await.dump(room_id.room_id).unwrap();
+		assert!(!dump_response.users.is_empty());
 	}
 }
