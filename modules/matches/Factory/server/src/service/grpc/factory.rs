@@ -76,8 +76,8 @@ mod tests {
 		async fn create_room(
 			&self,
 			_request: Request<internal::RoomTemplate>,
-		) -> Result<Response<internal::RoomIdResponse>, Status> {
-			Ok(Response::new(internal::RoomIdResponse {
+		) -> Result<Response<RoomIdResponse>, Status> {
+			Ok(Response::new(RoomIdResponse {
 				room_id: StubRealtimeService::ROOM_ID,
 			}))
 		}
@@ -107,7 +107,7 @@ mod tests {
 
 		async fn watch_created_room_event(
 			&self,
-			request: Request<EmptyRequest>,
+			_request: Request<EmptyRequest>,
 		) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
 			todo!()
 		}
