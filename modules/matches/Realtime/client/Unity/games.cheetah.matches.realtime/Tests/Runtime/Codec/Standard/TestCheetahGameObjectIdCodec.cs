@@ -1,8 +1,8 @@
-using Cheetah.Matches.Relay.Codec.Standard;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Codec.Standard;
+using Cheetah.Matches.Realtime.Types;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Runtime.Codec.Standard
+namespace Cheetah.Matches.Realtime.Tests.Codec.Standard
 {
     public class TestCheetahGameObjectIdCodec
     {

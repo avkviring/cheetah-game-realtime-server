@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects.Query;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects.Query;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Editor.DumpViewer.Sections.Objects.Query
+namespace Cheetah.Matches.Realtime.Editor.Tests.DumpViewer.Sections.Objects.Query
 {
     public class ParserTest
     {

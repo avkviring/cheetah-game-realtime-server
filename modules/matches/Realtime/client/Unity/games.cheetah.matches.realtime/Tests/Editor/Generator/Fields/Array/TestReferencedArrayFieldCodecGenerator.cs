@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Editor.Generator;
-using Cheetah.Matches.Relay.Editor.Generator.Fields.Array;
-using Cheetah.Matches.Relay.Editor.Generator.Fields.Array.Exceptions;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Editor.Generator;
+using Cheetah.Matches.Realtime.Editor.Generator.Fields.Array;
+using Cheetah.Matches.Realtime.Editor.Generator.Fields.Array.Exceptions;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Editor.Generator.Fields.Array
+namespace Cheetah.Matches.Realtime.Editor.Tests.Generator.Fields.Array
 {
     public class TestReferencedArrayFieldCodecGenerator
     {
@@ -16,7 +15,7 @@ namespace Cheetah.Matches.Relay.Tests.Editor.Generator.Fields.Array
             Assert.Null(CodecArrayFieldGenerator.Create(
                 new CodecsImporter("test"),
                 new FieldInfoStubBuilder<int>("name").Build(),
-                new HashSet<string>(), 
+                new HashSet<string>(),
                 new HashSet<string>()));
         }
 
@@ -27,7 +26,7 @@ namespace Cheetah.Matches.Relay.Tests.Editor.Generator.Fields.Array
                 CodecArrayFieldGenerator.Create(
                     new CodecsImporter("test"),
                     new FieldInfoStubBuilder<int[]>("name").Build(),
-                    new HashSet<string>(), 
+                    new HashSet<string>(),
                     new HashSet<string>()));
         }
 
@@ -37,23 +36,23 @@ namespace Cheetah.Matches.Relay.Tests.Editor.Generator.Fields.Array
             Assert.Throws<MissingArraySizeFieldException>(() =>
             {
                 CodecArrayFieldGenerator.Create(
-                    new CodecsImporter("test"), 
-                    CreateFieldInfoAccessor(), 
+                    new CodecsImporter("test"),
+                    CreateFieldInfoAccessor(),
                     new HashSet<string>(),
                     new HashSet<string>());
             });
         }
-        
+
         [Test]
         public void ShouldFailWhenIncorrectOrderArraySizeField()
         {
             Assert.Throws<IncorrectOrderArraySizeFieldException>(() =>
             {
                 CodecArrayFieldGenerator.Create(
-                    new CodecsImporter("test"), 
-                    CreateFieldInfoAccessor(), 
+                    new CodecsImporter("test"),
+                    CreateFieldInfoAccessor(),
                     new HashSet<string>(),
-                    new HashSet<string>{"size"});
+                    new HashSet<string> { "size" });
             });
         }
 
@@ -64,10 +63,10 @@ namespace Cheetah.Matches.Relay.Tests.Editor.Generator.Fields.Array
                 new CodecsImporter("test"),
                 CreateFieldInfoAccessor(),
                 new HashSet<string> { "size" },
-                new HashSet<string>{"size"});
+                new HashSet<string> { "size" });
             Assert.NotNull(generator);
         }
-        
+
         private static FieldInfoAccessorStub CreateFieldInfoAccessor()
         {
             var builder = new FieldInfoStubBuilder<int[]>("name");

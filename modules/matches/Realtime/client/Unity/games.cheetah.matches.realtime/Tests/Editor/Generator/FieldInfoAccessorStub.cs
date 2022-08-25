@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Cheetah.Matches.Relay.Editor.Generator;
+using Cheetah.Matches.Realtime.Editor.Generator;
 
-namespace Cheetah.Matches.Relay.Tests.Editor.Generator
+namespace Cheetah.Matches.Realtime.Editor.Tests.Generator
 {
     public class FieldInfoStubBuilder<T>
     {
         private readonly string name;
-        private List<object> attributes = new();
+        private readonly List<object> attributes = new();
 
         public FieldInfoStubBuilder(string name)
         {

@@ -1,8 +1,8 @@
-using Cheetah.Matches.Relay.Codec.Formatter;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Codec.Formatter;
+using Cheetah.Matches.Realtime.Types;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Runtime.Codec.Formatter
+namespace Cheetah.Matches.Realtime.Tests.Codec.Formatter
 {
     public class TestUShortFormatter : AbstractUnmanagedFormatterTest<ushort, UShortFormatter>
     {

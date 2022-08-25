@@ -1,8 +1,7 @@
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Tests.Runtime.Codec.Types;
+using Cheetah.Matches.Realtime.Codec;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Runtime.Codec.Field
+namespace Cheetah.Matches.Realtime.Tests.Codec.Field
 {
     public class TestCodecArrayField : AbstractFieldTest<TestCodecArrayField.Structure>
     {

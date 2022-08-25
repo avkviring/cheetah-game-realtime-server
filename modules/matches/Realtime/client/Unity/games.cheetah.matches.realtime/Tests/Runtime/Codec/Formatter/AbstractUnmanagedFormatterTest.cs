@@ -1,9 +1,9 @@
 using System.Linq;
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Types;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Types;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Runtime.Codec.Formatter
+namespace Cheetah.Matches.Realtime.Tests.Codec.Formatter
 {
     public abstract class AbstractUnmanagedFormatterTest<T, F> : AbstractFormatterTest<T, F>
         where T : unmanaged
