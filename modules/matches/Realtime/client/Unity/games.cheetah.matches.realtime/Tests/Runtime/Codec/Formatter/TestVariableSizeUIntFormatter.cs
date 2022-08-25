@@ -1,6 +1,6 @@
-using Cheetah.Matches.Relay.Codec.Formatter;
+using Cheetah.Matches.Realtime.Codec.Formatter;
 
-namespace Cheetah.Matches.Relay.Tests.Runtime.Codec.Formatter
+namespace Cheetah.Matches.Realtime.Tests.Codec.Formatter
 {
     public class TestVariableSizeUIntFormatter : AbstractVariableSizeFormatterTest<uint, VariableSizeUIntFormatter>
     {
@@ -12,7 +12,7 @@ namespace Cheetah.Matches.Relay.Tests.Runtime.Codec.Formatter
                 258,
                 ushort.MaxValue,
                 (uint)(ushort.MaxValue * byte.MaxValue - 1UL),
-                uint.MaxValue,
+                uint.MaxValue
             };
         }
 

@@ -1,16 +1,11 @@
 {
-  "name": "games.cheetah.matches.relay.tests",
-  "rootNamespace": "Cheetah.Matches.Relay",
+  "name": "games.cheetah.matches.realtime.tests",
+  "rootNamespace": "Cheetah.Matches.Realtime.Tests",
   "references": [
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
-    "games.cheetah.matches.relay",
-    "games.cheetah.unity.messagepack",
+    "games.cheetah.matches.realtime",
     "MessagePack"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [
-    "LinuxStandalone64"
   ],
   "allowUnsafeCode": true,
   "overrideReferences": true,

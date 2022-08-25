@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Cheetah.Matches.Relay.Codec;
-using Cheetah.Matches.Relay.Editor.Generator;
-using Cheetah.Matches.Relay.Editor.Generator.Fields.Array;
-using Cheetah.Matches.Relay.Editor.Generator.Fields.Array.Exceptions;
+using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.Editor.Generator;
+using Cheetah.Matches.Realtime.Editor.Generator.Fields.Array;
+using Cheetah.Matches.Realtime.Editor.Generator.Fields.Array.Exceptions;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Editor.Generator.Fields.Array
+namespace Cheetah.Matches.Realtime.Editor.Tests.Generator.Fields.Array
 {
     public class TestFixedArrayFieldCodecGenerator
     {

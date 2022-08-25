@@ -1,7 +1,7 @@
 using System;
-using Cheetah.Matches.Relay.Codec.Formatter;
+using Cheetah.Matches.Realtime.Codec.Formatter;
 
-namespace Cheetah.Matches.Relay.Tests.Runtime.Codec.Formatter
+namespace Cheetah.Matches.Realtime.Tests.Codec.Formatter
 {
     public class TestDoubleFormatter : AbstractUnmanagedFormatterTest<double, DoubleFormatter>
     {

@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects;
-using Cheetah.Matches.Relay.Editor.DumpViewer.Sections.Objects.Query;
-using Cheetah.Matches.Relay.Editor.GRPC;
-using Cheetah.Matches.Relay.Shared.GRPC;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects;
+using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects.Query;
+using Cheetah.Matches.Realtime.Editor.GRPC;
+using Cheetah.Matches.Realtime.Shared.GRPC;
 using Google.Protobuf;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Relay.Tests.Editor.DumpViewer.Sections.Objects.Query
+namespace Cheetah.Matches.Realtime.Editor.Tests.DumpViewer.Sections.Objects.Query
 {
     public class RuleTest
     {

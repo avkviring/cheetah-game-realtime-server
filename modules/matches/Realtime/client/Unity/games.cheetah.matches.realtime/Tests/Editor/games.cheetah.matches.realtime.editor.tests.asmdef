@@ -1,12 +1,12 @@
 {
-  "name": "games.cheetah.matches.relay.editor.tests",
-  "rootNamespace": "Cheetah.Matches.Relay",
+  "name": "games.cheetah.matches.realtime.editor.tests",
+  "rootNamespace": "Cheetah.Matches.Realtime.Editor.Tests",
   "references": [
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
-    "games.cheetah.matches.relay",
-    "games.cheetah.matches.relay.shared",
-    "games.cheetah.matches.relay.editor",
+    "games.cheetah.matches.realtime",
+    "games.cheetah.matches.realtime.shared",
+    "games.cheetah.matches.realtime.editor",
     "games.cheetah.platform"
   ],
   "includePlatforms": [
