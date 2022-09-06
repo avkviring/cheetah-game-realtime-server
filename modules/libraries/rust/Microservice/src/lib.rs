@@ -56,11 +56,9 @@ fn setup_tracer(name: &str, trace_level: tracing::Level) {
 		default_values.insert("hostname".to_owned(), get_env("HOSTNAME"));
 		let loki_layer = LokiLayer::new(loki_url, default_values);
 		let subscriber = subscriber.with(loki_layer);
-		tracing::subscriber::set_global_default(subscriber)
-			.expect("setting default subscriber failed");
+		tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 	} else {
-		tracing::subscriber::set_global_default(subscriber)
-			.expect("setting default subscriber failed");
+		tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 	}
 }
 
@@ -80,20 +78,14 @@ fn setup_panic_hook() {
 }
 
 pub fn get_internal_service_binding_addr() -> SocketAddr {
-	format!("0.0.0.0:{}", get_internal_service_port())
-		.parse()
-		.unwrap()
+	format!("0.0.0.0:{}", get_internal_service_port()).parse().unwrap()
 }
 
 pub fn get_external_service_binding_addr() -> SocketAddr {
-	format!("0.0.0.0:{}", get_external_service_port())
-		.parse()
-		.unwrap()
+	format!("0.0.0.0:{}", get_external_service_port()).parse().unwrap()
 }
 pub fn get_admin_service_binding_addr() -> SocketAddr {
-	format!("0.0.0.0:{}", get_admin_service_port())
-		.parse()
-		.unwrap()
+	format!("0.0.0.0:{}", get_admin_service_port()).parse().unwrap()
 }
 
 pub fn get_external_service_port() -> u16 {
@@ -118,10 +110,7 @@ pub fn get_internal_srv_uri_from_env(service: &str) -> Uri {
 	let port = match port_string.parse() {
 		Ok(value) => value,
 		Err(_) => {
-			panic!(
-				"{}_INTERNAL_SERVICE_PORT is not int {}",
-				service, port_string
-			);
+			panic!("{}_INTERNAL_SERVICE_PORT is not int {}", service, port_string);
 		}
 	};
 	make_internal_srv_uri(&host, port)

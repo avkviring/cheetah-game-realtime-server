@@ -9,9 +9,7 @@ use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCo
 use cheetah_matches_realtime_common::commands::FieldValue;
 use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::network::client::ConnectionStatus;
-use cheetah_matches_realtime_common::protocol::frame::applications::{
-	BothDirectionCommand, ChannelGroup, CommandWithChannel,
-};
+use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
@@ -39,10 +37,8 @@ pub struct ApplicationThreadClient {
 	pub listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64)>,
 	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)>,
 	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	pub listener_structure:
-		Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	pub listener_delete_field:
-		Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, FieldTypeFFI)>,
+	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
+	pub listener_delete_field: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, FieldTypeFFI)>,
 	pub listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
@@ -87,12 +83,8 @@ impl ApplicationThreadClient {
 		}
 	}
 
-	pub fn set_protocol_time_offset(
-		&mut self,
-		time_offset: Duration,
-	) -> Result<(), SendError<ClientRequest>> {
-		self.request_to_client
-			.send(ClientRequest::SetProtocolTimeOffsetForTest(time_offset))
+	pub fn set_protocol_time_offset(&mut self, time_offset: Duration) -> Result<(), SendError<ClientRequest>> {
+		self.request_to_client.send(ClientRequest::SetProtocolTimeOffsetForTest(time_offset))
 	}
 
 	pub fn send(&mut self, command: C2SCommand) -> Result<(), SendError<ClientRequest>> {
@@ -100,13 +92,10 @@ impl ApplicationThreadClient {
 			channel_type: self.channel.clone(),
 			command,
 		};
-		self.request_to_client
-			.send(ClientRequest::SendCommandToServer(out_command))
+		self.request_to_client.send(ClientRequest::SendCommandToServer(out_command))
 	}
 
-	pub fn get_connection_status(
-		&self,
-	) -> Result<ConnectionStatus, PoisonError<MutexGuard<ConnectionStatus>>> {
+	pub fn get_connection_status(&self) -> Result<ConnectionStatus, PoisonError<MutexGuard<ConnectionStatus>>> {
 		Ok(self.state.lock()?.clone())
 	}
 
@@ -126,9 +115,7 @@ impl ApplicationThreadClient {
 
 	pub fn receive(&mut self) {
 		while let Ok(command) = self.commands_from_server.try_recv() {
-			if let BothDirectionCommand::S2CWithCreator(command_with_user) =
-				command.both_direction_command
-			{
+			if let BothDirectionCommand::S2CWithCreator(command_with_user) = command.both_direction_command {
 				match command_with_user.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {
@@ -146,46 +133,26 @@ impl ApplicationThreadClient {
 						FieldValue::Long(v) => {
 							if let Some(ref listener) = self.listener_long_value {
 								let object_id = (&command.object_id).into();
-								listener(
-									command_with_user.creator,
-									&object_id,
-									command.field_id,
-									v,
-								);
+								listener(command_with_user.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Double(v) => {
 							if let Some(ref listener) = self.listener_float_value {
 								let object_id = (&command.object_id).into();
-								listener(
-									command_with_user.creator,
-									&object_id,
-									command.field_id,
-									v,
-								);
+								listener(command_with_user.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Structure(s) => {
 							if let Some(ref listener) = self.listener_structure {
 								let object_id = (&command.object_id).into();
-								listener(
-									command_with_user.creator,
-									&object_id,
-									command.field_id,
-									&s.into(),
-								);
+								listener(command_with_user.creator, &object_id, command.field_id, &s.into());
 							}
 						}
 					},
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(
-								command_with_user.creator,
-								&object_id,
-								command.field_id,
-								&From::from(&command.event),
-							);
+							listener(command_with_user.creator, &object_id, command.field_id, &From::from(&command.event));
 						}
 					}
 					S2CCommand::Delete(command) => {
@@ -197,12 +164,7 @@ impl ApplicationThreadClient {
 					S2CCommand::DeleteField(command) => {
 						if let Some(ref listener) = self.listener_delete_field {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(
-								command_with_user.creator,
-								&object_id,
-								command.field_id,
-								From::from(&command.field_type),
-							);
+							listener(command_with_user.creator, &object_id, command.field_id, From::from(&command.field_type));
 						}
 					}
 				}
@@ -210,16 +172,9 @@ impl ApplicationThreadClient {
 		}
 	}
 
-	pub fn create_game_object(
-		&mut self,
-		template: u16,
-		access_group: u64,
-	) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
+	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
-		let game_object_id = GameObjectId::new(
-			self.game_object_id_generator,
-			GameObjectOwner::Member(self.user_id),
-		);
+		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
 		self.send(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 			object_id: game_object_id.clone(),
 			template,
@@ -229,25 +184,13 @@ impl ApplicationThreadClient {
 		Ok(From::from(&game_object_id))
 	}
 
-	pub fn set_rtt_emulation(
-		&mut self,
-		rtt: Duration,
-		rtt_dispersion: f64,
-	) -> Result<(), SendError<ClientRequest>> {
-		self.request_to_client
-			.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion))
+	pub fn set_rtt_emulation(&mut self, rtt: Duration, rtt_dispersion: f64) -> Result<(), SendError<ClientRequest>> {
+		self.request_to_client.send(ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion))
 	}
 
-	pub fn set_drop_emulation(
-		&mut self,
-		drop_probability: f64,
-		drop_time: Duration,
-	) -> Result<(), SendError<ClientRequest>> {
+	pub fn set_drop_emulation(&mut self, drop_probability: f64, drop_time: Duration) -> Result<(), SendError<ClientRequest>> {
 		self.request_to_client
-			.send(ClientRequest::ConfigureDropEmulation(
-				drop_probability,
-				drop_time,
-			))
+			.send(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time))
 	}
 
 	pub fn reset_emulation(&mut self) -> Result<(), SendError<ClientRequest>> {

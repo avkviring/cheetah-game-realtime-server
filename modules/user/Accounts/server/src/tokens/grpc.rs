@@ -18,10 +18,7 @@ impl TokensGrpcService {
 }
 #[tonic::async_trait]
 impl proto::tokens_server::Tokens for TokensGrpcService {
-	async fn refresh(
-		&self,
-		request: tonic::Request<RefreshTokenRequest>,
-	) -> Result<tonic::Response<SessionAndRefreshTokens>, Status> {
+	async fn refresh(&self, request: tonic::Request<RefreshTokenRequest>) -> Result<tonic::Response<SessionAndRefreshTokens>, Status> {
 		let request = request.get_ref();
 
 		let tokens = self

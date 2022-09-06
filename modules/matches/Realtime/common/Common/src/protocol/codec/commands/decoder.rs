@@ -15,11 +15,7 @@ use crate::protocol::frame::channel::Channel;
 ///
 /// Преобразование массива байт в список команд
 ///
-pub fn decode_commands(
-	from_client: bool,
-	input: &mut Cursor<&[u8]>,
-	out: &mut Vec<CommandWithChannel>,
-) -> Result<(), CommandsDecoderError> {
+pub fn decode_commands(from_client: bool, input: &mut Cursor<&[u8]>, out: &mut Vec<CommandWithChannel>) -> Result<(), CommandsDecoderError> {
 	let length = input.read_u8()?;
 	let mut context = CommandContext::default();
 	for _ in 0..length {
@@ -37,11 +33,7 @@ fn decode_command(
 	context: &CommandContext,
 ) -> Result<CommandWithChannel, CommandsDecoderError> {
 	Ok(CommandWithChannel {
-		channel: Channel::decode(
-			&header.channel_type_id,
-			context.get_channel_group_id(),
-			input,
-		)?,
+		channel: Channel::decode(&header.channel_type_id, context.get_channel_group_id(), input)?,
 		both_direction_command: match from_client {
 			true => BothDirectionCommand::C2S(C2SCommand::decode(
 				&header.command_type_id,
@@ -51,12 +43,7 @@ fn decode_command(
 			)?),
 			false => BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				creator: context.get_creator()?,
-				command: S2CCommand::decode(
-					&header.command_type_id,
-					context.get_object_id(),
-					context.get_field_id(),
-					input,
-				)?,
+				command: S2CCommand::decode(&header.command_type_id, context.get_object_id(), context.get_field_id(), input)?,
 			}),
 		},
 	})

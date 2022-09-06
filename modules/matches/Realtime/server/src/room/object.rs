@@ -1,9 +1,7 @@
 use thiserror::Error;
 
 use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
-use cheetah_matches_realtime_common::commands::types::create::{
-	CreateGameObjectCommand, GameObjectCreatedS2CCommand,
-};
+use cheetah_matches_realtime_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use cheetah_matches_realtime_common::commands::{field_type::ToFieldType, FieldType, FieldValue};
 use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_realtime_common::room::access::AccessGroups;
@@ -12,8 +10,7 @@ use cheetah_matches_realtime_common::room::RoomMemberId;
 
 const TYPE_COUNT: usize = 3;
 pub const MAX_FIELD_COUNT: usize = 64;
-type FieldIndex =
-	heapless::FnvIndexMap<(FieldId, FieldType), FieldValue, { MAX_FIELD_COUNT * TYPE_COUNT }>;
+type FieldIndex = heapless::FnvIndexMap<(FieldId, FieldType), FieldValue, { MAX_FIELD_COUNT * TYPE_COUNT }>;
 pub type CreateCommandsCollector = heapless::Vec<S2CCommandWithFieldInfo, 255>;
 
 ///
@@ -39,12 +36,7 @@ pub enum GameObjectError {
 }
 
 impl GameObject {
-	pub fn new(
-		id: GameObjectId,
-		template_id: GameObjectTemplateId,
-		access_groups: AccessGroups,
-		created: bool,
-	) -> Self {
+	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, created: bool) -> Self {
 		Self {
 			id,
 			template_id,
@@ -72,11 +64,7 @@ impl GameObject {
 		self.fields.get(&(field_id, field_type)).map(|v| v.as_ref())
 	}
 
-	pub fn get_field_wrapped(
-		&self,
-		field_id: FieldId,
-		field_type: FieldType,
-	) -> Option<&FieldValue> {
+	pub fn get_field_wrapped(&self, field_id: FieldId, field_type: FieldType) -> Option<&FieldValue> {
 		self.fields.get(&(field_id, field_type))
 	}
 
@@ -89,11 +77,7 @@ impl GameObject {
 		self.set_field_wrapped(field_id, field_value)
 	}
 
-	pub fn set_field_wrapped(
-		&mut self,
-		field_id: FieldId,
-		value: FieldValue,
-	) -> Result<(), GameObjectError> {
+	pub fn set_field_wrapped(&mut self, field_id: FieldId, value: FieldValue) -> Result<(), GameObjectError> {
 		let field_type = value.field_type();
 		self.fields
 			.insert((field_id, field_type), value)
@@ -101,9 +85,7 @@ impl GameObject {
 			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.to_owned(), self.template_id))
 	}
 
-	pub fn get_compare_and_set_owners(
-		&self,
-	) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
+	pub fn get_compare_and_set_owners(&self) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
 		&self.compare_and_set_owners
 	}
 
@@ -111,11 +93,7 @@ impl GameObject {
 		self.compare_and_set_owners.get(field_id)
 	}
 
-	pub fn set_compare_and_set_owner(
-		&mut self,
-		field_id: FieldId,
-		value: RoomMemberId,
-	) -> Result<(), GameObjectError> {
+	pub fn set_compare_and_set_owner(&mut self, field_id: FieldId, value: RoomMemberId) -> Result<(), GameObjectError> {
 		self.compare_and_set_owners
 			.insert(field_id, value)
 			.map(|_| ())
@@ -128,10 +106,7 @@ impl GameObject {
 		}
 	}
 
-	fn do_collect_create_commands(
-		&self,
-		commands: &mut CreateCommandsCollector,
-	) -> Result<(), S2CCommandWithFieldInfo> {
+	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
 		commands.push(S2CCommandWithFieldInfo {
 			field: Option::None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
@@ -146,24 +121,16 @@ impl GameObject {
 		if self.created {
 			commands.push(S2CCommandWithFieldInfo {
 				field: None,
-				command: S2CCommand::Created(GameObjectCreatedS2CCommand {
-					object_id: self.id.clone(),
-				}),
+				command: S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: self.id.clone() }),
 			})?;
 		}
 		Ok(())
 	}
 
-	fn fields_to_commands(
-		&self,
-		commands: &mut CreateCommandsCollector,
-	) -> Result<(), S2CCommandWithFieldInfo> {
+	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
 		for (&(field_id, field_type), v) in self.fields() {
 			let command = S2CCommandWithFieldInfo {
-				field: Option::Some(Field {
-					id: field_id,
-					field_type,
-				}),
+				field: Option::Some(Field { id: field_id, field_type }),
 				command: S2CCommand::new_set_command(v.to_owned(), self.id.to_owned(), field_id),
 			};
 			commands.push(command)?;
@@ -192,9 +159,7 @@ mod tests {
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{
-		CreateCommandsCollector, Field, FieldValue, GameObject, S2CCommandWithFieldInfo,
-	};
+	use crate::room::object::{CreateCommandsCollector, Field, FieldValue, GameObject, S2CCommandWithFieldInfo};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -207,10 +172,7 @@ mod tests {
 		object.set_field(2, 200.200).unwrap();
 		object
 			.fields
-			.insert(
-				(1, FieldType::Structure),
-				FieldValue::Structure(vec![1, 2, 3]),
-			)
+			.insert((1, FieldType::Structure), FieldValue::Structure(vec![1, 2, 3]))
 			.unwrap();
 
 		let mut commands = CreateCommandsCollector::new();

@@ -15,11 +15,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 			let value = match object.get_field::<i64>(self.field_id) {
 				Some(value) => match (*value).checked_add(self.increment) {
 					None => {
-						tracing::error!(
-							"[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})",
-							value,
-							self.increment
-						);
+						tracing::error!("[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})", value, self.increment);
 						*value
 					}
 					Some(result) => {
@@ -105,9 +101,7 @@ mod tests {
 
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 100);
-		assert!(
-			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command)
-		);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
 	}
 
 	#[test]
@@ -133,9 +127,7 @@ mod tests {
 		};
 
 		room.test_out_commands.pop_back();
-		assert!(
-			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result)
-		);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result));
 	}
 
 	#[test]
@@ -156,10 +148,7 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_id),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		(room, user_id, object_id)

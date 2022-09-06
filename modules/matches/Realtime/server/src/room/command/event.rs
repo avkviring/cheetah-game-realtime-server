@@ -51,9 +51,7 @@ impl ServerCommandExecutor for TargetEventCommand {
 mod tests {
 	use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
-	use cheetah_matches_realtime_common::commands::types::event::{
-		EventCommand, TargetEventCommand,
-	};
+	use cheetah_matches_realtime_common::commands::types::event::{EventCommand, TargetEventCommand};
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
@@ -65,10 +63,7 @@ mod tests {
 	#[test]
 	pub fn should_send_event() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.test_out_commands.clear();
@@ -80,9 +75,7 @@ mod tests {
 		};
 
 		command.execute(&mut room, user).unwrap();
-		assert!(
-			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command)
-		);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
 
 	#[test]
@@ -99,10 +92,7 @@ mod tests {
 		room.test_mark_as_connected(user2).unwrap();
 		room.test_mark_as_connected(user3).unwrap();
 
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user1),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user1), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.test_get_user_out_commands(user1).clear();
@@ -119,16 +109,8 @@ mod tests {
 		};
 
 		command.execute(&mut room, user1).unwrap();
-		assert!(matches!(
-			room.test_get_user_out_commands(user1).pop_back(),
-			None
-		));
-		assert!(
-			matches!(room.test_get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id)
-		);
-		assert!(matches!(
-			room.test_get_user_out_commands(user3).pop_back(),
-			None
-		));
+		assert!(matches!(room.test_get_user_out_commands(user1).pop_back(), None));
+		assert!(matches!(room.test_get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id));
+		assert!(matches!(room.test_get_user_out_commands(user3).pop_back(), None));
 	}
 }

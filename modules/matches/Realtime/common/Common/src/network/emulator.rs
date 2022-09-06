@@ -182,16 +182,10 @@ mod tests {
 		let in_buffer = vec![1, 2, 3, 4, 5];
 		let out_buffer = vec![10, 11, 12];
 		emulator.schedule_in(&Instant::now(), in_buffer.as_slice());
-		emulator.schedule_out(
-			&Instant::now(),
-			out_buffer.as_slice(),
-			SocketAddr::from_str("127.0.0.1:5050").unwrap(),
-		);
+		emulator.schedule_out(&Instant::now(), out_buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
 		assert!(matches!(emulator.get_in(&Instant::now()), Some(buffer) if buffer==in_buffer));
-		assert!(
-			matches!(emulator.get_out(&Instant::now()), Some((buffer,_)) if buffer==out_buffer)
-		);
+		assert!(matches!(emulator.get_out(&Instant::now()), Some((buffer,_)) if buffer==out_buffer));
 	}
 
 	///
@@ -204,11 +198,7 @@ mod tests {
 		let send_data = vec![1, 2, 3];
 		let rtt = Duration::from_millis(1000);
 		emulator.rtt = Some(rtt);
-		emulator.schedule_out(
-			&now,
-			send_data.as_slice(),
-			SocketAddr::from_str("127.0.0.1:5050").unwrap(),
-		);
+		emulator.schedule_out(&now, send_data.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
 		assert!(matches!(emulator.get_out(&now), Option::None));
 
@@ -282,11 +272,7 @@ mod tests {
 				in_dropped_count += 1;
 			}
 
-			emulator.schedule_out(
-				&now,
-				buffer.as_slice(),
-				SocketAddr::from_str("127.0.0.1:5050").unwrap(),
-			);
+			emulator.schedule_out(&now, buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 			if emulator.get_out(&now).is_none() {
 				out_dropped_count += 1;
 			}
@@ -332,16 +318,8 @@ mod tests {
 
 		emulator.schedule_in(&now, frame_1.as_slice());
 		emulator.schedule_in(&now, frame_2.as_slice());
-		emulator.schedule_out(
-			&now,
-			frame_1.as_slice(),
-			SocketAddr::from_str("127.0.0.1:5050").unwrap(),
-		);
-		emulator.schedule_out(
-			&now,
-			frame_2.as_slice(),
-			SocketAddr::from_str("127.0.0.1:5050").unwrap(),
-		);
+		emulator.schedule_out(&now, frame_1.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_out(&now, frame_2.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
 		let now = now.add(half_rtt.sub(Duration::from_millis(1)));
 		assert!(matches!(emulator.get_in(&now), None));

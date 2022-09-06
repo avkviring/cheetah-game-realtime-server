@@ -19,12 +19,7 @@ pub extern "C" fn set_delete_field_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn delete_field(
-	client_id: ClientId,
-	object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	field_type: FieldTypeFFI,
-) -> u8 {
+pub extern "C" fn delete_field(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, field_type: FieldTypeFFI) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::DeleteField(DeleteFieldCommand {

@@ -7,15 +7,8 @@ fn main() -> Result<(), Error> {
 	println!("cargo:rerun-if-changed=../proto/matches/Realtime/matches.realtime.internal.proto");
 
 	tonic_build::configure().build_client(false).compile(
-		&[
-			"../proto/matches.factory.internal.proto",
-			"../proto/matches.factory.admin.proto",
-		],
-		&[
-			"../proto/",
-			"../../Registry/proto/",
-			"../../Realtime/proto/",
-		],
+		&["../proto/matches.factory.internal.proto", "../proto/matches.factory.admin.proto"],
+		&["../proto/", "../../Registry/proto/", "../../Realtime/proto/"],
 	)?;
 
 	// сервер нужен в тестах

@@ -1,7 +1,4 @@
-use crate::grpc::userstore::{
-	fetch_double_reply, fetch_long_reply, fetch_string_reply, FetchDoubleReply, FetchLongReply,
-	FetchStringReply,
-};
+use crate::grpc::userstore::{fetch_double_reply, fetch_long_reply, fetch_string_reply, FetchDoubleReply, FetchLongReply, FetchStringReply};
 
 impl From<f64> for FetchDoubleReply {
 	fn from(v: f64) -> Self {

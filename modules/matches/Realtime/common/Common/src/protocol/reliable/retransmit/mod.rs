@@ -33,15 +33,13 @@ pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 0.5;
 ///
 /// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
 ///
-pub const RETRANSMIT_LIMIT: usize =
-	(RETRANSMIT_MAX_TIME_IN_SEC as f64 / RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC) as usize;
+pub const RETRANSMIT_LIMIT: usize = (RETRANSMIT_MAX_TIME_IN_SEC as f64 / RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC) as usize;
 
 ///
 /// количество фреймов в буферах, должно гарантированно хватить для всех фреймов
 /// как только количество фреймов будет больше - то канал переходит в состояние disconnected
 ///
-pub const RETRANSMIT_FRAMES_CAPACITY: usize =
-	RELIABILITY_FRAME_PER_SECOND * RETRANSMIT_MAX_TIME_IN_SEC;
+pub const RETRANSMIT_FRAMES_CAPACITY: usize = RELIABILITY_FRAME_PER_SECOND * RETRANSMIT_MAX_TIME_IN_SEC;
 
 #[derive(Debug)]
 pub struct Retransmit {
@@ -92,38 +90,27 @@ impl Retransmit {
 	/// Получить фрейм для повторной отправки (если такой есть)
 	/// - метод необходимо вызывать пока результат Option::Some
 	///
-	pub fn get_retransmit_frame(
-		&mut self,
-		now: &Instant,
-		retransmit_frame_id: FrameId,
-	) -> Option<OutFrame> {
+	pub fn get_retransmit_frame(&mut self, now: &Instant, retransmit_frame_id: FrameId) -> Option<OutFrame> {
 		loop {
 			match self.frames.front() {
 				None => {
 					return Option::None;
 				}
 				Some(scheduled_frame) => {
-					if !self
-						.wait_ack_frames
-						.contains(&scheduled_frame.original_frame_id)
-					{
+					if !self.wait_ack_frames.contains(&scheduled_frame.original_frame_id) {
 						self.frames.pop_front();
 					} else if now.sub(scheduled_frame.time) >= self.ack_wait_duration {
 						let mut scheduled_frame = self.frames.pop_front().unwrap();
 
 						let retransmit_count = scheduled_frame.retransmit_count + 1;
-						self.max_retransmit_count =
-							max(self.max_retransmit_count, retransmit_count);
+						self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);
 						scheduled_frame.retransmit_count = retransmit_count;
 						scheduled_frame.time = *now;
 
 						let original_frame_id = scheduled_frame.original_frame_id;
 						let mut retransmit_frame = scheduled_frame.frame.clone();
 						retransmit_frame.frame_id = retransmit_frame_id;
-						let retransmit_header = Header::Retransmit(RetransmitHeader::new(
-							original_frame_id,
-							retransmit_count,
-						));
+						let retransmit_header = Header::Retransmit(RetransmitHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
 
 						// мы только-что удалили фрейм, значит место в точно должно быть
@@ -160,12 +147,9 @@ impl Retransmit {
 			let original_frame_id = frame.frame_id;
 			let mut reliable_frame = OutFrame::new(original_frame_id);
 			reliable_frame.headers = frame.headers.clone();
-			frame
-				.get_commands()
-				.filter(|c| c.channel.is_reliable())
-				.for_each(|c| {
-					reliable_frame.add_command(c.clone());
-				});
+			frame.get_commands().filter(|c| c.channel.is_reliable()).for_each(|c| {
+				reliable_frame.add_command(c.clone());
+			});
 
 			self.frames.push_back(ScheduledFrame {
 				time: *now,
@@ -207,10 +191,7 @@ mod tests {
 	///
 	fn should_empty_when_get_retransmit_frame() {
 		let mut handler = Retransmit::default();
-		assert!(matches!(
-			handler.get_retransmit_frame(&Instant::now(), 1),
-			Option::None
-		));
+		assert!(matches!(handler.get_retransmit_frame(&Instant::now(), 1), Option::None));
 	}
 
 	///
@@ -221,10 +202,7 @@ mod tests {
 		let mut handler = Retransmit::default();
 		let now = Instant::now();
 		handler.build_frame(&create_reliability_frame(1), &now);
-		assert!(matches!(
-			handler.get_retransmit_frame(&now, 2),
-			Option::None
-		));
+		assert!(matches!(handler.get_retransmit_frame(&now, 2), Option::None));
 	}
 
 	///
@@ -273,10 +251,7 @@ mod tests {
 		handler.build_frame(&frame, &now);
 
 		let get_time = now.add(handler.ack_wait_duration);
-		assert!(matches!(
-			handler.get_retransmit_frame(&get_time, 2),
-			Option::None
-		));
+		assert!(matches!(handler.get_retransmit_frame(&get_time, 2), Option::None));
 	}
 
 	///
@@ -290,10 +265,7 @@ mod tests {
 		handler.build_frame(&frame, &now);
 		handler.on_frame_received(&create_ack_frame(100, frame.frame_id), &now);
 		let get_time = now.add(handler.ack_wait_duration);
-		assert!(matches!(
-			handler.get_retransmit_frame(&get_time, 2),
-			Option::None
-		));
+		assert!(matches!(handler.get_retransmit_frame(&get_time, 2), Option::None));
 	}
 
 	///
@@ -311,10 +283,7 @@ mod tests {
 		assert!(matches!(
 				handler.get_retransmit_frame(&get_time,2),
 				Option::Some(retransmit_frame) if retransmit_frame.frame_id == 2));
-		assert!(matches!(
-			handler.get_retransmit_frame(&get_time, 3),
-			Option::None
-		));
+		assert!(matches!(handler.get_retransmit_frame(&get_time, 3), Option::None));
 		let get_time = get_time.add(handler.ack_wait_duration);
 		assert!(matches!(
 				handler.get_retransmit_frame(&get_time,4),

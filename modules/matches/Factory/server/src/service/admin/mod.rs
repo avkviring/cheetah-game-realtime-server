@@ -45,10 +45,7 @@ fn to_admin_field_type(field_type: &FieldType) -> i32 {
 
 #[tonic::async_trait]
 impl admin::configurations_server::Configurations for ConfigurationsService {
-	async fn get_item_names(
-		&self,
-		_: Request<admin::GetItemsNamesRequest>,
-	) -> Result<Response<admin::GetItemsNamesResponse>, tonic::Status> {
+	async fn get_item_names(&self, _: Request<admin::GetItemsNamesRequest>) -> Result<Response<admin::GetItemsNamesResponse>, tonic::Status> {
 		Result::Ok(Response::new(admin::GetItemsNamesResponse {
 			templates: self.templates.clone(),
 			fields: self.fields.clone(),

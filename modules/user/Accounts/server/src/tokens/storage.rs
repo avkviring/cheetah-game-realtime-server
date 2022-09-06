@@ -23,11 +23,7 @@ impl TokenStorage {
 		Self { pg_pool, ttl }
 	}
 
-	pub async fn create_new_linked_uuid(
-		&self,
-		user: &User,
-		device: &str,
-	) -> Result<Uuid, sqlx::Error> {
+	pub async fn create_new_linked_uuid(&self, user: &User, device: &str) -> Result<Uuid, sqlx::Error> {
 		let token_uuid = Uuid::new_v4();
 		// удаляем старую привязку
 		sqlx::query("delete from cheetah_user_accounts_tokens where user_uuid=$1 and device=$2")
@@ -40,32 +36,24 @@ impl TokenStorage {
 			.bind(user.0)
 			.bind(device)
 			.bind(token_uuid)
-			.execute(&self.pg_pool).await?;
+			.execute(&self.pg_pool)
+			.await?;
 		Ok(token_uuid)
 	}
 
-	pub(crate) async fn is_linked(
-		&self,
-		user: &User,
-		device: &str,
-		token_uuid: &Uuid,
-		now: SystemTime,
-	) -> Result<bool, sqlx::Error> {
-		let result: Option<PgRow> = sqlx::query(
-			"select create_at from cheetah_user_accounts_tokens where user_uuid=$1 and device=$2 and token=$3",
-		)
-		.bind(user.0)
-		.bind(device)
-		.bind(token_uuid)
-		.fetch_optional(&self.pg_pool)
-		.await?;
+	pub(crate) async fn is_linked(&self, user: &User, device: &str, token_uuid: &Uuid, now: SystemTime) -> Result<bool, sqlx::Error> {
+		let result: Option<PgRow> = sqlx::query("select create_at from cheetah_user_accounts_tokens where user_uuid=$1 and device=$2 and token=$3")
+			.bind(user.0)
+			.bind(device)
+			.bind(token_uuid)
+			.fetch_optional(&self.pg_pool)
+			.await?;
 
 		Ok(match result {
 			None => false,
 			Some(row) => {
 				let created_at: NaiveDateTime = row.get(0);
-				created_at.timestamp_millis() as u128 + self.ttl.as_millis()
-					> now.duration_since(UNIX_EPOCH).unwrap().as_millis()
+				created_at.timestamp_millis() as u128 + self.ttl.as_millis() > now.duration_since(UNIX_EPOCH).unwrap().as_millis()
 			}
 		})
 	}
@@ -103,14 +91,8 @@ pub mod tests {
 		let user = User::default();
 		let device = "device".to_owned();
 		let _now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-		let version_1 = storage
-			.create_new_linked_uuid(&user, &device)
-			.await
-			.unwrap();
-		let linked = storage
-			.is_linked(&user, &device, &version_1, SystemTime::now())
-			.await
-			.unwrap();
+		let version_1 = storage.create_new_linked_uuid(&user, &device).await.unwrap();
+		let linked = storage.is_linked(&user, &device, &version_1, SystemTime::now()).await.unwrap();
 
 		assert!(linked);
 	}
@@ -121,10 +103,7 @@ pub mod tests {
 
 		let user = User::default();
 		let device = "device".to_owned();
-		let linked = storage
-			.is_linked(&user, &device, &Uuid::new_v4(), SystemTime::now())
-			.await
-			.unwrap();
+		let linked = storage.is_linked(&user, &device, &Uuid::new_v4(), SystemTime::now()).await.unwrap();
 
 		assert!(!linked);
 	}
@@ -135,16 +114,10 @@ pub mod tests {
 		let user = User::default();
 		let device = "device".to_owned();
 
-		let uuid = storage
-			.create_new_linked_uuid(&user, &device)
-			.await
-			.unwrap();
+		let uuid = storage.create_new_linked_uuid(&user, &device).await.unwrap();
 
 		let offset = Duration::from_secs(100);
-		let linked = storage
-			.is_linked(&user, &device, &uuid, SystemTime::now().add(offset))
-			.await
-			.unwrap();
+		let linked = storage.is_linked(&user, &device, &uuid, SystemTime::now().add(offset)).await.unwrap();
 		assert!(!linked)
 	}
 

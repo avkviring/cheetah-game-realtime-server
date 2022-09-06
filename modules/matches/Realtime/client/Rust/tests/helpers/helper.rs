@@ -30,14 +30,7 @@ impl IntegrationTestHelper {
 
 	pub fn create_client(&self, user_id: RoomMemberId, user_key: MemberPrivateKey) -> ClientId {
 		let mut client: ClientId = 0;
-		do_create_client(
-			self.socket_addr.to_string(),
-			user_id,
-			self.room_id,
-			&user_key,
-			0,
-			&mut client,
-		);
+		do_create_client(self.socket_addr.to_string(), user_id, self.room_id, &user_key, 0, &mut client);
 		client
 	}
 
@@ -65,18 +58,12 @@ impl IntegrationTestHelper {
 			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
 		};
-		let user_id = self
-			.server
-			.register_user(self.room_id, user_template)
-			.ok()
-			.unwrap();
+		let user_id = self.server.register_user(self.room_id, user_template).ok().unwrap();
 		(user_id, private_key)
 	}
 }
 
-pub fn setup<const N: usize>(
-	builder: IntegrationTestServerBuilder,
-) -> (IntegrationTestHelper, [u16; N]) {
+pub fn setup<const N: usize>(builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, [u16; N]) {
 	let mut helper = IntegrationTestHelper::new(builder);
 	let mut members = [0; N];
 	for i in 0..N {

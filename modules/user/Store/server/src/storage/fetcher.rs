@@ -12,11 +12,7 @@ impl Fetcher {
 		Self { pg_pool }
 	}
 
-	pub(crate) async fn get<T>(
-		&self,
-		user_uuid: &Uuid,
-		field_name: &str,
-	) -> Result<Option<T>, sqlx::Error>
+	pub(crate) async fn get<T>(&self, user_uuid: &Uuid, field_name: &str) -> Result<Option<T>, sqlx::Error>
 	where
 		T: TableName + Send,
 		T: for<'r> sqlx::Decode<'r, Postgres> + sqlx::Type<Postgres>,

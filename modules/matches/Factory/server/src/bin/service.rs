@@ -26,13 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	Ok(())
 }
 
-async fn create_admin_grpc_server(
-	configurations: &YamlConfigurations,
-) -> impl Future<Output = Result<(), Error>> {
+async fn create_admin_grpc_server(configurations: &YamlConfigurations) -> impl Future<Output = Result<(), Error>> {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-	health_reporter
-		.set_service_status("", ServingStatus::Serving)
-		.await;
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
 
 	let service = ConfigurationsService::new(configurations);
 	let grpc_service = ConfigurationsServer::new(service);
@@ -42,16 +38,11 @@ async fn create_admin_grpc_server(
 		.add_service(tonic_web::enable(grpc_service))
 		.serve(cheetah_libraries_microservice::get_admin_service_binding_addr())
 }
-async fn create_internal_grpc_server(
-	configurations: &YamlConfigurations,
-) -> impl Future<Output = Result<(), Error>> {
+async fn create_internal_grpc_server(configurations: &YamlConfigurations) -> impl Future<Output = Result<(), Error>> {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-	health_reporter
-		.set_service_status("", ServingStatus::Serving)
-		.await;
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
 
-	let registry_url =
-		cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
+	let registry_url = cheetah_libraries_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
 	let registry = RegistryClient::new(registry_url.clone())
 		.await
 		.unwrap_or_else(|_| panic!("Can not connect to {:?}", registry_url));

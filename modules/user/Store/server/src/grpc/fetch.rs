@@ -8,8 +8,7 @@ use uuid::Uuid;
 use cheetah_libraries_microservice::trace;
 
 use crate::grpc::userstore::{
-	self, fetch_server::Fetch, FetchDoubleReply, FetchDoubleRequest, FetchLongReply,
-	FetchLongRequest, FetchStringReply, FetchStringRequest,
+	self, fetch_server::Fetch, FetchDoubleReply, FetchDoubleRequest, FetchLongReply, FetchLongRequest, FetchStringReply, FetchStringRequest,
 };
 use crate::storage;
 
@@ -24,11 +23,7 @@ impl FetchService {
 		}
 	}
 
-	async fn process_request<T, R, V, Op, Fut>(
-		&self,
-		request: Request<T>,
-		op: Op,
-	) -> Result<Response<R>, Status>
+	async fn process_request<T, R, V, Op, Fut>(&self, request: Request<T>, op: Op) -> Result<Response<R>, Status>
 	where
 		R: From<userstore::FetchStatus> + From<V>,
 		Op: FnOnce(Uuid, T) -> Fut,
@@ -51,33 +46,27 @@ impl FetchService {
 
 #[tonic::async_trait]
 impl Fetch for FetchService {
-	async fn double(
-		&self,
-		request: Request<FetchDoubleRequest>,
-	) -> Result<Response<FetchDoubleReply>, Status> {
-		self.process_request(request, |user, args| async move {
-			self.fetcher.get::<f64>(&user, &args.field_name).await
-		})
+	async fn double(&self, request: Request<FetchDoubleRequest>) -> Result<Response<FetchDoubleReply>, Status> {
+		self.process_request(
+			request,
+			|user, args| async move { self.fetcher.get::<f64>(&user, &args.field_name).await },
+		)
 		.await
 	}
 
-	async fn long(
-		&self,
-		request: Request<FetchLongRequest>,
-	) -> Result<Response<FetchLongReply>, Status> {
-		self.process_request(request, |user, args| async move {
-			self.fetcher.get::<i64>(&user, &args.field_name).await
-		})
+	async fn long(&self, request: Request<FetchLongRequest>) -> Result<Response<FetchLongReply>, Status> {
+		self.process_request(
+			request,
+			|user, args| async move { self.fetcher.get::<i64>(&user, &args.field_name).await },
+		)
 		.await
 	}
 
-	async fn string(
-		&self,
-		request: Request<FetchStringRequest>,
-	) -> Result<Response<FetchStringReply>, Status> {
-		self.process_request(request, |user, args| async move {
-			self.fetcher.get::<String>(&user, &args.field_name).await
-		})
+	async fn string(&self, request: Request<FetchStringRequest>) -> Result<Response<FetchStringReply>, Status> {
+		self.process_request(
+			request,
+			|user, args| async move { self.fetcher.get::<String>(&user, &args.field_name).await },
+		)
 		.await
 	}
 }

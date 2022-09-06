@@ -104,10 +104,7 @@ impl MemberTemplate {
 	pub fn validate(self) -> Result<MemberTemplate, UserTemplateError> {
 		for object in &self.objects {
 			if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
-				return Err(UserTemplateError::UserObjectHasWrongId(
-					self.private_key,
-					object.id,
-				));
+				return Err(UserTemplateError::UserObjectHasWrongId(self.private_key, object.id));
 			}
 		}
 		Ok(self)
@@ -123,8 +120,8 @@ mod tests {
 
 	use crate::room::object::Field;
 	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate,
-		Permission, PermissionField, Permissions, UserTemplateError,
+		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, Permissions,
+		UserTemplateError,
 	};
 
 	impl MemberTemplate {
@@ -132,12 +129,7 @@ mod tests {
 			MemberTemplate::new_member(access_group, Default::default())
 		}
 
-		pub fn configure_object(
-			&mut self,
-			id: u32,
-			template: GameObjectTemplateId,
-			access_groups: AccessGroups,
-		) -> &mut GameObjectTemplate {
+		pub fn configure_object(&mut self, id: u32, template: GameObjectTemplateId, access_groups: AccessGroups) -> &mut GameObjectTemplate {
 			let objects = &mut self.objects;
 			objects.push(GameObjectTemplate {
 				id,
@@ -160,42 +152,27 @@ mod tests {
 			access_group: &AccessGroups,
 			permission: Permission,
 		) {
-			let template_permission =
-				match self.templates.iter_mut().find(|t| t.template == template) {
-					None => {
-						let template_permission = GameObjectTemplatePermission {
-							template,
-							rules: vec![],
-							fields: vec![],
-						};
-						self.templates.push(template_permission);
-						self.templates
-							.iter_mut()
-							.find(|t| t.template == template)
-							.unwrap()
-					}
-					Some(template) => template,
-				};
+			let template_permission = match self.templates.iter_mut().find(|t| t.template == template) {
+				None => {
+					let template_permission = GameObjectTemplatePermission {
+						template,
+						rules: vec![],
+						fields: vec![],
+					};
+					self.templates.push(template_permission);
+					self.templates.iter_mut().find(|t| t.template == template).unwrap()
+				}
+				Some(template) => template,
+			};
 
-			let permission_field = match template_permission
-				.fields
-				.iter_mut()
-				.find(|f| f.field.id == *field_id)
-			{
+			let permission_field = match template_permission.fields.iter_mut().find(|f| f.field.id == *field_id) {
 				None => {
 					let permission_field = PermissionField {
-						field: Field {
-							id: *field_id,
-							field_type,
-						},
+						field: Field { id: *field_id, field_type },
 						rules: vec![],
 					};
 					template_permission.fields.push(permission_field);
-					template_permission
-						.fields
-						.iter_mut()
-						.find(|f| f.field.id == *field_id)
-						.unwrap()
+					template_permission.fields.iter_mut().find(|f| f.field.id == *field_id).unwrap()
 				}
 				Some(permission_field) => permission_field,
 			};
@@ -216,9 +193,6 @@ mod tests {
 			fields: Default::default(),
 		}];
 		let template = MemberTemplate::new_member(AccessGroups(0b1111), objects);
-		assert!(matches!(
-			template.validate(),
-			Result::Err(UserTemplateError::UserObjectHasWrongId(_, _))
-		))
+		assert!(matches!(template.validate(), Result::Err(UserTemplateError::UserObjectHasWrongId(_, _))))
 	}
 }

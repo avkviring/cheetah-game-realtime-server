@@ -8,19 +8,13 @@ use crate::service::FactoryService;
 
 #[tonic::async_trait]
 impl factory::factory_server::Factory for FactoryService {
-	async fn create_match(
-		&self,
-		request: Request<factory::CreateMatchRequest>,
-	) -> Result<Response<factory::CreateMatchResponse>, Status> {
-		self.do_create_match(request.into_inner().template)
-			.await
-			.map(Response::new)
+	async fn create_match(&self, request: Request<factory::CreateMatchRequest>) -> Result<Response<factory::CreateMatchResponse>, Status> {
+		self.do_create_match(request.into_inner().template).await.map(Response::new)
 	}
 }
 
 lazy_static! {
-	static ref CREATE_MATCH_COUNTER: IntCounter =
-		register_int_counter!("create_match_counter", "").unwrap();
+	static ref CREATE_MATCH_COUNTER: IntCounter = register_int_counter!("create_match_counter", "").unwrap();
 }
 
 #[cfg(test)]
@@ -34,9 +28,7 @@ mod tests {
 
 	use realtime::internal;
 
-	use crate::proto::matches::realtime::internal::{
-		EmptyRequest, ProbeRequest, ProbeResponse, RoomIdResponse,
-	};
+	use crate::proto::matches::realtime::internal::{EmptyRequest, ProbeRequest, ProbeResponse, RoomIdResponse};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::{realtime, registry};
 	use crate::service::configuration::yaml::test::EXAMPLE_DIR;
@@ -73,19 +65,13 @@ mod tests {
 	}
 	#[tonic::async_trait]
 	impl internal::realtime_server::Realtime for StubRealtimeService {
-		async fn create_room(
-			&self,
-			_request: Request<internal::RoomTemplate>,
-		) -> Result<Response<RoomIdResponse>, Status> {
+		async fn create_room(&self, _request: Request<internal::RoomTemplate>) -> Result<Response<RoomIdResponse>, Status> {
 			Ok(Response::new(RoomIdResponse {
 				room_id: StubRealtimeService::ROOM_ID,
 			}))
 		}
 
-		async fn create_member(
-			&self,
-			_request: Request<internal::CreateMemberRequest>,
-		) -> Result<Response<internal::CreateMemberResponse>, Status> {
+		async fn create_member(&self, _request: Request<internal::CreateMemberRequest>) -> Result<Response<internal::CreateMemberResponse>, Status> {
 			unimplemented!()
 		}
 
@@ -96,19 +82,13 @@ mod tests {
 			unimplemented!()
 		}
 
-		async fn probe(
-			&self,
-			_request: Request<ProbeRequest>,
-		) -> Result<Response<ProbeResponse>, Status> {
+		async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {
 			Ok(Response::new(ProbeResponse {}))
 		}
 
 		type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
 
-		async fn watch_created_room_event(
-			&self,
-			_request: Request<EmptyRequest>,
-		) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
+		async fn watch_created_room_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
 			todo!()
 		}
 	}
@@ -119,11 +99,7 @@ mod tests {
 		let uri = stub_grpc_services().await;
 
 		let registry = RegistryClient::new(uri).await.unwrap();
-		let factory = FactoryService::new(
-			registry,
-			&YamlConfigurations::load(templates_directory).unwrap(),
-		)
-		.unwrap();
+		let factory = FactoryService::new(registry, &YamlConfigurations::load(templates_directory).unwrap()).unwrap();
 		let result = factory.do_create_match("gubaha".to_string()).await.unwrap();
 		assert_eq!(result.id, StubRealtimeService::ROOM_ID);
 	}
@@ -149,20 +125,13 @@ mod tests {
 		let stub_relay = StubRealtimeService {};
 		tokio::spawn(async move {
 			Server::builder()
-				.add_service(registry::internal::registry_server::RegistryServer::new(
-					stub_registry,
-				))
+				.add_service(registry::internal::registry_server::RegistryServer::new(stub_registry))
 				.add_service(internal::realtime_server::RealtimeServer::new(stub_relay))
-				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
-					stub_grpc_service_tcp,
-				))
+				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(stub_grpc_service_tcp))
 				.await
 		});
 
-		cheetah_libraries_microservice::make_internal_srv_uri(
-			&stub_grpc_service_addr.ip().to_string(),
-			stub_grpc_service_addr.port(),
-		)
+		cheetah_libraries_microservice::make_internal_srv_uri(&stub_grpc_service_addr.ip().to_string(), stub_grpc_service_addr.port())
 	}
 
 	// Подготовка шаблонов в каталоге

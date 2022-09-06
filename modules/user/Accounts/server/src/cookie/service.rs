@@ -29,53 +29,32 @@ impl CookieService {
 		}
 	}
 
-	async fn do_register(
-		&self,
-		device_id: &str,
-	) -> anyhow::Result<(SessionAndRefreshTokens, Cookie)> {
+	async fn do_register(&self, device_id: &str) -> anyhow::Result<(SessionAndRefreshTokens, Cookie)> {
 		let user = self.user_service.create().await?;
 		let cookie = self.storage.attach(user).await?;
 		let tokens = self.create_jwt_tokens(user, device_id).await?;
 		Ok((tokens, cookie))
 	}
 
-	async fn do_login(
-		&self,
-		request: &LoginRequest,
-		cookie: Cookie,
-	) -> anyhow::Result<Option<SessionAndRefreshTokens>> {
+	async fn do_login(&self, request: &LoginRequest, cookie: Cookie) -> anyhow::Result<Option<SessionAndRefreshTokens>> {
 		Ok(match self.storage.find(&cookie).await? {
 			None => None,
-			Some(user) => Some(
-				self.create_jwt_tokens(user, request.device_id.as_str())
-					.await?,
-			),
+			Some(user) => Some(self.create_jwt_tokens(user, request.device_id.as_str()).await?),
 		})
 	}
 
-	async fn create_jwt_tokens(
-		&self,
-		user: User,
-		device_id: &str,
-	) -> anyhow::Result<SessionAndRefreshTokens> {
-		let result = self
-			.token_service
-			.create(user, device_id)
-			.await
-			.map(|tokens| SessionAndRefreshTokens {
-				session: tokens.session,
-				refresh: tokens.refresh,
-			})?;
+	async fn create_jwt_tokens(&self, user: User, device_id: &str) -> anyhow::Result<SessionAndRefreshTokens> {
+		let result = self.token_service.create(user, device_id).await.map(|tokens| SessionAndRefreshTokens {
+			session: tokens.session,
+			refresh: tokens.refresh,
+		})?;
 		Ok(result)
 	}
 }
 
 #[tonic::async_trait]
 impl proto::cookie_server::Cookie for CookieService {
-	async fn register(
-		&self,
-		request: Request<proto::RegistryRequest>,
-	) -> Result<Response<proto::RegistryResponse>, Status> {
+	async fn register(&self, request: Request<proto::RegistryRequest>) -> Result<Response<proto::RegistryResponse>, Status> {
 		COOKIE_REGISTER_COUNTER.inc();
 		let device_id = &request.get_ref().device_id;
 		self.do_register(device_id)
@@ -90,10 +69,7 @@ impl proto::cookie_server::Cookie for CookieService {
 			.map_err(|_| Status::internal(""))
 	}
 
-	async fn login(
-		&self,
-		request: Request<LoginRequest>,
-	) -> Result<Response<proto::LoginResponse>, Status> {
+	async fn login(&self, request: Request<LoginRequest>) -> Result<Response<proto::LoginResponse>, Status> {
 		COOKIE_LOGIN_COUNTER.inc();
 		let request = request.get_ref();
 		let cookie = request.cookie.as_str();
@@ -111,13 +87,8 @@ impl proto::cookie_server::Cookie for CookieService {
 }
 
 lazy_static! {
-	static ref COOKIE_REGISTER_COUNTER: IntCounter = register_int_counter!(
-		"cookie_user_register_count",
-		"Count register user by cookie"
-	)
-	.unwrap();
-	static ref COOKIE_LOGIN_COUNTER: IntCounter =
-		register_int_counter!("cookie_user_login_count", "Count login user by cookie").unwrap();
+	static ref COOKIE_REGISTER_COUNTER: IntCounter = register_int_counter!("cookie_user_register_count", "Count register user by cookie").unwrap();
+	static ref COOKIE_LOGIN_COUNTER: IntCounter = register_int_counter!("cookie_user_login_count", "Count login user by cookie").unwrap();
 }
 
 #[cfg(test)]
@@ -136,13 +107,8 @@ mod test {
 	#[tokio::test]
 	async fn should_register_and_login() {
 		let (pg_pool, _instance) = setup_postgresql().await;
-		let (token_service, _node) =
-			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
-		let service = CookieService::new(
-			pg_pool.clone(),
-			token_service,
-			UserService::new(pg_pool.clone()),
-		);
+		let (token_service, _node) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let service = CookieService::new(pg_pool.clone(), token_service, UserService::new(pg_pool.clone()));
 		let result = service
 			.register(Request::new(RegistryRequest {
 				device_id: "device".to_string(),
@@ -152,16 +118,7 @@ mod test {
 		let register_response = register_response.get_ref();
 
 		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
-		let register_user_uuid = jwt
-			.get_user_uuid(
-				register_response
-					.tokens
-					.as_ref()
-					.unwrap()
-					.session
-					.to_owned(),
-			)
-			.unwrap();
+		let register_user_uuid = jwt.get_user_uuid(register_response.tokens.as_ref().unwrap().session.to_owned()).unwrap();
 
 		let login_result = service
 			.login(Request::new(LoginRequest {
@@ -172,9 +129,7 @@ mod test {
 		let login_response = login_result.unwrap();
 		let login_response = login_response.get_ref();
 
-		let login_user_id = jwt
-			.get_user_uuid(login_response.tokens.as_ref().unwrap().session.to_owned())
-			.unwrap();
+		let login_user_id = jwt.get_user_uuid(login_response.tokens.as_ref().unwrap().session.to_owned()).unwrap();
 
 		assert_eq!(register_user_uuid, login_user_id);
 	}
@@ -182,8 +137,7 @@ mod test {
 	#[tokio::test]
 	async fn should_not_login_with_wrong_cookie() {
 		let (pg_pool, _instance) = setup_postgresql().await;
-		let (token_service, _node) =
-			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let (token_service, _node) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 		let service = CookieService::new(pg_pool.clone(), token_service, UserService::new(pg_pool));
 		let login_result = service
 			.login(Request::new(LoginRequest {

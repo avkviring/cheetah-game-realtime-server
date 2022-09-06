@@ -24,10 +24,7 @@ pub struct Service {
 
 impl Service {
 	pub fn new(pg_pool: PgPool, jwt_public_key: String) -> Self {
-		Self {
-			pg_pool,
-			jwt_public_key,
-		}
+		Self { pg_pool, jwt_public_key }
 	}
 
 	pub async fn serve(&self, addr: SocketAddr) -> Result<(), Box<dyn Error>> {
@@ -35,24 +32,16 @@ impl Service {
 
 		let updater_service = UpdateService::new(self.pg_pool.clone());
 
-		health_reporter
-			.set_service_status("", ServingStatus::Serving)
-			.await;
+		health_reporter.set_service_status("", ServingStatus::Serving).await;
 
-		health_reporter
-			.set_serving::<UpdateServer<UpdateService>>()
-			.await;
+		health_reporter.set_serving::<UpdateServer<UpdateService>>().await;
 
 		let fetcher_service = FetchService::new(self.pg_pool.clone());
-		health_reporter
-			.set_serving::<FetchServer<FetchService>>()
-			.await;
+		health_reporter.set_serving::<FetchServer<FetchService>>().await;
 
 		let auth_interceptor = JwtAuthInterceptor::new(self.jwt_public_key.to_owned());
-		let updater_server =
-			UpdateServer::with_interceptor(updater_service, auth_interceptor.clone());
-		let fetcher_server =
-			FetchServer::with_interceptor(fetcher_service, auth_interceptor.clone());
+		let updater_server = UpdateServer::with_interceptor(updater_service, auth_interceptor.clone());
+		let fetcher_server = FetchServer::with_interceptor(fetcher_service, auth_interceptor.clone());
 
 		Server::builder()
 			.accept_http1(true)

@@ -26,10 +26,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
 		let user = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 
@@ -43,13 +40,8 @@ mod tests {
 		command.execute(&mut room, user).unwrap();
 		let object = room.get_object(&object_id).unwrap();
 
-		assert_eq!(
-			*object.get_field_wrapped(100, FieldType::Structure).unwrap(),
-			command.value
-		);
-		assert!(
-			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c == command)
-		);
+		assert_eq!(*object.get_field_wrapped(100, FieldType::Structure).unwrap(), command.value);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c == command));
 	}
 
 	fn init_set_structure_test() -> (Room, RoomMemberId, RoomMemberId, GameObjectId) {

@@ -122,10 +122,7 @@ mod tests {
 		let mut statistics = RetransmitStatistics::default();
 		let now = Instant::now();
 		statistics.on_ack_received(1, &now);
-		assert!(matches!(
-			statistics.get_average_redundant_frames(&now),
-			Option::None
-		));
+		assert!(matches!(statistics.get_average_redundant_frames(&now), Option::None));
 	}
 
 	///

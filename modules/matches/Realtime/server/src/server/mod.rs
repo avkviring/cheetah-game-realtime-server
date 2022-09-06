@@ -42,11 +42,7 @@ impl Drop for Server {
 }
 
 impl Server {
-	pub fn new(
-		socket: UdpSocket,
-		receiver: Receiver<ManagementTask>,
-		halt_signal: Arc<AtomicBool>,
-	) -> Self {
+	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Self {
 			network_layer: NetworkLayer::new(socket, measures.clone()).unwrap(),
@@ -86,8 +82,7 @@ impl Server {
 				ManagementTask::RegisterUser(room_id, user_template, sender) => {
 					let result = self.rooms.register_user(room_id, user_template.clone());
 					if let Ok(user_id) = &result {
-						self.network_layer
-							.register_user(now, room_id, *user_id, user_template);
+						self.network_layer.register_user(now, room_id, *user_id, user_template);
 					}
 					if let Err(e) = sender.send(result) {
 						tracing::error!("[Request::RegisterUser] error send response {:?}", e);
@@ -96,58 +91,39 @@ impl Server {
 				TimeOffset(time_offset) => {
 					self.time_offset = Option::Some(time_offset);
 				}
-				ManagementTask::Dump(room_id, sender) => {
-					match self.rooms.room_by_id.get(&room_id) {
-						None => {
-							if let Err(e) = sender.send(Result::Err(
-								format!("Room not found {:?}", room_id).to_string(),
-							)) {
-								tracing::error!("[Request::Dump] error send response {:?}", e);
-							}
-						}
-						Some(room) => {
-							let response: DumpResponse = DumpResponse::from(room);
-							let result = Result::Ok(response);
-							if let Err(e) = sender.send(result) {
-								tracing::error!("[Request::Dump] error send response {:?}", e);
-							}
+				ManagementTask::Dump(room_id, sender) => match self.rooms.room_by_id.get(&room_id) {
+					None => {
+						if let Err(e) = sender.send(Result::Err(format!("Room not found {:?}", room_id).to_string())) {
+							tracing::error!("[Request::Dump] error send response {:?}", e);
 						}
 					}
-				}
-				ManagementTask::GetRooms(sender) => {
-					match sender.send(self.rooms.room_by_id.keys().cloned().collect()) {
-						Ok(_) => {}
-						Err(e) => {
+					Some(room) => {
+						let response: DumpResponse = DumpResponse::from(room);
+						let result = Result::Ok(response);
+						if let Err(e) = sender.send(result) {
+							tracing::error!("[Request::Dump] error send response {:?}", e);
+						}
+					}
+				},
+				ManagementTask::GetRooms(sender) => match sender.send(self.rooms.room_by_id.keys().cloned().collect()) {
+					Ok(_) => {}
+					Err(e) => {
+						tracing::error!("[Request::RegisterUser] error send response {:?}", e);
+					}
+				},
+				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => match self.rooms.room_by_id.get_mut(&room_id) {
+					None => {
+						if let Err(e) = sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id))) {
 							tracing::error!("[Request::RegisterUser] error send response {:?}", e);
 						}
 					}
-				}
-				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => {
-					match self.rooms.room_by_id.get_mut(&room_id) {
-						None => {
-							if let Err(e) = sender.send(Result::Err(
-								CommandTracerSessionTaskError::RoomNotFound(room_id),
-							)) {
-								tracing::error!(
-									"[Request::RegisterUser] error send response {:?}",
-									e
-								);
-							}
-						}
-						Some(room) => {
-							room.command_trace_session
-								.clone()
-								.borrow_mut()
-								.execute_task(task);
-							if let Err(e) = sender.send(Result::Ok(())) {
-								tracing::error!(
-									"[Request::RegisterUser] error send response {:?}",
-									e
-								);
-							}
+					Some(room) => {
+						room.command_trace_session.clone().borrow_mut().execute_task(task);
+						if let Err(e) = sender.send(Result::Ok(())) {
+							tracing::error!("[Request::RegisterUser] error send response {:?}", e);
 						}
 					}
-				}
+				},
 			}
 		}
 	}

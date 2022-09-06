@@ -15,9 +15,7 @@ use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
-use crate::debug::tracer::{
-	SessionId, TracedBothDirectionCommand, TracedCommand, TracerSessionCommand,
-};
+use crate::debug::tracer::{SessionId, TracedBothDirectionCommand, TracedCommand, TracerSessionCommand};
 use crate::server::manager::ServerManager;
 
 pub struct CommandTracerGRPCService {
@@ -26,9 +24,7 @@ pub struct CommandTracerGRPCService {
 
 impl CommandTracerGRPCService {
 	pub fn new(relay_server: Arc<Mutex<ServerManager>>) -> Self {
-		Self {
-			manager: relay_server,
-		}
+		Self { manager: relay_server }
 	}
 
 	///
@@ -60,46 +56,24 @@ impl CommandTracerGRPCService {
 
 #[tonic::async_trait]
 impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
-	async fn create_session(
-		&self,
-		request: Request<admin::CreateSessionRequest>,
-	) -> Result<Response<admin::CreateSessionResponse>, Status> {
+	async fn create_session(&self, request: Request<admin::CreateSessionRequest>) -> Result<Response<admin::CreateSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let task = TracerSessionCommand::CreateSession(sender);
-		self.execute_task(
-			request.get_ref().room as RoomId,
-			task,
-			receiver,
-			|session_id| {
-				Ok(admin::CreateSessionResponse {
-					id: session_id as u32,
-				})
-			},
-		)
-		.await
-	}
-
-	async fn set_filter(
-		&self,
-		request: Request<admin::SetFilterRequest>,
-	) -> Result<Response<admin::SetFilterResponse>, Status> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		let request = request.get_ref();
-		let task = TracerSessionCommand::SetFilter(
-			request.session as SessionId,
-			request.filter.clone(),
-			sender,
-		);
-		self.execute_task(request.room as RoomId, task, receiver, |_| {
-			Ok(admin::SetFilterResponse {})
+		self.execute_task(request.get_ref().room as RoomId, task, receiver, |session_id| {
+			Ok(admin::CreateSessionResponse { id: session_id as u32 })
 		})
 		.await
 	}
 
-	async fn get_commands(
-		&self,
-		request: Request<admin::GetCommandsRequest>,
-	) -> Result<Response<admin::GetCommandsResponse>, Status> {
+	async fn set_filter(&self, request: Request<admin::SetFilterRequest>) -> Result<Response<admin::SetFilterResponse>, Status> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		let request = request.get_ref();
+		let task = TracerSessionCommand::SetFilter(request.session as SessionId, request.filter.clone(), sender);
+		self.execute_task(request.room as RoomId, task, receiver, |_| Ok(admin::SetFilterResponse {}))
+			.await
+	}
+
+	async fn get_commands(&self, request: Request<admin::GetCommandsRequest>) -> Result<Response<admin::GetCommandsResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = TracerSessionCommand::GetCommands(request.session as SessionId, sender);
@@ -114,10 +88,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		.await
 	}
 
-	async fn close_session(
-		&self,
-		request: Request<admin::CloseSessionRequest>,
-	) -> Result<Response<admin::CloseSessionResponse>, Status> {
+	async fn close_session(&self, request: Request<admin::CloseSessionRequest>) -> Result<Response<admin::CloseSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = TracerSessionCommand::CloseSession(request.session as SessionId, sender);
@@ -154,10 +125,7 @@ impl From<TracedCommand> for admin::Command {
 			TracedBothDirectionCommand::C2S(command) => command.as_ref().to_string(),
 			TracedBothDirectionCommand::S2C(command) => command.as_ref().to_string(),
 		};
-		let field_id = command
-			.network_command
-			.get_field_id()
-			.map(|field_id| field_id as u32);
+		let field_id = command.network_command.get_field_id().map(|field_id| field_id as u32);
 		let field_type = command
 			.network_command
 			.get_field_type()
@@ -188,16 +156,10 @@ fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
 		TracedBothDirectionCommand::C2S(command) => match command {
 			C2SCommand::CreateGameObject(command) => {
-				format!(
-					"access({:?}), template({:?}) ",
-					command.access_groups.0, command.template
-				)
+				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
 			}
 			C2SCommand::CreatedGameObject(command) => {
-				format!(
-					"room_owner({:?}), singleton_key({:?}) ",
-					command.room_owner, command.singleton_key
-				)
+				format!("room_owner({:?}), singleton_key({:?}) ", command.room_owner, command.singleton_key)
 			}
 			C2SCommand::SetField(command) => {
 				format!("{:?}", command.value)
@@ -206,16 +168,10 @@ fn get_string_value(command: &TracedCommand) -> String {
 				format!("{:?}", command.increment)
 			}
 			C2SCommand::CompareAndSetLong(command) => {
-				format!(
-					"new = {:?}, current = {:?}, reset = {:?}",
-					command.new, command.current, command.reset
-				)
+				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
 			}
 			C2SCommand::CompareAndSetStructure(command) => {
-				format!(
-					"new = {:?}, current = {:?}, reset = {:?}",
-					command.new, command.current, command.reset
-				)
+				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
 			}
 			C2SCommand::IncrementDouble(command) => {
 				format!("{:?}", command.increment)
@@ -224,10 +180,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 				format!("{:?}", command.event.as_slice())
 			}
 			C2SCommand::TargetEvent(command) => {
-				format!(
-					"target_user = {:?}, value = {:?}",
-					command.target, command.event.event
-				)
+				format!("target_user = {:?}, value = {:?}", command.target, command.event.event)
 			}
 			C2SCommand::Delete(_) => "".to_string(),
 			C2SCommand::AttachToRoom => "".to_string(),
@@ -237,10 +190,7 @@ fn get_string_value(command: &TracedCommand) -> String {
 			}
 		},
 		TracedBothDirectionCommand::S2C(command) => match command {
-			S2CCommand::Create(command) => format!(
-				"access({:?}), template({:?}) ",
-				command.access_groups.0, command.template
-			),
+			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
 			S2CCommand::Created(_) => "".to_string(),
 			S2CCommand::SetField(command) => format!("{:?}", command.value),
 			S2CCommand::Event(command) => format!("{:?}", command.event),

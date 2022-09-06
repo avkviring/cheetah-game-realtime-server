@@ -22,10 +22,7 @@ impl UpdateService {
 		}
 	}
 
-	fn new_response(
-		&self,
-		result: Result<(), sqlx::Error>,
-	) -> Result<Response<UpdateReply>, Status> {
+	fn new_response(&self, result: Result<(), sqlx::Error>) -> Result<Response<UpdateReply>, Status> {
 		match result {
 			Ok(_) => Ok(Response::new(UpdateReply::default())),
 			Err(e) => {
@@ -35,11 +32,7 @@ impl UpdateService {
 		}
 	}
 
-	async fn process_request<T, Fut>(
-		&self,
-		request: Request<T>,
-		op: impl FnOnce(Uuid, T) -> Fut,
-	) -> Result<Response<UpdateReply>, Status>
+	async fn process_request<T, Fut>(&self, request: Request<T>, op: impl FnOnce(Uuid, T) -> Fut) -> Result<Response<UpdateReply>, Status>
 	where
 		Fut: Future<Output = Result<(), sqlx::Error>>,
 	{
@@ -51,54 +44,35 @@ impl UpdateService {
 
 #[tonic::async_trait]
 impl Update for UpdateService {
-	async fn increment_double(
-		&self,
-		request: Request<SetDoubleRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
+	async fn increment_double(&self, request: Request<SetDoubleRequest>) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.updater
-				.increment(&user, &args.field_name, args.value)
-				.await
+			self.updater.increment(&user, &args.field_name, args.value).await
 		})
 		.await
 	}
 
-	async fn increment_long(
-		&self,
-		request: Request<SetLongRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
+	async fn increment_long(&self, request: Request<SetLongRequest>) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
-			self.updater
-				.increment(&user, &args.field_name, args.value)
-				.await
+			self.updater.increment(&user, &args.field_name, args.value).await
 		})
 		.await
 	}
 
-	async fn set_long(
-		&self,
-		request: Request<SetLongRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
+	async fn set_long(&self, request: Request<SetLongRequest>) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
 			self.updater.set(&user, &args.field_name, args.value).await
 		})
 		.await
 	}
 
-	async fn set_double(
-		&self,
-		request: Request<SetDoubleRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
+	async fn set_double(&self, request: Request<SetDoubleRequest>) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
 			self.updater.set(&user, &args.field_name, args.value).await
 		})
 		.await
 	}
 
-	async fn set_string(
-		&self,
-		request: Request<SetStringRequest>,
-	) -> Result<Response<UpdateReply>, Status> {
+	async fn set_string(&self, request: Request<SetStringRequest>) -> Result<Response<UpdateReply>, Status> {
 		self.process_request(request, |user, args| async move {
 			self.updater.set(&user, &args.field_name, args.value).await
 		})

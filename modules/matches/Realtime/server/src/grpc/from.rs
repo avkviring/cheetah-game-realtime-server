@@ -1,8 +1,6 @@
 use cheetah_matches_realtime_common::{commands::FieldValue, room::access::AccessGroups};
 
-use crate::debug::proto::shared::{
-	field_value::Variant as VariantDebug, FieldValue as GRPCFieldValueDebug,
-};
+use crate::debug::proto::shared::{field_value::Variant as VariantDebug, FieldValue as GRPCFieldValueDebug};
 use crate::grpc::proto::internal;
 use crate::grpc::proto::shared::{self, field_value::Variant, FieldValue as GRPCFieldValue};
 use crate::room::object::Field;
@@ -12,11 +10,7 @@ impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
 		config::RoomTemplate {
 			name: source.template_name,
-			objects: source
-				.objects
-				.into_iter()
-				.map(config::GameObjectTemplate::from)
-				.collect(),
+			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
 			permissions: config::Permissions::from(source.permissions.unwrap_or_default()),
 		}
 	}
@@ -26,11 +20,7 @@ impl From<internal::UserTemplate> for config::MemberTemplate {
 	fn from(source: internal::UserTemplate) -> Self {
 		config::MemberTemplate::new_member(
 			AccessGroups(source.groups),
-			source
-				.objects
-				.into_iter()
-				.map(config::GameObjectTemplate::from)
-				.collect(),
+			source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
 		)
 	}
 }
@@ -72,20 +62,14 @@ impl From<FieldValue> for GRPCFieldValueDebug {
 			FieldValue::Structure(s) => VariantDebug::Structure(s),
 		};
 
-		GRPCFieldValueDebug {
-			variant: Some(value_d),
-		}
+		GRPCFieldValueDebug { variant: Some(value_d) }
 	}
 }
 
 impl From<internal::Permissions> for config::Permissions {
 	fn from(source: internal::Permissions) -> Self {
 		config::Permissions {
-			templates: source
-				.objects
-				.into_iter()
-				.map(config::GameObjectTemplatePermission::from)
-				.collect(),
+			templates: source.objects.into_iter().map(config::GameObjectTemplatePermission::from).collect(),
 		}
 	}
 }
@@ -94,16 +78,8 @@ impl From<internal::GameObjectTemplatePermission> for config::GameObjectTemplate
 	fn from(source: internal::GameObjectTemplatePermission) -> Self {
 		config::GameObjectTemplatePermission {
 			template: source.template as u16,
-			rules: source
-				.rules
-				.into_iter()
-				.map(config::GroupsPermissionRule::from)
-				.collect(),
-			fields: source
-				.fields
-				.into_iter()
-				.map(config::PermissionField::from)
-				.collect(),
+			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
+			fields: source.fields.into_iter().map(config::PermissionField::from).collect(),
 		}
 	}
 }
@@ -150,11 +126,7 @@ impl From<internal::PermissionField> for config::PermissionField {
 				id: source.id as u16,
 				field_type,
 			},
-			rules: source
-				.rules
-				.into_iter()
-				.map(config::GroupsPermissionRule::from)
-				.collect(),
+			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
 		}
 	}
 }

@@ -17,15 +17,13 @@ fn should_send_from_client() {
 	let mut peer_a = Protocol::new(&Instant::now(), &Instant::now());
 	let mut peer_b = Protocol::new(&Instant::now(), &Instant::now());
 
-	peer_a.out_commands_collector.add_command(
-		ChannelType::ReliableUnordered,
-		BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-	);
+	peer_a
+		.out_commands_collector
+		.add_command(ChannelType::ReliableUnordered, BothDirectionCommand::C2S(C2SCommand::AttachToRoom));
 
-	peer_a.out_commands_collector.add_command(
-		ChannelType::UnreliableUnordered,
-		BothDirectionCommand::C2S(C2SCommand::DetachFromRoom),
-	);
+	peer_a
+		.out_commands_collector
+		.add_command(ChannelType::UnreliableUnordered, BothDirectionCommand::C2S(C2SCommand::DetachFromRoom));
 
 	let mut channel = Channel::default();
 	channel.cycle(1, &mut peer_a, &mut peer_b);
@@ -47,15 +45,13 @@ fn should_transfer_reliable_on_unreliable_channel() {
 	let mut peer_a = Protocol::new(&Instant::now(), &Instant::now());
 	let mut peer_b = Protocol::new(&Instant::now(), &Instant::now());
 
-	peer_a.out_commands_collector.add_command(
-		ChannelType::ReliableUnordered,
-		BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-	);
+	peer_a
+		.out_commands_collector
+		.add_command(ChannelType::ReliableUnordered, BothDirectionCommand::C2S(C2SCommand::AttachToRoom));
 
-	peer_a.out_commands_collector.add_command(
-		ChannelType::UnreliableUnordered,
-		BothDirectionCommand::C2S(C2SCommand::DetachFromRoom),
-	);
+	peer_a
+		.out_commands_collector
+		.add_command(ChannelType::UnreliableUnordered, BothDirectionCommand::C2S(C2SCommand::DetachFromRoom));
 
 	let mut channel = Channel::default();
 	channel.add_reliable_percent(0..=10, 0.0);

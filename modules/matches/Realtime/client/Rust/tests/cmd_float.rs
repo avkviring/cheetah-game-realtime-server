@@ -24,10 +24,8 @@ fn should_inc() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	assert!(
-		matches!(INCR.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id 
-		== 1 && (*value - 200.0).abs() < 0.001 )
-	);
+	assert!(matches!(INCR.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id 
+		== 1 && (*value - 200.0).abs() < 0.001 ));
 }
 
 #[test]
@@ -43,10 +41,8 @@ fn should_set() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	assert!(
-		matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id ==
-		1 && (*value - 200.0).abs() < 0.001 )
-	);
+	assert!(matches!(SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id ==
+		1 && (*value - 200.0).abs() < 0.001 ));
 }
 
 lazy_static! {
@@ -57,20 +53,10 @@ lazy_static! {
 	static ref SET: Mutex<Option<(FieldId, f64)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn listener_for_set(
-	_: RoomMemberId,
-	_object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	value: f64,
-) {
+extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
 	SET.lock().unwrap().replace((field_id, value));
 }
 
-extern "C" fn listener_for_inc(
-	_: RoomMemberId,
-	_object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	value: f64,
-) {
+extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
 	INCR.lock().unwrap().replace((field_id, value));
 }

@@ -2,9 +2,7 @@ use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
 use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
 use cheetah_matches_realtime_common::protocol::codec::cipher::Cipher;
-use cheetah_matches_realtime_common::protocol::frame::applications::{
-	BothDirectionCommand, CommandWithChannel,
-};
+use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_matches_realtime_common::protocol::frame::channel::Channel;
 use cheetah_matches_realtime_common::protocol::frame::output::OutFrame;
 
@@ -28,13 +26,11 @@ pub fn create_object_frame() {
 	let mut frame = OutFrame::new(100500);
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
-		both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(
-			CreateGameObjectCommand {
-				object_id: Default::default(),
-				template: 0,
-				access_groups: Default::default(),
-			},
-		)),
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
+			object_id: Default::default(),
+			template: 0,
+			access_groups: Default::default(),
+		})),
 	});
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,

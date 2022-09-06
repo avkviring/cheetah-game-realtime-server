@@ -62,15 +62,9 @@ mod tests {
 			fields: Default::default(),
 		};
 
-		config_object
-			.fields
-			.insert((0, FieldType::Long), FieldValue::Long(100));
-		config_object
-			.fields
-			.insert((1, FieldType::Double), FieldValue::Double(105.105));
-		config_object
-			.fields
-			.insert((2, FieldType::Structure), FieldValue::Structure(vec![1]));
+		config_object.fields.insert((0, FieldType::Long), FieldValue::Long(100));
+		config_object.fields.insert((1, FieldType::Double), FieldValue::Double(105.105));
+		config_object.fields.insert((2, FieldType::Structure), FieldValue::Structure(vec![1]));
 
 		let object = config_object.clone().to_root_game_object();
 		assert_eq!(config_object.id, object.id.id);

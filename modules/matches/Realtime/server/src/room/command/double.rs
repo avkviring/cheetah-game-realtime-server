@@ -57,10 +57,7 @@ mod tests {
 	#[test]
 	fn should_set_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		let object_id = object.id.clone();
 		object.created = true;
 		room.test_out_commands.clear();
@@ -73,19 +70,14 @@ mod tests {
 
 		let object = room.get_object(&object_id).unwrap();
 		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 100);
-		assert!(
-			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command)
-		);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
 	}
 
 	#[test]
 	fn should_increment_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
 
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 		room.test_out_commands.clear();
@@ -107,8 +99,6 @@ mod tests {
 		};
 
 		room.test_out_commands.pop_back();
-		assert!(
-			matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result)
-		);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result));
 	}
 }

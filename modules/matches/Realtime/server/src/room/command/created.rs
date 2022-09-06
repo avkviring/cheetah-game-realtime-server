@@ -23,8 +23,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 
 		let object = if self.room_owner {
 			// создаем объект с владением комнаты
-			let new_room_object_id =
-				GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
+			let new_room_object_id = GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
 			if let Some(unique_key) = &self.singleton_key {
 				if room.has_object_singleton_key(unique_key) {
 					room.delete_object(&member_object_id)?;
@@ -50,9 +49,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		if object.id.owner == GameObjectOwner::Room {
 			room.send_to_members(groups, template, commands.as_slice(), |_| true)?;
 		} else {
-			room.send_to_members(groups, template, commands.as_slice(), |user| {
-				user.id != user_id
-			})?;
+			room.send_to_members(groups, template, commands.as_slice(), |user| user.id != user_id)?;
 		}
 		Ok(())
 	}
@@ -62,9 +59,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 mod tests {
 	use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
-	use cheetah_matches_realtime_common::commands::types::create::{
-		C2SCreatedGameObjectCommand, CreateGameObjectCommand,
-	};
+	use cheetah_matches_realtime_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
@@ -133,10 +128,7 @@ mod tests {
 		};
 		room.test_out_commands.clear();
 
-		assert!(matches!(
-			command.execute(&mut room, user1),
-			Err(ServerCommandError::Error(_))
-		));
+		assert!(matches!(command.execute(&mut room, user1), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.test_out_commands.pop_back(), None));
 	}
 
@@ -173,14 +165,10 @@ mod tests {
 		// должна быть загрузка объекта на текущий клиент
 		let (_, create_command) = &room.test_out_commands[1];
 		let (_, created_command) = &room.test_out_commands[0];
-		assert!(
-			matches!(create_command, S2CCommand::Create(ref command) if command.object_id
-			.owner==GameObjectOwner::Room)
-		);
-		assert!(
-			matches!(created_command, S2CCommand::Created(ref command) if command.object_id
-			.owner==GameObjectOwner::Room)
-		);
+		assert!(matches!(create_command, S2CCommand::Create(ref command) if command.object_id
+			.owner==GameObjectOwner::Room));
+		assert!(matches!(created_command, S2CCommand::Created(ref command) if command.object_id
+			.owner==GameObjectOwner::Room));
 	}
 
 	///

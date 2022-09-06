@@ -11,9 +11,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 		let user = room.get_member(&user_id)?;
 
 		if self.object_id.id == 0 {
-			return Err(ServerCommandError::Error(
-				"0 is forbidden for game object id".to_string(),
-			));
+			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_string()));
 		}
 
 		let groups = self.access_groups;
@@ -35,17 +33,9 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 		}
 
 		if room.contains_object(&self.object_id) {
-			return Err(ServerCommandError::Error(format!(
-				"Object already exists with id {:?}",
-				self.object_id
-			)));
+			return Err(ServerCommandError::Error(format!("Object already exists with id {:?}", self.object_id)));
 		}
-		room.insert_object(GameObject::new(
-			self.object_id.clone(),
-			self.template,
-			groups,
-			false,
-		));
+		room.insert_object(GameObject::new(self.object_id.clone(), self.template, groups, false));
 		Ok(())
 	}
 }
@@ -96,10 +86,7 @@ mod tests {
 			access_groups: AccessGroups(0b10),
 		};
 
-		assert!(matches!(
-			command.execute(&mut room, user_id),
-			Err(ServerCommandError::Error(_))
-		));
+		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object(&object_id), Err(_)));
 	}
 
@@ -116,10 +103,7 @@ mod tests {
 			access_groups: AccessGroups(0b1000),
 		};
 
-		assert!(matches!(
-			command.execute(&mut room, user_id),
-			Err(ServerCommandError::Error(_))
-		));
+		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object(&object_id), Err(_)));
 	}
 
@@ -136,10 +120,7 @@ mod tests {
 			template: 100,
 			access_groups: AccessGroups(0b11),
 		};
-		assert!(matches!(
-			command.execute(&mut room, user_id),
-			Err(ServerCommandError::Error(_))
-		));
+		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object(&object_id), Err(_)));
 	}
 
@@ -150,10 +131,7 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let access_groups = AccessGroups(0b11);
 		let (mut room, user_id) = setup(access_groups);
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_id),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.template_id = 777;
 		let object_id = object.id.clone();
 		room.test_out_commands.clear();
@@ -163,10 +141,7 @@ mod tests {
 			access_groups: AccessGroups(0b1000),
 		};
 
-		assert!(matches!(
-			command.execute(&mut room, user_id),
-			Err(ServerCommandError::Error(_))
-		));
+		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object(&object_id), Ok(object) if object.template_id == 777));
 	}
 

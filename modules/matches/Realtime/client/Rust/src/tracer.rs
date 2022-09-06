@@ -32,16 +32,10 @@ pub struct Trace {
 
 impl TracerCollector {
 	fn setup() -> Self {
-		LogTracer::builder()
-			.with_max_level(log::LevelFilter::Info)
-			.init()
-			.unwrap();
+		LogTracer::builder().with_max_level(log::LevelFilter::Info).init().unwrap();
 		let fmt_layer = fmt::layer().with_target(false);
-		let subscriber = Registry::default()
-			.with(fmt_layer)
-			.with(TracerCollectorLayer);
-		tracing::subscriber::set_global_default(subscriber)
-			.expect("Setting default subscriber failed");
+		let subscriber = Registry::default().with(fmt_layer).with(TracerCollectorLayer);
+		tracing::subscriber::set_global_default(subscriber).expect("Setting default subscriber failed");
 		Self {
 			level: tracing_core::Level::INFO,
 			items: Default::default(),

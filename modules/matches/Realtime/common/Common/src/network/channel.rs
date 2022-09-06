@@ -76,10 +76,7 @@ impl NetworkChannel {
 				match self.socket.send_to(buffer.as_slice(), addr) {
 					Ok(_) => {}
 					Err(e) => {
-						tracing::error!(
-							"[NetworkChannel] emulate mode, send to socket error {:?}",
-							e
-						)
+						tracing::error!("[NetworkChannel] emulate mode, send to socket error {:?}", e)
 					}
 				}
 			}
@@ -130,17 +127,11 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(
-				&now,
-				send_data.as_slice(),
-				channel_b.socket.local_addr().unwrap(),
-			)
+			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
-		assert!(
-			matches!(channel_b.recv(&now, &mut recv_data), Result::Ok(size) if send_data.len()==size)
-		);
+		assert!(matches!(channel_b.recv(&now, &mut recv_data), Result::Ok(size) if send_data.len()==size));
 	}
 
 	///
@@ -164,34 +155,22 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(
-				&now,
-				send_data.as_slice(),
-				channel_b.socket.local_addr().unwrap(),
-			)
+			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 
 		// данных нет - так как включен эмулятор лага
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
-		assert!(matches!(
-			channel_b.recv(&now, &mut recv_data),
-			Result::Err(_)
-		));
+		assert!(matches!(channel_b.recv(&now, &mut recv_data), Result::Err(_)));
 		// время окончания эмуляции rtt
 		let after_rtt_time = now.add(half_rtt).add(Duration::from_millis(10));
 		// данные должны быть отправлены, но их еще не будет на принимающей стороне
 		channel_a.cycle(&after_rtt_time);
 		std::thread::sleep(Duration::from_millis(10));
-		assert!(matches!(
-			channel_b.recv(&now, &mut recv_data),
-			Result::Err(_)
-		));
+		assert!(matches!(channel_b.recv(&now, &mut recv_data), Result::Err(_)));
 
 		// а теперь будут, так как прошло время эмуляции rtt
-		assert!(
-			matches!(channel_b.recv(&after_rtt_time, &mut recv_data), Result::Ok(size) if send_data.len()==size)
-		);
+		assert!(matches!(channel_b.recv(&after_rtt_time, &mut recv_data), Result::Ok(size) if send_data.len()==size));
 	}
 
 	///
@@ -210,11 +189,7 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(
-				&now,
-				send_data.as_slice(),
-				channel_b.socket.local_addr().unwrap(),
-			)
+			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];

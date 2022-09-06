@@ -44,31 +44,18 @@ impl TryFrom<&YamlConfigurations> for HashMap<String, relay::RoomTemplate> {
 				let objects = objects
 					.iter()
 					.enumerate()
-					.map(|(index, o)| {
-						create_relay_object(
-							template_name,
-							o,
-							templates,
-							groups,
-							fields,
-							auto_object_id_start + index as u32,
-						)
-					})
+					.map(|(index, o)| create_relay_object(template_name, o, templates, groups, fields, auto_object_id_start + index as u32))
 					.collect::<Result<_, Error>>()?;
 
 				let permissions = templates
 					.values()
-					.map(|template| {
-						create_template_permission(template_name, template, groups, fields)
-					})
+					.map(|template| create_template_permission(template_name, template, groups, fields))
 					.collect::<Result<_, Error>>()?;
 
 				let relay_room = relay::RoomTemplate {
 					template_name: template_name.clone(),
 					objects,
-					permissions: Some(relay::Permissions {
-						objects: permissions,
-					}),
+					permissions: Some(relay::Permissions { objects: permissions }),
 				};
 
 				Ok((template_name.clone(), relay_room))

@@ -11,10 +11,7 @@ use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 
 #[no_mangle]
 #[allow(unused_must_use)]
-pub extern "C" fn set_structure_listener(
-	client_id: ClientId,
-	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI),
-) -> u8 {
+pub extern "C" fn set_structure_listener(client_id: ClientId, listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)) -> u8 {
 	execute_with_client(client_id, |client| {
 		client.listener_structure = Some(listener);
 		Ok(())
@@ -22,12 +19,7 @@ pub extern "C" fn set_structure_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn set_structure(
-	client_id: ClientId,
-	object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	structure: &BufferFFI,
-) -> u8 {
+pub extern "C" fn set_structure(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, structure: &BufferFFI) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::SetField(SetFieldCommand {

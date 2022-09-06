@@ -65,10 +65,7 @@ impl Parser {
 						let aud = vec![self.client_id.to_owned()];
 						let mut validation = Validation::new(Algorithm::RS256);
 						validation.set_audience(&aud);
-						validation.set_issuer(&[
-							"https://accounts.google.com".to_string(),
-							"accounts.google.com".to_string(),
-						]);
+						validation.set_issuer(&["https://accounts.google.com".to_string(), "accounts.google.com".to_string()]);
 						validation.validate_exp = true;
 						validation.validate_nbf = false;
 						let result = jsonwebtoken::decode::<T>(token, &key, &validation);
@@ -169,8 +166,7 @@ impl GooglePublicKeyProvider {
 		}
 		match self.keys.get(&kid.to_owned()) {
 			None => Result::Err(GoogleKeyProviderError::KeyNotFound),
-			Some(key) => DecodingKey::from_rsa_components(key.n.as_str(), key.e.as_str())
-				.map_err(GoogleKeyProviderError::CreateKeyError),
+			Some(key) => DecodingKey::from_rsa_components(key.n.as_str(), key.e.as_str()).map_err(GoogleKeyProviderError::CreateKeyError),
 		}
 	}
 }
@@ -190,27 +186,24 @@ mod tests {
 		let n = "3g46w4uRYBx8CXFauWh6c5yO4ax_VDu5y8ml_Jd4Gx711155PTdtLeRuwZOhJ6nRy8YvLFPXc_aXtHifnQsi9YuI_vo7LGG2v3CCxh6ndZBjIeFkxErMDg4ELt2DQ0PgJUQUAKCkl2_gkVV9vh3oxahv_BpIgv1kuYlyQQi5JWeF7zAIm0FaZ-LJT27NbsCugcZIDQg9sztTN18L3-P_kYwvAkKY2bGYNU19qLFM1gZkzccFEDZv3LzAz7qbdWkwCoK00TUUH8TNjqmK67bytYzgEgkfF9q9szEQ5TrRL0uFg9LxT3kSTLYqYOVaUIX3uaChwaa-bQvHuNmryu7i9w";
 		let e = "AQAB";
 		let kid = "some-kid";
-		let resp = format!("{{\"keys\": [{{\"kty\": \"RSA\",\"use\": \"sig\",\"e\": \"{}\",\"n\": \"{}\",\"alg\": \"RS256\",\"kid\": \"{}\"}}]}}", e, n, kid);
+		let resp = format!(
+			"{{\"keys\": [{{\"kty\": \"RSA\",\"use\": \"sig\",\"e\": \"{}\",\"n\": \"{}\",\"alg\": \"RS256\",\"kid\": \"{}\"}}]}}",
+			e, n, kid
+		);
 
 		let server = MockServer::start();
 		let _server_mock = server.mock(|when, then| {
 			when.method(httpmock::Method::GET).path("/");
 
 			then.status(200)
-				.header(
-					"cache-control",
-					"public, max-age=24920, must-revalidate, no-transform",
-				)
+				.header("cache-control", "public, max-age=24920, must-revalidate, no-transform")
 				.header("Content-Type", "application/json; charset=UTF-8")
 				.body(resp);
 		});
 		let mut provider = GooglePublicKeyProvider::new(server.url("/").as_str());
 
 		assert!(matches!(provider.get_key(kid).await, Result::Ok(_)));
-		assert!(matches!(
-			provider.get_key("missing-key").await,
-			Result::Err(_)
-		));
+		assert!(matches!(provider.get_key("missing-key").await, Result::Err(_)));
 	}
 
 	#[tokio::test]
@@ -219,34 +212,28 @@ mod tests {
 		let n = "3g46w4uRYBx8CXFauWh6c5yO4ax_VDu5y8ml_Jd4Gx711155PTdtLeRuwZOhJ6nRy8YvLFPXc_aXtHifnQsi9YuI_vo7LGG2v3CCxh6ndZBjIeFkxErMDg4ELt2DQ0PgJUQUAKCkl2_gkVV9vh3oxahv_BpIgv1kuYlyQQi5JWeF7zAIm0FaZ-LJT27NbsCugcZIDQg9sztTN18L3-P_kYwvAkKY2bGYNU19qLFM1gZkzccFEDZv3LzAz7qbdWkwCoK00TUUH8TNjqmK67bytYzgEgkfF9q9szEQ5TrRL0uFg9LxT3kSTLYqYOVaUIX3uaChwaa-bQvHuNmryu7i9w";
 		let e = "AQAB";
 		let kid = "some-kid";
-		let resp = format!("{{\"keys\": [{{\"kty\": \"RSA\",\"use\": \"sig\",\"e\": \"{}\",\"n\": \"{}\",\"alg\": \"RS256\",\"kid\": \"{}\"}}]}}", e, n, kid);
+		let resp = format!(
+			"{{\"keys\": [{{\"kty\": \"RSA\",\"use\": \"sig\",\"e\": \"{}\",\"n\": \"{}\",\"alg\": \"RS256\",\"kid\": \"{}\"}}]}}",
+			e, n, kid
+		);
 
 		let mut server_mock = server.mock(|when, then| {
 			when.method(httpmock::Method::GET).path("/");
 			then.status(200)
-				.header(
-					"cache-control",
-					"public, max-age=3, must-revalidate, no-transform",
-				)
+				.header("cache-control", "public, max-age=3, must-revalidate, no-transform")
 				.header("Content-Type", "application/json; charset=UTF-8")
 				.body("{\"keys\":[]}");
 		});
 
 		let mut provider = GooglePublicKeyProvider::new(server.url("/").as_str());
 		let key_result = provider.get_key(kid).await;
-		assert!(matches!(
-			key_result,
-			Result::Err(GoogleKeyProviderError::KeyNotFound)
-		));
+		assert!(matches!(key_result, Result::Err(GoogleKeyProviderError::KeyNotFound)));
 
 		server_mock.delete();
 		let _server_mock = server.mock(|when, then| {
 			when.method(httpmock::Method::GET).path("/");
 			then.status(200)
-				.header(
-					"cache-control",
-					"public, max-age=3, must-revalidate, no-transform",
-				)
+				.header("cache-control", "public, max-age=3, must-revalidate, no-transform")
 				.header("Content-Type", "application/json; charset=UTF-8")
 				.body(resp);
 		});
@@ -271,17 +258,15 @@ mod tests {
 		let (token, validator, _server) = setup(&claims);
 		let result = validator.parse::<TokenClaims>(token.as_str()).await;
 
-		assert!(
-			if let ParserError::WrongToken(error) = result.err().unwrap() {
-				if let ErrorKind::ExpiredSignature = error.into_kind() {
-					true
-				} else {
-					false
-				}
+		assert!(if let ParserError::WrongToken(error) = result.err().unwrap() {
+			if let ErrorKind::ExpiredSignature = error.into_kind() {
+				true
 			} else {
 				false
 			}
-		);
+		} else {
+			false
+		});
 	}
 
 	#[tokio::test]
@@ -290,17 +275,15 @@ mod tests {
 		claims.iss = "https://some.com".to_owned();
 		let (token, validator, _server) = setup(&claims);
 		let result = validator.parse::<TokenClaims>(token.as_str()).await;
-		assert!(
-			if let ParserError::WrongToken(error) = result.err().unwrap() {
-				if let ErrorKind::InvalidIssuer = error.into_kind() {
-					true
-				} else {
-					false
-				}
+		assert!(if let ParserError::WrongToken(error) = result.err().unwrap() {
+			if let ErrorKind::InvalidIssuer = error.into_kind() {
+				true
 			} else {
 				false
 			}
-		);
+		} else {
+			false
+		});
 	}
 
 	#[tokio::test]
@@ -309,16 +292,14 @@ mod tests {
 		claims.aud = "other-id".to_owned();
 		let (token, validator, _server) = setup(&claims);
 		let result = validator.parse::<TokenClaims>(token.as_str()).await;
-		assert!(
-			if let ParserError::WrongToken(error) = result.err().unwrap() {
-				if let ErrorKind::InvalidAudience = error.into_kind() {
-					true
-				} else {
-					false
-				}
+		assert!(if let ParserError::WrongToken(error) = result.err().unwrap() {
+			if let ErrorKind::InvalidAudience = error.into_kind() {
+				true
 			} else {
 				false
 			}
-		);
+		} else {
+			false
+		});
 	}
 }

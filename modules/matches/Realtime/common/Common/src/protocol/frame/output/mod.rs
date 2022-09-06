@@ -46,8 +46,7 @@ impl OutFrame {
 			self.full = true;
 			return false;
 		} else {
-			self.contains_reliability_command =
-				self.contains_reliability_command || command.channel.is_reliable();
+			self.contains_reliability_command = self.contains_reliability_command || command.channel.is_reliable();
 			self.encoded_size = cursor.position();
 			self.commands.push(command);
 			self.encoded_commands[0] = self.commands.len() as u8;

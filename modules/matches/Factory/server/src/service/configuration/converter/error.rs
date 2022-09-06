@@ -1,6 +1,4 @@
-use crate::service::configuration::yaml::structures::{
-	FieldName, GroupName, RoomName, TemplateName,
-};
+use crate::service::configuration::yaml::structures::{FieldName, GroupName, RoomName, TemplateName};
 
 #[derive(Debug)]
 pub enum Error {
@@ -32,18 +30,10 @@ impl std::fmt::Display for Error {
 				write!(f, "Group {} not found in template {}", group, template)
 			}
 			Error::WrongFormatForFieldValue(room_name, field_name, value) => {
-				write!(
-					f,
-					"Wrong format value \"{}\" for field {} in room {}",
-					value, field_name, room_name
-				)
+				write!(f, "Wrong format value \"{}\" for field {} in room {}", value, field_name, room_name)
 			}
 			Error::EventValueNotSupported(room_name, field_name) => {
-				write!(
-					f,
-					"Set value for event {} not supported in room {}",
-					field_name, room_name
-				)
+				write!(f, "Set value for event {} not supported in room {}", field_name, room_name)
 			}
 		}
 	}

@@ -27,10 +27,7 @@ pub enum ConnectionStatusFFI {
 }
 
 #[no_mangle]
-pub extern "C" fn get_connection_status(
-	client_id: ClientId,
-	result: &mut ConnectionStatusFFI,
-) -> u8 {
+pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut ConnectionStatusFFI) -> u8 {
 	execute_with_client(client_id, |client| {
 		let status = client
 			.get_connection_status()
@@ -41,12 +38,8 @@ pub extern "C" fn get_connection_status(
 					ConnectionStatus::Connecting => ConnectionStatusFFI::Connecting,
 					ConnectionStatus::Connected => ConnectionStatusFFI::Connected,
 					ConnectionStatus::Disconnected(disconnect_reason) => match disconnect_reason {
-						DisconnectedReason::IOError(_) => {
-							ConnectionStatusFFI::DisconnectedByIOError
-						}
-						DisconnectedReason::ByRetryLimit => {
-							ConnectionStatusFFI::DisconnectedByRetryLimit
-						}
+						DisconnectedReason::IOError(_) => ConnectionStatusFFI::DisconnectedByIOError,
+						DisconnectedReason::ByRetryLimit => ConnectionStatusFFI::DisconnectedByRetryLimit,
 						DisconnectedReason::ByTimeout => ConnectionStatusFFI::DisconnectedByTimeout,
 						DisconnectedReason::ByCommand => ConnectionStatusFFI::DisconnectedByCommand,
 					},
@@ -85,22 +78,14 @@ pub extern "C" fn get_server_time(client_id: ClientId, server_out_time: &mut u64
 }
 
 #[no_mangle]
-pub extern "C" fn set_rtt_emulation(
-	client_id: ClientId,
-	rtt_in_ms: u64,
-	rtt_dispersion: f64,
-) -> u8 {
+pub extern "C" fn set_rtt_emulation(client_id: ClientId, rtt_in_ms: u64, rtt_dispersion: f64) -> u8 {
 	execute_with_client(client_id, |client| {
 		Ok(client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)?)
 	})
 }
 
 #[no_mangle]
-pub extern "C" fn set_drop_emulation(
-	client_id: ClientId,
-	drop_probability: f64,
-	drop_time_in_ms: u64,
-) -> u8 {
+pub extern "C" fn set_drop_emulation(client_id: ClientId, drop_probability: f64, drop_time_in_ms: u64) -> u8 {
 	execute_with_client(client_id, |client| {
 		Ok(client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms))?)
 	})
@@ -117,9 +102,7 @@ pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistic
 		let shared_statistics = &client.shared_statistics;
 		statistics.last_frame_id = shared_statistics.current_frame_id.load(Ordering::Relaxed);
 		statistics.rtt_in_ms = shared_statistics.rtt_in_ms.load(Ordering::Relaxed);
-		statistics.average_retransmit_frames = shared_statistics
-			.average_retransmit_frames
-			.load(Ordering::Relaxed);
+		statistics.average_retransmit_frames = shared_statistics.average_retransmit_frames.load(Ordering::Relaxed);
 		statistics.recv_packet_count = shared_statistics.recv_packet_count.load(Ordering::Relaxed);
 		statistics.send_packet_count = shared_statistics.send_packet_count.load(Ordering::Relaxed);
 		statistics.recv_size = shared_statistics.recv_size.load(Ordering::Relaxed);
@@ -180,19 +163,13 @@ pub fn do_create_client(
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
-	execute(|api| {
-		match api.create_client(
-			server_address,
-			member_id,
-			room_id,
-			user_private_key.clone(),
-			start_frame_id,
-		) {
+	execute(
+		|api| match api.create_client(server_address, member_id, room_id, user_private_key.clone(), start_frame_id) {
 			Ok(client_id) => {
 				*out_client_id = client_id;
 				Ok(())
 			}
 			Err(e) => Err(ClientError::CreateClientError(format!("{:?}", e))),
-		}
-	})
+		},
+	)
 }

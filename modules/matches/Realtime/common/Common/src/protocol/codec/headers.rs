@@ -32,9 +32,9 @@ impl Headers {
 					));
 				}
 			};
-			headers.push(header).map_err(|_| {
-				std::io::Error::new(ErrorKind::InvalidInput, "Headers count overflow")
-			})?;
+			headers
+				.push(header)
+				.map_err(|_| std::io::Error::new(ErrorKind::InvalidInput, "Headers count overflow"))?;
 		}
 		Ok(Self { headers })
 	}
@@ -92,10 +92,7 @@ mod tests {
 	}
 	#[test]
 	fn test_user_and_room() {
-		check(vec![Header::MemberAndRoomId(MemberAndRoomId {
-			member_id: 55,
-			room_id: 77,
-		})]);
+		check(vec![Header::MemberAndRoomId(MemberAndRoomId { member_id: 55, room_id: 77 })]);
 	}
 
 	#[test]
@@ -118,15 +115,11 @@ mod tests {
 
 	#[test]
 	fn test_rtt_response() {
-		check(vec![Header::RoundTripTimeResponse(RoundTripTimeHeader {
-			self_time: 155,
-		})]);
+		check(vec![Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 155 })]);
 	}
 	#[test]
 	fn test_rtt_request() {
-		check(vec![Header::RoundTripTimeRequest(RoundTripTimeHeader {
-			self_time: 155,
-		})]);
+		check(vec![Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 155 })]);
 	}
 
 	fn check(headers: Vec<Header>) {

@@ -8,10 +8,7 @@ use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 
 #[no_mangle]
-pub extern "C" fn set_event_listener(
-	client_id: ClientId,
-	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI),
-) -> u8 {
+pub extern "C" fn set_event_listener(client_id: ClientId, listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)) -> u8 {
 	execute_with_client(client_id, |client| {
 		client.listener_event = Some(listener);
 		Ok(())
@@ -19,12 +16,7 @@ pub extern "C" fn set_event_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn send_event(
-	client_id: ClientId,
-	object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	event: &BufferFFI,
-) -> u8 {
+pub extern "C" fn send_event(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, event: &BufferFFI) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::Event(EventCommand {
