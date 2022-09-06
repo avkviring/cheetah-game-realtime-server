@@ -66,7 +66,7 @@ impl ServerCommandExecutor for SetFieldCommand {
 			&object_id,
 			Field {
 				id: field_id,
-				field_type: FieldType::Long,
+				field_type: self.value.field_type(),
 			},
 			user_id,
 			Permission::Rw,
