@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use crate::proto::matches::realtime::internal as relay;
 use crate::proto::matches::realtime::shared::GameObjectField;
 use crate::service::configuration::converter::error::Error;
-use crate::service::configuration::yaml::structures::{
-	Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName,
-};
+use crate::service::configuration::yaml::structures::{Field, FieldName, FieldType, GroupName, RoomName, RoomObject, Template, TemplateName};
 
 ///
 /// Создаем объект для relay из конфигурации
@@ -33,13 +31,10 @@ pub fn create_relay_object(
 			.ok_or_else(|| Error::FieldNotExistForObject(room_name.clone(), value.field.clone()))?;
 		match field.r#type {
 			FieldType::Long => {
-				let value = value.value.as_i64().ok_or_else(|| {
-					Error::WrongFormatForFieldValue(
-						room_name.clone(),
-						value.field.clone(),
-						value.value.to_string(),
-					)
-				})?;
+				let value = value
+					.value
+					.as_i64()
+					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
 				let f = GameObjectField {
 					id: field.id as u32,
 					value: Some(value.into()),
@@ -47,13 +42,10 @@ pub fn create_relay_object(
 				relay_fields.push(f);
 			}
 			FieldType::Double => {
-				let value = value.value.as_f64().ok_or_else(|| {
-					Error::WrongFormatForFieldValue(
-						room_name.clone(),
-						value.field.clone(),
-						value.value.to_string(),
-					)
-				})?;
+				let value = value
+					.value
+					.as_f64()
+					.ok_or_else(|| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
 				let f = GameObjectField {
 					id: field.id as u32,
 					value: Some(value.into()),
@@ -61,13 +53,8 @@ pub fn create_relay_object(
 				relay_fields.push(f);
 			}
 			FieldType::Struct => {
-				let value = rmp_serde::to_vec(&value.value).map_err(|_| {
-					Error::WrongFormatForFieldValue(
-						room_name.clone(),
-						value.field.clone(),
-						value.value.to_string(),
-					)
-				})?;
+				let value = rmp_serde::to_vec(&value.value)
+					.map_err(|_| Error::WrongFormatForFieldValue(room_name.clone(), value.field.clone(), value.value.to_string()))?;
 				let f = GameObjectField {
 					id: field.id as u32,
 					value: Some(value.into()),
@@ -75,10 +62,7 @@ pub fn create_relay_object(
 				relay_fields.push(f);
 			}
 			FieldType::Event => {
-				return Err(Error::EventValueNotSupported(
-					room_name.to_string(),
-					value.field.clone(),
-				));
+				return Err(Error::EventValueNotSupported(room_name.to_string(), value.field.clone()));
 			}
 		}
 	}
@@ -105,8 +89,7 @@ pub mod test {
 	use crate::service::configuration::converter::error::Error;
 	use crate::service::configuration::converter::object::create_relay_object;
 	use crate::service::configuration::yaml::structures::{
-		Field, FieldType, FieldValue, GroupName, RoomObject, Template, TemplateName,
-		TemplatePermissions,
+		Field, FieldType, FieldValue, GroupName, RoomObject, Template, TemplateName, TemplatePermissions,
 	};
 
 	#[test]
@@ -331,10 +314,7 @@ pub mod test {
 		));
 	}
 
-	fn setup(
-		field_values: Vec<FieldValue>,
-		fields: Vec<(&str, Field)>,
-	) -> Result<relay::GameObjectTemplate, Error> {
+	fn setup(field_values: Vec<FieldValue>, fields: Vec<(&str, Field)>) -> Result<relay::GameObjectTemplate, Error> {
 		create_relay_object(
 			&"room".to_string(),
 			&RoomObject {
@@ -345,10 +325,7 @@ pub mod test {
 			},
 			&setup_templates(),
 			&setup_groups(),
-			&fields
-				.into_iter()
-				.map(|(k, v)| (k.to_string(), v))
-				.collect(),
+			&fields.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
 			0,
 		)
 	}

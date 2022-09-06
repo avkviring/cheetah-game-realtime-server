@@ -32,31 +32,15 @@ impl IntegrationTestServerBuilder {
 		permission: Permission,
 	) {
 		let field = PermissionField {
-			field: Field {
-				id: field_id,
-				field_type,
-			},
-			rules: vec![GroupsPermissionRule {
-				groups: group,
-				permission,
-			}],
+			field: Field { id: field_id, field_type },
+			rules: vec![GroupsPermissionRule { groups: group, permission }],
 		};
-		match self
-			.template
-			.permissions
-			.templates
-			.iter_mut()
-			.find(|tp| tp.template == template)
-		{
-			None => self
-				.template
-				.permissions
-				.templates
-				.push(GameObjectTemplatePermission {
-					template,
-					rules: Default::default(),
-					fields: vec![field],
-				}),
+		match self.template.permissions.templates.iter_mut().find(|tp| tp.template == template) {
+			None => self.template.permissions.templates.push(GameObjectTemplatePermission {
+				template,
+				rules: Default::default(),
+				fields: vec![field],
+			}),
 			Some(template) => {
 				template.fields.push(field);
 			}

@@ -68,24 +68,19 @@ pub enum CommandContextError {
 
 impl CommandContext {
 	pub(crate) fn get_creator(&self) -> Result<RoomMemberId, CommandContextError> {
-		self.creator
-			.ok_or(CommandContextError::ContextNotContainsCreator)
+		self.creator.ok_or(CommandContextError::ContextNotContainsCreator)
 	}
 
 	pub(crate) fn get_channel_group_id(&self) -> Result<ChannelGroup, CommandContextError> {
-		self.channel_group
-			.ok_or(CommandContextError::ContextNotContainsChannelGroupId)
+		self.channel_group.ok_or(CommandContextError::ContextNotContainsChannelGroupId)
 	}
 
 	pub(crate) fn get_field_id(&self) -> Result<FieldId, CommandContextError> {
-		self.field_id
-			.ok_or(CommandContextError::ContextNotContainsCreator)
+		self.field_id.ok_or(CommandContextError::ContextNotContainsCreator)
 	}
 
 	pub(crate) fn get_object_id(&self) -> Result<GameObjectId, CommandContextError> {
-		self.object_id
-			.clone()
-			.ok_or(CommandContextError::ContextNotContainsObjectId)
+		self.object_id.clone().ok_or(CommandContextError::ContextNotContainsObjectId)
 	}
 
 	///
@@ -174,10 +169,7 @@ impl CommandContext {
 	/// Читаем следующую порцию данных
 	/// после чтения - контекст будет изменен на актуальные значения
 	///
-	pub(crate) fn read_next(
-		&mut self,
-		input: &mut Cursor<&[u8]>,
-	) -> Result<CommandHeader, CommandContextError> {
+	pub(crate) fn read_next(&mut self, input: &mut Cursor<&[u8]>) -> Result<CommandHeader, CommandContextError> {
 		let header = CommandHeader::decode(input)?;
 		if header.new_object_id {
 			self.object_id.replace(GameObjectId::decode(input)?);
@@ -495,18 +487,9 @@ pub mod tests {
 			let header = read_context.read_next(&mut read_cursor).unwrap();
 			assert_eq!(read_context.object_id, param.object_id, "object_id");
 			assert_eq!(read_context.field_id, param.field_id, "field_id");
-			assert_eq!(
-				read_context.channel_group, param.channel_group,
-				"channel_group_id"
-			);
-			assert_eq!(
-				header.channel_type_id, param.channel_type_id,
-				"channel_type_id"
-			);
-			assert_eq!(
-				header.command_type_id, param.command_type_id,
-				"command_type_id"
-			);
+			assert_eq!(read_context.channel_group, param.channel_group, "channel_group_id");
+			assert_eq!(header.channel_type_id, param.channel_type_id, "channel_type_id");
+			assert_eq!(header.command_type_id, param.command_type_id, "command_type_id");
 			assert_eq!(read_context.creator, param.creator, "creator");
 		}
 

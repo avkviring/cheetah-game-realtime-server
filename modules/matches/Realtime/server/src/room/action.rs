@@ -61,11 +61,10 @@ impl Room {
 		let is_creator_object_owner = object_owner == Option::Some(creator_id);
 
 		let allow = is_creator_object_owner
-			|| permission_manager.borrow_mut().get_permission(
-				object.template_id,
-				field,
-				creator_access_group,
-			) >= permission;
+			|| permission_manager
+				.borrow_mut()
+				.get_permission(object.template_id, field, creator_access_group)
+				>= permission;
 
 		if !allow {
 			return Result::Err(ServerCommandError::MemberCannotAccessToObjectField {
@@ -84,10 +83,7 @@ impl Room {
 				let groups = object.access_groups;
 				let template = object.template_id;
 
-				let commands_with_field = S2CCommandWithFieldInfo {
-					field: Some(field),
-					command,
-				};
+				let commands_with_field = S2CCommandWithFieldInfo { field: Some(field), command };
 				let commands = [commands_with_field];
 
 				match target {

@@ -70,10 +70,7 @@ impl GoogleGrpcService {
 
 #[tonic::async_trait]
 impl proto::google_server::Google for GoogleGrpcService {
-	async fn register_or_login(
-		&self,
-		request: Request<proto::RegisterOrLoginRequest>,
-	) -> Result<Response<proto::RegisterOrLoginResponse>, Status> {
+	async fn register_or_login(&self, request: Request<proto::RegisterOrLoginRequest>) -> Result<Response<proto::RegisterOrLoginResponse>, Status> {
 		let registry_or_login_request = request.get_ref();
 		let token = &registry_or_login_request.google_token;
 		let google_id = self.parse_google_id(token).await?;
@@ -102,10 +99,7 @@ impl proto::google_server::Google for GoogleGrpcService {
 		}))
 	}
 
-	async fn attach(
-		&self,
-		request: Request<proto::AttachRequest>,
-	) -> Result<Response<proto::AttachResponse>, Status> {
+	async fn attach(&self, request: Request<proto::AttachRequest>) -> Result<Response<proto::AttachResponse>, Status> {
 		let attach_request = request.get_ref();
 		let token = &attach_request.google_token;
 		let google_id = self.parse_google_id(token).await?;
@@ -150,8 +144,7 @@ mod test {
 	#[tokio::test]
 	async fn should_register_and_login() {
 		let (pg_pool, _instance) = setup_postgresql().await;
-		let (token_service, _node) =
-			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let (token_service, _node) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
 		let (google_user_token, google_service) = setup_google(pg_pool, token_service);
 
 		let response_1 = google_service
@@ -176,29 +169,20 @@ mod test {
 		assert!(!result_2.registered_player);
 
 		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
-		let user_1 = jwt
-			.get_user_uuid(result_1.tokens.as_ref().unwrap().session.clone())
-			.unwrap();
-		let user_2 = jwt
-			.get_user_uuid(result_2.tokens.as_ref().unwrap().session.clone())
-			.unwrap();
+		let user_1 = jwt.get_user_uuid(result_1.tokens.as_ref().unwrap().session.clone()).unwrap();
+		let user_2 = jwt.get_user_uuid(result_2.tokens.as_ref().unwrap().session.clone()).unwrap();
 		assert_eq!(user_1, user_2);
 	}
 
 	fn setup_google(pg_pool: PgPool, token_service: TokensService) -> (String, GoogleGrpcService) {
-		let (token, public_key_server) = test_helper::setup_public_key_server(
-			&TokenClaims::new_with_expire(Duration::from_secs(100)),
-		);
+		let (token, public_key_server) = test_helper::setup_public_key_server(&TokenClaims::new_with_expire(Duration::from_secs(100)));
 
 		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
 		let service = GoogleGrpcService::new(
 			GoogleStorage::new(pg_pool.clone()),
 			token_service,
 			UserService::new(pg_pool),
-			Parser::new_with_custom_cert_url(
-				test_helper::CLIENT_ID,
-				public_key_server.url("/").as_str(),
-			),
+			Parser::new_with_custom_cert_url(test_helper::CLIENT_ID, public_key_server.url("/").as_str()),
 			jwt,
 		);
 		(token, service)
@@ -207,12 +191,9 @@ mod test {
 	#[tokio::test]
 	async fn should_attach() {
 		let (pg_pool, _instance) = setup_postgresql().await;
-		let (token_service, _node) =
-			stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
-		let (google_user_token, google_service) =
-			setup_google(pg_pool.clone(), token_service.clone());
-		let cookie_service =
-			CookieService::new(pg_pool.clone(), token_service, UserService::new(pg_pool));
+		let (token_service, _node) = stub_token_service(Duration::from_secs(1), Duration::from_secs(100)).await;
+		let (google_user_token, google_service) = setup_google(pg_pool.clone(), token_service.clone());
+		let cookie_service = CookieService::new(pg_pool.clone(), token_service, UserService::new(pg_pool));
 		let cookie_registry_response = cookie_service
 			.register(Request::new(RegistryRequest {
 				device_id: "some-device".to_string(),
@@ -228,11 +209,7 @@ mod test {
 		});
 		request.metadata_mut().insert(
 			"authorization",
-			MetadataValue::from_str(&format!(
-				"Bearer {}",
-				cookie_registry_result.tokens.as_ref().unwrap().session
-			))
-			.unwrap(),
+			MetadataValue::from_str(&format!("Bearer {}", cookie_registry_result.tokens.as_ref().unwrap().session)).unwrap(),
 		);
 
 		google_service.attach(request).await.unwrap();
@@ -249,25 +226,11 @@ mod test {
 
 		let jwt = jwt_tonic_user_uuid::JWTUserTokenParser::new(PUBLIC_KEY.to_string());
 		let cookie_user_id = jwt
-			.get_user_uuid(
-				cookie_registry_result
-					.tokens
-					.as_ref()
-					.unwrap()
-					.session
-					.to_string(),
-			)
+			.get_user_uuid(cookie_registry_result.tokens.as_ref().unwrap().session.to_string())
 			.unwrap();
 
 		let google_user_id = jwt
-			.get_user_uuid(
-				google_login_result
-					.tokens
-					.as_ref()
-					.unwrap()
-					.session
-					.to_string(),
-			)
+			.get_user_uuid(google_login_result.tokens.as_ref().unwrap().session.to_string())
 			.unwrap();
 
 		assert_eq!(cookie_user_id, google_user_id);

@@ -37,9 +37,7 @@ impl ChannelSequence {
 impl BothDirectionCommand {
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match &self {
-			BothDirectionCommand::S2CWithCreator(command_with_meta) => {
-				command_with_meta.command.get_object_id()
-			}
+			BothDirectionCommand::S2CWithCreator(command_with_meta) => command_with_meta.command.get_object_id(),
 			BothDirectionCommand::C2S(command) => command.get_object_id(),
 		}
 	}

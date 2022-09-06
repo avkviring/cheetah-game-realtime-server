@@ -85,17 +85,11 @@ impl NetworkLayer {
 						}
 						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
 							let mut buffer = [0; MAX_FRAME_SIZE];
-							let buffer_size = frame
-								.encode(&mut Cipher::new(&session.private_key), &mut buffer)
-								.unwrap();
+							let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
 							match self.socket.send_to(&buffer[0..buffer_size], peer_address) {
 								Ok(size) => {
 									if size != buffer_size {
-										tracing::error!(
-											"[network] size mismatch in socket.send_to {:?} {:?}",
-											buffer.len(),
-											size
-										);
+										tracing::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
 									}
 								}
 								Err(e) => match e.kind() {
@@ -130,20 +124,12 @@ impl NetworkLayer {
 		}
 	}
 
-	fn process_in_frame(
-		&mut self,
-		rooms: &mut Rooms,
-		buffer: &[u8; MAX_FRAME_SIZE],
-		size: usize,
-		address: SocketAddr,
-		now: &Instant,
-	) {
+	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: &Instant) {
 		let start_time = Instant::now();
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match InFrame::decode_headers(&mut cursor) {
 			Ok((frame_id, headers)) => {
-				let member_and_room_id_header: Option<MemberAndRoomId> =
-					headers.first(Header::predicate_member_and_room_id).cloned();
+				let member_and_room_id_header: Option<MemberAndRoomId> = headers.first(Header::predicate_member_and_room_id).cloned();
 
 				match member_and_room_id_header {
 					None => {
@@ -152,35 +138,19 @@ impl NetworkLayer {
 					Some(user_and_room_id) => {
 						match self.sessions.get_mut(&user_and_room_id) {
 							None => {
-								tracing::error!(
-									"[network] user session not found {:?}",
-									user_and_room_id
-								);
+								tracing::error!("[network] user session not found {:?}", user_and_room_id);
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
-								match InFrame::decode_frame_commands(
-									true,
-									frame_id,
-									cursor,
-									Cipher::new(private_key),
-								) {
+								match InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
 									Ok(commands) => {
 										let frame = InFrame::new(frame_id, headers, commands);
-										if frame.frame_id > session.max_receive_frame_id
-											|| session.max_receive_frame_id == 0
-										{
+										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.frame_id;
 										}
 										session.protocol.on_frame_received(frame, now);
-										rooms.execute_commands(
-											user_and_room_id,
-											session
-												.protocol
-												.in_commands_collector
-												.get_ready_commands(),
-										)
+										rooms.execute_commands(user_and_room_id, session.protocol.in_commands_collector.get_ready_commands())
 									}
 									Err(e) => {
 										tracing::error!("[network] error decode frame {:?}", e)
@@ -200,18 +170,9 @@ impl NetworkLayer {
 		measurers.on_income_frame(size, start_time.elapsed());
 	}
 
-	pub fn register_user(
-		&mut self,
-		now: &Instant,
-		room_id: RoomId,
-		user_id: RoomMemberId,
-		template: MemberTemplate,
-	) {
+	pub fn register_user(&mut self, now: &Instant, room_id: RoomId, user_id: RoomMemberId, template: MemberTemplate) {
 		self.sessions.insert(
-			MemberAndRoomId {
-				member_id: user_id,
-				room_id,
-			},
+			MemberAndRoomId { member_id: user_id, room_id },
 			MemberSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
@@ -246,9 +207,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(
-			prometheus::default_registry(),
-		))));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
 		let buffer = [0; MAX_FRAME_SIZE];
 		let usize = 100_usize;
 		udp_server.process_in_frame(
@@ -263,18 +222,11 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_wrong_user() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(
-			prometheus::default_registry(),
-		))));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
 		let mut buffer = [0; MAX_FRAME_SIZE];
 		let mut frame = OutFrame::new(0);
-		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId {
-			member_id: 0,
-			room_id: 0,
-		}));
-		let size = frame
-			.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer)
-			.unwrap();
+		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId { member_id: 0, room_id: 0 }));
+		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,
 			&buffer,
@@ -287,14 +239,10 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(
-			prometheus::default_registry(),
-		))));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
 		let mut buffer = [0; MAX_FRAME_SIZE];
 		let frame = OutFrame::new(0);
-		let size = frame
-			.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer)
-			.unwrap();
+		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
 		udp_server.process_in_frame(
 			&mut rooms,
 			&buffer,
@@ -310,9 +258,7 @@ mod tests {
 	#[test]
 	fn should_keep_address_from_last_frame() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(
-			prometheus::default_registry(),
-		))));
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
 		let mut buffer = [0; MAX_FRAME_SIZE];
 
 		let user_template = MemberTemplate::new_member(Default::default(), Default::default());
@@ -331,12 +277,8 @@ mod tests {
 			member_id: user.id,
 			room_id: 0,
 		};
-		frame
-			.headers
-			.add(Header::MemberAndRoomId(user_and_room_id.clone()));
-		let size = frame
-			.encode(&mut Cipher::new(&user_template.private_key), &mut buffer)
-			.unwrap();
+		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
+		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer).unwrap();
 
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
@@ -344,23 +286,11 @@ mod tests {
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &Instant::now());
 
 		let mut frame = OutFrame::new(10);
-		frame
-			.headers
-			.add(Header::MemberAndRoomId(user_and_room_id.clone()));
-		let size = frame
-			.encode(&mut Cipher::new(&user_template.private_key), &mut buffer)
-			.unwrap();
+		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
+		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer).unwrap();
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 
-		assert_eq!(
-			udp_server
-				.sessions
-				.get(&user_and_room_id)
-				.unwrap()
-				.peer_address
-				.unwrap(),
-			addr_1
-		);
+		assert_eq!(udp_server.sessions.get(&user_and_room_id).unwrap().peer_address.unwrap(), addr_1);
 	}
 
 	fn create_network_layer() -> NetworkLayer {

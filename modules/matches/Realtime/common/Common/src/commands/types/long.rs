@@ -35,11 +35,7 @@ impl IncrementLongC2SCommand {
 		out.write_variable_i64(self.increment)
 	}
 
-	pub fn decode(
-		object_id: GameObjectId,
-		field_id: FieldId,
-		input: &mut Cursor<&[u8]>,
-	) -> std::io::Result<Self> {
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let increment = input.read_variable_i64()?;
 		Ok(Self {
 			object_id,
@@ -61,19 +57,11 @@ impl CompareAndSetLongCommand {
 		}
 	}
 
-	pub fn decode(
-		object_id: GameObjectId,
-		field_id: FieldId,
-		input: &mut Cursor<&[u8]>,
-	) -> std::io::Result<Self> {
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let current = input.read_variable_i64()?;
 		let new = input.read_variable_i64()?;
 		let has_reset = input.read_u8()? == 1;
-		let reset = if has_reset {
-			Some(input.read_variable_i64()?)
-		} else {
-			None
-		};
+		let reset = if has_reset { Some(input.read_variable_i64()?) } else { None };
 		Ok(Self {
 			object_id,
 			field_id,

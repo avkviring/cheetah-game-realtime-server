@@ -91,28 +91,17 @@ impl NetworkClient {
 
 	fn do_write(&mut self, now: &Instant) {
 		while let Some(mut frame) = self.protocol.build_next_frame(now) {
-			frame
-				.headers
-				.add(Header::MemberAndRoomId(self.member_and_room_id.clone()));
+			frame.headers.add(Header::MemberAndRoomId(self.member_and_room_id.clone()));
 			self.out_frames.push_front(frame);
 		}
 
 		let mut buffer = [0; 2048];
 		while let Some(frame) = self.out_frames.back_mut() {
-			let frame_buffer_size = frame
-				.encode(&mut Cipher::new(&self.private_key), &mut buffer)
-				.unwrap();
-			match self
-				.channel
-				.send_to(now, &buffer[0..frame_buffer_size], self.server_address)
-			{
+			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer).unwrap();
+			match self.channel.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
 					if size != frame_buffer_size {
-						tracing::error!(
-							"error send frame size mismatch send {:?}, frame {:?}",
-							size,
-							frame_buffer_size
-						);
+						tracing::error!("error send frame size mismatch send {:?}, frame {:?}", size, frame_buffer_size);
 					} else {
 						self.out_frames.pop_back();
 					}
@@ -121,9 +110,7 @@ impl NetworkClient {
 					ErrorKind::WouldBlock => {}
 					_ => {
 						tracing::error!("error send {:?}", e);
-						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(
-							format!("error send {:?}", e),
-						));
+						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error send {:?}", e)));
 					}
 				},
 			}
@@ -139,9 +126,7 @@ impl NetworkClient {
 						ErrorKind::WouldBlock => {}
 						_ => {
 							tracing::error!("error receive {:?}", e);
-							self.state = ConnectionStatus::Disconnected(
-								DisconnectedReason::IOError(format!("error receive {:?}", e)),
-							);
+							self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error receive {:?}", e)));
 						}
 					}
 					break;
@@ -151,12 +136,7 @@ impl NetworkClient {
 					let header = InFrame::decode_headers(&mut cursor);
 					match header {
 						Ok((frame_id, headers)) => {
-							match InFrame::decode_frame_commands(
-								self.from_client,
-								frame_id,
-								cursor,
-								Cipher::new(&self.private_key),
-							) {
+							match InFrame::decode_frame_commands(self.from_client, frame_id, cursor, Cipher::new(&self.private_key)) {
 								Ok(commands) => {
 									let frame = InFrame::new(frame_id, headers, commands);
 									self.on_frame_received(now, frame);

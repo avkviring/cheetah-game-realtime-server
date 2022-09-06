@@ -32,14 +32,9 @@ impl RelayProber for ReconnectProber {
 	async fn probe(&self, addr: SocketAddr) -> Result<(), ProbeError> {
 		let mut builder = Endpoint::from_str(&format!("http://{}", addr)).unwrap();
 		builder = builder.connect_timeout(Duration::from_secs(1));
-		let mut client = RealtimeClient::connect(builder)
-			.await
-			.map_err(ProbeError::from)?;
+		let mut client = RealtimeClient::connect(builder).await.map_err(ProbeError::from)?;
 
-		client
-			.probe(Request::new(ProbeRequest {}))
-			.await
-			.map_err(ProbeError::from)?;
+		client.probe(Request::new(ProbeRequest {})).await.map_err(ProbeError::from)?;
 
 		Ok(())
 	}

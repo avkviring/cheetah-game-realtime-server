@@ -29,10 +29,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 	Ok(())
 }
 
-pub fn detach_from_room(
-	room: &mut Room,
-	member_id: RoomMemberId,
-) -> Result<(), ServerCommandError> {
+pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(&member_id)?;
 	member.attached = false;
 	Ok(())
@@ -60,8 +57,7 @@ mod tests {
 		room.test_mark_as_connected(user_a).unwrap();
 		room.test_mark_as_connected(user_b).unwrap();
 
-		let object_a_1 = room
-			.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_a);
+		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_a);
 		object_a_1.created = true;
 		let object_a_1_id = object_a_1.id.clone();
 
@@ -76,12 +72,8 @@ mod tests {
 		attach_to_room(&mut room, user_a).unwrap();
 
 		let mut commands = room.test_get_user_out_commands(user_a);
-		assert!(
-			matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id)
-		);
-		assert!(
-			matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id)
-		);
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), None));
 	}
 }

@@ -55,21 +55,9 @@ impl CommandHeader {
 		header += self.command_type_id.0 as u16;
 		header += (self.channel_type_id.0 as u16) << 6;
 		header += (u8::from(&self.creator_source) as u16) << 9;
-		header += if self.new_channel_group_id {
-			1 << NEW_CHANNEL_GROUP_ID_BIT
-		} else {
-			0
-		};
-		header += if self.new_field_id {
-			1 << NEW_FIELD_ID_BIT
-		} else {
-			0
-		};
-		header += if self.new_object_id {
-			1 << NEW_OBJECT_ID_BIT
-		} else {
-			0
-		};
+		header += if self.new_channel_group_id { 1 << NEW_CHANNEL_GROUP_ID_BIT } else { 0 };
+		header += if self.new_field_id { 1 << NEW_FIELD_ID_BIT } else { 0 };
+		header += if self.new_object_id { 1 << NEW_OBJECT_ID_BIT } else { 0 };
 		out.write_u16::<BigEndian>(header)
 	}
 	pub(crate) fn reserve(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
@@ -142,22 +130,10 @@ mod tests {
 		let actual = CommandHeader::decode(&mut read_cursor).unwrap();
 
 		assert_eq!(write_position, read_cursor.position());
-		assert_eq!(
-			actual.command_type_id, header.command_type_id,
-			"command_type"
-		);
-		assert_eq!(
-			actual.channel_type_id, header.channel_type_id,
-			"channel_type_id"
-		);
-		assert_eq!(
-			actual.creator_source, header.creator_source,
-			"creator_source"
-		);
-		assert_eq!(
-			actual.new_channel_group_id, header.new_channel_group_id,
-			"new_channel_group_id"
-		);
+		assert_eq!(actual.command_type_id, header.command_type_id, "command_type");
+		assert_eq!(actual.channel_type_id, header.channel_type_id, "channel_type_id");
+		assert_eq!(actual.creator_source, header.creator_source, "creator_source");
+		assert_eq!(actual.new_channel_group_id, header.new_channel_group_id, "new_channel_group_id");
 		assert_eq!(actual.new_field_id, header.new_field_id, "new_field_id");
 		assert_eq!(actual.new_object_id, header.new_object_id, "new_object_id");
 	}

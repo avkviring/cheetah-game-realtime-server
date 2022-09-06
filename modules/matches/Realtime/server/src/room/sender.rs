@@ -1,9 +1,7 @@
 use cheetah_matches_realtime_common::commands::s2c::S2CCommandWithCreator;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_matches_realtime_common::protocol::frame::applications::{
-	BothDirectionCommand, ChannelGroup,
-};
+use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::RoomMemberId;
@@ -30,14 +28,10 @@ impl Room {
 	{
 		#[cfg(test)]
 		commands.iter().for_each(|command| {
-			self.test_out_commands
-				.push_front((access_groups, command.command.clone()));
+			self.test_out_commands.push_front((access_groups, command.command.clone()));
 		});
 
-		let channel_type = self
-			.current_channel
-			.as_ref()
-			.unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
+		let channel_type = self.current_channel.as_ref().unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
 		let current_user = self.current_member_id.unwrap_or(0);
 
@@ -57,20 +51,17 @@ impl Room {
 				let allow = match command.field {
 					None => true,
 					Some(field) => {
-						permission_manager.borrow_mut().get_permission(
-							object_template,
-							field,
-							member.template.groups,
-						) > Permission::Deny
+						permission_manager
+							.borrow_mut()
+							.get_permission(object_template, field, member.template.groups)
+							> Permission::Deny
 					}
 				};
 
 				if allow {
-					command_trace_session.borrow_mut().collect_s2c(
-						object_template,
-						member.id,
-						&command.command,
-					);
+					command_trace_session
+						.borrow_mut()
+						.collect_s2c(object_template, member.id, &command.command);
 
 					let command_with_user = S2CCommandWithCreator {
 						creator: current_user,
@@ -97,10 +88,7 @@ impl Room {
 		let command_trace_session = self.command_trace_session.clone();
 		let permission_manager_rc = self.permission_manager.clone();
 		let mut permission_manager = permission_manager_rc.borrow_mut();
-		let channel = self
-			.current_channel
-			.clone()
-			.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
+		let channel = self.current_channel.clone().unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
 		let creator = self.current_member_id.unwrap_or(0);
 		let member = self.get_member_mut(user_id)?;
 
@@ -109,21 +97,16 @@ impl Room {
 			for command in commands {
 				let allow = match command.field {
 					None => true,
-					Some(field) => {
-						permission_manager.get_permission(object_template, field, groups)
-							> Permission::Deny
-					}
+					Some(field) => permission_manager.get_permission(object_template, field, groups) > Permission::Deny,
 				};
 				if allow {
 					let command_with_meta = S2CCommandWithCreator {
 						creator,
 						command: command.command.clone(),
 					};
-					command_trace_session.borrow_mut().collect_s2c(
-						object_template,
-						member.id,
-						&command.command,
-					);
+					command_trace_session
+						.borrow_mut()
+						.collect_s2c(object_template, member.id, &command.command);
 
 					member.out_commands.push(CommandWithChannelType {
 						channel_type: channel.clone(),
@@ -156,21 +139,14 @@ mod tests {
 		let access_groups = AccessGroups(55);
 		let field_id_1 = 10;
 		let field_id_2 = 11;
-		template.permissions.set_permission(
-			0,
-			&field_id_2,
-			FieldType::Long,
-			&access_groups,
-			Permission::Rw,
-		);
+		template
+			.permissions
+			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_1),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
 		object.created = true;
 		let object_id = object.id.clone();
 
@@ -215,20 +191,13 @@ mod tests {
 		let field_id_1 = 10;
 		let field_id_2 = 20;
 		let field_type = FieldType::Long;
-		template.permissions.set_permission(
-			0,
-			&field_id_2,
-			field_type,
-			&access_groups,
-			Permission::Rw,
-		);
+		template
+			.permissions
+			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
 		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_id),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id.clone();
@@ -238,10 +207,7 @@ mod tests {
 		assert!(room
 			.send_command_from_action(
 				&object_id,
-				Field {
-					id: field_id_1,
-					field_type,
-				},
+				Field { id: field_id_1, field_type },
 				user_id,
 				Permission::Rw,
 				Option::None,
@@ -261,10 +227,7 @@ mod tests {
 		assert!(room
 			.send_command_from_action(
 				&object_id,
-				Field {
-					id: field_id_2,
-					field_type,
-				},
+				Field { id: field_id_2, field_type },
 				user_id,
 				Permission::Rw,
 				Option::None,
@@ -295,10 +258,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups_a));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups_b));
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_1),
-			access_groups_a,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups_a);
 		object.created = true;
 		let object_id = object.id.clone();
 		assert!(room
@@ -324,23 +284,16 @@ mod tests {
 		let allow_field_id = 70;
 
 		let mut template = RoomTemplate::default();
-		template.permissions.set_permission(
-			object_template,
-			&deny_field_id,
-			FieldType::Long,
-			&groups,
-			Permission::Deny,
-		);
+		template
+			.permissions
+			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
 		let user_source_id = room.register_member(MemberTemplate::stub(groups));
 		let user_target_id = room.register_member(MemberTemplate::stub(groups));
 
 		room.test_mark_as_connected(user_target_id).unwrap();
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_target_id),
-			groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_target_id), groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id.clone();
@@ -370,16 +323,13 @@ mod tests {
 			},
 		];
 		room.current_member_id = Some(user_source_id);
-		room.send_to_member(&user_target_id, object_template, &commands)
-			.unwrap();
+		room.send_to_member(&user_target_id, object_template, &commands).unwrap();
 
 		let out_commands = room.test_get_user_out_commands_with_meta(user_target_id);
 		let command = out_commands.get(0);
 
-		assert!(
-			matches!(command, Some(S2CCommandWithCreator{creator, command: S2CCommand::SetField
-				(command)}) if command.field_id == allow_field_id && *creator == user_source_id)
-		);
+		assert!(matches!(command, Some(S2CCommandWithCreator{creator, command: S2CCommand::SetField
+				(command)}) if command.field_id == allow_field_id && *creator == user_source_id));
 		assert_eq!(out_commands.len(), 1);
 	}
 
@@ -395,13 +345,9 @@ mod tests {
 		let field_type = FieldType::Long;
 
 		let mut template = RoomTemplate::default();
-		template.permissions.set_permission(
-			object_template,
-			&deny_field_id,
-			FieldType::Long,
-			&access_groups,
-			Permission::Deny,
-		);
+		template
+			.permissions
+			.set_permission(object_template, &deny_field_id, FieldType::Long, &access_groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
 
@@ -410,10 +356,7 @@ mod tests {
 		room.test_mark_as_connected(user_1).unwrap();
 		room.test_mark_as_connected(user_2).unwrap();
 
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_1),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id.clone();
@@ -443,13 +386,10 @@ mod tests {
 			},
 		];
 
-		room.send_to_members(access_groups, object_template, &commands, |_| true)
-			.unwrap();
+		room.send_to_members(access_groups, object_template, &commands, |_| true).unwrap();
 
 		let commands = room.test_get_user_out_commands(user_2);
-		assert!(
-			matches!(commands.get(0),Option::Some(S2CCommand::SetField(c)) if c.field_id == allow_field_id)
-		);
+		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetField(c)) if c.field_id == allow_field_id));
 		assert_eq!(commands.len(), 1);
 	}
 
@@ -461,10 +401,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user_1),
-			access_groups,
-		);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
 		let object_id = object.id.clone();
 		room.test_mark_as_connected(user_1).unwrap();
 		room.test_mark_as_connected(user_2).unwrap();

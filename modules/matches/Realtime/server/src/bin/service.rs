@@ -28,36 +28,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	Ok(())
 }
 
-async fn create_internal_grpc_server(
-	manager: Arc<Mutex<ServerManager>>,
-) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+async fn create_internal_grpc_server(manager: Arc<Mutex<ServerManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-	health_reporter
-		.set_service_status("", ServingStatus::Serving)
-		.await;
-	let service =
-		cheetah_matches_realtime::grpc::proto::internal::realtime_server::RealtimeServer::new(
-			RealtimeInternalService::new(manager),
-		);
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
+	let service = cheetah_matches_realtime::grpc::proto::internal::realtime_server::RealtimeServer::new(RealtimeInternalService::new(manager));
 	let address = cheetah_libraries_microservice::get_internal_service_binding_addr();
-	Server::builder()
-		.add_service(service)
-		.add_service(health_service)
-		.serve(address)
+	Server::builder().add_service(service).add_service(health_service).serve(address)
 }
 
-async fn create_admin_grpc_server(
-	manager: Arc<Mutex<ServerManager>>,
-) -> impl Future<Output = Result<(), tonic::transport::Error>> {
+async fn create_admin_grpc_server(manager: Arc<Mutex<ServerManager>>) -> impl Future<Output = Result<(), tonic::transport::Error>> {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-	health_reporter
-		.set_service_status("", ServingStatus::Serving)
-		.await;
-	let relay =
-		admin::realtime_server::RealtimeServer::new(RealtimeAdminGRPCService::new(manager.clone()));
-	let tracer = admin::command_tracer_server::CommandTracerServer::new(
-		CommandTracerGRPCService::new(manager.clone()),
-	);
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
+	let relay = admin::realtime_server::RealtimeServer::new(RealtimeAdminGRPCService::new(manager.clone()));
+	let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(manager.clone()));
 	let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
 	let address = cheetah_libraries_microservice::get_admin_service_binding_addr();
 	Server::builder()

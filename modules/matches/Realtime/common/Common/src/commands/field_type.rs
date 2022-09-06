@@ -48,12 +48,7 @@ impl FieldType {
 			2 => FieldType::Double,
 			3 => FieldType::Structure,
 			4 => FieldType::Event,
-			_ => {
-				return Err(std::io::Error::new(
-					ErrorKind::InvalidData,
-					format!("{}", value),
-				))
-			}
+			_ => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("{}", value))),
 		})
 	}
 }

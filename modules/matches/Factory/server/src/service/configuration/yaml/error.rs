@@ -57,11 +57,7 @@ impl std::fmt::Display for Error {
 				file,
 				e,
 			} => {
-				let local_file = file
-					.clone()
-					.strip_prefix(global_root.as_path())
-					.unwrap()
-					.to_path_buf();
+				let local_file = file.clone().strip_prefix(global_root.as_path()).unwrap().to_path_buf();
 				write_yaml_error(f, message, &local_file, e)
 			}
 			Error::TemplateWithSameIdAlreadyExists { id, exist, current } => {
@@ -80,12 +76,7 @@ impl std::fmt::Display for Error {
 	}
 }
 
-fn write_yaml_error(
-	f: &mut Formatter,
-	message: &String,
-	file: &Path,
-	err: &serde_yaml::Error,
-) -> std::fmt::Result {
+fn write_yaml_error(f: &mut Formatter, message: &String, file: &Path, err: &serde_yaml::Error) -> std::fmt::Result {
 	write!(
 		f,
 		"{} in file {}. Wrong format {:?}: {:?}",

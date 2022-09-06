@@ -10,9 +10,7 @@ use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_matches_realtime_common::protocol::frame::applications::{
-	BothDirectionCommand, CommandWithChannel,
-};
+use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 
 pub type MeasureStringId = heapless::String<50>;
 type RoomTemplateString = heapless::String<50>;
@@ -36,13 +34,11 @@ pub struct Measurers {
 	///
 	/// Количество входящих команд
 	///
-	income_command_count:
-		IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
+	income_command_count: IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
 	///
 	/// Количество исходящих команд
 	///
-	outcome_command_count:
-		IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
+	outcome_command_count: IntCounterMeasurersByLabel<(Option<FieldType>, Option<FieldId>, RoomTemplateString)>,
 	///
 	/// Время выполнение команд
 	///
@@ -78,45 +74,41 @@ impl Measurers {
 	fn create_server_cycle_execution_time(registry: &Registry) -> Histogram {
 		create_and_register_measurer(
 			registry,
-			HistogramOpts::new("server_cycle_execution_time", "Server cycle execution time")
-				.buckets(vec![
-					Duration::from_micros(5).as_secs_f64(),
-					Duration::from_micros(50).as_secs_f64(),
-					Duration::from_micros(100).as_secs_f64(),
-					Duration::from_micros(500).as_secs_f64(),
-					Duration::from_millis(1).as_secs_f64(),
-					Duration::from_millis(5).as_secs_f64(),
-					Duration::from_millis(50).as_secs_f64(),
-					Duration::from_millis(100).as_secs_f64(),
-					Duration::from_millis(500).as_secs_f64(),
-				]),
+			HistogramOpts::new("server_cycle_execution_time", "Server cycle execution time").buckets(vec![
+				Duration::from_micros(5).as_secs_f64(),
+				Duration::from_micros(50).as_secs_f64(),
+				Duration::from_micros(100).as_secs_f64(),
+				Duration::from_micros(500).as_secs_f64(),
+				Duration::from_millis(1).as_secs_f64(),
+				Duration::from_millis(5).as_secs_f64(),
+				Duration::from_millis(50).as_secs_f64(),
+				Duration::from_millis(100).as_secs_f64(),
+				Duration::from_millis(500).as_secs_f64(),
+			]),
 		)
 	}
 
 	fn create_input_frame_time(registry: &Registry) -> Histogram {
 		create_and_register_measurer(
 			registry,
-			HistogramOpts::new("input_frame_execution_time", "Input frame execution time").buckets(
-				vec![
-					Duration::from_micros(10).as_secs_f64(),
-					Duration::from_micros(50).as_secs_f64(),
-					Duration::from_micros(100).as_secs_f64(),
-					Duration::from_micros(500).as_secs_f64(),
-					Duration::from_micros(900).as_secs_f64(),
-					Duration::from_millis(1).as_secs_f64(),
-					Duration::from_millis(5).as_secs_f64(),
-					Duration::from_millis(10).as_secs_f64(),
-					Duration::from_millis(50).as_secs_f64(),
-				],
-			),
+			HistogramOpts::new("input_frame_execution_time", "Input frame execution time").buckets(vec![
+				Duration::from_micros(10).as_secs_f64(),
+				Duration::from_micros(50).as_secs_f64(),
+				Duration::from_micros(100).as_secs_f64(),
+				Duration::from_micros(500).as_secs_f64(),
+				Duration::from_micros(900).as_secs_f64(),
+				Duration::from_millis(1).as_secs_f64(),
+				Duration::from_millis(5).as_secs_f64(),
+				Duration::from_millis(10).as_secs_f64(),
+				Duration::from_millis(50).as_secs_f64(),
+			]),
 		)
 	}
 
 	fn create_input_frame_size(registry: &Registry) -> Histogram {
 		create_and_register_measurer(
 			registry,
-			HistogramOpts::new("input_frame_size", "Input frame size")
-				.buckets(vec![100.0, 200.0, 400.0, 800.0, 1200.0, 1500.0]),
+			HistogramOpts::new("input_frame_size", "Input frame size").buckets(vec![100.0, 200.0, 400.0, 800.0, 1200.0, 1500.0]),
 		)
 	}
 
@@ -155,10 +147,7 @@ impl Measurers {
 	) -> MeasurersByLabel<(Option<FieldType>, Option<FieldId>, MeasureStringId), IntCounter, Opts> {
 		MeasurersByLabel::new(
 			registry,
-			Self::network_command_measurer_label_factory(
-				"outcome_command_counter",
-				"Outcome command counter",
-			),
+			Self::network_command_measurer_label_factory("outcome_command_counter", "Outcome command counter"),
 		)
 	}
 
@@ -167,54 +156,33 @@ impl Measurers {
 	) -> MeasurersByLabel<(Option<FieldType>, Option<FieldId>, MeasureStringId), IntCounter, Opts> {
 		MeasurersByLabel::new(
 			registry,
-			Self::network_command_measurer_label_factory(
-				"income_command_counter",
-				"Income command counter",
-			),
+			Self::network_command_measurer_label_factory("income_command_counter", "Income command counter"),
 		)
 	}
 
-	fn create_object_count_measurers(
-		registry: &Registry,
-	) -> MeasurersByLabel<String, IntGauge, Opts> {
+	fn create_object_count_measurers(registry: &Registry) -> MeasurersByLabel<String, IntGauge, Opts> {
 		MeasurersByLabel::new(
 			registry,
 			Box::new(|template| {
-				Opts::new("object_count", "object count").const_labels(
-					vec![("template".to_string(), template.clone())]
-						.into_iter()
-						.collect(),
-				)
+				Opts::new("object_count", "object count").const_labels(vec![("template".to_string(), template.clone())].into_iter().collect())
 			}),
 		)
 	}
 
-	fn create_member_count_measurers(
-		registry: &Registry,
-	) -> MeasurersByLabel<String, IntGauge, Opts> {
+	fn create_member_count_measurers(registry: &Registry) -> MeasurersByLabel<String, IntGauge, Opts> {
 		MeasurersByLabel::new(
 			registry,
 			Box::new(|template| {
-				Opts::new("member_count", "member count").const_labels(
-					vec![("template".to_string(), template.clone())]
-						.into_iter()
-						.collect(),
-				)
+				Opts::new("member_count", "member count").const_labels(vec![("template".to_string(), template.clone())].into_iter().collect())
 			}),
 		)
 	}
 
-	fn create_room_count_measurers(
-		registry: &Registry,
-	) -> MeasurersByLabel<String, IntGauge, Opts> {
+	fn create_room_count_measurers(registry: &Registry) -> MeasurersByLabel<String, IntGauge, Opts> {
 		MeasurersByLabel::new(
 			registry,
 			Box::new(|template| {
-				Opts::new("room_count", "room count").const_labels(
-					vec![("template".to_string(), template.clone())]
-						.into_iter()
-						.collect(),
-				)
+				Opts::new("room_count", "room count").const_labels(vec![("template".to_string(), template.clone())].into_iter().collect())
 			}),
 		)
 	}
@@ -231,19 +199,11 @@ impl Measurers {
 		self.room_count.measurer(name).inc();
 	}
 
-	pub(crate) fn on_output_commands(
-		&mut self,
-		template: &MeasureStringId,
-		commands: &[CommandWithChannelType],
-	) {
+	pub(crate) fn on_output_commands(&mut self, template: &MeasureStringId, commands: &[CommandWithChannelType]) {
 		commands.iter().for_each(|c| {
 			if let BothDirectionCommand::S2CWithCreator(ref c) = c.command {
 				let command = &c.command;
-				let key = (
-					command.get_field_type(),
-					command.get_field_id(),
-					template.clone(),
-				);
+				let key = (command.get_field_type(), command.get_field_id(), template.clone());
 				self.outcome_command_count.measurer(&key).inc();
 			}
 		});
@@ -259,36 +219,26 @@ impl Measurers {
 		});
 	}
 
-	pub(crate) fn on_execute_command(
-		&mut self,
-		field_id: Option<FieldId>,
-		command: &C2SCommand,
-		duration: Duration,
-	) {
+	pub(crate) fn on_execute_command(&mut self, field_id: Option<FieldId>, command: &C2SCommand, duration: Duration) {
 		let name = command.as_ref();
 		let key = (MeasureStringId::from(name), field_id);
-		self.input_command_execution_time
-			.measurer(&key)
-			.observe(duration.as_secs_f64());
+		self.input_command_execution_time.measurer(&key).observe(duration.as_secs_f64());
 	}
 
 	pub(crate) fn on_income_frame(&mut self, size: usize, duration: Duration) {
 		self.input_frame_size.observe(size as f64);
-		self.input_frame_execution_time
-			.observe(duration.as_secs_f64());
+		self.input_frame_execution_time.observe(duration.as_secs_f64());
 	}
 
 	pub(crate) fn on_server_cycle(&mut self, duration: Duration) {
-		self.server_cycle_execution_time
-			.observe(duration.as_secs_f64())
+		self.server_cycle_execution_time.observe(duration.as_secs_f64())
 	}
 
 	#[allow(clippy::type_complexity)]
 	fn network_command_measurer_label_factory(
 		name: &str,
 		help: &str,
-	) -> Box<LabelFactoryFactory<(Option<FieldType>, Option<FieldId>, heapless::String<50>), Opts>>
-	{
+	) -> Box<LabelFactoryFactory<(Option<FieldType>, Option<FieldId>, heapless::String<50>), Opts>> {
 		let name = name.to_string();
 		let help = help.to_string();
 		Box::new(move |(t, id, template)| {
@@ -296,13 +246,11 @@ impl Measurers {
 				vec![
 					(
 						"field_type".to_string(),
-						t.map(|f| f.to_string())
-							.unwrap_or_else(|| "unknown".to_string()),
+						t.map(|f| f.to_string()).unwrap_or_else(|| "unknown".to_string()),
 					),
 					(
 						"field_id".to_string(),
-						id.map(|f| format!("{}", f))
-							.unwrap_or_else(|| "unknown".to_string()),
+						id.map(|f| format!("{}", f)).unwrap_or_else(|| "unknown".to_string()),
 					),
 					("template".to_string(), template.to_string()),
 				]

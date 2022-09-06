@@ -55,10 +55,7 @@ pub fn load_user_uuid(metadata: &MetadataMap) -> Uuid {
 mod test {
 	use tonic::Code;
 
-	use super::{
-		store_user_uuid, AsciiMetadataValue, Interceptor, JwtAuthInterceptor, MetadataMap, Request,
-		Uuid,
-	};
+	use super::{store_user_uuid, AsciiMetadataValue, Interceptor, JwtAuthInterceptor, MetadataMap, Request, Uuid};
 
 	#[test]
 	fn test_store_user_uuid_does_not_panic() {
@@ -96,9 +93,7 @@ mod test {
 	fn test_interceptor_happy_request() {
 		let request = happy_request();
 		let mut interceptor = JwtAuthInterceptor::new(JWT_PUBLIC_KEY.into());
-		interceptor
-			.call(request)
-			.expect("Happy request failed authorization");
+		interceptor.call(request).expect("Happy request failed authorization");
 	}
 
 	#[test]
@@ -108,9 +103,7 @@ mod test {
 		md.insert("user", "penguins".parse().unwrap());
 		let mut interceptor = JwtAuthInterceptor::new(JWT_PUBLIC_KEY.into());
 
-		let modified_request = interceptor
-			.call(request)
-			.expect("Interceptor failed to process happy request");
+		let modified_request = interceptor.call(request).expect("Interceptor failed to process happy request");
 		let md = modified_request.metadata();
 
 		let uuid = md.get("user").unwrap();

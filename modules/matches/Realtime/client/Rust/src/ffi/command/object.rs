@@ -8,10 +8,7 @@ use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
 
 #[no_mangle]
-pub extern "C" fn set_create_object_listener(
-	client_id: ClientId,
-	listener: extern "C" fn(&GameObjectIdFFI, template: u16),
-) -> u8 {
+pub extern "C" fn set_create_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI, template: u16)) -> u8 {
 	execute_with_client(client_id, |client| {
 		client.listener_create_object = Some(listener);
 		Ok(())
@@ -19,10 +16,7 @@ pub extern "C" fn set_create_object_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn set_created_object_listener(
-	client_id: ClientId,
-	listener: extern "C" fn(&GameObjectIdFFI),
-) -> u8 {
+pub extern "C" fn set_created_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI)) -> u8 {
 	execute_with_client(client_id, |client| {
 		client.listener_created_object = Some(listener);
 		Ok(())
@@ -30,12 +24,7 @@ pub extern "C" fn set_created_object_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn create_object(
-	client_id: ClientId,
-	template: u16,
-	access_group: u64,
-	result: &mut GameObjectIdFFI,
-) -> u8 {
+pub extern "C" fn create_object(client_id: ClientId, template: u16, access_group: u64, result: &mut GameObjectIdFFI) -> u8 {
 	execute_with_client(client_id, |client| {
 		let game_object_id = client.create_game_object(template, access_group)?;
 		*result = game_object_id;
@@ -44,12 +33,7 @@ pub extern "C" fn create_object(
 }
 
 #[no_mangle]
-pub extern "C" fn created_object(
-	client_id: ClientId,
-	object_id: &GameObjectIdFFI,
-	room_owner: bool,
-	singleton_key: &BufferFFI,
-) -> u8 {
+pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectIdFFI, room_owner: bool, singleton_key: &BufferFFI) -> u8 {
 	let singleton_key = if singleton_key.len > 0 {
 		Some(BinaryValue::from(singleton_key))
 	} else {
@@ -66,10 +50,7 @@ pub extern "C" fn created_object(
 }
 
 #[no_mangle]
-pub extern "C" fn set_delete_object_listener(
-	client_id: ClientId,
-	listener: extern "C" fn(&GameObjectIdFFI),
-) -> u8 {
+pub extern "C" fn set_delete_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI)) -> u8 {
 	execute_with_client(client_id, |client| {
 		client.listener_delete_object = Some(listener);
 		Ok(())

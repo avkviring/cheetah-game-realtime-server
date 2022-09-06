@@ -26,12 +26,7 @@ fn should_set() {
 	let object_id = helper.create_member_object(client1);
 	let structure_buffer = BufferFFI::from(vec![100]);
 	let structure_field_id = 10;
-	ffi::command::structure::set_structure(
-		client1,
-		&object_id,
-		structure_field_id,
-		&structure_buffer,
-	);
+	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
 
 	helper.wait_udp();
 	ffi::client::receive(client2);
@@ -84,15 +79,7 @@ fn should_compare_and_set() {
 		true,
 		&vec![42].into(),
 	);
-	ffi::command::structure::compare_and_set_structure(
-		client2,
-		&object_id,
-		field_id,
-		&vec![0].into(),
-		&vec![200].into(),
-		false,
-		&vec![0].into(),
-	);
+	ffi::command::structure::compare_and_set_structure(client2, &object_id, field_id, &vec![0].into(), &vec![200].into(), false, &vec![0].into());
 	ffi::command::structure::compare_and_set_structure(
 		client2,
 		&object_id,
@@ -105,18 +92,8 @@ fn should_compare_and_set() {
 	helper.wait_udp();
 
 	ffi::client::receive(client1);
-	assert_eq!(
-		*COMPARE_AND_SET
-			.lock()
-			.unwrap()
-			.get(&field_id_with_reset)
-			.unwrap(),
-		vec![100].into()
-	);
-	assert_eq!(
-		*COMPARE_AND_SET.lock().unwrap().get(&field_id).unwrap(),
-		vec![200].into()
-	);
+	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(), vec![100].into());
+	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id).unwrap(), vec![200].into());
 
 	// теперь второй клиент разрывает соединение
 	// первый наблюдает за тем что значение поменяется на reset
@@ -124,14 +101,7 @@ fn should_compare_and_set() {
 	helper.wait_udp();
 
 	ffi::client::receive(client1);
-	assert_eq!(
-		*COMPARE_AND_SET
-			.lock()
-			.unwrap()
-			.get(&field_id_with_reset)
-			.unwrap(),
-		vec![42].into()
-	);
+	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(), vec![42].into());
 }
 
 lazy_static! {
@@ -142,26 +112,10 @@ lazy_static! {
 	static ref COMPARE_AND_SET: Mutex<HashMap<FieldId, BufferFFI>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_structure_listener(
-	_: RoomMemberId,
-	_object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	buffer: &BufferFFI,
-) {
-	STRUCTURE
-		.lock()
-		.unwrap()
-		.replace((field_id, (*buffer).clone()));
+extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }
 
-extern "C" fn on_compare_and_set_listener(
-	_: RoomMemberId,
-	_object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	value: &BufferFFI,
-) {
-	COMPARE_AND_SET
-		.lock()
-		.unwrap()
-		.insert(field_id, value.to_owned());
+extern "C" fn on_compare_and_set_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: &BufferFFI) {
+	COMPARE_AND_SET.lock().unwrap().insert(field_id, value.to_owned());
 }

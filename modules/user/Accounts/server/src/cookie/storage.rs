@@ -25,13 +25,11 @@ impl CookieStorage {
 	}
 
 	pub async fn find(&self, cookie: &Cookie) -> Result<Option<User>, sqlx::Error> {
-		Ok(
-			sqlx::query("select user_uuid from cheetah_user_accounts_cookie where cookie=$1")
-				.bind(cookie.0)
-				.fetch_optional(&self.pg_pool)
-				.await?
-				.map(|r| User(r.get(0))),
-		)
+		Ok(sqlx::query("select user_uuid from cheetah_user_accounts_cookie where cookie=$1")
+			.bind(cookie.0)
+			.fetch_optional(&self.pg_pool)
+			.await?
+			.map(|r| User(r.get(0))))
 	}
 }
 
@@ -54,13 +52,7 @@ pub mod tests {
 		let cookie_a = cookie_storage.attach(user_a).await.unwrap();
 		let cookie_b = cookie_storage.attach(user_b).await.unwrap();
 
-		assert_eq!(
-			cookie_storage.find(&cookie_a).await.unwrap().unwrap(),
-			user_a
-		);
-		assert_eq!(
-			cookie_storage.find(&cookie_b).await.unwrap().unwrap(),
-			user_b
-		);
+		assert_eq!(cookie_storage.find(&cookie_a).await.unwrap().unwrap(), user_a);
+		assert_eq!(cookie_storage.find(&cookie_b).await.unwrap().unwrap(), user_b);
 	}
 }

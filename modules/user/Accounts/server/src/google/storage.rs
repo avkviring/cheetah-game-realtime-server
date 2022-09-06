@@ -19,31 +19,26 @@ impl GoogleStorage {
 			.execute(&self.pg_pool)
 			.await?;
 
-		sqlx::query(
-			"insert into cheetah_user_accounts_google (user_uuid, google_id) values($1, $2)",
-		)
-		.bind(user.0)
-		.bind(google_id)
-		.execute(&self.pg_pool)
-		.await?;
+		sqlx::query("insert into cheetah_user_accounts_google (user_uuid, google_id) values($1, $2)")
+			.bind(user.0)
+			.bind(google_id)
+			.execute(&self.pg_pool)
+			.await?;
 
-		sqlx::query(
-			"insert into cheetah_user_accounts_google_users_history (user_uuid, google_id) values($1,$2)",
-		)
-		.bind(user.0)
-		.bind(google_id)
-		.execute(&self.pg_pool)
-		.await?;
+		sqlx::query("insert into cheetah_user_accounts_google_users_history (user_uuid, google_id) values($1,$2)")
+			.bind(user.0)
+			.bind(google_id)
+			.execute(&self.pg_pool)
+			.await?;
 
 		Ok(())
 	}
 
 	pub async fn find(&self, google_id: &str) -> Result<Option<User>, sqlx::Error> {
-		let result: Option<PgRow> =
-			sqlx::query("select * from cheetah_user_accounts_google where google_id=$1")
-				.bind(google_id)
-				.fetch_optional(&self.pg_pool)
-				.await?;
+		let result: Option<PgRow> = sqlx::query("select * from cheetah_user_accounts_google where google_id=$1")
+			.bind(google_id)
+			.fetch_optional(&self.pg_pool)
+			.await?;
 		Ok(result.map(|row| User(row.get(0))))
 	}
 }
@@ -67,28 +62,12 @@ pub mod tests {
 
 		let user_a = user_service.create().await.unwrap();
 		let user_b = user_service.create().await.unwrap();
-		google_storage
-			.attach(user_a, "a@kviring.com")
-			.await
-			.unwrap();
-		google_storage
-			.attach(user_b, "b@kviring.com")
-			.await
-			.unwrap();
+		google_storage.attach(user_a, "a@kviring.com").await.unwrap();
+		google_storage.attach(user_b, "b@kviring.com").await.unwrap();
 
-		assert_eq!(
-			google_storage.find("a@kviring.com").await.unwrap().unwrap(),
-			user_a
-		);
-		assert_eq!(
-			google_storage.find("b@kviring.com").await.unwrap().unwrap(),
-			user_b
-		);
-		assert!(google_storage
-			.find("c@kviring.com")
-			.await
-			.unwrap()
-			.is_none());
+		assert_eq!(google_storage.find("a@kviring.com").await.unwrap().unwrap(), user_a);
+		assert_eq!(google_storage.find("b@kviring.com").await.unwrap().unwrap(), user_b);
+		assert!(google_storage.find("c@kviring.com").await.unwrap().is_none());
 	}
 
 	#[tokio::test]
@@ -101,15 +80,14 @@ pub mod tests {
 		google_storage.attach(user, "a@kviring.com").await.unwrap();
 		google_storage.attach(user, "b@kviring.com").await.unwrap();
 
-		let result:Vec<(User, String)> = sqlx::query(
-			"select user_uuid, google_id from cheetah_user_accounts_google_users_history order by created_at",
-		)
-		.fetch_all(&pg_pool)
-		.await
-		.unwrap()
-			.iter()
-			.map(|row| (User(row.get(0)), row.get(1)))
-			.collect();
+		let result: Vec<(User, String)> =
+			sqlx::query("select user_uuid, google_id from cheetah_user_accounts_google_users_history order by created_at")
+				.fetch_all(&pg_pool)
+				.await
+				.unwrap()
+				.iter()
+				.map(|row| (User(row.get(0)), row.get(1)))
+				.collect();
 
 		let i1 = result.get(0).unwrap();
 		assert_eq!(i1.0, user);
@@ -131,28 +109,13 @@ pub mod tests {
 		let user_b = user_service.create().await.unwrap();
 		let user_c = user_service.create().await.unwrap();
 
-		google_storage
-			.attach(user_a, "a@kviring.com")
-			.await
-			.unwrap();
-		google_storage
-			.attach(user_b, "a@kviring.com")
-			.await
-			.unwrap();
-		google_storage
-			.attach(user_c, "c@kviring.com")
-			.await
-			.unwrap();
+		google_storage.attach(user_a, "a@kviring.com").await.unwrap();
+		google_storage.attach(user_b, "a@kviring.com").await.unwrap();
+		google_storage.attach(user_c, "c@kviring.com").await.unwrap();
 
-		assert_eq!(
-			google_storage.find("a@kviring.com").await.unwrap().unwrap(),
-			user_b
-		);
+		assert_eq!(google_storage.find("a@kviring.com").await.unwrap().unwrap(), user_b);
 		// проверяем что данные других пользователей не изменились
-		assert_eq!(
-			google_storage.find("c@kviring.com").await.unwrap().unwrap(),
-			user_c
-		);
+		assert_eq!(google_storage.find("c@kviring.com").await.unwrap().unwrap(), user_c);
 	}
 
 	/// Перепривязка google_id для пользователя
@@ -163,39 +126,16 @@ pub mod tests {
 		let google_storage = GoogleStorage::new(pg_pool);
 
 		let user_a = user_service.create().await.unwrap();
-		google_storage
-			.attach(user_a, "a@kviring.com")
-			.await
-			.unwrap();
-		google_storage
-			.attach(user_a, "aa@kviring.com")
-			.await
-			.unwrap();
+		google_storage.attach(user_a, "a@kviring.com").await.unwrap();
+		google_storage.attach(user_a, "aa@kviring.com").await.unwrap();
 
 		let user_b = user_service.create().await.unwrap();
-		google_storage
-			.attach(user_b, "c@kviring.com")
-			.await
-			.unwrap();
+		google_storage.attach(user_b, "c@kviring.com").await.unwrap();
 
-		assert!(google_storage
-			.find("a@kviring.com")
-			.await
-			.unwrap()
-			.is_none());
-		assert_eq!(
-			google_storage
-				.find("aa@kviring.com")
-				.await
-				.unwrap()
-				.unwrap(),
-			user_a
-		);
+		assert!(google_storage.find("a@kviring.com").await.unwrap().is_none());
+		assert_eq!(google_storage.find("aa@kviring.com").await.unwrap().unwrap(), user_a);
 
 		// проверяем что данные другого пользователя не удалены
-		assert_eq!(
-			google_storage.find("c@kviring.com").await.unwrap().unwrap(),
-			user_b
-		);
+		assert_eq!(google_storage.find("c@kviring.com").await.unwrap().unwrap(), user_b);
 	}
 }

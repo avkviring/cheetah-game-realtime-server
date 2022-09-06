@@ -36,11 +36,7 @@ impl CompareAndSetStructureCommand {
 		Ok(())
 	}
 
-	pub fn decode(
-		object_id: GameObjectId,
-		field_id: FieldId,
-		input: &mut Cursor<&[u8]>,
-	) -> std::io::Result<Self> {
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		Ok(CompareAndSetStructureCommand {
 			object_id,
 			field_id,

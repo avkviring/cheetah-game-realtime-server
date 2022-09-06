@@ -1,8 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::protocol::frame::applications::{
-	BothDirectionCommand, ChannelSequence, CommandWithChannel,
-};
+use crate::protocol::frame::applications::{BothDirectionCommand, ChannelSequence, CommandWithChannel};
 use crate::protocol::frame::channel::{Channel, ChannelType};
 use crate::protocol::frame::output::OutFrame;
 
@@ -37,11 +35,7 @@ impl OutCommandsCollector {
 	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
 		match self.create_channel(&channel_type) {
 			None => {
-				tracing::error!(
-					"can not create channel for {:?} {:?}",
-					channel_type,
-					command
-				)
+				tracing::error!("can not create channel for {:?} {:?}", channel_type, command)
 			}
 			Some(channel) => {
 				self.commands.push_back(CommandWithChannel {
@@ -55,13 +49,9 @@ impl OutCommandsCollector {
 	fn create_channel(&mut self, channel_type: &ChannelType) -> Option<Channel> {
 		match channel_type {
 			ChannelType::ReliableUnordered => Option::Some(Channel::ReliableUnordered),
-			ChannelType::ReliableOrdered(group_id) => {
-				Option::Some(Channel::ReliableOrdered(*group_id))
-			}
+			ChannelType::ReliableOrdered(group_id) => Option::Some(Channel::ReliableOrdered(*group_id)),
 			ChannelType::UnreliableUnordered => Option::Some(Channel::UnreliableUnordered),
-			ChannelType::UnreliableOrdered(group_id) => {
-				Option::Some(Channel::UnreliableOrdered(*group_id))
-			}
+			ChannelType::UnreliableOrdered(group_id) => Option::Some(Channel::UnreliableOrdered(*group_id)),
 			ChannelType::ReliableSequence(group) => {
 				let mut sequence = &mut self.group_sequence[group.0 as usize];
 				let result = Option::Some(Channel::ReliableSequence(*group, *sequence));
@@ -107,18 +97,12 @@ mod tests {
 				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			);
 		}
-		assert!(
-			matches!(output.commands[0].channel, Channel::ReliableSequence(_,sequence)
-			if sequence.0==0)
-		);
-		assert!(
-			matches!(output.commands[1].channel, Channel::ReliableSequence(_,sequence)
-			if sequence.0==1)
-		);
-		assert!(
-			matches!(output.commands[2].channel, Channel::ReliableSequence(_,sequence)
-			if sequence.0==2)
-		);
+		assert!(matches!(output.commands[0].channel, Channel::ReliableSequence(_,sequence)
+			if sequence.0==0));
+		assert!(matches!(output.commands[1].channel, Channel::ReliableSequence(_,sequence)
+			if sequence.0==1));
+		assert!(matches!(output.commands[2].channel, Channel::ReliableSequence(_,sequence)
+			if sequence.0==2));
 	}
 
 	#[test]

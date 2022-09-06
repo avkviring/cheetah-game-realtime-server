@@ -8,9 +8,7 @@ use std::time::{Duration, Instant};
 
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_matches_realtime_common::protocol::frame::applications::{
-	BothDirectionCommand, CommandWithChannel,
-};
+use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
@@ -111,11 +109,7 @@ impl NetworkThreadClient {
 	/// Обработка команд с сервера
 	///
 	fn commands_from_server(&mut self) {
-		let in_commands_from_protocol = self
-			.udp_client
-			.protocol
-			.in_commands_collector
-			.get_ready_commands();
+		let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_ready_commands();
 		for command in in_commands_from_protocol {
 			match self.commands_from_server.send(command.clone()) {
 				Ok(_) => {}
@@ -143,24 +137,20 @@ impl NetworkThreadClient {
 				ClientRequest::SetProtocolTimeOffsetForTest(duration) => {
 					self.protocol_time_offset_for_test = Some(duration);
 				}
-				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => {
-					self.udp_client.channel.config_emulator(|emulator| {
-						emulator.configure_rtt(rtt, rtt_dispersion);
-					})
-				}
-				ClientRequest::ConfigureDropEmulation(drop_probability, drop_time) => {
-					self.udp_client.channel.config_emulator(|emulator| {
-						emulator.configure_drop(drop_probability, drop_time);
-					})
-				}
+				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => self.udp_client.channel.config_emulator(|emulator| {
+					emulator.configure_rtt(rtt, rtt_dispersion);
+				}),
+				ClientRequest::ConfigureDropEmulation(drop_probability, drop_time) => self.udp_client.channel.config_emulator(|emulator| {
+					emulator.configure_drop(drop_probability, drop_time);
+				}),
 				ClientRequest::ResetEmulation => {
 					self.udp_client.channel.reset_emulator();
 				}
 				ClientRequest::SendCommandToServer(command) => {
-					self.udp_client.protocol.out_commands_collector.add_command(
-						command.channel_type,
-						BothDirectionCommand::C2S(command.command),
-					);
+					self.udp_client
+						.protocol
+						.out_commands_collector
+						.add_command(command.channel_type, BothDirectionCommand::C2S(command.command));
 				}
 			}
 		}
@@ -171,15 +161,9 @@ impl NetworkThreadClient {
 	///
 	fn update_state(&mut self) {
 		let protocol = &mut self.udp_client.protocol;
-		self.shared_statistics
-			.current_frame_id
-			.store(protocol.next_frame_id, Ordering::Relaxed);
+		self.shared_statistics.current_frame_id.store(protocol.next_frame_id, Ordering::Relaxed);
 		self.shared_statistics.rtt_in_ms.store(
-			protocol
-				.rtt
-				.get_rtt()
-				.unwrap_or_else(|| Duration::from_millis(0))
-				.as_millis() as u64,
+			protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64,
 			Ordering::Relaxed,
 		);
 		self.shared_statistics.average_retransmit_frames.store(
@@ -191,11 +175,7 @@ impl NetworkThreadClient {
 			Ordering::Relaxed,
 		);
 		self.shared_statistics.rtt_in_ms.store(
-			protocol
-				.rtt
-				.get_rtt()
-				.unwrap_or_else(|| Duration::from_millis(0))
-				.as_millis() as u64,
+			protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64,
 			Ordering::Relaxed,
 		);
 
@@ -206,12 +186,8 @@ impl NetworkThreadClient {
 		self.shared_statistics
 			.send_packet_count
 			.store(channel.send_packet_count, Ordering::Relaxed);
-		self.shared_statistics
-			.send_size
-			.store(channel.send_size, Ordering::Relaxed);
-		self.shared_statistics
-			.recv_size
-			.store(channel.recv_size, Ordering::Relaxed);
+		self.shared_statistics.send_size.store(channel.send_size, Ordering::Relaxed);
+		self.shared_statistics.recv_size.store(channel.recv_size, Ordering::Relaxed);
 		*self.connection_status.lock().unwrap() = self.udp_client.state.clone();
 	}
 }

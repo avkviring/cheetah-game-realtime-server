@@ -116,11 +116,7 @@ mod tests {
 	fn should_ack() {
 		let mut now = Instant::now();
 		let mut ack_sender = AckSender::default();
-		let in_frame = InFrame::new(
-			10,
-			Default::default(),
-			[create_command()].into_iter().collect(),
-		);
+		let in_frame = InFrame::new(10, Default::default(), [create_command()].into_iter().collect());
 		ack_sender.on_frame_received(&in_frame, &now);
 
 		for _ in 0..AckSender::MAX_ACK_FOR_FRAME {

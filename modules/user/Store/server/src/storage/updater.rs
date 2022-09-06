@@ -20,38 +20,21 @@ impl Updater {
 		T: for<'r> sqlx::Encode<'r, Postgres> + sqlx::Type<Postgres> + Send,
 	{
 		let table = T::table_name();
-		self.execute_query(user, field_name, value, &self.create_upsert_query(table))
-			.await
+		self.execute_query(user, field_name, value, &self.create_upsert_query(table)).await
 	}
 
-	pub async fn increment<T>(
-		&self,
-		user: &Uuid,
-		field_name: &str,
-		value: T,
-	) -> Result<(), sqlx::Error>
+	pub async fn increment<T>(&self, user: &Uuid, field_name: &str, value: T) -> Result<(), sqlx::Error>
 	where
 		T: Add,
 		T: TableName,
 		T: for<'r> sqlx::Encode<'r, Postgres> + sqlx::Type<Postgres> + Send,
 	{
 		let table = T::table_name();
-		self.execute_query(
-			user,
-			field_name,
-			value,
-			self.create_increment_query(table).as_str(),
-		)
-		.await
+		self.execute_query(user, field_name, value, self.create_increment_query(table).as_str())
+			.await
 	}
 
-	async fn execute_query<T>(
-		&self,
-		user: &Uuid,
-		field_name: &str,
-		value: T,
-		query: &str,
-	) -> Result<(), sqlx::Error>
+	async fn execute_query<T>(&self, user: &Uuid, field_name: &str, value: T, query: &str) -> Result<(), sqlx::Error>
 	where
 		T: for<'r> sqlx::Encode<'r, Postgres> + sqlx::Type<Postgres> + Send,
 	{

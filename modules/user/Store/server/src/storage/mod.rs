@@ -42,15 +42,9 @@ mod test {
 
 		let user_id = Uuid::new_v4();
 
-		updater
-			.set(&user_id, "points", expected_value)
-			.await
-			.unwrap();
+		updater.set(&user_id, "points", expected_value).await.unwrap();
 
-		updater
-			.increment(&user_id, "points", expected_value)
-			.await
-			.unwrap();
+		updater.increment(&user_id, "points", expected_value).await.unwrap();
 
 		let actual_value: T = fetcher.get(&user_id, "points").await.unwrap().unwrap();
 		assert_eq!(expected_value + expected_value, actual_value)
@@ -71,19 +65,13 @@ mod test {
 
 		let user_id = Uuid::new_v4();
 
-		updater
-			.set(&user_id, "points", expected_value_a.clone())
-			.await
-			.unwrap();
+		updater.set(&user_id, "points", expected_value_a.clone()).await.unwrap();
 
 		let actual_value: T = fetcher.get(&user_id, "points").await.unwrap().unwrap();
 		assert_eq!(expected_value_a, actual_value);
 
 		// проверяем двойную установку для тестирования upsert
-		updater
-			.set(&user_id, "points", expected_value_b.clone())
-			.await
-			.unwrap();
+		updater.set(&user_id, "points", expected_value_b.clone()).await.unwrap();
 
 		let actual_value: T = fetcher.get(&user_id, "points").await.unwrap().unwrap();
 		assert_eq!(expected_value_b, actual_value)

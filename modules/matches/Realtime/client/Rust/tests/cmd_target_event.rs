@@ -33,12 +33,7 @@ fn test() {
 	helper.wait_udp();
 
 	let mut object_id = GameObjectIdFFI::default();
-	ffi::command::object::create_object(
-		client1,
-		1,
-		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
-		&mut object_id,
-	);
+	ffi::command::object::create_object(client1, 1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
 	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
 
 	let mut event_buffer = BufferFFI::default();
@@ -46,33 +41,20 @@ fn test() {
 	event_buffer.buffer[0] = 100;
 	let event_field_id = 10;
 
-	ffi::command::event::send_target_event(
-		client1,
-		user2_id,
-		&object_id,
-		event_field_id,
-		&event_buffer,
-	);
+	ffi::command::event::send_target_event(client1, user2_id, &object_id, event_field_id, &event_buffer);
 	helper.wait_udp();
 
 	ffi::client::receive(client3);
 	assert!(matches!(EVENT.lock().unwrap().as_ref(), None));
 
 	ffi::client::receive(client2);
-	assert!(
-		matches!(EVENT.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer )
-	);
+	assert!(matches!(EVENT.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer ));
 }
 
 lazy_static! {
 	static ref EVENT: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_event_listener(
-	_: RoomMemberId,
-	_object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	buffer: &BufferFFI,
-) {
+extern "C" fn on_event_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
 	EVENT.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

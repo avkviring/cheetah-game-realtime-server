@@ -28,11 +28,7 @@ impl RealtimeInternalService {
 		RealtimeInternalService { server_manager }
 	}
 
-	async fn register_user(
-		&self,
-		room_id: RoomId,
-		template: MemberTemplate,
-	) -> Result<Response<CreateMemberResponse>, Status> {
+	async fn register_user(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
 		let mut server = self.server_manager.lock().await;
 		server
 			.register_user(room_id, template.clone())
@@ -50,19 +46,14 @@ impl RealtimeInternalService {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
-			server
-				.register_user(room_id, MemberTemplate::new_super_member_with_key(key))
-				.unwrap();
+			server.register_user(room_id, MemberTemplate::new_super_member_with_key(key)).unwrap();
 		}
 	}
 }
 
 #[tonic::async_trait]
 impl Realtime for RealtimeInternalService {
-	async fn create_room(
-		&self,
-		request: Request<RoomTemplate>,
-	) -> Result<Response<RoomIdResponse>, Status> {
+	async fn create_room(&self, request: Request<RoomTemplate>) -> Result<Response<RoomIdResponse>, Status> {
 		let mut server = self.server_manager.lock().await;
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
 		let template_name = template.name.clone();
@@ -75,10 +66,7 @@ impl Realtime for RealtimeInternalService {
 		Ok(Response::new(RoomIdResponse { room_id }))
 	}
 
-	async fn create_member(
-		&self,
-		request: Request<CreateMemberRequest>,
-	) -> Result<Response<CreateMemberResponse>, Status> {
+	async fn create_member(&self, request: Request<CreateMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 		let request = request.into_inner();
 		self.register_user(
 			request.room_id,
@@ -87,28 +75,18 @@ impl Realtime for RealtimeInternalService {
 		.await
 	}
 
-	async fn create_super_member(
-		&self,
-		request: Request<CreateSuperMemberRequest>,
-	) -> Result<Response<CreateMemberResponse>, Status> {
+	async fn create_super_member(&self, request: Request<CreateSuperMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 		let request = request.into_inner();
-		self.register_user(request.room_id, MemberTemplate::new_super_member())
-			.await
+		self.register_user(request.room_id, MemberTemplate::new_super_member()).await
 	}
 
-	async fn probe(
-		&self,
-		_request: Request<ProbeRequest>,
-	) -> Result<Response<ProbeResponse>, Status> {
+	async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {
 		Ok(Response::new(ProbeResponse {}))
 	}
 
 	type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
 
-	async fn watch_created_room_event(
-		&self,
-		_request: Request<EmptyRequest>,
-	) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
+	async fn watch_created_room_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
 		let (tx, rx) = mpsc::channel(64);
 		let server_manager = self.server_manager.clone();
 		tokio::spawn(async move {
@@ -149,15 +127,9 @@ mod test {
 
 	#[tokio::test]
 	async fn test_watch_created_room_event() {
-		let server_manager = Arc::new(Mutex::new(ServerManager::new(
-			bind_to_free_socket().unwrap().0,
-		)));
+		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap().0)));
 
-		let first_room_id = server_manager
-			.lock()
-			.await
-			.register_room(RoomTemplate::default())
-			.unwrap();
+		let first_room_id = server_manager.lock().await.register_room(RoomTemplate::default()).unwrap();
 
 		let service = RealtimeInternalService::new(server_manager.clone());
 		let mut response: ReceiverStream<Result<RoomIdResponse, Status>> = service
@@ -169,11 +141,7 @@ mod test {
 		let actual = response.try_next().await;
 		assert_eq!(actual.unwrap().unwrap().room_id, first_room_id);
 
-		let second_room_id = server_manager
-			.lock()
-			.await
-			.register_room(RoomTemplate::default())
-			.unwrap();
+		let second_room_id = server_manager.lock().await.register_room(RoomTemplate::default()).unwrap();
 
 		let actual = response.try_next().await;
 		assert_eq!(actual.unwrap().unwrap().room_id, second_room_id);
@@ -181,17 +149,11 @@ mod test {
 
 	#[tokio::test]
 	async fn test_create_super_member() {
-		let server_manager = Arc::new(Mutex::new(ServerManager::new(
-			bind_to_free_socket().unwrap().0,
-		)));
+		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap().0)));
 
 		std::env::set_var(SUPER_MEMBER_KEY_ENV, "some-key");
 		let service = RealtimeInternalService::new(server_manager.clone());
-		let room_id = service
-			.create_room(Request::new(Default::default()))
-			.await
-			.unwrap()
-			.into_inner();
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner();
 
 		let dump_response = server_manager.lock().await.dump(room_id.room_id).unwrap();
 		assert!(!dump_response.users.is_empty());

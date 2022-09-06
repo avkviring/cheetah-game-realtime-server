@@ -23,10 +23,7 @@ impl DumpGrpcService {
 
 #[tonic::async_trait]
 impl admin::dump_server::Dump for DumpGrpcService {
-	async fn dump(
-		&self,
-		request: Request<admin::DumpRequest>,
-	) -> Result<Response<admin::DumpResponse>, Status> {
+	async fn dump(&self, request: Request<admin::DumpRequest>) -> Result<Response<admin::DumpResponse>, Status> {
 		let manager = self.manager.lock().await;
 		let dump = manager
 			.dump(request.get_ref().room)

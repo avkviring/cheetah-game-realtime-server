@@ -19,15 +19,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 pub async fn run_grpc_server(loki_url: &str, namespace: &str) {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 
-	health_reporter
-		.set_service_status("", ServingStatus::Serving)
-		.await;
+	health_reporter.set_service_status("", ServingStatus::Serving).await;
 	let grpc_service = EventsServer::new(EventsService::new(loki_url, namespace));
 	// если мы здесь - то соединение к базе установлены, все параметры заданы
 	// то есть мы можем сказать что сервисы тоже готовы
-	health_reporter
-		.set_serving::<EventsServer<EventsService>>()
-		.await;
+	health_reporter.set_serving::<EventsServer<EventsService>>().await;
 
 	Server::builder()
 		.accept_http1(true)

@@ -21,11 +21,7 @@ impl IncrementDoubleC2SCommand {
 		out.write_f64::<BigEndian>(self.increment)
 	}
 
-	pub fn decode(
-		object_id: GameObjectId,
-		field_id: FieldId,
-		input: &mut Cursor<&[u8]>,
-	) -> std::io::Result<Self> {
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let increment = input.read_f64::<BigEndian>()?;
 		Ok(Self {
 			object_id,

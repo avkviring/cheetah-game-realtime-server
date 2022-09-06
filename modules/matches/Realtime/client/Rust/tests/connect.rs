@@ -42,18 +42,14 @@ fn should_disconnect_when_server_closed() {
 	drop(helper);
 
 	execute_with_client(client, |api| {
-		api.set_protocol_time_offset(DisconnectByTimeout::TIMEOUT)
-			.unwrap();
+		api.set_protocol_time_offset(DisconnectByTimeout::TIMEOUT).unwrap();
 		Ok(())
 	});
 	thread::sleep(Duration::from_millis(100));
 
 	execute_with_client(client, |api| {
 		let status = api.get_connection_status().unwrap();
-		assert!(matches!(
-			status,
-			ConnectionStatus::Disconnected(DisconnectedReason::ByTimeout)
-		));
+		assert!(matches!(status, ConnectionStatus::Disconnected(DisconnectedReason::ByTimeout)));
 		Ok(())
 	});
 }

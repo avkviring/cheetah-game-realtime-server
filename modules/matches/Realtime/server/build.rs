@@ -7,15 +7,11 @@ fn main() -> Result<(), Error> {
 	println!("cargo:rerun-if-changed=../Registry/proto/matches.registry.internal.proto");
 
 	tonic_build::configure().compile(
-		&[
-			"../proto/matches.realtime.internal.proto",
-			"../proto/matches.realtime.admin.proto",
-		],
+		&["../proto/matches.realtime.internal.proto", "../proto/matches.realtime.admin.proto"],
 		&["../proto/"],
 	)?;
-	tonic_build::configure().build_server(false).compile(
-		&["../../Registry/proto/matches.registry.internal.proto"],
-		&["../../Registry/proto/"],
-	)?;
+	tonic_build::configure()
+		.build_server(false)
+		.compile(&["../../Registry/proto/matches.registry.internal.proto"], &["../../Registry/proto/"])?;
 	Ok(())
 }

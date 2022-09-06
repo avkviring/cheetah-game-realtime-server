@@ -1,8 +1,6 @@
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
-use cheetah_matches_realtime_common::commands::types::long::{
-	CompareAndSetLongCommand, IncrementLongC2SCommand,
-};
+use cheetah_matches_realtime_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
@@ -11,10 +9,7 @@ use crate::ffi::command::send_command;
 use crate::ffi::{execute_with_client, GameObjectIdFFI};
 
 #[no_mangle]
-pub extern "C" fn set_long_value_listener(
-	client_id: ClientId,
-	listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64),
-) -> u8 {
+pub extern "C" fn set_long_value_listener(client_id: ClientId, listener: extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64)) -> u8 {
 	execute_with_client(client_id, |client| {
 		client.listener_long_value = Some(listener);
 		Ok(())
@@ -22,12 +17,7 @@ pub extern "C" fn set_long_value_listener(
 }
 
 #[no_mangle]
-pub extern "C" fn set_long_value(
-	client_id: ClientId,
-	object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	value: i64,
-) -> u8 {
+pub extern "C" fn set_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::SetField(SetFieldCommand {
@@ -39,12 +29,7 @@ pub extern "C" fn set_long_value(
 }
 
 #[no_mangle]
-pub extern "C" fn inc_long_value(
-	client_id: ClientId,
-	object_id: &GameObjectIdFFI,
-	field_id: FieldId,
-	increment: i64,
-) -> u8 {
+pub extern "C" fn inc_long_value(client_id: ClientId, object_id: &GameObjectIdFFI, field_id: FieldId, increment: i64) -> u8 {
 	send_command(
 		client_id,
 		C2SCommand::IncrementLongValue(IncrementLongC2SCommand {

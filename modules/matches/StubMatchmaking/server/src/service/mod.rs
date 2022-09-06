@@ -42,11 +42,7 @@ impl StubMatchmakingService {
 		}
 	}
 	#[async_recursion::async_recursion]
-	async fn matchmaking(
-		&self,
-		ticket: TicketRequest,
-		user_id: Uuid,
-	) -> Result<TicketResponse, String> {
+	async fn matchmaking(&self, ticket: TicketRequest, user_id: Uuid) -> Result<TicketResponse, String> {
 		let template = ticket.match_template.clone();
 		let match_info = self.find_or_create_match(&template).await?;
 		match StubMatchmakingService::attach_user(&ticket, &match_info).await {
@@ -69,16 +65,11 @@ impl StubMatchmakingService {
 		}
 	}
 
-	async fn attach_user(
-		ticket: &TicketRequest,
-		match_info: &MatchInfo,
-	) -> Result<realtime::internal::CreateMemberResponse, String> {
-		let mut relay = realtime::internal::realtime_client::RealtimeClient::connect(
-			cheetah_libraries_microservice::make_internal_srv_uri(
-				match_info.realtime_server_grpc_host.as_str(),
-				match_info.realtime_server_grpc_port,
-			),
-		)
+	async fn attach_user(ticket: &TicketRequest, match_info: &MatchInfo) -> Result<realtime::internal::CreateMemberResponse, String> {
+		let mut relay = realtime::internal::realtime_client::RealtimeClient::connect(cheetah_libraries_microservice::make_internal_srv_uri(
+			match_info.realtime_server_grpc_host.as_str(),
+			match_info.realtime_server_grpc_port,
+		))
 		.await
 		.map_err(|e| format!("Connect to relay error {:?}", e))?;
 
@@ -104,9 +95,7 @@ impl StubMatchmakingService {
 		let mut matches = self.matches.write().await;
 		match matches.get(template) {
 			None => {
-				let mut factory = FactoryClient::connect(self.factory_service_uri.clone())
-					.await
-					.unwrap();
+				let mut factory = FactoryClient::connect(self.factory_service_uri.clone()).await.unwrap();
 
 				let create_match_response = factory
 					.create_match(Request::new(CreateMatchRequest {
@@ -139,10 +128,7 @@ fn create_match_info(create_match_response: CreateMatchResponse) -> MatchInfo {
 
 #[tonic::async_trait]
 impl Matchmaking for StubMatchmakingService {
-	async fn matchmaking(
-		&self,
-		request: Request<TicketRequest>,
-	) -> Result<Response<TicketResponse>, Status> {
+	async fn matchmaking(&self, request: Request<TicketRequest>) -> Result<Response<TicketResponse>, Status> {
 		let user = JWTUserTokenParser::new(self.jwt_public_key.clone())
 			.get_user_uuid_from_grpc(request.metadata())
 			.trace_err(format!("Get user uuid {:?}", request.metadata()))
@@ -174,8 +160,7 @@ pub mod tests {
 	use crate::proto::matches::matchmaking;
 	use crate::proto::matches::realtime;
 	use crate::proto::matches::realtime::internal::{
-		CreateMemberRequest, CreateSuperMemberRequest, EmptyRequest, ProbeRequest, ProbeResponse,
-		RoomIdResponse,
+		CreateMemberRequest, CreateSuperMemberRequest, EmptyRequest, ProbeRequest, ProbeResponse, RoomIdResponse,
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::service::StubMatchmakingService;
@@ -300,23 +285,14 @@ pub mod tests {
 		};
 		tokio::spawn(async move {
 			Server::builder()
-				.add_service(factory::internal::factory_server::FactoryServer::new(
-					stub_factory,
-				))
-				.add_service(realtime::internal::realtime_server::RealtimeServer::new(
-					stub_relay,
-				))
-				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
-					stub_grpc_service_tcp,
-				))
+				.add_service(factory::internal::factory_server::FactoryServer::new(stub_factory))
+				.add_service(realtime::internal::realtime_server::RealtimeServer::new(stub_relay))
+				.serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(stub_grpc_service_tcp))
 				.await
 		});
 
 		let matchmaking = StubMatchmakingService::new(
-			cheetah_libraries_microservice::make_internal_srv_uri(
-				stub_grpc_service_addr.ip().to_string().as_str(),
-				stub_grpc_service_addr.port(),
-			),
+			cheetah_libraries_microservice::make_internal_srv_uri(stub_grpc_service_addr.ip().to_string().as_str(), stub_grpc_service_addr.port()),
 			Default::default(),
 		);
 		matchmaking
@@ -333,10 +309,7 @@ pub mod tests {
 	}
 	#[tonic::async_trait]
 	impl Factory for StubFactory {
-		async fn create_match(
-			&self,
-			_request: Request<CreateMatchRequest>,
-		) -> Result<Response<CreateMatchResponse>, Status> {
+		async fn create_match(&self, _request: Request<CreateMatchRequest>) -> Result<Response<CreateMatchResponse>, Status> {
 			let mut sequence = self.room_sequence.write().await;
 			let current_seq = *sequence;
 			*sequence += 1;
@@ -372,10 +345,7 @@ pub mod tests {
 			todo!()
 		}
 
-		async fn create_member(
-			&self,
-			_request: Request<CreateMemberRequest>,
-		) -> Result<Response<CreateMemberResponse>, Status> {
+		async fn create_member(&self, _request: Request<CreateMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 			let mut fail = self.fail_when_zero.write().await;
 			let current = *fail;
 			*fail -= 1;
@@ -389,26 +359,17 @@ pub mod tests {
 			}
 		}
 
-		async fn create_super_member(
-			&self,
-			_request: Request<CreateSuperMemberRequest>,
-		) -> Result<Response<CreateMemberResponse>, Status> {
+		async fn create_super_member(&self, _request: Request<CreateSuperMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 			todo!()
 		}
 
-		async fn probe(
-			&self,
-			_request: Request<ProbeRequest>,
-		) -> Result<Response<ProbeResponse>, Status> {
+		async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {
 			Ok(Response::new(ProbeResponse {}))
 		}
 
 		type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
 
-		async fn watch_created_room_event(
-			&self,
-			_request: Request<EmptyRequest>,
-		) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
+		async fn watch_created_room_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
 			todo!()
 		}
 	}

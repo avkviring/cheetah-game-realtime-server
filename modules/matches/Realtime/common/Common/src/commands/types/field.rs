@@ -16,11 +16,7 @@ impl DeleteFieldCommand {
 		self.field_type.encode(out)
 	}
 
-	pub fn decode(
-		object_id: GameObjectId,
-		field_id: FieldId,
-		input: &mut Cursor<&[u8]>,
-	) -> std::io::Result<Self> {
+	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		Ok(DeleteFieldCommand {
 			field_id,
 			object_id,
@@ -41,16 +37,8 @@ impl SetFieldCommand {
 		self.value.encode(out)
 	}
 
-	pub fn decode<T: Into<FieldValue> + ToFieldType>(
-		object_id: GameObjectId,
-		field_id: FieldId,
-		input: &mut Cursor<&[u8]>,
-	) -> std::io::Result<Self> {
+	pub fn decode<T: Into<FieldValue> + ToFieldType>(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let value = FieldValue::decode::<T>(input)?;
-		Ok(Self {
-			object_id,
-			field_id,
-			value,
-		})
+		Ok(Self { object_id, field_id, value })
 	}
 }
