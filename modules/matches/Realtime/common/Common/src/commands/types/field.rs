@@ -4,7 +4,7 @@ use crate::commands::{field_type::ToFieldType, FieldType, FieldValue};
 use crate::constants::FieldId;
 use crate::room::object::GameObjectId;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DeleteFieldCommand {
 	pub field_id: FieldId,
 	pub object_id: GameObjectId,

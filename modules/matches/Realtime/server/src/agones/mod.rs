@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use rymder::GameServer;
@@ -10,7 +10,7 @@ use cheetah_libraries_microservice::tonic::codegen::Arc;
 use crate::agones::client::RegistryClient;
 use crate::agones::proto::registry::RelayState;
 use crate::agones::proto::registry::{Addr, RelayAddrs};
-use crate::server::manager::ServerManager;
+use crate::server::manager::RoomsServerManager;
 
 pub mod client;
 pub mod proto;
@@ -29,10 +29,7 @@ pub enum RegistryError {
 /// Взаимодействие с AGONES SDK
 /// Если Agones  не запущен - то relay будет остановлен
 ///
-pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, server_manager: Arc<Mutex<ServerManager>>) {
-	if std::env::var("ENABLE_AGONES").is_err() {
-		return;
-	}
+pub async fn run_agones_cycle(server_manager: Arc<Mutex<RoomsServerManager>>) {
 	tracing::info!("Agones: Starting");
 	match rymder::Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
 		Ok((mut sdk, gameserver)) => {
@@ -45,7 +42,7 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, server_manager: Arc<
 
 			let mut allocated = false;
 
-			while !halt_signal.load(Ordering::Relaxed) {
+			while is_server_running(&server_manager).await {
 				// при создании первой комнаты - вызываем allocate
 				if !allocated && server_manager.lock().await.created_room_counter > 0 {
 					sdk.allocate().await.unwrap();
@@ -83,6 +80,10 @@ pub async fn run_agones_cycle(halt_signal: Arc<AtomicBool>, server_manager: Arc<
 			panic!("Agones: Fail connect {:?}", e);
 		}
 	}
+}
+
+async fn is_server_running(server_manager: &Arc<Mutex<RoomsServerManager>>) -> bool {
+	!server_manager.lock().await.get_halt_signal().load(Ordering::Relaxed)
 }
 
 async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), RegistryError> {

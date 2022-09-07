@@ -24,7 +24,7 @@ pub struct NetworkClient {
 	member_and_room_id: MemberAndRoomId,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ConnectionStatus {
 	Connecting,
 	///
@@ -37,7 +37,7 @@ pub enum ConnectionStatus {
 	Disconnected(DisconnectedReason),
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DisconnectedReason {
 	IOError(String),
 	ByRetryLimit,

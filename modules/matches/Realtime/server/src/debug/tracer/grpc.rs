@@ -16,14 +16,14 @@ use cheetah_matches_realtime_common::room::RoomId;
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
 use crate::debug::tracer::{SessionId, TracedBothDirectionCommand, TracedCommand, TracerSessionCommand};
-use crate::server::manager::ServerManager;
+use crate::server::manager::RoomsServerManager;
 
 pub struct CommandTracerGRPCService {
-	pub manager: Arc<Mutex<ServerManager>>,
+	pub manager: Arc<Mutex<RoomsServerManager>>,
 }
 
 impl CommandTracerGRPCService {
-	pub fn new(relay_server: Arc<Mutex<ServerManager>>) -> Self {
+	pub fn new(relay_server: Arc<Mutex<RoomsServerManager>>) -> Self {
 		Self { manager: relay_server }
 	}
 

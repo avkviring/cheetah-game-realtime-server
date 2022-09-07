@@ -8,7 +8,7 @@ use crate::protocol::frame::FrameId;
 ///
 /// Заголовок для указания факта повторной передачи данного фрейма
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RetransmitHeader {
 	pub original_frame_id: FrameId,
 	pub retransmit_count: u8,

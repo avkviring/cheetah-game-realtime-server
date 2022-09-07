@@ -23,7 +23,7 @@ pub struct RoundTripTime {
 }
 const AVERAGE_RTT_MIN_LEN: usize = 10;
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct RoundTripTimeHeader {
 	pub(crate) self_time: u64,
 }
@@ -75,9 +75,9 @@ impl RoundTripTime {
 		if self.rtt.is_full() {
 			let sum_rtt: Duration = self.rtt.iter().sum();
 			let average_rtt = sum_rtt.div(self.rtt.len() as u32);
-			Option::Some(average_rtt)
+			Some(average_rtt)
 		} else {
-			Option::None
+			None
 		}
 	}
 

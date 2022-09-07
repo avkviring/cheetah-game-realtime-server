@@ -7,16 +7,16 @@ use cheetah_libraries_microservice::tonic::{Request, Response};
 use cheetah_libraries_microservice::trace::Trace;
 
 use crate::debug::proto::admin;
-use crate::server::manager::ServerManager;
+use crate::server::manager::RoomsServerManager;
 
 pub mod convert;
 
 pub struct DumpGrpcService {
-	pub manager: Arc<Mutex<ServerManager>>,
+	pub manager: Arc<Mutex<RoomsServerManager>>,
 }
 
 impl DumpGrpcService {
-	pub fn new(manager: Arc<Mutex<ServerManager>>) -> Self {
+	pub fn new(manager: Arc<Mutex<RoomsServerManager>>) -> Self {
 		Self { manager }
 	}
 }

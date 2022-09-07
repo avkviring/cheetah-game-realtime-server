@@ -116,7 +116,7 @@ impl RedisStorage {
 			return Err(StorageError::NoRelayFound);
 		}
 
-		let addrs: Addrs = serde_json::from_slice(&*res).map_err(StorageError::from)?;
+		let addrs: Addrs = serde_json::from_slice(&res).map_err(StorageError::from)?;
 		Ok(addrs)
 	}
 }

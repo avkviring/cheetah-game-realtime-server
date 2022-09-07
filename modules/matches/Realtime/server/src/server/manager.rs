@@ -13,14 +13,14 @@ use crate::debug::tracer::TracerSessionCommand;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
-use crate::server::Server;
+use crate::server::RoomsServer;
 
 ///
 /// Управление сервером
 /// - запуск сервера в отдельном потоке
 /// - связь с сервером через Sender
 ///
-pub struct ServerManager {
+pub struct RoomsServerManager {
 	handler: Option<JoinHandle<()>>,
 	sender: Sender<ManagementTask>,
 	halt_signal: Arc<AtomicBool>,
@@ -28,7 +28,7 @@ pub struct ServerManager {
 }
 
 pub enum ManagementTask {
-	RegisterRoom(RoomTemplate, Sender<RoomId>),
+	CreateRoom(RoomTemplate, Sender<RoomId>),
 	RegisterUser(RoomId, MemberTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
 	///
 	/// Смещение текущего времени для тестирования
@@ -56,13 +56,13 @@ pub enum RegisterUserRequestError {
 	Error(RegisterUserError),
 }
 
-impl Drop for ServerManager {
+impl Drop for RoomsServerManager {
 	fn drop(&mut self) {
 		self.halt_signal.store(true, Ordering::Relaxed);
 	}
 }
 
-impl ServerManager {
+impl RoomsServerManager {
 	pub fn new(socket: UdpSocket) -> Self {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
@@ -70,7 +70,7 @@ impl ServerManager {
 		let handler = thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr().unwrap()))
 			.spawn(move || {
-				Server::new(socket, receiver, halt_signal).run();
+				RoomsServer::new(socket, receiver, halt_signal).run();
 			})
 			.unwrap();
 		Self {
@@ -112,10 +112,10 @@ impl ServerManager {
 		self.halt_signal.clone()
 	}
 
-	pub fn register_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
+	pub fn create_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
-			.send(ManagementTask::RegisterRoom(template, sender))
+			.send(ManagementTask::CreateRoom(template, sender))
 			.unwrap_or_else(|_| panic!("{}", expect_send_msg("RegisterRoom")));
 		self.created_room_counter += 1;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
@@ -194,19 +194,19 @@ mod test {
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
 	use crate::room::template::config::RoomTemplate;
-	use crate::server::manager::ServerManager;
+	use crate::server::manager::RoomsServerManager;
 
 	#[test]
 	fn should_increment_created_room_count() {
-		let mut server = ServerManager::new(bind_to_free_socket().unwrap().0);
-		server.register_room(RoomTemplate::default()).unwrap();
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		server.create_room(RoomTemplate::default()).unwrap();
 		assert_eq!(server.created_room_counter, 1);
 	}
 
 	#[test]
 	fn should_get_rooms() {
-		let mut server = ServerManager::new(bind_to_free_socket().unwrap().0);
-		let room_id = server.register_room(RoomTemplate::default()).unwrap();
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let rooms = server.get_rooms().unwrap();
 		assert_eq!(rooms, vec![room_id]);
 	}

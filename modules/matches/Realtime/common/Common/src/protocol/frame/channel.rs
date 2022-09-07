@@ -3,7 +3,7 @@ use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 ///
 /// Тип канала для отправки
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ChannelType {
 	///
 	/// Выполняем команды без учета порядка
@@ -30,7 +30,7 @@ pub enum ChannelType {
 ///
 /// Канал для отправки, отличается от [ApplicationCommandChannelType] полным набором данных для канала
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Channel {
 	///
 	/// Выполняем команды без учета порядка

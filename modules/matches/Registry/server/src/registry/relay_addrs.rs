@@ -11,7 +11,7 @@ pub enum AddrsError {
 	MalformedAddrs,
 }
 
-#[derive(PartialEq, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Addrs {
 	pub(crate) game: SocketAddr,
 	pub(crate) grpc_internal: SocketAddr,

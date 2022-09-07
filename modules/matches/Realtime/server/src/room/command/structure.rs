@@ -13,8 +13,7 @@ mod tests {
 	use crate::room::command::ServerCommandExecutor;
 	use crate::room::object::Field;
 	use crate::room::template::config::{
-		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission,
-		PermissionField, RoomTemplate,
+		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
 	};
 	use crate::room::Room;
 
@@ -47,47 +46,35 @@ mod tests {
 	fn init_set_structure_test() -> (Room, RoomMemberId, RoomMemberId, GameObjectId) {
 		let access_groups = AccessGroups(10);
 		let mut template = RoomTemplate::default();
-		template
-			.permissions
-			.templates
-			.push(GameObjectTemplatePermission {
-				template: 0,
+		template.permissions.templates.push(GameObjectTemplatePermission {
+			template: 0,
+			rules: vec![GroupsPermissionRule {
+				groups: access_groups,
+				permission: Permission::Ro,
+			}],
+			fields: vec![PermissionField {
+				field: Field {
+					id: FIELD_ID,
+					field_type: FieldType::Structure,
+				},
 				rules: vec![GroupsPermissionRule {
 					groups: access_groups,
-					permission: Permission::Ro,
+					permission: Permission::Rw,
 				}],
-				fields: vec![PermissionField {
-					field: Field {
-						id: FIELD_ID,
-						field_type: FieldType::Structure,
-					},
-					rules: vec![GroupsPermissionRule {
-						groups: access_groups,
-						permission: Permission::Rw,
-					}],
-				}],
-			});
+			}],
+		});
 		let mut room = Room::from_template(template);
 		let user1 = room.register_member(MemberTemplate::stub(access_groups));
 		room.test_mark_as_connected(user1).unwrap();
 		let user2 = room.register_member(MemberTemplate::stub(access_groups));
 		room.test_mark_as_connected(user2).unwrap();
-		let object1 = room.test_create_object_with_not_created_state(
-			GameObjectOwner::Member(user1),
-			access_groups,
-		);
+		let object1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user1), access_groups);
 		object1.created = true;
 		let object_id1 = object1.id.clone();
 		(room, user1, user2, object_id1)
 	}
 
-	fn run_set_structure_test(
-		room: &mut Room,
-		user1: RoomMemberId,
-		user2: RoomMemberId,
-		object_id: GameObjectId,
-		sender: RoomMemberId,
-	) {
+	fn run_set_structure_test(room: &mut Room, user1: RoomMemberId, user2: RoomMemberId, object_id: GameObjectId, sender: RoomMemberId) {
 		let command = SetFieldCommand {
 			object_id: object_id.clone(),
 			field_id: FIELD_ID,
@@ -97,12 +84,7 @@ mod tests {
 		command.execute(room, sender).unwrap();
 		let object = room.get_object(&object_id).unwrap();
 
-		assert_eq!(
-			*object
-				.get_field_wrapped(FIELD_ID, FieldType::Structure)
-				.unwrap(),
-			command.value
-		);
+		assert_eq!(*object.get_field_wrapped(FIELD_ID, FieldType::Structure).unwrap(), command.value);
 
 		let _expected = S2CCommandWithCreator {
 			command: S2CCommand::SetField(command),

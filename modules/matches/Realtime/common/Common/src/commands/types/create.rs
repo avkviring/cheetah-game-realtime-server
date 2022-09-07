@@ -12,7 +12,7 @@ use crate::room::object::GameObjectId;
 /// Создать игровой объект от имени клиента
 /// S->C, C->S
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CreateGameObjectCommand {
 	pub object_id: GameObjectId,
 	pub template: GameObjectTemplateId,
@@ -22,7 +22,7 @@ pub struct CreateGameObjectCommand {
 ///
 /// Игровой объект создан
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct C2SCreatedGameObjectCommand {
 	pub object_id: GameObjectId,
 	///
@@ -39,7 +39,7 @@ pub struct C2SCreatedGameObjectCommand {
 ///
 /// Игровой объект загружен на клиента
 ///  
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GameObjectCreatedS2CCommand {
 	pub object_id: GameObjectId,
 }
