@@ -18,7 +18,7 @@ pub struct Headers {
 	pub(crate) headers: HeaderVec<Header>,
 }
 
-#[derive(Debug, PartialEq, Clone, EnumMatchPredicates)]
+#[derive(Debug, PartialEq, Eq, Clone, EnumMatchPredicates)]
 pub enum Header {
 	///
 	/// Идентификатор комнаты и клиента

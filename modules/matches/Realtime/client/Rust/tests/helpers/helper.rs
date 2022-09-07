@@ -3,7 +3,7 @@ use std::thread;
 use std::time::Duration;
 
 use cheetah_matches_realtime::room::template::config::MemberTemplate;
-use cheetah_matches_realtime::server::manager::ServerManager;
+use cheetah_matches_realtime::server::manager::RoomsServerManager;
 use cheetah_matches_realtime_client::clients::registry::ClientId;
 use cheetah_matches_realtime_client::ffi;
 use cheetah_matches_realtime_client::ffi::client::do_create_client;
@@ -15,7 +15,7 @@ use crate::helpers::server::IntegrationTestServerBuilder;
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
 	room_id: RoomId,
-	pub server: ServerManager,
+	pub server: RoomsServerManager,
 }
 
 impl IntegrationTestHelper {

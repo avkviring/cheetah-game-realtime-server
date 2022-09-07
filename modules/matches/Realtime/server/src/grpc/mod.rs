@@ -12,19 +12,19 @@ use cheetah_matches_realtime_common::room::RoomId;
 use crate::grpc::proto::internal::realtime_server::Realtime;
 use crate::grpc::proto::internal::*;
 use crate::room::template::config::MemberTemplate;
-use crate::server::manager::ServerManager;
+use crate::server::manager::RoomsServerManager;
 
 mod from;
 pub mod proto;
 
 pub struct RealtimeInternalService {
-	pub server_manager: Arc<Mutex<ServerManager>>,
+	pub server_manager: Arc<Mutex<RoomsServerManager>>,
 }
 
 const SUPER_MEMBER_KEY_ENV: &str = "SUPER_MEMBER_KEY";
 
 impl RealtimeInternalService {
-	pub fn new(server_manager: Arc<Mutex<ServerManager>>) -> Self {
+	pub fn new(server_manager: Arc<Mutex<RoomsServerManager>>) -> Self {
 		RealtimeInternalService { server_manager }
 	}
 
@@ -42,7 +42,7 @@ impl RealtimeInternalService {
 			})
 	}
 
-	fn create_super_member_if_need(server: &mut MutexGuard<ServerManager>, room_id: RoomId) {
+	fn create_super_member_if_need(server: &mut MutexGuard<RoomsServerManager>, room_id: RoomId) {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
@@ -58,7 +58,7 @@ impl Realtime for RealtimeInternalService {
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
 		let template_name = template.name.clone();
 		let room_id = server
-			.register_room(template)
+			.create_room(template)
 			.trace_err(format!("Create room with template {}", template_name))
 			.map_err(Status::internal)?;
 
@@ -123,13 +123,13 @@ mod test {
 	use crate::grpc::proto::internal::{EmptyRequest, RoomIdResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::RoomTemplate;
-	use crate::server::manager::ServerManager;
+	use crate::server::manager::RoomsServerManager;
 
 	#[tokio::test]
 	async fn test_watch_created_room_event() {
-		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap().0)));
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap().0)));
 
-		let first_room_id = server_manager.lock().await.register_room(RoomTemplate::default()).unwrap();
+		let first_room_id = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
 
 		let service = RealtimeInternalService::new(server_manager.clone());
 		let mut response: ReceiverStream<Result<RoomIdResponse, Status>> = service
@@ -141,7 +141,7 @@ mod test {
 		let actual = response.try_next().await;
 		assert_eq!(actual.unwrap().unwrap().room_id, first_room_id);
 
-		let second_room_id = server_manager.lock().await.register_room(RoomTemplate::default()).unwrap();
+		let second_room_id = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
 
 		let actual = response.try_next().await;
 		assert_eq!(actual.unwrap().unwrap().room_id, second_room_id);
@@ -149,7 +149,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_create_super_member() {
-		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap().0)));
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap().0)));
 
 		std::env::set_var(SUPER_MEMBER_KEY_ENV, "some-key");
 		let service = RealtimeInternalService::new(server_manager.clone());

@@ -23,10 +23,10 @@ pub mod network;
 pub mod rooms;
 
 ///
-/// Relay сервер, запускается в отдельном потоке, обрабатывает сетевые команды, поддерживает
-/// одновременно несколько комнат
+/// Собственно сетевой сервер, запускается в отдельном потоке, обрабатывает сетевые команды,
+/// поддерживает одновременно несколько комнат
 ///
-pub struct Server {
+pub struct RoomsServer {
 	network_layer: NetworkLayer,
 	pub rooms: Rooms,
 	receiver: Receiver<ManagementTask>,
@@ -35,13 +35,13 @@ pub struct Server {
 	measures: Rc<RefCell<Measurers>>,
 }
 
-impl Drop for Server {
+impl Drop for RoomsServer {
 	fn drop(&mut self) {
-		tracing::error!("Relay: Drop invoked");
+		tracing::error!("RoomsServer: Drop invoked");
 	}
 }
 
-impl Server {
+impl RoomsServer {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Self {
@@ -70,7 +70,7 @@ impl Server {
 	fn execute_management_tasks(&mut self, now: &Instant) {
 		while let Ok(request) = self.receiver.try_recv() {
 			match request {
-				ManagementTask::RegisterRoom(template, sender) => {
+				ManagementTask::CreateRoom(template, sender) => {
 					let result = self.rooms.create_room(template.clone());
 					match sender.send(result) {
 						Ok(_) => {}
@@ -89,17 +89,17 @@ impl Server {
 					}
 				}
 				TimeOffset(time_offset) => {
-					self.time_offset = Option::Some(time_offset);
+					self.time_offset = Some(time_offset);
 				}
 				ManagementTask::Dump(room_id, sender) => match self.rooms.room_by_id.get(&room_id) {
 					None => {
-						if let Err(e) = sender.send(Result::Err(format!("Room not found {:?}", room_id).to_string())) {
+						if let Err(e) = sender.send(Err(format!("Room not found {:?}", room_id).to_string())) {
 							tracing::error!("[Request::Dump] error send response {:?}", e);
 						}
 					}
 					Some(room) => {
 						let response: DumpResponse = DumpResponse::from(room);
-						let result = Result::Ok(response);
+						let result = Ok(response);
 						if let Err(e) = sender.send(result) {
 							tracing::error!("[Request::Dump] error send response {:?}", e);
 						}
@@ -113,13 +113,13 @@ impl Server {
 				},
 				ManagementTask::CommandTracerSessionTask(room_id, task, sender) => match self.rooms.room_by_id.get_mut(&room_id) {
 					None => {
-						if let Err(e) = sender.send(Result::Err(CommandTracerSessionTaskError::RoomNotFound(room_id))) {
+						if let Err(e) = sender.send(Err(CommandTracerSessionTaskError::RoomNotFound(room_id))) {
 							tracing::error!("[Request::RegisterUser] error send response {:?}", e);
 						}
 					}
 					Some(room) => {
 						room.command_trace_session.clone().borrow_mut().execute_task(task);
-						if let Err(e) = sender.send(Result::Ok(())) {
+						if let Err(e) = sender.send(Ok(())) {
 							tracing::error!("[Request::RegisterUser] error send response {:?}", e);
 						}
 					}

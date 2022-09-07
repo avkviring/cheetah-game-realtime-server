@@ -9,7 +9,7 @@ use crate::protocol::frame::FrameId;
 /// - содержит подтверждение для N фреймов, начиная от [start_frame_id]
 /// - N зависит от [AskFrameHeader::CAPACITY]
 ///
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct AckHeader {
 	frame_ids: heapless::Vec<FrameId, 20>,
 }

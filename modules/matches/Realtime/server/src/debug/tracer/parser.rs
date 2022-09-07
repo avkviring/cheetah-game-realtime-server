@@ -28,12 +28,12 @@ enum Op {
 pub fn parse(query: &str) -> Result<Rule, ParseError> {
 	let query = query.replace(' ', "");
 	if query.is_empty() {
-		Result::Ok(Rule::True)
+		Ok(Rule::True)
 	} else {
 		match parse_with_bracket(query)? {
-			Token::And => Result::Err(ParseError::InternalError),
-			Token::Or => Result::Err(ParseError::InternalError),
-			Token::Rule(rule) => Result::Ok(rule),
+			Token::And => Err(ParseError::InternalError),
+			Token::Or => Err(ParseError::InternalError),
+			Token::Rule(rule) => Ok(rule),
 		}
 	}
 }
@@ -44,20 +44,20 @@ fn parse_with_bracket(mut query: String) -> Result<Token, ParseError> {
 		match query.chars().next().unwrap() {
 			'(' => {
 				let right_bracket = find_right_bracket(&query)?;
-				let expression = (&query[1..right_bracket]).to_string();
+				let expression = query[1..right_bracket].to_string();
 				let token = parse_with_bracket(expression)?;
 				tokens.push(token);
-				query = (&query[right_bracket..]).to_string();
+				query = query[right_bracket..].to_string();
 			}
 			')' => {
-				query = (&query[1..]).to_string();
+				query = query[1..].to_string();
 			}
 			'&' => {
-				query = (&query[2..]).to_string();
+				query = query[2..].to_string();
 				tokens.push(Token::And);
 			}
 			'|' => {
-				query = (&query[2..]).to_string();
+				query = query[2..].to_string();
 				tokens.push(Token::Or);
 			}
 			_ => {
@@ -68,9 +68,9 @@ fn parse_with_bracket(mut query: String) -> Result<Token, ParseError> {
 		}
 	}
 	match reduce(tokens)? {
-		Token::And => Result::Err(ParseError::InternalError),
-		Token::Or => Result::Err(ParseError::InternalError),
-		Token::Rule(rule) => Result::Ok(Token::Rule(rule)),
+		Token::And => Err(ParseError::InternalError),
+		Token::Or => Err(ParseError::InternalError),
+		Token::Rule(rule) => Ok(Token::Rule(rule)),
 	}
 }
 
@@ -84,10 +84,10 @@ fn find_right_bracket(query: &str) -> Result<usize, ParseError> {
 			deep -= 1;
 		};
 		if deep == 0 {
-			return Result::Ok(index);
+			return Ok(index);
 		}
 	}
-	Result::Err(ParseError::RightBracketNotFound(query.to_owned()))
+	Err(ParseError::RightBracketNotFound(query.to_owned()))
 }
 
 ///
@@ -111,7 +111,7 @@ fn reduce(mut source_tokens: Vec<Token>) -> Result<Token, ParseError> {
 		source_tokens = dest_tokens;
 		dest_tokens = vec![];
 	}
-	Result::Ok(source_tokens.remove(0))
+	Ok(source_tokens.remove(0))
 }
 
 ///
@@ -124,48 +124,48 @@ fn reduce_token(source_tokens: &mut Vec<Token>, dest_tokens: &mut Vec<Token>, to
 	let left = get_rule(dest_tokens.remove(dest_tokens.len() - 1))?;
 	let right = get_rule(source_tokens.remove(0))?;
 	let rules = vec![left, right].into_iter().flat_map(|r| token.expand(r)).collect();
-	Result::Ok(Token::Rule(token.create_rule(rules)))
+	Ok(Token::Rule(token.create_rule(rules)))
 }
 
 fn get_rule(token: Token) -> Result<Rule, ParseError> {
 	match token {
-		Token::And => Result::Err(ParseError::InternalError),
-		Token::Or => Result::Err(ParseError::InternalError),
-		Token::Rule(rule) => Result::Ok(rule),
+		Token::And => Err(ParseError::InternalError),
+		Token::Or => Err(ParseError::InternalError),
+		Token::Rule(rule) => Ok(rule),
 	}
 }
 
 fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 	if let Some(stripped) = query.strip_prefix("c2s") {
-		Result::Ok((Token::Rule(Rule::Direction(RuleCommandDirection::C2S)), stripped.to_ascii_lowercase()))
+		Ok((Token::Rule(Rule::Direction(RuleCommandDirection::C2S)), stripped.to_ascii_lowercase()))
 	} else if let Some(stripped) = query.strip_prefix("s2c") {
-		Result::Ok((Token::Rule(Rule::Direction(RuleCommandDirection::S2C)), stripped.to_ascii_lowercase()))
+		Ok((Token::Rule(Rule::Direction(RuleCommandDirection::S2C)), stripped.to_ascii_lowercase()))
 	} else {
 		let (field, op, query) = get_field(query)?;
 		let (value, query) = get_value(query);
 		let result = match field.as_str() {
 			"user" => {
 				let id = to_id(value)?;
-				Result::Ok(Rule::User(id as u16))
+				Ok(Rule::User(id as u16))
 			}
 			"template" => {
 				let id = to_id(value)?;
-				Result::Ok(Rule::Template(id as u16))
+				Ok(Rule::Template(id as u16))
 			}
 			"field" => {
 				let id = to_id(value)?;
-				Result::Ok(Rule::Field(id as u16))
+				Ok(Rule::Field(id as u16))
 			}
 			"id" => {
 				let id = to_id(value)?;
-				Result::Ok(Rule::ObjectId(id as u32))
+				Ok(Rule::ObjectId(id as u32))
 			}
 			"owner" => {
 				if value == "room" {
-					Result::Ok(Rule::RoomOwner)
+					Ok(Rule::RoomOwner)
 				} else {
 					let id = to_id(value)?;
-					Result::Ok(Rule::UserOwner(id as u16))
+					Ok(Rule::UserOwner(id as u16))
 				}
 			}
 			_ => return Err(ParseError::UnknownField(field)),
@@ -193,7 +193,7 @@ fn get_field(query: String) -> Result<(String, Op, String), ParseError> {
 	let eq_index = query.find('=');
 	let not_index = query.find("!=");
 	if eq_index.is_none() && not_index.is_none() {
-		Result::Err(ParseError::UnknownOperation(query))
+		Err(ParseError::UnknownOperation(query))
 	} else {
 		let eq_index = eq_index.unwrap_or(usize::MAX);
 		let not_index = not_index.unwrap_or(usize::MAX);
@@ -204,7 +204,7 @@ fn get_field(query: String) -> Result<(String, Op, String), ParseError> {
 		};
 		let field = &query[0..end_item_index];
 		let query = query[end_item_index + size..].to_string();
-		Result::Ok((field.to_string(), op, query))
+		Ok((field.to_string(), op, query))
 	}
 }
 

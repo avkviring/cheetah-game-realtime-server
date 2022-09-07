@@ -31,7 +31,7 @@ impl Default for InCommandsCollector {
 		Self {
 			last_frame_id_by_group: [0; 256],
 			sequences: [ChannelSequence(0); 256],
-			sequence_commands: [(); 256].map(|_| Option::None),
+			sequence_commands: [(); 256].map(|_| None),
 			ready_commands: Default::default(),
 			is_get_ready_commands: false,
 		}
@@ -76,7 +76,7 @@ impl InCommandsCollector {
 
 		let mut current_ready_sequence = *allow_sequence;
 		if let Some(commands) = &mut self.sequence_commands[channel_group.0 as usize] {
-			while let Option::Some(command_with_sequence) = commands.peek() {
+			while let Some(command_with_sequence) = commands.peek() {
 				let command_sequence = command_with_sequence.sequence;
 				if command_sequence == current_ready_sequence {
 					self.ready_commands.push(commands.pop().unwrap().command);
@@ -90,7 +90,7 @@ impl InCommandsCollector {
 
 		if !is_ready_command {
 			if self.sequence_commands[channel_group.0 as usize].is_none() {
-				self.sequence_commands[channel_group.0 as usize] = Option::Some(BinaryHeap::default());
+				self.sequence_commands[channel_group.0 as usize] = Some(BinaryHeap::default());
 			}
 			let option_buffer = &mut self.sequence_commands[channel_group.0 as usize];
 			let buffer = option_buffer.as_mut().unwrap();
@@ -128,7 +128,7 @@ impl PartialEq for SequenceApplicationCommand {
 
 impl PartialOrd for SequenceApplicationCommand {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-		Option::Some(self.cmp(other))
+		Some(self.cmp(other))
 	}
 }
 
@@ -257,7 +257,7 @@ mod tests {
 	}
 
 	fn assert(frame_id: FrameId, in_commands: &mut InCommandsCollector, commands: &[CommandWithChannel], expect: &[CommandWithChannel]) {
-		let frame = InFrame::new(frame_id, Default::default(), commands.iter().cloned().collect());
+		let frame = InFrame::new(frame_id, Default::default(), commands.to_vec());
 		in_commands.collect(frame);
 		assert_eq!(in_commands.get_ready_commands(), expect);
 	}

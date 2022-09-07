@@ -470,7 +470,7 @@ pub mod tests {
 				.write_next(
 					param.object_id.clone(),
 					param.field_id,
-					param.channel_group.clone(),
+					param.channel_group,
 					param.channel_type_id,
 					param.command_type_id,
 					param.creator,

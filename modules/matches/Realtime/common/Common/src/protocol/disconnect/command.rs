@@ -51,7 +51,7 @@ impl DisconnectByCommand {
 	}
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct DisconnectHeader {}
 
 #[cfg(test)]

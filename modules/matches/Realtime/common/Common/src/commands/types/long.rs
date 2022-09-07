@@ -10,7 +10,7 @@ use crate::room::object::GameObjectId;
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct IncrementLongC2SCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
@@ -21,7 +21,7 @@ pub struct IncrementLongC2SCommand {
 /// Установка значения new если текущее равно current
 /// reset - значение после выхода пользователя
 ///  
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompareAndSetLongCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,

@@ -4,7 +4,7 @@ use cheetah_matches_realtime::room::object::Field;
 use cheetah_matches_realtime::room::template::config::{
 	GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate,
 };
-use cheetah_matches_realtime::server::manager::ServerManager;
+use cheetah_matches_realtime::server::manager::RoomsServerManager;
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
 use cheetah_matches_realtime_common::network::bind_to_free_socket;
@@ -47,11 +47,11 @@ impl IntegrationTestServerBuilder {
 		}
 	}
 
-	pub fn build(self) -> (SocketAddr, ServerManager, RoomId) {
+	pub fn build(self) -> (SocketAddr, RoomsServerManager, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.1;
-		let mut server = ServerManager::new(socket.0);
-		let room_id = server.register_room(self.template).ok().unwrap();
+		let mut server = RoomsServerManager::new(socket.0);
+		let room_id = server.create_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}
 }
