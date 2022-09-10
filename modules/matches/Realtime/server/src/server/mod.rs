@@ -79,7 +79,7 @@ impl RoomsServer {
 						}
 					}
 				}
-				ManagementTask::RegisterUser(room_id, user_template, sender) => {
+				ManagementTask::CreateMember(room_id, user_template, sender) => {
 					let result = self.rooms.register_user(room_id, user_template.clone());
 					if let Ok(user_id) = &result {
 						self.network_layer.register_user(now, room_id, *user_id, user_template);

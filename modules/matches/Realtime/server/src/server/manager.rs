@@ -6,6 +6,8 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+use thiserror::Error;
+
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
@@ -29,7 +31,7 @@ pub struct RoomsServerManager {
 
 pub enum ManagementTask {
 	CreateRoom(RoomTemplate, Sender<RoomId>),
-	RegisterUser(RoomId, MemberTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
+	CreateMember(RoomId, MemberTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
 	///
 	/// Смещение текущего времени для тестирования
 	///
@@ -45,20 +47,24 @@ pub enum CommandTracerSessionTaskError {
 	RecvTimeoutError,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum RegisterRoomRequestError {
+	#[error("ChannelError {0}")]
 	ChannelError(RecvTimeoutError),
 }
 
-#[derive(Debug)]
-pub enum RegisterUserRequestError {
+#[derive(Debug, Error)]
+pub enum CreateMemberRequestError {
+	#[error("ChannelError {0}")]
 	ChannelError(RecvTimeoutError),
+	#[error("Error {0}")]
 	Error(RegisterUserError),
 }
 
 impl Drop for RoomsServerManager {
 	fn drop(&mut self) {
 		self.halt_signal.store(true, Ordering::Relaxed);
+		println!("Drop RoomsServerManager");
 	}
 }
 
@@ -70,6 +76,7 @@ impl RoomsServerManager {
 		let handler = thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr().unwrap()))
 			.spawn(move || {
+				println!("RUN SERVER {:?}", socket);
 				RoomsServer::new(socket, receiver, halt_signal).run();
 			})
 			.unwrap();
@@ -130,25 +137,25 @@ impl RoomsServerManager {
 		}
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, RegisterUserRequestError> {
+	pub fn create_member(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, CreateMemberRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
-			.send(ManagementTask::RegisterUser(room_id, template.clone(), sender))
+			.send(ManagementTask::CreateMember(room_id, template.clone(), sender))
 			.unwrap_or_else(|_| panic!("{}", expect_send_msg("RegisterUser")));
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {
-					tracing::info!("[server] create user({:?}) in room ({:?})", user_id, room_id);
+					tracing::info!("[server] create member({:?}) in room ({:?})", user_id, room_id);
 					Ok(user_id)
 				}
 				Err(e) => {
 					tracing::error!(
-						"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
+						"[server] fail create member ({:?}) in room ({:?}) with error {:?}",
 						template.private_key,
 						room_id,
 						e
 					);
-					Err(RegisterUserRequestError::Error(e))
+					Err(CreateMemberRequestError::Error(e))
 				}
 			},
 			Err(e) => {
@@ -158,7 +165,7 @@ impl RoomsServerManager {
 					room_id,
 					e
 				);
-				Err(RegisterUserRequestError::ChannelError(e))
+				Err(CreateMemberRequestError::ChannelError(e))
 			}
 		}
 	}
@@ -182,6 +189,10 @@ impl RoomsServerManager {
 			},
 			Err(e) => Err(format!("{:?}", e)),
 		}
+	}
+
+	pub fn shutdown(&mut self) {
+		self.halt_signal.store(true, Ordering::Relaxed);
 	}
 }
 

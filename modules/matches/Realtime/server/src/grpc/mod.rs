@@ -31,7 +31,7 @@ impl RealtimeInternalService {
 	async fn register_user(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
 		let mut server = self.server_manager.lock().await;
 		server
-			.register_user(room_id, template.clone())
+			.create_member(room_id, template.clone())
 			.trace_err(format!("Register member to room {}", room_id))
 			.map_err(Status::internal)
 			.map(|user_id| {
@@ -46,7 +46,7 @@ impl RealtimeInternalService {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
-			server.register_user(room_id, MemberTemplate::new_super_member_with_key(key)).unwrap();
+			server.create_member(room_id, MemberTemplate::new_super_member_with_key(key)).unwrap();
 		}
 	}
 }
