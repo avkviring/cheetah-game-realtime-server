@@ -64,7 +64,6 @@ pub enum CreateMemberRequestError {
 impl Drop for RoomsServerManager {
 	fn drop(&mut self) {
 		self.halt_signal.store(true, Ordering::Relaxed);
-		println!("Drop RoomsServerManager");
 	}
 }
 
@@ -76,7 +75,6 @@ impl RoomsServerManager {
 		let handler = thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr().unwrap()))
 			.spawn(move || {
-				println!("RUN SERVER {:?}", socket);
 				RoomsServer::new(socket, receiver, halt_signal).run();
 			})
 			.unwrap();

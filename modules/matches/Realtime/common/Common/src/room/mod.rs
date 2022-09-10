@@ -10,7 +10,7 @@ pub type RoomMemberId = u16;
 pub type RoomId = u64;
 
 #[derive(Debug, Clone)]
-pub struct MemberPrivateKey(pub(crate) [u8; 32]);
+pub struct MemberPrivateKey(pub [u8; 32]);
 
 impl MemberPrivateKey {
 	pub fn new_random() -> MemberPrivateKey {

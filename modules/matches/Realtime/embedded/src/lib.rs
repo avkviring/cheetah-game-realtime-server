@@ -1,3 +1,5 @@
+extern crate core;
+
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -5,11 +7,10 @@ use std::time::Duration;
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 
-use cheetah_matches_realtime::room::template::config::{GameObjectTemplate, MemberTemplate, RoomTemplate};
 use cheetah_matches_realtime::server::manager::RoomsServerManager;
 use cheetah_matches_realtime::ServerBuilder;
-use cheetah_matches_realtime_common::room::access::AccessGroups;
-use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
+
+mod ffi;
 
 ///
 /// Обертка для запуска сервера из so/dll.
@@ -64,27 +65,6 @@ impl EmbeddedServerWrapper {
 		Ok(())
 	}
 
-	pub fn create_room(&self, room_template: RoomTemplate) -> anyhow::Result<RoomId> {
-		let manager = self.manager.clone();
-		Ok(self.runtime.block_on(async move { manager.lock().await.create_room(room_template) })?)
-	}
-
-	pub fn create_member(
-		&self,
-		room_id: RoomId,
-		groups: AccessGroups,
-		objects: Vec<GameObjectTemplate>,
-	) -> anyhow::Result<(RoomMemberId, MemberPrivateKey)> {
-		let manager = self.manager.clone();
-		let member_template = MemberTemplate::new_member(groups, objects);
-		let key = member_template.private_key.clone();
-		Ok((
-			self.runtime
-				.block_on(async move { manager.lock().await.create_member(room_id, member_template) })?,
-			key,
-		))
-	}
-
 	pub fn shutdown(self) {
 		let manager = self.manager.clone();
 		self.runtime.block_on(async move { manager.lock().await.shutdown() });
@@ -94,12 +74,8 @@ impl EmbeddedServerWrapper {
 
 #[cfg(test)]
 mod test {
-	use std::time::Duration;
-
-	use cheetah_matches_realtime::room::template::config::RoomTemplate;
-	use cheetah_matches_realtime_common::room::access::AccessGroups;
-
 	use crate::EmbeddedServerWrapper;
+	use std::time::Duration;
 
 	#[test]
 	fn should_open_tcp_ports_after_start() {
@@ -117,22 +93,6 @@ mod test {
 		assert_ne!(server_a.game_socket_addr, server_b.game_socket_addr);
 		assert_ne!(server_a.admin_grpc_socket_addr, server_b.admin_grpc_socket_addr);
 		assert_ne!(server_a.internal_grpc_socket_addr, server_b.internal_grpc_socket_addr);
-	}
-
-	#[test]
-	fn should_create_room() {
-		let server = EmbeddedServerWrapper::run_new_server().unwrap();
-		let room_id = server.create_room(RoomTemplate::default()).unwrap();
-		let dump = server.runtime.block_on(async { server.manager.lock().await.dump(room_id) });
-		assert!(dump.is_ok())
-	}
-
-	#[test]
-	fn should_create_member() {
-		let server = EmbeddedServerWrapper::run_new_server().unwrap();
-		let room_id = server.create_room(RoomTemplate::default()).unwrap();
-		let (member_id, _member_private_key) = server.create_member(room_id, AccessGroups(8), Vec::new()).unwrap();
-		assert!(member_id > 0);
 	}
 
 	#[test]
