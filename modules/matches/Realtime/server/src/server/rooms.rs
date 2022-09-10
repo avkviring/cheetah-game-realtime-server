@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use fnv::FnvBuildHasher;
+use thiserror::Error;
 
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_realtime_common::protocol::frame::applications::CommandWithChannel;
@@ -21,8 +22,9 @@ pub struct Rooms {
 	measures: Rc<RefCell<Measurers>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum RegisterUserError {
+	#[error("RoomNotFound")]
 	RoomNotFound,
 }
 
@@ -48,9 +50,9 @@ impl Rooms {
 
 	pub fn register_user(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RegisterUserError> {
 		match self.room_by_id.get_mut(&room_id) {
-			None => Result::Err(RegisterUserError::RoomNotFound),
+			None => Err(RegisterUserError::RoomNotFound),
 			Some(room) => {
-				let result = Result::Ok(room.register_member(member_template));
+				let result = Ok(room.register_member(member_template));
 				if result.is_ok() {
 					self.measures.borrow_mut().on_change_member_count(&room.template_name, 1);
 				}

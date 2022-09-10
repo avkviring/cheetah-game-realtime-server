@@ -29,7 +29,7 @@ pub enum RegistryError {
 /// Взаимодействие с AGONES SDK
 /// Если Agones  не запущен - то relay будет остановлен
 ///
-pub async fn run_agones_cycle(server_manager: Arc<Mutex<RoomsServerManager>>) {
+pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 	tracing::info!("Agones: Starting");
 	match rymder::Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
 		Ok((mut sdk, gameserver)) => {
