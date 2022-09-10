@@ -13,7 +13,7 @@ pub type HeaderVec<T> = heapless::Vec<T, 10>;
 /// - не шифруется
 /// - защищены aead
 ///
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
 pub struct Headers {
 	pub(crate) headers: HeaderVec<Header>,
 }
