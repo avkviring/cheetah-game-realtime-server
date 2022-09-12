@@ -1,0 +1,16 @@
+{
+  "name": "games.cheetah.matches.realtime.embedded-server",
+  "rootNamespace": "Cheetah.Matches.Realtime.EmbeddedServer",
+  "references": [
+    "games.cheetah.matches.realtime"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
