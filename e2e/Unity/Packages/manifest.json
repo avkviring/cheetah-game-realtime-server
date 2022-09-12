@@ -14,6 +14,7 @@
     "games.cheetah.matches.matchmaking": "file:../../../modules/matches/StubMatchmaking/client/Unity/games.cheetah.matches.matchmaking",
     "games.cheetah.matches.realtime": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime",
     "games.cheetah.matches.realtime.doa": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.doa",
+    "games.cheetah.matches.realtime.embedded-server": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server",
     "games.cheetah.matches.realtime.shared": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.shared",
     "games.cheetah.matches.registry": "file:../../../modules/matches/Registry/client/Unity/games.cheetah.matches.registry",
     "games.cheetah.platform": "file:../../../modules/Platform/client/Unity/games.cheetah.platform",
@@ -55,6 +56,7 @@
     "com.unity.modules.xr": "1.0.0"
   },
   "testables": [
-    "games.cheetah.matches.realtime"
+    "games.cheetah.matches.realtime",
+    "games.cheetah.matches.realtime.embedded-server"
   ]
 }
