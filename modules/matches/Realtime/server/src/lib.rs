@@ -51,9 +51,9 @@ pub struct Server {
 impl Default for ServerBuilder {
 	fn default() -> Self {
 		Self {
-			game_bind_addr: SocketAddr::from_str("0.0.0.0:0").unwrap(),
-			admin_grpc_bind_addr: SocketAddr::from_str("0.0.0.0:0").unwrap(),
-			internal_grpc_bind_addr: SocketAddr::from_str("0.0.0.0:0").unwrap(),
+			game_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
+			admin_grpc_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
+			internal_grpc_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			is_agones_enabled: false,
 		}
 	}
