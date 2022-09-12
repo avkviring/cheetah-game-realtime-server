@@ -9,7 +9,7 @@ members = [
     "matches/StubMatchmaking/server",
     "matches/StubRegistry/server",
     "matches/Realtime/server",
-    "matches/Realtime/embedded",
+    "matches/Realtime/Embedded",
     "matches/Realtime/common/Common",
     "matches/Realtime/common/Macro",
     "matches/Realtime/client/Rust",
