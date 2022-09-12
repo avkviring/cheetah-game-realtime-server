@@ -16,7 +16,7 @@ pub struct EmbeddedServerDescription {
 pub enum ResultCode {
 	OK = 0,
 	InternalError = 1,
-	IpVersionNot4 = 2,
+	BindingAddressNotIpV4 = 2,
 }
 
 #[no_mangle]
@@ -30,7 +30,7 @@ pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription) -> Resu
 			result.id = server_id;
 			result.game_host = match server.game_socket_addr.ip() {
 				IpAddr::V4(v4) => v4.octets(),
-				IpAddr::V6(_) => return ResultCode::IpVersionNot4,
+				IpAddr::V6(_) => return ResultCode::BindingAddressNotIpV4,
 			};
 			result.game_port = server.game_socket_addr.port();
 			registry.servers.insert(server_id, server);
