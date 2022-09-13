@@ -8,28 +8,10 @@ on:
       - synchronize
       - opened
 jobs:
-  build-images:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v3
-        with:
-          path: |
-            $CARGO_HOME/registry/index/
-            $CARGO_HOME/registry/cache/
-            $CARGO_HOME/git/db/
-            modules/target/
-          key: rust-build-images-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            rust-build-images-
-      - name: Build servers
-        run: cd modules/ && RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
-      - name: Log in to registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
-      - name: Build images
-        run: version=999.999.998 scripts/package-server-images.sh
+  build-docker-images:
+    uses: ./.github/workflows/templates.build.docker-images.yml
+    with:
+      version: 999.999.998
   build-realtime-client-so:
     runs-on: ubuntu-latest
     container:
@@ -49,7 +31,7 @@ jobs:
   e2e-integration-unity-docker-test:
     runs-on: ubuntu-latest
     needs:
-      - build-images
+      - build-docker-images
       - build-realtime-client-so
     timeout-minutes: 20
     steps:
