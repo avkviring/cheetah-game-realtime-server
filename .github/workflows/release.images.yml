@@ -2,29 +2,8 @@ name: release.images
 on:
   release:
     types: [ published ]
-env:
-  version: ${{ github.event.release.tag_name }}
 jobs:
-  release-images:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v3
-        with:
-          path: |
-            $CARGO_HOME/registry/index/
-            $CARGO_HOME/registry/cache/
-            $CARGO_HOME/git/db/
-            modules/target/
-          key: rust-release-v2-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            rust-release-v2-
-      - name: Build servers
-        run: cd modules/ && RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
-      - name: Log in to registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
-      - name: Build image
-        run: scripts/package-server-images.sh
-
+  build-docker-images:
+    uses: ./.github/workflows/templates.build.docker-images.yml
+    with:
+      version: ${{ github.event.release.tag_name }}
