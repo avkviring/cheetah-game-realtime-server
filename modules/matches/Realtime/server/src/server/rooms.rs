@@ -19,7 +19,7 @@ pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
 	changed_rooms: heapless::FnvIndexSet<RoomId, 10_000>,
-	measures: Rc<RefCell<Measurers>>,
+	measurers: Rc<RefCell<Measurers>>,
 }
 
 #[derive(Debug, Error)]
@@ -29,21 +29,21 @@ pub enum RegisterUserError {
 }
 
 impl Rooms {
-	pub fn new(measures: Rc<RefCell<Measurers>>) -> Self {
+	pub fn new(measurers: Rc<RefCell<Measurers>>) -> Self {
 		Self {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
 			changed_rooms: Default::default(),
-			measures,
+			measurers,
 		}
 	}
 
 	pub fn create_room(&mut self, template: RoomTemplate) -> RoomId {
 		self.room_id_generator += 1;
-		self.measures.borrow_mut().on_create_room(&template.name);
+		self.measurers.borrow_mut().on_create_room(&template.name);
 
 		let room_id = self.room_id_generator;
-		let room = Room::new(room_id, template, self.measures.clone());
+		let room = Room::new(room_id, template, self.measurers.clone());
 		self.room_by_id.insert(room_id, room);
 		room_id
 	}
@@ -54,7 +54,7 @@ impl Rooms {
 			Some(room) => {
 				let result = Ok(room.register_member(member_template));
 				if result.is_ok() {
-					self.measures.borrow_mut().on_change_member_count(&room.template_name, 1);
+					self.measurers.borrow_mut().on_change_member_count(&room.template_name, 1);
 				}
 				result
 			}
@@ -73,7 +73,7 @@ impl Rooms {
 					let template = MeasureStringId::from(room.template_name.as_str());
 					room.collect_out_commands(|user_id, commands| {
 						collector(&room_id, user_id, commands);
-						self.measures.borrow_mut().on_output_commands(&template, commands);
+						self.measurers.borrow_mut().on_output_commands(&template, commands);
 					});
 				}
 			}
@@ -90,12 +90,12 @@ impl Rooms {
 				room.execute_commands(user_and_room_id.member_id, commands);
 				self.changed_rooms.insert(room.id).unwrap();
 
-				let mut measures = self.measures.borrow_mut();
+				let mut measurers = self.measurers.borrow_mut();
 				let delta_object_count = room.objects.len() - object_count;
 				if delta_object_count > 0 {
-					measures.on_change_object_count(&room.template_name, delta_object_count as i64);
+					measurers.on_change_object_count(&room.template_name, delta_object_count as i64);
 				}
-				measures.on_input_commands(&room.template_name, commands);
+				measurers.on_input_commands(&room.template_name, commands);
 			}
 		}
 	}
@@ -108,7 +108,7 @@ impl Rooms {
 			))),
 			Some(room) => {
 				room.disconnect_user(member_and_room_id.member_id)?;
-				self.measures.borrow_mut().on_change_member_count(&room.template_name, -1);
+				self.measurers.borrow_mut().on_change_member_count(&room.template_name, -1);
 				self.changed_rooms.insert(member_and_room_id.room_id).unwrap();
 				Ok(())
 			}

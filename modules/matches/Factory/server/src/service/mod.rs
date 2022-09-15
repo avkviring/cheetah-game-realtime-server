@@ -49,7 +49,7 @@ impl FactoryService {
 			.registry
 			.find_free_relay()
 			.await
-			.trace_err("Find free relay server")
+			.trace_err("Failed to find a free relay server")
 			.map_err(Status::internal)?;
 
 		let relay_grpc_addr = addrs.grpc_internal.as_ref().unwrap();
