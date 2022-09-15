@@ -134,7 +134,7 @@ impl YamlConfigurations {
 
 				let mut count = 0;
 				let name_from_path = name.to_str().unwrap().to_string().replace('\\', "/");
-				let prepared_content = YamlConfigurations::prepare_content(content);
+				let prepared_content = Self::prepare_content(content);
 				for document in serde_yaml::Deserializer::from_str(prepared_content.as_str()) {
 					count += 1;
 					let value = T::deserialize(document).map_err(|e| Error::Yaml {
@@ -359,7 +359,7 @@ pub mod test {
 									value: rmpv::Value::Integer(Integer::from(200))
 								}]
 							}
-						]
+						],
 					}
 				),
 				("kungur".to_string(), Room { objects: vec![] })

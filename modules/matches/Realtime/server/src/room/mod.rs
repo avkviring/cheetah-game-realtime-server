@@ -94,6 +94,7 @@ impl Room {
 			let game_object: GameObject = object.to_root_game_object();
 			room.insert_object(game_object);
 		});
+
 		room
 	}
 

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-use crate::proto::matches::realtime::internal as relay;
+use crate::proto::matches::realtime::internal::{Permissions, RoomTemplate};
 use crate::service::configuration::converter::error::Error;
 use crate::service::configuration::converter::object::create_relay_object;
 use crate::service::configuration::converter::template::create_template_permission;
@@ -18,7 +18,7 @@ mod template;
 
 const DEFAULT_OBJECT_ID_START: u32 = 1;
 
-impl TryFrom<&YamlConfigurations> for HashMap<String, relay::RoomTemplate> {
+impl TryFrom<&YamlConfigurations> for HashMap<String, RoomTemplate> {
 	type Error = Error;
 
 	fn try_from(value: &YamlConfigurations) -> Result<Self, Self::Error> {
@@ -52,10 +52,10 @@ impl TryFrom<&YamlConfigurations> for HashMap<String, relay::RoomTemplate> {
 					.map(|template| create_template_permission(template_name, template, groups, fields))
 					.collect::<Result<_, Error>>()?;
 
-				let relay_room = relay::RoomTemplate {
+				let relay_room = RoomTemplate {
 					template_name: template_name.clone(),
 					objects,
-					permissions: Some(relay::Permissions { objects: permissions }),
+					permissions: Some(Permissions { objects: permissions }),
 				};
 
 				Ok((template_name.clone(), relay_room))

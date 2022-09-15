@@ -4,33 +4,74 @@ use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tokio::sync::RwLock;
 use tonic::transport::Uri;
 use tonic::{Code, Request, Response, Status};
-use uuid::Uuid;
 
 use cheetah_libraries_microservice::trace::Trace;
 use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
 use matchmaking::external::{TicketRequest, TicketResponse};
-use realtime::internal::CreateMemberRequest;
 
-use crate::proto::matches::factory;
 use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::matchmaking;
-use crate::proto::matches::realtime;
+use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
+use crate::proto::matches::realtime::internal::{CreateMemberRequest, CreateMemberResponse};
+use crate::proto::matches::{factory, realtime};
 
 pub struct StubMatchmakingService {
 	pub jwt_public_key: String,
 	pub factory_service_uri: Uri,
 	pub matches: RwLock<HashMap<String, MatchInfo>>,
+	rules: Rules,
+}
+
+struct Rules {
+	max_user_count: u32,
+}
+
+impl Default for Rules {
+	fn default() -> Self {
+		Self { max_user_count: 4 }
+	}
+}
+
+#[derive(Clone)]
+struct ServerInfo {
+	grpc_host: String,
+	grpc_port: u16,
+	udp_host: String,
+	udp_port: u16,
+}
+
+#[derive(Clone)]
+struct RoomInfo {
+	id: u64,
+	user_count: u32,
 }
 
 #[derive(Clone)]
 pub struct MatchInfo {
-	pub realtime_server_grpc_host: String,
-	pub realtime_server_grpc_port: u16,
-	pub realtime_server_host: String,
-	pub realtime_server_port: u16,
-	pub room_id: u64,
+	server: ServerInfo,
+	room: RoomInfo,
+}
+
+impl From<CreateMatchResponse> for MatchInfo {
+	fn from(response: CreateMatchResponse) -> Self {
+		let addrs = response.addrs.unwrap();
+		let grpc_addr = addrs.grpc_internal.unwrap();
+		let game_addr = addrs.game.unwrap();
+		MatchInfo {
+			server: ServerInfo {
+				grpc_host: grpc_addr.host,
+				grpc_port: grpc_addr.port as u16,
+				udp_host: game_addr.host,
+				udp_port: game_addr.port as u16,
+			},
+			room: RoomInfo {
+				id: response.id,
+				user_count: todo!("Do something about it"),
+			},
+		}
+	}
 }
 
 impl StubMatchmakingService {
@@ -39,20 +80,17 @@ impl StubMatchmakingService {
 			jwt_public_key,
 			factory_service_uri: factory_service,
 			matches: RwLock::new(HashMap::new()),
+			rules: Default::default(),
 		}
 	}
-	#[async_recursion::async_recursion]
-	async fn matchmaking(&self, ticket: TicketRequest, user_id: Uuid) -> Result<TicketResponse, String> {
+
+	async fn matchmake(&self, ticket: TicketRequest) -> Result<TicketResponse, String> {
 		let template = ticket.match_template.clone();
-		let match_info = self.find_or_create_match(&template).await?;
-		match StubMatchmakingService::attach_user(&ticket, &match_info).await {
-			Ok(member_attach_response) => Ok(TicketResponse {
-				private_key: member_attach_response.private_key,
-				member_id: member_attach_response.user_id,
-				room_id: match_info.room_id,
-				realtime_server_host: match_info.realtime_server_host,
-				realtime_server_port: match_info.realtime_server_port as u32,
-			}),
+		match self.try_matchmake(&ticket, &template).await {
+			Ok(ticket) => {
+				tracing::info!("Ticket created {:?}", ticket);
+				Ok(ticket)
+			}
 			Err(e) => {
 				tracing::error!("Cannot attach_user {}", e);
 				// если  такой комнаты нет - то удаляем ее из существующих
@@ -60,22 +98,36 @@ impl StubMatchmakingService {
 				matches.remove(&template);
 				drop(matches);
 				// и создаем снова
-				self.matchmaking(ticket, user_id).await
+				self.try_matchmake(&ticket, &template).await
 			}
 		}
 	}
 
-	async fn attach_user(ticket: &TicketRequest, match_info: &MatchInfo) -> Result<realtime::internal::CreateMemberResponse, String> {
-		let mut relay = realtime::internal::realtime_client::RealtimeClient::connect(cheetah_libraries_microservice::make_internal_srv_uri(
-			match_info.realtime_server_grpc_host.as_str(),
-			match_info.realtime_server_grpc_port,
+	async fn try_matchmake(&self, ticket: &TicketRequest, template: &str) -> Result<TicketResponse, String> {
+		let match_info = self.find_or_create_match(&template).await?;
+		match self.attach_user(ticket, &match_info).await {
+			Ok(member_attach_response) => Ok(TicketResponse {
+				private_key: member_attach_response.private_key,
+				member_id: member_attach_response.user_id,
+				room_id: match_info.room.id,
+				realtime_server_host: match_info.server.udp_host,
+				realtime_server_port: match_info.server.udp_port as u32,
+			}),
+			Err(e) => Err(e),
+		}
+	}
+
+	async fn attach_user(&self, ticket: &TicketRequest, match_info: &MatchInfo) -> Result<CreateMemberResponse, String> {
+		let mut relay = RealtimeClient::connect(cheetah_libraries_microservice::make_internal_srv_uri(
+			&match_info.server.grpc_host,
+			match_info.server.grpc_port,
 		))
 		.await
-		.map_err(|e| format!("Connect to relay error {:?}", e))?;
+		.map_err(|e| format!("Failed to connect to realtime error {:?}", e))?;
 
 		match relay
 			.create_member(Request::new(CreateMemberRequest {
-				room_id: match_info.room_id,
+				room_id: match_info.room.id,
 				user: Some(realtime::internal::UserTemplate {
 					groups: ticket.user_groups,
 					objects: Default::default(),
@@ -85,8 +137,8 @@ impl StubMatchmakingService {
 		{
 			Ok(user_attach_response) => Ok(user_attach_response.into_inner()),
 			Err(status) => match status.code() {
-				Code::NotFound => Err("Relay server not found".to_string()),
-				e => Err(format!("Relay server unknown status {:?}", e)),
+				Code::NotFound => Err("Realtime server not found".to_string()),
+				e => Err(format!("Realtime server has unknown status: {:?}", e)),
 			},
 		}
 	}
@@ -102,10 +154,12 @@ impl StubMatchmakingService {
 						template: template.to_string(),
 					}))
 					.await
-					.map_err(|e| format!("Create match error {:?}", e))?
+					.map_err(|e| format!("Failed to create a match: {:?}", e))?
 					.into_inner();
-				let match_info = create_match_info(create_match_response);
+
+				let match_info: MatchInfo = create_match_response.into();
 				matches.insert(template.to_string(), match_info.clone());
+
 				Ok(match_info)
 			}
 			Some(match_info) => Ok(match_info.clone()),
@@ -113,29 +167,17 @@ impl StubMatchmakingService {
 	}
 }
 
-fn create_match_info(create_match_response: CreateMatchResponse) -> MatchInfo {
-	let addrs = create_match_response.addrs.unwrap();
-	let grpc_addr = addrs.grpc_internal.unwrap();
-	let game_addr = addrs.game.unwrap();
-	MatchInfo {
-		realtime_server_grpc_host: grpc_addr.host,
-		realtime_server_grpc_port: grpc_addr.port as u16,
-		realtime_server_host: game_addr.host,
-		realtime_server_port: game_addr.port as u16,
-		room_id: create_match_response.id,
-	}
-}
-
 #[tonic::async_trait]
 impl Matchmaking for StubMatchmakingService {
 	async fn matchmaking(&self, request: Request<TicketRequest>) -> Result<Response<TicketResponse>, Status> {
-		let user = JWTUserTokenParser::new(self.jwt_public_key.clone())
+		// TODO: заменить на новую схему авторизации
+		let _user = JWTUserTokenParser::new(self.jwt_public_key.clone())
 			.get_user_uuid_from_grpc(request.metadata())
 			.trace_err(format!("Get user uuid {:?}", request.metadata()))
 			.map_err(|_| Status::unauthenticated(""))?;
 
 		let ticket_request = request.into_inner();
-		self.matchmaking(ticket_request, user)
+		self.matchmake(ticket_request)
 			.await
 			.trace_err("Matchmaking error")
 			.map_err(|_| Status::internal(""))
@@ -169,13 +211,10 @@ pub mod tests {
 	async fn should_create_match() {
 		let matchmaking = setup(100).await;
 		let response = matchmaking
-			.matchmaking(
-				TicketRequest {
-					user_groups: 0,
-					match_template: Default::default(),
-				},
-				Default::default(),
-			)
+			.matchmake(TicketRequest {
+				user_groups: 0,
+				match_template: Default::default(),
+			})
 			.await
 			.unwrap();
 		assert_eq!(response.room_id, StubFactory::ROOM_ID);
@@ -187,26 +226,20 @@ pub mod tests {
 	/// не должен привести к изменению id комнаты
 	///
 	#[tokio::test]
-	async fn should_dont_create_match_if_exist() {
+	async fn should_not_create_match_if_exists() {
 		let matchmaking = setup(100).await;
 		matchmaking
-			.matchmaking(
-				TicketRequest {
-					user_groups: Default::default(),
-					match_template: "some-template".to_owned(),
-				},
-				Default::default(),
-			)
+			.matchmake(TicketRequest {
+				user_groups: Default::default(),
+				match_template: "some-template".to_owned(),
+			})
 			.await
 			.unwrap();
 		let response = matchmaking
-			.matchmaking(
-				TicketRequest {
-					user_groups: Default::default(),
-					match_template: "some-template".to_owned(),
-				},
-				Default::default(),
-			)
+			.matchmake(TicketRequest {
+				user_groups: Default::default(),
+				match_template: "some-template".to_owned(),
+			})
 			.await
 			.unwrap();
 		assert_eq!(response.room_id, StubFactory::ROOM_ID);
@@ -218,23 +251,17 @@ pub mod tests {
 	async fn should_create_different_match_for_different_template() {
 		let matchmaking = setup(100).await;
 		let response_a = matchmaking
-			.matchmaking(
-				TicketRequest {
-					user_groups: Default::default(),
-					match_template: "some-template-a".to_owned(),
-				},
-				Default::default(),
-			)
+			.matchmake(TicketRequest {
+				user_groups: Default::default(),
+				match_template: "some-template-a".to_owned(),
+			})
 			.await
 			.unwrap();
 		let response_b = matchmaking
-			.matchmaking(
-				TicketRequest {
-					user_groups: Default::default(),
-					match_template: "some-template-b".to_owned(),
-				},
-				Default::default(),
-			)
+			.matchmake(TicketRequest {
+				user_groups: Default::default(),
+				match_template: "some-template-b".to_owned(),
+			})
 			.await
 			.unwrap();
 		assert_eq!(response_a.room_id, StubFactory::ROOM_ID);
@@ -248,23 +275,17 @@ pub mod tests {
 	async fn should_recreate_match_if_not_found() {
 		let matchmaking = setup(1).await;
 		let response_a = matchmaking
-			.matchmaking(
-				TicketRequest {
-					user_groups: Default::default(),
-					match_template: "some-template".to_owned(),
-				},
-				Default::default(),
-			)
+			.matchmake(TicketRequest {
+				user_groups: Default::default(),
+				match_template: "some-template".to_owned(),
+			})
 			.await
 			.unwrap();
 		let response_b = matchmaking
-			.matchmaking(
-				TicketRequest {
-					user_groups: Default::default(),
-					match_template: "some-template".to_owned(),
-				},
-				Default::default(),
-			)
+			.matchmake(TicketRequest {
+				user_groups: Default::default(),
+				match_template: "some-template".to_owned(),
+			})
 			.await
 			.unwrap();
 		assert_eq!(response_a.room_id, StubFactory::ROOM_ID);
@@ -307,6 +328,7 @@ pub mod tests {
 	impl StubFactory {
 		pub const ROOM_ID: u64 = 555;
 	}
+
 	#[tonic::async_trait]
 	impl Factory for StubFactory {
 		async fn create_match(&self, _request: Request<CreateMatchRequest>) -> Result<Response<CreateMatchResponse>, Status> {
@@ -333,9 +355,11 @@ pub mod tests {
 	struct StubRealtimeService {
 		pub fail_when_zero: RwLock<i8>,
 	}
+
 	impl StubRealtimeService {
 		pub const MEMBER_ID: u32 = 777;
 	}
+
 	#[tonic::async_trait]
 	impl realtime::internal::realtime_server::Realtime for StubRealtimeService {
 		async fn create_room(

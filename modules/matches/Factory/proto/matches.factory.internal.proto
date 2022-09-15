@@ -8,7 +8,6 @@ service Factory {
     Создание матча на свободном Relay сервере
    */
   rpc CreateMatch(CreateMatchRequest) returns(CreateMatchResponse);
-
 }
 
 message CreateMatchRequest {

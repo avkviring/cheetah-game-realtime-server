@@ -22,6 +22,7 @@ pub struct Room {
 	#[serde(default)]
 	pub objects: Vec<RoomObject>,
 }
+
 impl SelfName for Room {
 	fn get_self_name(&self) -> Option<String> {
 		None
