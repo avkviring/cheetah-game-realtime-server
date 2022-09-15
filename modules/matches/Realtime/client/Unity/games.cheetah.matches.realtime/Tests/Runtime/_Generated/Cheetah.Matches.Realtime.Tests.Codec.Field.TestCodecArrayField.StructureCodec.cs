@@ -21,11 +21,11 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 	
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestCodecArrayField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestCodecArrayField.Structure source, ref CheetahBuffer buffer)
 			{
 				ByteFormatter.Instance.Write(source.size,ref buffer);
 				for(var i=0;i<source.size;i++) {
-					codec0.Encode(ref source.values[i],ref buffer);
+					codec0.Encode(in source.values[i],ref buffer);
 				}
 	
 			}

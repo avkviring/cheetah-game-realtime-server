@@ -51,7 +51,7 @@ namespace Cheetah.Matches.Realtime.Editor.Generator
             decodeMethod.AppendLine($"public void Decode(ref CheetahBuffer buffer, ref {targetTypeFullName} dest)");
             decodeMethod.AppendLine("{");
 
-            encodeMethod.AppendLine($"public void  Encode(ref {targetTypeFullName} source, ref CheetahBuffer buffer)");
+            encodeMethod.AppendLine($"public void  Encode(in {targetTypeFullName} source, ref CheetahBuffer buffer)");
             encodeMethod.AppendLine("{");
 
             var processedFields = new HashSet<string>();

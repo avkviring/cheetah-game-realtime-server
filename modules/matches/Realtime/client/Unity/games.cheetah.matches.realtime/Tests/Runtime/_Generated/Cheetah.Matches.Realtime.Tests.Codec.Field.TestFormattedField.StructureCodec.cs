@@ -26,7 +26,7 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 				dest.name = StringFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestFormattedField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestFormattedField.Structure source, ref CheetahBuffer buffer)
 			{
 				BoolFormatter.Instance.Write(source.boolValue,ref buffer);
 				ByteFormatter.Instance.Write(source.byteValue,ref buffer);

@@ -24,7 +24,7 @@ namespace Cheetah.Matches.Realtime
         public void SetStructure<T>(ushort fieldId, ref T item)
         {
             buffer.Clear();
-            Client.CodecRegistry.GetCodec<T>().Encode(ref item, ref buffer);
+            Client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
             ResultChecker.Check(StructureFFI.Set(Client.Id, ref ObjectId, fieldId, ref buffer));
         }
 
@@ -34,8 +34,8 @@ namespace Cheetah.Matches.Realtime
             var newBuffer = new CheetahBuffer();
             var resetBuffer = new CheetahBuffer();
             var codec = Client.CodecRegistry.GetCodec<T>();
-            codec.Encode(ref current, ref buffer);
-            codec.Encode(ref newval, ref newBuffer);
+            codec.Encode(in current, ref buffer);
+            codec.Encode(in newval, ref newBuffer);
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 Client.Id,
@@ -54,9 +54,9 @@ namespace Cheetah.Matches.Realtime
             var newBuffer = new CheetahBuffer();
             var resetBuffer = new CheetahBuffer();
             var codec = Client.CodecRegistry.GetCodec<T>();
-            codec.Encode(ref current, ref buffer);
-            codec.Encode(ref newval, ref newBuffer);
-            codec.Encode(ref reset, ref resetBuffer);
+            codec.Encode(in current, ref buffer);
+            codec.Encode(in newval, ref newBuffer);
+            codec.Encode(in reset, ref resetBuffer);
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 Client.Id,
@@ -72,14 +72,14 @@ namespace Cheetah.Matches.Realtime
         public void SendEvent<T>(ushort eventId, ref T item)
         {
             buffer.Clear();
-            Client.CodecRegistry.GetCodec<T>().Encode(ref item, ref buffer);
+            Client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
             ResultChecker.Check(EventFFI.Send(Client.Id, ref ObjectId, eventId, ref buffer));
         }
 
         public void SendEvent<T>(ushort eventId, uint targetUser, ref T item)
         {
             buffer.Clear();
-            Client.CodecRegistry.GetCodec<T>().Encode(ref item, ref buffer);
+            Client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
             ResultChecker.Check(EventFFI.Send(Client.Id, (ushort)targetUser, ref ObjectId, eventId, ref buffer));
         }
 

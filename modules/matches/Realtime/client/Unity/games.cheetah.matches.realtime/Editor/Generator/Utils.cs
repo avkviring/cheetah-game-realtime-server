@@ -18,7 +18,7 @@ namespace Cheetah.Matches.Realtime.Editor.Generator
 
         public static string GetFullName(Type type)
         {
-            return type.FullName.Replace("+", ".");
+            return type.FullName.Replace('+', '.');
         }
     }
 }

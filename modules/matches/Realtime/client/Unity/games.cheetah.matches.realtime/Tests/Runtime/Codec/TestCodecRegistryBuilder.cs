@@ -16,7 +16,7 @@ namespace Cheetah.Matches.Realtime.Tests.Codec
             {
             }
 
-            public void Encode(ref A source, ref CheetahBuffer buffer)
+            public void Encode(in A source, ref CheetahBuffer buffer)
             {
             }
         }
@@ -37,7 +37,7 @@ namespace Cheetah.Matches.Realtime.Tests.Codec
             {
             }
 
-            public void Encode(ref B source, ref CheetahBuffer buffer)
+            public void Encode(in B source, ref CheetahBuffer buffer)
             {
             }
         }

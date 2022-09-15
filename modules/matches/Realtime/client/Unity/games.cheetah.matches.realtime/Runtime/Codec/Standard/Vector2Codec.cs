@@ -13,7 +13,7 @@ namespace Cheetah.Matches.Realtime.Codec.Standard
             dest.y = FloatFormatter.StaticUncheckedRead(ref buffer);
         }
 
-        public void Encode(ref Vector2 source, ref CheetahBuffer buffer)
+        public void Encode(in Vector2 source, ref CheetahBuffer buffer)
         {
             buffer.AssertFreeSpace(sizeof(float) * 2);
             FloatFormatter.StaticUncheckedWrite(source.x, ref buffer);

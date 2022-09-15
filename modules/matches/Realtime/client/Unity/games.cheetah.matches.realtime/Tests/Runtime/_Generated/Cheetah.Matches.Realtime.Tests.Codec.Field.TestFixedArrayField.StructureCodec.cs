@@ -35,7 +35,7 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 	
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestFixedArrayField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestFixedArrayField.Structure source, ref CheetahBuffer buffer)
 			{
 				ByteFormatter.Instance.Write(source.size,ref buffer);
 				unsafe {

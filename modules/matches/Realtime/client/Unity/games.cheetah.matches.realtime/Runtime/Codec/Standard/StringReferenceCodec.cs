@@ -11,7 +11,7 @@ namespace Cheetah.Matches.Realtime.Types
             dest.value = StringFormatter.Instance.Read(ref buffer);
         }
 
-        public void Encode(ref StringReference source, ref CheetahBuffer buffer)
+        public void Encode(in StringReference source, ref CheetahBuffer buffer)
         {
             StringFormatter.Instance.Write(source.value, ref buffer);
         }

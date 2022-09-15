@@ -35,7 +35,7 @@ namespace Cheetah.Matches.Realtime.Editor.Generator.Fields.Array
             var result = new StringBuilder();
             var size = $"source.{arraySizeFieldAttribute.Field}";
             result.AppendLine($"for(var i=0;i<{size};i++) {{");
-            result.AppendLine($"\t{codecName}.Encode(ref source.{field.Name}[i],ref buffer);");
+            result.AppendLine($"\t{codecName}.Encode(in source.{field.Name}[i],ref buffer);");
             result.AppendLine("}");
             return result.ToString();
         }

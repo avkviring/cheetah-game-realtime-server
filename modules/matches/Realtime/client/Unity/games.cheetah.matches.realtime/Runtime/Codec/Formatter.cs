@@ -20,7 +20,7 @@ namespace Cheetah.Matches.Realtime.Codec
             dest = Read(ref buffer);
         }
 
-        void Codec<T>.Encode(ref T source, ref CheetahBuffer buffer)
+        void Codec<T>.Encode(in T source, ref CheetahBuffer buffer)
         {
             Write(source, ref buffer);
         }

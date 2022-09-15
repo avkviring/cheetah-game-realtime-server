@@ -20,7 +20,7 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 				dest.longValue = VariableSizeLongFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestVariableSizeField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestVariableSizeField.Structure source, ref CheetahBuffer buffer)
 			{
 				VariableSizeUIntFormatter.Instance.Write(source.uintValue,ref buffer);
 				VariableSizeULongFormatter.Instance.Write(source.ulongValue,ref buffer);

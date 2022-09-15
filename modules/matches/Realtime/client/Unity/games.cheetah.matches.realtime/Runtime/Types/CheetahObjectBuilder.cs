@@ -49,7 +49,7 @@ namespace Cheetah.Matches.Realtime.Types
         public void BuildSingletonRoomObject<T>(ref T singletonKey) where T : struct
         {
             buffer.Clear();
-            client.CodecRegistry.GetCodec<T>().Encode(ref singletonKey, ref buffer);
+            client.CodecRegistry.GetCodec<T>().Encode(in singletonKey, ref buffer);
             ResultChecker.Check(ObjectFFI.Created(client.Id, ref objectId, true, ref buffer));
         }
 
@@ -62,7 +62,7 @@ namespace Cheetah.Matches.Realtime.Types
         public CheetahObjectBuilder SetStructure<T>(ushort fieldId, ref T item)
         {
             buffer.Clear();
-            client.CodecRegistry.GetCodec<T>().Encode(ref item, ref buffer);
+            client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
             ResultChecker.Check(StructureFFI.Set(client.Id, ref objectId, fieldId, ref buffer));
             return this;
         }
@@ -91,8 +91,8 @@ namespace Cheetah.Matches.Realtime.Types
             var newBuffer = new CheetahBuffer();
             var resetBuffer = new CheetahBuffer();
             var codec = client.CodecRegistry.GetCodec<T>();
-            codec.Encode(ref current, ref buffer);
-            codec.Encode(ref newval, ref newBuffer);
+            codec.Encode(in current, ref buffer);
+            codec.Encode(in newval, ref newBuffer);
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 client.Id,
@@ -113,9 +113,9 @@ namespace Cheetah.Matches.Realtime.Types
             var newBuffer = new CheetahBuffer();
             var resetBuffer = new CheetahBuffer();
             var codec = client.CodecRegistry.GetCodec<T>();
-            codec.Encode(ref current, ref buffer);
-            codec.Encode(ref newval, ref newBuffer);
-            codec.Encode(ref reset, ref resetBuffer);
+            codec.Encode(in current, ref buffer);
+            codec.Encode(in newval, ref newBuffer);
+            codec.Encode(in reset, ref resetBuffer);
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 client.Id,

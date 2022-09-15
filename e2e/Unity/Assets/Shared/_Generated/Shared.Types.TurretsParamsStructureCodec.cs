@@ -18,7 +18,7 @@ namespace Shared_Types
 				dest.Damage = DoubleFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(ref Shared.Types.TurretsParamsStructure source, ref CheetahBuffer buffer)
+			public void  Encode(in Shared.Types.TurretsParamsStructure source, ref CheetahBuffer buffer)
 			{
 				DoubleFormatter.Instance.Write(source.Speed,ref buffer);
 				DoubleFormatter.Instance.Write(source.Damage,ref buffer);
