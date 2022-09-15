@@ -17,7 +17,7 @@ namespace Shared_Types
 				dest.MineId = IntFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(ref Shared.Types.DropMineEvent source, ref CheetahBuffer buffer)
+			public void  Encode(in Shared.Types.DropMineEvent source, ref CheetahBuffer buffer)
 			{
 				IntFormatter.Instance.Write(source.MineId,ref buffer);
 			}

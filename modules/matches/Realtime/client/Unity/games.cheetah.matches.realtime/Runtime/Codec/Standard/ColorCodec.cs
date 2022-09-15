@@ -16,7 +16,7 @@ namespace Cheetah.Matches.Realtime.Codec.Standard
             dest = new Color(r, g, b, a);
         }
 
-        public void Encode(ref Color source, ref CheetahBuffer buffer)
+        public void Encode(in Color source, ref CheetahBuffer buffer)
         {
             buffer.AssertFreeSpace(sizeof(float) * 4);
             FloatFormatter.StaticUncheckedWrite(source.r, ref buffer);

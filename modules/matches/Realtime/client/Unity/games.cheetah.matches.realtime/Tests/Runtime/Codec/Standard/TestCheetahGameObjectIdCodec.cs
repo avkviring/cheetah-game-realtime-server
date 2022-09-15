@@ -19,7 +19,7 @@ namespace Cheetah.Matches.Realtime.Tests.Codec.Standard
             };
             var buffer = new CheetahBuffer();
             var codec = new CheetahObjectIdCodec();
-            codec.Encode(ref id, ref buffer);
+            codec.Encode(in id, ref buffer);
 
             var decoded = new CheetahObjectId();
             codec.Decode(ref buffer, ref decoded);

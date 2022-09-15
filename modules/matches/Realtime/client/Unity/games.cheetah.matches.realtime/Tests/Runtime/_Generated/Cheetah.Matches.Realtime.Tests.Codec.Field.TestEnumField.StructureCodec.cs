@@ -17,7 +17,7 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 				dest.enumValue = (Cheetah.Matches.Realtime.Tests.Codec.Field.TestEnumField.EnumTest)ByteFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestEnumField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestEnumField.Structure source, ref CheetahBuffer buffer)
 			{
 				ByteFormatter.Instance.Write((byte)source.enumValue,ref buffer);
 			}

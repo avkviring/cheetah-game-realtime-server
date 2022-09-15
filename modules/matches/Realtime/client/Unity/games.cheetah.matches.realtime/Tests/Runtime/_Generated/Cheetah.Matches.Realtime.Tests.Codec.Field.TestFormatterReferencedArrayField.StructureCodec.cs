@@ -19,7 +19,7 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 				VariableSizeIntFormatter.Instance.ReadArray(ref buffer, dest.variableSizeArray, dest.size,0);
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestFormatterReferencedArrayField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestFormatterReferencedArrayField.Structure source, ref CheetahBuffer buffer)
 			{
 				UIntFormatter.Instance.Write(source.size,ref buffer);
 				StringFormatter.Instance.WriteArray(source.stringArray,source.size, 0,ref buffer);

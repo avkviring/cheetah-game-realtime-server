@@ -17,9 +17,9 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 				codec0.Decode(ref buffer, ref dest.innerValue);
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestCodecField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestCodecField.Structure source, ref CheetahBuffer buffer)
 			{
-				codec0.Encode(ref source.innerValue, ref buffer);
+				codec0.Encode(in source.innerValue, ref buffer);
 			}
 	
 			private readonly Codec<Cheetah.Matches.Realtime.Tests.Codec.Field.TestCodecField.Inner> codec0;

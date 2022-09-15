@@ -18,7 +18,7 @@ namespace Cheetah.Matches.Realtime.Codec.Standard
             }
         }
 
-        public void Encode(ref CheetahObjectId source, ref CheetahBuffer buffer)
+        public void Encode(in CheetahObjectId source, ref CheetahBuffer buffer)
         {
             VariableSizeFormatter.Write(source.id, ref buffer);
             BoolFormatter.Write(source.roomOwner, ref buffer);

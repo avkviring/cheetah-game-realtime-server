@@ -9,6 +9,6 @@ namespace Cheetah.Matches.Realtime.Codec
     public interface Codec<T>
     {
         void Decode(ref CheetahBuffer buffer, ref T dest);
-        void Encode(ref T source, ref CheetahBuffer buffer);
+        void Encode(in T source, ref CheetahBuffer buffer);
     }
 }

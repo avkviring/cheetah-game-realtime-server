@@ -14,7 +14,7 @@ namespace Cheetah.Matches.Realtime.Tests.Codec.Field
             var codec = codecRegistry.GetCodec<T>();
             var source = GetSource();
             var buffer = new CheetahBuffer();
-            codec.Encode(ref source, ref buffer);
+            codec.Encode(in source, ref buffer);
             var result = GetResult();
             buffer.pos = 0;
             codec.Decode(ref buffer, ref result);

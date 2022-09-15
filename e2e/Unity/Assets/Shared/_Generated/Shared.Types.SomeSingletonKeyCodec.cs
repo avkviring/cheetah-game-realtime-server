@@ -17,7 +17,7 @@ namespace Shared_Types
 				dest.Key = IntFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(ref Shared.Types.SomeSingletonKey source, ref CheetahBuffer buffer)
+			public void  Encode(in Shared.Types.SomeSingletonKey source, ref CheetahBuffer buffer)
 			{
 				IntFormatter.Instance.Write(source.Key,ref buffer);
 			}

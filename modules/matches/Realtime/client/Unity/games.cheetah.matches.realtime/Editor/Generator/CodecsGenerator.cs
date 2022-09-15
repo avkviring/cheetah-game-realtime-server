@@ -19,7 +19,7 @@ namespace Cheetah.Matches.Realtime.Editor.Generator
             var locationByName = CompilationPipeline.GetAssemblies()
                 .Where(assembly => assembly.sourceFiles.Length != 0)
                 .ToDictionary(assembly => assembly.name);
-            
+
             var formatters = new Formatters();
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
@@ -33,21 +33,21 @@ namespace Cheetah.Matches.Realtime.Editor.Generator
                 {
                     var generateCodecAttribute = type.GetCustomAttribute<GenerateCodec>();
                     if (generateCodecAttribute == null) continue;
-                    var rootNamespace = type.Namespace;
+                    var rootNamespace = type.Namespace.Replace(".", "_");
                     var result = new CodecGenerator(formatters, rootNamespace, type).Generate();
 
 
                     var assemblyDirectory = IsDefaultAssembly(unityAssembly)
                         ? GetDefaultAssemblyRootPath()
                         : Path.GetDirectoryName(CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(unityAssembly.name));
-
-                    var generatedCodecDirectory = assemblyDirectory + "/Cheetah/_Generated/";
+                    var generatedCodecDirectory = assemblyDirectory + "/_Generated/";
                     Directory.CreateDirectory(generatedCodecDirectory);
-                    
+
                     var generatedCodecFile = Utils.GetFullName(type) + "Codec.cs";
                     File.WriteAllBytes(generatedCodecDirectory + "/" + generatedCodecFile, Encoding.UTF8.GetBytes(result));
                 }
             }
+
             CompilationPipeline.RequestScriptCompilation();
         }
 

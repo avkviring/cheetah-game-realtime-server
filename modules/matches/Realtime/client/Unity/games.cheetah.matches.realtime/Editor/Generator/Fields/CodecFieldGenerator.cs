@@ -24,7 +24,7 @@ namespace Cheetah.Matches.Realtime.Editor.Generator.Fields
 
         public string GenerateEncode()
         {
-            return $"{codecsImporter.GetCodecName(field.FieldType)}.Encode(ref source.{field.Name}, ref buffer);";
+            return $"{codecsImporter.GetCodecName(field.FieldType)}.Encode(in source.{field.Name}, ref buffer);";
         }
 
         public string GenerateDecode()

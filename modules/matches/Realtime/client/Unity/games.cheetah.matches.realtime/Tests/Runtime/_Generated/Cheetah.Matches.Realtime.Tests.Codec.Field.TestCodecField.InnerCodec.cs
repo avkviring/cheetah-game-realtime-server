@@ -17,7 +17,7 @@ namespace Cheetah_Matches_Realtime_Tests_Codec_Field
 				dest.value = IntFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(ref Cheetah.Matches.Realtime.Tests.Codec.Field.TestCodecField.Inner source, ref CheetahBuffer buffer)
+			public void  Encode(in Cheetah.Matches.Realtime.Tests.Codec.Field.TestCodecField.Inner source, ref CheetahBuffer buffer)
 			{
 				IntFormatter.Instance.Write(source.value,ref buffer);
 			}
