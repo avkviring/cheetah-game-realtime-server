@@ -1,9 +1,10 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace Cheetah.Matches.Realtime.Types
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct CheetahObjectId
+    public struct CheetahObjectId : IEquatable<CheetahObjectId>
     {
         public uint id;
 
@@ -46,9 +47,11 @@ namespace Cheetah.Matches.Realtime.Types
             {
                 var hashCode = (int)id;
                 hashCode = (hashCode * 397) ^ roomOwner.GetHashCode();
-                hashCode = (hashCode * 397) ^ memberId;
+                hashCode = (hashCode * 397) ^ memberId.GetHashCode();
                 return hashCode;
             }
         }
+        
+        
     }
 }
