@@ -1,3 +1,4 @@
+using System;
 using Cheetah.Matches.Realtime.Internal;
 using Cheetah.Matches.Realtime.Internal.FFI;
 using Cheetah.Matches.Realtime.Types;
@@ -7,7 +8,7 @@ namespace Cheetah.Matches.Realtime
     /// <summary>
     /// Сетевой игровой объект
     /// </summary>
-    public struct CheetahObject
+    public struct CheetahObject : IEquatable<CheetahObject>
     {
         private static CheetahBuffer buffer;
         public CheetahObjectId ObjectId;
@@ -145,5 +146,7 @@ namespace Cheetah.Matches.Realtime
         {
             return ObjectId.GetHashCode();
         }
+        
+        
     }
 }
