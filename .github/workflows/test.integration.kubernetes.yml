@@ -13,22 +13,8 @@ jobs:
     uses: ./.github/workflows/templates.build.docker-images.yml
     with:
       version: 999.999.999
-  build-realtime-client-so:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-gnu-old-glib:0.0.5
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build Client
-        run: |
-          cargo build --manifest-path modules/matches/Realtime/client/Rust/Cargo.toml --release
-          mv modules/target/release/libcheetah_matches_realtime_client.so modules/target/release/linux.so
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux.so
-          path: |
-            modules/target/release/linux.so
+  build-realtime-client-library-linux:
+    uses: ./.github/workflows/templates.build.realtime-client-library-linux.yml
   deploy-servers:
     runs-on: ubuntu-latest
     needs:
@@ -47,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - deploy-servers
-      - build-realtime-client-so
+      - build-realtime-client-library-linux
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v2
@@ -60,7 +46,7 @@ jobs:
             integration-docker-test-
       - uses: actions/download-artifact@v2
         with:
-          name: linux.so
+          name: realtime-client-library-linux
           path: modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library/
       - name: Generate GRPC Implementations
         run: scripts/generators/grpc/unity.sh
