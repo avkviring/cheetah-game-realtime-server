@@ -1,5 +1,5 @@
 name: release.unity.packages
-on: 
+on:
   release:
     types: [ published ]
 env:
@@ -30,18 +30,8 @@ jobs:
           name: ios-build
           path: |
             modules/target/aarch64-apple-ios/release/libcheetah_matches_realtime_client.a
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build Client
-        run: cargo build --manifest-path $MANIFEST_PATH --release
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-build
-          path: |
-            modules/target/release/libcheetah_matches_realtime_client.so
+  build-realtime-client-library-linux:
+    uses: ./.github/workflows/templates.build.realtime-client-library-linux.yml
   build-android:
     runs-on: ubuntu-latest
     steps:
@@ -80,7 +70,12 @@ jobs:
             modules/target/debug/*.dll
             modules/target/debug/*.pdb
   publish-unity-packages:
-    needs: [build-macos, build-ios, build-linux, build-android, build-windows]
+    needs:
+      - build-macos
+      - build-ios
+      - build-realtime-client-library-linux
+      - build-android
+      - build-windows
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -96,8 +91,8 @@ jobs:
           path: macos-build
       - uses: actions/download-artifact@v3
         with:
-          name: linux-build
-          path: linux-build
+          name: build-realtime-client-library-linux
+          path: build-realtime-client-library-linux
       - uses: actions/download-artifact@v3
         with:
           name: android-build
@@ -110,16 +105,11 @@ jobs:
         run: |
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library
           mkdir -p $lib_path
-
           cp macos-build/libcheetah_matches_realtime_client.dylib $lib_path/macos.bundle
-
-          cp linux-build/libcheetah_matches_realtime_client.so $lib_path/linux.so
-
+          cp build-realtime-client-library-linux/linux.so $lib_path/linux.so
           cp windows-build/cheetah_matches_realtime_client.dll $lib_path/windows.dll
           cp windows-build/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
-
           cp ios-build/libcheetah_matches_realtime_client.a $lib_path/ios.a
-
           cp android-build/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so \
             $lib_path/android-armv7.so
           cp android-build/aarch64-linux-android/release/libcheetah_matches_realtime_client.so \

@@ -1,0 +1,20 @@
+name: build-realtime-client-library-linux
+on:
+  workflow_call:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-gnu-old-glib:0.0.5
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Client
+        run: |
+          cargo build --manifest-path modules/matches/Realtime/client/Rust/Cargo.toml --release
+          mv modules/target/release/libcheetah_matches_realtime_client.so modules/target/release/linux.so
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: realtime-client-library-linux
+          path: |
+            modules/target/release/linux.so
