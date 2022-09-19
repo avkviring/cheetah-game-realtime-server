@@ -28,7 +28,7 @@ mod tests {
 
 	use realtime::internal;
 
-	use crate::proto::matches::realtime::internal::{EmptyRequest, ProbeRequest, ProbeResponse, RoomIdResponse};
+	use crate::proto::matches::realtime::internal::{EmptyRequest, ProbeRequest, ProbeResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::{realtime, registry};
 	use crate::service::configuration::yaml::test::EXAMPLE_DIR;
@@ -79,6 +79,10 @@ mod tests {
 			&self,
 			_request: Request<internal::CreateSuperMemberRequest>,
 		) -> Result<Response<internal::CreateMemberResponse>, Status> {
+			unimplemented!()
+		}
+
+		async fn query_room(&self, _request: Request<QueryRoomRequest>) -> Result<Response<QueryRoomResponse>, Status> {
 			unimplemented!()
 		}
 

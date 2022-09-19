@@ -13,6 +13,7 @@ use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
+use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
 use crate::server::RoomsServer;
@@ -38,6 +39,7 @@ pub enum ManagementTask {
 	TimeOffset(Duration),
 	Dump(RoomId, Sender<Result<admin::DumpResponse, String>>),
 	GetRooms(Sender<Vec<RoomId>>),
+	QueryRoom(RoomId, Sender<Option<RoomInfo>>),
 	CommandTracerSessionTask(RoomId, TracerSessionCommand, Sender<Result<(), CommandTracerSessionTaskError>>),
 }
 
@@ -91,6 +93,15 @@ impl RoomsServerManager {
 		self.sender.send(ManagementTask::GetRooms(sender)).unwrap();
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(rooms) => Ok(rooms),
+			Err(e) => Err(format!("{:?}", e)),
+		}
+	}
+
+	pub fn query_room(&self, room_id: u64) -> Result<Option<RoomInfo>, String> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender.send(ManagementTask::QueryRoom(room_id, sender));
+		match receiver.recv_timeout(Duration::from_secs(1)) {
+			Ok(maybe_room_info) => Ok(maybe_room_info),
 			Err(e) => Err(format!("{:?}", e)),
 		}
 	}
@@ -202,7 +213,7 @@ fn expect_send_msg(task: &str) -> String {
 mod test {
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;
 
 	#[test]
@@ -218,5 +229,26 @@ mod test {
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let rooms = server.get_rooms().unwrap();
 		assert_eq!(rooms, vec![room_id]);
+	}
+
+	#[test]
+	fn should_create_member() {
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		let room_id = server.create_room(RoomTemplate::default()).unwrap();
+		let member_id = server.create_member(room_id, MemberTemplate::default()).unwrap();
+
+		assert_eq!(member_id, 1);
+	}
+
+	#[test]
+	fn should_get_room_info() {
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		let room_id = server.create_room(RoomTemplate::default()).unwrap();
+		for _ in 0..5 {
+			server.create_member(room_id, MemberTemplate::default()).unwrap();
+		}
+		let room_info = server.query_room(room_id).unwrap().unwrap();
+
+		assert_eq!(room_info.member_count, 5);
 	}
 }

@@ -58,6 +58,10 @@ pub struct Room {
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 }
 
+pub struct RoomInfo {
+	pub member_count: u32,
+}
+
 #[derive(Debug)]
 pub struct Member {
 	pub id: RoomMemberId,
