@@ -46,7 +46,7 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin
             client.GetPlugin<DoubleCommandRouter>().ChangeListener += OnDoubleChange;
         }
 
-        private void OnObjectDelete(ref CheetahObjectId objectId)
+        private void OnObjectDelete(in CheetahObjectId objectId)
         {
             creatingObjects.Remove(objectId);
         }
@@ -70,14 +70,14 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin
             }
         }
 
-        private void OnObjectCreating(ref CheetahObjectId objectId, ushort template)
+        private void OnObjectCreating(in CheetahObjectId objectId, ushort template)
         {
-            var cheetahObject = cheetahObjectsCreateInfo.GetObject(ref objectId);
+            var cheetahObject = cheetahObjectsCreateInfo.GetObject(in objectId);
             creatingObjects.Add(objectId, new CheetahObjectConstructor(cheetahObject, client.CodecRegistry));
         }
 
 
-        private void OnStructChange(ushort creator, ref CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
+        private void OnStructChange(ushort creator, in CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
         {
             if (creatingObjects.TryGetValue(objectId, out var creatingObject))
             {
@@ -85,7 +85,7 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin
             }
         }
 
-        private void OnDoubleChange(ushort creator, ref CheetahObjectId objectId, ushort fieldId, double value)
+        private void OnDoubleChange(ushort creator, in CheetahObjectId objectId, ushort fieldId, double value)
         {
             if (creatingObjects.TryGetValue(objectId, out var creatingObject))
             {
@@ -93,7 +93,7 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin
             }
         }
 
-        private void OnLongChange(ushort creator, ref CheetahObjectId objectId, ushort fieldId, long value)
+        private void OnLongChange(ushort creator, in CheetahObjectId objectId, ushort fieldId, long value)
         {
             if (creatingObjects.TryGetValue(objectId, out var creatingObject))
             {
@@ -106,9 +106,9 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin
         /// Объект создан - вызываем подписчиков
         /// </summary>
         /// <param name="objectId"></param>
-        private void OnObjectCreated(ref CheetahObjectId objectId)
+        private void OnObjectCreated(in CheetahObjectId objectId)
         {
-            var cheetahObject = cheetahObjectsCreateInfo.GetObject(ref objectId);
+            var cheetahObject = cheetahObjectsCreateInfo.GetObject(in objectId);
             if (createdListeners.TryGetValue(cheetahObject.Template, out var listeners))
             {
                 if (creatingObjects.TryGetValue(objectId, out var createdObject))

@@ -27,9 +27,9 @@ namespace Cheetah.Matches.Realtime.Types
         public CheetahObject Build()
         {
             buffer.Clear();
-            ResultChecker.Check(ObjectFFI.Created(client.Id, ref objectId, false, ref buffer));
-            createdInfo.OnLocalObjectCreating(ref objectId, template);
-            createdInfo.OnLocalObjectCreate(ref objectId);
+            ResultChecker.Check(ObjectFFI.Created(client.Id, in objectId, false, ref buffer));
+            createdInfo.OnLocalObjectCreating(in objectId, template);
+            createdInfo.OnLocalObjectCreate(in objectId);
             return new CheetahObject(objectId, template, client);
         }
 
@@ -39,7 +39,7 @@ namespace Cheetah.Matches.Realtime.Types
         public void BuildRoomObject()
         {
             buffer.Clear();
-            ResultChecker.Check(ObjectFFI.Created(client.Id, ref objectId, true, ref buffer));
+            ResultChecker.Check(ObjectFFI.Created(client.Id, in objectId, true, ref buffer));
         }
 
         /// <summary>
@@ -50,12 +50,12 @@ namespace Cheetah.Matches.Realtime.Types
         {
             buffer.Clear();
             client.CodecRegistry.GetCodec<T>().Encode(in singletonKey, ref buffer);
-            ResultChecker.Check(ObjectFFI.Created(client.Id, ref objectId, true, ref buffer));
+            ResultChecker.Check(ObjectFFI.Created(client.Id, in objectId, true, ref buffer));
         }
 
         public CheetahObjectBuilder SetDouble(ushort fieldId, double value)
         {
-            ResultChecker.Check(DoubleFFI.Set(client.Id, ref objectId, fieldId, value));
+            ResultChecker.Check(DoubleFFI.Set(client.Id, in objectId, fieldId, value));
             return this;
         }
 
@@ -63,25 +63,25 @@ namespace Cheetah.Matches.Realtime.Types
         {
             buffer.Clear();
             client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
-            ResultChecker.Check(StructureFFI.Set(client.Id, ref objectId, fieldId, ref buffer));
+            ResultChecker.Check(StructureFFI.Set(client.Id, in objectId, fieldId, ref buffer));
             return this;
         }
 
         public CheetahObjectBuilder SetLong(ushort fieldId, long value)
         {
-            ResultChecker.Check(LongFFI.Set(client.Id, ref objectId, fieldId, value));
+            ResultChecker.Check(LongFFI.Set(client.Id, in objectId, fieldId, value));
             return this;
         }
 
         public CheetahObjectBuilder CompareAndSetLong(ushort fieldId, long currentValue, long newValue)
         {
-            ResultChecker.Check(LongFFI.CompareAndSet(client.Id, ref objectId, fieldId, currentValue, newValue, false, 0));
+            ResultChecker.Check(LongFFI.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, false, 0));
             return this;
         }
 
         public CheetahObjectBuilder CompareAndSetLongWithReset(ushort fieldId, long currentValue, long newValue, long resetValue)
         {
-            ResultChecker.Check(LongFFI.CompareAndSet(client.Id, ref objectId, fieldId, currentValue, newValue, true, resetValue));
+            ResultChecker.Check(LongFFI.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, true, resetValue));
             return this;
         }
 
@@ -96,7 +96,7 @@ namespace Cheetah.Matches.Realtime.Types
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 client.Id,
-                ref objectId,
+                in objectId,
                 fieldId,
                 ref buffer,
                 ref newBuffer,
@@ -119,7 +119,7 @@ namespace Cheetah.Matches.Realtime.Types
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 client.Id,
-                ref objectId,
+                in objectId,
                 fieldId,
                 ref buffer,
                 ref newBuffer,

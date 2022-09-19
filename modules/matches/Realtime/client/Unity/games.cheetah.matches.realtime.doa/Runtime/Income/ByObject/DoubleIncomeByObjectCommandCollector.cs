@@ -12,7 +12,7 @@ namespace Cheetah.Matches.Realtime.DOA.Income.ByObject
         {
             this.id = id;
             router = client.GetPlugin<DoubleCommandRouterByObject>();
-            router.RegisterListener(ref id, fieldId, OnChange);
+            router.RegisterListener(in id, fieldId, OnChange);
         }
 
 
@@ -27,7 +27,7 @@ namespace Cheetah.Matches.Realtime.DOA.Income.ByObject
         public override void Dispose()
         {
             base.Dispose();
-            router.UnRegisterListener(ref id, fieldId, OnChange);
+            router.UnRegisterListener(in id, fieldId, OnChange);
         }
     }
 }

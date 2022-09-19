@@ -49,11 +49,11 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByField
             }
         }
 
-        protected void Notify(ushort commandCreator, ref CheetahObjectId objectId, ushort fieldId, ref T data)
+        protected void Notify(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, ref T data)
         {
             if (listenersByFieldId.TryGetValue(fieldId, out var listeners))
             {
-                listeners.Notify(commandCreator, createInfo.GetObject(ref objectId), createInfo.IsCreated(ref objectId), ref data);
+                listeners.Notify(commandCreator, createInfo.GetObject(in objectId), createInfo.IsCreated(in objectId), ref data);
             }
         }
     }

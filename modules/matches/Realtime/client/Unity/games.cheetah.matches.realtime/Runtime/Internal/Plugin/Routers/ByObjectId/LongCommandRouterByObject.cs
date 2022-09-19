@@ -14,9 +14,9 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByObjectId
             longCommandRouter.ChangeListener += OnChange;
         }
 
-        private void OnChange(ushort commandCreator, ref CheetahObjectId objectId, ushort fieldId, long value)
+        private void OnChange(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, long value)
         {
-            Notify(commandCreator, ref objectId, fieldId, ref value);
+            Notify(commandCreator, in objectId, fieldId, ref value);
         }
     }
 }

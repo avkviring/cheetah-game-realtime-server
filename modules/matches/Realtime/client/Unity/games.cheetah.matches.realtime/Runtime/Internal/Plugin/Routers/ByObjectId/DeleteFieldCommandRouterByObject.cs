@@ -14,9 +14,9 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByObjectId
             router.DeleteListener += OnDelete;
         }
 
-        private void OnDelete(ushort commandCreator, ref CheetahObjectId objectId, ushort fieldId, FieldType fieldType)
+        private void OnDelete(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, FieldType fieldType)
         {
-            Notify(commandCreator, ref objectId, fieldId, ref fieldType);
+            Notify(commandCreator, in objectId, fieldId, ref fieldType);
         }
     }
 }

@@ -15,9 +15,9 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByField
         }
 
 
-        private void OnChange(ushort commandCreator, ref CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
+        private void OnChange(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
         {
-            Notify(commandCreator, ref objectId, fieldId, ref data);
+            Notify(commandCreator, in objectId, fieldId, ref data);
         }
     }
 }
