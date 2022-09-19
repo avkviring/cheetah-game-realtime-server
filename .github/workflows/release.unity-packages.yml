@@ -3,35 +3,38 @@ on:
   release:
     types: [ published ]
 env:
-  MANIFEST_PATH: modules/matches/Realtime/client/Rust/Cargo.toml
+  REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Cargo.toml
+  REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/Embedded/Cargo.toml
 jobs:
   build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - name: Build Client
-        run: cargo build --manifest-path $MANIFEST_PATH --release
+        run: |
+          cargo build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --release
+          cargo build --manifest-path $REALTIME_EMBEDDED_MANIFEST_PATH --release
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: macos-build
+          name: build-macos
           path: |
-            modules/target/release/libcheetah_matches_realtime_client.dylib
+            modules/target/release/*.dylib
   build-ios:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - run: rustup target add aarch64-apple-ios
       - name: Build Client
-        run: cargo build --manifest-path $MANIFEST_PATH --target aarch64-apple-ios --release
+        run: cargo build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --target aarch64-apple-ios --release
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ios-build
+          name: build-ios
           path: |
             modules/target/aarch64-apple-ios/release/libcheetah_matches_realtime_client.a
-  build-realtime-client-library-linux:
-    uses: ./.github/workflows/templates.build.realtime-client-library-linux.yml
+  build-on-linux:
+    uses: ./.github/workflows/templates.build-on-linux.yml
   build-android:
     runs-on: ubuntu-latest
     steps:
@@ -39,13 +42,13 @@ jobs:
       - name: Install Cross
         run: cargo install --version 0.2.4 cross
       - name: Build Android armv7-linux-androideabi
-        run: cross build --manifest-path $MANIFEST_PATH --target armv7-linux-androideabi --release
+        run: cross build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --target armv7-linux-androideabi --release
       - name: Build Android aarch64-linux-android
-        run: cross build --manifest-path $MANIFEST_PATH --target aarch64-linux-android --release
+        run: cross build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --target aarch64-linux-android --release
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: android-build
+          name: build-android
           path: |
             modules/target/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so
             modules/target/aarch64-linux-android/release/libcheetah_matches_realtime_client.so
@@ -61,11 +64,13 @@ jobs:
             modules/target
           key: cargo-windows-${{ hashFiles('**/Cargo.lock') }}
       - name: Build windows
-        run: cargo build --manifest-path $env:MANIFEST_PATH
+        run: |
+          cargo build --manifest-path $env:REALTIME_CLIENT_MANIFEST_PATH
+          cargo build --manifest-path $env:REALTIME_EMBEDDED_MANIFEST_PATH
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: windows-build
+          name: build-windows
           path: |
             modules/target/debug/*.dll
             modules/target/debug/*.pdb
@@ -73,7 +78,7 @@ jobs:
     needs:
       - build-macos
       - build-ios
-      - build-realtime-client-library-linux
+      - build-on-linux
       - build-android
       - build-windows
     runs-on: ubuntu-latest
@@ -83,37 +88,43 @@ jobs:
         run: scripts/generators/grpc/unity.sh
       - uses: actions/download-artifact@v3
         with:
-          name: ios-build
-          path: ios-build
+          name: build-ios
+          path: build-ios
       - uses: actions/download-artifact@v3
         with:
-          name: macos-build
-          path: macos-build
+          name: build-macos
+          path: build-macos
       - uses: actions/download-artifact@v3
         with:
-          name: build-realtime-client-library-linux
-          path: build-realtime-client-library-linux
+          name: build-on-linux-result
+          path: build-on-linux-result
       - uses: actions/download-artifact@v3
         with:
-          name: android-build
-          path: android-build
+          name: build-android
+          path: build-android
       - uses: actions/download-artifact@v3
         with:
-          name: windows-build
-          path: windows-build
+          name: build-windows
+          path: build-windows
       - name: Copy Libraries into Realtime Matches Package
         run: |
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library
           mkdir -p $lib_path
-          cp macos-build/libcheetah_matches_realtime_client.dylib $lib_path/macos.bundle
-          cp build-realtime-client-library-linux/linux.so $lib_path/linux.so
-          cp windows-build/cheetah_matches_realtime_client.dll $lib_path/windows.dll
-          cp windows-build/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
-          cp ios-build/libcheetah_matches_realtime_client.a $lib_path/ios.a
-          cp android-build/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so \
-            $lib_path/android-armv7.so
-          cp android-build/aarch64-linux-android/release/libcheetah_matches_realtime_client.so \
-            $lib_path/android-aarch64.so
+          cp build-macos/libcheetah_matches_realtime_client.dylib $lib_path/macos.bundle
+          cp build-on-linux-result/libcheetah_matches_realtime_client.so $lib_path/linux.so
+          cp build-windows/cheetah_matches_realtime_client.dll $lib_path/windows.dll
+          cp build-windows/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
+          cp build-ios/libcheetah_matches_realtime_client.a $lib_path/ios.a
+          cp build-android/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so $lib_path/android-armv7.so
+          cp build-android/aarch64-linux-android/release/libcheetah_matches_realtime_client.so $lib_path/android-aarch64.so
+      - name: Copy Libraries into Realtime Matches Matches Package
+        run: |
+          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
+          mkdir -p $lib_path
+          cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/          
+          cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/        
+          cp build-windows/cheetah_matches_realtime_embedded.dll $lib_path/
+          cp build-windows/cheetah_matches_realtime_embedded.pdb $lib_path/
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'

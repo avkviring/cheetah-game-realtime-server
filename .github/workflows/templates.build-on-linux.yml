@@ -1,0 +1,24 @@
+name: build-on-linux
+on:
+  workflow_call:
+env:
+  REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Cargo.toml
+  REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/Embedded/Cargo.toml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-gnu-old-glib:0.0.5
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Client
+        run: |
+          rustup component add rustfmt
+          cargo build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --release
+          cargo build --manifest-path $REALTIME_EMBEDDED_MANIFEST_PATH --release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-on-linux-result
+          path: |
+            modules/target/release/*.so
