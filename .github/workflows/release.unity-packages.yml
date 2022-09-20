@@ -52,35 +52,15 @@ jobs:
           path: |
             modules/target/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so
             modules/target/aarch64-linux-android/release/libcheetah_matches_realtime_client.so
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3.0.5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            modules/target
-          key: cargo-windows-${{ hashFiles('**/Cargo.lock') }}
-      - name: Build windows
-        run: |
-          cargo build --manifest-path $env:REALTIME_CLIENT_MANIFEST_PATH
-          cargo build --manifest-path $env:REALTIME_EMBEDDED_MANIFEST_PATH
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-windows
-          path: |
-            modules/target/debug/*.dll
-            modules/target/debug/*.pdb
+  build-on-windows:
+    uses: ./.github/workflows/templates.build-on-windows.yml
   publish-unity-packages:
     needs:
       - build-macos
       - build-ios
       - build-on-linux
       - build-android
-      - build-windows
+      - build-on-windows
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -104,16 +84,16 @@ jobs:
           path: build-android
       - uses: actions/download-artifact@v3
         with:
-          name: build-windows
-          path: build-windows
+          name: build-on-windows
+          path: build-on-windows-result
       - name: Copy Libraries into Realtime Matches Package
         run: |
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library
           mkdir -p $lib_path
           cp build-macos/libcheetah_matches_realtime_client.dylib $lib_path/macos.bundle
           cp build-on-linux-result/libcheetah_matches_realtime_client.so $lib_path/linux.so
-          cp build-windows/cheetah_matches_realtime_client.dll $lib_path/windows.dll
-          cp build-windows/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
+          cp build-on-windows-result/cheetah_matches_realtime_client.dll $lib_path/windows.dll
+          cp build-on-windows-result/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
           cp build-ios/libcheetah_matches_realtime_client.a $lib_path/ios.a
           cp build-android/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so $lib_path/android-armv7.so
           cp build-android/aarch64-linux-android/release/libcheetah_matches_realtime_client.so $lib_path/android-aarch64.so
@@ -123,8 +103,8 @@ jobs:
           mkdir -p $lib_path
           cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/          
           cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/        
-          cp build-windows/cheetah_matches_realtime_embedded.dll $lib_path/
-          cp build-windows/cheetah_matches_realtime_embedded.pdb $lib_path/
+          cp build-on-windows-result/cheetah_matches_realtime_embedded.dll $lib_path/
+          cp build-on-windows-result/cheetah_matches_realtime_embedded.pdb $lib_path/
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'

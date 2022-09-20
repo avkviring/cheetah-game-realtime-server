@@ -1,0 +1,31 @@
+name: build-on-windows
+on:
+  workflow_call:
+env:
+  REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Cargo.toml
+  REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/Embedded/Cargo.toml
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            modules/target
+          key: cargo-windows-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build windows
+        run: |
+          cargo build --manifest-path $env:REALTIME_CLIENT_MANIFEST_PATH
+          cargo build --manifest-path $env:REALTIME_EMBEDDED_MANIFEST_PATH
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-on-windows-result
+          path: |
+            modules/target/debug/*.dll
+            modules/target/debug/*.pdb
+            
+            
