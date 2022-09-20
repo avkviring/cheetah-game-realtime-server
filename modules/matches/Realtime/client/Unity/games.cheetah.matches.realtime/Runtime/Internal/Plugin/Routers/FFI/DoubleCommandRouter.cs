@@ -24,11 +24,11 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI
         }
 
         [MonoPInvokeCallback(typeof(DoubleFFI.Listener))]
-        private static void OnChange(ushort commandCreator, ref CheetahObjectId objectId, ushort fieldId, double value)
+        private static void OnChange(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, double value)
         {
             try
             {
-                current.ChangeListener?.Invoke(commandCreator, ref objectId, fieldId, value);
+                current.ChangeListener?.Invoke(commandCreator, in objectId, fieldId, value);
             }
             catch (Exception e)
             {

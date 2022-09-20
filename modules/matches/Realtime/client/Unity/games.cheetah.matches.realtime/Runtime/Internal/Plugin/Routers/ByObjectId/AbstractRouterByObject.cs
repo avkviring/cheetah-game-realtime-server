@@ -54,7 +54,7 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByObjectId
             createInfo = client.GetPlugin<CheetahObjectsCreateInfo>();
         }
 
-        public void RegisterListener(ref CheetahObjectId id, ushort fieldId, Listener listener)
+        public void RegisterListener(in CheetahObjectId id, ushort fieldId, Listener listener)
         {
             var key = CreateKey(id, fieldId);
             if (!listenersByFieldId.TryGetValue(key, out var listeners))
@@ -76,7 +76,7 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByObjectId
         }
 
 
-        public void UnRegisterListener(ref CheetahObjectId id, ushort fieldId, Listener listener)
+        public void UnRegisterListener(in CheetahObjectId id, ushort fieldId, Listener listener)
         {
             if (listenersByFieldId.TryGetValue(CreateKey(id, fieldId), out var listeners))
             {
@@ -84,11 +84,11 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByObjectId
             }
         }
 
-        protected void Notify(ushort commandCreator, ref CheetahObjectId objectId, ushort fieldId, ref T data)
+        protected void Notify(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, ref T data)
         {
             if (listenersByFieldId.TryGetValue(CreateKey(objectId, fieldId), out var listeners))
             {
-                listeners.Notify(commandCreator, createInfo.GetObject(ref objectId), createInfo.IsCreated(ref objectId), ref data);
+                listeners.Notify(commandCreator, createInfo.GetObject(in objectId), createInfo.IsCreated(in objectId), ref data);
             }
         }
     }

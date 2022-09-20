@@ -18,9 +18,9 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByTemplate
             objectCommandRouter.ObjectCreatedListener += OnObjectCreated;
         }
 
-        private void OnObjectCreated(ref CheetahObjectId objectId)
+        private void OnObjectCreated(in CheetahObjectId objectId)
         {
-            Notify(ref objectId);
+            Notify(in objectId);
         }
     }
 }

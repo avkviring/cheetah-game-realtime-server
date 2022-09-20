@@ -26,7 +26,7 @@ namespace Cheetah.Matches.Realtime
         {
             buffer.Clear();
             Client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
-            ResultChecker.Check(StructureFFI.Set(Client.Id, ref ObjectId, fieldId, ref buffer));
+            ResultChecker.Check(StructureFFI.Set(Client.Id, in ObjectId, fieldId, ref buffer));
         }
 
         public void CompareAndSetStructure<T>(ushort fieldId, ref T current, ref T newval)
@@ -40,7 +40,7 @@ namespace Cheetah.Matches.Realtime
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 Client.Id,
-                ref ObjectId,
+                in ObjectId,
                 fieldId,
                 ref buffer,
                 ref newBuffer,
@@ -61,7 +61,7 @@ namespace Cheetah.Matches.Realtime
 
             ResultChecker.Check(StructureFFI.CompareAndSet(
                 Client.Id,
-                ref ObjectId,
+                in ObjectId,
                 fieldId,
                 ref buffer,
                 ref newBuffer,
@@ -74,49 +74,49 @@ namespace Cheetah.Matches.Realtime
         {
             buffer.Clear();
             Client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
-            ResultChecker.Check(EventFFI.Send(Client.Id, ref ObjectId, eventId, ref buffer));
+            ResultChecker.Check(EventFFI.Send(Client.Id, in ObjectId, eventId, ref buffer));
         }
 
         public void SendEvent<T>(ushort eventId, uint targetUser, ref T item)
         {
             buffer.Clear();
             Client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
-            ResultChecker.Check(EventFFI.Send(Client.Id, (ushort)targetUser, ref ObjectId, eventId, ref buffer));
+            ResultChecker.Check(EventFFI.Send(Client.Id, (ushort)targetUser, in ObjectId, eventId, ref buffer));
         }
 
         public void SetLong(ushort fieldId, long value)
         {
-            ResultChecker.Check(LongFFI.Set(Client.Id, ref ObjectId, fieldId, value));
+            ResultChecker.Check(LongFFI.Set(Client.Id, in ObjectId, fieldId, value));
         }
 
         public void IncrementLong(ushort fieldId, long increment)
         {
-            ResultChecker.Check(LongFFI.Increment(Client.Id, ref ObjectId, fieldId, increment));
+            ResultChecker.Check(LongFFI.Increment(Client.Id, in ObjectId, fieldId, increment));
         }
 
         public void CompareAndSetLong(ushort fieldId, long currentValue, long newValue)
         {
-            ResultChecker.Check(LongFFI.CompareAndSet(Client.Id, ref ObjectId, fieldId, currentValue, newValue, false, 0));
+            ResultChecker.Check(LongFFI.CompareAndSet(Client.Id, in ObjectId, fieldId, currentValue, newValue, false, 0));
         }
 
         public void CompareAndSetLongWithReset(ushort fieldId, long currentValue, long newValue, long resetValue)
         {
-            ResultChecker.Check(LongFFI.CompareAndSet(Client.Id, ref ObjectId, fieldId, currentValue, newValue, true, resetValue));
+            ResultChecker.Check(LongFFI.CompareAndSet(Client.Id, in ObjectId, fieldId, currentValue, newValue, true, resetValue));
         }
 
         public void SetDouble(ushort fieldId, double value)
         {
-            ResultChecker.Check(DoubleFFI.Set(Client.Id, ref ObjectId, fieldId, value));
+            ResultChecker.Check(DoubleFFI.Set(Client.Id, in ObjectId, fieldId, value));
         }
 
         public void DeleteField(ushort fieldId, FieldType fieldType)
         {
-            ResultChecker.Check(FieldFFI.Delete(Client.Id, ref ObjectId, fieldId, fieldType));
+            ResultChecker.Check(FieldFFI.Delete(Client.Id, in ObjectId, fieldId, fieldType));
         }
 
         public void IncrementDouble(ushort fieldId, double increment)
         {
-            ResultChecker.Check(DoubleFFI.Increment(Client.Id, ref ObjectId, fieldId, increment));
+            ResultChecker.Check(DoubleFFI.Increment(Client.Id, in ObjectId, fieldId, increment));
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace Cheetah.Matches.Realtime
         /// </summary>
         public void Delete()
         {
-            ResultChecker.Check(ObjectFFI.Delete(Client.Id, ref ObjectId));
+            ResultChecker.Check(ObjectFFI.Delete(Client.Id, in ObjectId));
         }
 
         public override string ToString()

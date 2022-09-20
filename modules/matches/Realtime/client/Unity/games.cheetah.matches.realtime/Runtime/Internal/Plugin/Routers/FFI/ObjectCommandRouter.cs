@@ -33,11 +33,11 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI
         }
 
         [MonoPInvokeCallback(typeof(ObjectFFI.CreateListener))]
-        private static void OnCreateListener(ref CheetahObjectId objectId, ushort template)
+        private static void OnCreateListener(in CheetahObjectId objectId, ushort template)
         {
             try
             {
-                current.ObjectCreatingListener?.Invoke(ref objectId, template);
+                current.ObjectCreatingListener?.Invoke(in objectId, template);
             }
             catch (Exception e)
             {
@@ -46,11 +46,11 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI
         }
 
         [MonoPInvokeCallback(typeof(ObjectFFI.CreatedListener))]
-        private static void OnCreatedListener(ref CheetahObjectId objectId)
+        private static void OnCreatedListener(in CheetahObjectId objectId)
         {
             try
             {
-                current.ObjectCreatedListener?.Invoke(ref objectId);
+                current.ObjectCreatedListener?.Invoke(in objectId);
             }
             catch (Exception e)
             {
@@ -60,12 +60,12 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.FFI
 
 
         [MonoPInvokeCallback(typeof(ObjectFFI.DeleteListener))]
-        private static void OnDeleteListener(ref CheetahObjectId objectId)
+        private static void OnDeleteListener(in CheetahObjectId objectId)
         {
             try
             {
-                current.ObjectDeleteListener?.Invoke(ref objectId);
-                current.ObjectPostDeleteListener?.Invoke(ref objectId);
+                current.ObjectDeleteListener?.Invoke(in objectId);
+                current.ObjectPostDeleteListener?.Invoke(in objectId);
             }
             catch (Exception e)
             {
