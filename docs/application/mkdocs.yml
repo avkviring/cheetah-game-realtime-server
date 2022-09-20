@@ -58,6 +58,8 @@ nav:
                   - "Логирование": "modules/matches/realtime/develop/logger.md"
                   - "Панель сетевых команд": "modules/matches/realtime/develop/commands-panel.md"
                   - "Просмотр состояния сервера": "modules/matches/realtime/develop/dump-panel.md"
+              - "Тестирование":
+                  - "Интеграционное": "modules/matches/realtime/test/integration.md"
               - "Плагины": "modules/matches/realtime/plugins/index.md"
       - "Статистика":
           - "Сбор событий": "modules/statistics/events/index.md"
