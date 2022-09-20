@@ -553,7 +553,7 @@ dependencies = [
  "rmp-serde",
  "rmpv",
  "serde",
- "serde_yaml",
+ "serde_yaml 0.8.24",
  "tempfile",
  "thiserror",
  "tokio",
@@ -688,6 +688,8 @@ dependencies = [
  "cheetah-libraries-microservice",
  "jwt-tonic-user-uuid",
  "prost",
+ "serde",
+ "serde_yaml 0.9.13",
  "tokio",
  "tokio-stream",
  "tonic",
@@ -736,7 +738,7 @@ dependencies = [
  "chrono",
  "prost",
  "serde",
- "serde_yaml",
+ "serde_yaml 0.8.24",
  "tokio",
  "tonic",
  "tonic-build",
@@ -3123,6 +3125,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_yaml"
+version = "0.9.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8613d593412a0deb7bbd8de9d908efff5a0cb9ccd8f62c641e7b2ed2f57291d1"
+dependencies = [
+ "indexmap",
+ "itoa 1.0.1",
+ "ryu",
+ "serde",
+ "unsafe-libyaml",
+]
+
+[[package]]
 name = "sha-1"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3983,6 +3998,12 @@ dependencies = [
  "generic-array",
  "subtle",
 ]
+
+[[package]]
+name = "unsafe-libyaml"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1e5fa573d8ac5f1a856f8d7be41d390ee973daf97c806b2c1a465e4e1406e68"
 
 [[package]]
 name = "untrusted"

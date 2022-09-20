@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::collections::HashMap;
 
 use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tokio::sync::RwLock;
@@ -12,6 +12,7 @@ use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
 use matchmaking::external::{TicketRequest, TicketResponse};
+use serde::Deserialize;
 
 use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::matchmaking;
@@ -26,9 +27,9 @@ pub struct StubMatchmakingService {
 	rulemap: HashMap<String, Rules>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Deserialize, serde::Serialize)]
 pub struct Rules {
-	max_user_count: u32,
+	pub max_user_count: u32,
 }
 
 #[derive(Clone)]

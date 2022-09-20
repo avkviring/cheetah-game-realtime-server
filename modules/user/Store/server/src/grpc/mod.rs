@@ -40,14 +40,14 @@ impl Service {
 		health_reporter.set_serving::<FetchServer<FetchService>>().await;
 
 		let auth_interceptor = JwtAuthInterceptor::new(self.jwt_public_key.to_owned());
-		let updater_server = UpdateServer::with_interceptor(updater_service, auth_interceptor.clone());
-		let fetcher_server = FetchServer::with_interceptor(fetcher_service, auth_interceptor.clone());
+		let updater_service = UpdateServer::with_interceptor(updater_service, auth_interceptor.clone());
+		let fetcher_service = FetchServer::with_interceptor(fetcher_service, auth_interceptor.clone());
 
 		Server::builder()
 			.accept_http1(true)
 			.add_service(tonic_web::enable(health_service))
-			.add_service(tonic_web::enable(updater_server))
-			.add_service(tonic_web::enable(fetcher_server))
+			.add_service(tonic_web::enable(updater_service))
+			.add_service(tonic_web::enable(fetcher_service))
 			.serve(addr)
 			.await?;
 
