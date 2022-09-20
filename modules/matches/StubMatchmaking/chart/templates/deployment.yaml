@@ -34,7 +34,17 @@ spec:
                 secretKeyRef:
                   name: jwt
                   key: public
+            - name: "CONFIG_FILE"
+              value: /tmp/config/rules.yaml
+          volumeMounts:
+            - mountPath: /tmp/config/
+              readOnly: true
+              name: configurations
           ports:
             - name: prometheus
               containerPort: 3000
               protocol: TCP
+      volumes:
+        - name: configurations
+          configMap:
+            name: "cheetah-matches-stubmatchmaking-rules"
