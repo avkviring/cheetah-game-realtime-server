@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tokio::sync::RwLock;
@@ -20,20 +20,15 @@ use crate::proto::matches::realtime::internal::{CreateMemberRequest, CreateMembe
 use crate::proto::matches::{factory, realtime};
 
 pub struct StubMatchmakingService {
-	pub jwt_public_key: String,
-	pub factory_service_uri: Uri,
-	pub matches: RwLock<HashMap<String, MatchInfo>>,
-	rules: Rules,
+	jwt_public_key: String,
+	factory_service_uri: Uri,
+	matches: RwLock<HashMap<String, MatchInfo>>,
+	rulemap: HashMap<String, Rules>,
 }
 
-struct Rules {
+#[derive(Clone)]
+pub struct Rules {
 	max_user_count: u32,
-}
-
-impl Default for Rules {
-	fn default() -> Self {
-		Self { max_user_count: 4 }
-	}
 }
 
 #[derive(Clone)]
@@ -73,12 +68,12 @@ impl From<CreateMatchResponse> for MatchInfo {
 }
 
 impl StubMatchmakingService {
-	pub fn new(factory_service: Uri, jwt_public_key: String) -> Self {
+	pub fn new(factory_service: Uri, jwt_public_key: String, rulemap: HashMap<String, Rules>) -> Self {
 		StubMatchmakingService {
 			jwt_public_key,
 			factory_service_uri: factory_service,
 			matches: RwLock::new(HashMap::new()),
-			rules: Default::default(),
+			rulemap,
 		}
 	}
 
@@ -90,7 +85,7 @@ impl StubMatchmakingService {
 				Ok(ticket)
 			}
 			Err(e) => {
-				tracing::error!("Cannot attach_user {}", e);
+				tracing::error!("Cannot attach user {}", e);
 				// если  такой комнаты нет - то удаляем ее из существующих
 				let mut matches = self.matches.write().await;
 				matches.remove(&template);
@@ -117,8 +112,9 @@ impl StubMatchmakingService {
 
 	async fn find_or_create_match(&self, template: &str) -> Result<MatchInfo, String> {
 		let matches = self.matches.read().await;
-		let match_infos: Vec<&MatchInfo> = matches.iter().filter_map(|m| if m.0 == template { Some(m.1) } else { None }).collect();
-		let maybe_match = self.select_by_rules(match_infos).await.cloned();
+		let match_infos = matches.iter().filter_map(|m| if m.0 == template { Some(m.1) } else { None }).collect();
+		let rules = self.rulemap.get(template);
+		let maybe_match = self.select_by_rules(match_infos, rules).await.cloned();
 		drop(matches);
 
 		let match_info = match maybe_match {
@@ -129,18 +125,19 @@ impl StubMatchmakingService {
 		Ok(match_info)
 	}
 
-	async fn select_by_rules<'a, 'b>(&'b self, match_infos: Vec<&'a MatchInfo>) -> Option<&'a MatchInfo> {
+	async fn select_by_rules<'a, 'b>(&'b self, match_infos: Vec<&'a MatchInfo>, rules: Option<&Rules>) -> Option<&'a MatchInfo> {
 		// Фильтруем комнаты в соответствии со значениями в self.rules
 		let mut suitable_rooms = Vec::with_capacity(match_infos.len());
 		for mi in match_infos {
 			let maybe_room = self.query_room(mi).await;
-			match maybe_room {
-				Ok(room_state) => {
-					if room_state.user_count < self.rules.max_user_count {
+			match (maybe_room, rules) {
+				(Ok(room_state), Some(rules)) => {
+					if room_state.user_count < rules.max_user_count {
 						suitable_rooms.push((room_state, mi))
 					}
 				}
-				Err(e) => {
+				(Ok(room_state), None) => suitable_rooms.push((room_state, mi)),
+				(Err(e), _) => {
 					tracing::warn!("Failed to query room: {}", e);
 				}
 			}
@@ -200,7 +197,7 @@ impl StubMatchmakingService {
 	async fn new_realtime_connection(&self, server: &ServerInfo) -> Result<RealtimeClient<Channel>, String> {
 		RealtimeClient::connect(cheetah_libraries_microservice::make_internal_srv_uri(&server.grpc_host, server.grpc_port))
 			.await
-			.map_err(|e| format!("Failed to connect to realtime error {:?}", e))
+			.map_err(|e| format!("Failed to connect to Realtime server: {:?}", e))
 	}
 
 	fn transform_bad_realtime_response_status(&self, status: Status) -> String {
@@ -231,9 +228,11 @@ impl Matchmaking for StubMatchmakingService {
 
 #[cfg(test)]
 pub mod tests {
+	use std::collections::HashMap;
+
 	use tokio::net::TcpListener;
 	use tokio::sync::RwLock;
-	use tokio_stream::wrappers::{ReceiverStream, UnboundedReceiverStream};
+	use tokio_stream::wrappers::ReceiverStream;
 	use tonic::transport::Server;
 	use tonic::{Request, Response, Status};
 
@@ -250,6 +249,10 @@ pub mod tests {
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::service::StubMatchmakingService;
+
+	use super::Rules;
+
+	const DEFAULT_TEMPLATE: &str = "generic";
 
 	#[tokio::test]
 	async fn should_create_match() {
@@ -341,7 +344,7 @@ pub mod tests {
 		let matchmaking = setup(100, true).await;
 		let request = TicketRequest {
 			user_groups: Default::default(),
-			match_template: "yes".to_owned(),
+			match_template: DEFAULT_TEMPLATE.to_owned(),
 		};
 		matchmaking.matchmake(request.clone()).await.unwrap();
 		let response = matchmaking.matchmake(request).await.unwrap();
@@ -358,9 +361,10 @@ pub mod tests {
 			relay_grpc_port: stub_grpc_service_addr.port(),
 			room_sequence: RwLock::new(0),
 		};
+		let max_user_count = 4;
 		let stub_relay = StubRealtimeService {
 			fail_when_zero: RwLock::new(fail_create_user),
-			expected_user_limit: 4,
+			expected_user_limit: max_user_count,
 			room_full: simulate_full_room,
 		};
 		tokio::spawn(async move {
@@ -374,6 +378,7 @@ pub mod tests {
 		let matchmaking = StubMatchmakingService::new(
 			cheetah_libraries_microservice::make_internal_srv_uri(stub_grpc_service_addr.ip().to_string().as_str(), stub_grpc_service_addr.port()),
 			Default::default(),
+			HashMap::from([(DEFAULT_TEMPLATE.to_owned(), Rules { max_user_count })]),
 		);
 		matchmaking
 	}
