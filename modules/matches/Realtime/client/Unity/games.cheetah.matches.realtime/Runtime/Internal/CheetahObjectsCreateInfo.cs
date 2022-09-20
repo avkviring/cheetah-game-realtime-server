@@ -23,40 +23,40 @@ namespace Cheetah.Matches.Realtime.Internal
             router.ObjectPostDeleteListener += OnDeleted;
         }
 
-        private void OnObjectCreating(ref CheetahObjectId objectId, ushort template)
+        private void OnObjectCreating(in CheetahObjectId objectId, ushort template)
         {
             templates.Add(objectId, template);
         }
 
-        private void OnObjectCreated(ref CheetahObjectId objectId)
+        private void OnObjectCreated(in CheetahObjectId objectId)
         {
             created.Add(objectId);
         }
 
-        private void OnDeleted(ref CheetahObjectId objectId)
+        private void OnDeleted(in CheetahObjectId objectId)
         {
             templates.Remove(objectId);
             created.Remove(objectId);
         }
 
-        public CheetahObject GetObject(ref CheetahObjectId objectId)
+        public CheetahObject GetObject(in CheetahObjectId objectId)
         {
             return new CheetahObject(objectId, templates[objectId], client);
         }
 
-        public bool IsCreated(ref CheetahObjectId objectId)
+        public bool IsCreated(in CheetahObjectId objectId)
         {
             return created.Contains(objectId);
         }
 
-        public void OnLocalObjectCreating(ref CheetahObjectId objectId, ushort template)
+        public void OnLocalObjectCreating(in CheetahObjectId objectId, ushort template)
         {
-            OnObjectCreating(ref objectId, template);
+            OnObjectCreating(in objectId, template);
         }
 
-        public void OnLocalObjectCreate(ref CheetahObjectId objectId)
+        public void OnLocalObjectCreate(in CheetahObjectId objectId)
         {
-            OnObjectCreated(ref objectId);
+            OnObjectCreated(in objectId);
         }
     }
 }

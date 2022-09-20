@@ -15,9 +15,9 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByTemplate
             router.DeleteListener += OnFieldDelete;
         }
 
-        private void OnFieldDelete(ushort commandCreator, ref CheetahObjectId objectId, ushort fieldId, FieldType fieldType)
+        private void OnFieldDelete(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, FieldType fieldType)
         {
-            var cheetahObject = objectsCreateInfo.GetObject(ref objectId);
+            var cheetahObject = objectsCreateInfo.GetObject(in objectId);
             if (listenersByTemplate.TryGetValue(cheetahObject.Template, out var listeners))
             {
                 listeners.Notify(new DeletedField

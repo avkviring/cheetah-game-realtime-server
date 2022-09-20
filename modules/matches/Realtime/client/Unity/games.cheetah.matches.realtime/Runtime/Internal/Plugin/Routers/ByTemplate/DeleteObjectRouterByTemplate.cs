@@ -15,9 +15,9 @@ namespace Cheetah.Matches.Realtime.Internal.Plugin.Routers.ByTemplate
             objectCommandRouter.ObjectDeleteListener += OnObjectDelete;
         }
 
-        private void OnObjectDelete(ref CheetahObjectId objectId)
+        private void OnObjectDelete(in CheetahObjectId objectId)
         {
-            Notify(ref objectId);
+            Notify(in objectId);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Cheetah.Matches.Realtime.DOA.Income.ByObject
         {
             this.id = id;
             router = client.GetPlugin<EventCommandRouterByObject>();
-            router.RegisterListener(ref id, fieldId, OnEvent);
+            router.RegisterListener(in id, fieldId, OnEvent);
             codec = client.CodecRegistry.GetCodec<T>();
         }
 
@@ -31,7 +31,7 @@ namespace Cheetah.Matches.Realtime.DOA.Income.ByObject
         public override void Dispose()
         {
             base.Dispose();
-            router.UnRegisterListener(ref id, fieldId, OnEvent);
+            router.UnRegisterListener(in id, fieldId, OnEvent);
         }
     }
 }
