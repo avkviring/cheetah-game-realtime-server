@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use jwt_tonic_user_uuid::JWTUserTokenParser;
 use tokio::sync::RwLock;
 use tonic::{
 	transport::{Channel, Uri},
@@ -21,7 +20,6 @@ use crate::proto::matches::realtime::internal::{CreateMemberRequest, CreateMembe
 use crate::proto::matches::{factory, realtime};
 
 pub struct StubMatchmakingService {
-	jwt_public_key: String,
 	factory_service_uri: Uri,
 	matches: RwLock<HashMap<String, MatchInfo>>,
 	rulemap: HashMap<String, Rules>,
@@ -69,9 +67,8 @@ impl From<CreateMatchResponse> for MatchInfo {
 }
 
 impl StubMatchmakingService {
-	pub fn new(factory_service: Uri, jwt_public_key: String, rulemap: HashMap<String, Rules>) -> Self {
+	pub fn new(factory_service: Uri, rulemap: HashMap<String, Rules>) -> Self {
 		StubMatchmakingService {
-			jwt_public_key,
 			factory_service_uri: factory_service,
 			matches: RwLock::new(HashMap::new()),
 			rulemap,
@@ -212,12 +209,6 @@ impl StubMatchmakingService {
 #[tonic::async_trait]
 impl Matchmaking for StubMatchmakingService {
 	async fn matchmaking(&self, request: Request<TicketRequest>) -> Result<Response<TicketResponse>, Status> {
-		// TODO: заменить на новую схему авторизации
-		let _user = JWTUserTokenParser::new(self.jwt_public_key.clone())
-			.get_user_uuid_from_grpc(request.metadata())
-			.trace_err(format!("Get user uuid {:?}", request.metadata()))
-			.map_err(|_| Status::unauthenticated(""))?;
-
 		let ticket_request = request.into_inner();
 		self.matchmake(ticket_request)
 			.await
@@ -378,7 +369,6 @@ pub mod tests {
 
 		let matchmaking = StubMatchmakingService::new(
 			cheetah_libraries_microservice::make_internal_srv_uri(stub_grpc_service_addr.ip().to_string().as_str(), stub_grpc_service_addr.port()),
-			Default::default(),
 			HashMap::from([(DEFAULT_TEMPLATE.to_owned(), Rules { max_user_count })]),
 		);
 		matchmaking

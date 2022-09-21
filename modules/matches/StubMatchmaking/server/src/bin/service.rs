@@ -1,9 +1,11 @@
 use tonic::transport::Server;
 
-use cheetah_matches_stub_matchmaking::proto::matches::matchmaking;
-use cheetah_matches_stub_matchmaking::service::StubMatchmakingService;
+use cheetah_libraries_microservice::auth::JwtAuthInterceptor;
 
 use cheetah_matches_stub_matchmaking::configuration::YamlConfig;
+use cheetah_matches_stub_matchmaking::proto::matches::matchmaking;
+use cheetah_matches_stub_matchmaking::service::StubMatchmakingService;
+use matchmaking::external::matchmaking_server::MatchmakingServer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,12 +16,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let config_file = cheetah_libraries_microservice::get_env("CONFIG_FILE");
 	let rulemap = YamlConfig::from_file(config_file.into()).unwrap().rulemap();
 
-	let service = StubMatchmakingService::new(factory_url, jwt_public_key, rulemap);
-	let grpc_service = matchmaking::external::matchmaking_server::MatchmakingServer::new(service);
+	let service = StubMatchmakingService::new(factory_url, rulemap);
+
+	let interceptor = JwtAuthInterceptor::new(jwt_public_key);
+	let service = MatchmakingServer::with_interceptor(service, interceptor);
 
 	Server::builder()
 		.accept_http1(true)
-		.add_service(tonic_web::enable(grpc_service))
+		.add_service(tonic_web::enable(service))
 		.serve(cheetah_libraries_microservice::get_external_service_binding_addr())
 		.await
 		.unwrap();
