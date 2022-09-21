@@ -11,8 +11,8 @@ pub type GroupName = String;
 /// Если задано - то полное имя определяется из пути до файла + собственное имя, если не задано -
 /// то имя определяется только по пути
 ///
-pub trait SelfName {
-	fn get_self_name(&self) -> Option<String>;
+pub trait MaybeNamed {
+	fn name(&self) -> Option<&str>;
 }
 
 /// Описание комнаты
@@ -23,8 +23,8 @@ pub struct Room {
 	pub objects: Vec<RoomObject>,
 }
 
-impl SelfName for Room {
-	fn get_self_name(&self) -> Option<String> {
+impl MaybeNamed for Room {
+	fn name(&self) -> Option<&str> {
 		None
 	}
 }
@@ -35,12 +35,13 @@ pub struct Field {
 	/// Имя опционально, актуально только для мультидокументого файла
 	pub name: Option<String>,
 	pub id: u16,
-	pub r#type: FieldType,
+	#[serde(rename = "type")]
+	pub typ: FieldType,
 }
 
-impl SelfName for Field {
-	fn get_self_name(&self) -> Option<String> {
-		self.name.clone()
+impl MaybeNamed for Field {
+	fn name(&self) -> Option<&str> {
+		self.name.as_deref()
 	}
 }
 
@@ -51,8 +52,9 @@ pub struct Template {
 	#[serde(default)]
 	pub permissions: TemplatePermissions,
 }
-impl SelfName for Template {
-	fn get_self_name(&self) -> Option<String> {
+
+impl MaybeNamed for Template {
+	fn name(&self) -> Option<&str> {
 		None
 	}
 }

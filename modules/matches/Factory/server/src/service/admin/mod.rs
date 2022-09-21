@@ -26,7 +26,7 @@ impl ConfigurationsService {
 				.iter()
 				.map(|(name, field)| admin::FieldInfo {
 					id: field.id as u32,
-					r#type: to_admin_field_type(&field.r#type),
+					r#type: to_admin_field_type(&field.typ),
 					name: name.to_string(),
 				})
 				.collect(),
@@ -96,7 +96,7 @@ pub mod tests {
 				Field {
 					name: None,
 					id: 10,
-					r#type: FieldType::Long,
+					typ: FieldType::Long,
 				},
 			)]
 			.into_iter()

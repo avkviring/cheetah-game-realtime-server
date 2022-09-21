@@ -54,7 +54,7 @@ fn create_permissions_field(
 
 	Result::Ok(relay::PermissionField {
 		id: field.id as u32,
-		r#type: shared::FieldType::from(&field.r#type) as i32,
+		r#type: shared::FieldType::from(&field.typ) as i32,
 		rules,
 	})
 }
@@ -126,7 +126,7 @@ pub mod test {
 				Field {
 					name: None,
 					id: 77,
-					r#type: FieldType::Long,
+					typ: FieldType::Long,
 				},
 			)]
 			.into_iter()
@@ -221,7 +221,7 @@ pub mod test {
 				Field {
 					name: None,
 					id: 128,
-					r#type: FieldType::Long,
+					typ: FieldType::Long,
 				},
 			)]
 			.into_iter()

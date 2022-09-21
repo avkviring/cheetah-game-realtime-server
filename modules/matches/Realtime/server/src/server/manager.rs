@@ -99,7 +99,9 @@ impl RoomsServerManager {
 
 	pub fn query_room(&self, room_id: u64) -> Result<Option<RoomInfo>, String> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ManagementTask::QueryRoom(room_id, sender));
+		self.sender
+			.send(ManagementTask::QueryRoom(room_id, sender))
+			.unwrap_or_else(|_| panic!("{}", expect_send_msg("QueryRoom")));
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(maybe_room_info) => Ok(maybe_room_info),
 			Err(e) => Err(format!("{:?}", e)),
