@@ -102,7 +102,7 @@ jobs:
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
           mkdir -p $lib_path
           cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/          
-          cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/        
+          cp build-macos/libcheetah_matches_realtime_embedded.bundle $lib_path/        
           cp build-on-windows-result/cheetah_matches_realtime_embedded.dll $lib_path/
           cp build-on-windows-result/cheetah_matches_realtime_embedded.pdb $lib_path/
       - uses: actions/setup-node@v3
