@@ -26,7 +26,7 @@ impl YamlConfig {
 	}
 
 	pub fn from_file(path: PathBuf) -> Result<Self, Error> {
-		let file = File::open(path).map_err(|e| Error::IOError(e))?;
+		let file = File::open(path).map_err(Error::IOError)?;
 		let reader = BufReader::new(file);
 		let rulemap = Self::from_reader(reader)?;
 
@@ -34,7 +34,7 @@ impl YamlConfig {
 	}
 
 	fn from_reader(reader: impl Read) -> Result<Self, Error> {
-		serde_yaml::from_reader(reader).map_err(|e| Error::DeserializationError(e))
+		serde_yaml::from_reader(reader).map_err(Error::DeserializationError)
 	}
 }
 

@@ -107,7 +107,7 @@ impl RoomsServer {
 					}
 				},
 				ManagementTask::QueryRoom(room_id, sender) => {
-					self.rooms.room_by_id.get(&room_id).map(|room| {
+					if let Some(room) = self.rooms.room_by_id.get(&room_id) {
 						let room_info = RoomInfo {
 							member_count: room.members.len() as u32,
 						};
@@ -115,7 +115,7 @@ impl RoomsServer {
 							Ok(()) => (),
 							Err(e) => tracing::error!("[Request::QueryRoom] error sending response {:?}", e),
 						}
-					});
+					}
 				}
 				ManagementTask::GetRooms(sender) => match sender.send(self.rooms.room_by_id.keys().cloned().collect()) {
 					Ok(_) => {}

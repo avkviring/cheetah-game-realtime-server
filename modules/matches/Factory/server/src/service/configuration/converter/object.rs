@@ -29,7 +29,7 @@ pub fn create_relay_object(
 		let field = name_to_field
 			.get(&value.field)
 			.ok_or_else(|| Error::FieldNotExistForObject(room_name.clone(), value.field.clone()))?;
-		match field.r#type {
+		match field.typ {
 			FieldType::Long => {
 				let value = value
 					.value
@@ -118,7 +118,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 55,
-						r#type: FieldType::Long,
+						typ: FieldType::Long,
 					},
 				),
 				(
@@ -126,7 +126,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 55,
-						r#type: FieldType::Double,
+						typ: FieldType::Double,
 					},
 				),
 				(
@@ -134,7 +134,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 59,
-						r#type: FieldType::Struct,
+						typ: FieldType::Struct,
 					},
 				),
 			],
@@ -176,7 +176,7 @@ pub mod test {
 				Field {
 					name: None,
 					id: 55,
-					r#type: FieldType::Long,
+					typ: FieldType::Long,
 				},
 			)],
 		);
@@ -199,7 +199,7 @@ pub mod test {
 				Field {
 					name: None,
 					id: 0,
-					r#type: FieldType::Event,
+					typ: FieldType::Event,
 				},
 			)],
 		);
@@ -222,7 +222,7 @@ pub mod test {
 				Field {
 					name: None,
 					id: 55,
-					r#type: FieldType::Double,
+					typ: FieldType::Double,
 				},
 			)],
 		);

@@ -8,9 +8,10 @@ use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
+use serde_yaml::Deserializer;
 
 use crate::service::configuration::yaml::error::Error;
-use crate::service::configuration::yaml::structures::{Field, FieldName, FieldType, GroupName, Room, RoomName, SelfName, Template, TemplateName};
+use crate::service::configuration::yaml::structures::{Field, FieldName, FieldType, GroupName, MaybeNamed, Room, RoomName, Template, TemplateName};
 
 pub mod error;
 pub mod structures;
@@ -30,9 +31,9 @@ impl YamlConfigurations {
 	pub fn load(root: impl Into<PathBuf>) -> Result<Self, Error> {
 		let root = root.into();
 		let groups = Self::load_group(root.clone())?;
-		let fields = Self::load_items::<_>(root.clone(), root.join("fields").as_path(), Path::new(""), || None)?;
-		let templates = Self::load_items::<_>(root.clone(), root.join("templates").as_path(), Path::new(""), || None)?;
-		let rooms = Self::load_items::<_>(root.clone(), root.join("rooms").as_path(), Path::new(""), || {
+		let fields = Self::load_items(root.clone(), root.join("fields").as_path(), Path::new(""), || None)?;
+		let templates = Self::load_items(root.clone(), root.join("templates").as_path(), Path::new(""), || None)?;
+		let rooms = Self::load_items(root.clone(), root.join("rooms").as_path(), Path::new(""), || {
 			Some(Room { objects: vec![] })
 		})?;
 		YamlConfigurations {
@@ -51,7 +52,7 @@ impl YamlConfigurations {
 	fn validate_fields(self) -> Result<YamlConfigurations, Error> {
 		let mut exist_fields: HashMap<(FieldType, u16), String> = HashMap::default();
 		for (name, field) in self.fields.iter() {
-			let key = (field.r#type.clone(), field.id);
+			let key = (field.typ.clone(), field.id);
 			if let Vacant(e) = exist_fields.entry(key.clone()) {
 				e.insert(name.clone());
 			} else {
@@ -93,13 +94,7 @@ impl YamlConfigurations {
 		})
 	}
 
-	///
-	/// Default это временный костыль, так как serde_yaml не может распарсить пустую строку в
-	/// структуру со всеми полями по-умолчанию
-	///
-	/// Убрать после закрытия задачи - https://github.com/dtolnay/serde-yaml/issues/86
-	///
-	fn load_items<T: SelfName>(
+	fn load_items<T: MaybeNamed>(
 		global_root: PathBuf,
 		dir: &Path,
 		prefix: &Path,
@@ -128,48 +123,22 @@ impl YamlConfigurations {
 					result.insert(k, v);
 				});
 			} else if let Some(name) = name.strip_suffix(".yaml").or_else(|| name.strip_suffix(".yml")) {
-				let name = prefix.join(name);
 				let path = entry.path();
 				let content = read_to_string(&path)?;
 
-				let mut count = 0;
-				let name_from_path = name.to_str().unwrap().to_string().replace('\\', "/");
-				let prepared_content = Self::prepare_content(content);
-				for document in serde_yaml::Deserializer::from_str(prepared_content.as_str()) {
-					count += 1;
-					let value = T::deserialize(document).map_err(|e| Error::Yaml {
-						message: format!("Cannot read {}", type_name::<T>()),
-						global_root: global_root.clone(),
-						file: path.clone(),
-						e,
-					})?;
-					let name_from_item = value.get_self_name().map(|v| format!("/{}", v)).unwrap_or_else(|| "".to_string());
-
-					let key = format!("{}{}", name_from_path, name_from_item);
-					match result.insert(key.clone(), value) {
-						None => {}
-						Some(_) => return Err(Error::NameAlreadyExists { name: key, file: path }),
+				// let mut count = 0;
+				let name_as_path = prefix.join(name);
+				let name = name_as_path.to_str().unwrap().to_string().replace('\\', "/");
+				let clean_content = Self::remove_byte_order_mark(content);
+				let documents = Deserializer::from_str(&clean_content);
+				let documents: Vec<Deserializer> = documents.collect();
+				if !documents.is_empty() {
+					for document in documents {
+						Self::deserialize_item(document, &global_root, &path, &name, &mut result)?;
 					}
-				}
-				// файл пустой - необходимо создать структуру по-умолчанию
-				if count == 0 {
-					match default_factory() {
-						None => {
-							return Err(Error::CannotCreateDefault {
-								name: name_from_path,
-								file: path,
-							})
-						}
-						Some(value) => match result.insert(name_from_path.clone(), value) {
-							None => {}
-							Some(_) => {
-								return Err(Error::NameAlreadyExists {
-									name: name_from_path,
-									file: path,
-								})
-							}
-						},
-					}
+				} else {
+					let document = Deserializer::from_str("");
+					Self::deserialize_item(document, &global_root, &path, &name, &mut result)?;
 				}
 			}
 		}
@@ -177,7 +146,32 @@ impl YamlConfigurations {
 		Ok(result)
 	}
 
-	fn prepare_content(content: String) -> String {
+	fn deserialize_item<T: DeserializeOwned + MaybeNamed>(
+		document: Deserializer,
+		global_root: &Path,
+		path: &Path,
+		name_prefix: &str,
+		into: &mut HashMap<String, T>,
+	) -> Result<(), Error> {
+		let value = T::deserialize(document).map_err(|e| Error::Yaml {
+			message: format!("Cannot read {}", type_name::<T>()),
+			global_root: global_root.to_owned(),
+			file: path.to_owned(),
+			e,
+		})?;
+		let name_suffix = value.name().map(|v| format!("/{}", v)).unwrap_or_else(|| "".to_string());
+
+		let key = format!("{}{}", name_prefix, name_suffix);
+		match into.insert(key.clone(), value) {
+			None => Ok(()),
+			Some(_) => Err(Error::NameAlreadyExists {
+				name: key,
+				file: path.to_owned(),
+			}),
+		}
+	}
+
+	fn remove_byte_order_mark(content: String) -> String {
 		content.replace('\u{feff}', "")
 	}
 }
@@ -196,7 +190,13 @@ pub mod test {
 	pub const EXAMPLE_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/example/rooms/");
 
 	#[test]
-	pub fn should_load_groups() {
+	fn should_deserialize_field() {
+		let yaml = "id: 55\ntype: struct";
+		serde_yaml::from_str::<Field>(yaml).expect("Failed to deserialize correct YAML");
+	}
+
+	#[test]
+	fn should_load_groups() {
 		let configuration = setup();
 		assert_eq!(
 			configuration.groups,
@@ -212,7 +212,7 @@ pub mod test {
 	}
 
 	#[test]
-	pub fn should_load_fields() {
+	fn should_load_fields() {
 		let configuration = setup();
 		assert_eq!(
 			configuration.fields,
@@ -222,7 +222,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 10,
-						r#type: FieldType::Double
+						typ: FieldType::Double
 					}
 				),
 				(
@@ -230,7 +230,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 15,
-						r#type: FieldType::Double
+						typ: FieldType::Double
 					}
 				),
 				(
@@ -238,7 +238,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 1,
-						r#type: FieldType::Struct
+						typ: FieldType::Struct
 					}
 				),
 				(
@@ -246,7 +246,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 2,
-						r#type: FieldType::Long
+						typ: FieldType::Long
 					}
 				),
 				(
@@ -254,7 +254,7 @@ pub mod test {
 					Field {
 						name: Some("power".to_string()),
 						id: 100,
-						r#type: FieldType::Double
+						typ: FieldType::Double
 					}
 				),
 				(
@@ -262,7 +262,7 @@ pub mod test {
 					Field {
 						name: Some("info".to_string()),
 						id: 110,
-						r#type: FieldType::Struct
+						typ: FieldType::Struct
 					}
 				),
 				(
@@ -270,7 +270,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 55,
-						r#type: FieldType::Struct
+						typ: FieldType::Struct
 					}
 				)
 			]
@@ -280,7 +280,7 @@ pub mod test {
 	}
 
 	#[test]
-	pub fn should_load_templates() {
+	fn should_load_templates() {
 		let configuration = setup();
 		assert_eq!(
 			configuration.templates,
@@ -323,54 +323,54 @@ pub mod test {
 	}
 
 	#[test]
-	pub fn should_load_rooms() {
+	fn should_load_rooms() {
 		let configuration = setup();
 		assert_eq!(
-			configuration.rooms,
-			vec![
-				(
-					"gubaha".to_string(),
-					Room {
-						objects: vec![
-							RoomObject {
-								id: Some(100),
-								template: "user".to_string(),
-								group: "red".to_string(),
-								values: vec![
-									FieldValue {
-										field: "user/score".to_string(),
-										value: rmpv::Value::Integer(Integer::from(100))
-									},
-									FieldValue {
-										field: "user/info".to_string(),
-										value: rmpv::Value::Map(vec![(
-											rmpv::Value::String(Utf8String::from("name")),
-											rmpv::Value::String(Utf8String::from("alex"))
-										)])
-									}
-								]
+			configuration.rooms["gubaha"],
+			Room {
+				objects: vec![
+					RoomObject {
+						id: Some(100),
+						template: "user".to_string(),
+						group: "red".to_string(),
+						values: vec![
+							FieldValue {
+								field: "user/score".to_string(),
+								value: rmpv::Value::Integer(Integer::from(100))
 							},
-							RoomObject {
-								id: None,
-								template: "weapons/turret".to_string(),
-								group: "blue".to_string(),
-								values: vec![FieldValue {
-									field: "characteristic/damage".to_string(),
-									value: rmpv::Value::Integer(Integer::from(200))
-								}]
+							FieldValue {
+								field: "user/info".to_string(),
+								value: rmpv::Value::Map(vec![(
+									rmpv::Value::String(Utf8String::from("name")),
+									rmpv::Value::String(Utf8String::from("alex"))
+								)])
 							}
-						],
+						]
+					},
+					RoomObject {
+						id: None,
+						template: "weapons/turret".to_string(),
+						group: "blue".to_string(),
+						values: vec![FieldValue {
+							field: "characteristic/damage".to_string(),
+							value: rmpv::Value::Integer(Integer::from(200))
+						}]
 					}
-				),
-				("kungur".to_string(), Room { objects: vec![] })
-			]
-			.into_iter()
-			.collect()
-		)
+				],
+			},
+		);
+
+		assert_eq!(configuration.rooms["kungur"], Room { objects: vec![] });
 	}
 
 	#[test]
-	pub fn validate_unique_template_id() {
+	fn should_load_empty_room_config() {
+		let configuration = setup();
+		assert_eq!(configuration.rooms["kungur"], Room { objects: vec![] })
+	}
+
+	#[test]
+	fn validate_unique_template_id() {
 		let configurations = YamlConfigurations {
 			groups: Default::default(),
 			fields: Default::default(),
@@ -409,7 +409,7 @@ pub mod test {
 	}
 
 	#[test]
-	pub fn validate_unique_field_id() {
+	fn validate_unique_field_id() {
 		let configurations = YamlConfigurations {
 			groups: Default::default(),
 			fields: vec![
@@ -418,7 +418,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 100,
-						r#type: FieldType::Long,
+						typ: FieldType::Long,
 					},
 				),
 				(
@@ -426,7 +426,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 100,
-						r#type: FieldType::Long,
+						typ: FieldType::Long,
 					},
 				),
 			]
@@ -450,7 +450,7 @@ pub mod test {
 	}
 
 	#[test]
-	pub fn validate_unique_field_id_for_different_types() {
+	fn validate_unique_field_id_for_different_types() {
 		let configurations = YamlConfigurations {
 			groups: Default::default(),
 			fields: vec![
@@ -459,7 +459,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 100,
-						r#type: FieldType::Long,
+						typ: FieldType::Long,
 					},
 				),
 				(
@@ -467,7 +467,7 @@ pub mod test {
 					Field {
 						name: None,
 						id: 100,
-						r#type: FieldType::Struct,
+						typ: FieldType::Struct,
 					},
 				),
 			]

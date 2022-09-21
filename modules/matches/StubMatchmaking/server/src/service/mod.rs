@@ -95,7 +95,7 @@ impl StubMatchmakingService {
 	}
 
 	async fn try_matchmake(&self, ticket: &TicketRequest, template: &str) -> Result<TicketResponse, String> {
-		let match_info = self.find_or_create_match(&template).await?;
+		let match_info = self.find_or_create_match(template).await?;
 		match self.attach_user(ticket, &match_info).await {
 			Ok(member_attach_response) => Ok(TicketResponse {
 				private_key: member_attach_response.private_key,
