@@ -19,7 +19,7 @@ fnv = "1.0.7"
 serde = { version = "1.0.140", features = ["derive", "rc"] }
 heapless = { version = "0.7.10", features = ["serde"] }
 futures = "0.3.21"
-serde_json = "1.0.82"
+serde_json = "1.0.85"
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
 tokio-stream = { version = "0.1.8", features = ["net"] }
 tonic = "0.6.2"
