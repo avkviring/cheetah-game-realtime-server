@@ -95,9 +95,11 @@ jobs:
           cp build-on-windows-result/cheetah_matches_realtime_client.dll $lib_path/windows.dll
           cp build-on-windows-result/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
           cp build-ios/libcheetah_matches_realtime_client.a $lib_path/ios.a
-          cp build-android/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so $lib_path/android-armv7.so
-          cp build-android/aarch64-linux-android/release/libcheetah_matches_realtime_client.so $lib_path/android-aarch64.so
-      - name: Copy Libraries into Realtime Matches Matches Package
+          mkdir $lib_path/android-armv7
+          cp build-android/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so $lib_path/android-armv7/libcheetah_matches_realtime_client.so
+          mkdir $lib_path/android-aarch64
+          cp build-android/aarch64-linux-android/release/libcheetah_matches_realtime_client.so $lib_path/android-aarch64/libcheetah_matches_realtime_client.so
+      - name: Copy Libraries into Realtime Matches Embedded Package
         run: |
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
           mkdir -p $lib_path
