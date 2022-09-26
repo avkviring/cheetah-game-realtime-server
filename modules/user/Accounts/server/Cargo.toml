@@ -28,7 +28,7 @@ rand = "0.8"
 tracing = "0.1.31"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 headers = "0.3.1"
-rustls = { version = "0.20.2" }
+rustls = { version = "0.20.6" }
 thiserror = "1.0.30"
 prometheus = "0.13.1"
 uuid = { version = "1.0.0", features = ["v4", "serde"] }
