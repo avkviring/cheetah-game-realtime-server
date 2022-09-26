@@ -7,7 +7,7 @@ namespace Cheetah.Matches.Realtime.Internal.FFI
 #elif UNITY_EDITOR_LINUX
         public const string Library = "linux";            
 #elif UNITY_ANDROID
-        public const string Library = "android-armv7";
+        public const string Library = "cheetah_matches_realtime_client";
 #elif UNITY_IOS
         public const string Library = "__Internal";
 #elif UNITY_STANDALONE_WIN
