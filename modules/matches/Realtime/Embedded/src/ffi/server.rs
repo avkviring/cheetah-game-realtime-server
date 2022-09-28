@@ -11,16 +11,8 @@ pub struct EmbeddedServerDescription {
 	game_port: u16,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[repr(u8)]
-pub enum ResultCode {
-	OK = 0,
-	InternalError = 1,
-	BindingAddressNotIpV4 = 2,
-}
-
 #[no_mangle]
-pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription) -> ResultCode {
+pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_error: extern "C" fn(*const u16)) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	registry.next_server_id += 1;
 	let server_id = registry.next_server_id;
@@ -30,13 +22,20 @@ pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription) -> Resu
 			result.id = server_id;
 			result.game_host = match server.game_socket_addr.ip() {
 				IpAddr::V4(v4) => v4.octets(),
-				IpAddr::V6(_) => return ResultCode::BindingAddressNotIpV4,
+				IpAddr::V6(_) => {
+					on_error(widestring::U16CString::default().as_ptr());
+					return false;
+				}
 			};
 			result.game_port = server.game_socket_addr.port();
 			registry.servers.insert(server_id, server);
-			ResultCode::OK
+			true
 		}
-		Err(_) => ResultCode::InternalError,
+		Err(e) => {
+			let string = widestring::U16CString::from_str(format!("{:?}", e)).unwrap();
+			on_error(string.as_ptr());
+			false
+		}
 	}
 }
 
@@ -53,20 +52,25 @@ pub extern "C" fn destroy_server(server_id: ServerId) -> bool {
 
 #[cfg(test)]
 mod test {
-	use crate::ffi::server::{destroy_server, run_new_server, EmbeddedServerDescription, ResultCode};
+	use crate::ffi::server::{destroy_server, run_new_server, EmbeddedServerDescription};
 
 	#[test]
 	pub fn should_run_new_server() {
 		let mut result = EmbeddedServerDescription::default();
-		let result = run_new_server(&mut result);
-		assert_eq!(result, ResultCode::OK)
+		let success = run_new_server(&mut result, on_error);
+		assert!(success)
 	}
 
 	#[test]
 	pub fn should_destroy_server() {
 		let mut result = EmbeddedServerDescription::default();
-		run_new_server(&mut result);
+		let success = run_new_server(&mut result, on_error);
+		assert!(success);
 		assert!(destroy_server(result.id));
 		assert!(!destroy_server(result.id))
+	}
+
+	pub extern "C" fn on_error(message: *const u16) {
+		panic!("Fail create server with message {:?}", message)
 	}
 }

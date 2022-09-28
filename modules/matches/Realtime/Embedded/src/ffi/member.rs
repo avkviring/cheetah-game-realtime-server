@@ -12,7 +12,13 @@ pub struct MemberDescription {
 }
 
 #[no_mangle]
-pub extern "C" fn create_member(server_id: ServerId, room_id: RoomId, group: u64, member_descriptions: &mut MemberDescription) -> bool {
+pub extern "C" fn create_member(
+	server_id: ServerId,
+	room_id: RoomId,
+	group: u64,
+	member_descriptions: &mut MemberDescription,
+	on_error: extern "C" fn(*const u16),
+) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	return if let Some(server) = registry.servers.get_mut(&server_id) {
 		let manager = server.manager.clone();
@@ -26,9 +32,13 @@ pub extern "C" fn create_member(server_id: ServerId, room_id: RoomId, group: u64
 				member_descriptions.id = member_id;
 				true
 			}
-			Err(_) => false,
+			Err(e) => {
+				on_error(widestring::U16CString::from_str(format!("{:?}", e)).unwrap().as_ptr());
+				false
+			}
 		}
 	} else {
+		on_error(widestring::U16CString::from_str(format!("Embedded server not found")).unwrap().as_ptr());
 		false
 	};
 }
@@ -42,11 +52,21 @@ mod test {
 	#[test]
 	pub fn should_create_member() {
 		let mut result = EmbeddedServerDescription::default();
-		run_new_server(&mut result);
+		run_new_server(&mut result, on_server_error);
 		let mut room_id = 0;
-		create_room(result.id, &mut room_id);
+		create_room(result.id, &mut room_id, on_room_error);
 		let mut member = Default::default();
-		assert!(create_member(result.id, room_id, 777, &mut member));
+		assert!(create_member(result.id, room_id, 777, &mut member, on_member_error));
 		assert_eq!(member.id, 1);
+	}
+
+	pub extern "C" fn on_server_error(message: *const u16) {
+		panic!("Fail create server with message {:?}", message)
+	}
+	pub extern "C" fn on_room_error(_: *const u16) {
+		panic!("Fail create room")
+	}
+	pub extern "C" fn on_member_error(_: *const u16) {
+		panic!("Fail create member")
 	}
 }

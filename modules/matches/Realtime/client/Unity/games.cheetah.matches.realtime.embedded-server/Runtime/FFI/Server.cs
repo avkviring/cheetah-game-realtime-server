@@ -4,6 +4,9 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.FFI
 {
     internal static class Server
     {
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void OnServerError([MarshalAs(UnmanagedType.LPWStr)] string message);
+
         internal struct Description
         {
             internal ulong id;
@@ -14,16 +17,9 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.FFI
             internal ushort gamePort;
         }
 
-
-        public enum ResultCode
-        {
-            Ok = 0,
-            InternalError = 1,
-            BindingAddressNotIpV4 = 2,
-        }
-
+        
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "run_new_server")]
-        internal static extern ResultCode RunNewServer(ref Description description);
+        internal static extern bool RunNewServer(ref Description description, OnServerError onServerError);
 
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_server")]
         internal static extern bool DestroyServer(ulong serverId);

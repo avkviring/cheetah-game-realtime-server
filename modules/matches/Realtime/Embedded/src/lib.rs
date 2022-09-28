@@ -4,11 +4,11 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use cheetah_matches_realtime::builder::ServerBuilder;
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 
 use cheetah_matches_realtime::server::manager::RoomsServerManager;
-use cheetah_matches_realtime::ServerBuilder;
 
 mod ffi;
 
@@ -32,8 +32,8 @@ pub enum EmbeddedServerWrapperError {
 
 impl EmbeddedServerWrapper {
 	pub fn run_new_server() -> anyhow::Result<Self> {
-		let runtime = tokio::runtime::Builder::new_multi_thread().worker_threads(2).enable_io().build().unwrap();
-		let server = runtime.block_on(async move { ServerBuilder::default().build().await });
+		let runtime = tokio::runtime::Builder::new_multi_thread().worker_threads(2).enable_io().build()?;
+		let server = runtime.block_on(async move { ServerBuilder::default().build().await })?;
 		let manager = server.manager.clone();
 		let game_socket_addr = server.game_socket_addr;
 		let internal_grpc_socket_addr = server.internal_grpc_tcp_listener.local_addr()?;

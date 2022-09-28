@@ -140,7 +140,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_watch_created_room_event() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap().0)));
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap()));
 
 		let first_room_id = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
 
@@ -162,7 +162,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_create_super_member() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap().0)));
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap()));
 
 		std::env::set_var(SUPER_MEMBER_KEY_ENV, "some-key");
 		let service = RealtimeInternalService::new(server_manager.clone());

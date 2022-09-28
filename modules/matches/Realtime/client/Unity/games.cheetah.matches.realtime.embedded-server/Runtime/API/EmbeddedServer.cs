@@ -1,4 +1,5 @@
 using System;
+using AOT;
 using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
 using Cheetah.Matches.Realtime.EmbeddedServer.Impl;
 
@@ -18,26 +19,33 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
     public class EmbeddedServer
     {
         private readonly Server.Description description;
+        private static string errorMessage;
 
         public EmbeddedServer()
         {
-            var code = Server.RunNewServer(ref description);
-            if (code != Server.ResultCode.Ok)
+            if (Server.RunNewServer(ref description, OnError))
             {
-                throw new Exception("Cannot run embedded server. Error code " + code);
+                throw new Exception("Cannot run embedded server. " + errorMessage);
             }
         }
 
         public ServerRoom CreateRoom()
         {
             ulong roomId = 0;
-            Utils.CheckResult(Room.CreateRoom(description.id, ref roomId));
+            if (!Room.CreateRoom(description.id, ref roomId, OnError))
+            {
+                throw new Exception("Cannot create room. " + errorMessage);
+            }
+
             return new ServerRoomImpl(description, roomId);
         }
 
         public void Destroy()
         {
-            Utils.CheckResult(Server.DestroyServer(description.id));
+            if (!Server.DestroyServer(description.id))
+            {
+                throw new Exception("Embedded server not found");
+            }
         }
 
         public string GetGameHost()
@@ -52,6 +60,12 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
         public uint GetGamePort()
         {
             return description.gamePort;
+        }
+
+        [MonoPInvokeCallback(typeof(Server.OnServerError))]
+        private static void OnError(string message)
+        {
+            errorMessage = message;
         }
     }
 }
