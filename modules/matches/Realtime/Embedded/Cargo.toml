@@ -16,6 +16,7 @@ anyhow = "1.0.64"
 thiserror = "1.0.34"
 lazy_static = "1.4.0"
 port_scanner = "0.1.5"
+widestring = "0.5.1"
 
 [build-dependencies]
 tonic-build = { version = "0.6.2", features = ["rustfmt"] }

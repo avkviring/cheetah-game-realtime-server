@@ -1,5 +1,4 @@
-use std::net::{SocketAddr, UdpSocket};
-use std::str::FromStr;
+use std::net::SocketAddr;
 use std::sync::Arc;
 
 use futures::join;
@@ -14,25 +13,14 @@ use crate::debug::grpc::RealtimeAdminGRPCService;
 use crate::debug::proto::admin;
 use crate::debug::tracer::grpc::CommandTracerGRPCService;
 use crate::grpc::RealtimeInternalService;
-use crate::server::manager::RoomsServerManager;
+use crate::server::manager::{RoomsServerManager, RoomsServerManagerError};
 
 pub mod agones;
+pub mod builder;
 pub mod debug;
 pub mod grpc;
 pub mod room;
 pub mod server;
-
-///
-/// Паттерн Создатель для игрового сервера
-/// - если адреса для udp/grpc не заданы - то в качестве адреса выбирается 127.0.0.1, в качестве
-/// порта - свободный порт
-///
-pub struct ServerBuilder {
-	game_bind_addr: SocketAddr,
-	admin_grpc_bind_addr: SocketAddr,
-	internal_grpc_bind_addr: SocketAddr,
-	is_agones_enabled: bool,
-}
 
 ///
 /// Server = Agones + Grpc + NetworkRoomsServerManager
@@ -46,17 +34,6 @@ pub struct Server {
 	pub internal_grpc_tcp_listener: TcpListener,
 	pub admin_grpc_tcp_listener: TcpListener,
 	pub is_agones_enabled: bool,
-}
-
-impl Default for ServerBuilder {
-	fn default() -> Self {
-		Self {
-			game_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
-			admin_grpc_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
-			internal_grpc_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
-			is_agones_enabled: false,
-		}
-	}
 }
 
 impl Server {
@@ -102,44 +79,5 @@ impl Server {
 			.serve_with_incoming(TcpListenerStream::new(tcp_listener))
 			.await
 			.unwrap()
-	}
-}
-
-impl ServerBuilder {
-	pub fn set_game_address(mut self, addr: SocketAddr) -> Self {
-		self.game_bind_addr = addr;
-		self
-	}
-
-	pub fn set_admin_grpc_address(mut self, addr: SocketAddr) -> Self {
-		self.admin_grpc_bind_addr = addr;
-		self
-	}
-
-	pub fn set_internal_grpc_address(mut self, addr: SocketAddr) -> Self {
-		self.internal_grpc_bind_addr = addr;
-		self
-	}
-
-	pub fn enable_agones(mut self) -> Self {
-		self.is_agones_enabled = true;
-		self
-	}
-
-	pub async fn build(self) -> Server {
-		let game_socket = UdpSocket::bind(self.game_bind_addr).unwrap();
-		let game_socket_addr = game_socket.local_addr().unwrap();
-		let manager = Arc::new(Mutex::new(RoomsServerManager::new(game_socket)));
-
-		let internal_grpc_bind_listener = TcpListener::bind(self.internal_grpc_bind_addr).await.unwrap();
-		let admin_grpc_bind_listener = TcpListener::bind(self.admin_grpc_bind_addr).await.unwrap();
-
-		Server {
-			game_socket_addr,
-			internal_grpc_tcp_listener: internal_grpc_bind_listener,
-			admin_grpc_tcp_listener: admin_grpc_bind_listener,
-			is_agones_enabled: self.is_agones_enabled,
-			manager,
-		}
 	}
 }

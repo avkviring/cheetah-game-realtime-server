@@ -1,4 +1,4 @@
-use cheetah_matches_realtime::ServerBuilder;
+use cheetah_matches_realtime::builder::ServerBuilder;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -13,7 +13,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		builder = builder.enable_agones()
 	}
 
-	builder.build().await.run().await;
+	let server = builder.build().await.unwrap();
+	server.run().await;
 
 	Ok(())
 }

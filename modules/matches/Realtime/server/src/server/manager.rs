@@ -43,24 +43,38 @@ pub enum ManagementTask {
 	CommandTracerSessionTask(RoomId, TracerSessionCommand, Sender<Result<(), CommandTracerSessionTaskError>>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum CommandTracerSessionTaskError {
+	#[error("RoomNotFound {0}")]
 	RoomNotFound(RoomId),
+	#[error("RecvTimeoutError")]
 	RecvTimeoutError,
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
 }
 
 #[derive(Debug, Error)]
 pub enum RegisterRoomRequestError {
-	#[error("ChannelError {0}")]
-	ChannelError(RecvTimeoutError),
+	#[error("ChannelRecvError {0}")]
+	ChannelRecvError(RecvTimeoutError),
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
 }
 
 #[derive(Debug, Error)]
 pub enum CreateMemberRequestError {
-	#[error("ChannelError {0}")]
-	ChannelError(RecvTimeoutError),
+	#[error("ChannelRecvError {0}")]
+	ChannelRecvError(RecvTimeoutError),
 	#[error("Error {0}")]
 	Error(RegisterUserError),
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
+}
+
+#[derive(Debug, Error)]
+pub enum RoomsServerManagerError {
+	#[error("CannotCreateServerThread {0}")]
+	CannotCreateServerThread(String),
 }
 
 impl Drop for RoomsServerManager {
@@ -70,27 +84,27 @@ impl Drop for RoomsServerManager {
 }
 
 impl RoomsServerManager {
-	pub fn new(socket: UdpSocket) -> Self {
+	pub fn new(socket: UdpSocket) -> Result<Self, RoomsServerManagerError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
 		let handler = thread::Builder::new()
-			.name(format!("server({:?})", socket.local_addr().unwrap()))
+			.name(format!("server({:?})", socket.local_addr()))
 			.spawn(move || {
 				RoomsServer::new(socket, receiver, halt_signal).run();
 			})
-			.unwrap();
-		Self {
+			.map_err(|e| RoomsServerManagerError::CannotCreateServerThread(format!("{:?}", e)))?;
+		Ok(Self {
 			handler: Some(handler),
 			sender,
 			halt_signal: cloned_halt_signal,
 			created_room_counter: 0,
-		}
+		})
 	}
 
 	pub fn get_rooms(&self) -> Result<Vec<RoomId>, String> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ManagementTask::GetRooms(sender)).unwrap();
+		self.sender.send(ManagementTask::GetRooms(sender)).map_err(|e| format!("{:?}", e))?;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(rooms) => Ok(rooms),
 			Err(e) => Err(format!("{:?}", e)),
@@ -101,7 +115,7 @@ impl RoomsServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::QueryRoom(room_id, sender))
-			.unwrap_or_else(|_| panic!("{}", expect_send_msg("QueryRoom")));
+			.map_err(|e| format!("{:?}", e))?;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(maybe_room_info) => Ok(maybe_room_info),
 			Err(e) => Err(format!("{:?}", e)),
@@ -116,7 +130,7 @@ impl RoomsServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender))
-			.unwrap_or_else(|_| panic!("{}", expect_send_msg("CommandTracerSessionTask")));
+			.map_err(|e| CommandTracerSessionTaskError::ChannelSendError(format!("{:?}", e)))?;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(_) => Ok(()),
@@ -134,7 +148,7 @@ impl RoomsServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::CreateRoom(template, sender))
-			.unwrap_or_else(|_| panic!("{}", expect_send_msg("RegisterRoom")));
+			.map_err(|e| RegisterRoomRequestError::ChannelSendError(format!("{:?}", e)))?;
 		self.created_room_counter += 1;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(room_id) => {
@@ -143,7 +157,7 @@ impl RoomsServerManager {
 			}
 			Err(e) => {
 				tracing::error!("[server] fail create room");
-				Err(RegisterRoomRequestError::ChannelError(e))
+				Err(RegisterRoomRequestError::ChannelRecvError(e))
 			}
 		}
 	}
@@ -152,7 +166,7 @@ impl RoomsServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::CreateMember(room_id, template.clone(), sender))
-			.unwrap_or_else(|_| panic!("{}", expect_send_msg("RegisterUser")));
+			.map_err(|e| CreateMemberRequestError::ChannelSendError(format!("{:?}", e)))?;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(r) => match r {
 				Ok(user_id) => {
@@ -176,15 +190,13 @@ impl RoomsServerManager {
 					room_id,
 					e
 				);
-				Err(CreateMemberRequestError::ChannelError(e))
+				Err(CreateMemberRequestError::ChannelRecvError(e))
 			}
 		}
 	}
 
-	pub fn set_time_offset(&self, duration: Duration) {
-		self.sender
-			.send(TimeOffset(duration))
-			.unwrap_or_else(|_| panic!("{}", expect_send_msg("TimeOffset")));
+	pub fn set_time_offset(&self, duration: Duration) -> Result<(), String> {
+		self.sender.send(TimeOffset(duration)).map_err(|e| format!("{:?}", e))
 	}
 
 	pub fn join(&mut self) {
@@ -207,10 +219,6 @@ impl RoomsServerManager {
 	}
 }
 
-fn expect_send_msg(task: &str) -> String {
-	format!("Can not send {} to relay thread, possible relay thread is dead", task)
-}
-
 #[cfg(test)]
 mod test {
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
@@ -220,14 +228,14 @@ mod test {
 
 	#[test]
 	fn should_increment_created_room_count() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
 		server.create_room(RoomTemplate::default()).unwrap();
 		assert_eq!(server.created_room_counter, 1);
 	}
 
 	#[test]
 	fn should_get_rooms() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let rooms = server.get_rooms().unwrap();
 		assert_eq!(rooms, vec![room_id]);
@@ -235,7 +243,7 @@ mod test {
 
 	#[test]
 	fn should_create_member() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let member_id = server.create_member(room_id, MemberTemplate::default()).unwrap();
 
@@ -244,7 +252,7 @@ mod test {
 
 	#[test]
 	fn should_get_room_info() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0);
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		for _ in 0..5 {
 			server.create_member(room_id, MemberTemplate::default()).unwrap();
