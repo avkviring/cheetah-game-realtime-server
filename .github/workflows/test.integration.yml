@@ -65,7 +65,7 @@ jobs:
           cd e2e/Unity/Server/Helmwave/
           echo '${{ secrets.KUBERNETES_STAGE_CLUSTER }}' >> /tmp/kubeconfig.xml
           export KUBECONFIG=/tmp/kubeconfig.xml
-          helmwave down --build
+          helmwave down --build || exit 0
           ./install.sh
   e2e-integration-unity-on-linux-kubernetes-test:
     runs-on: ubuntu-latest
