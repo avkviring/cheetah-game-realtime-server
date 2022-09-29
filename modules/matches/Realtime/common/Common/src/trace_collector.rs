@@ -2,14 +2,12 @@ use std::collections::VecDeque;
 use std::sync::Mutex;
 
 use lazy_static::lazy_static;
-use tracing::{log, Event};
+use tracing::Event;
 use tracing_core::field::Visit;
 use tracing_core::{Field, LevelFilter};
-use tracing_log::LogTracer;
+use tracing_log::{log, LogTracer};
 use tracing_subscriber::layer::{Context, SubscriberExt};
 use tracing_subscriber::{fmt, Layer, Registry};
-
-use crate::ffi::logs::LogLevel;
 
 lazy_static! {
 	pub static ref TRACER_COLLECTOR: Mutex<TracerCollector> = Mutex::new(TracerCollector::setup());
@@ -26,7 +24,7 @@ pub struct TracerCollector {
 
 #[derive(Debug, Clone)]
 pub struct Trace {
-	pub level: LogLevel,
+	pub level: tracing_core::Level,
 	pub message: String,
 }
 
@@ -42,12 +40,8 @@ impl TracerCollector {
 		}
 	}
 
-	pub fn set_log_level(&mut self, log_level: LogLevel) {
-		self.level = match log_level {
-			LogLevel::Info => tracing_core::Level::INFO,
-			LogLevel::Warn => tracing_core::Level::WARN,
-			LogLevel::Error => tracing_core::Level::ERROR,
-		};
+	pub fn set_log_level(&mut self, log_level: tracing_core::Level) {
+		self.level = log_level;
 	}
 
 	fn on_event(&mut self, event: &Event<'_>) {
@@ -56,13 +50,7 @@ impl TracerCollector {
 			let mut visitor = ValueVisitor::new("message");
 			event.record(&mut visitor);
 			let message = visitor.result.unwrap_or_else(|| "".to_string());
-			let level = match *event.metadata().level() {
-				tracing_core::Level::INFO => LogLevel::Info,
-				tracing_core::Level::WARN => LogLevel::Warn,
-				tracing_core::Level::ERROR => LogLevel::Error,
-				tracing_core::Level::DEBUG => LogLevel::Info,
-				tracing_core::Level::TRACE => LogLevel::Info,
-			};
+			let level = *event.metadata().level();
 			let message = format!(
 				"{} in {}:{}",
 				message,
@@ -113,8 +101,7 @@ mod tests {
 
 	use lazy_static::lazy_static;
 
-	use crate::ffi::logs::LogLevel;
-	use crate::tracer::TRACER_COLLECTOR;
+	use crate::trace_collector::TRACER_COLLECTOR;
 
 	lazy_static! {
 		pub static ref LOCK: Mutex<()> = Mutex::new(());
@@ -122,11 +109,11 @@ mod tests {
 
 	#[test]
 	fn should_collect_trace() {
-		let _lock = setup(LogLevel::Error);
+		let _lock = setup(tracing_core::Level::ERROR);
 		tracing::error!("some error");
 
 		let mut path = PathBuf::new();
-		for v in ["matches", "Realtime", "client", "Rust", "src", "tracer.rs"] {
+		for v in ["matches", "Realtime", "common", "Common", "src", "tracer.rs"] {
 			path.push(v);
 		}
 		let view_path = path.display();
@@ -137,7 +124,7 @@ mod tests {
 
 	#[test]
 	fn should_not_collect_trace_if_wrong_level() {
-		let _lock = setup(LogLevel::Error);
+		let _lock = setup(tracing_core::Level::ERROR);
 		let msg = "should_not_collect_trace_if_wrong_level";
 		tracing::info!("{}", msg);
 		assert!(!contains(msg));
@@ -145,13 +132,13 @@ mod tests {
 
 	#[test]
 	fn should_set_level() {
-		let _lock = setup(LogLevel::Info);
+		let _lock = setup(tracing_core::Level::INFO);
 		let msg = "should_set_level";
 		tracing::info!("{}", msg);
 		assert!(contains(msg));
 	}
 
-	fn setup(log_level: LogLevel) -> LockResult<MutexGuard<'static, ()>> {
+	fn setup(log_level: tracing_core::Level) -> LockResult<MutexGuard<'static, ()>> {
 		let lock = LOCK.lock();
 		{
 			let collector = &mut TRACER_COLLECTOR.lock().unwrap();

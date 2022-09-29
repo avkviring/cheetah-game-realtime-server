@@ -4,6 +4,7 @@ use lazy_static::lazy_static;
 
 use crate::EmbeddedServerWrapper;
 
+pub mod logs;
 pub mod member;
 pub mod room;
 pub mod server;

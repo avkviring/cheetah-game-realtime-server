@@ -627,11 +627,15 @@ dependencies = [
  "hash32-derive",
  "heapless",
  "lazy_static",
+ "log",
  "rand",
  "snap",
  "strum_macros",
  "thiserror",
  "tracing",
+ "tracing-core",
+ "tracing-log",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -642,10 +646,14 @@ dependencies = [
  "cheetah-matches-realtime",
  "cheetah-matches-realtime-common",
  "lazy_static",
+ "log",
  "port_scanner",
  "thiserror",
  "tokio",
  "tonic-build",
+ "tracing-core",
+ "tracing-log",
+ "tracing-subscriber",
  "widestring",
 ]
 

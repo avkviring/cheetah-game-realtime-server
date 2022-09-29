@@ -2,6 +2,8 @@ using System;
 using AOT;
 using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
 using Cheetah.Matches.Realtime.EmbeddedServer.Impl;
+using Cheetah.Matches.Realtime.Logger;
+using UnityEngine;
 
 namespace Cheetah.Matches.Realtime.EmbeddedServer.API
 {
@@ -23,7 +25,7 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
 
         public EmbeddedServer()
         {
-            if (Server.RunNewServer(ref description, OnError))
+            if (!Server.RunNewServer(ref description, OnError))
             {
                 throw new Exception("Cannot run embedded server. " + errorMessage);
             }
@@ -67,5 +69,41 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
         {
             errorMessage = message;
         }
+
+
+
+        public static void InitLogger(CheetahLogLevel logLevel)
+        {
+            FFI.Logger.InitLogger();
+            FFI.Logger.SetMaxLogLevel(logLevel);
+        }
+
+        public static void ShowCurrentLogs()
+        {
+            FFI.Logger.CollectLogs(ShowLog);
+        }
+        
+        [MonoPInvokeCallback(typeof(FFI.Logger.LogCollector))]
+        private static void ShowLog(CheetahLogLevel level, string log)
+        {
+            switch (level)
+            {
+                case CheetahLogLevel.Info:
+                    Debug.Log(log);
+                    break;
+                case CheetahLogLevel.Warn:
+                    Debug.LogWarning(log);
+                    break;
+                case CheetahLogLevel.Error:
+                    Debug.LogError(log);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(level), level, null);
+            }
+        }
+        
+        
+        
+        
     }
 }
