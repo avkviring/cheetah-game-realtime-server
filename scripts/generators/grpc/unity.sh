@@ -50,4 +50,8 @@ generate_unity_grpc_files .admin.proto Editor
 echo
 generate_unity_grpc_files .shared.proto Runtime
 
+# мета файлы создаем только для linux - так как
+# именно он используется для вывода релиза
+if [[ ($OSTYPE == 'linux'*)  ]]; then
 generate_meta_files
+fi
