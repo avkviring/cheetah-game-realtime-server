@@ -20,7 +20,7 @@ serde = { version = "1.0.140", features = ["derive", "rc"] }
 serde_yaml = "0.9.13"
 rmp-serde = "1.1.0"
 rmpv = { version = "1.0.0", features = ["with-serde"] }
-tokio-stream = { version = "0.1.8", features = ["net"] }
+tokio-stream = { version = "0.1.10", features = ["net"] }
 futures = "0.3.21"
 tonic-web = "0.2.0"
 thiserror = "1.0"
