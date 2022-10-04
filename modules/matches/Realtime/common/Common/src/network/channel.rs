@@ -18,9 +18,9 @@ pub struct NetworkChannel {
 
 impl NetworkChannel {
 	pub fn new() -> io::Result<Self> {
-		let socket = bind_to_free_socket()?.0;
+		let socket = bind_to_free_socket()?;
 		socket.set_nonblocking(true)?;
-		Result::Ok(Self {
+		Ok(Self {
 			socket,
 			emulator: None,
 			recv_packet_count: 0,
@@ -44,10 +44,10 @@ impl NetworkChannel {
 			}
 			// вместо полученного пакета получаем пакет из очереди с учетом эмуляции сети
 			match emulator.get_in(now) {
-				None => io::Result::Err(Error::new(ErrorKind::WouldBlock, "")),
+				None => Err(Error::new(ErrorKind::WouldBlock, "")),
 				Some(buffer) => {
 					buf[0..buffer.len()].copy_from_slice(buffer.as_slice());
-					io::Result::Ok(buffer.len())
+					Ok(buffer.len())
 				}
 			}
 		} else {
@@ -62,7 +62,7 @@ impl NetworkChannel {
 			None => self.socket.send_to(buf, addr),
 			Some(emulator) => {
 				emulator.schedule_out(now, buf, addr);
-				io::Result::Ok(buf.len())
+				Ok(buf.len())
 			}
 		}
 	}
@@ -105,7 +105,7 @@ impl NetworkChannel {
 	/// - восстановление данных возлагается на Relay протокол
 	///
 	pub fn reset_emulator(&mut self) {
-		self.emulator = Option::None;
+		self.emulator = None;
 	}
 }
 

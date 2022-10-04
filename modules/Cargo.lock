@@ -651,6 +651,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tonic-build",
+ "tracing",
  "tracing-core",
  "tracing-log",
  "tracing-subscriber",
