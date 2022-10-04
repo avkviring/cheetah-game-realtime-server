@@ -66,18 +66,16 @@ impl ServerBuilder {
 	}
 
 	pub async fn build(self) -> Result<Server, ServerBuilderError> {
-		let game_socket = UdpSocket::bind(self.game_bind_addr).map_err(|e| ServerBuilderError::ErrorBindUdpSocket(e))?;
-		let game_socket_addr = game_socket
-			.local_addr()
-			.map_err(|e| ServerBuilderError::ErrorGetLocalAddrFromUdpSocket(e))?;
-		let server_manager = RoomsServerManager::new(game_socket).map_err(|e| ServerBuilderError::RoomsServerManager(e))?;
+		let game_socket = UdpSocket::bind(self.game_bind_addr).map_err(ServerBuilderError::ErrorBindUdpSocket)?;
+		let game_socket_addr = game_socket.local_addr().map_err(ServerBuilderError::ErrorGetLocalAddrFromUdpSocket)?;
+		let server_manager = RoomsServerManager::new(game_socket).map_err(ServerBuilderError::RoomsServerManager)?;
 		let manager = Arc::new(Mutex::new(server_manager));
 		let internal_grpc_bind_listener = TcpListener::bind(self.internal_grpc_bind_addr)
 			.await
-			.map_err(|e| ServerBuilderError::ErrorOpenGrpcSocket(e))?;
+			.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
 		let admin_grpc_bind_listener = TcpListener::bind(self.admin_grpc_bind_addr)
 			.await
-			.map_err(|e| ServerBuilderError::ErrorOpenGrpcSocket(e))?;
+			.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
 
 		Ok(Server {
 			game_socket_addr,

@@ -5,8 +5,8 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
-use std::thread;
 use std::time::{Duration, Instant};
+use std::{io, thread};
 
 use admin::DumpResponse;
 
@@ -43,19 +43,19 @@ impl Drop for RoomsServer {
 }
 
 impl RoomsServer {
-	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Self {
+	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Result<Self, io::Error> {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
-		Self {
-			network_layer: NetworkLayer::new(socket, measures.clone()).unwrap(),
+		Ok(Self {
+			network_layer: NetworkLayer::new(socket, measures.clone())?,
 			rooms: Rooms::new(measures.clone()),
 			receiver,
 			halt_signal,
 			time_offset: None,
 			measurers: measures,
-		}
+		})
 	}
 
-	pub fn run(&mut self) {
+	pub fn run(mut self) {
 		while !self.halt_signal.load(Ordering::Relaxed) {
 			let mut now = Instant::now();
 			if let Some(time_offset) = self.time_offset {

@@ -23,7 +23,7 @@ pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_erro
 			result.game_host = match server.game_socket_addr.ip() {
 				IpAddr::V4(v4) => v4.octets(),
 				IpAddr::V6(_) => {
-					on_error(widestring::U16CString::default().as_ptr());
+					on_error(widestring::U16CString::from_str("IPv6 not supported").unwrap().as_ptr());
 					return false;
 				}
 			};

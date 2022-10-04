@@ -38,7 +38,7 @@ pub extern "C" fn create_member(
 			}
 		}
 	} else {
-		on_error(widestring::U16CString::from_str(format!("Embedded server not found")).unwrap().as_ptr());
+		on_error(widestring::U16CString::from_str("Embedded server not found").unwrap().as_ptr());
 		false
 	};
 }

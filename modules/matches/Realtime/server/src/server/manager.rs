@@ -2,9 +2,9 @@ use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::sync::Arc;
-use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
+use std::{io, thread};
 
 use thiserror::Error;
 
@@ -24,7 +24,7 @@ use crate::server::RoomsServer;
 /// - связь с сервером через Sender
 ///
 pub struct RoomsServerManager {
-	handler: Option<JoinHandle<()>>,
+	handler: Option<JoinHandle<Result<(), io::Error>>>,
 	sender: Sender<ManagementTask>,
 	halt_signal: Arc<AtomicBool>,
 	pub created_room_counter: usize,
@@ -90,8 +90,15 @@ impl RoomsServerManager {
 		let cloned_halt_signal = halt_signal.clone();
 		let handler = thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
-			.spawn(move || {
-				RoomsServer::new(socket, receiver, halt_signal).run();
+			.spawn(move || match RoomsServer::new(socket, receiver, halt_signal) {
+				Ok(server) => {
+					server.run();
+					Ok(())
+				}
+				Err(e) => {
+					tracing::error!("Error running network thread {:?}", e);
+					Err(e)
+				}
 			})
 			.map_err(|e| RoomsServerManagerError::CannotCreateServerThread(format!("{:?}", e)))?;
 		Ok(Self {
@@ -199,8 +206,8 @@ impl RoomsServerManager {
 		self.sender.send(TimeOffset(duration)).map_err(|e| format!("{:?}", e))
 	}
 
-	pub fn join(&mut self) {
-		self.handler.take().unwrap().join().unwrap();
+	pub fn join(&mut self) -> Result<(), io::Error> {
+		self.handler.take().unwrap().join().unwrap()
 	}
 
 	pub fn dump(&self, room_id: u64) -> Result<admin::DumpResponse, String> {

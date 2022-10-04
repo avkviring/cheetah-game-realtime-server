@@ -113,7 +113,7 @@ mod tests {
 		tracing::error!("some error");
 
 		let mut path = PathBuf::new();
-		for v in ["matches", "Realtime", "common", "Common", "src", "tracer.rs"] {
+		for v in ["matches", "Realtime", "common", "Common", "src", "trace_collector.rs"] {
 			path.push(v);
 		}
 		let view_path = path.display();
