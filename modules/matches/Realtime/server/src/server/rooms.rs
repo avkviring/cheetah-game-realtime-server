@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use fnv::FnvBuildHasher;
@@ -18,7 +18,7 @@ use crate::server::measurers::{MeasureStringId, Measurers};
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
-	changed_rooms: heapless::FnvIndexSet<RoomId, 10_000>,
+	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	measurers: Rc<RefCell<Measurers>>,
 }
 
@@ -88,12 +88,13 @@ impl Rooms {
 			Some(room) => {
 				let object_count = room.objects.len();
 				room.execute_commands(user_and_room_id.member_id, commands);
-				self.changed_rooms.insert(room.id).unwrap();
+				self.changed_rooms.insert(room.id);
 
 				let mut measurers = self.measurers.borrow_mut();
-				let delta_object_count = room.objects.len() - object_count;
+
+				let delta_object_count: i64 = room.objects.len() as i64 - object_count as i64;
 				if delta_object_count > 0 {
-					measurers.on_change_object_count(&room.template_name, delta_object_count as i64);
+					measurers.on_change_object_count(&room.template_name, delta_object_count);
 				}
 				measurers.on_input_commands(&room.template_name, commands);
 			}
@@ -109,7 +110,7 @@ impl Rooms {
 			Some(room) => {
 				room.disconnect_user(member_and_room_id.member_id)?;
 				self.measurers.borrow_mut().on_change_member_count(&room.template_name, -1);
-				self.changed_rooms.insert(member_and_room_id.room_id).unwrap();
+				self.changed_rooms.insert(member_and_room_id.room_id);
 				Ok(())
 			}
 		}
