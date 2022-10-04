@@ -295,7 +295,7 @@ mod tests {
 
 	fn create_network_layer() -> NetworkLayer {
 		NetworkLayer::new(
-			bind_to_free_socket().unwrap().0,
+			bind_to_free_socket().unwrap(),
 			Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))),
 		)
 		.unwrap()

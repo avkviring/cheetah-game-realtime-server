@@ -49,8 +49,8 @@ impl IntegrationTestServerBuilder {
 
 	pub fn build(self) -> (SocketAddr, RoomsServerManager, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
-		let addr = socket.1;
-		let mut server = RoomsServerManager::new(socket.0).unwrap();
+		let addr = socket.local_addr().unwrap();
+		let mut server = RoomsServerManager::new(socket).unwrap();
 		let room_id = server.create_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}

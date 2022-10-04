@@ -228,14 +228,14 @@ mod test {
 
 	#[test]
 	fn should_increment_created_room_count() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
 		server.create_room(RoomTemplate::default()).unwrap();
 		assert_eq!(server.created_room_counter, 1);
 	}
 
 	#[test]
 	fn should_get_rooms() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let rooms = server.get_rooms().unwrap();
 		assert_eq!(rooms, vec![room_id]);
@@ -243,7 +243,7 @@ mod test {
 
 	#[test]
 	fn should_create_member() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let member_id = server.create_member(room_id, MemberTemplate::default()).unwrap();
 
@@ -252,7 +252,7 @@ mod test {
 
 	#[test]
 	fn should_get_room_info() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap().0).unwrap();
+		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		for _ in 0..5 {
 			server.create_member(room_id, MemberTemplate::default()).unwrap();
