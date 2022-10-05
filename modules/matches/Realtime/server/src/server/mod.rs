@@ -36,12 +36,6 @@ pub struct RoomsServer {
 	measurers: Rc<RefCell<Measurers>>,
 }
 
-impl Drop for RoomsServer {
-	fn drop(&mut self) {
-		tracing::error!("RoomsServer: Drop invoked");
-	}
-}
-
 impl RoomsServer {
 	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Result<Self, io::Error> {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
