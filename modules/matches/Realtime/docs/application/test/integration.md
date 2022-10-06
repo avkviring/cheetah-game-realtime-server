@@ -9,6 +9,9 @@
 ## Пример использования
 
 ```csharp
+    // если нам необходимо посмотреть логи с сервера
+    API.EmbeddedServer.InitLogger(CheetahLogLevel.Warn);
+
     var server = new API.EmbeddedServer();
     var room = server.CreateRoom();
     var member = room.CreateMember(0b000111);
@@ -26,7 +29,8 @@
     
     // после теста для освобождения ресурсов
     server.Destroy();    
-
+    
+    // показываем собранные логи с сервера
+    API.EmbeddedServer.ShowCurrentLogs();
 ```
-
 
