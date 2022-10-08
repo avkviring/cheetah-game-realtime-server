@@ -1,6 +1,6 @@
 cpu:
-  request: "0.1"
-  limit: "1"
+  request: "100m"
+  limit: "1000m"
 memory:
-  request: 50Mi
-  limit: 100Mi
+  request: "50Mi"
+  limit: "100Mi"
