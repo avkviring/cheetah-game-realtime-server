@@ -31,7 +31,7 @@ headers = "0.3.1"
 rustls = { version = "0.20.2" }
 thiserror = "1.0.30"
 prometheus = "0.13.1"
-uuid = { version = "1.0.0", features = ["v4", "serde"] }
+uuid = { version = "1.2.1", features = ["v4", "serde"] }
 anyhow = "1.0.57"
 jwt-tonic-user-uuid = "0.0.1"
 sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "migrate", "chrono"] }
