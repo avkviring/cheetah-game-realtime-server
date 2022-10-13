@@ -33,7 +33,11 @@ namespace Cheetah.Matches.Realtime.Editor.Generator
                 {
                     var generateCodecAttribute = type.GetCustomAttribute<GenerateCodec>();
                     if (generateCodecAttribute == null) continue;
-                    var rootNamespace = type.Namespace.Replace(".", "_");
+                    string rootNamespace = null;
+                    if (type.Namespace is not null)
+                    {
+                        rootNamespace = type.Namespace.Replace(".", "_");
+                    }
                     var result = new CodecGenerator(formatters, rootNamespace, type).Generate();
 
 
