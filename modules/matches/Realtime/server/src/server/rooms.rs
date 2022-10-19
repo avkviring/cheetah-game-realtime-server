@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use fnv::FnvBuildHasher;
@@ -18,7 +18,6 @@ use crate::server::measurers::{MeasureStringId, Measurers};
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
-	changed_rooms: HashSet<RoomId, FnvBuildHasher>,
 	measurers: Rc<RefCell<Measurers>>,
 }
 
@@ -33,7 +32,6 @@ impl Rooms {
 		Self {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
-			changed_rooms: Default::default(),
 			measurers,
 		}
 	}
@@ -65,18 +63,12 @@ impl Rooms {
 	where
 		F: FnMut(&RoomId, &RoomMemberId, &[CommandWithChannelType]),
 	{
-		for room_id in self.changed_rooms.iter() {
-			match self.room_by_id.get_mut(room_id) {
-				None => {}
-				Some(room) => {
-					let room_id = room.id;
-					let template = MeasureStringId::from(room.template_name.as_str());
-					room.collect_out_commands(|user_id, commands| {
-						collector(&room_id, user_id, commands);
-						self.measurers.borrow_mut().on_output_commands(&template, commands);
-					});
-				}
-			}
+		for (room_id, room) in self.room_by_id.iter_mut() {
+			let template = MeasureStringId::from(room.template_name.as_str());
+			room.collect_out_commands(|user_id, commands| {
+				collector(room_id, user_id, commands);
+				self.measurers.borrow_mut().on_output_commands(&template, commands);
+			});
 		}
 	}
 
@@ -88,7 +80,6 @@ impl Rooms {
 			Some(room) => {
 				let object_count = room.objects.len();
 				room.execute_commands(user_and_room_id.member_id, commands);
-				self.changed_rooms.insert(room.id);
 
 				let mut measurers = self.measurers.borrow_mut();
 
@@ -110,7 +101,6 @@ impl Rooms {
 			Some(room) => {
 				room.disconnect_user(member_and_room_id.member_id)?;
 				self.measurers.borrow_mut().on_change_member_count(&room.template_name, -1);
-				self.changed_rooms.insert(member_and_room_id.room_id);
 				Ok(())
 			}
 		}
