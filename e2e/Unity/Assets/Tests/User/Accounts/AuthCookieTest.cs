@@ -1,6 +1,7 @@
 using System.Collections;
 using Cheetah.User.Accounts.Cookie;
 using Cheetah.Platform;
+using Cheetah.Platform.Tests;
 using NUnit.Framework;
 using Tests.Helpers;
 using UnityEngine.TestTools;
@@ -15,7 +16,7 @@ namespace Tests.User.Accounts
         [UnityTest]
         public IEnumerator ShouldCreateUser()
         {
-            var connectorFactory = new ConnectorFactory();
+            var connectorFactory = new KubernetesOrDockerConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
 

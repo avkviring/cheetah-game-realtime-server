@@ -1,0 +1,9 @@
+{
+  "name": "games.cheetah.platform.tests",
+  "rootNamespace": "Cheetah.Platform.Tests",
+  "references": [
+    "games.cheetah.platform"
+  ],
+  "autoReferenced": true,
+  "overrideReferences": false
+}

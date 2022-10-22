@@ -1,24 +1,23 @@
 using System.Collections;
-using NUnit.Framework;
 using Cheetah.Platform;
+using Cheetah.Platform.Tests;
+using Cheetah.User.Accounts.Cookie;
+using Cheetah.User.Store;
+using NUnit.Framework;
 using Tests.Helpers;
 using UnityEngine.TestTools;
-using Cheetah.User.Store;
-using Cheetah.User.Accounts.Cookie;
 
 namespace Tests.User.Store
 {
-    using Cheetah.User.Accounts;
-
     public class UserStoreTest
     {
         private ClusterConnector _clusterConnector;
-        private User _user;
+        private Cheetah.User.Accounts.User _user;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            var factory = new ConnectorFactory();
+            var factory = new KubernetesOrDockerConnectorFactory();
             yield return Enumerators.Await(factory.Connect());
             _clusterConnector = factory.ClusterConnector;
 

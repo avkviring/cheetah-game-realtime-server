@@ -14,7 +14,7 @@ namespace Tests.Helpers
     /// - если в интеграционных тестах не задан адрес сервера - то запускаем локальный сервер
     /// - обязательно вызывать connector.Shutdown() в конце теста, иначе Unity не сможет выйти после теста
     /// </summary>
-    public class ConnectorFactory
+    public class KubernetesOrDockerConnectorFactory
     {
         public ClusterConnector ClusterConnector { get; private set; }
 

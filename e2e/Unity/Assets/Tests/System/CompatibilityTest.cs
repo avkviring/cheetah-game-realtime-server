@@ -1,5 +1,6 @@
 using System.Collections;
 using Cheetah.Platform;
+using Cheetah.Platform.Tests;
 using Cheetah.System.Compatibility;
 using NUnit.Framework;
 using Tests.Helpers;
@@ -14,7 +15,7 @@ namespace Tests.System
         [UnityTest]
         public IEnumerator Test()
         {
-            var connectorFactory = new ConnectorFactory();
+            var connectorFactory = new KubernetesOrDockerConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
             var checker = new CompatibilityChecker(clusterConnector);

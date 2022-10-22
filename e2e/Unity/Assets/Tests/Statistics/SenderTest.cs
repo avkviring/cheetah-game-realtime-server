@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cheetah.Platform;
+using Cheetah.Platform.Tests;
 using Cheetah.Statistics.Events;
 using NUnit.Framework;
 using Tests.Helpers;
@@ -17,7 +18,7 @@ namespace Tests.Statistics
         [UnityTest]
         public IEnumerator TestEvent()
         {
-            var connectorFactory = new ConnectorFactory();
+            var connectorFactory = new KubernetesOrDockerConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
             var session = new StatisticsSession(clusterConnector);
@@ -32,7 +33,7 @@ namespace Tests.Statistics
         [UnityTest]
         public IEnumerator TestLog()
         {
-            var connectorFactory = new ConnectorFactory();
+            var connectorFactory = new KubernetesOrDockerConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
             var session = new StatisticsSession(clusterConnector);
