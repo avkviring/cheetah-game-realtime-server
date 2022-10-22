@@ -3,6 +3,7 @@ using Cheetah.Matches.Matchmaking.GRPC;
 using Cheetah.Matches.Realtime;
 using Cheetah.Matches.Realtime.Codec;
 using Cheetah.Platform;
+using Cheetah.Platform.Tests;
 using NUnit.Framework;
 using Shared;
 using Tests.Helpers;
@@ -27,7 +28,7 @@ namespace Tests.Matches.Realtime.Helpers
         public IEnumerator SetUp()
         {
             var codecRegistry = new CodecRegistryBuilder();
-            var connectorFactory = new ConnectorFactory();
+            var connectorFactory = new KubernetesOrDockerConnectorFactory();
             yield return Enumerators.Await(connectorFactory.Connect());
             clusterConnector = connectorFactory.ClusterConnector;
 

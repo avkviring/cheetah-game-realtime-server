@@ -2,7 +2,7 @@ using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Tests.Helpers
+namespace Cheetah.Platform.Tests
 {
     public static class Enumerators
     {
