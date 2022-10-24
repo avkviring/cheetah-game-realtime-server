@@ -119,6 +119,16 @@ impl Realtime for RealtimeInternalService {
 		});
 		Ok(Response::new(ReceiverStream::new(rx)))
 	}
+
+	/// удалить комнату с севрера и закрыть соединение со всеми пользователями
+	async fn delete_room(&self, request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
+		let room_id = request.get_ref().id as RoomId;
+		let mut server = self.server_manager.lock().await;
+		server
+			.delete_room(room_id)
+			.map(|_| Response::new(DeleteRoomResponse {}))
+			.map_err(|_| Status::not_found(format!("Room with ID {} does not exist", room_id)))
+	}
 }
 
 #[cfg(test)]
@@ -133,7 +143,7 @@ mod test {
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
 	use crate::grpc::proto::internal::realtime_server::Realtime;
-	use crate::grpc::proto::internal::{EmptyRequest, RoomIdResponse};
+	use crate::grpc::proto::internal::{DeleteRoomRequest, EmptyRequest, RoomIdResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::RoomTemplate;
 	use crate::server::manager::RoomsServerManager;
@@ -170,5 +180,24 @@ mod test {
 
 		let dump_response = server_manager.lock().await.dump(room_id.room_id).unwrap();
 		assert!(!dump_response.users.is_empty());
+	}
+
+	#[tokio::test]
+	async fn test_delete_room() {
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+
+		let service = RealtimeInternalService::new(server_manager.clone());
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
+
+		assert!(service.delete_room(Request::new(DeleteRoomRequest { id: room_id })).await.is_ok());
+	}
+
+	#[tokio::test]
+	async fn test_delete_room_not_exist() {
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+
+		let service = RealtimeInternalService::new(server_manager.clone());
+
+		assert!(service.delete_room(Request::new(Default::default())).await.is_err());
 	}
 }

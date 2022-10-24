@@ -14,7 +14,7 @@ use crate::helpers::server::IntegrationTestServerBuilder;
 
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
-	room_id: RoomId,
+	pub room_id: RoomId,
 	pub server: RoomsServerManager,
 }
 

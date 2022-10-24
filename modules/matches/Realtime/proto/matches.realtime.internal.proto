@@ -33,6 +33,11 @@ service Realtime {
     Отслеживание операций создания комнаты, при первом вызове отсылаются и уже созданные комнаты.
    */
   rpc WatchCreatedRoomEvent(EmptyRequest) returns (stream RoomIdResponse);
+
+  /**
+    Отключить всех пользователей от комнаты и удалить её
+   */
+  rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse);
 }
 
 
@@ -163,4 +168,11 @@ message ProbeRequest {
 }
 message ProbeResponse {
 
+}
+
+message DeleteRoomRequest {
+  uint64 id = 1;
+}
+
+message DeleteRoomResponse {
 }

@@ -237,7 +237,8 @@ pub mod tests {
 	use crate::proto::matches::matchmaking;
 	use crate::proto::matches::realtime;
 	use crate::proto::matches::realtime::internal::{
-		CreateMemberRequest, CreateSuperMemberRequest, EmptyRequest, ProbeRequest, ProbeResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse,
+		CreateMemberRequest, CreateSuperMemberRequest, DeleteRoomRequest, DeleteRoomResponse, EmptyRequest, ProbeRequest, ProbeResponse,
+		QueryRoomRequest, QueryRoomResponse, RoomIdResponse,
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::service::StubMatchmakingService;
@@ -284,7 +285,7 @@ pub mod tests {
 		assert_eq!(response.room_id, StubFactory::ROOM_ID);
 	}
 	///
-	/// Для каждого шаблона должен быть собственный матч     
+	/// Для каждого шаблона должен быть собственный матч
 	///
 	#[tokio::test]
 	async fn should_create_different_match_for_different_template() {
@@ -308,7 +309,7 @@ pub mod tests {
 	}
 
 	///
-	/// Для каждого шаблона должен быть собственный матч     
+	/// Для каждого шаблона должен быть собственный матч
 	///
 	#[tokio::test]
 	async fn should_recreate_match_if_not_found() {
@@ -461,6 +462,10 @@ pub mod tests {
 		type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
 
 		async fn watch_created_room_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
+			unimplemented!()
+		}
+
+		async fn delete_room(&self, _request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
 			unimplemented!()
 		}
 	}
