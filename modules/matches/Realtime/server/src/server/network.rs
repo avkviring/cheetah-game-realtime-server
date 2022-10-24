@@ -76,34 +76,38 @@ impl NetworkLayer {
 					tracing::error!("[network] member not found {:?}", id);
 				}
 				Some(session) => {
-					if let Some(peer_address) = session.peer_address.as_ref() {
+					if session.peer_address.is_some() {
 						for command in commands {
 							session
 								.protocol
 								.out_commands_collector
 								.add_command(command.channel_type.clone(), command.command.clone());
 						}
-						if let Some(frame) = session.protocol.build_next_frame(&Instant::now()) {
-							let mut buffer = [0; MAX_FRAME_SIZE];
-							let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
-							match self.socket.send_to(&buffer[0..buffer_size], peer_address) {
-								Ok(size) => {
-									if size != buffer_size {
-										tracing::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
-									}
-								}
-								Err(e) => match e.kind() {
-									ErrorKind::WouldBlock => {}
-									_ => {
-										tracing::error!("[network] socket error {:?}", e);
-									}
-								},
-							}
-						}
+						Self::send_frame(&self.socket, session);
 					}
 				}
 			}
 		});
+	}
+
+	fn send_frame(socket: &UdpSocket, session: &mut MemberSession) {
+		if let (Some(peer_address), Some(frame)) = (session.peer_address, session.protocol.build_next_frame(&Instant::now())) {
+			let mut buffer = [0; MAX_FRAME_SIZE];
+			let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
+			match socket.send_to(&buffer[0..buffer_size], peer_address) {
+				Ok(size) => {
+					if size != buffer_size {
+						tracing::error!("[network] size mismatch in socket.send_to {:?} {:?}", buffer.len(), size);
+					}
+				}
+				Err(e) => match e.kind() {
+					ErrorKind::WouldBlock => {}
+					_ => {
+						tracing::error!("[network] socket error {:?}", e);
+					}
+				},
+			}
+		}
 	}
 
 	fn receive(&mut self, rooms: &mut Rooms, now: &Instant) {
@@ -180,6 +184,16 @@ impl NetworkLayer {
 				protocol: Protocol::new(now, &self.start_application_time),
 			},
 		);
+	}
+
+	/// Послать DisconnectHeader пользователю и удалить сессию с сервера
+	pub fn disconnect_users(&mut self, member_and_room_ids: impl Iterator<Item = MemberAndRoomId>) {
+		for id in member_and_room_ids {
+			if let Some(mut session) = self.sessions.remove(&id) {
+				session.protocol.disconnect_by_command.disconnect();
+				Self::send_frame(&self.socket, &mut session);
+			}
+		}
 	}
 }
 
@@ -291,6 +305,19 @@ mod tests {
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
 
 		assert_eq!(udp_server.sessions.get(&user_and_room_id).unwrap().peer_address.unwrap(), addr_1);
+	}
+
+	#[test]
+	fn should_disconnect_users() {
+		let mut udp_server = create_network_layer();
+		let user_template = MemberTemplate::new_member(Default::default(), Default::default());
+		let user_to_delete = MemberAndRoomId { member_id: 0, room_id: 0 };
+		udp_server.register_user(&Instant::now(), user_to_delete.room_id, user_to_delete.member_id, user_template.clone());
+		udp_server.register_user(&Instant::now(), 0, 1, user_template.clone());
+
+		udp_server.disconnect_users(vec![user_to_delete.clone()].into_iter());
+
+		assert!(!udp_server.sessions.contains_key(&user_to_delete), "session should be deleted");
 	}
 
 	fn create_network_layer() -> NetworkLayer {

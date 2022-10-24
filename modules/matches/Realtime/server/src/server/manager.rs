@@ -16,7 +16,7 @@ use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
-use crate::server::RoomsServer;
+use crate::server::{DeleteRoomError, RoomsServer};
 
 ///
 /// Управление сервером
@@ -41,6 +41,7 @@ pub enum ManagementTask {
 	GetRooms(Sender<Vec<RoomId>>),
 	QueryRoom(RoomId, Sender<Option<RoomInfo>>),
 	CommandTracerSessionTask(RoomId, TracerSessionCommand, Sender<Result<(), CommandTracerSessionTaskError>>),
+	DeleteRoom(RoomId, Sender<Result<(), DeleteRoomError>>),
 }
 
 #[derive(Debug, Error)]
@@ -75,6 +76,16 @@ pub enum CreateMemberRequestError {
 pub enum RoomsServerManagerError {
 	#[error("CannotCreateServerThread {0}")]
 	CannotCreateServerThread(String),
+}
+
+#[derive(Debug, Error)]
+pub enum DeleteRoomRequestError {
+	#[error("ChannelRecvError {0}")]
+	ChannelRecvError(RecvTimeoutError),
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
+	#[error("DeleteRoomError {0}")]
+	DeleteRoomError(DeleteRoomError),
 }
 
 impl Drop for RoomsServerManager {
@@ -165,6 +176,29 @@ impl RoomsServerManager {
 			Err(e) => {
 				tracing::error!("[server] fail create room");
 				Err(RegisterRoomRequestError::ChannelRecvError(e))
+			}
+		}
+	}
+
+	/// удалить комнату с севрера и закрыть соединение со всеми пользователями
+	pub fn delete_room(&mut self, room_id: RoomId) -> Result<(), DeleteRoomRequestError> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender
+			.send(ManagementTask::DeleteRoom(room_id, sender))
+			.map_err(|e| DeleteRoomRequestError::ChannelSendError(format!("{:?}", e)))?;
+		match receiver.recv_timeout(Duration::from_secs(1)) {
+			Ok(Ok(_)) => {
+				self.created_room_counter -= 1;
+				tracing::info!("[server] delete room({:?})", room_id);
+				Ok(())
+			}
+			Ok(Err(e)) => {
+				tracing::error!("[server] fail delete room({:?})", room_id);
+				Err(DeleteRoomRequestError::DeleteRoomError(e))
+			}
+			Err(e) => {
+				tracing::error!("[server] timeout delete room({:?})", room_id);
+				Err(DeleteRoomRequestError::ChannelRecvError(e))
 			}
 		}
 	}

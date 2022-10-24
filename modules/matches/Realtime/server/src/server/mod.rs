@@ -7,8 +7,11 @@ use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, thread};
+use thiserror::Error;
 
 use admin::DumpResponse;
+use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::debug::proto::admin;
 use crate::room::RoomInfo;
@@ -16,12 +19,18 @@ use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
 use crate::server::measurers::Measurers;
 use crate::server::network::NetworkLayer;
-use crate::server::rooms::Rooms;
+use crate::server::rooms::{RoomNotFoundError, Rooms};
 
 pub mod manager;
 pub mod measurers;
 pub mod network;
 pub mod rooms;
+
+#[derive(Debug, Error)]
+pub enum DeleteRoomError {
+	#[error("RoomNotFound")]
+	RoomNotFound(RoomNotFoundError),
+}
 
 ///
 /// Собственно сетевой сервер, запускается в отдельном потоке, обрабатывает сетевые команды,
@@ -71,6 +80,15 @@ impl RoomsServer {
 						Ok(_) => {}
 						Err(e) => {
 							tracing::error!("[Request::RegisterRoom] error send response {:?}", e);
+						}
+					}
+				}
+				ManagementTask::DeleteRoom(room_id, sender) => {
+					let result = self.delete_room(room_id);
+					match sender.send(result) {
+						Ok(_) => {}
+						Err(e) => {
+							tracing::error!("[Request::DeleteRoom] error send response {:?}", e);
 						}
 					}
 				}
@@ -132,5 +150,13 @@ impl RoomsServer {
 				},
 			}
 		}
+	}
+
+	/// удалить комнату с севрера и закрыть соединение со всеми пользователями
+	fn delete_room(&mut self, room_id: RoomId) -> Result<(), DeleteRoomError> {
+		let room = self.rooms.take_room(&room_id).map_err(DeleteRoomError::RoomNotFound)?;
+		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
+		self.network_layer.disconnect_users(ids);
+		Ok(())
 	}
 }

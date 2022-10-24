@@ -28,7 +28,9 @@ mod tests {
 
 	use realtime::internal;
 
-	use crate::proto::matches::realtime::internal::{EmptyRequest, ProbeRequest, ProbeResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse};
+	use crate::proto::matches::realtime::internal::{
+		DeleteRoomRequest, DeleteRoomResponse, EmptyRequest, ProbeRequest, ProbeResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse,
+	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::{realtime, registry};
 	use crate::service::configuration::yaml::test::EXAMPLE_DIR;
@@ -93,7 +95,11 @@ mod tests {
 		type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
 
 		async fn watch_created_room_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
-			todo!()
+			unimplemented!()
+		}
+
+		async fn delete_room(&self, _request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
+			unimplemented!()
 		}
 	}
 

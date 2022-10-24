@@ -27,6 +27,10 @@ pub enum RegisterUserError {
 	RoomNotFound,
 }
 
+#[derive(Debug, Clone, Error)]
+#[error("room not found {0}")]
+pub struct RoomNotFoundError(RoomId);
+
 impl Rooms {
 	pub fn new(measurers: Rc<RefCell<Measurers>>) -> Self {
 		Self {
@@ -44,6 +48,11 @@ impl Rooms {
 		let room = Room::new(room_id, template, self.measurers.clone());
 		self.room_by_id.insert(room_id, room);
 		room_id
+	}
+
+	/// удалить комнату из списка без изменений пользователей и объектов
+	pub fn take_room(&mut self, room_id: &RoomId) -> Result<Room, RoomNotFoundError> {
+		self.room_by_id.remove(room_id).ok_or(RoomNotFoundError(*room_id))
 	}
 
 	pub fn register_user(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RegisterUserError> {
@@ -104,5 +113,29 @@ impl Rooms {
 				Ok(())
 			}
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn should_remove_room() {
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let room_id = rooms.create_room(RoomTemplate::default());
+		let room = rooms.take_room(&room_id);
+		assert!(room.is_ok(), "want room when take by room_id");
+		assert_eq!(room_id, room.unwrap().id, "want taken room_id to match with room_id parameter");
+		assert!(!rooms.room_by_id.contains_key(&room_id), "want room_id to be removed from rooms")
+	}
+
+	#[test]
+	fn should_remove_room_room_not_found() {
+		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let room_id = 123;
+		let room = rooms.take_room(&room_id);
+		assert!(room.is_err(), "want error when take non existing room");
+		assert_eq!(room_id, room.err().unwrap().0, "want the same room_id in take_room parameter and error")
 	}
 }
