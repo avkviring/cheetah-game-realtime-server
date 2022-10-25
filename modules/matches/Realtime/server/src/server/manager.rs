@@ -6,6 +6,7 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 use std::{io, thread};
 
+use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
 use thiserror::Error;
 
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
@@ -16,7 +17,7 @@ use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
-use crate::server::{DeleteRoomError, RoomsServer};
+use crate::server::{DeleteMemberError, DeleteRoomError, RoomsServer};
 
 ///
 /// Управление сервером
@@ -33,6 +34,7 @@ pub struct RoomsServerManager {
 pub enum ManagementTask {
 	CreateRoom(RoomTemplate, Sender<RoomId>),
 	CreateMember(RoomId, MemberTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
+	DeleteMember(MemberAndRoomId, Sender<Result<(), DeleteMemberError>>),
 	///
 	/// Смещение текущего времени для тестирования
 	///
@@ -86,6 +88,16 @@ pub enum DeleteRoomRequestError {
 	ChannelSendError(String),
 	#[error("DeleteRoomError {0}")]
 	DeleteRoomError(DeleteRoomError),
+}
+
+#[derive(Debug, Error)]
+pub enum DeleteMemberRequestError {
+	#[error("ChannelRecvError {0}")]
+	ChannelRecvError(RecvTimeoutError),
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
+	#[error("DeleteMemberError {0}")]
+	DeleteMemberError(DeleteMemberError),
 }
 
 impl Drop for RoomsServerManager {
@@ -176,6 +188,28 @@ impl RoomsServerManager {
 			Err(e) => {
 				tracing::error!("[server] fail create room");
 				Err(RegisterRoomRequestError::ChannelRecvError(e))
+			}
+		}
+	}
+
+	/// закрыть соединение с пользователем и удалить его из комнаты
+	pub fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), DeleteMemberRequestError> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender
+			.send(ManagementTask::DeleteMember(id, sender))
+			.map_err(|e| DeleteMemberRequestError::ChannelSendError(format!("{:?}", e)))?;
+		match receiver.recv_timeout(Duration::from_secs(1)) {
+			Ok(Ok(_)) => {
+				tracing::info!("[server] delete member({:?})", id);
+				Ok(())
+			}
+			Ok(Err(e)) => {
+				tracing::error!("[server] fail delete member({:?})", id);
+				Err(DeleteMemberRequestError::DeleteMemberError(e))
+			}
+			Err(e) => {
+				tracing::error!("[server] timeout delete member({:?})", id);
+				Err(DeleteMemberRequestError::ChannelRecvError(e))
 			}
 		}
 	}

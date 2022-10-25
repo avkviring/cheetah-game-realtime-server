@@ -237,8 +237,8 @@ pub mod tests {
 	use crate::proto::matches::matchmaking;
 	use crate::proto::matches::realtime;
 	use crate::proto::matches::realtime::internal::{
-		CreateMemberRequest, CreateSuperMemberRequest, DeleteRoomRequest, DeleteRoomResponse, EmptyRequest, ProbeRequest, ProbeResponse,
-		QueryRoomRequest, QueryRoomResponse, RoomIdResponse,
+		CreateMemberRequest, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest, DeleteRoomResponse,
+		EmptyRequest, ProbeRequest, ProbeResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse,
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::service::StubMatchmakingService;
@@ -439,6 +439,10 @@ pub mod tests {
 					private_key: vec![],
 				}))
 			}
+		}
+
+		async fn delete_member(&self, _request: Request<DeleteMemberRequest>) -> Result<Response<DeleteMemberResponse>, Status> {
+			unimplemented!()
 		}
 
 		async fn create_super_member(&self, _request: Request<CreateSuperMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {

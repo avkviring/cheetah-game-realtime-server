@@ -15,6 +15,11 @@ service Realtime {
   rpc CreateMember(CreateMemberRequest) returns(CreateMemberResponse);
 
   /**
+    Удалить пользователя из комнаты и закрыть соединение
+   */
+  rpc DeleteMember(DeleteMemberRequest) returns(DeleteMemberResponse);
+
+  /**
     Создать супер пользователя, для него отключены проверки всех прав
    */
   rpc CreateSuperMember(CreateSuperMemberRequest) returns(CreateMemberResponse);
@@ -175,4 +180,13 @@ message DeleteRoomRequest {
 }
 
 message DeleteRoomResponse {
+}
+
+message DeleteMemberRequest {
+  uint64 room_id = 1;
+  uint32 user_id = 2;
+}
+
+message  DeleteMemberResponse {
+
 }
