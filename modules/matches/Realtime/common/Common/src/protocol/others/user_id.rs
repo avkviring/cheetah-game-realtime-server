@@ -3,7 +3,7 @@ use crate::room::{RoomId, RoomMemberId};
 use hash32_derive::Hash32;
 use std::io::Cursor;
 
-#[derive(Debug, Default, Clone, PartialEq, Hash, Eq, Hash32)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Hash, Eq, Hash32)]
 pub struct MemberAndRoomId {
 	pub member_id: RoomMemberId,
 	pub room_id: RoomId,

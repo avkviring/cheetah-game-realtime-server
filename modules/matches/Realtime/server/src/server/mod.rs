@@ -14,6 +14,7 @@ use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::debug::proto::admin;
+use crate::room::command::ServerCommandError;
 use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
@@ -30,6 +31,12 @@ pub mod rooms;
 pub enum DeleteRoomError {
 	#[error("RoomNotFound")]
 	RoomNotFound(RoomNotFoundError),
+}
+
+#[derive(Debug, Error)]
+pub enum DeleteMemberError {
+	#[error("ServerCommandError {0}")]
+	ServerCommand(ServerCommandError),
 }
 
 ///
@@ -101,6 +108,15 @@ impl RoomsServer {
 						tracing::error!("[Request::RegisterUser] error send response {:?}", e);
 					}
 				}
+				ManagementTask::DeleteMember(id, sender) => {
+					let result = self.delete_member(id);
+					match sender.send(result) {
+						Ok(_) => {}
+						Err(e) => {
+							tracing::error!("[Request::DeleteMember] error send response {:?}", e);
+						}
+					}
+				}
 				TimeOffset(time_offset) => {
 					self.time_offset = Some(time_offset);
 				}
@@ -158,5 +174,11 @@ impl RoomsServer {
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
 		self.network_layer.disconnect_users(ids);
 		Ok(())
+	}
+
+	/// закрыть соединение с пользователем и удалить его из комнаты
+	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), DeleteMemberError> {
+		self.network_layer.disconnect_users([id].into_iter());
+		self.rooms.user_disconnected(&id).map_err(DeleteMemberError::ServerCommand)
 	}
 }

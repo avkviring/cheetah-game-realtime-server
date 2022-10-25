@@ -54,7 +54,7 @@ impl NetworkLayer {
 				if let Err(e) = rooms.user_disconnected(id) {
 					e.log_error(id.room_id, id.member_id);
 				}
-				disconnected.push(id.clone()).unwrap();
+				disconnected.push(*id).unwrap();
 			}
 		});
 		for id in disconnected {

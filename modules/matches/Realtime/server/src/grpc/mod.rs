@@ -7,12 +7,13 @@ use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
 use cheetah_libraries_microservice::trace::Trace;
+use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::grpc::proto::internal::realtime_server::Realtime;
 use crate::grpc::proto::internal::*;
 use crate::room::template::config::MemberTemplate;
-use crate::server::manager::RoomsServerManager;
+use crate::server::manager::{DeleteMemberRequestError, RoomsServerManager};
 
 mod from;
 pub mod proto;
@@ -129,6 +130,23 @@ impl Realtime for RealtimeInternalService {
 			.map(|_| Response::new(DeleteRoomResponse {}))
 			.map_err(|_| Status::not_found(format!("Room with ID {} does not exist", room_id)))
 	}
+
+	/// закрыть соединение с пользователем и удалить его из комнаты
+	async fn delete_member(&self, request: Request<DeleteMemberRequest>) -> Result<Response<DeleteMemberResponse>, Status> {
+		self.server_manager
+			.lock()
+			.await
+			.delete_member(MemberAndRoomId {
+				member_id: request.get_ref().user_id as _,
+				room_id: request.get_ref().room_id as _,
+			})
+			.map(|_| Response::new(DeleteMemberResponse {}))
+			.map_err(|e| match e {
+				DeleteMemberRequestError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
+				DeleteMemberRequestError::ChannelSendError(e) => Status::unavailable(e),
+				DeleteMemberRequestError::DeleteMemberError(e) => Status::not_found(e.to_string()),
+			})
+	}
 }
 
 #[cfg(test)]
@@ -138,14 +156,14 @@ mod test {
 	use tokio::sync::Mutex;
 	use tokio_stream::wrappers::ReceiverStream;
 	use tokio_stream::StreamExt;
-	use tonic::{Request, Status};
+	use tonic::{Code, Request, Status};
 
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
 	use crate::grpc::proto::internal::realtime_server::Realtime;
-	use crate::grpc::proto::internal::{DeleteRoomRequest, EmptyRequest, RoomIdResponse};
+	use crate::grpc::proto::internal::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, RoomIdResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
-	use crate::room::template::config::RoomTemplate;
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;
 
 	#[tokio::test]
@@ -199,5 +217,59 @@ mod test {
 		let service = RealtimeInternalService::new(server_manager.clone());
 
 		assert!(service.delete_room(Request::new(Default::default())).await.is_err());
+	}
+
+	#[tokio::test]
+	async fn test_delete_member() {
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
+		let user_id = service
+			.register_user(room_id, MemberTemplate::default())
+			.await
+			.unwrap()
+			.into_inner()
+			.user_id;
+		assert!(
+			!server_manager.lock().await.dump(room_id).unwrap().users.is_empty(),
+			"room should not be empty"
+		);
+
+		assert!(
+			service
+				.delete_member(Request::new(DeleteMemberRequest { user_id, room_id }))
+				.await
+				.is_ok(),
+			"delete_member should return ok"
+		);
+
+		println!(
+			"user_id={:?} dump={:?}",
+			user_id,
+			server_manager.lock().await.dump(room_id).unwrap().users
+		);
+		assert!(
+			server_manager
+				.lock()
+				.await
+				.dump(room_id)
+				.unwrap()
+				.users
+				.iter()
+				.find(|&u| u.id == user_id)
+				.is_none(),
+			"deleted member should not be in the room"
+		);
+	}
+
+	#[tokio::test]
+	async fn test_delete_member_room_not_exist() {
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+
+		let res = service.delete_member(Request::new(DeleteMemberRequest { user_id: 0, room_id: 0 })).await;
+
+		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "delete_member should return not_found");
 	}
 }

@@ -91,7 +91,7 @@ impl NetworkClient {
 
 	fn do_write(&mut self, now: &Instant) {
 		while let Some(mut frame) = self.protocol.build_next_frame(now) {
-			frame.headers.add(Header::MemberAndRoomId(self.member_and_room_id.clone()));
+			frame.headers.add(Header::MemberAndRoomId(self.member_and_room_id));
 			self.out_frames.push_front(frame);
 		}
 
