@@ -1,12 +1,13 @@
 use thiserror::Error;
 
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::field::Field;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
-use crate::room::object::{Field, GameObjectError};
+use crate::room::object::GameObjectError;
 use crate::room::Room;
 
 pub mod compare_and_set;

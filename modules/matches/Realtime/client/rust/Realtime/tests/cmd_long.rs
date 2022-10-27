@@ -6,8 +6,8 @@ use lazy_static::lazy_static;
 use cheetah_matches_realtime::room::template::config::Permission;
 use cheetah_matches_realtime_client::ffi;
 use cheetah_matches_realtime_client::ffi::GameObjectIdFFI;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::FieldType;
-use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;

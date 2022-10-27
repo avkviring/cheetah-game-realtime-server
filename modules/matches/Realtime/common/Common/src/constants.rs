@@ -1,4 +1,3 @@
-pub type FieldId = u16;
 pub type GameObjectTemplateId = u16;
 ///
 /// Максимальное количество FieldId в игровом объекте (для каждого типа данных)

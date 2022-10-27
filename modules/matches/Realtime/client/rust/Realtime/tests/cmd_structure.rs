@@ -4,8 +4,8 @@ use std::sync::Mutex;
 use cheetah_matches_realtime::room::template::config::Permission;
 use cheetah_matches_realtime_client::ffi;
 use cheetah_matches_realtime_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::FieldType;
-use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;

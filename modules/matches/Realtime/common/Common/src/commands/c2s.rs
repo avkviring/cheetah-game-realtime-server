@@ -2,6 +2,7 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
+use crate::commands::field::FieldId;
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
@@ -10,7 +11,6 @@ use crate::commands::types::float::IncrementDoubleC2SCommand;
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 use crate::commands::types::structure::CompareAndSetStructureCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType, FieldValue};
-use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 
@@ -164,6 +164,7 @@ mod tests {
 
 	use crate::commands::binary_value::BinaryValue;
 	use crate::commands::c2s::C2SCommand;
+	use crate::commands::field::FieldId;
 	use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
@@ -172,7 +173,6 @@ mod tests {
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 	use crate::commands::types::structure::CompareAndSetStructureCommand;
 	use crate::commands::CommandTypeId;
-	use crate::constants::FieldId;
 	use crate::protocol::codec::commands::context::CommandContextError;
 	use crate::room::access::AccessGroups;
 	use crate::room::object::GameObjectId;

@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
-use crate::constants::FieldId;
+use crate::commands::field::FieldId;
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::object::GameObjectId;
 
@@ -20,7 +20,7 @@ pub struct IncrementLongC2SCommand {
 ///
 /// Установка значения new если текущее равно current
 /// reset - значение после выхода пользователя
-///  
+///
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompareAndSetLongCommand {
 	pub object_id: GameObjectId,

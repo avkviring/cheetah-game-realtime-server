@@ -1,6 +1,6 @@
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::types::field::DeleteFieldCommand;
-use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::clients::registry::ClientId;

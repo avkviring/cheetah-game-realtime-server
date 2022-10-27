@@ -121,12 +121,13 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_realtime_common::commands::field::Field;
 	use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_realtime_common::commands::{types::field::SetFieldCommand, FieldType};
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{Field, S2CCommandWithFieldInfo};
+	use crate::room::object::S2CCommandWithFieldInfo;
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
 	use crate::room::Room;
 

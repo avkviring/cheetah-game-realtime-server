@@ -7,7 +7,7 @@ use crate::{
 	protocol::codec::variable_int::{VariableIntReader, VariableIntWriter},
 };
 
-use super::{binary_value::BinaryValue, field_type::ToFieldType};
+use super::{binary_value::BinaryValue, field::ToFieldType};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum FieldValue {

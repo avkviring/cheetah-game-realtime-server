@@ -4,8 +4,8 @@ use std::io::{Cursor, ErrorKind};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use thiserror::Error;
 
+use crate::commands::field::FieldId;
 use crate::commands::CommandTypeId;
-use crate::constants::FieldId;
 use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::header::CommandHeader;
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
@@ -269,8 +269,8 @@ impl From<&CreatorSource> for u8 {
 pub mod tests {
 	use std::io::Cursor;
 
+	use crate::commands::field::FieldId;
 	use crate::commands::CommandTypeId;
-	use crate::constants::FieldId;
 	use crate::protocol::codec::channel::ChannelType;
 	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::frame::applications::ChannelGroup;

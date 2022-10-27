@@ -11,11 +11,11 @@ mod tests {
 	use cheetah_matches_realtime_common::room::RoomMemberId;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::object::Field;
 	use crate::room::template::config::{
 		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
 	};
 	use crate::room::Room;
+	use cheetah_matches_realtime_common::commands::field::Field;
 
 	const FIELD_ID: u16 = 100;
 

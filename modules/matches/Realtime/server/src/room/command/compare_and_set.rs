@@ -1,17 +1,17 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use cheetah_matches_realtime_common::commands::field::{Field, FieldId};
 use cheetah_matches_realtime_common::commands::{
 	s2c::S2CCommand,
 	types::{long::CompareAndSetLongCommand, structure::CompareAndSetStructureCommand},
 };
 use cheetah_matches_realtime_common::commands::{FieldType, FieldValue};
-use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::room::object::{Field, GameObject, S2CCommandWithFieldInfo};
+use crate::room::object::{GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -145,22 +145,22 @@ fn reset_value(object: &mut GameObject, field_id: FieldId, value: &FieldValue) -
 
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_realtime_common::commands::field::FieldId;
 	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 	use cheetah_matches_realtime_common::commands::types::long::CompareAndSetLongCommand;
 	use cheetah_matches_realtime_common::commands::types::structure::CompareAndSetStructureCommand;
 	use cheetah_matches_realtime_common::commands::FieldType;
-	use cheetah_matches_realtime_common::constants::FieldId;
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 	use cheetah_matches_realtime_common::room::RoomMemberId;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::object::Field;
 	use crate::room::template::config::{
 		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
 	};
 	use crate::room::Room;
+	use cheetah_matches_realtime_common::commands::field::Field;
 
 	///
 	/// Проверяем что при выполнении нескольких команд соблюдаются гарантии CompareAndSet

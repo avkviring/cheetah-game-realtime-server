@@ -1,9 +1,10 @@
 use thiserror::Error;
 
+use cheetah_matches_realtime_common::commands::field::{Field, FieldId};
 use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 use cheetah_matches_realtime_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
-use cheetah_matches_realtime_common::commands::{field_type::ToFieldType, FieldType, FieldValue};
-use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_realtime_common::commands::{field::ToFieldType, FieldType, FieldValue};
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
@@ -145,21 +146,16 @@ pub struct S2CCommandWithFieldInfo {
 	pub command: S2CCommand,
 }
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
-pub struct Field {
-	pub id: FieldId,
-	pub field_type: FieldType,
-}
-
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_realtime_common::commands::field::Field;
 	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 	use cheetah_matches_realtime_common::commands::FieldType;
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{CreateCommandsCollector, Field, FieldValue, GameObject, S2CCommandWithFieldInfo};
+	use crate::room::object::{CreateCommandsCollector, FieldValue, GameObject, S2CCommandWithFieldInfo};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды

@@ -5,8 +5,8 @@ use fnv::FnvBuildHasher;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 
-use crate::room::object::Field;
 use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
+use cheetah_matches_realtime_common::commands::field::Field;
 
 #[derive(Debug)]
 pub struct PermissionManager {
@@ -106,9 +106,9 @@ mod tests {
 	use cheetah_matches_realtime_common::commands::FieldType;
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 
-	use crate::room::object::Field;
 	use crate::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions};
 	use crate::room::template::permission::PermissionManager;
+	use cheetah_matches_realtime_common::commands::field::Field;
 
 	#[test]
 	fn should_default_permission() {

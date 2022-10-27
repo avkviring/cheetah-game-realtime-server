@@ -8,7 +8,7 @@ use cheetah_matches_realtime_client::ffi;
 use cheetah_matches_realtime_client::ffi::channel::Channel;
 use cheetah_matches_realtime_client::ffi::logs::{init_logger, set_max_log_level, LogLevel};
 use cheetah_matches_realtime_client::ffi::GameObjectIdFFI;
-use cheetah_matches_realtime_common::constants::FieldId;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;

@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use fnv::FnvBuildHasher;
 
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::commands::FieldValue;
-use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::MemberPrivateKey;
 
-use crate::room::object::Field;
+use cheetah_matches_realtime_common::commands::field::Field;
 
 ///
 /// Шаблон для создания комнаты
@@ -113,16 +114,17 @@ impl MemberTemplate {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_realtime_common::commands::field::FieldId;
 	use cheetah_matches_realtime_common::commands::FieldType;
-	use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+	use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 
-	use crate::room::object::Field;
 	use crate::room::template::config::{
 		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, Permissions,
 		UserTemplateError,
 	};
+	use cheetah_matches_realtime_common::commands::field::Field;
 
 	impl MemberTemplate {
 		pub fn stub(access_group: AccessGroups) -> Self {
