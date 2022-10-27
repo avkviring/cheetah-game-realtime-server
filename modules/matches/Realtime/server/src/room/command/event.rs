@@ -1,10 +1,11 @@
+use cheetah_matches_realtime_common::commands::field::Field;
 use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 use cheetah_matches_realtime_common::commands::types::event::{EventCommand, TargetEventCommand};
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::room::object::{Field, GameObject};
+use crate::room::object::GameObject;
 use crate::room::template::config::Permission;
 use crate::room::Room;
 

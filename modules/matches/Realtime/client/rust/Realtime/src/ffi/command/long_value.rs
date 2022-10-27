@@ -1,7 +1,7 @@
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
 use cheetah_matches_realtime_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
-use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::clients::registry::ClientId;

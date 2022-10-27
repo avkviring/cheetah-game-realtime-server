@@ -1,5 +1,6 @@
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::FieldType;
-use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 use cheetah_matches_realtime_common::room::RoomMemberId;
@@ -119,9 +120,10 @@ impl Rule {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+	use cheetah_matches_realtime_common::commands::field::FieldId;
 	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 	use cheetah_matches_realtime_common::commands::types::event::EventCommand;
-	use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+	use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 	use cheetah_matches_realtime_common::room::RoomMemberId;

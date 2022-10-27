@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::constants::FieldId;
+use crate::commands::field::FieldId;
 use crate::room::object::GameObjectId;
 
 ///

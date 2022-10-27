@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
-use crate::commands::{field_type::ToFieldType, FieldType, FieldValue};
-use crate::constants::FieldId;
+use crate::commands::field::FieldId;
+use crate::commands::{field::ToFieldType, FieldType, FieldValue};
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Eq, Clone)]

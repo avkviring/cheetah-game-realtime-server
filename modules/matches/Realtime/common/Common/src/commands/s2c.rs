@@ -1,12 +1,12 @@
 use std::io::Cursor;
 
+use crate::commands::field::FieldId;
 use crate::commands::field_value::FieldValue;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
-use crate::constants::FieldId;
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
@@ -118,11 +118,11 @@ mod tests {
 	use std::io::Cursor;
 
 	use crate::commands::binary_value::BinaryValue;
+	use crate::commands::field::FieldId;
 	use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::field::SetFieldCommand;
 	use crate::commands::CommandTypeId;
-	use crate::constants::FieldId;
 	use crate::{
 		commands::s2c::S2CCommand, commands::types::event::EventCommand, protocol::codec::commands::context::CommandContextError,
 		room::access::AccessGroups, room::object::GameObjectId, room::owner::GameObjectOwner,

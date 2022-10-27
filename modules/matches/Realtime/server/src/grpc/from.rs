@@ -3,8 +3,8 @@ use cheetah_matches_realtime_common::{commands::FieldValue, room::access::Access
 use crate::debug::proto::shared::{field_value::Variant as VariantDebug, FieldValue as GRPCFieldValueDebug};
 use crate::grpc::proto::internal;
 use crate::grpc::proto::shared::{self, field_value::Variant, FieldValue as GRPCFieldValue};
-use crate::room::object::Field;
 use crate::room::template::config;
+use cheetah_matches_realtime_common::commands::field::Field;
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {

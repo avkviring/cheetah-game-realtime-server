@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
+use crate::commands::field::FieldId;
 use crate::commands::CommandTypeId;
-use crate::constants::FieldId;
 use crate::protocol::codec::channel::ChannelType;
 use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};

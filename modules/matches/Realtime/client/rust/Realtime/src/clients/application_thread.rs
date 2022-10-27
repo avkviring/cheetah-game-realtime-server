@@ -4,10 +4,10 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
 use cheetah_matches_realtime_common::commands::FieldValue;
-use cheetah_matches_realtime_common::constants::FieldId;
 use cheetah_matches_realtime_common::network::client::ConnectionStatus;
 use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;

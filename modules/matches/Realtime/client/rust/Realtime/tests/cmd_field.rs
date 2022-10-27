@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 
 use cheetah_matches_realtime_client::ffi;
 use cheetah_matches_realtime_client::ffi::{FieldTypeFFI, GameObjectIdFFI};
-use cheetah_matches_realtime_common::constants::FieldId;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
@@ -23,7 +23,7 @@ fn should_delete_field_ffi() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	assert!(matches!(DELETED_FIELD.lock().unwrap().as_ref(),Option::Some((field_id, field_type)) if 
+	assert!(matches!(DELETED_FIELD.lock().unwrap().as_ref(),Option::Some((field_id, field_type)) if
 			*field_id ==1 && *field_type==FieldTypeFFI::Long ));
 }
 

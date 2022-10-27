@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use crate::commands::binary_value::BinaryValue;
-use crate::constants::FieldId;
+use crate::commands::field::FieldId;
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;

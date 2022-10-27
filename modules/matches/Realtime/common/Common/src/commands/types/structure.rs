@@ -3,7 +3,7 @@ use std::io::Cursor;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
 use crate::commands::binary_value::BinaryValue;
-use crate::constants::FieldId;
+use crate::commands::field::FieldId;
 use crate::room::object::GameObjectId;
 
 ///

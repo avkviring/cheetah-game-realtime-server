@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 
 use cheetah_matches_realtime_client::ffi;
 use cheetah_matches_realtime_client::ffi::GameObjectIdFFI;
-use cheetah_matches_realtime_common::constants::FieldId;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
@@ -24,7 +24,7 @@ fn should_inc() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	assert!(matches!(INCR.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id 
+	assert!(matches!(INCR.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id
 		== 1 && (*value - 200.0).abs() < 0.001 ));
 }
 

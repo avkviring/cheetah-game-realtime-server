@@ -1,12 +1,13 @@
 use std::net::SocketAddr;
 
-use cheetah_matches_realtime::room::object::Field;
 use cheetah_matches_realtime::room::template::config::{
 	GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate,
 };
 use cheetah_matches_realtime::server::manager::RoomsServerManager;
+use cheetah_matches_realtime_common::commands::field::Field;
+use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::FieldType;
-use cheetah_matches_realtime_common::constants::{FieldId, GameObjectTemplateId};
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::network::bind_to_free_socket;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::RoomId;

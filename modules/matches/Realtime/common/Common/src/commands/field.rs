@@ -80,3 +80,11 @@ impl ToFieldType for &[u8] {
 		FieldType::Structure
 	}
 }
+
+pub type FieldId = u16;
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+pub struct Field {
+	pub id: FieldId,
+	pub field_type: FieldType,
+}
