@@ -3,8 +3,8 @@ on:
   release:
     types: [ published ]
 env:
-  REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Cargo.toml
-  REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/Embedded/Cargo.toml
+  REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/rust/Realtime/Cargo.toml
+  REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/client/rust/Embedded/Cargo.toml
 jobs:
   build-macos:
     runs-on: macos-latest
