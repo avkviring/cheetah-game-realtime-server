@@ -9,8 +9,8 @@ crate-type = ["cdylib","staticlib"]
 
 
 [dependencies]
-cheetah-matches-realtime-common = { path = "../common/Common" }
-cheetah-matches-realtime = { path = "../server" }
+cheetah-matches-realtime-common = { path = "../../../common/Common" }
+cheetah-matches-realtime = { path = "../../../server" }
 tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
 anyhow = "1.0.64"
 thiserror = "1.0.34"
