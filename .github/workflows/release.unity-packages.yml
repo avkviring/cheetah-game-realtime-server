@@ -7,19 +7,11 @@ env:
   REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/client/rust/Embedded/Cargo.toml
 jobs:
   build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build Client
-        run: |
-          cargo build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --release
-          cargo build --manifest-path $REALTIME_EMBEDDED_MANIFEST_PATH --release
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-macos
-          path: |
-            modules/target/release/*.dylib
+    uses: ./.github/workflows/templates.build-on-macos.yml
+  build-on-linux:
+    uses: ./.github/workflows/templates.build-on-linux.yml
+  build-on-windows:
+    uses: ./.github/workflows/templates.build-on-windows.yml
   build-ios:
     runs-on: macos-latest
     steps:
@@ -33,8 +25,6 @@ jobs:
           name: build-ios
           path: |
             modules/target/aarch64-apple-ios/release/libcheetah_matches_realtime_client.a
-  build-on-linux:
-    uses: ./.github/workflows/templates.build-on-linux.yml
   build-android:
     runs-on: ubuntu-latest
     steps:
@@ -52,8 +42,6 @@ jobs:
           path: |
             modules/target/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so
             modules/target/aarch64-linux-android/release/libcheetah_matches_realtime_client.so
-  build-on-windows:
-    uses: ./.github/workflows/templates.build-on-windows.yml
   publish-unity-packages:
     needs:
       - build-macos
@@ -107,6 +95,14 @@ jobs:
           cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/libcheetah_matches_realtime_embedded.bundle            
           cp build-on-windows-result/cheetah_matches_realtime_embedded.dll $lib_path/
           cp build-on-windows-result/cheetah_matches_realtime_embedded.pdb $lib_path/
+      - name: Copy Libraries into UDS
+        run: |
+          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds/Runtime/FFI/Library/
+          mkdir -p $lib_path
+          cp build-on-linux-result/libcheetah_matches_realtime_uds_client.so $lib_path/          
+          cp build-macos/libcheetah_matches_realtime_uds_client.dylib $lib_path/libcheetah_matches_realtime_uds_client.bundle            
+          cp build-on-windows-result/cheetah_matches_realtime_uds_client.dll $lib_path/
+          cp build-on-windows-result/cheetah_matches_realtime_uds_client.pdb $lib_path/
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'

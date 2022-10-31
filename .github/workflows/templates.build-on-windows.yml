@@ -4,6 +4,7 @@ on:
 env:
   REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/rust/Realtime/Cargo.toml
   REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/client/rust/Embedded/Cargo.toml
+  REALTIME_UDS_MANIFEST_PATH: modules/matches/Realtime/client/rust/UDS/Cargo.toml
 jobs:
   build:
     runs-on: windows-latest
@@ -20,6 +21,7 @@ jobs:
         run: |
           cargo build --manifest-path $env:REALTIME_CLIENT_MANIFEST_PATH
           cargo build --manifest-path $env:REALTIME_EMBEDDED_MANIFEST_PATH
+          cargo build --manifest-path $env:REALTIME_UDS_MANIFEST_PATH
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
