@@ -191,6 +191,14 @@
         "games.cheetah.platform": "999.999.999"
       }
     },
+    "games.cheetah.matches.realtime.uds": {
+      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "games.cheetah.platform": "999.999.999"
+      }
+    },
     "games.cheetah.matches.registry": {
       "version": "file:../../../modules/matches/Registry/client/Unity/games.cheetah.matches.registry",
       "depth": 0,

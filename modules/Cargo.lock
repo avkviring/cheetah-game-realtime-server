@@ -669,6 +669,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cheetah-matches-realtime-uds-client"
+version = "0.0.1"
+dependencies = [
+ "cheetah-matches-realtime",
+ "cheetah-matches-realtime-common",
+ "easybench",
+ "fnv",
+ "heapless",
+ "lazy_static",
+ "rand",
+ "thiserror",
+ "tracing",
+ "tracing-core",
+ "tracing-log",
+ "tracing-subscriber",
+ "widestring",
+]
+
+[[package]]
 name = "cheetah-matches-registry"
 version = "999.999.999"
 dependencies = [

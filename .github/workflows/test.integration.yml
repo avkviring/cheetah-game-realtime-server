@@ -41,6 +41,8 @@ jobs:
           cp build-on-linux-result/libcheetah_matches_realtime_client.so $lib_path/linux.so
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/          
           cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/
+          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds/Runtime/FFI/Library/      
+          cp build-on-linux-result/libcheetah_matches_realtime_uds_client.so $lib_path/
       - name: Generate GRPC Implementations
         run: scripts/generators/grpc/unity.sh
       - name: Configure integration-test-config.json

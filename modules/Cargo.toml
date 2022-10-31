@@ -13,6 +13,7 @@ members = [
     "matches/Realtime/common/Macro",
     "matches/Realtime/client/rust/Realtime",
     "matches/Realtime/client/rust/Embedded",
+    "matches/Realtime/client/rust/UDS",
     "statistics/Events/server",
     "system/Compatibility/server",
 ]
