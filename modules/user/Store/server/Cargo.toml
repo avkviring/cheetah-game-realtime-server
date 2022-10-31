@@ -20,7 +20,7 @@ sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uui
 
 [dev-dependencies]
 uuid = { version = "1.0.0", features = ["v4"] }
-testcontainers = "0.13.0"
+testcontainers = "0.14.0"
 lazy_static = "1.4.0"
 
 [build-dependencies]

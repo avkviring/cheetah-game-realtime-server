@@ -37,7 +37,7 @@ jwt-tonic-user-uuid = "0.0.1"
 sqlx = { version = "0.6.1", features = ["runtime-tokio-rustls", "postgres", "uuid", "migrate", "chrono"] }
 
 [dev-dependencies]
-testcontainers = "0.13.0"
+testcontainers = "0.14.0"
 lazy_static = "1.4.0"
 futures = "0.3.21"
 httpmock = { version = "0.6.2" }
