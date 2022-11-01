@@ -5,7 +5,7 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::commands::CommandTypeId;
 use crate::protocol::codec::channel::ChannelType;
-use crate::protocol::codec::commands::context::CreatorSource;
+use crate::protocol::codec::commands::context::{CommandContextError, CreatorSource};
 
 ///
 /// Заголовок команды
@@ -33,26 +33,26 @@ impl CommandHeader {
 			new_channel_group_id: false,
 			creator_source: CreatorSource::NotSupported,
 			channel_type_id: ChannelType(0),
-			command_type_id: CommandTypeId(0),
+			command_type_id: CommandTypeId::CreatedGameObject,
 		}
 	}
-	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<CommandHeader> {
+	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> Result<CommandHeader, CommandContextError> {
 		let header = input.read_u16::<BigEndian>()?;
+		let command_type_id = (header & 0b111111) as u8;
 		Ok(Self {
 			new_object_id: (header & 1 << NEW_OBJECT_ID_BIT) > 0,
 			new_field_id: (header & 1 << NEW_FIELD_ID_BIT) > 0,
 			new_channel_group_id: (header & 1 << NEW_CHANNEL_GROUP_ID_BIT) > 0,
 			creator_source: CreatorSource::try_from(((header & 0b11000000000) >> 9) as u8)?,
 			channel_type_id: ChannelType(((header & 0b111000000) >> 6) as u8),
-			command_type_id: CommandTypeId((header & 0b111111) as u8),
+			command_type_id: num::FromPrimitive::from_u8(command_type_id).ok_or(CommandContextError::UnknownCommandTypeId(command_type_id))?,
 		})
 	}
 
 	pub(crate) fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		assert!(self.command_type_id.0 < 64);
-		assert!(self.channel_type_id.0 < 8);
+		assert!(self.channel_type_id < ChannelType(8));
 		let mut header: u16 = 0;
-		header += self.command_type_id.0 as u16;
+		header += self.command_type_id as u16;
 		header += (self.channel_type_id.0 as u16) << 6;
 		header += (u8::from(&self.creator_source) as u16) << 9;
 		header += if self.new_channel_group_id { 1 << NEW_CHANNEL_GROUP_ID_BIT } else { 0 };
@@ -82,7 +82,7 @@ mod tests {
 			new_channel_group_id: false,
 			creator_source: CreatorSource::NotSupported,
 			channel_type_id: ChannelType(0),
-			command_type_id: CommandTypeId(0),
+			command_type_id: CommandTypeId::CreateGameObject,
 		});
 		check(CommandHeader {
 			new_object_id: true,
@@ -90,7 +90,7 @@ mod tests {
 			new_channel_group_id: false,
 			creator_source: CreatorSource::New,
 			channel_type_id: ChannelType(7),
-			command_type_id: CommandTypeId(0),
+			command_type_id: CommandTypeId::CreateGameObject,
 		});
 		check(CommandHeader {
 			new_object_id: false,
@@ -98,7 +98,7 @@ mod tests {
 			new_channel_group_id: false,
 			creator_source: CreatorSource::Current,
 			channel_type_id: ChannelType(5),
-			command_type_id: CommandTypeId(7),
+			command_type_id: CommandTypeId::SetStructure,
 		});
 
 		check(CommandHeader {
@@ -107,7 +107,7 @@ mod tests {
 			new_channel_group_id: true,
 			creator_source: CreatorSource::AsObjectOwner,
 			channel_type_id: ChannelType(3),
-			command_type_id: CommandTypeId(31),
+			command_type_id: CommandTypeId::CreateGameObject,
 		});
 
 		check(CommandHeader {
@@ -116,7 +116,7 @@ mod tests {
 			new_channel_group_id: true,
 			creator_source: CreatorSource::NotSupported,
 			channel_type_id: ChannelType(7),
-			command_type_id: CommandTypeId(63),
+			command_type_id: CommandTypeId::CreateGameObject,
 		});
 	}
 

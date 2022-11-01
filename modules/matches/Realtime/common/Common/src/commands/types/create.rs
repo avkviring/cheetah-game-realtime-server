@@ -38,7 +38,7 @@ pub struct C2SCreatedGameObjectCommand {
 
 ///
 /// Игровой объект загружен на клиента
-///  
+///
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GameObjectCreatedS2CCommand {
 	pub object_id: GameObjectId,

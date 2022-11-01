@@ -16,7 +16,7 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 		let object_id = self.object_id.clone();
 
 		let action = |object: &mut GameObject| {
-			let value = if let Some(value) = object.get_field(field_id) {
+			let value = if let Some(value) = object.get_field::<f64>(field_id) {
 				let new_value = value + self.increment;
 				object.set_field(field_id, new_value)?;
 				new_value
@@ -39,7 +39,7 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 			},
 			user_id,
 			Permission::Rw,
-			Option::None,
+			None,
 			action,
 		)
 	}

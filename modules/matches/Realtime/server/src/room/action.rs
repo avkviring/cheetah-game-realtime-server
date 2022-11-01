@@ -36,7 +36,7 @@ impl Room {
 		let permission_manager = self.permission_manager.clone();
 		let creator_access_group = match self.members.get(&creator_id) {
 			None => {
-				return Result::Err(ServerCommandError::MemberNotFound(creator_id));
+				return Err(ServerCommandError::MemberNotFound(creator_id));
 			}
 			Some(member) => member.template.groups,
 		};
@@ -44,7 +44,7 @@ impl Room {
 		let object = self.get_object(game_object_id)?;
 		// проверяем группу доступа
 		if !object.access_groups.contains_any(&creator_access_group) {
-			return Result::Err(ServerCommandError::MemberCannotAccessToObject {
+			return Err(ServerCommandError::MemberCannotAccessToObject {
 				room_id,
 				member_id: creator_id,
 				object_id: game_object_id.clone(),
@@ -54,12 +54,12 @@ impl Room {
 		}
 
 		let object_owner = if let GameObjectOwner::Member(owner) = object.id.owner {
-			Option::Some(owner)
+			Some(owner)
 		} else {
-			Option::None
+			None
 		};
 
-		let is_creator_object_owner = object_owner == Option::Some(creator_id);
+		let is_creator_object_owner = object_owner == Some(creator_id);
 
 		let allow = is_creator_object_owner
 			|| permission_manager
@@ -68,7 +68,7 @@ impl Room {
 				>= permission;
 
 		if !allow {
-			return Result::Err(ServerCommandError::MemberCannotAccessToObjectField {
+			return Err(ServerCommandError::MemberCannotAccessToObjectField {
 				room_id,
 				member_id: creator_id,
 				object_id: object.id.clone(),
@@ -97,7 +97,7 @@ impl Room {
 							// отправляем себе только если есть права на запись
 							// иначе никто другой не может вносит изменения в данное поле и
 							// отправлять себе как единственному источнику изменений избыточно
-							if object_owner == Option::Some(user.id) {
+							if object_owner == Some(user.id) {
 								permission_manager.has_write_access(template, field)
 							} else {
 								true

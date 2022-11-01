@@ -10,7 +10,7 @@ use crate::protocol::frame::channel::Channel;
 ///
 /// Тип канала передача данных (тег для [CommandChannel])
 ///
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Copy, Clone)]
 pub struct ChannelType(pub u8);
 
 impl ChannelType {
@@ -94,7 +94,7 @@ mod tests {
 		check(
 			Channel::ReliableUnordered,
 			ChannelType::RELIABLE_UNORDERED,
-			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
+			Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
 	}
 
@@ -103,7 +103,7 @@ mod tests {
 		check(
 			Channel::ReliableOrdered(ChannelGroup(100)),
 			ChannelType::RELIABLE_ORDERED,
-			Result::Ok(ChannelGroup(100)),
+			Ok(ChannelGroup(100)),
 		);
 	}
 
@@ -112,7 +112,7 @@ mod tests {
 		check(
 			Channel::UnreliableUnordered,
 			ChannelType::UNRELIABLE_UNORDERED,
-			Result::Err(CommandContextError::ContextNotContainsChannelGroupId),
+			Err(CommandContextError::ContextNotContainsChannelGroupId),
 		);
 	}
 
@@ -121,7 +121,7 @@ mod tests {
 		check(
 			Channel::UnreliableOrdered(ChannelGroup(155)),
 			ChannelType::UNRELIABLE_ORDERED,
-			Result::Ok(ChannelGroup(155)),
+			Ok(ChannelGroup(155)),
 		);
 	}
 
@@ -130,7 +130,7 @@ mod tests {
 		check(
 			Channel::ReliableSequence(ChannelGroup(7), ChannelSequence(255)),
 			ChannelType::RELIABLE_SEQUENCE,
-			Result::Ok(ChannelGroup(7)),
+			Ok(ChannelGroup(7)),
 		);
 	}
 
