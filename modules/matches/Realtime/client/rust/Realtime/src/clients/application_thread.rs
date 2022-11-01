@@ -65,7 +65,7 @@ impl ApplicationThreadClient {
 		Self {
 			user_id,
 			commands_from_server: in_commands,
-			handler: Option::Some(handler),
+			handler: Some(handler),
 			state,
 			server_time,
 			request_to_client: sender,

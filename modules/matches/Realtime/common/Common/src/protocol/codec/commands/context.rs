@@ -64,6 +64,8 @@ pub enum CommandContextError {
 		#[from]
 		source: std::io::Error,
 	},
+	#[error("Unknown command type id {0}")]
+	UnknownCommandTypeId(u8),
 }
 
 impl CommandContext {
@@ -298,7 +300,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: None,
 				size: 2, //flags
 			},
@@ -307,7 +309,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: None,
 				size: 2 + 2, //flags + object_id
 			},
@@ -316,7 +318,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: None,
 				size: 2, // flags
 			},
@@ -325,7 +327,7 @@ pub mod tests {
 				field_id: Some(5),
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: None,
 				size: 3, // flags + field_id
 			},
@@ -334,7 +336,7 @@ pub mod tests {
 				field_id: Some(5),
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: None,
 				size: 2, // flags
 			},
@@ -343,7 +345,7 @@ pub mod tests {
 				field_id: Some(5),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: None,
 				size: 3, // flags + channel_group
 			},
@@ -352,7 +354,7 @@ pub mod tests {
 				field_id: Some(5),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: None,
 				size: 2, // flags
 			},
@@ -361,7 +363,7 @@ pub mod tests {
 				field_id: Some(5),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(7),
 				size: 3, // flags+creator
 			},
@@ -370,7 +372,7 @@ pub mod tests {
 				field_id: Some(5),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(7),
 				size: 4, // flags + object_id
 			},
@@ -379,7 +381,7 @@ pub mod tests {
 				field_id: Some(10),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(7),
 				size: 3, // flags + field_id
 			},
@@ -388,7 +390,7 @@ pub mod tests {
 				field_id: Some(10),
 				channel_group: Some(ChannelGroup(100)),
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(5),
 				size: 2, // flags
 			},
@@ -405,7 +407,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(5),
 				size: 2 + 1, //flags + сохранение идентификатора пользователя
 			},
@@ -414,7 +416,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(5),
 				size: 2, //flags + пользователь не поменялся
 			},
@@ -423,7 +425,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(5),
 				size: 2 + 2, //flags + игровой объект
 			},
@@ -432,7 +434,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(7),
 				size: 2, //flags + пользователь равен владельцу игрового объекта, отдельного
 				         // сохранения не требуется
@@ -442,7 +444,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(7),
 				size: 4, //flags + object_id
 			},
@@ -451,7 +453,7 @@ pub mod tests {
 				field_id: None,
 				channel_group: None,
 				channel_type_id: ChannelType(5),
-				command_type_id: CommandTypeId(31),
+				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(9),
 				size: 3, //flags + user_id
 			},

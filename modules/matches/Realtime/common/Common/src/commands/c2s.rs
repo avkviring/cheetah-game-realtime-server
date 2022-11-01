@@ -91,23 +91,23 @@ impl C2SCommand {
 
 	pub fn get_type_id(&self) -> CommandTypeId {
 		match self {
-			C2SCommand::CreateGameObject(_) => CommandTypeId::CREATE_GAME_OBJECT,
-			C2SCommand::CreatedGameObject(_) => CommandTypeId::CREATED_GAME_OBJECT,
+			C2SCommand::CreateGameObject(_) => CommandTypeId::CreateGameObject,
+			C2SCommand::CreatedGameObject(_) => CommandTypeId::CreatedGameObject,
 			C2SCommand::SetField(command) => match command.value {
-				FieldValue::Long(_) => CommandTypeId::SET_LONG,
-				FieldValue::Double(_) => CommandTypeId::SET_DOUBLE,
-				FieldValue::Structure(_) => CommandTypeId::SET_STRUCTURE,
+				FieldValue::Long(_) => CommandTypeId::SetLong,
+				FieldValue::Double(_) => CommandTypeId::SetDouble,
+				FieldValue::Structure(_) => CommandTypeId::SetStructure,
 			},
-			C2SCommand::IncrementLongValue(_) => CommandTypeId::INCREMENT_LONG,
-			C2SCommand::CompareAndSetLong(_) => CommandTypeId::COMPARE_AND_SET_LONG,
-			C2SCommand::CompareAndSetStructure(_) => CommandTypeId::COMPARE_AND_SET_STRUCTURE,
-			C2SCommand::IncrementDouble(_) => CommandTypeId::INCREMENT_DOUBLE,
-			C2SCommand::Event(_) => CommandTypeId::EVENT,
-			C2SCommand::TargetEvent(_) => CommandTypeId::TARGET_EVENT,
-			C2SCommand::Delete(_) => CommandTypeId::DELETE,
-			C2SCommand::AttachToRoom => CommandTypeId::ATTACH_TO_ROOM,
-			C2SCommand::DetachFromRoom => CommandTypeId::DETACH_FROM_ROOM,
-			C2SCommand::DeleteField(_) => CommandTypeId::DELETE_FIELD,
+			C2SCommand::IncrementLongValue(_) => CommandTypeId::IncrementLong,
+			C2SCommand::CompareAndSetLong(_) => CommandTypeId::CompareAndSetLong,
+			C2SCommand::CompareAndSetStructure(_) => CommandTypeId::CompareAndSetStructure,
+			C2SCommand::IncrementDouble(_) => CommandTypeId::IncrementDouble,
+			C2SCommand::Event(_) => CommandTypeId::Event,
+			C2SCommand::TargetEvent(_) => CommandTypeId::TargetEvent,
+			C2SCommand::Delete(_) => CommandTypeId::Delete,
+			C2SCommand::AttachToRoom => CommandTypeId::AttachToRoom,
+			C2SCommand::DetachFromRoom => CommandTypeId::DetachFromRoom,
+			C2SCommand::DeleteField(_) => CommandTypeId::DeleteField,
 		}
 	}
 
@@ -136,24 +136,23 @@ impl C2SCommand {
 		input: &mut Cursor<&[u8]>,
 	) -> Result<C2SCommand, CommandDecodeError> {
 		Ok(match *command_type_id {
-			CommandTypeId::ATTACH_TO_ROOM => C2SCommand::AttachToRoom,
-			CommandTypeId::DETACH_FROM_ROOM => C2SCommand::DetachFromRoom,
-			CommandTypeId::CREATED_GAME_OBJECT => C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::decode(object_id?, input)?),
-			CommandTypeId::DELETE => C2SCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
-			CommandTypeId::CREATE_GAME_OBJECT => C2SCommand::CreateGameObject(CreateGameObjectCommand::decode(object_id?, input)?),
-			CommandTypeId::INCREMENT_LONG => C2SCommand::IncrementLongValue(IncrementLongC2SCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::INCREMENT_DOUBLE => C2SCommand::IncrementDouble(IncrementDoubleC2SCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::COMPARE_AND_SET_LONG => C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::COMPARE_AND_SET_STRUCTURE => {
+			CommandTypeId::AttachToRoom => C2SCommand::AttachToRoom,
+			CommandTypeId::DetachFromRoom => C2SCommand::DetachFromRoom,
+			CommandTypeId::CreatedGameObject => C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::decode(object_id?, input)?),
+			CommandTypeId::Delete => C2SCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
+			CommandTypeId::CreateGameObject => C2SCommand::CreateGameObject(CreateGameObjectCommand::decode(object_id?, input)?),
+			CommandTypeId::IncrementLong => C2SCommand::IncrementLongValue(IncrementLongC2SCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::IncrementDouble => C2SCommand::IncrementDouble(IncrementDoubleC2SCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::CompareAndSetLong => C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::CompareAndSetStructure => {
 				C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand::decode(object_id?, field_id?, input)?)
 			}
-			CommandTypeId::SET_DOUBLE => C2SCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
-			CommandTypeId::SET_LONG => C2SCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
-			CommandTypeId::SET_STRUCTURE => C2SCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?),
-			CommandTypeId::EVENT => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::TARGET_EVENT => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::DELETE_FIELD => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
-			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
+			CommandTypeId::SetDouble => C2SCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
+			CommandTypeId::SetLong => C2SCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
+			CommandTypeId::SetStructure => C2SCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?),
+			CommandTypeId::Event => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::TargetEvent => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::DeleteField => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 		})
 	}
 }
@@ -180,11 +179,11 @@ mod tests {
 
 	#[test]
 	fn should_decode_encode_attach() {
-		check(C2SCommand::AttachToRoom, CommandTypeId::ATTACH_TO_ROOM, None, None);
+		check(C2SCommand::AttachToRoom, CommandTypeId::AttachToRoom, None, None);
 	}
 	#[test]
 	fn should_decode_encode_detach() {
-		check(C2SCommand::DetachFromRoom, CommandTypeId::DETACH_FROM_ROOM, None, None);
+		check(C2SCommand::DetachFromRoom, CommandTypeId::DetachFromRoom, None, None);
 	}
 
 	#[test]
@@ -196,7 +195,7 @@ mod tests {
 				template: 3,
 				access_groups: AccessGroups(5),
 			}),
-			CommandTypeId::CREATE_GAME_OBJECT,
+			CommandTypeId::CreateGameObject,
 			Some(object_id),
 			None,
 		);
@@ -211,7 +210,7 @@ mod tests {
 				room_owner: false,
 				singleton_key: None,
 			}),
-			CommandTypeId::CREATED_GAME_OBJECT,
+			CommandTypeId::CreatedGameObject,
 			Some(object_id),
 			None,
 		);
@@ -227,7 +226,7 @@ mod tests {
 				field_id,
 				value: 100.into(),
 			}),
-			CommandTypeId::SET_LONG,
+			CommandTypeId::SetLong,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -243,7 +242,7 @@ mod tests {
 				field_id,
 				increment: 100,
 			}),
-			CommandTypeId::INCREMENT_LONG,
+			CommandTypeId::IncrementLong,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -261,7 +260,7 @@ mod tests {
 				new: 101,
 				reset: Some(102),
 			}),
-			CommandTypeId::COMPARE_AND_SET_LONG,
+			CommandTypeId::CompareAndSetLong,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -279,7 +278,7 @@ mod tests {
 				new: vec![101].as_slice().into(),
 				reset: Some(vec![102].as_slice().into()),
 			}),
-			CommandTypeId::COMPARE_AND_SET_STRUCTURE,
+			CommandTypeId::CompareAndSetStructure,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -295,7 +294,7 @@ mod tests {
 				field_id,
 				value: 3.15.into(),
 			}),
-			CommandTypeId::SET_DOUBLE,
+			CommandTypeId::SetDouble,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -311,7 +310,7 @@ mod tests {
 				field_id,
 				increment: 3.15,
 			}),
-			CommandTypeId::INCREMENT_DOUBLE,
+			CommandTypeId::IncrementDouble,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -327,7 +326,7 @@ mod tests {
 				field_id,
 				value: vec![1, 2, 3, 4].into(),
 			}),
-			CommandTypeId::SET_STRUCTURE,
+			CommandTypeId::SetStructure,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -343,7 +342,7 @@ mod tests {
 				field_id,
 				event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 			}),
-			CommandTypeId::EVENT,
+			CommandTypeId::Event,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -362,7 +361,7 @@ mod tests {
 					event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 				},
 			}),
-			CommandTypeId::TARGET_EVENT,
+			CommandTypeId::TargetEvent,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -375,7 +374,7 @@ mod tests {
 			C2SCommand::Delete(DeleteGameObjectCommand {
 				object_id: object_id.clone(),
 			}),
-			CommandTypeId::DELETE,
+			CommandTypeId::Delete,
 			Some(object_id),
 			None,
 		);

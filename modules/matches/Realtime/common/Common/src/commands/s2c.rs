@@ -69,16 +69,16 @@ impl S2CCommand {
 
 	pub fn get_type_id(&self) -> CommandTypeId {
 		match self {
-			S2CCommand::Create(_) => CommandTypeId::CREATE_GAME_OBJECT,
-			S2CCommand::Created(_) => CommandTypeId::CREATED_GAME_OBJECT,
+			S2CCommand::Create(_) => CommandTypeId::CreateGameObject,
+			S2CCommand::Created(_) => CommandTypeId::CreatedGameObject,
 			S2CCommand::SetField(command) => match command.value {
-				FieldValue::Long(_) => CommandTypeId::SET_LONG,
-				FieldValue::Double(_) => CommandTypeId::SET_DOUBLE,
-				FieldValue::Structure(_) => CommandTypeId::SET_STRUCTURE,
+				FieldValue::Long(_) => CommandTypeId::SetLong,
+				FieldValue::Double(_) => CommandTypeId::SetDouble,
+				FieldValue::Structure(_) => CommandTypeId::SetStructure,
 			},
-			S2CCommand::Event(_) => CommandTypeId::EVENT,
-			S2CCommand::Delete(_) => CommandTypeId::DELETE,
-			S2CCommand::DeleteField(_) => CommandTypeId::DELETE_FIELD,
+			S2CCommand::Event(_) => CommandTypeId::Event,
+			S2CCommand::Delete(_) => CommandTypeId::Delete,
+			S2CCommand::DeleteField(_) => CommandTypeId::DeleteField,
 		}
 	}
 
@@ -100,14 +100,14 @@ impl S2CCommand {
 		input: &mut Cursor<&[u8]>,
 	) -> Result<S2CCommand, CommandDecodeError> {
 		Ok(match *command_type_id {
-			CommandTypeId::CREATE_GAME_OBJECT => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
-			CommandTypeId::CREATED_GAME_OBJECT => S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: object_id? }),
-			CommandTypeId::DELETE => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
-			CommandTypeId::SET_LONG => S2CCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
-			CommandTypeId::SET_DOUBLE => S2CCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
-			CommandTypeId::SET_STRUCTURE => S2CCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?),
-			CommandTypeId::EVENT => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::DELETE_FIELD => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::CreateGameObject => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
+			CommandTypeId::CreatedGameObject => S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: object_id? }),
+			CommandTypeId::Delete => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
+			CommandTypeId::SetLong => S2CCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
+			CommandTypeId::SetDouble => S2CCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
+			CommandTypeId::SetStructure => S2CCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?),
+			CommandTypeId::Event => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
@@ -137,7 +137,7 @@ mod tests {
 				template: 3,
 				access_groups: AccessGroups(5),
 			}),
-			CommandTypeId::CREATE_GAME_OBJECT,
+			CommandTypeId::CreateGameObject,
 			Some(object_id),
 			None,
 		);
@@ -150,7 +150,7 @@ mod tests {
 			S2CCommand::Created(GameObjectCreatedS2CCommand {
 				object_id: object_id.clone(),
 			}),
-			CommandTypeId::CREATED_GAME_OBJECT,
+			CommandTypeId::CreatedGameObject,
 			Some(object_id),
 			None,
 		);
@@ -166,7 +166,7 @@ mod tests {
 				field_id,
 				value: 100.into(),
 			}),
-			CommandTypeId::SET_LONG,
+			CommandTypeId::SetLong,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -182,7 +182,7 @@ mod tests {
 				field_id,
 				value: 3.15.into(),
 			}),
-			CommandTypeId::SET_DOUBLE,
+			CommandTypeId::SetDouble,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -198,7 +198,7 @@ mod tests {
 				field_id,
 				value: vec![1, 2, 3, 4].into(),
 			}),
-			CommandTypeId::SET_STRUCTURE,
+			CommandTypeId::SetStructure,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -214,7 +214,7 @@ mod tests {
 				field_id,
 				event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 			}),
-			CommandTypeId::EVENT,
+			CommandTypeId::Event,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -227,7 +227,7 @@ mod tests {
 			S2CCommand::Delete(DeleteGameObjectCommand {
 				object_id: object_id.clone(),
 			}),
-			CommandTypeId::DELETE,
+			CommandTypeId::Delete,
 			Some(object_id),
 			None,
 		);
