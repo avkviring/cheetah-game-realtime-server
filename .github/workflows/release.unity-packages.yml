@@ -99,10 +99,10 @@ jobs:
         run: |
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds/Runtime/FFI/Library/
           mkdir -p $lib_path
-          cp build-on-linux-result/libcheetah_matches_realtime_uds_client.so $lib_path/          
-          cp build-macos/libcheetah_matches_realtime_uds_client.dylib $lib_path/libcheetah_matches_realtime_uds_client.bundle            
-          cp build-on-windows-result/cheetah_matches_realtime_uds_client.dll $lib_path/
-          cp build-on-windows-result/cheetah_matches_realtime_uds_client.pdb $lib_path/
+          cp build-on-linux-result/libcheetah_matches_realtime_server_plugin.so $lib_path/          
+          cp build-macos/libcheetah_matches_realtime_server_plugin.dylib $lib_path/libcheetah_matches_realtime_server_plugin.bundle            
+          cp build-on-windows-result/cheetah_matches_realtime_server_plugin.dll $lib_path/
+          cp build-on-windows-result/cheetah_matches_realtime_server_plugin.pdb $lib_path/
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
