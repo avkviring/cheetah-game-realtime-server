@@ -4,7 +4,7 @@ on:
 env:
   REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/rust/Realtime/Cargo.toml
   REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/client/rust/Embedded/Cargo.toml
-  REALTIME_UDS_MANIFEST_PATH: modules/matches/Realtime/client/rust/UDS/Cargo.toml
+  REALTIME_UDS_MANIFEST_PATH: modules/matches/Realtime/client/rust/ServerPlugin/Cargo.toml
 jobs:
   build:
     runs-on: macos-latest
