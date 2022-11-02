@@ -8,6 +8,7 @@ use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
 use crate::commands::types::float::IncrementDoubleC2SCommand;
+use crate::commands::types::forwarded::ForwardedCommand;
 use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 use crate::commands::types::structure::CompareAndSetStructureCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType, FieldValue};
@@ -33,6 +34,7 @@ pub enum C2SCommand {
 	///
 	AttachToRoom,
 	DetachFromRoom,
+	Forwarded(Box<ForwardedCommand>),
 }
 
 impl C2SCommand {
@@ -51,6 +53,7 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.field_id),
+			C2SCommand::Forwarded(command) => command.c2s.get_field_id(),
 		}
 	}
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
@@ -68,6 +71,7 @@ impl C2SCommand {
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.object_id.clone()),
 			C2SCommand::CompareAndSetStructure(command) => Some(command.object_id.clone()),
+			C2SCommand::Forwarded(command) => command.c2s.get_object_id(),
 		}
 	}
 
@@ -86,6 +90,7 @@ impl C2SCommand {
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.field_type),
 			C2SCommand::CompareAndSetStructure(_) => Some(FieldType::Structure),
+			C2SCommand::Forwarded(command) => command.c2s.get_field_type(),
 		}
 	}
 
@@ -108,6 +113,7 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => CommandTypeId::AttachToRoom,
 			C2SCommand::DetachFromRoom => CommandTypeId::DetachFromRoom,
 			C2SCommand::DeleteField(_) => CommandTypeId::DeleteField,
+			C2SCommand::Forwarded(_) => CommandTypeId::Forwarded,
 		}
 	}
 
@@ -126,6 +132,30 @@ impl C2SCommand {
 			C2SCommand::DetachFromRoom => Ok(()),
 			C2SCommand::DeleteField(command) => command.encode(out),
 			C2SCommand::CompareAndSetStructure(command) => command.encode(out),
+			C2SCommand::Forwarded(command) => command.encode(out),
+		}
+	}
+
+	pub fn get_trace_string(&self) -> String {
+		match self {
+			C2SCommand::CreateGameObject(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
+			C2SCommand::CreatedGameObject(command) => format!("room_owner({:?}), singleton_key({:?}) ", command.room_owner, command.singleton_key),
+			C2SCommand::IncrementLongValue(command) => format!("{:?}", command.increment),
+			C2SCommand::CompareAndSetLong(command) => {
+				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
+			}
+			C2SCommand::SetField(command) => format!("{:?}", command.value),
+			C2SCommand::IncrementDouble(command) => format!("{:?}", command.increment),
+			C2SCommand::CompareAndSetStructure(command) => {
+				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
+			}
+			C2SCommand::Event(command) => format!("{:?}", command.event.as_slice()),
+			C2SCommand::TargetEvent(command) => format!("target_user = {:?}, value = {:?}", command.target, command.event.event),
+			C2SCommand::Delete(_) => "".to_string(),
+			C2SCommand::DeleteField(command) => format!("field_type = {:?}", command.field_type),
+			C2SCommand::AttachToRoom => "".to_string(),
+			C2SCommand::DetachFromRoom => "".to_string(),
+			C2SCommand::Forwarded(command) => format!("forward: user({:?}) command({:?})", command.user_id, command.c2s.get_trace_string()),
 		}
 	}
 
@@ -153,6 +183,7 @@ impl C2SCommand {
 			CommandTypeId::Event => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::TargetEvent => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DeleteField => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::Forwarded => C2SCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 		})
 	}
 }

@@ -7,8 +7,6 @@ use tonic::Status;
 
 use cheetah_libraries_microservice::tonic::{Request, Response};
 use cheetah_libraries_microservice::trace::Trace;
-use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
-use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 use cheetah_matches_realtime_common::room::RoomId;
@@ -154,49 +152,8 @@ impl From<TracedCommand> for admin::Command {
 
 fn get_string_value(command: &TracedCommand) -> String {
 	match &command.network_command {
-		TracedBothDirectionCommand::C2S(command) => match command {
-			C2SCommand::CreateGameObject(command) => {
-				format!("access({:?}), template({:?}) ", command.access_groups.0, command.template)
-			}
-			C2SCommand::CreatedGameObject(command) => {
-				format!("room_owner({:?}), singleton_key({:?}) ", command.room_owner, command.singleton_key)
-			}
-			C2SCommand::SetField(command) => {
-				format!("{:?}", command.value)
-			}
-			C2SCommand::IncrementLongValue(command) => {
-				format!("{:?}", command.increment)
-			}
-			C2SCommand::CompareAndSetLong(command) => {
-				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
-			}
-			C2SCommand::CompareAndSetStructure(command) => {
-				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
-			}
-			C2SCommand::IncrementDouble(command) => {
-				format!("{:?}", command.increment)
-			}
-			C2SCommand::Event(command) => {
-				format!("{:?}", command.event.as_slice())
-			}
-			C2SCommand::TargetEvent(command) => {
-				format!("target_user = {:?}, value = {:?}", command.target, command.event.event)
-			}
-			C2SCommand::Delete(_) => "".to_string(),
-			C2SCommand::AttachToRoom => "".to_string(),
-			C2SCommand::DetachFromRoom => "".to_string(),
-			C2SCommand::DeleteField(command) => {
-				format!("field_type = {:?}", command.field_type)
-			}
-		},
-		TracedBothDirectionCommand::S2C(command) => match command {
-			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
-			S2CCommand::Created(_) => "".to_string(),
-			S2CCommand::SetField(command) => format!("{:?}", command.value),
-			S2CCommand::Event(command) => format!("{:?}", command.event),
-			S2CCommand::Delete(_) => "".to_string(),
-			S2CCommand::DeleteField(_) => "".to_string(),
-		},
+		TracedBothDirectionCommand::C2S(command) => command.get_trace_string(),
+		TracedBothDirectionCommand::S2C(command) => command.get_trace_string(),
 	}
 }
 

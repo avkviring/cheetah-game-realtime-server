@@ -104,6 +104,8 @@ pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> 
 		C2SCommand::CreatedGameObject(command) => command.execute(room, user_id),
 		C2SCommand::TargetEvent(command) => command.execute(room, user_id),
 		C2SCommand::DeleteField(command) => command.execute(room, user_id),
+		// execute forwarded command on behalf of the original user
+		C2SCommand::Forwarded(command) => execute(&command.c2s, room, command.user_id),
 	}
 }
 

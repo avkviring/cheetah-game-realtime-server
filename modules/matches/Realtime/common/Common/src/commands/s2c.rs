@@ -6,6 +6,7 @@ use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
+use crate::commands::types::forwarded::ForwardedCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
@@ -21,6 +22,7 @@ pub enum S2CCommand {
 	Event(EventCommand),
 	Delete(DeleteGameObjectCommand),
 	DeleteField(DeleteFieldCommand),
+	Forwarded(Box<ForwardedCommand>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -42,6 +44,7 @@ impl S2CCommand {
 			S2CCommand::Event(command) => Some(command.field_id),
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_id),
+			S2CCommand::Forwarded(command) => command.c2s.get_field_id(),
 		}
 	}
 
@@ -53,6 +56,7 @@ impl S2CCommand {
 			S2CCommand::Event(command) => Some(command.object_id.clone()),
 			S2CCommand::Delete(command) => Some(command.object_id.clone()),
 			S2CCommand::DeleteField(command) => Some(command.object_id.clone()),
+			S2CCommand::Forwarded(command) => command.c2s.get_object_id(),
 		}
 	}
 
@@ -64,6 +68,7 @@ impl S2CCommand {
 			S2CCommand::Event(_) => Some(FieldType::Event),
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_type),
+			S2CCommand::Forwarded(command) => command.c2s.get_field_type(),
 		}
 	}
 
@@ -79,6 +84,19 @@ impl S2CCommand {
 			S2CCommand::Event(_) => CommandTypeId::Event,
 			S2CCommand::Delete(_) => CommandTypeId::Delete,
 			S2CCommand::DeleteField(_) => CommandTypeId::DeleteField,
+			S2CCommand::Forwarded(_) => CommandTypeId::Forwarded,
+		}
+	}
+
+	pub fn get_trace_string(&self) -> String {
+		match self {
+			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
+			S2CCommand::Created(_) => "".to_string(),
+			S2CCommand::SetField(command) => format!("{:?}", command.value),
+			S2CCommand::Event(command) => format!("{:?}", command.event),
+			S2CCommand::Delete(_) => "".to_string(),
+			S2CCommand::DeleteField(_) => "".to_string(),
+			S2CCommand::Forwarded(command) => format!("forward: user({:?}) command({:?})", command.user_id, command.c2s.get_trace_string()),
 		}
 	}
 
@@ -90,6 +108,7 @@ impl S2CCommand {
 			S2CCommand::Event(command) => command.encode(out),
 			S2CCommand::Delete(_) => Ok(()),
 			S2CCommand::DeleteField(command) => command.encode(out),
+			S2CCommand::Forwarded(command) => command.encode(out),
 		}
 	}
 
@@ -108,6 +127,7 @@ impl S2CCommand {
 			CommandTypeId::SetStructure => S2CCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?),
 			CommandTypeId::Event => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::Forwarded => S2CCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}

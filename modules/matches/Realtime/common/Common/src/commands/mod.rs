@@ -33,6 +33,7 @@ pub enum CommandTypeId {
 	DetachFromRoom,
 	DeleteField,
 	CompareAndSetStructure,
+	Forwarded,
 }
 
 #[derive(Error, Debug)]
