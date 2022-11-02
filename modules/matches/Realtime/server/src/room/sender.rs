@@ -19,7 +19,7 @@ impl Room {
 	pub fn send_to_members<T>(
 		&mut self,
 		access_groups: AccessGroups,
-		object_template: GameObjectTemplateId,
+		object_template: Option<GameObjectTemplateId>,
 		commands: &[S2CCommandWithFieldInfo],
 		filter: T,
 	) -> Result<(), ServerCommandError>
@@ -47,18 +47,19 @@ impl Room {
 			.filter(|user| filter(user));
 
 		for member in members_for_send {
-			for command in commands {
-				let allow = match command.field {
-					None => true,
-					Some(field) => {
-						permission_manager
-							.borrow_mut()
-							.get_permission(object_template, field, member.template.groups)
-							> Permission::Deny
+			commands
+				.iter()
+				.filter(|&command| {
+					if let Some(template) = object_template {
+						match command.field {
+							None => true,
+							Some(field) => permission_manager.borrow_mut().get_permission(template, field, member.template.groups) > Permission::Deny,
+						}
+					} else {
+						true
 					}
-				};
-
-				if allow {
+				})
+				.for_each(|command| {
 					command_trace_session
 						.borrow_mut()
 						.collect_s2c(object_template, member.id, &command.command);
@@ -72,8 +73,7 @@ impl Room {
 						channel_type: channel_type.clone(),
 						command: BothDirectionCommand::S2CWithCreator(command_with_user),
 					})
-				}
-			}
+				});
 		}
 
 		Ok(())
@@ -106,7 +106,7 @@ impl Room {
 					};
 					command_trace_session
 						.borrow_mut()
-						.collect_s2c(object_template, member.id, &command.command);
+						.collect_s2c(Some(object_template), member.id, &command.command);
 
 					member.out_commands.push(CommandWithChannelType {
 						channel_type: channel.clone(),
@@ -387,7 +387,7 @@ mod tests {
 			},
 		];
 
-		room.send_to_members(access_groups, object_template, &commands, |_| true).unwrap();
+		room.send_to_members(access_groups, Some(object_template), &commands, |_| true).unwrap();
 
 		let commands = room.test_get_user_out_commands(user_2);
 		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetField(c)) if c.field_id == allow_field_id));

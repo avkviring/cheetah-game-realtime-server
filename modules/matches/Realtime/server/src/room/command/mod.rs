@@ -17,6 +17,7 @@ pub mod delete;
 pub mod double;
 pub mod event;
 pub mod field;
+pub mod forwarded;
 pub mod long;
 pub mod room;
 pub mod structure;
@@ -71,6 +72,13 @@ pub enum ServerCommandError {
 
 	#[error("Game object with id {object_id:?} ")]
 	GameObjectNotFound { object_id: GameObjectId },
+
+	#[error("ForwardedCommandPermissionDenied: {msg:?} sender_member_id={sender_member_id:?} creator_member_id={creator_member_id:?}")]
+	ForwardedCommandPermissionDenied {
+		msg: String,
+		sender_member_id: RoomMemberId,
+		creator_member_id: RoomMemberId,
+	},
 }
 
 impl ServerCommandError {
@@ -104,8 +112,7 @@ pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> 
 		C2SCommand::CreatedGameObject(command) => command.execute(room, user_id),
 		C2SCommand::TargetEvent(command) => command.execute(room, user_id),
 		C2SCommand::DeleteField(command) => command.execute(room, user_id),
-		// execute forwarded command on behalf of the original user
-		C2SCommand::Forwarded(command) => execute(&command.c2s, room, command.user_id),
+		C2SCommand::Forwarded(command) => command.execute(room, user_id),
 	}
 }
 

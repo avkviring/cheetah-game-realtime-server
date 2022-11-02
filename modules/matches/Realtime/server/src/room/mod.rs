@@ -30,6 +30,7 @@ use crate::server::measurers::Measurers;
 
 pub mod action;
 pub mod command;
+pub mod forward;
 pub mod object;
 pub mod sender;
 pub mod template;
@@ -163,14 +164,20 @@ impl Room {
 					self.current_channel.replace(From::from(&command_with_channel.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, command);
 
-					let instant = Instant::now();
-					match execute(command, self, user_id) {
-						Ok(_) => {}
-						Err(e) => {
-							e.log_command_execute_error(command, self.id, user_id);
+					if self.is_forwarded(command) {
+						if let Err(e) = self.forward_to_super_members(command, user_id) {
+							e.log_error(self.id, user_id);
 						}
+					} else {
+						let instant = Instant::now();
+						match execute(command, self, user_id) {
+							Ok(_) => {}
+							Err(e) => {
+								e.log_command_execute_error(command, self.id, user_id);
+							}
+						}
+						measurers.on_execute_command(command.get_field_id(), command, instant.elapsed())
 					}
-					measurers.on_execute_command(command.get_field_id(), command, instant.elapsed())
 				}
 				_ => {
 					tracing::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel)
@@ -257,7 +264,7 @@ impl Room {
 				if object.created {
 					self.send_to_members(
 						object.access_groups,
-						object.template_id,
+						Some(object.template_id),
 						&[S2CCommandWithFieldInfo {
 							field: None,
 							command: S2CCommand::Delete(DeleteGameObjectCommand {
@@ -289,7 +296,7 @@ impl Room {
 			object.collect_create_commands(&mut commands);
 			let template = object.template_id;
 			let access_groups = object.access_groups;
-			self.send_to_members(access_groups, template, commands.as_slice(), |_user| true)?;
+			self.send_to_members(access_groups, Some(template), commands.as_slice(), |_user| true)?;
 			self.insert_object(object);
 		}
 		Ok(())

@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
-use crate::commands::field::FieldId;
+use crate::commands::field::{Field, FieldId};
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
@@ -114,6 +114,14 @@ impl C2SCommand {
 			C2SCommand::DetachFromRoom => CommandTypeId::DetachFromRoom,
 			C2SCommand::DeleteField(_) => CommandTypeId::DeleteField,
 			C2SCommand::Forwarded(_) => CommandTypeId::Forwarded,
+		}
+	}
+
+	pub fn get_field(&self) -> Option<Field> {
+		if let (Some(id), Some(field_type)) = (self.get_field_id(), self.get_field_type()) {
+			Some(Field { id, field_type })
+		} else {
+			None
 		}
 	}
 
