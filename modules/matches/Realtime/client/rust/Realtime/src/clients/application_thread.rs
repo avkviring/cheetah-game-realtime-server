@@ -7,7 +7,6 @@ use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
 use cheetah_matches_realtime_common::commands::FieldValue;
 use cheetah_matches_realtime_common::network::client::ConnectionStatus;
 use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -20,7 +19,7 @@ use cheetah_matches_realtime_common::room::RoomMemberId;
 use crate::clients::network_thread::C2SCommandWithChannel;
 use crate::clients::{ClientRequest, SharedClientStatistics};
 use crate::ffi::channel::Channel;
-use crate::ffi::{BufferFFI, FieldTypeFFI, GameObjectIdFFI};
+use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI, GameObjectIdFFI};
 
 ///
 /// Взаимодействие с сетевым потоком клиента, через Sender
@@ -43,7 +42,7 @@ pub struct ApplicationThreadClient {
 	pub listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
-	pub listener_forwarded_command: Option<extern "C" fn(ForwardedCommand)>,
+	pub listener_forwarded_command: Option<extern "C" fn(ForwardedCommandFFI)>,
 }
 
 impl Drop for ApplicationThreadClient {
@@ -172,7 +171,7 @@ impl ApplicationThreadClient {
 					}
 					S2CCommand::Forwarded(command) => {
 						if let Some(ref listener) = self.listener_forwarded_command {
-							listener(*command);
+							listener(command.as_ref().into());
 						}
 					}
 				}

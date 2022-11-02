@@ -2,11 +2,10 @@ use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::types::create::C2SCreatedGameObjectCommand;
 use cheetah_matches_realtime_common::commands::types::delete::DeleteGameObjectCommand;
-use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
-use crate::ffi::{execute_with_client, BufferFFI, GameObjectIdFFI};
+use crate::ffi::{execute_with_client, BufferFFI, ForwardedCommandFFI, GameObjectIdFFI};
 
 #[no_mangle]
 pub extern "C" fn set_create_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectIdFFI, template: u16)) -> u8 {
@@ -69,7 +68,7 @@ pub extern "C" fn delete_object(client_id: ClientId, object_id: &GameObjectIdFFI
 }
 
 #[no_mangle]
-pub extern "C" fn set_forwarded_command_listener(client_id: ClientId, listener: extern "C" fn(command: ForwardedCommand)) -> u8 {
+pub extern "C" fn set_forwarded_command_listener(client_id: ClientId, listener: extern "C" fn(ForwardedCommandFFI)) -> u8 {
 	execute_with_client(client_id, |client| {
 		client.listener_forwarded_command = Some(listener);
 		Ok(())
