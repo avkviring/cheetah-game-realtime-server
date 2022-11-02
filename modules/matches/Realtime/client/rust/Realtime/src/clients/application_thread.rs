@@ -7,6 +7,7 @@ use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
+use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
 use cheetah_matches_realtime_common::commands::FieldValue;
 use cheetah_matches_realtime_common::network::client::ConnectionStatus;
 use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -42,6 +43,7 @@ pub struct ApplicationThreadClient {
 	pub listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
+	pub listener_forwarded_command: Option<extern "C" fn(ForwardedCommand)>,
 }
 
 impl Drop for ApplicationThreadClient {
@@ -80,6 +82,7 @@ impl ApplicationThreadClient {
 			listener_create_object: None,
 			listener_created_object: None,
 			listener_delete_field: None,
+			listener_forwarded_command: None,
 		}
 	}
 
@@ -165,6 +168,11 @@ impl ApplicationThreadClient {
 						if let Some(ref listener) = self.listener_delete_field {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);
 							listener(command_with_user.creator, &object_id, command.field_id, From::from(&command.field_type));
+						}
+					}
+					S2CCommand::Forwarded(command) => {
+						if let Some(ref listener) = self.listener_forwarded_command {
+							listener(*command);
 						}
 					}
 				}
