@@ -5,6 +5,8 @@ use lazy_static::lazy_static;
 use thiserror::Error;
 
 use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
+use cheetah_matches_realtime_common::commands::field::FieldId;
+use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
@@ -86,11 +88,35 @@ where
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ForwardedCommandFFI {
+	creator: RoomMemberId,
+	game_object_id: GameObjectIdFFI,
+	field_id: FieldId,
+}
+
+impl From<&ForwardedCommand> for ForwardedCommandFFI {
+	fn from(c: &ForwardedCommand) -> Self {
+		ForwardedCommandFFI {
+			creator: c.user_id,
+			game_object_id: c.c2s.get_object_id().unwrap_or_default().into(),
+			field_id: c.c2s.get_field_id().unwrap_or_default(),
+		}
+	}
+}
+
+#[repr(C)]
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct GameObjectIdFFI {
 	id: u32,
 	pub room_owner: bool,
 	user_id: RoomMemberId,
+}
+
+impl From<GameObjectId> for GameObjectIdFFI {
+	fn from(source: GameObjectId) -> Self {
+		(&source).into()
+	}
 }
 
 impl From<&GameObjectId> for GameObjectIdFFI {
@@ -176,12 +202,18 @@ impl From<&BinaryValue> for BufferFFI {
 }
 
 #[repr(C)]
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum FieldTypeFFI {
 	Long,
 	Double,
 	Structure,
 	Event,
+}
+
+impl From<FieldType> for FieldTypeFFI {
+	fn from(source: FieldType) -> Self {
+		(&source).into()
+	}
 }
 
 impl From<&FieldType> for FieldTypeFFI {
