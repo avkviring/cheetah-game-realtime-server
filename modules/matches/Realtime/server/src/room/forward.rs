@@ -26,7 +26,7 @@ impl Room {
 
 		let mut object_template: Option<GameObjectTemplateId> = None;
 		if let Some(object_id) = command.get_object_id() {
-			object_template = self.get_object(&object_id).ok().map(|object| object.template_id);
+			object_template = self.get_object_mut(&object_id).ok().map(|object| object.template_id);
 		}
 
 		self.send_to_members(AccessGroups::super_group(), object_template, slice::from_ref(&s2c), |_user| true)

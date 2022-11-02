@@ -41,7 +41,7 @@ impl Room {
 			Some(member) => member.template.groups,
 		};
 
-		let object = self.get_object(game_object_id)?;
+		let object = self.get_object_mut(game_object_id)?;
 		// проверяем группу доступа
 		if !object.access_groups.contains_any(&creator_access_group) {
 			return Err(ServerCommandError::MemberCannotAccessToObject {

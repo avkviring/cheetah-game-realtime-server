@@ -244,7 +244,7 @@ impl Room {
 		self.objects.insert(object.id.clone(), object);
 	}
 
-	pub fn get_object(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
+	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
 		self.objects.get_mut(object_id).ok_or_else(|| ServerCommandError::GameObjectNotFound {
 			object_id: object_id.clone(),
 		})
@@ -356,7 +356,7 @@ mod tests {
 			let mut object = GameObject::new(id.clone(), 0, access_groups, false);
 			object.created = created;
 			self.insert_object(object);
-			self.get_object(&id).unwrap()
+			self.get_object_mut(&id).unwrap()
 		}
 
 		pub fn test_mark_as_connected(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {

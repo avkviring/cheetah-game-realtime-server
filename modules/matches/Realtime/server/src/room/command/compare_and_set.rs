@@ -111,7 +111,7 @@ pub fn apply_reset(
 	field: FieldId,
 	reset: &FieldValue,
 ) -> Result<(), ServerCommandError> {
-	match room.get_object(object_id) {
+	match room.get_object_mut(object_id) {
 		Err(_) => {
 			// нормальная ситуация для пользовательских объектов
 		}
@@ -177,7 +177,7 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -190,7 +190,7 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
@@ -203,7 +203,7 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command3.new
 		);
 	}
@@ -220,7 +220,7 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
 			command1.new.as_slice()
 		);
 
@@ -233,7 +233,7 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
 			command1.new.as_slice()
 		);
 
@@ -246,7 +246,7 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
 			command3.new.as_slice()
 		);
 	}
@@ -286,13 +286,13 @@ mod tests {
 		};
 		command.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
 			command.new
 		);
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
 			command.reset.unwrap()
 		);
 	}
@@ -323,9 +323,9 @@ mod tests {
 		.execute(&mut room, user1_id)
 		.unwrap();
 
-		assert_eq!(*room.get_object(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
+		assert_eq!(*room.get_object_mut(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
 		room.disconnect_user(user1_id).unwrap();
-		assert_eq!(*room.get_object(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
+		assert_eq!(*room.get_object_mut(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
 	}
 
 	///
@@ -354,7 +354,7 @@ mod tests {
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object(&object_id).unwrap().get_field::<i64>(command_1.field_id).unwrap(),
+			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command_1.field_id).unwrap(),
 			command_2.new
 		);
 	}

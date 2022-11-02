@@ -69,7 +69,7 @@ mod tests {
 		};
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 100);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
 	}
@@ -90,7 +90,7 @@ mod tests {
 		command.clone().execute(&mut room, user).unwrap();
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 200);
 
 		let result = SetFieldCommand {
