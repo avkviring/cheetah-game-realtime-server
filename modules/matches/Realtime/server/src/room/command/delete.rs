@@ -55,7 +55,7 @@ mod tests {
 		room.current_member_id = Option::Some(user_a_id);
 		command.execute(&mut room, user_a_id).unwrap();
 
-		assert!(matches!(room.get_object(&object_id), Err(_)));
+		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
 		assert!(matches!(room.test_get_user_out_commands(user_a_id).pop_back(), None));
 		assert!(matches!(room.test_get_user_out_commands(user_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
 	}
@@ -81,7 +81,7 @@ mod tests {
 			command.execute(&mut room, user_b),
 			Err(ServerCommandError::MemberNotOwnerGameObject { object_id: _, member_id: _ })
 		));
-		assert!(matches!(room.get_object(&object_id), Ok(_)));
+		assert!(matches!(room.get_object_mut(&object_id), Ok(_)));
 		assert!(matches!(room.test_out_commands.pop_back(), None));
 	}
 }

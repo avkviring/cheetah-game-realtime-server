@@ -10,7 +10,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let room_id = room.id;
-		let object = room.get_object(&self.object_id)?;
+		let object = room.get_object_mut(&self.object_id)?;
 
 		if object.created {
 			return Err(ServerCommandError::Error(format!(
@@ -35,7 +35,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 			let mut object = room.delete_object(&member_object_id)?;
 			object.id = new_room_object_id.clone();
 			room.insert_object(object);
-			room.get_object(&new_room_object_id)?
+			room.get_object_mut(&new_room_object_id)?
 		} else {
 			object
 		};
@@ -108,7 +108,7 @@ mod tests {
 		room.test_out_commands.clear();
 		command.execute(&mut room, user1).unwrap();
 
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 		assert!(object.created);
 	}
 
@@ -119,7 +119,7 @@ mod tests {
 	#[test]
 	pub fn should_dont_send_command_if_object_already_created() {
 		let (mut room, object_id, user1, _) = setup_two_players();
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 		object.created = true;
 		let command = C2SCreatedGameObjectCommand {
 			object_id: object_id.clone(),
@@ -154,7 +154,7 @@ mod tests {
 		created_command.execute(&mut room, user).unwrap();
 
 		// старого объекта уже не должно быть
-		assert!(room.get_object(&member_object_id).is_err());
+		assert!(room.get_object_mut(&member_object_id).is_err());
 
 		let (_object_id, object) = room.objects.first().unwrap();
 		// это именно тот объект, который мы создали?

@@ -65,7 +65,7 @@ mod tests {
 		command.execute(&mut room, user_id).unwrap();
 
 		assert!(matches!(
-			room.get_object(&object_id),
+			room.get_object_mut(&object_id),
 			Ok(object)
 				if object.template_id == command.template
 				&& object.access_groups == command.access_groups
@@ -87,7 +87,7 @@ mod tests {
 		};
 
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object(&object_id), Err(_)));
+		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
 	}
 
 	///
@@ -104,7 +104,7 @@ mod tests {
 		};
 
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object(&object_id), Err(_)));
+		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
 	}
 
 	///
@@ -121,7 +121,7 @@ mod tests {
 			access_groups: AccessGroups(0b11),
 		};
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object(&object_id), Err(_)));
+		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
 	}
 
 	//
@@ -142,7 +142,7 @@ mod tests {
 		};
 
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object(&object_id), Ok(object) if object.template_id == 777));
+		assert!(matches!(room.get_object_mut(&object_id), Ok(object) if object.template_id == 777));
 	}
 
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {

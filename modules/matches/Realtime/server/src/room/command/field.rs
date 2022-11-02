@@ -56,7 +56,7 @@ mod tests {
 		};
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object(&object_id).unwrap();
+		let object = room.get_object_mut(&object_id).unwrap();
 		assert!(object.get_field::<i64>(10).is_none());
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::DeleteField(c))) if c==command));
 	}
