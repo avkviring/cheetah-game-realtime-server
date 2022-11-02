@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::rc::Rc;
 use std::time::Instant;
 
-use fnv::{FnvBuildHasher, FnvHashMap};
+use fnv::{FnvBuildHasher, FnvHashMap, FnvHashSet};
 use indexmap::map::IndexMap;
 
 use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
@@ -23,6 +23,7 @@ use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::compare_and_set::{reset_all_compare_and_set, CASCleanersStore};
 use crate::room::command::{execute, ServerCommandError};
+use crate::room::forward::ForwardedCommandConfig;
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
@@ -57,6 +58,8 @@ pub struct Room {
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
+
+	pub forwarded_command_configs: FnvHashSet<ForwardedCommandConfig>,
 }
 
 pub struct RoomInfo {
@@ -93,6 +96,7 @@ impl Room {
 			template_name: template.name.clone(),
 			measurers,
 			objects_singleton_key: Default::default(),
+			forwarded_command_configs: Default::default(),
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -164,7 +168,7 @@ impl Room {
 					self.current_channel.replace(From::from(&command_with_channel.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, command);
 
-					if self.is_forwarded(command) {
+					if self.is_forwarded(command, user_id) {
 						if let Err(e) = self.forward_to_super_members(command, user_id) {
 							e.log_error(self.id, user_id);
 						}
@@ -242,6 +246,12 @@ impl Room {
 
 	pub fn insert_object(&mut self, object: GameObject) {
 		self.objects.insert(object.id.clone(), object);
+	}
+
+	pub fn get_object(&self, object_id: &GameObjectId) -> Result<&GameObject, ServerCommandError> {
+		self.objects.get(object_id).ok_or_else(|| ServerCommandError::GameObjectNotFound {
+			object_id: object_id.clone(),
+		})
 	}
 
 	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
