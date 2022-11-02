@@ -227,10 +227,10 @@ impl CommandTracerSessions {
 	///
 	/// Сохранить s2c команду в сессии
 	///
-	pub fn collect_s2c(&mut self, template: GameObjectTemplateId, user: RoomMemberId, command: &S2CCommand) {
+	pub fn collect_s2c(&mut self, template: Option<GameObjectTemplateId>, user: RoomMemberId, command: &S2CCommand) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = TracedBothDirectionCommand::S2C(command.clone());
-			s.collect(Some(template), user, network_command);
+			s.collect(template, user, network_command);
 		})
 	}
 
@@ -295,7 +295,7 @@ pub mod tests {
 		tracer.collect_c2s(&Default::default(), 101, &C2SCommand::AttachToRoom);
 		tracer.collect_c2s(&Default::default(), 102, &C2SCommand::AttachToRoom);
 		tracer.collect_s2c(
-			200,
+			Some(200),
 			100,
 			&S2CCommand::Event(EventCommand {
 				object_id: Default::default(),
@@ -349,7 +349,7 @@ pub mod tests {
 		tracer.collect_c2s(&Default::default(), 101, &C2SCommand::AttachToRoom);
 		tracer.collect_c2s(&Default::default(), 102, &C2SCommand::AttachToRoom);
 		tracer.collect_s2c(
-			200,
+			Some(200),
 			100,
 			&S2CCommand::Event(EventCommand {
 				object_id: Default::default(),

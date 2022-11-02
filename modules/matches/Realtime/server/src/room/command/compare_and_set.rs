@@ -121,7 +121,7 @@ pub fn apply_reset(
 					let command = reset_value(object, field, reset)?;
 					let groups = object.access_groups;
 					let template = object.template_id;
-					room.send_to_members(groups, template, &[command], |_| true)?;
+					room.send_to_members(groups, Some(template), &[command], |_| true)?;
 				}
 			}
 		}
