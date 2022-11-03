@@ -1,3 +1,5 @@
+extern crate core;
+
 use std::net::SocketAddr;
 use std::sync::Arc;
 

@@ -34,6 +34,9 @@ tracing = "0.1.31"
 prometheus = "0.13.1"
 lazy_static = "1.4.0"
 prometheus-measures-exporter = "0.0.1"
+num = "0.4"
+num-derive = "0.3"
+num-traits = "0.2"
 
 [build-dependencies]
 tonic-build = {version="0.6.2", features=["rustfmt"]}

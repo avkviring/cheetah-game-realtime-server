@@ -13,6 +13,7 @@ use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
+use crate::room::forward::ForwardedCommandConfig;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
@@ -44,6 +45,7 @@ pub enum ManagementTask {
 	QueryRoom(RoomId, Sender<Option<RoomInfo>>),
 	CommandTracerSessionTask(RoomId, TracerSessionCommand, Sender<Result<(), CommandTracerSessionTaskError>>),
 	DeleteRoom(RoomId, Sender<Result<(), DeleteRoomError>>),
+	PutForwardedCommandConfig(RoomId, ForwardedCommandConfig, Sender<Result<(), PutForwardedCommandConfigError>>),
 }
 
 #[derive(Debug, Error)]
@@ -98,6 +100,16 @@ pub enum DeleteMemberRequestError {
 	ChannelSendError(String),
 	#[error("DeleteMemberError {0}")]
 	DeleteMemberError(DeleteMemberError),
+}
+
+#[derive(Debug, Error)]
+pub enum PutForwardedCommandConfigError {
+	#[error("RoomNotFound {0}")]
+	RoomNotFound(RoomId),
+	#[error("ChannelRecvError {0}")]
+	ChannelRecvError(RecvTimeoutError),
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
 }
 
 impl Drop for RoomsServerManager {
@@ -266,6 +278,27 @@ impl RoomsServerManager {
 					e
 				);
 				Err(CreateMemberRequestError::ChannelRecvError(e))
+			}
+		}
+	}
+
+	pub fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardedCommandConfig) -> Result<(), PutForwardedCommandConfigError> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender
+			.send(ManagementTask::PutForwardedCommandConfig(room_id, config, sender))
+			.map_err(|e| PutForwardedCommandConfigError::ChannelSendError(format!("{:?}", e)))?;
+		match receiver.recv_timeout(Duration::from_secs(1)) {
+			Ok(Ok(_)) => {
+				tracing::info!("[server] put forward command config({:?})", room_id);
+				Ok(())
+			}
+			Ok(Err(e)) => {
+				tracing::error!("[server] fail put forward command config({:?})", room_id);
+				Err(e)
+			}
+			Err(e) => {
+				tracing::error!("[server] timeout put forward command config({:?})", room_id);
+				Err(PutForwardedCommandConfigError::ChannelRecvError(e))
 			}
 		}
 	}

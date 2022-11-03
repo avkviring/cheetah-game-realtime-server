@@ -59,7 +59,7 @@ pub struct Room {
 	///
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 
-	pub forwarded_command_configs: FnvHashSet<ForwardedCommandConfig>,
+	forwarded_command_configs: FnvHashSet<ForwardedCommandConfig>,
 }
 
 pub struct RoomInfo {
