@@ -160,6 +160,23 @@ impl Realtime for RealtimeInternalService {
 		let command_type_id: CommandTypeId = num::FromPrimitive::from_u32(command_type_id)
 			.ok_or_else(|| Status::invalid_argument(format!("unknown command_type_id {:?}", command_type_id)))?;
 
+		let field_id = request.get_ref().field_id;
+		let field_id = if let Some(field_id) = field_id {
+			Some(FieldId::try_from(field_id).map_err(|e| Status::invalid_argument(format!("field_id is too large {:?} {:?}", field_id, e)))?)
+		} else {
+			None
+		};
+
+		let object_template_id = request.get_ref().template_id;
+		let object_template_id = if let Some(object_template_id) = object_template_id {
+			Some(
+				GameObjectTemplateId::try_from(object_template_id)
+					.map_err(|e| Status::invalid_argument(format!("object_template_id is too large {:?} {:?}", object_template_id, e)))?,
+			)
+		} else {
+			None
+		};
+
 		self.server_manager
 			.lock()
 			.await
@@ -167,8 +184,8 @@ impl Realtime for RealtimeInternalService {
 				request.get_ref().room_id as RoomId,
 				ForwardConfig {
 					command_type_id,
-					field_id: request.get_ref().field_id.map(|x| x as FieldId),
-					object_template_id: request.get_ref().template_id.map(|x| x as GameObjectTemplateId),
+					field_id,
+					object_template_id,
 				},
 			)
 			.map(|_| Response::new(PutForwardedCommandConfigResponse {}))

@@ -238,7 +238,8 @@ pub mod tests {
 	use crate::proto::matches::realtime;
 	use crate::proto::matches::realtime::internal::{
 		CreateMemberRequest, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest, DeleteRoomResponse,
-		EmptyRequest, ProbeRequest, ProbeResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse,
+		EmptyRequest, ProbeRequest, ProbeResponse, PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, QueryRoomRequest,
+		QueryRoomResponse, RoomIdResponse,
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::service::StubMatchmakingService;
@@ -470,6 +471,13 @@ pub mod tests {
 		}
 
 		async fn delete_room(&self, _request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
+			unimplemented!()
+		}
+
+		async fn put_forwarded_command_config(
+			&self,
+			_request: Request<PutForwardedCommandConfigRequest>,
+		) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
 			unimplemented!()
 		}
 	}
