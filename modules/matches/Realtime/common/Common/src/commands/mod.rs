@@ -1,4 +1,4 @@
-use num_derive::FromPrimitive;
+use num_derive::{FromPrimitive, ToPrimitive};
 use thiserror::Error;
 
 use crate::protocol::codec::commands::context::CommandContextError;
@@ -17,7 +17,7 @@ pub use crate::commands::field_value::FieldValue;
 /// Идентификатор типа команды
 ///
 #[repr(C)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, FromPrimitive, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, FromPrimitive, ToPrimitive, Hash)]
 pub enum CommandTypeId {
 	CreateGameObject = 0,
 	CreatedGameObject,

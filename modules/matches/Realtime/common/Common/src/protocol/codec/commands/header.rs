@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use num_traits::FromPrimitive;
 
 use crate::commands::CommandTypeId;
 use crate::protocol::codec::channel::ChannelType;
@@ -45,7 +46,7 @@ impl CommandHeader {
 			new_channel_group_id: (header & 1 << NEW_CHANNEL_GROUP_ID_BIT) > 0,
 			creator_source: CreatorSource::try_from(((header & 0b11000000000) >> 9) as u8)?,
 			channel_type_id: ChannelType(((header & 0b111000000) >> 6) as u8),
-			command_type_id: num::FromPrimitive::from_u8(command_type_id).ok_or(CommandContextError::UnknownCommandTypeId(command_type_id))?,
+			command_type_id: FromPrimitive::from_u8(command_type_id).ok_or(CommandContextError::UnknownCommandTypeId(command_type_id))?,
 		})
 	}
 
