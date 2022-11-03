@@ -201,6 +201,7 @@ impl Realtime for RealtimeInternalService {
 mod test {
 	use std::sync::Arc;
 
+	use cheetah_matches_realtime_common::commands::CommandTypeId;
 	use tokio::sync::Mutex;
 	use tokio_stream::wrappers::ReceiverStream;
 	use tokio_stream::StreamExt;
@@ -209,7 +210,7 @@ mod test {
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
 	use crate::grpc::proto::internal::realtime_server::Realtime;
-	use crate::grpc::proto::internal::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, RoomIdResponse};
+	use crate::grpc::proto::internal::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, PutForwardedCommandConfigRequest, RoomIdResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;
@@ -319,5 +320,83 @@ mod test {
 		let res = service.delete_member(Request::new(DeleteMemberRequest { user_id: 0, room_id: 0 })).await;
 
 		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "delete_member should return not_found");
+	}
+
+	#[tokio::test]
+	async fn test_put_forwarded_command_config() {
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
+
+		assert!(
+			service
+				.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
+					room_id,
+					command_type_id: CommandTypeId::AttachToRoom as _,
+					field_id: None,
+					template_id: None
+				}))
+				.await
+				.is_ok(),
+			"put_forwarded_command_config should return ok"
+		);
+		assert!(
+			service
+				.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
+					room_id,
+					command_type_id: CommandTypeId::AttachToRoom as _,
+					field_id: None,
+					template_id: None
+				}))
+				.await
+				.is_ok(),
+			"put_forwarded_command_config should be idempotent"
+		);
+	}
+
+	#[tokio::test]
+	async fn test_put_forwarded_command_config_room_not_found() {
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+
+		let res = service
+			.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
+				room_id: 0,
+				command_type_id: CommandTypeId::AttachToRoom as _,
+				field_id: None,
+				template_id: None,
+			}))
+			.await;
+
+		assert!(
+			matches!(res.unwrap_err().code(), Code::NotFound),
+			"put_forwarded_command_config should return not_found"
+		);
+	}
+
+	#[tokio::test]
+	async fn test_put_forwarded_command_config_invalid_argument() {
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
+
+		let tests = [(30, 0, 0), (0, u16::MAX as u32 + 1, 0), (0, 0, u16::MAX as u32 + 1)];
+		for (command_type_id, field_id, template_id) in tests {
+			let res = service
+				.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
+					room_id,
+					command_type_id,
+					field_id: Some(field_id),
+					template_id: Some(template_id),
+				}))
+				.await;
+
+			assert!(
+				matches!(res.unwrap_err().code(), Code::InvalidArgument),
+				"put_forwarded_command_config should return invalid_Argument"
+			);
+		}
 	}
 }
