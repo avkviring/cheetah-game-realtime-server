@@ -318,12 +318,14 @@ mod tests {
 	use std::cell::RefCell;
 	use std::collections::VecDeque;
 	use std::rc::Rc;
+	use std::slice;
 
 	use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 	use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 	use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
 	use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
-	use cheetah_matches_realtime_common::commands::{FieldType, FieldValue};
+	use cheetah_matches_realtime_common::commands::{CommandTypeId, FieldType, FieldValue};
 	use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
 	use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use cheetah_matches_realtime_common::protocol::frame::channel::{Channel, ChannelType};
@@ -332,6 +334,7 @@ mod tests {
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 	use cheetah_matches_realtime_common::room::RoomMemberId;
 
+	use crate::room::forward::ForwardConfig;
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};
@@ -628,6 +631,28 @@ mod tests {
 		assert!(room.has_object_singleton_key(&unique_key));
 		room.delete_object(&object_id).unwrap();
 		assert!(!room.has_object_singleton_key(&unique_key));
+	}
+
+	#[test]
+	fn should_not_execute_when_forward() {
+		let mut room = Room::default();
+		room.put_forwarded_command_config(ForwardConfig {
+			command_type_id: CommandTypeId::CreateGameObject,
+			field_id: None,
+			object_template_id: None,
+		});
+
+		let user_id = room.register_member(MemberTemplate::stub(AccessGroups(10)));
+		let command = CommandWithChannel {
+			channel: Channel::ReliableUnordered,
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
+				object_id: GameObjectId::new(1, GameObjectOwner::Member(user_id)),
+				template: 0,
+				access_groups: Default::default(),
+			})),
+		};
+		room.execute_commands(user_id, slice::from_ref(&command));
+		assert!(room.objects.is_empty())
 	}
 
 	pub fn create_template() -> (RoomTemplate, MemberTemplate) {
