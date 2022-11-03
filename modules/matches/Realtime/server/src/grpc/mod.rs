@@ -7,13 +7,17 @@ use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
 use cheetah_libraries_microservice::trace::Trace;
+use cheetah_matches_realtime_common::commands::field::FieldId;
+use cheetah_matches_realtime_common::commands::CommandTypeId;
+use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::grpc::proto::internal::realtime_server::Realtime;
 use crate::grpc::proto::internal::*;
+use crate::room::forward::ForwardedCommandConfig;
 use crate::room::template::config::MemberTemplate;
-use crate::server::manager::{DeleteMemberRequestError, RoomsServerManager};
+use crate::server::manager::{DeleteMemberRequestError, PutForwardedCommandConfigError, RoomsServerManager};
 
 mod from;
 pub mod proto;
@@ -145,6 +149,33 @@ impl Realtime for RealtimeInternalService {
 				DeleteMemberRequestError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
 				DeleteMemberRequestError::ChannelSendError(e) => Status::unavailable(e),
 				DeleteMemberRequestError::DeleteMemberError(e) => Status::not_found(e.to_string()),
+			})
+	}
+
+	async fn put_forwarded_command_config(
+		&self,
+		request: Request<PutForwardedCommandConfigRequest>,
+	) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
+		let command_type_id = request.get_ref().command_type_id;
+		let command_type_id: CommandTypeId = num::FromPrimitive::from_u32(command_type_id)
+			.ok_or(Status::invalid_argument(format!("unknown command_type_id {:?}", command_type_id)))?;
+
+		self.server_manager
+			.lock()
+			.await
+			.put_forwarded_command_config(
+				request.get_ref().room_id as RoomId,
+				ForwardedCommandConfig {
+					command_type_id,
+					field_id: request.get_ref().field_id as FieldId,
+					object_template_id: request.get_ref().template_id as GameObjectTemplateId,
+				},
+			)
+			.map(|_| Response::new(PutForwardedCommandConfigResponse {}))
+			.map_err(|e| match e {
+				PutForwardedCommandConfigError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
+				PutForwardedCommandConfigError::ChannelSendError(e) => Status::unavailable(e),
+				PutForwardedCommandConfigError::RoomNotFound(e) => Status::not_found(e.to_string()),
 			})
 	}
 }

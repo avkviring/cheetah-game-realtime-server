@@ -17,7 +17,7 @@ use crate::debug::proto::admin;
 use crate::room::command::ServerCommandError;
 use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
-use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask};
+use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask, PutForwardedCommandConfigError};
 use crate::server::measurers::Measurers;
 use crate::server::network::NetworkLayer;
 use crate::server::rooms::{RoomNotFoundError, Rooms};
@@ -164,6 +164,20 @@ impl RoomsServer {
 						}
 					}
 				},
+				ManagementTask::PutForwardedCommandConfig(room_id, config, sender) => {
+					let result = if let Some(room) = self.rooms.room_by_id.get_mut(&room_id) {
+						room.put_forwarded_command_config(config);
+						Ok(())
+					} else {
+						Err(PutForwardedCommandConfigError::RoomNotFound(room_id))
+					};
+					match sender.send(result) {
+						Ok(_) => {}
+						Err(e) => {
+							tracing::error!("[Request::DeleteMember] error send response {:?}", e);
+						}
+					}
+				}
 			}
 		}
 	}

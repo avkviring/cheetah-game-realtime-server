@@ -13,12 +13,16 @@ use std::slice;
 
 #[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
 pub struct ForwardedCommandConfig {
-	command_type_id: CommandTypeId,
-	field_id: FieldId,
-	object_template_id: GameObjectTemplateId,
+	pub(crate) command_type_id: CommandTypeId,
+	pub(crate) field_id: FieldId,
+	pub(crate) object_template_id: GameObjectTemplateId,
 }
 
 impl Room {
+	pub(crate) fn put_forwarded_command_config(&mut self, config: ForwardedCommandConfig) {
+		self.forwarded_command_configs.insert(config);
+	}
+
 	pub(crate) fn is_forwarded(&self, command: &C2SCommand, user_id: RoomMemberId) -> bool {
 		// check non super member
 		if let Some(member) = self.members.get(&user_id) {
