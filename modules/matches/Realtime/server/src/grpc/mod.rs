@@ -15,7 +15,7 @@ use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::grpc::proto::internal::realtime_server::Realtime;
 use crate::grpc::proto::internal::*;
-use crate::room::forward::ForwardedCommandConfig;
+use crate::room::forward::ForwardConfig;
 use crate::room::template::config::MemberTemplate;
 use crate::server::manager::{DeleteMemberRequestError, PutForwardedCommandConfigError, RoomsServerManager};
 
@@ -158,17 +158,17 @@ impl Realtime for RealtimeInternalService {
 	) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
 		let command_type_id = request.get_ref().command_type_id;
 		let command_type_id: CommandTypeId = num::FromPrimitive::from_u32(command_type_id)
-			.ok_or(Status::invalid_argument(format!("unknown command_type_id {:?}", command_type_id)))?;
+			.ok_or_else(|| Status::invalid_argument(format!("unknown command_type_id {:?}", command_type_id)))?;
 
 		self.server_manager
 			.lock()
 			.await
 			.put_forwarded_command_config(
 				request.get_ref().room_id as RoomId,
-				ForwardedCommandConfig {
+				ForwardConfig {
 					command_type_id,
-					field_id: request.get_ref().field_id as FieldId,
-					object_template_id: request.get_ref().template_id as GameObjectTemplateId,
+					field_id: request.get_ref().field_id.map(|x| x as FieldId),
+					object_template_id: request.get_ref().template_id.map(|x| x as GameObjectTemplateId),
 				},
 			)
 			.map(|_| Response::new(PutForwardedCommandConfigResponse {}))

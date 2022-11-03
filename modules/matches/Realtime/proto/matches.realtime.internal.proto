@@ -196,8 +196,8 @@ message  DeleteMemberResponse {
 message PutForwardedCommandConfigRequest {
   uint64 room_id = 1;
   uint32 command_type_id = 2;
-  uint32 field_id = 3;
-  uint32 template_id = 4;
+  optional uint32 field_id = 3;
+  optional uint32 template_id = 4;
 }
 
 message PutForwardedCommandConfigResponse {
