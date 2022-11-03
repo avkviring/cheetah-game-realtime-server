@@ -29,7 +29,7 @@ pub trait ServerCommandExecutor {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError>;
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ServerCommandError {
 	#[error("{:?}",.0)]
 	Error(String),

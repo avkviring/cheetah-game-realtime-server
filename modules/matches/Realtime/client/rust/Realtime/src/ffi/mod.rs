@@ -102,7 +102,7 @@ impl From<&ForwardedCommand> for ForwardedCommandFFI {
 	fn from(c: &ForwardedCommand) -> Self {
 		ForwardedCommandFFI {
 			command_type_id: c.c2s.get_type_id(),
-			creator: c.user_id,
+			creator: c.creator,
 			game_object_id: c.c2s.get_object_id().unwrap_or_default().into(),
 			field_id: c.c2s.get_field_id().unwrap_or_default(),
 			has_field_type: c.c2s.get_field_type().is_some(),
@@ -112,11 +112,17 @@ impl From<&ForwardedCommand> for ForwardedCommandFFI {
 }
 
 #[repr(C)]
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameObjectIdFFI {
 	id: u32,
 	pub room_owner: bool,
 	user_id: RoomMemberId,
+}
+
+impl Default for GameObjectIdFFI {
+	fn default() -> Self {
+		GameObjectId::default().into()
+	}
 }
 
 impl From<GameObjectId> for GameObjectIdFFI {
@@ -246,10 +252,15 @@ impl From<FieldTypeFFI> for FieldType {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
+	use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+	use cheetah_matches_realtime_common::commands::types::event::{EventCommand, TargetEventCommand};
+	use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
+	use cheetah_matches_realtime_common::commands::CommandTypeId;
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
-	use crate::ffi::GameObjectIdFFI;
+	use crate::ffi::{FieldTypeFFI, ForwardedCommandFFI, GameObjectIdFFI};
 
 	#[test]
 	fn should_convert_object_id() {
@@ -260,5 +271,54 @@ mod tests {
 		let object_id_fff = GameObjectIdFFI::from(&object_id);
 		let converted_object_id = GameObjectId::from(&object_id_fff);
 		assert_eq!(object_id, converted_object_id);
+	}
+
+	#[test]
+	fn should_convert_forwarded_to_ffi() {
+		let command = ForwardedCommand {
+			creator: 123,
+			c2s: C2SCommand::AttachToRoom,
+		};
+		let ffi = ForwardedCommandFFI::from(&command);
+		assert_eq!(
+			ForwardedCommandFFI {
+				command_type_id: CommandTypeId::AttachToRoom,
+				creator: 123,
+				game_object_id: Default::default(),
+				field_id: Default::default(),
+				has_field_type: false,
+				field_type: FieldTypeFFI::Long,
+			},
+			ffi
+		)
+	}
+
+	#[test]
+	fn should_convert_forwarded_to_ffi_with_field() {
+		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
+		let field_id = 77;
+		let command = ForwardedCommand {
+			creator: 123,
+			c2s: C2SCommand::TargetEvent(TargetEventCommand {
+				target: 10,
+				event: EventCommand {
+					object_id: object_id.clone(),
+					field_id,
+					event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
+				},
+			}),
+		};
+		let ffi = ForwardedCommandFFI::from(&command);
+		assert_eq!(
+			ForwardedCommandFFI {
+				command_type_id: CommandTypeId::TargetEvent,
+				creator: 123,
+				game_object_id: object_id.into(),
+				field_id,
+				has_field_type: true,
+				field_type: FieldTypeFFI::Event,
+			},
+			ffi
+		)
 	}
 }

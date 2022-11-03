@@ -11,13 +11,13 @@ use std::io::{Cursor, Error, ErrorKind};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ForwardedCommand {
-	pub user_id: RoomMemberId,
+	pub creator: RoomMemberId,
 	pub c2s: C2SCommand,
 }
 
 impl ForwardedCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_variable_u64(self.user_id.into())?;
+		out.write_variable_u64(self.creator.into())?;
 		out.write_u8(
 			ToPrimitive::to_u8(&self.c2s.get_type_id())
 				.ok_or_else(|| Error::new(ErrorKind::InvalidData, format!("could not write CommandTypeId to u8")))?,
@@ -37,7 +37,7 @@ impl ForwardedCommand {
 		let command_type_id = input.read_u8()?;
 		let command_type_id = num::FromPrimitive::from_u8(command_type_id).ok_or(CommandContextError::UnknownCommandTypeId(command_type_id))?;
 		Ok(ForwardedCommand {
-			user_id,
+			creator: user_id,
 			c2s: C2SCommand::decode(&command_type_id, object_id, field_id, input)?,
 		})
 	}

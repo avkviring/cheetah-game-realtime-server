@@ -163,7 +163,7 @@ impl C2SCommand {
 			C2SCommand::DeleteField(command) => format!("field_type = {:?}", command.field_type),
 			C2SCommand::AttachToRoom => "".to_string(),
 			C2SCommand::DetachFromRoom => "".to_string(),
-			C2SCommand::Forwarded(command) => format!("forward: user({:?}) command({:?})", command.user_id, command.c2s.get_trace_string()),
+			C2SCommand::Forwarded(command) => format!("forward: user({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
 		}
 	}
 
@@ -208,6 +208,7 @@ mod tests {
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::field::SetFieldCommand;
 	use crate::commands::types::float::IncrementDoubleC2SCommand;
+	use crate::commands::types::forwarded::ForwardedCommand;
 	use crate::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
 	use crate::commands::types::structure::CompareAndSetStructureCommand;
 	use crate::commands::CommandTypeId;
@@ -416,6 +417,28 @@ mod tests {
 			CommandTypeId::Delete,
 			Some(object_id),
 			None,
+		);
+	}
+
+	#[test]
+	fn should_decode_encode_forwarded() {
+		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
+		let field_id = 77;
+		check(
+			C2SCommand::Forwarded(Box::new(ForwardedCommand {
+				creator: 123,
+				c2s: C2SCommand::TargetEvent(TargetEventCommand {
+					target: 10,
+					event: EventCommand {
+						object_id: object_id.clone(),
+						field_id,
+						event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
+					},
+				}),
+			})),
+			CommandTypeId::Forwarded,
+			Some(object_id),
+			Some(field_id),
 		);
 	}
 

@@ -58,7 +58,7 @@ impl Room {
 		let s2c = S2CCommandWithFieldInfo {
 			field: command.get_field(),
 			command: S2CCommand::Forwarded(Box::new(ForwardedCommand {
-				user_id,
+				creator: user_id,
 				c2s: command.clone(),
 			})),
 		};
@@ -79,3 +79,6 @@ impl Room {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {}
