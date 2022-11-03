@@ -30,7 +30,7 @@ pub struct GameObject {
 	compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum GameObjectError {
 	#[error("Field count overflow in game object {:?} with template {:?}", .0, .1)]
 	FieldCountOverflow(GameObjectId, GameObjectTemplateId),
