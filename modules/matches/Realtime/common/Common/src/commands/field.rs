@@ -6,6 +6,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 ///
 /// Тип данных поля
 ///
+#[repr(C)]
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum FieldType {
 	Long = 1,

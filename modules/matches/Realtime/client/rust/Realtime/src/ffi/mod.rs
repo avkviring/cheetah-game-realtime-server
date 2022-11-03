@@ -7,7 +7,7 @@ use thiserror::Error;
 use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
-use cheetah_matches_realtime_common::commands::FieldType;
+use cheetah_matches_realtime_common::commands::{CommandTypeId, FieldType};
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 use cheetah_matches_realtime_common::room::RoomMemberId;
@@ -90,17 +90,23 @@ where
 #[repr(C)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ForwardedCommandFFI {
+	command_type_id: CommandTypeId,
 	creator: RoomMemberId,
 	game_object_id: GameObjectIdFFI,
 	field_id: FieldId,
+	has_field_type: bool,
+	field_type: FieldTypeFFI,
 }
 
 impl From<&ForwardedCommand> for ForwardedCommandFFI {
 	fn from(c: &ForwardedCommand) -> Self {
 		ForwardedCommandFFI {
+			command_type_id: c.c2s.get_type_id(),
 			creator: c.user_id,
 			game_object_id: c.c2s.get_object_id().unwrap_or_default().into(),
 			field_id: c.c2s.get_field_id().unwrap_or_default(),
+			has_field_type: c.c2s.get_field_type().is_some(),
+			field_type: c.c2s.get_field_type().unwrap_or(FieldType::Long).into(),
 		}
 	}
 }
