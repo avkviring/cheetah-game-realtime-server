@@ -16,6 +16,7 @@ pub use crate::commands::field_value::FieldValue;
 ///
 /// Идентификатор типа команды
 ///
+#[repr(C)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, FromPrimitive, Hash)]
 pub enum CommandTypeId {
 	CreateGameObject = 0,
