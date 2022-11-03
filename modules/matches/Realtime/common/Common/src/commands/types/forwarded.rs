@@ -20,7 +20,7 @@ impl ForwardedCommand {
 		out.write_variable_u64(self.creator.into())?;
 		out.write_u8(
 			ToPrimitive::to_u8(&self.c2s.get_type_id())
-				.ok_or_else(|| Error::new(ErrorKind::InvalidData, format!("could not write CommandTypeId to u8")))?,
+				.ok_or_else(|| Error::new(ErrorKind::InvalidData, "could not write CommandTypeId to u8".to_string()))?,
 		)?;
 		self.c2s.encode(out)
 	}
