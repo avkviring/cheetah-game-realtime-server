@@ -12,18 +12,18 @@ use cheetah_matches_realtime_common::room::RoomMemberId;
 use std::slice;
 
 #[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
-pub struct ForwardedCommandConfig {
+pub struct ForwardConfig {
 	pub(crate) command_type_id: CommandTypeId,
-	pub(crate) field_id: FieldId,
-	pub(crate) object_template_id: GameObjectTemplateId,
+	pub(crate) field_id: Option<FieldId>,
+	pub(crate) object_template_id: Option<GameObjectTemplateId>,
 }
 
 impl Room {
-	pub(crate) fn put_forwarded_command_config(&mut self, config: ForwardedCommandConfig) {
-		self.forwarded_command_configs.insert(config);
+	pub(crate) fn put_forwarded_command_config(&mut self, config: ForwardConfig) {
+		self.forward_configs.insert(config);
 	}
 
-	pub(crate) fn is_forwarded(&self, command: &C2SCommand, user_id: RoomMemberId) -> bool {
+	pub(crate) fn should_forward(&self, command: &C2SCommand, user_id: RoomMemberId) -> bool {
 		// check non super member
 		if let Some(member) = self.members.get(&user_id) {
 			if member.template.super_member {
@@ -34,15 +34,22 @@ impl Room {
 		match command {
 			C2SCommand::Forwarded(_) => false,
 			_ => {
-				if let (Some(field_id), Some(object_template_id)) = (command.get_field_id(), self.get_object_template_id(command)) {
-					self.forwarded_command_configs.contains(&ForwardedCommandConfig {
-						command_type_id: command.get_type_id(),
-						field_id,
-						object_template_id,
-					})
-				} else {
-					false
+				let mut config = ForwardConfig {
+					command_type_id: command.get_type_id(),
+					field_id: command.get_field_id(),
+					object_template_id: self.get_object_template_id(command),
+				};
+				if self.forward_configs.contains(&config) {
+					return true;
 				}
+
+				config.object_template_id = None;
+				if self.forward_configs.contains(&config) {
+					return true;
+				}
+
+				config.field_id = None;
+				self.forward_configs.contains(&config)
 			}
 		}
 	}

@@ -23,7 +23,7 @@ use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::compare_and_set::{reset_all_compare_and_set, CASCleanersStore};
 use crate::room::command::{execute, ServerCommandError};
-use crate::room::forward::ForwardedCommandConfig;
+use crate::room::forward::ForwardConfig;
 use crate::room::object::{CreateCommandsCollector, GameObject, S2CCommandWithFieldInfo};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
@@ -59,7 +59,7 @@ pub struct Room {
 	///
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 
-	forwarded_command_configs: FnvHashSet<ForwardedCommandConfig>,
+	forward_configs: FnvHashSet<ForwardConfig>,
 }
 
 pub struct RoomInfo {
@@ -96,7 +96,7 @@ impl Room {
 			template_name: template.name.clone(),
 			measurers,
 			objects_singleton_key: Default::default(),
-			forwarded_command_configs: Default::default(),
+			forward_configs: Default::default(),
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -168,7 +168,7 @@ impl Room {
 					self.current_channel.replace(From::from(&command_with_channel.channel));
 					tracer.borrow_mut().collect_c2s(&self.objects, user_id, command);
 
-					if self.is_forwarded(command, user_id) {
+					if self.should_forward(command, user_id) {
 						if let Err(e) = self.forward_to_super_members(command, user_id) {
 							e.log_error(self.id, user_id);
 						}

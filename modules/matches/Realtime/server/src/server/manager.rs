@@ -13,7 +13,7 @@ use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
-use crate::room::forward::ForwardedCommandConfig;
+use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
@@ -45,7 +45,7 @@ pub enum ManagementTask {
 	QueryRoom(RoomId, Sender<Option<RoomInfo>>),
 	CommandTracerSessionTask(RoomId, TracerSessionCommand, Sender<Result<(), CommandTracerSessionTaskError>>),
 	DeleteRoom(RoomId, Sender<Result<(), DeleteRoomError>>),
-	PutForwardedCommandConfig(RoomId, ForwardedCommandConfig, Sender<Result<(), PutForwardedCommandConfigError>>),
+	PutForwardedCommandConfig(RoomId, ForwardConfig, Sender<Result<(), PutForwardedCommandConfigError>>),
 }
 
 #[derive(Debug, Error)]
@@ -282,7 +282,7 @@ impl RoomsServerManager {
 		}
 	}
 
-	pub fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardedCommandConfig) -> Result<(), PutForwardedCommandConfigError> {
+	pub fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardConfig) -> Result<(), PutForwardedCommandConfigError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::PutForwardedCommandConfig(room_id, config, sender))
