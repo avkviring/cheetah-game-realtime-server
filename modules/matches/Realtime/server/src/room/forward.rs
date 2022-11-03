@@ -54,11 +54,11 @@ impl Room {
 		}
 	}
 
-	pub(crate) fn forward_to_super_members(&mut self, command: &C2SCommand, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	pub(crate) fn forward_to_super_members(&mut self, command: &C2SCommand, sender_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let s2c = S2CCommandWithFieldInfo {
 			field: command.get_field(),
 			command: S2CCommand::Forwarded(Box::new(ForwardedCommand {
-				creator: user_id,
+				creator: sender_id,
 				c2s: command.clone(),
 			})),
 		};
@@ -81,4 +81,93 @@ impl Room {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+	use crate::room::forward::ForwardConfig;
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::room::Room;
+	use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
+	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+	use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
+	use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
+	use cheetah_matches_realtime_common::commands::{CommandTypeId, FieldValue};
+	use cheetah_matches_realtime_common::room::access::AccessGroups;
+	use cheetah_matches_realtime_common::room::RoomMemberId;
+
+	#[test]
+	fn should_not_forward_from_super_member() {
+		let (room, _member, super_member) = setup();
+		let command = C2SCommand::AttachToRoom;
+		assert!(!room.should_forward(&command, super_member));
+	}
+
+	#[test]
+	fn should_not_forward_already_forwarded() {
+		let (room, member, super_member) = setup();
+		let command = C2SCommand::Forwarded(Box::new(ForwardedCommand {
+			creator: member,
+			c2s: C2SCommand::AttachToRoom,
+		}));
+		assert!(!room.should_forward(&command, super_member));
+	}
+
+	#[test]
+	fn should_not_forward_config() {
+		let (mut room, member, _super_member) = setup();
+		room.put_forwarded_command_config(ForwardConfig {
+			command_type_id: CommandTypeId::SetLong,
+			field_id: Some(1 as _),
+			object_template_id: None,
+		});
+		let command = C2SCommand::SetField(SetFieldCommand {
+			object_id: Default::default(),
+			field_id: 2 as _,
+			value: FieldValue::Long(1),
+		});
+		assert!(!room.should_forward(&command, member));
+	}
+
+	#[test]
+	fn should_forward_config() {
+		let (mut room, member, _super_member) = setup();
+		room.put_forwarded_command_config(ForwardConfig {
+			command_type_id: CommandTypeId::SetLong,
+			field_id: Some(1 as _),
+			object_template_id: None,
+		});
+		let command = C2SCommand::SetField(SetFieldCommand {
+			object_id: Default::default(),
+			field_id: 1 as _,
+			value: FieldValue::Long(1),
+		});
+		assert!(room.should_forward(&command, member));
+	}
+
+	#[test]
+	fn should_forward_only_to_super_members() {
+		let (mut room, member_1, super_member) = setup();
+		let command = C2SCommand::AttachToRoom;
+		let member_2 = room.register_member(MemberTemplate::stub(AccessGroups(10)));
+		room.test_mark_as_connected(super_member).unwrap();
+		room.test_mark_as_connected(member_2).unwrap();
+
+		room.forward_to_super_members(&command, member_1).unwrap();
+
+		assert!(room.test_get_user_out_commands(member_2).is_empty());
+		assert_eq!(
+			S2CCommand::Forwarded(Box::new(ForwardedCommand {
+				creator: member_1,
+				c2s: command,
+			})),
+			room.test_get_user_out_commands(super_member)[0]
+		);
+	}
+
+	fn setup() -> (Room, RoomMemberId, RoomMemberId) {
+		let template = RoomTemplate::default();
+		let access_groups = AccessGroups(10);
+		let mut room = Room::from_template(template);
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let super_member_1 = room.register_member(MemberTemplate::new_super_member());
+		(room, member_1, super_member_1)
+	}
+}
