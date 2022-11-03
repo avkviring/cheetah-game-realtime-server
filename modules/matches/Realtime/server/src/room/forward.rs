@@ -67,7 +67,7 @@ impl Room {
 			AccessGroups::super_group(),
 			self.get_object_template_id(command),
 			slice::from_ref(&s2c),
-			|_user| true,
+			|member| member.template.super_member,
 		)
 	}
 
