@@ -35,7 +35,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 		if room.contains_object(&self.object_id) {
 			return Err(ServerCommandError::Error(format!("Object already exists with id {:?}", self.object_id)));
 		}
-		room.insert_object(GameObject::new(self.object_id.clone(), self.template, groups, false));
+		room.insert_object(GameObject::new(self.object_id, self.template, groups, false));
 		Ok(())
 	}
 }
@@ -58,14 +58,14 @@ mod tests {
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
 		let command = CreateGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b10),
 		};
 		command.execute(&mut room, user_id).unwrap();
 
 		assert!(matches!(
-			room.get_object_mut(&object_id),
+			room.get_object_mut(object_id),
 			Ok(object)
 				if object.template_id == command.template
 				&& object.access_groups == command.access_groups
@@ -81,13 +81,13 @@ mod tests {
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(1000));
 		let command = CreateGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b10),
 		};
 
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
 	///
@@ -98,13 +98,13 @@ mod tests {
 		let (mut room, user_id) = setup(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
 		let command = CreateGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
 
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
 	///
@@ -116,12 +116,12 @@ mod tests {
 
 		let object_id = GameObjectId::new(0, GameObjectOwner::Member(user_id));
 		let command = CreateGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b11),
 		};
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object_mut(&object_id), Err(_)));
+		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
 	//
@@ -133,16 +133,16 @@ mod tests {
 		let (mut room, user_id) = setup(access_groups);
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.template_id = 777;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		room.test_out_commands.clear();
 		let command = CreateGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
 
 		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
-		assert!(matches!(room.get_object_mut(&object_id), Ok(object) if object.template_id == 777));
+		assert!(matches!(room.get_object_mut(object_id), Ok(object) if object.template_id == 777));
 	}
 
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {

@@ -73,7 +73,7 @@ pub fn perform_compare_and_set(
 		}
 	};
 
-	room.send_command_from_action(&object_id, Field { id: field_id, field_type }, user_id, Permission::Rw, None, action)?;
+	room.send_command_from_action(object_id, Field { id: field_id, field_type }, user_id, Permission::Rw, None, action)?;
 
 	if is_field_changed.take() {
 		let m = room.get_member_mut(&user_id)?;
@@ -98,7 +98,7 @@ pub fn reset_all_compare_and_set(
 	compare_and_set_cleaners: &CASCleanersStore,
 ) -> Result<(), ServerCommandError> {
 	for ((object_id, field, _), reset) in compare_and_set_cleaners {
-		apply_reset(room, user_id, object_id, *field, reset)?;
+		apply_reset(room, user_id, *object_id, *field, reset)?;
 	}
 
 	Ok(())
@@ -107,7 +107,7 @@ pub fn reset_all_compare_and_set(
 pub fn apply_reset(
 	room: &mut Room,
 	user_id: RoomMemberId,
-	object_id: &GameObjectId,
+	object_id: GameObjectId,
 	field: FieldId,
 	reset: &FieldValue,
 ) -> Result<(), ServerCommandError> {
@@ -169,7 +169,7 @@ mod tests {
 	fn should_compare_and_set_long() {
 		let (mut room, user1_id, _, object_id, field_id) = setup();
 		let command1 = CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id,
 			current: 0,
 			new: 100,
@@ -177,12 +177,12 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
 		let command2 = CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: command1.field_id,
 			current: 0,
 			new: 200,
@@ -190,12 +190,12 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
 		let command3 = CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: command1.field_id,
 			current: command1.new,
 			new: 300,
@@ -203,7 +203,7 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command3.new
 		);
 	}
@@ -212,7 +212,7 @@ mod tests {
 	fn should_compare_and_set_structure() {
 		let (mut room, user1_id, _, object_id, field_id) = setup();
 		let command1 = CompareAndSetStructureCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id,
 			current: vec![0, 1].as_slice().into(),
 			new: vec![1, 0, 0].as_slice().into(),
@@ -220,12 +220,12 @@ mod tests {
 		};
 		command1.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
 			command1.new.as_slice()
 		);
 
 		let command2 = CompareAndSetStructureCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: command1.field_id,
 			current: vec![0, 1].as_slice().into(),
 			new: vec![2, 0, 0].as_slice().into(),
@@ -233,12 +233,12 @@ mod tests {
 		};
 		command2.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
 			command1.new.as_slice()
 		);
 
 		let command3 = CompareAndSetStructureCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: command1.field_id,
 			current: command1.new,
 			new: vec![3, 0, 0].as_slice().into(),
@@ -246,7 +246,7 @@ mod tests {
 		};
 		command3.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
 			command3.new.as_slice()
 		);
 	}
@@ -278,7 +278,7 @@ mod tests {
 	fn should_reset() {
 		let (mut room, user1_id, _, object_id, field_id) = setup();
 		let command = CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id,
 			current: 0,
 			new: 100,
@@ -286,13 +286,13 @@ mod tests {
 		};
 		command.execute(&mut room, user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
 			command.new
 		);
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
 			command.reset.unwrap()
 		);
 	}
@@ -305,7 +305,7 @@ mod tests {
 	fn should_disable_reset() {
 		let (mut room, user1_id, _, object_id, field_id) = setup();
 		CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id,
 			current: 0,
 			new: 100,
@@ -314,7 +314,7 @@ mod tests {
 		.execute(&mut room, user1_id)
 		.unwrap();
 		CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id,
 			current: 100,
 			new: 200,
@@ -323,9 +323,9 @@ mod tests {
 		.execute(&mut room, user1_id)
 		.unwrap();
 
-		assert_eq!(*room.get_object_mut(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
+		assert_eq!(*room.get_object_mut(object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
 		room.disconnect_user(user1_id).unwrap();
-		assert_eq!(*room.get_object_mut(&object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
+		assert_eq!(*room.get_object_mut(object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
 	}
 
 	///
@@ -336,14 +336,14 @@ mod tests {
 	fn should_correct_reset_when_with_two_members() {
 		let (mut room, user1_id, user2_id, object_id, field_id) = setup();
 		let command_1 = CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id,
 			current: 0,
 			new: 100,
 			reset: Some(555),
 		};
 		let command_2 = CompareAndSetLongCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id,
 			current: 100,
 			new: 200,
@@ -354,7 +354,7 @@ mod tests {
 
 		room.disconnect_user(user1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(&object_id).unwrap().get_field::<i64>(command_1.field_id).unwrap(),
+			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command_1.field_id).unwrap(),
 			command_2.new
 		);
 	}
@@ -390,7 +390,7 @@ mod tests {
 		object.created = true;
 		object.template_id = object_template;
 
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		(room, user1_id, user2_id, object_id, object_field)
 	}
 }

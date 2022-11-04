@@ -13,7 +13,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
-		let object_id = self.object_id.clone();
+		let object_id = self.object_id;
 
 		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.get_field::<f64>(field_id) {
@@ -25,14 +25,14 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 				self.increment
 			};
 			Ok(Some(S2CCommand::SetField(SetFieldCommand {
-				object_id: self.object_id.clone(),
+				object_id: self.object_id,
 				field_id,
 				value: value.into(),
 			})))
 		};
 
 		room.send_command_from_action(
-			&object_id,
+			object_id,
 			Field {
 				id: field_id,
 				field_type: FieldType::Double,
@@ -59,17 +59,17 @@ mod tests {
 	fn should_set_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		object.created = true;
 		room.test_out_commands.clear();
 		let command = SetFieldCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: 10,
 			value: 100.100.into(),
 		};
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 100);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
 	}
@@ -80,21 +80,21 @@ mod tests {
 
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		room.test_out_commands.clear();
 		let command = IncrementDoubleC2SCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: 10,
 			increment: 100.100,
 		};
 		command.clone().execute(&mut room, user).unwrap();
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 200);
 
 		let result = SetFieldCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: 10,
 			value: 200.200.into(),
 		};

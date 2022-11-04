@@ -27,17 +27,17 @@ mod tests {
 		let user = room.register_member(MemberTemplate::stub(access_groups));
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 
 		room.test_out_commands.clear();
 		let command = SetFieldCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: 100,
 			value: vec![1, 2, 3, 4, 5].into(),
 		};
 
 		command.execute(&mut room, user).unwrap();
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 
 		assert_eq!(*object.get_field_wrapped(100, FieldType::Structure).unwrap(), command.value);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c == command));
@@ -76,13 +76,13 @@ mod tests {
 
 	fn run_set_structure_test(room: &mut Room, user1: RoomMemberId, user2: RoomMemberId, object_id: GameObjectId, sender: RoomMemberId) {
 		let command = SetFieldCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: FIELD_ID,
 			value: vec![1, 2, 3, 4, 5].into(),
 		};
 
 		command.execute(room, sender).unwrap();
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 
 		assert_eq!(*object.get_field_wrapped(FIELD_ID, FieldType::Structure).unwrap(), command.value);
 

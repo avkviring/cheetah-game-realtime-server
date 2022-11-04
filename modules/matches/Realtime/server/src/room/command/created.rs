@@ -10,7 +10,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let room_id = room.id;
-		let object = room.get_object_mut(&self.object_id)?;
+		let object = room.get_object_mut(self.object_id)?;
 
 		if object.created {
 			return Err(ServerCommandError::Error(format!(
@@ -19,23 +19,23 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 			)));
 		}
 
-		let member_object_id = object.id.clone();
+		let member_object_id = object.id;
 
 		let object = if self.room_owner {
 			// создаем объект с владением комнаты
 			let new_room_object_id = GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
 			if let Some(unique_key) = &self.singleton_key {
 				if room.has_object_singleton_key(unique_key) {
-					room.delete_object(&member_object_id)?;
+					room.delete_object(member_object_id)?;
 					return Ok(());
 				}
-				room.set_singleton_key(unique_key.clone(), new_room_object_id.clone());
+				room.set_singleton_key(unique_key.clone(), new_room_object_id);
 			}
 			room.room_object_id_generator += 1;
-			let mut object = room.delete_object(&member_object_id)?;
-			object.id = new_room_object_id.clone();
+			let mut object = room.delete_object(member_object_id)?;
+			object.id = new_room_object_id;
 			room.insert_object(object);
-			room.get_object_mut(&new_room_object_id)?
+			room.get_object_mut(new_room_object_id)?
 		} else {
 			object
 		};
@@ -76,7 +76,7 @@ mod tests {
 		room.test_mark_as_connected(user1).unwrap();
 		room.test_mark_as_connected(user2).unwrap();
 		let command = C2SCreatedGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			room_owner: false,
 			singleton_key: None,
 		};
@@ -101,14 +101,14 @@ mod tests {
 	pub fn should_switch_object_to_created_state() {
 		let (mut room, object_id, user1, _) = setup_two_players();
 		let command = C2SCreatedGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			room_owner: false,
 			singleton_key: None,
 		};
 		room.test_out_commands.clear();
 		command.execute(&mut room, user1).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 		assert!(object.created);
 	}
 
@@ -119,10 +119,10 @@ mod tests {
 	#[test]
 	pub fn should_dont_send_command_if_object_already_created() {
 		let (mut room, object_id, user1, _) = setup_two_players();
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 		object.created = true;
 		let command = C2SCreatedGameObjectCommand {
-			object_id: object_id.clone(),
+			object_id,
 			room_owner: false,
 			singleton_key: None,
 		};
@@ -140,21 +140,21 @@ mod tests {
 		let (mut room, user, access_groups) = setup_one_player();
 		let member_object_id = GameObjectId::new(100, GameObjectOwner::Member(user));
 		let create_command = CreateGameObjectCommand {
-			object_id: member_object_id.clone(),
+			object_id: member_object_id,
 			template: 777,
 			access_groups,
 		};
 		create_command.execute(&mut room, user).unwrap();
 
 		let created_command = C2SCreatedGameObjectCommand {
-			object_id: member_object_id.clone(),
+			object_id: member_object_id,
 			room_owner: true,
 			singleton_key: None,
 		};
 		created_command.execute(&mut room, user).unwrap();
 
 		// старого объекта уже не должно быть
-		assert!(room.get_object_mut(&member_object_id).is_err());
+		assert!(room.get_object_mut(member_object_id).is_err());
 
 		let (_object_id, object) = room.objects.first().unwrap();
 		// это именно тот объект, который мы создали?
@@ -182,7 +182,7 @@ mod tests {
 
 		let member_object_id_1 = GameObjectId::new(100, GameObjectOwner::Member(user));
 		let create_command = CreateGameObjectCommand {
-			object_id: member_object_id_1.clone(),
+			object_id: member_object_id_1,
 			template: 777,
 			access_groups,
 		};
@@ -197,7 +197,7 @@ mod tests {
 
 		let member_object_id_2 = GameObjectId::new(101, GameObjectOwner::Member(user));
 		let create_command = CreateGameObjectCommand {
-			object_id: member_object_id_2.clone(),
+			object_id: member_object_id_2,
 			template: 777,
 			access_groups,
 		};

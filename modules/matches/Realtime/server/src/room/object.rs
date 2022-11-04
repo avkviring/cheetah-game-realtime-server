@@ -30,7 +30,7 @@ pub struct GameObject {
 	compare_and_set_owners: heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT>,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum GameObjectError {
 	#[error("Field count overflow in game object {:?} with template {:?}", .0, .1)]
 	FieldCountOverflow(GameObjectId, GameObjectTemplateId),
@@ -98,7 +98,7 @@ impl GameObject {
 		self.compare_and_set_owners
 			.insert(field_id, value)
 			.map(|_| ())
-			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.clone(), self.template_id))
+			.map_err(|_| GameObjectError::FieldCountOverflow(self.id, self.template_id))
 	}
 
 	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector) {
@@ -111,7 +111,7 @@ impl GameObject {
 		commands.push(S2CCommandWithFieldInfo {
 			field: Option::None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
-				object_id: self.id.clone(),
+				object_id: self.id,
 				template: self.template_id,
 				access_groups: self.access_groups,
 			}),
@@ -122,7 +122,7 @@ impl GameObject {
 		if self.created {
 			commands.push(S2CCommandWithFieldInfo {
 				field: None,
-				command: S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: self.id.clone() }),
+				command: S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: self.id }),
 			})?;
 		}
 		Ok(())
