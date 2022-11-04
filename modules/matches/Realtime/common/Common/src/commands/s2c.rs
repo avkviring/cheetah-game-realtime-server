@@ -50,12 +50,12 @@ impl S2CCommand {
 
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
-			S2CCommand::Create(command) => Some(command.object_id.clone()),
-			S2CCommand::Created(command) => Some(command.object_id.clone()),
-			S2CCommand::SetField(command) => Some(command.object_id.clone()),
-			S2CCommand::Event(command) => Some(command.object_id.clone()),
-			S2CCommand::Delete(command) => Some(command.object_id.clone()),
-			S2CCommand::DeleteField(command) => Some(command.object_id.clone()),
+			S2CCommand::Create(command) => Some(command.object_id),
+			S2CCommand::Created(command) => Some(command.object_id),
+			S2CCommand::SetField(command) => Some(command.object_id),
+			S2CCommand::Event(command) => Some(command.object_id),
+			S2CCommand::Delete(command) => Some(command.object_id),
+			S2CCommand::DeleteField(command) => Some(command.object_id),
 			S2CCommand::Forwarded(command) => command.c2s.get_object_id(),
 		}
 	}
@@ -156,7 +156,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
 			S2CCommand::Create(CreateGameObjectCommand {
-				object_id: object_id.clone(),
+				object_id,
 				template: 3,
 				access_groups: AccessGroups(5),
 			}),
@@ -170,9 +170,7 @@ mod tests {
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			S2CCommand::Created(GameObjectCreatedS2CCommand {
-				object_id: object_id.clone(),
-			}),
+			S2CCommand::Created(GameObjectCreatedS2CCommand { object_id }),
 			CommandTypeId::CreatedGameObject,
 			Some(object_id),
 			None,
@@ -185,7 +183,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			S2CCommand::SetField(SetFieldCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				value: 100.into(),
 			}),
@@ -201,7 +199,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			S2CCommand::SetField(SetFieldCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				value: 3.15.into(),
 			}),
@@ -217,7 +215,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			S2CCommand::SetField(SetFieldCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				value: vec![1, 2, 3, 4].into(),
 			}),
@@ -233,7 +231,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			S2CCommand::Event(EventCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 			}),
@@ -247,9 +245,7 @@ mod tests {
 	fn should_decode_encode_delete() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			S2CCommand::Delete(DeleteGameObjectCommand {
-				object_id: object_id.clone(),
-			}),
+			S2CCommand::Delete(DeleteGameObjectCommand { object_id }),
 			CommandTypeId::Delete,
 			Some(object_id),
 			None,
@@ -266,7 +262,7 @@ mod tests {
 				c2s: C2SCommand::TargetEvent(TargetEventCommand {
 					target: 10,
 					event: EventCommand {
-						object_id: object_id.clone(),
+						object_id,
 						field_id,
 						event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 					},

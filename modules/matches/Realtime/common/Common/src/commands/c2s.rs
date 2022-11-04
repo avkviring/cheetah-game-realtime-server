@@ -58,19 +58,19 @@ impl C2SCommand {
 	}
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
-			C2SCommand::CreateGameObject(command) => Some(command.object_id.clone()),
-			C2SCommand::CreatedGameObject(command) => Some(command.object_id.clone()),
-			C2SCommand::SetField(command) => Some(command.object_id.clone()),
-			C2SCommand::IncrementLongValue(command) => Some(command.object_id.clone()),
-			C2SCommand::CompareAndSetLong(command) => Some(command.object_id.clone()),
-			C2SCommand::IncrementDouble(command) => Some(command.object_id.clone()),
-			C2SCommand::Event(command) => Some(command.object_id.clone()),
-			C2SCommand::TargetEvent(command) => Some(command.event.object_id.clone()),
-			C2SCommand::Delete(command) => Some(command.object_id.clone()),
+			C2SCommand::CreateGameObject(command) => Some(command.object_id),
+			C2SCommand::CreatedGameObject(command) => Some(command.object_id),
+			C2SCommand::SetField(command) => Some(command.object_id),
+			C2SCommand::IncrementLongValue(command) => Some(command.object_id),
+			C2SCommand::CompareAndSetLong(command) => Some(command.object_id),
+			C2SCommand::IncrementDouble(command) => Some(command.object_id),
+			C2SCommand::Event(command) => Some(command.object_id),
+			C2SCommand::TargetEvent(command) => Some(command.event.object_id),
+			C2SCommand::Delete(command) => Some(command.object_id),
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
-			C2SCommand::DeleteField(command) => Some(command.object_id.clone()),
-			C2SCommand::CompareAndSetStructure(command) => Some(command.object_id.clone()),
+			C2SCommand::DeleteField(command) => Some(command.object_id),
+			C2SCommand::CompareAndSetStructure(command) => Some(command.object_id),
 			C2SCommand::Forwarded(command) => command.c2s.get_object_id(),
 		}
 	}
@@ -231,7 +231,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
 			C2SCommand::CreateGameObject(CreateGameObjectCommand {
-				object_id: object_id.clone(),
+				object_id,
 				template: 3,
 				access_groups: AccessGroups(5),
 			}),
@@ -246,7 +246,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
 			C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {
-				object_id: object_id.clone(),
+				object_id,
 				room_owner: false,
 				singleton_key: None,
 			}),
@@ -262,7 +262,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::SetField(SetFieldCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				value: 100.into(),
 			}),
@@ -278,7 +278,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::IncrementLongValue(IncrementLongC2SCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				increment: 100,
 			}),
@@ -294,7 +294,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::CompareAndSetLong(CompareAndSetLongCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				current: 100,
 				new: 101,
@@ -312,7 +312,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				current: vec![100].as_slice().into(),
 				new: vec![101].as_slice().into(),
@@ -330,7 +330,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::SetField(SetFieldCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				value: 3.15.into(),
 			}),
@@ -346,7 +346,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::IncrementDouble(IncrementDoubleC2SCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				increment: 3.15,
 			}),
@@ -362,7 +362,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::SetField(SetFieldCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				value: vec![1, 2, 3, 4].into(),
 			}),
@@ -378,7 +378,7 @@ mod tests {
 		let field_id = 77;
 		check(
 			C2SCommand::Event(EventCommand {
-				object_id: object_id.clone(),
+				object_id,
 				field_id,
 				event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 			}),
@@ -396,7 +396,7 @@ mod tests {
 			C2SCommand::TargetEvent(TargetEventCommand {
 				target: 10,
 				event: EventCommand {
-					object_id: object_id.clone(),
+					object_id,
 					field_id,
 					event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 				},
@@ -411,9 +411,7 @@ mod tests {
 	fn should_decode_encode_delete() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			C2SCommand::Delete(DeleteGameObjectCommand {
-				object_id: object_id.clone(),
-			}),
+			C2SCommand::Delete(DeleteGameObjectCommand { object_id }),
 			CommandTypeId::Delete,
 			Some(object_id),
 			None,
@@ -430,7 +428,7 @@ mod tests {
 				c2s: C2SCommand::TargetEvent(TargetEventCommand {
 					target: 10,
 					event: EventCommand {
-						object_id: object_id.clone(),
+						object_id,
 						field_id,
 						event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
 					},
