@@ -73,7 +73,7 @@ impl Room {
 
 	fn get_object_template_id(&self, command: &C2SCommand) -> Option<GameObjectTemplateId> {
 		if let Some(object_id) = command.get_object_id() {
-			self.get_object(&object_id).ok().map(|object| object.template_id)
+			self.get_object(object_id).ok().map(|object| object.template_id)
 		} else {
 			None
 		}

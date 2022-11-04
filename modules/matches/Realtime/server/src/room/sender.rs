@@ -149,12 +149,12 @@ mod tests {
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 
 		// владельцу разрешены любые операции
 		assert!(room
 			.send_command_from_action(
-				&object_id,
+				object_id,
 				Field {
 					id: field_id_1,
 					field_type: FieldType::Long,
@@ -169,7 +169,7 @@ mod tests {
 		// RO - по-умолчанию для всех полей
 		assert!(room
 			.send_command_from_action(
-				&object_id,
+				object_id,
 				Field {
 					id: field_id_1,
 					field_type: FieldType::Long,
@@ -201,20 +201,20 @@ mod tests {
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.access_groups = access_groups;
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		room.test_mark_as_connected(user_id).unwrap();
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		assert!(room
 			.send_command_from_action(
-				&object_id,
+				object_id,
 				Field { id: field_id_1, field_type },
 				user_id,
 				Permission::Rw,
 				Option::None,
 				|_| {
 					Ok(Some(S2CCommand::SetField(SetFieldCommand {
-						object_id: object_id.clone(),
+						object_id,
 						field_id: field_id_1,
 						value: 0.into(),
 					})))
@@ -227,14 +227,14 @@ mod tests {
 		// изменяем поле, которое могут изменять другие пользователи
 		assert!(room
 			.send_command_from_action(
-				&object_id,
+				object_id,
 				Field { id: field_id_2, field_type },
 				user_id,
 				Permission::Rw,
 				Option::None,
 				|_| {
 					Ok(Some(S2CCommand::SetField(SetFieldCommand {
-						object_id: object_id.clone(),
+						object_id,
 						field_id: field_id_2,
 						value: 0.into(),
 					})))
@@ -261,10 +261,10 @@ mod tests {
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups_b));
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups_a);
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		assert!(room
 			.send_command_from_action(
-				&object_id,
+				object_id,
 				Field {
 					id: 0,
 					field_type: FieldType::Long,
@@ -297,7 +297,7 @@ mod tests {
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_target_id), groups);
 		object.created = true;
 		object.template_id = object_template;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 
 		let commands = vec![
 			S2CCommandWithFieldInfo {
@@ -306,7 +306,7 @@ mod tests {
 					field_type: FieldType::Long,
 				}),
 				command: S2CCommand::SetField(SetFieldCommand {
-					object_id: object_id.clone(),
+					object_id,
 					field_id: deny_field_id,
 					value: 0.into(),
 				}),
@@ -360,7 +360,7 @@ mod tests {
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
 		object.created = true;
 		object.template_id = object_template;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 
 		let commands = [
 			S2CCommandWithFieldInfo {
@@ -369,7 +369,7 @@ mod tests {
 					field_type,
 				}),
 				command: S2CCommand::SetField(SetFieldCommand {
-					object_id: object_id.clone(),
+					object_id,
 					field_id: allow_field_id,
 					value: 0.into(),
 				}),
@@ -403,13 +403,13 @@ mod tests {
 		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		room.test_mark_as_connected(user_1).unwrap();
 		room.test_mark_as_connected(user_2).unwrap();
 
 		assert!(room
 			.send_command_from_action(
-				&object_id.clone(),
+				object_id,
 				Field {
 					id: field_id,
 					field_type: FieldType::Long,

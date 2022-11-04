@@ -470,7 +470,7 @@ pub mod tests {
 			let delta_size = cursor.position();
 			write_context
 				.write_next(
-					param.object_id.clone(),
+					param.object_id,
 					param.field_id,
 					param.channel_group,
 					param.channel_type_id,

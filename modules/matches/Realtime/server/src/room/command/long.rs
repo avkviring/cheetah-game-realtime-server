@@ -30,13 +30,13 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				}
 			};
 			Ok(Some(S2CCommand::SetField(SetFieldCommand {
-				object_id: self.object_id.clone(),
+				object_id: self.object_id,
 				field_id: self.field_id,
 				value: value.into(),
 			})))
 		};
 		room.send_command_from_action(
-			&self.object_id,
+			self.object_id,
 			Field {
 				id: self.field_id,
 				field_type: FieldType::Long,
@@ -52,7 +52,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 impl ServerCommandExecutor for SetFieldCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
-		let object_id = self.object_id.clone();
+		let object_id = self.object_id;
 
 		let action = |object: &mut GameObject| {
 			object.set_field_wrapped(self.field_id, self.value.to_owned())?;
@@ -60,7 +60,7 @@ impl ServerCommandExecutor for SetFieldCommand {
 		};
 
 		room.send_command_from_action(
-			&object_id,
+			object_id,
 			Field {
 				id: field_id,
 				field_type: self.value.field_type(),
@@ -94,13 +94,13 @@ mod tests {
 
 		room.test_out_commands.clear();
 		let command = SetFieldCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: 10,
 			value: 100.into(),
 		};
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 100);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
 	}
@@ -111,18 +111,18 @@ mod tests {
 
 		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: 10,
 			increment: 100,
 		};
 		command.clone().execute(&mut room, user).unwrap();
 		command.execute(&mut room, user).unwrap();
 
-		let object = room.get_object_mut(&object_id).unwrap();
+		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 200);
 
 		let result = SetFieldCommand {
-			object_id: object_id.clone(),
+			object_id,
 			field_id: 10,
 			value: 200.into(),
 		};
@@ -151,7 +151,7 @@ mod tests {
 		let user_id = room.register_member(MemberTemplate::stub(access_groups));
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		(room, user_id, object_id)
 	}
 }

@@ -22,7 +22,7 @@ impl Room {
 	///
 	pub fn send_command_from_action<T>(
 		&mut self,
-		game_object_id: &GameObjectId,
+		game_object_id: GameObjectId,
 		field: Field,
 		creator_id: RoomMemberId,
 		permission: Permission,
@@ -47,7 +47,7 @@ impl Room {
 			return Err(ServerCommandError::MemberCannotAccessToObject {
 				room_id,
 				member_id: creator_id,
-				object_id: game_object_id.clone(),
+				object_id: game_object_id,
 				member_access_group: creator_access_group,
 				object_access_group: object.access_groups,
 			});
@@ -71,7 +71,7 @@ impl Room {
 			return Err(ServerCommandError::MemberCannotAccessToObjectField {
 				room_id,
 				member_id: creator_id,
-				object_id: object.id.clone(),
+				object_id: object.id,
 				template_id: object.template_id,
 				field,
 			});

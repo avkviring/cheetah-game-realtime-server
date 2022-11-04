@@ -230,13 +230,13 @@ impl Room {
 				self.process_objects(&mut |o| {
 					if let GameObjectOwner::Member(owner) = o.id.owner {
 						if owner == user.id {
-							objects.push(o.id.clone());
+							objects.push(o.id);
 						}
 					}
 				});
 
 				for id in objects {
-					self.delete_object(&id)?;
+					self.delete_object(id)?;
 				}
 				reset_all_compare_and_set(self, user.id, &user.compare_and_set_cleaners)?;
 			}
@@ -245,31 +245,27 @@ impl Room {
 	}
 
 	pub fn insert_object(&mut self, object: GameObject) {
-		self.objects.insert(object.id.clone(), object);
+		self.objects.insert(object.id, object);
 	}
 
-	pub fn get_object(&self, object_id: &GameObjectId) -> Result<&GameObject, ServerCommandError> {
-		self.objects.get(object_id).ok_or_else(|| ServerCommandError::GameObjectNotFound {
-			object_id: object_id.clone(),
-		})
+	pub fn get_object(&self, object_id: GameObjectId) -> Result<&GameObject, ServerCommandError> {
+		self.objects.get(&object_id).ok_or(ServerCommandError::GameObjectNotFound { object_id })
 	}
 
-	pub fn get_object_mut(&mut self, object_id: &GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
-		self.objects.get_mut(object_id).ok_or_else(|| ServerCommandError::GameObjectNotFound {
-			object_id: object_id.clone(),
-		})
+	pub fn get_object_mut(&mut self, object_id: GameObjectId) -> Result<&mut GameObject, ServerCommandError> {
+		self.objects
+			.get_mut(&object_id)
+			.ok_or(ServerCommandError::GameObjectNotFound { object_id })
 	}
 
 	pub fn contains_object(&self, object_id: &GameObjectId) -> bool {
 		self.objects.contains_key(object_id)
 	}
 
-	pub fn delete_object(&mut self, object_id: &GameObjectId) -> Result<GameObject, ServerCommandError> {
+	pub fn delete_object(&mut self, object_id: GameObjectId) -> Result<GameObject, ServerCommandError> {
 		let current_user = self.current_member_id;
-		match self.objects.shift_remove(object_id) {
-			None => Err(ServerCommandError::GameObjectNotFound {
-				object_id: object_id.clone(),
-			}),
+		match self.objects.shift_remove(&object_id) {
+			None => Err(ServerCommandError::GameObjectNotFound { object_id }),
 			Some(object) => {
 				if object.created {
 					self.send_to_members(
@@ -277,9 +273,7 @@ impl Room {
 						Some(object.template_id),
 						&[S2CCommandWithFieldInfo {
 							field: None,
-							command: S2CCommand::Delete(DeleteGameObjectCommand {
-								object_id: object.id.clone(),
-							}),
+							command: S2CCommand::Delete(DeleteGameObjectCommand { object_id: object.id }),
 						}],
 						|user| {
 							if let Some(user_id) = current_user {
@@ -366,10 +360,10 @@ mod tests {
 		fn test_do_create_object(&mut self, owner: GameObjectOwner, access_groups: AccessGroups, created: bool) -> &mut GameObject {
 			self.test_object_id_generator += 1;
 			let id = GameObjectId::new(self.test_object_id_generator, owner);
-			let mut object = GameObject::new(id.clone(), 0, access_groups, false);
+			let mut object = GameObject::new(id, 0, access_groups, false);
 			object.created = created;
 			self.insert_object(object);
-			self.get_object_mut(&id).unwrap()
+			self.get_object_mut(id).unwrap()
 		}
 
 		pub fn test_mark_as_connected(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -557,7 +551,7 @@ mod tests {
 		});
 		assert_eq!(order, "1005200");
 
-		room.delete_object(&GameObjectId::new(100, GameObjectOwner::Room)).unwrap();
+		room.delete_object(GameObjectId::new(100, GameObjectOwner::Room)).unwrap();
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
@@ -625,11 +619,11 @@ mod tests {
 	fn should_check_singleton_key() {
 		let mut room = Room::default();
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Room, AccessGroups(7));
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		let unique_key = BinaryValue::from([1, 2, 3, 4].as_slice());
-		room.set_singleton_key(unique_key.clone(), object_id.clone());
+		room.set_singleton_key(unique_key.clone(), object_id);
 		assert!(room.has_object_singleton_key(&unique_key));
-		room.delete_object(&object_id).unwrap();
+		room.delete_object(object_id).unwrap();
 		assert!(!room.has_object_singleton_key(&unique_key));
 	}
 

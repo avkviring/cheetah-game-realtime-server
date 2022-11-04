@@ -12,10 +12,10 @@ use crate::room::Room;
 impl ServerCommandExecutor for EventCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
-		let object_id = self.object_id.clone();
+		let object_id = self.object_id;
 		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.clone())));
 		room.send_command_from_action(
-			&object_id,
+			object_id,
 			Field {
 				id: field_id,
 				field_type: FieldType::Long,
@@ -31,11 +31,11 @@ impl ServerCommandExecutor for EventCommand {
 impl ServerCommandExecutor for TargetEventCommand {
 	fn execute(&self, room: &mut Room, user_id: u16) -> Result<(), ServerCommandError> {
 		let field_id = self.event.field_id;
-		let object_id = self.event.object_id.clone();
+		let object_id = self.event.object_id;
 		let target = self.target;
 		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.event.clone())));
 		room.send_command_from_action(
-			&object_id,
+			object_id,
 			Field {
 				id: field_id,
 				field_type: FieldType::Event,
@@ -66,7 +66,7 @@ mod tests {
 		let (mut room, user, access_groups) = setup_one_player();
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		room.test_out_commands.clear();
 
 		let command = EventCommand {
@@ -95,7 +95,7 @@ mod tests {
 
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user1), access_groups);
 		object.created = true;
-		let object_id = object.id.clone();
+		let object_id = object.id;
 		room.test_get_user_out_commands(user1).clear();
 		room.test_get_user_out_commands(user2).clear();
 		room.test_get_user_out_commands(user3).clear();
