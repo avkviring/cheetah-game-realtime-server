@@ -82,7 +82,7 @@ impl CommandContext {
 	}
 
 	pub(crate) fn get_object_id(&self) -> Result<GameObjectId, CommandContextError> {
-		self.object_id.clone().ok_or(CommandContextError::ContextNotContainsObjectId)
+		self.object_id.ok_or(CommandContextError::ContextNotContainsObjectId)
 	}
 
 	///
