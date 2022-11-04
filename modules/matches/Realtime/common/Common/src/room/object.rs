@@ -8,7 +8,7 @@ use hash32_derive::Hash32;
 ///
 /// Идентификатор игрового объекта на клиенте
 ///
-#[derive(Debug, Clone, PartialEq, Hash, Eq, Hash32)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq, Hash32)]
 pub struct GameObjectId {
 	///
 	/// Создатель игрового объекта
