@@ -183,7 +183,7 @@ impl ApplicationThreadClient {
 		self.game_object_id_generator += 1;
 		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
 		self.send(C2SCommand::CreateGameObject(CreateGameObjectCommand {
-			object_id: game_object_id.clone(),
+			object_id: game_object_id,
 			template,
 			access_groups: AccessGroups(access_group),
 		}))?;
