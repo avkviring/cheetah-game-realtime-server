@@ -171,7 +171,7 @@ impl ApplicationThreadClient {
 					}
 					S2CCommand::Forwarded(command) => {
 						if let Some(ref listener) = self.listener_forwarded_command {
-							listener(command.as_ref().into());
+							listener((*command).into());
 						}
 					}
 				}

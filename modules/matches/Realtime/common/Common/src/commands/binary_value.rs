@@ -6,11 +6,11 @@ use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter}
 /// Бинарное значение поля
 ///
 #[derive(Debug, Clone, PartialEq, Default, Hash, Eq)]
-pub struct BinaryValue(heapless::Vec<u8, 256>);
+pub struct BinaryValue(pub heapless::Vec<u8, 255>);
 
 impl From<&[u8]> for BinaryValue {
 	fn from(source: &[u8]) -> Self {
-		BinaryValue(heapless::Vec::<u8, 256>::from_slice(source).unwrap())
+		BinaryValue(heapless::Vec::<u8, 255>::from_slice(source).unwrap())
 	}
 }
 
