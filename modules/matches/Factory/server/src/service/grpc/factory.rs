@@ -30,7 +30,7 @@ mod tests {
 
 	use crate::proto::matches::realtime::internal::{
 		DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest, DeleteRoomResponse, EmptyRequest, ProbeRequest, ProbeResponse,
-		PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse,
+		PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, RoomIdResponse,
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::proto::matches::{realtime, registry};
@@ -86,10 +86,6 @@ mod tests {
 			&self,
 			_request: Request<internal::CreateSuperMemberRequest>,
 		) -> Result<Response<internal::CreateMemberResponse>, Status> {
-			unimplemented!()
-		}
-
-		async fn query_room(&self, _request: Request<QueryRoomRequest>) -> Result<Response<QueryRoomResponse>, Status> {
 			unimplemented!()
 		}
 

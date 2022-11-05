@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use serde::Deserialize;
 use tokio::sync::RwLock;
 use tonic::{
 	transport::{Channel, Uri},
@@ -11,18 +12,16 @@ use factory::internal::factory_client::FactoryClient;
 use factory::internal::CreateMatchRequest;
 use matchmaking::external::matchmaking_server::Matchmaking;
 use matchmaking::external::{TicketRequest, TicketResponse};
-use serde::Deserialize;
 
 use crate::proto::matches::factory::internal::CreateMatchResponse;
 use crate::proto::matches::matchmaking;
 use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
-use crate::proto::matches::realtime::internal::{CreateMemberRequest, CreateMemberResponse, QueryRoomRequest, QueryRoomResponse};
+use crate::proto::matches::realtime::internal::{CreateMemberRequest, CreateMemberResponse};
 use crate::proto::matches::{factory, realtime};
 
 pub struct StubMatchmakingService {
 	factory_service_uri: Uri,
 	matches: RwLock<HashMap<String, MatchInfo>>,
-	rulemap: HashMap<String, Rules>,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, serde::Serialize)]
@@ -67,11 +66,10 @@ impl From<CreateMatchResponse> for MatchInfo {
 }
 
 impl StubMatchmakingService {
-	pub fn new(factory_service: Uri, rulemap: HashMap<String, Rules>) -> Self {
+	pub fn new(factory_service: Uri) -> Self {
 		StubMatchmakingService {
 			factory_service_uri: factory_service,
 			matches: RwLock::new(HashMap::new()),
-			rulemap,
 		}
 	}
 
@@ -110,42 +108,14 @@ impl StubMatchmakingService {
 
 	async fn find_or_create_match(&self, template: &str) -> Result<MatchInfo, String> {
 		let matches = self.matches.read().await;
-		let match_infos = matches.iter().filter_map(|m| if m.0 == template { Some(m.1) } else { None }).collect();
-		let rules = self.rulemap.get(template);
-		let maybe_match = self.select_by_rules(match_infos, rules).await.cloned();
-		drop(matches);
-
-		let match_info = match maybe_match {
-			Some(match_info) => match_info,
-			None => self.create_match(template).await?,
-		};
-
-		Ok(match_info)
-	}
-
-	async fn select_by_rules<'a, 'b>(&'b self, match_infos: Vec<&'a MatchInfo>, rules: Option<&Rules>) -> Option<&'a MatchInfo> {
-		// Фильтруем комнаты в соответствии со значениями в self.rules
-		let mut suitable_rooms = Vec::with_capacity(match_infos.len());
-		for mi in match_infos {
-			let maybe_room = self.query_room(mi).await;
-			match (maybe_room, rules) {
-				(Ok(room_state), Some(rules)) => {
-					if room_state.user_count < rules.max_user_count {
-						suitable_rooms.push((room_state, mi))
-					}
-				}
-				(Ok(room_state), None) => suitable_rooms.push((room_state, mi)),
-				(Err(e), _) => {
-					tracing::warn!("Failed to query room: {}", e);
-				}
+		let match_info = match matches.get(template) {
+			Some(match_info) => match_info.clone(),
+			None => {
+				drop(matches);
+				self.create_match(template).await?
 			}
-		}
-
-		// Выбираем одну комнату из подходящих
-		suitable_rooms
-			.into_iter()
-			.max_by_key(|(room_state, _)| room_state.user_count)
-			.map(|(_, match_info)| match_info)
+		};
+		Ok(match_info)
 	}
 
 	async fn create_match(&self, template: &str) -> Result<MatchInfo, String> {
@@ -183,15 +153,6 @@ impl StubMatchmakingService {
 			.map_err(|status| self.transform_bad_realtime_response_status(status))
 	}
 
-	async fn query_room(&self, match_info: &MatchInfo) -> Result<QueryRoomResponse, String> {
-		let mut relay = self.new_realtime_connection(&match_info.server).await?;
-		relay
-			.query_room(QueryRoomRequest { id: match_info.room.id })
-			.await
-			.map(|response| response.into_inner())
-			.map_err(|status| self.transform_bad_realtime_response_status(status))
-	}
-
 	async fn new_realtime_connection(&self, server: &ServerInfo) -> Result<RealtimeClient<Channel>, String> {
 		RealtimeClient::connect(cheetah_libraries_microservice::make_internal_srv_uri(&server.grpc_host, server.grpc_port))
 			.await
@@ -220,8 +181,6 @@ impl Matchmaking for StubMatchmakingService {
 
 #[cfg(test)]
 pub mod tests {
-	use std::collections::HashMap;
-
 	use tokio::net::TcpListener;
 	use tokio::sync::RwLock;
 	use tokio_stream::wrappers::ReceiverStream;
@@ -238,19 +197,14 @@ pub mod tests {
 	use crate::proto::matches::realtime;
 	use crate::proto::matches::realtime::internal::{
 		CreateMemberRequest, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest, DeleteRoomResponse,
-		EmptyRequest, ProbeRequest, ProbeResponse, PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, QueryRoomRequest,
-		QueryRoomResponse, RoomIdResponse,
+		EmptyRequest, ProbeRequest, ProbeResponse, PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, RoomIdResponse,
 	};
 	use crate::proto::matches::registry::internal::{Addr, RelayAddrs};
 	use crate::service::StubMatchmakingService;
 
-	use super::Rules;
-
-	const DEFAULT_TEMPLATE: &str = "generic";
-
 	#[tokio::test]
 	async fn should_create_match() {
-		let matchmaking = setup(100, false).await;
+		let matchmaking = setup().await;
 		let response = matchmaking
 			.matchmake(TicketRequest {
 				user_groups: 0,
@@ -268,7 +222,7 @@ pub mod tests {
 	///
 	#[tokio::test]
 	async fn should_not_create_match_if_exists() {
-		let matchmaking = setup(100, false).await;
+		let matchmaking = setup().await;
 		matchmaking
 			.matchmake(TicketRequest {
 				user_groups: Default::default(),
@@ -290,7 +244,7 @@ pub mod tests {
 	///
 	#[tokio::test]
 	async fn should_create_different_match_for_different_template() {
-		let matchmaking = setup(100, false).await;
+		let matchmaking = setup().await;
 		let response_a = matchmaking
 			.matchmake(TicketRequest {
 				user_groups: Default::default(),
@@ -309,44 +263,7 @@ pub mod tests {
 		assert_eq!(response_b.room_id, StubFactory::ROOM_ID + 1);
 	}
 
-	///
-	/// Для каждого шаблона должен быть собственный матч
-	///
-	#[tokio::test]
-	async fn should_recreate_match_if_not_found() {
-		let matchmaking = setup(1, false).await;
-		let response_a = matchmaking
-			.matchmake(TicketRequest {
-				user_groups: Default::default(),
-				match_template: "some-template".to_owned(),
-			})
-			.await
-			.unwrap();
-		let response_b = matchmaking
-			.matchmake(TicketRequest {
-				user_groups: Default::default(),
-				match_template: "some-template".to_owned(),
-			})
-			.await
-			.unwrap();
-		assert_eq!(response_a.room_id, StubFactory::ROOM_ID);
-		assert_eq!(response_b.room_id, StubFactory::ROOM_ID + 1);
-	}
-
-	#[tokio::test]
-	async fn should_create_new_match_because_existing_one_full() {
-		let matchmaking = setup(100, true).await;
-		let request = TicketRequest {
-			user_groups: Default::default(),
-			match_template: DEFAULT_TEMPLATE.to_owned(),
-		};
-		matchmaking.matchmake(request.clone()).await.unwrap();
-		let response = matchmaking.matchmake(request).await.unwrap();
-
-		assert_eq!(response.room_id, StubFactory::ROOM_ID + 1);
-	}
-
-	async fn setup(fail_create_user: i8, simulate_full_room: bool) -> StubMatchmakingService {
+	async fn setup() -> StubMatchmakingService {
 		let stub_grpc_service_tcp = TcpListener::bind("127.0.0.1:0").await.unwrap();
 		let stub_grpc_service_addr = stub_grpc_service_tcp.local_addr().unwrap();
 
@@ -355,12 +272,7 @@ pub mod tests {
 			relay_grpc_port: stub_grpc_service_addr.port(),
 			room_sequence: RwLock::new(0),
 		};
-		let max_user_count = 4;
-		let stub_relay = StubRealtimeService {
-			fail_when_zero: RwLock::new(fail_create_user),
-			expected_user_limit: max_user_count,
-			room_full: simulate_full_room,
-		};
+		let stub_relay = StubRealtimeService {};
 		tokio::spawn(async move {
 			Server::builder()
 				.add_service(factory::internal::factory_server::FactoryServer::new(stub_factory))
@@ -369,10 +281,10 @@ pub mod tests {
 				.await
 		});
 
-		let matchmaking = StubMatchmakingService::new(
-			cheetah_libraries_microservice::make_internal_srv_uri(stub_grpc_service_addr.ip().to_string().as_str(), stub_grpc_service_addr.port()),
-			HashMap::from([(DEFAULT_TEMPLATE.to_owned(), Rules { max_user_count })]),
-		);
+		let matchmaking = StubMatchmakingService::new(cheetah_libraries_microservice::make_internal_srv_uri(
+			stub_grpc_service_addr.ip().to_string().as_str(),
+			stub_grpc_service_addr.port(),
+		));
 		matchmaking
 	}
 
@@ -409,11 +321,7 @@ pub mod tests {
 		}
 	}
 
-	struct StubRealtimeService {
-		fail_when_zero: RwLock<i8>,
-		expected_user_limit: u32,
-		room_full: bool,
-	}
+	struct StubRealtimeService {}
 
 	impl StubRealtimeService {
 		pub const MEMBER_ID: u32 = 777;
@@ -421,25 +329,15 @@ pub mod tests {
 
 	#[tonic::async_trait]
 	impl realtime::internal::realtime_server::Realtime for StubRealtimeService {
-		async fn create_room(
-			&self,
-			_request: Request<realtime::internal::RoomTemplate>,
-		) -> Result<Response<realtime::internal::RoomIdResponse>, Status> {
+		async fn create_room(&self, _request: Request<realtime::internal::RoomTemplate>) -> Result<Response<RoomIdResponse>, Status> {
 			unimplemented!()
 		}
 
 		async fn create_member(&self, _request: Request<CreateMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
-			let mut fail = self.fail_when_zero.write().await;
-			let current = *fail;
-			*fail -= 1;
-			if current == 0 {
-				Err(Status::not_found(""))
-			} else {
-				Ok(Response::new(CreateMemberResponse {
-					user_id: StubRealtimeService::MEMBER_ID,
-					private_key: vec![],
-				}))
-			}
+			Ok(Response::new(CreateMemberResponse {
+				user_id: StubRealtimeService::MEMBER_ID,
+				private_key: vec![],
+			}))
 		}
 
 		async fn delete_member(&self, _request: Request<DeleteMemberRequest>) -> Result<Response<DeleteMemberResponse>, Status> {
@@ -448,16 +346,6 @@ pub mod tests {
 
 		async fn create_super_member(&self, _request: Request<CreateSuperMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 			unimplemented!()
-		}
-
-		async fn query_room(&self, _request: Request<QueryRoomRequest>) -> Result<Response<QueryRoomResponse>, Status> {
-			let user_count = if self.room_full {
-				self.expected_user_limit
-			} else {
-				(self.expected_user_limit - 1).clamp(0, self.expected_user_limit)
-			};
-
-			Ok(Response::new(QueryRoomResponse { user_count }))
 		}
 
 		async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {

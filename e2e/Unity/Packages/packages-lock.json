@@ -151,7 +151,6 @@
       "source": "local",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
-        "games.cheetah.user.accounts": "999.999.999",
         "games.cheetah.matches.factory": "999.999.999",
         "games.cheetah.matches.registry": "999.999.999"
       }
@@ -215,12 +214,6 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "2.0.0"
       }
-    },
-    "games.cheetah.user.accounts": {
-      "version": "file:../../../modules/user/Accounts/client/Unity/games.cheetah.user.accounts",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

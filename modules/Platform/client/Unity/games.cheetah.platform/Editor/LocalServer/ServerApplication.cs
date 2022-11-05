@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cheetah.Platform.Editor.LocalServer.Applications;
 using Cheetah.Platform.Editor.LocalServer.Docker;
 using JetBrains.Annotations;
 using UnityEditor.PackageManager;
@@ -31,7 +30,6 @@ namespace Cheetah.Platform.Editor.LocalServer
         /// </summary>
         public DockerImage DockerImage => DockerImage.From(dockerImageReference + ":" + DockerImageVersion);
 
-        [CanBeNull] public string PostgresDatabase { get; private set; }
 
         protected ServerApplication(string containerName, string dockerImageReference)
         {
@@ -43,12 +41,6 @@ namespace Cheetah.Platform.Editor.LocalServer
         {
             dockerImageReference = dockerImageReferenceBuilder.Invoke(GetType());
             ContainerName = containerName;
-        }
-
-
-        protected void EnablePostgreSql(string database)
-        {
-            PostgresDatabase = database;
         }
 
 
@@ -69,15 +61,6 @@ namespace Cheetah.Platform.Editor.LocalServer
         /// <returns></returns>
         public virtual void ConfigureDockerContainerBuilder(DockerContainerBuilder builder)
         {
-        }
-
-        public void ConfigurePostgresEnv(DockerContainerBuilder builder)
-        {
-            builder.AddEnv("POSTGRES_HOST", PostgreSqlApplication.Host);
-            builder.AddEnv("POSTGRES_PORT", "5432");
-            builder.AddEnv("POSTGRES_DB", PostgresDatabase);
-            builder.AddEnv("POSTGRES_USER", PostgreSqlApplication.User);
-            builder.AddEnv("POSTGRES_PASSWORD", PostgreSqlApplication.Password);
         }
 
 

@@ -7,13 +7,9 @@
     "games.cheetah.platform.editor",
     "games.cheetah.platform",
     "games.cheetah.platform.tests",
-    "games.cheetah.user.accounts",
-    "games.cheetah.user.store",
     "games.cheetah.matches.realtime",
     "games.cheetah.matches.matchmaking",
     "games.cheetah.matches.realtime.doa",
-    "games.cheetah.statistics.events",
-    "games.cheetah.system.compatibility",
     "Shared"
   ],
   "includePlatforms": [],

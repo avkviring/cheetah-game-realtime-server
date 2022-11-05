@@ -19,7 +19,6 @@
     "games.cheetah.matches.realtime.uds": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds",
     "games.cheetah.matches.registry": "file:../../../modules/matches/Registry/client/Unity/games.cheetah.matches.registry",
     "games.cheetah.platform": "file:../../../modules/Platform/client/Unity/games.cheetah.platform",
-    "games.cheetah.user.accounts": "file:../../../modules/user/Accounts/client/Unity/games.cheetah.user.accounts",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",

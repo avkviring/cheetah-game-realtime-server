@@ -19,7 +19,7 @@ namespace Tests.Matches.Realtime
             // слушаем создание новых объектов на втором клиенте
             var collector = new CreatedObjectByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
-            var objectBuilder = clientA.NewObjectBuilder(777, UserHelper.UserGroup);
+            var objectBuilder = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup);
             var turretsParams = new TurretsParamsStructure()
             {
                 Damage = 1.5,
@@ -49,7 +49,7 @@ namespace Tests.Matches.Realtime
             // слушаем создание новых объектов на втором клиенте
             var collector = new DeletedObjectByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             createdObject.Delete();
             // ждем отправки команды
             yield return new WaitForSeconds(1);
@@ -72,7 +72,7 @@ namespace Tests.Matches.Realtime
             var collectorB = new CreatedObjectByTemplateIncomeCommands(clientB, 1);
             ;
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(1, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).Build();
             // слушаем события 
             var eventCollectorA = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientA, createdObject.ObjectId, DropMineEventId);
             // ждем отправки команды
@@ -107,7 +107,7 @@ namespace Tests.Matches.Realtime
             // слушаем создание новых объектов на втором клиенте
             var collector = new DeletedFieldByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             createdObject.SetLong(fieldId, 5);
             createdObject.DeleteField(fieldId, FieldType.Long);
             // ждем отправки команды
