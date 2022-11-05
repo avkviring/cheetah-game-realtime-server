@@ -66,6 +66,8 @@ pub enum CommandContextError {
 	},
 	#[error("Unknown command type id {0}")]
 	UnknownCommandTypeId(u8),
+	#[error("InputValueIsTooLarge")]
+	InputValueIsTooLarge,
 }
 
 impl CommandContext {
@@ -106,14 +108,14 @@ impl CommandContext {
 		header.channel_type_id = channel_type_id;
 
 		let position = out.position();
-		header.reserve(out)?;
+		CommandHeader::reserve(out)?;
 
 		if compare_and_set(&mut self.object_id, object_id) {
 			self.object_id.as_ref().unwrap().encode(out)?;
 			header.new_object_id = true;
 		}
 		if compare_and_set(&mut self.field_id, field_id) {
-			out.write_variable_u64(*self.field_id.as_ref().unwrap() as u64)?;
+			out.write_variable_u64(u64::from(*self.field_id.as_ref().unwrap()))?;
 			header.new_field_id = true;
 		}
 
@@ -125,7 +127,7 @@ impl CommandContext {
 		let creator_source = self.determinate_creator_source(creator);
 		if let CreatorSource::New = creator_source {
 			let creator = creator.unwrap();
-			out.write_variable_u64(creator as u64)?;
+			out.write_variable_u64(u64::from(creator))?;
 		};
 		if let Some(creator) = creator {
 			self.creator.replace(creator);
@@ -177,12 +179,17 @@ impl CommandContext {
 			self.object_id.replace(GameObjectId::decode(input)?);
 		}
 		if header.new_field_id {
-			self.field_id.replace(input.read_variable_u64()? as FieldId);
+			self.field_id.replace(
+				input
+					.read_variable_u64()?
+					.try_into()
+					.map_err(|_| CommandContextError::InputValueIsTooLarge)?,
+			);
 		}
 		if header.new_channel_group_id {
 			self.channel_group.replace(ChannelGroup(input.read_u8()?));
 		}
-		self.read_and_set_creator(input, &header.creator_source)?;
+		self.read_and_set_creator(input, header.creator_source)?;
 		Ok(header)
 	}
 
@@ -193,7 +200,7 @@ impl CommandContext {
 	fn read_and_set_creator(
 		&mut self,
 		input: &mut Cursor<&[u8]>,
-		creator_source: &CreatorSource,
+		creator_source: CreatorSource,
 	) -> Result<Option<RoomMemberId>, CommandContextError> {
 		match creator_source {
 			CreatorSource::NotSupported => Ok(None),
@@ -202,7 +209,10 @@ impl CommandContext {
 				Some(current) => Ok(Some(*current)),
 			},
 			CreatorSource::New => {
-				let creator = input.read_variable_u64()? as RoomMemberId;
+				let creator = input
+					.read_variable_u64()?
+					.try_into()
+					.map_err(|_| CommandContextError::InputValueIsTooLarge)?;
 				self.creator.replace(creator);
 				Ok(Some(creator))
 			}
@@ -396,7 +406,7 @@ pub mod tests {
 			},
 		];
 
-		check(params);
+		check(&params);
 	}
 
 	#[test]
@@ -458,15 +468,15 @@ pub mod tests {
 				size: 3, //flags + user_id
 			},
 		];
-		check(params);
+		check(&params);
 	}
 
-	fn check(params: Vec<Params>) {
+	fn check(params: &[Params]) {
 		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let mut write_context = CommandContext::default();
 
-		for param in params.iter() {
+		for param in params {
 			let delta_size = cursor.position();
 			write_context
 				.write_next(
@@ -485,7 +495,7 @@ pub mod tests {
 
 		let mut read_context = CommandContext::default();
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
-		for param in params.iter() {
+		for param in params {
 			let header = read_context.read_next(&mut read_cursor).unwrap();
 			assert_eq!(read_context.object_id, param.object_id, "object_id");
 			assert_eq!(read_context.field_id, param.field_id, "field_id");

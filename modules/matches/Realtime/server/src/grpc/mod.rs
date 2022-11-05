@@ -29,6 +29,7 @@ pub struct RealtimeInternalService {
 const SUPER_MEMBER_KEY_ENV: &str = "SUPER_MEMBER_KEY";
 
 impl RealtimeInternalService {
+	#[must_use]
 	pub fn new(server_manager: Arc<Mutex<RoomsServerManager>>) -> Self {
 		RealtimeInternalService { server_manager }
 	}
@@ -36,22 +37,22 @@ impl RealtimeInternalService {
 	async fn register_user(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
 		let mut server = self.server_manager.lock().await;
 		server
-			.create_member(room_id, template.clone())
+			.create_member(room_id, &template.clone())
 			.trace_err(format!("Register member to room {}", room_id))
 			.map_err(Status::internal)
 			.map(|user_id| {
 				Response::new(CreateMemberResponse {
-					user_id: user_id as u32,
+					user_id: u32::from(user_id),
 					private_key: template.private_key.into(),
 				})
 			})
 	}
 
-	fn create_super_member_if_need(server: &mut MutexGuard<RoomsServerManager>, room_id: RoomId) {
+	fn create_super_member_if_need(server: &mut MutexGuard<'_, RoomsServerManager>, room_id: RoomId) {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
-			server.create_member(room_id, MemberTemplate::new_super_member_with_key(key)).unwrap();
+			server.create_member(room_id, &MemberTemplate::new_super_member_with_key(key)).unwrap();
 		}
 	}
 }
@@ -128,8 +129,12 @@ impl Realtime for RealtimeInternalService {
 			.lock()
 			.await
 			.delete_member(MemberAndRoomId {
-				member_id: request.get_ref().user_id as _,
-				room_id: request.get_ref().room_id as _,
+				member_id: request
+					.get_ref()
+					.user_id
+					.try_into()
+					.map_err(|_| Status::invalid_argument("member_id is too big".to_string()))?,
+				room_id: request.get_ref().room_id,
 			})
 			.map(|_| Response::new(DeleteMemberResponse {}))
 			.map_err(|e| match e {
@@ -274,7 +279,7 @@ mod test {
 
 		assert!(
 			service
-				.delete_member(Request::new(DeleteMemberRequest { user_id, room_id }))
+				.delete_member(Request::new(DeleteMemberRequest { room_id, user_id }))
 				.await
 				.is_ok(),
 			"delete_member should return ok"
@@ -286,15 +291,7 @@ mod test {
 			server_manager.lock().await.dump(room_id).unwrap().users
 		);
 		assert!(
-			server_manager
-				.lock()
-				.await
-				.dump(room_id)
-				.unwrap()
-				.users
-				.iter()
-				.find(|&u| u.id == user_id)
-				.is_none(),
+			!server_manager.lock().await.dump(room_id).unwrap().users.iter().any(|u| u.id == user_id),
 			"deleted member should not be in the room"
 		);
 	}
@@ -369,7 +366,7 @@ mod test {
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
 
-		let tests = [(30, 0, 0), (0, u16::MAX as u32 + 1, 0), (0, 0, u16::MAX as u32 + 1)];
+		let tests = [(30, 0, 0), (0, u32::from(u16::MAX) + 1, 0), (0, 0, u32::from(u16::MAX) + 1)];
 		for (command_type_id, field_id, template_id) in tests {
 			let res = service
 				.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {

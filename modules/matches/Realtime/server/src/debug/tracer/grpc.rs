@@ -13,7 +13,7 @@ use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
-use crate::debug::tracer::{SessionId, TracedBothDirectionCommand, TracedCommand, TracerSessionCommand};
+use crate::debug::tracer::{TracedBothDirectionCommand, TracedCommand, TracerSessionCommand};
 use crate::server::manager::RoomsServerManager;
 
 pub struct CommandTracerGRPCService {
@@ -21,6 +21,7 @@ pub struct CommandTracerGRPCService {
 }
 
 impl CommandTracerGRPCService {
+	#[must_use]
 	pub fn new(relay_server: Arc<Mutex<RoomsServerManager>>) -> Self {
 		Self { manager: relay_server }
 	}
@@ -58,7 +59,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let task = TracerSessionCommand::CreateSession(sender);
 		self.execute_task(request.get_ref().room as RoomId, task, receiver, |session_id| {
-			Ok(admin::CreateSessionResponse { id: session_id as u32 })
+			Ok(admin::CreateSessionResponse { id: u32::from(session_id) })
 		})
 		.await
 	}
@@ -66,7 +67,14 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn set_filter(&self, request: Request<admin::SetFilterRequest>) -> Result<Response<admin::SetFilterResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = TracerSessionCommand::SetFilter(request.session as SessionId, request.filter.clone(), sender);
+		let task = TracerSessionCommand::SetFilter(
+			request
+				.session
+				.try_into()
+				.map_err(|_| Status::invalid_argument("session is too large".to_string()))?,
+			request.filter.clone(),
+			sender,
+		);
 		self.execute_task(request.room as RoomId, task, receiver, |_| Ok(admin::SetFilterResponse {}))
 			.await
 	}
@@ -74,7 +82,13 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn get_commands(&self, request: Request<admin::GetCommandsRequest>) -> Result<Response<admin::GetCommandsResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = TracerSessionCommand::GetCommands(request.session as SessionId, sender);
+		let task = TracerSessionCommand::GetCommands(
+			request
+				.session
+				.try_into()
+				.map_err(|_| Status::invalid_argument("session is too large".to_string()))?,
+			sender,
+		);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
 				.trace_err("Get commands for trace")
@@ -89,7 +103,13 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn close_session(&self, request: Request<admin::CloseSessionRequest>) -> Result<Response<admin::CloseSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = TracerSessionCommand::CloseSession(request.session as SessionId, sender);
+		let task = TracerSessionCommand::CloseSession(
+			request
+				.session
+				.try_into()
+				.map_err(|_| Status::invalid_argument("session is too large".to_string()))?,
+			sender,
+		);
 		self.execute_task(request.room as RoomId, task, receiver, |result| {
 			result
 				.trace_err("Close tracer session")
@@ -118,12 +138,12 @@ impl From<TracedCommand> for admin::Command {
 				}
 			},
 		};
-		let template = command.template.map(|id| id as u32);
+		let template = command.template.map(u32::from);
 		let command_name: String = match &command.network_command {
 			TracedBothDirectionCommand::C2S(command) => command.as_ref().to_string(),
 			TracedBothDirectionCommand::S2C(command) => command.as_ref().to_string(),
 		};
-		let field_id = command.network_command.get_field_id().map(|field_id| field_id as u32);
+		let field_id = command.network_command.get_field_id().map(u32::from);
 		let field_type = command
 			.network_command
 			.get_field_type()
@@ -141,7 +161,7 @@ impl From<TracedCommand> for admin::Command {
 			direction: direction.to_string(),
 			command: command_name,
 			object_id,
-			user_id: command.user as u32,
+			user_id: u32::from(command.user),
 			template,
 			value,
 			field_id,
@@ -196,7 +216,7 @@ pub mod test {
 				field_id: Some(555),
 				field_type: Some(shared::FieldType::Event as i32)
 			}
-		)
+		);
 	}
 
 	#[test]
@@ -222,6 +242,6 @@ pub mod test {
 				field_id: None,
 				field_type: None
 			}
-		)
+		);
 	}
 }

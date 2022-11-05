@@ -59,7 +59,7 @@ impl NetworkThreadClient {
 				room_id,
 				server_address,
 				start_frame_id,
-				&Instant::now(),
+				Instant::now(),
 			)?,
 			request_from_controller: receiver,
 			protocol_time_offset_for_test: None,
@@ -73,7 +73,7 @@ impl NetworkThreadClient {
 		self.running = true;
 		while self.running {
 			let now = self.get_now_time();
-			self.udp_client.cycle(&now);
+			self.udp_client.cycle(now);
 			self.update_server_time();
 			self.commands_from_server();
 			self.request_from_controller();
@@ -84,7 +84,7 @@ impl NetworkThreadClient {
 	}
 
 	fn update_server_time(&mut self) {
-		let mut server_time: MutexGuard<Option<u64>> = self.server_time.lock().unwrap();
+		let mut server_time: MutexGuard<'_, Option<u64>> = self.server_time.lock().unwrap();
 		match self.udp_client.protocol.rtt.remote_time {
 			None => {}
 			Some(time) => {
@@ -115,7 +115,7 @@ impl NetworkThreadClient {
 				Ok(_) => {}
 				Err(e) => {
 					self.running = false;
-					tracing::error!("[client] error send command from server {:?}", e)
+					tracing::error!("[client] error send command from server {:?}", e);
 				}
 			}
 		}
@@ -130,9 +130,9 @@ impl NetworkThreadClient {
 				ClientRequest::Close => {
 					self.udp_client.protocol.disconnect_by_command.disconnect();
 					let now = Instant::now();
-					self.udp_client.cycle(&now);
+					self.udp_client.cycle(now);
 					self.running = false;
-					tracing::info!("[client] ClientRequest::Close")
+					tracing::info!("[client] ClientRequest::Close");
 				}
 				ClientRequest::SetProtocolTimeOffsetForTest(duration) => {
 					self.protocol_time_offset_for_test = Some(duration);
@@ -159,6 +159,7 @@ impl NetworkThreadClient {
 	///
 	/// Обновление статистики для контроллера
 	///
+	#[allow(clippy::cast_possible_truncation)]
 	fn update_state(&mut self) {
 		let protocol = &mut self.udp_client.protocol;
 		self.shared_statistics.current_frame_id.store(protocol.next_frame_id, Ordering::Relaxed);
@@ -170,7 +171,7 @@ impl NetworkThreadClient {
 			protocol
 				.retransmitter
 				.statistics
-				.get_average_retransmit_frames(&Instant::now())
+				.get_average_retransmit_frames(Instant::now())
 				.unwrap_or(0) as u32,
 			Ordering::Relaxed,
 		);

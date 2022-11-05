@@ -33,5 +33,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.add_service(grpc_service)
 		.serve(cheetah_libraries_microservice::get_internal_service_binding_addr())
 		.await?;
-	Result::Ok(())
+	Ok(())
 }

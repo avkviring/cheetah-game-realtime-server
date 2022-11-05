@@ -53,9 +53,9 @@ impl NetworkClient {
 		room_id: RoomId,
 		server_address: SocketAddr,
 		start_frame_id: u64,
-		start_application_time: &Instant,
+		start_application_time: Instant,
 	) -> std::io::Result<NetworkClient> {
-		let mut protocol = Protocol::new(&Instant::now(), start_application_time);
+		let mut protocol = Protocol::new(Instant::now(), start_application_time);
 		protocol.next_frame_id = start_frame_id;
 		let channel = NetworkChannel::new()?;
 
@@ -71,7 +71,7 @@ impl NetworkClient {
 		})
 	}
 
-	pub fn cycle(&mut self, now: &Instant) {
+	pub fn cycle(&mut self, now: Instant) {
 		if let ConnectionStatus::Disconnected(_) = self.state {
 			return;
 		}
@@ -81,15 +81,15 @@ impl NetworkClient {
 		self.do_write(now);
 
 		if self.protocol.is_connected(now) {
-			self.state = ConnectionStatus::Connected
+			self.state = ConnectionStatus::Connected;
 		}
 
 		if let Some(reason) = self.protocol.is_disconnected(now) {
-			self.state = ConnectionStatus::Disconnected(reason)
+			self.state = ConnectionStatus::Disconnected(reason);
 		}
 	}
 
-	fn do_write(&mut self, now: &Instant) {
+	fn do_write(&mut self, now: Instant) {
 		while let Some(mut frame) = self.protocol.build_next_frame(now) {
 			frame.headers.add(Header::MemberAndRoomId(self.member_and_room_id));
 			self.out_frames.push_front(frame);
@@ -100,34 +100,32 @@ impl NetworkClient {
 			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer).unwrap();
 			match self.channel.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
 				Ok(size) => {
-					if size != frame_buffer_size {
-						tracing::error!("error send frame size mismatch send {:?}, frame {:?}", size, frame_buffer_size);
-					} else {
+					if size == frame_buffer_size {
 						self.out_frames.pop_back();
+					} else {
+						tracing::error!("error send frame size mismatch send {:?}, frame {:?}", size, frame_buffer_size);
 					}
 				}
-				Err(e) => match e.kind() {
-					ErrorKind::WouldBlock => {}
-					_ => {
+				Err(e) => {
+					if e.kind() == ErrorKind::WouldBlock {
+					} else {
 						tracing::error!("error send {:?}", e);
 						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error send {:?}", e)));
 					}
-				},
+				}
 			}
 		}
 	}
 
-	fn do_read(&mut self, now: &Instant) {
+	fn do_read(&mut self, now: Instant) {
 		let mut buffer = [0; 2048];
 		loop {
 			match self.channel.recv(now, &mut buffer) {
 				Err(e) => {
-					match e.kind() {
-						ErrorKind::WouldBlock => {}
-						_ => {
-							tracing::error!("error receive {:?}", e);
-							self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error receive {:?}", e)));
-						}
+					if e.kind() == ErrorKind::WouldBlock {
+					} else {
+						tracing::error!("error receive {:?}", e);
+						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error receive {:?}", e)));
 					}
 					break;
 				}
@@ -139,15 +137,15 @@ impl NetworkClient {
 							match InFrame::decode_frame_commands(self.from_client, frame_id, cursor, Cipher::new(&self.private_key)) {
 								Ok(commands) => {
 									let frame = InFrame::new(frame_id, headers, commands);
-									self.on_frame_received(now, frame);
+									self.on_frame_received(now, &frame);
 								}
 								Err(e) => {
-									tracing::error!("error decode frame {:?}", e)
+									tracing::error!("error decode frame {:?}", e);
 								}
 							}
 						}
 						Err(e) => {
-							tracing::error!("error decode header {:?}", e)
+							tracing::error!("error decode header {:?}", e);
 						}
 					}
 				}
@@ -155,7 +153,7 @@ impl NetworkClient {
 		}
 	}
 
-	fn on_frame_received(&mut self, now: &Instant, frame: InFrame) {
+	fn on_frame_received(&mut self, now: Instant, frame: &InFrame) {
 		self.protocol.on_frame_received(frame, now);
 	}
 }

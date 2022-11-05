@@ -1,5 +1,3 @@
-extern crate core;
-
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -46,10 +44,10 @@ impl EmbeddedServerWrapper {
 
 		Ok(EmbeddedServerWrapper {
 			runtime,
+			manager,
 			game_socket_addr,
 			internal_grpc_socket_addr,
 			admin_grpc_socket_addr,
-			manager,
 		})
 	}
 

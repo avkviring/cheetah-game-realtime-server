@@ -20,9 +20,9 @@ fn test() {
 	let (user2_id, user2_key) = helper.create_user();
 	let (user3_id, user3_key) = helper.create_user();
 
-	let client1 = helper.create_client(user1_id, user1_key);
-	let client2 = helper.create_client(user2_id, user2_key);
-	let client3 = helper.create_client(user3_id, user3_key);
+	let client1 = helper.create_client(user1_id, &user1_key);
+	let client2 = helper.create_client(user2_id, &user2_key);
+	let client3 = helper.create_client(user3_id, &user3_key);
 
 	ffi::command::event::set_event_listener(client2, on_event_listener);
 	ffi::command::room::attach_to_room(client2);
@@ -36,8 +36,10 @@ fn test() {
 	ffi::command::object::create_object(client1, 1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
 	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
 
-	let mut event_buffer = BufferFFI::default();
-	event_buffer.len = 1;
+	let mut event_buffer = BufferFFI {
+		len: 1,
+		..Default::default()
+	};
 	event_buffer.buffer[0] = 100;
 	let event_field_id = 10;
 
@@ -48,7 +50,7 @@ fn test() {
 	assert!(matches!(EVENT.lock().unwrap().as_ref(), None));
 
 	ffi::client::receive(client2);
-	assert!(matches!(EVENT.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer ));
+	assert!(matches!(EVENT.lock().unwrap().as_ref(),Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer ));
 }
 
 lazy_static! {

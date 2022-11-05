@@ -91,13 +91,13 @@ impl ApplicationThreadClient {
 
 	pub fn send(&mut self, command: C2SCommand) -> Result<(), SendError<ClientRequest>> {
 		let out_command = C2SCommandWithChannel {
-			channel_type: self.channel.clone(),
+			channel_type: self.channel,
 			command,
 		};
 		self.request_to_client.send(ClientRequest::SendCommandToServer(out_command))
 	}
 
-	pub fn get_connection_status(&self) -> Result<ConnectionStatus, PoisonError<MutexGuard<ConnectionStatus>>> {
+	pub fn get_connection_status(&self) -> Result<ConnectionStatus, PoisonError<MutexGuard<'_, ConnectionStatus>>> {
 		Ok(self.state.lock()?.clone())
 	}
 

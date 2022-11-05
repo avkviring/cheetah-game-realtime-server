@@ -17,7 +17,10 @@ impl From<&[u8]> for BinaryValue {
 impl BinaryValue {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let mut result = BinaryValue(Default::default());
-		let size = input.read_variable_u64()? as usize;
+		let size = input
+			.read_variable_u64()?
+			.try_into()
+			.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast size into usize".to_string()))?;
 		if size > result.0.capacity() {
 			return Err(Error::new(ErrorKind::InvalidData, format!("Event buffer size to big {}", size)));
 		}
@@ -34,10 +37,12 @@ impl BinaryValue {
 	}
 
 	#[allow(clippy::len_without_is_empty)]
+	#[must_use]
 	pub fn len(&self) -> usize {
 		self.0.len()
 	}
 
+	#[must_use]
 	pub fn as_slice(&self) -> &[u8] {
 		self.0.as_slice()
 	}

@@ -26,7 +26,7 @@ pub extern "C" fn create_member(
 		member_descriptions.private_key.copy_from_slice(&member_template.private_key.0);
 		match server
 			.runtime
-			.block_on(async move { manager.lock().await.create_member(room_id, member_template) })
+			.block_on(async move { manager.lock().await.create_member(room_id, &member_template) })
 		{
 			Ok(member_id) => {
 				member_descriptions.id = member_id;

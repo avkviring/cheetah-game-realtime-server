@@ -30,7 +30,7 @@ impl NetworkChannel {
 		})
 	}
 
-	pub fn recv(&mut self, now: &Instant, buf: &mut [u8]) -> io::Result<usize> {
+	pub fn recv(&mut self, now: Instant, buf: &mut [u8]) -> io::Result<usize> {
 		let result = self.socket.recv(buf);
 		if result.is_ok() {
 			self.recv_packet_count += 1;
@@ -55,7 +55,7 @@ impl NetworkChannel {
 		}
 	}
 
-	pub fn send_to(&mut self, now: &Instant, buf: &[u8], addr: SocketAddr) -> io::Result<usize> {
+	pub fn send_to(&mut self, now: Instant, buf: &[u8], addr: SocketAddr) -> io::Result<usize> {
 		self.send_packet_count += 1;
 		self.send_size += buf.len() as u64;
 		match &mut self.emulator {
@@ -70,13 +70,13 @@ impl NetworkChannel {
 	///
 	/// Если в эмуляторе есть данные для отправки в реальный сокет - отправляем
 	///
-	pub fn cycle(&mut self, now: &Instant) {
+	pub fn cycle(&mut self, now: Instant) {
 		if let Some(emulator) = self.emulator.as_mut() {
 			while let Some((buffer, addr)) = emulator.get_out(now) {
 				match self.socket.send_to(buffer.as_slice(), addr) {
 					Ok(_) => {}
 					Err(e) => {
-						tracing::error!("[NetworkChannel] emulate mode, send to socket error {:?}", e)
+						tracing::error!("[NetworkChannel] emulate mode, send to socket error {:?}", e);
 					}
 				}
 			}
@@ -127,17 +127,17 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
+			.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
-		assert!(matches!(channel_b.recv(&now, &mut recv_data), Result::Ok(size) if send_data.len()==size));
+		assert!(matches!(channel_b.recv(now, &mut recv_data), Ok(size) if send_data.len()==size));
 	}
 
 	///
 	/// Проверяем интеграцию канала и системы эмулирования характеристик сети
 	/// Проверяем только rtt, этого достаточно, так как мы проверяем только интеграцию
-	/// Все остальные тесты есть в [NetworkLatencyEmulator]
+	/// Все остальные тесты есть в [`NetworkLatencyEmulator`]
 	///
 	#[test]
 	fn should_receive_and_send_with_emulator() {
@@ -155,22 +155,22 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
+			.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 
 		// данных нет - так как включен эмулятор лага
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
-		assert!(matches!(channel_b.recv(&now, &mut recv_data), Result::Err(_)));
+		assert!(matches!(channel_b.recv(now, &mut recv_data), Err(_)));
 		// время окончания эмуляции rtt
 		let after_rtt_time = now.add(half_rtt).add(Duration::from_millis(10));
 		// данные должны быть отправлены, но их еще не будет на принимающей стороне
-		channel_a.cycle(&after_rtt_time);
+		channel_a.cycle(after_rtt_time);
 		std::thread::sleep(Duration::from_millis(10));
-		assert!(matches!(channel_b.recv(&now, &mut recv_data), Result::Err(_)));
+		assert!(matches!(channel_b.recv(now, &mut recv_data), Err(_)));
 
 		// а теперь будут, так как прошло время эмуляции rtt
-		assert!(matches!(channel_b.recv(&after_rtt_time, &mut recv_data), Result::Ok(size) if send_data.len()==size));
+		assert!(matches!(channel_b.recv(after_rtt_time, &mut recv_data), Ok(size) if send_data.len()==size));
 	}
 
 	///
@@ -189,11 +189,11 @@ pub mod tests {
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
 		channel_a
-			.send_to(&now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
+			.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
 			.unwrap();
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
-		channel_b.recv(&now, &mut recv_data).unwrap();
+		channel_b.recv(now, &mut recv_data).unwrap();
 
 		assert_eq!(channel_a.recv_size, 0);
 		assert_eq!(channel_a.send_size, 3);

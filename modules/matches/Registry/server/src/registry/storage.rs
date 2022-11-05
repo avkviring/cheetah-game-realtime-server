@@ -75,9 +75,9 @@ impl Storage for RedisStorage {
 }
 
 impl RedisStorage {
-	/// Создать новый RedisStorage
-	/// RedisStorage использует multiplexed соединение к Redis
-	/// RedisStorage можно клонировать
+	/// Создать новый `RedisStorage`
+	/// `RedisStorage` использует multiplexed соединение к Redis
+	/// `RedisStorage` можно клонировать
 	pub async fn new(dsn: &str) -> Result<Self, StorageError> {
 		tracing::info!("connecting to redis: {:?}", dsn);
 		let client = redis::Client::open(dsn)?;
@@ -136,7 +136,7 @@ pub mod tests {
 	async fn should_return_err_on_empty_set() {
 		let (_node, storage) = stub_storage().await;
 		let res = storage.get_random_relay_addr().await;
-		assert!(matches!(res, Err(StorageError::NoRelayFound)))
+		assert!(matches!(res, Err(StorageError::NoRelayFound)));
 	}
 
 	#[tokio::test]
@@ -150,7 +150,7 @@ pub mod tests {
 		storage.update_status(&want, RelayState::NotReady).await.unwrap();
 		let res = storage.get_random_relay_addr().await;
 
-		assert!(matches!(res, Err(StorageError::NoRelayFound)))
+		assert!(matches!(res, Err(StorageError::NoRelayFound)));
 	}
 
 	#[tokio::test]
@@ -164,7 +164,7 @@ pub mod tests {
 		storage.update_status(&want, RelayState::Ready).await.unwrap();
 		let got = storage.get_random_relay_addr().await.unwrap();
 
-		assert_eq!(got, want)
+		assert_eq!(got, want);
 	}
 
 	lazy_static::lazy_static! {

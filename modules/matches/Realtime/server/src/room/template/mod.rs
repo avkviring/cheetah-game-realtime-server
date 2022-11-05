@@ -9,24 +9,25 @@ pub mod config;
 pub mod permission;
 
 impl GameObjectTemplate {
+	#[must_use]
 	pub fn to_root_game_object(&self) -> GameObject {
 		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Room))
 	}
 
+	#[must_use]
 	pub fn create_user_game_object(&self, user_id: RoomMemberId) -> GameObject {
 		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Member(user_id)))
 	}
 
+	#[must_use]
 	pub fn to_game_object(&self, id: GameObjectId) -> GameObject {
-		if id.id == 0 {
-			panic!("0 is forbidden for game object id");
-		}
+		assert_ne!(id.id, 0, "0 is forbidden for game object id");
 
 		let mut object = GameObject::new(id, self.template, self.groups, true);
 
 		self.fields
 			.iter()
-			.for_each(|(&(k, _), v)| object.set_field_wrapped(k, v.to_owned()).unwrap());
+			.for_each(|(&(k, _), v)| object.set_field_wrapped(k, v.clone()).unwrap());
 
 		object
 	}
@@ -50,10 +51,11 @@ mod tests {
 			groups: Default::default(),
 			fields: Default::default(),
 		};
-		config_object.to_root_game_object();
+		let _object = config_object.to_root_game_object();
 	}
 
 	#[test]
+	#[allow(clippy::float_cmp)]
 	fn should_convert_game_object() {
 		let mut config_object = GameObjectTemplate {
 			id: 100,

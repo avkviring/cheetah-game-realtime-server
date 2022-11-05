@@ -24,7 +24,7 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 			},
 			user_id,
 			Permission::Rw,
-			Option::None,
+			None,
 			action,
 		)
 	}

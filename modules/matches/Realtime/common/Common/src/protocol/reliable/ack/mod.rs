@@ -39,8 +39,9 @@ impl AckSender {
 }
 
 impl AckSender {
-	pub fn contains_self_data(&self, now: &Instant) -> bool {
-		self.ack_tasks.iter().any(|t| *now >= t.scheduled_ack)
+	#[must_use]
+	pub fn contains_self_data(&self, now: Instant) -> bool {
+		self.ack_tasks.iter().any(|t| now >= t.scheduled_ack)
 	}
 
 	///
@@ -50,13 +51,13 @@ impl AckSender {
 	/// повторной отсылки пакета
 	///
 	///
-	pub fn build_out_frame(&mut self, frame: &mut OutFrame, now: &Instant) {
+	pub fn build_out_frame(&mut self, frame: &mut OutFrame, now: Instant) {
 		let mut header = AckHeader::default();
 		self.ack_tasks.iter_mut().for_each(|task| {
-			if *now >= task.scheduled_ack && !header.is_full() {
+			if now >= task.scheduled_ack && !header.is_full() {
 				header.add_frame_id(task.frame_id);
 				task.ack_count += 1;
-				task.scheduled_ack = now.add(AckSender::SEND_INTERVAL)
+				task.scheduled_ack = now.add(AckSender::SEND_INTERVAL);
 			}
 		});
 
@@ -71,7 +72,7 @@ impl AckSender {
 		frame.headers.add(Header::Ack(header));
 	}
 
-	pub fn on_frame_received(&mut self, frame: &InFrame, now: &Instant) {
+	pub fn on_frame_received(&mut self, frame: &InFrame, now: Instant) {
 		if !frame.contains_reliability_command() {
 			return;
 		}
@@ -80,7 +81,7 @@ impl AckSender {
 			.push(AckTask {
 				frame_id: frame.get_original_frame_id(),
 				ack_count: 0,
-				scheduled_ack: *now,
+				scheduled_ack: now,
 			})
 			.is_err()
 		{
@@ -109,7 +110,7 @@ mod tests {
 	///
 	fn should_ack_not_need_send() {
 		let ack_sender = AckSender::default();
-		assert!(!ack_sender.contains_self_data(&Instant::now()));
+		assert!(!ack_sender.contains_self_data(Instant::now()));
 	}
 
 	#[test]
@@ -117,27 +118,27 @@ mod tests {
 		let mut now = Instant::now();
 		let mut ack_sender = AckSender::default();
 		let in_frame = InFrame::new(10, Default::default(), [create_command()].into_iter().collect());
-		ack_sender.on_frame_received(&in_frame, &now);
+		ack_sender.on_frame_received(&in_frame, now);
 
 		for _ in 0..AckSender::MAX_ACK_FOR_FRAME {
 			// в исходящем фрейме должно быть подтверждение на входящий
-			assert!(ack_sender.contains_self_data(&now));
-			let header = build_out_frame(&mut now, &mut ack_sender);
+			assert!(ack_sender.contains_self_data(now));
+			let header = build_out_frame(now, &mut ack_sender);
 			assert!(header.get_frames().any(|id| *id == in_frame.frame_id));
 			// отослали - теперь подтверждения быть не должно
-			assert!(!ack_sender.contains_self_data(&now));
-			let header = build_out_frame(&mut now, &mut ack_sender);
+			assert!(!ack_sender.contains_self_data(now));
+			let header = build_out_frame(now, &mut ack_sender);
 			assert!(!header.get_frames().any(|id| *id == in_frame.frame_id));
 			now = now.add(AckSender::SEND_INTERVAL);
 		}
 
 		// теперь данных быть не должно, так как мы их отослали необходимое количество раз
-		assert!(!ack_sender.contains_self_data(&now));
-		let header = build_out_frame(&mut now, &mut ack_sender);
+		assert!(!ack_sender.contains_self_data(now));
+		let header = build_out_frame(now, &mut ack_sender);
 		assert!(!header.get_frames().any(|id| *id == in_frame.frame_id));
 	}
 
-	fn build_out_frame(now: &mut Instant, ack_sender: &mut AckSender) -> AckHeader {
+	fn build_out_frame(now: Instant, ack_sender: &mut AckSender) -> AckHeader {
 		let out_frame = &mut OutFrame::new(200);
 		ack_sender.build_out_frame(out_frame, now);
 		let header: &AckHeader = out_frame.headers.first(Header::predicate_ack).unwrap();

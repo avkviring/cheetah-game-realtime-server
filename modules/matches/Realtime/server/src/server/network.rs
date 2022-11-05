@@ -44,7 +44,7 @@ impl NetworkLayer {
 		})
 	}
 
-	pub fn cycle(&mut self, rooms: &mut Rooms, now: &Instant) {
+	pub fn cycle(&mut self, rooms: &mut Rooms, now: Instant) {
 		self.receive(rooms, now);
 		self.send(rooms);
 
@@ -81,7 +81,7 @@ impl NetworkLayer {
 							session
 								.protocol
 								.out_commands_collector
-								.add_command(command.channel_type.clone(), command.command.clone());
+								.add_command(command.channel_type, command.command.clone());
 						}
 						Self::send_frame(&self.socket, session);
 					}
@@ -91,7 +91,7 @@ impl NetworkLayer {
 	}
 
 	fn send_frame(socket: &UdpSocket, session: &mut MemberSession) {
-		if let (Some(peer_address), Some(frame)) = (session.peer_address, session.protocol.build_next_frame(&Instant::now())) {
+		if let (Some(peer_address), Some(frame)) = (session.peer_address, session.protocol.build_next_frame(Instant::now())) {
 			let mut buffer = [0; MAX_FRAME_SIZE];
 			let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
 			match socket.send_to(&buffer[0..buffer_size], peer_address) {
@@ -110,7 +110,7 @@ impl NetworkLayer {
 		}
 	}
 
-	fn receive(&mut self, rooms: &mut Rooms, now: &Instant) {
+	fn receive(&mut self, rooms: &mut Rooms, now: Instant) {
 		let mut buffer = [0; MAX_FRAME_SIZE];
 		loop {
 			let result = self.socket.recv_from(&mut buffer);
@@ -128,12 +128,12 @@ impl NetworkLayer {
 		}
 	}
 
-	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: &Instant) {
+	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: Instant) {
 		let start_time = Instant::now();
 		let mut cursor = Cursor::new(&buffer[0..size]);
 		match InFrame::decode_headers(&mut cursor) {
 			Ok((frame_id, headers)) => {
-				let member_and_room_id_header: Option<MemberAndRoomId> = headers.first(Header::predicate_member_and_room_id).cloned();
+				let member_and_room_id_header: Option<MemberAndRoomId> = headers.first(Header::predicate_member_and_room_id).copied();
 
 				match member_and_room_id_header {
 					None => {
@@ -153,11 +153,11 @@ impl NetworkLayer {
 											session.peer_address.replace(address);
 											session.max_receive_frame_id = frame.frame_id;
 										}
-										session.protocol.on_frame_received(frame, now);
-										rooms.execute_commands(user_and_room_id, session.protocol.in_commands_collector.get_ready_commands())
+										session.protocol.on_frame_received(&frame, now);
+										rooms.execute_commands(user_and_room_id, session.protocol.in_commands_collector.get_ready_commands());
 									}
 									Err(e) => {
-										tracing::error!("[network] error decode frame {:?}", e)
+										tracing::error!("[network] error decode frame {:?}", e);
 									}
 								}
 							}
@@ -174,19 +174,19 @@ impl NetworkLayer {
 		measurers.on_income_frame(size, start_time.elapsed());
 	}
 
-	pub fn register_user(&mut self, now: &Instant, room_id: RoomId, user_id: RoomMemberId, template: MemberTemplate) {
+	pub fn register_user(&mut self, now: Instant, room_id: RoomId, user_id: RoomMemberId, template: MemberTemplate) {
 		self.sessions.insert(
 			MemberAndRoomId { member_id: user_id, room_id },
 			MemberSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
 				max_receive_frame_id: 0,
-				protocol: Protocol::new(now, &self.start_application_time),
+				protocol: Protocol::new(now, self.start_application_time),
 			},
 		);
 	}
 
-	/// Послать DisconnectHeader пользователю и удалить сессию с сервера
+	/// Послать `DisconnectHeader` пользователю и удалить сессию с сервера
 	pub fn disconnect_users(&mut self, member_and_room_ids: impl Iterator<Item = MemberAndRoomId>) {
 		for id in member_and_room_ids {
 			if let Some(mut session) = self.sessions.remove(&id) {
@@ -229,7 +229,7 @@ mod tests {
 			&buffer,
 			usize,
 			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
-			&Instant::now(),
+			Instant::now(),
 		);
 	}
 
@@ -241,13 +241,7 @@ mod tests {
 		let mut frame = OutFrame::new(0);
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId { member_id: 0, room_id: 0 }));
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
-		udp_server.process_in_frame(
-			&mut rooms,
-			&buffer,
-			size,
-			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
-			&Instant::now(),
-		);
+		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
 	}
 
 	#[test]
@@ -257,13 +251,7 @@ mod tests {
 		let mut buffer = [0; MAX_FRAME_SIZE];
 		let frame = OutFrame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
-		udp_server.process_in_frame(
-			&mut rooms,
-			&buffer,
-			size,
-			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
-			&Instant::now(),
-		);
+		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
 	}
 
 	///
@@ -284,25 +272,25 @@ mod tests {
 			compare_and_set_cleaners: Default::default(),
 			out_commands: Default::default(),
 		};
-		udp_server.register_user(&Instant::now(), 0, user.id, user.template.clone());
+		udp_server.register_user(Instant::now(), 0, user.id, user.template.clone());
 
 		let mut frame = OutFrame::new(100);
 		let user_and_room_id = MemberAndRoomId {
 			member_id: user.id,
 			room_id: 0,
 		};
-		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
+		frame.headers.add(Header::MemberAndRoomId(user_and_room_id));
 		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer).unwrap();
 
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
 
-		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, &Instant::now());
+		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, Instant::now());
 
 		let mut frame = OutFrame::new(10);
-		frame.headers.add(Header::MemberAndRoomId(user_and_room_id.clone()));
+		frame.headers.add(Header::MemberAndRoomId(user_and_room_id));
 		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer).unwrap();
-		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, &Instant::now());
+		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, Instant::now());
 
 		assert_eq!(udp_server.sessions.get(&user_and_room_id).unwrap().peer_address.unwrap(), addr_1);
 	}
@@ -312,10 +300,10 @@ mod tests {
 		let mut udp_server = create_network_layer();
 		let user_template = MemberTemplate::new_member(Default::default(), Default::default());
 		let user_to_delete = MemberAndRoomId { member_id: 0, room_id: 0 };
-		udp_server.register_user(&Instant::now(), user_to_delete.room_id, user_to_delete.member_id, user_template.clone());
-		udp_server.register_user(&Instant::now(), 0, 1, user_template.clone());
+		udp_server.register_user(Instant::now(), user_to_delete.room_id, user_to_delete.member_id, user_template.clone());
+		udp_server.register_user(Instant::now(), 0, 1, user_template);
 
-		udp_server.disconnect_users(vec![user_to_delete.clone()].into_iter());
+		udp_server.disconnect_users(vec![user_to_delete].into_iter());
 
 		assert!(!udp_server.sessions.contains_key(&user_to_delete), "session should be deleted");
 	}

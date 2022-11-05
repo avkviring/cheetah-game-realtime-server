@@ -22,6 +22,7 @@ pub struct OutFrame {
 }
 
 impl OutFrame {
+	#[must_use]
 	pub fn new(frame_id: FrameId) -> Self {
 		Self {
 			frame_id,
@@ -35,6 +36,7 @@ impl OutFrame {
 		}
 	}
 
+	#[allow(clippy::cast_possible_truncation)]
 	pub fn add_command(&mut self, command: CommandWithChannel) -> bool {
 		if self.full {
 			return false;
@@ -45,12 +47,12 @@ impl OutFrame {
 		if cursor.position() > MAX_ENCODED_COMMANDS_SIZE as u64 {
 			self.full = true;
 			return false;
-		} else {
-			self.contains_reliability_command = self.contains_reliability_command || command.channel.is_reliable();
-			self.encoded_size = cursor.position();
-			self.commands.push(command);
-			self.encoded_commands[0] = self.commands.len() as u8;
 		}
+
+		self.contains_reliability_command = self.contains_reliability_command || command.channel.is_reliable();
+		self.encoded_size = cursor.position();
+		self.commands.push(command);
+		self.encoded_commands[0] = self.commands.len() as u8;
 		true
 	}
 
@@ -59,20 +61,24 @@ impl OutFrame {
 	}
 
 	///
-	///  Получить оригинальный frame_id
+	///  Получить оригинальный `frame_id`
 	/// - для повторно отосланных фреймов - id изначального фрейма
 	/// - для всех остальных id фрейма
 	///
+	#[must_use]
 	pub fn get_original_frame_id(&self) -> FrameId {
 		match self.headers.first(Header::predicate_retransmit) {
 			None => self.frame_id,
 			Some(value) => value.original_frame_id,
 		}
 	}
+	#[must_use]
 	pub fn contains_reliability_command(&self) -> bool {
 		self.contains_reliability_command
 	}
 
+	#[allow(clippy::cast_possible_truncation)]
+	#[must_use]
 	pub fn get_commands_buffer(&self) -> &[u8] {
 		&self.encoded_commands[0..self.encoded_size as usize]
 	}

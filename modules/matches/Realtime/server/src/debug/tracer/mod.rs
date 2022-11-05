@@ -138,7 +138,7 @@ impl Session {
 			None => self.filtered_commands.push_back(collected_command.clone()),
 			Some(filter) => {
 				if filter.filter(collected_command) {
-					self.filtered_commands.push_back(collected_command.clone())
+					self.filtered_commands.push_back(collected_command.clone());
 				}
 			}
 		}
@@ -177,8 +177,8 @@ impl CommandTracerSessions {
 	///
 	/// Установить фильтр для сессии
 	///
-	pub fn set_filter(&mut self, session_id: SessionId, query: String) -> Result<(), TracerSessionCommandError> {
-		match parse(query.as_ref()) {
+	pub fn set_filter(&mut self, session_id: SessionId, query: &str) -> Result<(), TracerSessionCommandError> {
+		match parse(query) {
 			Ok(rule) => {
 				let filter = Filter::new(rule);
 				match self.sessions.get_mut(&session_id) {
@@ -221,7 +221,7 @@ impl CommandTracerSessions {
 				}
 			};
 			s.collect(template, user, network_command);
-		})
+		});
 	}
 
 	///
@@ -231,7 +231,7 @@ impl CommandTracerSessions {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = TracedBothDirectionCommand::S2C(command.clone());
 			s.collect(template, user, network_command);
-		})
+		});
 	}
 
 	///
@@ -254,7 +254,7 @@ impl CommandTracerSessions {
 				sender.send(session_id).unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			TracerSessionCommand::SetFilter(session_id, query, sender) => {
-				let result = self.set_filter(session_id, query);
+				let result = self.set_filter(session_id, &query);
 				sender.send(result).unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			TracerSessionCommand::GetCommands(session, sender) => {
@@ -357,7 +357,7 @@ pub mod tests {
 				event: Default::default(),
 			}),
 		);
-		tracer.set_filter(session_id, "(user=100)".to_string()).unwrap();
+		tracer.set_filter(session_id, "(user=100)").unwrap();
 
 		let commands = tracer.drain_filtered_commands(session_id).unwrap();
 		assert_eq!(
@@ -395,7 +395,7 @@ pub mod tests {
 		}
 		tracer.collect_c2s(&Default::default(), 55, &C2SCommand::AttachToRoom);
 
-		let session = &mut tracer.sessions.get_mut(&session_id).unwrap();
+		let session = tracer.sessions.get_mut(&session_id).unwrap();
 		assert!(session.filtered_commands.len() < Session::BUFFER_LIMIT);
 		assert!(session.commands.len() < Session::BUFFER_LIMIT);
 		let last_command = session.commands.pop_back().unwrap();
@@ -405,9 +405,9 @@ pub mod tests {
 				time: Session::now(),
 				template: None,
 				user: 55,
-				network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			}
-		)
+		);
 	}
 
 	#[test]
@@ -415,7 +415,7 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		tracer.close_session(session_id).unwrap();
-		assert!(tracer.sessions.is_empty())
+		assert!(tracer.sessions.is_empty());
 	}
 
 	#[test]
@@ -425,10 +425,10 @@ pub mod tests {
 		tracer.execute_task(TracerSessionCommand::CreateSession(sender));
 		match receiver.try_recv() {
 			Ok(session_id) => {
-				assert!(tracer.sessions.contains_key(&session_id))
+				assert!(tracer.sessions.contains_key(&session_id));
 			}
-			Err(_) => {
-				assert!(false)
+			Err(e) => {
+				panic!("{:?}", e)
 			}
 		}
 	}
@@ -441,10 +441,10 @@ pub mod tests {
 		tracer.execute_task(TracerSessionCommand::SetFilter(session_id, "(user=55)".to_string(), sender));
 		match receiver.try_recv() {
 			Ok(result) => match result {
-				Ok(_) => assert!(true),
-				Err(_) => assert!(false),
+				Ok(_) => {}
+				Err(e) => panic!("{:?}", e),
 			},
-			Err(_) => assert!(false),
+			Err(e) => panic!("{:?}", e),
 		}
 	}
 
@@ -455,11 +455,12 @@ pub mod tests {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		tracer.execute_task(TracerSessionCommand::SetFilter(session_id, "(8=55)".to_string(), sender));
 		match receiver.try_recv() {
-			Ok(result) => match result {
-				Ok(_) => assert!(false),
-				Err(_) => assert!(true),
-			},
-			Err(_) => assert!(false),
+			Ok(result) => {
+				if result.is_ok() {
+					panic!()
+				}
+			}
+			Err(e) => panic!("{:?}", e),
 		}
 	}
 
@@ -473,9 +474,9 @@ pub mod tests {
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(result) => assert_eq!(result.len(), 1),
-				Err(_) => assert!(false),
+				Err(e) => panic!("{:?}", e),
 			},
-			Err(_) => assert!(false),
+			Err(e) => panic!("{:?}", e),
 		}
 	}
 
@@ -488,9 +489,9 @@ pub mod tests {
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => assert!(tracer.sessions.is_empty()),
-				Err(_) => assert!(false),
+				Err(e) => panic!("{:?}", e),
 			},
-			Err(_) => assert!(false),
+			Err(e) => panic!("{:?}", e),
 		}
 	}
 
@@ -518,9 +519,9 @@ pub mod tests {
 				network_command: TracedBothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 					object_id: Default::default(),
 					template: 100,
-					access_groups: Default::default()
-				}))
+					access_groups: Default::default(),
+				})),
 			}]
-		)
+		);
 	}
 }

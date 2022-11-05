@@ -57,6 +57,7 @@ pub struct Measurers {
 }
 
 impl Measurers {
+	#[must_use]
 	pub fn new(registry: &Registry) -> Self {
 		Self {
 			room_count: Self::create_room_count_measurers(registry),
@@ -192,7 +193,7 @@ impl Measurers {
 	}
 
 	pub(crate) fn on_change_member_count(&mut self, name: &String, delta: i64) {
-		self.member_count.measurer(name).add(delta)
+		self.member_count.measurer(name).add(delta);
 	}
 
 	pub(crate) fn on_create_room(&mut self, name: &String) {
@@ -200,23 +201,23 @@ impl Measurers {
 	}
 
 	pub(crate) fn on_output_commands(&mut self, template: &MeasureStringId, commands: &[CommandWithChannelType]) {
-		commands.iter().for_each(|c| {
+		for c in commands.iter() {
 			if let BothDirectionCommand::S2CWithCreator(ref c) = c.command {
 				let command = &c.command;
 				let key = (command.get_field_type(), command.get_field_id(), template.clone());
 				self.outcome_command_count.measurer(&key).inc();
 			}
-		});
+		}
 	}
 
 	pub(crate) fn on_input_commands(&mut self, template: &str, commands: &[CommandWithChannel]) {
 		let template = MeasureStringId::from(template);
-		commands.iter().for_each(|c| {
+		for c in commands.iter() {
 			if let BothDirectionCommand::C2S(ref c) = c.both_direction_command {
 				let key = (c.get_field_type(), c.get_field_id(), template.clone());
-				self.income_command_count.measurer(&key).inc()
+				self.income_command_count.measurer(&key).inc();
 			}
-		});
+		}
 	}
 
 	pub(crate) fn on_execute_command(&mut self, field_id: Option<FieldId>, command: &C2SCommand, duration: Duration) {
@@ -225,13 +226,14 @@ impl Measurers {
 		self.input_command_execution_time.measurer(&key).observe(duration.as_secs_f64());
 	}
 
+	#[allow(clippy::cast_precision_loss)]
 	pub(crate) fn on_income_frame(&mut self, size: usize, duration: Duration) {
 		self.input_frame_size.observe(size as f64);
 		self.input_frame_execution_time.observe(duration.as_secs_f64());
 	}
 
 	pub(crate) fn on_server_cycle(&mut self, duration: Duration) {
-		self.server_cycle_execution_time.observe(duration.as_secs_f64())
+		self.server_cycle_execution_time.observe(duration.as_secs_f64());
 	}
 
 	#[allow(clippy::type_complexity)]

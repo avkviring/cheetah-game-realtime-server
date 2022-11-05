@@ -24,8 +24,10 @@ fn test() {
 	ffi::command::object::create_object(client1, 1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
 	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
 
-	let mut event_buffer = BufferFFI::default();
-	event_buffer.len = 1;
+	let mut event_buffer = BufferFFI {
+		len: 1,
+		..Default::default()
+	};
 	event_buffer.buffer[0] = 100;
 	let event_field_id = 10;
 	ffi::command::event::send_event(client1, &object_id, event_field_id, &event_buffer);
@@ -33,7 +35,7 @@ fn test() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	assert!(matches!(EVENT.lock().unwrap().as_ref(),Option::Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer ));
+	assert!(matches!(EVENT.lock().unwrap().as_ref(),Some((field_id, buffer)) if *field_id == event_field_id && *buffer == event_buffer ));
 }
 
 lazy_static! {

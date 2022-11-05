@@ -59,7 +59,7 @@ impl NetworkLatencyEmulator {
 	///
 	/// Получаем данные из сокета и решаем отдавать ли их или использовать очередь для эмуляции характеристик сети
 	///
-	pub fn schedule_in(&mut self, now: &Instant, buffer: &[u8]) {
+	pub fn schedule_in(&mut self, now: Instant, buffer: &[u8]) {
 		if !self.check_drop_time(now) {
 			let time = self.get_schedule_time(now);
 			self.in_queue.push(BinaryFrame {
@@ -73,11 +73,11 @@ impl NetworkLatencyEmulator {
 	///
 	/// Получить данные для клиента с учетом всех параметров эмуляции
 	///
-	pub fn get_in(&mut self, now: &Instant) -> Option<Vec<u8>> {
+	pub fn get_in(&mut self, now: Instant) -> Option<Vec<u8>> {
 		match self.in_queue.peek() {
 			None => None,
 			Some(frame) => {
-				if *now >= frame.time {
+				if now >= frame.time {
 					let frame = self.in_queue.pop().unwrap();
 					Some(frame.buffer)
 				} else {
@@ -90,7 +90,7 @@ impl NetworkLatencyEmulator {
 	///
 	/// Сохраняем данные для отправки, реальная отправка происходит с учетом всех характеристик эмулируемой сети
 	///
-	pub fn schedule_out(&mut self, now: &Instant, buffer: &[u8], addr: SocketAddr) {
+	pub fn schedule_out(&mut self, now: Instant, buffer: &[u8], addr: SocketAddr) {
 		if !self.check_drop_time(now) {
 			let time = self.get_schedule_time(now);
 			self.out_queue.push(BinaryFrame {
@@ -104,21 +104,21 @@ impl NetworkLatencyEmulator {
 	///
 	/// Получаем данные для отправки в реальный сокет
 	///
-	pub fn get_out(&mut self, now: &Instant) -> Option<(Vec<u8>, SocketAddr)> {
+	pub fn get_out(&mut self, now: Instant) -> Option<(Vec<u8>, SocketAddr)> {
 		match self.out_queue.peek() {
-			None => Option::None,
+			None => None,
 			Some(data) => {
-				if *now >= data.time {
+				if now >= data.time {
 					let data = self.out_queue.pop().unwrap();
-					Option::Some((data.buffer.clone(), data.addr.unwrap()))
+					Some((data.buffer.clone(), data.addr.unwrap()))
 				} else {
-					Option::None
+					None
 				}
 			}
 		}
 	}
 
-	fn get_schedule_time(&mut self, now: &Instant) -> Instant {
+	fn get_schedule_time(&mut self, now: Instant) -> Instant {
 		let rtt = *self.rtt.as_ref().unwrap_or(&Duration::from_millis(0));
 		let half_rtt = rtt.div(2);
 		let mut time = now.add(half_rtt);
@@ -132,9 +132,9 @@ impl NetworkLatencyEmulator {
 		time
 	}
 
-	fn check_drop_time(&mut self, now: &Instant) -> bool {
+	fn check_drop_time(&mut self, now: Instant) -> bool {
 		if let Some(drop_time) = &self.drop_start {
-			if drop_time.add(self.drop_time.unwrap_or_else(|| Duration::from_millis(0))) > *now {
+			if drop_time.add(self.drop_time.unwrap_or_else(|| Duration::from_millis(0))) > now {
 				return true;
 			}
 			self.drop_start = None;
@@ -144,7 +144,7 @@ impl NetworkLatencyEmulator {
 			None => false,
 			Some(drop_probability) => {
 				if drop_probability > rand::thread_rng().gen() {
-					self.drop_start = Option::Some(*now);
+					self.drop_start = Some(now);
 					true
 				} else {
 					false
@@ -160,7 +160,7 @@ impl NetworkLatencyEmulator {
 
 	pub fn configure_drop(&mut self, drop_probability: f64, drop_time: Duration) {
 		self.drop_probability = Some(drop_probability);
-		self.drop_time = Some(drop_time)
+		self.drop_time = Some(drop_time);
 	}
 }
 
@@ -181,11 +181,11 @@ mod tests {
 		let mut emulator = NetworkLatencyEmulator::default();
 		let in_buffer = vec![1, 2, 3, 4, 5];
 		let out_buffer = vec![10, 11, 12];
-		emulator.schedule_in(&Instant::now(), in_buffer.as_slice());
-		emulator.schedule_out(&Instant::now(), out_buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_in(Instant::now(), in_buffer.as_slice());
+		emulator.schedule_out(Instant::now(), out_buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
-		assert!(matches!(emulator.get_in(&Instant::now()), Some(buffer) if buffer==in_buffer));
-		assert!(matches!(emulator.get_out(&Instant::now()), Some((buffer,_)) if buffer==out_buffer));
+		assert!(matches!(emulator.get_in(Instant::now()), Some(buffer) if buffer==in_buffer));
+		assert!(matches!(emulator.get_out(Instant::now()), Some((buffer,_)) if buffer==out_buffer));
 	}
 
 	///
@@ -198,16 +198,16 @@ mod tests {
 		let send_data = vec![1, 2, 3];
 		let rtt = Duration::from_millis(1000);
 		emulator.rtt = Some(rtt);
-		emulator.schedule_out(&now, send_data.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_out(now, send_data.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
-		assert!(matches!(emulator.get_out(&now), Option::None));
+		assert!(matches!(emulator.get_out(now), None));
 
 		// время задержки прошло - данные доступны для отправки
 		now = now.add(rtt.div(2));
-		assert!(matches!(emulator.get_out(&now), Option::Some(_)));
+		assert!(matches!(emulator.get_out(now), Some(_)));
 
 		// больше данных нет
-		assert!(matches!(emulator.get_out(&now), Option::None));
+		assert!(matches!(emulator.get_out(now), None));
 	}
 
 	#[test]
@@ -217,15 +217,15 @@ mod tests {
 		let send_data = vec![1, 2, 3];
 		let rtt = Duration::from_millis(1000);
 		emulator.rtt = Some(rtt);
-		emulator.schedule_in(&now, send_data.as_slice());
-		assert!(matches!(emulator.get_in(&now), Option::None));
+		emulator.schedule_in(now, send_data.as_slice());
+		assert!(matches!(emulator.get_in(now), None));
 
 		// время задержки прошло - данные доступны для отправки
 		now = now.add(rtt.div(2));
-		assert!(matches!(emulator.get_in(&now), Option::Some(_)));
+		assert!(matches!(emulator.get_in(now), Some(_)));
 
 		// больше данных нет
-		assert!(matches!(emulator.get_in(&now), Option::None));
+		assert!(matches!(emulator.get_in(now), None));
 	}
 
 	#[test]
@@ -239,7 +239,7 @@ mod tests {
 		let now = Instant::now();
 		let mut count_not_equal_half = 0;
 		for _ in 0..1000 {
-			let instant = emulator.get_schedule_time(&now);
+			let instant = emulator.get_schedule_time(now);
 			let delta = instant.sub(now);
 			assert!(delta.as_secs_f64() >= half_rtt.as_secs_f64() * (1.0 - rtt_dispersion));
 			assert!(delta.as_secs_f64() <= half_rtt.as_secs_f64() * (1.0 + rtt_dispersion));
@@ -248,7 +248,7 @@ mod tests {
 			}
 		}
 
-		assert!(count_not_equal_half > 0)
+		assert!(count_not_equal_half > 0);
 	}
 
 	#[test]
@@ -266,14 +266,14 @@ mod tests {
 		let mut now = Instant::now();
 		for _ in 0..count {
 			now = now.add(Duration::from_millis(1));
-			emulator.schedule_in(&now, buffer.as_slice());
+			emulator.schedule_in(now, buffer.as_slice());
 
-			if emulator.get_in(&now).is_none() {
+			if emulator.get_in(now).is_none() {
 				in_dropped_count += 1;
 			}
 
-			emulator.schedule_out(&now, buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
-			if emulator.get_out(&now).is_none() {
+			emulator.schedule_out(now, buffer.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+			if emulator.get_out(now).is_none() {
 				out_dropped_count += 1;
 			}
 		}
@@ -294,15 +294,15 @@ mod tests {
 		};
 
 		let now = Instant::now();
-		emulator.check_drop_time(&now);
+		emulator.check_drop_time(now);
 		// проверяем установки времени эмуляции
 		assert!(matches!(emulator.drop_start, Some(time) if time == now));
 
 		// мы в зоне отказа сети, даже если вероятность отказа 0
 		emulator.drop_probability = Some(0.0);
-		assert!(emulator.check_drop_time(&now));
+		assert!(emulator.check_drop_time(now));
 		// выходим из зоны отказа сети
-		assert!(!emulator.check_drop_time(&now.add(drop_time)));
+		assert!(!emulator.check_drop_time(now.add(drop_time)));
 	}
 
 	#[test]
@@ -316,20 +316,20 @@ mod tests {
 		let frame_2 = vec![2];
 		let now = Instant::now();
 
-		emulator.schedule_in(&now, frame_1.as_slice());
-		emulator.schedule_in(&now, frame_2.as_slice());
-		emulator.schedule_out(&now, frame_1.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
-		emulator.schedule_out(&now, frame_2.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_in(now, frame_1.as_slice());
+		emulator.schedule_in(now, frame_2.as_slice());
+		emulator.schedule_out(now, frame_1.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
+		emulator.schedule_out(now, frame_2.as_slice(), SocketAddr::from_str("127.0.0.1:5050").unwrap());
 
 		let now = now.add(half_rtt.sub(Duration::from_millis(1)));
-		assert!(matches!(emulator.get_in(&now), None));
-		assert!(matches!(emulator.get_out(&now), None));
+		assert!(matches!(emulator.get_in(now), None));
+		assert!(matches!(emulator.get_out(now), None));
 
 		let now = now.add(Duration::from_millis(1));
-		assert!(matches!(emulator.get_in(&now),Some(frame) if frame==frame_1 ));
-		assert!(matches!(emulator.get_in(&now),Some(frame) if frame==frame_2 ));
+		assert!(matches!(emulator.get_in(now),Some(frame) if frame==frame_1 ));
+		assert!(matches!(emulator.get_in(now),Some(frame) if frame==frame_2 ));
 
-		assert!(matches!(emulator.get_out(&now),Some((frame,_)) if frame==frame_1));
-		assert!(matches!(emulator.get_out(&now),Some((frame,_)) if frame==frame_2));
+		assert!(matches!(emulator.get_out(now),Some((frame,_)) if frame==frame_1));
+		assert!(matches!(emulator.get_out(now),Some((frame,_)) if frame==frame_2));
 	}
 }

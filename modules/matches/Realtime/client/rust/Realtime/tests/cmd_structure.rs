@@ -33,7 +33,7 @@ fn should_set() {
 
 	assert!(matches!(
 		STRUCTURE.lock().unwrap().as_ref(),
-		Option::Some((field_id, buffer))
+		Some((field_id, buffer))
 			if *field_id == structure_field_id && *buffer == structure_buffer
 	));
 }
@@ -117,5 +117,5 @@ extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectIdFF
 }
 
 extern "C" fn on_compare_and_set_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: &BufferFFI) {
-	COMPARE_AND_SET.lock().unwrap().insert(field_id, value.to_owned());
+	COMPARE_AND_SET.lock().unwrap().insert(field_id, value.clone());
 }

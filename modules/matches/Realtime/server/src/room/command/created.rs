@@ -172,7 +172,7 @@ mod tests {
 	}
 
 	///
-	/// Не должно быть двух объектов с владельцем Room с одним singleton_key
+	/// Не должно быть двух объектов с владельцем Room с одним `singleton_key`
 	///
 	#[test]
 	pub fn should_dont_create_more_one_object_with_one_singleton_key() {

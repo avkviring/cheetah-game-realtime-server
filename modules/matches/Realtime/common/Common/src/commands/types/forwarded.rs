@@ -38,7 +38,7 @@ impl ForwardedCommand {
 		let command_type_id = num::FromPrimitive::from_u8(command_type_id).ok_or(CommandContextError::UnknownCommandTypeId(command_type_id))?;
 		Ok(ForwardedCommand {
 			creator: user_id,
-			c2s: C2SCommand::decode(&command_type_id, object_id, field_id, input)?,
+			c2s: C2SCommand::decode(command_type_id, object_id, field_id, input)?,
 		})
 	}
 }

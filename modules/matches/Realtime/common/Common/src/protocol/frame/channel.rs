@@ -3,7 +3,7 @@ use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 ///
 /// Тип канала для отправки
 ///
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ChannelType {
 	///
 	/// Выполняем команды без учета порядка
@@ -28,9 +28,9 @@ pub enum ChannelType {
 }
 
 ///
-/// Канал для отправки, отличается от [ApplicationCommandChannelType] полным набором данных для канала
+/// Канал для отправки, отличается от [`ApplicationCommandChannelType`] полным набором данных для канала
 ///
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Channel {
 	///
 	/// Выполняем команды без учета порядка
@@ -67,6 +67,7 @@ impl From<&Channel> for ChannelType {
 }
 
 impl Channel {
+	#[must_use]
 	pub fn is_reliable(&self) -> bool {
 		match self {
 			Channel::ReliableUnordered => true,
@@ -76,6 +77,7 @@ impl Channel {
 			Channel::UnreliableOrdered(_) => false,
 		}
 	}
+	#[must_use]
 	pub fn get_channel_group_id(&self) -> Option<ChannelGroup> {
 		match self {
 			Channel::ReliableUnordered => None,

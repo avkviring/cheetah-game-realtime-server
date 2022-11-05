@@ -32,10 +32,12 @@ pub struct S2CCommandWithCreator {
 }
 
 impl S2CCommand {
+	#[must_use]
 	pub fn new_set_command(value: FieldValue, object_id: GameObjectId, field_id: u16) -> S2CCommand {
-		S2CCommand::SetField(SetFieldCommand { field_id, object_id, value })
+		S2CCommand::SetField(SetFieldCommand { object_id, field_id, value })
 	}
 
+	#[must_use]
 	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
 			S2CCommand::Create(_) => None,
@@ -48,6 +50,7 @@ impl S2CCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
 			S2CCommand::Create(command) => Some(command.object_id),
@@ -60,6 +63,7 @@ impl S2CCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_field_type(&self) -> Option<FieldType> {
 		match self {
 			S2CCommand::Create(_) => None,
@@ -72,6 +76,7 @@ impl S2CCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_type_id(&self) -> CommandTypeId {
 		match self {
 			S2CCommand::Create(_) => CommandTypeId::CreateGameObject,
@@ -88,6 +93,7 @@ impl S2CCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_trace_string(&self) -> String {
 		match self {
 			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
@@ -155,7 +161,7 @@ mod tests {
 	fn should_decode_encode_create() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			S2CCommand::Create(CreateGameObjectCommand {
+			&S2CCommand::Create(CreateGameObjectCommand {
 				object_id,
 				template: 3,
 				access_groups: AccessGroups(5),
@@ -170,7 +176,7 @@ mod tests {
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			S2CCommand::Created(GameObjectCreatedS2CCommand { object_id }),
+			&S2CCommand::Created(GameObjectCreatedS2CCommand { object_id }),
 			CommandTypeId::CreatedGameObject,
 			Some(object_id),
 			None,
@@ -182,7 +188,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			S2CCommand::SetField(SetFieldCommand {
+			&S2CCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
 				value: 100.into(),
@@ -198,7 +204,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			S2CCommand::SetField(SetFieldCommand {
+			&S2CCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
 				value: 3.15.into(),
@@ -214,7 +220,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			S2CCommand::SetField(SetFieldCommand {
+			&S2CCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
 				value: vec![1, 2, 3, 4].into(),
@@ -230,7 +236,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			S2CCommand::Event(EventCommand {
+			&S2CCommand::Event(EventCommand {
 				object_id,
 				field_id,
 				event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
@@ -245,7 +251,7 @@ mod tests {
 	fn should_decode_encode_delete() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			S2CCommand::Delete(DeleteGameObjectCommand { object_id }),
+			&S2CCommand::Delete(DeleteGameObjectCommand { object_id }),
 			CommandTypeId::Delete,
 			Some(object_id),
 			None,
@@ -257,7 +263,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			S2CCommand::Forwarded(Box::new(ForwardedCommand {
+			&S2CCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: 123,
 				c2s: C2SCommand::TargetEvent(TargetEventCommand {
 					target: 10,
@@ -274,7 +280,7 @@ mod tests {
 		);
 	}
 
-	fn check(expected: S2CCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {
+	fn check(expected: &S2CCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {
 		let object_id = object_id.ok_or(CommandContextError::ContextNotContainsObjectId);
 		let field_id = field_id.ok_or(CommandContextError::ContextNotContainsFieldId);
 		let mut buffer = [0_u8; 100];
@@ -285,6 +291,6 @@ mod tests {
 		let actual = S2CCommand::decode(&command_type_id, object_id, field_id, &mut read_cursor).unwrap();
 
 		assert_eq!(write_position, read_cursor.position());
-		assert_eq!(expected, actual);
+		assert_eq!(expected, &actual);
 	}
 }

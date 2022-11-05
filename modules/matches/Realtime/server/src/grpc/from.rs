@@ -26,6 +26,7 @@ impl From<internal::UserTemplate> for config::MemberTemplate {
 }
 
 impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
+	#[allow(clippy::cast_possible_truncation)]
 	fn from(source: internal::GameObjectTemplate) -> Self {
 		config::GameObjectTemplate {
 			id: source.id,
@@ -75,6 +76,7 @@ impl From<internal::Permissions> for config::Permissions {
 }
 
 impl From<internal::GameObjectTemplatePermission> for config::GameObjectTemplatePermission {
+	#[allow(clippy::cast_possible_truncation)]
 	fn from(source: internal::GameObjectTemplatePermission) -> Self {
 		config::GameObjectTemplatePermission {
 			template: source.template as u16,
@@ -106,6 +108,7 @@ impl From<internal::GroupsPermissionRule> for config::GroupsPermissionRule {
 }
 
 impl From<internal::PermissionField> for config::PermissionField {
+	#[allow(clippy::cast_possible_truncation)]
 	fn from(source: internal::PermissionField) -> Self {
 		let event = shared::FieldType::Event as i32;
 		let double = shared::FieldType::Double as i32;

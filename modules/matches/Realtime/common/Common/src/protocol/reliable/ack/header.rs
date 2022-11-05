@@ -6,8 +6,8 @@ use crate::protocol::frame::FrameId;
 
 ///
 /// Подтверждение пакета
-/// - содержит подтверждение для N фреймов, начиная от [start_frame_id]
-/// - N зависит от [AskFrameHeader::CAPACITY]
+/// - содержит подтверждение для N фреймов, начиная от [`start_frame_id`]
+/// - N зависит от [`AskFrameHeader::CAPACITY`]
 ///
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct AckHeader {
@@ -19,7 +19,7 @@ impl AckHeader {
 		self.frame_ids.push(frame_id).unwrap();
 	}
 
-	pub fn get_frames(&self) -> Iter<FrameId> {
+	pub fn get_frames(&self) -> Iter<'_, FrameId> {
 		self.frame_ids.iter()
 	}
 
@@ -45,6 +45,7 @@ impl AckHeader {
 		Ok(())
 	}
 
+	#[must_use]
 	pub fn is_full(&self) -> bool {
 		self.frame_ids.is_full()
 	}
@@ -57,14 +58,14 @@ mod tests {
 
 	#[test]
 	///
-	/// Проверяем сохранение списка frame_id
+	/// Проверяем сохранение списка `frame_id`
 	///
 	pub fn should_store_frame_id() {
 		let mut header = AckHeader::default();
 		let originals = vec![1, 2, 3, 4, 7, 9, 15];
-		originals.iter().for_each(|i| {
+		for i in &originals {
 			header.add_frame_id(*i as FrameId);
-		});
+		}
 
 		let actual = header.get_frames().as_slice();
 		assert_eq!(originals, actual);

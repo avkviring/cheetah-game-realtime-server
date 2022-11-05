@@ -17,6 +17,7 @@ pub enum FieldValue {
 }
 
 impl FieldValue {
+	#[must_use]
 	pub fn field_type(&self) -> FieldType {
 		match self {
 			FieldValue::Long(_) => FieldType::Long,

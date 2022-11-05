@@ -48,6 +48,7 @@ impl IntegrationTestServerBuilder {
 		}
 	}
 
+	#[must_use]
 	pub fn build(self) -> (SocketAddr, RoomsServerManager, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.local_addr().unwrap();

@@ -30,6 +30,7 @@ struct PermissionCachedFieldKey {
 }
 
 impl PermissionManager {
+	#[must_use]
 	pub fn new(permission: &Permissions) -> Self {
 		let mut result = Self {
 			templates: Default::default(),

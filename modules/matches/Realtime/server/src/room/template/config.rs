@@ -79,14 +79,17 @@ pub enum UserTemplateError {
 }
 
 impl MemberTemplate {
+	#[must_use]
 	pub fn new_member(groups: AccessGroups, objects: Vec<GameObjectTemplate>) -> Self {
 		MemberTemplate::new(false, groups, objects)
 	}
 
+	#[must_use]
 	pub fn new_super_member() -> Self {
 		MemberTemplate::new(true, AccessGroups::super_group(), Default::default())
 	}
 
+	#[must_use]
 	pub fn new_super_member_with_key(key: MemberPrivateKey) -> Self {
 		let mut member = Self::new_super_member();
 		member.private_key = key;
@@ -127,6 +130,7 @@ mod tests {
 	use cheetah_matches_realtime_common::commands::field::Field;
 
 	impl MemberTemplate {
+		#[must_use]
 		pub fn stub(access_group: AccessGroups) -> Self {
 			MemberTemplate::new_member(access_group, Default::default())
 		}
@@ -195,6 +199,6 @@ mod tests {
 			fields: Default::default(),
 		}];
 		let template = MemberTemplate::new_member(AccessGroups(0b1111), objects);
-		assert!(matches!(template.validate(), Result::Err(UserTemplateError::UserObjectHasWrongId(_, _))))
+		assert!(matches!(template.validate(), Err(UserTemplateError::UserObjectHasWrongId(_, _))));
 	}
 }

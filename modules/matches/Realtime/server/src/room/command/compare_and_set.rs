@@ -22,11 +22,11 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 		perform_compare_and_set(
 			room,
 			user_id,
-			self.object_id.to_owned(),
+			self.object_id,
 			self.field_id,
-			FieldValue::Long(self.current),
+			&FieldValue::Long(self.current),
 			FieldValue::Long(self.new),
-			self.reset.as_ref().map(|r| FieldValue::Long(*r)),
+			&self.reset.as_ref().map(|r| FieldValue::Long(*r)),
 		)
 	}
 }
@@ -36,11 +36,11 @@ impl ServerCommandExecutor for CompareAndSetStructureCommand {
 		perform_compare_and_set(
 			room,
 			user_id,
-			self.object_id.to_owned(),
+			self.object_id,
 			self.field_id,
-			FieldValue::Structure(self.current.as_slice().into()),
+			&FieldValue::Structure(self.current.as_slice().into()),
 			FieldValue::Structure(self.new.as_slice().into()),
-			self.reset.as_ref().map(|r| FieldValue::Structure(r.as_slice().into())),
+			&self.reset.as_ref().map(|r| FieldValue::Structure(r.as_slice().into())),
 		)
 	}
 }
@@ -50,24 +50,24 @@ pub fn perform_compare_and_set(
 	user_id: RoomMemberId,
 	object_id: GameObjectId,
 	field_id: u16,
-	current: FieldValue,
+	current: &FieldValue,
 	new: FieldValue,
-	reset: Option<FieldValue>,
+	reset: &Option<FieldValue>,
 ) -> Result<(), ServerCommandError> {
 	let field_type = current.field_type();
 	let is_field_changed = Rc::new(RefCell::new(false));
 	let action = |object: &mut GameObject| {
 		let allow = match object.get_field_wrapped(field_id, field_type) {
 			None => true,
-			Some(value) => *value == current,
+			Some(value) => value == current,
 		};
 		if allow {
 			*is_field_changed.borrow_mut() = true;
-			object.set_field_wrapped(field_id, new.to_owned())?;
+			object.set_field_wrapped(field_id, new.clone())?;
 			if reset.is_some() {
 				object.set_compare_and_set_owner(field_id, user_id)?;
 			}
-			Ok(Some(S2CCommand::new_set_command(new, object.id.to_owned(), field_id)))
+			Ok(Some(S2CCommand::new_set_command(new, object.id, field_id)))
 		} else {
 			Ok(None)
 		}
@@ -83,7 +83,7 @@ pub fn perform_compare_and_set(
 				cls.remove(&(object_id, field_id, field_type));
 			}
 			Some(reset_value) => {
-				cls.insert((object_id, field_id, field_type), reset_value.to_owned())
+				cls.insert((object_id, field_id, field_type), reset_value.clone())
 					.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners overflow".to_string()))?;
 			}
 		}
@@ -131,13 +131,13 @@ pub fn apply_reset(
 }
 
 fn reset_value(object: &mut GameObject, field_id: FieldId, value: &FieldValue) -> Result<S2CCommandWithFieldInfo, ServerCommandError> {
-	object.set_field_wrapped(field_id, value.to_owned())?;
+	object.set_field_wrapped(field_id, value.clone())?;
 	let command = S2CCommandWithFieldInfo {
 		field: Some(Field {
 			id: field_id,
 			field_type: value.field_type(),
 		}),
-		command: S2CCommand::new_set_command(value.to_owned(), object.id.to_owned(), field_id),
+		command: S2CCommand::new_set_command(value.clone(), object.id, field_id),
 	};
 
 	Ok(command)
@@ -163,7 +163,7 @@ mod tests {
 	use cheetah_matches_realtime_common::commands::field::Field;
 
 	///
-	/// Проверяем что при выполнении нескольких команд соблюдаются гарантии CompareAndSet
+	/// Проверяем что при выполнении нескольких команд соблюдаются гарантии `CompareAndSet`
 	///
 	#[test]
 	fn should_compare_and_set_long() {
@@ -299,7 +299,7 @@ mod tests {
 
 	///
 	/// Проверяем что при выходе пользователя не будет сброшено значение, если была вторая
-	/// команда CompareAndSet без установки reset
+	/// команда `CompareAndSet` без установки reset
 	///
 	#[test]
 	fn should_disable_reset() {

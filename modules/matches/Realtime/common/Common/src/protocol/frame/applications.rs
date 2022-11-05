@@ -29,12 +29,14 @@ pub enum BothDirectionCommand {
 impl ChannelSequence {
 	pub const FIRST: ChannelSequence = ChannelSequence(0);
 
-	pub fn next(&self) -> ChannelSequence {
+	#[must_use]
+	pub fn next(&self) -> Self {
 		ChannelSequence(self.0 + 1)
 	}
 }
 
 impl BothDirectionCommand {
+	#[must_use]
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match &self {
 			BothDirectionCommand::S2CWithCreator(command_with_meta) => command_with_meta.command.get_object_id(),

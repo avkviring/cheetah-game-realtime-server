@@ -45,21 +45,25 @@ pub enum ServerBuilderError {
 }
 
 impl ServerBuilder {
+	#[must_use]
 	pub fn set_game_address(mut self, addr: SocketAddr) -> Self {
 		self.game_bind_addr = addr;
 		self
 	}
 
+	#[must_use]
 	pub fn set_admin_grpc_address(mut self, addr: SocketAddr) -> Self {
 		self.admin_grpc_bind_addr = addr;
 		self
 	}
 
+	#[must_use]
 	pub fn set_internal_grpc_address(mut self, addr: SocketAddr) -> Self {
 		self.internal_grpc_bind_addr = addr;
 		self
 	}
 
+	#[must_use]
 	pub fn enable_agones(mut self) -> Self {
 		self.is_agones_enabled = true;
 		self

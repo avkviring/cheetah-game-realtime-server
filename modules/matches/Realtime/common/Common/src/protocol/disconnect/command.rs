@@ -30,6 +30,7 @@ impl DisconnectByCommand {
 		self.disconnecting_by_self_request = true;
 	}
 
+	#[must_use]
 	pub fn contains_self_data(&self) -> bool {
 		self.disconnecting_by_self_request && !self.disconnected_by_self
 	}
@@ -46,6 +47,7 @@ impl DisconnectByCommand {
 		self.disconnected_by_peer = headers.is_some();
 	}
 
+	#[must_use]
 	pub fn disconnected(&self) -> bool {
 		self.disconnected_by_peer || self.disconnected_by_self
 	}
@@ -88,6 +90,6 @@ mod tests {
 		let mut frame = OutFrame::new(10);
 		handler.build_frame(&mut frame);
 		assert!(!handler.disconnected());
-		assert!(matches!(frame.headers.first(Header::predicate_disconnect), Option::None));
+		assert!(matches!(frame.headers.first(Header::predicate_disconnect), None));
 	}
 }

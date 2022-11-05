@@ -65,13 +65,14 @@ impl InFrame {
 	/// - остаток команд возвращается как результат функции
 	/// - данные команды также удаляются из исходного фрейма
 	///
-	/// Метод вызывается после decode_headers (более подробно в тестах)
+	/// Метод вызывается после `decode_headers` (более подробно в тестах)
 	///
+	#[allow(clippy::cast_possible_truncation)]
 	pub fn decode_frame_commands(
 		c2s_commands: bool,
 		frame_id: FrameId,
 		cursor: Cursor<&[u8]>,
-		mut cipher: Cipher,
+		mut cipher: Cipher<'_>,
 	) -> Result<Vec<CommandWithChannel>, FrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
@@ -105,7 +106,8 @@ impl OutFrame {
 	///
 	/// Преобразуем Frame в набор байт для отправки через сеть
 	///
-	pub fn encode(&self, cipher: &mut Cipher, out: &mut [u8]) -> Result<usize, FrameEncodeError> {
+	#[allow(clippy::cast_possible_truncation)]
+	pub fn encode(&self, cipher: &mut Cipher<'_>, out: &mut [u8]) -> Result<usize, FrameEncodeError> {
 		let mut frame_cursor = Cursor::new(out);
 		frame_cursor.write_variable_u64(self.frame_id).unwrap();
 		self.headers.encode_headers(&mut frame_cursor).unwrap();

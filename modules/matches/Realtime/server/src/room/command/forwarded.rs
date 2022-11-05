@@ -141,7 +141,7 @@ mod tests {
 		if let Err(e) = command.execute(&mut room, super_member_1) {
 			panic!("{:?}", e)
 		}
-		assert!(!room.members.get(&member_1).unwrap().attached)
+		assert!(!room.members.get(&member_1).unwrap().attached);
 	}
 
 	fn setup() -> (Room, RoomMemberId, RoomMemberId, RoomMemberId) {

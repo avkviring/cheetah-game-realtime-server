@@ -18,19 +18,19 @@ impl Channel {
 		let mut now = Instant::now();
 
 		for i in 0..count {
-			let frame_a = peer_a.build_next_frame(&now);
+			let frame_a = peer_a.build_next_frame(now);
 			if let Some(frame_a) = frame_a {
 				if self.allow(i as u64) {
-					let commands = Vec::from_iter(frame_a.get_commands().cloned());
-					peer_b.on_frame_received(InFrame::new(frame_a.frame_id, frame_a.headers, commands), &now)
+					let commands = frame_a.get_commands().cloned().collect::<Vec<_>>();
+					peer_b.on_frame_received(&InFrame::new(frame_a.frame_id, frame_a.headers, commands), now);
 				}
 			}
 
-			let frame_b = peer_b.build_next_frame(&now);
+			let frame_b = peer_b.build_next_frame(now);
 			if let Some(frame_b) = frame_b {
 				if self.allow(i as u64) {
-					let commands = Vec::from_iter(frame_b.get_commands().cloned());
-					peer_a.on_frame_received(InFrame::new(frame_b.frame_id, frame_b.headers, commands), &now)
+					let commands = frame_b.get_commands().cloned().collect::<Vec<_>>();
+					peer_a.on_frame_received(&InFrame::new(frame_b.frame_id, frame_b.headers, commands), now);
 				}
 			}
 
@@ -42,12 +42,13 @@ impl Channel {
 		self.reliable_percents.push((range, transfered_percent));
 	}
 
+	#[must_use]
 	pub fn allow(&self, position: u64) -> bool {
 		let find = self.reliable_percents.iter().find_map(|(range, percent)| {
 			if range.contains(&position) {
-				Option::Some(OsRng.gen_bool(*percent))
+				Some(OsRng.gen_bool(*percent))
 			} else {
-				Option::None
+				None
 			}
 		});
 		find.unwrap_or(true)

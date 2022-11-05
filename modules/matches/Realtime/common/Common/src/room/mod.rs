@@ -13,6 +13,7 @@ pub type RoomId = u64;
 pub struct MemberPrivateKey(pub [u8; 32]);
 
 impl MemberPrivateKey {
+	#[must_use]
 	pub fn new_random() -> MemberPrivateKey {
 		MemberPrivateKey(rand::thread_rng().gen::<[u8; 32]>())
 	}

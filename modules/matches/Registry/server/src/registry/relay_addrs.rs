@@ -43,7 +43,7 @@ impl TryFrom<Addr> for SocketAddr {
 
 	fn try_from(a: Addr) -> Result<Self, Self::Error> {
 		let ip = IpAddr::from_str(&a.host).map_err(|_| AddrsError::MalformedAddrs)?;
-		Ok(SocketAddr::new(ip, a.port as u16))
+		Ok(SocketAddr::new(ip, a.port.try_into().map_err(|_| AddrsError::MalformedAddrs)?))
 	}
 }
 
@@ -51,7 +51,7 @@ impl From<SocketAddr> for Addr {
 	fn from(a: SocketAddr) -> Self {
 		Self {
 			host: a.ip().to_string(),
-			port: a.port() as _,
+			port: u32::from(a.port()),
 		}
 	}
 }

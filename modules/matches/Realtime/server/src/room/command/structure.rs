@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
-	use cheetah_matches_realtime_common::commands::s2c::S2CCommandWithCreator;
 	use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
 	use cheetah_matches_realtime_common::commands::FieldType;
 	use cheetah_matches_realtime_common::protocol::frame::applications::BothDirectionCommand;
@@ -70,7 +69,7 @@ mod tests {
 		room.test_mark_as_connected(user2).unwrap();
 		let object1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user1), access_groups);
 		object1.created = true;
-		let object_id1 = object1.id.clone();
+		let object_id1 = object1.id;
 		(room, user1, user2, object_id1)
 	}
 
@@ -85,11 +84,6 @@ mod tests {
 		let object = room.get_object_mut(object_id).unwrap();
 
 		assert_eq!(*object.get_field_wrapped(FIELD_ID, FieldType::Structure).unwrap(), command.value);
-
-		let _expected = S2CCommandWithCreator {
-			command: S2CCommand::SetField(command),
-			creator: user1,
-		};
 
 		let member1 = room.get_member(&user1).unwrap();
 		assert!(matches!(

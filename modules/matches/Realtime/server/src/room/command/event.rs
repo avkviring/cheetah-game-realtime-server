@@ -22,7 +22,7 @@ impl ServerCommandExecutor for EventCommand {
 			},
 			user_id,
 			Permission::Rw,
-			Option::None,
+			None,
 			action,
 		)
 	}
@@ -42,7 +42,7 @@ impl ServerCommandExecutor for TargetEventCommand {
 			},
 			user_id,
 			Permission::Rw,
-			Option::Some(target),
+			Some(target),
 			action,
 		)
 	}

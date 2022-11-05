@@ -27,9 +27,9 @@ impl Room {
 		T: Fn(&Member) -> bool,
 	{
 		#[cfg(test)]
-		commands.iter().for_each(|command| {
+		for command in commands.iter() {
 			self.test_out_commands.push_front((access_groups, command.command.clone()));
-		});
+		}
 
 		let channel_type = self.current_channel.as_ref().unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
@@ -70,9 +70,9 @@ impl Room {
 					};
 
 					member.out_commands.push(CommandWithChannelType {
-						channel_type: channel_type.clone(),
+						channel_type: *channel_type,
 						command: BothDirectionCommand::S2CWithCreator(command_with_user),
-					})
+					});
 				});
 		}
 
@@ -88,7 +88,7 @@ impl Room {
 		let command_trace_session = self.command_trace_session.clone();
 		let permission_manager_rc = self.permission_manager.clone();
 		let mut permission_manager = permission_manager_rc.borrow_mut();
-		let channel = self.current_channel.clone().unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
+		let channel = self.current_channel.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
 		let creator = self.current_member_id.unwrap_or(0);
 		let member = self.get_member_mut(user_id)?;
 
@@ -109,9 +109,9 @@ impl Room {
 						.collect_s2c(Some(object_template), member.id, &command.command);
 
 					member.out_commands.push(CommandWithChannelType {
-						channel_type: channel.clone(),
+						channel_type: channel,
 						command: BothDirectionCommand::S2CWithCreator(command_with_meta),
-					})
+					});
 				}
 			}
 		}
@@ -206,46 +206,29 @@ mod tests {
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		assert!(room
-			.send_command_from_action(
-				object_id,
-				Field { id: field_id_1, field_type },
-				user_id,
-				Permission::Rw,
-				Option::None,
-				|_| {
-					Ok(Some(S2CCommand::SetField(SetFieldCommand {
-						object_id,
-						field_id: field_id_1,
-						value: 0.into(),
-					})))
-				},
-			)
+			.send_command_from_action(object_id, Field { id: field_id_1, field_type }, user_id, Permission::Rw, None, |_| {
+				Ok(Some(S2CCommand::SetField(SetFieldCommand {
+					object_id,
+					field_id: field_id_1,
+					value: 0.into(),
+				})))
+			},)
 			.is_ok());
 
 		assert!(room.test_get_user_out_commands(user_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
 		assert!(room
-			.send_command_from_action(
-				object_id,
-				Field { id: field_id_2, field_type },
-				user_id,
-				Permission::Rw,
-				Option::None,
-				|_| {
-					Ok(Some(S2CCommand::SetField(SetFieldCommand {
-						object_id,
-						field_id: field_id_2,
-						value: 0.into(),
-					})))
-				},
-			)
+			.send_command_from_action(object_id, Field { id: field_id_2, field_type }, user_id, Permission::Rw, None, |_| {
+				Ok(Some(S2CCommand::SetField(SetFieldCommand {
+					object_id,
+					field_id: field_id_2,
+					value: 0.into(),
+				})))
+			},)
 			.is_ok());
 
-		assert!(matches!(
-			room.test_get_user_out_commands(user_id).get(0),
-			Option::Some(S2CCommand::SetField(_))
-		));
+		assert!(matches!(room.test_get_user_out_commands(user_id).get(0), Some(S2CCommand::SetField(_))));
 	}
 
 	///
@@ -390,7 +373,7 @@ mod tests {
 		room.send_to_members(access_groups, Some(object_template), &commands, |_| true).unwrap();
 
 		let commands = room.test_get_user_out_commands(user_2);
-		assert!(matches!(commands.get(0),Option::Some(S2CCommand::SetField(c)) if c.field_id == allow_field_id));
+		assert!(matches!(commands.get(0),Some(S2CCommand::SetField(c)) if c.field_id == allow_field_id));
 		assert_eq!(commands.len(), 1);
 	}
 
@@ -416,7 +399,7 @@ mod tests {
 				},
 				user_1,
 				Permission::Rw,
-				Option::None,
+				None,
 				|_| {
 					Ok(Some(S2CCommand::SetField(SetFieldCommand {
 						object_id,

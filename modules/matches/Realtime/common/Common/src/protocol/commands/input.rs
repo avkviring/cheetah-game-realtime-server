@@ -47,7 +47,7 @@ impl InCommandsCollector {
 		self.ready_commands.as_slice()
 	}
 
-	pub fn collect(&mut self, frame: InFrame) {
+	pub fn collect(&mut self, frame: &InFrame) {
 		if self.is_get_ready_commands {
 			self.ready_commands.clear();
 			self.is_get_ready_commands = false;
@@ -95,7 +95,7 @@ impl InCommandsCollector {
 			let option_buffer = &mut self.sequence_commands[channel_group.0 as usize];
 			let buffer = option_buffer.as_mut().unwrap();
 			if buffer.len() > SEQUENCE_COMMANDS_LIMIT {
-				tracing::error!("Sequence commands buffer overflow")
+				tracing::error!("Sequence commands buffer overflow");
 			} else {
 				buffer.push(SequenceApplicationCommand {
 					sequence: input_sequence,
@@ -168,7 +168,7 @@ mod tests {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
 		let frame = InFrame::new(1, Default::default(), [cmd_1.clone()].into_iter().collect());
-		in_commands.collect(frame);
+		in_commands.collect(&frame);
 		assert_eq!(in_commands.get_ready_commands(), [cmd_1]);
 		assert_eq!(in_commands.get_ready_commands(), []);
 	}
@@ -178,8 +178,8 @@ mod tests {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
 		let frame = InFrame::new(1, Default::default(), [cmd_1.clone()].into_iter().collect());
-		in_commands.collect(frame.clone());
-		in_commands.collect(frame);
+		in_commands.collect(&frame.clone());
+		in_commands.collect(&frame);
 		assert_eq!(in_commands.get_ready_commands(), [cmd_1.clone(), cmd_1]);
 		assert_eq!(in_commands.get_ready_commands(), []);
 	}
@@ -258,7 +258,7 @@ mod tests {
 
 	fn assert(frame_id: FrameId, in_commands: &mut InCommandsCollector, commands: &[CommandWithChannel], expect: &[CommandWithChannel]) {
 		let frame = InFrame::new(frame_id, Default::default(), commands.to_vec());
-		in_commands.collect(frame);
+		in_commands.collect(&frame);
 		assert_eq!(in_commands.get_ready_commands(), expect);
 	}
 	fn create_test_command(channel: Channel, content: i64) -> CommandWithChannel {

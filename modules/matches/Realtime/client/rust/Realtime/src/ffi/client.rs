@@ -112,6 +112,7 @@ pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistic
 }
 
 #[no_mangle]
+#[allow(clippy::cast_possible_truncation)]
 pub extern "C" fn get_last_error_msg(buffer: &mut BufferFFI) {
 	let msg = LAST_ERROR.lock().unwrap();
 	let msg = msg.as_bytes();
@@ -142,7 +143,7 @@ pub unsafe extern "C" fn create_client(
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
-	let server_address = CStr::from_ptr(addr).to_str().unwrap().to_string();
+	let server_address = CStr::from_ptr(addr).to_str().unwrap();
 	let mut user_private_key = [0; 32];
 	user_private_key.copy_from_slice(&user_private_key_buffer.buffer[0..32]);
 	do_create_client(
@@ -156,7 +157,7 @@ pub unsafe extern "C" fn create_client(
 }
 
 pub fn do_create_client(
-	server_address: String,
+	server_address: &str,
 	member_id: RoomMemberId,
 	room_id: RoomId,
 	user_private_key: &MemberPrivateKey,

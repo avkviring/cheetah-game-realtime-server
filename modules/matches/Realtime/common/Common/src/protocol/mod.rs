@@ -59,7 +59,8 @@ pub struct Protocol {
 }
 
 impl Protocol {
-	pub fn new(now: &Instant, start_application_time: &Instant) -> Self {
+	#[must_use]
+	pub fn new(now: Instant, start_application_time: Instant) -> Self {
 		Self {
 			next_frame_id: 1,
 			disconnect_by_timeout: DisconnectByTimeout::new(now),
@@ -78,15 +79,15 @@ impl Protocol {
 	///
 	/// Обработка входящего фрейма
 	///
-	pub fn on_frame_received(&mut self, frame: InFrame, now: &Instant) {
+	pub fn on_frame_received(&mut self, frame: &InFrame, now: Instant) {
 		self.in_frame_counter += 1;
 		self.disconnect_by_timeout.on_frame_received(now);
-		self.retransmitter.on_frame_received(&frame, now);
-		if let Ok(replayed) = self.replay_protection.set_and_check(&frame) {
+		self.retransmitter.on_frame_received(frame, now);
+		if let Ok(replayed) = self.replay_protection.set_and_check(frame) {
 			if !replayed {
-				self.disconnect_by_command.on_frame_received(&frame);
-				self.ack_sender.on_frame_received(&frame, now);
-				self.rtt.on_frame_received(&frame, now);
+				self.disconnect_by_command.on_frame_received(frame);
+				self.ack_sender.on_frame_received(frame, now);
+				self.rtt.on_frame_received(frame, now);
 				self.in_commands_collector.collect(frame);
 			}
 		}
@@ -95,11 +96,11 @@ impl Protocol {
 	///
 	/// Создание фрейма для отправки
 	///
-	pub fn build_next_frame(&mut self, now: &Instant) -> Option<OutFrame> {
+	pub fn build_next_frame(&mut self, now: Instant) -> Option<OutFrame> {
 		match self.get_next_retransmit_frame(now) {
 			None => {}
 			Some(frame) => {
-				return Option::Some(frame);
+				return Some(frame);
 			}
 		}
 
@@ -118,16 +119,17 @@ impl Protocol {
 			self.rtt.build_frame(&mut frame, now);
 			self.keep_alive.build_frame(&mut frame, now);
 			self.retransmitter.build_frame(&frame, now);
-			Option::Some(frame)
+			Some(frame)
 		} else {
-			Option::None
+			None
 		}
 	}
 
 	///
 	/// Разорвана ли связь?
 	///
-	pub fn is_disconnected(&self, now: &Instant) -> Option<DisconnectedReason> {
+	#[must_use]
+	pub fn is_disconnected(&self, now: Instant) -> Option<DisconnectedReason> {
 		if self.retransmitter.disconnected(now) {
 			Some(DisconnectedReason::ByRetryLimit)
 		} else if self.disconnect_by_timeout.disconnected(now) {
@@ -142,17 +144,18 @@ impl Protocol {
 	///
 	/// Установлено ли соединения?
 	///
-	pub fn is_connected(&self, now: &Instant) -> bool {
+	#[must_use]
+	pub fn is_connected(&self, now: Instant) -> bool {
 		self.in_frame_counter > 0 && self.is_disconnected(now).is_none()
 	}
 
-	pub fn get_next_retransmit_frame(&mut self, now: &Instant) -> Option<OutFrame> {
+	pub fn get_next_retransmit_frame(&mut self, now: Instant) -> Option<OutFrame> {
 		let next_frame_id = self.next_frame_id + 1;
 		match self.retransmitter.get_retransmit_frame(now, next_frame_id) {
-			None => Option::None,
+			None => None,
 			Some(frame) => {
 				self.next_frame_id = next_frame_id;
-				Option::Some(frame)
+				Some(frame)
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 pub type GameObjectTemplateId = u16;
 ///
-/// Максимальное количество FieldId в игровом объекте (для каждого типа данных)
+/// Максимальное количество `FieldId` в игровом объекте (для каждого типа данных)
 ///
 pub const MAX_FIELDS_IN_OBJECT: usize = 255;
 

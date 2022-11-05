@@ -59,7 +59,7 @@ mod tests {
 
 		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_a);
 		object_a_1.created = true;
-		let object_a_1_id = object_a_1.id.clone();
+		let object_a_1_id = object_a_1.id;
 
 		// не созданный объект - не должен загрузиться
 		room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_a);

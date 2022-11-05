@@ -57,7 +57,7 @@ impl TracerCollector {
 				event.metadata().file().unwrap_or(""),
 				event.metadata().line().unwrap_or(0)
 			);
-			self.items.push_back(Trace { level, message })
+			self.items.push_back(Trace { level, message });
 		}
 	}
 }
@@ -142,7 +142,7 @@ mod tests {
 		let lock = LOCK.lock();
 		{
 			let collector = &mut TRACER_COLLECTOR.lock().unwrap();
-			collector.set_log_level(log_level)
+			collector.set_log_level(log_level);
 		}
 		lock
 	}
