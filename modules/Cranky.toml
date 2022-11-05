@@ -1,0 +1,32 @@
+# https://github.com/ericseppanen/cargo-cranky
+# cargo install cargo-cranky && cargo cranky
+
+deny = [
+]
+
+warn = [
+    "clippy::all",
+    "clippy::pedantic",
+    #    "clippy::restriction",
+
+    "warnings",
+    #    "future-incompatible",
+    #    "nonstandard-style",
+    "rust-2018-compatibility",
+    "rust-2018-idioms",
+    "rust-2021-compatibility",
+    "unused",
+]
+
+allow = [
+    "clippy::missing_errors_doc",
+    "clippy::return_self_not_must_use", # tonic
+    "clippy::match_same_arms",
+    "clippy::too_many_lines",
+    "clippy::module_name_repetitions",
+    "clippy::wildcard_imports", # tonic::codegen::*
+    "clippy::default_trait_access", # todo many no auto fix
+    "clippy::missing_panics_doc", # todo check where unwrap can be changed to result
+    "clippy::similar_names", # tonic
+    "clippy::implicit_hasher", # todo
+]

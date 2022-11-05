@@ -38,6 +38,7 @@ pub enum C2SCommand {
 }
 
 impl C2SCommand {
+	#[must_use]
 	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
 			C2SCommand::CreateGameObject(_) => None,
@@ -56,6 +57,7 @@ impl C2SCommand {
 			C2SCommand::Forwarded(command) => command.c2s.get_field_id(),
 		}
 	}
+	#[must_use]
 	pub fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
 			C2SCommand::CreateGameObject(command) => Some(command.object_id),
@@ -75,6 +77,7 @@ impl C2SCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_field_type(&self) -> Option<FieldType> {
 		match self {
 			C2SCommand::CreateGameObject(_) => None,
@@ -94,6 +97,7 @@ impl C2SCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_type_id(&self) -> CommandTypeId {
 		match self {
 			C2SCommand::CreateGameObject(_) => CommandTypeId::CreateGameObject,
@@ -117,6 +121,7 @@ impl C2SCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_field(&self) -> Option<Field> {
 		if let (Some(id), Some(field_type)) = (self.get_field_id(), self.get_field_type()) {
 			Some(Field { id, field_type })
@@ -144,6 +149,7 @@ impl C2SCommand {
 		}
 	}
 
+	#[must_use]
 	pub fn get_trace_string(&self) -> String {
 		match self {
 			C2SCommand::CreateGameObject(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
@@ -168,12 +174,12 @@ impl C2SCommand {
 	}
 
 	pub(crate) fn decode(
-		command_type_id: &CommandTypeId,
+		command_type_id: CommandTypeId,
 		object_id: Result<GameObjectId, CommandContextError>,
 		field_id: Result<FieldId, CommandContextError>,
 		input: &mut Cursor<&[u8]>,
 	) -> Result<C2SCommand, CommandDecodeError> {
-		Ok(match *command_type_id {
+		Ok(match command_type_id {
 			CommandTypeId::AttachToRoom => C2SCommand::AttachToRoom,
 			CommandTypeId::DetachFromRoom => C2SCommand::DetachFromRoom,
 			CommandTypeId::CreatedGameObject => C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::decode(object_id?, input)?),
@@ -219,18 +225,18 @@ mod tests {
 
 	#[test]
 	fn should_decode_encode_attach() {
-		check(C2SCommand::AttachToRoom, CommandTypeId::AttachToRoom, None, None);
+		check(&C2SCommand::AttachToRoom, CommandTypeId::AttachToRoom, None, None);
 	}
 	#[test]
 	fn should_decode_encode_detach() {
-		check(C2SCommand::DetachFromRoom, CommandTypeId::DetachFromRoom, None, None);
+		check(&C2SCommand::DetachFromRoom, CommandTypeId::DetachFromRoom, None, None);
 	}
 
 	#[test]
 	fn should_decode_encode_create_member_object() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			C2SCommand::CreateGameObject(CreateGameObjectCommand {
+			&C2SCommand::CreateGameObject(CreateGameObjectCommand {
 				object_id,
 				template: 3,
 				access_groups: AccessGroups(5),
@@ -245,7 +251,7 @@ mod tests {
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {
+			&C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {
 				object_id,
 				room_owner: false,
 				singleton_key: None,
@@ -261,7 +267,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetField(SetFieldCommand {
+			&C2SCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
 				value: 100.into(),
@@ -277,7 +283,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::IncrementLongValue(IncrementLongC2SCommand {
+			&C2SCommand::IncrementLongValue(IncrementLongC2SCommand {
 				object_id,
 				field_id,
 				increment: 100,
@@ -293,7 +299,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::CompareAndSetLong(CompareAndSetLongCommand {
+			&C2SCommand::CompareAndSetLong(CompareAndSetLongCommand {
 				object_id,
 				field_id,
 				current: 100,
@@ -311,7 +317,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand {
+			&C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand {
 				object_id,
 				field_id,
 				current: vec![100].as_slice().into(),
@@ -329,7 +335,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetField(SetFieldCommand {
+			&C2SCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
 				value: 3.15.into(),
@@ -345,7 +351,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::IncrementDouble(IncrementDoubleC2SCommand {
+			&C2SCommand::IncrementDouble(IncrementDoubleC2SCommand {
 				object_id,
 				field_id,
 				increment: 3.15,
@@ -361,7 +367,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::SetField(SetFieldCommand {
+			&C2SCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
 				value: vec![1, 2, 3, 4].into(),
@@ -377,7 +383,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::Event(EventCommand {
+			&C2SCommand::Event(EventCommand {
 				object_id,
 				field_id,
 				event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
@@ -393,7 +399,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::TargetEvent(TargetEventCommand {
+			&C2SCommand::TargetEvent(TargetEventCommand {
 				target: 10,
 				event: EventCommand {
 					object_id,
@@ -411,7 +417,7 @@ mod tests {
 	fn should_decode_encode_delete() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			C2SCommand::Delete(DeleteGameObjectCommand { object_id }),
+			&C2SCommand::Delete(DeleteGameObjectCommand { object_id }),
 			CommandTypeId::Delete,
 			Some(object_id),
 			None,
@@ -423,7 +429,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			C2SCommand::Forwarded(Box::new(ForwardedCommand {
+			&C2SCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: 123,
 				c2s: C2SCommand::TargetEvent(TargetEventCommand {
 					target: 10,
@@ -440,7 +446,7 @@ mod tests {
 		);
 	}
 
-	fn check(expected: C2SCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {
+	fn check(expected: &C2SCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {
 		let object_id = object_id.ok_or(CommandContextError::ContextNotContainsObjectId);
 		let field_id = field_id.ok_or(CommandContextError::ContextNotContainsFieldId);
 		let mut buffer = [0_u8; 100];
@@ -448,8 +454,8 @@ mod tests {
 		expected.encode(&mut cursor).unwrap();
 		let write_position = cursor.position();
 		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
-		let actual = C2SCommand::decode(&command_type_id, object_id, field_id, &mut read_cursor).unwrap();
+		let actual = C2SCommand::decode(command_type_id, object_id, field_id, &mut read_cursor).unwrap();
 		assert_eq!(write_position, read_cursor.position());
-		assert_eq!(expected, actual);
+		assert_eq!(expected, &actual);
 	}
 }

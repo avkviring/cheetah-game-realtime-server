@@ -37,6 +37,7 @@ pub enum GameObjectError {
 }
 
 impl GameObject {
+	#[must_use]
 	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, created: bool) -> Self {
 		Self {
 			id,
@@ -56,15 +57,16 @@ impl GameObject {
 		&self.fields
 	}
 
-	pub fn get_field<'a, T: 'a>(&'a self, field_id: FieldId) -> Option<&'a T>
+	pub fn get_field<T>(&self, field_id: FieldId) -> Option<&T>
 	where
 		FieldValue: AsRef<T>,
 		T: ToFieldType,
 	{
 		let field_type = T::to_field_type();
-		self.fields.get(&(field_id, field_type)).map(|v| v.as_ref())
+		self.fields.get(&(field_id, field_type)).map(AsRef::as_ref)
 	}
 
+	#[must_use]
 	pub fn get_field_wrapped(&self, field_id: FieldId, field_type: FieldType) -> Option<&FieldValue> {
 		self.fields.get(&(field_id, field_type))
 	}
@@ -83,13 +85,15 @@ impl GameObject {
 		self.fields
 			.insert((field_id, field_type), value)
 			.map(|_| ())
-			.map_err(|_| GameObjectError::FieldCountOverflow(self.id.to_owned(), self.template_id))
+			.map_err(|_| GameObjectError::FieldCountOverflow(self.id, self.template_id))
 	}
 
+	#[must_use]
 	pub fn get_compare_and_set_owners(&self) -> &heapless::FnvIndexMap<FieldId, RoomMemberId, MAX_FIELD_COUNT> {
 		&self.compare_and_set_owners
 	}
 
+	#[must_use]
 	pub fn get_compare_and_set_owner(&self, field_id: &FieldId) -> Option<&RoomMemberId> {
 		self.compare_and_set_owners.get(field_id)
 	}
@@ -109,7 +113,7 @@ impl GameObject {
 
 	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
 		commands.push(S2CCommandWithFieldInfo {
-			field: Option::None,
+			field: None,
 			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id,
 				template: self.template_id,
@@ -131,8 +135,8 @@ impl GameObject {
 	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
 		for (&(field_id, field_type), v) in self.fields() {
 			let command = S2CCommandWithFieldInfo {
-				field: Option::Some(Field { id: field_id, field_type }),
-				command: S2CCommand::new_set_command(v.to_owned(), self.id.to_owned(), field_id),
+				field: Some(Field { id: field_id, field_type }),
+				command: S2CCommand::new_set_command(v.clone(), self.id, field_id),
 			};
 			commands.push(command)?;
 		}
@@ -163,7 +167,7 @@ mod tests {
 	#[test]
 	pub fn should_collect_command() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id.clone(), 55, AccessGroups(63), true);
+		let mut object = GameObject::new(id, 55, AccessGroups(63), true);
 		object.set_field(1, 100).unwrap();
 		object.set_field(2, 200.200).unwrap();
 		object
@@ -200,7 +204,7 @@ mod tests {
 				command: S2CCommand::SetField(c),
 			} = &commands[2]
 			{
-				let v: f64 = c.to_owned().value.into();
+				let v: f64 = c.clone().value.into();
 				let values_close = (v - 200.200).abs() < 0.0001;
 				c.object_id == id && c.field_id == 2 && values_close
 			} else {
@@ -231,7 +235,7 @@ mod tests {
 	#[test]
 	pub fn should_collect_command_for_not_created_object() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id.clone(), 0, Default::default(), false);
+		let mut object = GameObject::new(id, 0, Default::default(), false);
 		object.set_field(1, 100).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
@@ -256,6 +260,6 @@ mod tests {
 		object.set_field(1, [4, 5, 6, 7].as_ref()).unwrap();
 
 		let s: &Vec<u8> = object.get_field(1).unwrap();
-		assert_eq!(*s, [4, 5, 6, 7])
+		assert_eq!(*s, [4, 5, 6, 7]);
 	}
 }

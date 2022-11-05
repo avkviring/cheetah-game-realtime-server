@@ -26,60 +26,64 @@ mod tests {
 
 	#[test]
 	fn test_c2s() {
-		let mut commands = Vec::new();
-		commands.push(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
-				object_id: Default::default(),
-				field_id: 10,
-				value: 1.5.into(),
-			})),
-		});
-		commands.push(CommandWithChannel {
-			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
-				object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
-				field_id: 15,
-				value: 16.into(),
-			})),
-		});
-		check(true, commands);
+		let commands = vec![
+			CommandWithChannel {
+				channel: Channel::ReliableUnordered,
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+					object_id: Default::default(),
+					field_id: 10,
+					value: 1.5.into(),
+				})),
+			},
+			CommandWithChannel {
+				channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+					object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
+					field_id: 15,
+					value: 16.into(),
+				})),
+			},
+		];
+
+		check(true, &commands);
 	}
 
 	#[test]
 	fn test_s2s() {
-		let mut commands = Vec::new();
-		commands.push(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-				command: S2CCommand::SetField(SetFieldCommand {
-					object_id: Default::default(),
-					field_id: 10,
-					value: 1.5.into(),
+		let commands = vec![
+			CommandWithChannel {
+				channel: Channel::ReliableUnordered,
+				both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+					command: S2CCommand::SetField(SetFieldCommand {
+						object_id: Default::default(),
+						field_id: 10,
+						value: 1.5.into(),
+					}),
+					creator: 55,
 				}),
-				creator: 55,
-			}),
-		});
-		commands.push(CommandWithChannel {
-			channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-			both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-				command: S2CCommand::SetField(SetFieldCommand {
-					object_id: Default::default(),
-					field_id: 5,
-					value: 1.into(),
+			},
+			CommandWithChannel {
+				channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
+				both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+					command: S2CCommand::SetField(SetFieldCommand {
+						object_id: Default::default(),
+						field_id: 5,
+						value: 1.into(),
+					}),
+					creator: 57,
 				}),
-				creator: 57,
-			}),
-		});
-		check(false, commands);
+			},
+		];
+		check(false, &commands);
 	}
 
-	fn check(from_client: bool, commands: Vec<CommandWithChannel>) {
+	#[allow(clippy::cast_possible_truncation)]
+	fn check(from_client: bool, commands: &[CommandWithChannel]) {
 		let mut buffer = [0_u8; 64];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let mut context = CommandContext::default();
 		cursor.write_u8(commands.len() as u8).unwrap();
-		for command in &commands {
+		for command in commands {
 			encode_command(&mut context, command, &mut cursor).unwrap();
 		}
 		let write_position = cursor.position();

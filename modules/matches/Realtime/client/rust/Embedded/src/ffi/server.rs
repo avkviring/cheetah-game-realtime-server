@@ -58,7 +58,7 @@ mod test {
 	pub fn should_run_new_server() {
 		let mut result = EmbeddedServerDescription::default();
 		let success = run_new_server(&mut result, on_error);
-		assert!(success)
+		assert!(success);
 	}
 
 	#[test]
@@ -67,7 +67,7 @@ mod test {
 		let success = run_new_server(&mut result, on_error);
 		assert!(success);
 		assert!(destroy_server(result.id));
-		assert!(!destroy_server(result.id))
+		assert!(!destroy_server(result.id));
 	}
 
 	pub extern "C" fn on_error(message: *const u16) {

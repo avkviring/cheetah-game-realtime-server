@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.set_game_address("0.0.0.0:5555".parse().unwrap());
 
 	if std::env::var("ENABLE_AGONES").is_ok() {
-		builder = builder.enable_agones()
+		builder = builder.enable_agones();
 	}
 
 	let server = builder.build().await.unwrap();

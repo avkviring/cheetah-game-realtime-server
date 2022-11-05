@@ -71,14 +71,14 @@ impl RoomsServer {
 			if let Some(time_offset) = self.time_offset {
 				now = now.add(time_offset);
 			}
-			self.network_layer.cycle(&mut self.rooms, &now);
-			self.execute_management_tasks(&now);
+			self.network_layer.cycle(&mut self.rooms, now);
+			self.execute_management_tasks(now);
 			self.measurers.borrow_mut().on_server_cycle(now.elapsed());
 			thread::sleep(Duration::from_millis(1));
 		}
 	}
 
-	fn execute_management_tasks(&mut self, now: &Instant) {
+	fn execute_management_tasks(&mut self, now: Instant) {
 		while let Ok(request) = self.receiver.try_recv() {
 			match request {
 				ManagementTask::CreateRoom(template, sender) => {
@@ -134,7 +134,7 @@ impl RoomsServer {
 						}
 					}
 				},
-				ManagementTask::GetRooms(sender) => match sender.send(self.rooms.room_by_id.keys().cloned().collect()) {
+				ManagementTask::GetRooms(sender) => match sender.send(self.rooms.room_by_id.keys().copied().collect()) {
 					Ok(_) => {}
 					Err(e) => {
 						tracing::error!("[Request::GetRooms] error send response {:?}", e);

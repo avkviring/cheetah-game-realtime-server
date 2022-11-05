@@ -38,13 +38,13 @@ fn test() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	assert!(matches!(CREATE_OBJECT_ID.lock().unwrap().as_ref(),Option::Some(id) if *id==object_id));
+	assert!(matches!(CREATE_OBJECT_ID.lock().unwrap().as_ref(),Some(id) if *id==object_id));
 	assert!(matches!(
-		STRUCTURE.lock().unwrap().as_ref(), Option::Some((field_id, buffer))
+		STRUCTURE.lock().unwrap().as_ref(), Some((field_id, buffer))
 			if *field_id == structure_field_id && *buffer == structure_buffer
 	));
-	assert!(matches!(CREATED_OBJECT_ID.lock().unwrap().as_ref(), Option::Some(id) if *id==object_id));
-	assert!(matches!(DELETED_OBJECT_ID.lock().unwrap().as_ref(), Option::Some(id) if *id==object_id));
+	assert!(matches!(CREATED_OBJECT_ID.lock().unwrap().as_ref(), Some(id) if *id==object_id));
+	assert!(matches!(DELETED_OBJECT_ID.lock().unwrap().as_ref(), Some(id) if *id==object_id));
 }
 
 lazy_static! {

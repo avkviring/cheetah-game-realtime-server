@@ -41,9 +41,11 @@ pub enum RuleCommandDirection {
 }
 
 impl Filter {
+	#[must_use]
 	pub fn new(rule: Rule) -> Self {
 		Self { rule }
 	}
+	#[must_use]
 	pub fn filter(&self, command: &TracedCommand) -> bool {
 		self.rule.filter(command)
 	}
@@ -79,6 +81,7 @@ impl TracedBothDirectionCommand {
 }
 
 impl Rule {
+	#[must_use]
 	pub fn filter(&self, command: &TracedCommand) -> bool {
 		match self {
 			Rule::Direction(direction) => *direction == command.network_command.get_direction(),
@@ -131,10 +134,11 @@ mod tests {
 	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedBothDirectionCommand, TracedCommand};
 
 	impl TracedCommand {
+		#[must_use]
 		pub fn c2s() -> Self {
 			Self {
 				time: 0.0,
-				template: Option::None,
+				template: None,
 				user: 0,
 				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
@@ -144,10 +148,11 @@ mod tests {
 			}
 		}
 
+		#[must_use]
 		pub fn s2c() -> Self {
 			Self {
 				time: 0.0,
-				template: Option::None,
+				template: None,
 				user: 0,
 				network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
 					object_id: Default::default(),
@@ -157,22 +162,25 @@ mod tests {
 			}
 		}
 
+		#[must_use]
 		pub fn with_user(mut self, user_id: RoomMemberId) -> Self {
 			self.user = user_id;
 			self
 		}
 
+		#[must_use]
 		pub fn with_template(mut self, template_id: GameObjectTemplateId) -> Self {
 			self.template = Some(template_id);
 			self
 		}
 
+		#[must_use]
 		pub fn with_field_id(mut self, field_id: FieldId) -> Self {
 			match &self.network_command {
 				TracedBothDirectionCommand::C2S(command) => {
 					if let C2SCommand::Event(mut event_command) = command.clone() {
 						event_command.field_id = field_id;
-						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
+						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command));
 					}
 				}
 				TracedBothDirectionCommand::S2C(command) => {
@@ -185,12 +193,13 @@ mod tests {
 			self
 		}
 
+		#[must_use]
 		pub fn with_object_id(mut self, object_id: GameObjectId) -> Self {
 			match &self.network_command {
 				TracedBothDirectionCommand::C2S(command) => {
 					if let C2SCommand::Event(mut event_command) = command.clone() {
 						event_command.object_id = object_id;
-						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command))
+						self.network_command = TracedBothDirectionCommand::C2S(C2SCommand::Event(event_command));
 					}
 				}
 				TracedBothDirectionCommand::S2C(command) => {

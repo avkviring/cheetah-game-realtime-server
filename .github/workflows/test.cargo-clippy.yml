@@ -21,7 +21,8 @@ jobs:
           key: rust-clippy-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-clippy-v1-
+      - run: cargo install cargo-cranky
       - name: Lint cargo clippy
-        run: cd modules/ && cargo clippy -- -D warnings
+        run: cd modules/ && cargo cranky --workspace --all-targets --all-features -- -D warnings
 
 

@@ -13,8 +13,8 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementLongC2SCommand {
 	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let action = |object: &mut GameObject| {
-			let value = match object.get_field::<i64>(self.field_id) {
-				Some(value) => match (*value).checked_add(self.increment) {
+			let value = if let Some(value) = object.get_field::<i64>(self.field_id) {
+				match (*value).checked_add(self.increment) {
 					None => {
 						tracing::error!("[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})", value, self.increment);
 						*value
@@ -23,12 +23,12 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 						object.set_field(self.field_id, result)?;
 						result
 					}
-				},
-				None => {
-					object.set_field(self.field_id, self.increment)?;
-					self.increment
 				}
+			} else {
+				object.set_field(self.field_id, self.increment)?;
+				self.increment
 			};
+
 			Ok(Some(S2CCommand::SetField(SetFieldCommand {
 				object_id: self.object_id,
 				field_id: self.field_id,
@@ -43,7 +43,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 			},
 			user_id,
 			Permission::Rw,
-			Option::None,
+			None,
 			action,
 		)
 	}
@@ -55,7 +55,7 @@ impl ServerCommandExecutor for SetFieldCommand {
 		let object_id = self.object_id;
 
 		let action = |object: &mut GameObject| {
-			object.set_field_wrapped(self.field_id, self.value.to_owned())?;
+			object.set_field_wrapped(self.field_id, self.value.clone())?;
 			Ok(Some(S2CCommand::SetField(self.clone())))
 		};
 
@@ -67,7 +67,7 @@ impl ServerCommandExecutor for SetFieldCommand {
 			},
 			user_id,
 			Permission::Rw,
-			Option::None,
+			None,
 			action,
 		)
 	}

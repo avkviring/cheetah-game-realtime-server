@@ -20,19 +20,19 @@ impl From<&GameObject> for admin::DumpObject {
 	fn from(source: &GameObject) -> Self {
 		Self {
 			owner_user_id: match &source.id.owner {
-				GameObjectOwner::Room => Option::None,
-				GameObjectOwner::Member(id) => Option::Some(*id as u32),
+				GameObjectOwner::Room => None,
+				GameObjectOwner::Member(id) => Some(u32::from(*id)),
 			},
 			id: source.id.id,
-			template: source.template_id as u32,
+			template: u32::from(source.template_id),
 			groups: source.access_groups.0,
 			created: source.created,
 			fields: source
 				.fields()
 				.iter()
 				.map(|((id, _), v)| GameObjectField {
-					id: *id as u32,
-					value: Some(v.to_owned().into()),
+					id: u32::from(*id),
+					value: Some(v.clone().into()),
 				})
 				.collect(),
 			compare_and_set_owners: from(source.get_compare_and_set_owners()),
@@ -41,13 +41,13 @@ impl From<&GameObject> for admin::DumpObject {
 }
 
 fn from<IN: Clone, OUT: From<IN>, const N: usize>(source: &heapless::FnvIndexMap<FieldId, IN, N>) -> HashMap<u32, OUT> {
-	source.iter().map(|(k, v)| (*k as u32, OUT::from(v.clone()))).collect()
+	source.iter().map(|(k, v)| (u32::from(*k), OUT::from(v.clone()))).collect()
 }
 
 impl From<&Member> for admin::DumpUser {
 	fn from(user: &Member) -> Self {
 		Self {
-			id: user.id as u32,
+			id: u32::from(user.id),
 			groups: user.template.groups.0,
 			attached: user.attached,
 			compare_and_set_cleaners: user
@@ -57,10 +57,10 @@ impl From<&Member> for admin::DumpUser {
 					game_object_id: object_id.id,
 					game_object_owner_user: match object_id.owner {
 						GameObjectOwner::Room => u32::MAX,
-						GameObjectOwner::Member(id) => id as u32,
+						GameObjectOwner::Member(id) => u32::from(id),
 					},
-					field_id: *field_id as u32,
-					value: Some(value.to_owned().into()),
+					field_id: u32::from(*field_id),
+					value: Some(value.clone().into()),
 				})
 				.collect(),
 		}

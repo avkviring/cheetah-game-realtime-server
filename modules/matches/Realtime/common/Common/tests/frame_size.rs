@@ -10,7 +10,7 @@ use cheetah_matches_realtime_common::protocol::frame::output::OutFrame;
 // msgpack - raw(12), compressed(5), chiper(30)
 // self - raw(7), compressed(4), chiper(25)
 pub fn empty_frame() {
-	let frame = OutFrame::new(100500);
+	let frame = OutFrame::new(100_500);
 	let mut buffer = [0; 2048];
 	let private_key = [0; 32];
 	let key = private_key.as_slice().into();
@@ -23,7 +23,7 @@ pub fn empty_frame() {
 // msgpack - raw(61), compressed(40), chiper(66)
 // self - raw(21), compressed(18), chiper(39)
 pub fn create_object_frame() {
-	let mut frame = OutFrame::new(100500);
+	let mut frame = OutFrame::new(100_500);
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
 		both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {

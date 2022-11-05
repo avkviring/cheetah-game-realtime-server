@@ -5,6 +5,7 @@ use criterion::{criterion_group, criterion_main, Criterion, Throughput};
 use cheetah_matches_realtime_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_realtime_common::protocol::frame::input::InFrame;
 use cheetah_matches_realtime_common::protocol::frame::output::OutFrame;
+use cheetah_matches_realtime_common::room::MemberPrivateKey;
 
 ///
 /// msgpack - 1.5024 Melem/s
@@ -15,11 +16,11 @@ fn frame_encode(c: &mut Criterion) {
 	group.throughput(Throughput::Elements(1));
 	group.bench_function("frame_encode", |b| {
 		b.iter(|| {
-			let frame = OutFrame::new(100500);
+			let frame = OutFrame::new(100_500);
 			let mut buffer = [0; 2048];
-			let private_key = [0; 32];
+			let private_key = MemberPrivateKey([0; 32]);
 			frame.encode(&mut Cipher::new(&private_key), &mut buffer).unwrap();
-		})
+		});
 	});
 	group.finish();
 }
@@ -29,9 +30,9 @@ fn frame_encode(c: &mut Criterion) {
 /// self - 1.5 Melem/s
 ///
 fn frame_decode(c: &mut Criterion) {
-	let frame = OutFrame::new(100500);
+	let frame = OutFrame::new(100_500);
 	let mut buffer = [0; 2048];
-	let private_key = [0; 32];
+	let private_key = MemberPrivateKey([0; 32]);
 	let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer).unwrap();
 
 	let mut group = c.benchmark_group("throughput-decode");
@@ -41,7 +42,7 @@ fn frame_decode(c: &mut Criterion) {
 			let mut cursor = Cursor::new(&buffer[0..size]);
 			let (frame_id, _) = InFrame::decode_headers(&mut cursor).unwrap();
 			InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(&private_key)).unwrap();
-		})
+		});
 	});
 	group.finish();
 }

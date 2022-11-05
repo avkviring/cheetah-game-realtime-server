@@ -16,6 +16,7 @@ pub struct DumpGrpcService {
 }
 
 impl DumpGrpcService {
+	#[must_use]
 	pub fn new(manager: Arc<Mutex<RoomsServerManager>>) -> Self {
 		Self { manager }
 	}

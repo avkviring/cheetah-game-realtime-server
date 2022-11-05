@@ -229,15 +229,16 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 
 impl From<&GameObjectIdFFI> for GameObjectId {
 	fn from(from: &GameObjectIdFFI) -> Self {
-		match from.room_owner {
-			true => Self {
+		if from.room_owner {
+			Self {
 				owner: GameObjectOwner::Room,
 				id: from.id,
-			},
-			false => Self {
+			}
+		} else {
+			Self {
 				owner: GameObjectOwner::Member(from.user_id),
 				id: from.id,
-			},
+			}
 		}
 	}
 }
@@ -263,6 +264,7 @@ impl Default for BufferFFI {
 }
 
 impl From<Vec<u8>> for BufferFFI {
+	#[allow(clippy::cast_possible_truncation)]
 	fn from(source: Vec<u8>) -> Self {
 		let mut buffer = BufferFFI {
 			len: source.len() as u8,
@@ -280,6 +282,7 @@ impl From<&BufferFFI> for BinaryValue {
 }
 
 impl From<&BinaryValue> for BufferFFI {
+	#[allow(clippy::cast_possible_truncation)]
 	fn from(source: &BinaryValue) -> Self {
 		let mut result = BufferFFI {
 			len: source.len() as u8,
@@ -450,7 +453,7 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::IncrementLong,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Long,
 					long_value_new: 1,
 					..Default::default()
@@ -471,7 +474,7 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::CompareAndSetLong,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Long,
 					long_value_old: 1,
 					long_value_new: 2,
@@ -492,7 +495,7 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::SetLong,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Long,
 					long_value_new: 1,
 					..Default::default()
@@ -511,7 +514,7 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::SetDouble,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Double,
 					float_value_new: 1.2,
 					..Default::default()
@@ -523,14 +526,14 @@ mod tests {
 					c2s: C2SCommand::SetField(SetFieldCommand {
 						object_id,
 						field_id,
-						value: FieldValue::Structure(b1.clone().0.to_vec()),
+						value: FieldValue::Structure(b1.0.to_vec()),
 					}),
 				},
 				ForwardedCommandFFI {
 					creator,
 					command_type_id: CommandTypeId::SetStructure,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Structure,
 					binary_value_new: b1.clone().into(),
 					..Default::default()
@@ -549,7 +552,7 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::IncrementDouble,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Double,
 					float_value_new: 1.2,
 					..Default::default()
@@ -570,11 +573,11 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::CompareAndSetStructure,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Structure,
 					binary_value_old: b1.clone().into(),
-					binary_value_new: b2.clone().into(),
-					binary_value_reset: b3.clone().into(),
+					binary_value_new: b2.into(),
+					binary_value_reset: b3.into(),
 					..Default::default()
 				},
 			),
@@ -591,7 +594,7 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::Event,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Event,
 					binary_value_new: b1.clone().into(),
 					..Default::default()
@@ -613,10 +616,10 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::TargetEvent,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Event,
 					target,
-					binary_value_new: b1.clone().into(),
+					binary_value_new: b1.into(),
 					..Default::default()
 				},
 			),
@@ -645,7 +648,7 @@ mod tests {
 					creator,
 					command_type_id: CommandTypeId::DeleteField,
 					object_id: object_id.into(),
-					field_id: field_id.into(),
+					field_id,
 					field_type: FieldTypeFFI::Structure,
 					..Default::default()
 				},
@@ -653,7 +656,7 @@ mod tests {
 		];
 
 		for (from, want) in tests {
-			assert_eq!(want, from.into())
+			assert_eq!(want, from.into());
 		}
 	}
 
@@ -678,6 +681,6 @@ mod tests {
 		buffer[2] = 3;
 		buffer[3] = 4;
 		let ffi = BufferFFI { len: 4, pos: 0, buffer };
-		assert_eq!(ffi, BufferFFI::from(b.clone()))
+		assert_eq!(ffi, BufferFFI::from(b));
 	}
 }

@@ -72,7 +72,7 @@ impl Rooms {
 	where
 		F: FnMut(&RoomId, &RoomMemberId, &[CommandWithChannelType]),
 	{
-		for (room_id, room) in self.room_by_id.iter_mut() {
+		for (room_id, room) in &mut self.room_by_id {
 			let template = MeasureStringId::from(room.template_name.as_str());
 			room.collect_out_commands(|user_id, commands| {
 				collector(room_id, user_id, commands);
@@ -127,7 +127,7 @@ mod tests {
 		let room = rooms.take_room(&room_id);
 		assert!(room.is_ok(), "want room when take by room_id");
 		assert_eq!(room_id, room.unwrap().id, "want taken room_id to match with room_id parameter");
-		assert!(!rooms.room_by_id.contains_key(&room_id), "want room_id to be removed from rooms")
+		assert!(!rooms.room_by_id.contains_key(&room_id), "want room_id to be removed from rooms");
 	}
 
 	#[test]
@@ -136,6 +136,6 @@ mod tests {
 		let room_id = 123;
 		let room = rooms.take_room(&room_id);
 		assert!(room.is_err(), "want error when take non existing room");
-		assert_eq!(room_id, room.err().unwrap().0, "want the same room_id in take_room parameter and error")
+		assert_eq!(room_id, room.err().unwrap().0, "want the same room_id in take_room parameter and error");
 	}
 }

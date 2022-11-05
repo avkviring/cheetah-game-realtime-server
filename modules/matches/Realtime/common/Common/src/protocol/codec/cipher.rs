@@ -17,6 +17,7 @@ pub struct Cipher<'a> {
 }
 
 impl<'a> Cipher<'a> {
+	#[must_use]
 	pub fn new(private_key: &'a MemberPrivateKey) -> Self {
 		Self { private_key }
 	}
@@ -76,7 +77,7 @@ mod tests {
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 
-		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Result::Err(_)));
+		assert!(matches!(cipher.decrypt(&mut buffer, &OTHER_AD, NONCE), Err(_)));
 	}
 
 	#[test]
@@ -87,6 +88,6 @@ mod tests {
 		buffer.extend_from_slice(&ORIGINAL).unwrap();
 		cipher.encrypt(&mut buffer, &AD, NONCE).unwrap();
 		buffer[0] = 0;
-		assert!(matches!(cipher.decrypt(&mut buffer, &AD, NONCE), Result::Err(_)));
+		assert!(matches!(cipher.decrypt(&mut buffer, &AD, NONCE), Err(_)));
 	}
 }

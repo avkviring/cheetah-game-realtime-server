@@ -23,6 +23,7 @@ const U48_MARKER: u8 = 254;
 const U64_MARKER: u8 = 255;
 
 impl VariableIntWriter for Cursor<&mut [u8]> {
+	#[allow(clippy::cast_possible_truncation)]
 	fn write_variable_u64(&mut self, value: u64) -> std::io::Result<()> {
 		if value < U8_MAX {
 			return self.write_u8(value as u8);
@@ -33,22 +34,22 @@ impl VariableIntWriter for Cursor<&mut [u8]> {
 			return self.write_u8((value - U8_MAX as u64) as u8);
 		};
 
-		if value < u16::MAX as _ {
+		if value < u64::from(u16::MAX) {
 			self.write_u8(U16_MARKER)?;
 			return self.write_u16::<BigEndian>(value as u16);
 		};
 
-		if value < (u16::MAX as u64) * (u8::MAX as u64) {
+		if value < u64::from(u16::MAX) * u64::from(u8::MAX) {
 			self.write_u8(U24_MARKER)?;
 			return self.write_u24::<BigEndian>(value as u32);
 		}
 
-		if value < u32::MAX as u64 {
+		if value < u64::from(u32::MAX) {
 			self.write_u8(U32_MARKER)?;
 			return self.write_u32::<BigEndian>(value as u32);
 		};
 
-		if value < (u32::MAX as u64) * (u8::MAX as u64) * (u8::MAX as u64) {
+		if value < u64::from(u32::MAX) * u64::from(u8::MAX) * u64::from(u8::MAX) {
 			self.write_u8(U48_MARKER)?;
 			return self.write_u48::<BigEndian>(value as u64);
 		};
@@ -57,22 +58,25 @@ impl VariableIntWriter for Cursor<&mut [u8]> {
 		self.write_u64::<BigEndian>(value)
 	}
 
+	#[allow(clippy::cast_possible_wrap)]
+	#[allow(clippy::cast_sign_loss)]
 	fn write_variable_i64(&mut self, value: i64) -> std::io::Result<()> {
 		let zigzag = if value < 0 { !(value as u64) * 2 + 1 } else { (value as u64) * 2 };
 		self.write_variable_u64(zigzag)
 	}
 }
 impl VariableIntReader for Cursor<&[u8]> {
+	#[allow(clippy::cast_possible_truncation)]
 	fn read_variable_u64(&mut self) -> std::io::Result<u64> {
 		let first = self.read_u8()?;
 		if first < U8_MAX as u8 {
-			return Ok(first as u64);
+			return Ok(u64::from(first));
 		};
 		Ok(match first {
-			U9_MARKER => U8_MAX + self.read_u8()? as u64,
-			U16_MARKER => self.read_u16::<BigEndian>()? as u64,
-			U24_MARKER => self.read_u24::<BigEndian>()? as u64,
-			U32_MARKER => self.read_u32::<BigEndian>()? as u64,
+			U9_MARKER => U8_MAX + u64::from(self.read_u8()?),
+			U16_MARKER => u64::from(self.read_u16::<BigEndian>()?),
+			U24_MARKER => u64::from(self.read_u24::<BigEndian>()?),
+			U32_MARKER => u64::from(self.read_u32::<BigEndian>()?),
 			U48_MARKER => self.read_u48::<BigEndian>()? as u64,
 			U64_MARKER => self.read_u64::<BigEndian>()?,
 			_ => {
@@ -84,6 +88,7 @@ impl VariableIntReader for Cursor<&[u8]> {
 		})
 	}
 
+	#[allow(clippy::cast_possible_wrap)]
 	fn read_variable_i64(&mut self) -> std::io::Result<i64> {
 		let unsigned = self.read_variable_u64()?;
 		Ok(if unsigned % 2 == 0 { unsigned / 2 } else { !(unsigned / 2) } as i64)
@@ -101,10 +106,10 @@ mod test {
 		check_u64(U8_MAX - 1, 1);
 		check_u64(U8_MAX, 2);
 		check_u64(U8_MAX as u64 + 255 - 1, 2);
-		check_u64((u16::MAX - 1) as u64, 3);
-		check_u64((u16::MAX as u64) * (u8::MAX as u64) - 1, 4);
-		check_u64((u32::MAX - 1) as u64, 5);
-		check_u64((u32::MAX as u64) * (u8::MAX as u64) - 1, 7);
+		check_u64(u64::from(u16::MAX - 1), 3);
+		check_u64(u64::from(u16::MAX) * u64::from(u8::MAX) - 1, 4);
+		check_u64(u64::from(u32::MAX - 1), 5);
+		check_u64(u64::from(u32::MAX) * u64::from(u8::MAX) - 1, 7);
 		check_u64((u64::MAX - 1) as u64, 9);
 	}
 
@@ -112,8 +117,8 @@ mod test {
 	fn test_i64() {
 		check_i64(-1, 1);
 		check_i64(1, 1);
-		check_i64((U9_MARKER as i64 + 255 - 2) / 2, 2);
-		check_i64(-(U9_MARKER as i64 + 255 - 2) / 2, 2);
+		check_i64((i64::from(U9_MARKER) + 255 - 2) / 2, 2);
+		check_i64(-(i64::from(U9_MARKER) + 255 - 2) / 2, 2);
 	}
 
 	fn check_u64(value: u64, size: u64) {

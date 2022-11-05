@@ -31,6 +31,7 @@ impl FrameReplayProtection {
 	/// Отметить фрейм как принятый и проверить его статус
 	///
 	#[allow(clippy::result_unit_err)]
+	#[allow(clippy::cast_possible_truncation)]
 	pub fn set_and_check(&mut self, frame: &InFrame) -> Result<bool, ()> {
 		let frame_id = frame.get_original_frame_id();
 

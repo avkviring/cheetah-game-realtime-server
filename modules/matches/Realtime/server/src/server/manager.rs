@@ -152,7 +152,7 @@ impl RoomsServerManager {
 	}
 
 	///
-	/// Выполнить задачу в CommandTracerSessions конкретной комнаты
+	/// Выполнить задачу в `CommandTracerSessions` конкретной комнаты
 	/// Подход с вложенным enum для отдельного класса задач применяется для изолирования функционала
 	///
 	pub fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: TracerSessionCommand) -> Result<(), CommandTracerSessionTaskError> {
@@ -236,7 +236,7 @@ impl RoomsServerManager {
 		}
 	}
 
-	pub fn create_member(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, CreateMemberRequestError> {
+	pub fn create_member(&mut self, room_id: RoomId, template: &MemberTemplate) -> Result<RoomMemberId, CreateMemberRequestError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		self.sender
 			.send(ManagementTask::CreateMember(room_id, template.clone(), sender))
@@ -340,7 +340,7 @@ mod test {
 	fn should_create_member() {
 		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
-		let member_id = server.create_member(room_id, MemberTemplate::default()).unwrap();
+		let member_id = server.create_member(room_id, &MemberTemplate::default()).unwrap();
 
 		assert_eq!(member_id, 1);
 	}

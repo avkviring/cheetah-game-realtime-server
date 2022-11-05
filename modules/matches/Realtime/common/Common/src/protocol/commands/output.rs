@@ -33,9 +33,9 @@ impl Default for OutCommandsCollector {
 
 impl OutCommandsCollector {
 	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
-		match self.create_channel(&channel_type) {
+		match self.create_channel(channel_type) {
 			None => {
-				tracing::error!("can not create channel for {:?} {:?}", channel_type, command)
+				tracing::error!("can not create channel for {:?} {:?}", channel_type, command);
 			}
 			Some(channel) => {
 				self.commands.push_back(CommandWithChannel {
@@ -46,21 +46,22 @@ impl OutCommandsCollector {
 		}
 	}
 
-	fn create_channel(&mut self, channel_type: &ChannelType) -> Option<Channel> {
+	fn create_channel(&mut self, channel_type: ChannelType) -> Option<Channel> {
 		match channel_type {
-			ChannelType::ReliableUnordered => Option::Some(Channel::ReliableUnordered),
-			ChannelType::ReliableOrdered(group_id) => Option::Some(Channel::ReliableOrdered(*group_id)),
-			ChannelType::UnreliableUnordered => Option::Some(Channel::UnreliableUnordered),
-			ChannelType::UnreliableOrdered(group_id) => Option::Some(Channel::UnreliableOrdered(*group_id)),
+			ChannelType::ReliableUnordered => Some(Channel::ReliableUnordered),
+			ChannelType::ReliableOrdered(group_id) => Some(Channel::ReliableOrdered(group_id)),
+			ChannelType::UnreliableUnordered => Some(Channel::UnreliableUnordered),
+			ChannelType::UnreliableOrdered(group_id) => Some(Channel::UnreliableOrdered(group_id)),
 			ChannelType::ReliableSequence(group) => {
 				let mut sequence = &mut self.group_sequence[group.0 as usize];
-				let result = Option::Some(Channel::ReliableSequence(*group, *sequence));
+				let result = Some(Channel::ReliableSequence(group, *sequence));
 				sequence.0 += 1;
 				result
 			}
 		}
 	}
 
+	#[must_use]
 	pub fn contains_self_data(&self) -> bool {
 		!self.commands.is_empty()
 	}
@@ -131,6 +132,6 @@ mod tests {
 			iter.for_each(|c| frames_commands.push_back(c.clone()));
 		}
 
-		assert_eq!(output_commands, frames_commands)
+		assert_eq!(output_commands, frames_commands);
 	}
 }

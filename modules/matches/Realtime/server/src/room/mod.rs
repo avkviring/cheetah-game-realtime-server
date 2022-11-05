@@ -125,7 +125,7 @@ impl Room {
 	where
 		F: FnMut(&RoomMemberId, &[CommandWithChannelType]),
 	{
-		for (user_id, user) in self.members.iter_mut() {
+		for (user_id, user) in &mut self.members {
 			let commands = user.out_commands.as_slice();
 			collector(user_id, commands);
 			user.out_commands.clear();
@@ -180,11 +180,11 @@ impl Room {
 								e.log_command_execute_error(command, self.id, user_id);
 							}
 						}
-						measurers.on_execute_command(command.get_field_id(), command, instant.elapsed())
+						measurers.on_execute_command(command.get_field_id(), command, instant.elapsed());
 					}
 				}
-				_ => {
-					tracing::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel)
+				BothDirectionCommand::S2CWithCreator(_) => {
+					tracing::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel);
 				}
 			}
 		}
@@ -258,6 +258,7 @@ impl Room {
 			.ok_or(ServerCommandError::GameObjectNotFound { object_id })
 	}
 
+	#[must_use]
 	pub fn contains_object(&self, object_id: &GameObjectId) -> bool {
 		self.objects.contains_key(object_id)
 	}
@@ -345,6 +346,7 @@ mod tests {
 	}
 
 	impl Room {
+		#[must_use]
 		pub fn from_template(template: RoomTemplate) -> Self {
 			Room::new(0, template, Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))))
 		}
@@ -373,6 +375,7 @@ mod tests {
 			Ok(())
 		}
 
+		#[must_use]
 		pub fn test_get_user_out_commands(&self, user_id: RoomMemberId) -> VecDeque<S2CCommand> {
 			self.get_member(&user_id)
 				.unwrap()
@@ -386,6 +389,7 @@ mod tests {
 				.collect()
 		}
 
+		#[must_use]
 		pub fn test_get_user_out_commands_with_meta(&self, user_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
 			self.get_member(&user_id)
 				.unwrap()
@@ -413,20 +417,16 @@ mod tests {
 		let user_b = room.register_member(MemberTemplate::stub(access_groups));
 		let object_a_1 = room
 			.test_create_object_with_created_state(GameObjectOwner::Member(user_a), access_groups)
-			.id
-			.clone();
+			.id;
 		let object_a_2 = room
 			.test_create_object_with_created_state(GameObjectOwner::Member(user_a), access_groups)
-			.id
-			.clone();
+			.id;
 		let object_b_1 = room
 			.test_create_object_with_created_state(GameObjectOwner::Member(user_b), access_groups)
-			.id
-			.clone();
+			.id;
 		let object_b_2 = room
 			.test_create_object_with_created_state(GameObjectOwner::Member(user_b), access_groups)
-			.id
-			.clone();
+			.id;
 
 		room.test_out_commands.clear();
 		room.disconnect_user(user_a).unwrap();
@@ -646,7 +646,7 @@ mod tests {
 			})),
 		};
 		room.execute_commands(user_id, slice::from_ref(&command));
-		assert!(room.objects.is_empty())
+		assert!(room.objects.is_empty());
 	}
 
 	pub fn create_template() -> (RoomTemplate, MemberTemplate) {

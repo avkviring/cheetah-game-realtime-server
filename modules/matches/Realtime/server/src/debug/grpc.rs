@@ -13,6 +13,7 @@ pub struct RealtimeAdminGRPCService {
 	pub manager: Arc<Mutex<RoomsServerManager>>,
 }
 impl RealtimeAdminGRPCService {
+	#[must_use]
 	pub fn new(manager: Arc<Mutex<RoomsServerManager>>) -> Self {
 		Self { manager }
 	}

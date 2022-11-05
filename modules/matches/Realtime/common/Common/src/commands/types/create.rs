@@ -1,4 +1,4 @@
-use std::io::Cursor;
+use std::io::{Cursor, Error, ErrorKind};
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
@@ -46,12 +46,15 @@ pub struct GameObjectCreatedS2CCommand {
 
 impl CreateGameObjectCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_variable_u64(self.template as u64)?;
+		out.write_variable_u64(u64::from(self.template))?;
 		out.write_variable_u64(self.access_groups.0)
 	}
 
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let template = input.read_variable_u64()? as GameObjectTemplateId;
+		let template = input
+			.read_variable_u64()?
+			.try_into()
+			.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast into GameObjectTemplateId".to_string()))?;
 		let access_groups = AccessGroups(input.read_variable_u64()?);
 		Ok(Self {
 			object_id,
@@ -72,7 +75,7 @@ impl C2SCreatedGameObjectCommand {
 
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let room_owner = input.read_u8()? == 1;
-		let unique_key = BinaryValue::decode(input).map(|v| if v.len() != 0 { Some(v) } else { None })?;
+		let unique_key = BinaryValue::decode(input).map(|v| if v.len() == 0 { None } else { Some(v) })?;
 		Ok(Self {
 			object_id,
 			room_owner,

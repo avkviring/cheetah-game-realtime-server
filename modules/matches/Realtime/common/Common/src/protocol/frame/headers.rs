@@ -58,15 +58,14 @@ pub enum Header {
 }
 
 impl Headers {
+	#[must_use]
 	pub fn is_full(&self) -> bool {
 		tracing::info!("is_full  {:?} {:?}", self.headers.capacity(), self.headers.len());
 		self.headers.capacity() == self.headers.len()
 	}
 
 	pub fn add(&mut self, header: Header) {
-		if self.headers.push(header).is_err() {
-			panic!("Headers vector overflow {:?}", self.headers)
-		}
+		assert!(self.headers.push(header).is_ok(), "Headers vector overflow {:?}", self.headers);
 	}
 
 	pub fn find<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> HeaderVec<&T> {

@@ -88,21 +88,21 @@ mod tests {
 
 	#[test]
 	fn test_hello() {
-		check(vec![Header::Hello]);
+		check(&[Header::Hello]);
 	}
 	#[test]
 	fn test_user_and_room() {
-		check(vec![Header::MemberAndRoomId(MemberAndRoomId { member_id: 55, room_id: 77 })]);
+		check(&[Header::MemberAndRoomId(MemberAndRoomId { member_id: 55, room_id: 77 })]);
 	}
 
 	#[test]
 	fn test_disconnect() {
-		check(vec![Header::Disconnect(DisconnectHeader {})]);
+		check(&[Header::Disconnect(DisconnectHeader {})]);
 	}
 
 	#[test]
 	fn test_retransmit_frame() {
-		check(vec![Header::Retransmit(RetransmitHeader {
+		check(&[Header::Retransmit(RetransmitHeader {
 			original_frame_id: 100,
 			retransmit_count: 55,
 		})]);
@@ -110,20 +110,21 @@ mod tests {
 
 	#[test]
 	fn test_ack() {
-		check(vec![Header::Ack(AckHeader::default())]);
+		check(&[Header::Ack(AckHeader::default())]);
 	}
 
 	#[test]
 	fn test_rtt_response() {
-		check(vec![Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 155 })]);
-	}
-	#[test]
-	fn test_rtt_request() {
-		check(vec![Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 155 })]);
+		check(&[Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 155 })]);
 	}
 
-	fn check(headers: Vec<Header>) {
-		let headers = HeaderVec::from_slice(&headers).unwrap();
+	#[test]
+	fn test_rtt_request() {
+		check(&[Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 155 })]);
+	}
+
+	fn check(headers: &[Header]) {
+		let headers = HeaderVec::from_slice(headers).unwrap();
 		let headers = Headers { headers };
 		let mut data = [0_u8; 100];
 		let mut out = Cursor::new(data.as_mut());

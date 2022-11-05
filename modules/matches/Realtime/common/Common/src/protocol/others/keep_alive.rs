@@ -14,15 +14,16 @@ impl KeepAlive {
 	// должно быть кратно меньше чем время разрыва соединения
 	const INTERVAL: Duration = Duration::from_secs(1);
 
-	pub fn contains_self_data(&self, now: &Instant) -> bool {
+	#[must_use]
+	pub fn contains_self_data(&self, now: Instant) -> bool {
 		match self.last_send.as_ref() {
 			None => true,
 			Some(last_time) => now.sub(*last_time) >= KeepAlive::INTERVAL,
 		}
 	}
 
-	pub fn build_frame(&mut self, _: &mut OutFrame, now: &Instant) {
-		self.last_send = Option::Some(*now);
+	pub fn build_frame(&mut self, _: &mut OutFrame, now: Instant) {
+		self.last_send = Some(now);
 	}
 }
 
@@ -38,7 +39,7 @@ mod tests {
 	pub fn should_send_first_time() {
 		let handler = KeepAlive::default();
 		let now = Instant::now();
-		assert!(handler.contains_self_data(&now));
+		assert!(handler.contains_self_data(now));
 	}
 
 	#[test]
@@ -46,8 +47,8 @@ mod tests {
 		let mut handler = KeepAlive::default();
 		let now = Instant::now();
 		let mut frame = OutFrame::new(1);
-		handler.build_frame(&mut frame, &now);
-		assert!(!handler.contains_self_data(&now));
-		assert!(handler.contains_self_data(&now.add(KeepAlive::INTERVAL)));
+		handler.build_frame(&mut frame, now);
+		assert!(!handler.contains_self_data(now));
+		assert!(handler.contains_self_data(now.add(KeepAlive::INTERVAL)));
 	}
 }

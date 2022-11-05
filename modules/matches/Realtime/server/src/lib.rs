@@ -1,5 +1,3 @@
-extern crate core;
-
 use std::net::SocketAddr;
 use std::sync::Arc;
 
@@ -25,8 +23,8 @@ pub mod room;
 pub mod server;
 
 ///
-/// Server = Agones + Grpc + NetworkRoomsServerManager
-/// NetworkRoomsServerManager = Manager + NetworkRoomsServer
+/// Server = Agones + Grpc + `NetworkRoomsServerManager`
+/// `NetworkRoomsServerManager` = Manager + `NetworkRoomsServer`
 /// где
 ///  Server - композиция из grpc и
 ///
@@ -61,7 +59,7 @@ impl Server {
 			.add_service(service)
 			.serve_with_incoming(TcpListenerStream::new(tcp_listener))
 			.await
-			.unwrap()
+			.unwrap();
 	}
 
 	async fn configure_admin_grpc_service(tcp_listener: TcpListener, manager: Arc<Mutex<RoomsServerManager>>) {
@@ -80,6 +78,6 @@ impl Server {
 			.add_service(tonic_web::enable(tracer))
 			.serve_with_incoming(TcpListenerStream::new(tcp_listener))
 			.await
-			.unwrap()
+			.unwrap();
 	}
 }

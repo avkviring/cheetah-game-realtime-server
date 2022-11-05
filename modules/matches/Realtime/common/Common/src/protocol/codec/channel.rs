@@ -8,7 +8,7 @@ use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 use crate::protocol::frame::channel::Channel;
 
 ///
-/// Тип канала передача данных (тег для [CommandChannel])
+/// Тип канала передача данных (тег для [`CommandChannel`])
 ///
 #[derive(Debug, Eq, PartialEq, PartialOrd, Copy, Clone)]
 pub struct ChannelType(pub u8);
@@ -29,6 +29,7 @@ impl Channel {
 	///
 	/// Получить идентификатор типа
 	///
+	#[must_use]
 	pub fn get_type(&self) -> ChannelType {
 		let id = match self {
 			Channel::ReliableUnordered => ChannelType::RELIABLE_UNORDERED,
@@ -43,7 +44,7 @@ impl Channel {
 
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		if let Channel::ReliableSequence(_, sequence) = self {
-			out.write_variable_u64(sequence.0 as u64)?
+			out.write_variable_u64(u64::from(sequence.0))?;
 		};
 		Ok(())
 	}
@@ -58,7 +59,15 @@ impl Channel {
 			ChannelType::UNRELIABLE_UNORDERED => Channel::UnreliableUnordered,
 			ChannelType::RELIABLE_ORDERED => Channel::ReliableOrdered(channel_group?),
 			ChannelType::UNRELIABLE_ORDERED => Channel::UnreliableOrdered(channel_group?),
-			ChannelType::RELIABLE_SEQUENCE => Channel::ReliableSequence(channel_group?, ChannelSequence(input.read_variable_u64()? as u32)),
+			ChannelType::RELIABLE_SEQUENCE => Channel::ReliableSequence(
+				channel_group?,
+				ChannelSequence(
+					input
+						.read_variable_u64()?
+						.try_into()
+						.map_err(|_| CommandChannelDecodeError::InputValueIsTooLarge)?,
+				),
+			),
 			_ => return Err(CommandChannelDecodeError::UnknownType(*channel_type)),
 		})
 	}
@@ -78,6 +87,8 @@ pub enum CommandChannelDecodeError {
 		#[from]
 		source: CommandContextError,
 	},
+	#[error("InputValueIsTooLarge")]
+	InputValueIsTooLarge,
 }
 
 #[cfg(test)]

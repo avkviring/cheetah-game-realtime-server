@@ -12,7 +12,7 @@ use crate::protocol::codec::commands::context::{CommandContextError, CreatorSour
 /// Заголовок команды
 /// Все данные заголовка сохраняются в u16
 ///
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub(crate) struct CommandHeader {
 	pub(crate) new_object_id: bool,
 	pub(crate) new_field_id: bool,
@@ -39,13 +39,13 @@ impl CommandHeader {
 	}
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> Result<CommandHeader, CommandContextError> {
 		let header = input.read_u16::<BigEndian>()?;
-		let command_type_id = (header & 0b111111) as u8;
+		let command_type_id = (header & 0b11_1111) as u8;
 		Ok(Self {
 			new_object_id: (header & 1 << NEW_OBJECT_ID_BIT) > 0,
 			new_field_id: (header & 1 << NEW_FIELD_ID_BIT) > 0,
 			new_channel_group_id: (header & 1 << NEW_CHANNEL_GROUP_ID_BIT) > 0,
-			creator_source: CreatorSource::try_from(((header & 0b11000000000) >> 9) as u8)?,
-			channel_type_id: ChannelType(((header & 0b111000000) >> 6) as u8),
+			creator_source: CreatorSource::try_from(((header & 0b110_0000_0000) >> 9) as u8)?,
+			channel_type_id: ChannelType(((header & 0b1_1100_0000) >> 6) as u8),
 			command_type_id: FromPrimitive::from_u8(command_type_id).ok_or(CommandContextError::UnknownCommandTypeId(command_type_id))?,
 		})
 	}
@@ -54,14 +54,14 @@ impl CommandHeader {
 		assert!(self.channel_type_id < ChannelType(8));
 		let mut header: u16 = 0;
 		header += self.command_type_id as u16;
-		header += (self.channel_type_id.0 as u16) << 6;
-		header += (u8::from(&self.creator_source) as u16) << 9;
+		header += u16::from(self.channel_type_id.0) << 6;
+		header += u16::from(u8::from(&self.creator_source)) << 9;
 		header += if self.new_channel_group_id { 1 << NEW_CHANNEL_GROUP_ID_BIT } else { 0 };
 		header += if self.new_field_id { 1 << NEW_FIELD_ID_BIT } else { 0 };
 		header += if self.new_object_id { 1 << NEW_OBJECT_ID_BIT } else { 0 };
 		out.write_u16::<BigEndian>(header)
 	}
-	pub(crate) fn reserve(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+	pub(crate) fn reserve(out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_u16::<BigEndian>(0)
 	}
 }

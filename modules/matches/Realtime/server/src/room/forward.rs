@@ -31,26 +31,25 @@ impl Room {
 			}
 		}
 
-		match command {
-			C2SCommand::Forwarded(_) => false,
-			_ => {
-				let mut config = ForwardConfig {
-					command_type_id: command.get_type_id(),
-					field_id: command.get_field_id(),
-					object_template_id: self.get_object_template_id(command),
-				};
-				if self.forward_configs.contains(&config) {
-					return true;
-				}
-
-				config.object_template_id = None;
-				if self.forward_configs.contains(&config) {
-					return true;
-				}
-
-				config.field_id = None;
-				self.forward_configs.contains(&config)
+		if let C2SCommand::Forwarded(_) = command {
+			false
+		} else {
+			let mut config = ForwardConfig {
+				command_type_id: command.get_type_id(),
+				field_id: command.get_field_id(),
+				object_template_id: self.get_object_template_id(command),
+			};
+			if self.forward_configs.contains(&config) {
+				return true;
 			}
+
+			config.object_template_id = None;
+			if self.forward_configs.contains(&config) {
+				return true;
+			}
+
+			config.field_id = None;
+			self.forward_configs.contains(&config)
 		}
 	}
 
@@ -115,12 +114,12 @@ mod tests {
 		let (mut room, member, _super_member) = setup();
 		room.put_forwarded_command_config(ForwardConfig {
 			command_type_id: CommandTypeId::SetLong,
-			field_id: Some(1 as _),
+			field_id: Some(1_u16),
 			object_template_id: None,
 		});
 		let command = C2SCommand::SetField(SetFieldCommand {
 			object_id: Default::default(),
-			field_id: 2 as _,
+			field_id: 2_u16,
 			value: FieldValue::Long(1),
 		});
 		assert!(!room.should_forward(&command, member));
@@ -131,12 +130,12 @@ mod tests {
 		let (mut room, member, _super_member) = setup();
 		room.put_forwarded_command_config(ForwardConfig {
 			command_type_id: CommandTypeId::SetLong,
-			field_id: Some(1 as _),
+			field_id: Some(1_u16),
 			object_template_id: None,
 		});
 		let command = C2SCommand::SetField(SetFieldCommand {
 			object_id: Default::default(),
-			field_id: 1 as _,
+			field_id: 1_u16,
 			value: FieldValue::Long(1),
 		});
 		assert!(room.should_forward(&command, member));

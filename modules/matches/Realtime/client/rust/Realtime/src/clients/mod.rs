@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::Arc;
 ///
 /// Сетевой клиент запускается в отдельном потоке, взаимодействие между потоками unity
-/// (application) и сетевым клиентом осуществляется с помощью application_thread и network_thread
+/// (application) и сетевым клиентом осуществляется с помощью `application_thread` и `network_thread`
 ///
 ///
 use std::time::Duration;

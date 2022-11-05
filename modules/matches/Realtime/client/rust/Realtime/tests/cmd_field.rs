@@ -23,7 +23,7 @@ fn should_delete_field_ffi() {
 	helper.wait_udp();
 	ffi::client::receive(client2);
 
-	assert!(matches!(DELETED_FIELD.lock().unwrap().as_ref(),Option::Some((field_id, field_type)) if
+	assert!(matches!(DELETED_FIELD.lock().unwrap().as_ref(),Some((field_id, field_type)) if
 			*field_id ==1 && *field_type==FieldTypeFFI::Long ));
 }
 

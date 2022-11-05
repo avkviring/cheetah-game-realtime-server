@@ -12,6 +12,7 @@ pub struct InFrame {
 	contains_reliability_command: bool,
 }
 impl InFrame {
+	#[must_use]
 	pub fn new(frame_id: FrameId, headers: Headers, commands: Vec<CommandWithChannel>) -> Self {
 		let contains_reliability_command = commands.iter().any(|f| f.channel.is_reliable());
 		Self {
@@ -27,10 +28,11 @@ impl InFrame {
 	}
 
 	///
-	///  Получить оригинальный frame_id
+	///  Получить оригинальный `frame_id`
 	/// - для повторно отосланных фреймов - id изначального фрейма
 	/// - для всех остальных id фрейма
 	///
+	#[must_use]
 	pub fn get_original_frame_id(&self) -> FrameId {
 		match self.headers.first(Header::predicate_retransmit) {
 			None => self.frame_id,
@@ -41,6 +43,7 @@ impl InFrame {
 	///
 	/// Фрейм с надежной доставкой?
 	///
+	#[must_use]
 	pub fn contains_reliability_command(&self) -> bool {
 		self.contains_reliability_command
 	}

@@ -37,7 +37,7 @@ mod test {
 		run_new_server(&mut result, on_server_error);
 		let mut room_id = 0;
 		assert!(create_room(result.id, &mut room_id, on_room_error));
-		assert_eq!(room_id, 1)
+		assert_eq!(room_id, 1);
 	}
 
 	pub extern "C" fn on_server_error(message: *const u16) {

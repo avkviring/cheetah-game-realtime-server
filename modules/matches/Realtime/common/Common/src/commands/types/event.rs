@@ -1,4 +1,4 @@
-use std::io::Cursor;
+use std::io::{Cursor, Error, ErrorKind};
 
 use crate::commands::binary_value::BinaryValue;
 use crate::commands::field::FieldId;
@@ -41,12 +41,15 @@ impl EventCommand {
 
 impl TargetEventCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_variable_u64(self.target as u64)?;
+		out.write_variable_u64(u64::from(self.target))?;
 		self.event.encode(out)
 	}
 
 	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let target = input.read_variable_u64()? as RoomMemberId;
+		let target = input
+			.read_variable_u64()?
+			.try_into()
+			.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast into RoomMemberId".to_string()))?;
 
 		Ok(Self {
 			target,

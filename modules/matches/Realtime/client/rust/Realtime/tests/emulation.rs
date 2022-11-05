@@ -13,7 +13,10 @@ use crate::helpers::helper::setup;
 
 pub mod helpers;
 
+#[allow(dead_code)]
 fn should_drop() {
+	const COMMAND_COUNTS: usize = 200_000;
+
 	let (helper, [client1, client2]) = setup(Default::default());
 
 	let object_id = helper.create_member_object(client1);
@@ -25,7 +28,6 @@ fn should_drop() {
 	helper.wait_udp();
 
 	ffi::channel::set_channel(client1, Channel::ReliableOrdered, 0);
-	const COMMAND_COUNTS: usize = 200000;
 	for _ in 0..COMMAND_COUNTS {
 		ffi::command::long_value::inc_long_value(client1, &object_id, 1, 1);
 	}
@@ -33,7 +35,7 @@ fn should_drop() {
 	ffi::client::receive(client2);
 
 	match SHOULD_DROP_SET.lock().unwrap().as_ref() {
-		None => assert!(false, "SHOULD_DROP_SET is None"),
+		None => panic!("SHOULD_DROP_SET is None"),
 		Some(counter) => {
 			assert!(counter.1 < COMMAND_COUNTS as i64, "counter should less 200_000 {}", counter.1);
 			assert!(counter.1 > 0, "counter should more zero {}", counter.1);
@@ -45,6 +47,7 @@ lazy_static! {
 	static ref SHOULD_DROP_SET: Mutex<Option<(FieldId, i64)>> = Mutex::new(Default::default());
 }
 
+#[allow(dead_code)]
 extern "C" fn should_drop_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
 	SHOULD_DROP_SET.lock().unwrap().replace((field_id, value));
 }
@@ -64,11 +67,11 @@ fn should_rtt_emulation() {
 
 	std::thread::sleep(Duration::from_millis(200));
 	ffi::client::receive(client2);
-	assert!(matches!(SHOULD_RTT_SET.lock().unwrap().as_ref(), Option::None));
+	assert!(matches!(SHOULD_RTT_SET.lock().unwrap().as_ref(), None));
 
 	std::thread::sleep(Duration::from_millis(250));
 	ffi::client::receive(client2);
-	assert!(matches!(SHOULD_RTT_SET.lock().unwrap().as_ref(),Option::Some((field_id, value)) if *field_id == 1 && *value==555 ));
+	assert!(matches!(SHOULD_RTT_SET.lock().unwrap().as_ref(),Some((field_id, value)) if *field_id == 1 && *value==555 ));
 }
 
 lazy_static! {

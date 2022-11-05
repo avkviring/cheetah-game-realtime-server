@@ -73,7 +73,7 @@ mod tests {
 	}
 
 	///
-	/// Проверяем что owner_id в идентификаторе объекта должен быть равен текущему
+	/// Проверяем что `owner_id` в идентификаторе объекта должен быть равен текущему
 	///
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
@@ -91,7 +91,7 @@ mod tests {
 	}
 
 	///
-	/// AccessGroup нового объекта не должна быть больше чем группа клиента
+	/// `AccessGroup` нового объекта не должна быть больше чем группа клиента
 	///
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
@@ -108,7 +108,7 @@ mod tests {
 	}
 
 	///
-	/// AccessGroup нового объекта не должна быть больше чем группа клиента
+	/// `AccessGroup` нового объекта не должна быть больше чем группа клиента
 	///
 	#[test]
 	fn should_not_create_when_id_is_zero() {

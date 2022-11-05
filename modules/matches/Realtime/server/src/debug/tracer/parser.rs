@@ -91,7 +91,7 @@ fn find_right_bracket(query: &str) -> Result<usize, ParseError> {
 }
 
 ///
-/// Преобразовать Token::And, Token::Or в Token::Rule с учетом приоритетов
+/// Преобразовать `Token::And`, `Token::Or` в `Token::Rule` с учетом приоритетов
 /// В итоге из набора токенов должен остаться только один
 ///
 fn reduce(mut source_tokens: Vec<Token>) -> Result<Token, ParseError> {
@@ -115,9 +115,9 @@ fn reduce(mut source_tokens: Vec<Token>) -> Result<Token, ParseError> {
 }
 
 ///
-/// Преобразовать один токен Token::And или Token::Or в Token::Rule
-/// token_rule_1 token_and token_rule_2 token_and token_rule_3
-/// преобразуется в Rule:And(rule_1,rule_2, rule_3)
+/// Преобразовать один токен `Token::And` или `Token::Or` в `Token::Rule`
+/// `token_rule_1` `token_and` `token_rule_2` `token_and` `token_rule_3`
+/// преобразуется в `Rule:And(rule_1,rule_2`, `rule_3`)
 ///
 
 fn reduce_token(source_tokens: &mut Vec<Token>, dest_tokens: &mut Vec<Token>, token: &Token) -> Result<Token, ParseError> {
@@ -142,30 +142,30 @@ fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 		Ok((Token::Rule(Rule::Direction(RuleCommandDirection::S2C)), stripped.to_ascii_lowercase()))
 	} else {
 		let (field, op, query) = get_field(query)?;
-		let (value, query) = get_value(query);
+		let (value, query) = get_value(&query);
 		let result = match field.as_str() {
 			"user" => {
-				let id = to_id(value)?;
-				Ok(Rule::User(id as u16))
+				let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
+				Ok(Rule::User(id))
 			}
 			"template" => {
-				let id = to_id(value)?;
-				Ok(Rule::Template(id as u16))
+				let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
+				Ok(Rule::Template(id))
 			}
 			"field" => {
-				let id = to_id(value)?;
-				Ok(Rule::Field(id as u16))
+				let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
+				Ok(Rule::Field(id))
 			}
 			"id" => {
-				let id = to_id(value)?;
-				Ok(Rule::ObjectId(id as u32))
+				let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
+				Ok(Rule::ObjectId(id))
 			}
 			"owner" => {
 				if value == "room" {
 					Ok(Rule::RoomOwner)
 				} else {
-					let id = to_id(value)?;
-					Ok(Rule::UserOwner(id as u16))
+					let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
+					Ok(Rule::UserOwner(id))
 				}
 			}
 			_ => return Err(ParseError::UnknownField(field)),
@@ -180,10 +180,6 @@ fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 			)
 		})
 	}
-}
-
-fn to_id(value: String) -> Result<u64, ParseError> {
-	value.parse().map_err(|_| ParseError::ValueFormatError(value))
 }
 
 ///
@@ -211,7 +207,7 @@ fn get_field(query: String) -> Result<(String, Op, String), ParseError> {
 ///
 /// Получить значение поле и урезанную исходную строку
 ///
-fn get_value(query: String) -> (String, String) {
+fn get_value(query: &str) -> (String, String) {
 	let and_op = query.find("&&").unwrap_or(query.len());
 	let or_op = query.find("||").unwrap_or(query.len());
 	let position = min(and_op, or_op);
@@ -268,74 +264,74 @@ mod test {
 	fn should_parse_empty() {
 		let query = "";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::True)
+		assert_eq!(result, Rule::True);
 	}
 
 	#[test]
 	fn should_parse_user() {
 		let query = "user=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::User(55))
+		assert_eq!(result, Rule::User(55));
 	}
 
 	#[test]
 	fn should_parse_field() {
 		let query = "field=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::Field(55))
+		assert_eq!(result, Rule::Field(55));
 	}
 
 	#[test]
 	fn should_parse_template() {
 		let query = "template=155";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::Template(155))
+		assert_eq!(result, Rule::Template(155));
 	}
 	#[test]
 	fn should_parse_object_id() {
 		let query = "id=155";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::ObjectId(155))
+		assert_eq!(result, Rule::ObjectId(155));
 	}
 	#[test]
 	fn should_parse_room_owner() {
 		let query = "owner=room";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::RoomOwner)
+		assert_eq!(result, Rule::RoomOwner);
 	}
 
 	#[test]
 	fn should_parse_user_owner() {
 		let query = "owner=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::UserOwner(55))
+		assert_eq!(result, Rule::UserOwner(55));
 	}
 
 	#[test]
 	fn should_parse_c2s() {
 		let query = "c2s";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::Direction(RuleCommandDirection::C2S))
+		assert_eq!(result, Rule::Direction(RuleCommandDirection::C2S));
 	}
 	#[test]
 	fn should_parse_s2c() {
 		let query = "s2c";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::Direction(RuleCommandDirection::S2C))
+		assert_eq!(result, Rule::Direction(RuleCommandDirection::S2C));
 	}
 
 	#[test]
 	fn should_parse_not() {
 		let query = "owner!=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::Not(Box::new(Rule::UserOwner(55))))
+		assert_eq!(result, Rule::Not(Box::new(Rule::UserOwner(55))));
 	}
 
 	#[test]
 	fn should_parse_or() {
 		let query = "c2s || user=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55)]))
+		assert_eq!(result, Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55)]));
 	}
 	#[test]
 	fn should_parse_more_two_or() {
@@ -344,14 +340,14 @@ mod test {
 		assert_eq!(
 			result,
 			Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55), Rule::Template(10)])
-		)
+		);
 	}
 
 	#[test]
 	fn should_parse_and() {
 		let query = "user=55 && c2s";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S)]))
+		assert_eq!(result, Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S)]));
 	}
 	#[test]
 	fn should_parse_more_two_and() {
@@ -360,7 +356,7 @@ mod test {
 		assert_eq!(
 			result,
 			Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S), Rule::Field(100)])
-		)
+		);
 	}
 
 	#[test]
@@ -373,35 +369,35 @@ mod test {
 				Rule::User(55),
 				Rule::Field(10),
 				Rule::OrRule(vec![Rule::Template(20), Rule::Template(30)]),
-				Rule::RoomOwner
+				Rule::RoomOwner,
 			])
-		)
+		);
 	}
 
 	#[test]
 	fn should_fail_when_wrong_field() {
 		let query = "wrong=555";
-		assert!(matches!(parse(query), Result::Err(ParseError::UnknownField(value)) if 
+		assert!(matches!(parse(query), Err(ParseError::UnknownField(value)) if
 			value=="wrong"));
 	}
 	#[test]
 	fn should_fail_when_wrong_value() {
 		let query = "id=ttt";
-		assert!(matches!(parse(query), Result::Err(ParseError::ValueFormatError(value)) if 
+		assert!(matches!(parse(query), Err(ParseError::ValueFormatError(value)) if
 			value=="ttt"));
 	}
 
 	#[test]
 	fn should_fail_when_wrong_bracket() {
 		let query = "(id=ttt";
-		assert!(matches!(parse(query), Result::Err(ParseError::RightBracketNotFound(value)) if 
+		assert!(matches!(parse(query), Err(ParseError::RightBracketNotFound(value)) if
 			value=="(id=ttt"));
 	}
 
 	#[test]
 	fn should_fail_when_wrong_operation() {
 		let query = "id=1 & template=5";
-		assert!(matches!(parse(query), Result::Err(ParseError::ValueFormatError(value)) if 
+		assert!(matches!(parse(query), Err(ParseError::ValueFormatError(value)) if
 			value=="1&template=5"));
 	}
 }

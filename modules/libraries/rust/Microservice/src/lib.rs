@@ -2,8 +2,6 @@
 
 pub mod trace;
 
-extern crate core;
-
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::thread::sleep;
@@ -21,7 +19,7 @@ pub use tracing_subscriber::{fmt, EnvFilter, Layer, Registry};
 pub type StringId = heapless::String<20>;
 
 pub fn init(name: &str) {
-	init_with_trace_level(name, tracing::Level::INFO)
+	init_with_trace_level(name, tracing::Level::INFO);
 }
 
 pub fn init_with_trace_level(name: &str, trace_level: tracing::Level) {
@@ -31,10 +29,12 @@ pub fn init_with_trace_level(name: &str, trace_level: tracing::Level) {
 	tracing::info!("start service {} ", name);
 }
 
+#[must_use]
 pub fn get_env(name: &str) -> String {
 	std::env::var(name).unwrap_or_else(|_| panic!("Env {} is not set", name))
 }
 
+#[must_use]
 pub fn get_env_or_default(name: &str, default: &str) -> String {
 	std::env::var(name).unwrap_or_else(|_| default.to_owned())
 }
@@ -76,40 +76,49 @@ fn setup_panic_hook() {
 	}));
 }
 
+#[must_use]
 pub fn get_internal_service_binding_addr() -> SocketAddr {
 	format!("0.0.0.0:{}", get_internal_service_port()).parse().unwrap()
 }
 
+#[must_use]
 pub fn get_external_service_binding_addr() -> SocketAddr {
 	format!("0.0.0.0:{}", get_external_service_port()).parse().unwrap()
 }
+
+#[must_use]
 pub fn get_admin_service_binding_addr() -> SocketAddr {
 	format!("0.0.0.0:{}", get_admin_service_port()).parse().unwrap()
 }
 
+#[must_use]
 pub fn get_external_service_port() -> u16 {
 	5000
 }
 
+#[must_use]
 pub fn get_internal_service_port() -> u16 {
 	5001
 }
 
+#[must_use]
 pub fn get_admin_service_port() -> u16 {
 	5002
 }
 
+#[must_use]
 pub fn make_internal_srv_uri(host: &str, port: u16) -> Uri {
 	format!("http://{}:{}", host, port).parse().unwrap()
 }
 
+#[must_use]
 pub fn get_internal_srv_uri_from_env(service: &str) -> Uri {
 	let host = get_env(format!("{}_INTERNAL_SERVICE_HOST", service).as_str());
 	let port_string = get_env(format!("{}_INTERNAL_SERVICE_PORT", service).as_str());
 	let port = match port_string.parse() {
 		Ok(value) => value,
-		Err(_) => {
-			panic!("{}_INTERNAL_SERVICE_PORT is not int {}", service, port_string);
+		Err(e) => {
+			panic!("{}_INTERNAL_SERVICE_PORT is not int {} err={:?}", service, port_string, e);
 		}
 	};
 	make_internal_srv_uri(&host, port)

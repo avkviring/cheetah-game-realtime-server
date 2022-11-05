@@ -56,6 +56,8 @@ mod tests {
 	use crate::room::command::ServerCommandExecutor;
 
 	#[test]
+	#[allow(clippy::cast_sign_loss)]
+	#[allow(clippy::cast_possible_truncation)]
 	fn should_set_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
@@ -75,6 +77,8 @@ mod tests {
 	}
 
 	#[test]
+	#[allow(clippy::cast_sign_loss)]
+	#[allow(clippy::cast_possible_truncation)]
 	fn should_increment_double_command() {
 		let (mut room, user, access_groups) = setup_one_player();
 

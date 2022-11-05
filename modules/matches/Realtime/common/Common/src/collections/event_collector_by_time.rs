@@ -48,28 +48,28 @@ impl<T: Copy + PartialEq + AddAssign<T> + Int + Debug, N: ArrayLength<T>> EventC
 		}
 	}
 
-	pub fn switch_measure_position(&mut self, now: &Instant) {
+	pub fn switch_measure_position(&mut self, now: Instant) {
 		let start_time = match self.start_measurement_time {
 			None => {
-				self.start_measurement_time = Option::Some(*now);
+				self.start_measurement_time = Some(now);
 				now
 			}
-			Some(ref time) => time,
+			Some(time) => time,
 		};
 
-		if now.sub(*start_time) >= self.measure_time {
-			self.start_measurement_time = Option::Some(*now);
+		if now.sub(start_time) >= self.measure_time {
+			self.start_measurement_time = Some(now);
 			let mut new_position = self.position + 1;
 			if new_position == self.ring_buffer.len() {
 				new_position = 0;
 			}
 			self.ring_buffer[self.position] = self.current_value;
 			self.position = new_position;
-			self.current_value = self.default_value
+			self.current_value = self.default_value;
 		}
 	}
 
-	pub fn get_sum_and_count(&mut self, now: &Instant) -> Option<(T, u8)> {
+	pub fn get_sum_and_count(&mut self, now: Instant) -> Option<(T, u8)> {
 		self.switch_measure_position(now);
 		let mut sum = self.default_value;
 		let mut count = 0;
@@ -81,13 +81,13 @@ impl<T: Copy + PartialEq + AddAssign<T> + Int + Debug, N: ArrayLength<T>> EventC
 			}
 		}
 		if count == 0 {
-			Option::None
+			None
 		} else {
-			Option::Some((sum, count))
+			Some((sum, count))
 		}
 	}
 
-	pub fn on_event(&mut self, now: &Instant) {
+	pub fn on_event(&mut self, now: Instant) {
 		self.switch_measure_position(now);
 		let option = self.current_value.add_with_overflow_control(T::one());
 		if let Some(value) = option {
@@ -145,8 +145,8 @@ mod tests {
 	pub fn should_return_none_if_not_enough_duration() {
 		let (mut collector, _) = setup();
 		let now = Instant::now();
-		collector.on_event(&now);
-		assert!(matches!(collector.get_sum_and_count(&now), Option::None));
+		collector.on_event(now);
+		assert!(matches!(collector.get_sum_and_count(now), None));
 	}
 
 	///
@@ -156,10 +156,10 @@ mod tests {
 	pub fn should_return_sum_and_count_for_one_aggregation() {
 		let (mut collector, duration) = setup();
 		let now = Instant::now();
-		collector.on_event(&now);
-		collector.on_event(&now);
-		collector.on_event(&now);
-		assert!(matches!(collector.get_sum_and_count(&now.add(duration)), Option::Some((sum, count)) if sum == 3 && count == 1));
+		collector.on_event(now);
+		collector.on_event(now);
+		collector.on_event(now);
+		assert!(matches!(collector.get_sum_and_count(now.add(duration)), Some((sum, count)) if sum == 3 && count == 1));
 	}
 
 	///
@@ -169,13 +169,13 @@ mod tests {
 	pub fn should_return_sum_and_count_for_two_aggregation() {
 		let (mut collector, duration) = setup();
 		let mut now = Instant::now();
-		collector.on_event(&now);
-		collector.on_event(&now);
-		collector.on_event(&now);
+		collector.on_event(now);
+		collector.on_event(now);
+		collector.on_event(now);
 		now.add_assign(duration);
-		collector.on_event(&now);
-		collector.on_event(&now);
-		assert!(matches!(collector.get_sum_and_count(&now.add(duration)), Option::Some((sum, count)) if sum == 5 && count == 2));
+		collector.on_event(now);
+		collector.on_event(now);
+		assert!(matches!(collector.get_sum_and_count(now.add(duration)), Some((sum, count)) if sum == 5 && count == 2));
 	}
 
 	fn setup() -> (EventCollectorByTime<u8, U8>, Duration) {

@@ -1,8 +1,7 @@
-use std::io::Cursor;
+use std::io::{Cursor, Error, ErrorKind};
 
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::owner::GameObjectOwner;
-use crate::room::RoomMemberId;
 use hash32_derive::Hash32;
 
 ///
@@ -27,23 +26,31 @@ impl GameObjectId {
 	///
 	pub const CLIENT_OBJECT_ID_OFFSET: u32 = 512;
 
+	#[must_use]
 	pub fn new(id: u32, owner: GameObjectOwner) -> Self {
 		GameObjectId { owner, id }
 	}
 
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_variable_u64(self.id as u64)?;
+		out.write_variable_u64(u64::from(self.id))?;
 		match self.owner {
 			GameObjectOwner::Room => out.write_variable_i64(-1),
-			GameObjectOwner::Member(user) => out.write_variable_i64(user as i64),
+			GameObjectOwner::Member(user) => out.write_variable_i64(i64::from(user)),
 		}
 	}
 	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		Ok(GameObjectId {
-			id: input.read_variable_u64()? as u32,
+			id: input
+				.read_variable_u64()?
+				.try_into()
+				.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast to GameObjectId".to_string()))?,
 			owner: match input.read_variable_i64()? {
 				-1 => GameObjectOwner::Room,
-				user_id => GameObjectOwner::Member(user_id as RoomMemberId),
+				user_id => GameObjectOwner::Member(
+					user_id
+						.try_into()
+						.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast i32 to RoomMemberId".to_string()))?,
+				),
 			},
 		})
 	}
