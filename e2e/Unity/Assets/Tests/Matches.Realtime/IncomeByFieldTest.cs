@@ -17,7 +17,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new EventIncomeByFieldCommandCollector<DropMineEvent>(clientB, DropMineEventId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // отправляем сообщение
             var dropMineEvent = new DropMineEvent()
             {
@@ -41,7 +41,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new EventIncomeByFieldCommandCollector<DropMineEvent>(clientB, DropMineEventId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // отправляем сообщение
             var dropMineEvent = new DropMineEvent()
             {
@@ -65,7 +65,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new StructureIncomeByFieldCommandCollector<TurretsParamsStructure>(clientB, TurretsParamsFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем структуру
             var turretsParams = new TurretsParamsStructure()
             {
@@ -92,7 +92,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new StructureIncomeByFieldCommandCollector<TurretsParamsStructure>(clientB, TurretsParamsFieldId);
             
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             var turretParamsA = new TurretsParamsStructure()
             {
                 Damage = 2,
@@ -129,7 +129,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
             createdObject.SetLong(HealFieldId, 7799);
             // ждем отправки команды
@@ -149,7 +149,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
             createdObject.IncrementLong(HealFieldId, 1001);
             // ждем отправки команды
@@ -169,7 +169,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
             createdObject.CompareAndSetLong(HealFieldId, 0,555);
             createdObject.CompareAndSetLongWithReset(HealFieldId, 555,1000,0);
@@ -192,7 +192,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new DoubleIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
             createdObject.SetDouble(HealFieldId, 77.99);
             // ждем отправки команды
@@ -212,7 +212,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new DoubleIncomeByFieldCommandCollector(clientB, HealFieldId);
             // создаем объект на первом клиенте
-            var createdObject = clientA.NewObjectBuilder(777, UserHelper.UserGroup).Build();
+            var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
             createdObject.IncrementDouble(HealFieldId, 77.99);
             // ждем отправки команды

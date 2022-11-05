@@ -1,24 +1,25 @@
 using System.Threading.Tasks;
 using Cheetah.Matches.Matchmaking.GRPC;
+using Cheetah.Platform;
 
 namespace Cheetah.Matches.Matchmaking
 {
     public class MatchmakingScheduler
     {
-        private readonly User.Accounts.User user;
+        private readonly ClusterConnector clusterConnector;
 
-        public MatchmakingScheduler(User.Accounts.User user)
+        public MatchmakingScheduler(ClusterConnector clusterConnector)
         {
-            this.user = user;
+            this.clusterConnector = clusterConnector;
         }
 
         public async Task<TicketResponse> Schedule(string roomTemplate, ulong userGroups)
         {
-            return await user.ClusterConnector.DoRequest(async channel =>
+            return await clusterConnector.DoRequest(async channel =>
             {
                 var client = new GRPC.Matchmaking.MatchmakingClient(channel);
                 var ticketRequest = new TicketRequest { UserGroups = userGroups, MatchTemplate = roomTemplate };
-                var response = await client.MatchmakingAsync(ticketRequest, user.CreateAuthMetadata());
+                var response = await client.MatchmakingAsync(ticketRequest);
                 return response;
             });
         }

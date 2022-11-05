@@ -1,6 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub mod auth;
 pub mod trace;
 
 extern crate core;

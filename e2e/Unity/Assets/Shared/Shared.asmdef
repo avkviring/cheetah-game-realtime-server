@@ -4,7 +4,6 @@
   "references": [
     "games.cheetah.platform.editor",
     "games.cheetah.platform",
-    "games.cheetah.user.accounts",
     "games.cheetah.matches.matchmaking",
     "games.cheetah.matches.realtime"
   ],

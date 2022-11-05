@@ -7,7 +7,6 @@
   "unityRelease": "0b5",
   "dependencies": {
     "games.cheetah.platform": "999.999.999",
-    "games.cheetah.user.accounts": "999.999.999",
     "games.cheetah.matches.factory": "999.999.999",
     "games.cheetah.matches.registry": "999.999.999"
   },

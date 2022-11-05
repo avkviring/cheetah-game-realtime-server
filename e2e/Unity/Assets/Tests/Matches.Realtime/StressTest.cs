@@ -22,7 +22,7 @@ namespace Tests.Matches.Realtime
             var createdObjectStreamB = new CreatedObjectByTemplateIncomeCommands(clientB, 11);
             for (var i = 0; i < CountObjects; i++)
             {
-                clientA.NewObjectBuilder(11, UserHelper.UserGroup).BuildRoomObject();
+                clientA.NewObjectBuilder(11, PlayerHelper.PlayerGroup).BuildRoomObject();
             }
             yield return new WaitForSeconds(1);
             clientA.Update();

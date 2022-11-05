@@ -33,14 +33,14 @@ namespace Tests.Matches.Realtime.Helpers
             clusterConnector = connectorFactory.ClusterConnector;
 
             // подключаем первого клиента
-            var ticketA = UserHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_a");
+            var ticketA = PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_a");
             yield return Enumerators.Await(ticketA);
             memberA = ticketA.Result.MemberId;
             clientA = ConnectToRelay(ticketA.Result, codecRegistry);
             clientA.AttachToRoom();
 
             // подключаем второго клиента
-            var ticketB = UserHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_b");
+            var ticketB = PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_b");
             yield return Enumerators.Await(ticketB);
             memberB = ticketB.Result.MemberId;
             clientB = ConnectToRelay(ticketB.Result, codecRegistry);

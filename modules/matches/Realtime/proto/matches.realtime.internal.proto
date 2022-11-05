@@ -25,11 +25,6 @@ service Realtime {
   rpc CreateSuperMember(CreateSuperMemberRequest) returns(CreateMemberResponse);
 
   /**
-    Получить данные о комнате
-   */
-  rpc QueryRoom(QueryRoomRequest) returns (QueryRoomResponse);
-
-  /**
     Проверить живой ли сервер
    */
   rpc Probe(ProbeRequest) returns (ProbeResponse);
@@ -162,13 +157,6 @@ message GameObjectTemplate {
   repeated cheetah.matches.realtime.shared.GameObjectField fields = 4;
 }
 
-message QueryRoomRequest {
-  uint64 id = 1;
-}
-
-message QueryRoomResponse {
-  uint32 user_count = 1;
-}
 
 message ProbeRequest {
 

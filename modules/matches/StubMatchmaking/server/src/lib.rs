@@ -1,3 +1,4 @@
-pub mod configuration;
+extern crate core;
+
 pub mod proto;
 pub mod service;

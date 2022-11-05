@@ -25,7 +25,7 @@ namespace Tests.Matches.Realtime
             var createdObjectStreamB = new CreatedObjectByTemplateIncomeCommands(clientB, 1);
 
             // создаем объект на первом клиенте
-            clientA.NewObjectBuilder(1, UserHelper.UserGroup).BuildRoomObject();
+            clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).BuildRoomObject();
             // ждем отправки команды
             yield return new WaitForSeconds(1);
             // прием команды
@@ -53,8 +53,8 @@ namespace Tests.Matches.Realtime
 
             // создаем объект на первом клиенте
             var someSingletonKey = new SomeSingletonKey { Key = new DateTime().Millisecond };
-            clientA.NewObjectBuilder(1, UserHelper.UserGroup).BuildSingletonRoomObject(ref someSingletonKey);
-            clientA.NewObjectBuilder(1, UserHelper.UserGroup).BuildSingletonRoomObject(ref someSingletonKey);
+            clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).BuildSingletonRoomObject(ref someSingletonKey);
+            clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).BuildSingletonRoomObject(ref someSingletonKey);
             // ждем отправки команды
             yield return new WaitForSeconds(1);
             // прием команды

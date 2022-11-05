@@ -7,6 +7,7 @@ use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, thread};
+
 use thiserror::Error;
 
 use admin::DumpResponse;
@@ -15,7 +16,6 @@ use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::debug::proto::admin;
 use crate::room::command::ServerCommandError;
-use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask, PutForwardedCommandConfigError};
 use crate::server::measurers::Measurers;
@@ -134,17 +134,6 @@ impl RoomsServer {
 						}
 					}
 				},
-				ManagementTask::QueryRoom(room_id, sender) => {
-					if let Some(room) = self.rooms.room_by_id.get(&room_id) {
-						let room_info = RoomInfo {
-							member_count: room.members.len() as u32,
-						};
-						match sender.send(Some(room_info)) {
-							Ok(()) => (),
-							Err(e) => tracing::error!("[Request::QueryRoom] error sending response {:?}", e),
-						}
-					}
-				}
 				ManagementTask::GetRooms(sender) => match sender.send(self.rooms.room_by_id.keys().cloned().collect()) {
 					Ok(_) => {}
 					Err(e) => {

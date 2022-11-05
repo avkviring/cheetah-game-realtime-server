@@ -148,7 +148,6 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
 
                 var progress = 0;
                 var serverApplications = Registry.GetApplications();
-                await LaunchPostgresql(progressListener, serverApplications, progress, network);
                 
                 var deltaProgress = 100 / serverApplications.Count; 
                 var done = false;
@@ -222,18 +221,7 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             var grpcProxyApplication = new GrpcProxyApplication(systemApplicationsConfigurator, serverApplications);
             await Launch(grpcProxyApplication, network.ID, progressListener);
         }
-
-        private async Task LaunchPostgresql(IDockerProgressListener progressListener, List<ServerApplication> serverApplications, int progress,
-            NetworksCreateResponse network)
-        {
-            var applicationWithPostgresql = serverApplications.FindAll(app => app.PostgresDatabase!=null).Select(a=>a.PostgresDatabase).ToList();
-            if (applicationWithPostgresql.Count > 0)
-            {
-                progressListener.SetProgressTitle("starting postgresql database");
-                progressListener.SetProgress(progress);
-                await Launch(new PostgreSqlApplication(applicationWithPostgresql), network.ID, progressListener);
-            }
-        }
+        
 
 
         private async Task<string> Launch(ServerApplication serverApplication, string networkId, IDockerProgressListener progressListener)
@@ -241,7 +229,6 @@ namespace Cheetah.Platform.Editor.LocalServer.Docker
             await ImagePull(serverApplication.DockerImage, progressListener, serverApplication.ContainerName);
             var dockerContainerBuilder = new DockerContainerBuilder(serverApplication.ContainerName, serverApplication.DockerImage);
             serverApplication.ConfigureDockerContainerBuilder(dockerContainerBuilder);
-            if (serverApplication.PostgresDatabase!=null) serverApplication.ConfigurePostgresEnv(dockerContainerBuilder);
 
             var createContainerResponse =
                 await docker.Containers.CreateContainerAsync(dockerContainerBuilder.BuildDockerConfig(networkId, unityProjectId));

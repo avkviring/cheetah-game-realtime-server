@@ -85,19 +85,6 @@ impl Realtime for RealtimeInternalService {
 		self.register_user(request.room_id, MemberTemplate::new_super_member()).await
 	}
 
-	async fn query_room(&self, request: Request<QueryRoomRequest>) -> Result<Response<QueryRoomResponse>, Status> {
-		let request = request.into_inner();
-		let server = self.server_manager.lock().await;
-		let maybe_room_info = server.query_room(request.id).trace_err("QueryRoom failed").map_err(Status::internal)?;
-
-		match maybe_room_info {
-			Some(room_info) => Ok(Response::new(QueryRoomResponse {
-				user_count: room_info.member_count,
-			})),
-			None => Err(Status::not_found(format!("Room with ID {} does not exist", request.id))),
-		}
-	}
-
 	async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {
 		Ok(Response::new(ProbeResponse {}))
 	}
@@ -201,12 +188,12 @@ impl Realtime for RealtimeInternalService {
 mod test {
 	use std::sync::Arc;
 
-	use cheetah_matches_realtime_common::commands::CommandTypeId;
 	use tokio::sync::Mutex;
 	use tokio_stream::wrappers::ReceiverStream;
 	use tokio_stream::StreamExt;
 	use tonic::{Code, Request, Status};
 
+	use cheetah_matches_realtime_common::commands::CommandTypeId;
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
 	use crate::grpc::proto::internal::realtime_server::Realtime;
