@@ -1,30 +1,23 @@
-use jwt_tonic_user_uuid::JWTUserTokenParser;
 use sqlx::PgPool;
 use tonic::transport::Server;
 use tonic_health::ServingStatus;
 
 use crate::cookie::service::CookieService;
-use crate::google::google_jwt::Parser;
-use crate::google::storage::GoogleStorage;
-use crate::google::GoogleGrpcService;
-use crate::proto;
 use crate::proto::cookie_server::CookieServer;
-use crate::proto::google_server::GoogleServer;
 use crate::proto::tokens_server::TokensServer;
 use crate::tokens::grpc::TokensGrpcService;
 use crate::tokens::TokensService;
 use crate::users::service::UserService;
 
-pub async fn run_grpc_server(jwt_public_key: String, jwt_private_key: String, pg_pool: PgPool, google_client_id: Option<String>) {
+pub async fn run_grpc_server(jwt_public_key: String, jwt_private_key: String, pg_pool: PgPool) {
 	let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 
 	health_reporter.set_service_status("", ServingStatus::Serving).await;
 	let token_service = TokensService::new(pg_pool.clone(), jwt_private_key, jwt_public_key.clone()).await;
 	let user_service = UserService::new(pg_pool.clone());
 
-	let token_grpc_service = proto::tokens_server::TokensServer::new(TokensGrpcService::new(token_service.clone()));
-	let cookie_grpc_service =
-		proto::cookie_server::CookieServer::new(CookieService::new(pg_pool.clone(), token_service.clone(), user_service.clone()));
+	let token_grpc_service = TokensServer::new(TokensGrpcService::new(token_service.clone()));
+	let cookie_grpc_service = CookieServer::new(CookieService::new(pg_pool.clone(), token_service.clone(), user_service.clone()));
 
 	// если мы здесь - то соединение к базе установлены, все параметры заданы
 	// то есть мы можем сказать что сервисы тоже готовы
@@ -39,19 +32,5 @@ pub async fn run_grpc_server(jwt_public_key: String, jwt_private_key: String, pg
 		.add_service(tonic_web::enable(token_grpc_service))
 		.add_service(tonic_web::enable(cookie_grpc_service));
 
-	if let Some(google_client_id) = google_client_id {
-		let google_grpc_service = proto::google_server::GoogleServer::new(GoogleGrpcService::new(
-			GoogleStorage::new(pg_pool),
-			token_service.clone(),
-			user_service.clone(),
-			Parser::new(&google_client_id),
-			JWTUserTokenParser::new(jwt_public_key),
-		));
-
-		health_reporter.set_serving::<GoogleServer<GoogleGrpcService>>().await;
-		let builder = builder.add_service(tonic_web::enable(google_grpc_service));
-		builder.serve(external_addr).await.unwrap();
-	} else {
-		builder.serve(external_addr).await.unwrap();
-	}
+	builder.serve(external_addr).await.unwrap();
 }

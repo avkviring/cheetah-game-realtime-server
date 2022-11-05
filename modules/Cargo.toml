@@ -3,7 +3,6 @@ members = [
     "libraries/rust/Microservice",
     "libraries/rust/Postgresql",
     "user/Accounts/server",
-    "user/Store/server",
     "matches/Factory/server",
     "matches/Registry/server",
     "matches/StubMatchmaking/server",
@@ -14,6 +13,4 @@ members = [
     "matches/Realtime/client/rust/Realtime",
     "matches/Realtime/client/rust/Embedded",
     "matches/Realtime/client/rust/ServerPlugin",
-    "statistics/Events/server",
-    "system/Compatibility/server",
 ]

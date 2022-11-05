@@ -23,10 +23,6 @@ service Cookie {
   rpc Login(LoginRequest) returns (LoginResponse);
 }
 
-service Google {
-  rpc RegisterOrLogin(RegisterOrLoginRequest) returns (RegisterOrLoginResponse);
-  rpc Attach(AttachRequest) returns (AttachResponse);
-}
 
 message Token {
   string token = 1;

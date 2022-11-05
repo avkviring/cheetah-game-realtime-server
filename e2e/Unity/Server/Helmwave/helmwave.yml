@@ -14,24 +14,8 @@ releases:
   - name: platform
     chart: ../../../../modules/Platform/chart/
     <<: *options
-  - name: statisitcs-events
-    chart: ../../../../modules/statistics/Events/chart/
-    <<: *options
-    depends_on:
-      - platform@stage1
-  - name: system-compatibility
-    chart: ../../../../modules/system/Compatibility/chart/
-    <<: *options
-    depends_on:
-      - platform@stage1
-      - config@stage1
   - name: user-accounts
     chart: ../../../../modules/user/Accounts/chart/
-    <<: *options
-    depends_on:
-      - platform@stage1
-  - name: user-store
-    chart: ../../../../modules/user/Store/chart/
     <<: *options
     depends_on:
       - platform@stage1

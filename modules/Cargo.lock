@@ -553,7 +553,7 @@ dependencies = [
  "rmp-serde",
  "rmpv",
  "serde",
- "serde_yaml 0.9.13",
+ "serde_yaml",
  "tempfile",
  "thiserror",
  "tokio",
@@ -709,7 +709,7 @@ dependencies = [
  "jwt-tonic-user-uuid",
  "prost",
  "serde",
- "serde_yaml 0.9.13",
+ "serde_yaml",
  "tokio",
  "tokio-stream",
  "tonic",
@@ -732,42 +732,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cheetah-statistics-events"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "cheetah-libraries-microservice",
- "httpmock",
- "prost",
- "reqwest",
- "serde",
- "tokio",
- "tonic",
- "tonic-build",
- "tonic-health",
- "tonic-web",
- "tracing",
-]
-
-[[package]]
-name = "cheetah-system-compatibility"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "cheetah-libraries-microservice",
- "chrono",
- "prost",
- "serde",
- "serde_yaml 0.8.24",
- "tokio",
- "tonic",
- "tonic-build",
- "tonic-health",
- "tonic-web",
- "tracing",
-]
-
-[[package]]
 name = "cheetah-user-accounts"
 version = "0.0.0"
 dependencies = [
@@ -779,7 +743,6 @@ dependencies = [
  "cheetah-libraries-postgresql",
  "chrono",
  "futures",
- "headers",
  "httpmock",
  "jsonwebtoken 8.0.1",
  "jwt-tonic-user-uuid",
@@ -801,24 +764,6 @@ dependencies = [
  "tonic-health",
  "tonic-web",
  "tracing",
- "uuid",
-]
-
-[[package]]
-name = "cheetah-user-store"
-version = "999.999.999"
-dependencies = [
- "cheetah-libraries-microservice",
- "cheetah-libraries-postgresql",
- "lazy_static",
- "prost",
- "sqlx",
- "testcontainers 0.13.0",
- "tokio",
- "tonic",
- "tonic-build",
- "tonic-health",
- "tonic-web",
  "uuid",
 ]
 
@@ -1545,31 +1490,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "headers"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cff78e5788be1e0ab65b04d306b2ed5092c815ec97ec70f4ebd5aee158aa55d"
-dependencies = [
- "base64 0.13.0",
- "bitflags",
- "bytes",
- "headers-core",
- "http",
- "httpdate",
- "mime",
- "sha-1",
-]
-
-[[package]]
-name = "headers-core"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7f66481bfee273957b1f20485a4ff3362987f85b2c236580d81b4eb7a326429"
-dependencies = [
- "http",
-]
-
-[[package]]
 name = "heapless"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2001,12 +1921,6 @@ dependencies = [
  "pkg-config",
  "vcpkg",
 ]
-
-[[package]]
-name = "linked-hash-map"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "lock_api"
@@ -3176,18 +3090,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "serde_yaml"
-version = "0.8.24"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "707d15895415db6628332b737c838b88c598522e4dc70647e59b72312924aebc"
-dependencies = [
- "indexmap",
- "ryu",
- "serde",
- "yaml-rust",
 ]
 
 [[package]]
@@ -4393,15 +4295,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0120db82e8a1e0b9fb3345a539c478767c0048d842860994d96113d5b667bd69"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "yaml-rust"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
-dependencies = [
- "linked-hash-map",
 ]
 
 [[package]]

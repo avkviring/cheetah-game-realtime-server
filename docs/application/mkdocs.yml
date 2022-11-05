@@ -33,8 +33,6 @@ nav:
           - "Аутентификация":
               - "Введение": "modules/user/accounts/index.md"
               - "Временная регистрация": "modules/user/accounts/cookie.md"
-              - "Google": "modules/user/accounts/google.md"
-          - "Данные": "modules/user/store/index.md"
       - "Матчи":
           - "Выбор матча": "modules/matches/matchmaking/index.md"
           - "Матч":
@@ -61,10 +59,6 @@ nav:
               - "Тестирование":
                   - "Интеграционное": "modules/matches/realtime/test/integration.md"
               - "Плагины": "modules/matches/realtime/plugins/index.md"
-      - "Статистика":
-          - "Сбор событий": "modules/statistics/events/index.md"
-      - "Системные":
-          - "Совместимость клиента и сервера": "modules/system/compatibility/index.md"
   - "Хостинг":
       - "Настройка кластера": "hosting/setup-cluster.md"
 

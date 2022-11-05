@@ -1,5 +1,0 @@
-apiVersion: v2
-name: cheetah-user-store
-type: application
-version: "999.999.999"
-appVersion: "999.999.999"
