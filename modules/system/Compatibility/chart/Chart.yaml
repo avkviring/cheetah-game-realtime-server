@@ -1,6 +1,0 @@
-apiVersion: v2
-name: cheetah-system-compatibility
-description: Сервис для проверки совместимости клиента и сервера
-type: application
-version: "999.999.999"
-appVersion: "999.999.999"
