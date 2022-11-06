@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading;
 using Cheetah.Matches.Realtime.DOA.Income.ByTemplate;
 using NUnit.Framework;
 using Shared;
@@ -10,21 +11,21 @@ namespace Tests.Matches.Realtime
 {
     public class StressTest : AbstractTest
     {
-        [UnityTest]
-        public IEnumerator ShouldCreateLotOfObjects()
+        [Test]
+        public void ShouldCreateLotOfObjects()
         {
             const int CountObjects = 1000;
             // загружаем объекты комнаты - они нам не интересны
             clientA.Update();
             clientB.Update();
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(1000);
 
             var createdObjectStreamB = new CreatedObjectByTemplateIncomeCommands(clientB, 11);
             for (var i = 0; i < CountObjects; i++)
             {
                 clientA.NewObjectBuilder(11, PlayerHelper.PlayerGroup).BuildRoomObject();
             }
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(1000);
             clientA.Update();
             clientB.Update();
             Assert.AreEqual(createdObjectStreamB.GetStream().Count, CountObjects);

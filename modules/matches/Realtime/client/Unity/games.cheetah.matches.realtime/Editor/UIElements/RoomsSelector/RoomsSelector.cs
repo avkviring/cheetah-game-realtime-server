@@ -59,7 +59,7 @@ namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector
             selectedRoom = room;
             menu.text = FormatItemCallback(room);
             EditorPrefs.SetString(storageKey, room.ToString());
-            await RoomSelectEvent.Invoke(room);
+            await RoomSelectEvent(room);
         }
 
         private static string FormatItemCallback(ulong item)

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading;
 using NUnit.Framework;
 using Tests.Matches.Realtime.Helpers;
 using UnityEngine;
@@ -8,8 +9,7 @@ namespace Tests.Matches.Realtime
 {
     public class StatisticsTest : AbstractTest
     {
-        [UnityTest]
-        public IEnumerator ShouldStatistics()
+        public void ShouldStatistics()
         {
             clientA.AttachToRoom();
             clientB.AttachToRoom();
@@ -18,7 +18,7 @@ namespace Tests.Matches.Realtime
             var prevStatisticsB = clientB.GetStatistics();
             clientA.NewObjectBuilder(1, 8).Build();
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             var currentStatisticsA = clientA.GetStatistics();
             var currentStatisticsB = clientB.GetStatistics();
 

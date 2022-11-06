@@ -1,4 +1,3 @@
-using Cheetah.Matches.Factory.Editor.Configurations;
 using Cheetah.Matches.Realtime.Editor.DumpViewer.TypesExtension;
 using Cheetah.Matches.Realtime.Editor.GRPC;
 using Cheetah.Matches.Realtime.Editor.UIElements.Table;
@@ -28,7 +27,7 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections
             table.SetOrderComparer(new DumpUserIdComparator());
         }
 
-        public static void ConfigureObjectsTable(TableElement table, ConfigurationsProvider configurationsProvider)
+        public static void ConfigureObjectsTable(TableElement table)
         {
             table.AddColumn("Идентификатор", 200, 200, null, (item) =>
             {
@@ -39,8 +38,7 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections
             table.AddColumn("Шаблон", 200, null, null, (item) =>
             {
                 var dumpObject = (item as DumpObject);
-                var templateName = configurationsProvider.GetTemplateName((ushort)dumpObject.Template);
-                return templateName != null ? templateName + "(" + dumpObject.Template + ")" : dumpObject.Template.ToString();
+                return dumpObject.Template.ToString();
             });
             table.AddColumn("Создан", 100, null, null, (item) => (item as DumpObject).Created.ToString());
             table.SetSelectItemComparer(new DumpObjectIdComparator());

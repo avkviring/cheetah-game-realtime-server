@@ -1,4 +1,4 @@
-using System.Collections;
+using System.Threading;
 using Cheetah.Matches.Realtime.DOA.Income.ByObject;
 using Cheetah.Matches.Realtime.DOA.Income.ByTemplate;
 using Cheetah.Matches.Realtime.Types;
@@ -6,15 +6,13 @@ using NUnit.Framework;
 using Shared;
 using Shared.Types;
 using Tests.Matches.Realtime.Helpers;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Tests.Matches.Realtime
 {
     public class IncomeByTemplateTest : AbstractTest
     {
-        [UnityTest]
-        public IEnumerator TestCreatedObjectIncomeCommands()
+        [Test]
+        public void TestCreatedObjectIncomeCommands()
         {
             // слушаем создание новых объектов на втором клиенте
             var collector = new CreatedObjectByTemplateIncomeCommands(clientB, 777);
@@ -28,7 +26,7 @@ namespace Tests.Matches.Realtime
             objectBuilder.SetStructure(TurretsParamsFieldId, ref turretsParams);
             var createdObject = objectBuilder.Build();
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -43,8 +41,8 @@ namespace Tests.Matches.Realtime
         }
 
 
-        [UnityTest]
-        public IEnumerator TestDeleteObjectIncomeCommands()
+        [Test]
+        public void TestDeleteObjectIncomeCommands()
         {
             // слушаем создание новых объектов на втором клиенте
             var collector = new DeletedObjectByTemplateIncomeCommands(clientB, 777);
@@ -52,7 +50,7 @@ namespace Tests.Matches.Realtime
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             createdObject.Delete();
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -65,18 +63,17 @@ namespace Tests.Matches.Realtime
         /// 
         /// </summary>
         /// <returns></returns>
-        [UnityTest]
-        public IEnumerator TestEventBySelfObjectIncomeCommands()
+        //[Test]
+        public void TestEventBySelfObjectIncomeCommands()
         {
             // слушаем создание объектов
             var collectorB = new CreatedObjectByTemplateIncomeCommands(clientB, 1);
-            ;
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).Build();
             // слушаем события 
             var eventCollectorA = new EventIncomeByObjectCommandCollector<DropMineEvent>(clientA, createdObject.ObjectId, DropMineEventId);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(1000);
             // прием команды
             clientB.Update();
 
@@ -89,7 +86,7 @@ namespace Tests.Matches.Realtime
             incomeEvent.cheetahObject.SendEvent(DropMineEventId, ref dropMineEvent);
 
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(1000);
             // прием команды
             clientA.Update();
             // проверяем результат
@@ -97,11 +94,11 @@ namespace Tests.Matches.Realtime
             Assert.AreEqual(1, eventsStream.Count);
             var actual = eventsStream.GetItem(0);
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
-            Assert.AreEqual(memberB, actual.commandCreator);
+            Assert.AreEqual(memberB.GetId(), actual.commandCreator);
         }
         
-        [UnityTest]
-        public IEnumerator TestDeleteFieldIncomeCommands()
+        [Test]
+        public void TestDeleteFieldIncomeCommands()
         {
             const ushort fieldId = 1000;
             // слушаем создание новых объектов на втором клиенте
@@ -111,7 +108,7 @@ namespace Tests.Matches.Realtime
             createdObject.SetLong(fieldId, 5);
             createdObject.DeleteField(fieldId, FieldType.Long);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат

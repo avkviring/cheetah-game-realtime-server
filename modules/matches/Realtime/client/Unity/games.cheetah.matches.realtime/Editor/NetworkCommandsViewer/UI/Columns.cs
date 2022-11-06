@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cheetah.Matches.Factory.Editor.Configurations;
 using Cheetah.Matches.Realtime.Editor.GRPC;
 using UnityEditor;
 
@@ -21,7 +20,7 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI
 
         public readonly IList<Column> AllColumns = new List<Column>()
         {
-            new Column("Time", 110, 110, null, (command, provider) =>
+            new Column("Time", 110, 110, null, (command) =>
             {
                 var time = TimeSpan.FromSeconds(command.Time);
                 var dateTime = new DateTime(time.Ticks);
@@ -29,31 +28,29 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI
                 return localTime.Hour.ToString("D2") + ":" + localTime.Minute.ToString("D2") + ":" + localTime.Second.ToString("D2") + "." +
                        localTime.Millisecond.ToString("D3");
             }),
-            new Column("Direction", 110, 110, null, (command, provider) => command.Direction),
-            new Column("User", 70, 70, null, (command, provider) => command.UserId.ToString()),
-            new Column("Template", 150, 150, null, (command, provider) =>
+            new Column("Direction", 110, 110, null, (command) => command.Direction),
+            new Column("User", 70, 70, null, (command) => command.UserId.ToString()),
+            new Column("Template", 150, 150, null, (command) =>
             {
                 if (!command.HasTemplate)
                 {
                     return "unknown";
                 }
 
-                var templateName = provider.GetTemplateName((ushort)command.Template);
-                return templateName != null ? templateName + "(" + command.Template + ")" : command.Template.ToString();
+                return command.Template.ToString();
             }),
-            new Column("Field", 150, 150, 1, (command, provider) =>
+            new Column("Field", 150, 150, 1, (command) =>
             {
                 if (!command.HasFieldType || !command.HasFieldId)
                 {
                     return "";
                 }
 
-                var name = provider.GetFieldName((ushort)command.FieldId, command.FieldType);
-                return name != null ? name + "(" + command.FieldId + ")" : command.FieldId.ToString();
+                return command.FieldId.ToString();
             }),
-            new Column("Object", 200, null, null, (command, provider) => command.ObjectId),
-            new Column("Command", 200, null, null, (command, provider) => command.Command_),
-            new Column("Value", 250, null, 1, (command, provider) => command.Value),
+            new Column("Object", 200, null, null, (command) => command.ObjectId),
+            new Column("Command", 200, null, null, (command) => command.Command_),
+            new Column("Value", 250, null, 1, (command) => command.Value),
         };
 
         public bool IsEnable(Column column)
@@ -88,7 +85,7 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI
 
     public class Column
     {
-        public delegate string Converter(Command command, ConfigurationsProvider provider);
+        public delegate string Converter(Command command);
 
         public readonly string header;
         public readonly int? minWidth;
@@ -105,9 +102,9 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI
             this.converter = converter;
         }
 
-        public string GetValue(Command command, ConfigurationsProvider provider)
+        public string GetValue(Command command)
         {
-            return converter.Invoke(command, provider);
+            return converter.Invoke(command);
         }
     }
 }

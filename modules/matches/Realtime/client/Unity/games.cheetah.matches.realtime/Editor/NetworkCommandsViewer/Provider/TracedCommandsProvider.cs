@@ -8,7 +8,7 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.Provider
 #pragma warning disable 1998
     public abstract class TracedCommandsProvider
     {
-        public virtual async Task SetRoom(ulong room)
+        public virtual Task SetRoom(ulong room)
         {
             throw new NotImplementedException();
         }

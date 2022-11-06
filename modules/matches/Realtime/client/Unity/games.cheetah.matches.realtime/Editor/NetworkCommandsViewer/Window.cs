@@ -1,7 +1,5 @@
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
-using Cheetah.Matches.Factory.Editor.Configurations;
 using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.Provider;
 using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI;
 using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI.Controller;
@@ -10,7 +8,6 @@ using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector;
 using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider;
 using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
 using Cheetah.Matches.Realtime.Editor.UIElements.Table;
-using Cheetah.Platform.Editor.Connector;
 using Grpc.Core;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -38,7 +35,6 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
         private TableController tableController;
         private StatusIndicator statusIndicator;
         private TracedCommandsProvider provider;
-        private ConfigurationsProvider configurationsProvider;
         private RoomsProvider roomsProvider;
         private RoomsSelector roomsSelector;
         private int timeToUpdate;
@@ -56,9 +52,9 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
 
         public void OnEnable()
         {
-            provider = RemoteProviders
-                ? (TracedCommandsProvider)new RemoteTracedCommandsProvider(LocalClusterConnectorFactory.CreateConnector())
-                : new TestTracedCommandsProvider();
+            // provider = RemoteProviders
+            //     ? (TracedCommandsProvider)new RemoteTracedCommandsProvider(LocalClusterConnectorFactory.CreateConnector())
+            //     : new TestTracedCommandsProvider();
             inUpdate = false; // иначе он может остаться в true после перезагрузки домена
             LoadStyles();
             var ui = LoadVisualTree();
@@ -76,23 +72,15 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
         
         private void ConfigureRoomSelector(TemplateContainer ui)
         {
-            roomsProvider = RemoteProviders
-                ? (RoomsProvider)new RemoteRoomsProvider(LocalClusterConnectorFactory.CreateConnector())
-                : new TestRoomsProvider();
-            configurationsProvider = RemoteProviders
-                ? (ConfigurationsProvider)new RemoteConfigurationsProvider(LocalClusterConnectorFactory.CreateConnector())
-                : new TestConfigurationsProvider();
+            // roomsProvider = RemoteProviders
+            //     ? (RoomsProvider)new RemoteRoomsProvider(LocalClusterConnectorFactory.CreateConnector())
+            //     : new TestRoomsProvider();
             roomsSelector = ui.Q<RoomsSelector>("room-selector");
             roomsSelector.SetProvider(roomsProvider);
             roomsSelector.RoomSelectEvent += provider.SetRoom;
-            roomsSelector.RoomSelectEvent += UpdateConfigurationProvider;
             roomsSelector.RoomUnselectEvent += provider.ResetRooms;
         }
-
-        private Task UpdateConfigurationProvider(ulong arg)
-        {
-            return configurationsProvider.Load();
-        }
+        
 
         private static void SetupHelpButton(VisualElement ui)
         {
@@ -178,7 +166,7 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
         private void InitializeTable(VisualElement ui)
         {
             var table = ui.Q<TableElement>("commands-table");
-            tableController = new TableController(table, columns, provider,configurationsProvider);
+            tableController = new TableController(table, columns, provider);
         }
 
 

@@ -1,71 +1,72 @@
-using System.Collections;
-using Cheetah.Matches.Matchmaking.GRPC;
+using System.Threading;
 using Cheetah.Matches.Realtime;
 using Cheetah.Matches.Realtime.Codec;
-using Cheetah.Platform;
-using Cheetah.Platform.Tests;
+using Cheetah.Matches.Realtime.EmbeddedServer.API;
 using NUnit.Framework;
 using Shared;
-using Tests.Helpers;
-using UnityEngine;
-using UnityEngine.TestTools;
+using Shared_Types;
 
 namespace Tests.Matches.Realtime.Helpers
 {
     public abstract class AbstractTest
     {
-        protected ClusterConnector clusterConnector;
         protected CheetahClient clientA;
 
         protected CheetahClient clientB;
-        protected uint memberA;
-        protected uint memberB;
+        protected ServerMember memberA;
+        protected ServerMember memberB;
+        private EmbeddedServer server;
         protected const ushort TurretsParamsFieldId = 333;
         protected const ushort DropMineEventId = 555;
         protected const ushort HealFieldId = 777;
 
-        [UnitySetUp]
-        public IEnumerator SetUp()
+        [SetUp]
+        public void SetUp()
         {
+            server = new EmbeddedServer();
+            var room = server.CreateRoom();
+
+            memberA = room.CreateMember(PlayerHelper.PlayerGroup);
+            memberB = room.CreateMember(PlayerHelper.PlayerGroup);
+
+
             var codecRegistry = new CodecRegistryBuilder();
-            var connectorFactory = new KubernetesOrDockerConnectorFactory();
-            yield return Enumerators.Await(connectorFactory.Connect());
-            clusterConnector = connectorFactory.ClusterConnector;
+            codecRegistry.Register(factory=>new GlobalNamespaceObjectCodec());
+            codecRegistry.Register(factory=>new DropMineEventCodec());
+            codecRegistry.Register(factory=>new SomeSingletonKeyCodec());
+            codecRegistry.Register(factory=>new TurretsParamsStructureCodec());
+
 
             // подключаем первого клиента
-            var ticketA = PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_a");
-            yield return Enumerators.Await(ticketA);
-            memberA = ticketA.Result.MemberId;
-            clientA = ConnectToRelay(ticketA.Result, codecRegistry);
+            clientA = ConnectToRelay(server, room, memberA, codecRegistry);
             clientA.AttachToRoom();
 
             // подключаем второго клиента
-            var ticketB = PlayerHelper.CreateNewPlayerAndMatchToBattle(clusterConnector, "user_b");
-            yield return Enumerators.Await(ticketB);
-            memberB = ticketB.Result.MemberId;
-            clientB = ConnectToRelay(ticketB.Result, codecRegistry);
+            clientB = ConnectToRelay(server, room, memberB, codecRegistry);
             clientB.AttachToRoom();
 
             // полуаем сетевые команды, которые не надо учитывать в тестах
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             clientA.Update();
             clientB.Update();
         }
 
-        private static CheetahClient ConnectToRelay(TicketResponse ticket, CodecRegistryBuilder codecRegistryBuilder)
+        private static CheetahClient ConnectToRelay(EmbeddedServer server, ServerRoom room, ServerMember member,
+            CodecRegistryBuilder codecRegistryBuilder)
         {
-            var client = new CheetahClient(ticket.RealtimeServerHost, ticket.RealtimeServerPort, ticket.MemberId, ticket.RoomId, ticket.PrivateKey.ToByteArray(),
+            var client = new CheetahClient(server.GetGameHost(), server.GetGamePort(), member.GetId(), room.GetId(),
+                member.GetPrivateKey(),
                 codecRegistryBuilder.Build());
             client.DisableClientLog();
             return client;
         }
 
         [TearDown]
-        public async void TearDown()
+        public void TearDown()
         {
             clientA.Destroy();
             clientB.Destroy();
-            await clusterConnector.Destroy();
+            server.Destroy();
         }
     }
 }

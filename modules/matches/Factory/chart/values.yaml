@@ -1,6 +1,0 @@
-cpu:
-  request: "0.1"
-  limit: "1"
-memory:
-  request: 20Mi
-  limit: 40Mi

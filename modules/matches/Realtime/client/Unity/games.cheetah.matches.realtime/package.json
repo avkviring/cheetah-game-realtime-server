@@ -7,8 +7,7 @@
   "unityRelease": "0b5",
   "repository": "github:cheetah-game-platform/platform",
   "dependencies": {
-    "games.cheetah.platform": "999.999.999",
-    "games.cheetah.matches.factory": "999.999.999"
+    "games.cheetah.platform": "999.999.999"
   },
   "hideInEditor": false,
   "type": "library",

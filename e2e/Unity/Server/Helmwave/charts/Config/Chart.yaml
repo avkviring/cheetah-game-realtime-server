@@ -1,6 +1,0 @@
-apiVersion: v2
-name: config
-description: config
-type: application
-version: 999.999.999
-appVersion: "999.999.999"
