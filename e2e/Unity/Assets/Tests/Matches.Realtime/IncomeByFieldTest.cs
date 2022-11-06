@@ -1,18 +1,16 @@
-using System.Collections;
+using System.Threading;
 using Cheetah.Matches.Realtime.DOA.Income.ByField;
 using NUnit.Framework;
 using Shared;
 using Shared.Types;
 using Tests.Matches.Realtime.Helpers;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Tests.Matches.Realtime
 {
     public class IncomeByFieldTest: AbstractTest
     {
-        [UnityTest]
-        public IEnumerator TestEventIncomeCommands()
+        [Test]
+        public void TestEventIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new EventIncomeByFieldCommandCollector<DropMineEvent>(clientB, DropMineEventId);
@@ -25,18 +23,18 @@ namespace Tests.Matches.Realtime
             };
             createdObject.SendEvent(DropMineEventId, ref dropMineEvent);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
             var eventsStream= collector.GetStream();
             var actual = eventsStream.GetItem(0);
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
         }
         
-        [UnityTest]
-        public IEnumerator TestTargetEventIncomeCommands()
+        [Test]
+        public void TestTargetEventIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new EventIncomeByFieldCommandCollector<DropMineEvent>(clientB, DropMineEventId);
@@ -47,20 +45,20 @@ namespace Tests.Matches.Realtime
             {
                 MineId = 150
             };
-            createdObject.SendEvent(DropMineEventId, memberB, ref dropMineEvent);
+            createdObject.SendEvent(DropMineEventId, memberB.GetId(), ref dropMineEvent);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
             var eventsStream= collector.GetStream();
             var actual = eventsStream.GetItem(0);
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
         }
         
-        [UnityTest]
-        public IEnumerator TestStructureIncomeCommands()
+        [Test]
+        public void TestStructureIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new StructureIncomeByFieldCommandCollector<TurretsParamsStructure>(clientB, TurretsParamsFieldId);
@@ -74,7 +72,7 @@ namespace Tests.Matches.Realtime
             };
             createdObject.SetStructure(TurretsParamsFieldId, ref turretsParams);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -83,11 +81,11 @@ namespace Tests.Matches.Realtime
             var turretsParamsStructure = actual.value;
             Assert.AreEqual(turretsParams.Damage, turretsParamsStructure.Damage);
             Assert.AreEqual(turretsParams.Speed, turretsParamsStructure.Speed);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
         }
 
-        [UnityTest]
-        public IEnumerator TestCompareAndSetStructureIncomeCommands()
+        [Test]
+        public void TestCompareAndSetStructureIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new StructureIncomeByFieldCommandCollector<TurretsParamsStructure>(clientB, TurretsParamsFieldId);
@@ -110,7 +108,7 @@ namespace Tests.Matches.Realtime
             createdObject.CompareAndSetStructureWithReset(TurretsParamsFieldId, ref turretParamsB, ref turretParamsC, ref turretParamsA);
 
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
 
@@ -120,11 +118,11 @@ namespace Tests.Matches.Realtime
             var second = stream.GetItem(2);
             Assert.AreEqual(100, first.value.Speed);
             Assert.AreEqual(5, second.value.Damage);
-            Assert.AreEqual(memberA, first.commandCreator);
+            Assert.AreEqual(memberA.GetId(), first.commandCreator);
         }
         
-        [UnityTest]
-        public IEnumerator TestLongIncomeCommands()
+        [Test]
+        public void TestLongIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
@@ -133,18 +131,18 @@ namespace Tests.Matches.Realtime
             // изменяем значение
             createdObject.SetLong(HealFieldId, 7799);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
             var actual = stream.GetItem(0);
             Assert.AreEqual( 7799, actual.value);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
         }
             
-        [UnityTest]
-        public IEnumerator TestIncrementLongIncomeCommands()
+        [Test]
+        public void TestIncrementLongIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
@@ -153,18 +151,18 @@ namespace Tests.Matches.Realtime
             // изменяем значение
             createdObject.IncrementLong(HealFieldId, 1001);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
             var actual = stream.GetItem(0);
             Assert.AreEqual(1001, actual.value);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
         }
         
-        [UnityTest]
-        public IEnumerator TestCompareAndSetLongIncomeCommands()
+        [Test]
+        public void TestCompareAndSetLongIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
@@ -174,7 +172,7 @@ namespace Tests.Matches.Realtime
             createdObject.CompareAndSetLong(HealFieldId, 0,555);
             createdObject.CompareAndSetLongWithReset(HealFieldId, 555,1000,0);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
@@ -183,11 +181,11 @@ namespace Tests.Matches.Realtime
             var second = stream.GetItem(1);
             Assert.AreEqual( 555, first.value);
             Assert.AreEqual( 1000, second.value);
-            Assert.AreEqual(memberA, first.commandCreator);
+            Assert.AreEqual(memberA.GetId(), first.commandCreator);
         }
         
-        [UnityTest]
-        public IEnumerator TestDoubleIncomeCommands()
+        [Test]
+        public void TestDoubleIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new DoubleIncomeByFieldCommandCollector(clientB, HealFieldId);
@@ -196,18 +194,18 @@ namespace Tests.Matches.Realtime
             // изменяем значение
             createdObject.SetDouble(HealFieldId, 77.99);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
             var actual = stream.GetItem(0);
             Assert.AreEqual( 77.99, actual.value);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
         }
         
-        [UnityTest]
-        public IEnumerator TestIncrementDoubleIncomeCommands()
+        [Test]
+        public void TestIncrementDoubleIncomeCommands()
         {
             // слушаем события определенного типа
             var collector = new DoubleIncomeByFieldCommandCollector(clientB, HealFieldId);
@@ -216,14 +214,14 @@ namespace Tests.Matches.Realtime
             // изменяем значение
             createdObject.IncrementDouble(HealFieldId, 77.99);
             // ждем отправки команды
-            yield return new WaitForSeconds(1);
+            Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
             var stream= collector.GetStream();
             var actual = stream.GetItem(0);
             Assert.AreEqual( 77.99, actual.value);
-            Assert.AreEqual(memberA, actual.commandCreator);
+            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
         }
         
     }

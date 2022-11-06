@@ -4,7 +4,6 @@
   "references": [
     "games.cheetah.platform.editor",
     "games.cheetah.platform",
-    "games.cheetah.matches.factory.editor",
     "games.cheetah.matches.realtime.shared",
     "games.cheetah.matches.realtime"
   ],

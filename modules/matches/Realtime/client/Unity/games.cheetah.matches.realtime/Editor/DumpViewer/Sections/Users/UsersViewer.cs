@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Cheetah.Matches.Factory.Editor.Configurations;
 using Cheetah.Matches.Realtime.Editor.GRPC;
 using Cheetah.Matches.Realtime.Editor.UIElements.Table;
 using UnityEditor;
@@ -16,12 +15,10 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Users
         private TableElement objectsInUserGroupTable;
         private DumpResponse dumpResponse;
         private readonly Label selectedUserIdLabel;
-        private ConfigurationsProvider configurationsProvider;
 
 
-        public UsersViewer(ConfigurationsProvider configurationsProvider)
+        public UsersViewer()
         {
-            this.configurationsProvider = configurationsProvider;
             var uiAsset =
                 AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/DumpViewer/Sections/Users/Panel.uxml");
             uiAsset.CloneTree(this);
@@ -63,13 +60,13 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Users
         private void ConfigureCreateObjectTable()
         {
             createdObjectsTable = this.Q<TableElement>("created-objects");
-            TablesConfigurator.ConfigureObjectsTable(createdObjectsTable, configurationsProvider);
+            TablesConfigurator.ConfigureObjectsTable(createdObjectsTable);
         }
 
         private void ConfigureObjectsInUserGroups()
         {
             objectsInUserGroupTable = this.Q<TableElement>("groups-objects");
-            TablesConfigurator.ConfigureObjectsTable(objectsInUserGroupTable,configurationsProvider);
+            TablesConfigurator.ConfigureObjectsTable(objectsInUserGroupTable);
         }
 
         public void SetData(DumpResponse dumpResponse)

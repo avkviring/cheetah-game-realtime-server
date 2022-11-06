@@ -219,7 +219,7 @@ namespace Cheetah.Matches.Realtime.Editor.Generator
         internal string GenerateConstructor()
         {
             var result = new StringBuilder();
-            result.AppendLine($"private {codecClassName}(CodecRegistry codecRegistry)");
+            result.AppendLine($"public {codecClassName}(CodecRegistry codecRegistry)");
             result.AppendLine("{");
             foreach (var (type, codecFieldName) in types)
             {

@@ -136,32 +136,12 @@
       },
       "url": "https://packages.unity.com"
     },
-    "games.cheetah.matches.factory": {
-      "version": "file:../../../modules/matches/Factory/client/Unity/games.cheetah.matches.factory",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "games.cheetah.platform": "999.999.999",
-        "games.cheetah.matches.realtime.shared": "999.999.999"
-      }
-    },
-    "games.cheetah.matches.matchmaking": {
-      "version": "file:../../../modules/matches/StubMatchmaking/client/Unity/games.cheetah.matches.matchmaking",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "games.cheetah.platform": "999.999.999",
-        "games.cheetah.matches.factory": "999.999.999",
-        "games.cheetah.matches.registry": "999.999.999"
-      }
-    },
     "games.cheetah.matches.realtime": {
       "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime",
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999",
-        "games.cheetah.matches.factory": "999.999.999"
+        "games.cheetah.platform": "999.999.999"
       }
     },
     "games.cheetah.matches.realtime.doa": {
@@ -196,15 +176,6 @@
       "source": "local",
       "dependencies": {
         "games.cheetah.platform": "999.999.999"
-      }
-    },
-    "games.cheetah.matches.registry": {
-      "version": "file:../../../modules/matches/Registry/client/Unity/games.cheetah.matches.registry",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "games.cheetah.platform": "999.999.999",
-        "games.cheetah.matches.realtime": "999.999.999"
       }
     },
     "games.cheetah.platform": {

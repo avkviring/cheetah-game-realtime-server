@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading;
 using NUnit.Framework;
 using Tests.Matches.Realtime.Helpers;
 using UnityEngine;
@@ -8,11 +9,11 @@ namespace Tests.Matches.Realtime
 {
     public class ServerTimeTest : AbstractTest
     {
-        [UnityTest]
-        public IEnumerator Test()
+        [Test]
+        public void Test()
         {
             // ждем отправки команды
-            yield return new WaitForSeconds(2);
+            Thread.Sleep(2000);
             Assert.True(clientA.GetServerTimeInMs() > 1000);
         }
     }

@@ -1,6 +1,0 @@
-apiVersion: v2
-name: cheetah-matches-realtime
-description: cheetah-matches-realtime
-type: application
-version: "999.999.999"
-appVersion: "999.999.999"

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cheetah.Matches.Factory.Editor.Configurations;
 using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects.Query;
 using Cheetah.Matches.Realtime.Editor.DumpViewer.TypesExtension;
 using Cheetah.Matches.Realtime.Editor.GRPC;
@@ -19,7 +18,6 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects
     public class ObjectsViewer : VisualElement
     {
         private readonly StatusIndicator statusIndicator;
-        private readonly ConfigurationsProvider configurationsProvider;
         private TableElement objectsTable;
         private TableElement fieldsTable;
         private TableElement loadUsersTable;
@@ -37,10 +35,9 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects
             public FieldValue Value;
         }
 
-        public ObjectsViewer(StatusIndicator statusIndicator, ConfigurationsProvider configurationsProvider)
+        public ObjectsViewer(StatusIndicator statusIndicator)
         {
             this.statusIndicator = statusIndicator;
-            this.configurationsProvider = configurationsProvider;
             var uiAsset =
                 AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Packages/games.Cheetah.Matches.Realtime/Editor/DumpViewer/Sections/Objects/Panel.uxml");
             uiAsset.CloneTree(this);
@@ -98,8 +95,7 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects
             fieldsTable.AddColumn("Поле", 200, null, 0, o =>
             {
                 var item = (FieldItem)o;
-                var name = configurationsProvider.GetFieldName((ushort)item.Id, ToFieldType(item.Value.VariantCase));
-                return name != null ? name + "(" + item.Id + ")" : item.Id.ToString();
+                return item.Id.ToString();
             });
             fieldsTable.AddColumn("Значение", 200, null, 1, o =>
             {
@@ -119,7 +115,7 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects
         private void ConfigureObjectsTable()
         {
             objectsTable = this.Q<TableElement>("objects");
-            TablesConfigurator.ConfigureObjectsTable(objectsTable, configurationsProvider);
+            TablesConfigurator.ConfigureObjectsTable(objectsTable);
             objectsTable.RegisterSelectedListener(OnObjectSelect);
         }
 

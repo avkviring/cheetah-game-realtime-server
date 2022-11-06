@@ -2,7 +2,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Cheetah.Matches.Factory.Editor.Configurations;
 using Cheetah.Matches.Realtime.Editor.DumpViewer.Provider;
 using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects;
 using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Users;
@@ -11,7 +10,6 @@ using Cheetah.Matches.Realtime.Editor.UIElements;
 using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector;
 using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider;
 using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
-using Cheetah.Platform.Editor.Connector;
 using Grpc.Core;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -56,7 +54,6 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
         private ulong? selectedRoom;
         private bool connectError;
         private RoomsProvider roomsProvider;
-        private ConfigurationsProvider configurationsProvider;
         private DumpResponse dump;
 
         public void OnEnable()
@@ -64,12 +61,9 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
             var ui = LoadVisualTree();
             rootVisualElement.Add(ui);
             statusIndicator = ui.Q<StatusIndicator>("status");
-            provider = RemoteProviders
-                ? (DumpProvider)new RemoteDumpProvider(LocalClusterConnectorFactory.CreateConnector())
-                : new TestDumpProvider();
-            configurationsProvider = RemoteProviders
-                ? (ConfigurationsProvider)new RemoteConfigurationsProvider(LocalClusterConnectorFactory.CreateConnector())
-                : new TestConfigurationsProvider();
+            // provider = RemoteProviders
+            //     ? (DumpProvider)new RemoteDumpProvider(LocalClusterConnectorFactory.CreateConnector())
+            //     : new TestDumpProvider();
             ConfigureRoomSelector(ui);
             ConfigureDumpButton(ui);
             ConfigureTabs(ui);
@@ -143,8 +137,8 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
 
         private void ConfigureTabs(VisualElement ui)
         {
-            objectsViewer = new ObjectsViewer(statusIndicator, configurationsProvider);
-            usersViewer = new UsersViewer(configurationsProvider);
+            objectsViewer = new ObjectsViewer(statusIndicator);
+            usersViewer = new UsersViewer();
             tabContent = ui.Q<VisualElement>("tabs-content");
             autoRefresh = ui.Q<Toggle>("auto-refresh");
             var tabsController = new TabsController();
@@ -165,12 +159,12 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
 
         private void ConfigureRoomSelector(VisualElement ui)
         {
-            roomsProvider = RemoteProviders
-                ? (RoomsProvider)new RemoteRoomsProvider(LocalClusterConnectorFactory.CreateConnector())
-                : new TestRoomsProvider();
+            // roomsProvider = RemoteProviders
+            //     ? (RoomsProvider)new RemoteRoomsProvider(LocalClusterConnectorFactory.CreateConnector())
+            //     : new TestRoomsProvider();
             roomSelector = ui.Q<RoomsSelector>("room-selector");
             roomSelector.SetProvider(roomsProvider);
-            roomSelector.RoomSelectEvent += RoomSelect;
+            roomSelector.RoomSelectEvent += RoomRoomSelect;
             roomSelector.RoomUnselectEvent += RoomUnselect;
         }
 
@@ -180,11 +174,11 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
             dumpButton.SetEnabled(false);
         }
 
-        private Task RoomSelect(ulong room)
+        private Task RoomRoomSelect(ulong room)
         {
             selectedRoom = room;
             dumpButton.SetEnabled(!connectError);
-            return configurationsProvider.Load();
+            return Task.CompletedTask;
         }
 
         private async void OnDumpButtonPressed(ClickEvent evt)
@@ -291,7 +285,6 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
         private async void OnDestroy()
         {
             await provider.Destroy();
-            await configurationsProvider.Destroy();
         }
     }
 }

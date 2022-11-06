@@ -1,10 +1,7 @@
 [workspace]
 members = [
     "libraries/rust/Microservice",
-    "matches/Factory/server",
     "matches/Registry/server",
-    "matches/StubMatchmaking/server",
-    "matches/StubRegistry/server",
     "matches/Realtime/server",
     "matches/Realtime/common/Common",
     "matches/Realtime/common/Macro",
