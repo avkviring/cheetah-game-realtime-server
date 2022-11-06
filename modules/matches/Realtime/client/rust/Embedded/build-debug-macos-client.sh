@@ -1,5 +1,8 @@
 #!/bin/bash
 ## сборка runtime клиента для тестирования на macos
-OUTPUT="../../Unity/games.cheetah.matches.realtime.embedded-server/"
-cargo build
-cp ../../../../../target/debug/libcheetah_matches_realtime_embedded.dylib "$OUTPUT/Runtime/FFI/Library/libcheetah_matches_realtime_embedded.bundle"
+UNITY_OUTPUT="../../Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/"
+NET_OUTPUT="../../Net/Embedded/Libraries/"
+cargo build --release
+
+cp ../../../../../target/release/libcheetah_matches_realtime_embedded.dylib "$UNITY_OUTPUT/libcheetah_matches_realtime_embedded.bundle"
+cp ../../../../../target/release/libcheetah_matches_realtime_embedded.dylib "$UNITY_OUTPUT/libcheetah_matches_realtime_embedded.dylib"

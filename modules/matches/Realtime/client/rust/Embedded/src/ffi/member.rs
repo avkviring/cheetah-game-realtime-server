@@ -52,7 +52,7 @@ mod test {
 	#[test]
 	pub fn should_create_member() {
 		let mut result = EmbeddedServerDescription::default();
-		run_new_server(&mut result, on_server_error);
+		run_new_server(&mut result, on_server_error, &Default::default());
 		let mut room_id = 0;
 		create_room(result.id, &mut room_id, on_room_error);
 		let mut member = Default::default();

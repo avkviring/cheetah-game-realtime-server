@@ -1,8 +1,8 @@
 using System;
-using AOT;
 using Cheetah.Matches.Realtime.EmbeddedServer.API;
 using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
 
+#nullable enable
 namespace Cheetah.Matches.Realtime.EmbeddedServer.Impl
 {
     internal class ServerRoomImpl : ServerRoom
@@ -23,16 +23,20 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.Impl
             {
                 throw new Exception("Cannot create member. " + onMemberErrorMessage);
             }
+
             return new ServerMemberImpl(member);
         }
 
+
+#if UNITY
         [MonoPInvokeCallback(typeof(Member.OnMemberError))]
-        private static void OnMemberError(string message)
+#endif
+        private static void OnMemberError(string? message)
         {
             onMemberErrorMessage = message;
         }
 
-        private static string onMemberErrorMessage;
+        private static string? onMemberErrorMessage;
 
         public ulong GetId()
         {

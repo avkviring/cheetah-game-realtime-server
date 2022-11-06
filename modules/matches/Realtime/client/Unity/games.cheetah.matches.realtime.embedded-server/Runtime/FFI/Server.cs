@@ -7,19 +7,28 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.FFI
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void OnServerError([MarshalAs(UnmanagedType.LPWStr)] string message);
 
+        [StructLayout(LayoutKind.Sequential)]
         internal struct Description
         {
-            internal ulong id;
-
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-            internal unsafe fixed byte serverIp[4];
-
-            internal ushort gamePort;
+            [MarshalAs(UnmanagedType.U8)] internal ulong id;
+            internal unsafe fixed byte gameIp[4];
+            [MarshalAs(UnmanagedType.U2)] internal ushort gamePort;
+            internal unsafe fixed byte internal_grpc_ip[4];
+            [MarshalAs(UnmanagedType.U2)] internal ushort internal_grpc_port;
+            internal unsafe fixed byte admin_grpc_ip[4];
+            [MarshalAs(UnmanagedType.U2)] internal ushort admin_grpc_port;
         }
 
-        
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct BindAddress
+        {
+            internal unsafe fixed byte bindAddress[4];
+        }
+
+
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "run_new_server")]
-        internal static extern bool RunNewServer(ref Description description, OnServerError onServerError);
+        internal static extern bool RunNewServer(ref Description description, OnServerError onServerError,
+            ref BindAddress bindAddress);
 
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_server")]
         internal static extern bool DestroyServer(ulong serverId);

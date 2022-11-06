@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cheetah.Matches.Realtime.Codec;
+using Cheetah.Matches.Realtime.EmbeddedServer.API;
 using Cheetah.Matches.Realtime.Logger;
 using Cheetah.Matches.Realtime.Types;
 using NUnit.Framework;
@@ -12,7 +13,7 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.Tests
         [Test]
         public void Test()
         {
-            API.EmbeddedServer.InitLogger(CheetahLogLevel.Warn);
+            API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
             
             var server = new API.EmbeddedServer();
             var room = server.CreateRoom();

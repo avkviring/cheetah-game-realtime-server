@@ -9,31 +9,51 @@ pub struct EmbeddedServerDescription {
 	pub(crate) id: ServerId,
 	game_host: [u8; 4],
 	game_port: u16,
+	internal_grpc_host: [u8; 4],
+	internal_grpc_port: u16,
+	admin_grpc_host: [u8; 4],
+	admin_grpc_port: u16,
 }
 
 #[no_mangle]
-pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_error: extern "C" fn(*const u16)) -> bool {
+pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_error: extern "C" fn(*const u16), bind_address: &[u8; 4]) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	registry.next_server_id += 1;
 	let server_id = registry.next_server_id;
 
-	match EmbeddedServerWrapper::run_new_server() {
+	match EmbeddedServerWrapper::run_new_server(bind_address.clone()) {
 		Ok(server) => {
 			result.id = server_id;
-			result.game_host = match server.game_socket_addr.ip() {
-				IpAddr::V4(v4) => v4.octets(),
-				IpAddr::V6(_) => {
-					on_error(widestring::U16CString::from_str("IPv6 not supported").unwrap().as_ptr());
-					return false;
-				}
-			};
+
+			if !set_addr(&mut result.game_host, on_error, &server.game_socket_addr.ip())
+				|| !set_addr(&mut result.internal_grpc_host, on_error, &server.internal_grpc_socket_addr.ip())
+				|| !set_addr(&mut result.admin_grpc_host, on_error, &server.admin_grpc_socket_addr.ip())
+			{
+				return false;
+			}
+
 			result.game_port = server.game_socket_addr.port();
+			result.internal_grpc_port = server.internal_grpc_socket_addr.port();
+			result.admin_grpc_port = server.admin_grpc_socket_addr.port();
 			registry.servers.insert(server_id, server);
 			true
 		}
 		Err(e) => {
 			let string = widestring::U16CString::from_str(format!("{:?}", e)).unwrap();
 			on_error(string.as_ptr());
+			false
+		}
+	}
+}
+
+fn set_addr(out: &mut [u8; 4], on_error: extern "C" fn(*const u16), ip_addr: &IpAddr) -> bool {
+	match ip_addr {
+		IpAddr::V4(v4) => {
+			*out = v4.octets();
+			true
+		}
+		IpAddr::V6(_) => {
+			on_error(widestring::U16CString::from_str("IPv6 not supported").unwrap().as_ptr());
 			false
 		}
 	}
@@ -57,14 +77,14 @@ mod test {
 	#[test]
 	pub fn should_run_new_server() {
 		let mut result = EmbeddedServerDescription::default();
-		let success = run_new_server(&mut result, on_error);
+		let success = run_new_server(&mut result, on_error, &Default::default());
 		assert!(success);
 	}
 
 	#[test]
 	pub fn should_destroy_server() {
 		let mut result = EmbeddedServerDescription::default();
-		let success = run_new_server(&mut result, on_error);
+		let success = run_new_server(&mut result, on_error, &Default::default());
 		assert!(success);
 		assert!(destroy_server(result.id));
 		assert!(!destroy_server(result.id));

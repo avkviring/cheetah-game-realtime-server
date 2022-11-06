@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>GamesCheetah.RealtimeEmbeddedServer</AssemblyName>
+        <PackageId>GamesCheetah.RealtimeEmbeddedServer</PackageId>
+        <Version>999.999.999</Version>
+        <Authors>Kviring Aleksei</Authors>
+        <Company>Games.Cheetah.Platform</Company>
+        <Product>Embedded server for realtime game</Product>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>Cheetah.Matches.Realtime.EmbeddedServer</RootNamespace>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\**\*.cs" CopyToPublishDirectory="PreserveNewest" />
+        <Resource Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\**\.dll" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+        <Resource Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\**\*.so" />
+        <Content Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\FFI\Library\libcheetah_matches_realtime_embedded.dylib">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <Pack>true</Pack>
+            <PackagePath>runtimes/osx-x64/native/libcheetah_matches_realtime_embedded.dylib</PackagePath>
+        </Content>
+        <Content Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\FFI\Library\libcheetah_matches_realtime_server_plugin.so">
+                    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+                    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+                    <Pack>true</Pack>
+                    <PackagePath>runtimes/linux/native/libcheetah_matches_realtime_server_plugin.so</PackagePath>
+         </Content>
+         <Content Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\FFI\Library\cheetah_matches_realtime_server_plugin.dll">
+                             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+                             <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+                             <Pack>true</Pack>
+                             <PackagePath>runtimes/win-x64/native/cheetah_matches_realtime_server_plugin.dll</PackagePath>
+         </Content>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
+    </ItemGroup>
+</Project>
