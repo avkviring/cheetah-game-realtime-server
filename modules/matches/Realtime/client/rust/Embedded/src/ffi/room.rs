@@ -34,7 +34,7 @@ mod test {
 	#[test]
 	pub fn should_create_room() {
 		let mut result = EmbeddedServerDescription::default();
-		run_new_server(&mut result, on_server_error);
+		run_new_server(&mut result, on_server_error, &Default::default());
 		let mut room_id = 0;
 		assert!(create_room(result.id, &mut room_id, on_room_error));
 		assert_eq!(room_id, 1);

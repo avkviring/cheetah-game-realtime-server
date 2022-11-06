@@ -14,7 +14,6 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.FFI
         {
             internal ushort id;
 
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = PrivateKeyLength)]
             internal unsafe fixed byte privateKey[PrivateKeyLength];
         }
 

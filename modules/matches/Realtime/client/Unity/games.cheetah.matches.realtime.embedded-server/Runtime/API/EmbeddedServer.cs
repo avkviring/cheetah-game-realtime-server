@@ -1,10 +1,15 @@
-using System;
+#if UNITY_64
 using AOT;
+using UnityEngine;
+#else
+using Serilog;
+#endif
+using System;
+using System.Net;
 using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
 using Cheetah.Matches.Realtime.EmbeddedServer.Impl;
-using Cheetah.Matches.Realtime.Logger;
-using UnityEngine;
 
+#nullable enable
 namespace Cheetah.Matches.Realtime.EmbeddedServer.API
 {
     /// <summary>
@@ -21,13 +26,24 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
     public class EmbeddedServer
     {
         private readonly Server.Description description;
-        private static string errorMessage;
+        private static string? errorMessage;
 
-        public EmbeddedServer()
+        public EmbeddedServer(IPAddress bindAddress)
         {
-            if (!Server.RunNewServer(ref description, OnError))
+            unsafe
             {
-                throw new Exception("Cannot run embedded server. " + errorMessage);
+                var bindFFIAddress = new Server.BindAddress();
+                var addressBytes = bindAddress.GetAddressBytes();
+
+                bindFFIAddress.bindAddress[0] = addressBytes[0];
+                bindFFIAddress.bindAddress[1] = addressBytes[1];
+                bindFFIAddress.bindAddress[2] = addressBytes[2];
+                bindFFIAddress.bindAddress[3] = addressBytes[3];
+
+                if (!Server.RunNewServer(ref description, OnError, ref bindFFIAddress))
+                {
+                    throw new Exception("Cannot run embedded server. " + errorMessage);
+                }
             }
         }
 
@@ -50,12 +66,30 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
             }
         }
 
-        public string GetGameHost()
+        public string GetGameIp()
         {
             unsafe
             {
                 return
-                    $"{description.serverIp[0]}.{description.serverIp[1]}.{description.serverIp[2]}.{description.serverIp[3]}";
+                    $"{description.gameIp[0]}.{description.gameIp[1]}.{description.gameIp[2]}.{description.gameIp[3]}";
+            }
+        }
+
+        public string GetAdminGrpcIp()
+        {
+            unsafe
+            {
+                return
+                    $"{description.admin_grpc_ip[0]}.{description.admin_grpc_ip[1]}.{description.admin_grpc_ip[2]}.{description.admin_grpc_ip[3]}";
+            }
+        }
+
+        public string GetInternalGrpcIp()
+        {
+            unsafe
+            {
+                return
+                    $"{description.internal_grpc_ip[0]}.{description.internal_grpc_ip[1]}.{description.internal_grpc_ip[2]}.{description.internal_grpc_ip[3]}";
             }
         }
 
@@ -64,46 +98,73 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
             return description.gamePort;
         }
 
+        public uint GetAdminGrpcPort()
+        {
+            return description.admin_grpc_port;
+        }
+
+        public uint GetInternalGrpcPort()
+        {
+            return description.internal_grpc_port;
+        }
+
+#if UNITY_64
         [MonoPInvokeCallback(typeof(Server.OnServerError))]
-        private static void OnError(string message)
+#endif
+        private static void OnError(string? message)
         {
             errorMessage = message;
         }
 
 
-
-        public static void InitLogger(CheetahLogLevel logLevel)
+        public static void InitLogger(EmeddedServerLogLevel emeddedServerLogLevel)
         {
-            FFI.Logger.InitLogger();
-            FFI.Logger.SetMaxLogLevel(logLevel);
+            Logger.InitLogger();
+            Logger.SetMaxLogLevel(emeddedServerLogLevel);
         }
 
         public static void ShowCurrentLogs()
         {
-            FFI.Logger.CollectLogs(ShowLog);
+            Logger.CollectLogs(ShowLog);
         }
-        
+
+#if UNITY_64
         [MonoPInvokeCallback(typeof(FFI.Logger.LogCollector))]
-        private static void ShowLog(CheetahLogLevel level, string log)
+        private static void ShowLog(EmeddedServerLogLevel level, string log)
         {
             switch (level)
             {
-                case CheetahLogLevel.Info:
+                case EmeddedServerLogLevel.Info:
                     Debug.Log(log);
                     break;
-                case CheetahLogLevel.Warn:
+                case EmeddedServerLogLevel.Warn:
                     Debug.LogWarning(log);
                     break;
-                case CheetahLogLevel.Error:
+                case EmeddedServerLogLevel.Error:
                     Debug.LogError(log);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(level), level, null);
             }
         }
-        
-        
-        
-        
+#else
+        private static void ShowLog(EmeddedServerLogLevel level, string log)
+        {
+            switch (level)
+            {
+                case EmeddedServerLogLevel.Info:
+                    Log.Information(log);
+                    break;
+                case EmeddedServerLogLevel.Warn:
+                    Log.Warning(log);
+                    break;
+                case EmeddedServerLogLevel.Error:
+                    Log.Error(log);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(level), level, null);
+            }
+        }
+#endif
     }
 }
