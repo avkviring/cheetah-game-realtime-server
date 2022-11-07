@@ -11,7 +11,7 @@ crate-type = ["cdylib","staticlib"]
 [dependencies]
 cheetah-matches-realtime-common = { path = "../../../common/Common" }
 cheetah-matches-realtime = { path = "../../../server" }
-tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
+tokio = { version = "1.21.2", features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
 anyhow = "1.0.64"
 thiserror = "1.0.34"
 lazy_static = "1.4.0"

@@ -10,7 +10,7 @@ path = "src/bin/main.rs"
 [dependencies]
 pin-project = "1.0.10"
 pin-project-internal = "1.0.10"
-tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
+tokio = { version = "1.21.2", features = ["rt-multi-thread", "time", "fs", "macros", "net"] }
 tonic = "0.6.2"
 tonic-health = "0.5.0"
 prost = "0.9.0"

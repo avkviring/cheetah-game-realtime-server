@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 serde = { version = "1.0.140", features = ["derive"] }
-tokio = "1.17.0"
+tokio = "1.21.2"
 tonic = "0.6.2"
 tracing = { version = "0.1.31" }
 tracing-log = { version = "0.1.2" }
