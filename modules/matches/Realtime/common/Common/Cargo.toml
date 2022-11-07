@@ -9,7 +9,7 @@ lazy_static = "1.4.0"
 rand = "0.8.3"
 snap = "1.0.5"
 byteorder = "1.4.3"
-chacha20poly1305 = { version = "0.9.0", features = ["heapless", "reduced-round"] }
+chacha20poly1305 = { version = "0.10.1", features = ["heapless", "reduced-round"] }
 cheetah-matches-realtime-macro = { path = "../Macro/" }
 generic-array = "0.14.5"
 heapless = { version = "0.7.8" }
