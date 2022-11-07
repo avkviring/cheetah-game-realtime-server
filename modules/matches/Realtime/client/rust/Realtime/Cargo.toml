@@ -14,7 +14,7 @@ widestring = "0.5.1"
 fnv = "1.0.7"
 heapless = { version = "0.7.8", features = ["serde"] }
 thiserror = "1.0.30"
-tracing = "0.1.31"
+tracing = "0.1.34"
 tracing-core = "0.1.26"
 tracing-log = { version = "0.1.2" }
 tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }

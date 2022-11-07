@@ -30,7 +30,7 @@ strum_macros = "0.24.2"
 cheetah-libraries-microservice = { path = "../../../libraries/rust/Microservice" }
 tonic-web = "0.2.0"
 thiserror = "1.0.30"
-tracing = "0.1.31"
+tracing = "0.1.34"
 prometheus = "0.13.1"
 lazy_static = "1.4.0"
 prometheus-measures-exporter = "0.0.1"
