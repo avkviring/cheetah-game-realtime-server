@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use fnv::FnvBuildHasher;
+use fnv::{FnvBuildHasher, FnvHashSet};
 use thiserror::Error;
 
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
@@ -15,10 +15,12 @@ use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
 use crate::server::measurers::{MeasureStringId, Measurers};
 
+#[derive(Default)]
 pub struct Rooms {
 	pub room_by_id: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
 	measurers: Rc<RefCell<Measurers>>,
+	plugin_names: FnvHashSet<String>,
 }
 
 #[derive(Debug, Error)]
@@ -32,11 +34,12 @@ pub enum RegisterUserError {
 pub struct RoomNotFoundError(RoomId);
 
 impl Rooms {
-	pub fn new(measurers: Rc<RefCell<Measurers>>) -> Self {
+	pub fn new(measurers: Rc<RefCell<Measurers>>, plugin_names: FnvHashSet<String>) -> Self {
 		Self {
 			room_by_id: Default::default(),
 			room_id_generator: 0,
 			measurers,
+			plugin_names,
 		}
 	}
 
@@ -45,7 +48,7 @@ impl Rooms {
 		self.measurers.borrow_mut().on_create_room(&template.name);
 
 		let room_id = self.room_id_generator;
-		let room = Room::new(room_id, template, self.measurers.clone());
+		let room = Room::new(room_id, template, self.measurers.clone(), self.plugin_names.clone());
 		self.room_by_id.insert(room_id, room);
 		room_id
 	}
@@ -122,7 +125,7 @@ mod tests {
 
 	#[test]
 	fn should_remove_room() {
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let mut rooms = Rooms::default();
 		let room_id = rooms.create_room(RoomTemplate::default());
 		let room = rooms.take_room(&room_id);
 		assert!(room.is_ok(), "want room when take by room_id");
@@ -132,7 +135,7 @@ mod tests {
 
 	#[test]
 	fn should_remove_room_room_not_found() {
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let mut rooms = Rooms::default();
 		let room_id = 123;
 		let room = rooms.take_room(&room_id);
 		assert!(room.is_err(), "want error when take non existing room");

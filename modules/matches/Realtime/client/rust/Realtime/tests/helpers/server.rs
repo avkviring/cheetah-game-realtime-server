@@ -1,3 +1,4 @@
+use fnv::FnvHashSet;
 use std::net::SocketAddr;
 
 use cheetah_matches_realtime::room::template::config::{
@@ -52,7 +53,7 @@ impl IntegrationTestServerBuilder {
 	pub fn build(self) -> (SocketAddr, RoomsServerManager, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.local_addr().unwrap();
-		let mut server = RoomsServerManager::new(socket).unwrap();
+		let mut server = RoomsServerManager::new(socket, FnvHashSet::default()).unwrap();
 		let room_id = server.create_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}

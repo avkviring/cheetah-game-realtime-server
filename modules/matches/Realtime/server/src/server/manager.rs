@@ -1,3 +1,4 @@
+use fnv::FnvHashSet;
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{RecvTimeoutError, Sender};
@@ -15,6 +16,7 @@ use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
+use crate::room::RoomInfo;
 use crate::server::manager::ManagementTask::TimeOffset;
 use crate::server::rooms::RegisterUserError;
 use crate::server::{DeleteMemberError, DeleteRoomError, RoomsServer};
@@ -44,6 +46,8 @@ pub enum ManagementTask {
 	CommandTracerSessionTask(RoomId, TracerSessionCommand, Sender<Result<(), CommandTracerSessionTaskError>>),
 	DeleteRoom(RoomId, Sender<Result<(), DeleteRoomError>>),
 	PutForwardedCommandConfig(RoomId, ForwardConfig, Sender<Result<(), PutForwardedCommandConfigError>>),
+	MarkRoomAsReady(RoomId, String, Sender<Result<(), MarkRoomAsReadyError>>),
+	GetRoomInfo(RoomId, Sender<Result<RoomInfo, RoomNotFoundError>>),
 }
 
 #[derive(Debug, Error)]
@@ -110,6 +114,28 @@ pub enum PutForwardedCommandConfigError {
 	ChannelSendError(String),
 }
 
+#[derive(Debug, Error)]
+pub enum MarkRoomAsReadyError {
+	#[error("RoomNotFound {0}")]
+	RoomNotFound(RoomId),
+	#[error("UnknownPluginName {0}")]
+	UnknownPluginName(String),
+	#[error("ChannelRecvError {0}")]
+	ChannelRecvError(RecvTimeoutError),
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
+}
+
+#[derive(Debug, Error)]
+pub enum RoomNotFoundError {
+	#[error("RoomNotFound {0}")]
+	RoomNotFound(RoomId),
+	#[error("ChannelRecvError {0}")]
+	ChannelRecvError(RecvTimeoutError),
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(String),
+}
+
 impl Drop for RoomsServerManager {
 	fn drop(&mut self) {
 		self.halt_signal.store(true, Ordering::Relaxed);
@@ -117,13 +143,13 @@ impl Drop for RoomsServerManager {
 }
 
 impl RoomsServerManager {
-	pub fn new(socket: UdpSocket) -> Result<Self, RoomsServerManagerError> {
+	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>) -> Result<Self, RoomsServerManagerError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
 		let handler = thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
-			.spawn(move || match RoomsServer::new(socket, receiver, halt_signal) {
+			.spawn(move || match RoomsServer::new(socket, receiver, halt_signal, plugin_names) {
 				Ok(server) => {
 					server.run();
 					Ok(())
@@ -290,6 +316,48 @@ impl RoomsServerManager {
 		}
 	}
 
+	pub fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), MarkRoomAsReadyError> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender
+			.send(ManagementTask::MarkRoomAsReady(room_id, plugin_name, sender))
+			.map_err(|e| MarkRoomAsReadyError::ChannelSendError(format!("{:?}", e)))?;
+		match receiver.recv_timeout(Duration::from_secs(1)) {
+			Ok(Ok(_)) => {
+				tracing::info!("[server] mark_room_as_ready({:?})", room_id);
+				Ok(())
+			}
+			Ok(Err(e)) => {
+				tracing::error!("[server] fail mark_room_as_ready({:?})", room_id);
+				Err(e)
+			}
+			Err(e) => {
+				tracing::error!("[server] timeout mark_room_as_ready({:?})", room_id);
+				Err(MarkRoomAsReadyError::ChannelRecvError(e))
+			}
+		}
+	}
+
+	pub fn get_room_info(&mut self, room_id: RoomId) -> Result<RoomInfo, RoomNotFoundError> {
+		let (sender, receiver) = std::sync::mpsc::channel();
+		self.sender
+			.send(ManagementTask::GetRoomInfo(room_id, sender))
+			.map_err(|e| RoomNotFoundError::ChannelSendError(format!("{:?}", e)))?;
+		match receiver.recv_timeout(Duration::from_secs(1)) {
+			Ok(Ok(room_info)) => {
+				tracing::info!("[server] room_info({:?})", room_id);
+				Ok(room_info)
+			}
+			Ok(Err(e)) => {
+				tracing::error!("[server] fail room_info({:?})", room_id);
+				Err(e)
+			}
+			Err(e) => {
+				tracing::error!("[server] timeout room_info({:?})", room_id);
+				Err(RoomNotFoundError::ChannelRecvError(e))
+			}
+		}
+	}
+
 	pub fn set_time_offset(&self, duration: Duration) -> Result<(), String> {
 		self.sender.send(TimeOffset(duration)).map_err(|e| format!("{:?}", e))
 	}
@@ -317,20 +385,21 @@ impl RoomsServerManager {
 #[cfg(test)]
 mod test {
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
+	use fnv::FnvHashSet;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;
 
 	#[test]
 	fn should_increment_created_room_count() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
+		let mut server = new_server_manager();
 		server.create_room(RoomTemplate::default()).unwrap();
 		assert_eq!(server.created_room_counter, 1);
 	}
 
 	#[test]
 	fn should_get_rooms() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
+		let mut server = new_server_manager();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let rooms = server.get_rooms().unwrap();
 		assert_eq!(rooms, vec![room_id]);
@@ -338,10 +407,14 @@ mod test {
 
 	#[test]
 	fn should_create_member() {
-		let mut server = RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap();
+		let mut server = new_server_manager();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
 		let member_id = server.create_member(room_id, &MemberTemplate::default()).unwrap();
 
 		assert_eq!(member_id, 1);
+	}
+
+	fn new_server_manager() -> RoomsServerManager {
+		RoomsServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
 	}
 }

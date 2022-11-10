@@ -17,7 +17,8 @@ use crate::grpc::proto::internal::realtime_server::Realtime;
 use crate::grpc::proto::internal::*;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::MemberTemplate;
-use crate::server::manager::{DeleteMemberRequestError, PutForwardedCommandConfigError, RoomsServerManager};
+use crate::room::RoomInfo;
+use crate::server::manager::{DeleteMemberRequestError, MarkRoomAsReadyError, PutForwardedCommandConfigError, RoomNotFoundError, RoomsServerManager};
 
 mod from;
 pub mod proto;
@@ -187,10 +188,55 @@ impl Realtime for RealtimeInternalService {
 				PutForwardedCommandConfigError::RoomNotFound(e) => Status::not_found(e.to_string()),
 			})
 	}
+
+	async fn mark_room_as_ready(&self, request: Request<MarkRoomAsReadyRequest>) -> Result<Response<MarkRoomAsReadyResponse>, Status> {
+		self.server_manager
+			.lock()
+			.await
+			.mark_room_as_ready(request.get_ref().room_id as RoomId, request.get_ref().plugin_name.clone())
+			.map(|_| Response::new(MarkRoomAsReadyResponse {}))
+			.map_err(|e| match e {
+				MarkRoomAsReadyError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
+				MarkRoomAsReadyError::ChannelSendError(e) => Status::unavailable(e),
+				MarkRoomAsReadyError::RoomNotFound(e) => Status::not_found(e.to_string()),
+				MarkRoomAsReadyError::UnknownPluginName(e) => Status::invalid_argument(e),
+			})
+	}
+
+	async fn get_room_info(&self, request: Request<GetRoomInfoRequest>) -> Result<Response<GetRoomInfoResponse>, Status> {
+		let room_id = request.get_ref().room_id as RoomId;
+
+		self.server_manager
+			.lock()
+			.await
+			.get_room_info(room_id)
+			.map(|room_info| Response::new(GetRoomInfoResponse::from(room_info)))
+			.map_err(Status::from)
+	}
+}
+
+impl From<RoomNotFoundError> for Status {
+	fn from(e: RoomNotFoundError) -> Self {
+		match e {
+			RoomNotFoundError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
+			RoomNotFoundError::ChannelSendError(e) => Status::unavailable(e),
+			RoomNotFoundError::RoomNotFound(e) => Status::not_found(e.to_string()),
+		}
+	}
+}
+
+impl From<RoomInfo> for GetRoomInfoResponse {
+	fn from(room_info: RoomInfo) -> Self {
+		Self {
+			room_id: room_info.room_id,
+			ready: room_info.ready,
+		}
+	}
 }
 
 #[cfg(test)]
 mod test {
+	use fnv::FnvHashSet;
 	use std::sync::Arc;
 
 	use tokio::sync::Mutex;
@@ -202,14 +248,17 @@ mod test {
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 
 	use crate::grpc::proto::internal::realtime_server::Realtime;
-	use crate::grpc::proto::internal::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, PutForwardedCommandConfigRequest, RoomIdResponse};
+	use crate::grpc::proto::internal::{
+		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GetRoomInfoRequest, MarkRoomAsReadyRequest, PutForwardedCommandConfigRequest,
+		RoomIdResponse,
+	};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;
 
 	#[tokio::test]
 	async fn test_watch_created_room_event() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 
 		let first_room_id = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
 
@@ -231,7 +280,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_create_super_member() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 
 		std::env::set_var(SUPER_MEMBER_KEY_ENV, "some-key");
 		let service = RealtimeInternalService::new(server_manager.clone());
@@ -243,7 +292,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_delete_room() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 
 		let service = RealtimeInternalService::new(server_manager.clone());
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
@@ -253,7 +302,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_delete_room_not_exist() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 
 		let service = RealtimeInternalService::new(server_manager.clone());
 
@@ -262,7 +311,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_delete_member() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(server_manager.clone());
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
@@ -298,7 +347,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_delete_member_room_not_exist() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(server_manager.clone());
 
 		let res = service.delete_member(Request::new(DeleteMemberRequest { user_id: 0, room_id: 0 })).await;
@@ -308,7 +357,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_put_forwarded_command_config() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(server_manager.clone());
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
@@ -341,7 +390,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_put_forwarded_command_config_room_not_found() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(server_manager.clone());
 
 		let res = service
@@ -361,7 +410,7 @@ mod test {
 
 	#[tokio::test]
 	async fn test_put_forwarded_command_config_invalid_argument() {
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap()).unwrap()));
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(server_manager.clone());
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
@@ -382,5 +431,101 @@ mod test {
 				"put_forwarded_command_config should return invalid_Argument"
 			);
 		}
+	}
+
+	#[tokio::test]
+	async fn test_mark_room_as_ready() {
+		let plugin_name = "plugin_1";
+		let plugin_names = FnvHashSet::from_iter([plugin_name.to_string()]);
+		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap(), plugin_names).unwrap()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
+
+		let ready = service
+			.get_room_info(Request::new(GetRoomInfoRequest { room_id }))
+			.await
+			.unwrap()
+			.into_inner()
+			.ready;
+		assert!(!ready, "room should not be ready after creation if plugins list is configured");
+
+		assert!(
+			service
+				.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
+					room_id,
+					plugin_name: plugin_name.to_string(),
+				}))
+				.await
+				.is_ok(),
+			"mark_room_as_ready should return ok"
+		);
+
+		let ready = service
+			.get_room_info(Request::new(GetRoomInfoRequest { room_id }))
+			.await
+			.unwrap()
+			.into_inner()
+			.ready;
+		assert!(ready, "room should be ready after all plugins have called mark_room_as_ready");
+
+		assert!(
+			service
+				.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
+					room_id,
+					plugin_name: plugin_name.to_string(),
+				}))
+				.await
+				.is_ok(),
+			"mark_room_as_ready should return after retries"
+		);
+	}
+
+	#[tokio::test]
+	async fn test_get_room_info_not_found() {
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+		let res = service.get_room_info(Request::new(GetRoomInfoRequest { room_id: 0 })).await;
+
+		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "get_room_info should return not_found");
+	}
+
+	#[tokio::test]
+	async fn test_mark_room_as_ready_room_not_found() {
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+		let res = service
+			.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
+				room_id: 0,
+				plugin_name: "plugin_1".to_string(),
+			}))
+			.await;
+
+		assert!(
+			matches!(res.unwrap_err().code(), Code::NotFound),
+			"mark_room_as_ready should return not_found"
+		);
+	}
+
+	#[tokio::test]
+	async fn test_mark_room_as_ready_unknown_plugin_name() {
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
+
+		let res = service
+			.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
+				room_id,
+				plugin_name: "unknown_plugin_name".to_string(),
+			}))
+			.await;
+
+		assert!(
+			matches!(res.unwrap_err().code(), Code::InvalidArgument),
+			"mark_room_as_ready should return invalid_argument"
+		);
+	}
+
+	fn new_server_manager() -> RoomsServerManager {
+		RoomsServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
 	}
 }
