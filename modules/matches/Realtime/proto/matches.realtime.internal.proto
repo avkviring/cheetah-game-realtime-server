@@ -39,7 +39,21 @@ service Realtime {
    */
   rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse);
 
+  /**
+  Настроить форвардинг команд суперпользователям совпадающих с фильтром вместо execute для комнаты
+   */
   rpc PutForwardedCommandConfig(PutForwardedCommandConfigRequest) returns (PutForwardedCommandConfigResponse);
+
+  /**
+  Метод вызывается плагином, когда он закончил настройку новой комнаты и разрешает выполнять команды от пользователей.
+  Чтобы статус комнаты переключился в ready, все плагины переданные в env PLUGIN_NAMES должны вызвать этот метод.
+   */
+  rpc MarkRoomAsReady(MarkRoomAsReadyRequest) returns(MarkRoomAsReadyResponse);
+
+  /**
+  Получить информацию о комнате
+   */
+  rpc GetRoomInfo(GetRoomInfoRequest) returns(GetRoomInfoResponse);
 }
 
 
@@ -190,4 +204,25 @@ message PutForwardedCommandConfigRequest {
 
 message PutForwardedCommandConfigResponse {
 
+}
+
+message MarkRoomAsReadyRequest {
+  uint64 room_id = 1;
+  // имя плагина должно совпадать с одним из переменной окружения PLUGIN_NAMES
+  string plugin_name = 2;
+}
+
+message MarkRoomAsReadyResponse {
+
+}
+
+message GetRoomInfoRequest {
+  uint64 room_id = 1;
+}
+
+message GetRoomInfoResponse {
+  uint64 room_id = 1;
+  // если комната ready, не-суперпользователи могут подключиться к комнате и их команды будут выполняться.
+  // пока комната не-ready, только суперпользователи могут подключиться и выполнять команды в комнате.
+  bool ready = 2;
 }

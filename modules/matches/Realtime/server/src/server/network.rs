@@ -221,7 +221,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let mut rooms = Rooms::default();
 		let buffer = [0; MAX_FRAME_SIZE];
 		let usize = 100_usize;
 		udp_server.process_in_frame(
@@ -236,7 +236,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_wrong_user() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
 		let mut frame = OutFrame::new(0);
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId { member_id: 0, room_id: 0 }));
@@ -247,7 +247,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_missing_user_header() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
 		let frame = OutFrame::new(0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
@@ -260,7 +260,7 @@ mod tests {
 	#[test]
 	fn should_keep_address_from_last_frame() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = Rooms::new(Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))));
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
 
 		let user_template = MemberTemplate::new_member(Default::default(), Default::default());

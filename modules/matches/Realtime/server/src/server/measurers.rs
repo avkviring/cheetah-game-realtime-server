@@ -56,6 +56,12 @@ pub struct Measurers {
 	server_cycle_execution_time: Histogram,
 }
 
+impl Default for Measurers {
+	fn default() -> Self {
+		Measurers::new(prometheus::default_registry())
+	}
+}
+
 impl Measurers {
 	#[must_use]
 	pub fn new(registry: &Registry) -> Self {

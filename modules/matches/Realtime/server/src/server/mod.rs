@@ -1,3 +1,4 @@
+use fnv::FnvHashSet;
 use std::cell::RefCell;
 use std::net::UdpSocket;
 use std::ops::Add;
@@ -17,7 +18,7 @@ use cheetah_matches_realtime_common::room::RoomId;
 use crate::debug::proto::admin;
 use crate::room::command::ServerCommandError;
 use crate::server::manager::ManagementTask::TimeOffset;
-use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask, PutForwardedCommandConfigError};
+use crate::server::manager::{CommandTracerSessionTaskError, ManagementTask, MarkRoomAsReadyError, PutForwardedCommandConfigError};
 use crate::server::measurers::Measurers;
 use crate::server::network::NetworkLayer;
 use crate::server::rooms::{RoomNotFoundError, Rooms};
@@ -50,18 +51,25 @@ pub struct RoomsServer {
 	halt_signal: Arc<AtomicBool>,
 	time_offset: Option<Duration>,
 	measurers: Rc<RefCell<Measurers>>,
+	plugin_names: FnvHashSet<String>,
 }
 
 impl RoomsServer {
-	pub fn new(socket: UdpSocket, receiver: Receiver<ManagementTask>, halt_signal: Arc<AtomicBool>) -> Result<Self, io::Error> {
+	pub fn new(
+		socket: UdpSocket,
+		receiver: Receiver<ManagementTask>,
+		halt_signal: Arc<AtomicBool>,
+		plugin_names: FnvHashSet<String>,
+	) -> Result<Self, io::Error> {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Ok(Self {
 			network_layer: NetworkLayer::new(socket, measures.clone())?,
-			rooms: Rooms::new(measures.clone()),
+			rooms: Rooms::new(measures.clone(), plugin_names.clone()),
 			receiver,
 			halt_signal,
 			time_offset: None,
 			measurers: measures,
+			plugin_names,
 		})
 	}
 
@@ -163,7 +171,38 @@ impl RoomsServer {
 					match sender.send(result) {
 						Ok(_) => {}
 						Err(e) => {
-							tracing::error!("[Request::DeleteMember] error send response {:?}", e);
+							tracing::error!("[Request::PutForwardedCommandConfig] error send response {:?}", e);
+						}
+					}
+				}
+				ManagementTask::MarkRoomAsReady(room_id, plugin_name, sender) => {
+					let result = if let Some(room) = self.rooms.room_by_id.get_mut(&room_id) {
+						if self.plugin_names.contains(&plugin_name) {
+							room.mark_room_as_ready(&plugin_name);
+							Ok(())
+						} else {
+							Err(MarkRoomAsReadyError::UnknownPluginName(plugin_name))
+						}
+					} else {
+						Err(MarkRoomAsReadyError::RoomNotFound(room_id))
+					};
+					match sender.send(result) {
+						Ok(_) => {}
+						Err(e) => {
+							tracing::error!("[Request::MarkRoomAsReady] error send response {:?}", e);
+						}
+					}
+				}
+				ManagementTask::GetRoomInfo(room_id, sender) => {
+					let result = if let Some(room) = self.rooms.room_by_id.get(&room_id) {
+						Ok(room.get_info())
+					} else {
+						Err(manager::RoomNotFoundError::RoomNotFound(room_id))
+					};
+					match sender.send(result) {
+						Ok(_) => {}
+						Err(e) => {
+							tracing::error!("[Request::GetRoomInfo] error send response {:?}", e);
 						}
 					}
 				}

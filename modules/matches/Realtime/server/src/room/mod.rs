@@ -60,10 +60,13 @@ pub struct Room {
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 
 	forward_configs: FnvHashSet<ForwardConfig>,
+
+	plugins_pending: FnvHashSet<String>,
 }
 
 pub struct RoomInfo {
-	pub member_count: u32,
+	pub(crate) room_id: RoomId,
+	pub(crate) ready: bool,
 }
 
 #[derive(Debug)]
@@ -77,7 +80,7 @@ pub struct Member {
 }
 
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate, measurers: Rc<RefCell<Measurers>>) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate, measurers: Rc<RefCell<Measurers>>, plugin_names: FnvHashSet<String>) -> Self {
 		let mut room = Room {
 			id,
 			members: FnvHashMap::default(),
@@ -97,6 +100,7 @@ impl Room {
 			measurers,
 			objects_singleton_key: Default::default(),
 			forward_configs: Default::default(),
+			plugins_pending: plugin_names,
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -105,6 +109,24 @@ impl Room {
 		});
 
 		room
+	}
+
+	pub(crate) fn get_info(&self) -> RoomInfo {
+		RoomInfo {
+			room_id: self.id,
+			ready: self.is_ready(),
+		}
+	}
+
+	///
+	/// Получено ли подтверждение от всех плагинов что конфигурация комнаты закончена
+	///
+	fn is_ready(&self) -> bool {
+		self.plugins_pending.is_empty()
+	}
+
+	pub(crate) fn mark_room_as_ready(&mut self, plugin_name: &str) {
+		self.plugins_pending.remove(plugin_name);
 	}
 
 	pub(crate) fn has_object_singleton_key(&self, value: &BinaryValue) -> bool {
@@ -133,30 +155,42 @@ impl Room {
 	}
 
 	///
-	/// Обработать входящие команды
+	/// Обработать входящие команды.
+	///
+	/// Пользователь должен быть добавлен в комнату через [`Self::register_member`] до выполнения команд.
+	///
+	/// Если комната не сконфигурирована [`Self::is_ready`] то команды не-суперпользователей будут игнорироваться.
+	///
+	/// Если в конмате настроен форвардинг [`Self::should_forward`],
+	/// то команды не-суперпользователей будут перенаправлены суперпользователям вместо выполнения.
 	///
 	pub fn execute_commands(&mut self, user_id: RoomMemberId, commands: &[CommandWithChannel]) {
-		let user = self.members.get_mut(&user_id);
-		match user {
-			None => {
-				tracing::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
+		if let Some(user) = self.members.get(&user_id) {
+			if !self.is_allowed_to_connect(user) {
+				tracing::error!("[room({:?})] user is not allowed to connect {:?}", self.id, user_id);
+				self.current_member_id = None;
+				self.current_channel = None;
+				return;
 			}
-			Some(user) => {
-				self.current_member_id.replace(user_id);
-
-				let connected_now = !user.connected;
+			self.current_member_id.replace(user_id);
+			if !user.connected {
+				let user = self.members.get_mut(&user_id).unwrap();
 				user.connected = true;
-
-				if connected_now {
-					self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
-					let user_id = user.id;
-					let template = user.template.clone();
-					if let Err(e) = self.on_user_connect(user_id, template) {
-						e.log_error(self.id, user_id);
-						return;
-					}
+				self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
+				let user_id = user.id;
+				let template = user.template.clone();
+				if let Err(e) = self.on_user_connect(user_id, template) {
+					e.log_error(self.id, user_id);
+					self.current_member_id = None;
+					self.current_channel = None;
+					return;
 				}
 			}
+		} else {
+			tracing::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
+			self.current_member_id = None;
+			self.current_channel = None;
+			return;
 		}
 
 		let measurers = self.measurers.clone();
@@ -306,10 +340,22 @@ impl Room {
 		}
 		Ok(())
 	}
+
+	///
+	/// Если конфигурация комнаты плагинами не завершена, только `super_member` пользователи могут подключаться к комнате
+	///
+	fn is_allowed_to_connect(&self, member: &Member) -> bool {
+		if self.is_ready() {
+			true
+		} else {
+			member.template.super_member
+		}
+	}
 }
 
 #[cfg(test)]
 mod tests {
+	use fnv::FnvHashSet;
 	use std::cell::RefCell;
 	use std::collections::VecDeque;
 	use std::rc::Rc;
@@ -341,6 +387,7 @@ mod tests {
 				0,
 				RoomTemplate::default(),
 				Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))),
+				FnvHashSet::default(),
 			)
 		}
 	}
@@ -348,7 +395,12 @@ mod tests {
 	impl Room {
 		#[must_use]
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template, Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))))
+			Room::new(
+				0,
+				template,
+				Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))),
+				FnvHashSet::default(),
+			)
 		}
 
 		pub fn test_create_object_with_not_created_state(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {
@@ -637,21 +689,52 @@ mod tests {
 		});
 
 		let user_id = room.register_member(MemberTemplate::stub(AccessGroups(10)));
-		let command = CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
-				object_id: GameObjectId::new(1, GameObjectOwner::Member(user_id)),
-				template: 0,
-				access_groups: Default::default(),
-			})),
-		};
+		let command = get_create_game_object_command(1);
 		room.execute_commands(user_id, slice::from_ref(&command));
 		assert!(room.objects.is_empty());
+	}
+
+	#[test]
+	fn should_not_execute_when_not_ready() {
+		let plugin_name = "plugin_1";
+		let mut room = Room {
+			plugins_pending: FnvHashSet::from_iter([plugin_name.to_string()]),
+			..Default::default()
+		};
+		let member_1 = room.register_member(MemberTemplate::stub(AccessGroups(10)));
+		let super_member_1 = room.register_member(MemberTemplate::new_super_member());
+		let command_1 = get_create_game_object_command(1);
+
+		// should not execute commands from non-superusers
+		room.execute_commands(member_1, slice::from_ref(&command_1));
+		assert!(room.objects.is_empty());
+
+		// should execute commands from superusers
+		room.execute_commands(super_member_1, slice::from_ref(&command_1));
+		assert_eq!(1, room.objects.len());
+
+		room.mark_room_as_ready(plugin_name);
+
+		// should execute commands from all users when room is ready
+		let command_2 = get_create_game_object_command(2);
+		room.execute_commands(member_1, slice::from_ref(&command_2));
+		assert_eq!(2, room.objects.len());
 	}
 
 	pub fn create_template() -> (RoomTemplate, MemberTemplate) {
 		let template = RoomTemplate::default();
 		let user_template = MemberTemplate::new_member(AccessGroups(55), Default::default());
 		(template, user_template)
+	}
+
+	fn get_create_game_object_command(object_id: u32) -> CommandWithChannel {
+		CommandWithChannel {
+			channel: Channel::ReliableUnordered,
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
+				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
+				template: 0,
+				access_groups: Default::default(),
+			})),
+		}
 	}
 }

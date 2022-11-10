@@ -1,3 +1,4 @@
+use fnv::FnvHashSet;
 use std::io;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
@@ -19,6 +20,7 @@ pub struct ServerBuilder {
 	admin_grpc_bind_addr: SocketAddr,
 	internal_grpc_bind_addr: SocketAddr,
 	is_agones_enabled: bool,
+	plugin_names: FnvHashSet<String>,
 }
 
 impl Default for ServerBuilder {
@@ -28,6 +30,7 @@ impl Default for ServerBuilder {
 			admin_grpc_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			internal_grpc_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			is_agones_enabled: false,
+			plugin_names: FnvHashSet::default(),
 		}
 	}
 }
@@ -69,10 +72,16 @@ impl ServerBuilder {
 		self
 	}
 
+	#[must_use]
+	pub fn set_plugin_names(mut self, plugin_names: FnvHashSet<String>) -> Self {
+		self.plugin_names = plugin_names;
+		self
+	}
+
 	pub async fn build(self) -> Result<Server, ServerBuilderError> {
 		let game_socket = UdpSocket::bind(self.game_bind_addr).map_err(ServerBuilderError::ErrorBindUdpSocket)?;
 		let game_socket_addr = game_socket.local_addr().map_err(ServerBuilderError::ErrorGetLocalAddrFromUdpSocket)?;
-		let server_manager = RoomsServerManager::new(game_socket).map_err(ServerBuilderError::RoomsServerManager)?;
+		let server_manager = RoomsServerManager::new(game_socket, self.plugin_names).map_err(ServerBuilderError::RoomsServerManager)?;
 		let manager = Arc::new(Mutex::new(server_manager));
 		let internal_grpc_bind_listener = TcpListener::bind(self.internal_grpc_bind_addr)
 			.await
