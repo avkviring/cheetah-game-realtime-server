@@ -19,7 +19,7 @@ thiserror = "1.0.30"
 hash32 = "0.2.1"
 hash32-derive = "0.1.1"
 tracing = "0.1.31"
-log = "0.4.14"
+log = "0.4.17"
 tracing-core = "0.1.26"
 tracing-log = { version = "0.1.2" }
 tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
