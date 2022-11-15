@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Threading;
 using Cheetah.Matches.Realtime.Codec;
 using Cheetah.Matches.Realtime.EmbeddedServer.API;
@@ -15,12 +16,12 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.Tests
         {
             API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
             
-            var server = new API.EmbeddedServer();
+            var server = new API.EmbeddedServer(IPAddress.Loopback);
             var room = server.CreateRoom();
             var member = room.CreateMember(0b000111);
 
             var client = new CheetahClient(
-                server.GetGameHost(),
+                server.GetGameIp(),
                 server.GetGamePort(),
                 member.GetId(),
                 room.GetId(),
