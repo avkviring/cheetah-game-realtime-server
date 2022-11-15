@@ -1,4 +1,4 @@
-name: release.unity.packages
+name: release.packages-and-nuget.packages
 on:
   release:
     types: [ published ]
@@ -117,3 +117,37 @@ jobs:
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
+  publish-nuget-packages:
+    needs:
+      - build-macos
+      - build-on-linux
+      - build-on-windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-macos
+          path: build-macos
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-on-linux-result
+          path: build-on-linux-result
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-android
+          path: build-android
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-on-windows-result
+          path: build-on-windows-result
+      - name: Copy Libraries into UDS
+        run: |
+          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds/Runtime/FFI/Library/
+          mkdir -p $lib_path
+          cp build-on-linux-result/libcheetah_matches_realtime_server_plugin.so $lib_path/          
+          cp build-macos/libcheetah_matches_realtime_server_plugin.dylib $lib_path/libcheetah_matches_realtime_server_plugin.bundle            
+          cp build-on-windows-result/cheetah_matches_realtime_server_plugin.dll $lib_path/
+          cp build-on-windows-result/cheetah_matches_realtime_server_plugin.pdb $lib_path/
+      - name: Publish Packages
+        run: VERSION=${{ github.event.release.tag_name }} NUGET_PUSH_KEY=${{ secrets.NUGET_PUSH_KEY }} scripts/release/nuget-packages.sh
