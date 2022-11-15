@@ -5,3 +5,5 @@ target
 **/Unity/**/Runtime/GRPC/*.cs
 **/Unity/**/Runtime/GRPC/*.cs.meta
 **/client/csharp/*.grpc
+**/bin/
+**/obj/
