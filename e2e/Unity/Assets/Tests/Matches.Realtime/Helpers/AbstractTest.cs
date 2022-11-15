@@ -1,3 +1,4 @@
+using System.Net;
 using System.Threading;
 using Cheetah.Matches.Realtime;
 using Cheetah.Matches.Realtime.Codec;
@@ -23,7 +24,7 @@ namespace Tests.Matches.Realtime.Helpers
         [SetUp]
         public void SetUp()
         {
-            server = new EmbeddedServer();
+            server = new EmbeddedServer(IPAddress.Loopback);
             var room = server.CreateRoom();
 
             memberA = room.CreateMember(PlayerHelper.PlayerGroup);
@@ -54,7 +55,7 @@ namespace Tests.Matches.Realtime.Helpers
         private static CheetahClient ConnectToRelay(EmbeddedServer server, ServerRoom room, ServerMember member,
             CodecRegistryBuilder codecRegistryBuilder)
         {
-            var client = new CheetahClient(server.GetGameHost(), server.GetGamePort(), member.GetId(), room.GetId(),
+            var client = new CheetahClient(server.GetGameIp(), server.GetGamePort(), member.GetId(), room.GetId(),
                 member.GetPrivateKey(),
                 codecRegistryBuilder.Build());
             client.DisableClientLog();

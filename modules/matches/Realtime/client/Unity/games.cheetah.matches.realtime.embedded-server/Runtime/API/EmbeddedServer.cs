@@ -119,13 +119,13 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
 
         public static void InitLogger(EmeddedServerLogLevel emeddedServerLogLevel)
         {
-            Logger.InitLogger();
-            Logger.SetMaxLogLevel(emeddedServerLogLevel);
+            FFI.Logger.InitLogger();
+            FFI.Logger.SetMaxLogLevel(emeddedServerLogLevel);
         }
-
+        
         public static void ShowCurrentLogs()
         {
-            Logger.CollectLogs(ShowLog);
+            FFI.Logger.CollectLogs(ShowLog);
         }
 
 #if UNITY_64
