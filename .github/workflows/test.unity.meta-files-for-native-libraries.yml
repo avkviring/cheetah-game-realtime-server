@@ -1,0 +1,23 @@
+name: test.unity.meta-files-for-native-libraries
+on:
+  pull_request:
+    types:
+      - synchronize
+      - opened
+jobs:
+  check-meta-files-in-realtime-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          cd modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library
+          test -f ios.a.meta || exit -1
+          test -f linux.so.meta || exit -1
+          test -f macos.bundle.meta || exit -1
+          test -f windows.dll.meta || exit -1
+          test -f windows.pdb.meta || exit -1
+          test -f android-aarch64/libcheetah_matches_realtime_client.so.meta || exit -1
+          test -f android-armv7/libcheetah_matches_realtime_client.so.meta || exit -1
+
+
+
