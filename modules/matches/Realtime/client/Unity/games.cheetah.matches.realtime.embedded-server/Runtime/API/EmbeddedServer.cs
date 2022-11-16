@@ -1,13 +1,14 @@
-#if UNITY_64
+
+using System;
+using System.Net;
+using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
+using Cheetah.Matches.Realtime.EmbeddedServer.Impl;
+#if UNITY_5_3_OR_NEWER
 using AOT;
 using UnityEngine;
 #else
 using Serilog;
 #endif
-using System;
-using System.Net;
-using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
-using Cheetah.Matches.Realtime.EmbeddedServer.Impl;
 
 #nullable enable
 namespace Cheetah.Matches.Realtime.EmbeddedServer.API
@@ -108,7 +109,7 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
             return description.internal_grpc_port;
         }
 
-#if UNITY_64
+#if UNITY_5_3_OR_NEWER
         [MonoPInvokeCallback(typeof(Server.OnServerError))]
 #endif
         private static void OnError(string? message)
@@ -128,7 +129,7 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
             FFI.Logger.CollectLogs(ShowLog);
         }
 
-#if UNITY_64
+#if UNITY_5_3_OR_NEWER
         [MonoPInvokeCallback(typeof(FFI.Logger.LogCollector))]
         private static void ShowLog(EmeddedServerLogLevel level, string log)
         {
