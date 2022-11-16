@@ -18,6 +18,16 @@ jobs:
           test -f windows.pdb.meta || exit -1
           test -f android-aarch64/libcheetah_matches_realtime_client.so.meta || exit -1
           test -f android-armv7/libcheetah_matches_realtime_client.so.meta || exit -1
+  check-meta-files-in-embedded-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          cd modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library
+          test -f cheetah_matches_realtime_embedded.dll.meta || exit -1
+          test -f libcheetah_matches_realtime_embedded.bundle.meta || exit -1
+          test -f libcheetah_matches_realtime_embedded.so.meta || exit -1
+          test -f cheetah_matches_realtime_embedded.pdb.meta || exit -1
 
 
 
