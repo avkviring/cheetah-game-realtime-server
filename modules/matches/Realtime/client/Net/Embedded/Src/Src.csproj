@@ -23,17 +23,17 @@
             <Pack>true</Pack>
             <PackagePath>runtimes/osx-x64/native/libcheetah_matches_realtime_embedded.dylib</PackagePath>
         </Content>
-        <Content Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\FFI\Library\libcheetah_matches_realtime_server_plugin.so">
+        <Content Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\FFI\Library\libcheetah_matches_realtime_embedded.so">
                     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
                     <CopyToPublishDirectory>Always</CopyToPublishDirectory>
                     <Pack>true</Pack>
-                    <PackagePath>runtimes/linux/native/libcheetah_matches_realtime_server_plugin.so</PackagePath>
+                    <PackagePath>runtimes/linux/native/libcheetah_matches_realtime_embedded.so</PackagePath>
          </Content>
-         <Content Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\FFI\Library\cheetah_matches_realtime_server_plugin.dll">
+         <Content Include="..\..\..\Unity\games.cheetah.matches.realtime.embedded-server\Runtime\FFI\Library\cheetah_matches_realtime_embedded.dll">
                              <CopyToOutputDirectory>Always</CopyToOutputDirectory>
                              <CopyToPublishDirectory>Always</CopyToPublishDirectory>
                              <Pack>true</Pack>
-                             <PackagePath>runtimes/win-x64/native/cheetah_matches_realtime_server_plugin.dll</PackagePath>
+                             <PackagePath>runtimes/win-x64/native/cheetah_matches_realtime_embedded.dll</PackagePath>
          </Content>
     </ItemGroup>
     <ItemGroup>
