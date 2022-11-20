@@ -59,7 +59,7 @@ impl IntegrationTestHelper {
 			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
 		};
-		let user_id = self.server.create_member(self.room_id, &user_template).ok().unwrap();
+		let user_id = self.server.create_member(self.room_id, user_template).ok().unwrap();
 		(user_id, private_key)
 	}
 }

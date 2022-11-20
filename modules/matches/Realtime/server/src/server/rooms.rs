@@ -23,15 +23,9 @@ pub struct Rooms {
 	plugin_names: FnvHashSet<String>,
 }
 
-#[derive(Debug, Error)]
-pub enum RegisterUserError {
-	#[error("RoomNotFound")]
-	RoomNotFound,
-}
-
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, PartialEq, Eq)]
 #[error("room not found {0}")]
-pub struct RoomNotFoundError(RoomId);
+pub struct RoomNotFoundError(pub RoomId);
 
 impl Rooms {
 	pub fn new(measurers: Rc<RefCell<Measurers>>, plugin_names: FnvHashSet<String>) -> Self {
@@ -58,9 +52,9 @@ impl Rooms {
 		self.room_by_id.remove(room_id).ok_or(RoomNotFoundError(*room_id))
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RegisterUserError> {
+	pub fn register_user(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RoomNotFoundError> {
 		match self.room_by_id.get_mut(&room_id) {
-			None => Err(RegisterUserError::RoomNotFound),
+			None => Err(RoomNotFoundError(room_id)),
 			Some(room) => {
 				let result = Ok(room.register_member(member_template));
 				if result.is_ok() {
@@ -106,10 +100,7 @@ impl Rooms {
 
 	pub fn user_disconnected(&mut self, member_and_room_id: &MemberAndRoomId) -> Result<(), ServerCommandError> {
 		match self.room_by_id.get_mut(&member_and_room_id.room_id) {
-			None => Err(ServerCommandError::Error(format!(
-				"[rooms] room not found ({:?}) in user_disconnect",
-				member_and_room_id
-			))),
+			None => Err(ServerCommandError::RoomNotFound(RoomNotFoundError(member_and_room_id.room_id))),
 			Some(room) => {
 				room.disconnect_user(member_and_room_id.member_id)?;
 				self.measurers.borrow_mut().on_change_member_count(&room.template_name, -1);

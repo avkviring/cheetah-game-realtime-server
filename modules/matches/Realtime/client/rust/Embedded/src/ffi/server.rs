@@ -21,7 +21,7 @@ pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_erro
 	registry.next_server_id += 1;
 	let server_id = registry.next_server_id;
 
-	match EmbeddedServerWrapper::run_new_server(bind_address.clone()) {
+	match EmbeddedServerWrapper::run_new_server(*bind_address) {
 		Ok(server) => {
 			result.id = server_id;
 
