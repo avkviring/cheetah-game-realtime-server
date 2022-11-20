@@ -6,7 +6,6 @@ use tokio::sync::{mpsc, MutexGuard};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
-use cheetah_libraries_microservice::trace::Trace;
 use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::CommandTypeId;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
@@ -15,10 +14,12 @@ use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::grpc::proto::internal::realtime_server::Realtime;
 use crate::grpc::proto::internal::*;
+use crate::room::command::ServerCommandError;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::MemberTemplate;
 use crate::room::RoomInfo;
-use crate::server::manager::{DeleteMemberRequestError, MarkRoomAsReadyError, PutForwardedCommandConfigError, RoomNotFoundError, RoomsServerManager};
+use crate::server::manager::{TaskError, TaskExecutionError};
+use crate::RoomsServerManager;
 
 mod from;
 pub mod proto;
@@ -36,15 +37,16 @@ impl RealtimeInternalService {
 	}
 
 	async fn register_user(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
-		let mut server = self.server_manager.lock().await;
-		server
-			.create_member(room_id, &template.clone())
-			.trace_err(format!("Register member to room {}", room_id))
-			.map_err(Status::internal)
+		let private_key = template.private_key.clone();
+		self.server_manager
+			.lock()
+			.await
+			.create_member(room_id, template)
+			.map_err(Status::from)
 			.map(|user_id| {
 				Response::new(CreateMemberResponse {
 					user_id: u32::from(user_id),
-					private_key: template.private_key.into(),
+					private_key: private_key.into(),
 				})
 			})
 	}
@@ -53,7 +55,7 @@ impl RealtimeInternalService {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
-			server.create_member(room_id, &MemberTemplate::new_super_member_with_key(key)).unwrap();
+			server.create_member(room_id, MemberTemplate::new_super_member_with_key(key)).unwrap();
 		}
 	}
 }
@@ -63,11 +65,7 @@ impl Realtime for RealtimeInternalService {
 	async fn create_room(&self, request: Request<RoomTemplate>) -> Result<Response<RoomIdResponse>, Status> {
 		let mut server = self.server_manager.lock().await;
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
-		let template_name = template.name.clone();
-		let room_id = server
-			.create_room(template)
-			.trace_err(format!("Create room with template {}", template_name))
-			.map_err(Status::internal)?;
+		let room_id = server.create_room(template).map_err(Status::from)?;
 
 		Self::create_super_member_if_need(&mut server, room_id);
 		Ok(Response::new(RoomIdResponse { room_id }))
@@ -80,6 +78,23 @@ impl Realtime for RealtimeInternalService {
 			crate::room::template::config::MemberTemplate::from(request.user.unwrap()),
 		)
 		.await
+	}
+
+	/// закрыть соединение с пользователем и удалить его из комнаты
+	async fn delete_member(&self, request: Request<DeleteMemberRequest>) -> Result<Response<DeleteMemberResponse>, Status> {
+		self.server_manager
+			.lock()
+			.await
+			.delete_member(MemberAndRoomId {
+				member_id: request
+					.get_ref()
+					.user_id
+					.try_into()
+					.map_err(|_| Status::invalid_argument("member_id is too big".to_string()))?,
+				room_id: request.get_ref().room_id,
+			})
+			.map(|_| Response::new(DeleteMemberResponse {}))
+			.map_err(Status::from)
 	}
 
 	async fn create_super_member(&self, request: Request<CreateSuperMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
@@ -121,28 +136,7 @@ impl Realtime for RealtimeInternalService {
 		server
 			.delete_room(room_id)
 			.map(|_| Response::new(DeleteRoomResponse {}))
-			.map_err(|_| Status::not_found(format!("Room with ID {} does not exist", room_id)))
-	}
-
-	/// закрыть соединение с пользователем и удалить его из комнаты
-	async fn delete_member(&self, request: Request<DeleteMemberRequest>) -> Result<Response<DeleteMemberResponse>, Status> {
-		self.server_manager
-			.lock()
-			.await
-			.delete_member(MemberAndRoomId {
-				member_id: request
-					.get_ref()
-					.user_id
-					.try_into()
-					.map_err(|_| Status::invalid_argument("member_id is too big".to_string()))?,
-				room_id: request.get_ref().room_id,
-			})
-			.map(|_| Response::new(DeleteMemberResponse {}))
-			.map_err(|e| match e {
-				DeleteMemberRequestError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
-				DeleteMemberRequestError::ChannelSendError(e) => Status::unavailable(e),
-				DeleteMemberRequestError::DeleteMemberError(e) => Status::not_found(e.to_string()),
-			})
+			.map_err(Status::from)
 	}
 
 	async fn put_forwarded_command_config(
@@ -182,11 +176,7 @@ impl Realtime for RealtimeInternalService {
 				},
 			)
 			.map(|_| Response::new(PutForwardedCommandConfigResponse {}))
-			.map_err(|e| match e {
-				PutForwardedCommandConfigError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
-				PutForwardedCommandConfigError::ChannelSendError(e) => Status::unavailable(e),
-				PutForwardedCommandConfigError::RoomNotFound(e) => Status::not_found(e.to_string()),
-			})
+			.map_err(Status::from)
 	}
 
 	async fn mark_room_as_ready(&self, request: Request<MarkRoomAsReadyRequest>) -> Result<Response<MarkRoomAsReadyResponse>, Status> {
@@ -195,12 +185,7 @@ impl Realtime for RealtimeInternalService {
 			.await
 			.mark_room_as_ready(request.get_ref().room_id as RoomId, request.get_ref().plugin_name.clone())
 			.map(|_| Response::new(MarkRoomAsReadyResponse {}))
-			.map_err(|e| match e {
-				MarkRoomAsReadyError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
-				MarkRoomAsReadyError::ChannelSendError(e) => Status::unavailable(e),
-				MarkRoomAsReadyError::RoomNotFound(e) => Status::not_found(e.to_string()),
-				MarkRoomAsReadyError::UnknownPluginName(e) => Status::invalid_argument(e),
-			})
+			.map_err(Status::from)
 	}
 
 	async fn get_room_info(&self, request: Request<GetRoomInfoRequest>) -> Result<Response<GetRoomInfoResponse>, Status> {
@@ -215,12 +200,19 @@ impl Realtime for RealtimeInternalService {
 	}
 }
 
-impl From<RoomNotFoundError> for Status {
-	fn from(e: RoomNotFoundError) -> Self {
+impl From<TaskError> for Status {
+	fn from(e: TaskError) -> Self {
 		match e {
-			RoomNotFoundError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
-			RoomNotFoundError::ChannelSendError(e) => Status::unavailable(e),
-			RoomNotFoundError::RoomNotFound(e) => Status::not_found(e.to_string()),
+			TaskError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
+			TaskError::ChannelSendError(e) => Status::unavailable(e.to_string()),
+			TaskError::UnexpectedResultError => Status::internal("unexpected management task result type"),
+			TaskError::TaskExecutionError(TaskExecutionError::RoomNotFound(e)) => Status::not_found(e.to_string()),
+			TaskError::TaskExecutionError(TaskExecutionError::UnknownPluginName(e)) => Status::invalid_argument(e),
+			TaskError::TaskExecutionError(TaskExecutionError::ServerCommandError(e)) => match e {
+				ServerCommandError::MemberNotFound(e) => Status::not_found(e.to_string()),
+				ServerCommandError::RoomNotFound(e) => Status::not_found(e.to_string()),
+				e => Status::internal(e.to_string()),
+			},
 		}
 	}
 }

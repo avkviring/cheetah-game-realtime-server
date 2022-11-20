@@ -9,6 +9,7 @@ use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::room::object::GameObjectError;
 use crate::room::Room;
+use crate::server::rooms::RoomNotFoundError;
 
 pub mod compare_and_set;
 pub mod create;
@@ -43,7 +44,10 @@ pub enum ServerCommandError {
 	#[error("Member {member_id:?} not owner for game object {object_id:?}")]
 	MemberNotOwnerGameObject { object_id: GameObjectId, member_id: RoomMemberId },
 
-	#[error("Member with id {:?}",.0)]
+	#[error("RoomNotFoundError {0}")]
+	RoomNotFound(RoomNotFoundError),
+
+	#[error("Member with id {:?}", .0)]
 	MemberNotFound(RoomMemberId),
 
 	#[error(

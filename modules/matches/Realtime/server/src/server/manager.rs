@@ -1,11 +1,10 @@
 use fnv::FnvHashSet;
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{RecvTimeoutError, Sender};
+use std::sync::mpsc::{RecvTimeoutError, SendError, Sender};
 use std::sync::Arc;
-use std::thread::JoinHandle;
+use std::thread;
 use std::time::Duration;
-use std::{io, thread};
 
 use thiserror::Error;
 
@@ -14,12 +13,12 @@ use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
+use crate::room::command::ServerCommandError;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::RoomInfo;
-use crate::server::manager::ManagementTask::TimeOffset;
-use crate::server::rooms::RegisterUserError;
-use crate::server::{DeleteMemberError, DeleteRoomError, RoomsServer};
+use crate::server::rooms::RoomNotFoundError;
+use crate::server::RoomsServer;
 
 ///
 /// Управление сервером
@@ -27,55 +26,35 @@ use crate::server::{DeleteMemberError, DeleteRoomError, RoomsServer};
 /// - связь с сервером через Sender
 ///
 pub struct RoomsServerManager {
-	handler: Option<JoinHandle<Result<(), io::Error>>>,
-	sender: Sender<ManagementTask>,
+	sender: Sender<ChannelTask>,
 	halt_signal: Arc<AtomicBool>,
 	pub created_room_counter: usize,
 }
 
 pub enum ManagementTask {
-	CreateRoom(RoomTemplate, Sender<RoomId>),
-	CreateMember(RoomId, MemberTemplate, Sender<Result<RoomMemberId, RegisterUserError>>),
-	DeleteMember(MemberAndRoomId, Sender<Result<(), DeleteMemberError>>),
-	///
-	/// Смещение текущего времени для тестирования
-	///
-	TimeOffset(Duration),
-	Dump(RoomId, Sender<Result<admin::DumpResponse, String>>),
-	GetRooms(Sender<Vec<RoomId>>),
-	CommandTracerSessionTask(RoomId, TracerSessionCommand, Sender<Result<(), CommandTracerSessionTaskError>>),
-	DeleteRoom(RoomId, Sender<Result<(), DeleteRoomError>>),
-	PutForwardedCommandConfig(RoomId, ForwardConfig, Sender<Result<(), PutForwardedCommandConfigError>>),
-	MarkRoomAsReady(RoomId, String, Sender<Result<(), MarkRoomAsReadyError>>),
-	GetRoomInfo(RoomId, Sender<Result<RoomInfo, RoomNotFoundError>>),
+	CreateRoom(RoomTemplate),
+	CreateMember(RoomId, MemberTemplate),
+	DeleteMember(MemberAndRoomId),
+	Dump(RoomId),
+	GetRooms,
+	CommandTracerSessionTask(RoomId, TracerSessionCommand),
+	DeleteRoom(RoomId),
+	PutForwardedCommandConfig(RoomId, ForwardConfig),
+	MarkRoomAsReady(RoomId, String),
+	GetRoomInfo(RoomId),
 }
 
-#[derive(Debug, Error)]
-pub enum CommandTracerSessionTaskError {
-	#[error("RoomNotFound {0}")]
-	RoomNotFound(RoomId),
-	#[error("RecvTimeoutError")]
-	RecvTimeoutError,
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
-}
-
-#[derive(Debug, Error)]
-pub enum RegisterRoomRequestError {
-	#[error("ChannelRecvError {0}")]
-	ChannelRecvError(RecvTimeoutError),
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
-}
-
-#[derive(Debug, Error)]
-pub enum CreateMemberRequestError {
-	#[error("ChannelRecvError {0}")]
-	ChannelRecvError(RecvTimeoutError),
-	#[error("Error {0}")]
-	Error(RegisterUserError),
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
+pub enum ManagementTaskResult {
+	CreateRoom(RoomId),
+	CreateMember(RoomMemberId),
+	DeleteMember,
+	Dump(admin::DumpResponse),
+	GetRooms(Vec<RoomId>),
+	CommandTracerSessionTask,
+	DeleteRoom,
+	PutForwardedCommandConfig,
+	MarkRoomAsReady,
+	GetRoomInfo(RoomInfo),
 }
 
 #[derive(Debug, Error)]
@@ -85,55 +64,30 @@ pub enum RoomsServerManagerError {
 }
 
 #[derive(Debug, Error)]
-pub enum DeleteRoomRequestError {
+pub enum TaskError {
+	#[error("ChannelSendError {0}")]
+	ChannelSendError(SendError<ChannelTask>),
 	#[error("ChannelRecvError {0}")]
 	ChannelRecvError(RecvTimeoutError),
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
-	#[error("DeleteRoomError {0}")]
-	DeleteRoomError(DeleteRoomError),
+	#[error("TaskExecutionError {0}")]
+	TaskExecutionError(TaskExecutionError),
+	#[error("UnexpectedResultError")]
+	UnexpectedResultError,
 }
 
 #[derive(Debug, Error)]
-pub enum DeleteMemberRequestError {
-	#[error("ChannelRecvError {0}")]
-	ChannelRecvError(RecvTimeoutError),
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
-	#[error("DeleteMemberError {0}")]
-	DeleteMemberError(DeleteMemberError),
-}
-
-#[derive(Debug, Error)]
-pub enum PutForwardedCommandConfigError {
+pub enum TaskExecutionError {
 	#[error("RoomNotFound {0}")]
-	RoomNotFound(RoomId),
-	#[error("ChannelRecvError {0}")]
-	ChannelRecvError(RecvTimeoutError),
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
-}
-
-#[derive(Debug, Error)]
-pub enum MarkRoomAsReadyError {
-	#[error("RoomNotFound {0}")]
-	RoomNotFound(RoomId),
+	RoomNotFound(RoomNotFoundError),
 	#[error("UnknownPluginName {0}")]
 	UnknownPluginName(String),
-	#[error("ChannelRecvError {0}")]
-	ChannelRecvError(RecvTimeoutError),
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
+	#[error("ServerCommandError {0}")]
+	ServerCommandError(ServerCommandError),
 }
 
-#[derive(Debug, Error)]
-pub enum RoomNotFoundError {
-	#[error("RoomNotFound {0}")]
-	RoomNotFound(RoomId),
-	#[error("ChannelRecvError {0}")]
-	ChannelRecvError(RecvTimeoutError),
-	#[error("ChannelSendError {0}")]
-	ChannelSendError(String),
+pub struct ChannelTask {
+	pub task: ManagementTask,
+	pub sender: Sender<Result<ManagementTaskResult, TaskExecutionError>>,
 }
 
 impl Drop for RoomsServerManager {
@@ -147,7 +101,7 @@ impl RoomsServerManager {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = halt_signal.clone();
-		let handler = thread::Builder::new()
+		thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
 			.spawn(move || match RoomsServer::new(socket, receiver, halt_signal, plugin_names) {
 				Ok(server) => {
@@ -161,220 +115,101 @@ impl RoomsServerManager {
 			})
 			.map_err(|e| RoomsServerManagerError::CannotCreateServerThread(format!("{:?}", e)))?;
 		Ok(Self {
-			handler: Some(handler),
 			sender,
 			halt_signal: cloned_halt_signal,
 			created_room_counter: 0,
 		})
 	}
 
-	pub fn get_rooms(&self) -> Result<Vec<RoomId>, String> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ManagementTask::GetRooms(sender)).map_err(|e| format!("{:?}", e))?;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(rooms) => Ok(rooms),
-			Err(e) => Err(format!("{:?}", e)),
-		}
+	pub(crate) fn get_rooms(&self) -> Result<Vec<RoomId>, TaskError> {
+		self.execute_task(ManagementTask::GetRooms).map(|res| {
+			if let ManagementTaskResult::GetRooms(rooms) = res {
+				Ok(rooms)
+			} else {
+				Err(TaskError::UnexpectedResultError)
+			}
+		})?
+	}
+
+	pub fn create_room(&mut self, template: RoomTemplate) -> Result<RoomId, TaskError> {
+		self.execute_task(ManagementTask::CreateRoom(template)).map(|res| {
+			if let ManagementTaskResult::CreateRoom(room_id) = res {
+				self.created_room_counter += 1;
+				Ok(room_id)
+			} else {
+				Err(TaskError::UnexpectedResultError)
+			}
+		})?
+	}
+
+	/// закрыть соединение с пользователем и удалить его из комнаты
+	pub fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), TaskError> {
+		self.execute_task(ManagementTask::DeleteMember(id)).map(|_| ())
+	}
+
+	/// удалить комнату с сервера и закрыть соединение со всеми пользователями
+	pub fn delete_room(&mut self, room_id: RoomId) -> Result<(), TaskError> {
+		self.execute_task(ManagementTask::DeleteRoom(room_id)).map(|_| ())
+	}
+
+	pub fn create_member(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, TaskError> {
+		self.execute_task(ManagementTask::CreateMember(room_id, template)).map(|res| {
+			if let ManagementTaskResult::CreateMember(id) = res {
+				Ok(id)
+			} else {
+				Err(TaskError::UnexpectedResultError)
+			}
+		})?
+	}
+
+	pub(crate) fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardConfig) -> Result<(), TaskError> {
+		self.execute_task(ManagementTask::PutForwardedCommandConfig(room_id, config)).map(|_| ())
+	}
+
+	pub(crate) fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), TaskError> {
+		self.execute_task(ManagementTask::MarkRoomAsReady(room_id, plugin_name)).map(|_| ())
+	}
+
+	pub(crate) fn get_room_info(&mut self, room_id: RoomId) -> Result<RoomInfo, TaskError> {
+		self.execute_task(ManagementTask::GetRoomInfo(room_id)).map(|res| {
+			if let ManagementTaskResult::GetRoomInfo(room_info) = res {
+				Ok(room_info)
+			} else {
+				Err(TaskError::UnexpectedResultError)
+			}
+		})?
+	}
+
+	pub(crate) fn dump(&self, room_id: u64) -> Result<admin::DumpResponse, TaskError> {
+		self.execute_task(ManagementTask::Dump(room_id)).map(|res| {
+			if let ManagementTaskResult::Dump(resp) = res {
+				Ok(resp)
+			} else {
+				Err(TaskError::UnexpectedResultError)
+			}
+		})?
 	}
 
 	///
 	/// Выполнить задачу в `CommandTracerSessions` конкретной комнаты
 	/// Подход с вложенным enum для отдельного класса задач применяется для изолирования функционала
 	///
-	pub fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: TracerSessionCommand) -> Result<(), CommandTracerSessionTaskError> {
+	pub(crate) fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: TracerSessionCommand) -> Result<(), TaskError> {
+		self.execute_task(ManagementTask::CommandTracerSessionTask(room_id, task)).map(|_| ())
+	}
+
+	fn execute_task(&self, task: ManagementTask) -> Result<ManagementTaskResult, TaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::CommandTracerSessionTask(room_id, task, sender))
-			.map_err(|e| CommandTracerSessionTaskError::ChannelSendError(format!("{:?}", e)))?;
+		self.sender.send(ChannelTask { task, sender }).map_err(TaskError::ChannelSendError)?;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(r) => match r {
-				Ok(_) => Ok(()),
-				Err(e) => Err(e),
-			},
-			Err(_e) => Err(CommandTracerSessionTaskError::RecvTimeoutError),
+			Ok(Ok(result)) => Ok(result),
+			Ok(Err(e)) => Err(TaskError::TaskExecutionError(e)),
+			Err(e) => Err(TaskError::ChannelRecvError(e)),
 		}
 	}
 
-	pub fn get_halt_signal(&self) -> Arc<AtomicBool> {
+	pub(crate) fn get_halt_signal(&self) -> Arc<AtomicBool> {
 		self.halt_signal.clone()
-	}
-
-	pub fn create_room(&mut self, template: RoomTemplate) -> Result<RoomId, RegisterRoomRequestError> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::CreateRoom(template, sender))
-			.map_err(|e| RegisterRoomRequestError::ChannelSendError(format!("{:?}", e)))?;
-		self.created_room_counter += 1;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(room_id) => {
-				tracing::info!("[server] create room({:?})", room_id);
-				Ok(room_id)
-			}
-			Err(e) => {
-				tracing::error!("[server] fail create room");
-				Err(RegisterRoomRequestError::ChannelRecvError(e))
-			}
-		}
-	}
-
-	/// закрыть соединение с пользователем и удалить его из комнаты
-	pub fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), DeleteMemberRequestError> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::DeleteMember(id, sender))
-			.map_err(|e| DeleteMemberRequestError::ChannelSendError(format!("{:?}", e)))?;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(Ok(_)) => {
-				tracing::info!("[server] delete member({:?})", id);
-				Ok(())
-			}
-			Ok(Err(e)) => {
-				tracing::error!("[server] fail delete member({:?})", id);
-				Err(DeleteMemberRequestError::DeleteMemberError(e))
-			}
-			Err(e) => {
-				tracing::error!("[server] timeout delete member({:?})", id);
-				Err(DeleteMemberRequestError::ChannelRecvError(e))
-			}
-		}
-	}
-
-	/// удалить комнату с сервера и закрыть соединение со всеми пользователями
-	pub fn delete_room(&mut self, room_id: RoomId) -> Result<(), DeleteRoomRequestError> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::DeleteRoom(room_id, sender))
-			.map_err(|e| DeleteRoomRequestError::ChannelSendError(format!("{:?}", e)))?;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(Ok(_)) => {
-				self.created_room_counter -= 1;
-				tracing::info!("[server] delete room({:?})", room_id);
-				Ok(())
-			}
-			Ok(Err(e)) => {
-				tracing::error!("[server] fail delete room({:?})", room_id);
-				Err(DeleteRoomRequestError::DeleteRoomError(e))
-			}
-			Err(e) => {
-				tracing::error!("[server] timeout delete room({:?})", room_id);
-				Err(DeleteRoomRequestError::ChannelRecvError(e))
-			}
-		}
-	}
-
-	pub fn create_member(&mut self, room_id: RoomId, template: &MemberTemplate) -> Result<RoomMemberId, CreateMemberRequestError> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::CreateMember(room_id, template.clone(), sender))
-			.map_err(|e| CreateMemberRequestError::ChannelSendError(format!("{:?}", e)))?;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(r) => match r {
-				Ok(user_id) => {
-					tracing::info!("[server] create member({:?}) in room ({:?})", user_id, room_id);
-					Ok(user_id)
-				}
-				Err(e) => {
-					tracing::error!(
-						"[server] fail create member ({:?}) in room ({:?}) with error {:?}",
-						template.private_key,
-						room_id,
-						e
-					);
-					Err(CreateMemberRequestError::Error(e))
-				}
-			},
-			Err(e) => {
-				tracing::error!(
-					"[server] fail create user ({:?}) in room ({:?}) with error {:?}",
-					template.private_key,
-					room_id,
-					e
-				);
-				Err(CreateMemberRequestError::ChannelRecvError(e))
-			}
-		}
-	}
-
-	pub fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardConfig) -> Result<(), PutForwardedCommandConfigError> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::PutForwardedCommandConfig(room_id, config, sender))
-			.map_err(|e| PutForwardedCommandConfigError::ChannelSendError(format!("{:?}", e)))?;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(Ok(_)) => {
-				tracing::info!("[server] put forward command config({:?})", room_id);
-				Ok(())
-			}
-			Ok(Err(e)) => {
-				tracing::error!("[server] fail put forward command config({:?})", room_id);
-				Err(e)
-			}
-			Err(e) => {
-				tracing::error!("[server] timeout put forward command config({:?})", room_id);
-				Err(PutForwardedCommandConfigError::ChannelRecvError(e))
-			}
-		}
-	}
-
-	pub fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), MarkRoomAsReadyError> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::MarkRoomAsReady(room_id, plugin_name, sender))
-			.map_err(|e| MarkRoomAsReadyError::ChannelSendError(format!("{:?}", e)))?;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(Ok(_)) => {
-				tracing::info!("[server] mark_room_as_ready({:?})", room_id);
-				Ok(())
-			}
-			Ok(Err(e)) => {
-				tracing::error!("[server] fail mark_room_as_ready({:?})", room_id);
-				Err(e)
-			}
-			Err(e) => {
-				tracing::error!("[server] timeout mark_room_as_ready({:?})", room_id);
-				Err(MarkRoomAsReadyError::ChannelRecvError(e))
-			}
-		}
-	}
-
-	pub fn get_room_info(&mut self, room_id: RoomId) -> Result<RoomInfo, RoomNotFoundError> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender
-			.send(ManagementTask::GetRoomInfo(room_id, sender))
-			.map_err(|e| RoomNotFoundError::ChannelSendError(format!("{:?}", e)))?;
-		match receiver.recv_timeout(Duration::from_secs(1)) {
-			Ok(Ok(room_info)) => {
-				tracing::info!("[server] room_info({:?})", room_id);
-				Ok(room_info)
-			}
-			Ok(Err(e)) => {
-				tracing::error!("[server] fail room_info({:?})", room_id);
-				Err(e)
-			}
-			Err(e) => {
-				tracing::error!("[server] timeout room_info({:?})", room_id);
-				Err(RoomNotFoundError::ChannelRecvError(e))
-			}
-		}
-	}
-
-	pub fn set_time_offset(&self, duration: Duration) -> Result<(), String> {
-		self.sender.send(TimeOffset(duration)).map_err(|e| format!("{:?}", e))
-	}
-
-	pub fn join(&mut self) -> Result<(), io::Error> {
-		self.handler.take().unwrap().join().unwrap()
-	}
-
-	pub fn dump(&self, room_id: u64) -> Result<admin::DumpResponse, String> {
-		let (sender, receiver) = std::sync::mpsc::channel();
-		match self.sender.send(ManagementTask::Dump(room_id, sender)) {
-			Ok(_) => match receiver.recv() {
-				Ok(result) => result,
-				Err(e) => Err(format!("{:?}", e)),
-			},
-			Err(e) => Err(format!("{:?}", e)),
-		}
 	}
 
 	pub fn shutdown(&mut self) {
@@ -409,7 +244,7 @@ mod test {
 	fn should_create_member() {
 		let mut server = new_server_manager();
 		let room_id = server.create_room(RoomTemplate::default()).unwrap();
-		let member_id = server.create_member(room_id, &MemberTemplate::default()).unwrap();
+		let member_id = server.create_member(room_id, MemberTemplate::default()).unwrap();
 
 		assert_eq!(member_id, 1);
 	}

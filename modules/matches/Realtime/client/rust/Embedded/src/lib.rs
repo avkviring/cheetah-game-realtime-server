@@ -36,8 +36,8 @@ impl EmbeddedServerWrapper {
 
 		let server = runtime.block_on(async move {
 			ServerBuilder::default()
-				.set_internal_grpc_address(bind_socket_address.clone())
-				.set_admin_grpc_address(bind_socket_address.clone())
+				.set_internal_grpc_address(bind_socket_address)
+				.set_admin_grpc_address(bind_socket_address)
 				.set_game_address(bind_socket_address)
 				.build()
 				.await
