@@ -26,13 +26,13 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 			let new_room_object_id = GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
 			if let Some(unique_key) = &self.singleton_key {
 				if room.has_object_singleton_key(unique_key) {
-					room.delete_object(member_object_id)?;
+					room.delete_object(member_object_id, user_id)?;
 					return Ok(());
 				}
 				room.set_singleton_key(unique_key.clone(), new_room_object_id);
 			}
 			room.room_object_id_generator += 1;
-			let mut object = room.delete_object(member_object_id)?;
+			let mut object = room.delete_object(member_object_id, user_id)?;
 			object.id = new_room_object_id;
 			room.insert_object(object);
 			room.get_object_mut(new_room_object_id)?
@@ -44,7 +44,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		object.created = true;
 		// объект полностью загружен - теперь его надо загрузить остальным клиентам
 		let mut commands = CreateCommandsCollector::new();
-		object.collect_create_commands(&mut commands);
+		object.collect_create_commands(&mut commands, user_id);
 		let template = object.template_id;
 		if object.id.owner == GameObjectOwner::Room {
 			room.send_to_members(groups, Some(template), commands.as_slice(), |_| true)?;

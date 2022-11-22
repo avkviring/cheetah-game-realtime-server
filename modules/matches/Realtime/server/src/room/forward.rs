@@ -1,9 +1,8 @@
 use crate::room::command::ServerCommandError;
-use crate::room::object::S2CCommandWithFieldInfo;
 use crate::room::Room;
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::field::FieldId;
-use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
 use cheetah_matches_realtime_common::commands::CommandTypeId;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
@@ -54,8 +53,9 @@ impl Room {
 	}
 
 	pub(crate) fn forward_to_super_members(&mut self, command: &C2SCommand, sender_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let s2c = S2CCommandWithFieldInfo {
+		let s2c = S2CCommandWithMeta {
 			field: command.get_field(),
+			creator: sender_id,
 			command: S2CCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: sender_id,
 				c2s: command.clone(),

@@ -8,7 +8,7 @@ use fnv::{FnvBuildHasher, FnvHashMap, FnvHashSet};
 use indexmap::map::IndexMap;
 
 use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
-use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_matches_realtime_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
@@ -24,7 +24,7 @@ use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::compare_and_set::{reset_all_compare_and_set, CASCleanersStore};
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::forward::ForwardConfig;
-use crate::room::object::{CreateCommandsCollector, GameObject, S2CCommandWithFieldInfo};
+use crate::room::object::{CreateCommandsCollector, GameObject};
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::server::measurers::Measurers;
@@ -43,7 +43,6 @@ pub struct Room {
 	pub members: HashMap<RoomMemberId, Member, FnvBuildHasher>,
 	pub(crate) objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ChannelType>,
-	current_member_id: Option<RoomMemberId>,
 	pub user_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	pub room_object_id_generator: u32,
@@ -86,7 +85,6 @@ impl Room {
 			members: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
-			current_member_id: Default::default(),
 			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
 			#[cfg(test)]
 			test_object_id_generator: 0,
@@ -168,11 +166,9 @@ impl Room {
 		if let Some(user) = self.members.get(&user_id) {
 			if !self.is_allowed_to_connect(user) {
 				tracing::error!("[room({:?})] user is not allowed to connect {:?}", self.id, user_id);
-				self.current_member_id = None;
 				self.current_channel = None;
 				return;
 			}
-			self.current_member_id.replace(user_id);
 			if !user.connected {
 				let user = self.members.get_mut(&user_id).unwrap();
 				user.connected = true;
@@ -181,14 +177,12 @@ impl Room {
 				let template = user.template.clone();
 				if let Err(e) = self.on_user_connect(user_id, template) {
 					e.log_error(self.id, user_id);
-					self.current_member_id = None;
 					self.current_channel = None;
 					return;
 				}
 			}
 		} else {
 			tracing::error!("[room({:?})] user({:?}) not found for input frame", self.id, user_id);
-			self.current_member_id = None;
 			self.current_channel = None;
 			return;
 		}
@@ -223,7 +217,6 @@ impl Room {
 			}
 		}
 
-		self.current_member_id = None;
 		self.current_channel = None;
 	}
 
@@ -256,7 +249,6 @@ impl Room {
 	///
 	pub fn disconnect_user(&mut self, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		tracing::info!("[room({:?})] disconnect user({:?})", self.id, user_id);
-		self.current_member_id.replace(user_id);
 		match self.members.remove(&user_id) {
 			None => {}
 			Some(user) => {
@@ -270,7 +262,7 @@ impl Room {
 				});
 
 				for id in objects {
-					self.delete_object(id)?;
+					self.delete_object(id, user_id)?;
 				}
 				reset_all_compare_and_set(self, user.id, &user.compare_and_set_cleaners)?;
 			}
@@ -297,8 +289,7 @@ impl Room {
 		self.objects.contains_key(object_id)
 	}
 
-	pub fn delete_object(&mut self, object_id: GameObjectId) -> Result<GameObject, ServerCommandError> {
-		let current_user = self.current_member_id;
+	pub fn delete_object(&mut self, object_id: GameObjectId, initiator: RoomMemberId) -> Result<GameObject, ServerCommandError> {
 		match self.objects.shift_remove(&object_id) {
 			None => Err(ServerCommandError::GameObjectNotFound { object_id }),
 			Some(object) => {
@@ -306,17 +297,12 @@ impl Room {
 					self.send_to_members(
 						object.access_groups,
 						Some(object.template_id),
-						&[S2CCommandWithFieldInfo {
+						&[S2CCommandWithMeta {
 							field: None,
+							creator: initiator,
 							command: S2CCommand::Delete(DeleteGameObjectCommand { object_id: object.id }),
 						}],
-						|user| {
-							if let Some(user_id) = current_user {
-								user.id != user_id
-							} else {
-								true
-							}
-						},
+						|user| user.id != initiator,
 					)?;
 				}
 				Ok(object)
@@ -332,7 +318,7 @@ impl Room {
 		for object_template in template.objects {
 			let object = object_template.create_user_game_object(user_id);
 			let mut commands = CreateCommandsCollector::new();
-			object.collect_create_commands(&mut commands);
+			object.collect_create_commands(&mut commands, user_id);
 			let template = object.template_id;
 			let access_groups = object.access_groups;
 			self.send_to_members(access_groups, Some(template), commands.as_slice(), |_user| true)?;
@@ -603,7 +589,7 @@ mod tests {
 		});
 		assert_eq!(order, "1005200");
 
-		room.delete_object(GameObjectId::new(100, GameObjectOwner::Room)).unwrap();
+		room.delete_object(GameObjectId::new(100, GameObjectOwner::Room), u16::MAX).unwrap();
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
@@ -675,7 +661,7 @@ mod tests {
 		let unique_key = BinaryValue::from([1, 2, 3, 4].as_slice());
 		room.set_singleton_key(unique_key.clone(), object_id);
 		assert!(room.has_object_singleton_key(&unique_key));
-		room.delete_object(object_id).unwrap();
+		room.delete_object(object_id, u16::MAX).unwrap();
 		assert!(!room.has_object_singleton_key(&unique_key));
 	}
 

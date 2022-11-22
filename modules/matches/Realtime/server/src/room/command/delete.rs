@@ -16,7 +16,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 				});
 			}
 		}
-		room.delete_object(self.object_id)?;
+		room.delete_object(self.object_id, member_id)?;
 		Ok(())
 	}
 }
@@ -49,7 +49,6 @@ mod tests {
 		room.test_out_commands.clear();
 		let command = DeleteGameObjectCommand { object_id };
 
-		room.current_member_id = Some(user_a_id);
 		command.execute(&mut room, user_a_id).unwrap();
 
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
