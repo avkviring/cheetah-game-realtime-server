@@ -16,13 +16,13 @@ pub mod helpers;
 fn test() {
 	let builder = IntegrationTestServerBuilder::default();
 	let mut helper = IntegrationTestHelper::new(builder);
-	let (user1_id, user1_key) = helper.create_user();
-	let (user2_id, user2_key) = helper.create_user();
-	let (user3_id, user3_key) = helper.create_user();
+	let (member1_id, member1_key) = helper.create_member();
+	let (member2_id, member2_key) = helper.create_member();
+	let (member3_id, member3_key) = helper.create_member();
 
-	let client1 = helper.create_client(user1_id, &user1_key);
-	let client2 = helper.create_client(user2_id, &user2_key);
-	let client3 = helper.create_client(user3_id, &user3_key);
+	let client1 = helper.create_client(member1_id, &member1_key);
+	let client2 = helper.create_client(member2_id, &member2_key);
+	let client3 = helper.create_client(member3_id, &member3_key);
 
 	ffi::command::event::set_event_listener(client2, on_event_listener);
 	ffi::command::room::attach_to_room(client2);
@@ -43,7 +43,7 @@ fn test() {
 	event_buffer.buffer[0] = 100;
 	let event_field_id = 10;
 
-	ffi::command::event::send_target_event(client1, user2_id, &object_id, event_field_id, &event_buffer);
+	ffi::command::event::send_target_event(client1, member2_id, &object_id, event_field_id, &event_buffer);
 	helper.wait_udp();
 
 	ffi::client::receive(client3);

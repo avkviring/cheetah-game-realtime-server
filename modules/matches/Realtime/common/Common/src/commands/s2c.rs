@@ -109,7 +109,7 @@ impl S2CCommand {
 			S2CCommand::Event(command) => format!("{:?}", command.event),
 			S2CCommand::Delete(_) => "".to_string(),
 			S2CCommand::DeleteField(_) => "".to_string(),
-			S2CCommand::Forwarded(command) => format!("forward: user({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
+			S2CCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
 		}
 	}
 

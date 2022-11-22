@@ -36,7 +36,7 @@ impl Registry {
 		server_address: &str,
 		member_id: RoomMemberId,
 		room_id: RoomId,
-		user_private_key: MemberPrivateKey,
+		private_key: MemberPrivateKey,
 		start_frame_id: u64,
 	) -> std::io::Result<ClientId> {
 		Self::set_panic_hook();
@@ -52,7 +52,7 @@ impl Registry {
 			SocketAddr::from_str(server_address).map_err(|e| std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{:?}", e)))?,
 			member_id,
 			room_id,
-			user_private_key,
+			private_key,
 			in_command_sender,
 			state,
 			receiver,

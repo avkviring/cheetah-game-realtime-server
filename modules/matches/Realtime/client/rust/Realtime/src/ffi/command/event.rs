@@ -30,7 +30,7 @@ pub extern "C" fn send_event(client_id: ClientId, object_id: &GameObjectIdFFI, f
 #[no_mangle]
 pub extern "C" fn send_target_event(
 	client_id: ClientId,
-	target_user: RoomMemberId,
+	target_member_id: RoomMemberId,
 	object_id: &GameObjectIdFFI,
 	field_id: FieldId,
 	event: &BufferFFI,
@@ -43,7 +43,7 @@ pub extern "C" fn send_target_event(
 	send_command(
 		client_id,
 		C2SCommand::TargetEvent(TargetEventCommand {
-			target: target_user,
+			target: target_member_id,
 			event: event_command,
 		}),
 	)

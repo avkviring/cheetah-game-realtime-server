@@ -92,16 +92,16 @@ impl Room {
 				let commands = [commands_with_field];
 
 				match target {
-					Some(target_user) => {
-						self.send_to_member(&target_user, template, &commands)?;
+					Some(target_member_id) => {
+						self.send_to_member(&target_member_id, template, &commands)?;
 					}
 					None => {
-						self.send_to_members(groups, Some(template), &commands, |user| {
+						self.send_to_members(groups, Some(template), &commands, |member| {
 							let mut permission_manager = permission_manager.borrow_mut();
 							// отправляем себе только если есть права на запись
 							// иначе никто другой не может вносит изменения в данное поле и
 							// отправлять себе как единственному источнику изменений избыточно
-							if object_owner == Some(user.id) {
+							if object_owner == Some(member.id) {
 								permission_manager.has_write_access(template, field)
 							} else {
 								true

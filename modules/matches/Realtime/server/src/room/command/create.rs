@@ -8,7 +8,7 @@ use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let user = room.get_member(&member_id)?;
+		let member = room.get_member(&member_id)?;
 
 		if self.object_id.id == 0 {
 			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_string()));
@@ -16,18 +16,18 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 		let groups = self.access_groups;
 
-		if !groups.is_sub_groups(&user.template.groups) {
+		if !groups.is_sub_groups(&member.template.groups) {
 			return Err(ServerCommandError::Error(format!(
 				"Incorrect access group {:?} with client groups {:?}",
-				groups, user.template.groups
+				groups, member.template.groups
 			)));
 		}
 
-		if let GameObjectOwner::Member(object_id_user) = self.object_id.owner {
-			if object_id_user != user.id {
+		if let GameObjectOwner::Member(object_id_member) = self.object_id.owner {
+			if object_id_member != member.id {
 				return Err(ServerCommandError::Error(format!(
-					"Incorrect object_id {:?} for user {:?}",
-					self.object_id, user
+					"Incorrect object_id {:?} for member {:?}",
+					self.object_id, member
 				)));
 			}
 		}

@@ -52,7 +52,7 @@ impl Rooms {
 		self.room_by_id.remove(room_id).ok_or(RoomNotFoundError(*room_id))
 	}
 
-	pub fn register_user(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RoomNotFoundError> {
+	pub fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RoomNotFoundError> {
 		match self.room_by_id.get_mut(&room_id) {
 			None => Err(RoomNotFoundError(room_id)),
 			Some(room) => {
@@ -78,14 +78,14 @@ impl Rooms {
 		}
 	}
 
-	pub fn execute_commands(&mut self, user_and_room_id: MemberAndRoomId, commands: &[CommandWithChannel]) {
-		match self.room_by_id.get_mut(&user_and_room_id.room_id) {
+	pub fn execute_commands(&mut self, member_and_room_id: MemberAndRoomId, commands: &[CommandWithChannel]) {
+		match self.room_by_id.get_mut(&member_and_room_id.room_id) {
 			None => {
-				tracing::error!("[rooms] on_frame_received room({}) not found", user_and_room_id.room_id);
+				tracing::error!("[rooms] on_frame_received room({}) not found", member_and_room_id.room_id);
 			}
 			Some(room) => {
 				let object_count = room.objects.len();
-				room.execute_commands(user_and_room_id.member_id, commands);
+				room.execute_commands(member_and_room_id.member_id, commands);
 
 				let mut measurers = self.measurers.borrow_mut();
 
@@ -98,11 +98,11 @@ impl Rooms {
 		}
 	}
 
-	pub fn user_disconnected(&mut self, member_and_room_id: &MemberAndRoomId) -> Result<(), ServerCommandError> {
+	pub fn member_disconnected(&mut self, member_and_room_id: &MemberAndRoomId) -> Result<(), ServerCommandError> {
 		match self.room_by_id.get_mut(&member_and_room_id.room_id) {
 			None => Err(ServerCommandError::RoomNotFound(RoomNotFoundError(member_and_room_id.room_id))),
 			Some(room) => {
-				room.disconnect_user(member_and_room_id.member_id)?;
+				room.disconnect_member(member_and_room_id.member_id)?;
 				self.measurers.borrow_mut().on_change_member_count(&room.template_name, -1);
 				Ok(())
 			}

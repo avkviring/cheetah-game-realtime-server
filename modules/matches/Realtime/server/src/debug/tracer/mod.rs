@@ -68,7 +68,7 @@ struct Session {
 pub struct TracedCommand {
 	time: f64,
 	template: Option<GameObjectTemplateId>,
-	user: RoomMemberId,
+	member: RoomMemberId,
 	network_command: TracedBothDirectionCommand,
 }
 ///
@@ -121,11 +121,11 @@ impl Session {
 	/// Сохранение сетевой команды
 	/// - учитывается ограничение на размер буфера команд
 	///
-	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, user: RoomMemberId, network_command: TracedBothDirectionCommand) {
+	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, member_id: RoomMemberId, network_command: TracedBothDirectionCommand) {
 		let collected_command = TracedCommand {
 			time: Session::now(),
 			template,
-			user,
+			member: member_id,
 			network_command,
 		};
 		self.push_filtered_command(&collected_command);
@@ -197,7 +197,7 @@ impl CommandTracerSessions {
 	///
 	/// Сохранить c2s команду в сессии
 	///
-	pub fn collect_c2s(&mut self, objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>, user: RoomMemberId, command: &C2SCommand) {
+	pub fn collect_c2s(&mut self, objects: &IndexMap<GameObjectId, GameObject, FnvBuildHasher>, member_id: RoomMemberId, command: &C2SCommand) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = TracedBothDirectionCommand::C2S(command.clone());
 			let template = match network_command.get_object_id() {
@@ -220,17 +220,17 @@ impl CommandTracerSessions {
 					template
 				}
 			};
-			s.collect(template, user, network_command);
+			s.collect(template, member_id, network_command);
 		});
 	}
 
 	///
 	/// Сохранить s2c команду в сессии
 	///
-	pub fn collect_s2c(&mut self, template: Option<GameObjectTemplateId>, user: RoomMemberId, command: &S2CCommand) {
+	pub fn collect_s2c(&mut self, template: Option<GameObjectTemplateId>, member_id: RoomMemberId, command: &S2CCommand) {
 		self.sessions.values_mut().for_each(|s| {
 			let network_command = TracedBothDirectionCommand::S2C(command.clone());
-			s.collect(template, user, network_command);
+			s.collect(template, member_id, network_command);
 		});
 	}
 
@@ -310,30 +310,30 @@ pub mod tests {
 				TracedCommand {
 					time: Session::now(),
 					template: None,
-					user: 100,
-					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					member: 100,
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: None,
-					user: 101,
-					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					member: 101,
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: None,
-					user: 102,
-					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					member: 102,
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: Some(200),
-					user: 100,
+					member: 100,
 					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
 						object_id: Default::default(),
 						field_id: 0,
-						event: Default::default()
-					}))
+						event: Default::default(),
+					})),
 				}
 			]
 		);
@@ -366,18 +366,18 @@ pub mod tests {
 				TracedCommand {
 					time: Session::now(),
 					template: None,
-					user: 100,
-					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom)
+					member: 100,
+					network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 				},
 				TracedCommand {
 					time: Session::now(),
 					template: Some(200),
-					user: 100,
+					member: 100,
 					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
 						object_id: Default::default(),
 						field_id: 0,
-						event: Default::default()
-					}))
+						event: Default::default(),
+					})),
 				}
 			]
 		);
@@ -404,7 +404,7 @@ pub mod tests {
 			TracedCommand {
 				time: Session::now(),
 				template: None,
-				user: 55,
+				member: 55,
 				network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			}
 		);
@@ -515,7 +515,7 @@ pub mod tests {
 			vec![TracedCommand {
 				time: Session::now(),
 				template: Some(100),
-				user: 100,
+				member: 100,
 				network_command: TracedBothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 					object_id: Default::default(),
 					template: 100,

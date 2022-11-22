@@ -90,8 +90,9 @@ mod tests {
 	fn test_hello() {
 		check(&[Header::Hello]);
 	}
+
 	#[test]
-	fn test_user_and_room() {
+	fn test_member_and_room() {
 		check(&[Header::MemberAndRoomId(MemberAndRoomId { member_id: 55, room_id: 77 })]);
 	}
 

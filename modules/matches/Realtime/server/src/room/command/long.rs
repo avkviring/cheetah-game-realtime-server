@@ -90,7 +90,7 @@ mod tests {
 
 	#[test]
 	fn should_set_long_command() {
-		let (mut room, user, object_id) = setup();
+		let (mut room, member_id, object_id) = setup();
 
 		room.test_out_commands.clear();
 		let command = SetFieldCommand {
@@ -98,7 +98,7 @@ mod tests {
 			field_id: 10,
 			value: 100.into(),
 		};
-		command.execute(&mut room, user).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 100);
@@ -107,7 +107,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_long_command() {
-		let (mut room, user, object_id) = setup();
+		let (mut room, member_id, object_id) = setup();
 
 		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
@@ -115,8 +115,8 @@ mod tests {
 			field_id: 10,
 			increment: 100,
 		};
-		command.clone().execute(&mut room, user).unwrap();
-		command.execute(&mut room, user).unwrap();
+		command.clone().execute(&mut room, member_id).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 200);
@@ -133,15 +133,15 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_if_overflow() {
-		let (mut room, user, object_id) = setup();
+		let (mut room, member_id, object_id) = setup();
 		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id,
 			field_id: 10,
 			increment: i64::MAX,
 		};
-		command.clone().execute(&mut room, user).unwrap();
-		command.execute(&mut room, user).unwrap();
+		command.clone().execute(&mut room, member_id).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 	}
 
 	fn setup() -> (Room, RoomMemberId, GameObjectId) {

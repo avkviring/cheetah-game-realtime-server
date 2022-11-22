@@ -38,10 +38,10 @@ impl Room {
 		let members_for_send = self
 			.members
 			.values_mut()
-			.filter(|user| user.attached)
-			.filter(|user| user.connected)
-			.filter(|user| user.template.groups.contains_any(&access_groups))
-			.filter(|user| filter(user));
+			.filter(|member| member.attached)
+			.filter(|member| member.connected)
+			.filter(|member| member.template.groups.contains_any(&access_groups))
+			.filter(|member| filter(member));
 
 		for member in members_for_send {
 			commands
@@ -61,14 +61,14 @@ impl Room {
 						.borrow_mut()
 						.collect_s2c(object_template, member.id, &command.command);
 
-					let command_with_user = S2CCommandWithCreator {
+					let member_with_creator = S2CCommandWithCreator {
 						creator: command.creator,
 						command: command.command.clone(),
 					};
 
 					member.out_commands.push(CommandWithChannelType {
 						channel_type: *channel_type,
-						command: BothDirectionCommand::S2CWithCreator(command_with_user),
+						command: BothDirectionCommand::S2CWithCreator(member_with_creator),
 					});
 				});
 		}
@@ -140,9 +140,9 @@ mod tests {
 			.set_permission(0, &field_id_2, FieldType::Long, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
-		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups);
 		object.created = true;
 		let object_id = object.id;
 
@@ -154,7 +154,7 @@ mod tests {
 					id: field_id_1,
 					field_type: FieldType::Long,
 				},
-				user_1,
+				member_1,
 				Permission::Rw,
 				None,
 				|_| Ok(None),
@@ -169,7 +169,7 @@ mod tests {
 					id: field_id_1,
 					field_type: FieldType::Long,
 				},
-				user_2,
+				member_2,
 				Permission::Rw,
 				None,
 				|_| Ok(None),
@@ -210,7 +210,7 @@ mod tests {
 			},)
 			.is_ok());
 
-		assert!(room.test_get_user_out_commands(member_id).is_empty());
+		assert!(room.test_get_member_out_commands(member_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
 		assert!(room
@@ -223,7 +223,10 @@ mod tests {
 			},)
 			.is_ok());
 
-		assert!(matches!(room.test_get_user_out_commands(member_id).get(0), Some(S2CCommand::SetField(_))));
+		assert!(matches!(
+			room.test_get_member_out_commands(member_id).get(0),
+			Some(S2CCommand::SetField(_))
+		));
 	}
 
 	///
@@ -235,9 +238,9 @@ mod tests {
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_member(MemberTemplate::stub(access_groups_a));
-		let user_2 = room.register_member(MemberTemplate::stub(access_groups_b));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups_a);
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups_a));
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups_b));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups_a);
 		object.created = true;
 		let object_id = object.id;
 		assert!(room
@@ -247,7 +250,7 @@ mod tests {
 					id: 0,
 					field_type: FieldType::Long,
 				},
-				user_2,
+				member_2,
 				Permission::Ro,
 				None,
 				|_| Ok(None),
@@ -256,7 +259,7 @@ mod tests {
 	}
 
 	#[test]
-	fn should_send_to_user() {
+	fn should_send_to_member() {
 		let groups = AccessGroups(55);
 		let object_template = 5;
 		let deny_field_id = 50;
@@ -268,11 +271,11 @@ mod tests {
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		let _user_source_id = room.register_member(MemberTemplate::stub(groups));
-		let user_target_id = room.register_member(MemberTemplate::stub(groups));
+		let _member_source_id = room.register_member(MemberTemplate::stub(groups));
+		let member_target_id = room.register_member(MemberTemplate::stub(groups));
 
-		room.test_mark_as_connected(user_target_id).unwrap();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_target_id), groups);
+		room.test_mark_as_connected(member_target_id).unwrap();
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_target_id), groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id;
@@ -303,13 +306,13 @@ mod tests {
 				}),
 			},
 		];
-		room.send_to_member(&user_target_id, object_template, &commands).unwrap();
+		room.send_to_member(&member_target_id, object_template, &commands).unwrap();
 
-		let out_commands = room.test_get_user_out_commands_with_meta(user_target_id);
+		let out_commands = room.test_get_member_out_commands_with_meta(member_target_id);
 		let command = out_commands.get(0);
 
 		assert!(
-			matches!(command, Some(S2CCommandWithCreator{creator: _user_source_id, command: S2CCommand::SetField
+			matches!(command, Some(S2CCommandWithCreator{creator: _member_source_id, command: S2CCommand::SetField
 				(command)}) if command.field_id == allow_field_id)
 		);
 		assert_eq!(out_commands.len(), 1);
@@ -333,12 +336,12 @@ mod tests {
 
 		let mut room = Room::from_template(template);
 
-		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
-		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		room.test_mark_as_connected(user_1).unwrap();
-		room.test_mark_as_connected(user_2).unwrap();
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+		room.test_mark_as_connected(member_1).unwrap();
+		room.test_mark_as_connected(member_2).unwrap();
 
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups);
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id;
@@ -372,7 +375,7 @@ mod tests {
 
 		room.send_to_members(access_groups, Some(object_template), &commands, |_| true).unwrap();
 
-		let commands = room.test_get_user_out_commands(user_2);
+		let commands = room.test_get_member_out_commands(member_2);
 		assert!(matches!(commands.get(0),Some(S2CCommand::SetField(c)) if c.field_id == allow_field_id));
 		assert_eq!(commands.len(), 1);
 	}
@@ -383,12 +386,12 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(55);
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
-		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups);
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups);
 		let object_id = object.id;
-		room.test_mark_as_connected(user_1).unwrap();
-		room.test_mark_as_connected(user_2).unwrap();
+		room.test_mark_as_connected(member_1).unwrap();
+		room.test_mark_as_connected(member_2).unwrap();
 
 		assert!(room
 			.send_command_from_action(
@@ -397,7 +400,7 @@ mod tests {
 					id: field_id,
 					field_type: FieldType::Long,
 				},
-				user_1,
+				member_1,
 				Permission::Rw,
 				None,
 				|_| {
@@ -410,7 +413,7 @@ mod tests {
 			)
 			.is_ok());
 
-		let commands = room.test_get_user_out_commands(user_2);
+		let commands = room.test_get_member_out_commands(member_2);
 		assert!(commands.is_empty());
 	}
 }

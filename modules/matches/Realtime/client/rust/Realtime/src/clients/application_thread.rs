@@ -117,8 +117,8 @@ impl ApplicationThreadClient {
 
 	pub fn receive(&mut self) {
 		while let Ok(command) = self.commands_from_server.try_recv() {
-			if let BothDirectionCommand::S2CWithCreator(command_with_user) = command.both_direction_command {
-				match command_with_user.command {
+			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.both_direction_command {
+				match member_with_creator.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {
 							let object_id = (&command.object_id).into();
@@ -135,26 +135,26 @@ impl ApplicationThreadClient {
 						FieldValue::Long(v) => {
 							if let Some(ref listener) = self.listener_long_value {
 								let object_id = (&command.object_id).into();
-								listener(command_with_user.creator, &object_id, command.field_id, v);
+								listener(member_with_creator.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Double(v) => {
 							if let Some(ref listener) = self.listener_float_value {
 								let object_id = (&command.object_id).into();
-								listener(command_with_user.creator, &object_id, command.field_id, v);
+								listener(member_with_creator.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Structure(s) => {
 							if let Some(ref listener) = self.listener_structure {
 								let object_id = (&command.object_id).into();
-								listener(command_with_user.creator, &object_id, command.field_id, &s.into());
+								listener(member_with_creator.creator, &object_id, command.field_id, &s.into());
 							}
 						}
 					},
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(command_with_user.creator, &object_id, command.field_id, &From::from(&command.event));
+							listener(member_with_creator.creator, &object_id, command.field_id, &From::from(&command.event));
 						}
 					}
 					S2CCommand::Delete(command) => {
@@ -166,7 +166,7 @@ impl ApplicationThreadClient {
 					S2CCommand::DeleteField(command) => {
 						if let Some(ref listener) = self.listener_delete_field {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(command_with_user.creator, &object_id, command.field_id, From::from(&command.field_type));
+							listener(member_with_creator.creator, &object_id, command.field_id, From::from(&command.field_type));
 						}
 					}
 					S2CCommand::Forwarded(command) => {

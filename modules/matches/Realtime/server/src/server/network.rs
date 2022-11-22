@@ -51,7 +51,7 @@ impl NetworkLayer {
 		let mut disconnected = heapless::Vec::<MemberAndRoomId, 1000>::new();
 		self.sessions.iter_mut().for_each(|(id, session)| {
 			if session.protocol.is_disconnected(now).is_some() && !disconnected.is_full() {
-				if let Err(e) = rooms.user_disconnected(id) {
+				if let Err(e) = rooms.member_disconnected(id) {
 					e.log_error(id.room_id, id.member_id);
 				}
 				disconnected.push(*id).unwrap();
@@ -139,10 +139,10 @@ impl NetworkLayer {
 					None => {
 						tracing::error!("[network] MemberAndRoomId header not found {:?}", headers);
 					}
-					Some(user_and_room_id) => {
-						match self.sessions.get_mut(&user_and_room_id) {
+					Some(member_and_room_id) => {
+						match self.sessions.get_mut(&member_and_room_id) {
 							None => {
-								tracing::error!("[network] user session not found {:?}", user_and_room_id);
+								tracing::error!("[network] member session not found {:?}", member_and_room_id);
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
@@ -154,7 +154,7 @@ impl NetworkLayer {
 											session.max_receive_frame_id = frame.frame_id;
 										}
 										session.protocol.on_frame_received(&frame, now);
-										rooms.execute_commands(user_and_room_id, session.protocol.in_commands_collector.get_ready_commands());
+										rooms.execute_commands(member_and_room_id, session.protocol.in_commands_collector.get_ready_commands());
 									}
 									Err(e) => {
 										tracing::error!("[network] error decode frame {:?}", e);
@@ -174,7 +174,7 @@ impl NetworkLayer {
 		measurers.on_income_frame(size, start_time.elapsed());
 	}
 
-	pub fn register_user(&mut self, now: Instant, room_id: RoomId, member_id: RoomMemberId, template: MemberTemplate) {
+	pub fn register_member(&mut self, now: Instant, room_id: RoomId, member_id: RoomMemberId, template: MemberTemplate) {
 		self.sessions.insert(
 			MemberAndRoomId { member_id, room_id },
 			MemberSession {
@@ -187,7 +187,7 @@ impl NetworkLayer {
 	}
 
 	/// Послать `DisconnectHeader` пользователю и удалить сессию с сервера
-	pub fn disconnect_users(&mut self, member_and_room_ids: impl Iterator<Item = MemberAndRoomId>) {
+	pub fn disconnect_members(&mut self, member_and_room_ids: impl Iterator<Item = MemberAndRoomId>) {
 		for id in member_and_room_ids {
 			if let Some(mut session) = self.sessions.remove(&id) {
 				session.protocol.disconnect_by_command.disconnect();
@@ -234,7 +234,7 @@ mod tests {
 	}
 
 	#[test]
-	fn should_not_panic_when_wrong_user() {
+	fn should_not_panic_when_wrong_member() {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
@@ -245,7 +245,7 @@ mod tests {
 	}
 
 	#[test]
-	fn should_not_panic_when_missing_user_header() {
+	fn should_not_panic_when_missing_member_header() {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
@@ -263,24 +263,24 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
 
-		let user_template = MemberTemplate::new_member(Default::default(), Default::default());
-		let user = Member {
+		let member_template = MemberTemplate::new_member(Default::default(), Default::default());
+		let member = Member {
 			id: 100,
 			connected: false,
 			attached: false,
-			template: user_template.clone(),
+			template: member_template.clone(),
 			compare_and_set_cleaners: Default::default(),
 			out_commands: Default::default(),
 		};
-		udp_server.register_user(Instant::now(), 0, user.id, user.template.clone());
+		udp_server.register_member(Instant::now(), 0, member.id, member.template.clone());
 
 		let mut frame = OutFrame::new(100);
-		let user_and_room_id = MemberAndRoomId {
-			member_id: user.id,
+		let member_and_room_id = MemberAndRoomId {
+			member_id: member.id,
 			room_id: 0,
 		};
-		frame.headers.add(Header::MemberAndRoomId(user_and_room_id));
-		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer).unwrap();
+		frame.headers.add(Header::MemberAndRoomId(member_and_room_id));
+		let size = frame.encode(&mut Cipher::new(&member_template.private_key), &mut buffer).unwrap();
 
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
@@ -288,24 +288,29 @@ mod tests {
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, Instant::now());
 
 		let mut frame = OutFrame::new(10);
-		frame.headers.add(Header::MemberAndRoomId(user_and_room_id));
-		let size = frame.encode(&mut Cipher::new(&user_template.private_key), &mut buffer).unwrap();
+		frame.headers.add(Header::MemberAndRoomId(member_and_room_id));
+		let size = frame.encode(&mut Cipher::new(&member_template.private_key), &mut buffer).unwrap();
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, Instant::now());
 
-		assert_eq!(udp_server.sessions.get(&user_and_room_id).unwrap().peer_address.unwrap(), addr_1);
+		assert_eq!(udp_server.sessions.get(&member_and_room_id).unwrap().peer_address.unwrap(), addr_1);
 	}
 
 	#[test]
-	fn should_disconnect_users() {
+	fn should_disconnect_members() {
 		let mut udp_server = create_network_layer();
-		let user_template = MemberTemplate::new_member(Default::default(), Default::default());
-		let user_to_delete = MemberAndRoomId { member_id: 0, room_id: 0 };
-		udp_server.register_user(Instant::now(), user_to_delete.room_id, user_to_delete.member_id, user_template.clone());
-		udp_server.register_user(Instant::now(), 0, 1, user_template);
+		let member_template = MemberTemplate::new_member(Default::default(), Default::default());
+		let member_to_delete = MemberAndRoomId { member_id: 0, room_id: 0 };
+		udp_server.register_member(
+			Instant::now(),
+			member_to_delete.room_id,
+			member_to_delete.member_id,
+			member_template.clone(),
+		);
+		udp_server.register_member(Instant::now(), 0, 1, member_template);
 
-		udp_server.disconnect_users(vec![user_to_delete].into_iter());
+		udp_server.disconnect_members(vec![member_to_delete].into_iter());
 
-		assert!(!udp_server.sessions.contains_key(&user_to_delete), "session should be deleted");
+		assert!(!udp_server.sessions.contains_key(&member_to_delete), "session should be deleted");
 	}
 
 	fn create_network_layer() -> NetworkLayer {

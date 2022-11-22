@@ -4,7 +4,7 @@ use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedComman
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 impl ServerCommandExecutor for ForwardedCommand {
-	/// execute forwarded command on behalf of the original user
+	/// execute forwarded command on behalf of the original member
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		// check that the command is from a super member
 		if let Some(member) = room.members.get(&member_id) {
@@ -116,7 +116,7 @@ mod tests {
 			creator: member_1,
 			c2s: C2SCommand::AttachToRoom,
 		};
-		room.disconnect_user(super_member_1).unwrap();
+		room.disconnect_member(super_member_1).unwrap();
 		assert_eq!(MemberNotFound(super_member_1), command.execute(&mut room, super_member_1).unwrap_err());
 	}
 
@@ -127,7 +127,7 @@ mod tests {
 			creator: member_1,
 			c2s: C2SCommand::AttachToRoom,
 		};
-		room.disconnect_user(member_1).unwrap();
+		room.disconnect_member(member_1).unwrap();
 		assert_eq!(MemberNotFound(member_1), command.execute(&mut room, super_member_1).unwrap_err());
 	}
 

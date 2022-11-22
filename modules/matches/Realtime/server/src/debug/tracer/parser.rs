@@ -146,7 +146,7 @@ fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 		let result = match field.as_str() {
 			"user" => {
 				let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
-				Ok(Rule::User(id))
+				Ok(Rule::Member(id))
 			}
 			"template" => {
 				let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
@@ -165,7 +165,7 @@ fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 					Ok(Rule::RoomOwner)
 				} else {
 					let id = value.parse().map_err(|_| ParseError::ValueFormatError(value))?;
-					Ok(Rule::UserOwner(id))
+					Ok(Rule::MemberOwner(id))
 				}
 			}
 			_ => return Err(ParseError::UnknownField(field)),
@@ -271,7 +271,7 @@ mod test {
 	fn should_parse_user() {
 		let query = "user=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::User(55));
+		assert_eq!(result, Rule::Member(55));
 	}
 
 	#[test]
@@ -304,7 +304,7 @@ mod test {
 	fn should_parse_user_owner() {
 		let query = "owner=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::UserOwner(55));
+		assert_eq!(result, Rule::MemberOwner(55));
 	}
 
 	#[test]
@@ -324,14 +324,14 @@ mod test {
 	fn should_parse_not() {
 		let query = "owner!=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::Not(Box::new(Rule::UserOwner(55))));
+		assert_eq!(result, Rule::Not(Box::new(Rule::MemberOwner(55))));
 	}
 
 	#[test]
 	fn should_parse_or() {
 		let query = "c2s || user=55";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55)]));
+		assert_eq!(result, Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::Member(55)]));
 	}
 	#[test]
 	fn should_parse_more_two_or() {
@@ -339,7 +339,7 @@ mod test {
 		let result = parse(query).unwrap();
 		assert_eq!(
 			result,
-			Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::User(55), Rule::Template(10)])
+			Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::Member(55), Rule::Template(10)])
 		);
 	}
 
@@ -347,7 +347,7 @@ mod test {
 	fn should_parse_and() {
 		let query = "user=55 && c2s";
 		let result = parse(query).unwrap();
-		assert_eq!(result, Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S)]));
+		assert_eq!(result, Rule::AndRule(vec![Rule::Member(55), Rule::Direction(RuleCommandDirection::C2S)]));
 	}
 	#[test]
 	fn should_parse_more_two_and() {
@@ -355,7 +355,7 @@ mod test {
 		let result = parse(query).unwrap();
 		assert_eq!(
 			result,
-			Rule::AndRule(vec![Rule::User(55), Rule::Direction(RuleCommandDirection::C2S), Rule::Field(100)])
+			Rule::AndRule(vec![Rule::Member(55), Rule::Direction(RuleCommandDirection::C2S), Rule::Field(100)])
 		);
 	}
 
@@ -366,7 +366,7 @@ mod test {
 		assert_eq!(
 			result,
 			Rule::AndRule(vec![
-				Rule::User(55),
+				Rule::Member(55),
 				Rule::Field(10),
 				Rule::OrRule(vec![Rule::Template(20), Rule::Template(30)]),
 				Rule::RoomOwner,

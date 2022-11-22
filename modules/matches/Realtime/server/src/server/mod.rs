@@ -86,8 +86,8 @@ impl RoomsServer {
 				.delete_room(room_id)
 				.map(|_| ManagementTaskResult::DeleteRoom)
 				.map_err(TaskExecutionError::RoomNotFound)?,
-			ManagementTask::CreateMember(room_id, user_template) => self
-				.register_user(room_id, user_template, now)
+			ManagementTask::CreateMember(room_id, member_template) => self
+				.register_member(room_id, member_template, now)
 				.map(ManagementTaskResult::CreateMember)
 				.map_err(TaskExecutionError::RoomNotFound)?,
 			ManagementTask::DeleteMember(id) => self
@@ -143,9 +143,9 @@ impl RoomsServer {
 		}
 	}
 
-	fn register_user(&mut self, room_id: RoomId, user_template: MemberTemplate, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {
-		let room_member_id = self.rooms.register_user(room_id, user_template.clone())?;
-		self.network_layer.register_user(now, room_id, room_member_id, user_template);
+	fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {
+		let room_member_id = self.rooms.register_member(room_id, member_template.clone())?;
+		self.network_layer.register_member(now, room_id, room_member_id, member_template);
 		Ok(room_member_id)
 	}
 
@@ -153,13 +153,13 @@ impl RoomsServer {
 	fn delete_room(&mut self, room_id: RoomId) -> Result<(), RoomNotFoundError> {
 		let room = self.rooms.take_room(&room_id)?;
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
-		self.network_layer.disconnect_users(ids);
+		self.network_layer.disconnect_members(ids);
 		Ok(())
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
 	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ServerCommandError> {
-		self.network_layer.disconnect_users([id].into_iter());
-		self.rooms.user_disconnected(&id)
+		self.network_layer.disconnect_members([id].into_iter());
+		self.rooms.member_disconnected(&id)
 	}
 }
