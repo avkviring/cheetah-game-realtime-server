@@ -23,8 +23,8 @@ mod tests {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
-		let user = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
+		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		object.created = true;
 		let object_id = object.id;
 
@@ -35,7 +35,7 @@ mod tests {
 			value: vec![1, 2, 3, 4, 5].into(),
 		};
 
-		command.execute(&mut room, user).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 		let object = room.get_object_mut(object_id).unwrap();
 
 		assert_eq!(*object.get_field_wrapped(100, FieldType::Structure).unwrap(), command.value);
@@ -63,17 +63,17 @@ mod tests {
 			}],
 		});
 		let mut room = Room::from_template(template);
-		let user1 = room.register_member(MemberTemplate::stub(access_groups));
-		room.test_mark_as_connected(user1).unwrap();
-		let user2 = room.register_member(MemberTemplate::stub(access_groups));
-		room.test_mark_as_connected(user2).unwrap();
-		let object1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user1), access_groups);
+		let member1 = room.register_member(MemberTemplate::stub(access_groups));
+		room.test_mark_as_connected(member1).unwrap();
+		let member2 = room.register_member(MemberTemplate::stub(access_groups));
+		room.test_mark_as_connected(member2).unwrap();
+		let object1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member1), access_groups);
 		object1.created = true;
 		let object_id1 = object1.id;
-		(room, user1, user2, object_id1)
+		(room, member1, member2, object_id1)
 	}
 
-	fn run_set_structure_test(room: &mut Room, user1: RoomMemberId, user2: RoomMemberId, object_id: GameObjectId, sender: RoomMemberId) {
+	fn run_set_structure_test(room: &mut Room, member1: RoomMemberId, member2: RoomMemberId, object_id: GameObjectId, sender: RoomMemberId) {
 		let command = SetFieldCommand {
 			object_id,
 			field_id: FIELD_ID,
@@ -85,12 +85,12 @@ mod tests {
 
 		assert_eq!(*object.get_field_wrapped(FIELD_ID, FieldType::Structure).unwrap(), command.value);
 
-		let member1 = room.get_member(&user1).unwrap();
+		let member1 = room.get_member(&member1).unwrap();
 		assert!(matches!(
 			member1.out_commands[0].command.clone(),
 			BothDirectionCommand::S2CWithCreator(_expected)
 		));
-		let member2 = room.get_member(&user2).unwrap();
+		let member2 = room.get_member(&member2).unwrap();
 		assert!(matches!(
 			member2.out_commands[0].command.clone(),
 			BothDirectionCommand::S2CWithCreator(_expected)
@@ -99,13 +99,13 @@ mod tests {
 
 	#[test]
 	pub fn should_send_command_to_all_when_owner_sets_structure_field() {
-		let (mut room, user1, user2, object_id) = init_set_structure_test();
-		run_set_structure_test(&mut room, user1, user2, object_id, user1);
+		let (mut room, member1, member2, object_id) = init_set_structure_test();
+		run_set_structure_test(&mut room, member1, member2, object_id, member1);
 	}
 
 	#[test]
 	pub fn should_send_command_to_all_when_non_owner_sets_structure_field() {
-		let (mut room, user1, user2, object_id) = init_set_structure_test();
-		run_set_structure_test(&mut room, user1, user2, object_id, user2);
+		let (mut room, member1, member2, object_id) = init_set_structure_test();
+		run_set_structure_test(&mut room, member1, member2, object_id, member2);
 	}
 }

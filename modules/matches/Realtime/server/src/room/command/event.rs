@@ -63,8 +63,8 @@ mod tests {
 
 	#[test]
 	pub fn should_send_event() {
-		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
+		let (mut room, member_id, access_groups) = setup_one_player();
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		object.created = true;
 		let object_id = object.id;
 		room.test_out_commands.clear();
@@ -75,33 +75,33 @@ mod tests {
 			event: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()),
 		};
 
-		command.execute(&mut room, user).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
 	}
 
 	#[test]
-	pub fn should_send_event_to_user() {
+	pub fn should_send_event_to_member() {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 
 		let mut room = Room::from_template(template);
-		let user1 = room.register_member(MemberTemplate::stub(access_groups));
-		let user2 = room.register_member(MemberTemplate::stub(access_groups));
-		let user3 = room.register_member(MemberTemplate::stub(access_groups));
+		let member1 = room.register_member(MemberTemplate::stub(access_groups));
+		let member2 = room.register_member(MemberTemplate::stub(access_groups));
+		let member3 = room.register_member(MemberTemplate::stub(access_groups));
 
-		room.test_mark_as_connected(user1).unwrap();
-		room.test_mark_as_connected(user2).unwrap();
-		room.test_mark_as_connected(user3).unwrap();
+		room.test_mark_as_connected(member1).unwrap();
+		room.test_mark_as_connected(member2).unwrap();
+		room.test_mark_as_connected(member3).unwrap();
 
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user1), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member1), access_groups);
 		object.created = true;
 		let object_id = object.id;
-		room.test_get_user_out_commands(user1).clear();
-		room.test_get_user_out_commands(user2).clear();
-		room.test_get_user_out_commands(user3).clear();
+		room.test_get_member_out_commands(member1).clear();
+		room.test_get_member_out_commands(member2).clear();
+		room.test_get_member_out_commands(member3).clear();
 
 		let command = TargetEventCommand {
-			target: user2,
+			target: member2,
 			event: EventCommand {
 				object_id,
 				field_id: 100,
@@ -109,9 +109,9 @@ mod tests {
 			},
 		};
 
-		command.execute(&mut room, user1).unwrap();
-		assert!(matches!(room.test_get_user_out_commands(user1).pop_back(), None));
-		assert!(matches!(room.test_get_user_out_commands(user2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id));
-		assert!(matches!(room.test_get_user_out_commands(user3).pop_back(), None));
+		command.execute(&mut room, member1).unwrap();
+		assert!(matches!(room.test_get_member_out_commands(member1).pop_back(), None));
+		assert!(matches!(room.test_get_member_out_commands(member2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id));
+		assert!(matches!(room.test_get_member_out_commands(member3).pop_back(), None));
 	}
 }

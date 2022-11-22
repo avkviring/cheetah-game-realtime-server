@@ -35,7 +35,7 @@ impl GameObjectId {
 		out.write_variable_u64(u64::from(self.id))?;
 		match self.owner {
 			GameObjectOwner::Room => out.write_variable_i64(-1),
-			GameObjectOwner::Member(user) => out.write_variable_i64(i64::from(user)),
+			GameObjectOwner::Member(member_id) => out.write_variable_i64(i64::from(member_id)),
 		}
 	}
 	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
@@ -81,7 +81,7 @@ mod tests {
 	}
 
 	#[test]
-	fn should_encode_decode_user_owner() {
+	fn should_encode_decode_member_owner() {
 		let mut buffer = [0_u8; 100];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let original = GameObjectId::new(100, GameObjectOwner::Member(5));

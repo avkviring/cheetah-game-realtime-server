@@ -134,12 +134,12 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
-		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
 		let object_id = room
-			.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups)
+			.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups)
 			.id;
-		(room, object_id, user_1, user_2)
+		(room, object_id, member_1, member_2)
 	}
 
 	pub fn setup_one_player() -> (Room, RoomMemberId, AccessGroups) {

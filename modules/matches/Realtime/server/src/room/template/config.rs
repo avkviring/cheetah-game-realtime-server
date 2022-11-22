@@ -74,8 +74,8 @@ pub enum Permission {
 }
 
 #[derive(Debug)]
-pub enum UserTemplateError {
-	UserObjectHasWrongId(MemberPrivateKey, u32),
+pub enum MemberTemplateError {
+	MemberObjectHasWrongId(MemberPrivateKey, u32),
 }
 
 impl MemberTemplate {
@@ -105,10 +105,10 @@ impl MemberTemplate {
 		}
 	}
 
-	pub fn validate(self) -> Result<MemberTemplate, UserTemplateError> {
+	pub fn validate(self) -> Result<MemberTemplate, MemberTemplateError> {
 		for object in &self.objects {
 			if object.id >= GameObjectId::CLIENT_OBJECT_ID_OFFSET {
-				return Err(UserTemplateError::UserObjectHasWrongId(self.private_key, object.id));
+				return Err(MemberTemplateError::MemberObjectHasWrongId(self.private_key, object.id));
 			}
 		}
 		Ok(self)
@@ -124,8 +124,8 @@ mod tests {
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 
 	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, Permissions,
-		UserTemplateError,
+		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, MemberTemplateError, Permission, PermissionField,
+		Permissions,
 	};
 	use cheetah_matches_realtime_common::commands::field::Field;
 
@@ -191,7 +191,7 @@ mod tests {
 	}
 
 	#[test]
-	fn should_validate_fail_when_user_object_has_wrong_id() {
+	fn should_validate_fail_when_member_object_has_wrong_id() {
 		let objects = vec![GameObjectTemplate {
 			id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
 			template: 0b100,
@@ -199,6 +199,6 @@ mod tests {
 			fields: Default::default(),
 		}];
 		let template = MemberTemplate::new_member(AccessGroups(0b1111), objects);
-		assert!(matches!(template.validate(), Err(UserTemplateError::UserObjectHasWrongId(_, _))));
+		assert!(matches!(template.validate(), Err(MemberTemplateError::MemberObjectHasWrongId(_, _))));
 	}
 }

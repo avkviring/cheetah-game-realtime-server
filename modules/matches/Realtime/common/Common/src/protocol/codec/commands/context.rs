@@ -220,9 +220,9 @@ impl CommandContext {
 				None => Err(CommandContextError::ContextNotContainsObjectId),
 				Some(object_id) => match &object_id.owner {
 					GameObjectOwner::Room => Err(CommandContextError::ContextNotContainsObjectId),
-					GameObjectOwner::Member(user) => {
-						self.creator.replace(*user);
-						Ok(Some(*user))
+					GameObjectOwner::Member(member_id) => {
+						self.creator.replace(*member_id);
+						Ok(Some(*member_id))
 					}
 				},
 			},

@@ -14,8 +14,8 @@ pub mod helpers;
 fn should_connect_to_server() {
 	let builder = IntegrationTestServerBuilder::default();
 	let mut helper = IntegrationTestHelper::new(builder);
-	let (member_id, user_key) = helper.create_user();
-	let client = helper.create_client(member_id, &user_key);
+	let (member_id, private_key) = helper.create_member();
+	let client = helper.create_client(member_id, &private_key);
 	helper.wait_udp();
 	execute_with_client(client, |api| {
 		let status = api.get_connection_status().unwrap();
@@ -29,8 +29,8 @@ fn should_disconnect_when_server_closed() {
 	let builder = IntegrationTestServerBuilder::default();
 
 	let mut helper = IntegrationTestHelper::new(builder);
-	let (member_id, user_key) = helper.create_user();
-	let client = helper.create_client(member_id, &user_key);
+	let (member_id, private_key) = helper.create_member();
+	let client = helper.create_client(member_id, &private_key);
 	helper.wait_udp();
 
 	execute_with_client(client, |api| {

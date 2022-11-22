@@ -52,12 +52,12 @@ impl Room {
 		}
 	}
 
-	pub(crate) fn forward_to_super_members(&mut self, command: &C2SCommand, sender_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	pub(crate) fn forward_to_super_members(&mut self, command: &C2SCommand, creator_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let s2c = S2CCommandWithMeta {
 			field: command.get_field(),
-			creator: sender_id,
+			creator: creator_id,
 			command: S2CCommand::Forwarded(Box::new(ForwardedCommand {
-				creator: sender_id,
+				creator: creator_id,
 				c2s: command.clone(),
 			})),
 		};
@@ -151,13 +151,13 @@ mod tests {
 
 		room.forward_to_super_members(&command, member_1).unwrap();
 
-		assert!(room.test_get_user_out_commands(member_2).is_empty());
+		assert!(room.test_get_member_out_commands(member_2).is_empty());
 		assert_eq!(
 			S2CCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: member_1,
 				c2s: command,
 			})),
-			room.test_get_user_out_commands(super_member)[0]
+			room.test_get_member_out_commands(super_member)[0]
 		);
 	}
 

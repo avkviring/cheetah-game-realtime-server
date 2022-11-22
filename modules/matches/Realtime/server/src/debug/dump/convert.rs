@@ -45,12 +45,12 @@ fn from<IN: Clone, OUT: From<IN>, const N: usize>(source: &heapless::FnvIndexMap
 }
 
 impl From<&Member> for admin::DumpUser {
-	fn from(user: &Member) -> Self {
+	fn from(member: &Member) -> Self {
 		Self {
-			id: u32::from(user.id),
-			groups: user.template.groups.0,
-			attached: user.attached,
-			compare_and_set_cleaners: user
+			id: u32::from(member.id),
+			groups: member.template.groups.0,
+			attached: member.attached,
+			compare_and_set_cleaners: member
 				.compare_and_set_cleaners
 				.iter()
 				.map(|((object_id, field_id, _), value)| admin::CompareAndSetCleaner {

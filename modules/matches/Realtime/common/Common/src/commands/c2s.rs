@@ -164,12 +164,12 @@ impl C2SCommand {
 				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
 			}
 			C2SCommand::Event(command) => format!("{:?}", command.event.as_slice()),
-			C2SCommand::TargetEvent(command) => format!("target_user = {:?}, value = {:?}", command.target, command.event.event),
+			C2SCommand::TargetEvent(command) => format!("target_member = {:?}, value = {:?}", command.target, command.event.event),
 			C2SCommand::Delete(_) => "".to_string(),
 			C2SCommand::DeleteField(command) => format!("field_type = {:?}", command.field_type),
 			C2SCommand::AttachToRoom => "".to_string(),
 			C2SCommand::DetachFromRoom => "".to_string(),
-			C2SCommand::Forwarded(command) => format!("forward: user({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
+			C2SCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
 		}
 	}
 

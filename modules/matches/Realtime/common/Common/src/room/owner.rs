@@ -20,9 +20,9 @@ impl hash32::Hash for GameObjectOwner {
 			GameObjectOwner::Room => {
 				hash32::Hash::hash(&0, state);
 			}
-			GameObjectOwner::Member(user) => {
+			GameObjectOwner::Member(member_id) => {
 				hash32::Hash::hash(&1, state);
-				hash32::Hash::hash(user, state);
+				hash32::Hash::hash(member_id, state);
 			}
 		}
 	}

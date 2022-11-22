@@ -44,8 +44,8 @@ mod tests {
 
 	#[test]
 	fn should_command() {
-		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
+		let (mut room, member_id, access_groups) = setup_one_player();
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		let object_id = object.id;
 		object.created = true;
 		object.set_field(10, 100).unwrap();
@@ -54,7 +54,7 @@ mod tests {
 			field_id: 10,
 			field_type: FieldType::Long,
 		};
-		command.execute(&mut room, user).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
 		assert!(object.get_field::<i64>(10).is_none());
