@@ -20,10 +20,10 @@ use crate::room::Room;
 pub type CASCleanersStore = heapless::FnvIndexMap<(GameObjectId, FieldId, FieldType), FieldValue, 256>;
 
 impl ServerCommandExecutor for CompareAndSetLongCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		perform_compare_and_set(
 			room,
-			user_id,
+			member_id,
 			self.object_id,
 			self.field_id,
 			&FieldValue::Long(self.current),
@@ -34,10 +34,10 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 }
 
 impl ServerCommandExecutor for CompareAndSetStructureCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		perform_compare_and_set(
 			room,
-			user_id,
+			member_id,
 			self.object_id,
 			self.field_id,
 			&FieldValue::Structure(self.current.as_slice().into()),
@@ -49,7 +49,7 @@ impl ServerCommandExecutor for CompareAndSetStructureCommand {
 
 pub fn perform_compare_and_set(
 	room: &mut Room,
-	user_id: RoomMemberId,
+	member_id: RoomMemberId,
 	object_id: GameObjectId,
 	field_id: u16,
 	current: &FieldValue,
@@ -67,7 +67,7 @@ pub fn perform_compare_and_set(
 			*is_field_changed.borrow_mut() = true;
 			object.set_field_wrapped(field_id, new.clone())?;
 			if reset.is_some() {
-				object.set_compare_and_set_owner(field_id, user_id)?;
+				object.set_compare_and_set_owner(field_id, member_id)?;
 			}
 			Ok(Some(S2CCommand::new_set_command(new, object.id, field_id)))
 		} else {
@@ -75,10 +75,10 @@ pub fn perform_compare_and_set(
 		}
 	};
 
-	room.send_command_from_action(object_id, Field { id: field_id, field_type }, user_id, Permission::Rw, None, action)?;
+	room.send_command_from_action(object_id, Field { id: field_id, field_type }, member_id, Permission::Rw, None, action)?;
 
 	if is_field_changed.take() {
-		let m = room.get_member_mut(&user_id)?;
+		let m = room.get_member_mut(&member_id)?;
 		let cls = &mut m.compare_and_set_cleaners;
 		match &reset {
 			None => {
@@ -96,11 +96,11 @@ pub fn perform_compare_and_set(
 
 pub fn reset_all_compare_and_set(
 	room: &mut Room,
-	user_id: RoomMemberId,
+	member_id: RoomMemberId,
 	compare_and_set_cleaners: &CASCleanersStore,
 ) -> Result<(), ServerCommandError> {
 	for ((object_id, field, _), reset) in compare_and_set_cleaners {
-		apply_reset(room, user_id, *object_id, *field, reset)?;
+		apply_reset(room, member_id, *object_id, *field, reset)?;
 	}
 
 	Ok(())
@@ -108,7 +108,7 @@ pub fn reset_all_compare_and_set(
 
 pub fn apply_reset(
 	room: &mut Room,
-	user_id: RoomMemberId,
+	member_id: RoomMemberId,
 	object_id: GameObjectId,
 	field: FieldId,
 	reset: &FieldValue,
@@ -119,8 +119,8 @@ pub fn apply_reset(
 		}
 		Ok(object) => {
 			if let Some(owner) = object.get_compare_and_set_owner(&field) {
-				if *owner == user_id {
-					let command = reset_value(object, field, reset, user_id)?;
+				if *owner == member_id {
+					let command = reset_value(object, field, reset, member_id)?;
 					let groups = object.access_groups;
 					let template = object.template_id;
 					room.send_to_members(groups, Some(template), slice::from_ref(&command), |_| true)?;

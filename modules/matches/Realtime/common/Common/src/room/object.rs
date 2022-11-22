@@ -46,8 +46,8 @@ impl GameObjectId {
 				.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast to GameObjectId".to_string()))?,
 			owner: match input.read_variable_i64()? {
 				-1 => GameObjectOwner::Room,
-				user_id => GameObjectOwner::Member(
-					user_id
+				member_id => GameObjectOwner::Member(
+					member_id
 						.try_into()
 						.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast i32 to RoomMemberId".to_string()))?,
 				),

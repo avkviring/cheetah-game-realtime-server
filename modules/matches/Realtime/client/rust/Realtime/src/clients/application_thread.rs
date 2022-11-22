@@ -25,7 +25,7 @@ use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI, GameObjectIdFFI};
 /// Взаимодействие с сетевым потоком клиента, через Sender
 ///
 pub struct ApplicationThreadClient {
-	user_id: RoomMemberId,
+	member_id: RoomMemberId,
 	commands_from_server: Receiver<CommandWithChannel>,
 	handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
@@ -55,7 +55,7 @@ impl Drop for ApplicationThreadClient {
 
 impl ApplicationThreadClient {
 	pub fn new(
-		user_id: RoomMemberId,
+		member_id: RoomMemberId,
 		handler: JoinHandle<()>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		in_commands: Receiver<CommandWithChannel>,
@@ -64,7 +64,7 @@ impl ApplicationThreadClient {
 		server_time: Arc<Mutex<Option<u64>>>,
 	) -> Self {
 		Self {
-			user_id,
+			member_id,
 			commands_from_server: in_commands,
 			handler: Some(handler),
 			state,
@@ -181,7 +181,7 @@ impl ApplicationThreadClient {
 
 	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
-		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
+		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.member_id));
 		self.send(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 			object_id: game_object_id,
 			template,

@@ -10,7 +10,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
 		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.clone())));
@@ -20,7 +20,7 @@ impl ServerCommandExecutor for EventCommand {
 				id: field_id,
 				field_type: FieldType::Long,
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,
@@ -29,7 +29,7 @@ impl ServerCommandExecutor for EventCommand {
 }
 
 impl ServerCommandExecutor for TargetEventCommand {
-	fn execute(&self, room: &mut Room, user_id: u16) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: u16) -> Result<(), ServerCommandError> {
 		let field_id = self.event.field_id;
 		let object_id = self.event.object_id;
 		let target = self.target;
@@ -40,7 +40,7 @@ impl ServerCommandExecutor for TargetEventCommand {
 				id: field_id,
 				field_type: FieldType::Event,
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			Some(target),
 			action,

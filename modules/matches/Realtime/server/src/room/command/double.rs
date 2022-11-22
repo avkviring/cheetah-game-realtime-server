@@ -11,7 +11,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementDoubleC2SCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
 
@@ -37,7 +37,7 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 				id: field_id,
 				field_type: FieldType::Double,
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,

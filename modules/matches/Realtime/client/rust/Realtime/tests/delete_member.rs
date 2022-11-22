@@ -2,7 +2,7 @@ use crate::helpers::helper::IntegrationTestHelper;
 use crate::helpers::server::IntegrationTestServerBuilder;
 use cheetah_matches_realtime_client::ffi::execute_with_client;
 use cheetah_matches_realtime_common::network::client::{ConnectionStatus, DisconnectedReason};
-use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use std::thread;
 use std::time::Duration;
 
@@ -13,8 +13,8 @@ fn should_disconnect_on_delete_member() {
 	let builder = IntegrationTestServerBuilder::default();
 
 	let mut helper = IntegrationTestHelper::new(builder);
-	let (user_id, user_key) = helper.create_user();
-	let client = helper.create_client(user_id, &user_key);
+	let (member_id, user_key) = helper.create_user();
+	let client = helper.create_client(member_id, &user_key);
 	helper.wait_udp();
 
 	execute_with_client(client, |api| {
@@ -28,7 +28,7 @@ fn should_disconnect_on_delete_member() {
 			.server
 			.delete_member(MemberAndRoomId {
 				room_id: helper.room_id,
-				member_id: user_id,
+				member_id,
 			})
 			.is_ok(),
 		"want successful delete_member"

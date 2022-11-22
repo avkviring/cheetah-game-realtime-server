@@ -78,7 +78,7 @@ impl Room {
 
 	pub fn send_to_member(
 		&mut self,
-		user_id: &RoomMemberId,
+		member_id: &RoomMemberId,
 		object_template: GameObjectTemplateId,
 		commands: &[S2CCommandWithMeta],
 	) -> Result<(), ServerCommandError> {
@@ -86,7 +86,7 @@ impl Room {
 		let permission_manager_rc = self.permission_manager.clone();
 		let mut permission_manager = permission_manager_rc.borrow_mut();
 		let channel = self.current_channel.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
-		let member = self.get_member_mut(user_id)?;
+		let member = self.get_member_mut(member_id)?;
 
 		if member.attached && member.connected {
 			let groups = member.template.groups;
@@ -192,16 +192,16 @@ mod tests {
 			.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
 
 		let mut room = Room::from_template(template);
-		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
+		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id;
-		room.test_mark_as_connected(user_id).unwrap();
+		room.test_mark_as_connected(member_id).unwrap();
 
 		// изменяем поле, которое никто кроме нас не может изменять
 		assert!(room
-			.send_command_from_action(object_id, Field { id: field_id_1, field_type }, user_id, Permission::Rw, None, |_| {
+			.send_command_from_action(object_id, Field { id: field_id_1, field_type }, member_id, Permission::Rw, None, |_| {
 				Ok(Some(S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: field_id_1,
@@ -210,11 +210,11 @@ mod tests {
 			},)
 			.is_ok());
 
-		assert!(room.test_get_user_out_commands(user_id).is_empty());
+		assert!(room.test_get_user_out_commands(member_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
 		assert!(room
-			.send_command_from_action(object_id, Field { id: field_id_2, field_type }, user_id, Permission::Rw, None, |_| {
+			.send_command_from_action(object_id, Field { id: field_id_2, field_type }, member_id, Permission::Rw, None, |_| {
 				Ok(Some(S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: field_id_2,
@@ -223,7 +223,7 @@ mod tests {
 			},)
 			.is_ok());
 
-		assert!(matches!(room.test_get_user_out_commands(user_id).get(0), Some(S2CCommand::SetField(_))));
+		assert!(matches!(room.test_get_user_out_commands(member_id).get(0), Some(S2CCommand::SetField(_))));
 	}
 
 	///
