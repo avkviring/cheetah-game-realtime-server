@@ -1,7 +1,9 @@
+use core::slice;
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use cheetah_matches_realtime_common::commands::field::{Field, FieldId};
+use cheetah_matches_realtime_common::commands::s2c::S2CCommandWithMeta;
 use cheetah_matches_realtime_common::commands::{
 	s2c::S2CCommand,
 	types::{long::CompareAndSetLongCommand, structure::CompareAndSetStructureCommand},
@@ -11,7 +13,7 @@ use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::room::object::{GameObject, S2CCommandWithFieldInfo};
+use crate::room::object::GameObject;
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -118,10 +120,10 @@ pub fn apply_reset(
 		Ok(object) => {
 			if let Some(owner) = object.get_compare_and_set_owner(&field) {
 				if *owner == user_id {
-					let command = reset_value(object, field, reset)?;
+					let command = reset_value(object, field, reset, user_id)?;
 					let groups = object.access_groups;
 					let template = object.template_id;
-					room.send_to_members(groups, Some(template), &[command], |_| true)?;
+					room.send_to_members(groups, Some(template), slice::from_ref(&command), |_| true)?;
 				}
 			}
 		}
@@ -130,13 +132,19 @@ pub fn apply_reset(
 	Ok(())
 }
 
-fn reset_value(object: &mut GameObject, field_id: FieldId, value: &FieldValue) -> Result<S2CCommandWithFieldInfo, ServerCommandError> {
+fn reset_value(
+	object: &mut GameObject,
+	field_id: FieldId,
+	value: &FieldValue,
+	creator: RoomMemberId,
+) -> Result<S2CCommandWithMeta, ServerCommandError> {
 	object.set_field_wrapped(field_id, value.clone())?;
-	let command = S2CCommandWithFieldInfo {
+	let command = S2CCommandWithMeta {
 		field: Some(Field {
 			id: field_id,
 			field_type: value.field_type(),
 		}),
+		creator,
 		command: S2CCommand::new_set_command(value.clone(), object.id, field_id),
 	};
 

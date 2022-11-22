@@ -1,4 +1,4 @@
-use cheetah_matches_realtime_common::commands::s2c::S2CCommandWithCreator;
+use cheetah_matches_realtime_common::commands::s2c::{S2CCommandWithCreator, S2CCommandWithMeta};
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
@@ -7,7 +7,6 @@ use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
-use crate::room::object::S2CCommandWithFieldInfo;
 use crate::room::template::config::Permission;
 use crate::room::{Member, Room};
 
@@ -20,7 +19,7 @@ impl Room {
 		&mut self,
 		access_groups: AccessGroups,
 		object_template: Option<GameObjectTemplateId>,
-		commands: &[S2CCommandWithFieldInfo],
+		commands: &[S2CCommandWithMeta],
 		filter: T,
 	) -> Result<(), ServerCommandError>
 	where
@@ -32,8 +31,6 @@ impl Room {
 		}
 
 		let channel_type = self.current_channel.as_ref().unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
-
-		let current_user = self.current_member_id.unwrap_or(0);
 
 		let permission_manager = self.permission_manager.clone();
 		let command_trace_session = self.command_trace_session.clone();
@@ -65,7 +62,7 @@ impl Room {
 						.collect_s2c(object_template, member.id, &command.command);
 
 					let command_with_user = S2CCommandWithCreator {
-						creator: current_user,
+						creator: command.creator,
 						command: command.command.clone(),
 					};
 
@@ -83,13 +80,12 @@ impl Room {
 		&mut self,
 		user_id: &RoomMemberId,
 		object_template: GameObjectTemplateId,
-		commands: &[S2CCommandWithFieldInfo],
+		commands: &[S2CCommandWithMeta],
 	) -> Result<(), ServerCommandError> {
 		let command_trace_session = self.command_trace_session.clone();
 		let permission_manager_rc = self.permission_manager.clone();
 		let mut permission_manager = permission_manager_rc.borrow_mut();
 		let channel = self.current_channel.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
-		let creator = self.current_member_id.unwrap_or(0);
 		let member = self.get_member_mut(user_id)?;
 
 		if member.attached && member.connected {
@@ -101,7 +97,7 @@ impl Room {
 				};
 				if allow {
 					let command_with_meta = S2CCommandWithCreator {
-						creator,
+						creator: command.creator,
 						command: command.command.clone(),
 					};
 					command_trace_session
@@ -122,12 +118,11 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_realtime_common::commands::field::Field;
-	use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+	use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithCreator, S2CCommandWithMeta};
 	use cheetah_matches_realtime_common::commands::{types::field::SetFieldCommand, FieldType};
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::S2CCommandWithFieldInfo;
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
 	use crate::room::Room;
 
@@ -273,7 +268,7 @@ mod tests {
 			.set_permission(object_template, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
 
 		let mut room = Room::from_template(template);
-		let user_source_id = room.register_member(MemberTemplate::stub(groups));
+		let _user_source_id = room.register_member(MemberTemplate::stub(groups));
 		let user_target_id = room.register_member(MemberTemplate::stub(groups));
 
 		room.test_mark_as_connected(user_target_id).unwrap();
@@ -283,22 +278,24 @@ mod tests {
 		let object_id = object.id;
 
 		let commands = vec![
-			S2CCommandWithFieldInfo {
+			S2CCommandWithMeta {
 				field: Some(Field {
 					id: deny_field_id,
 					field_type: FieldType::Long,
 				}),
+				creator: u16::MAX,
 				command: S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: deny_field_id,
 					value: 0.into(),
 				}),
 			},
-			S2CCommandWithFieldInfo {
+			S2CCommandWithMeta {
 				field: Some(Field {
 					id: allow_field_id,
 					field_type: FieldType::Long,
 				}),
+				creator: u16::MAX,
 				command: S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: allow_field_id,
@@ -306,14 +303,15 @@ mod tests {
 				}),
 			},
 		];
-		room.current_member_id = Some(user_source_id);
 		room.send_to_member(&user_target_id, object_template, &commands).unwrap();
 
 		let out_commands = room.test_get_user_out_commands_with_meta(user_target_id);
 		let command = out_commands.get(0);
 
-		assert!(matches!(command, Some(S2CCommandWithCreator{creator, command: S2CCommand::SetField
-				(command)}) if command.field_id == allow_field_id && *creator == user_source_id));
+		assert!(
+			matches!(command, Some(S2CCommandWithCreator{creator: _user_source_id, command: S2CCommand::SetField
+				(command)}) if command.field_id == allow_field_id)
+		);
 		assert_eq!(out_commands.len(), 1);
 	}
 
@@ -346,22 +344,24 @@ mod tests {
 		let object_id = object.id;
 
 		let commands = [
-			S2CCommandWithFieldInfo {
+			S2CCommandWithMeta {
 				field: Some(Field {
 					id: allow_field_id,
 					field_type,
 				}),
+				creator: u16::MAX,
 				command: S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: allow_field_id,
 					value: 0.into(),
 				}),
 			},
-			S2CCommandWithFieldInfo {
+			S2CCommandWithMeta {
 				field: Some(Field {
 					id: deny_field_id,
 					field_type,
 				}),
+				creator: u16::MAX,
 				command: S2CCommand::SetField(SetFieldCommand {
 					object_id,
 					field_id: deny_field_id,

@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use crate::commands::field::FieldId;
+use crate::commands::field::{Field, FieldId};
 use crate::commands::field_value::FieldValue;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
@@ -29,6 +29,13 @@ pub enum S2CCommand {
 pub struct S2CCommandWithCreator {
 	pub command: S2CCommand,
 	pub creator: RoomMemberId,
+}
+
+#[derive(Debug)]
+pub struct S2CCommandWithMeta {
+	pub field: Option<Field>,
+	pub creator: RoomMemberId,
+	pub command: S2CCommand,
 }
 
 impl S2CCommand {

@@ -17,7 +17,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 		.filter(|(_, o)| o.access_groups.contains_any(&access_group))
 		.map(|(_, o)| {
 			let mut commands = CreateCommandsCollector::new();
-			o.collect_create_commands(&mut commands);
+			o.collect_create_commands(&mut commands, member_id);
 			(o.template_id, commands)
 		})
 		.clone()
