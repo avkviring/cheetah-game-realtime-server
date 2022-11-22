@@ -161,8 +161,8 @@ impl CommandContext {
 			return CreatorSource::New;
 		}
 
-		if let GameObjectOwner::Member(user_id) = self.object_id.as_ref().unwrap().owner {
-			if user_id == creator {
+		if let GameObjectOwner::Member(member_id) = self.object_id.as_ref().unwrap().owner {
+			if member_id == creator {
 				return CreatorSource::AsObjectOwner;
 			}
 		}
@@ -465,7 +465,7 @@ pub mod tests {
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(9),
-				size: 3, //flags + user_id
+				size: 3, //flags + member_id
 			},
 		];
 		check(&params);

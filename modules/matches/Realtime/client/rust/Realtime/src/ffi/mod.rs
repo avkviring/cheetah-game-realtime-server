@@ -195,7 +195,7 @@ impl From<ForwardedCommand> for ForwardedCommandFFI {
 pub struct GameObjectIdFFI {
 	id: u32,
 	pub room_owner: bool,
-	user_id: RoomMemberId,
+	member_id: RoomMemberId,
 }
 
 impl Default for GameObjectIdFFI {
@@ -216,12 +216,12 @@ impl From<&GameObjectId> for GameObjectIdFFI {
 			GameObjectOwner::Room => GameObjectIdFFI {
 				id: from.id,
 				room_owner: true,
-				user_id: RoomMemberId::MAX,
+				member_id: RoomMemberId::MAX,
 			},
-			GameObjectOwner::Member(user_id) => GameObjectIdFFI {
+			GameObjectOwner::Member(member_id) => GameObjectIdFFI {
 				id: from.id,
 				room_owner: false,
-				user_id,
+				member_id,
 			},
 		}
 	}
@@ -236,7 +236,7 @@ impl From<&GameObjectIdFFI> for GameObjectId {
 			}
 		} else {
 			Self {
-				owner: GameObjectOwner::Member(from.user_id),
+				owner: GameObjectOwner::Member(from.member_id),
 				id: from.id,
 			}
 		}

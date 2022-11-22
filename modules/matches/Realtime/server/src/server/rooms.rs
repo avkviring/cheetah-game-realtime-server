@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_realtime_common::protocol::frame::applications::CommandWithChannel;
-use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
@@ -71,8 +71,8 @@ impl Rooms {
 	{
 		for (room_id, room) in &mut self.room_by_id {
 			let template = MeasureStringId::from(room.template_name.as_str());
-			room.collect_out_commands(|user_id, commands| {
-				collector(room_id, user_id, commands);
+			room.collect_out_commands(|member_id, commands| {
+				collector(room_id, member_id, commands);
 				self.measurers.borrow_mut().on_output_commands(&template, commands);
 			});
 		}

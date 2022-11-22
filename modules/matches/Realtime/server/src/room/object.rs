@@ -106,16 +106,16 @@ impl GameObject {
 			.map_err(|_| GameObjectError::FieldCountOverflow(self.id, self.template_id))
 	}
 
-	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector, user_id: RoomMemberId) {
-		if self.do_collect_create_commands(commands, user_id).is_err() {
+	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) {
+		if self.do_collect_create_commands(commands, member_id).is_err() {
 			tracing::error!("Collect create commands overflow {:?}", self);
 		}
 	}
 
-	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector, user_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
+	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
 		commands.push(S2CCommandWithMeta {
 			field: None,
-			creator: user_id,
+			creator: member_id,
 			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id,
 				template: self.template_id,
@@ -123,23 +123,23 @@ impl GameObject {
 			}),
 		})?;
 
-		self.fields_to_commands(commands, user_id)?;
+		self.fields_to_commands(commands, member_id)?;
 
 		if self.created {
 			commands.push(S2CCommandWithMeta {
 				field: None,
-				creator: user_id,
+				creator: member_id,
 				command: S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: self.id }),
 			})?;
 		}
 		Ok(())
 	}
 
-	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector, user_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
+	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
 		for (&(field_id, field_type), v) in self.fields() {
 			let command = S2CCommandWithMeta {
 				field: Some(Field { id: field_id, field_type }),
-				creator: user_id,
+				creator: member_id,
 				command: S2CCommand::new_set_command(v.clone(), self.id, field_id),
 			};
 			commands.push(command)?;

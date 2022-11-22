@@ -11,7 +11,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.get_field::<i64>(self.field_id) {
 				match (*value).checked_add(self.increment) {
@@ -41,7 +41,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				id: self.field_id,
 				field_type: FieldType::Long,
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,
@@ -50,7 +50,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 }
 
 impl ServerCommandExecutor for SetFieldCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
 
@@ -65,7 +65,7 @@ impl ServerCommandExecutor for SetFieldCommand {
 				id: field_id,
 				field_type: self.value.field_type(),
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,
@@ -148,10 +148,10 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
+		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		object.created = true;
 		let object_id = object.id;
-		(room, user_id, object_id)
+		(room, member_id, object_id)
 	}
 }

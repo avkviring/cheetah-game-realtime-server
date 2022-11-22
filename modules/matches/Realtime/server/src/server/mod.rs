@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, thread};
 
-use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;

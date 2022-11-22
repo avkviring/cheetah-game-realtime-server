@@ -9,7 +9,7 @@ use cheetah_matches_realtime_common::protocol::codec::cipher::Cipher;
 use cheetah_matches_realtime_common::protocol::frame::headers::Header;
 use cheetah_matches_realtime_common::protocol::frame::input::InFrame;
 use cheetah_matches_realtime_common::protocol::frame::{FrameId, MAX_FRAME_SIZE};
-use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::protocol::Protocol;
 use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
@@ -174,9 +174,9 @@ impl NetworkLayer {
 		measurers.on_income_frame(size, start_time.elapsed());
 	}
 
-	pub fn register_user(&mut self, now: Instant, room_id: RoomId, user_id: RoomMemberId, template: MemberTemplate) {
+	pub fn register_user(&mut self, now: Instant, room_id: RoomId, member_id: RoomMemberId, template: MemberTemplate) {
 		self.sessions.insert(
-			MemberAndRoomId { member_id: user_id, room_id },
+			MemberAndRoomId { member_id, room_id },
 			MemberSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
@@ -210,7 +210,7 @@ mod tests {
 	use cheetah_matches_realtime_common::protocol::frame::headers::Header;
 	use cheetah_matches_realtime_common::protocol::frame::output::OutFrame;
 	use cheetah_matches_realtime_common::protocol::frame::MAX_FRAME_SIZE;
-	use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+	use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 
 	use crate::room::template::config::MemberTemplate;
 	use crate::room::Member;

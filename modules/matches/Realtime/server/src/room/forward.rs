@@ -22,9 +22,9 @@ impl Room {
 		self.forward_configs.insert(config);
 	}
 
-	pub(crate) fn should_forward(&self, command: &C2SCommand, user_id: RoomMemberId) -> bool {
+	pub(crate) fn should_forward(&self, command: &C2SCommand, member_id: RoomMemberId) -> bool {
 		// check non super member
-		if let Some(member) = self.members.get(&user_id) {
+		if let Some(member) = self.members.get(&member_id) {
 			if member.template.super_member {
 				return false;
 			}

@@ -8,7 +8,7 @@ use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
-use crate::protocol::others::user_id::MemberAndRoomId;
+use crate::protocol::others::member_id::MemberAndRoomId;
 use crate::protocol::Protocol;
 use crate::room::{MemberPrivateKey, RoomId, RoomMemberId};
 

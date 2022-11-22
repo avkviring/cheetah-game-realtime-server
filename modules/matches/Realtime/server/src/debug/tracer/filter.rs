@@ -163,8 +163,8 @@ mod tests {
 		}
 
 		#[must_use]
-		pub fn with_user(mut self, user_id: RoomMemberId) -> Self {
-			self.user = user_id;
+		pub fn with_user(mut self, member_id: RoomMemberId) -> Self {
+			self.user = member_id;
 			self
 		}
 

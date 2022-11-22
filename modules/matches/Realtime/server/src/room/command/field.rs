@@ -9,7 +9,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteFieldCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
 		let action = |object: &mut GameObject| {
@@ -22,7 +22,7 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 				id: field_id,
 				field_type: self.field_type,
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,
