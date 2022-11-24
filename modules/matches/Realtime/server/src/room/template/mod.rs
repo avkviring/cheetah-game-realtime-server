@@ -15,8 +15,8 @@ impl GameObjectTemplate {
 	}
 
 	#[must_use]
-	pub fn create_user_game_object(&self, user_id: RoomMemberId) -> GameObject {
-		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Member(user_id)))
+	pub fn create_member_game_object(&self, member_id: RoomMemberId) -> GameObject {
+		self.to_game_object(GameObjectId::new(self.id, GameObjectOwner::Member(member_id)))
 	}
 
 	#[must_use]

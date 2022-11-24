@@ -17,7 +17,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 		.filter(|(_, o)| o.access_groups.contains_any(&access_group))
 		.map(|(_, o)| {
 			let mut commands = CreateCommandsCollector::new();
-			o.collect_create_commands(&mut commands);
+			o.collect_create_commands(&mut commands, member_id);
 			(o.template_id, commands)
 		})
 		.clone()
@@ -50,28 +50,28 @@ mod tests {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let groups_a = AccessGroups(0b100);
-		let user_a = room.register_member(MemberTemplate::stub(groups_a));
+		let member_a = room.register_member(MemberTemplate::stub(groups_a));
 		let groups_b = AccessGroups(0b10);
-		let user_b = room.register_member(MemberTemplate::stub(groups_b));
+		let member_b = room.register_member(MemberTemplate::stub(groups_b));
 
-		room.test_mark_as_connected(user_a).unwrap();
-		room.test_mark_as_connected(user_b).unwrap();
+		room.test_mark_as_connected(member_a).unwrap();
+		room.test_mark_as_connected(member_b).unwrap();
 
-		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_a);
+		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
 		object_a_1.created = true;
 		let object_a_1_id = object_a_1.id;
 
 		// не созданный объект - не должен загрузиться
-		room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_a);
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
 		// другая группа + созданный объект - не должен загрузиться
-		room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_b)
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b)
 			.created = true;
 		// другая группа - не должен загрузиться
-		room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_b), groups_b);
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b);
 
-		attach_to_room(&mut room, user_a).unwrap();
+		attach_to_room(&mut room, member_a).unwrap();
 
-		let mut commands = room.test_get_user_out_commands(user_a);
+		let mut commands = room.test_get_member_out_commands(member_a);
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), None));

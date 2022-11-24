@@ -11,7 +11,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let action = |object: &mut GameObject| {
 			let value = if let Some(value) = object.get_field::<i64>(self.field_id) {
 				match (*value).checked_add(self.increment) {
@@ -41,7 +41,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				id: self.field_id,
 				field_type: FieldType::Long,
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,
@@ -50,7 +50,7 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 }
 
 impl ServerCommandExecutor for SetFieldCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
 
@@ -65,7 +65,7 @@ impl ServerCommandExecutor for SetFieldCommand {
 				id: field_id,
 				field_type: self.value.field_type(),
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,
@@ -90,7 +90,7 @@ mod tests {
 
 	#[test]
 	fn should_set_long_command() {
-		let (mut room, user, object_id) = setup();
+		let (mut room, member_id, object_id) = setup();
 
 		room.test_out_commands.clear();
 		let command = SetFieldCommand {
@@ -98,7 +98,7 @@ mod tests {
 			field_id: 10,
 			value: 100.into(),
 		};
-		command.execute(&mut room, user).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 100);
@@ -107,7 +107,7 @@ mod tests {
 
 	#[test]
 	fn should_increment_long_command() {
-		let (mut room, user, object_id) = setup();
+		let (mut room, member_id, object_id) = setup();
 
 		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
@@ -115,8 +115,8 @@ mod tests {
 			field_id: 10,
 			increment: 100,
 		};
-		command.clone().execute(&mut room, user).unwrap();
-		command.execute(&mut room, user).unwrap();
+		command.clone().execute(&mut room, member_id).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
 		assert_eq!(*object.get_field::<i64>(10).unwrap(), 200);
@@ -133,25 +133,25 @@ mod tests {
 
 	#[test]
 	fn should_not_panic_if_overflow() {
-		let (mut room, user, object_id) = setup();
+		let (mut room, member_id, object_id) = setup();
 		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id,
 			field_id: 10,
 			increment: i64::MAX,
 		};
-		command.clone().execute(&mut room, user).unwrap();
-		command.execute(&mut room, user).unwrap();
+		command.clone().execute(&mut room, member_id).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 	}
 
 	fn setup() -> (Room, RoomMemberId, GameObjectId) {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
+		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		object.created = true;
 		let object_id = object.id;
-		(room, user_id, object_id)
+		(room, member_id, object_id)
 	}
 }

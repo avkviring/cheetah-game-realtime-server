@@ -6,8 +6,8 @@ use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter}
 use crate::protocol::disconnect::command::DisconnectHeader;
 use crate::protocol::frame::headers::Header::RoundTripTimeRequest;
 use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
+use crate::protocol::others::member_id::MemberAndRoomId;
 use crate::protocol::others::rtt::RoundTripTimeHeader;
-use crate::protocol::others::user_id::MemberAndRoomId;
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
@@ -81,8 +81,8 @@ mod tests {
 
 	use crate::protocol::disconnect::command::DisconnectHeader;
 	use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
+	use crate::protocol::others::member_id::MemberAndRoomId;
 	use crate::protocol::others::rtt::RoundTripTimeHeader;
-	use crate::protocol::others::user_id::MemberAndRoomId;
 	use crate::protocol::reliable::ack::header::AckHeader;
 	use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
@@ -90,8 +90,9 @@ mod tests {
 	fn test_hello() {
 		check(&[Header::Hello]);
 	}
+
 	#[test]
-	fn test_user_and_room() {
+	fn test_member_and_room() {
 		check(&[Header::MemberAndRoomId(MemberAndRoomId { member_id: 55, room_id: 77 })]);
 	}
 

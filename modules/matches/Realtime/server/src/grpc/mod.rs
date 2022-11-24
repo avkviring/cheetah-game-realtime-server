@@ -9,7 +9,7 @@ use tonic::{Request, Response, Status};
 use cheetah_matches_realtime_common::commands::field::FieldId;
 use cheetah_matches_realtime_common::commands::CommandTypeId;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
-use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::RoomId;
 
 use crate::grpc::proto::internal::realtime_server::Realtime;
@@ -36,16 +36,16 @@ impl RealtimeInternalService {
 		RealtimeInternalService { server_manager }
 	}
 
-	async fn register_user(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
+	async fn register_member(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
 		let private_key = template.private_key.clone();
 		self.server_manager
 			.lock()
 			.await
 			.create_member(room_id, template)
 			.map_err(Status::from)
-			.map(|user_id| {
+			.map(|member_id| {
 				Response::new(CreateMemberResponse {
-					user_id: u32::from(user_id),
+					user_id: u32::from(member_id),
 					private_key: private_key.into(),
 				})
 			})
@@ -73,7 +73,7 @@ impl Realtime for RealtimeInternalService {
 
 	async fn create_member(&self, request: Request<CreateMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 		let request = request.into_inner();
-		self.register_user(
+		self.register_member(
 			request.room_id,
 			crate::room::template::config::MemberTemplate::from(request.user.unwrap()),
 		)
@@ -99,7 +99,7 @@ impl Realtime for RealtimeInternalService {
 
 	async fn create_super_member(&self, request: Request<CreateSuperMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 		let request = request.into_inner();
-		self.register_user(request.room_id, MemberTemplate::new_super_member()).await
+		self.register_member(request.room_id, MemberTemplate::new_super_member()).await
 	}
 
 	async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {
@@ -307,8 +307,8 @@ mod test {
 		let service = RealtimeInternalService::new(server_manager.clone());
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-		let user_id = service
-			.register_user(room_id, MemberTemplate::default())
+		let member_id = service
+			.register_member(room_id, MemberTemplate::default())
 			.await
 			.unwrap()
 			.into_inner()
@@ -320,19 +320,19 @@ mod test {
 
 		assert!(
 			service
-				.delete_member(Request::new(DeleteMemberRequest { room_id, user_id }))
+				.delete_member(Request::new(DeleteMemberRequest { room_id, user_id: member_id }))
 				.await
 				.is_ok(),
 			"delete_member should return ok"
 		);
 
 		println!(
-			"user_id={:?} dump={:?}",
-			user_id,
+			"member_id={:?} dump={:?}",
+			member_id,
 			server_manager.lock().await.dump(room_id).unwrap().users
 		);
 		assert!(
-			!server_manager.lock().await.dump(room_id).unwrap().users.iter().any(|u| u.id == user_id),
+			!server_manager.lock().await.dump(room_id).unwrap().users.iter().any(|u| u.id == member_id),
 			"deleted member should not be in the room"
 		);
 	}

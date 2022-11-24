@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use thiserror::Error;
 
-use cheetah_matches_realtime_common::protocol::others::user_id::MemberAndRoomId;
+use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;

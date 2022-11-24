@@ -7,8 +7,8 @@ use crate::room::object::GameObject;
 use crate::room::Room;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let user = room.get_member(&user_id)?;
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		let member = room.get_member(&member_id)?;
 
 		if self.object_id.id == 0 {
 			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_string()));
@@ -16,18 +16,18 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 		let groups = self.access_groups;
 
-		if !groups.is_sub_groups(&user.template.groups) {
+		if !groups.is_sub_groups(&member.template.groups) {
 			return Err(ServerCommandError::Error(format!(
 				"Incorrect access group {:?} with client groups {:?}",
-				groups, user.template.groups
+				groups, member.template.groups
 			)));
 		}
 
-		if let GameObjectOwner::Member(object_id_user) = self.object_id.owner {
-			if object_id_user != user.id {
+		if let GameObjectOwner::Member(object_id_member) = self.object_id.owner {
+			if object_id_member != member.id {
 				return Err(ServerCommandError::Error(format!(
-					"Incorrect object_id {:?} for user {:?}",
-					self.object_id, user
+					"Incorrect object_id {:?} for member {:?}",
+					self.object_id, member
 				)));
 			}
 		}
@@ -53,16 +53,16 @@ mod tests {
 
 	#[test]
 	fn should_create() {
-		let (mut room, user_id) = setup(AccessGroups(0b11));
-		room.test_mark_as_connected(user_id).unwrap();
+		let (mut room, member_id) = setup(AccessGroups(0b11));
+		room.test_mark_as_connected(member_id).unwrap();
 
-		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
+		let object_id = GameObjectId::new(1, GameObjectOwner::Member(member_id));
 		let command = CreateGameObjectCommand {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b10),
 		};
-		command.execute(&mut room, user_id).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 
 		assert!(matches!(
 			room.get_object_mut(object_id),
@@ -77,7 +77,7 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_owner_in_object_id_is_wrong() {
-		let (mut room, user_id) = setup(AccessGroups(0b11));
+		let (mut room, member_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(1000));
 		let command = CreateGameObjectCommand {
@@ -86,7 +86,7 @@ mod tests {
 			access_groups: AccessGroups(0b10),
 		};
 
-		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
@@ -95,15 +95,15 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_access_group_is_wrong() {
-		let (mut room, user_id) = setup(AccessGroups(0b11));
-		let object_id = GameObjectId::new(1, GameObjectOwner::Member(user_id));
+		let (mut room, member_id) = setup(AccessGroups(0b11));
+		let object_id = GameObjectId::new(1, GameObjectOwner::Member(member_id));
 		let command = CreateGameObjectCommand {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
 
-		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
@@ -112,15 +112,15 @@ mod tests {
 	///
 	#[test]
 	fn should_not_create_when_id_is_zero() {
-		let (mut room, user_id) = setup(AccessGroups(0b11));
+		let (mut room, member_id) = setup(AccessGroups(0b11));
 
-		let object_id = GameObjectId::new(0, GameObjectOwner::Member(user_id));
+		let object_id = GameObjectId::new(0, GameObjectOwner::Member(member_id));
 		let command = CreateGameObjectCommand {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b11),
 		};
-		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
@@ -130,8 +130,8 @@ mod tests {
 	#[test]
 	fn should_not_replace_exists_object() {
 		let access_groups = AccessGroups(0b11);
-		let (mut room, user_id) = setup(access_groups);
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user_id), access_groups);
+		let (mut room, member_id) = setup(access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		object.template_id = 777;
 		let object_id = object.id;
 		room.test_out_commands.clear();
@@ -141,14 +141,14 @@ mod tests {
 			access_groups: AccessGroups(0b1000),
 		};
 
-		assert!(matches!(command.execute(&mut room, user_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Ok(object) if object.template_id == 777));
 	}
 
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
-		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		(room, user_id)
+		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		(room, member_id)
 	}
 }

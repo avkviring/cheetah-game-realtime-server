@@ -30,14 +30,14 @@ impl ForwardedCommand {
 		field_id: Result<FieldId, CommandContextError>,
 		input: &mut Cursor<&[u8]>,
 	) -> Result<Self, CommandDecodeError> {
-		let user_id = input
+		let member_id = input
 			.read_variable_u64()?
 			.try_into()
-			.map_err(|e| Error::new(ErrorKind::InvalidData, format!("could not convert user_id into RoomMemberId: {:?}", e)))?;
+			.map_err(|e| Error::new(ErrorKind::InvalidData, format!("could not convert member_id into RoomMemberId: {:?}", e)))?;
 		let command_type_id = input.read_u8()?;
 		let command_type_id = num::FromPrimitive::from_u8(command_type_id).ok_or(CommandContextError::UnknownCommandTypeId(command_type_id))?;
 		Ok(ForwardedCommand {
-			creator: user_id,
+			creator: member_id,
 			c2s: C2SCommand::decode(command_type_id, object_id, field_id, input)?,
 		})
 	}

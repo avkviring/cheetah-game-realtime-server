@@ -161,8 +161,8 @@ impl CommandContext {
 			return CreatorSource::New;
 		}
 
-		if let GameObjectOwner::Member(user_id) = self.object_id.as_ref().unwrap().owner {
-			if user_id == creator {
+		if let GameObjectOwner::Member(member_id) = self.object_id.as_ref().unwrap().owner {
+			if member_id == creator {
 				return CreatorSource::AsObjectOwner;
 			}
 		}
@@ -220,9 +220,9 @@ impl CommandContext {
 				None => Err(CommandContextError::ContextNotContainsObjectId),
 				Some(object_id) => match &object_id.owner {
 					GameObjectOwner::Room => Err(CommandContextError::ContextNotContainsObjectId),
-					GameObjectOwner::Member(user) => {
-						self.creator.replace(*user);
-						Ok(Some(*user))
+					GameObjectOwner::Member(member_id) => {
+						self.creator.replace(*member_id);
+						Ok(Some(*member_id))
 					}
 				},
 			},
@@ -465,7 +465,7 @@ pub mod tests {
 				channel_type_id: ChannelType(5),
 				command_type_id: CommandTypeId::CreateGameObject,
 				creator: Some(9),
-				size: 3, //flags + user_id
+				size: 3, //flags + member_id
 			},
 		];
 		check(&params);

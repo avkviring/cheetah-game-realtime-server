@@ -8,7 +8,7 @@ use crate::room::object::CreateCommandsCollector;
 use crate::room::Room;
 
 impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let room_id = room.id;
 		let object = room.get_object_mut(self.object_id)?;
 
@@ -26,13 +26,13 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 			let new_room_object_id = GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
 			if let Some(unique_key) = &self.singleton_key {
 				if room.has_object_singleton_key(unique_key) {
-					room.delete_object(member_object_id)?;
+					room.delete_object(member_object_id, member_id)?;
 					return Ok(());
 				}
 				room.set_singleton_key(unique_key.clone(), new_room_object_id);
 			}
 			room.room_object_id_generator += 1;
-			let mut object = room.delete_object(member_object_id)?;
+			let mut object = room.delete_object(member_object_id, member_id)?;
 			object.id = new_room_object_id;
 			room.insert_object(object);
 			room.get_object_mut(new_room_object_id)?
@@ -44,12 +44,12 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		object.created = true;
 		// объект полностью загружен - теперь его надо загрузить остальным клиентам
 		let mut commands = CreateCommandsCollector::new();
-		object.collect_create_commands(&mut commands);
+		object.collect_create_commands(&mut commands, member_id);
 		let template = object.template_id;
 		if object.id.owner == GameObjectOwner::Room {
 			room.send_to_members(groups, Some(template), commands.as_slice(), |_| true)?;
 		} else {
-			room.send_to_members(groups, Some(template), commands.as_slice(), |user| user.id != user_id)?;
+			room.send_to_members(groups, Some(template), commands.as_slice(), |member| member.id != member_id)?;
 		}
 		Ok(())
 	}
@@ -72,24 +72,24 @@ mod tests {
 	///
 	#[test]
 	pub fn should_send_commands() {
-		let (mut room, object_id, user1, user2) = setup_two_players();
-		room.test_mark_as_connected(user1).unwrap();
-		room.test_mark_as_connected(user2).unwrap();
+		let (mut room, object_id, member1, member2) = setup_two_players();
+		room.test_mark_as_connected(member1).unwrap();
+		room.test_mark_as_connected(member2).unwrap();
 		let command = C2SCreatedGameObjectCommand {
 			object_id,
 			room_owner: false,
 			singleton_key: None,
 		};
-		command.execute(&mut room, user1).unwrap();
+		command.execute(&mut room, member1).unwrap();
 
-		assert!(room.test_get_user_out_commands(user1).is_empty());
+		assert!(room.test_get_member_out_commands(member1).is_empty());
 		assert!(matches!(
-			room.test_get_user_out_commands(user2).get(0),
+			room.test_get_member_out_commands(member2).get(0),
 			Some(S2CCommand::Create(c)) if c.object_id == object_id
 		));
 
 		assert!(matches!(
-			room.test_get_user_out_commands(user2).get(1),
+			room.test_get_member_out_commands(member2).get(1),
 			Some(S2CCommand::Created(c)) if c.object_id == object_id
 		));
 	}
@@ -99,14 +99,14 @@ mod tests {
 	///
 	#[test]
 	pub fn should_switch_object_to_created_state() {
-		let (mut room, object_id, user1, _) = setup_two_players();
+		let (mut room, object_id, member1, _) = setup_two_players();
 		let command = C2SCreatedGameObjectCommand {
 			object_id,
 			room_owner: false,
 			singleton_key: None,
 		};
 		room.test_out_commands.clear();
-		command.execute(&mut room, user1).unwrap();
+		command.execute(&mut room, member1).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
 		assert!(object.created);
@@ -118,7 +118,7 @@ mod tests {
 	///
 	#[test]
 	pub fn should_dont_send_command_if_object_already_created() {
-		let (mut room, object_id, user1, _) = setup_two_players();
+		let (mut room, object_id, member1, _) = setup_two_players();
 		let object = room.get_object_mut(object_id).unwrap();
 		object.created = true;
 		let command = C2SCreatedGameObjectCommand {
@@ -128,7 +128,7 @@ mod tests {
 		};
 		room.test_out_commands.clear();
 
-		assert!(matches!(command.execute(&mut room, user1), Err(ServerCommandError::Error(_))));
+		assert!(matches!(command.execute(&mut room, member1), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.test_out_commands.pop_back(), None));
 	}
 
@@ -137,21 +137,21 @@ mod tests {
 	///
 	#[test]
 	pub fn should_convert_object_to_room_object() {
-		let (mut room, user, access_groups) = setup_one_player();
-		let member_object_id = GameObjectId::new(100, GameObjectOwner::Member(user));
+		let (mut room, member_id, access_groups) = setup_one_player();
+		let member_object_id = GameObjectId::new(100, GameObjectOwner::Member(member_id));
 		let create_command = CreateGameObjectCommand {
 			object_id: member_object_id,
 			template: 777,
 			access_groups,
 		};
-		create_command.execute(&mut room, user).unwrap();
+		create_command.execute(&mut room, member_id).unwrap();
 
 		let created_command = C2SCreatedGameObjectCommand {
 			object_id: member_object_id,
 			room_owner: true,
 			singleton_key: None,
 		};
-		created_command.execute(&mut room, user).unwrap();
+		created_command.execute(&mut room, member_id).unwrap();
 
 		// старого объекта уже не должно быть
 		assert!(room.get_object_mut(member_object_id).is_err());
@@ -176,38 +176,38 @@ mod tests {
 	///
 	#[test]
 	pub fn should_dont_create_more_one_object_with_one_singleton_key() {
-		let (mut room, user, access_groups) = setup_one_player();
+		let (mut room, member_id, access_groups) = setup_one_player();
 
 		let singleton_key = Some(BinaryValue::from([1, 2, 3].as_slice()));
 
-		let member_object_id_1 = GameObjectId::new(100, GameObjectOwner::Member(user));
+		let member_object_id_1 = GameObjectId::new(100, GameObjectOwner::Member(member_id));
 		let create_command = CreateGameObjectCommand {
 			object_id: member_object_id_1,
 			template: 777,
 			access_groups,
 		};
-		create_command.execute(&mut room, user).unwrap();
+		create_command.execute(&mut room, member_id).unwrap();
 		let created_command = C2SCreatedGameObjectCommand {
 			object_id: member_object_id_1,
 			room_owner: true,
 			singleton_key: singleton_key.clone(),
 		};
-		created_command.execute(&mut room, user).unwrap();
+		created_command.execute(&mut room, member_id).unwrap();
 		room.test_out_commands.clear();
 
-		let member_object_id_2 = GameObjectId::new(101, GameObjectOwner::Member(user));
+		let member_object_id_2 = GameObjectId::new(101, GameObjectOwner::Member(member_id));
 		let create_command = CreateGameObjectCommand {
 			object_id: member_object_id_2,
 			template: 777,
 			access_groups,
 		};
-		create_command.execute(&mut room, user).unwrap();
+		create_command.execute(&mut room, member_id).unwrap();
 		let created_command = C2SCreatedGameObjectCommand {
 			object_id: member_object_id_2,
 			room_owner: true,
 			singleton_key,
 		};
-		created_command.execute(&mut room, user).unwrap();
+		created_command.execute(&mut room, member_id).unwrap();
 		assert_eq!(room.objects.len(), 1);
 		assert_eq!(room.test_out_commands.len(), 0);
 	}

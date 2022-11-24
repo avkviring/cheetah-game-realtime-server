@@ -9,7 +9,7 @@ use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteFieldCommand {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
 		let action = |object: &mut GameObject| {
@@ -22,7 +22,7 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 				id: field_id,
 				field_type: self.field_type,
 			},
-			user_id,
+			member_id,
 			Permission::Rw,
 			None,
 			action,
@@ -44,8 +44,8 @@ mod tests {
 
 	#[test]
 	fn should_command() {
-		let (mut room, user, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(user), access_groups);
+		let (mut room, member_id, access_groups) = setup_one_player();
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		let object_id = object.id;
 		object.created = true;
 		object.set_field(10, 100).unwrap();
@@ -54,7 +54,7 @@ mod tests {
 			field_id: 10,
 			field_type: FieldType::Long,
 		};
-		command.execute(&mut room, user).unwrap();
+		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
 		assert!(object.get_field::<i64>(10).is_none());

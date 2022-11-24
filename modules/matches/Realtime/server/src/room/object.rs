@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use cheetah_matches_realtime_common::commands::field::{Field, FieldId};
-use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_matches_realtime_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use cheetah_matches_realtime_common::commands::{field::ToFieldType, FieldType, FieldValue};
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
@@ -11,8 +11,9 @@ use cheetah_matches_realtime_common::room::RoomMemberId;
 
 const TYPE_COUNT: usize = 3;
 pub const MAX_FIELD_COUNT: usize = 64;
+
 type FieldIndex = heapless::FnvIndexMap<(FieldId, FieldType), FieldValue, { MAX_FIELD_COUNT * TYPE_COUNT }>;
-pub type CreateCommandsCollector = heapless::Vec<S2CCommandWithFieldInfo, 255>;
+pub type CreateCommandsCollector = heapless::Vec<S2CCommandWithMeta, 255>;
 
 ///
 /// Игровой объект - логическая группировка игровых данных
@@ -105,15 +106,16 @@ impl GameObject {
 			.map_err(|_| GameObjectError::FieldCountOverflow(self.id, self.template_id))
 	}
 
-	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector) {
-		if self.do_collect_create_commands(commands).is_err() {
+	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) {
+		if self.do_collect_create_commands(commands, member_id).is_err() {
 			tracing::error!("Collect create commands overflow {:?}", self);
 		}
 	}
 
-	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
-		commands.push(S2CCommandWithFieldInfo {
+	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
+		commands.push(S2CCommandWithMeta {
 			field: None,
+			creator: member_id,
 			command: S2CCommand::Create(CreateGameObjectCommand {
 				object_id: self.id,
 				template: self.template_id,
@@ -121,21 +123,23 @@ impl GameObject {
 			}),
 		})?;
 
-		self.fields_to_commands(commands)?;
+		self.fields_to_commands(commands, member_id)?;
 
 		if self.created {
-			commands.push(S2CCommandWithFieldInfo {
+			commands.push(S2CCommandWithMeta {
 				field: None,
+				creator: member_id,
 				command: S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: self.id }),
 			})?;
 		}
 		Ok(())
 	}
 
-	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector) -> Result<(), S2CCommandWithFieldInfo> {
+	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
 		for (&(field_id, field_type), v) in self.fields() {
-			let command = S2CCommandWithFieldInfo {
+			let command = S2CCommandWithMeta {
 				field: Some(Field { id: field_id, field_type }),
+				creator: member_id,
 				command: S2CCommand::new_set_command(v.clone(), self.id, field_id),
 			};
 			commands.push(command)?;
@@ -144,22 +148,16 @@ impl GameObject {
 	}
 }
 
-#[derive(Debug)]
-pub struct S2CCommandWithFieldInfo {
-	pub field: Option<Field>,
-	pub command: S2CCommand,
-}
-
 #[cfg(test)]
 mod tests {
 	use cheetah_matches_realtime_common::commands::field::Field;
-	use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+	use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 	use cheetah_matches_realtime_common::commands::FieldType;
 	use cheetah_matches_realtime_common::room::access::AccessGroups;
 	use cheetah_matches_realtime_common::room::object::GameObjectId;
 	use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{CreateCommandsCollector, FieldValue, GameObject, S2CCommandWithFieldInfo};
+	use crate::room::object::{CreateCommandsCollector, FieldValue, GameObject};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -176,11 +174,11 @@ mod tests {
 			.unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
-		object.collect_create_commands(&mut commands);
+		object.collect_create_commands(&mut commands, u16::MAX);
 
 		assert!(matches!(
 			&commands[0],
-			S2CCommandWithFieldInfo { field: None, command:S2CCommand::Create(c) }
+			S2CCommandWithMeta { field: None, creator: u16::MAX, command:S2CCommand::Create(c) }
 			if c.object_id==id
 			&& c.template == object.template_id
 			&& c.access_groups == object.access_groups
@@ -188,19 +186,21 @@ mod tests {
 
 		assert!(matches!(
 			&commands[1],
-			S2CCommandWithFieldInfo {
+			S2CCommandWithMeta {
 				field: Some(Field { id: 1, field_type: FieldType::Long }),
+				creator: u16::MAX,
 				command: S2CCommand::SetField(c)
 			}
 			if c.object_id==id && c.field_id == 1 && c.value == 100.into()
 		));
 
 		assert!({
-			if let S2CCommandWithFieldInfo {
+			if let S2CCommandWithMeta {
 				field: Some(Field {
 					id: 2,
 					field_type: FieldType::Double,
 				}),
+				creator: u16::MAX,
 				command: S2CCommand::SetField(c),
 			} = &commands[2]
 			{
@@ -214,8 +214,9 @@ mod tests {
 
 		assert!(matches!(
 			&commands[3],
-			S2CCommandWithFieldInfo {
+			S2CCommandWithMeta {
 				field: Some(Field { id: 1, field_type: FieldType::Structure }),
+				creator: u16::MAX,
 				command: S2CCommand::SetField(c)
 			}
 			if c.object_id==id && c.field_id == 1 && c.value == vec![1,2,3].into()
@@ -223,8 +224,8 @@ mod tests {
 
 		assert!(matches!(
 			&commands[4],
-			S2CCommandWithFieldInfo {
-				 field: None,  command: S2CCommand::Created(c)
+			S2CCommandWithMeta {
+				 field: None, creator: u16::MAX, command: S2CCommand::Created(c)
 			}
 			if c.object_id == id));
 	}
@@ -239,17 +240,22 @@ mod tests {
 		object.set_field(1, 100).unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
-		object.collect_create_commands(&mut commands);
+		object.collect_create_commands(&mut commands, u16::MAX);
 		assert_eq!(commands.len(), 2);
 		assert!(matches!(
 			&commands[0],
-			S2CCommandWithFieldInfo {
+			S2CCommandWithMeta {
 				field: None,
+				creator: u16::MAX,
 				command: S2CCommand::Create(_)
 			}
 		));
 		assert!(matches!(&commands[1],
-			S2CCommandWithFieldInfo { field: Some(Field { id: 1, field_type: FieldType::Long }), command:S2CCommand::SetField(c)}
+			S2CCommandWithMeta {
+				field: Some(Field { id: 1, field_type: FieldType::Long }),
+				creator: u16::MAX,
+				command:S2CCommand::SetField(c)
+			}
 			if c.object_id==id && c.field_id== 1 && c.value == 100.into()));
 	}
 

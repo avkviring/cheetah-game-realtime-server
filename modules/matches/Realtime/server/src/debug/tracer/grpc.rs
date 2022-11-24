@@ -133,8 +133,8 @@ impl From<TracedCommand> for admin::Command {
 				GameObjectOwner::Room => {
 					format!("root({})", id.id)
 				}
-				GameObjectOwner::Member(user) => {
-					format!("user({},{})", user, id.id)
+				GameObjectOwner::Member(member_id) => {
+					format!("member({},{})", member_id, id.id)
 				}
 			},
 		};
@@ -161,7 +161,7 @@ impl From<TracedCommand> for admin::Command {
 			direction: direction.to_string(),
 			command: command_name,
 			object_id,
-			user_id: u32::from(command.user),
+			user_id: u32::from(command.member),
 			template,
 			value,
 			field_id,
@@ -194,7 +194,7 @@ pub mod test {
 		let command = TracedCommand {
 			time: 1.1,
 			template: Some(155),
-			user: 255,
+			member: 255,
 			network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Room),
 				field_id: 555,
@@ -224,7 +224,7 @@ pub mod test {
 		let command = TracedCommand {
 			time: 1.1,
 			template: None,
-			user: 255,
+			member: 255,
 			network_command: TracedBothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		};
 

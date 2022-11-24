@@ -25,11 +25,11 @@ pub enum Rule {
 	AndRule(Vec<Rule>),
 	Direction(RuleCommandDirection),
 	Not(Box<Rule>),
-	User(RoomMemberId),
+	Member(RoomMemberId),
 	Template(GameObjectTemplateId),
 	Field(FieldId),
 	RoomOwner,
-	UserOwner(RoomMemberId),
+	MemberOwner(RoomMemberId),
 	ObjectId(u32),
 	True,
 }
@@ -86,7 +86,7 @@ impl Rule {
 		match self {
 			Rule::Direction(direction) => *direction == command.network_command.get_direction(),
 			Rule::Not(rule) => !rule.filter(command),
-			Rule::User(rule_user) => *rule_user == command.user,
+			Rule::Member(member_id) => *member_id == command.member,
 			Rule::Template(rule_template) => match &command.template {
 				None => false,
 				Some(template) => *rule_template == *template,
@@ -104,11 +104,11 @@ impl Rule {
 					GameObjectOwner::Member(_) => false,
 				},
 			},
-			Rule::UserOwner(user) => match command.network_command.get_object_id() {
+			Rule::MemberOwner(member_id) => match command.network_command.get_object_id() {
 				None => false,
 				Some(object_id) => match object_id.owner {
 					GameObjectOwner::Room => false,
-					GameObjectOwner::Member(object_user) => object_user == *user,
+					GameObjectOwner::Member(object_member_id) => object_member_id == *member_id,
 				},
 			},
 			Rule::ObjectId(object_id) => match command.network_command.get_object_id() {
@@ -139,7 +139,7 @@ mod tests {
 			Self {
 				time: 0.0,
 				template: None,
-				user: 0,
+				member: 0,
 				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 0,
@@ -153,7 +153,7 @@ mod tests {
 			Self {
 				time: 0.0,
 				template: None,
-				user: 0,
+				member: 0,
 				network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 0,
@@ -163,8 +163,8 @@ mod tests {
 		}
 
 		#[must_use]
-		pub fn with_user(mut self, user_id: RoomMemberId) -> Self {
-			self.user = user_id;
+		pub fn with_member(mut self, member_id: RoomMemberId) -> Self {
+			self.member = member_id;
 			self
 		}
 
@@ -225,10 +225,10 @@ mod tests {
 	}
 
 	#[test]
-	fn should_filter_by_user() {
-		let filter = Filter::new(Rule::User(55));
-		assert!(filter.filter(&TracedCommand::c2s().with_user(55)));
-		assert!(!filter.filter(&TracedCommand::c2s().with_user(155)));
+	fn should_filter_by_member() {
+		let filter = Filter::new(Rule::Member(55));
+		assert!(filter.filter(&TracedCommand::c2s().with_member(55)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_member(155)));
 	}
 
 	#[test]
@@ -260,12 +260,14 @@ mod tests {
 		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
 		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Member(100)))));
 	}
+
 	#[test]
-	fn should_filter_by_user_owner() {
-		let filter = Filter::new(Rule::UserOwner(55));
+	fn should_filter_by_member_owner() {
+		let filter = Filter::new(Rule::MemberOwner(55));
 		assert!(filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(50, GameObjectOwner::Member(55)))));
 		assert!(!filter.filter(&TracedCommand::c2s().with_object_id(GameObjectId::new(100, GameObjectOwner::Room))));
 	}
+
 	#[test]
 	fn should_filter_by_object_id() {
 		let filter = Filter::new(Rule::ObjectId(100));
@@ -277,15 +279,15 @@ mod tests {
 
 	#[test]
 	fn should_filter_or() {
-		let filter = Filter::new(Rule::OrRule(vec![Rule::Template(100), Rule::Template(55), Rule::User(55)]));
-		assert!(filter.filter(&TracedCommand::c2s().with_template(100).with_user(55)));
-		assert!(filter.filter(&TracedCommand::c2s().with_template(55).with_user(100)));
+		let filter = Filter::new(Rule::OrRule(vec![Rule::Template(100), Rule::Template(55), Rule::Member(55)]));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(100).with_member(55)));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(55).with_member(100)));
 	}
 
 	#[test]
 	fn should_filter_and() {
-		let filter = Filter::new(Rule::AndRule(vec![Rule::Template(100), Rule::User(55)]));
-		assert!(filter.filter(&TracedCommand::c2s().with_template(100).with_user(55)));
-		assert!(!filter.filter(&TracedCommand::c2s().with_template(55).with_user(100)));
+		let filter = Filter::new(Rule::AndRule(vec![Rule::Template(100), Rule::Member(55)]));
+		assert!(filter.filter(&TracedCommand::c2s().with_template(100).with_member(55)));
+		assert!(!filter.filter(&TracedCommand::c2s().with_template(55).with_member(100)));
 	}
 }

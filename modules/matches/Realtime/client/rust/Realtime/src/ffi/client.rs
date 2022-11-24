@@ -139,18 +139,18 @@ pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
 	member_id: RoomMemberId,
 	room_id: RoomId,
-	user_private_key_buffer: &BufferFFI,
+	private_key_buffer: &BufferFFI,
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
 	let server_address = CStr::from_ptr(addr).to_str().unwrap();
-	let mut user_private_key = [0; 32];
-	user_private_key.copy_from_slice(&user_private_key_buffer.buffer[0..32]);
+	let mut private_key = [0; 32];
+	private_key.copy_from_slice(&private_key_buffer.buffer[0..32]);
 	do_create_client(
 		server_address,
 		member_id,
 		room_id,
-		&user_private_key.as_slice().into(),
+		&private_key.as_slice().into(),
 		start_frame_id,
 		out_client_id,
 	)
@@ -160,12 +160,12 @@ pub fn do_create_client(
 	server_address: &str,
 	member_id: RoomMemberId,
 	room_id: RoomId,
-	user_private_key: &MemberPrivateKey,
+	private_key: &MemberPrivateKey,
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
 	execute(
-		|api| match api.create_client(server_address, member_id, room_id, user_private_key.clone(), start_frame_id) {
+		|api| match api.create_client(server_address, member_id, room_id, private_key.clone(), start_frame_id) {
 			Ok(client_id) => {
 				*out_client_id = client_id;
 				Ok(())

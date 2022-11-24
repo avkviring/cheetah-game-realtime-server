@@ -4,26 +4,26 @@ use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedComman
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 impl ServerCommandExecutor for ForwardedCommand {
-	/// execute forwarded command on behalf of the original user
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	/// execute forwarded command on behalf of the original member
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		// check that the command is from a super member
-		if let Some(member) = room.members.get(&user_id) {
+		if let Some(member) = room.members.get(&member_id) {
 			if !member.template.super_member {
 				return Err(ServerCommandError::ForwardedCommandPermissionDenied {
 					msg: "only super members are allowed to send ForwardedCommand".to_string(),
-					sender_member_id: user_id,
+					sender_member_id: member_id,
 					creator_member_id: self.creator,
 				});
 			}
 		} else {
-			return Err(ServerCommandError::MemberNotFound(user_id));
+			return Err(ServerCommandError::MemberNotFound(member_id));
 		}
 
 		// check that sender and creator are different
-		if user_id == self.creator {
+		if member_id == self.creator {
 			return Err(ServerCommandError::ForwardedCommandPermissionDenied {
 				msg: "ForwardedCommand sender and creator should be different".to_string(),
-				sender_member_id: user_id,
+				sender_member_id: member_id,
 				creator_member_id: self.creator,
 			});
 		}
@@ -33,7 +33,7 @@ impl ServerCommandExecutor for ForwardedCommand {
 			if member.template.super_member {
 				return Err(ServerCommandError::ForwardedCommandPermissionDenied {
 					msg: "only non super members commands can be forwarded".to_string(),
-					sender_member_id: user_id,
+					sender_member_id: member_id,
 					creator_member_id: self.creator,
 				});
 			}
@@ -116,7 +116,7 @@ mod tests {
 			creator: member_1,
 			c2s: C2SCommand::AttachToRoom,
 		};
-		room.disconnect_user(super_member_1).unwrap();
+		room.disconnect_member(super_member_1).unwrap();
 		assert_eq!(MemberNotFound(super_member_1), command.execute(&mut room, super_member_1).unwrap_err());
 	}
 
@@ -127,7 +127,7 @@ mod tests {
 			creator: member_1,
 			c2s: C2SCommand::AttachToRoom,
 		};
-		room.disconnect_user(member_1).unwrap();
+		room.disconnect_member(member_1).unwrap();
 		assert_eq!(MemberNotFound(member_1), command.execute(&mut room, super_member_1).unwrap_err());
 	}
 

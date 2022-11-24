@@ -27,7 +27,7 @@ pub mod structure;
 /// Выполнение серверной команды
 ///
 pub trait ServerCommandExecutor {
-	fn execute(&self, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError>;
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError>;
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
@@ -101,22 +101,22 @@ impl ServerCommandError {
 	}
 }
 
-pub fn execute(command: &C2SCommand, room: &mut Room, user_id: RoomMemberId) -> Result<(), ServerCommandError> {
+pub fn execute(command: &C2SCommand, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	match command {
-		C2SCommand::CreateGameObject(command) => command.execute(room, user_id),
-		C2SCommand::SetField(command) => command.execute(room, user_id),
-		C2SCommand::IncrementLongValue(command) => command.execute(room, user_id),
-		C2SCommand::CompareAndSetLong(command) => command.execute(room, user_id),
-		C2SCommand::IncrementDouble(command) => command.execute(room, user_id),
-		C2SCommand::CompareAndSetStructure(command) => command.execute(room, user_id),
-		C2SCommand::Event(command) => command.execute(room, user_id),
-		C2SCommand::Delete(command) => command.execute(room, user_id),
-		C2SCommand::AttachToRoom => room::attach_to_room(room, user_id),
-		C2SCommand::DetachFromRoom => room::detach_from_room(room, user_id),
-		C2SCommand::CreatedGameObject(command) => command.execute(room, user_id),
-		C2SCommand::TargetEvent(command) => command.execute(room, user_id),
-		C2SCommand::DeleteField(command) => command.execute(room, user_id),
-		C2SCommand::Forwarded(command) => command.execute(room, user_id),
+		C2SCommand::CreateGameObject(command) => command.execute(room, member_id),
+		C2SCommand::SetField(command) => command.execute(room, member_id),
+		C2SCommand::IncrementLongValue(command) => command.execute(room, member_id),
+		C2SCommand::CompareAndSetLong(command) => command.execute(room, member_id),
+		C2SCommand::IncrementDouble(command) => command.execute(room, member_id),
+		C2SCommand::CompareAndSetStructure(command) => command.execute(room, member_id),
+		C2SCommand::Event(command) => command.execute(room, member_id),
+		C2SCommand::Delete(command) => command.execute(room, member_id),
+		C2SCommand::AttachToRoom => room::attach_to_room(room, member_id),
+		C2SCommand::DetachFromRoom => room::detach_from_room(room, member_id),
+		C2SCommand::CreatedGameObject(command) => command.execute(room, member_id),
+		C2SCommand::TargetEvent(command) => command.execute(room, member_id),
+		C2SCommand::DeleteField(command) => command.execute(room, member_id),
+		C2SCommand::Forwarded(command) => command.execute(room, member_id),
 	}
 }
 
@@ -134,19 +134,19 @@ mod tests {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(0b11);
 		let mut room = Room::from_template(template);
-		let user_1 = room.register_member(MemberTemplate::stub(access_groups));
-		let user_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
 		let object_id = room
-			.test_create_object_with_not_created_state(GameObjectOwner::Member(user_1), access_groups)
+			.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups)
 			.id;
-		(room, object_id, user_1, user_2)
+		(room, object_id, member_1, member_2)
 	}
 
 	pub fn setup_one_player() -> (Room, RoomMemberId, AccessGroups) {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let user_id = room.register_member(MemberTemplate::stub(access_groups));
-		(room, user_id, access_groups)
+		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		(room, member_id, access_groups)
 	}
 }

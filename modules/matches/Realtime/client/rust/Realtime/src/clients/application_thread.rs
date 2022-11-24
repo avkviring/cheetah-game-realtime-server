@@ -25,7 +25,7 @@ use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI, GameObjectIdFFI};
 /// Взаимодействие с сетевым потоком клиента, через Sender
 ///
 pub struct ApplicationThreadClient {
-	user_id: RoomMemberId,
+	member_id: RoomMemberId,
 	commands_from_server: Receiver<CommandWithChannel>,
 	handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
@@ -55,7 +55,7 @@ impl Drop for ApplicationThreadClient {
 
 impl ApplicationThreadClient {
 	pub fn new(
-		user_id: RoomMemberId,
+		member_id: RoomMemberId,
 		handler: JoinHandle<()>,
 		state: Arc<Mutex<ConnectionStatus>>,
 		in_commands: Receiver<CommandWithChannel>,
@@ -64,7 +64,7 @@ impl ApplicationThreadClient {
 		server_time: Arc<Mutex<Option<u64>>>,
 	) -> Self {
 		Self {
-			user_id,
+			member_id,
 			commands_from_server: in_commands,
 			handler: Some(handler),
 			state,
@@ -117,8 +117,8 @@ impl ApplicationThreadClient {
 
 	pub fn receive(&mut self) {
 		while let Ok(command) = self.commands_from_server.try_recv() {
-			if let BothDirectionCommand::S2CWithCreator(command_with_user) = command.both_direction_command {
-				match command_with_user.command {
+			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.both_direction_command {
+				match member_with_creator.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {
 							let object_id = (&command.object_id).into();
@@ -135,26 +135,26 @@ impl ApplicationThreadClient {
 						FieldValue::Long(v) => {
 							if let Some(ref listener) = self.listener_long_value {
 								let object_id = (&command.object_id).into();
-								listener(command_with_user.creator, &object_id, command.field_id, v);
+								listener(member_with_creator.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Double(v) => {
 							if let Some(ref listener) = self.listener_float_value {
 								let object_id = (&command.object_id).into();
-								listener(command_with_user.creator, &object_id, command.field_id, v);
+								listener(member_with_creator.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Structure(s) => {
 							if let Some(ref listener) = self.listener_structure {
 								let object_id = (&command.object_id).into();
-								listener(command_with_user.creator, &object_id, command.field_id, &s.into());
+								listener(member_with_creator.creator, &object_id, command.field_id, &s.into());
 							}
 						}
 					},
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(command_with_user.creator, &object_id, command.field_id, &From::from(&command.event));
+							listener(member_with_creator.creator, &object_id, command.field_id, &From::from(&command.event));
 						}
 					}
 					S2CCommand::Delete(command) => {
@@ -166,7 +166,7 @@ impl ApplicationThreadClient {
 					S2CCommand::DeleteField(command) => {
 						if let Some(ref listener) = self.listener_delete_field {
 							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(command_with_user.creator, &object_id, command.field_id, From::from(&command.field_type));
+							listener(member_with_creator.creator, &object_id, command.field_id, From::from(&command.field_type));
 						}
 					}
 					S2CCommand::Forwarded(command) => {
@@ -181,7 +181,7 @@ impl ApplicationThreadClient {
 
 	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
-		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.user_id));
+		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.member_id));
 		self.send(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 			object_id: game_object_id,
 			template,

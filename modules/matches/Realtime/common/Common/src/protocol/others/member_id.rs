@@ -16,7 +16,7 @@ impl MemberAndRoomId {
 			member_id: input
 				.read_variable_u64()?
 				.try_into()
-				.map_err(|_| std::io::Error::new(InvalidData, "user_id is too large".to_string()))?,
+				.map_err(|_| std::io::Error::new(InvalidData, "member_id is too large".to_string()))?,
 			room_id: input.read_variable_u64()?,
 		})
 	}

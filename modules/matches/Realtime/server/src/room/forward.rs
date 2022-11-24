@@ -1,9 +1,8 @@
 use crate::room::command::ServerCommandError;
-use crate::room::object::S2CCommandWithFieldInfo;
 use crate::room::Room;
 use cheetah_matches_realtime_common::commands::c2s::C2SCommand;
 use cheetah_matches_realtime_common::commands::field::FieldId;
-use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_matches_realtime_common::commands::types::forwarded::ForwardedCommand;
 use cheetah_matches_realtime_common::commands::CommandTypeId;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
@@ -23,9 +22,9 @@ impl Room {
 		self.forward_configs.insert(config);
 	}
 
-	pub(crate) fn should_forward(&self, command: &C2SCommand, user_id: RoomMemberId) -> bool {
+	pub(crate) fn should_forward(&self, command: &C2SCommand, member_id: RoomMemberId) -> bool {
 		// check non super member
-		if let Some(member) = self.members.get(&user_id) {
+		if let Some(member) = self.members.get(&member_id) {
 			if member.template.super_member {
 				return false;
 			}
@@ -53,11 +52,12 @@ impl Room {
 		}
 	}
 
-	pub(crate) fn forward_to_super_members(&mut self, command: &C2SCommand, sender_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let s2c = S2CCommandWithFieldInfo {
+	pub(crate) fn forward_to_super_members(&mut self, command: &C2SCommand, creator_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		let s2c = S2CCommandWithMeta {
 			field: command.get_field(),
+			creator: creator_id,
 			command: S2CCommand::Forwarded(Box::new(ForwardedCommand {
-				creator: sender_id,
+				creator: creator_id,
 				c2s: command.clone(),
 			})),
 		};
@@ -151,13 +151,13 @@ mod tests {
 
 		room.forward_to_super_members(&command, member_1).unwrap();
 
-		assert!(room.test_get_user_out_commands(member_2).is_empty());
+		assert!(room.test_get_member_out_commands(member_2).is_empty());
 		assert_eq!(
 			S2CCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: member_1,
 				c2s: command,
 			})),
-			room.test_get_user_out_commands(super_member)[0]
+			room.test_get_member_out_commands(super_member)[0]
 		);
 	}
 

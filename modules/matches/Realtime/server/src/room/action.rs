@@ -1,11 +1,11 @@
 use cheetah_matches_realtime_common::commands::field::Field;
-use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
+use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 use cheetah_matches_realtime_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
-use crate::room::object::{GameObject, S2CCommandWithFieldInfo};
+use crate::room::object::GameObject;
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -84,20 +84,24 @@ impl Room {
 				let groups = object.access_groups;
 				let template = object.template_id;
 
-				let commands_with_field = S2CCommandWithFieldInfo { field: Some(field), command };
+				let commands_with_field = S2CCommandWithMeta {
+					field: Some(field),
+					creator: creator_id,
+					command,
+				};
 				let commands = [commands_with_field];
 
 				match target {
-					Some(target_user) => {
-						self.send_to_member(&target_user, template, &commands)?;
+					Some(target_member_id) => {
+						self.send_to_member(&target_member_id, template, &commands)?;
 					}
 					None => {
-						self.send_to_members(groups, Some(template), &commands, |user| {
+						self.send_to_members(groups, Some(template), &commands, |member| {
 							let mut permission_manager = permission_manager.borrow_mut();
 							// отправляем себе только если есть права на запись
 							// иначе никто другой не может вносит изменения в данное поле и
 							// отправлять себе как единственному источнику изменений избыточно
-							if object_owner == Some(user.id) {
+							if object_owner == Some(member.id) {
 								permission_manager.has_write_access(template, field)
 							} else {
 								true

@@ -29,9 +29,9 @@ impl IntegrationTestHelper {
 		}
 	}
 
-	pub fn create_client(&self, user_id: RoomMemberId, user_key: &MemberPrivateKey) -> ClientId {
+	pub fn create_client(&self, member_id: RoomMemberId, private_key: &MemberPrivateKey) -> ClientId {
 		let mut client: ClientId = 0;
-		do_create_client(&self.socket_addr.to_string(), user_id, self.room_id, user_key, 0, &mut client);
+		do_create_client(&self.socket_addr.to_string(), member_id, self.room_id, private_key, 0, &mut client);
 		client
 	}
 
@@ -51,16 +51,16 @@ impl IntegrationTestHelper {
 		object_id
 	}
 
-	pub fn create_user(&mut self) -> (RoomMemberId, MemberPrivateKey) {
+	pub fn create_member(&mut self) -> (RoomMemberId, MemberPrivateKey) {
 		let private_key = MemberPrivateKey::new_random();
-		let user_template = MemberTemplate {
+		let member_template = MemberTemplate {
 			super_member: false,
 			private_key: private_key.clone(),
 			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
 			objects: Default::default(),
 		};
-		let user_id = self.server.create_member(self.room_id, user_template).ok().unwrap();
-		(user_id, private_key)
+		let member_id = self.server.create_member(self.room_id, member_template).ok().unwrap();
+		(member_id, private_key)
 	}
 }
 
@@ -69,8 +69,8 @@ pub fn setup<const N: usize>(builder: IntegrationTestServerBuilder) -> (Integrat
 	let mut helper = IntegrationTestHelper::new(builder);
 	let mut members = [0; N];
 	for member in members.iter_mut() {
-		let (user_id, user_key) = helper.create_user();
-		*member = helper.create_client(user_id, &user_key);
+		let (member_id, private_key) = helper.create_member();
+		*member = helper.create_client(member_id, &private_key);
 	}
 	(helper, members)
 }
