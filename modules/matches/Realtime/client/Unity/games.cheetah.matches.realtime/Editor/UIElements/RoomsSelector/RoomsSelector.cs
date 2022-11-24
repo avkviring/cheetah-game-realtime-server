@@ -47,6 +47,7 @@ namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector
             menu.AddToClassList("selector");
             SetDefaultMenuText();
             Insert(0, menu);
+            SetEnabled(false);
         }
 
         private void SetDefaultMenuText()
@@ -70,6 +71,11 @@ namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector
 
         public async Task Update()
         {
+            if (provider == null)
+            {
+                menu.menu.MenuItems().Clear();
+                return;
+            } 
             var rooms = await provider.GetRooms();
             if (!rooms.SequenceEqual(currentRooms))
             {
@@ -115,6 +121,7 @@ namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector
 
         public void SetProvider(RoomsProvider provider)
         {
+            SetEnabled(true);
             this.provider = provider;
         }
 
@@ -122,5 +129,14 @@ namespace Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector
         {
             this.storageKey = storageKey;
         }
+
+        public void RemoveProvider()
+        {
+            provider = null;
+            SetEnabled(false);
+        }
+        
+        
+        
     }
 }

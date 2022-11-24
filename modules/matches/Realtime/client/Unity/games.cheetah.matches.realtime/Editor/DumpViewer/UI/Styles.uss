@@ -14,7 +14,14 @@
     margin: 0;
 }
 
-
+.content-header {
+    height: 25px;
+    margin: 0;
+    padding: 0;
+    margin-left: 5px;
+    margin-right: 5px;
+    padding-top: 7px;
+}
 .content {
     flex-grow: 1;
     height: 100%;
@@ -27,6 +34,11 @@
 }
 
 .toolbar-button {
+    width: 200px;
+    -unity-text-align: middle-center;
+}
+
+.toggle-button {
     width: 100px;
     -unity-text-align: middle-center;
 }
@@ -44,4 +56,8 @@
     min-width: 70px;
     max-width: 70px;
     -unity-text-align: middle-center;
+}
+
+.spaces {
+    width: 100%;
 }
