@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -7,9 +8,11 @@ using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Objects;
 using Cheetah.Matches.Realtime.Editor.DumpViewer.Sections.Users;
 using Cheetah.Matches.Realtime.Editor.GRPC;
 using Cheetah.Matches.Realtime.Editor.UIElements;
+using Cheetah.Matches.Realtime.Editor.UIElements.NetworkAddress;
 using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector;
 using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider;
 using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
+using Cheetah.Platform;
 using Grpc.Core;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -29,14 +32,12 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
         private const bool RemoteProviders = true;
 
         private const string PathToUxml = "Packages/games.Cheetah.Matches.Realtime/Editor/DumpViewer/UI/Window.uxml";
-        private const int UpdateTime = 60 / 2;
-        private const int ErrorUpdateTime = 60;
 
-        [MenuItem("Window/Cheetah/Relay dump viewer")]
+        [MenuItem("Window/Cheetah/Dump Viewer")]
         public static void ShowWindow()
         {
             var window = GetWindow<DumpViewerWindow>();
-            window.titleContent = new GUIContent("Relay dump viewer");
+            window.titleContent = new GUIContent("Cheetah DumpViewer");
         }
 
         private DumpProvider provider;
@@ -44,7 +45,6 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
         private UsersViewer usersViewer;
         private StatusIndicator statusIndicator;
         private RoomsSelector roomSelector;
-        private int timeToUpdate;
         private ToolbarButton dumpButton;
         private ToolbarButton exportButton;
         private ToolbarToggle objectsTab;
@@ -53,22 +53,26 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
         private VisualElement tabContent;
         private ulong? selectedRoom;
         private bool connectError;
-        private RoomsProvider roomsProvider;
-        private DumpResponse dump;
+        private DumpResponse dumpResult;
 
         public void OnEnable()
         {
             var ui = LoadVisualTree();
             rootVisualElement.Add(ui);
             statusIndicator = ui.Q<StatusIndicator>("status");
-            // provider = RemoteProviders
-            //     ? (DumpProvider)new RemoteDumpProvider(LocalClusterConnectorFactory.CreateConnector())
-            //     : new TestDumpProvider();
+            ConfigureConnect(ui);
             ConfigureRoomSelector(ui);
             ConfigureDumpButton(ui);
-            ConfigureTabs(ui);
             ConfigureExportButton(ui);
             ConfigureHelpButton(ui);
+            ConfigureTabs(ui);
+            DisableContent();
+        }
+
+        private void ConfigureConnect(VisualElement ui)
+        {
+            NetworkAddress networkAddress = ui.Q<NetworkAddress>("server-address");
+            networkAddress.AddConnectCallback(async address => await DoConnect(address));
         }
 
         private void ConfigureHelpButton(VisualElement ui)
@@ -79,61 +83,6 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
             });
         }
 
-        private void ConfigureExportButton(VisualElement ui)
-        {
-            ui.Q<ToolbarButton>("export").RegisterCallback<ClickEvent>(evt =>
-            {
-                if (dump != null)
-                {
-                    var path = EditorUtility.SaveFolderPanel(
-                        "Select folders for store dumps (objects.csv, users.csv)",
-                        "",
-                        "");
-                    if (path.Length == 0) return;
-                    
-
-                    var objects = new StringBuilder();
-                    objects.Append("id").Append("\t");
-                    objects.Append("template").Append("\t");
-                    objects.Append("ownerUserId").Append("\t");
-                    objects.Append("groups").Append("\t");
-                    objects.Append("created").Append("\t");
-                    objects.Append("fields").Append("\t");
-                    objects.Append("compareAndSetOwners");
-                    objects.AppendLine();
-                    foreach (var dumpObject in dump.Objects)
-                    {
-                        objects.Append(dumpObject.Id).Append("\t");
-                        objects.Append(dumpObject.Template).Append("\t");
-                        objects.Append(dumpObject.HasOwnerUserId ? dumpObject.OwnerUserId : "None").Append("\t");
-                        objects.Append(dumpObject.Groups).Append("\t");
-                        objects.Append(dumpObject.Created).Append("\t");
-                        objects.Append(string.Join(",", dumpObject.Fields.Select(p => p.Id + "=" + p.Value))).Append("\t");
-                        objects.Append(string.Join(",", dumpObject.CompareAndSetOwners.Select(p => p.Key + "=" + p.Value)));
-                        objects.AppendLine();
-                    }
-                    
-                    var users = new StringBuilder();
-                    users.Append("id").Append("\t");
-                    users.Append("groups").Append("\t");
-                    users.Append("attached").Append("\t");
-                    users.Append("compareAndSetCleaners");
-                    users.AppendLine();
-                    foreach (var dumpUser in dump.Users)
-                    {
-                        users.Append(dumpUser.Id).Append("\t");
-                        users.Append(dumpUser.Groups).Append("\t");
-                        users.Append(dumpUser.Attached).Append("\t");
-                        users.Append(string.Join(",",
-                            dumpUser.CompareAndSetCleaners.Select(p => (p.GameObjectId, p.GameObjectOwnerUser, p.FieldId, p.Value)))).Append("\t");
-                        users.AppendLine();
-                    }
-                    
-                    File.WriteAllText(path+"/objects.csv", objects.ToString());
-                    File.WriteAllText(path+"/users.csv", users.ToString());
-                }
-            });
-        }
 
         private void ConfigureTabs(VisualElement ui)
         {
@@ -147,7 +96,6 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
             usersTab = ui.Q<ToolbarToggle>("usersTab");
             tabsController.RegisterTab(usersTab, () => { SwitchContentTo(tabContent, usersViewer); });
             tabsController.SwitchToFirst();
-            DisableContent();
         }
 
         private void ConfigureDumpButton(VisualElement ui)
@@ -159,11 +107,8 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
 
         private void ConfigureRoomSelector(VisualElement ui)
         {
-            // roomsProvider = RemoteProviders
-            //     ? (RoomsProvider)new RemoteRoomsProvider(LocalClusterConnectorFactory.CreateConnector())
-            //     : new TestRoomsProvider();
             roomSelector = ui.Q<RoomsSelector>("room-selector");
-            roomSelector.SetProvider(roomsProvider);
+            roomSelector.SetEnabled(false);
             roomSelector.RoomSelectEvent += RoomRoomSelect;
             roomSelector.RoomUnselectEvent += RoomUnselect;
         }
@@ -190,10 +135,10 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
                 while (autoRefresh.value || first)
                 {
                     statusIndicator.ResetStatus();
-                    var dump = await provider.Dump((ulong)selectedRoom);
-                    objectsViewer.SetData(dump);
-                    usersViewer.SetData(dump);
-                    this.dump = dump;
+                    var currentDumpResult = await provider.Dump((ulong)selectedRoom);
+                    objectsViewer.SetData(currentDumpResult);
+                    usersViewer.SetData(currentDumpResult);
+                    dumpResult = currentDumpResult;
                     await Task.Delay(60);
                     first = false;
                 }
@@ -237,54 +182,132 @@ namespace Cheetah.Matches.Realtime.Editor.DumpViewer
 
         private async void Update()
         {
-            timeToUpdate++;
-            if (timeToUpdate < UpdateTime)
+            if (provider == null)
             {
                 return;
             }
 
-            if (connectError && timeToUpdate < ErrorUpdateTime)
-            {
-                return;
-            }
-
-            timeToUpdate = 0;
             try
             {
                 await roomSelector.Update();
-                ConnectedState();
+                await Task.Delay(TimeSpan.FromSeconds(5));
             }
             catch (RpcException e)
             {
-                Debug.Log(e);
-                ConnectErrorState();
+                ConnectErrorState(e);
             }
         }
 
         private void ConnectedState()
         {
-            if (!connectError)
-            {
-                return;
-            }
-
             connectError = false;
-            roomSelector.SetEnabled(true);
             dumpButton.SetEnabled(selectedRoom != null);
+            statusIndicator.SetStatus("Connected", StatusIndicator.MessageType.Regular);
         }
 
-        private void ConnectErrorState()
+        private void ConnectErrorState(Exception exception)
         {
+            Debug.LogError(exception);
             connectError = true;
-            roomSelector.SetEnabled(false);
+            provider = null;
+            roomSelector.RemoveProvider();
             dumpButton.SetEnabled(false);
-            statusIndicator.SetStatus("Cannot connect to cluster.", StatusIndicator.MessageType.Error);
+            var message = exception.Message;
+            if (exception is RpcException rpcException)
+            {
+                message = "grpc status code: " + rpcException.Status.StatusCode.ToString();
+            }
+
+            statusIndicator.SetStatus("Cannot connect to server: " + message, StatusIndicator.MessageType.Error);
         }
 
 
         private async void OnDestroy()
         {
-            await provider.Destroy();
+            if (provider != null)
+            {
+                await provider.Destroy();
+            }
+        }
+
+        private void ConfigureExportButton(VisualElement ui)
+        {
+            exportButton = ui.Q<ToolbarButton>("export");
+            exportButton.RegisterCallback<ClickEvent>(_ =>
+            {
+                if (dumpResult != null)
+                {
+                    var path = EditorUtility.SaveFolderPanel(
+                        "Select folders for store dumps (objects.csv, users.csv)",
+                        "",
+                        "");
+                    if (path.Length == 0) return;
+
+
+                    var objects = new StringBuilder();
+                    objects.Append("id").Append("\t");
+                    objects.Append("template").Append("\t");
+                    objects.Append("ownerUserId").Append("\t");
+                    objects.Append("groups").Append("\t");
+                    objects.Append("created").Append("\t");
+                    objects.Append("fields").Append("\t");
+                    objects.Append("compareAndSetOwners");
+                    objects.AppendLine();
+                    foreach (var dumpObject in dumpResult.Objects)
+                    {
+                        objects.Append(dumpObject.Id).Append("\t");
+                        objects.Append(dumpObject.Template).Append("\t");
+                        objects.Append(dumpObject.HasOwnerUserId ? dumpObject.OwnerUserId : "None").Append("\t");
+                        objects.Append(dumpObject.Groups).Append("\t");
+                        objects.Append(dumpObject.Created).Append("\t");
+                        objects.Append(string.Join(",", dumpObject.Fields.Select(p => p.Id + "=" + p.Value))).Append("\t");
+                        objects.Append(string.Join(",", dumpObject.CompareAndSetOwners.Select(p => p.Key + "=" + p.Value)));
+                        objects.AppendLine();
+                    }
+
+                    var users = new StringBuilder();
+                    users.Append("id").Append("\t");
+                    users.Append("groups").Append("\t");
+                    users.Append("attached").Append("\t");
+                    users.Append("compareAndSetCleaners");
+                    users.AppendLine();
+                    foreach (var dumpUser in dumpResult.Users)
+                    {
+                        users.Append(dumpUser.Id).Append("\t");
+                        users.Append(dumpUser.Groups).Append("\t");
+                        users.Append(dumpUser.Attached).Append("\t");
+                        users.Append(string.Join(",",
+                            dumpUser.CompareAndSetCleaners.Select(p => (p.GameObjectId, p.GameObjectOwnerUser, p.FieldId, p.Value)))).Append("\t");
+                        users.AppendLine();
+                    }
+
+                    File.WriteAllText(path + "/objects.csv", objects.ToString());
+                    File.WriteAllText(path + "/users.csv", users.ToString());
+                }
+            });
+        }
+
+        private async Task DoConnect(string address)
+        {
+            try
+            {
+                var uri = new Uri(address);
+                var clusterConnector = new ClusterConnector(uri.Host, uri.Port, uri.Scheme == "https");
+                var roomsProvider = RemoteProviders
+                    ? (RoomsProvider)new RemoteRoomsProvider(clusterConnector)
+                    : new TestRoomsProvider();
+
+                var rooms = await roomsProvider.GetRooms();
+                roomSelector.SetProvider(roomsProvider);
+                provider = RemoteProviders
+                    ? (DumpProvider)new RemoteDumpProvider(clusterConnector)
+                    : new TestDumpProvider();
+                ConnectedState();
+            }
+            catch (Exception e)
+            {
+                ConnectErrorState(e);
+            }
         }
     }
 }

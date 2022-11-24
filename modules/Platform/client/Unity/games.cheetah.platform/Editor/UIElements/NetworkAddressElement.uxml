@@ -1,9 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance"
-         engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
-         editor-extension-mode="True">
-    <ui:Label name="title" text="Bind address" display-tooltip-when-elided="true"
-              style="padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; margin-left: 5px; margin-right: 3px; margin-top: 3px; margin-bottom: 3px; height: 15px; -unity-font-style: bold;"/>
-    <ui:TextField picking-mode="Ignore" label="   Host" text="127.0.0.1" readonly="false" name="host"
-                  style="margin-left: 3px; margin-right: 3px; margin-top: 3px; margin-bottom: 3px;"/>
-    <uie:IntegerField label="   Port" value="7777" name="port" style="margin-left: 3px; margin-right: 3px; margin-top: 3px; margin-bottom: 3px;"/>
-</ui:UXML>

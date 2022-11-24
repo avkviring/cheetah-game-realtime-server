@@ -1,13 +1,17 @@
+using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.Provider;
 using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI;
 using Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer.UI.Controller;
 using Cheetah.Matches.Realtime.Editor.UIElements.HistoryTextField;
+using Cheetah.Matches.Realtime.Editor.UIElements.NetworkAddress;
 using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector;
 using Cheetah.Matches.Realtime.Editor.UIElements.RoomsSelector.Provider;
 using Cheetah.Matches.Realtime.Editor.UIElements.StatusIndicator;
 using Cheetah.Matches.Realtime.Editor.UIElements.Table;
+using Cheetah.Platform;
 using Grpc.Core;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -24,63 +28,64 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
         /// <summary>
         /// Удаленные провайдеры данных или тестовые
         /// </summary>
-        private const bool RemoteProviders = true;
+        private const bool RemoteProviders = false;
 
         private const string PathToStyleSheet = "Packages/games.Cheetah.Matches.Realtime/Editor/NetworkCommandsViewer/UI/Styles.uss";
         private const string PathToUxml = "Packages/games.Cheetah.Matches.Realtime/Editor/NetworkCommandsViewer/UI/Window.uxml";
         private const int UpdateTime = 60 / 2;
         private const int ErrorUpdateTime = 60;
 
-        private readonly Columns columns = new Columns();
-        private TableController tableController;
+        private readonly Columns columns = new();
         private StatusIndicator statusIndicator;
-        private TracedCommandsProvider provider;
-        private RoomsProvider roomsProvider;
         private RoomsSelector roomsSelector;
-        private int timeToUpdate;
-        private bool pause;
         private SearchFieldController searchFieldController;
         private ToolbarButton pauseButton;
-        private bool connectError;
+        private NetworkAddress realtimeGrpcAdminNetworkAddress;
+        private ToolbarButton clearButton;
 
-        [MenuItem("Window/Cheetah/Relay commands viewer")]
+        private TracedCommandsProvider provider;
+        private TableController tableController;
+
+        private int timeToUpdate;
+        private bool pause;
+        private bool connectError;
+        private bool inUpdate;
+        private TableElement table;
+        private HistoryTextField searchTextField;
+
+
+        [MenuItem("Window/Cheetah/Commands viewer")]
         public static void ShowServerCommandsViewerWindow()
         {
             var window = GetWindow<NetworkCommandsViewerWindow>();
-            window.titleContent = new GUIContent("Relay commands viewer");
+            window.titleContent = new GUIContent("Cheetah CommandsViewer");
         }
 
         public void OnEnable()
         {
-            // provider = RemoteProviders
-            //     ? (TracedCommandsProvider)new RemoteTracedCommandsProvider(LocalClusterConnectorFactory.CreateConnector())
-            //     : new TestTracedCommandsProvider();
             inUpdate = false; // иначе он может остаться в true после перезагрузки домена
             LoadStyles();
             var ui = LoadVisualTree();
             new ColumnsMenuController(ui.Q<ToolbarMenu>("colummenu"), columns);
             statusIndicator = ui.Q<StatusIndicator>("status");
-            searchFieldController = new SearchFieldController(ui.Q<HistoryTextField>("searchField"), statusIndicator, provider);
-            ConfigureRoomSelector(ui);
-            InitializeTable(ui);
+            realtimeGrpcAdminNetworkAddress = ui.Q<NetworkAddress>("server-address");
+            roomsSelector = ui.Q<RoomsSelector>("room-selector");
+            table = ui.Q<TableElement>("commands-table");
+            searchTextField = ui.Q<HistoryTextField>("searchField");
             rootVisualElement.Add(ui);
+            SetupConnect(ui);
             SetupClearButton(ui);
             SetupPauseButton(ui);
             SetupHelpButton(ui);
             SetupExportButton(ui);
         }
-        
-        private void ConfigureRoomSelector(TemplateContainer ui)
+
+        private void SetupConnect(TemplateContainer ui)
         {
-            // roomsProvider = RemoteProviders
-            //     ? (RoomsProvider)new RemoteRoomsProvider(LocalClusterConnectorFactory.CreateConnector())
-            //     : new TestRoomsProvider();
-            roomsSelector = ui.Q<RoomsSelector>("room-selector");
-            roomsSelector.SetProvider(roomsProvider);
-            roomsSelector.RoomSelectEvent += provider.SetRoom;
-            roomsSelector.RoomUnselectEvent += provider.ResetRooms;
+            var networkAddress = ui.Q<NetworkAddress>("server-address");
+            networkAddress.AddConnectCallback(async address => await DoConnect(address));
         }
-        
+
 
         private static void SetupHelpButton(VisualElement ui)
         {
@@ -109,12 +114,11 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
                 tableController.Update();
             });
         }
-        
-        private void SetupExportButton(TemplateContainer ui)
+
+        private void SetupExportButton(VisualElement ui)
         {
             ui.Q<ToolbarButton>("export").RegisterCallback<ClickEvent>(evt =>
             {
-
                 var path = EditorUtility.SaveFilePanel(
                     "Export commands to file",
                     "",
@@ -139,14 +143,14 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
                     builder.Append(command.Direction).Append("\t");
                     builder.Append(command.Command_).Append("\t");
                     builder.Append(command.HasTemplate ? command.Template : "None").Append("\t");
-                    builder.Append(command.HasFieldId ? command.FieldId :"None").Append("\t");
+                    builder.Append(command.HasFieldId ? command.FieldId : "None").Append("\t");
                     builder.Append(command.HasFieldType ? command.FieldType : "None").Append("\t");
                     builder.Append(command.ObjectId).Append("\t");
                     builder.Append(command.Value);
                     builder.AppendLine();
                 }
-                File.WriteAllText(path, builder.ToString());
 
+                File.WriteAllText(path, builder.ToString());
             });
         }
 
@@ -163,25 +167,21 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
             return uiAsset.CloneTree();
         }
 
-        private void InitializeTable(VisualElement ui)
-        {
-            var table = ui.Q<TableElement>("commands-table");
-            tableController = new TableController(table, columns, provider);
-        }
-
-
-        private bool inUpdate;
-        private ToolbarButton clearButton;
-
 
         private async void Update()
         {
+            if (provider == null)
+            {
+                return;
+            }
+
             if (inUpdate)
             {
                 return;
             }
 
             inUpdate = true;
+
 
             try
             {
@@ -213,6 +213,7 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
                     // обновляем данные
                     await roomsSelector.Update();
                     await searchFieldController.Update();
+
                     if (await provider.Update())
                     {
                         tableController.Update();
@@ -248,7 +249,11 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
 
         private void ConfigureEnabledStatus()
         {
-            searchFieldController.Enabled(provider.IsReady() && !pause && !connectError);
+            if (searchFieldController != null)
+            {
+                searchFieldController.Enabled(provider != null && provider.IsReady() && !pause && !connectError);
+            }
+
             pauseButton.SetEnabled(!connectError);
 
             var connected = !pause && !connectError;
@@ -260,8 +265,51 @@ namespace Cheetah.Matches.Realtime.Editor.NetworkCommandsViewer
 
         private async void OnDestroy()
         {
-            await roomsProvider.Destroy();
-            await provider.Destroy();
+            if (provider != null)
+            {
+                await provider.Destroy();
+            }
+        }
+
+
+        private async Task DoConnect(string address)
+        {
+            try
+            {
+                var uri = new Uri(address);
+                var clusterConnector = new ClusterConnector(uri.Host, uri.Port, uri.Scheme == "https");
+                var roomsProvider = RemoteProviders
+                    ? (RoomsProvider)new RemoteRoomsProvider(clusterConnector)
+                    : new TestRoomsProvider();
+
+                await roomsProvider.GetRooms();
+
+                roomsSelector.SetProvider(roomsProvider);
+                provider = RemoteProviders
+                    ? (TracedCommandsProvider)new RemoteTracedCommandsProvider(clusterConnector)
+                    : new TestTracedCommandsProvider();
+
+                roomsSelector.RoomSelectEvent += provider.SetRoom;
+                roomsSelector.RoomUnselectEvent += provider.ResetRooms;
+
+
+                tableController = new TableController(table, columns, provider);
+                searchFieldController = new SearchFieldController(searchTextField, statusIndicator, provider);
+                statusIndicator.SetStatus("Connected", StatusIndicator.MessageType.Regular);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                var message = e.Message;
+                if (e is RpcException rpcException)
+                {
+                    message = "grpc status code: " + rpcException.Status.StatusCode;
+                }
+
+                statusIndicator.SetStatus("Cannot connect to server: " + message, StatusIndicator.MessageType.Error);
+                tableController = null;
+                searchFieldController = null;
+            }
         }
     }
 }
