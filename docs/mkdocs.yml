@@ -1,0 +1,50 @@
+theme:
+  name: material
+  language: ru
+  features:
+    - navigation.top
+    - navigation.instant
+  palette:
+    scheme: slate
+    primary: amber
+repo_url: https://github.com/cheetah-game-platform/platform
+site_name: Cheetah Game Platform
+docs_dir: content
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.details
+  - pymdownx.tabbed
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink:
+plugins:
+  - search:
+      lang: ru
+extra_css:
+  - extra/extra.css
+nav:
+  - "Введение": "index.md"
+  - "Пакеты": "packets.md"
+  - "Базовые понятия":
+      - "Клиент": "basics/client.md"
+      - "Комната": "basics/room.md"
+      - "Объект": "basics/object.md"
+      - "Канал": "basics/channel.md"
+  - "Команды":
+      - "События": "commands/event.md"
+      - "Структуры": "commands/structure.md"
+      - "Целые числа": "commands/long.md"
+      - "Вещественные числа": "commands/double.md"
+      - "Сериализация": "commands/serialization.md"
+      - "Удаление поля": "commands/delete_field.md"
+      - "CompareAndSet": "commands/compare_and_set.md"
+  - "Локальная разработка":
+      - "Эмуляция параметров сети": "develop/network.md"
+      - "Логирование": "develop/logger.md"
+      - "Панель сетевых команд": "develop/commands-panel.md"
+      - "Просмотр состояния сервера": "develop/dump-panel.md"
+  - "Тестирование":
+      - "Интеграционное": "test/integration.md"
+  - "Плагины": "plugins/index.md"
+
