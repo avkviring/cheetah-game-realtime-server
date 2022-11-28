@@ -25,7 +25,7 @@ use crate::room::command::compare_and_set::{reset_all_compare_and_set, CASCleane
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::forward::ForwardConfig;
 use crate::room::object::{CreateCommandsCollector, GameObject};
-use crate::room::template::config::{MemberTemplate, RoomTemplate};
+use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::server::measurers::Measurers;
 
@@ -336,6 +336,10 @@ impl Room {
 		} else {
 			member.template.super_member
 		}
+	}
+
+	pub(crate) fn update_permissions(&mut self, permissions: &Permissions) {
+		self.permission_manager.borrow_mut().update_permissions(permissions);
 	}
 }
 

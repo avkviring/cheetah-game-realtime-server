@@ -5,6 +5,7 @@ use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirecti
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::RoomMemberId;
+use std::rc::Rc;
 
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::Permission;
@@ -32,7 +33,7 @@ impl Room {
 
 		let channel_type = self.current_channel.as_ref().unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
-		let permission_manager = self.permission_manager.clone();
+		let permission_manager = Rc::clone(&self.permission_manager);
 		let command_trace_session = self.command_trace_session.clone();
 
 		let members_for_send = self
@@ -83,8 +84,7 @@ impl Room {
 		commands: &[S2CCommandWithMeta],
 	) -> Result<(), ServerCommandError> {
 		let command_trace_session = self.command_trace_session.clone();
-		let permission_manager_rc = self.permission_manager.clone();
-		let mut permission_manager = permission_manager_rc.borrow_mut();
+		let permission_manager = Rc::clone(&self.permission_manager);
 		let channel = self.current_channel.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
 		let member = self.get_member_mut(member_id)?;
 
@@ -93,7 +93,7 @@ impl Room {
 			for command in commands {
 				let allow = match command.field {
 					None => true,
-					Some(field) => permission_manager.get_permission(object_template, field, groups) > Permission::Deny,
+					Some(field) => permission_manager.borrow_mut().get_permission(object_template, field, groups) > Permission::Deny,
 				};
 				if allow {
 					let command_with_meta = S2CCommandWithCreator {

@@ -88,21 +88,9 @@ impl From<internal::GameObjectTemplatePermission> for config::GameObjectTemplate
 
 impl From<internal::GroupsPermissionRule> for config::GroupsPermissionRule {
 	fn from(source: internal::GroupsPermissionRule) -> Self {
-		let deny = internal::PermissionLevel::Deny as i32;
-		let ro = internal::PermissionLevel::Ro as i32;
-		let rw = internal::PermissionLevel::Rw as i32;
-
-		let permission = match source.permission {
-			x if x == deny => config::Permission::Deny,
-			x if x == ro => config::Permission::Ro,
-			x if x == rw => config::Permission::Rw,
-			_ => {
-				panic!("Enum permission unrecognized {}", source.permission)
-			}
-		};
 		config::GroupsPermissionRule {
 			groups: AccessGroups(source.groups),
-			permission,
+			permission: num::FromPrimitive::from_i32(source.permission).expect("Enum permission unrecognized"),
 		}
 	}
 }

@@ -1,6 +1,5 @@
-use std::collections::{HashMap, HashSet};
-
-use fnv::FnvBuildHasher;
+use fnv::{FnvHashMap, FnvHashSet};
+use std::cell::RefCell;
 
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
@@ -8,16 +7,18 @@ use cheetah_matches_realtime_common::room::access::AccessGroups;
 use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
 use cheetah_matches_realtime_common::commands::field::Field;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct PermissionManager {
-	templates: HashMap<GameObjectTemplateId, Vec<GroupsPermissionRule>, FnvBuildHasher>,
-	fields: HashMap<PermissionFieldKey, Vec<GroupsPermissionRule>, FnvBuildHasher>,
-	cache: HashMap<PermissionCachedFieldKey, Permission, FnvBuildHasher>,
-	write_access_template: HashSet<GameObjectTemplateId, FnvBuildHasher>,
-	write_access_fields: HashSet<PermissionFieldKey, FnvBuildHasher>,
+	template_rules: FnvHashMap<GameObjectTemplateId, FnvHashMap<AccessGroups, Permission>>,
+	field_rules: FnvHashMap<PermissionFieldKey, FnvHashMap<AccessGroups, Permission>>,
+
+	write_access_template: FnvHashSet<GameObjectTemplateId>,
+	write_access_fields: FnvHashSet<PermissionFieldKey>,
+
+	cache: RefCell<FnvHashMap<PermissionCachedFieldKey, Permission>>,
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Clone)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 struct PermissionFieldKey {
 	template: GameObjectTemplateId,
 	field: Field,
@@ -26,25 +27,30 @@ struct PermissionFieldKey {
 #[derive(Hash, Eq, PartialEq, Debug)]
 struct PermissionCachedFieldKey {
 	field_key: PermissionFieldKey,
-	group: AccessGroups,
+	groups: AccessGroups,
 }
 
 impl PermissionManager {
 	#[must_use]
-	pub fn new(permission: &Permissions) -> Self {
-		let mut result = Self {
-			templates: Default::default(),
-			fields: Default::default(),
-			cache: Default::default(),
-			write_access_template: Default::default(),
-			write_access_fields: Default::default(),
-		};
+	pub fn new(permissions: &Permissions) -> Self {
+		let mut pm = Self::default();
+		pm.update_permissions(permissions);
+		pm
+	}
 
-		for template in &permission.templates {
-			if template.rules.iter().any(|t| t.permission != Permission::Ro) {
-				result.write_access_template.insert(template.template);
+	pub fn update_permissions(&mut self, permissions: &Permissions) {
+		self.cache.borrow_mut().clear();
+		for template in &permissions.templates {
+			let entry = self.template_rules.entry(template.template).or_default();
+			for GroupsPermissionRule { groups, permission } in &template.rules {
+				entry.insert(*groups, *permission);
 			}
-			result.templates.insert(template.template, template.rules.clone());
+
+			if entry.iter().any(|(_, &p)| p == Permission::Rw) {
+				self.write_access_template.insert(template.template);
+			} else {
+				self.write_access_template.remove(&template.template);
+			}
 
 			for field in &template.fields {
 				let key = PermissionFieldKey {
@@ -52,53 +58,61 @@ impl PermissionManager {
 					field: field.field,
 				};
 
-				if field.rules.iter().any(|t| t.permission != Permission::Ro) {
-					result.write_access_fields.insert(key.clone());
+				let entry = self.field_rules.entry(key).or_default();
+				for GroupsPermissionRule { groups, permission } in &field.rules {
+					entry.insert(*groups, *permission);
 				}
 
-				result.fields.insert(key, field.rules.clone());
+				if entry.iter().any(|(_, &p)| p == Permission::Rw) {
+					self.write_access_fields.insert(key);
+				} else {
+					self.write_access_fields.remove(&key);
+				}
 			}
 		}
-
-		result
 	}
 
 	///
 	/// Доступен ли объект на запись другим пользователем кроме создателя
 	///
-	pub fn has_write_access(&mut self, template: GameObjectTemplateId, field: Field) -> bool {
+	#[must_use]
+	pub fn has_write_access(&self, template: GameObjectTemplateId, field: Field) -> bool {
 		self.write_access_template.contains(&template) || self.write_access_fields.contains(&PermissionFieldKey { template, field })
 	}
 
-	pub fn get_permission(&mut self, template: GameObjectTemplateId, field: Field, member_group: AccessGroups) -> Permission {
+	#[must_use]
+	pub fn get_permission(&self, template: GameObjectTemplateId, field: Field, groups: AccessGroups) -> Permission {
 		let field_key = PermissionFieldKey { template, field };
 
-		let cached_key = PermissionCachedFieldKey {
-			field_key,
-			group: member_group,
-		};
-
-		match self.cache.get(&cached_key) {
-			None => {
-				let permission = match self.fields.get(&cached_key.field_key) {
-					None => match self.templates.get(&template) {
-						None => &Permission::Rw,
-						Some(permissions) => PermissionManager::get_permission_by_group(member_group, permissions),
-					},
-					Some(permissions) => PermissionManager::get_permission_by_group(member_group, permissions),
-				};
-				self.cache.insert(cached_key, *permission);
-				*permission
-			}
-			Some(permission) => *permission,
-		}
+		*self
+			.cache
+			.borrow_mut()
+			.entry(PermissionCachedFieldKey { field_key, groups })
+			.or_insert_with(|| {
+				if let Some(field_rules) = self.field_rules.get(&field_key) {
+					Self::get_permission_by_group(groups, field_rules)
+				} else if let Some(template_rules) = self.template_rules.get(&template) {
+					Self::get_permission_by_group(groups, template_rules)
+				} else {
+					Permission::Rw
+				}
+			})
 	}
 
-	fn get_permission_by_group(member_group: AccessGroups, groups: &[GroupsPermissionRule]) -> &Permission {
+	fn get_permission_by_group(member_group: AccessGroups, groups: &FnvHashMap<AccessGroups, Permission>) -> Permission {
 		groups
 			.iter()
-			.find(|p| p.groups.contains_any(&member_group))
-			.map_or(&Permission::Rw, |p| &p.permission)
+			.filter_map(
+				|(group, &permission)| {
+					if group.contains_any(&member_group) {
+						Some(permission)
+					} else {
+						None
+					}
+				},
+			)
+			.max()
+			.unwrap_or(Permission::Rw)
 	}
 }
 
@@ -113,7 +127,7 @@ mod tests {
 
 	#[test]
 	fn should_default_permission() {
-		let mut permissions_manager = PermissionManager::new(&Permissions::default());
+		let permissions_manager = PermissionManager::new(&Permissions::default());
 		assert_eq!(
 			permissions_manager.get_permission(
 				10,
@@ -146,7 +160,7 @@ mod tests {
 		});
 		permissions.templates.push(template_permission);
 
-		let mut permissions_manager = PermissionManager::new(&permissions);
+		let permissions_manager = PermissionManager::new(&permissions);
 
 		assert_eq!(
 			permissions_manager.get_permission(
@@ -197,7 +211,7 @@ mod tests {
 		});
 		permissions.templates.push(template_permission);
 
-		let mut permissions_manager = PermissionManager::new(&permissions);
+		let permissions_manager = PermissionManager::new(&permissions);
 
 		assert_eq!(
 			permissions_manager.get_permission(
@@ -215,7 +229,7 @@ mod tests {
 				10,
 				Field {
 					id: 15,
-					field_type: FieldType::Long
+					field_type: FieldType::Long,
 				},
 				AccessGroups(0b01)
 			),
@@ -250,7 +264,7 @@ mod tests {
 
 		let mut permissions_manager = PermissionManager::new(&permissions);
 		// прогреваем кеш
-		permissions_manager.get_permission(
+		let _ = permissions_manager.get_permission(
 			10,
 			Field {
 				id: 10,
@@ -258,7 +272,7 @@ mod tests {
 			},
 			AccessGroups(0b01),
 		);
-		permissions_manager.get_permission(
+		let _ = permissions_manager.get_permission(
 			10,
 			Field {
 				id: 15,
@@ -267,17 +281,17 @@ mod tests {
 			AccessGroups(0b01),
 		);
 		// удаляем исходные данные
-		permissions_manager.fields.clear();
-		permissions_manager.templates.clear();
+		permissions_manager.field_rules.clear();
+		permissions_manager.template_rules.clear();
 
 		assert_eq!(
 			permissions_manager.get_permission(
 				10,
 				Field {
 					id: 10,
-					field_type: FieldType::Long
+					field_type: FieldType::Long,
 				},
-				AccessGroups(0b01)
+				AccessGroups(0b01),
 			),
 			Permission::Deny
 		);
@@ -286,9 +300,9 @@ mod tests {
 				10,
 				Field {
 					id: 15,
-					field_type: FieldType::Long
+					field_type: FieldType::Long,
 				},
-				AccessGroups(0b01)
+				AccessGroups(0b01),
 			),
 			Permission::Rw
 		);
@@ -297,7 +311,7 @@ mod tests {
 	#[test]
 	fn should_not_has_write_access_by_default() {
 		let permissions = Permissions::default();
-		let mut permissions_manager = PermissionManager::new(&permissions);
+		let permissions_manager = PermissionManager::new(&permissions);
 		assert!(!permissions_manager.has_write_access(
 			10,
 			Field {
@@ -318,7 +332,7 @@ mod tests {
 			}],
 			fields: vec![],
 		});
-		let mut permissions_manager = PermissionManager::new(&permissions);
+		let permissions_manager = PermissionManager::new(&permissions);
 		assert!(permissions_manager.has_write_access(
 			10,
 			Field {
@@ -339,7 +353,7 @@ mod tests {
 			}],
 			fields: vec![],
 		});
-		let mut permissions_manager = PermissionManager::new(&permissions);
+		let permissions_manager = PermissionManager::new(&permissions);
 		assert!(!permissions_manager.has_write_access(
 			10,
 			Field {
@@ -366,13 +380,128 @@ mod tests {
 				}],
 			}],
 		});
-		let mut permissions_manager = PermissionManager::new(&permissions);
+		let permissions_manager = PermissionManager::new(&permissions);
 		assert!(permissions_manager.has_write_access(
 			10,
 			Field {
 				id: 100,
 				field_type: FieldType::Long,
-			}
+			},
 		));
+	}
+
+	#[test]
+	fn should_update_permissions() {
+		let template = 10;
+		let field = Field {
+			id: 100,
+			field_type: FieldType::Long,
+		};
+		let groups = AccessGroups(1);
+
+		let mut permissions = Permissions::default();
+		permissions.templates.push(GameObjectTemplatePermission {
+			template,
+			rules: vec![GroupsPermissionRule {
+				groups,
+				permission: Permission::Rw,
+			}],
+			fields: vec![],
+		});
+		let mut permissions_manager = PermissionManager::new(&permissions);
+
+		// should have write access
+		assert!(permissions_manager.has_write_access(template, field));
+		assert_eq!(Permission::Rw, permissions_manager.get_permission(template, field, groups));
+
+		// should not have write access after update
+		permissions.templates[0].rules[0].permission = Permission::Ro;
+		permissions_manager.update_permissions(&permissions);
+		assert!(!permissions_manager.has_write_access(template, field));
+		assert_eq!(Permission::Ro, permissions_manager.get_permission(template, field, groups));
+	}
+
+	#[test]
+	fn should_deny_template() {
+		let mut permissions = Permissions::default();
+		permissions.templates.push(GameObjectTemplatePermission {
+			template: 10,
+			rules: vec![GroupsPermissionRule {
+				groups: Default::default(),
+				permission: Permission::Deny,
+			}],
+			fields: vec![],
+		});
+
+		// should not have write access
+		let permissions_manager = PermissionManager::new(&permissions);
+		assert!(!permissions_manager.has_write_access(
+			10,
+			Field {
+				id: 100,
+				field_type: FieldType::Long,
+			},
+		));
+	}
+
+	#[test]
+	fn should_deny_field() {
+		let mut permissions = Permissions::default();
+		permissions.templates.push(GameObjectTemplatePermission {
+			template: 10,
+			rules: vec![],
+			fields: vec![PermissionField {
+				field: Field {
+					id: 100,
+					field_type: FieldType::Long,
+				},
+				rules: vec![GroupsPermissionRule {
+					groups: Default::default(),
+					permission: Permission::Deny,
+				}],
+			}],
+		});
+
+		// should have write access
+		let permissions_manager = PermissionManager::new(&permissions);
+		assert!(!permissions_manager.has_write_access(
+			10,
+			Field {
+				id: 100,
+				field_type: FieldType::Long,
+			},
+		));
+	}
+
+	#[test]
+	fn should_use_max_permission() {
+		let mut permissions = Permissions::default();
+		permissions.templates.push(GameObjectTemplatePermission {
+			template: 10,
+			rules: vec![
+				GroupsPermissionRule {
+					groups: AccessGroups(0b1),
+					permission: Permission::Ro,
+				},
+				GroupsPermissionRule {
+					groups: AccessGroups(0b10),
+					permission: Permission::Rw,
+				},
+			],
+			fields: vec![],
+		});
+
+		let permissions_manager = PermissionManager::new(&permissions);
+		assert_eq!(
+			Permission::Rw,
+			permissions_manager.get_permission(
+				10,
+				Field {
+					id: 100,
+					field_type: FieldType::Long,
+				},
+				AccessGroups(0b11),
+			)
+		);
 	}
 }

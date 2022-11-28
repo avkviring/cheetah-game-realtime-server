@@ -54,6 +54,8 @@ service Realtime {
   Получить информацию о комнате
    */
   rpc GetRoomInfo(GetRoomInfoRequest) returns(GetRoomInfoResponse);
+
+  rpc UpdateRoomPermissions(UpdateRoomPermissionsRequest) returns(UpdateRoomPermissionsResponse);
 }
 
 
@@ -225,4 +227,14 @@ message GetRoomInfoResponse {
   // если комната ready, не-суперпользователи могут подключиться к комнате и их команды будут выполняться.
   // пока комната не-ready, только суперпользователи могут подключиться и выполнять команды в комнате.
   bool ready = 2;
+}
+
+message UpdateRoomPermissionsRequest {
+  uint64 room_id = 1;
+  // Права доступа для комнаты
+  Permissions permissions = 2;
+}
+
+message UpdateRoomPermissionsResponse {
+
 }

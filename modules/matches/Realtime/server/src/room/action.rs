@@ -3,6 +3,7 @@ use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithM
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
 use cheetah_matches_realtime_common::room::RoomMemberId;
+use std::rc::Rc;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::GameObject;
@@ -33,7 +34,7 @@ impl Room {
 		T: FnOnce(&mut GameObject) -> Result<Option<S2CCommand>, ServerCommandError>,
 	{
 		let room_id = self.id;
-		let permission_manager = self.permission_manager.clone();
+		let permission_manager = Rc::clone(&self.permission_manager);
 		let creator_access_group = match self.members.get(&creator_id) {
 			None => {
 				return Err(ServerCommandError::MemberNotFound(creator_id));
@@ -97,7 +98,7 @@ impl Room {
 					}
 					None => {
 						self.send_to_members(groups, Some(template), &commands, |member| {
-							let mut permission_manager = permission_manager.borrow_mut();
+							let permission_manager = permission_manager.borrow_mut();
 							// отправляем себе только если есть права на запись
 							// иначе никто другой не может вносит изменения в данное поле и
 							// отправлять себе как единственному источнику изменений избыточно

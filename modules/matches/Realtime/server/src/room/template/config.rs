@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use cheetah_matches_realtime_common::commands::field::FieldId;
 use fnv::FnvBuildHasher;
+use num_derive::{FromPrimitive, ToPrimitive};
 
 use cheetah_matches_realtime_common::commands::FieldType;
 use cheetah_matches_realtime_common::commands::FieldValue;
@@ -66,9 +67,9 @@ pub struct PermissionField {
 	pub rules: Vec<GroupsPermissionRule>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Ord, PartialOrd, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Ord, PartialOrd, Eq, FromPrimitive, ToPrimitive)]
 pub enum Permission {
-	Deny,
+	Deny = 0,
 	Ro,
 	Rw,
 }
