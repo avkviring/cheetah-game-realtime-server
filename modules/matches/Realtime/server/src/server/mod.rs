@@ -13,7 +13,7 @@ use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomI
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
-use crate::room::template::config::MemberTemplate;
+use crate::room::template::config::{MemberTemplate, Permissions};
 use crate::server::manager::{ChannelTask, ManagementTask, ManagementTaskResult, TaskExecutionError};
 use crate::server::measurers::Measurers;
 use crate::server::network::NetworkLayer;
@@ -126,6 +126,7 @@ impl RoomsServer {
 				.get(&room_id)
 				.map(|room| ManagementTaskResult::GetRoomInfo(room.get_info()))
 				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
+			ManagementTask::UpdateRoomPermissions(room_id, permissions) => self.update_room_permissions(room_id, &permissions)?,
 		};
 		Ok(res)
 	}
@@ -161,5 +162,16 @@ impl RoomsServer {
 	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ServerCommandError> {
 		self.network_layer.disconnect_members([id].into_iter());
 		self.rooms.member_disconnected(&id)
+	}
+
+	fn update_room_permissions(&mut self, room_id: RoomId, permissions: &Permissions) -> Result<ManagementTaskResult, TaskExecutionError> {
+		self.rooms
+			.room_by_id
+			.get_mut(&room_id)
+			.map(|room| {
+				room.update_permissions(permissions);
+				Ok(ManagementTaskResult::UpdateRoomPermissions)
+			})
+			.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?
 	}
 }

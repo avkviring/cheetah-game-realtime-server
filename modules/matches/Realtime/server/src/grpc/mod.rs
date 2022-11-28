@@ -198,6 +198,20 @@ impl Realtime for RealtimeInternalService {
 			.map(|room_info| Response::new(GetRoomInfoResponse::from(room_info)))
 			.map_err(Status::from)
 	}
+
+	async fn update_room_permissions(
+		&self,
+		mut request: Request<UpdateRoomPermissionsRequest>,
+	) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
+		let room_id = request.get_ref().room_id as RoomId;
+		let permissions = crate::room::template::config::Permissions::from(request.get_mut().permissions.take().unwrap_or_default());
+		self.server_manager
+			.lock()
+			.await
+			.update_room_permissions(room_id, permissions)
+			.map(|_| Response::new(UpdateRoomPermissionsResponse {}))
+			.map_err(Status::from)
+	}
 }
 
 impl From<TaskError> for Status {
@@ -229,6 +243,7 @@ impl From<RoomInfo> for GetRoomInfoResponse {
 #[cfg(test)]
 mod test {
 	use fnv::FnvHashSet;
+	use num_traits::ToPrimitive;
 	use std::sync::Arc;
 
 	use tokio::sync::Mutex;
@@ -241,11 +256,11 @@ mod test {
 
 	use crate::grpc::proto::internal::realtime_server::Realtime;
 	use crate::grpc::proto::internal::{
-		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GetRoomInfoRequest, MarkRoomAsReadyRequest, PutForwardedCommandConfigRequest,
-		RoomIdResponse,
+		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GameObjectTemplatePermission, GetRoomInfoRequest, GroupsPermissionRule,
+		MarkRoomAsReadyRequest, Permissions, PutForwardedCommandConfigRequest, RoomIdResponse, UpdateRoomPermissionsRequest,
 	};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
-	use crate::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;
 
 	#[tokio::test]
@@ -515,6 +530,31 @@ mod test {
 			matches!(res.unwrap_err().code(), Code::InvalidArgument),
 			"mark_room_as_ready should return invalid_argument"
 		);
+	}
+
+	#[tokio::test]
+	async fn test_update_room_permissions() {
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
+		let service = RealtimeInternalService::new(server_manager.clone());
+		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
+
+		let mut permissions = Permissions::default();
+		permissions.objects.push(GameObjectTemplatePermission {
+			template: 10,
+			rules: vec![GroupsPermissionRule {
+				groups: Default::default(),
+				permission: ToPrimitive::to_i32(&Permission::Rw).unwrap(),
+			}],
+			fields: vec![],
+		});
+
+		let status = service
+			.update_room_permissions(Request::new(UpdateRoomPermissionsRequest {
+				room_id,
+				permissions: Some(permissions),
+			}))
+			.await;
+		assert!(status.is_ok());
 	}
 
 	fn new_server_manager() -> RoomsServerManager {

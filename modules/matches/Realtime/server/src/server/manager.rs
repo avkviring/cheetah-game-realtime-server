@@ -15,7 +15,7 @@ use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
 use crate::room::command::ServerCommandError;
 use crate::room::forward::ForwardConfig;
-use crate::room::template::config::{MemberTemplate, RoomTemplate};
+use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::RoomInfo;
 use crate::server::rooms::RoomNotFoundError;
 use crate::server::RoomsServer;
@@ -42,6 +42,7 @@ pub enum ManagementTask {
 	PutForwardedCommandConfig(RoomId, ForwardConfig),
 	MarkRoomAsReady(RoomId, String),
 	GetRoomInfo(RoomId),
+	UpdateRoomPermissions(RoomId, Permissions),
 }
 
 pub enum ManagementTaskResult {
@@ -55,6 +56,7 @@ pub enum ManagementTaskResult {
 	PutForwardedCommandConfig,
 	MarkRoomAsReady,
 	GetRoomInfo(RoomInfo),
+	UpdateRoomPermissions,
 }
 
 #[derive(Debug, Error)]
@@ -168,6 +170,10 @@ impl RoomsServerManager {
 
 	pub(crate) fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), TaskError> {
 		self.execute_task(ManagementTask::MarkRoomAsReady(room_id, plugin_name)).map(|_| ())
+	}
+
+	pub(crate) fn update_room_permissions(&mut self, room_id: RoomId, permissions: Permissions) -> Result<(), TaskError> {
+		self.execute_task(ManagementTask::UpdateRoomPermissions(room_id, permissions)).map(|_| ())
 	}
 
 	pub(crate) fn get_room_info(&mut self, room_id: RoomId) -> Result<RoomInfo, TaskError> {
