@@ -1,4 +1,4 @@
-name: build-on-windows
+name: build-on-macos
 on:
   workflow_call:
 env:
