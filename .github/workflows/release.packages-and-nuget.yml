@@ -17,6 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: rustup target add aarch64-apple-ios
+      - run: xcodebuild -version
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "13.4.1"
+      - run: xcodebuild -version      
       - name: Build Client
         run: cargo build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --target aarch64-apple-ios --release
       - name: Upload Artifact
