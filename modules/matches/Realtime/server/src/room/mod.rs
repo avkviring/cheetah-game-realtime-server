@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::slice;
 use std::time::Instant;
 
 use fnv::{FnvBuildHasher, FnvHashMap, FnvHashSet};
@@ -10,11 +11,11 @@ use indexmap::map::IndexMap;
 use cheetah_matches_realtime_common::commands::binary_value::BinaryValue;
 use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_matches_realtime_common::commands::types::delete::DeleteGameObjectCommand;
+use cheetah_matches_realtime_common::commands::types::member_connected::MemberConnectedCommand;
 use cheetah_matches_realtime_common::constants::GameObjectTemplateId;
 use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
-#[cfg(test)]
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::object::GameObjectId;
 use cheetah_matches_realtime_common::room::owner::GameObjectOwner;
@@ -170,14 +171,8 @@ impl Room {
 				return;
 			}
 			if !member.connected {
-				let member = self.members.get_mut(&member_id).unwrap();
-				member.connected = true;
-				self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
-				let member_id = member.id;
-				let template = member.template.clone();
-				if let Err(e) = self.on_member_connect(member_id, template) {
+				if let Err(e) = self.connect_member(member_id) {
 					e.log_error(self.id, member_id);
-					self.current_channel = None;
 					return;
 				}
 			}
@@ -218,6 +213,17 @@ impl Room {
 		}
 
 		self.current_channel = None;
+	}
+
+	fn connect_member(&mut self, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
+		let template = self.members.get(&member_id).unwrap().template.clone();
+		if let Err(e) = self.on_member_connect(member_id, template) {
+			self.current_channel = None;
+			return Err(e);
+		}
+		self.members.get_mut(&member_id).unwrap().connected = true;
+		Ok(())
 	}
 
 	pub fn register_member(&mut self, template: MemberTemplate) -> RoomMemberId {
@@ -324,6 +330,16 @@ impl Room {
 			self.send_to_members(access_groups, Some(template), commands.as_slice(), |_member_id| true)?;
 			self.insert_object(object);
 		}
+
+		let s2c = S2CCommandWithMeta {
+			field: None,
+			creator: member_id,
+			command: S2CCommand::MemberConnected(MemberConnectedCommand { member_id }),
+		};
+		self.send_to_members(AccessGroups::super_group(), None, slice::from_ref(&s2c), |member| {
+			member.template.super_member
+		})?;
+
 		Ok(())
 	}
 
@@ -356,6 +372,7 @@ mod tests {
 	use cheetah_matches_realtime_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
 	use cheetah_matches_realtime_common::commands::types::field::SetFieldCommand;
+	use cheetah_matches_realtime_common::commands::types::member_connected::MemberConnectedCommand;
 	use cheetah_matches_realtime_common::commands::{CommandTypeId, FieldType, FieldValue};
 	use cheetah_matches_realtime_common::protocol::commands::output::CommandWithChannelType;
 	use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
@@ -709,6 +726,33 @@ mod tests {
 		let command_2 = get_create_game_object_command(2);
 		room.execute_commands(member_1, slice::from_ref(&command_2));
 		assert_eq!(2, room.objects.len());
+	}
+
+	#[test]
+	fn should_send_member_connected_to_super_members() {
+		let template = RoomTemplate::default();
+		let access_groups = AccessGroups(10);
+		let mut room = Room::from_template(template);
+		let super_member = room.register_member(MemberTemplate::new_super_member());
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+
+		room.test_mark_as_connected(super_member).unwrap();
+		room.test_mark_as_connected(member_1).unwrap();
+
+		let command_1 = CommandWithChannel {
+			channel: Channel::ReliableUnordered,
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+		};
+		room.execute_commands(member_2, slice::from_ref(&command_1));
+
+		// MemberConnectedCommand should be sent only to super_member
+		assert!(room.test_get_member_out_commands(member_1).is_empty());
+		assert!(room.test_get_member_out_commands(member_2).is_empty());
+		assert_eq!(
+			S2CCommand::MemberConnected(MemberConnectedCommand { member_id: member_2 }),
+			room.test_get_member_out_commands(super_member)[0]
+		);
 	}
 
 	pub fn create_template() -> (RoomTemplate, MemberTemplate) {

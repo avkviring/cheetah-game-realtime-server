@@ -7,6 +7,7 @@ pub mod event;
 pub mod field;
 pub mod float_value;
 pub mod long_value;
+pub mod member_connected;
 pub mod object;
 pub mod room;
 pub mod structure;

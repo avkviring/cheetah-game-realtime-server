@@ -7,6 +7,7 @@ use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
 use crate::commands::types::forwarded::ForwardedCommand;
+use crate::commands::types::member_connected::MemberConnectedCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
@@ -23,6 +24,7 @@ pub enum S2CCommand {
 	Delete(DeleteGameObjectCommand),
 	DeleteField(DeleteFieldCommand),
 	Forwarded(Box<ForwardedCommand>),
+	MemberConnected(MemberConnectedCommand),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -54,6 +56,7 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_id),
 			S2CCommand::Forwarded(command) => command.c2s.get_field_id(),
+			S2CCommand::MemberConnected(_) => None,
 		}
 	}
 
@@ -67,6 +70,7 @@ impl S2CCommand {
 			S2CCommand::Delete(command) => Some(command.object_id),
 			S2CCommand::DeleteField(command) => Some(command.object_id),
 			S2CCommand::Forwarded(command) => command.c2s.get_object_id(),
+			S2CCommand::MemberConnected(_) => None,
 		}
 	}
 
@@ -80,6 +84,7 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_type),
 			S2CCommand::Forwarded(command) => command.c2s.get_field_type(),
+			S2CCommand::MemberConnected(_) => None,
 		}
 	}
 
@@ -97,6 +102,7 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => CommandTypeId::Delete,
 			S2CCommand::DeleteField(_) => CommandTypeId::DeleteField,
 			S2CCommand::Forwarded(_) => CommandTypeId::Forwarded,
+			S2CCommand::MemberConnected(_) => CommandTypeId::MemberConnected,
 		}
 	}
 
@@ -110,6 +116,7 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => "".to_string(),
 			S2CCommand::DeleteField(_) => "".to_string(),
 			S2CCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
+			S2CCommand::MemberConnected(command) => format!("member connected({:?})", command.member_id),
 		}
 	}
 
@@ -122,6 +129,7 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => Ok(()),
 			S2CCommand::DeleteField(command) => command.encode(out),
 			S2CCommand::Forwarded(command) => command.encode(out),
+			S2CCommand::MemberConnected(command) => command.encode(out),
 		}
 	}
 
@@ -141,6 +149,7 @@ impl S2CCommand {
 			CommandTypeId::Event => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::Forwarded => S2CCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
+			CommandTypeId::MemberConnected => S2CCommand::MemberConnected(MemberConnectedCommand::decode(input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
@@ -158,6 +167,7 @@ mod tests {
 	use crate::commands::types::event::TargetEventCommand;
 	use crate::commands::types::field::SetFieldCommand;
 	use crate::commands::types::forwarded::ForwardedCommand;
+	use crate::commands::types::member_connected::MemberConnectedCommand;
 	use crate::commands::CommandTypeId;
 	use crate::{
 		commands::s2c::S2CCommand, commands::types::event::EventCommand, protocol::codec::commands::context::CommandContextError,
@@ -284,6 +294,16 @@ mod tests {
 			CommandTypeId::Forwarded,
 			Some(object_id),
 			Some(field_id),
+		);
+	}
+
+	#[test]
+	fn should_decode_encode_member_connected() {
+		check(
+			&S2CCommand::MemberConnected(MemberConnectedCommand { member_id: 100 }),
+			CommandTypeId::MemberConnected,
+			None,
+			None,
 		);
 	}
 
