@@ -5,4 +5,5 @@ pub mod field;
 pub mod float;
 pub mod forwarded;
 pub mod long;
+pub mod member_connected;
 pub mod structure;

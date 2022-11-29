@@ -43,6 +43,7 @@ pub struct ApplicationThreadClient {
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
 	pub listener_forwarded_command: Option<extern "C" fn(ForwardedCommandFFI)>,
+	pub listener_member_connected: Option<extern "C" fn(RoomMemberId)>,
 }
 
 impl Drop for ApplicationThreadClient {
@@ -82,6 +83,7 @@ impl ApplicationThreadClient {
 			listener_created_object: None,
 			listener_delete_field: None,
 			listener_forwarded_command: None,
+			listener_member_connected: None,
 		}
 	}
 
@@ -172,6 +174,11 @@ impl ApplicationThreadClient {
 					S2CCommand::Forwarded(command) => {
 						if let Some(ref listener) = self.listener_forwarded_command {
 							listener((*command).into());
+						}
+					}
+					S2CCommand::MemberConnected(command) => {
+						if let Some(ref listener) = self.listener_member_connected {
+							listener(command.member_id);
 						}
 					}
 				}

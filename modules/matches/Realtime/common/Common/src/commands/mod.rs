@@ -35,6 +35,7 @@ pub enum CommandTypeId {
 	DeleteField,
 	CompareAndSetStructure,
 	Forwarded,
+	MemberConnected,
 }
 
 #[derive(Error, Debug)]
