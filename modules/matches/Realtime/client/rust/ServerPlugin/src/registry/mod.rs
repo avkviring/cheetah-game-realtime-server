@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
-use tonic::transport::Channel;
 
 use crate::registry::created_room::CreateRoomEventReader;
 
@@ -13,23 +12,31 @@ pub type RoomId = u64;
 
 #[derive(Default)]
 pub struct Registry {
-	pub plugins: HashMap<ServerPluginId, ServerPlugin, FnvBuildHasher>,
-	server_plugin_generator_id: ServerPluginId,
+    plugins: HashMap<ServerPluginId, ServerPlugin, FnvBuildHasher>,
+    server_plugin_generator_id: ServerPluginId,
 }
+
+impl Registry {
+
+    pub fn register_plugin(&mut self, server_plugin: ServerPlugin) -> ServerPluginId {
+        let plugin_id = self.server_plugin_generator_id;
+        self.plugins.insert(plugin_id, server_plugin);
+        self.server_plugin_generator_id += 1;
+        plugin_id
+    }
+}
+
 
 pub type ServerPluginId = u16;
 
 pub struct ServerPlugin {
-	create_room_event_reader: CreateRoomEventReader,
+    create_room_event_reader: CreateRoomEventReader,
 }
 
 impl ServerPlugin {
-	pub fn new(server_grpc_addr: String) -> Result<Self, anyhow::Error> {
-		// let c = Channel::from_shared(server_grpc_addr)?;
-		// let connect = c.connect().await;
-		todo!()
-		// Ok(ServerPlugin {
-		// 	create_room_event_reader: CreateRoomEventReader::new(channel?),
-		// })
-	}
+    pub fn new(server_grpc_addr: String) -> Result<Self, anyhow::Error> {
+        Ok(ServerPlugin {
+            create_room_event_reader: CreateRoomEventReader::from_address(server_grpc_addr)?,
+        })
+    }
 }
