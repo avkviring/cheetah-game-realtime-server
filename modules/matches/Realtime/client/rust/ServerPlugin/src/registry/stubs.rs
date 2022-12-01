@@ -12,12 +12,14 @@ use tower::service_fn;
 use crate::proto::matches::realtime::internal::realtime_server::{Realtime, RealtimeServer};
 use crate::proto::matches::realtime::internal::{
 	CreateMemberRequest, CreateMemberResponse, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest,
-	DeleteRoomResponse, EmptyRequest, ProbeRequest, ProbeResponse, QueryRoomRequest, QueryRoomResponse, RoomIdResponse, RoomTemplate,
+	DeleteRoomResponse, EmptyRequest, GetRoomInfoRequest, GetRoomInfoResponse, MarkRoomAsReadyRequest, MarkRoomAsReadyResponse, ProbeRequest,
+	ProbeResponse, PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, RoomIdResponse, RoomLifecycleResponse, RoomTemplate,
+	UpdateRoomPermissionsRequest, UpdateRoomPermissionsResponse,
 };
 
 pub struct RealtimeStub<CreatedEventStubFunc, Fut>
 where
-	CreatedEventStubFunc: Fn(Sender<Result<RoomIdResponse, Status>>) -> Fut,
+	CreatedEventStubFunc: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut,
 	CreatedEventStubFunc: Send + Sync + 'static,
 	Fut: Future<Output = ()> + 'static + Send + Sync,
 {
@@ -27,7 +29,7 @@ where
 #[tonic::async_trait]
 impl<CreatedEventStubFunc, Fut> Realtime for RealtimeStub<CreatedEventStubFunc, Fut>
 where
-	CreatedEventStubFunc: Fn(Sender<Result<RoomIdResponse, Status>>) -> Fut,
+	CreatedEventStubFunc: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut,
 	CreatedEventStubFunc: Send + Sync + 'static,
 	Fut: Future<Output = ()> + 'static + Send + Sync,
 {
@@ -47,16 +49,12 @@ where
 		unreachable!()
 	}
 
-	async fn query_room(&self, _request: Request<QueryRoomRequest>) -> Result<Response<QueryRoomResponse>, Status> {
-		unreachable!()
-	}
-
 	async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {
 		unreachable!()
 	}
 
-	type WatchCreatedRoomEventStream = ReceiverStream<Result<RoomIdResponse, Status>>;
-	async fn watch_created_room_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchCreatedRoomEventStream>, Status> {
+	type WatchRoomLifecycleEventStream = ReceiverStream<Result<RoomLifecycleResponse, Status>>;
+	async fn watch_room_lifecycle_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchRoomLifecycleEventStream>, Status> {
 		let (tx, rx) = mpsc::channel(64);
 		(self.created_event_stub_function)(tx).await;
 		Ok(Response::new(ReceiverStream::new(rx)))
@@ -65,11 +63,30 @@ where
 	async fn delete_room(&self, _request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
 		unreachable!()
 	}
+
+	async fn put_forwarded_command_config(
+		&self,
+		_: Request<PutForwardedCommandConfigRequest>,
+	) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
+		unreachable!()
+	}
+
+	async fn mark_room_as_ready(&self, _: Request<MarkRoomAsReadyRequest>) -> Result<Response<MarkRoomAsReadyResponse>, Status> {
+		unreachable!()
+	}
+
+	async fn get_room_info(&self, _: Request<GetRoomInfoRequest>) -> Result<Response<GetRoomInfoResponse>, Status> {
+		unreachable!()
+	}
+
+	async fn update_room_permissions(&self, _: Request<UpdateRoomPermissionsRequest>) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
+		unreachable!()
+	}
 }
 
 pub fn create_stub_server<F, Fut>(f: F) -> (Runtime, JoinHandle<Result<(), Error>>, Channel)
 where
-	F: Fn(Sender<Result<RoomIdResponse, Status>>) -> Fut,
+	F: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut,
 	F: Send + Sync + 'static,
 	Fut: Future<Output = ()> + 'static + Send + Sync,
 {
