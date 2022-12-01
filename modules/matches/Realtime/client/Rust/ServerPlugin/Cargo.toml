@@ -9,8 +9,8 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
 lazy_static = "1.4.0"
-tonic = "0.8.2"
-prost = "0.11.0"
+tonic = "0.6.2"
+prost = "0.9.0"
 fnv = "1.0.7"
 tokio = { version = "1.21.2", features = ["rt-multi-thread"] }
 crossbeam = "0.8.2"
@@ -28,4 +28,4 @@ mockall = "0.11.3"
 
 
 [build-dependencies]
-tonic-build = { version = "0.8.2" }
+tonic-build = {version="0.6.2", features=["rustfmt"]}
