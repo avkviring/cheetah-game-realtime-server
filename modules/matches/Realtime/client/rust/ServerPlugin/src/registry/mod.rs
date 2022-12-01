@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
 
-use crate::registry::created_room::CreateRoomEventReader;
+use crate::registry::events::RoomLifecycleEventReader;
 
-pub mod created_room;
+pub mod events;
 #[cfg(test)]
 pub mod stubs;
 
@@ -17,12 +17,15 @@ pub struct Registry {
 }
 
 impl Registry {
-
     pub fn register_plugin(&mut self, server_plugin: ServerPlugin) -> ServerPluginId {
         let plugin_id = self.server_plugin_generator_id;
         self.plugins.insert(plugin_id, server_plugin);
         self.server_plugin_generator_id += 1;
         plugin_id
+    }
+
+    pub fn get_plugin(&mut self, id: ServerPluginId) -> Option<&mut ServerPlugin> {
+        return self.plugins.get_mut(&id);
     }
 }
 
@@ -30,13 +33,13 @@ impl Registry {
 pub type ServerPluginId = u16;
 
 pub struct ServerPlugin {
-    create_room_event_reader: CreateRoomEventReader,
+    pub(crate) reader: RoomLifecycleEventReader,
 }
 
 impl ServerPlugin {
     pub fn new(server_grpc_addr: String) -> Result<Self, anyhow::Error> {
         Ok(ServerPlugin {
-            create_room_event_reader: CreateRoomEventReader::from_address(server_grpc_addr)?,
+            reader: RoomLifecycleEventReader::from_address(server_grpc_addr)?,
         })
     }
 }

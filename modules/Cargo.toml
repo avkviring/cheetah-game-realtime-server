@@ -5,7 +5,7 @@ members = [
     "matches/Realtime/server",
     "matches/Realtime/common/Common",
     "matches/Realtime/common/Macro",
-    "matches/Realtime/client/rust/Realtime",
-    "matches/Realtime/client/rust/Embedded",
-    "matches/Realtime/client/rust/ServerPlugin",
+    "matches/Realtime/client/Rust/Realtime",
+    "matches/Realtime/client/Rust/Embedded",
+    "matches/Realtime/client/Rust/ServerPlugin",
 ]

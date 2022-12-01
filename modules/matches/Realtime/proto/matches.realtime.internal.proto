@@ -32,7 +32,8 @@ service Realtime {
   /**
     Отслеживание операций создания комнаты, при первом вызове отсылаются и уже созданные комнаты.
    */
-  rpc WatchCreatedRoomEvent(EmptyRequest) returns (stream RoomIdResponse);
+  rpc WatchRoomLifecycleEvent(EmptyRequest) returns (stream RoomLifecycleResponse);
+
 
   /**
     Отключить всех пользователей от комнаты и удалить её
@@ -237,4 +238,13 @@ message UpdateRoomPermissionsRequest {
 
 message UpdateRoomPermissionsResponse {
 
+}
+
+message RoomLifecycleResponse {
+  uint64 room_id = 1;
+  enum RoomLifecycleType {
+    Created = 0;
+    Deleted = 1;
+  }
+  RoomLifecycleType type = 2;
 }
