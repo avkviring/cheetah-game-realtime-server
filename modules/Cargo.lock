@@ -302,7 +302,7 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-subscriber",
- "widestring 0.5.1",
+ "widestring",
 ]
 
 [[package]]
@@ -350,7 +350,7 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-subscriber",
- "widestring 0.5.1",
+ "widestring",
 ]
 
 [[package]]
@@ -381,7 +381,6 @@ dependencies = [
  "tonic",
  "tonic-build",
  "tower",
- "widestring 1.0.2",
 ]
 
 [[package]]
@@ -2673,12 +2672,6 @@ name = "widestring"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17882f045410753661207383517a6f62ec3dbeb6a4ed2acce01f0728238d1983"
-
-[[package]]
-name = "widestring"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "653f141f39ec16bba3c5abe400a0c60da7468261cc2cbf36805022876bc721a8"
 
 [[package]]
 name = "winapi"
