@@ -1,0 +1,4 @@
+*.dll
+*.pdb
+*.dylib
+*.so
