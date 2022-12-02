@@ -13,21 +13,21 @@ namespace Cheetah.Platform
     /// </summary>
     public class ClusterConnector
     {
-        private readonly string url;
-        private readonly int port;
-        private readonly bool useSSL;
         private GrpcChannel channel;
+        private readonly string address;
 
-        public ClusterConnector(string url, int port, bool useSSL)
+
+        public ClusterConnector(string url, int port, bool useSSL) : this((useSSL ? "https" : "http") + "://" + url + ":" + port)
         {
-            this.url = url;
-            this.port = port;
-            this.useSSL = useSSL;
+        }
+
+        public ClusterConnector(string address)
+        {
+            this.address = address;
         }
 
         private void DoConnect()
         {
-            var address = (useSSL ? "https" : "http") + "://" + url + ":" + port;
             channel = GrpcChannel.ForAddress(
                 address, new GrpcChannelOptions
                 {
