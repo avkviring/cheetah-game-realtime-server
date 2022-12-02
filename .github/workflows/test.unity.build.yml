@@ -14,9 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         targetPlatform:
-#          - StandaloneOSX
-#          - StandaloneWindows
-#          - StandaloneWindows64
           - StandaloneLinux64
           - iOS
           - Android
@@ -30,7 +27,7 @@ jobs:
           restore-keys: |
             test-build-${{ matrix.targetPlatform }}-unity-client-
       - name: Generate GRPC Implementations
-        run: scripts/generators/grpc/unity.sh
+        run: cd scripts && ./generate-all.sh
       - uses: game-ci/unity-builder@v2
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
