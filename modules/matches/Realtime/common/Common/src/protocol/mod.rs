@@ -132,10 +132,8 @@ impl Protocol {
 			Some(DisconnectedReason::ByRetryLimit)
 		} else if self.disconnect_by_timeout.disconnected(now) {
 			Some(DisconnectedReason::ByTimeout)
-		} else if self.disconnect_by_command.disconnected() {
-			Some(DisconnectedReason::ByCommand)
 		} else {
-			None
+			self.disconnect_by_command.disconnected().map(DisconnectedReason::ByCommand)
 		}
 	}
 

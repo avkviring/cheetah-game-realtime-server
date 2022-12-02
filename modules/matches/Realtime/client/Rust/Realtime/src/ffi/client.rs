@@ -4,6 +4,7 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use cheetah_matches_realtime_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_matches_realtime_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::clients::registry::ClientId;
@@ -23,7 +24,7 @@ pub enum ConnectionStatusFFI {
 	DisconnectedByIOError,
 	DisconnectedByRetryLimit,
 	DisconnectedByTimeout,
-	DisconnectedByCommand,
+	DisconnectedByCommand(DisconnectByCommandReason),
 }
 
 #[no_mangle]
@@ -41,7 +42,7 @@ pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut Connec
 						DisconnectedReason::IOError(_) => ConnectionStatusFFI::DisconnectedByIOError,
 						DisconnectedReason::ByRetryLimit => ConnectionStatusFFI::DisconnectedByRetryLimit,
 						DisconnectedReason::ByTimeout => ConnectionStatusFFI::DisconnectedByTimeout,
-						DisconnectedReason::ByCommand => ConnectionStatusFFI::DisconnectedByCommand,
+						DisconnectedReason::ByCommand(reason) => ConnectionStatusFFI::DisconnectedByCommand(reason),
 					},
 				};
 				*result = ffi_status;

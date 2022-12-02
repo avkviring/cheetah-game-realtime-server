@@ -9,6 +9,7 @@ use cheetah_matches_realtime_common::commands::s2c::S2CCommand;
 use cheetah_matches_realtime_common::commands::types::create::CreateGameObjectCommand;
 use cheetah_matches_realtime_common::commands::FieldValue;
 use cheetah_matches_realtime_common::network::client::ConnectionStatus;
+use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_matches_realtime_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
 use cheetah_matches_realtime_common::protocol::frame::channel::ChannelType;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
@@ -48,7 +49,11 @@ pub struct ApplicationThreadClient {
 
 impl Drop for ApplicationThreadClient {
 	fn drop(&mut self) {
-		if self.request_to_client.send(ClientRequest::Close).is_ok() {
+		if self
+			.request_to_client
+			.send(ClientRequest::Close(DisconnectByCommandReason::ClientStopped))
+			.is_ok()
+		{
 			self.handler.take().unwrap().join().unwrap();
 		}
 	}

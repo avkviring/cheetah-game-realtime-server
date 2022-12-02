@@ -1,3 +1,4 @@
+use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::Arc;
 ///
@@ -21,7 +22,7 @@ pub enum ClientRequest {
 	ConfigureDropEmulation(f64, Duration),
 	SendCommandToServer(C2SCommandWithChannel),
 	ResetEmulation,
-	Close,
+	Close(DisconnectByCommandReason),
 }
 
 ///

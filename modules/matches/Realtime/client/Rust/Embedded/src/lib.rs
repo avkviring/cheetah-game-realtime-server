@@ -61,8 +61,8 @@ impl EmbeddedServerWrapper {
 			manager,
 			game_socket_addr,
 			internal_grpc_socket_addr,
-			admin_webgrpc_socket_addr,
 			internal_webgrpc_socket_addr,
+			admin_webgrpc_socket_addr,
 		})
 	}
 

@@ -2,6 +2,7 @@ use crate::helpers::helper::IntegrationTestHelper;
 use crate::helpers::server::IntegrationTestServerBuilder;
 use cheetah_matches_realtime_client::ffi::execute_with_client;
 use cheetah_matches_realtime_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use std::thread;
 use std::time::Duration;
@@ -38,7 +39,10 @@ fn should_disconnect_on_delete_member() {
 
 	execute_with_client(client, |api| {
 		let status = api.get_connection_status().unwrap();
-		assert!(matches!(status, ConnectionStatus::Disconnected(DisconnectedReason::ByCommand)));
+		assert!(matches!(
+			status,
+			ConnectionStatus::Disconnected(DisconnectedReason::ByCommand(DisconnectByCommandReason::MemberDeleted))
+		));
 		Ok(())
 	});
 }

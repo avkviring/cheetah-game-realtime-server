@@ -6,6 +6,7 @@ use std::rc::Rc;
 use std::time::Instant;
 
 use cheetah_matches_realtime_common::protocol::codec::cipher::Cipher;
+use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_matches_realtime_common::protocol::frame::headers::Header;
 use cheetah_matches_realtime_common::protocol::frame::input::InFrame;
 use cheetah_matches_realtime_common::protocol::frame::{FrameId, MAX_FRAME_SIZE};
@@ -187,10 +188,10 @@ impl NetworkLayer {
 	}
 
 	/// Послать `DisconnectHeader` пользователю и удалить сессию с сервера
-	pub fn disconnect_members(&mut self, member_and_room_ids: impl Iterator<Item = MemberAndRoomId>) {
+	pub fn disconnect_members(&mut self, member_and_room_ids: impl Iterator<Item = MemberAndRoomId>, reason: DisconnectByCommandReason) {
 		for id in member_and_room_ids {
 			if let Some(mut session) = self.sessions.remove(&id) {
-				session.protocol.disconnect_by_command.disconnect();
+				session.protocol.disconnect_by_command.disconnect(reason);
 				Self::send_frame(&self.socket, &mut session);
 			}
 		}
@@ -207,6 +208,7 @@ mod tests {
 
 	use cheetah_matches_realtime_common::network::bind_to_free_socket;
 	use cheetah_matches_realtime_common::protocol::codec::cipher::Cipher;
+	use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 	use cheetah_matches_realtime_common::protocol::frame::headers::Header;
 	use cheetah_matches_realtime_common::protocol::frame::output::OutFrame;
 	use cheetah_matches_realtime_common::protocol::frame::MAX_FRAME_SIZE;
@@ -308,7 +310,7 @@ mod tests {
 		);
 		udp_server.register_member(Instant::now(), 0, 1, member_template);
 
-		udp_server.disconnect_members(vec![member_to_delete].into_iter());
+		udp_server.disconnect_members(vec![member_to_delete].into_iter(), DisconnectByCommandReason::MemberDeleted);
 
 		assert!(!udp_server.sessions.contains_key(&member_to_delete), "session should be deleted");
 	}

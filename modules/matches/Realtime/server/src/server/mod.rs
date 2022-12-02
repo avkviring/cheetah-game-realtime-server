@@ -1,3 +1,4 @@
+use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 use fnv::FnvHashSet;
 use std::cell::RefCell;
 use std::net::UdpSocket;
@@ -7,7 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use std::{io, thread};
+use std::{io, iter, thread};
 
 use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
@@ -154,13 +155,14 @@ impl RoomsServer {
 	fn delete_room(&mut self, room_id: RoomId) -> Result<(), RoomNotFoundError> {
 		let room = self.rooms.take_room(&room_id)?;
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
-		self.network_layer.disconnect_members(ids);
+		self.network_layer.disconnect_members(ids, DisconnectByCommandReason::RoomDeleted);
 		Ok(())
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
 	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ServerCommandError> {
-		self.network_layer.disconnect_members([id].into_iter());
+		self.network_layer
+			.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
 		self.rooms.member_disconnected(&id)
 	}
 
