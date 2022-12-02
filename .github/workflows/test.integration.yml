@@ -35,7 +35,7 @@ jobs:
           lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/          
           cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/
       - name: Generate GRPC Implementations
-        run: scripts/generators/grpc/unity.sh
+        run: cd scripts && ./generate-all.sh
       - uses: cheetah-game-platform/unity-test-runner@main
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
