@@ -39,7 +39,7 @@ pub struct Server {
 
 impl Server {
 	pub async fn run(self) {
-		let internal_grpc_future = Self::new_internal_grpc_service(self.internal_grpc_listener, self.manager.clone());
+		let internal_grpc_future = Self::new_internal_grpc_service(self.internal_grpc_listener, Arc::clone(&self.manager));
 		let internal_webgrpc_future = Self::new_internal_webgrpc_service(self.internal_webgrpc_listener, Arc::clone(&self.manager));
 		let admin_grpc = Self::configure_admin_grpc_service(self.admin_webgrpc_listener, Arc::clone(&self.manager));
 		if self.is_agones_enabled {

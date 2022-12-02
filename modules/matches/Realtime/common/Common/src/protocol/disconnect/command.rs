@@ -1,6 +1,10 @@
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
+use byteorder::{ReadBytesExt, WriteBytesExt};
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
+use std::io::{Cursor, Error, ErrorKind};
 
 ///
 /// Быстрое закрытие соединения по команде с удаленной стороны
@@ -10,55 +14,84 @@ pub struct DisconnectByCommand {
 	///
 	/// Соединение разорвано удаленной стороной
 	///
-	disconnected_by_peer: bool,
-
-	///
-	/// Запрос на разрыв соединения
-	///
-	disconnecting_by_self_request: bool,
+	by_peer_reason: Option<DisconnectByCommandReason>,
 
 	///
 	/// Отправили заголовок на разрыв соединения
 	///
 	disconnected_by_self: bool,
+
+	///
+	/// Запрос на разрыв соединения
+	///
+	by_self_reason: Option<DisconnectByCommandReason>,
 }
 impl DisconnectByCommand {
 	///
 	/// Разорвать соединение с удаленной стороной
 	///
-	pub fn disconnect(&mut self) {
-		self.disconnecting_by_self_request = true;
+	pub fn disconnect(&mut self, reason: DisconnectByCommandReason) {
+		self.by_self_reason = Some(reason);
 	}
 
 	#[must_use]
 	pub fn contains_self_data(&self) -> bool {
-		self.disconnecting_by_self_request && !self.disconnected_by_self
+		self.by_self_reason.is_some() && !self.disconnected_by_self
 	}
 
 	pub fn build_frame(&mut self, frame: &mut OutFrame) {
-		if self.disconnecting_by_self_request {
-			frame.headers.add(Header::Disconnect(DisconnectHeader::default()));
+		if let Some(reason) = self.by_self_reason {
+			frame.headers.add(Header::Disconnect(DisconnectHeader(reason)));
 			self.disconnected_by_self = true;
 		}
 	}
 
 	pub fn on_frame_received(&mut self, frame: &InFrame) {
-		let headers: Option<&DisconnectHeader> = frame.headers.first(Header::predicate_disconnect);
-		self.disconnected_by_peer = headers.is_some();
+		if let Some(header) = frame.headers.first(Header::predicate_disconnect) {
+			self.by_peer_reason = Some(header.0);
+		}
 	}
 
 	#[must_use]
-	pub fn disconnected(&self) -> bool {
-		self.disconnected_by_peer || self.disconnected_by_self
+	pub fn disconnected(&self) -> Option<DisconnectByCommandReason> {
+		if self.disconnected_by_self {
+			self.by_self_reason
+		} else if self.by_peer_reason.is_some() {
+			self.by_peer_reason
+		} else {
+			None
+		}
 	}
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
-pub struct DisconnectHeader;
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct DisconnectHeader(pub DisconnectByCommandReason);
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, FromPrimitive, ToPrimitive)]
+pub enum DisconnectByCommandReason {
+	ClientStopped = 0,
+	RoomDeleted,
+	MemberDeleted,
+}
+
+impl DisconnectHeader {
+	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+		let reason = input.read_u8()?;
+		Ok(Self(FromPrimitive::from_u8(reason).ok_or_else(|| {
+			Error::new(ErrorKind::InvalidData, "could not read DisconnectByCommandReason from u8".to_owned())
+		})?))
+	}
+	pub(crate) fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
+		out.write_u8(
+			ToPrimitive::to_u8(&self.0)
+				.ok_or_else(|| Error::new(ErrorKind::InvalidData, "could not write DisconnectByCommandReason to u8".to_owned()))?,
+		)
+	}
+}
 
 #[cfg(test)]
 mod tests {
-	use crate::protocol::disconnect::command::DisconnectByCommand;
+	use crate::protocol::disconnect::command::{DisconnectByCommand, DisconnectByCommandReason};
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::frame::output::OutFrame;
@@ -69,10 +102,10 @@ mod tests {
 		let mut remote_handler = DisconnectByCommand::default();
 
 		assert!(!self_handler.contains_self_data());
-		assert!(!self_handler.disconnected());
-		assert!(!remote_handler.disconnected());
+		assert!(self_handler.disconnected().is_none());
+		assert!(remote_handler.disconnected().is_none());
 
-		self_handler.disconnect();
+		self_handler.disconnect(DisconnectByCommandReason::ClientStopped);
 
 		assert!(self_handler.contains_self_data());
 
@@ -80,8 +113,8 @@ mod tests {
 		self_handler.build_frame(&mut frame);
 		remote_handler.on_frame_received(&InFrame::new(frame.frame_id, frame.headers, Default::default()));
 
-		assert!(self_handler.disconnected());
-		assert!(remote_handler.disconnected());
+		assert_eq!(DisconnectByCommandReason::ClientStopped, self_handler.disconnected().unwrap());
+		assert_eq!(DisconnectByCommandReason::ClientStopped, remote_handler.disconnected().unwrap());
 	}
 
 	#[test]
@@ -89,7 +122,7 @@ mod tests {
 		let mut handler = DisconnectByCommand::default();
 		let mut frame = OutFrame::new(10);
 		handler.build_frame(&mut frame);
-		assert!(!handler.disconnected());
+		assert!(handler.disconnected().is_none());
 		assert!(matches!(frame.headers.first(Header::predicate_disconnect), None));
 	}
 }

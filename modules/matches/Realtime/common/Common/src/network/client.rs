@@ -5,6 +5,7 @@ use std::time::Instant;
 
 use crate::network::channel::NetworkChannel;
 use crate::protocol::codec::cipher::Cipher;
+use crate::protocol::disconnect::command::DisconnectByCommandReason;
 use crate::protocol::frame::headers::Header;
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
@@ -42,7 +43,7 @@ pub enum DisconnectedReason {
 	IOError(String),
 	ByRetryLimit,
 	ByTimeout,
-	ByCommand,
+	ByCommand(DisconnectByCommandReason),
 }
 
 impl NetworkClient {

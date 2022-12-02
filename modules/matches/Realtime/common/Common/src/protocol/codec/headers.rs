@@ -21,7 +21,7 @@ impl Headers {
 			let header = match type_header {
 				0 => Header::MemberAndRoomId(MemberAndRoomId::decode(input)?),
 				1 => Header::Ack(AckHeader::decode(input)?),
-				2 => Header::Disconnect(DisconnectHeader {}),
+				2 => Header::Disconnect(DisconnectHeader::decode(input)?),
 				3 => Header::RoundTripTimeRequest(RoundTripTimeHeader::decode(input)?),
 				4 => Header::RoundTripTimeResponse(RoundTripTimeHeader::decode(input)?),
 				5 => Header::Retransmit(RetransmitHeader::decode(input)?),
@@ -52,8 +52,9 @@ impl Headers {
 					out.write_u8(1)?;
 					data.encode(out)?;
 				}
-				Header::Disconnect(_) => {
+				Header::Disconnect(data) => {
 					out.write_u8(2)?;
+					data.encode(out)?;
 				}
 				RoundTripTimeRequest(data) => {
 					out.write_u8(3)?;
@@ -80,7 +81,7 @@ impl Headers {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::protocol::disconnect::command::DisconnectHeader;
+	use crate::protocol::disconnect::command::{DisconnectByCommandReason, DisconnectHeader};
 	use crate::protocol::frame::headers::{Header, HeaderVec, Headers};
 	use crate::protocol::others::member_id::MemberAndRoomId;
 	use crate::protocol::others::rtt::RoundTripTimeHeader;
@@ -99,7 +100,7 @@ mod tests {
 
 	#[test]
 	fn test_disconnect() {
-		check(&[Header::Disconnect(DisconnectHeader {})]);
+		check(&[Header::Disconnect(DisconnectHeader(DisconnectByCommandReason::RoomDeleted))]);
 	}
 
 	#[test]

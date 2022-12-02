@@ -119,8 +119,8 @@ impl NetworkThreadClient {
 	fn request_from_controller(&mut self) {
 		while let Ok(command) = self.request_from_controller.try_recv() {
 			match command {
-				ClientRequest::Close => {
-					self.udp_client.protocol.disconnect_by_command.disconnect();
+				ClientRequest::Close(reason) => {
+					self.udp_client.protocol.disconnect_by_command.disconnect(reason);
 					let now = Instant::now();
 					self.udp_client.cycle(now);
 					self.running = false;
