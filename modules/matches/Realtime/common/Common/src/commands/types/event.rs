@@ -46,10 +46,7 @@ impl TargetEventCommand {
 	}
 
 	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let target = input
-			.read_variable_u64()?
-			.try_into()
-			.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast into RoomMemberId".to_string()))?;
+		let target = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 
 		Ok(Self {
 			target,

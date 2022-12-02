@@ -1,18 +1,19 @@
 use cheetah_matches_realtime::room::template::config::MemberTemplate;
 use cheetah_matches_realtime_common::room::access::AccessGroups;
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
+use std::sync::Arc;
 
 use crate::ffi::{ServerId, REGISTRY};
 
 #[derive(Debug, Default)]
 #[repr(C)]
-pub struct MemberDescription {
+pub(crate) struct MemberDescription {
 	id: RoomMemberId,
 	private_key: [u8; 32],
 }
 
 #[no_mangle]
-pub extern "C" fn create_member(
+pub(crate) extern "C" fn create_member(
 	server_id: ServerId,
 	room_id: RoomId,
 	group: u64,
@@ -21,7 +22,7 @@ pub extern "C" fn create_member(
 ) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	return if let Some(server) = registry.servers.get_mut(&server_id) {
-		let manager = server.manager.clone();
+		let manager = Arc::clone(&server.manager);
 		let member_template = MemberTemplate::new_member(AccessGroups(group), Vec::new());
 		member_descriptions.private_key.copy_from_slice(&member_template.private_key.0);
 		match server
@@ -50,7 +51,7 @@ mod test {
 	use crate::ffi::server::{run_new_server, EmbeddedServerDescription};
 
 	#[test]
-	pub fn should_create_member() {
+	pub(crate) fn should_create_member() {
 		let mut result = EmbeddedServerDescription::default();
 		run_new_server(&mut result, on_server_error, &Default::default());
 		let mut room_id = 0;
@@ -60,13 +61,15 @@ mod test {
 		assert_eq!(member.id, 1);
 	}
 
-	pub extern "C" fn on_server_error(message: *const u16) {
+	pub(crate) extern "C" fn on_server_error(message: *const u16) {
 		panic!("Fail create server with message {:?}", message)
 	}
-	pub extern "C" fn on_room_error(_: *const u16) {
+
+	pub(crate) extern "C" fn on_room_error(_: *const u16) {
 		panic!("Fail create room")
 	}
-	pub extern "C" fn on_member_error(_: *const u16) {
+
+	pub(crate) extern "C" fn on_member_error(_: *const u16) {
 		panic!("Fail create member")
 	}
 }

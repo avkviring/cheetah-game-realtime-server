@@ -102,15 +102,7 @@ impl PermissionManager {
 	fn get_permission_by_group(member_group: AccessGroups, groups: &FnvHashMap<AccessGroups, Permission>) -> Permission {
 		groups
 			.iter()
-			.filter_map(
-				|(group, &permission)| {
-					if group.contains_any(&member_group) {
-						Some(permission)
-					} else {
-						None
-					}
-				},
-			)
+			.filter_map(|(group, &permission)| group.contains_any(&member_group).then_some(permission))
 			.max()
 			.unwrap_or(Permission::Rw)
 	}

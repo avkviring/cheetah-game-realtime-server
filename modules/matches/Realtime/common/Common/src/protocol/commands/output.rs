@@ -90,7 +90,7 @@ mod tests {
 	use crate::protocol::frame::MAX_FRAME_SIZE;
 
 	#[test]
-	pub fn test_group_sequence() {
+	pub(crate) fn test_group_sequence() {
 		let mut output = OutCommandsCollector::default();
 		for _ in 0..3 {
 			output.add_command(
@@ -107,7 +107,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_split_commands_by_size() {
+	pub(crate) fn should_split_commands_by_size() {
 		let mut output = OutCommandsCollector::default();
 		for _i in 0..MAX_FRAME_SIZE {
 			output.add_command(

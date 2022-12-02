@@ -38,10 +38,10 @@ pub struct Server {
 
 impl Server {
 	pub async fn run(self) {
-		let internal_grpc = Self::configure_internal_grpc_service(self.internal_grpc_tcp_listener, self.manager.clone());
-		let admin_grpc = Self::configure_admin_grpc_service(self.admin_grpc_tcp_listener, self.manager.clone());
+		let internal_grpc = Self::configure_internal_grpc_service(self.internal_grpc_tcp_listener, Arc::clone(&self.manager));
+		let admin_grpc = Self::configure_admin_grpc_service(self.admin_grpc_tcp_listener, Arc::clone(&self.manager));
 		if self.is_agones_enabled {
-			let agones = run_agones_sdk(self.manager.clone());
+			let agones = run_agones_sdk(Arc::clone(&self.manager));
 			join!(internal_grpc, admin_grpc, agones);
 		} else {
 			join!(internal_grpc, admin_grpc);
@@ -66,8 +66,8 @@ impl Server {
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 		health_reporter.set_service_status("", ServingStatus::Serving).await;
 
-		let admin = admin::realtime_server::RealtimeServer::new(RealtimeAdminGRPCService::new(manager.clone()));
-		let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(manager.clone()));
+		let admin = admin::realtime_server::RealtimeServer::new(RealtimeAdminGRPCService::new(Arc::clone(&manager)));
+		let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(Arc::clone(&manager)));
 		let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
 
 		tonic::transport::Server::builder()

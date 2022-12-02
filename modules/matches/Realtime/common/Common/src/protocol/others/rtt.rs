@@ -76,13 +76,10 @@ impl RoundTripTime {
 	#[allow(clippy::cast_possible_truncation)]
 	#[must_use]
 	pub fn get_rtt(&self) -> Option<Duration> {
-		if self.rtt.is_full() {
+		self.rtt.is_full().then(|| {
 			let sum_rtt: Duration = self.rtt.iter().sum();
-			let average_rtt = sum_rtt.div(self.rtt.len() as u32);
-			Some(average_rtt)
-		} else {
-			None
-		}
+			sum_rtt.div(self.rtt.len() as u32)
+		})
 	}
 
 	#[allow(clippy::cast_possible_truncation)]
@@ -145,7 +142,7 @@ mod tests {
 	/// Тестируем обмен между двумя handler-ми.
 	/// После обмена должно быть определено rtt.
 	///
-	pub fn should_calculate_rtt() {
+	pub(crate) fn should_calculate_rtt() {
 		let mut handler_a = RoundTripTime::new(Instant::now());
 		let mut handler_b = RoundTripTime::new(Instant::now());
 
@@ -169,7 +166,7 @@ mod tests {
 	///
 	/// Для retransmit фреймов операции получения response должны быть игнорированы
 	///
-	pub fn should_ignore_retransmit_frame_when_receive_response() {
+	pub(crate) fn should_ignore_retransmit_frame_when_receive_response() {
 		let mut handler = RoundTripTime::new(Instant::now());
 		let now = Instant::now();
 		let mut frame = InFrame::new(10, Default::default(), Default::default());
@@ -186,7 +183,7 @@ mod tests {
 	///
 	/// Для retransmit фреймов операции получения request должны быть игнорированы
 	///
-	pub fn should_ignore_retransmit_frame_when_receive_request() {
+	pub(crate) fn should_ignore_retransmit_frame_when_receive_request() {
 		let mut handler = RoundTripTime::new(Instant::now());
 		let now = Instant::now();
 
@@ -212,7 +209,7 @@ mod tests {
 	/// - учитываем что для расчета среднего rtt количество измерение должно быть больше определенного значения
 	///
 	#[test]
-	pub fn should_calculate_rtt_average() {
+	pub(crate) fn should_calculate_rtt_average() {
 		let mut handler = RoundTripTime::new(Instant::now());
 		for i in 0..AVERAGE_RTT_MIN_LEN {
 			let mut frame = InFrame::new(10, Default::default(), Default::default());
@@ -230,7 +227,7 @@ mod tests {
 	/// Проверяем лимит на максимальный размер измерений
 	///
 	#[test]
-	pub fn should_limit_on_length_rtt() {
+	pub(crate) fn should_limit_on_length_rtt() {
 		let mut handler = RoundTripTime::new(Instant::now());
 		for i in 0..2 * AVERAGE_RTT_MIN_LEN {
 			let mut frame = InFrame::new(10, Default::default(), Default::default());

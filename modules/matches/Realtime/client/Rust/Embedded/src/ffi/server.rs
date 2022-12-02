@@ -5,7 +5,7 @@ use crate::EmbeddedServerWrapper;
 
 #[derive(Debug, Copy, Clone, Default)]
 #[repr(C)]
-pub struct EmbeddedServerDescription {
+pub(crate) struct EmbeddedServerDescription {
 	pub(crate) id: ServerId,
 	game_host: [u8; 4],
 	game_port: u16,
@@ -16,7 +16,7 @@ pub struct EmbeddedServerDescription {
 }
 
 #[no_mangle]
-pub extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_error: extern "C" fn(*const u16), bind_address: &[u8; 4]) -> bool {
+pub(crate) extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_error: extern "C" fn(*const u16), bind_address: &[u8; 4]) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	registry.next_server_id += 1;
 	let server_id = registry.next_server_id;
@@ -60,7 +60,7 @@ fn set_addr(out: &mut [u8; 4], on_error: extern "C" fn(*const u16), ip_addr: &Ip
 }
 
 #[no_mangle]
-pub extern "C" fn destroy_server(server_id: ServerId) -> bool {
+pub(crate) extern "C" fn destroy_server(server_id: ServerId) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	if let Some(server) = registry.servers.remove(&server_id) {
 		server.shutdown();
@@ -75,14 +75,14 @@ mod test {
 	use crate::ffi::server::{destroy_server, run_new_server, EmbeddedServerDescription};
 
 	#[test]
-	pub fn should_run_new_server() {
+	pub(crate) fn should_run_new_server() {
 		let mut result = EmbeddedServerDescription::default();
 		let success = run_new_server(&mut result, on_error, &Default::default());
 		assert!(success);
 	}
 
 	#[test]
-	pub fn should_destroy_server() {
+	pub(crate) fn should_destroy_server() {
 		let mut result = EmbeddedServerDescription::default();
 		let success = run_new_server(&mut result, on_error, &Default::default());
 		assert!(success);
@@ -90,7 +90,7 @@ mod test {
 		assert!(!destroy_server(result.id));
 	}
 
-	pub extern "C" fn on_error(message: *const u16) {
+	pub(crate) extern "C" fn on_error(message: *const u16) {
 		panic!("Fail create server with message {:?}", message)
 	}
 }

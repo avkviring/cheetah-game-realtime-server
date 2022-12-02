@@ -37,6 +37,7 @@ impl CompareAndSetStructureCommand {
 	}
 
 	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+		#[allow(clippy::if_then_some_else_none)]
 		Ok(CompareAndSetStructureCommand {
 			object_id,
 			field_id,

@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 use std::io::{Cursor, ErrorKind};
+use std::num::TryFromIntError;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use thiserror::Error;
@@ -67,7 +68,7 @@ pub enum CommandContextError {
 	#[error("Unknown command type id {0}")]
 	UnknownCommandTypeId(u8),
 	#[error("InputValueIsTooLarge")]
-	InputValueIsTooLarge,
+	InputValueIsTooLarge(TryFromIntError),
 }
 
 impl CommandContext {
@@ -93,6 +94,7 @@ impl CommandContext {
 	/// командой
 	///
 	#[allow(clippy::too_many_arguments)]
+	#[allow(clippy::unwrap_in_result)]
 	pub(crate) fn write_next(
 		&mut self,
 		object_id: Option<GameObjectId>,
@@ -179,12 +181,8 @@ impl CommandContext {
 			self.object_id.replace(GameObjectId::decode(input)?);
 		}
 		if header.new_field_id {
-			self.field_id.replace(
-				input
-					.read_variable_u64()?
-					.try_into()
-					.map_err(|_| CommandContextError::InputValueIsTooLarge)?,
-			);
+			self.field_id
+				.replace(input.read_variable_u64()?.try_into().map_err(CommandContextError::InputValueIsTooLarge)?);
 		}
 		if header.new_channel_group_id {
 			self.channel_group.replace(ChannelGroup(input.read_u8()?));
@@ -209,10 +207,7 @@ impl CommandContext {
 				Some(current) => Ok(Some(*current)),
 			},
 			CreatorSource::New => {
-				let creator = input
-					.read_variable_u64()?
-					.try_into()
-					.map_err(|_| CommandContextError::InputValueIsTooLarge)?;
+				let creator = input.read_variable_u64()?.try_into().map_err(CommandContextError::InputValueIsTooLarge)?;
 				self.creator.replace(creator);
 				Ok(Some(creator))
 			}

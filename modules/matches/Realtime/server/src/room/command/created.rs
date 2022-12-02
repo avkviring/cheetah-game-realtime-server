@@ -71,7 +71,7 @@ mod tests {
 	/// - Команда не должна отсылаться обратно пользователю
 	///
 	#[test]
-	pub fn should_send_commands() {
+	pub(crate) fn should_send_commands() {
 		let (mut room, object_id, member1, member2) = setup_two_players();
 		room.test_mark_as_connected(member1).unwrap();
 		room.test_mark_as_connected(member2).unwrap();
@@ -98,7 +98,7 @@ mod tests {
 	/// Команда должна отметить объект как загруженный
 	///
 	#[test]
-	pub fn should_switch_object_to_created_state() {
+	pub(crate) fn should_switch_object_to_created_state() {
 		let (mut room, object_id, member1, _) = setup_two_players();
 		let command = C2SCreatedGameObjectCommand {
 			object_id,
@@ -117,7 +117,7 @@ mod tests {
 	/// Такого быть не должно, однако проверить стоит, так как команду могут послать умышленно.
 	///
 	#[test]
-	pub fn should_dont_send_command_if_object_already_created() {
+	pub(crate) fn should_dont_send_command_if_object_already_created() {
 		let (mut room, object_id, member1, _) = setup_two_players();
 		let object = room.get_object_mut(object_id).unwrap();
 		object.created = true;
@@ -136,7 +136,7 @@ mod tests {
 	/// Если создается объект с owner = room, то его id должен сменится на id с owner = room
 	///
 	#[test]
-	pub fn should_convert_object_to_room_object() {
+	pub(crate) fn should_convert_object_to_room_object() {
 		let (mut room, member_id, access_groups) = setup_one_player();
 		let member_object_id = GameObjectId::new(100, GameObjectOwner::Member(member_id));
 		let create_command = CreateGameObjectCommand {
@@ -154,7 +154,7 @@ mod tests {
 		created_command.execute(&mut room, member_id).unwrap();
 
 		// старого объекта уже не должно быть
-		assert!(room.get_object_mut(member_object_id).is_err());
+		room.get_object_mut(member_object_id).unwrap_err();
 
 		let (_object_id, object) = room.objects.first().unwrap();
 		// это именно тот объект, который мы создали?
@@ -175,7 +175,7 @@ mod tests {
 	/// Не должно быть двух объектов с владельцем Room с одним `singleton_key`
 	///
 	#[test]
-	pub fn should_dont_create_more_one_object_with_one_singleton_key() {
+	pub(crate) fn should_dont_create_more_one_object_with_one_singleton_key() {
 		let (mut room, member_id, access_groups) = setup_one_player();
 
 		let singleton_key = Some(BinaryValue::from([1, 2, 3].as_slice()));

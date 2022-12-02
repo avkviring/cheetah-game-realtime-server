@@ -17,10 +17,7 @@ impl From<&[u8]> for BinaryValue {
 impl BinaryValue {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let mut result = BinaryValue(Default::default());
-		let size = input
-			.read_variable_u64()?
-			.try_into()
-			.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast size into usize".to_string()))?;
+		let size = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 		if size > result.0.capacity() {
 			return Err(Error::new(ErrorKind::InvalidData, format!("Event buffer size to big {}", size)));
 		}

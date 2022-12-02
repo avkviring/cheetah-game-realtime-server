@@ -164,7 +164,7 @@ mod tests {
 	use crate::room::owner::GameObjectOwner;
 
 	#[test]
-	pub fn test_clear_after_get_ready_commands() {
+	pub(crate) fn test_clear_after_get_ready_commands() {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
 		let frame = InFrame::new(1, Default::default(), [cmd_1.clone()].into_iter().collect());
@@ -174,7 +174,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn test_not_clear_after_collect() {
+	pub(crate) fn test_not_clear_after_collect() {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
 		let frame = InFrame::new(1, Default::default(), [cmd_1.clone()].into_iter().collect());
@@ -185,7 +185,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn test_unordered() {
+	pub(crate) fn test_unordered() {
 		let mut in_commands = InCommandsCollector::default();
 		let cmd_1 = create_test_command(Channel::ReliableUnordered, 1);
 		let cmd_2 = create_test_command(Channel::ReliableUnordered, 2);
@@ -195,7 +195,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn test_group_ordered() {
+	pub(crate) fn test_group_ordered() {
 		let mut in_commands = InCommandsCollector::default();
 
 		let cmd_1 = create_test_command(Channel::ReliableOrdered(ChannelGroup(1)), 1);
@@ -208,7 +208,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn test_group_ordered_when_different_group() {
+	pub(crate) fn test_group_ordered_when_different_group() {
 		let mut in_commands = InCommandsCollector::default();
 
 		let cmd_1 = create_test_command(Channel::ReliableOrdered(ChannelGroup(1)), 1);
@@ -219,7 +219,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn test_group_sequence() {
+	pub(crate) fn test_group_sequence() {
 		let mut in_commands = InCommandsCollector::default();
 
 		let cmd_1 = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(0)), 1);
@@ -238,7 +238,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn test_group_sequence_with_different_group() {
+	pub(crate) fn test_group_sequence_with_different_group() {
 		let mut in_commands = InCommandsCollector::default();
 
 		let cmd_1_a = create_test_command(Channel::ReliableSequence(ChannelGroup(1), ChannelSequence(0)), 1);

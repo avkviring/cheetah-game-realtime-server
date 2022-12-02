@@ -93,6 +93,7 @@ impl Retransmit {
 	/// Получить фрейм для повторной отправки (если такой есть)
 	/// - метод необходимо вызывать пока результат Some
 	///
+	#[allow(clippy::unwrap_in_result)]
 	pub fn get_retransmit_frame(&mut self, now: Instant, retransmit_frame_id: FrameId) -> Option<OutFrame> {
 		loop {
 			match self.frames.front() {

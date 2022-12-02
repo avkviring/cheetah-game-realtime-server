@@ -31,6 +31,7 @@ pub struct Registry {
 }
 
 impl Registry {
+	#[allow(clippy::unwrap_in_result)]
 	pub fn create_client(
 		&mut self,
 		server_address: &str,
@@ -43,7 +44,7 @@ impl Registry {
 
 		let server_time = Arc::new(Mutex::new(None));
 		let state = Arc::new(Mutex::new(ConnectionStatus::Connecting));
-		let state_cloned = state.clone();
+		let state_cloned = Arc::clone(&state);
 		let shared_statistics = SharedClientStatistics::default();
 
 		let (sender, receiver) = std::sync::mpsc::channel();
@@ -58,7 +59,7 @@ impl Registry {
 			receiver,
 			start_frame_id,
 			shared_statistics.clone(),
-			server_time.clone(),
+			Arc::clone(&server_time),
 		)?;
 
 		let handler = thread::Builder::new()

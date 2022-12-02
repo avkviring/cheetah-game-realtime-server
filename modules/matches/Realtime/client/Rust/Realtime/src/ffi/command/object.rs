@@ -34,11 +34,7 @@ pub extern "C" fn create_object(client_id: ClientId, template: u16, access_group
 
 #[no_mangle]
 pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectIdFFI, room_owner: bool, singleton_key: &BufferFFI) -> u8 {
-	let singleton_key = if singleton_key.len > 0 {
-		Some(BinaryValue::from(singleton_key))
-	} else {
-		None
-	};
+	let singleton_key = (singleton_key.len > 0).then(|| BinaryValue::from(singleton_key));
 	send_command(
 		client_id,
 		C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {

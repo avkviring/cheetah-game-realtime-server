@@ -28,7 +28,6 @@ fn should_disconnect_on_delete_room() {
 
 	execute_with_client(client, |api| {
 		let status = api.get_connection_status().unwrap();
-		println!("{:?}", status);
 		assert!(matches!(status, ConnectionStatus::Disconnected(DisconnectedReason::ByCommand)));
 		Ok(())
 	});

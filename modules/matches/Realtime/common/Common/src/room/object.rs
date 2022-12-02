@@ -40,17 +40,10 @@ impl GameObjectId {
 	}
 	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		Ok(GameObjectId {
-			id: input
-				.read_variable_u64()?
-				.try_into()
-				.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast to GameObjectId".to_string()))?,
+			id: input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?,
 			owner: match input.read_variable_i64()? {
 				-1 => GameObjectOwner::Room,
-				member_id => GameObjectOwner::Member(
-					member_id
-						.try_into()
-						.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast i32 to RoomMemberId".to_string()))?,
-				),
+				member_id => GameObjectOwner::Member(member_id.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?),
 			},
 		})
 	}

@@ -12,6 +12,7 @@ use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 
 impl Headers {
+	#[allow(clippy::map_err_ignore)]
 	pub fn decode_headers(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let mut headers = HeaderVec::new();
 		let count = input.read_variable_u64()?;

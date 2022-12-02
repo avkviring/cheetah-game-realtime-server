@@ -1,4 +1,5 @@
 use cheetah_matches_realtime_common::room::RoomMemberId;
+use std::rc::Rc;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::CreateCommandsCollector;
@@ -8,7 +9,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 	let member = room.get_member_mut(&member_id)?;
 	member.attached = true;
 	let access_group = member.template.groups;
-	let command_collector_rc = room.tmp_command_collector.clone();
+	let command_collector_rc = Rc::clone(&room.tmp_command_collector);
 	let mut command_collector = (*command_collector_rc).borrow_mut();
 	command_collector.clear();
 	room.objects
@@ -46,7 +47,7 @@ mod tests {
 	use crate::room::Room;
 
 	#[test]
-	pub fn should_load_object_when_attach_to_room() {
+	pub(crate) fn should_load_object_when_attach_to_room() {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let groups_a = AccessGroups(0b100);

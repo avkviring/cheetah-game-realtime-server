@@ -58,7 +58,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn create_session(&self, request: Request<admin::CreateSessionRequest>) -> Result<Response<admin::CreateSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let task = TracerSessionCommand::CreateSession(sender);
-		self.execute_task(request.get_ref().room as RoomId, task, receiver, |session_id| {
+		self.execute_task(request.get_ref().room, task, receiver, |session_id| {
 			Ok(admin::CreateSessionResponse { id: u32::from(session_id) })
 		})
 		.await
@@ -71,12 +71,11 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			request
 				.session
 				.try_into()
-				.map_err(|_| Status::invalid_argument("session is too large".to_string()))?,
+				.map_err(|e| Status::invalid_argument(format!("session is too large: {}", e)))?,
 			request.filter.clone(),
 			sender,
 		);
-		self.execute_task(request.room as RoomId, task, receiver, |_| Ok(admin::SetFilterResponse {}))
-			.await
+		self.execute_task(request.room, task, receiver, |_| Ok(admin::SetFilterResponse {})).await
 	}
 
 	async fn get_commands(&self, request: Request<admin::GetCommandsRequest>) -> Result<Response<admin::GetCommandsResponse>, Status> {
@@ -86,10 +85,10 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			request
 				.session
 				.try_into()
-				.map_err(|_| Status::invalid_argument("session is too large".to_string()))?,
+				.map_err(|e| Status::invalid_argument(format!("session is too large: {}", e)))?,
 			sender,
 		);
-		self.execute_task(request.room as RoomId, task, receiver, |result| {
+		self.execute_task(request.room, task, receiver, |result| {
 			result
 				.trace_err("Get commands for trace")
 				.map_err(Status::internal)
@@ -107,10 +106,10 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			request
 				.session
 				.try_into()
-				.map_err(|_| Status::invalid_argument("session is too large".to_string()))?,
+				.map_err(|e| Status::invalid_argument(format!("session is too large: {}", e)))?,
 			sender,
 		);
-		self.execute_task(request.room as RoomId, task, receiver, |result| {
+		self.execute_task(request.room, task, receiver, |result| {
 			result
 				.trace_err("Close tracer session")
 				.map_err(Status::internal)
@@ -128,7 +127,7 @@ impl From<TracedCommand> for admin::Command {
 		};
 
 		let object_id = match command.network_command.get_object_id() {
-			None => "none".to_string(),
+			None => "none".to_owned(),
 			Some(id) => match &id.owner {
 				GameObjectOwner::Room => {
 					format!("root({})", id.id)
@@ -140,8 +139,8 @@ impl From<TracedCommand> for admin::Command {
 		};
 		let template = command.template.map(u32::from);
 		let command_name: String = match &command.network_command {
-			TracedBothDirectionCommand::C2S(command) => command.as_ref().to_string(),
-			TracedBothDirectionCommand::S2C(command) => command.as_ref().to_string(),
+			TracedBothDirectionCommand::C2S(command) => command.as_ref().to_owned(),
+			TracedBothDirectionCommand::S2C(command) => command.as_ref().to_owned(),
 		};
 		let field_id = command.network_command.get_field_id().map(u32::from);
 		let field_type = command
@@ -158,7 +157,7 @@ impl From<TracedCommand> for admin::Command {
 
 		Self {
 			time: command.time,
-			direction: direction.to_string(),
+			direction: direction.to_owned(),
 			command: command_name,
 			object_id,
 			user_id: u32::from(command.member),
@@ -207,14 +206,14 @@ pub mod test {
 			grpc_command,
 			admin::Command {
 				time: 1.1,
-				direction: "c2s".to_string(),
-				command: "Event".to_string(),
-				object_id: "root(100)".to_string(),
+				direction: "c2s".to_owned(),
+				command: "Event".to_owned(),
+				object_id: "root(100)".to_owned(),
 				user_id: 255,
 				template: Some(155),
-				value: "[10, 20, 30]".to_string(),
+				value: "[10, 20, 30]".to_owned(),
 				field_id: Some(555),
-				field_type: Some(shared::FieldType::Event as i32)
+				field_type: Some(shared::FieldType::Event as i32),
 			}
 		);
 	}
@@ -233,14 +232,14 @@ pub mod test {
 			grpc_command,
 			admin::Command {
 				time: 1.1,
-				direction: "c2s".to_string(),
-				command: "AttachToRoom".to_string(),
-				object_id: "none".to_string(),
+				direction: "c2s".to_owned(),
+				command: "AttachToRoom".to_owned(),
+				object_id: "none".to_owned(),
 				user_id: 255,
 				template: None,
-				value: "".to_string(),
+				value: String::new(),
 				field_id: None,
-				field_type: None
+				field_type: None,
 			}
 		);
 	}

@@ -10,7 +10,7 @@ impl ServerCommandExecutor for ForwardedCommand {
 		if let Some(member) = room.members.get(&member_id) {
 			if !member.template.super_member {
 				return Err(ServerCommandError::ForwardedCommandPermissionDenied {
-					msg: "only super members are allowed to send ForwardedCommand".to_string(),
+					msg: "only super members are allowed to send ForwardedCommand".to_owned(),
 					sender_member_id: member_id,
 					creator_member_id: self.creator,
 				});
@@ -22,7 +22,7 @@ impl ServerCommandExecutor for ForwardedCommand {
 		// check that sender and creator are different
 		if member_id == self.creator {
 			return Err(ServerCommandError::ForwardedCommandPermissionDenied {
-				msg: "ForwardedCommand sender and creator should be different".to_string(),
+				msg: "ForwardedCommand sender and creator should be different".to_owned(),
 				sender_member_id: member_id,
 				creator_member_id: self.creator,
 			});
@@ -32,7 +32,7 @@ impl ServerCommandExecutor for ForwardedCommand {
 			// check that command creator is not a super member
 			if member.template.super_member {
 				return Err(ServerCommandError::ForwardedCommandPermissionDenied {
-					msg: "only non super members commands can be forwarded".to_string(),
+					msg: "only non super members commands can be forwarded".to_owned(),
 					sender_member_id: member_id,
 					creator_member_id: self.creator,
 				});
@@ -67,7 +67,7 @@ mod tests {
 		};
 		assert_eq!(
 			ForwardedCommandPermissionDenied {
-				msg: "only super members are allowed to send ForwardedCommand".to_string(),
+				msg: "only super members are allowed to send ForwardedCommand".to_owned(),
 				sender_member_id: member_1,
 				creator_member_id: 0,
 			},
@@ -84,7 +84,7 @@ mod tests {
 		};
 		assert_eq!(
 			ForwardedCommandPermissionDenied {
-				msg: "only non super members commands can be forwarded".to_string(),
+				msg: "only non super members commands can be forwarded".to_owned(),
 				sender_member_id: super_member_1,
 				creator_member_id: super_member_2,
 			},
@@ -101,7 +101,7 @@ mod tests {
 		};
 		assert_eq!(
 			ForwardedCommandPermissionDenied {
-				msg: "ForwardedCommand sender and creator should be different".to_string(),
+				msg: "ForwardedCommand sender and creator should be different".to_owned(),
 				sender_member_id: super_member_1,
 				creator_member_id: super_member_1,
 			},
@@ -141,7 +141,7 @@ mod tests {
 		if let Err(e) = command.execute(&mut room, super_member_1) {
 			panic!("{:?}", e)
 		}
-		assert!(!room.members.get(&member_1).unwrap().attached);
+		assert!(!room.members[&member_1].attached);
 	}
 
 	fn setup() -> (Room, RoomMemberId, RoomMemberId, RoomMemberId) {

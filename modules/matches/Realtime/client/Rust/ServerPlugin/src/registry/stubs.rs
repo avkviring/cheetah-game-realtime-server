@@ -19,18 +19,17 @@ use crate::proto::matches::realtime::internal::{
 
 pub struct RealtimeStub<CreatedEventStubFunc, Fut>
 where
-	CreatedEventStubFunc: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut,
-	CreatedEventStubFunc: Send + Sync + 'static,
+	CreatedEventStubFunc: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut + Send + Sync + 'static,
 	Fut: Future<Output = ()> + 'static + Send + Sync,
 {
 	pub created_event_stub_function: CreatedEventStubFunc,
 }
 
 #[tonic::async_trait]
+#[allow(clippy::unreachable)]
 impl<CreatedEventStubFunc, Fut> Realtime for RealtimeStub<CreatedEventStubFunc, Fut>
 where
-	CreatedEventStubFunc: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut,
-	CreatedEventStubFunc: Send + Sync + 'static,
+	CreatedEventStubFunc: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut + Send + Sync + 'static,
 	Fut: Future<Output = ()> + 'static + Send + Sync,
 {
 	async fn create_room(&self, _request: Request<RoomTemplate>) -> Result<Response<RoomIdResponse>, Status> {
@@ -66,28 +65,30 @@ where
 
 	async fn put_forwarded_command_config(
 		&self,
-		_: Request<PutForwardedCommandConfigRequest>,
+		_request: Request<PutForwardedCommandConfigRequest>,
 	) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
 		unreachable!()
 	}
 
-	async fn mark_room_as_ready(&self, _: Request<MarkRoomAsReadyRequest>) -> Result<Response<MarkRoomAsReadyResponse>, Status> {
+	async fn mark_room_as_ready(&self, _request: Request<MarkRoomAsReadyRequest>) -> Result<Response<MarkRoomAsReadyResponse>, Status> {
 		unreachable!()
 	}
 
-	async fn get_room_info(&self, _: Request<GetRoomInfoRequest>) -> Result<Response<GetRoomInfoResponse>, Status> {
+	async fn get_room_info(&self, _request: Request<GetRoomInfoRequest>) -> Result<Response<GetRoomInfoResponse>, Status> {
 		unreachable!()
 	}
 
-	async fn update_room_permissions(&self, _: Request<UpdateRoomPermissionsRequest>) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
+	async fn update_room_permissions(
+		&self,
+		_request: Request<UpdateRoomPermissionsRequest>,
+	) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
 		unreachable!()
 	}
 }
 
 pub fn create_stub_server<F, Fut>(f: F) -> (Runtime, JoinHandle<Result<(), Error>>, Channel)
 where
-	F: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut,
-	F: Send + Sync + 'static,
+	F: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut + Send + Sync + 'static,
 	Fut: Future<Output = ()> + 'static + Send + Sync,
 {
 	let (client, server) = tokio::io::duplex(1024);

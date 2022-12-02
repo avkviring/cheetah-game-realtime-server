@@ -4,19 +4,19 @@ use lazy_static::lazy_static;
 
 use crate::EmbeddedServerWrapper;
 
-pub mod logs;
-pub mod member;
-pub mod room;
-pub mod server;
+pub(crate) mod logs;
+pub(crate) mod member;
+pub(crate) mod room;
+pub(crate) mod server;
 
 lazy_static! {
 	static ref REGISTRY: std::sync::Mutex<Registry> = std::sync::Mutex::new(Default::default());
 }
 
-pub type ServerId = u64;
+pub(crate) type ServerId = u64;
 
 #[derive(Default)]
 struct Registry {
-	pub next_server_id: ServerId,
-	pub servers: HashMap<u64, EmbeddedServerWrapper>,
+	pub(crate) next_server_id: ServerId,
+	pub(crate) servers: HashMap<u64, EmbeddedServerWrapper>,
 }

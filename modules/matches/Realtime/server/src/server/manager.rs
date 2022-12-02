@@ -102,7 +102,7 @@ impl RoomsServerManager {
 	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>) -> Result<Self, RoomsServerManagerError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
-		let cloned_halt_signal = halt_signal.clone();
+		let cloned_halt_signal = Arc::clone(&halt_signal);
 		thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
 			.spawn(move || match RoomsServer::new(socket, receiver, halt_signal, plugin_names) {
@@ -215,7 +215,7 @@ impl RoomsServerManager {
 	}
 
 	pub(crate) fn get_halt_signal(&self) -> Arc<AtomicBool> {
-		self.halt_signal.clone()
+		Arc::clone(&self.halt_signal)
 	}
 
 	pub fn shutdown(&mut self) {

@@ -42,7 +42,7 @@ impl Rooms {
 		self.measurers.borrow_mut().on_create_room(&template.name);
 
 		let room_id = self.room_id_generator;
-		let room = Room::new(room_id, template, self.measurers.clone(), self.plugin_names.clone());
+		let room = Room::new(room_id, template, Rc::clone(&self.measurers), self.plugin_names.clone());
 		self.room_by_id.insert(room_id, room);
 		room_id
 	}

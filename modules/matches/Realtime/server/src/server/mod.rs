@@ -47,8 +47,8 @@ impl RoomsServer {
 	) -> Result<Self, io::Error> {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Ok(Self {
-			network_layer: NetworkLayer::new(socket, measures.clone())?,
-			rooms: Rooms::new(measures.clone(), plugin_names.clone()),
+			network_layer: NetworkLayer::new(socket, Rc::clone(&measures))?,
+			rooms: Rooms::new(Rc::clone(&measures), plugin_names.clone()),
 			receiver,
 			halt_signal,
 			time_offset: None,
@@ -106,7 +106,7 @@ impl RoomsServer {
 				.room_by_id
 				.get_mut(&room_id)
 				.map(|room| {
-					room.command_trace_session.clone().borrow_mut().execute_task(task);
+					Rc::clone(&room.command_trace_session).borrow_mut().execute_task(task);
 					ManagementTaskResult::CommandTracerSessionTask
 				})
 				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,

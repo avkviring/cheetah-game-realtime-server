@@ -49,7 +49,7 @@ impl TracerCollector {
 		if filter >= *event.metadata().level() {
 			let mut visitor = ValueVisitor::new("message");
 			event.record(&mut visitor);
-			let message = visitor.result.unwrap_or_else(|| "".to_string());
+			let message = visitor.result.unwrap_or_default();
 			let level = *event.metadata().level();
 			let message = format!(
 				"{} in {}:{}",
@@ -80,7 +80,7 @@ pub struct ValueVisitor {
 impl ValueVisitor {
 	pub fn new<S: AsRef<str>>(name: S) -> Self {
 		Self {
-			name: name.as_ref().to_string(),
+			name: name.as_ref().to_owned(),
 			result: None,
 		}
 	}

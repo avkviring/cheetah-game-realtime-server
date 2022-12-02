@@ -8,7 +8,7 @@ jobs:
   test-cargo-udeps:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.5
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v3

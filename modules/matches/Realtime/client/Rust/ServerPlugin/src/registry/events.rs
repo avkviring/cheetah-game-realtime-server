@@ -13,8 +13,8 @@ use crate::registry::RoomId;
 
 ///
 /// Класс для чтения событий о создании новых комнат, фактически обертка над асинхронным кодом
-/// чтения данных из gRPC stream. Не блокирует текущий поток, создает свой, также создает
-/// tokio::runtime
+/// чтения данных из `gRPC` stream. Не блокирует текущий поток, создает свой, также создает
+/// `tokio::runtime`
 ///
 pub struct RoomLifecycleEventReader {
 	handler: Option<JoinHandle<()>>,
@@ -49,6 +49,7 @@ impl Default for RoomLifecycleEventReader {
 }
 
 impl RoomLifecycleEventReader {
+	#[allow(clippy::unwrap_in_result)]
 	pub fn from_address(grpc_server_address: String) -> Result<RoomLifecycleEventReader, Error> {
 		let reader = Self::default();
 		let handler = reader
@@ -60,15 +61,17 @@ impl RoomLifecycleEventReader {
 		Ok(reader.run(channel))
 	}
 
+	#[must_use]
 	pub fn from_channel(server_channel: Channel) -> Self {
 		let reader = Self::default();
 		reader.run(server_channel)
 	}
 
+	#[must_use]
 	pub fn run(mut self, server_channel: Channel) -> Self {
-		let created_rooms = self.created_rooms.clone();
-		let deleted_rooms = self.deleted_rooms.clone();
-		let reader_result = self.reader_result.clone();
+		let created_rooms = Arc::clone(&self.created_rooms);
+		let deleted_rooms = Arc::clone(&self.deleted_rooms);
+		let reader_result = Arc::clone(&self.reader_result);
 
 		let handler = self.runtime.as_ref().unwrap().spawn(async move {
 			let r = Self::reader_loop(server_channel, created_rooms, deleted_rooms).await;
@@ -89,6 +92,7 @@ impl RoomLifecycleEventReader {
 		Ok(self.deleted_rooms.pop())
 	}
 
+	#[allow(clippy::unwrap_in_result)]
 	fn assert_reader_thread_alive(&self) -> Result<(), RoomLifecycleEventReaderError> {
 		match self.reader_result.lock().unwrap().as_ref() {
 			None => Ok(()),
@@ -115,17 +119,18 @@ impl RoomLifecycleEventReader {
 				.message()
 				.await
 				.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{:?}", e)))?;
-			Self::process_message(created_rooms.clone(), deleted_rooms.clone(), message)?;
+			Self::process_message(&created_rooms, &deleted_rooms, message)?;
 		}
 	}
 
+	#[allow(clippy::map_err_ignore)]
 	fn process_message(
-		created_rooms: Arc<ArrayQueue<RoomId>>,
-		deleted_rooms: Arc<ArrayQueue<RoomId>>,
+		created_rooms: &Arc<ArrayQueue<RoomId>>,
+		deleted_rooms: &Arc<ArrayQueue<RoomId>>,
 		message: Option<RoomLifecycleResponse>,
 	) -> Result<(), RoomLifecycleEventReaderError> {
 		if let Some(message) = message {
-			match RoomLifecycleType::from_i32(message.r#type).ok_or_else(|| RoomLifecycleEventReaderError::UnknownRoomLifecycleType)? {
+			match RoomLifecycleType::from_i32(message.r#type).ok_or(RoomLifecycleEventReaderError::UnknownRoomLifecycleType)? {
 				RoomLifecycleType::Created => created_rooms
 					.push(message.room_id)
 					.map_err(|_| RoomLifecycleEventReaderError::CreatedRoomQueueOverflow)?,
@@ -141,7 +146,7 @@ impl RoomLifecycleEventReader {
 impl Drop for RoomLifecycleEventReader {
 	fn drop(&mut self) {
 		let runtime = self.runtime.take().unwrap();
-		runtime.shutdown_timeout(Duration::from_millis(100))
+		runtime.shutdown_timeout(Duration::from_millis(100));
 	}
 }
 
@@ -211,7 +216,7 @@ mod test {
 		handler.abort();
 		let reader = RoomLifecycleEventReader::from_channel(channel);
 		thread::sleep(Duration::from_secs(1));
-		assert!(reader.pop_create_room().is_err());
-		assert!(reader.pop_deleted_rooms().is_err());
+		reader.pop_create_room().unwrap_err();
+		reader.pop_deleted_rooms().unwrap_err();
 	}
 }

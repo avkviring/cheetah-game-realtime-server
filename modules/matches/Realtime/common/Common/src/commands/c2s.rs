@@ -165,10 +165,10 @@ impl C2SCommand {
 			}
 			C2SCommand::Event(command) => format!("{:?}", command.event.as_slice()),
 			C2SCommand::TargetEvent(command) => format!("target_member = {:?}, value = {:?}", command.target, command.event.event),
-			C2SCommand::Delete(_) => "".to_string(),
+			C2SCommand::Delete(_) => String::new(),
 			C2SCommand::DeleteField(command) => format!("field_type = {:?}", command.field_type),
-			C2SCommand::AttachToRoom => "".to_string(),
-			C2SCommand::DetachFromRoom => "".to_string(),
+			C2SCommand::AttachToRoom => String::new(),
+			C2SCommand::DetachFromRoom => String::new(),
 			C2SCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
 		}
 	}

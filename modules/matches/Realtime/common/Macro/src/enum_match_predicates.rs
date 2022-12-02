@@ -7,7 +7,7 @@ use syn::{Data, DataEnum};
 ///
 /// Генерация метода для поиска конкретного элемента enum в коллекции
 ///
-pub fn do_enum_match_predicates(input: TokenStream) -> TokenStream {
+pub(crate) fn do_enum_match_predicates(input: TokenStream) -> TokenStream {
 	let ast: syn::DeriveInput = syn::parse(input).unwrap();
 	let name = &ast.ident;
 	let enum_data: DataEnum = match ast.data {

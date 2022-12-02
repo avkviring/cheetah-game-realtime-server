@@ -20,8 +20,9 @@ pub enum ResultCode {
 }
 
 #[no_mangle]
+#[allow(unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn create_plugin(grpc_server_addr: *const c_char, out_plugin_id: &mut ServerPluginId) -> ResultCode {
-	let grpc_server_addr_as_string = CStr::from_ptr(grpc_server_addr).to_str().unwrap().to_string();
+	let grpc_server_addr_as_string = CStr::from_ptr(grpc_server_addr).to_str().unwrap().to_owned();
 	execute(|registry| {
 		let plugin = ServerPlugin::new(grpc_server_addr_as_string);
 		match plugin {

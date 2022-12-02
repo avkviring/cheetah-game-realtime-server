@@ -19,7 +19,7 @@ mod tests {
 	const FIELD_ID: u16 = 100;
 
 	#[test]
-	pub fn should_set_structure() {
+	pub(crate) fn should_set_structure() {
 		let template = RoomTemplate::default();
 		let mut room = Room::from_template(template);
 		let access_groups = AccessGroups(10);
@@ -98,13 +98,13 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_send_command_to_all_when_owner_sets_structure_field() {
+	pub(crate) fn should_send_command_to_all_when_owner_sets_structure_field() {
 		let (mut room, member1, member2, object_id) = init_set_structure_test();
 		run_set_structure_test(&mut room, member1, member2, object_id, member1);
 	}
 
 	#[test]
-	pub fn should_send_command_to_all_when_non_owner_sets_structure_field() {
+	pub(crate) fn should_send_command_to_all_when_non_owner_sets_structure_field() {
 		let (mut room, member1, member2, object_id) = init_set_structure_test();
 		run_set_structure_test(&mut room, member1, member2, object_id, member2);
 	}

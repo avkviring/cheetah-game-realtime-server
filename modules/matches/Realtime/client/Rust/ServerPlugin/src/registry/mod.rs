@@ -25,7 +25,7 @@ impl Registry {
 	}
 
 	pub fn get_plugin(&mut self, id: ServerPluginId) -> Option<&mut ServerPlugin> {
-		return self.plugins.get_mut(&id);
+		self.plugins.get_mut(&id)
 	}
 }
 

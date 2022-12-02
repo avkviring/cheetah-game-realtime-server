@@ -32,9 +32,9 @@ impl NetworkChannel {
 
 	pub fn recv(&mut self, now: Instant, buf: &mut [u8]) -> io::Result<usize> {
 		let result = self.socket.recv(buf);
-		if result.is_ok() {
+		if let Ok(read_bytes) = result {
 			self.recv_packet_count += 1;
-			self.recv_size += *result.as_ref().unwrap() as u64;
+			self.recv_size += read_bytes as u64;
 		}
 
 		if let Some(emulator) = self.emulator.as_mut() {

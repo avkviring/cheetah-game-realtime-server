@@ -8,7 +8,7 @@ jobs:
   test-cargo-clippy:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.4
+      image: ghcr.io/cheetah-game-platform/rust-builder-x86_64-unknown-linux-musl:0.0.5
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v3
@@ -21,7 +21,6 @@ jobs:
           key: rust-clippy-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-clippy-v1-
-      - run: cargo install cargo-cranky
       - name: Lint cargo clippy
         run: cd modules/ && cargo cranky --workspace --all-targets --all-features -- -D warnings
 

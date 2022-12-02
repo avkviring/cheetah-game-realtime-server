@@ -47,7 +47,7 @@ pub extern "C" fn compare_and_set_structure(
 			field_id,
 			new: new.into(),
 			object_id: object_id.into(),
-			reset: if has_reset { Some(reset.into()) } else { None },
+			reset: has_reset.then(|| reset.into()),
 		}),
 	)
 }

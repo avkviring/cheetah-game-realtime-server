@@ -18,7 +18,7 @@ pub enum StorageError {
 }
 
 #[async_trait]
-pub trait Storage: Send + Sync {
+pub(crate) trait Storage: Send + Sync {
 	async fn get_random_relay_addr(&self) -> Result<Addrs, StorageError>;
 	async fn update_status(&self, addrs: &Addrs, state: RelayState) -> Result<(), StorageError>;
 	async fn remove_relay(&self, addrs: &Addrs) -> Result<(), StorageError>;
@@ -28,7 +28,7 @@ const REDIS_SET_KEY_READY: &str = "registry:relay-addrs:ready";
 const REDIS_SET_KEY_ALLOCATED: &str = "registry:relay-addrs:allocated";
 
 #[derive(Clone)]
-pub struct RedisStorage {
+pub(crate) struct RedisStorage {
 	conn: MultiplexedConnection,
 }
 
@@ -78,7 +78,7 @@ impl RedisStorage {
 	/// Создать новый `RedisStorage`
 	/// `RedisStorage` использует multiplexed соединение к Redis
 	/// `RedisStorage` можно клонировать
-	pub async fn new(dsn: &str) -> Result<Self, StorageError> {
+	pub(crate) async fn new(dsn: &str) -> Result<Self, StorageError> {
 		tracing::info!("connecting to redis: {:?}", dsn);
 		let client = redis::Client::open(dsn)?;
 		client
@@ -122,7 +122,7 @@ impl RedisStorage {
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
 	use crate::proto::matches::registry::internal::RelayState;
 	use crate::registry::relay_addrs::Addrs;
 	use crate::registry::storage::{RedisStorage, Storage, StorageError};

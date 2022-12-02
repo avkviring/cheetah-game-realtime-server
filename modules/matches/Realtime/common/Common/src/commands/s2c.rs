@@ -110,11 +110,11 @@ impl S2CCommand {
 	pub fn get_trace_string(&self) -> String {
 		match self {
 			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
-			S2CCommand::Created(_) => "".to_string(),
+			S2CCommand::Created(_) => String::new(),
 			S2CCommand::SetField(command) => format!("{:?}", command.value),
 			S2CCommand::Event(command) => format!("{:?}", command.event),
-			S2CCommand::Delete(_) => "".to_string(),
-			S2CCommand::DeleteField(_) => "".to_string(),
+			S2CCommand::Delete(_) => String::new(),
+			S2CCommand::DeleteField(_) => String::new(),
 			S2CCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
 			S2CCommand::MemberConnected(command) => format!("member connected({:?})", command.member_id),
 		}

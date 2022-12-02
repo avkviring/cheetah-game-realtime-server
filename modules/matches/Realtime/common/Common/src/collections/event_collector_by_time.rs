@@ -142,7 +142,7 @@ mod tests {
 	///
 	/// Если не прошло время агрегации - сумма и количество не может быть определено
 	///
-	pub fn should_return_none_if_not_enough_duration() {
+	pub(crate) fn should_return_none_if_not_enough_duration() {
 		let (mut collector, _) = setup();
 		let now = Instant::now();
 		collector.on_event(now);
@@ -153,7 +153,7 @@ mod tests {
 	/// Проверяем агрегирование в рамках одного временного диапазона
 	///
 	#[test]
-	pub fn should_return_sum_and_count_for_one_aggregation() {
+	pub(crate) fn should_return_sum_and_count_for_one_aggregation() {
 		let (mut collector, duration) = setup();
 		let now = Instant::now();
 		collector.on_event(now);
@@ -166,7 +166,7 @@ mod tests {
 	/// Проверяем агрегирование в рамках двух временных диапазонов
 	///
 	#[test]
-	pub fn should_return_sum_and_count_for_two_aggregation() {
+	pub(crate) fn should_return_sum_and_count_for_two_aggregation() {
 		let (mut collector, duration) = setup();
 		let mut now = Instant::now();
 		collector.on_event(now);

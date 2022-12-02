@@ -54,7 +54,7 @@ impl DisconnectByCommand {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
-pub struct DisconnectHeader {}
+pub struct DisconnectHeader;
 
 #[cfg(test)]
 mod tests {
@@ -64,7 +64,7 @@ mod tests {
 	use crate::protocol::frame::output::OutFrame;
 
 	#[test]
-	pub fn should_disconnect() {
+	pub(crate) fn should_disconnect() {
 		let mut self_handler = DisconnectByCommand::default();
 		let mut remote_handler = DisconnectByCommand::default();
 
@@ -85,7 +85,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_not_disconnect() {
+	pub(crate) fn should_not_disconnect() {
 		let mut handler = DisconnectByCommand::default();
 		let mut frame = OutFrame::new(10);
 		handler.build_frame(&mut frame);

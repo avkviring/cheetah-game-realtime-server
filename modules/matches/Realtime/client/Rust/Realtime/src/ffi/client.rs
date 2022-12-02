@@ -72,7 +72,7 @@ pub extern "C" fn receive(client_id: ClientId) -> u8 {
 #[no_mangle]
 pub extern "C" fn get_server_time(client_id: ClientId, server_out_time: &mut u64) -> u8 {
 	execute_with_client(client_id, |client| {
-		*server_out_time = client.get_server_time().unwrap_or(0_u64);
+		*server_out_time = client.get_server_time().unwrap_or_default();
 		Ok(())
 	})
 }
@@ -135,6 +135,7 @@ pub struct Statistics {
 
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
+#[allow(unsafe_op_in_unsafe_fn)]
 pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
 	member_id: RoomMemberId,

@@ -182,9 +182,9 @@ impl Room {
 			return;
 		}
 
-		let measurers = self.measurers.clone();
+		let measurers = Rc::clone(&self.measurers);
 		let mut measurers = measurers.borrow_mut();
-		let tracer = self.command_trace_session.clone();
+		let tracer = Rc::clone(&self.command_trace_session);
 		for command_with_channel in commands {
 			match &command_with_channel.both_direction_command {
 				BothDirectionCommand::C2S(command) => {
@@ -217,12 +217,15 @@ impl Room {
 
 	fn connect_member(&mut self, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
-		let template = self.members.get(&member_id).unwrap().template.clone();
+		let member = self.members.get(&member_id).ok_or(ServerCommandError::MemberNotFound(member_id))?;
+		let template = member.template.clone();
 		if let Err(e) = self.on_member_connect(member_id, template) {
 			self.current_channel = None;
 			return Err(e);
 		}
-		self.members.get_mut(&member_id).unwrap().connected = true;
+
+		let member = self.members.get_mut(&member_id).ok_or(ServerCommandError::MemberNotFound(member_id))?;
+		member.connected = true;
 		Ok(())
 	}
 
@@ -584,7 +587,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_keep_order_object() {
+	pub(crate) fn should_keep_order_object() {
 		let (template, member_template) = create_template();
 		let mut room = Room::from_template(template);
 		room.register_member(member_template);
@@ -623,7 +626,7 @@ mod tests {
 	/// При загрузки пользовательских предопределенных объектов должны быть учтены правила доступа
 	///
 	#[test]
-	pub fn should_apply_permissions_for_self_object() {
+	pub(crate) fn should_apply_permissions_for_self_object() {
 		let mut template = RoomTemplate::default();
 		let groups = AccessGroups(55);
 
@@ -652,7 +655,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_clear_out_commands_after_collect() {
+	pub(crate) fn should_clear_out_commands_after_collect() {
 		let mut room = Room::default();
 		let member_template = MemberTemplate::stub(AccessGroups(8));
 		let member_id = room.register_member(member_template);
@@ -705,7 +708,7 @@ mod tests {
 	fn should_not_execute_when_not_ready() {
 		let plugin_name = "plugin_1";
 		let mut room = Room {
-			plugins_pending: FnvHashSet::from_iter([plugin_name.to_string()]),
+			plugins_pending: FnvHashSet::from_iter([plugin_name.to_owned()]),
 			..Default::default()
 		};
 		let member_1 = room.register_member(MemberTemplate::stub(AccessGroups(10)));
@@ -755,7 +758,7 @@ mod tests {
 		);
 	}
 
-	pub fn create_template() -> (RoomTemplate, MemberTemplate) {
+	pub(crate) fn create_template() -> (RoomTemplate, MemberTemplate) {
 		let template = RoomTemplate::default();
 		let member_template = MemberTemplate::new_member(AccessGroups(55), Default::default());
 		(template, member_template)
