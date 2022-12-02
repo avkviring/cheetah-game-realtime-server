@@ -11,12 +11,12 @@ use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
 use crate::proto::matches::realtime::internal::ProbeRequest;
 
 #[async_trait]
-pub trait RelayProber: Send + Sync {
+pub(crate) trait RelayProber: Send + Sync {
 	async fn probe(&self, addr: SocketAddr) -> Result<(), ProbeError>;
 }
 
 #[derive(Error, Debug)]
-pub enum ProbeError {
+pub(crate) enum ProbeError {
 	#[error(transparent)]
 	TransportError(#[from] tonic::transport::Error),
 
@@ -24,7 +24,7 @@ pub enum ProbeError {
 	GrpcErrorStatus(#[from] tonic::Status),
 }
 
-pub struct ReconnectProber {}
+pub(crate) struct ReconnectProber;
 
 #[async_trait]
 impl RelayProber for ReconnectProber {

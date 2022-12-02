@@ -81,6 +81,7 @@ impl GameObject {
 		self.set_field_wrapped(field_id, field_value)
 	}
 
+	#[allow(clippy::map_err_ignore)]
 	pub fn set_field_wrapped(&mut self, field_id: FieldId, value: FieldValue) -> Result<(), GameObjectError> {
 		let field_type = value.field_type();
 		self.fields
@@ -99,6 +100,7 @@ impl GameObject {
 		self.compare_and_set_owners.get(field_id)
 	}
 
+	#[allow(clippy::map_err_ignore)]
 	pub fn set_compare_and_set_owner(&mut self, field_id: FieldId, value: RoomMemberId) -> Result<(), GameObjectError> {
 		self.compare_and_set_owners
 			.insert(field_id, value)
@@ -163,7 +165,7 @@ mod tests {
 	/// Проверяем что все типы данных преобразованы в команды
 	///
 	#[test]
-	pub fn should_collect_command() {
+	pub(crate) fn should_collect_command() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id, 55, AccessGroups(63), true);
 		object.set_field(1, 100).unwrap();
@@ -234,7 +236,7 @@ mod tests {
 	/// Для несозданного объекта не должно быть команды Created
 	///
 	#[test]
-	pub fn should_collect_command_for_not_created_object() {
+	pub(crate) fn should_collect_command_for_not_created_object() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
 		let mut object = GameObject::new(id, 0, Default::default(), false);
 		object.set_field(1, 100).unwrap();
@@ -260,7 +262,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_update_structure() {
+	pub(crate) fn should_update_structure() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
 		object.set_field(1, [1, 2, 3].as_ref()).unwrap();
 		object.set_field(1, [4, 5, 6, 7].as_ref()).unwrap();

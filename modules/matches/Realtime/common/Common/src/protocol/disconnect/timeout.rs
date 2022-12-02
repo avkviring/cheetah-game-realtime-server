@@ -34,7 +34,7 @@ mod tests {
 	///
 	/// После запуска - канал некоторые время считается открытым
 	///
-	pub fn should_not_disconnect_when_start() {
+	pub(crate) fn should_not_disconnect_when_start() {
 		let now = Instant::now();
 		let handler = DisconnectByTimeout::new(now);
 		assert!(!handler.disconnected(now));
@@ -44,7 +44,7 @@ mod tests {
 	/// Разрыв связи через timeout после старта, если не было ни одного фрейма
 	///
 	#[test]
-	pub fn should_disconnect_after_timeout() {
+	pub(crate) fn should_disconnect_after_timeout() {
 		let now = Instant::now();
 		let handler = DisconnectByTimeout::new(now);
 		assert!(handler.disconnected(now.add(DisconnectByTimeout::TIMEOUT).add(Duration::from_millis(1))));
@@ -54,7 +54,7 @@ mod tests {
 	/// Если был пакет - то канал не закрыт определенное время после этого
 	///
 	#[test]
-	pub fn should_not_disconnect_when_not_timeout_after_frame() {
+	pub(crate) fn should_not_disconnect_when_not_timeout_after_frame() {
 		let now = Instant::now();
 		let mut handler = DisconnectByTimeout::new(now);
 		handler.on_frame_received(now);
@@ -65,7 +65,7 @@ mod tests {
 	/// Если был пакет - то канал закрыт после таймаута
 	///
 	#[test]
-	pub fn should_disconnect_when_not_timeout_after_frame() {
+	pub(crate) fn should_disconnect_when_not_timeout_after_frame() {
 		let now = Instant::now();
 		let mut handler = DisconnectByTimeout::new(now);
 		handler.on_frame_received(now);

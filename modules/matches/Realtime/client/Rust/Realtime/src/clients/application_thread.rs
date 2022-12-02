@@ -103,6 +103,7 @@ impl ApplicationThreadClient {
 		Ok(self.state.lock()?.clone())
 	}
 
+	#[allow(clippy::unwrap_in_result)]
 	pub fn get_server_time(&self) -> Option<u64> {
 		*self.server_time.lock().unwrap()
 	}

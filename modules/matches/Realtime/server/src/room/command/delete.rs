@@ -72,7 +72,7 @@ mod tests {
 
 		assert!(matches!(
 			command.execute(&mut room, member_b),
-			Err(ServerCommandError::MemberNotOwnerGameObject { object_id: _, member_id: _ })
+			Err(ServerCommandError::MemberNotOwnerGameObject { .. })
 		));
 		assert!(matches!(room.get_object_mut(object_id), Ok(_)));
 		assert!(matches!(room.test_out_commands.pop_back(), None));

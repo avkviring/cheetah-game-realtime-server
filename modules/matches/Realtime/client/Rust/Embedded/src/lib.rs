@@ -42,7 +42,7 @@ impl EmbeddedServerWrapper {
 				.build()
 				.await
 		})?;
-		let manager = server.manager.clone();
+		let manager = Arc::clone(&server.manager);
 		let game_socket_addr = server.game_socket_addr;
 		let internal_grpc_socket_addr = server.internal_grpc_tcp_listener.local_addr()?;
 		let admin_grpc_socket_addr = server.admin_grpc_tcp_listener.local_addr()?;
@@ -74,7 +74,7 @@ impl EmbeddedServerWrapper {
 	}
 
 	pub fn shutdown(self) {
-		let manager = self.manager.clone();
+		let manager = Arc::clone(&self.manager);
 		self.runtime.block_on(async move { manager.lock().await.shutdown() });
 		self.runtime.shutdown_background();
 	}

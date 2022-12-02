@@ -94,14 +94,14 @@ async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), Regis
 	let status = gs
 		.status
 		.as_ref()
-		.ok_or_else(|| RegistryError::InvalidGameServerStatus("could not find status in GameServer".to_string()))?;
+		.ok_or_else(|| RegistryError::InvalidGameServerStatus("could not find status in GameServer".to_owned()))?;
 	let host = status.address;
 	let port = status
 		.ports
 		.iter()
 		.find(|p| p.name == "default")
 		.map(|p| p.port)
-		.ok_or_else(|| RegistryError::InvalidGameServerStatus("could not find port default in GameServer Status".to_string()))?;
+		.ok_or_else(|| RegistryError::InvalidGameServerStatus("could not find port default in GameServer Status".to_owned()))?;
 
 	let addrs = RelayAddrs {
 		game: Some(Addr {

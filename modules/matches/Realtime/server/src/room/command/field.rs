@@ -62,7 +62,7 @@ mod tests {
 	}
 
 	#[test]
-	pub fn should_delete_field() {
+	pub(crate) fn should_delete_field() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
 
 		object.set_field(1, [1, 2, 3].as_ref()).unwrap();

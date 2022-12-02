@@ -29,7 +29,7 @@ struct MemberSession {
 	peer_address: Option<SocketAddr>,
 	private_key: MemberPrivateKey,
 	max_receive_frame_id: FrameId,
-	pub protocol: Protocol,
+	pub(crate) protocol: Protocol,
 }
 
 impl NetworkLayer {
@@ -292,7 +292,7 @@ mod tests {
 		let size = frame.encode(&mut Cipher::new(&member_template.private_key), &mut buffer).unwrap();
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, Instant::now());
 
-		assert_eq!(udp_server.sessions.get(&member_and_room_id).unwrap().peer_address.unwrap(), addr_1);
+		assert_eq!(udp_server.sessions[&member_and_room_id].peer_address.unwrap(), addr_1);
 	}
 
 	#[test]

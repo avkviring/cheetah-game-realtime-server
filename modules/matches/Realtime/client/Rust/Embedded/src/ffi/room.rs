@@ -1,13 +1,14 @@
 use cheetah_matches_realtime::room::template::config::RoomTemplate;
 use cheetah_matches_realtime_common::room::RoomId;
+use std::sync::Arc;
 
 use crate::ffi::{ServerId, REGISTRY};
 
 #[no_mangle]
-pub extern "C" fn create_room(server_id: ServerId, room_id: &mut RoomId, on_error: extern "C" fn(*const u16)) -> bool {
+pub(crate) extern "C" fn create_room(server_id: ServerId, room_id: &mut RoomId, on_error: extern "C" fn(*const u16)) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	return if let Some(server) = registry.servers.get_mut(&server_id) {
-		let manager = server.manager.clone();
+		let manager = Arc::clone(&server.manager);
 		match server
 			.runtime
 			.block_on(async move { manager.lock().await.create_room(RoomTemplate::default()) })
@@ -32,7 +33,7 @@ mod test {
 	use crate::ffi::server::{run_new_server, EmbeddedServerDescription};
 
 	#[test]
-	pub fn should_create_room() {
+	pub(crate) fn should_create_room() {
 		let mut result = EmbeddedServerDescription::default();
 		run_new_server(&mut result, on_server_error, &Default::default());
 		let mut room_id = 0;
@@ -40,11 +41,11 @@ mod test {
 		assert_eq!(room_id, 1);
 	}
 
-	pub extern "C" fn on_server_error(message: *const u16) {
+	pub(crate) extern "C" fn on_server_error(message: *const u16) {
 		panic!("Fail create server with message {:?}", message)
 	}
 
-	pub extern "C" fn on_room_error(_: *const u16) {
+	pub(crate) extern "C" fn on_room_error(_: *const u16) {
 		panic!("Fail create room")
 	}
 }

@@ -47,6 +47,7 @@ impl ServerCommandExecutor for CompareAndSetStructureCommand {
 	}
 }
 
+#[allow(clippy::map_err_ignore)]
 pub fn perform_compare_and_set(
 	room: &mut Room,
 	member_id: RoomMemberId,
@@ -86,7 +87,7 @@ pub fn perform_compare_and_set(
 			}
 			Some(reset_value) => {
 				cls.insert((object_id, field_id, field_type), reset_value.clone())
-					.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners overflow".to_string()))?;
+					.map_err(|_| ServerCommandError::Error("CompareAndSetCleaners overflow".to_owned()))?;
 			}
 		}
 	}

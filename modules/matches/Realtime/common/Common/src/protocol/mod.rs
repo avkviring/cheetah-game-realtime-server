@@ -109,7 +109,7 @@ impl Protocol {
 			|| self.disconnect_by_command.contains_self_data()
 			|| self.keep_alive.contains_self_data(now);
 
-		if contains_data {
+		contains_data.then(|| {
 			let mut frame = OutFrame::new(self.next_frame_id);
 			self.next_frame_id += 1;
 
@@ -119,10 +119,8 @@ impl Protocol {
 			self.rtt.build_frame(&mut frame, now);
 			self.keep_alive.build_frame(&mut frame, now);
 			self.retransmitter.build_frame(&frame, now);
-			Some(frame)
-		} else {
-			None
-		}
+			frame
+		})
 	}
 
 	///

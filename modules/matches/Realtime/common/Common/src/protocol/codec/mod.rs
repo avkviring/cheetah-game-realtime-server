@@ -37,6 +37,8 @@ pub enum FrameDecodeError {
 		#[from]
 		source: std::io::Error,
 	},
+	#[error("HeaplessError")]
+	HeaplessError,
 }
 
 #[derive(Error, Debug)]
@@ -68,6 +70,7 @@ impl InFrame {
 	/// Метод вызывается после `decode_headers` (более подробно в тестах)
 	///
 	#[allow(clippy::cast_possible_truncation)]
+	#[allow(clippy::map_err_ignore)]
 	pub fn decode_frame_commands(
 		c2s_commands: bool,
 		frame_id: FrameId,
@@ -78,11 +81,12 @@ impl InFrame {
 		let data = cursor.into_inner();
 
 		// commands - decrypt
-		let nonce = frame_id.to_be_bytes() as [u8; 8];
+		let nonce = frame_id.to_be_bytes();
 		let ad = &data[0..header_end as usize];
 
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
-		vec.extend_from_slice(&data[header_end as usize..data.len()]).unwrap();
+		vec.extend_from_slice(&data[header_end as usize..data.len()])
+			.map_err(|_| FrameDecodeError::HeaplessError)?;
 
 		cipher
 			.decrypt(&mut vec, ad, nonce)
@@ -109,8 +113,12 @@ impl OutFrame {
 	#[allow(clippy::cast_possible_truncation)]
 	pub fn encode(&self, cipher: &mut Cipher<'_>, out: &mut [u8]) -> Result<usize, FrameEncodeError> {
 		let mut frame_cursor = Cursor::new(out);
-		frame_cursor.write_variable_u64(self.frame_id).unwrap();
-		self.headers.encode_headers(&mut frame_cursor).unwrap();
+		frame_cursor
+			.write_variable_u64(self.frame_id)
+			.map_err(|e| FrameEncodeError::Io { source: e })?;
+		self.headers
+			.encode_headers(&mut frame_cursor)
+			.map_err(|e| FrameEncodeError::Io { source: e })?;
 		let commands_buffer = self.get_commands_buffer();
 
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();

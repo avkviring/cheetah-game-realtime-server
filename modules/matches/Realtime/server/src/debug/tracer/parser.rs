@@ -44,24 +44,24 @@ fn parse_with_bracket(mut query: String) -> Result<Token, ParseError> {
 		match query.chars().next().unwrap() {
 			'(' => {
 				let right_bracket = find_right_bracket(&query)?;
-				let expression = query[1..right_bracket].to_string();
+				let expression = query[1..right_bracket].to_owned();
 				let token = parse_with_bracket(expression)?;
 				tokens.push(token);
-				query = query[right_bracket..].to_string();
+				query = query[right_bracket..].to_owned();
 			}
 			')' => {
-				query = query[1..].to_string();
+				query = query[1..].to_owned();
 			}
 			'&' => {
-				query = query[2..].to_string();
+				query = query[2..].to_owned();
 				tokens.push(Token::And);
 			}
 			'|' => {
-				query = query[2..].to_string();
+				query = query[2..].to_owned();
 				tokens.push(Token::Or);
 			}
 			_ => {
-				let (token, stripped_query) = parse_field(query.to_string())?;
+				let (token, stripped_query) = parse_field(query)?;
 				tokens.push(token);
 				query = stripped_query;
 			}
@@ -135,6 +135,7 @@ fn get_rule(token: Token) -> Result<Rule, ParseError> {
 	}
 }
 
+#[allow(clippy::map_err_ignore)]
 fn parse_field(query: String) -> Result<(Token, String), ParseError> {
 	if let Some(stripped) = query.strip_prefix("c2s") {
 		Ok((Token::Rule(Rule::Direction(RuleCommandDirection::C2S)), stripped.to_ascii_lowercase()))
@@ -199,8 +200,8 @@ fn get_field(query: String) -> Result<(String, Op, String), ParseError> {
 			(not_index, Op::NotEqual, 2)
 		};
 		let field = &query[0..end_item_index];
-		let query = query[end_item_index + size..].to_string();
-		Ok((field.to_string(), op, query))
+		let query = query[end_item_index + size..].to_owned();
+		Ok((field.to_owned(), op, query))
 	}
 }
 
@@ -211,14 +212,14 @@ fn get_value(query: &str) -> (String, String) {
 	let and_op = query.find("&&").unwrap_or(query.len());
 	let or_op = query.find("||").unwrap_or(query.len());
 	let position = min(and_op, or_op);
-	(query[..position].to_string(), query[position..].to_string())
+	(query[..position].to_owned(), query[position..].to_owned())
 }
 
 impl Token {
 	///
 	/// Функция для объединения одно
 	///
-	pub fn create_rule(&self, rules: Vec<Rule>) -> Rule {
+	pub(crate) fn create_rule(&self, rules: Vec<Rule>) -> Rule {
 		match self {
 			Token::And => Rule::AndRule(rules),
 			Token::Or => Rule::OrRule(rules),
@@ -232,7 +233,7 @@ impl Token {
 	/// Раскрыть rule как набор внутренних rule
 	/// необходимо для преобразования правил And(rule1,And(rule2,rule3) в And(rule1, rule2, rule3)
 	///
-	pub fn expand(&self, rule: Rule) -> Vec<Rule> {
+	pub(crate) fn expand(&self, rule: Rule) -> Vec<Rule> {
 		match self {
 			Token::And => {
 				if let Rule::AndRule(rules) = rule {

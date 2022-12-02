@@ -49,7 +49,7 @@ impl CompareAndSetLongCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_i64(self.current)?;
 		out.write_variable_i64(self.new)?;
-		out.write_u8(if self.reset.is_some() { 1 } else { 0 })?;
+		out.write_u8(u8::from(self.reset.is_some()))?;
 		if let Some(reset_value) = &self.reset {
 			out.write_variable_i64(*reset_value)
 		} else {
@@ -61,6 +61,7 @@ impl CompareAndSetLongCommand {
 		let current = input.read_variable_i64()?;
 		let new = input.read_variable_i64()?;
 		let has_reset = input.read_u8()? == 1;
+		#[allow(clippy::if_then_some_else_none)]
 		let reset = if has_reset { Some(input.read_variable_i64()?) } else { None };
 		Ok(Self {
 			object_id,

@@ -76,14 +76,10 @@ impl NetworkLatencyEmulator {
 	pub fn get_in(&mut self, now: Instant) -> Option<Vec<u8>> {
 		match self.in_queue.peek() {
 			None => None,
-			Some(frame) => {
-				if now >= frame.time {
-					let frame = self.in_queue.pop().unwrap();
-					Some(frame.buffer)
-				} else {
-					None
-				}
-			}
+			Some(frame) => (now >= frame.time).then(|| {
+				let frame = self.in_queue.pop().unwrap();
+				frame.buffer
+			}),
 		}
 	}
 
@@ -107,14 +103,10 @@ impl NetworkLatencyEmulator {
 	pub fn get_out(&mut self, now: Instant) -> Option<(Vec<u8>, SocketAddr)> {
 		match self.out_queue.peek() {
 			None => None,
-			Some(data) => {
-				if now >= data.time {
-					let data = self.out_queue.pop().unwrap();
-					Some((data.buffer.clone(), data.addr.unwrap()))
-				} else {
-					None
-				}
-			}
+			Some(data) => (now >= data.time).then(|| {
+				let data = self.out_queue.pop().unwrap();
+				(data.buffer.clone(), data.addr.unwrap())
+			}),
 		}
 	}
 

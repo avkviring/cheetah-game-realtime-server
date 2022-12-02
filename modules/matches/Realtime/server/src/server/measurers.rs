@@ -139,8 +139,8 @@ impl Measurers {
 					])
 					.const_labels(
 						vec![
-							("command".to_string(), command.to_string()),
-							("field_id".to_string(), format!("{:?}", field_id)),
+							("command".to_owned(), command.to_string()),
+							("field_id".to_owned(), format!("{:?}", field_id)),
 						]
 						.into_iter()
 						.collect(),
@@ -171,7 +171,7 @@ impl Measurers {
 		MeasurersByLabel::new(
 			registry,
 			Box::new(|template| {
-				Opts::new("object_count", "object count").const_labels(vec![("template".to_string(), template.clone())].into_iter().collect())
+				Opts::new("object_count", "object count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())
 			}),
 		)
 	}
@@ -180,7 +180,7 @@ impl Measurers {
 		MeasurersByLabel::new(
 			registry,
 			Box::new(|template| {
-				Opts::new("member_count", "member count").const_labels(vec![("template".to_string(), template.clone())].into_iter().collect())
+				Opts::new("member_count", "member count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())
 			}),
 		)
 	}
@@ -189,7 +189,7 @@ impl Measurers {
 		MeasurersByLabel::new(
 			registry,
 			Box::new(|template| {
-				Opts::new("room_count", "room count").const_labels(vec![("template".to_string(), template.clone())].into_iter().collect())
+				Opts::new("room_count", "room count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())
 			}),
 		)
 	}
@@ -247,20 +247,17 @@ impl Measurers {
 		name: &str,
 		help: &str,
 	) -> Box<LabelFactoryFactory<(Option<FieldType>, Option<FieldId>, heapless::String<50>), Opts>> {
-		let name = name.to_string();
-		let help = help.to_string();
+		let name = name.to_owned();
+		let help = help.to_owned();
 		Box::new(move |(t, id, template)| {
 			Opts::new(name.as_str(), help.as_str()).const_labels(
 				vec![
+					("field_type".to_owned(), t.map(|f| f.to_string()).unwrap_or_else(|| "unknown".to_owned())),
 					(
-						"field_type".to_string(),
-						t.map(|f| f.to_string()).unwrap_or_else(|| "unknown".to_string()),
+						"field_id".to_owned(),
+						id.map(|f| format!("{}", f)).unwrap_or_else(|| "unknown".to_owned()),
 					),
-					(
-						"field_id".to_string(),
-						id.map(|f| format!("{}", f)).unwrap_or_else(|| "unknown".to_string()),
-					),
-					("template".to_string(), template.to_string()),
+					("template".to_owned(), template.to_string()),
 				]
 				.into_iter()
 				.collect(),

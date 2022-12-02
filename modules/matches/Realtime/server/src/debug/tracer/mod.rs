@@ -105,7 +105,7 @@ impl Session {
 	///
 	/// Максимальное число сохраненных команд в сессии
 	///
-	pub const BUFFER_LIMIT: usize = 65000;
+	pub(crate) const BUFFER_LIMIT: usize = 65000;
 
 	#[cfg(not(test))]
 	fn now() -> f64 {
@@ -121,7 +121,7 @@ impl Session {
 	/// Сохранение сетевой команды
 	/// - учитывается ограничение на размер буфера команд
 	///
-	pub fn collect(&mut self, template: Option<GameObjectTemplateId>, member_id: RoomMemberId, network_command: TracedBothDirectionCommand) {
+	pub(crate) fn collect(&mut self, template: Option<GameObjectTemplateId>, member_id: RoomMemberId, network_command: TracedBothDirectionCommand) {
 		let collected_command = TracedCommand {
 			time: Session::now(),
 			template,
@@ -156,8 +156,7 @@ impl Session {
 	///
 	/// Сохранить фильтр в сессии и применить его для уже собранных команд
 	///
-	pub fn apply_filter(&mut self, filter: Filter) {
-		let filter = filter;
+	pub(crate) fn apply_filter(&mut self, filter: Filter) {
 		self.filtered_commands = self.commands.iter().filter(|c| filter.filter(c)).cloned().collect();
 		self.filter = Some(filter);
 	}
@@ -438,7 +437,7 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.execute_task(TracerSessionCommand::SetFilter(session_id, "(user=55)".to_string(), sender));
+		tracer.execute_task(TracerSessionCommand::SetFilter(session_id, "(user=55)".to_owned(), sender));
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => {}
@@ -453,7 +452,7 @@ pub mod tests {
 		let mut tracer = CommandTracerSessions::default();
 		let session_id = tracer.create_session();
 		let (sender, receiver) = std::sync::mpsc::channel();
-		tracer.execute_task(TracerSessionCommand::SetFilter(session_id, "(8=55)".to_string(), sender));
+		tracer.execute_task(TracerSessionCommand::SetFilter(session_id, "(8=55)".to_owned(), sender));
 		match receiver.try_recv() {
 			Ok(result) => {
 				if result.is_ok() {

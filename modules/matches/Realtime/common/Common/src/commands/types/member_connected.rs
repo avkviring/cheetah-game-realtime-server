@@ -2,7 +2,7 @@ use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter}
 use crate::room::RoomMemberId;
 use std::io::{Cursor, Error, ErrorKind};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct MemberConnectedCommand {
 	pub member_id: RoomMemberId,
 }

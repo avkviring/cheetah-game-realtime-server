@@ -36,14 +36,14 @@ mod tests {
 	use crate::protocol::others::keep_alive::KeepAlive;
 
 	#[test]
-	pub fn should_send_first_time() {
+	pub(crate) fn should_send_first_time() {
 		let handler = KeepAlive::default();
 		let now = Instant::now();
 		assert!(handler.contains_self_data(now));
 	}
 
 	#[test]
-	pub fn should_timeout_after_send() {
+	pub(crate) fn should_timeout_after_send() {
 		let mut handler = KeepAlive::default();
 		let now = Instant::now();
 		let mut frame = OutFrame::new(1);

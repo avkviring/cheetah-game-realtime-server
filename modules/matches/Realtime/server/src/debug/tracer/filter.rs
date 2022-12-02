@@ -58,21 +58,21 @@ impl TracedBothDirectionCommand {
 			TracedBothDirectionCommand::S2C(_) => RuleCommandDirection::S2C,
 		}
 	}
-	pub fn get_field_type(&self) -> Option<FieldType> {
+	pub(crate) fn get_field_type(&self) -> Option<FieldType> {
 		match self {
 			TracedBothDirectionCommand::C2S(command) => command.get_field_type(),
 			TracedBothDirectionCommand::S2C(command) => command.get_field_type(),
 		}
 	}
 
-	pub fn get_field_id(&self) -> Option<FieldId> {
+	pub(crate) fn get_field_id(&self) -> Option<FieldId> {
 		match self {
 			TracedBothDirectionCommand::C2S(command) => command.get_field_id(),
 			TracedBothDirectionCommand::S2C(command) => command.get_field_id(),
 		}
 	}
 
-	pub fn get_object_id(&self) -> Option<GameObjectId> {
+	pub(crate) fn get_object_id(&self) -> Option<GameObjectId> {
 		match self {
 			TracedBothDirectionCommand::C2S(command) => command.get_object_id(),
 			TracedBothDirectionCommand::S2C(command) => command.get_object_id(),

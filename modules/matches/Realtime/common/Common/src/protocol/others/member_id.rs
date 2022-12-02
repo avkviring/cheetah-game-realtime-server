@@ -13,10 +13,7 @@ pub struct MemberAndRoomId {
 impl MemberAndRoomId {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		Ok(Self {
-			member_id: input
-				.read_variable_u64()?
-				.try_into()
-				.map_err(|_| std::io::Error::new(InvalidData, "member_id is too large".to_string()))?,
+			member_id: input.read_variable_u64()?.try_into().map_err(|e| std::io::Error::new(InvalidData, e))?,
 			room_id: input.read_variable_u64()?,
 		})
 	}

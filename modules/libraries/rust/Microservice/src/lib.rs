@@ -61,6 +61,8 @@ fn setup_tracer(name: &str, trace_level: tracing::Level) {
 	}
 }
 
+#[allow(clippy::print_stdout)]
+#[allow(clippy::exit)]
 fn setup_panic_hook() {
 	panic::set_hook(Box::new(move |panic_info| {
 		// ставим задачу на выход

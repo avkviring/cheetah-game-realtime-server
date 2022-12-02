@@ -4,19 +4,19 @@ use cheetah_matches_realtime_common::trace_collector::TRACER_COLLECTOR;
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum LogLevel {
+pub(crate) enum LogLevel {
 	Info,
 	Warn,
 	Error,
 }
 
 #[no_mangle]
-pub extern "C" fn init_logger() {
+pub(crate) extern "C" fn init_logger() {
 	set_max_log_level(LogLevel::Error);
 }
 
 #[no_mangle]
-pub extern "C" fn set_max_log_level(log_level: LogLevel) {
+pub(crate) extern "C" fn set_max_log_level(log_level: LogLevel) {
 	let collector = &mut TRACER_COLLECTOR.lock().unwrap();
 	collector.set_log_level(match log_level {
 		LogLevel::Info => tracing_core::Level::INFO,
@@ -26,7 +26,7 @@ pub extern "C" fn set_max_log_level(log_level: LogLevel) {
 }
 
 #[no_mangle]
-pub extern "C" fn collect_logs(on_log_message: extern "C" fn(LogLevel, *const u16)) {
+pub(crate) extern "C" fn collect_logs(on_log_message: extern "C" fn(LogLevel, *const u16)) {
 	let collector = &mut TRACER_COLLECTOR.lock().unwrap();
 	loop {
 		match collector.items.pop_front() {

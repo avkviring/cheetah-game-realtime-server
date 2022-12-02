@@ -45,6 +45,7 @@ extern "C" fn on_object_create(_object_id: &GameObjectIdFFI, _: u16) {
 /// Тестируем работу сервера под большой нагрузкой
 ///
 //#[test]
+#[allow(clippy::print_stderr)]
 pub fn stress_test() {
 	init_logger();
 	let (helper, [client1, client2]) = setup(Default::default());

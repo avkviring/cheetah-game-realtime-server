@@ -1,4 +1,5 @@
 use std::io::Cursor;
+use std::num::TryFromIntError;
 
 use thiserror::Error;
 
@@ -65,7 +66,7 @@ impl Channel {
 					input
 						.read_variable_u64()?
 						.try_into()
-						.map_err(|_| CommandChannelDecodeError::InputValueIsTooLarge)?,
+						.map_err(CommandChannelDecodeError::InputValueIsTooLarge)?,
 				),
 			),
 			_ => return Err(CommandChannelDecodeError::UnknownType(*channel_type)),
@@ -88,7 +89,7 @@ pub enum CommandChannelDecodeError {
 		source: CommandContextError,
 	},
 	#[error("InputValueIsTooLarge")]
-	InputValueIsTooLarge,
+	InputValueIsTooLarge(TryFromIntError),
 }
 
 #[cfg(test)]

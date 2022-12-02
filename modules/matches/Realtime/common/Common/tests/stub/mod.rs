@@ -44,13 +44,10 @@ impl Channel {
 
 	#[must_use]
 	pub fn allow(&self, position: u64) -> bool {
-		let find = self.reliable_percents.iter().find_map(|(range, percent)| {
-			if range.contains(&position) {
-				Some(OsRng.gen_bool(*percent))
-			} else {
-				None
-			}
-		});
+		let find = self
+			.reliable_percents
+			.iter()
+			.find_map(|(range, percent)| range.contains(&position).then(|| OsRng.gen_bool(*percent)));
 		find.unwrap_or(true)
 	}
 }

@@ -53,18 +53,17 @@ impl AckHeader {
 
 #[cfg(test)]
 mod tests {
-	use crate::protocol::frame::FrameId;
 	use crate::protocol::reliable::ack::header::AckHeader;
 
 	#[test]
 	///
 	/// Проверяем сохранение списка `frame_id`
 	///
-	pub fn should_store_frame_id() {
+	pub(crate) fn should_store_frame_id() {
 		let mut header = AckHeader::default();
 		let originals = vec![1, 2, 3, 4, 7, 9, 15];
 		for i in &originals {
-			header.add_frame_id(*i as FrameId);
+			header.add_frame_id(*i);
 		}
 
 		let actual = header.get_frames().as_slice();

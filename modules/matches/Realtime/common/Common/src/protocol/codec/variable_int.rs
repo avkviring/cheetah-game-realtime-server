@@ -31,7 +31,7 @@ impl VariableIntWriter for Cursor<&mut [u8]> {
 
 		if value < U8_MAX + 255 {
 			self.write_u8(U9_MARKER)?;
-			return self.write_u8((value - U8_MAX as u64) as u8);
+			return self.write_u8((value - U8_MAX) as u8);
 		};
 
 		if value < u64::from(u16::MAX) {
@@ -51,7 +51,7 @@ impl VariableIntWriter for Cursor<&mut [u8]> {
 
 		if value < u64::from(u32::MAX) * u64::from(u8::MAX) * u64::from(u8::MAX) {
 			self.write_u8(U48_MARKER)?;
-			return self.write_u48::<BigEndian>(value as u64);
+			return self.write_u48::<BigEndian>(value);
 		};
 
 		self.write_u8(U64_MARKER)?;
@@ -77,7 +77,7 @@ impl VariableIntReader for Cursor<&[u8]> {
 			U16_MARKER => u64::from(self.read_u16::<BigEndian>()?),
 			U24_MARKER => u64::from(self.read_u24::<BigEndian>()?),
 			U32_MARKER => u64::from(self.read_u32::<BigEndian>()?),
-			U48_MARKER => self.read_u48::<BigEndian>()? as u64,
+			U48_MARKER => self.read_u48::<BigEndian>()?,
 			U64_MARKER => self.read_u64::<BigEndian>()?,
 			_ => {
 				return Err(std::io::Error::new(
@@ -105,12 +105,12 @@ mod test {
 	fn test_u64() {
 		check_u64(U8_MAX - 1, 1);
 		check_u64(U8_MAX, 2);
-		check_u64(U8_MAX as u64 + 255 - 1, 2);
+		check_u64(U8_MAX + 255 - 1, 2);
 		check_u64(u64::from(u16::MAX - 1), 3);
 		check_u64(u64::from(u16::MAX) * u64::from(u8::MAX) - 1, 4);
 		check_u64(u64::from(u32::MAX - 1), 5);
 		check_u64(u64::from(u32::MAX) * u64::from(u8::MAX) - 1, 7);
-		check_u64((u64::MAX - 1) as u64, 9);
+		check_u64(u64::MAX - 1, 9);
 	}
 
 	#[test]

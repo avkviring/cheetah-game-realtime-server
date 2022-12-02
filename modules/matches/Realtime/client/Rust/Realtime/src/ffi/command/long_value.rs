@@ -57,7 +57,7 @@ pub extern "C" fn compare_and_set_long_value(
 			field_id,
 			current,
 			new,
-			reset: if has_reset { Some(reset) } else { None },
+			reset: has_reset.then_some(reset),
 		}),
 	)
 }

@@ -82,7 +82,7 @@ mod tests {
 		let frame_a = InFrame::new(1000 + FrameReplayProtection::BUFFER_SIZE as u64, Default::default(), Default::default());
 		let frame_b = InFrame::new(10, Default::default(), Default::default());
 		assert!(!protection.set_and_check(&frame_a).unwrap());
-		assert!(protection.set_and_check(&frame_b).is_err());
+		protection.set_and_check(&frame_b).unwrap_err();
 	}
 
 	#[test]

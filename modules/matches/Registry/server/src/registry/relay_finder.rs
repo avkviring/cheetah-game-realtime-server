@@ -2,20 +2,20 @@ use crate::registry::relay_addrs::Addrs;
 use crate::registry::relay_prober::RelayProber;
 use crate::registry::storage::{Storage, StorageError};
 
-pub struct RelayFinder {
+pub(crate) struct RelayFinder {
 	storage: Box<dyn Storage>,
 	prober: Box<dyn RelayProber>,
 }
 
 impl RelayFinder {
-	pub fn new(storage: Box<dyn Storage>, prober: Box<dyn RelayProber>) -> Self {
+	pub(crate) fn new(storage: Box<dyn Storage>, prober: Box<dyn RelayProber>) -> Self {
 		RelayFinder { storage, prober }
 	}
 
 	/// Получить адрес доступного Relay из хранилища и проверяет что он доступен
 	/// проверка необходима, т.к. в случае падения Registry и Relay одновременно, адрес Relay может остаться в хранилище.
 	/// Если Relay недоступен, удаляем его из хранилища и пробуем получить новый адрес.
-	pub async fn get_random_relay_addr(&self) -> Result<Addrs, StorageError> {
+	pub(crate) async fn get_random_relay_addr(&self) -> Result<Addrs, StorageError> {
 		loop {
 			let addrs = self.storage.get_random_relay_addr().await?;
 			tracing::info!("probing relay {:?}", addrs);

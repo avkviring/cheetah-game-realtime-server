@@ -11,7 +11,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 		let member = room.get_member(&member_id)?;
 
 		if self.object_id.id == 0 {
-			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_string()));
+			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_owned()));
 		}
 
 		let groups = self.access_groups;

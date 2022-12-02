@@ -51,10 +51,7 @@ impl CreateGameObjectCommand {
 	}
 
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let template = input
-			.read_variable_u64()?
-			.try_into()
-			.map_err(|_| Error::new(ErrorKind::InvalidData, "could not cast into GameObjectTemplateId".to_string()))?;
+		let template = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 		let access_groups = AccessGroups(input.read_variable_u64()?);
 		Ok(Self {
 			object_id,
@@ -66,7 +63,7 @@ impl CreateGameObjectCommand {
 
 impl C2SCreatedGameObjectCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_u8(if self.room_owner { 1 } else { 0 })?;
+		out.write_u8(u8::from(self.room_owner))?;
 		match &self.singleton_key {
 			None => out.write_variable_u64(0),
 			Some(buffer) => buffer.encode(out),

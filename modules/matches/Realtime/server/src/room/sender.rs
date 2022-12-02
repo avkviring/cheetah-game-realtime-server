@@ -34,7 +34,7 @@ impl Room {
 		let channel_type = self.current_channel.as_ref().unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
 
 		let permission_manager = Rc::clone(&self.permission_manager);
-		let command_trace_session = self.command_trace_session.clone();
+		let command_trace_session = Rc::clone(&self.command_trace_session);
 
 		let members_for_send = self
 			.members
@@ -83,7 +83,7 @@ impl Room {
 		object_template: GameObjectTemplateId,
 		commands: &[S2CCommandWithMeta],
 	) -> Result<(), ServerCommandError> {
-		let command_trace_session = self.command_trace_session.clone();
+		let command_trace_session = Rc::clone(&self.command_trace_session);
 		let permission_manager = Rc::clone(&self.permission_manager);
 		let channel = self.current_channel.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
 		let member = self.get_member_mut(member_id)?;
@@ -147,34 +147,32 @@ mod tests {
 		let object_id = object.id;
 
 		// владельцу разрешены любые операции
-		assert!(room
-			.send_command_from_action(
-				object_id,
-				Field {
-					id: field_id_1,
-					field_type: FieldType::Long,
-				},
-				member_1,
-				Permission::Rw,
-				None,
-				|_| Ok(None),
-			)
-			.is_ok());
+		room.send_command_from_action(
+			object_id,
+			Field {
+				id: field_id_1,
+				field_type: FieldType::Long,
+			},
+			member_1,
+			Permission::Rw,
+			None,
+			|_| Ok(None),
+		)
+		.unwrap();
 
 		// RO - по-умолчанию для всех полей
-		assert!(room
-			.send_command_from_action(
-				object_id,
-				Field {
-					id: field_id_1,
-					field_type: FieldType::Long,
-				},
-				member_2,
-				Permission::Rw,
-				None,
-				|_| Ok(None),
-			)
-			.is_ok());
+		room.send_command_from_action(
+			object_id,
+			Field {
+				id: field_id_1,
+				field_type: FieldType::Long,
+			},
+			member_2,
+			Permission::Rw,
+			None,
+			|_| Ok(None),
+		)
+		.unwrap();
 	}
 
 	///
@@ -200,28 +198,26 @@ mod tests {
 		room.test_mark_as_connected(member_id).unwrap();
 
 		// изменяем поле, которое никто кроме нас не может изменять
-		assert!(room
-			.send_command_from_action(object_id, Field { id: field_id_1, field_type }, member_id, Permission::Rw, None, |_| {
-				Ok(Some(S2CCommand::SetField(SetFieldCommand {
-					object_id,
-					field_id: field_id_1,
-					value: 0.into(),
-				})))
-			},)
-			.is_ok());
+		room.send_command_from_action(object_id, Field { id: field_id_1, field_type }, member_id, Permission::Rw, None, |_| {
+			Ok(Some(S2CCommand::SetField(SetFieldCommand {
+				object_id,
+				field_id: field_id_1,
+				value: 0.into(),
+			})))
+		})
+		.unwrap();
 
 		assert!(room.test_get_member_out_commands(member_id).is_empty());
 
 		// изменяем поле, которое могут изменять другие пользователи
-		assert!(room
-			.send_command_from_action(object_id, Field { id: field_id_2, field_type }, member_id, Permission::Rw, None, |_| {
-				Ok(Some(S2CCommand::SetField(SetFieldCommand {
-					object_id,
-					field_id: field_id_2,
-					value: 0.into(),
-				})))
-			},)
-			.is_ok());
+		room.send_command_from_action(object_id, Field { id: field_id_2, field_type }, member_id, Permission::Rw, None, |_| {
+			Ok(Some(S2CCommand::SetField(SetFieldCommand {
+				object_id,
+				field_id: field_id_2,
+				value: 0.into(),
+			})))
+		})
+		.unwrap();
 
 		assert!(matches!(
 			room.test_get_member_out_commands(member_id).get(0),
@@ -243,19 +239,18 @@ mod tests {
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups_a);
 		object.created = true;
 		let object_id = object.id;
-		assert!(room
-			.send_command_from_action(
-				object_id,
-				Field {
-					id: 0,
-					field_type: FieldType::Long,
-				},
-				member_2,
-				Permission::Ro,
-				None,
-				|_| Ok(None),
-			)
-			.is_err());
+		room.send_command_from_action(
+			object_id,
+			Field {
+				id: 0,
+				field_type: FieldType::Long,
+			},
+			member_2,
+			Permission::Ro,
+			None,
+			|_| Ok(None),
+		)
+		.unwrap_err();
 	}
 
 	#[test]
@@ -393,25 +388,24 @@ mod tests {
 		room.test_mark_as_connected(member_1).unwrap();
 		room.test_mark_as_connected(member_2).unwrap();
 
-		assert!(room
-			.send_command_from_action(
-				object_id,
-				Field {
-					id: field_id,
-					field_type: FieldType::Long,
-				},
-				member_1,
-				Permission::Rw,
-				None,
-				|_| {
-					Ok(Some(S2CCommand::SetField(SetFieldCommand {
-						object_id,
-						field_id: 100,
-						value: 200.into(),
-					})))
-				},
-			)
-			.is_ok());
+		room.send_command_from_action(
+			object_id,
+			Field {
+				id: field_id,
+				field_type: FieldType::Long,
+			},
+			member_1,
+			Permission::Rw,
+			None,
+			|_| {
+				Ok(Some(S2CCommand::SetField(SetFieldCommand {
+					object_id,
+					field_id: 100,
+					value: 200.into(),
+				})))
+			},
+		)
+		.unwrap();
 
 		let commands = room.test_get_member_out_commands(member_2);
 		assert!(commands.is_empty());

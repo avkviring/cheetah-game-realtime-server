@@ -33,7 +33,7 @@ impl From<MemberPrivateKey> for Vec<u8> {
 
 impl From<&[u8]> for MemberPrivateKey {
 	fn from(source: &[u8]) -> MemberPrivateKey {
-		let mut key = [0u8; 32];
+		let mut key = [0_u8; 32];
 		let len = min(source.len(), key.len());
 		key[0..len].copy_from_slice(source);
 		MemberPrivateKey(key)

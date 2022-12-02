@@ -41,7 +41,7 @@ mod tests {
 		let env_var = Alphanumeric.sample_string(&mut rand::thread_rng(), 16);
 		env::set_var(&env_var, "plugin_1;plugin_2");
 		assert_eq!(
-			FnvHashSet::<String>::from_iter(["plugin_1".to_string(), "plugin_2".to_string()]),
+			FnvHashSet::<String>::from_iter(["plugin_1".to_owned(), "plugin_2".to_owned()]),
 			get_plugin_names(&env_var)
 		);
 		env::remove_var(&env_var);

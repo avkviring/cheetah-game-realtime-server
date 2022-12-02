@@ -41,6 +41,7 @@ impl From<Addrs> for RelayAddrs {
 impl TryFrom<Addr> for SocketAddr {
 	type Error = AddrsError;
 
+	#[allow(clippy::map_err_ignore)]
 	fn try_from(a: Addr) -> Result<Self, Self::Error> {
 		let ip = IpAddr::from_str(&a.host).map_err(|_| AddrsError::MalformedAddrs)?;
 		Ok(SocketAddr::new(ip, a.port.try_into().map_err(|_| AddrsError::MalformedAddrs)?))
