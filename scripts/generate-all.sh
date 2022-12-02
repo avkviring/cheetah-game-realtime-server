@@ -12,5 +12,7 @@ generate_unity_grpc_files modules/matches/Realtime/proto/matches.realtime.intern
 # мета файлы создаем только для linux - так как
 # именно он используется для вывода релиза
 if [[ ($OSTYPE == 'linux'*) ]]; then
-  generate_meta_files
+  generate_meta_files modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.admin/Editor
+  generate_meta_files modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.shared/Runtime
+  generate_meta_files modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.internal/Runtime
 fi

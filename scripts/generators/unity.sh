@@ -12,13 +12,11 @@ generate_unity_grpc_files() {
 }
 
 generate_meta_files() {
-  generated_scripts=$(find . -type f -name '*.cs' | grep '.*/Unity/.*\(Editor\|Runtime\)/GRPC.*.cs')
-  echo 'Creating Unity .meta files'
-  for f in $generated_scripts; do
-    project_part=$(basename $(dirname $(dirname $f)))
-    file_name=$(basename $f)
-    guid=$(uuidgen --md5 -n @url -N Unity/$project_part/$file_name | tr -d '-')
-    echo "  for $(basename $f) (guid: $guid)..."
+  dir=$1
+  echo "Creating Unity .meta files $dir"
+  for f in $dir/*.cs; do
+    guid=$(uuidgen --md5 -n @url -N $f | tr -d '-')
+    meta=$f.meta
     echo "fileFormatVersion: 2
 guid: $guid
 MonoImporter:
@@ -30,7 +28,6 @@ icon: {instanceID: 0}
 userData:
 assetBundleName:
 assetBundleVariant:
-" >$f.meta
-
+" > $meta
   done
 }
