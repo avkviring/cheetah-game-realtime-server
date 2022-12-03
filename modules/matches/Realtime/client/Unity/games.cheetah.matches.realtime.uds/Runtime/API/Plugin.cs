@@ -6,7 +6,7 @@ using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using static Cheetah.Matches.Realtime.GRPC.Internal.Realtime;
 
-namespace Cheetah.Matches.Realtime.Plugin.API
+namespace Cheetah.Matches.Realtime.UDS.API
 {
     public class Plugin
     {
@@ -46,16 +46,16 @@ namespace Cheetah.Matches.Realtime.Plugin.API
 
         public void OnUpdate()
         {
-            var result = FFI.Plugin.PopRoomEvent(serverPluginId, out var roomEvent);
+            var result = UDS.FFI.Plugin.PopRoomEvent(serverPluginId, out var roomEvent);
             switch (result)
             {
-                case FFI.Plugin.ResultCode.OK:
+                case UDS.FFI.Plugin.ResultCode.OK:
                     switch (roomEvent.eventType)
                     {
-                        case FFI.Plugin.RoomEventType.Created:
+                        case UDS.FFI.Plugin.RoomEventType.Created:
                             CreateRoomPlugin(roomEvent.roomId);
                             break;
-                        case FFI.Plugin.RoomEventType.Deleted:
+                        case UDS.FFI.Plugin.RoomEventType.Deleted:
                             onRoomDeleted.Invoke(roomEvent.roomId);
                             break;
                         default:
@@ -63,9 +63,9 @@ namespace Cheetah.Matches.Realtime.Plugin.API
                     }
 
                     break;
-                case FFI.Plugin.ResultCode.Empty:
+                case UDS.FFI.Plugin.ResultCode.Empty:
                     break;
-                case FFI.Plugin.ResultCode.Error:
+                case UDS.FFI.Plugin.ResultCode.Error:
                     ThrowLastError();
                     break;
                 default:

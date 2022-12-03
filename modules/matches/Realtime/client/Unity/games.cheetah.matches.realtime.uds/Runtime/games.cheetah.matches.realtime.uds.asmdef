@@ -1,6 +1,6 @@
 {
-  "name": "games.cheetah.matches.realtime.plugin",
-  "rootNamespace": "Cheetah.Matches.Realtime.Plugin",
+  "name": "games.cheetah.matches.realtime.uds",
+  "rootNamespace": "Cheetah.Matches.Realtime.UDS",
   "references": [
     "games.cheetah.matches.realtime",
     "games.cheetah.platform",
