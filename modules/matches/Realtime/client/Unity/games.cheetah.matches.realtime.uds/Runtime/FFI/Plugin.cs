@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Cheetah.Matches.Realtime.Plugin.FFI
+namespace Cheetah.Matches.Realtime.UDS.FFI
 {
     internal static class Plugin
     {

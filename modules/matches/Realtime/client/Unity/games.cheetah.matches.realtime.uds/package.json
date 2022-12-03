@@ -1,7 +1,7 @@
 {
-  "name": "games.cheetah.matches.realtime.plugin",
+  "name": "games.cheetah.matches.realtime.uds",
   "version": "999.999.999",
-  "displayName": "games.cheetah.realtime.plugin",
+  "displayName": "games.cheetah.realtime.uds",
   "description": "UDS Client",
   "unity": "2019.1",
   "unityRelease": "0b5",
