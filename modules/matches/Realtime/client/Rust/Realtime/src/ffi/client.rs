@@ -24,7 +24,9 @@ pub enum ConnectionStatusFFI {
 	DisconnectedByIOError,
 	DisconnectedByRetryLimit,
 	DisconnectedByTimeout,
-	DisconnectedByCommand(DisconnectByCommandReason),
+	DisconnectedByClientStopped,
+	DisconnectedByRoomDeleted,
+	DisconnectedByMemberDeleted,
 }
 
 #[no_mangle]
@@ -42,7 +44,11 @@ pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut Connec
 						DisconnectedReason::IOError(_) => ConnectionStatusFFI::DisconnectedByIOError,
 						DisconnectedReason::ByRetryLimit => ConnectionStatusFFI::DisconnectedByRetryLimit,
 						DisconnectedReason::ByTimeout => ConnectionStatusFFI::DisconnectedByTimeout,
-						DisconnectedReason::ByCommand(reason) => ConnectionStatusFFI::DisconnectedByCommand(reason),
+						DisconnectedReason::ByCommand(reason) => match reason {
+							DisconnectByCommandReason::ClientStopped => ConnectionStatusFFI::DisconnectedByClientStopped,
+							DisconnectByCommandReason::RoomDeleted => ConnectionStatusFFI::DisconnectedByRoomDeleted,
+							DisconnectByCommandReason::MemberDeleted => ConnectionStatusFFI::DisconnectedByMemberDeleted,
+						},
 					},
 				};
 				*result = ffi_status;

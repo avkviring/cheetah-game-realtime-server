@@ -7,6 +7,8 @@ namespace Cheetah.Matches.Realtime.Types
         DisconnectedByIOError,
         DisconnectedByRetryLimit,
         DisconnectedByTimeout,
-        DisconnectedByCommand,
+        DisconnectedByClientStopped,
+        DisconnectedByRoomDeleted,
+        DisconnectedByMemberDeleted,
     }
 }
