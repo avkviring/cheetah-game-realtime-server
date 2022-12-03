@@ -59,13 +59,13 @@ pub enum ManagementTaskResult {
 	UpdateRoomPermissions,
 }
 
-#[derive(Debug, Error)]
+#[derive(Error, Debug)]
 pub enum RoomsServerManagerError {
 	#[error("CannotCreateServerThread {0}")]
 	CannotCreateServerThread(String),
 }
 
-#[derive(Debug, Error)]
+#[derive(Error, Debug)]
 pub enum TaskError {
 	#[error("ChannelSendError {0}")]
 	ChannelSendError(SendError<ChannelTask>),
@@ -77,14 +77,14 @@ pub enum TaskError {
 	UnexpectedResultError,
 }
 
-#[derive(Debug, Error)]
+#[derive(Error, Debug)]
 pub enum TaskExecutionError {
 	#[error("RoomNotFound {0}")]
-	RoomNotFound(RoomNotFoundError),
+	RoomNotFound(#[from] RoomNotFoundError),
 	#[error("UnknownPluginName {0}")]
 	UnknownPluginName(String),
 	#[error("ServerCommandError {0}")]
-	ServerCommandError(ServerCommandError),
+	ServerCommandError(#[from] ServerCommandError),
 }
 
 pub struct ChannelTask {

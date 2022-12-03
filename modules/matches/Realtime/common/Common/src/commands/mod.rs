@@ -40,16 +40,10 @@ pub enum CommandTypeId {
 
 #[derive(Error, Debug)]
 pub enum CommandDecodeError {
-	#[error("Unknown type {:?}.",.0)]
+	#[error("Unknown type {0:?}.")]
 	UnknownTypeId(CommandTypeId),
-	#[error("IO error {:?}",.source)]
-	Io {
-		#[from]
-		source: std::io::Error,
-	},
-	#[error("CommandContext error {:?}", .source)]
-	CommandContext {
-		#[from]
-		source: CommandContextError,
-	},
+	#[error("IO error {0}")]
+	Io(#[from] std::io::Error),
+	#[error("CommandContext error {0}")]
+	CommandContext(#[from] CommandContextError),
 }

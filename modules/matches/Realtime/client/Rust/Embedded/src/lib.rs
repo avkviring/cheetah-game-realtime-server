@@ -1,6 +1,7 @@
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use std::time::Duration;
+use thiserror::Error;
 
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
@@ -23,7 +24,7 @@ pub struct EmbeddedServerWrapper {
 	pub admin_webgrpc_socket_addr: SocketAddr,
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Error, Debug)]
 pub enum EmbeddedServerWrapperError {
 	#[error("GrpcServicesNotStarted")]
 	GrpcServicesNotStarted,

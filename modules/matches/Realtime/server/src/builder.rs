@@ -37,7 +37,7 @@ impl Default for ServerBuilder {
 	}
 }
 
-#[derive(Debug, Error)]
+#[derive(Error, Debug)]
 pub enum ServerBuilderError {
 	#[error("RoomsServerManager {0}")]
 	RoomsServerManager(RoomsServerManagerError),

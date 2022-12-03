@@ -83,18 +83,11 @@ impl RoomsServer {
 	fn execute_task(&mut self, task: ManagementTask, now: Instant) -> Result<ManagementTaskResult, TaskExecutionError> {
 		let res = match task {
 			ManagementTask::CreateRoom(template) => ManagementTaskResult::CreateRoom(self.rooms.create_room(template)),
-			ManagementTask::DeleteRoom(room_id) => self
-				.delete_room(room_id)
-				.map(|_| ManagementTaskResult::DeleteRoom)
-				.map_err(TaskExecutionError::RoomNotFound)?,
+			ManagementTask::DeleteRoom(room_id) => self.delete_room(room_id).map(|_| ManagementTaskResult::DeleteRoom)?,
 			ManagementTask::CreateMember(room_id, member_template) => self
 				.register_member(room_id, member_template, now)
-				.map(ManagementTaskResult::CreateMember)
-				.map_err(TaskExecutionError::RoomNotFound)?,
-			ManagementTask::DeleteMember(id) => self
-				.delete_member(id)
-				.map(|_| ManagementTaskResult::DeleteMember)
-				.map_err(TaskExecutionError::ServerCommandError)?,
+				.map(ManagementTaskResult::CreateMember)?,
+			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
 			ManagementTask::Dump(room_id) => self
 				.rooms
 				.room_by_id

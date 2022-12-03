@@ -172,13 +172,11 @@ pub fn do_create_client(
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
-	execute(
-		|api| match api.create_client(server_address, member_id, room_id, private_key.clone(), start_frame_id) {
-			Ok(client_id) => {
+	execute(|api| {
+		api.create_client(server_address, member_id, room_id, private_key.clone(), start_frame_id)
+			.map(|client_id| {
 				*out_client_id = client_id;
 				Ok(())
-			}
-			Err(e) => Err(ClientError::CreateClientError(format!("{:?}", e))),
-		},
-	)
+			})?
+	})
 }
