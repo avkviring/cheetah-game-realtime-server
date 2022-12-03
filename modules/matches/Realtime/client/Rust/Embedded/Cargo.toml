@@ -1,8 +1,8 @@
 [package]
 name = "cheetah-matches-realtime-embedded"
+authors.workspace = true
+edition.workspace = true
 version = "0.1.0"
-authors = ["kviring <alex@kviring.com>"]
-edition = "2021"
 
 [lib]
 crate-type = ["cdylib","staticlib"]
@@ -11,18 +11,18 @@ crate-type = ["cdylib","staticlib"]
 [dependencies]
 cheetah-matches-realtime-common = { path = "../../../common/Common" }
 cheetah-matches-realtime = { path = "../../../server" }
-tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
-anyhow = "1.0.64"
-thiserror = "1.0.34"
-lazy_static = "1.4.0"
+tokio = { workspace = true, features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
+anyhow.workspace = true
+thiserror.workspace = true
+lazy_static.workspace = true
 port_scanner = "0.1.5"
-widestring = "0.5.1"
-log = "0.4.14"
-tracing = "0.1.31"
-tracing-core = "0.1.26"
-tracing-log = { version = "0.1.2" }
-tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
+widestring.workspace = true
+log.workspace = true
+tracing.workspace = true
+tracing-core.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
 
 
 [build-dependencies]
-tonic-build = { version = "0.6.2", features = ["rustfmt"] }
+tonic-build.workspace = true
