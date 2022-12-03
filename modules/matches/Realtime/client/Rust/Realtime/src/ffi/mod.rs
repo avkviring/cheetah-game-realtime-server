@@ -1,3 +1,4 @@
+use std::io;
 use std::sync::mpsc::SendError;
 use std::sync::Mutex;
 
@@ -26,19 +27,16 @@ pub mod logs;
 #[derive(Error, Debug)]
 #[allow(clippy::large_enum_variant)]
 pub enum ClientError {
-	#[error("Create client error {}",.0)]
-	CreateClientError(String),
-	#[error("Registry mutex error {}",.0)]
+	#[error("Create client error {0}")]
+	CreateClientError(#[from] io::Error),
+	#[error("Registry mutex error {0}")]
 	RegistryMutex(String),
-	#[error("Client not found {}",.0)]
+	#[error("Client not found {0}")]
 	ClientNotFound(ClientId),
-	#[error("Connection status mutex error {}",.0)]
+	#[error("Connection status mutex error {0}")]
 	ConnectionStatusMutexError(String),
-	#[error("Send task error {}",.source)]
-	SendTaskError {
-		#[from]
-		source: SendError<ClientRequest>,
-	},
+	#[error("Send task error {0}")]
+	SendTaskError(#[from] SendError<ClientRequest>),
 }
 
 impl ClientError {

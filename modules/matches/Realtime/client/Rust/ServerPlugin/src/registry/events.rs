@@ -24,7 +24,7 @@ pub struct RoomLifecycleEventReader {
 	deleted_rooms: Arc<ArrayQueue<RoomId>>,
 }
 
-#[derive(Debug, Clone, Error)]
+#[derive(Error, Debug, Clone)]
 pub enum RoomLifecycleEventReaderError {
 	#[error("CreatedRoomQueueOverflow overflow")]
 	CreatedRoomQueueOverflow,

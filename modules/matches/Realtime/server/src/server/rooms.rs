@@ -23,7 +23,7 @@ pub struct Rooms {
 	plugin_names: FnvHashSet<String>,
 }
 
-#[derive(Debug, Clone, Error, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 #[error("room not found {0}")]
 pub struct RoomNotFoundError(pub RoomId);
 

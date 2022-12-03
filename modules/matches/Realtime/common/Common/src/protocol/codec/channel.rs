@@ -60,15 +60,7 @@ impl Channel {
 			ChannelType::UNRELIABLE_UNORDERED => Channel::UnreliableUnordered,
 			ChannelType::RELIABLE_ORDERED => Channel::ReliableOrdered(channel_group?),
 			ChannelType::UNRELIABLE_ORDERED => Channel::UnreliableOrdered(channel_group?),
-			ChannelType::RELIABLE_SEQUENCE => Channel::ReliableSequence(
-				channel_group?,
-				ChannelSequence(
-					input
-						.read_variable_u64()?
-						.try_into()
-						.map_err(CommandChannelDecodeError::InputValueIsTooLarge)?,
-				),
-			),
+			ChannelType::RELIABLE_SEQUENCE => Channel::ReliableSequence(channel_group?, ChannelSequence(input.read_variable_u64()?.try_into()?)),
 			_ => return Err(CommandChannelDecodeError::UnknownType(*channel_type)),
 		})
 	}
@@ -76,20 +68,14 @@ impl Channel {
 
 #[derive(Error, Debug)]
 pub enum CommandChannelDecodeError {
-	#[error("Unknown command type {:?}", .0)]
+	#[error("Unknown command type {0:?}")]
 	UnknownType(ChannelType),
-	#[error("IO error {:?}", .source)]
-	Io {
-		#[from]
-		source: std::io::Error,
-	},
-	#[error("CommandContext error {:?}", .source)]
-	CommandContext {
-		#[from]
-		source: CommandContextError,
-	},
-	#[error("InputValueIsTooLarge")]
-	InputValueIsTooLarge(TryFromIntError),
+	#[error("Io error {0}")]
+	Io(#[from] std::io::Error),
+	#[error("CommandContext error {0}")]
+	CommandContext(#[from] CommandContextError),
+	#[error("InputValueIsTooLarge {0}")]
+	InputValueIsTooLarge(#[from] TryFromIntError),
 }
 
 #[cfg(test)]

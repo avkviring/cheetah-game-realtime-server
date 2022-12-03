@@ -52,27 +52,12 @@ fn decode_command(
 
 #[derive(Error, Debug)]
 pub enum CommandsDecoderError {
-	#[error("IO error {:?}", .source)]
-	Io {
-		#[from]
-		source: std::io::Error,
-	},
-
-	#[error("ApplicationCommandChannel error {:?}", .source)]
-	ApplicationCommandChannel {
-		#[from]
-		source: CommandChannelDecodeError,
-	},
-
-	#[error("CommandDecodeError error {:?}", .source)]
-	CommandDecode {
-		#[from]
-		source: CommandDecodeError,
-	},
-
-	#[error("CommandContextError error {:?}", .source)]
-	CommandContext {
-		#[from]
-		source: CommandContextError,
-	},
+	#[error("IO error {0}")]
+	Io(#[from] std::io::Error),
+	#[error("ApplicationCommandChannel error {0}")]
+	ApplicationCommandChannel(#[from] CommandChannelDecodeError),
+	#[error("CommandDecodeError error {0}")]
+	CommandDecode(#[from] CommandDecodeError),
+	#[error("CommandContextError error {0}")]
+	CommandContext(#[from] CommandContextError),
 }

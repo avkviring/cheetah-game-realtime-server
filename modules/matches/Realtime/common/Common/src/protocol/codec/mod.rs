@@ -5,6 +5,7 @@ pub mod compress;
 pub mod headers;
 pub mod variable_int;
 
+use chacha20poly1305::aead;
 use std::io::{Cursor, Write};
 
 use thiserror::Error;
@@ -21,37 +22,26 @@ use crate::protocol::frame::{FrameId, MAX_FRAME_SIZE};
 
 #[derive(Error, Debug)]
 pub enum FrameDecodeError {
-	#[error("DecryptedError {}",.0)]
-	DecryptedError(String),
-	#[error("DecompressError {}",.0)]
-	DecompressError(String),
-	#[error("CommandCountReadError")]
-	CommandCountReadError,
-	#[error("Decode commands error {:?}", .source)]
-	CommandsDecode {
-		#[from]
-		source: CommandsDecoderError,
-	},
-	#[error("Io error {:?}", .source)]
-	Io {
-		#[from]
-		source: std::io::Error,
-	},
+	#[error("DecryptedError {0}")]
+	DecryptedError(aead::Error),
+	#[error("DecompressError {0}")]
+	DecompressError(#[from] snap::Error),
+	#[error("Decode commands error {0}")]
+	CommandsDecode(#[from] CommandsDecoderError),
+	#[error("Io error {0}")]
+	Io(#[from] std::io::Error),
 	#[error("HeaplessError")]
 	HeaplessError,
 }
 
 #[derive(Error, Debug)]
 pub enum FrameEncodeError {
-	#[error("EncryptedError {}",.0)]
-	EncryptedError(String),
-	#[error("CompressError {}",.0)]
-	CompressError(String),
-	#[error("Io error {:?}", .source)]
-	Io {
-		#[from]
-		source: std::io::Error,
-	},
+	#[error("EncryptedError {0}")]
+	EncryptedError(aead::Error),
+	#[error("CompressError {0}")]
+	CompressError(#[from] snap::Error),
+	#[error("Io error {0}")]
+	Io(#[from] std::io::Error),
 }
 
 impl InFrame {
@@ -88,14 +78,11 @@ impl InFrame {
 		vec.extend_from_slice(&data[header_end as usize..data.len()])
 			.map_err(|_| FrameDecodeError::HeaplessError)?;
 
-		cipher
-			.decrypt(&mut vec, ad, nonce)
-			.map_err(|e| FrameDecodeError::DecryptedError(format!("{:?}", e)))?;
+		cipher.decrypt(&mut vec, ad, nonce).map_err(FrameDecodeError::DecryptedError)?;
 
 		// commands - decompress
 		let mut decompressed_buffer = [0; MAX_FRAME_SIZE];
-		let decompressed_size =
-			packet_decompress(&vec, &mut decompressed_buffer).map_err(|e| FrameDecodeError::DecompressError(format!("{:?}", e)))?;
+		let decompressed_size = packet_decompress(&vec, &mut decompressed_buffer)?;
 		let decompressed_buffer = &decompressed_buffer[0..decompressed_size];
 
 		let mut cursor = Cursor::new(decompressed_buffer);
@@ -113,19 +100,15 @@ impl OutFrame {
 	#[allow(clippy::cast_possible_truncation)]
 	pub fn encode(&self, cipher: &mut Cipher<'_>, out: &mut [u8]) -> Result<usize, FrameEncodeError> {
 		let mut frame_cursor = Cursor::new(out);
-		frame_cursor
-			.write_variable_u64(self.frame_id)
-			.map_err(|e| FrameEncodeError::Io { source: e })?;
-		self.headers
-			.encode_headers(&mut frame_cursor)
-			.map_err(|e| FrameEncodeError::Io { source: e })?;
+		frame_cursor.write_variable_u64(self.frame_id).map_err(FrameEncodeError::Io)?;
+		self.headers.encode_headers(&mut frame_cursor).map_err(FrameEncodeError::Io)?;
 		let commands_buffer = self.get_commands_buffer();
 
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
 		unsafe {
 			vec.set_len(4096);
 		}
-		let compressed_size = packet_compress(commands_buffer, &mut vec).map_err(|e| FrameEncodeError::CompressError(format!("{:?}", e)))?;
+		let compressed_size = packet_compress(commands_buffer, &mut vec)?;
 		unsafe {
 			vec.set_len(compressed_size);
 		}
@@ -133,7 +116,7 @@ impl OutFrame {
 		let frame_position = frame_cursor.position() as usize;
 		cipher
 			.encrypt(&mut vec, &frame_cursor.get_ref()[0..frame_position], self.frame_id.to_be_bytes())
-			.map_err(|e| FrameEncodeError::EncryptedError(format!("{:?}", e)))?;
+			.map_err(FrameEncodeError::EncryptedError)?;
 
 		frame_cursor.write_all(&vec)?;
 

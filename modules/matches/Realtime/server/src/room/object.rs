@@ -33,7 +33,7 @@ pub struct GameObject {
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum GameObjectError {
-	#[error("Field count overflow in game object {:?} with template {:?}", .0, .1)]
+	#[error("Field count overflow in game object {0:?} with template {1:?}")]
 	FieldCountOverflow(GameObjectId, GameObjectTemplateId),
 }
 

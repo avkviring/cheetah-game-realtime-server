@@ -32,22 +32,19 @@ pub trait ServerCommandExecutor {
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum ServerCommandError {
-	#[error("{:?}",.0)]
+	#[error("{0:?}")]
 	Error(String),
 
-	#[error("{error:?}")]
-	GameObjectError {
-		#[from]
-		error: GameObjectError,
-	},
+	#[error(transparent)]
+	GameObjectError(#[from] GameObjectError),
 
-	#[error("Member {member_id:?} not owner for game object {object_id:?}")]
+	#[error("Member {member_id} not owner for game object {object_id:?}")]
 	MemberNotOwnerGameObject { object_id: GameObjectId, member_id: RoomMemberId },
 
 	#[error("RoomNotFoundError {0}")]
-	RoomNotFound(RoomNotFoundError),
+	RoomNotFound(#[from] RoomNotFoundError),
 
-	#[error("Member with id {:?}", .0)]
+	#[error("Member with id {0}")]
 	MemberNotFound(RoomMemberId),
 
 	#[error(
@@ -77,7 +74,7 @@ pub enum ServerCommandError {
 	#[error("Game object with id {object_id:?} ")]
 	GameObjectNotFound { object_id: GameObjectId },
 
-	#[error("ForwardedCommandPermissionDenied: {msg:?} sender_member_id={sender_member_id:?} creator_member_id={creator_member_id:?}")]
+	#[error("ForwardedCommandPermissionDenied: {msg} sender_member_id={sender_member_id} creator_member_id={creator_member_id}")]
 	ForwardedCommandPermissionDenied {
 		msg: String,
 		sender_member_id: RoomMemberId,
