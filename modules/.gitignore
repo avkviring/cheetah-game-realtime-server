@@ -13,3 +13,4 @@ target
 /matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.admin/Editor/MatchesRealtimeAdmin.cs.meta
 /matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.shared/Runtime/MatchesRealtimeShared.cs
 /matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.shared/Runtime/MatchesRealtimeShared.cs.meta
+/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/libcheetah_matches_realtime_embedded.bundle

@@ -97,7 +97,7 @@ jobs:
           cp build-on-windows-result/cheetah_matches_realtime_embedded.pdb $lib_path/
       - name: Copy Libraries into UDS
         run: |
-          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.plugin/Runtime/FFI/Library/
+          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds/Runtime/FFI/Library/
           mkdir -p $lib_path
           cp build-on-linux-result/libcheetah_matches_realtime_server_plugin.so $lib_path/          
           cp build-macos/libcheetah_matches_realtime_server_plugin.dylib $lib_path/libcheetah_matches_realtime_server_plugin.bundle            
