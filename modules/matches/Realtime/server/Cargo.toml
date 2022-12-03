@@ -1,8 +1,8 @@
 [package]
 name = "cheetah-matches-realtime"
+authors.workspace = true
+edition.workspace = true
 version = "0.1.0"
-authors = ["kviring <alex@kviring.com>"]
-edition = "2021"
 
 [[bin]]
 name = "cheetah-matches-realtime-server"
@@ -12,31 +12,31 @@ path = "src/bin/service.rs"
 
 
 [dependencies]
-rand = "0.8.5"
+rand.workspace = true
 indexmap = { version = "1.9.1" }
-cheetah-matches-realtime-common = { path = "../common/Common/" }
-fnv = "1.0.7"
-serde = { version = "1.0.140", features = ["derive", "rc"] }
-heapless = { version = "0.7.10", features = ["serde"] }
-futures = "0.3.21"
-serde_json = "1.0.82"
-tokio = { version = "1.16.1", features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
-tokio-stream = { version = "0.1.8", features = ["net"] }
-tonic = "0.6.2"
-tonic-health = "0.5.0"
-prost = "0.9.0"
+cheetah-matches-realtime-common = { path = "../common/Common" }
+fnv.workspace = true
+serde = { workspace = true, features = ["derive", "rc"] }
+heapless = { workspace = true, features = ["serde"] }
+futures.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
+tokio-stream = { workspace = true, features = ["net"] }
+tonic.workspace = true
+tonic-health.workspace = true
+prost.workspace = true
 rymder = "0.3.0"
-strum_macros = "0.24.2"
+strum_macros.workspace = true
 cheetah-libraries-microservice = { path = "../../../libraries/rust/Microservice" }
 tonic-web = "0.2.0"
-thiserror = "1.0.30"
-tracing = "0.1.31"
+thiserror.workspace = true
+tracing.workspace = true
 prometheus = "0.13.1"
-lazy_static = "1.4.0"
-prometheus-measures-exporter = "0.0.1"
+lazy_static.workspace = true
+prometheus-measures-exporter.workspace = true
 num = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
 
 [build-dependencies]
-tonic-build = {version="0.6.2", features=["rustfmt"]}
+tonic-build.workspace = true

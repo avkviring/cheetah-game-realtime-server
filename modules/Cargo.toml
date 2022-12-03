@@ -9,3 +9,32 @@ members = [
     "matches/Realtime/client/Rust/Embedded",
     "matches/Realtime/client/Rust/ServerPlugin",
 ]
+
+[workspace.package]
+authors = ["kviring <alex@kviring.com>"]
+edition = "2021"
+
+[workspace.dependencies]
+log = "0.4.14"
+serde = "1.0.140"
+serde_json = "1.0.82"
+tokio = "1.17.0"
+tonic = "0.6.2"
+tonic-health = "0.5.0"
+prost = "0.9.0"
+thiserror = "1.0.37"
+futures = "0.3.25"
+tracing = "0.1.31"
+lazy_static = "1.4.0"
+tonic-build = { version = "0.6.2", features = ["rustfmt"] }
+tracing-log = "0.1.2"
+fnv = "1.0.7"
+rand = "0.8.5"
+tokio-stream = "0.1.11"
+strum_macros = "0.24.2"
+prometheus-measures-exporter = "0.0.1"
+heapless = "0.7.10"
+tracing-core = "0.1.26"
+tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
+anyhow = "1.0.66"
+widestring = "0.5.1"

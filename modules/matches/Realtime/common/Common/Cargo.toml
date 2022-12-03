@@ -1,28 +1,28 @@
 [package]
 name = "cheetah-matches-realtime-common"
+authors.workspace = true
+edition.workspace = true
 version = "0.1.0"
-authors = ["Kviring Aleksey <alex@kviring.com>"]
-edition = "2021"
 
 [dependencies]
-lazy_static = "1.4.0"
-rand = "0.8.3"
+lazy_static.workspace = true
+rand.workspace = true
 snap = "1.0.5"
 byteorder = "1.4.3"
 chacha20poly1305 = { version = "0.9.0", features = ["heapless", "reduced-round"] }
-cheetah-matches-realtime-macro = { path = "../Macro/" }
+cheetah-matches-realtime-macro = { path = "../Macro" }
 generic-array = "0.14.5"
-heapless = { version = "0.7.8" }
-fnv = "1.0.7"
-strum_macros = "0.24.2"
-thiserror = "1.0.30"
+heapless.workspace = true
+fnv.workspace = true
+strum_macros.workspace = true
+thiserror.workspace = true
 hash32 = "0.2.1"
 hash32-derive = "0.1.1"
-tracing = "0.1.31"
-log = "0.4.14"
-tracing-core = "0.1.26"
-tracing-log = { version = "0.1.2" }
-tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
+tracing.workspace = true
+log.workspace = true
+tracing-core.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
 num = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
