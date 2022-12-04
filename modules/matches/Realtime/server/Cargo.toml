@@ -25,10 +25,10 @@ tokio-stream = { workspace = true, features = ["net"] }
 tonic.workspace = true
 tonic-health.workspace = true
 prost.workspace = true
-rymder = "0.3.0"
+rymder = "0.5.0" # agones sdk
 strum_macros.workspace = true
 cheetah-libraries-microservice = { path = "../../../libraries/rust/Microservice" }
-tonic-web = "0.2.0"
+tonic-web = "0.5.0"
 thiserror.workspace = true
 tracing.workspace = true
 prometheus = "0.13.1"
@@ -40,3 +40,4 @@ num-traits = "0.2"
 
 [build-dependencies]
 tonic-build.workspace = true
+protobuf-src.workspace = true

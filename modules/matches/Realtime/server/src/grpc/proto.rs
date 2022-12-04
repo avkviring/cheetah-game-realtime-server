@@ -5,7 +5,9 @@ pub mod shared {
 		clippy::wildcard_imports,
 		clippy::return_self_not_must_use,
 		clippy::clone_on_ref_ptr,
-		clippy::similar_names
+		clippy::similar_names,
+		clippy::must_use_candidate,
+		clippy::doc_markdown
 	)]
 	tonic::include_proto!("cheetah.matches.realtime.shared");
 }
@@ -17,7 +19,9 @@ pub mod internal {
 		clippy::wildcard_imports,
 		clippy::return_self_not_must_use,
 		clippy::clone_on_ref_ptr,
-		clippy::similar_names
+		clippy::similar_names,
+		clippy::must_use_candidate,
+		clippy::doc_markdown
 	)]
 	tonic::include_proto!("cheetah.matches.realtime.internal");
 }
