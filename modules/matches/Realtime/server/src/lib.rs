@@ -6,6 +6,7 @@ use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tokio_stream::wrappers::TcpListenerStream;
 use tonic_health::ServingStatus;
+use tonic_web::GrpcWebLayer;
 
 use grpc::proto::internal::realtime_server::RealtimeServer;
 
@@ -72,8 +73,9 @@ impl Server {
 
 		tonic::transport::server::Server::builder()
 			.accept_http1(true)
-			.add_service(tonic_web::enable(health_service))
-			.add_service(tonic_web::enable(service))
+			.layer(GrpcWebLayer::new())
+			.add_service(health_service)
+			.add_service(service)
 			.serve_with_incoming(TcpListenerStream::new(listener))
 			.await
 			.unwrap();
@@ -89,10 +91,11 @@ impl Server {
 
 		tonic::transport::Server::builder()
 			.accept_http1(true)
-			.add_service(tonic_web::enable(health_service))
-			.add_service(tonic_web::enable(dumper))
-			.add_service(tonic_web::enable(admin))
-			.add_service(tonic_web::enable(tracer))
+			.layer(GrpcWebLayer::new())
+			.add_service(health_service)
+			.add_service(dumper)
+			.add_service(admin)
+			.add_service(tracer)
 			.serve_with_incoming(TcpListenerStream::new(tcp_listener))
 			.await
 			.unwrap();
