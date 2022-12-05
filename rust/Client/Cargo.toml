@@ -1,0 +1,26 @@
+[package]
+name = "cheetah-client"
+authors.workspace = true
+edition.workspace = true
+version = "0.0.1"
+
+
+[lib]
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[dependencies]
+lazy_static.workspace = true
+cheetah-common = { path = "../Common" }
+widestring.workspace = true
+fnv.workspace = true
+heapless = { workspace = true, features = ["serde"] }
+thiserror.workspace = true
+tracing.workspace = true
+tracing-core.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+cheetah-server = { path = "../Server" }
+easybench = "1.0.0"
+rand.workspace = true

@@ -18,12 +18,12 @@ jobs:
             $CARGO_HOME/registry/index/
             $CARGO_HOME/registry/cache/
             $CARGO_HOME/git/db/
-            modules/target/
+            rust/target/
           key: rust-release-v2-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-release-v2-
       - name: Build servers
-        run: cd modules/ && RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
+        run: cd rust/ && RUSTFLAGS="-Ctarget-cpu=haswell -Ctarget-feature=+avx2" cargo build --release --target x86_64-unknown-linux-musl
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
       - name: Build image

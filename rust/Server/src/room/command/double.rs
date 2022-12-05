@@ -1,0 +1,109 @@
+use cheetah_common::commands::field::Field;
+use cheetah_common::commands::s2c::S2CCommand;
+use cheetah_common::commands::types::field::SetFieldCommand;
+use cheetah_common::commands::types::float::IncrementDoubleC2SCommand;
+use cheetah_common::commands::FieldType;
+use cheetah_common::room::RoomMemberId;
+
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
+use crate::room::object::GameObject;
+use crate::room::template::config::Permission;
+use crate::room::Room;
+
+impl ServerCommandExecutor for IncrementDoubleC2SCommand {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		let field_id = self.field_id;
+		let object_id = self.object_id;
+
+		let action = |object: &mut GameObject| {
+			let value = if let Some(value) = object.get_field::<f64>(field_id) {
+				let new_value = value + self.increment;
+				object.set_field(field_id, new_value)?;
+				new_value
+			} else {
+				object.set_field(field_id, self.increment)?;
+				self.increment
+			};
+			Ok(Some(S2CCommand::SetField(SetFieldCommand {
+				object_id: self.object_id,
+				field_id,
+				value: value.into(),
+			})))
+		};
+
+		room.send_command_from_action(
+			object_id,
+			Field {
+				id: field_id,
+				field_type: FieldType::Double,
+			},
+			member_id,
+			Permission::Rw,
+			None,
+			action,
+		)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use cheetah_common::commands::s2c::S2CCommand;
+	use cheetah_common::commands::types::field::SetFieldCommand;
+	use cheetah_common::commands::types::float::IncrementDoubleC2SCommand;
+	use cheetah_common::room::owner::GameObjectOwner;
+
+	use crate::room::command::tests::setup_one_player;
+	use crate::room::command::ServerCommandExecutor;
+
+	#[test]
+	#[allow(clippy::cast_sign_loss)]
+	#[allow(clippy::cast_possible_truncation)]
+	fn should_set_double_command() {
+		let (mut room, member_id, access_groups) = setup_one_player();
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let object_id = object.id;
+		object.created = true;
+		room.test_out_commands.clear();
+		let command = SetFieldCommand {
+			object_id,
+			field_id: 10,
+			value: 100.100.into(),
+		};
+		command.execute(&mut room, member_id).unwrap();
+
+		let object = room.get_object_mut(object_id).unwrap();
+		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 100);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
+	}
+
+	#[test]
+	#[allow(clippy::cast_sign_loss)]
+	#[allow(clippy::cast_possible_truncation)]
+	fn should_increment_double_command() {
+		let (mut room, member_id, access_groups) = setup_one_player();
+
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		object.created = true;
+		let object_id = object.id;
+		room.test_out_commands.clear();
+		let command = IncrementDoubleC2SCommand {
+			object_id,
+			field_id: 10,
+			increment: 100.100,
+		};
+		command.clone().execute(&mut room, member_id).unwrap();
+		command.execute(&mut room, member_id).unwrap();
+
+		let object = room.get_object_mut(object_id).unwrap();
+		assert_eq!(*object.get_field::<f64>(10).unwrap() as u64, 200);
+
+		let result = SetFieldCommand {
+			object_id,
+			field_id: 10,
+			value: 200.200.into(),
+		};
+
+		room.test_out_commands.pop_back();
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result));
+	}
+}

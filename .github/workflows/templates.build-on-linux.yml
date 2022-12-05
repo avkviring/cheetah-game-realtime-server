@@ -2,9 +2,9 @@ name: build-on-linux
 on:
   workflow_call:
 env:
-  REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Realtime/Cargo.toml
-  REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Embedded/Cargo.toml
-  REALTIME_UDS_MANIFEST_PATH: modules/matches/Realtime/client/Rust/ServerPlugin/Cargo.toml
+  REALTIME_CLIENT_MANIFEST_PATH: rust/Client/Cargo.toml
+  REALTIME_EMBEDDED_MANIFEST_PATH: rust/Embedded/Cargo.toml
+  REALTIME_UDS_MANIFEST_PATH: rust/Plugin/Cargo.toml
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,4 +23,4 @@ jobs:
         with:
           name: build-on-linux-result
           path: |
-            modules/target/release/*.so
+            rust/target/release/*.so

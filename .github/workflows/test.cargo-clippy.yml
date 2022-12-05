@@ -17,11 +17,11 @@ jobs:
             $CARGO_HOME/registry/index/
             $CARGO_HOME/registry/cache/
             $CARGO_HOME/git/db/
-            modules/target/
+            rust/target/
           key: rust-clippy-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-clippy-v1-
       - name: Lint cargo clippy
-        run: cd modules/ && cargo cranky --workspace --all-targets --all-features -- -D warnings
+        run: cd rust/ && cargo cranky --workspace --all-targets --all-features -- -D warnings
 
 
