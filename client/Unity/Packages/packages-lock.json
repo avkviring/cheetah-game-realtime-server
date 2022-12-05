@@ -137,27 +137,27 @@
       "url": "https://packages.unity.com"
     },
     "games.cheetah.matches.realtime": {
-      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime",
+      "version": "file:games.cheetah.matches.realtime",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
         "games.cheetah.matches.realtime.grpc.admin": "999.999.999"
       }
     },
     "games.cheetah.matches.realtime.doa": {
-      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.doa",
+      "version": "file:games.cheetah.matches.realtime.doa",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
         "games.cheetah.matches.realtime": "999.999.999"
       }
     },
     "games.cheetah.matches.realtime.embedded-server": {
-      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server",
+      "version": "file:games.cheetah.matches.realtime.embedded-server",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
         "games.cheetah.matches.realtime": "999.999.999",
@@ -165,43 +165,43 @@
       }
     },
     "games.cheetah.matches.realtime.grpc.admin": {
-      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.admin",
+      "version": "file:games.cheetah.matches.realtime.grpc.admin",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
         "games.cheetah.matches.realtime.grpc.shared": "999.999.999"
       }
     },
     "games.cheetah.matches.realtime.grpc.internal": {
-      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.internal",
+      "version": "file:games.cheetah.matches.realtime.grpc.internal",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
         "games.cheetah.matches.realtime.grpc.shared": "999.999.999"
       }
     },
     "games.cheetah.matches.realtime.grpc.shared": {
-      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.shared",
+      "version": "file:games.cheetah.matches.realtime.grpc.shared",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "games.cheetah.platform": "999.999.999"
       }
     },
     "games.cheetah.platform": {
-      "version": "file:../../../modules/Platform/client/Unity/games.cheetah.platform",
+      "version": "file:games.cheetah.platform",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "2.0.0"
       }
     },
     "games.cheetah.uds": {
-      "version": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.uds",
+      "version": "file:games.cheetah.uds",
       "depth": 0,
-      "source": "local",
+      "source": "embedded",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
         "games.cheetah.matches.realtime": "999.999.999",
