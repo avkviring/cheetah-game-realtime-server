@@ -1,0 +1,29 @@
+{
+  "name": "games.cheetah.matches.realtime.embedded-server.tests",
+  "rootNamespace": "Cheetah.Matches.Realtime.EmbeddedServer.Tests",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "games.cheetah.platform",
+    "games.cheetah.matches.realtime",
+    "games.cheetah.matches.realtime.embedded-server",
+    "games.cheetah.matches.realtime.grpc.internal"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "System.Memory.dll",
+    "Grpc.Core.Api.dll",
+    "Google.Protobuf.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,16 @@
+{
+  "name": "games.cheetah.matches.realtime",
+  "version": "999.999.999",
+  "displayName": "games.cheetah.matches.realtime",
+  "description": "Realtime battle server.",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "repository": "github:cheetah-game-platform/platform",
+  "dependencies": {
+    "games.cheetah.platform": "999.999.999",
+    "games.cheetah.matches.realtime.grpc.admin": "999.999.999"
+  },
+  "hideInEditor": false,
+  "type": "library",
+  "author": "https://cheetah.games"
+}
