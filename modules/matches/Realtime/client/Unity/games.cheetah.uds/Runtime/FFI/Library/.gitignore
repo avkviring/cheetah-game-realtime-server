@@ -1,0 +1,5 @@
+*.dll
+*.pdb
+*.dylib
+*.so
+/libcheetah_matches_realtime_server_plugin.bundle

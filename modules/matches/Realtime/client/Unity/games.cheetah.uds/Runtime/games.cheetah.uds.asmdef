@@ -1,6 +1,6 @@
 {
-  "name": "games.cheetah.matches.realtime.uds",
-  "rootNamespace": "Cheetah.Matches.Realtime.UDS",
+  "name": "games.cheetah.uds",
+  "rootNamespace": "Games.Cheetah.UDS",
   "references": [
     "games.cheetah.matches.realtime",
     "games.cheetah.platform",

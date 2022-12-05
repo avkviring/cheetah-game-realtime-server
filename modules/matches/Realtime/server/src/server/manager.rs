@@ -31,6 +31,7 @@ pub struct RoomsServerManager {
 	pub created_room_counter: usize,
 }
 
+#[derive(Debug)]
 pub enum ManagementTask {
 	CreateRoom(RoomTemplate),
 	CreateMember(RoomId, MemberTemplate),
@@ -45,6 +46,7 @@ pub enum ManagementTask {
 	UpdateRoomPermissions(RoomId, Permissions),
 }
 
+#[derive(Debug)]
 pub enum ManagementTaskResult {
 	CreateRoom(RoomId),
 	CreateMember(RoomMemberId),

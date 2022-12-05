@@ -1,14 +1,15 @@
+#nullable enable
 using System;
 using Cheetah.Matches.Realtime.EmbeddedServer.API;
 using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
 
-#nullable enable
 namespace Cheetah.Matches.Realtime.EmbeddedServer.Impl
 {
     internal class ServerRoomImpl : ServerRoom
     {
-        private readonly Server.Description serverDescription;
         private readonly ulong roomId;
+        private readonly Server.Description serverDescription;
+        
 
         internal ServerRoomImpl(Server.Description serverDescription, ulong roomId)
         {
@@ -41,6 +42,11 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.Impl
         public ulong GetId()
         {
             return roomId;
+        }
+
+        public override string ToString()
+        {
+            return $"{nameof(serverDescription)}: {serverDescription}, {nameof(roomId)}: {roomId}";
         }
     }
 }

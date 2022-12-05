@@ -1,0 +1,31 @@
+{
+  "name": "games.cheetah.uds.test",
+  "rootNamespace": "Games.Cheetah.UDS.Tests",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "UnityEngine",
+    "games.cheetah.matches.realtime",
+    "games.cheetah.matches.realtime.grpc.internal",
+    "games.cheetah.matches.realtime.editor",
+    "games.cheetah.platform",
+    "games.cheetah.matches.realtime.embedded-server",
+    "games.cheetah.uds"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "System.Memory.dll",
+    "Google.Protobuf.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

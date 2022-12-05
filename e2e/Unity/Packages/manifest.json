@@ -4,7 +4,7 @@
     "com.unity.ide.rider": "3.0.16",
     "com.unity.ide.visualstudio": "2.0.16",
     "com.unity.ide.vscode": "1.2.5",
-    "com.unity.test-framework": "1.1.31",
+    "com.unity.test-framework": "1.1.33",
     "com.unity.textmeshpro": "3.0.6",
     "com.unity.timeline": "1.6.4",
     "com.unity.toolchain.macos-x86_64-linux-x86_64": "2.0.2",
@@ -16,8 +16,8 @@
     "games.cheetah.matches.realtime.grpc.admin": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.admin",
     "games.cheetah.matches.realtime.grpc.internal": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.internal",
     "games.cheetah.matches.realtime.grpc.shared": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.grpc.shared",
-    "games.cheetah.matches.realtime.uds": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.uds",
     "games.cheetah.platform": "file:../../../modules/Platform/client/Unity/games.cheetah.platform",
+    "games.cheetah.uds": "file:../../../modules/matches/Realtime/client/Unity/games.cheetah.uds",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
@@ -52,6 +52,7 @@
   },
   "testables": [
     "games.cheetah.matches.realtime",
-    "games.cheetah.matches.realtime.embedded-server"
+    "games.cheetah.matches.realtime.embedded-server",
+    "games.cheetah.uds"
   ]
 }

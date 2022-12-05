@@ -30,18 +30,13 @@ namespace Cheetah.Matches.Realtime
         }
 
 
-        public CheetahClient(string address, uint memberId, ulong roomId, byte[] privateUserKey, CodecRegistry codecRegistry)
+        public CheetahClient(Uri gameUri, uint memberId, ulong roomId, byte[] privateUserKey, CodecRegistry codecRegistry)
         {
             LoggerGateway.CollectLogs(false); // очищаем логи с предыдущего клиента
             CodecRegistry = codecRegistry;
             var userPrivateKey = new CheetahBuffer(privateUserKey);
-            ResultChecker.Check(ClientFFI.CreateClient(address, (ushort)memberId, roomId, ref userPrivateKey, 0, out Id));
+            ResultChecker.Check(ClientFFI.CreateClient(gameUri.Host + ":" + gameUri.Port, (ushort)memberId, roomId, ref userPrivateKey, 0, out Id));
             objectsCreateInfo = GetPlugin<CheetahObjectsCreateInfo>();
-        }
-
-        public CheetahClient(string host, uint port, uint memberId, ulong roomId, byte[] privateUserKey, CodecRegistry codecRegistry)
-            : this($"{host}:{port}", memberId, roomId, privateUserKey, codecRegistry)
-        {
         }
 
         /// <summary>

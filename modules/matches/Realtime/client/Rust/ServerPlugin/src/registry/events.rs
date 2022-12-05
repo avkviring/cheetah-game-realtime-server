@@ -4,7 +4,7 @@ use std::time::Duration;
 use crossbeam::queue::ArrayQueue;
 use thiserror::Error;
 use tokio::task::JoinHandle;
-use tonic::transport::{Channel, Error};
+use tonic::transport::Channel;
 
 use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
 use crate::proto::matches::realtime::internal::room_lifecycle_response::RoomLifecycleType;
@@ -34,13 +34,17 @@ pub enum RoomLifecycleEventReaderError {
 	GrpcError(String),
 	#[error("UnknownRoomLifecycleType")]
 	UnknownRoomLifecycleType,
+	#[error("InvalidUri {0}")]
+	InvalidUri(String),
+	#[error("ChannelError {0}")]
+	ChannelError(String),
 }
 
 impl Default for RoomLifecycleEventReader {
 	fn default() -> Self {
 		Self {
 			handler: Default::default(),
-			runtime: Some(tokio::runtime::Builder::new_multi_thread().build().unwrap()),
+			runtime: Some(tokio::runtime::Builder::new_multi_thread().enable_io().build().unwrap()),
 			reader_result: Arc::new(Mutex::new(None)),
 			created_rooms: Arc::new(ArrayQueue::new(100)),
 			deleted_rooms: Arc::new(ArrayQueue::new(100)),
@@ -49,14 +53,15 @@ impl Default for RoomLifecycleEventReader {
 }
 
 impl RoomLifecycleEventReader {
-	#[allow(clippy::unwrap_in_result)]
-	pub fn from_address(grpc_server_address: String) -> Result<RoomLifecycleEventReader, Error> {
+	pub fn from_address(grpc_server_address: String) -> Result<RoomLifecycleEventReader, RoomLifecycleEventReaderError> {
 		let reader = Self::default();
-		let handler = reader
-			.runtime
-			.as_ref()
-			.unwrap()
-			.block_on(async move { Channel::from_shared(grpc_server_address).unwrap().connect().await });
+		let handler = reader.runtime.as_ref().unwrap().block_on(async move {
+			let endpoint = Channel::from_shared(grpc_server_address).map_err(|e| RoomLifecycleEventReaderError::InvalidUri(format!("{:?}", e)))?;
+			endpoint
+				.connect()
+				.await
+				.map_err(|e| RoomLifecycleEventReaderError::ChannelError(e.to_string()))
+		});
 		let channel = handler?;
 		Ok(reader.run(channel))
 	}

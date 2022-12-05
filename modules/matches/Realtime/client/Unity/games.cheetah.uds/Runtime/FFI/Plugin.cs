@@ -1,13 +1,13 @@
 using System.Runtime.InteropServices;
 
-namespace Cheetah.Matches.Realtime.UDS.FFI
+namespace Games.Cheetah.UDS.FFI
 {
     internal static class Plugin
     {
         [StructLayout(LayoutKind.Sequential)]
         internal struct RoomEvent
         {
-            [MarshalAs(UnmanagedType.U8)] public  ulong roomId;
+            public  ulong roomId;
             public RoomEventType eventType;
         }
 

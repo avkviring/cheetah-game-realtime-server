@@ -21,8 +21,7 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.Tests
             var member = room.CreateMember(0b000111);
 
             var client = new CheetahClient(
-                server.GetGameIp(),
-                server.GetGamePort(),
+                server.GetGameUri(),
                 member.GetId(),
                 room.GetId(),
                 member.GetPrivateKey(),

@@ -67,61 +67,45 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
             }
         }
 
-        public string GetGameIp()
+        public Uri GetGameUri()
         {
             unsafe
             {
-                return
-                    $"{description.gameIp[0]}.{description.gameIp[1]}.{description.gameIp[2]}.{description.gameIp[3]}";
+                var ip = $"{description.gameIp[0]}.{description.gameIp[1]}.{description.gameIp[2]}.{description.gameIp[3]}";
+                return new Uri("udp://" + ip + ":" + description.gamePort);
             }
         }
 
-        public string GetAdminWebGrpcIp()
+        public Uri GetAdminWebGrpcUri()
         {
             unsafe
             {
-                return
+                var ip =
                     $"{description.admin_webgrpc_ip[0]}.{description.admin_webgrpc_ip[1]}.{description.admin_webgrpc_ip[2]}.{description.admin_webgrpc_ip[3]}";
+                return new Uri($"http://{ip}:{description.admin_webgrpc_port}");
             }
         }
 
-        public string GetInternalGrpcIp()
+        public Uri GetInternalGrpcUri()
         {
             unsafe
             {
-                return
+                var ip =
                     $"{description.internal_grpc_ip[0]}.{description.internal_grpc_ip[1]}.{description.internal_grpc_ip[2]}.{description.internal_grpc_ip[3]}";
+                return new Uri($"http://{ip}:{description.internal_grpc_port}");
             }
         }
 
-        public string GetInternalWebGrpcIp()
+        public Uri GetInternalWebGrpcUri()
         {
             unsafe
             {
-                return
+                var ip =
                     $"{description.internal_webgrpc_ip[0]}.{description.internal_webgrpc_ip[1]}.{description.internal_webgrpc_ip[2]}.{description.internal_webgrpc_ip[3]}";
+                return new Uri($"http://{ip}:{description.internal_webgrpc_port}");
             }
         }
 
-        public uint GetGamePort()
-        {
-            return description.gamePort;
-        }
-
-        public uint GetAdminWebGrpcPort()
-        {
-            return description.admin_webgrpc_port;
-        }
-
-        public uint GetInternalGrpcPort()
-        {
-            return description.internal_grpc_port;
-        }
-
-        public uint GetInternalWebGrpcPort()
-        {
-            return description.internal_webgrpc_port;
-        }
 
 #if UNITY_5_3_OR_NEWER
         [MonoPInvokeCallback(typeof(Server.OnServerError))]

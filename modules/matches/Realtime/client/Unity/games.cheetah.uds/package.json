@@ -1,14 +1,15 @@
 {
-  "name": "games.cheetah.matches.realtime.uds",
+  "name": "games.cheetah.uds",
   "version": "999.999.999",
-  "displayName": "games.cheetah.realtime.uds",
+  "displayName": "games.cheetah.uds",
   "description": "UDS Client",
   "unity": "2019.1",
   "unityRelease": "0b5",
   "dependencies": {
     "games.cheetah.platform": "999.999.999",
     "games.cheetah.matches.realtime": "999.999.999",
-    "games.cheetah.matches.realtime.grpc.internal": "999.999.999"
+    "games.cheetah.matches.realtime.grpc.internal": "999.999.999",
+    "games.cheetah.matches.realtime.embedded-server": "999.999.999"
   },
   "repository": "github:cheetah-game-platform/platform",
   "hideInEditor": false,

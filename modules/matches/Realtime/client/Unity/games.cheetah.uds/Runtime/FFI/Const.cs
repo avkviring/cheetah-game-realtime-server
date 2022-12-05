@@ -1,4 +1,4 @@
-namespace Cheetah.Matches.Realtime.UDS.FFI
+namespace Games.Cheetah.UDS.FFI
 {
     internal static class Const
     {
