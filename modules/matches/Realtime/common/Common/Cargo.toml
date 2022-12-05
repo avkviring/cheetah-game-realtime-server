@@ -28,7 +28,7 @@ num-derive = "0.3"
 num-traits = "0.2"
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.4"
 
 [[bench]]
 name = "frame_codec"
