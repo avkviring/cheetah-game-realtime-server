@@ -94,7 +94,7 @@ namespace Tests.Matches.Realtime
             Assert.AreEqual(1, eventsStream.Count);
             var actual = eventsStream.GetItem(0);
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
-            Assert.AreEqual(memberB.GetId(), actual.commandCreator);
+            Assert.AreEqual(memberB.UserId, actual.commandCreator);
         }
         
         [Test]

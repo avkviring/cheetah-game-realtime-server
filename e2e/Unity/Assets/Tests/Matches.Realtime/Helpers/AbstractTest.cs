@@ -1,8 +1,10 @@
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using Cheetah.Matches.Realtime;
 using Cheetah.Matches.Realtime.Codec;
 using Cheetah.Matches.Realtime.EmbeddedServer.API;
+using Cheetah.Matches.Realtime.GRPC.Internal;
 using NUnit.Framework;
 using Shared;
 using Shared_Types;
@@ -14,8 +16,9 @@ namespace Tests.Matches.Realtime.Helpers
         protected CheetahClient clientA;
 
         protected CheetahClient clientB;
-        protected ServerMember memberA;
-        protected ServerMember memberB;
+        private RoomIdResponse roomIdResponse;
+        protected CreateMemberResponse memberA;
+        protected CreateMemberResponse memberB;
         private EmbeddedServer server;
         protected const ushort TurretsParamsFieldId = 333;
         protected const ushort DropMineEventId = 555;
@@ -25,25 +28,42 @@ namespace Tests.Matches.Realtime.Helpers
         public void SetUp()
         {
             server = new EmbeddedServer(IPAddress.Loopback);
-            var room = server.CreateRoom();
-
-            memberA = room.CreateMember(PlayerHelper.PlayerGroup);
-            memberB = room.CreateMember(PlayerHelper.PlayerGroup);
+            var grpcClient = server.CreateGrpcClient();
+            Task.Run(async () =>
+            {
+                roomIdResponse = await grpcClient.CreateRoomAsync(new RoomTemplate());
+                memberA = await grpcClient.CreateMemberAsync(new CreateMemberRequest
+                {
+                    RoomId = roomIdResponse.RoomId,
+                    User = new UserTemplate
+                    {
+                        Groups = PlayerHelper.PlayerGroup
+                    }
+                });
+                memberB = await grpcClient.CreateMemberAsync(new CreateMemberRequest
+                {
+                    RoomId = roomIdResponse.RoomId,
+                    User = new UserTemplate
+                    {
+                        Groups = PlayerHelper.PlayerGroup
+                    }
+                });
+            }).GetAwaiter().GetResult();
 
 
             var codecRegistry = new CodecRegistryBuilder();
-            codecRegistry.Register(factory=>new GlobalNamespaceObjectCodec());
-            codecRegistry.Register(factory=>new DropMineEventCodec());
-            codecRegistry.Register(factory=>new SomeSingletonKeyCodec());
-            codecRegistry.Register(factory=>new TurretsParamsStructureCodec());
+            codecRegistry.Register(_ => new GlobalNamespaceObjectCodec());
+            codecRegistry.Register(_ => new DropMineEventCodec());
+            codecRegistry.Register(_ => new SomeSingletonKeyCodec());
+            codecRegistry.Register(_ => new TurretsParamsStructureCodec());
 
 
             // подключаем первого клиента
-            clientA = ConnectToRelay(server, room, memberA, codecRegistry);
+            clientA = ConnectToServer(server, roomIdResponse.RoomId, memberA, codecRegistry);
             clientA.AttachToRoom();
 
             // подключаем второго клиента
-            clientB = ConnectToRelay(server, room, memberB, codecRegistry);
+            clientB = ConnectToServer(server, roomIdResponse.RoomId, memberB, codecRegistry);
             clientB.AttachToRoom();
 
             // полуаем сетевые команды, которые не надо учитывать в тестах
@@ -52,11 +72,11 @@ namespace Tests.Matches.Realtime.Helpers
             clientB.Update();
         }
 
-        private static CheetahClient ConnectToRelay(EmbeddedServer server, ServerRoom room, ServerMember member,
+        private static CheetahClient ConnectToServer(EmbeddedServer server, ulong roomId, CreateMemberResponse member,
             CodecRegistryBuilder codecRegistryBuilder)
         {
-            var client = new CheetahClient(server.GetGameUri(), member.GetId(), room.GetId(),
-                member.GetPrivateKey(),
+            var client = new CheetahClient(server.GetGameUri(), member.UserId, roomId,
+                member.PrivateKey.ToByteArray(),
                 codecRegistryBuilder.Build());
             client.DisableClientLog();
             return client;

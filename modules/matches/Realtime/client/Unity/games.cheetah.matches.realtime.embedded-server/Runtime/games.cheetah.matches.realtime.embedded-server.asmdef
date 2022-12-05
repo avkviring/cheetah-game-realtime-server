@@ -2,7 +2,9 @@
   "name": "games.cheetah.matches.realtime.embedded-server",
   "rootNamespace": "Cheetah.Matches.Realtime.EmbeddedServer",
   "references": [
-    "games.cheetah.matches.realtime"
+    "games.cheetah.platform",
+    "games.cheetah.matches.realtime",
+    "games.cheetah.matches.realtime.grpc.internal"
   ],
   "allowUnsafeCode": true,
   "overrideReferences": false,

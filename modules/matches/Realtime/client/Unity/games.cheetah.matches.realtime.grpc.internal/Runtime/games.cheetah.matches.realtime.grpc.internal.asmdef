@@ -2,6 +2,7 @@
   "name": "games.cheetah.matches.realtime.grpc.internal",
   "rootNamespace": "Cheetah.Matches.Realtime.GRPC.Internal",
   "references": [
+    "games.cheetah.platform",
     "games.cheetah.matches.realtime",
     "games.cheetah.matches.realtime.grpc.shared"
   ],

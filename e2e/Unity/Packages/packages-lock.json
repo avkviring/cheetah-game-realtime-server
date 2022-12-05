@@ -160,7 +160,8 @@
       "source": "local",
       "dependencies": {
         "games.cheetah.platform": "999.999.999",
-        "games.cheetah.matches.realtime": "999.999.999"
+        "games.cheetah.matches.realtime": "999.999.999",
+        "games.cheetah.matches.realtime.grpc.internal": "999.999.999"
       }
     },
     "games.cheetah.matches.realtime.grpc.admin": {
