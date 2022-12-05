@@ -76,7 +76,7 @@ jobs:
           path: build-on-windows-result
       - name: Copy Libraries into Realtime Matches Package
         run: |
-          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library
+          lib_path=client/Unity/Packages/games.cheetah.matches.realtime/Runtime/Library
           mkdir -p $lib_path
           cp build-macos/libcheetah_matches_realtime_client.dylib $lib_path/macos.bundle
           cp build-on-linux-result/libcheetah_matches_realtime_client.so $lib_path/linux.so
@@ -89,7 +89,7 @@ jobs:
           cp build-android/aarch64-linux-android/release/libcheetah_matches_realtime_client.so $lib_path/android-aarch64/libcheetah_matches_realtime_client.so
       - name: Copy Libraries into Realtime Matches Embedded Package
         run: |
-          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
+          lib_path=client/Unity/Packages/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
           mkdir -p $lib_path
           cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/          
           cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/libcheetah_matches_realtime_embedded.bundle            
@@ -97,7 +97,7 @@ jobs:
           cp build-on-windows-result/cheetah_matches_realtime_embedded.pdb $lib_path/
       - name: Copy Libraries into UDS
         run: |
-          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.uds/Runtime/FFI/Library/
+          lib_path=client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library/
           mkdir -p $lib_path
           cp build-on-linux-result/libcheetah_matches_realtime_server_plugin.so $lib_path/          
           cp build-macos/libcheetah_matches_realtime_server_plugin.dylib $lib_path/libcheetah_matches_realtime_server_plugin.bundle            
@@ -110,7 +110,7 @@ jobs:
           scope: ''
       - name: Publish Packages
         run: |
-          package_files=$(find modules -name 'package.json')
+          package_files=$(find client/Unity/Packages/ -name 'package.json')
           for f in $package_files; do
             sed -i 's/999.999.999/${{ github.event.release.tag_name }}/' $f
             npm publish $(dirname $f)
@@ -143,7 +143,7 @@ jobs:
           path: build-on-windows-result
       - name: Copy Libraries into
         run: |
-         lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
+         lib_path=client/Unity/Packages/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
          mkdir -p $lib_path
          cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/          
          cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/libcheetah_matches_realtime_embedded.dylib            
