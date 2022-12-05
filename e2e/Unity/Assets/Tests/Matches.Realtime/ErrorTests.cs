@@ -1,3 +1,4 @@
+using System;
 using Cheetah.Matches.Realtime;
 using Cheetah.Matches.Realtime.Codec;
 using Cheetah.Matches.Realtime.Internal;
@@ -13,8 +14,8 @@ namespace Tests.Matches.Realtime
         [Test]
         public void ShouldException()
         {
-            var wrongHost = "____";
-            Assert.Throws<CreateClientError>(() => new CheetahClient(wrongHost, 0, 0, 0, new byte[128], new CodecRegistryBuilder().Build()));
+            var wrongHost = new Uri("udp://not-exist-host:8080");
+            Assert.Throws<CreateClientError>(() => new CheetahClient(wrongHost,  0, 0, new byte[128], new CodecRegistryBuilder().Build()));
         }
     }
 }

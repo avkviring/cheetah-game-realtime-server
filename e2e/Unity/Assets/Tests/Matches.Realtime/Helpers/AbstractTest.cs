@@ -55,7 +55,7 @@ namespace Tests.Matches.Realtime.Helpers
         private static CheetahClient ConnectToRelay(EmbeddedServer server, ServerRoom room, ServerMember member,
             CodecRegistryBuilder codecRegistryBuilder)
         {
-            var client = new CheetahClient(server.GetGameIp(), server.GetGamePort(), member.GetId(), room.GetId(),
+            var client = new CheetahClient(server.GetGameUri(), member.GetId(), room.GetId(),
                 member.GetPrivateKey(),
                 codecRegistryBuilder.Build());
             client.DisableClientLog();

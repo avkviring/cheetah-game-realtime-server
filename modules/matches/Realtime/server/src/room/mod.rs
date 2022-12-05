@@ -64,6 +64,7 @@ pub struct Room {
 	plugins_pending: FnvHashSet<String>,
 }
 
+#[derive(Debug)]
 pub struct RoomInfo {
 	pub(crate) room_id: RoomId,
 	pub(crate) ready: bool,

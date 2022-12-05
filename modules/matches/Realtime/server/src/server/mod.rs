@@ -1,5 +1,3 @@
-use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
-use fnv::FnvHashSet;
 use std::cell::RefCell;
 use std::net::UdpSocket;
 use std::ops::Add;
@@ -10,6 +8,9 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, iter, thread};
 
+use fnv::FnvHashSet;
+
+use cheetah_matches_realtime_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_matches_realtime_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_matches_realtime_common::room::{RoomId, RoomMemberId};
 
@@ -75,7 +76,7 @@ impl RoomsServer {
 		while let Ok(ChannelTask { task, sender }) = self.receiver.try_recv() {
 			let res = self.execute_task(task, now);
 			if let Err(e) = sender.send(res) {
-				tracing::error!("error send response {:?}", e);
+				tracing::error!("error send response {:?} with task {:?}", e, e.0);
 			}
 		}
 	}

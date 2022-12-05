@@ -69,6 +69,7 @@ pub unsafe extern "C" fn pop_room_event(plugin_id: ServerPluginId, out: &mut Roo
 	})
 }
 
+#[repr(C)]
 pub struct NativeString {
 	pub len: u8,
 	pub buffer: [u8; 255],
