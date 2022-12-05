@@ -12,7 +12,7 @@ tonic.workspace = true
 tracing.workspace = true
 tracing-log.workspace = true
 tracing-subscriber.workspace = true
-reqwest = { version = "0.11.9", features = ["json", "rustls", "blocking"], default-features = false }
+reqwest = { version = "0.11.13", features = ["json", "rustls", "blocking"], default-features = false }
 prometheus-measures-exporter.workspace = true
 hyper = "0.14.18"
 heapless.workspace = true
