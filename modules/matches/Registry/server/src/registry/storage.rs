@@ -15,6 +15,8 @@ pub enum StorageError {
 	RedisError(#[from] RedisError),
 	#[error(transparent)]
 	MalformedValue(#[from] serde_json::Error),
+	#[error("UnknownHostname")]
+	UnknownHostname,
 }
 
 #[async_trait]
@@ -27,7 +29,7 @@ pub(crate) trait Storage: Send + Sync {
 const REDIS_SET_KEY_READY: &str = "registry:relay-addrs:ready";
 const REDIS_SET_KEY_ALLOCATED: &str = "registry:relay-addrs:allocated";
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct RedisStorage {
 	conn: MultiplexedConnection,
 }
@@ -78,14 +80,28 @@ impl RedisStorage {
 	/// Создать новый `RedisStorage`
 	/// `RedisStorage` использует multiplexed соединение к Redis
 	/// `RedisStorage` можно клонировать
+	#[allow(clippy::map_err_ignore)]
 	pub(crate) async fn new(dsn: &str) -> Result<Self, StorageError> {
 		tracing::info!("connecting to redis: {:?}", dsn);
-		let client = redis::Client::open(dsn)?;
-		client
+		let mut conn = redis::Client::open(dsn)?
 			.get_multiplexed_tokio_connection()
 			.await
-			.map(|conn| Self { conn })
-			.map_err(StorageError::from)
+			.map_err(StorageError::from)?;
+
+		let hostname = hostname::get()
+			.map_err(|_| StorageError::UnknownHostname)?
+			.into_string()
+			.map_err(|_| StorageError::UnknownHostname)?;
+
+		// AUTH + CLIENT SETNAME
+		redis::cmd("CLIENT")
+			.arg("SETNAME")
+			.arg(hostname)
+			.query_async(&mut conn)
+			.await
+			.map_err(StorageError::from)?;
+
+		Ok(Self { conn })
 	}
 
 	async fn ensure_addrs_in_sets(&self, addrs: &Addrs, remove_from: &str, add_to: &str) -> Result<(), StorageError> {
@@ -131,6 +147,28 @@ mod tests {
 	use testcontainers::clients::Cli;
 	use testcontainers::images::redis::Redis;
 	use testcontainers::{Container, Docker};
+
+	#[tokio::test]
+	async fn should_return_error_if_no_redis() {
+		RedisStorage::new("redis://127.0.0.1:1").await.unwrap_err();
+	}
+
+	#[tokio::test]
+	async fn should_return_error_if_redis_auth_failed() {
+		let node = (*CLI).run(Redis::default());
+		let port = node.get_host_port(6379).unwrap();
+		let dsn = format!("redis://127.0.0.1:{}", port);
+
+		let mut conn = redis::Client::open(&*dsn).unwrap().get_connection().unwrap();
+		redis::cmd("CONFIG")
+			.arg("SET")
+			.arg("requirepass")
+			.arg("testpass")
+			.query::<()>(&mut conn)
+			.unwrap();
+
+		RedisStorage::new(&dsn).await.unwrap_err();
+	}
 
 	#[tokio::test]
 	async fn should_return_err_on_empty_set() {
