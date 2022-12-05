@@ -14,7 +14,7 @@ tracing-log.workspace = true
 tracing-subscriber.workspace = true
 reqwest = { version = "0.11.9", features = ["json", "rustls", "blocking"], default-features = false }
 prometheus-measures-exporter.workspace = true
-hyper = "0.14.18"
+hyper = "0.14.22"
 heapless.workspace = true
 lazy_static.workspace = true
 tracing-loki-layer = "0.1.0"
