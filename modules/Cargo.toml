@@ -16,7 +16,7 @@ edition = "2021"
 
 [workspace.dependencies]
 log = "0.4.14"
-serde = "1.0.140"
+serde = "1.0.149"
 serde_json = "1.0.82"
 tokio = "1.22.0"
 tonic = "0.8.3"
