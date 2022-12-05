@@ -42,7 +42,7 @@ pub enum ClientError {
 impl ClientError {
 	pub(crate) fn store_error_and_get_code(&self) -> u8 {
 		let mut last_error = LAST_ERROR.lock().unwrap();
-		let msg = format!("{:?}", self);
+		let msg = format!("{self:?}");
 		*last_error = msg;
 
 		match self {
@@ -71,7 +71,7 @@ where
 			Err(e) => e.store_error_and_get_code(),
 		},
 		Err(e) => {
-			let error = ClientError::RegistryMutex(format!("{:?}", e));
+			let error = ClientError::RegistryMutex(format!("{e:?}"));
 			error.store_error_and_get_code()
 		}
 	}

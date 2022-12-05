@@ -50,7 +50,7 @@ impl Registry {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
 		let client = NetworkThreadClient::new(
-			SocketAddr::from_str(server_address).map_err(|e| std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{:?}", e)))?,
+			SocketAddr::from_str(server_address).map_err(|e| std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{e:?}")))?,
 			member_id,
 			room_id,
 			private_key,
@@ -63,7 +63,7 @@ impl Registry {
 		)?;
 
 		let handler = thread::Builder::new()
-			.name(format!("member({:?})", member_id))
+			.name(format!("member({member_id:?})"))
 			.spawn(move || {
 				client.run();
 			})
@@ -89,7 +89,7 @@ impl Registry {
 	fn set_panic_hook() {
 		let default_panic = panic::take_hook();
 		panic::set_hook(Box::new(move |panic_info| {
-			let msg = format!("Panic in relay client {:?}", panic_info);
+			let msg = format!("Panic in relay client {panic_info:?}");
 			thread::spawn(move || {
 				tracing::error!("{}", msg);
 			});

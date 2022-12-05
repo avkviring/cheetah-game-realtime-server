@@ -31,7 +31,7 @@ pub fn init_with_trace_level(name: &str, trace_level: tracing::Level) {
 
 #[must_use]
 pub fn get_env(name: &str) -> String {
-	std::env::var(name).unwrap_or_else(|_| panic!("Env {} is not set", name))
+	std::env::var(name).unwrap_or_else(|_| panic!("Env {name} is not set"))
 }
 
 #[must_use]
@@ -72,7 +72,7 @@ fn setup_panic_hook() {
 			// выходим
 			process::exit(1)
 		});
-		println!("panic {}", panic_info);
+		println!("panic {panic_info}");
 		// сообщаем об ошибке
 		tracing::error!("{}", panic_info);
 	}));
@@ -118,17 +118,17 @@ pub fn get_admin_webgrpc_service_default_port() -> u16 {
 
 #[must_use]
 pub fn make_internal_srv_uri(host: &str, port: u16) -> Uri {
-	format!("http://{}:{}", host, port).parse().unwrap()
+	format!("http://{host}:{port}").parse().unwrap()
 }
 
 #[must_use]
 pub fn get_internal_srv_uri_from_env(service: &str) -> Uri {
-	let host = get_env(format!("{}_INTERNAL_SERVICE_HOST", service).as_str());
-	let port_string = get_env(format!("{}_INTERNAL_SERVICE_PORT", service).as_str());
+	let host = get_env(format!("{service}_INTERNAL_SERVICE_HOST").as_str());
+	let port_string = get_env(format!("{service}_INTERNAL_SERVICE_PORT").as_str());
 	let port = match port_string.parse() {
 		Ok(value) => value,
 		Err(e) => {
-			panic!("{}_INTERNAL_SERVICE_PORT is not int {} err={:?}", service, port_string, e);
+			panic!("{service}_INTERNAL_SERVICE_PORT is not int {port_string} err={e:?}");
 		}
 	};
 	make_internal_srv_uri(&host, port)

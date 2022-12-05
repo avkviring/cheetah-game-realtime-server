@@ -19,7 +19,7 @@ impl BinaryValue {
 		let mut result = BinaryValue(Default::default());
 		let size = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 		if size > result.0.capacity() {
-			return Err(Error::new(ErrorKind::InvalidData, format!("Event buffer size to big {}", size)));
+			return Err(Error::new(ErrorKind::InvalidData, format!("Event buffer size to big {size}")));
 		}
 		unsafe {
 			result.0.set_len(size);

@@ -43,7 +43,7 @@ pub(crate) extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, 
 			true
 		}
 		Err(e) => {
-			let string = widestring::U16CString::from_str(format!("{:?}", e)).unwrap();
+			let string = widestring::U16CString::from_str(format!("{e:?}")).unwrap();
 			on_error(string.as_ptr());
 			false
 		}
@@ -95,6 +95,6 @@ mod test {
 	}
 
 	pub(crate) extern "C" fn on_error(message: *const u16) {
-		panic!("Fail create server with message {:?}", message)
+		panic!("Fail create server with message {message:?}")
 	}
 }

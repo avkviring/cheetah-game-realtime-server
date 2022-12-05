@@ -610,7 +610,7 @@ mod tests {
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
-			order = format!("{}{}", order, o.id.id);
+			order = format!("{order}{}", o.id.id);
 		});
 		assert_eq!(order, "1005200");
 
@@ -618,7 +618,7 @@ mod tests {
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
-			order = format!("{}{}", order, o.id.id);
+			order = format!("{order}{}", o.id.id);
 		});
 		assert_eq!(order, "5200");
 	}

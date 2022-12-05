@@ -17,7 +17,7 @@ pub(crate) fn do_enum_match_predicates(input: TokenStream) -> TokenStream {
 	let variants = enum_data.variants.iter();
 	let variant_structs = variants.map(|v| {
 		let var_id = &v.ident;
-		let name_field = Ident::new(&format!("predicate_{}", var_id).to_snake_case(), Span::call_site());
+		let name_field = Ident::new(&format!("predicate_{var_id}").to_snake_case(), Span::call_site());
 		let fields = v.fields.clone().into_token_stream();
 		if fields.is_empty() {
 			quote! {}

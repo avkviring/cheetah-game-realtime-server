@@ -139,7 +139,7 @@ mod tests {
 			c2s: C2SCommand::DetachFromRoom,
 		};
 		if let Err(e) = command.execute(&mut room, super_member_1) {
-			panic!("{:?}", e)
+			panic!("{e:?}")
 		}
 		assert!(!room.members[&member_1].attached);
 	}

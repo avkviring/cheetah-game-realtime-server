@@ -53,13 +53,13 @@ pub unsafe extern "C" fn pop_room_event(plugin_id: ServerPluginId, out: &mut Roo
 	execute::<_, String>(|registry| {
 		let plugin = registry
 			.get_plugin(plugin_id)
-			.ok_or_else(|| format!("Plugin with id {} not found in registry", plugin_id))?;
+			.ok_or_else(|| format!("Plugin with id {plugin_id} not found in registry"))?;
 
-		if let Some(room_id) = plugin.reader.pop_create_room().map_err(|e| format!("{}", e))? {
+		if let Some(room_id) = plugin.reader.pop_create_room().map_err(|e| format!("{e}"))? {
 			out.room_id = room_id;
 			out.event_type = RoomEventType::Created;
 			Ok(ResultCode::OK)
-		} else if let Some(room_id) = plugin.reader.pop_deleted_rooms().map_err(|e| format!("{}", e))? {
+		} else if let Some(room_id) = plugin.reader.pop_deleted_rooms().map_err(|e| format!("{e}"))? {
 			out.room_id = room_id;
 			out.event_type = RoomEventType::Deleted;
 			Ok(ResultCode::OK)
@@ -94,12 +94,12 @@ where
 		Ok(registry) => match body(registry) {
 			Ok(result) => result,
 			Err(e) => {
-				set_error_msg(format!("{}", e));
+				set_error_msg(format!("{e}"));
 				ResultCode::Error
 			}
 		},
 		Err(e) => {
-			set_error_msg(format!("{:?}", e));
+			set_error_msg(format!("{e:?}"));
 			ResultCode::Error
 		}
 	}

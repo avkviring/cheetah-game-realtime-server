@@ -77,7 +77,7 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 		}
 		Err(e) => {
 			tracing::error!("Agones: Fail connect {:?}", e);
-			panic!("Agones: Fail connect {:?}", e);
+			panic!("Agones: Fail connect {e:?}");
 		}
 	}
 }

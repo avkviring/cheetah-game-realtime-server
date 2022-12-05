@@ -34,7 +34,7 @@ pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut Connec
 	execute_with_client(client_id, |client| {
 		let status = client
 			.get_connection_status()
-			.map_err(|e| ClientError::ConnectionStatusMutexError(format!("{:?}", e)));
+			.map_err(|e| ClientError::ConnectionStatusMutexError(format!("{e:?}")));
 		match status {
 			Ok(status) => {
 				let ffi_status = match status {

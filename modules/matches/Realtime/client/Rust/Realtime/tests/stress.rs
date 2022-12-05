@@ -51,7 +51,7 @@ pub fn stress_test() {
 	let (helper, [client1, client2]) = setup(Default::default());
 
 	panic::set_hook(Box::new(move |panic_info| {
-		eprintln!("{}", panic_info);
+		eprintln!("{panic_info}");
 	}));
 
 	let object_id = helper.create_member_object(client1);

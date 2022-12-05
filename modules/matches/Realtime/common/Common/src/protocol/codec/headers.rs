@@ -27,10 +27,7 @@ impl Headers {
 				5 => Header::Retransmit(RetransmitHeader::decode(input)?),
 				6 => Header::Hello,
 				_ => {
-					return Err(std::io::Error::new(
-						ErrorKind::InvalidData,
-						format!("Invalid type header {}", type_header),
-					));
+					return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Invalid type header {type_header}")));
 				}
 			};
 			headers
