@@ -92,7 +92,7 @@ impl Realtime for RealtimeInternalService {
 					.get_ref()
 					.user_id
 					.try_into()
-					.map_err(|e| Status::invalid_argument(format!("member_id is too big: {}", e)))?,
+					.map_err(|e| Status::invalid_argument(format!("member_id is too big: {e}")))?,
 				room_id: request.get_ref().room_id,
 			})
 			.map(|_| Response::new(DeleteMemberResponse {}))
@@ -167,11 +167,11 @@ impl Realtime for RealtimeInternalService {
 	) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
 		let command_type_id = request.get_ref().command_type_id;
 		let command_type_id: CommandTypeId = num::FromPrimitive::from_u32(command_type_id)
-			.ok_or_else(|| Status::invalid_argument(format!("unknown command_type_id {:?}", command_type_id)))?;
+			.ok_or_else(|| Status::invalid_argument(format!("unknown command_type_id {command_type_id:?}")))?;
 
 		let field_id = request.get_ref().field_id;
 		let field_id = if let Some(field_id) = field_id {
-			Some(FieldId::try_from(field_id).map_err(|e| Status::invalid_argument(format!("field_id is too large {:?} {:?}", field_id, e)))?)
+			Some(FieldId::try_from(field_id).map_err(|e| Status::invalid_argument(format!("field_id is too large {field_id:?} {e:?}")))?)
 		} else {
 			None
 		};
@@ -180,7 +180,7 @@ impl Realtime for RealtimeInternalService {
 		let object_template_id = if let Some(object_template_id) = object_template_id {
 			Some(
 				GameObjectTemplateId::try_from(object_template_id)
-					.map_err(|e| Status::invalid_argument(format!("object_template_id is too large {:?} {:?}", object_template_id, e)))?,
+					.map_err(|e| Status::invalid_argument(format!("object_template_id is too large {object_template_id:?} {e:?}")))?,
 			)
 		} else {
 			None

@@ -111,7 +111,7 @@ impl NetworkClient {
 					if e.kind() == ErrorKind::WouldBlock {
 					} else {
 						tracing::error!("error send {:?}", e);
-						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error send {:?}", e)));
+						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error send {e:?}")));
 					}
 				}
 			}
@@ -126,7 +126,7 @@ impl NetworkClient {
 					if e.kind() == ErrorKind::WouldBlock {
 					} else {
 						tracing::error!("error receive {:?}", e);
-						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error receive {:?}", e)));
+						self.state = ConnectionStatus::Disconnected(DisconnectedReason::IOError(format!("error receive {e:?}")));
 					}
 					break;
 				}

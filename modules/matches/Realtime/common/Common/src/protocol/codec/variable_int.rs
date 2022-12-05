@@ -82,7 +82,7 @@ impl VariableIntReader for Cursor<&[u8]> {
 			_ => {
 				return Err(std::io::Error::new(
 					ErrorKind::InvalidData,
-					format!("Variable int marker not valid {}", first),
+					format!("Variable int marker not valid {first}"),
 				));
 			}
 		})

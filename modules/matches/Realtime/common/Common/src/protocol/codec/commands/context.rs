@@ -247,12 +247,7 @@ impl TryFrom<u8> for CreatorSource {
 			1 => CreatorSource::Current,
 			2 => CreatorSource::New,
 			3 => CreatorSource::AsObjectOwner,
-			_ => {
-				return Err(std::io::Error::new(
-					ErrorKind::InvalidData,
-					format!("Invalid tag {} CreatorSource", value),
-				))
-			}
+			_ => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Invalid tag {value} CreatorSource"))),
 		})
 	}
 }

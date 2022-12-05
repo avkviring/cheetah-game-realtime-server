@@ -16,7 +16,7 @@ impl<T, E: Debug> Trace<T> for Result<T, E> {
 }
 
 pub fn err(details: impl Debug, object: impl Debug) -> String {
-	let msg = format!("{:?} {:?}", details, object);
+	let msg = format!("{details:?} {object:?}");
 	error!("{}", msg);
 	msg
 }

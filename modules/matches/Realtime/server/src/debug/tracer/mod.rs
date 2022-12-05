@@ -189,7 +189,7 @@ impl CommandTracerSessions {
 					}
 				}
 			}
-			Err(e) => Err(TracerSessionCommandError::QueryError(format!("{:?}", e))),
+			Err(e) => Err(TracerSessionCommandError::QueryError(format!("{e:?}"))),
 		}
 	}
 
@@ -427,7 +427,7 @@ pub mod tests {
 				assert!(tracer.sessions.contains_key(&session_id));
 			}
 			Err(e) => {
-				panic!("{:?}", e)
+				panic!("{e:?}")
 			}
 		}
 	}
@@ -441,9 +441,9 @@ pub mod tests {
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => {}
-				Err(e) => panic!("{:?}", e),
+				Err(e) => panic!("{e:?}"),
 			},
-			Err(e) => panic!("{:?}", e),
+			Err(e) => panic!("{e:?}"),
 		}
 	}
 
@@ -459,7 +459,7 @@ pub mod tests {
 					panic!()
 				}
 			}
-			Err(e) => panic!("{:?}", e),
+			Err(e) => panic!("{e:?}"),
 		}
 	}
 
@@ -473,9 +473,9 @@ pub mod tests {
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(result) => assert_eq!(result.len(), 1),
-				Err(e) => panic!("{:?}", e),
+				Err(e) => panic!("{e:?}"),
 			},
-			Err(e) => panic!("{:?}", e),
+			Err(e) => panic!("{e:?}"),
 		}
 	}
 
@@ -488,9 +488,9 @@ pub mod tests {
 		match receiver.try_recv() {
 			Ok(result) => match result {
 				Ok(_) => assert!(tracer.sessions.is_empty()),
-				Err(e) => panic!("{:?}", e),
+				Err(e) => panic!("{e:?}"),
 			},
-			Err(e) => panic!("{:?}", e),
+			Err(e) => panic!("{e:?}"),
 		}
 	}
 

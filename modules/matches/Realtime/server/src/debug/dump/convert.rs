@@ -10,7 +10,7 @@ use crate::room::{Member, Room};
 
 impl From<&Room> for admin::DumpResponse {
 	fn from(room: &Room) -> Self {
-		let users = room.members.iter().map(|(_k, u)| admin::DumpUser::from(u)).collect();
+		let users = room.members.values().map(admin::DumpUser::from).collect();
 		let objects = room.objects.iter().map(|(_k, o)| admin::DumpObject::from(o)).collect();
 		Self { users, objects }
 	}

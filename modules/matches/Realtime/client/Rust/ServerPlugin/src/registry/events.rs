@@ -56,7 +56,7 @@ impl RoomLifecycleEventReader {
 	pub fn from_address(grpc_server_address: String) -> Result<RoomLifecycleEventReader, RoomLifecycleEventReaderError> {
 		let reader = Self::default();
 		let handler = reader.runtime.as_ref().unwrap().block_on(async move {
-			let endpoint = Channel::from_shared(grpc_server_address).map_err(|e| RoomLifecycleEventReaderError::InvalidUri(format!("{:?}", e)))?;
+			let endpoint = Channel::from_shared(grpc_server_address).map_err(|e| RoomLifecycleEventReaderError::InvalidUri(format!("{e:?}")))?;
 			endpoint
 				.connect()
 				.await
@@ -117,13 +117,13 @@ impl RoomLifecycleEventReader {
 		let mut response = client
 			.watch_room_lifecycle_event(EmptyRequest::default())
 			.await
-			.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{:?}", e)))?;
+			.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{e:?}")))?;
 		let stream = response.get_mut();
 		loop {
 			let message = stream
 				.message()
 				.await
-				.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{:?}", e)))?;
+				.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{e:?}")))?;
 			Self::process_message(&created_rooms, &deleted_rooms, message)?;
 		}
 	}

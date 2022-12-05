@@ -79,6 +79,6 @@ mod tests {
 	async fn stub_storage<'a>() -> (Container<'a, Cli, Redis>, RedisStorage) {
 		let node = (*CLI).run(Redis::default());
 		let port = node.get_host_port(6379).unwrap();
-		(node, RedisStorage::new(&format!("redis://127.0.0.1:{}", port)).await.unwrap())
+		(node, RedisStorage::new(&format!("redis://127.0.0.1:{port}")).await.unwrap())
 	}
 }

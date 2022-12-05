@@ -41,12 +41,12 @@ impl CommandTracerGRPCService {
 
 		manager
 			.execute_command_trace_sessions_task(room_id, task.clone())
-			.trace_err(format!("Schedule tracer command {} {:?}", room_id, task))
+			.trace_err(format!("Schedule tracer command {room_id} {task:?}"))
 			.map_err(Status::internal)?;
 
 		let result = receiver
 			.recv_timeout(Duration::from_millis(100))
-			.trace_err(format!("Wait tracer command {} {:?}", room_id, task))
+			.trace_err(format!("Wait tracer command {room_id} {task:?}"))
 			.map_err(Status::internal)?;
 
 		converter(result).map(Response::new)
@@ -71,7 +71,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			request
 				.session
 				.try_into()
-				.map_err(|e| Status::invalid_argument(format!("session is too large: {}", e)))?,
+				.map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?,
 			request.filter.clone(),
 			sender,
 		);
@@ -85,7 +85,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			request
 				.session
 				.try_into()
-				.map_err(|e| Status::invalid_argument(format!("session is too large: {}", e)))?,
+				.map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?,
 			sender,
 		);
 		self.execute_task(request.room, task, receiver, |result| {
@@ -106,7 +106,7 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 			request
 				.session
 				.try_into()
-				.map_err(|e| Status::invalid_argument(format!("session is too large: {}", e)))?,
+				.map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?,
 			sender,
 		);
 		self.execute_task(request.room, task, receiver, |result| {
@@ -133,7 +133,7 @@ impl From<TracedCommand> for admin::Command {
 					format!("root({})", id.id)
 				}
 				GameObjectOwner::Member(member_id) => {
-					format!("member({},{})", member_id, id.id)
+					format!("member({member_id},{})", id.id)
 				}
 			},
 		};

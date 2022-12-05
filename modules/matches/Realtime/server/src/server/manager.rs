@@ -117,7 +117,7 @@ impl RoomsServerManager {
 					Err(e)
 				}
 			})
-			.map_err(|e| RoomsServerManagerError::CannotCreateServerThread(format!("{:?}", e)))?;
+			.map_err(|e| RoomsServerManagerError::CannotCreateServerThread(format!("{e:?}")))?;
 		Ok(Self {
 			sender,
 			halt_signal: cloned_halt_signal,

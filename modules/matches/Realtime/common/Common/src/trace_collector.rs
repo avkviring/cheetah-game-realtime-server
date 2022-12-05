@@ -89,7 +89,7 @@ impl ValueVisitor {
 impl Visit for ValueVisitor {
 	fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
 		if field.name() == self.name {
-			self.result = Some(format!("{:?}", value));
+			self.result = Some(format!("{value:?}"));
 		}
 	}
 }

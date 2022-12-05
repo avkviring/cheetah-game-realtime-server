@@ -55,6 +55,6 @@ mod tests {
 	fn test_get_plugin_names_empty() {
 		let env_var = Alphanumeric.sample_string(&mut rand::thread_rng(), 16);
 		let plugin_names = get_plugin_names(&env_var);
-		assert!(plugin_names.is_empty(), "plugin_names are not empty: {:?}", plugin_names);
+		assert!(plugin_names.is_empty(), "plugin_names are not empty: {plugin_names:?}");
 	}
 }

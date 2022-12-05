@@ -16,7 +16,7 @@ impl MemberConnectedCommand {
 		let member_id = input
 			.read_variable_u64()?
 			.try_into()
-			.map_err(|e| Error::new(ErrorKind::InvalidData, format!("could not convert member_id into RoomMemberId: {:?}", e)))?;
+			.map_err(|e| Error::new(ErrorKind::InvalidData, format!("could not convert member_id into RoomMemberId: {e:?}")))?;
 		Ok(Self { member_id })
 	}
 }

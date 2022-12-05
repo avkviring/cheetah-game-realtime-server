@@ -30,7 +30,7 @@ pub(crate) struct ReconnectProber;
 impl RelayProber for ReconnectProber {
 	// todo(v.zakharov): add health-check rpc instead of opening connection each time
 	async fn probe(&self, addr: SocketAddr) -> Result<(), ProbeError> {
-		let mut builder = Endpoint::from_str(&format!("http://{}", addr)).unwrap();
+		let mut builder = Endpoint::from_str(&format!("http://{addr}")).unwrap();
 		builder = builder.connect_timeout(Duration::from_secs(1));
 		let mut client = RealtimeClient::connect(builder).await.map_err(ProbeError::from)?;
 

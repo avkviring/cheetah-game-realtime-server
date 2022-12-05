@@ -140,7 +140,7 @@ impl Measurers {
 					.const_labels(
 						vec![
 							("command".to_owned(), command.to_string()),
-							("field_id".to_owned(), format!("{:?}", field_id)),
+							("field_id".to_owned(), format!("{field_id:?}")),
 						]
 						.into_iter()
 						.collect(),
@@ -253,10 +253,7 @@ impl Measurers {
 			Opts::new(name.as_str(), help.as_str()).const_labels(
 				vec![
 					("field_type".to_owned(), t.map(|f| f.to_string()).unwrap_or_else(|| "unknown".to_owned())),
-					(
-						"field_id".to_owned(),
-						id.map(|f| format!("{}", f)).unwrap_or_else(|| "unknown".to_owned()),
-					),
+					("field_id".to_owned(), id.map(|f| format!("{f}")).unwrap_or_else(|| "unknown".to_owned())),
 					("template".to_owned(), template.to_string()),
 				]
 				.into_iter()
