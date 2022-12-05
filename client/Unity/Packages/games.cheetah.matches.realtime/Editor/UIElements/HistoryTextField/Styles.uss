@@ -1,0 +1,13 @@
+.main {
+    margin: 0;
+    padding: 0;
+    flex-grow: 1;
+    display: flex;
+}
+
+.text-field {
+    flex-grow: 1;
+    height: 30px;
+    margin: 0;
+    padding: 0;
+}
