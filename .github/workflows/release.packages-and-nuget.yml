@@ -3,8 +3,8 @@ on:
   release:
     types: [ published ]
 env:
-  REALTIME_CLIENT_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Realtime/Cargo.toml
-  REALTIME_EMBEDDED_MANIFEST_PATH: modules/matches/Realtime/client/Rust/Embedded/Cargo.toml
+  REALTIME_CLIENT_MANIFEST_PATH: rust/matches/Realtime/client/Rust/Realtime/Cargo.toml
+  REALTIME_EMBEDDED_MANIFEST_PATH: rust/matches/Realtime/client/Rust/Embedded/Cargo.toml
 jobs:
   build-macos:
     uses: ./.github/workflows/templates.build-on-macos.yml
@@ -40,8 +40,8 @@ jobs:
         with:
           name: build-android
           path: |
-            modules/target/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so
-            modules/target/aarch64-linux-android/release/libcheetah_matches_realtime_client.so
+            rust/target/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so
+            rust/target/aarch64-linux-android/release/libcheetah_matches_realtime_client.so
   publish-unity-packages:
     needs:
       - build-macos

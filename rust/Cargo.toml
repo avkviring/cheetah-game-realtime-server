@@ -1,13 +1,14 @@
 [workspace]
 members = [
-    "libraries/rust/Microservice",
-    "matches/Registry/server",
-    "matches/Realtime/server",
-    "matches/Realtime/common/Common",
-    "matches/Realtime/common/Macro",
-    "matches/Realtime/client/Rust/Realtime",
-    "matches/Realtime/client/Rust/Embedded",
-    "matches/Realtime/client/Rust/ServerPlugin",
+    "Microservice",
+    "Registry",
+    "Client",
+    "Common",
+    "Embedded",
+    "Macro",
+    "Plugin",
+    "Registry",
+    "Server"
 ]
 
 [workspace.package]

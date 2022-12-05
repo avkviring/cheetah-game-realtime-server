@@ -17,11 +17,11 @@ jobs:
             $CARGO_HOME/cargo/registry/index/
             $CARGO_HOME/cargo/registry/cache/
             $CARGO_HOME/cargo/git/db/
-            modules/target/
+            rust/target/
           key: rust-udeps-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-udeps-v1-
       - name: Lint udeps
-        run: cd modules/ && cargo +nightly udeps
+        run: cd rust/ && cargo +nightly udeps
 
 
