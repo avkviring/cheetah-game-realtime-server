@@ -17,7 +17,8 @@ tonic-health.workspace = true
 prost.workspace = true
 cheetah-libraries-microservice = { path = "../../../libraries/rust/Microservice" }
 thiserror.workspace = true
-redis = { version = "0.21.4", features = ["tokio-comp"] }
+hostname = "^0.3"
+redis = { version = "0.22.1", features = ["tokio-comp"] }
 futures.workspace = true
 async-trait = "0.1.52"
 serde = { workspace = true, features = ["derive"] }
