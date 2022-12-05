@@ -11,7 +11,9 @@
     "games.cheetah.matches.matchmaking",
     "games.cheetah.matches.realtime.doa",
     "games.cheetah.matches.realtime.embedded-server",
-    "Shared"
+    "Shared",
+    "games.cheetah.matches.realtime.grpc.internal",
+    "games.cheetah.matches.realtime.grpc.shared"
   ],
   "includePlatforms": [
     "Editor"
@@ -21,6 +23,7 @@
   "overrideReferences": true,
   "precompiledReferences": [
     "nunit.framework.dll",
+    "Grpc.Core.Api.dll",
     "Google.Protobuf.dll"
   ],
   "autoReferenced": false,

@@ -39,14 +39,15 @@ namespace Games.Cheetah.UDS.Tests
         {
             Task.Run(async () =>
             {
-                var room = server.CreateRoom();
+                var grpcClient = server.CreateGrpcClient();
+                var room = await grpcClient.CreateRoomAsync(new RoomTemplate());
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
                 await plugin.OnUpdate();
                 // даем время cheetahClient перейти в состояние connected
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
-                Assert.AreEqual(room.GetId(), createdRoomId);
+                Assert.AreEqual(room.RoomId, createdRoomId);
                 Assert.AreEqual(cheetahClient.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
             }).GetAwaiter().GetResult();
         }

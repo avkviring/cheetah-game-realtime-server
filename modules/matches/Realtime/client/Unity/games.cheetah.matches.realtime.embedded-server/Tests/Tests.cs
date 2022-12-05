@@ -1,9 +1,10 @@
 using System;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using Cheetah.Matches.Realtime.Codec;
 using Cheetah.Matches.Realtime.EmbeddedServer.API;
-using Cheetah.Matches.Realtime.Logger;
+using Cheetah.Matches.Realtime.GRPC.Internal;
 using Cheetah.Matches.Realtime.Types;
 using NUnit.Framework;
 
@@ -14,35 +15,47 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.Tests
         [Test]
         public void Test()
         {
-            API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
-            
-            var server = new API.EmbeddedServer(IPAddress.Loopback);
-            var room = server.CreateRoom();
-            var member = room.CreateMember(0b000111);
+            Task.Run(async () =>
+            {
+                API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
 
-            var client = new CheetahClient(
-                server.GetGameUri(),
-                member.GetId(),
-                room.GetId(),
-                member.GetPrivateKey(),
-                new CodecRegistryBuilder().Build());
-            client.DisableClientLog();
-            client.Update();
+                var server = new API.EmbeddedServer(IPAddress.Loopback);
+                var grpcClient = server.CreateGrpcClient();
+                var room = await grpcClient.CreateRoomAsync(new RoomTemplate());
+                var member = await grpcClient.CreateMemberAsync(new CreateMemberRequest
+                {
+                    RoomId = room.RoomId,
+                    User = new UserTemplate
+                    {
+                        Groups = 0b000111
+                    }
+                });
 
-            // небольшая пауза для обмена сетевыми пакетами
-            Thread.Sleep(TimeSpan.FromSeconds(1));
 
-            // проверяем факт соединения
-            Assert.AreEqual(client.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
+                var client = new CheetahClient(
+                    server.GetGameUri(),
+                    member.UserId,
+                    room.RoomId,
+                    member.PrivateKey.ToByteArray(),
+                    new CodecRegistryBuilder().Build());
+                client.DisableClientLog();
+                client.Update();
 
-            // останавливаем сервер
-            server.Destroy();
+                // небольшая пауза для обмена сетевыми пакетами
+                Thread.Sleep(TimeSpan.FromSeconds(1));
 
-            // сервер остановлен - выжидаем окончания timeout на клиентские команды
-            Thread.Sleep(TimeSpan.FromSeconds(11));
-            Assert.AreNotEqual(client.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
-            
-            API.EmbeddedServer.ShowCurrentLogs();
+                // проверяем факт соединения
+                Assert.AreEqual(client.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
+
+                // останавливаем сервер
+                server.Destroy();
+
+                // сервер остановлен - выжидаем окончания timeout на клиентские команды
+                Thread.Sleep(TimeSpan.FromSeconds(11));
+                Assert.AreNotEqual(client.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
+
+                API.EmbeddedServer.ShowCurrentLogs();
+            });
         }
     }
 }

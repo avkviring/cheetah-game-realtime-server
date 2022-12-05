@@ -5,8 +5,6 @@ use lazy_static::lazy_static;
 use crate::EmbeddedServerWrapper;
 
 pub(crate) mod logs;
-pub(crate) mod member;
-pub(crate) mod room;
 pub(crate) mod server;
 
 lazy_static! {

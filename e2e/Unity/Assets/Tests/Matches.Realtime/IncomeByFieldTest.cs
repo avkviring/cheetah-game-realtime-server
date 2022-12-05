@@ -7,7 +7,7 @@ using Tests.Matches.Realtime.Helpers;
 
 namespace Tests.Matches.Realtime
 {
-    public class IncomeByFieldTest: AbstractTest
+    public class IncomeByFieldTest : AbstractTest
     {
         [Test]
         public void TestEventIncomeCommands()
@@ -27,12 +27,12 @@ namespace Tests.Matches.Realtime
             // прием команды
             clientB.Update();
             // проверяем результат
-            var eventsStream= collector.GetStream();
+            var eventsStream = collector.GetStream();
             var actual = eventsStream.GetItem(0);
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
-            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
+            Assert.AreEqual(memberA.UserId, actual.commandCreator);
         }
-        
+
         [Test]
         public void TestTargetEventIncomeCommands()
         {
@@ -45,18 +45,18 @@ namespace Tests.Matches.Realtime
             {
                 MineId = 150
             };
-            createdObject.SendEvent(DropMineEventId, memberB.GetId(), ref dropMineEvent);
+            createdObject.SendEvent(DropMineEventId, memberB.UserId, ref dropMineEvent);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
-            var eventsStream= collector.GetStream();
+            var eventsStream = collector.GetStream();
             var actual = eventsStream.GetItem(0);
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
-            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
+            Assert.AreEqual(memberA.UserId, actual.commandCreator);
         }
-        
+
         [Test]
         public void TestStructureIncomeCommands()
         {
@@ -76,12 +76,12 @@ namespace Tests.Matches.Realtime
             // прием команды
             clientB.Update();
             // проверяем результат
-            var structuresStream= collector.GetStream();
+            var structuresStream = collector.GetStream();
             var actual = structuresStream.GetItem(0);
             var turretsParamsStructure = actual.value;
             Assert.AreEqual(turretsParams.Damage, turretsParamsStructure.Damage);
             Assert.AreEqual(turretsParams.Speed, turretsParamsStructure.Speed);
-            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
+            Assert.AreEqual(memberA.UserId, actual.commandCreator);
         }
 
         [Test]
@@ -89,7 +89,7 @@ namespace Tests.Matches.Realtime
         {
             // слушаем события определенного типа
             var collector = new StructureIncomeByFieldCommandCollector<TurretsParamsStructure>(clientB, TurretsParamsFieldId);
-            
+
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             var turretParamsA = new TurretsParamsStructure()
             {
@@ -118,9 +118,9 @@ namespace Tests.Matches.Realtime
             var second = stream.GetItem(2);
             Assert.AreEqual(100, first.value.Speed);
             Assert.AreEqual(5, second.value.Damage);
-            Assert.AreEqual(memberA.GetId(), first.commandCreator);
+            Assert.AreEqual(memberA.UserId, first.commandCreator);
         }
-        
+
         [Test]
         public void TestLongIncomeCommands()
         {
@@ -135,12 +135,12 @@ namespace Tests.Matches.Realtime
             // прием команды
             clientB.Update();
             // проверяем результат
-            var stream= collector.GetStream();
+            var stream = collector.GetStream();
             var actual = stream.GetItem(0);
-            Assert.AreEqual( 7799, actual.value);
-            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
+            Assert.AreEqual(7799, actual.value);
+            Assert.AreEqual(memberA.UserId, actual.commandCreator);
         }
-            
+
         [Test]
         public void TestIncrementLongIncomeCommands()
         {
@@ -155,12 +155,12 @@ namespace Tests.Matches.Realtime
             // прием команды
             clientB.Update();
             // проверяем результат
-            var stream= collector.GetStream();
+            var stream = collector.GetStream();
             var actual = stream.GetItem(0);
             Assert.AreEqual(1001, actual.value);
-            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
+            Assert.AreEqual(memberA.UserId, actual.commandCreator);
         }
-        
+
         [Test]
         public void TestCompareAndSetLongIncomeCommands()
         {
@@ -169,21 +169,21 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            createdObject.CompareAndSetLong(HealFieldId, 0,555);
-            createdObject.CompareAndSetLongWithReset(HealFieldId, 555,1000,0);
+            createdObject.CompareAndSetLong(HealFieldId, 0, 555);
+            createdObject.CompareAndSetLongWithReset(HealFieldId, 555, 1000, 0);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
             clientB.Update();
             // проверяем результат
-            var stream= collector.GetStream();
+            var stream = collector.GetStream();
             var first = stream.GetItem(0);
             var second = stream.GetItem(1);
-            Assert.AreEqual( 555, first.value);
-            Assert.AreEqual( 1000, second.value);
-            Assert.AreEqual(memberA.GetId(), first.commandCreator);
+            Assert.AreEqual(555, first.value);
+            Assert.AreEqual(1000, second.value);
+            Assert.AreEqual(memberA.UserId, first.commandCreator);
         }
-        
+
         [Test]
         public void TestDoubleIncomeCommands()
         {
@@ -198,12 +198,12 @@ namespace Tests.Matches.Realtime
             // прием команды
             clientB.Update();
             // проверяем результат
-            var stream= collector.GetStream();
+            var stream = collector.GetStream();
             var actual = stream.GetItem(0);
-            Assert.AreEqual( 77.99, actual.value);
-            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
+            Assert.AreEqual(77.99, actual.value);
+            Assert.AreEqual(memberA.UserId, actual.commandCreator);
         }
-        
+
         [Test]
         public void TestIncrementDoubleIncomeCommands()
         {
@@ -218,11 +218,10 @@ namespace Tests.Matches.Realtime
             // прием команды
             clientB.Update();
             // проверяем результат
-            var stream= collector.GetStream();
+            var stream = collector.GetStream();
             var actual = stream.GetItem(0);
-            Assert.AreEqual( 77.99, actual.value);
-            Assert.AreEqual(memberA.GetId(), actual.commandCreator);
+            Assert.AreEqual(77.99, actual.value);
+            Assert.AreEqual(memberA.UserId, actual.commandCreator);
         }
-        
     }
 }

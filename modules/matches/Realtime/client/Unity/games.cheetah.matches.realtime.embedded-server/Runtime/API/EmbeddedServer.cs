@@ -1,7 +1,10 @@
 using System;
 using System.Net;
+using System.Net.Http;
 using Cheetah.Matches.Realtime.EmbeddedServer.FFI;
-using Cheetah.Matches.Realtime.EmbeddedServer.Impl;
+using Grpc.Net.Client;
+using Grpc.Net.Client.Web;
+using static Cheetah.Matches.Realtime.GRPC.Internal.Realtime;
 #if UNITY_5_3_OR_NEWER
 using AOT;
 using UnityEngine;
@@ -48,15 +51,16 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
             }
         }
 
-        public ServerRoom CreateRoom()
-        {
-            ulong roomId = 0;
-            if (!Room.CreateRoom(description.id, ref roomId, OnError))
-            {
-                throw new Exception("Cannot create room. " + errorMessage);
-            }
 
-            return new ServerRoomImpl(description, roomId);
+        public RealtimeClient CreateGrpcClient()
+        {
+            var channel = GrpcChannel.ForAddress(
+                GetInternalWebGrpcUri(), new GrpcChannelOptions
+                {
+                    HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
+                }
+            );
+            return new RealtimeClient(channel);
         }
 
         public void Destroy()
@@ -140,7 +144,7 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.API
                     Debug.LogWarning(log);
                     break;
                 case EmeddedServerLogLevel.Error:
-                    Debug.LogError(log);
+                    Debug.LogWarning(log);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(level), level, null);
