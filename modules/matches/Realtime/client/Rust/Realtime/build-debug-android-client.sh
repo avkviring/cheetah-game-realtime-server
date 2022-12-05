@@ -1,5 +1,5 @@
 #!/bin/bash
-OUTPUT="../../Unity/games.cheetah.matches.realtime"
+OUTPUT="../../../../../../client/Unity/Packages/games.cheetah.matches.realtime"
 cd ../../../../
 cross build --manifest-path matches/Realtime/client/rust/Realtime/Cargo.toml --target armv7-linux-androideabi
 cross build --manifest-path matches/Realtime/client/rust/Realtime/Cargo.toml --target aarch64-linux-android

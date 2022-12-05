@@ -1,6 +1,6 @@
 #!/bin/bash
 ## сборка runtime клиента для тестирования на macos
-UNITY_OUTPUT="../../Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/"
+UNITY_OUTPUT="../../../../../../client/Unity/Packages/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/"
 NET_OUTPUT="../../Net/Embedded/Libraries/"
 cargo build --release
 
