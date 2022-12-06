@@ -15,10 +15,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let redis_auth = env::var("REDIS_AUTH").ok();
 	let redis_dsn = match redis_auth {
 		Some(ref password) => {
-			format!("redis://:{}@{}:{}", password, redis_host, redis_port)
+			format!("redis://:{password}@{redis_host}:{redis_port}")
 		}
 		None => {
-			format!("redis://{}:{}", redis_host, redis_port)
+			format!("redis://{redis_host}:{redis_port}")
 		}
 	};
 
