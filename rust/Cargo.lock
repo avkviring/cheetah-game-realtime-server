@@ -106,15 +106,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "autotools"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8138adefca3e5d2e73bfba83bd6eeaf904b26a7ac1b4a19892cfe16cc7e1701"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "axum"
 version = "0.5.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -383,10 +374,8 @@ dependencies = [
  "lazy_static",
  "log",
  "port_scanner",
- "protobuf-src",
  "thiserror",
  "tokio",
- "tonic-build",
  "tracing",
  "tracing-core",
  "tracing-log",
@@ -435,7 +424,6 @@ dependencies = [
  "lazy_static",
  "mockall",
  "prost 0.11.3",
- "protobuf-src",
  "thiserror",
  "tokio",
  "tokio-stream",
@@ -456,7 +444,6 @@ dependencies = [
  "pin-project",
  "pin-project-internal",
  "prost 0.11.3",
- "protobuf-src",
  "redis",
  "serde",
  "serde_json",
@@ -486,7 +473,6 @@ dependencies = [
  "prometheus",
  "prometheus-measures-exporter",
  "prost 0.11.3",
- "protobuf-src",
  "rand",
  "rymder",
  "serde",
@@ -1707,15 +1693,6 @@ name = "protobuf"
 version = "2.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf7e6d18738ecd0902d30d1ad232c9125985a3422929b16c65517b38adc14f96"
-
-[[package]]
-name = "protobuf-src"
-version = "1.1.0+21.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7ac8852baeb3cc6fb83b93646fb93c0ffe5d14bf138c945ceb4b9948ee0e3c1"
-dependencies = [
- "autotools",
-]
 
 [[package]]
 name = "quote"
