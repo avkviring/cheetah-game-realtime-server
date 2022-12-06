@@ -2,12 +2,12 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use std::time::Duration;
 
+use crate::proto::matches::realtime::internal::internal_client::InternalClient;
 use async_trait::async_trait;
 use thiserror::Error;
 use tonic::transport::Endpoint;
 use tonic::Request;
 
-use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
 use crate::proto::matches::realtime::internal::ProbeRequest;
 
 #[async_trait]
@@ -32,7 +32,7 @@ impl RelayProber for ReconnectProber {
 	async fn probe(&self, addr: SocketAddr) -> Result<(), ProbeError> {
 		let mut builder = Endpoint::from_str(&format!("http://{addr}")).unwrap();
 		builder = builder.connect_timeout(Duration::from_secs(1));
-		let mut client = RealtimeClient::connect(builder).await.map_err(ProbeError::from)?;
+		let mut client = InternalClient::connect(builder).await.map_err(ProbeError::from)?;
 
 		client.probe(Request::new(ProbeRequest {})).await.map_err(ProbeError::from)?;
 

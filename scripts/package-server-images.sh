@@ -8,17 +8,9 @@
 set -e
 tempdir=$(mktemp -d)
 cp rust/grpc_health_probe $tempdir/grpc_health_probe
-for f in $(find . -type f -name Dockerfile); do
-  project=$(echo $f \
-    | sed "s/\/server\/Dockerfile//g" \
-    | sed "s/\.\///g" \
-    | sed "s/\modules\///g" \
-    | tr '\/[:upper:]' '-[:lower:]'
-  )
-  server="cheetah-$project-server"
-  echo "Packaging project $project -> ($f)"
+cp -R rust/target/x86_64-unknown-linux-musl/release/ $tempdir
+docker build $tempdir -f rust/Server/Dockerfile -t ghcr.io/cheetah-game-platform/platform/cheetah-server:${version}
+docker build $tempdir -f rust/Registry/Dockerfile -t ghcr.io/cheetah-game-platform/platform/cheetah-registry:${version}
 
-  cp rust/target/x86_64-unknown-linux-musl/release/$server $tempdir
-  docker build $tempdir -f $f -t ghcr.io/cheetah-game-platform/platform/${project}:${version}
-  docker push ghcr.io/cheetah-game-platform/platform/${project}:${version}
-done
+docker push ghcr.io/cheetah-game-platform/platform/cheetah-server:${version}
+docker push ghcr.io/cheetah-game-platform/platform/cheetah-registry:${version}

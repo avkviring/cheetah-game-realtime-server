@@ -6,7 +6,7 @@ EXPOSE 5555/udp
 EXPOSE 3000/tcp
 COPY grpc_health_probe /bin/grpc_health_probe
 RUN chmod +x /bin/grpc_health_probe
-COPY cheetah-matches-realtime-server /cheetah-matches-realtime-server
+COPY cheetah-server /cheetah-server
 RUN adduser -D service
 USER service
-CMD ["/cheetah-matches-realtime-server"]
+CMD ["/cheetah-server"]

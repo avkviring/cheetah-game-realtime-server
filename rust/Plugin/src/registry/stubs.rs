@@ -9,7 +9,7 @@ use tonic::transport::{Channel, Endpoint, Error, Server, Uri};
 use tonic::{Request, Response, Status};
 use tower::service_fn;
 
-use crate::proto::matches::realtime::internal::realtime_server::{Realtime, RealtimeServer};
+use crate::proto::matches::realtime::internal::internal_server::{Internal, InternalServer};
 use crate::proto::matches::realtime::internal::{
 	CreateMemberRequest, CreateMemberResponse, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest,
 	DeleteRoomResponse, EmptyRequest, GetRoomInfoRequest, GetRoomInfoResponse, MarkRoomAsReadyRequest, MarkRoomAsReadyResponse, ProbeRequest,
@@ -27,7 +27,7 @@ where
 
 #[tonic::async_trait]
 #[allow(clippy::unreachable)]
-impl<CreatedEventStubFunc, Fut> Realtime for RealtimeStub<CreatedEventStubFunc, Fut>
+impl<CreatedEventStubFunc, Fut> Internal for RealtimeStub<CreatedEventStubFunc, Fut>
 where
 	CreatedEventStubFunc: Fn(Sender<Result<RoomLifecycleResponse, Status>>) -> Fut + Send + Sync + 'static,
 	Fut: Future<Output = ()> + 'static + Send + Sync,
@@ -100,7 +100,7 @@ where
 
 	let server_handler = runtime.spawn(async move {
 		Server::builder()
-			.add_service(RealtimeServer::new(service))
+			.add_service(InternalServer::new(service))
 			.serve_with_incoming(futures::stream::iter(vec![Ok::<_, std::io::Error>(server)]))
 			.await
 	});

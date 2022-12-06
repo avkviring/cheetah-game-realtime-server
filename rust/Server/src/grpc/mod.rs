@@ -12,7 +12,7 @@ use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_common::room::RoomId;
 
-use crate::grpc::proto::internal::realtime_server::Realtime;
+use crate::grpc::proto::internal::internal_server::Internal;
 use crate::grpc::proto::internal::room_lifecycle_response::RoomLifecycleType;
 #[allow(clippy::wildcard_imports)]
 use crate::grpc::proto::internal::*;
@@ -63,7 +63,7 @@ impl RealtimeInternalService {
 }
 
 #[tonic::async_trait]
-impl Realtime for RealtimeInternalService {
+impl Internal for RealtimeInternalService {
 	async fn create_room(&self, request: Request<RoomTemplate>) -> Result<Response<RoomIdResponse>, Status> {
 		let mut server = self.server_manager.lock().await;
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
@@ -275,7 +275,7 @@ mod test {
 	use cheetah_common::commands::CommandTypeId;
 	use cheetah_common::network::bind_to_free_socket;
 
-	use crate::grpc::proto::internal::realtime_server::Realtime;
+	use crate::grpc::proto::internal::internal_server::Internal;
 	use crate::grpc::proto::internal::room_lifecycle_response::RoomLifecycleType;
 	use crate::grpc::proto::internal::{
 		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GameObjectTemplatePermission, GetRoomInfoRequest, GroupsPermissionRule,

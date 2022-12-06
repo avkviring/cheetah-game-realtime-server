@@ -6,7 +6,7 @@ use thiserror::Error;
 use tokio::task::JoinHandle;
 use tonic::transport::Channel;
 
-use crate::proto::matches::realtime::internal::realtime_client::RealtimeClient;
+use crate::proto::matches::realtime::internal::internal_client::InternalClient;
 use crate::proto::matches::realtime::internal::room_lifecycle_response::RoomLifecycleType;
 use crate::proto::matches::realtime::internal::{EmptyRequest, RoomLifecycleResponse};
 use crate::registry::RoomId;
@@ -113,7 +113,7 @@ impl RoomLifecycleEventReader {
 		created_rooms: Arc<ArrayQueue<RoomId>>,
 		deleted_rooms: Arc<ArrayQueue<RoomId>>,
 	) -> Result<(), RoomLifecycleEventReaderError> {
-		let mut client = RealtimeClient::new(server_channel);
+		let mut client = InternalClient::new(server_channel);
 		let mut response = client
 			.watch_room_lifecycle_event(EmptyRequest::default())
 			.await
@@ -193,7 +193,7 @@ mod test {
 	fn should_get_rooms() {
 		let (_runtime, _handler, channel) = create_stub_server(setup_should_get_rooms);
 		let reader = RoomLifecycleEventReader::from_channel(channel);
-		std::thread::sleep(Duration::from_secs(1));
+		thread::sleep(Duration::from_secs(1));
 
 		let room_id = reader.pop_create_room().unwrap();
 		assert_eq!(room_id.unwrap(), 1);

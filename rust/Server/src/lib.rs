@@ -1,6 +1,8 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use admin::command_tracer_server::CommandTracerServer;
+use admin::dump_server::DumpServer;
 use futures::join;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
@@ -8,13 +10,13 @@ use tokio_stream::wrappers::TcpListenerStream;
 use tonic_health::ServingStatus;
 use tonic_web::GrpcWebLayer;
 
-use grpc::proto::internal::realtime_server::RealtimeServer;
-
 use crate::agones::run_agones_sdk;
 use crate::debug::dump::DumpGrpcService;
 use crate::debug::grpc::RealtimeAdminGRPCService;
 use crate::debug::proto::admin;
+use crate::debug::proto::admin::admin_server::AdminServer;
 use crate::debug::tracer::grpc::CommandTracerGRPCService;
+use crate::grpc::proto::internal::internal_server::InternalServer;
 use crate::grpc::RealtimeInternalService;
 use crate::server::manager::{RoomsServerManager, RoomsServerManagerError};
 
@@ -52,7 +54,7 @@ impl Server {
 	}
 
 	async fn new_internal_grpc_service(listener: TcpListener, manager: Arc<Mutex<RoomsServerManager>>) {
-		let service = RealtimeServer::new(RealtimeInternalService::new(manager));
+		let service = InternalServer::new(RealtimeInternalService::new(manager));
 
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 		health_reporter.set_service_status("", ServingStatus::Serving).await;
@@ -66,7 +68,7 @@ impl Server {
 	}
 
 	async fn new_internal_webgrpc_service(listener: TcpListener, manager: Arc<Mutex<RoomsServerManager>>) {
-		let service = RealtimeServer::new(RealtimeInternalService::new(manager));
+		let service = InternalServer::new(RealtimeInternalService::new(manager));
 
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 		health_reporter.set_service_status("", ServingStatus::Serving).await;
@@ -85,9 +87,9 @@ impl Server {
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 		health_reporter.set_service_status("", ServingStatus::Serving).await;
 
-		let admin = admin::realtime_server::RealtimeServer::new(RealtimeAdminGRPCService::new(Arc::clone(&manager)));
-		let tracer = admin::command_tracer_server::CommandTracerServer::new(CommandTracerGRPCService::new(Arc::clone(&manager)));
-		let dumper = admin::dump_server::DumpServer::new(DumpGrpcService::new(manager));
+		let admin = AdminServer::new(RealtimeAdminGRPCService::new(Arc::clone(&manager)));
+		let tracer = CommandTracerServer::new(CommandTracerGRPCService::new(Arc::clone(&manager)));
+		let dumper = DumpServer::new(DumpGrpcService::new(manager));
 
 		tonic::transport::Server::builder()
 			.accept_http1(true)

@@ -5,7 +5,7 @@ EXPOSE 5000/tcp
 EXPOSE 3000/tcp
 COPY grpc_health_probe /bin/grpc_health_probe
 RUN chmod +x /bin/grpc_health_probe
-COPY cheetah-matches-registry-server /cheetah-matches-registry-server
+COPY cheetah-registry /cheetah-registry
 RUN adduser -D service
 USER service
-CMD ["/cheetah-matches-registry-server"]
+CMD ["/registry"]

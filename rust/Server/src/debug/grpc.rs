@@ -20,7 +20,7 @@ impl RealtimeAdminGRPCService {
 }
 
 #[tonic::async_trait]
-impl admin::realtime_server::Realtime for RealtimeAdminGRPCService {
+impl admin::admin_server::Admin for RealtimeAdminGRPCService {
 	async fn get_rooms(&self, _request: Request<admin::GetRoomsRequest>) -> Result<Response<admin::GetRoomsResponse>, Status> {
 		let manager = self.manager.lock().await;
 		manager
