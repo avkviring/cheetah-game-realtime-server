@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          cd client/Unity/games.cheetah.client/Runtime/Library
+          cd client/Unity/Packages/games.cheetah.client/Runtime/Library
           test -f ios.a.meta || exit -1
           test -f linux.so.meta || exit -1
           test -f macos.bundle.meta || exit -1
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          cd client/Unity/games.cheetah.embedded-server/Runtime/FFI/Library
+          cd client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library
           test -f cheetah_embedded.dll.meta || exit -1
           test -f libcheetah_embedded.bundle.meta || exit -1
           test -f libcheetah_embedded.so.meta || exit -1
