@@ -1,0 +1,15 @@
+.main {
+    min-width: 112px;
+    max-width: 112px;
+    padding-left: 0px;
+    flex-grow: 0;
+}
+.selector {
+    margin: 0;
+    padding: 0;
+    height: 30px;
+}
+
+.unity-toolbar-menu__text {
+    margin-left: 3px;
+}   

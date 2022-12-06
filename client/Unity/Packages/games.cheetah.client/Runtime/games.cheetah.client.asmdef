@@ -1,0 +1,13 @@
+{
+  "name": "games.cheetah.client",
+  "rootNamespace": "Games.Cheetah.Client",
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

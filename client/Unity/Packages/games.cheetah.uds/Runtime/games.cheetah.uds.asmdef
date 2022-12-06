@@ -1,0 +1,18 @@
+{
+  "name": "games.cheetah.uds",
+  "rootNamespace": "Games.Cheetah.UDS",
+  "references": [
+    "games.cheetah.client",
+    "games.cheetah.platform",
+    "games.cheetah.grpc.internal"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

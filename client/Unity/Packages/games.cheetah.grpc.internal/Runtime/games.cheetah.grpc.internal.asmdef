@@ -1,0 +1,17 @@
+{
+  "name": "games.cheetah.grpc.internal",
+  "rootNamespace": "Games.Cheetah.Grpc.Internal",
+  "references": [
+    "games.cheetah.platform",
+    "games.cheetah.grpc.shared"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
