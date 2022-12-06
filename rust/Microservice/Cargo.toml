@@ -1,0 +1,20 @@
+[package]
+name = "cheetah-microservice"
+authors.workspace = true
+edition.workspace = true
+version = "999.999.999"
+
+[dependencies]
+log.workspace = true
+serde = { workspace = true, features = ["derive"] }
+tokio.workspace = true
+tonic.workspace = true
+tracing.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
+reqwest = { version = "0.11.9", features = ["json", "rustls", "blocking"], default-features = false }
+prometheus-measures-exporter.workspace = true
+hyper = "0.14.18"
+heapless.workspace = true
+lazy_static.workspace = true
+tracing-loki-layer = "0.1.0"

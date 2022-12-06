@@ -1,0 +1,43 @@
+[package]
+name = "cheetah-server"
+authors.workspace = true
+edition.workspace = true
+version = "0.1.0"
+
+[[bin]]
+name = "cheetah-server"
+path = "src/bin/service.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[dependencies]
+rand.workspace = true
+indexmap = { version = "1.9.1" }
+cheetah-common = { path = "../Common" }
+fnv.workspace = true
+serde = { workspace = true, features = ["derive", "rc"] }
+heapless = { workspace = true, features = ["serde"] }
+futures.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
+tokio-stream = { workspace = true, features = ["net"] }
+tonic.workspace = true
+tonic-health.workspace = true
+prost.workspace = true
+rymder = "0.5.0" # agones sdk
+strum_macros.workspace = true
+cheetah-microservice = { path = "../Microservice" }
+tonic-web = "0.5.0"
+thiserror.workspace = true
+tracing.workspace = true
+prometheus = "0.13.1"
+lazy_static.workspace = true
+prometheus-measures-exporter.workspace = true
+num = "0.4"
+num-derive = "0.3"
+num-traits = "0.2"
+
+[build-dependencies]
+tonic-build.workspace = true
+protobuf-src.workspace = true

@@ -1,0 +1,29 @@
+[package]
+name = "cheetah-embedded"
+authors.workspace = true
+edition.workspace = true
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib","staticlib"]
+
+
+[dependencies]
+cheetah-common = { path = "../Common" }
+cheetah-server = { path = "../Server" }
+tokio = { workspace = true, features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
+anyhow.workspace = true
+thiserror.workspace = true
+lazy_static.workspace = true
+port_scanner = "0.1.5"
+widestring.workspace = true
+log.workspace = true
+tracing.workspace = true
+tracing-core.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
+
+
+[build-dependencies]
+tonic-build.workspace = true
+protobuf-src.workspace = true
