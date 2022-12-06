@@ -1,5 +1,5 @@
 using System.Threading;
-using Cheetah.Matches.Realtime.DOA.Income.ByField;
+using Games.Cheetah.Client.DOA.Income.ByField;
 using NUnit.Framework;
 using Shared;
 using Shared.Types;

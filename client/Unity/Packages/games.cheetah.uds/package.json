@@ -7,9 +7,9 @@
   "unityRelease": "0b5",
   "dependencies": {
     "games.cheetah.platform": "999.999.999",
-    "games.cheetah.matches.realtime": "999.999.999",
-    "games.cheetah.matches.realtime.grpc.internal": "999.999.999",
-    "games.cheetah.matches.realtime.embedded-server": "999.999.999"
+    "games.cheetah.client": "999.999.999",
+    "games.cheetah.grpc.internal": "999.999.999",
+    "games.cheetah.embedded-server": "999.999.999"
   },
   "repository": "github:cheetah-game-platform/platform",
   "hideInEditor": false,

@@ -1,6 +1,6 @@
-using Cheetah.Matches.Realtime.Codec;
-using Cheetah.Matches.Realtime.Codec.Formatter;
-using Cheetah.Matches.Realtime.Types;
+using Games.Cheetah.Client.Codec;
+using Games.Cheetah.Client.Codec.Formatter;
+using Games.Cheetah.Client.Types;
 using UnityEngine;
 
 	// warning warning warning warning warning

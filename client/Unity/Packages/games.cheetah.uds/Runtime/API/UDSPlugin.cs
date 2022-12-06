@@ -1,13 +1,12 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Cheetah.Matches.Realtime;
-using Cheetah.Matches.Realtime.Codec;
 using Cheetah.Matches.Realtime.GRPC.Internal;
+using Games.Cheetah.Client;
+using Games.Cheetah.Client.Codec;
 using Games.Cheetah.UDS.FFI;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
-using static Cheetah.Matches.Realtime.GRPC.Internal.Realtime;
 
 namespace Games.Cheetah.UDS.API
 {
@@ -17,7 +16,7 @@ namespace Games.Cheetah.UDS.API
      */
     public class UDSPlugin
     {
-        public delegate void OnRoomCreated(ulong roomId, RealtimeClient grpcClient, CheetahClient cheetahClient);
+        public delegate void OnRoomCreated(ulong roomId, Realtime.RealtimeClient grpcClient, CheetahClient cheetahClient);
 
         public delegate void OnRoomDeleted(ulong roomId);
 
@@ -94,7 +93,7 @@ namespace Games.Cheetah.UDS.API
                 }
             );
 
-            var grpcClient = new RealtimeClient(channel);
+            var grpcClient = new Realtime.RealtimeClient(channel);
             var member = await grpcClient.CreateSuperMemberAsync(new CreateSuperMemberRequest
             {
                 RoomId = roomId

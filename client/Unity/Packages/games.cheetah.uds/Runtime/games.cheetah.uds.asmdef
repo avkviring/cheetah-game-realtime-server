@@ -2,9 +2,9 @@
   "name": "games.cheetah.uds",
   "rootNamespace": "Games.Cheetah.UDS",
   "references": [
-    "games.cheetah.matches.realtime",
+    "games.cheetah.client",
     "games.cheetah.platform",
-    "games.cheetah.matches.realtime.grpc.internal"
+    "games.cheetah.grpc.internal"
   ],
   "allowUnsafeCode": true,
   "overrideReferences": false,

@@ -1,7 +1,7 @@
 using System.Threading;
-using Cheetah.Matches.Realtime.DOA.Income.ByObject;
-using Cheetah.Matches.Realtime.DOA.Income.ByTemplate;
-using Cheetah.Matches.Realtime.Types;
+using Games.Cheetah.Client.DOA.Income.ByObject;
+using Games.Cheetah.Client.DOA.Income.ByTemplate;
+using Games.Cheetah.Client.Types;
 using NUnit.Framework;
 using Shared;
 using Shared.Types;
@@ -96,7 +96,7 @@ namespace Tests.Matches.Realtime
             Assert.AreEqual(dropMineEvent.MineId, actual.value.MineId);
             Assert.AreEqual(memberB.UserId, actual.commandCreator);
         }
-        
+
         [Test]
         public void TestDeleteFieldIncomeCommands()
         {

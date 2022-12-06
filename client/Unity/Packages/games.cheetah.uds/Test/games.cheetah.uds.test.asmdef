@@ -5,11 +5,10 @@
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
     "UnityEngine",
-    "games.cheetah.matches.realtime",
-    "games.cheetah.matches.realtime.grpc.internal",
-    "games.cheetah.matches.realtime.editor",
+    "games.cheetah.client",
+    "games.cheetah.grpc.internal",
     "games.cheetah.platform",
-    "games.cheetah.matches.realtime.embedded-server",
+    "games.cheetah.embedded-server",
     "games.cheetah.uds"
   ],
   "includePlatforms": [

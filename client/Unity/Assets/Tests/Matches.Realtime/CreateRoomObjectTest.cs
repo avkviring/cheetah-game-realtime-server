@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading;
-using Cheetah.Matches.Realtime.DOA.Income.ByTemplate;
+using Games.Cheetah.Client.DOA.Income.ByTemplate;
 using NUnit.Framework;
 using Shared;
 using Shared.Types;

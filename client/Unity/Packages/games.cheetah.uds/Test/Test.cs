@@ -1,29 +1,29 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using Cheetah.Matches.Realtime;
-using Cheetah.Matches.Realtime.Codec;
-using Cheetah.Matches.Realtime.EmbeddedServer.API;
 using Cheetah.Matches.Realtime.GRPC.Internal;
-using Cheetah.Matches.Realtime.Types;
+using Games.Cheetah.Client;
+using Games.Cheetah.Client.Codec;
+using Games.Cheetah.Client.Types;
+using Games.Cheetah.EmbeddedServer.API;
 using Games.Cheetah.UDS.API;
 using NUnit.Framework;
 
-namespace Games.Cheetah.UDS.Tests
+namespace Games.Cheetah.UDS.Tests.Test
 {
     public class Test
     {
         private ulong createdRoomId;
         private CheetahClient cheetahClient;
-        private EmbeddedServer server;
+        private EmbeddedServer.API.EmbeddedServer server;
         private UDSPlugin plugin;
 
 
         [SetUp]
         public void SetUp()
         {
-            EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
-            server = new EmbeddedServer(IPAddress.Loopback);
+            EmbeddedServer.API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
+            server = new EmbeddedServer.API.EmbeddedServer(IPAddress.Loopback);
             plugin = new UDSPlugin(
                 server.GetInternalGrpcUri(),
                 server.GetInternalWebGrpcUri(),

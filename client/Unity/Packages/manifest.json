@@ -43,8 +43,8 @@
     "com.unity.modules.xr": "1.0.0"
   },
   "testables": [
-    "games.cheetah.matches.realtime",
-    "games.cheetah.matches.realtime.embedded-server",
+    "games.cheetah.client",
+    "games.cheetah.embedded-server",
     "games.cheetah.uds"
   ]
 }

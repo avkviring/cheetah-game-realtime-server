@@ -1,4 +1,4 @@
-using Cheetah.Matches.Realtime.Codec;
+using Games.Cheetah.Client.Codec;
 
 namespace Shared.Types
 {

@@ -4,16 +4,14 @@
   "references": [
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
-    "games.cheetah.platform.editor",
     "games.cheetah.platform",
     "games.cheetah.platform.tests",
-    "games.cheetah.matches.realtime",
-    "games.cheetah.matches.matchmaking",
-    "games.cheetah.matches.realtime.doa",
-    "games.cheetah.matches.realtime.embedded-server",
+    "games.cheetah.client",
+    "games.cheetah.client.doa",
+    "games.cheetah.embedded-server",
     "Shared",
-    "games.cheetah.matches.realtime.grpc.internal",
-    "games.cheetah.matches.realtime.grpc.shared"
+    "games.cheetah.grpc.internal",
+    "games.cheetah.grpc.shared"
   ],
   "includePlatforms": [
     "Editor"

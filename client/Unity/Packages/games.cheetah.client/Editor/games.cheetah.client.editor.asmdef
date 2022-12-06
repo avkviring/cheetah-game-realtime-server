@@ -1,0 +1,23 @@
+{
+  "name": "games.cheetah.client.editor",
+  "rootNamespace": "Games.Cheetah.Client",
+  "references": [
+    "games.cheetah.platform",
+    "games.cheetah.client",
+    "games.cheetah.grpc.admin",
+    "games.cheetah.grpc.shared"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

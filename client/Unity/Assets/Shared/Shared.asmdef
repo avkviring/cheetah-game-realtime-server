@@ -2,10 +2,8 @@
   "name": "Shared",
   "rootNamespace": "",
   "references": [
-    "games.cheetah.platform.editor",
     "games.cheetah.platform",
-    "games.cheetah.matches.matchmaking",
-    "games.cheetah.matches.realtime"
+    "games.cheetah.client"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
