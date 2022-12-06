@@ -8,4 +8,4 @@ RUN chmod +x /bin/grpc_health_probe
 COPY cheetah-registry /cheetah-registry
 RUN adduser -D service
 USER service
-CMD ["/registry"]
+CMD ["/cheetah-registry"]

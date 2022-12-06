@@ -20,7 +20,7 @@ jobs:
       - uses: actions/cache@v2.1.7
         with:
           path: |
-            e2e/Unity/Library
+            client/Unity/Library
           key: integration-docker-test-${{ github.sha }}
           restore-keys: |
             integration-docker-test-
@@ -30,19 +30,19 @@ jobs:
           path: build-on-linux-result
       - name: Copy Libraries
         run: |
-          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime/Runtime/Library                    
-          cp build-on-linux-result/libcheetah_matches_realtime_client.so $lib_path/linux.so
-          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/          
-          cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/
-          lib_path=modules/matches/Realtime/client/Unity/games.cheetah.uds/Runtime/FFI/Library/          
-          cp build-on-linux-result/libcheetah_matches_realtime_server_plugin.so $lib_path/
+          lib_path=client/Unity/Packages/games.cheetah.client/Runtime/Library                    
+          cp build-on-linux-result/libcheetah_client.so $lib_path/linux.so
+          lib_path=client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library/          
+          cp build-on-linux-result/libcheetah_embedded.so $lib_path/
+          lib_path=client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library/          
+          cp build-on-linux-result/libcheetah_plugin.so $lib_path/
       - name: Generate GRPC Implementations
         run: cd scripts && ./generate-all.sh
       - uses: cheetah-game-platform/unity-test-runner@main
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-          projectPath: e2e/Unity/
+          projectPath: client/Unity/
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           testMode: All
           useHostNetwork: true

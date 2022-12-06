@@ -15,12 +15,12 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            modules/target/
+            rust/target/
           key: rust-test-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-test-v1-
       - name: Test
-        run: cd modules/ && cargo test
+        run: cd rust/ && cargo test
 
 
 
