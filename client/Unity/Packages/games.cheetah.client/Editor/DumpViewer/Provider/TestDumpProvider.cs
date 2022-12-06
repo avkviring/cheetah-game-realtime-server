@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cheetah.Matches.Realtime.GRPC.Admin;
-using Cheetah.Matches.Realtime.GRPC.Shared;
+using Games.Cheetah.GRPC.Admin;
+using Games.Cheetah.GRPC.Shared;
 using Google.Protobuf;
 
 namespace Games.Cheetah.Client.Editor.DumpViewer.Provider

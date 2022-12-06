@@ -1,5 +1,5 @@
 using System.Collections;
-using Cheetah.Matches.Realtime.GRPC.Admin;
+using Games.Cheetah.GRPC.Admin;
 
 namespace Games.Cheetah.Client.Editor.DumpViewer.TypesExtension
 {

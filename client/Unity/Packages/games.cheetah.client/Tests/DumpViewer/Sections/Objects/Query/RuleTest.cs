@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Cheetah.Matches.Realtime.GRPC.Admin;
-using Cheetah.Matches.Realtime.GRPC.Shared;
 using Games.Cheetah.Client.Editor.DumpViewer.Sections.Objects;
 using Games.Cheetah.Client.Editor.DumpViewer.Sections.Objects.Query;
+using Games.Cheetah.GRPC.Admin;
+using Games.Cheetah.GRPC.Shared;
 using Google.Protobuf;
 using NUnit.Framework;
 

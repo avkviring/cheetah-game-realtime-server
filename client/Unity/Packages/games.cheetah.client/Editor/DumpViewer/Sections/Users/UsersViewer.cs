@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Cheetah.Matches.Realtime.GRPC.Admin;
 using Games.Cheetah.Client.Editor.UIElements.Table;
+using Games.Cheetah.GRPC.Admin;
 using UnityEditor;
 using UnityEngine.UIElements;
 

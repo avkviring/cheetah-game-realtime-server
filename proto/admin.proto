@@ -1,12 +1,12 @@
 syntax = "proto3";
 package cheetah.matches.realtime.admin;
-option csharp_namespace = "Cheetah.Matches.Realtime.GRPC.Admin";
+option csharp_namespace = "Games.Cheetah.GRPC.Admin";
 
-import public "matches.realtime.shared.proto";
+import public "shared.proto";
 /**
  Общие команды для получения информации и управления сервером
  */
-service Realtime {
+service Admin {
   /**
   Получить список комнат
  */

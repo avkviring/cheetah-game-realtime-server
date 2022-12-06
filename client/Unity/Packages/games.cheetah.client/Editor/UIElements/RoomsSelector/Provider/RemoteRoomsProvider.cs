@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cheetah.Matches.Realtime.GRPC.Admin;
 using Cheetah.Platform;
+using Games.Cheetah.GRPC.Admin;
 using UnityEditor;
 
 namespace Games.Cheetah.Client.Editor.UIElements.RoomsSelector.Provider
@@ -21,7 +21,7 @@ namespace Games.Cheetah.Client.Editor.UIElements.RoomsSelector.Provider
         {
             var result = await connector.DoRequest(async (channel) =>
             {
-                var client = new Realtime.RealtimeClient(channel);
+                var client = new Admin.AdminClient(channel);
                 return await client.GetRoomsAsync(new GetRoomsRequest());
             });
             return result.Rooms.ToList();

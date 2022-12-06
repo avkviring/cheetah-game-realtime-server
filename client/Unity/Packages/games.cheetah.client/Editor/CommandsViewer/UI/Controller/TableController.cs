@@ -1,6 +1,6 @@
-using Cheetah.Matches.Realtime.GRPC.Admin;
 using Games.Cheetah.Client.Editor.CommandsViewer.Provider;
 using Games.Cheetah.Client.Editor.UIElements.Table;
+using Games.Cheetah.GRPC.Admin;
 
 namespace Games.Cheetah.Client.Editor.CommandsViewer.UI.Controller
 {

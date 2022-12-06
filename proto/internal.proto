@@ -1,10 +1,10 @@
 syntax = "proto3";
 package cheetah.matches.realtime.internal;
-option csharp_namespace = "Cheetah.Matches.Realtime.GRPC.Internal";
+option csharp_namespace = "Games.Cheetah.GRPC.Internal";
 
-import public "matches.realtime.shared.proto";
+import public "shared.proto";
 
-service Realtime {
+service Internal {
   /**
     Создать комнату
    */

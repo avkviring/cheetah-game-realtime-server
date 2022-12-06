@@ -5,9 +5,9 @@ cd ../
 echo "=== Generate Unity GRPC "
 source scripts/generators/unity.sh
 
-generate_unity_grpc_files proto/matches.realtime.admin.proto client/Unity/Packages/games.cheetah.grpc.admin/Editor/
-generate_unity_grpc_files proto/matches.realtime.shared.proto client/Unity/Packages/games.cheetah.grpc.shared/Runtime/
-generate_unity_grpc_files proto/matches.realtime.internal.proto client/Unity/Packages/games.cheetah.grpc.internal/Runtime/
+generate_unity_grpc_files proto/shared.proto client/Unity/Packages/games.cheetah.grpc.shared/Runtime/
+generate_unity_grpc_files proto/admin.proto client/Unity/Packages/games.cheetah.grpc.admin/Editor/
+generate_unity_grpc_files proto/internal.proto client/Unity/Packages/games.cheetah.grpc.internal/Runtime/
 
 # мета файлы создаем только для linux - так как
 # именно он используется для вывода релиза

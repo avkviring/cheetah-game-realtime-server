@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using Cheetah.Matches.Realtime.GRPC.Admin;
 using Cheetah.Platform;
+using Games.Cheetah.GRPC.Admin;
 using UnityEditor;
 
 namespace Games.Cheetah.Client.Editor.DumpViewer.Provider

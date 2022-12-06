@@ -6,8 +6,9 @@ using Games.Cheetah.EmbeddedServer.FFI;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using UnityEngine;
-using static Cheetah.Matches.Realtime.GRPC.Internal.Realtime;
+using static Games.Cheetah.GRPC.Internal.Internal;
 using Logger = Games.Cheetah.EmbeddedServer.FFI.Logger;
+
 #if UNITY_5_3_OR_NEWER
 
 #else
@@ -53,7 +54,7 @@ namespace Games.Cheetah.EmbeddedServer.API
         }
 
 
-        public RealtimeClient CreateGrpcClient()
+        public InternalClient CreateGrpcClient()
         {
             var channel = GrpcChannel.ForAddress(
                 GetInternalWebGrpcUri(), new GrpcChannelOptions
@@ -61,7 +62,7 @@ namespace Games.Cheetah.EmbeddedServer.API
                     HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
                 }
             );
-            return new RealtimeClient(channel);
+            return new InternalClient(channel);
         }
 
         public void Destroy()

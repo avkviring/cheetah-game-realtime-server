@@ -1,10 +1,10 @@
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Cheetah.Matches.Realtime.GRPC.Internal;
 using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.EmbeddedServer.API;
+using Games.Cheetah.GRPC.Internal;
 using NUnit.Framework;
 using Shared;
 using Shared_Types;
