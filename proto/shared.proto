@@ -1,0 +1,23 @@
+syntax = "proto3";
+package cheetah.matches.realtime.shared;
+option csharp_namespace = "Games.Cheetah.GRPC.Shared";
+
+enum FieldType {
+  Long = 0;
+  Double = 1;
+  Structure = 2;
+  Event = 3;
+}
+
+message GameObjectField {
+  uint32 id = 1;
+  FieldValue value = 2;
+}
+
+message FieldValue {
+  oneof Variant {
+    int64 long = 1;
+    double double = 2;
+    bytes structure = 3; 
+  }
+}
