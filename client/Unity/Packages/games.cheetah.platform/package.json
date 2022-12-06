@@ -1,0 +1,15 @@
+{
+  "name": "games.cheetah.platform",
+  "version": "999.999.999",
+  "displayName": "games.cheetah.platform",
+  "description": "Enter point to platform services",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "repository": "github:cheetah-game-platform/platform",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "2.0.0"
+  },
+  "hideInEditor": false,
+  "type": "library",
+  "author": "https://cheetah.games"
+}

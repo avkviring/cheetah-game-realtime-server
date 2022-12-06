@@ -1,0 +1,29 @@
+{
+  "name": "games.cheetah.uds.test",
+  "rootNamespace": "Games.Cheetah.UDS.Tests",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "UnityEngine",
+    "games.cheetah.client",
+    "games.cheetah.grpc.internal",
+    "games.cheetah.platform",
+    "games.cheetah.embedded-server",
+    "games.cheetah.uds"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Grpc.Core.Api.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

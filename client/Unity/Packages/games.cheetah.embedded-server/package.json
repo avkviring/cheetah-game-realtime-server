@@ -1,0 +1,17 @@
+{
+  "name": "games.cheetah.embedded-server",
+  "version": "999.999.999",
+  "displayName": "games.cheetah.embedded-server",
+  "description": "Embedded realtime server (usually use for test)",
+  "unity": "2019.1",
+  "unityRelease": "0b5",
+  "repository": "github:cheetah-game-platform/platform",
+  "dependencies": {
+    "games.cheetah.platform": "999.999.999",
+    "games.cheetah.client": "999.999.999",
+    "games.cheetah.grpc.internal": "999.999.999"
+  },
+  "hideInEditor": false,
+  "type": "library",
+  "author": "https://cheetah.games"
+}

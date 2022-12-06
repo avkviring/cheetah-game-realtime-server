@@ -1,0 +1,32 @@
+{
+  "name": "games.cheetah.client.tests",
+  "rootNamespace": "Games.Cheetah.Client",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "UnityEngine",
+    "games.cheetah.client",
+    "games.cheetah.client.editor",
+    "games.cheetah.grpc.admin",
+    "games.cheetah.grpc.shared",
+    "games.cheetah.editor",
+    "games.cheetah.platform",
+    "Shared"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "System.Memory.dll",
+    "Google.Protobuf.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

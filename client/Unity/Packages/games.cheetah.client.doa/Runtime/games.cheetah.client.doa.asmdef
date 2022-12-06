@@ -1,0 +1,16 @@
+{
+  "name": "games.cheetah.client.doa",
+  "rootNamespace": "Games.Cheetah.Client.DOA",
+  "references": [
+    "games.cheetah.client"
+  ],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    ""
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
