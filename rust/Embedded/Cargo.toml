@@ -22,8 +22,3 @@ tracing.workspace = true
 tracing-core.workspace = true
 tracing-log.workspace = true
 tracing-subscriber.workspace = true
-
-
-[build-dependencies]
-tonic-build.workspace = true
-protobuf-src.workspace = true
