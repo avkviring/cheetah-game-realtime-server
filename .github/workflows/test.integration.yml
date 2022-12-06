@@ -30,9 +30,9 @@ jobs:
           path: build-on-linux-result
       - name: Copy Libraries
         run: |
-          lib_path=client/Unity/Packages/games.cheetah.matches.realtime/Runtime/Library                    
+          lib_path=client/Unity/Packages/games.cheetah.client/Runtime/Library                    
           cp build-on-linux-result/libcheetah_client.so $lib_path/linux.so
-          lib_path=client/Unity/Packages/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/          
+          lib_path=client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library/          
           cp build-on-linux-result/libcheetah_embedded.so $lib_path/
           lib_path=client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library/          
           cp build-on-linux-result/libcheetah_plugin.so $lib_path/

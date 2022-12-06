@@ -3,8 +3,8 @@ on:
   release:
     types: [ published ]
 env:
-  REALTIME_CLIENT_MANIFEST_PATH: rust/matches/Realtime/client/Rust/Realtime/Cargo.toml
-  REALTIME_EMBEDDED_MANIFEST_PATH: rust/matches/Realtime/client/Rust/Embedded/Cargo.toml
+  REALTIME_CLIENT_MANIFEST_PATH: rust/Client/Cargo.toml
+  REALTIME_EMBEDDED_MANIFEST_PATH: rust/Embedded/Cargo.toml
 jobs:
   build-macos:
     uses: ./.github/workflows/templates.build-on-macos.yml
@@ -24,7 +24,7 @@ jobs:
         with:
           name: build-ios
           path: |
-            modules/target/aarch64-apple-ios/release/libcheetah_matches_realtime_client.a
+            rust/target/aarch64-apple-ios/release/libcheetah_client.a
   build-android:
     runs-on: ubuntu-latest
     steps:
@@ -40,8 +40,8 @@ jobs:
         with:
           name: build-android
           path: |
-            rust/target/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so
-            rust/target/aarch64-linux-android/release/libcheetah_matches_realtime_client.so
+            rust/target/armv7-linux-androideabi/release/libcheetah_client.so
+            rust/target/aarch64-linux-android/release/libcheetah_client.so
   publish-unity-packages:
     needs:
       - build-macos
@@ -76,33 +76,33 @@ jobs:
           path: build-on-windows-result
       - name: Copy Libraries into Realtime Matches Package
         run: |
-          lib_path=client/Unity/Packages/games.cheetah.matches.realtime/Runtime/Library
+          lib_path=client/Unity/Packages/games.cheetah.client/Runtime/Library
           mkdir -p $lib_path
-          cp build-macos/libcheetah_matches_realtime_client.dylib $lib_path/macos.bundle
-          cp build-on-linux-result/libcheetah_matches_realtime_client.so $lib_path/linux.so
-          cp build-on-windows-result/cheetah_matches_realtime_client.dll $lib_path/windows.dll
-          cp build-on-windows-result/cheetah_matches_realtime_client.pdb $lib_path/windows.pdb
-          cp build-ios/libcheetah_matches_realtime_client.a $lib_path/ios.a
+          cp build-macos/libcheetah_client.dylib $lib_path/macos.bundle
+          cp build-on-linux-result/libcheetah_client.so $lib_path/linux.so
+          cp build-on-windows-result/cheetah_client.dll $lib_path/windows.dll
+          cp build-on-windows-result/cheetah_client.pdb $lib_path/windows.pdb
+          cp build-ios/libcheetah_client.a $lib_path/ios.a
           mkdir -p $lib_path/android-armv7
-          cp build-android/armv7-linux-androideabi/release/libcheetah_matches_realtime_client.so $lib_path/android-armv7/libcheetah_matches_realtime_client.so
+          cp build-android/armv7-linux-androideabi/release/libcheetah_lient.so $lib_path/android-armv7/libcheetah_client.so
           mkdir -p $lib_path/android-aarch64
-          cp build-android/aarch64-linux-android/release/libcheetah_matches_realtime_client.so $lib_path/android-aarch64/libcheetah_matches_realtime_client.so
+          cp build-android/aarch64-linux-android/release/libcheetah_client.so $lib_path/android-aarch64/libcheetah_client.so
       - name: Copy Libraries into Realtime Matches Embedded Package
         run: |
-          lib_path=client/Unity/Packages/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
+          lib_path=client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library/
           mkdir -p $lib_path
-          cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/          
-          cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/libcheetah_matches_realtime_embedded.bundle            
-          cp build-on-windows-result/cheetah_matches_realtime_embedded.dll $lib_path/
-          cp build-on-windows-result/cheetah_matches_realtime_embedded.pdb $lib_path/
+          cp build-on-linux-result/libcheetah_embedded.so $lib_path/          
+          cp build-macos/libcheetah_embedded.dylib $lib_path/libcheetah_embedded.bundle            
+          cp build-on-windows-result/cheetah_embedded.dll $lib_path/
+          cp build-on-windows-result/cheetah_embedded.pdb $lib_path/
       - name: Copy Libraries into UDS
         run: |
           lib_path=client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library/
           mkdir -p $lib_path
-          cp build-on-linux-result/libcheetah_matches_realtime_server_plugin.so $lib_path/          
-          cp build-macos/libcheetah_matches_realtime_server_plugin.dylib $lib_path/libcheetah_matches_realtime_server_plugin.bundle            
-          cp build-on-windows-result/cheetah_matches_realtime_server_plugin.dll $lib_path/
-          cp build-on-windows-result/cheetah_matches_realtime_server_plugin.pdb $lib_path/
+          cp build-on-linux-result/libcheetah_plugin.so $lib_path/          
+          cp build-macos/libcheetah_plugin.dylib $lib_path/libcheetah_plugin.bundle            
+          cp build-on-windows-result/cheetah_plugin.dll $lib_path/
+          cp build-on-windows-result/cheetah_plugin.pdb $lib_path/
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'
@@ -143,11 +143,11 @@ jobs:
           path: build-on-windows-result
       - name: Copy Libraries into
         run: |
-         lib_path=client/Unity/Packages/games.cheetah.matches.realtime.embedded-server/Runtime/FFI/Library/
+         lib_path=client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library/
          mkdir -p $lib_path
-         cp build-on-linux-result/libcheetah_matches_realtime_embedded.so $lib_path/          
-         cp build-macos/libcheetah_matches_realtime_embedded.dylib $lib_path/libcheetah_matches_realtime_embedded.dylib            
-         cp build-on-windows-result/cheetah_matches_realtime_embedded.dll $lib_path/
-         cp build-on-windows-result/cheetah_matches_realtime_embedded.pdb $lib_path/
+         cp build-on-linux-result/libcheetah_embedded.so $lib_path/          
+         cp build-macos/libcheetah_embedded.dylib $lib_path/libcheetah_embedded.dylib            
+         cp build-on-windows-result/cheetah_embedded.dll $lib_path/
+         cp build-on-windows-result/cheetah_embedded.pdb $lib_path/
       - name: Publish Packages
         run: VERSION=${{ github.event.release.tag_name }} NUGET_PUSH_KEY=${{ secrets.NUGET_PUSH_KEY }} scripts/release/nuget-packages.sh
