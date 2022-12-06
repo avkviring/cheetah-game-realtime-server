@@ -17,10 +17,10 @@ jobs:
             $CARGO_HOME/registry/index/
             $CARGO_HOME/registry/cache/
             $CARGO_HOME/git/db/
-            modules/target/
+            rust/target/
           key: rust-fmt-v1-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-fmt-v1-
       - name: Lint cargo fmt
-        run: cd modules/ && cargo fmt --all -- --check
+        run: cd rust/ && cargo fmt --all -- --check
 

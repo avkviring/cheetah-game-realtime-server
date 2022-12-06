@@ -22,7 +22,7 @@ jobs:
       - uses: actions/cache@v2.1.7
         with:
           path: |
-            e2e/Unity/Library
+            client/Unity/Library
           key: test-build-${{ matrix.targetPlatform }}-unity-client-${{ github.sha }}
           restore-keys: |
             test-build-${{ matrix.targetPlatform }}-unity-client-
@@ -32,7 +32,7 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-          projectPath: e2e/Unity/
+          projectPath: client/Unity/
           targetPlatform: ${{ matrix.targetPlatform }}
 
 
