@@ -9,10 +9,9 @@ use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 
-const TYPE_COUNT: usize = 3;
 pub const MAX_FIELD_COUNT: usize = 64;
 
-type FieldIndex = heapless::FnvIndexMap<(FieldId, FieldType), FieldValue, { MAX_FIELD_COUNT * TYPE_COUNT }>;
+type FieldIndex = heapless::FnvIndexMap<(FieldId, FieldType), FieldValue, { MAX_FIELD_COUNT * 4 }>;
 pub type CreateCommandsCollector = heapless::Vec<S2CCommandWithMeta, 255>;
 
 ///
