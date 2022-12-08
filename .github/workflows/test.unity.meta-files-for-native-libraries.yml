@@ -5,39 +5,28 @@ on:
       - synchronize
       - opened
 jobs:
-  check-meta-files-in-realtime-client:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - run: |
           cd client/Unity/Packages/games.cheetah.client/Runtime/Library
           test -f ios.a.meta || exit -1
-          test -f linux.so.meta || exit -1
-          test -f macos.bundle.meta || exit -1
-          test -f windows.dll.meta || exit -1
-          test -f windows.pdb.meta || exit -1
+          test -f libcheetah_client.so.meta || exit -1
+          test -f libcheetah_client.bundle.meta || exit -1
+          test -f cheetah_client.dll.meta || exit -1
           test -f android-aarch64/libcheetah_client.so.meta || exit -1
           test -f android-armv7/libcheetah_client.so.meta || exit -1
-  check-meta-files-in-embedded-server:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
       - run: |
           cd client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library
           test -f cheetah_embedded.dll.meta || exit -1
           test -f libcheetah_embedded.bundle.meta || exit -1
           test -f libcheetah_embedded.so.meta || exit -1
-          test -f cheetah_embedded.pdb.meta || exit -1
-#  check-meta-files-in-uds:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#      - run: |
-#          cd client/Unity/games.cheetah.uds/Runtime/FFI/Library
-#          test -f cheetah_matches_realtime_embedded.dll.meta || exit -1
-#          test -f libcheetah_matches_realtime_embedded.bundle.meta || exit -1
-#          test -f libcheetah_matches_realtime_embedded.so.meta || exit -1
-#          test -f cheetah_matches_realtime_embedded.pdb.meta || exit -1
+      - run: |
+          cd client/Unity/games.cheetah.uds/Runtime/FFI/Library
+          test -f cheetah_plugin.dll.meta || exit -1
+          test -f libcheetah_plugin.bundle.meta || exit -1
+          test -f libcheetah_plugin.so.meta || exit -1          
 
 
 
