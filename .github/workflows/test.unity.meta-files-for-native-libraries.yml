@@ -37,13 +37,13 @@ jobs:
           cd client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library
           test -f libcheetah_embedded.so.meta || exit -1
       - run: |
-          cd client/Unity/games.cheetah.uds/Runtime/FFI/Library
+          cd client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library
           test -f cheetah_plugin.dll.meta || exit -1
       - run: |
-          cd client/Unity/games.cheetah.uds/Runtime/FFI/Library
+          cd client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library
           test -f libcheetah_plugin.bundle.meta || exit -1
       - run: |
-          cd client/Unity/games.cheetah.uds/Runtime/FFI/Library
+          cd client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library
           test -f libcheetah_plugin.so.meta || exit -1          
 
 
