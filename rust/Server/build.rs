@@ -11,6 +11,6 @@ fn main() -> Result<(), Error> {
 	tonic_build::configure().compile(&["../../proto/internal.proto", "../../proto/admin.proto"], &["../../proto/"])?;
 	tonic_build::configure()
 		.build_server(false)
-		.compile(&["../../proto/matches.registry.internal.proto"], &["../../proto/"])?;
+		.compile(&["../../proto/registry.internal.proto"], &["../../proto/"])?;
 	Ok(())
 }
