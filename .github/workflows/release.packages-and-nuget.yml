@@ -78,15 +78,15 @@ jobs:
         run: |
           lib_path=client/Unity/Packages/games.cheetah.client/Runtime/Library
           mkdir -p $lib_path
-          cp build-macos/libcheetah_client.dylib $lib_path/macos.bundle
-          cp build-on-linux-result/libcheetah_client.so $lib_path/linux.so
-          cp build-on-windows-result/cheetah_client.dll $lib_path/windows.dll
-          cp build-on-windows-result/cheetah_client.pdb $lib_path/windows.pdb
+          cp build-macos/libcheetah_client.dylib $lib_path/
+          cp build-on-linux-result/libcheetah_client.so $lib_path/
+          cp build-on-windows-result/cheetah_client.dll $lib_path/
+          cp build-on-windows-result/cheetah_client.pdb $lib_path/
           cp build-ios/libcheetah_client.a $lib_path/ios.a
           mkdir -p $lib_path/android-armv7
-          cp build-android/armv7-linux-androideabi/release/libcheetah_lient.so $lib_path/android-armv7/libcheetah_client.so
+          cp build-android/armv7-linux-androideabi/release/libcheetah_client.so $lib_path/android-armv7/
           mkdir -p $lib_path/android-aarch64
-          cp build-android/aarch64-linux-android/release/libcheetah_client.so $lib_path/android-aarch64/libcheetah_client.so
+          cp build-android/aarch64-linux-android/release/libcheetah_client.so $lib_path/android-aarch64/
       - name: Copy Libraries into Realtime Matches Embedded Package
         run: |
           lib_path=client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library/
@@ -143,10 +143,11 @@ jobs:
           path: build-on-windows-result
       - name: Copy Libraries into
         run: |
-         lib_path=client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library/
+         lib_path=client/Net/Embedded/Src/
+         mkdir native
          mkdir -p $lib_path
          cp build-on-linux-result/libcheetah_embedded.so $lib_path/          
-         cp build-macos/libcheetah_embedded.dylib $lib_path/libcheetah_embedded.dylib            
+         cp build-macos/libcheetah_embedded.dylib $lib_path/            
          cp build-on-windows-result/cheetah_embedded.dll $lib_path/
          cp build-on-windows-result/cheetah_embedded.pdb $lib_path/
       - name: Publish Packages

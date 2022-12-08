@@ -1,8 +1,9 @@
 using System.Net;
-using Cheetah.Matches.Realtime.EmbeddedServer.API;
+using Games.Cheetah.EmbeddedServer.API;
+using Games.Cheetah.GRPC.Internal;
 using NUnit.Framework;
 
-namespace Cheetah.Matches.Realtime.EmbeddedServer.Test
+namespace Games.Cheetah.EmbeddedServer.Test
 {
     public class EmbeddedServerTests
     {
@@ -11,8 +12,16 @@ namespace Cheetah.Matches.Realtime.EmbeddedServer.Test
         {
             API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
             var server = new API.EmbeddedServer(IPAddress.Any);
-            var room = server.CreateRoom();
-            var member = room.CreateMember(0b000111);
+            var client = server.CreateGrpcClient();
+            var room = client.CreateRoom(new RoomTemplate());
+            client.CreateMember(new CreateMemberRequest
+            {
+                RoomId = room.RoomId,
+                User = new UserTemplate
+                {
+                    Groups = 0b000111
+                }
+            });
             API.EmbeddedServer.ShowCurrentLogs();
         }
     }

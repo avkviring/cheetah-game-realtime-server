@@ -12,6 +12,7 @@ function push() {
   mv $project_file.back $project_file
 }
 
-push modules/matches/Realtime/client/Net/Embedded/Src/Src.csproj
-push modules/matches/Registry/proto/RegistryProto.csproj
-push modules/matches/Realtime/proto/RealtimeProto.csproj
+push client/Net/Embedded/Src/Src.csproj
+#push client/Net/Embedded/Proto/Proto.csproj
+#push client/Net/Registry/Proto/Proto.csproj
+

@@ -9,11 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Embedded\Test\Test.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Src", "Embedded\Src\Src.csproj", "{2BE06986-210E-455B-9087-6E860DB171EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proto", "Embedded\Proto\Proto.csproj", "{3504F41D-0EC5-4E02-BF92-E10A1752686B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Registry", "Registry", "{47AFAB73-60D0-4E3D-9B52-593070276F16}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Proto", "Registry\Proto\Proto.csproj", "{BC7BC7AE-40E4-425A-AC3B-06B84D86C231}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
