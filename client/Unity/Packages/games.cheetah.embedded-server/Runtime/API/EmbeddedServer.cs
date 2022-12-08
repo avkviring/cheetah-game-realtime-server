@@ -1,16 +1,15 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using AOT;
 using Games.Cheetah.EmbeddedServer.FFI;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
-using UnityEngine;
 using static Games.Cheetah.GRPC.Internal.Internal;
 using Logger = Games.Cheetah.EmbeddedServer.FFI.Logger;
 
 #if UNITY_5_3_OR_NEWER
-
+using UnityEngine;
+using AOT;
 #else
 using Serilog;
 #endif

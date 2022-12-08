@@ -7,7 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <RootNamespace>Cheetah.Matches.Realtime.EmbeddedServer</RootNamespace>
+        <RootNamespace>Games.Cheetah.EmbeddedServer.Test</RootNamespace>
         <IsPackable>true</IsPackable>
     </PropertyGroup>
     <ItemGroup>
