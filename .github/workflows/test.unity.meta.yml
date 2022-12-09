@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           cd client/Unity/Packages/games.cheetah.client/Runtime/Library
-          test -f ios.a.meta || exit -1
+          test -f libcheetah_client.a.meta || exit -1
       - run: |
           cd client/Unity/Packages/games.cheetah.client/Runtime/Library
           test -f libcheetah_client.so.meta || exit -1
