@@ -23,3 +23,7 @@ games.cheetah.uds/Runtime/FFI/Library/*.bundle
 games.cheetah.embedded-server/Runtime/FFI/Library/*.dll
 games.cheetah.embedded-server/Runtime/FFI/Library/*.so
 games.cheetah.embedded-server/Runtime/FFI/Library/*.bundle
+
+!games.cheetah.grpc.admin.asmdef.meta
+!games.cheetah.grpc.internal.asmdef.meta
+!games.cheetah.grpc.shared.asmdef.meta
