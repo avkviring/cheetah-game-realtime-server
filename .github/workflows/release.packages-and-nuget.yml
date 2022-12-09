@@ -78,11 +78,11 @@ jobs:
         run: |
           lib_path=client/Unity/Packages/games.cheetah.client/Runtime/Library
           mkdir -p $lib_path
-          cp build-macos/libcheetah_client.dylib $lib_path/
+          cp build-macos/libcheetah_client.dylib $lib_path/libcheetah_client.bundle
           cp build-on-linux-result/libcheetah_client.so $lib_path/
           cp build-on-windows-result/cheetah_client.dll $lib_path/
           cp build-on-windows-result/cheetah_client.pdb $lib_path/
-          cp build-ios/libcheetah_client.a $lib_path/ios.a
+          cp build-ios/libcheetah_client.a $lib_path/
           mkdir -p $lib_path/android-armv7
           cp build-android/armv7-linux-androideabi/release/libcheetah_client.so $lib_path/android-armv7/
           mkdir -p $lib_path/android-aarch64
