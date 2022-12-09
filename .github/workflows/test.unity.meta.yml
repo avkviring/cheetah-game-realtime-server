@@ -1,11 +1,11 @@
-name: test.unity.meta-files-for-native-libraries
+name: test.unity.meta
 on:
   pull_request:
     types:
       - synchronize
       - opened
 jobs:
-  test:
+  test-unity-meta-native-library-meta-file:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
