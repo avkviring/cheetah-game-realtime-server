@@ -10,6 +10,7 @@ using Logger = Games.Cheetah.EmbeddedServer.FFI.Logger;
 #if UNITY_5_3_OR_NEWER
 using UnityEngine;
 using AOT;
+
 #else
 using Serilog;
 #endif
@@ -72,13 +73,17 @@ namespace Games.Cheetah.EmbeddedServer.API
             }
         }
 
-        public Uri GetGameUri()
+        public string GetUdpGameHost()
         {
             unsafe
             {
-                var ip = $"{description.gameIp[0]}.{description.gameIp[1]}.{description.gameIp[2]}.{description.gameIp[3]}";
-                return new Uri("udp://" + ip + ":" + description.gamePort);
+                return $"{description.gameIp[0]}.{description.gameIp[1]}.{description.gameIp[2]}.{description.gameIp[3]}";
             }
+        }
+
+        public ushort GetUdpGamePort()
+        {
+            return description.gamePort;
         }
 
         public Uri GetAdminWebGrpcUri()

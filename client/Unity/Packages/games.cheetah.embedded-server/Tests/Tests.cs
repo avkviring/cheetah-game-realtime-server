@@ -34,7 +34,8 @@ namespace Games.Cheetah.EmbeddedServer.Tests
 
 
                 var client = new CheetahClient(
-                    server.GetGameUri(),
+                    server.GetUdpGameHost(),
+                    server.GetUdpGamePort(),
                     member.UserId,
                     room.RoomId,
                     member.PrivateKey.ToByteArray(),

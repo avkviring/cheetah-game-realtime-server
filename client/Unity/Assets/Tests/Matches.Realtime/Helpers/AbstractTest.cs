@@ -75,7 +75,7 @@ namespace Tests.Matches.Realtime.Helpers
         private static CheetahClient ConnectToServer(EmbeddedServer server, ulong roomId, CreateMemberResponse member,
             CodecRegistryBuilder codecRegistryBuilder)
         {
-            var client = new CheetahClient(server.GetGameUri(), member.UserId, roomId,
+            var client = new CheetahClient(server.GetUdpGameHost(), server.GetUdpGamePort(), member.UserId, roomId,
                 member.PrivateKey.ToByteArray(),
                 codecRegistryBuilder.Build());
             client.DisableClientLog();

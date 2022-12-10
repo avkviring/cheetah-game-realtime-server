@@ -1,6 +1,5 @@
 using System;
 using System.Net;
-using System.Threading.Tasks;
 using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Types;
@@ -8,6 +7,8 @@ using Games.Cheetah.EmbeddedServer.API;
 using Games.Cheetah.GRPC.Internal;
 using Games.Cheetah.UDS.API;
 using NUnit.Framework;
+using UnityEditor.VersionControl;
+using Task = System.Threading.Tasks.Task;
 
 namespace Games.Cheetah.UDS.Tests.Test
 {
@@ -27,7 +28,8 @@ namespace Games.Cheetah.UDS.Tests.Test
             plugin = new UDSPlugin(
                 server.GetInternalGrpcUri(),
                 server.GetInternalWebGrpcUri(),
-                server.GetGameUri(),
+                server.GetUdpGameHost(),
+                server.GetUdpGamePort(),
                 OnRoomCreated,
                 OnRoomDeleted,
                 new CodecRegistryBuilder().Build());
