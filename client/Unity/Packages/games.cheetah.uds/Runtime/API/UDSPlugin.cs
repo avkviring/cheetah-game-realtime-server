@@ -28,12 +28,14 @@ namespace Games.Cheetah.UDS.API
         private readonly ushort serverPluginId;
         private readonly Uri grpcRealtimeServerInternalUri;
         private readonly Uri webGrpcRealtimeServerInternalUri;
-        private readonly Uri udpRealtimeServerUri;
+        private readonly string udpServerHost;
+        private readonly ushort udpServerPort;
 
         public UDSPlugin(
             Uri grpcRealtimeServerInternalUri,
             Uri webGrpcRealtimeServerInternalUri,
-            Uri udpRealtimeServerUri,
+            string udpServerHost,
+            ushort udpServerPort,
             OnRoomCreated onRoomCreated,
             OnRoomDeleted onRoomDeleted,
             CodecRegistry codecRegistry
@@ -41,7 +43,8 @@ namespace Games.Cheetah.UDS.API
         {
             this.grpcRealtimeServerInternalUri = grpcRealtimeServerInternalUri;
             this.webGrpcRealtimeServerInternalUri = webGrpcRealtimeServerInternalUri;
-            this.udpRealtimeServerUri = udpRealtimeServerUri;
+            this.udpServerHost = udpServerHost;
+            this.udpServerPort = udpServerPort;
             this.onRoomCreated = onRoomCreated;
             this.onRoomDeleted = onRoomDeleted;
             this.codecRegistry = codecRegistry;
@@ -102,7 +105,8 @@ namespace Games.Cheetah.UDS.API
 
 
             var cheetahClient = new CheetahClient(
-                udpRealtimeServerUri,
+                udpServerHost,
+                udpServerPort,
                 member.UserId,
                 roomId,
                 member.PrivateKey.ToByteArray(),

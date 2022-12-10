@@ -30,12 +30,12 @@ namespace Games.Cheetah.Client
         }
 
 
-        public CheetahClient(Uri gameUri, uint memberId, ulong roomId, byte[] privateUserKey, CodecRegistry codecRegistry)
+        public CheetahClient(string serverUdpHost, ushort serverUdpPort, uint memberId, ulong roomId, byte[] privateUserKey, CodecRegistry codecRegistry)
         {
             LoggerGateway.CollectLogs(false); // очищаем логи с предыдущего клиента
             CodecRegistry = codecRegistry;
             var userPrivateKey = new CheetahBuffer(privateUserKey);
-            ResultChecker.Check(ClientFFI.CreateClient(gameUri.Host + ":" + gameUri.Port, (ushort)memberId, roomId, ref userPrivateKey, 0, out Id));
+            ResultChecker.Check(ClientFFI.CreateClient(serverUdpHost + ":" + serverUdpPort, (ushort)memberId, roomId, ref userPrivateKey, 0, out Id));
             objectsCreateInfo = GetPlugin<CheetahObjectsCreateInfo>();
         }
 
