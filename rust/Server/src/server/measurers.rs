@@ -11,6 +11,7 @@ use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::FieldType;
 use cheetah_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
+use cheetah_common::protocol::others::rtt::RoundTripTime;
 
 pub type MeasureStringId = heapless::String<50>;
 type RoomTemplateString = heapless::String<50>;
@@ -54,6 +55,10 @@ pub struct Measurers {
 	/// Время выполнения серверного цикла
 	///
 	server_cycle_execution_time: Histogram,
+	///
+	/// Round trip time с клиентами
+	///
+	rtt: Histogram,
 }
 
 impl Default for Measurers {
@@ -75,6 +80,7 @@ impl Measurers {
 			input_frame_size: Self::create_input_frame_size(registry),
 			input_frame_execution_time: Self::create_input_frame_time(registry),
 			server_cycle_execution_time: Self::create_server_cycle_execution_time(registry),
+			rtt: Self::create_rtt(registry),
 		}
 	}
 
@@ -91,6 +97,20 @@ impl Measurers {
 				Duration::from_millis(50).as_secs_f64(),
 				Duration::from_millis(100).as_secs_f64(),
 				Duration::from_millis(500).as_secs_f64(),
+			]),
+		)
+	}
+
+	fn create_rtt(registry: &Registry) -> Histogram {
+		create_and_register_measurer(
+			registry,
+			HistogramOpts::new("rtt", "Round trip time with clients").buckets(vec![
+				Duration::from_millis(1).as_secs_f64(),
+				Duration::from_millis(5).as_secs_f64(),
+				Duration::from_millis(50).as_secs_f64(),
+				Duration::from_millis(100).as_secs_f64(),
+				Duration::from_millis(500).as_secs_f64(),
+				Duration::from_secs(1).as_secs_f64(),
 			]),
 		)
 	}
@@ -240,6 +260,14 @@ impl Measurers {
 
 	pub(crate) fn on_server_cycle(&mut self, duration: Duration) {
 		self.server_cycle_execution_time.observe(duration.as_secs_f64());
+	}
+
+	pub(crate) fn on_network_cycle<'a>(&mut self, rtts: impl Iterator<Item = &'a RoundTripTime>) {
+		for rtt in rtts {
+			if let Some(duration) = rtt.get_rtt() {
+				self.rtt.observe(duration.as_secs_f64());
+			}
+		}
 	}
 
 	#[allow(clippy::type_complexity)]

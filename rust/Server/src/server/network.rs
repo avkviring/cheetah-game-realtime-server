@@ -61,6 +61,7 @@ impl NetworkLayer {
 		for id in disconnected {
 			self.sessions.remove(&id);
 		}
+		self.measurers.borrow_mut().on_network_cycle(self.sessions.values().map(|session| &session.protocol.rtt));
 	}
 
 	///
