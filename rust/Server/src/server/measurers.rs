@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use prometheus::{Histogram, HistogramOpts, IntCounter, IntGauge, Opts, Registry};
+use prometheus::local::LocalIntCounter;
 use prometheus_measures_exporter::measurer::create_and_register_measurer;
 use prometheus_measures_exporter::measurers_by_label::{
 	HistogramMeasurersByLabel, IntCounterMeasurersByLabel, LabelFactoryFactory, MeasurersByLabel,
@@ -59,6 +60,10 @@ pub struct Measurers {
 	/// Round trip time с клиентами
 	///
 	rtt: Histogram,
+	///
+	/// Количество ретрансмитов с клиентами
+	///
+	pub retransmit_count: LocalIntCounter
 }
 
 impl Default for Measurers {
@@ -81,6 +86,7 @@ impl Measurers {
 			input_frame_execution_time: Self::create_input_frame_time(registry),
 			server_cycle_execution_time: Self::create_server_cycle_execution_time(registry),
 			rtt: Self::create_rtt(registry),
+			retransmit_count: Self::create_retransmit_count(registry),
 		}
 	}
 
@@ -104,7 +110,7 @@ impl Measurers {
 	fn create_rtt(registry: &Registry) -> Histogram {
 		create_and_register_measurer(
 			registry,
-			HistogramOpts::new("rtt", "Round trip time with clients").buckets(vec![
+			HistogramOpts::new("protocol_rtt", "Round trip time with clients").buckets(vec![
 				Duration::from_millis(1).as_secs_f64(),
 				Duration::from_millis(5).as_secs_f64(),
 				Duration::from_millis(50).as_secs_f64(),
@@ -113,6 +119,12 @@ impl Measurers {
 				Duration::from_secs(1).as_secs_f64(),
 			]),
 		)
+	}
+
+	fn create_retransmit_count(registry: &Registry) -> LocalIntCounter {
+		let counter = IntCounter::new("protocol_retransmit", "protocol retransmits to clients").unwrap();
+		registry.register(Box::new(counter.clone())).unwrap();
+		counter.local()
 	}
 
 	fn create_input_frame_time(registry: &Registry) -> Histogram {
@@ -262,6 +274,7 @@ impl Measurers {
 		self.server_cycle_execution_time.observe(duration.as_secs_f64());
 	}
 
+	#[allow(single_use_lifetimes)]
 	pub(crate) fn on_network_cycle<'a>(&mut self, rtts: impl Iterator<Item = &'a RoundTripTime>) {
 		for rtt in rtts {
 			if let Some(duration) = rtt.get_rtt() {

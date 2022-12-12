@@ -4,6 +4,7 @@ use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use fnv::FnvBuildHasher;
+use prometheus::local::LocalIntCounter;
 
 use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::input::InFrame;
@@ -76,19 +77,18 @@ pub struct ScheduledFrame {
 	pub retransmit_count: u8,
 }
 
-impl Default for Retransmit {
-	fn default() -> Self {
+impl Retransmit {
+	#[must_use]
+	pub fn new(counter: LocalIntCounter) -> Self {
 		Self {
 			frames: Default::default(),
 			wait_ack_frames: Default::default(),
 			max_retransmit_count: Default::default(),
 			ack_wait_duration: Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC),
-			statistics: Default::default(),
+			statistics: RetransmitStatistics::new(counter),
 		}
 	}
-}
 
-impl Retransmit {
 	///
 	/// Получить фрейм для повторной отправки (если такой есть)
 	/// - метод необходимо вызывать пока результат Some
@@ -178,6 +178,7 @@ impl Retransmit {
 mod tests {
 	use std::ops::Add;
 	use std::time::Instant;
+	use prometheus::IntCounter;
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
@@ -195,7 +196,7 @@ mod tests {
 	/// Если не было отосланных фреймов - то нет фреймов и для повтора
 	///
 	fn should_empty_when_get_retransmit_frame() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		assert!(matches!(handler.get_retransmit_frame(Instant::now(), 1), None));
 	}
 
@@ -204,7 +205,7 @@ mod tests {
 	///
 	#[test]
 	fn should_empty_when_no_timeout() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let now = Instant::now();
 		handler.build_frame(&create_reliability_frame(1), now);
 		assert!(matches!(handler.get_retransmit_frame(now, 2), None));
@@ -215,7 +216,7 @@ mod tests {
 	///
 	#[test]
 	fn should_add_retransmit_header() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let now = Instant::now();
 		let original_frame = create_reliability_frame(1);
 		handler.build_frame(&original_frame, now);
@@ -234,7 +235,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_retransmit_frame_when_timeout() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -250,7 +251,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_for_unreliable_frame() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let now = Instant::now();
 		let frame = create_unreliable_frame(1);
 		handler.build_frame(&frame, now);
@@ -264,7 +265,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_then_ack() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -279,7 +280,7 @@ mod tests {
 	///
 	#[test]
 	fn should_retransmit_after_retransmit() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -300,7 +301,7 @@ mod tests {
 	///
 	#[test]
 	fn should_close_after_fail_retransmits() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -324,7 +325,7 @@ mod tests {
 	///
 	#[test]
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
-		let mut handler = Retransmit::default();
+		let mut handler = get_retransmitter();
 		let mut frame = OutFrame::new(0);
 		frame.add_command(CommandWithChannel {
 			channel: Channel::UnreliableUnordered,
@@ -367,5 +368,9 @@ mod tests {
 		ack_header.add_frame_id(acked_frame_id);
 		frame.headers.add(Header::Ack(ack_header));
 		frame
+	}
+
+	fn get_retransmitter() -> Retransmit {
+		Retransmit::new(IntCounter::new("name", "help").unwrap().local())
 	}
 }

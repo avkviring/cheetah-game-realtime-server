@@ -317,6 +317,7 @@ dependencies = [
  "num",
  "num-derive",
  "num-traits",
+ "prometheus",
  "rand",
  "snap",
  "strum_macros",

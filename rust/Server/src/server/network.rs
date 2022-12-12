@@ -183,7 +183,7 @@ impl NetworkLayer {
 				peer_address: Default::default(),
 				private_key: template.private_key,
 				max_receive_frame_id: 0,
-				protocol: Protocol::new(now, self.start_application_time),
+				protocol: Protocol::new(now, self.start_application_time, self.measurers.borrow().retransmit_count.clone()),
 			},
 		);
 	}

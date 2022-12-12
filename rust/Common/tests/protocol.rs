@@ -1,4 +1,5 @@
 use std::time::Instant;
+use prometheus::IntCounter;
 
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::protocol::frame::applications::BothDirectionCommand;
@@ -14,8 +15,8 @@ pub mod stub;
 ///
 #[test]
 fn should_send_from_client() {
-	let mut peer_a = Protocol::new(Instant::now(), Instant::now());
-	let mut peer_b = Protocol::new(Instant::now(), Instant::now());
+	let mut peer_a = Protocol::new(Instant::now(), Instant::now(), IntCounter::new("name", "help").unwrap().local());
+	let mut peer_b = Protocol::new(Instant::now(), Instant::now(), IntCounter::new("name", "help").unwrap().local());
 
 	peer_a
 		.out_commands_collector
@@ -42,8 +43,8 @@ fn should_send_from_client() {
 /// Тестирование надежной доставки по ненадежному каналу
 #[test]
 fn should_transfer_reliable_on_unreliable_channel() {
-	let mut peer_a = Protocol::new(Instant::now(), Instant::now());
-	let mut peer_b = Protocol::new(Instant::now(), Instant::now());
+	let mut peer_a = Protocol::new(Instant::now(), Instant::now(), IntCounter::new("name", "help").unwrap().local());
+	let mut peer_b = Protocol::new(Instant::now(), Instant::now(), IntCounter::new("name", "help").unwrap().local());
 
 	peer_a
 		.out_commands_collector

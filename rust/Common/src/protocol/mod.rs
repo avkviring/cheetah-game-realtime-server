@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::time::Instant;
+use prometheus::local::LocalIntCounter;
 
 use crate::network::client::DisconnectedReason;
 use crate::protocol::commands::input::InCommandsCollector;
@@ -60,7 +61,7 @@ pub struct Protocol {
 
 impl Protocol {
 	#[must_use]
-	pub fn new(now: Instant, start_application_time: Instant) -> Self {
+	pub fn new(now: Instant, start_application_time: Instant, retransmit_counter: LocalIntCounter) -> Self {
 		Self {
 			next_frame_id: 1,
 			disconnect_by_timeout: DisconnectByTimeout::new(now),
@@ -68,7 +69,7 @@ impl Protocol {
 			ack_sender: Default::default(),
 			in_commands_collector: Default::default(),
 			out_commands_collector: Default::default(),
-			retransmitter: Default::default(),
+			retransmitter: Retransmit::new(retransmit_counter),
 			disconnect_by_command: Default::default(),
 			rtt: RoundTripTime::new(start_application_time),
 			keep_alive: Default::default(),

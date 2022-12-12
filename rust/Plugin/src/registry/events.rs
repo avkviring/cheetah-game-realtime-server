@@ -53,6 +53,7 @@ impl Default for RoomLifecycleEventReader {
 }
 
 impl RoomLifecycleEventReader {
+	#[allow(clippy::unwrap_in_result)]
 	pub fn from_address(grpc_server_address: String) -> Result<RoomLifecycleEventReader, RoomLifecycleEventReaderError> {
 		let reader = Self::default();
 		let handler = reader.runtime.as_ref().unwrap().block_on(async move {
