@@ -31,7 +31,7 @@ cheetah-microservice = { path = "../Microservice" }
 tonic-web = "0.5.0"
 thiserror.workspace = true
 tracing.workspace = true
-prometheus = "0.13.1"
+prometheus.workspace = true
 lazy_static.workspace = true
 prometheus-measures-exporter.workspace = true
 num = "0.4"

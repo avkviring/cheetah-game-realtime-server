@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
 use generic_array::typenum::U8;
+use prometheus::local::LocalIntCounter;
 
 use crate::collections::event_collector_by_time::EventCollectorByTime;
 use crate::protocol::frame::FrameId;
@@ -22,29 +23,10 @@ pub struct RetransmitStatistics {
 	/// Статистика по повторно отправленным фреймам
 	///
 	retransmit_events_collector: EventCollectorByTime<u8, U8>,
+
+	counter: LocalIntCounter
 	//already_processed_frames: LruCache<FrameId, bool>,
 	//acked_original_frames: LruCache<FrameId, bool>,
-}
-
-impl Default for RetransmitStatistics {
-	fn default() -> Self {
-		Self {
-			redundant_events_collector: EventCollectorByTime::new(
-				0,
-				0,
-				RetransmitStatistics::EMPTY_MEASUREMENT_MARK,
-				RetransmitStatistics::MEASURE_DURATION,
-			),
-			retransmit_events_collector: EventCollectorByTime::new(
-				0,
-				0,
-				RetransmitStatistics::EMPTY_MEASUREMENT_MARK,
-				RetransmitStatistics::MEASURE_DURATION,
-			),
-			//already_processed_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
-			//acked_original_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
-		}
-	}
 }
 
 impl RetransmitStatistics {
@@ -59,6 +41,27 @@ impl RetransmitStatistics {
 	/// Время измерения для одной ячейки в [`redundant_frames_measurements`]
 	///
 	const MEASURE_DURATION: Duration = Duration::from_millis(5000);
+
+	#[must_use]
+	pub fn new(counter: LocalIntCounter) -> Self {
+		Self {
+			redundant_events_collector: EventCollectorByTime::new(
+				0,
+				0,
+				RetransmitStatistics::EMPTY_MEASUREMENT_MARK,
+				RetransmitStatistics::MEASURE_DURATION,
+			),
+			retransmit_events_collector: EventCollectorByTime::new(
+				0,
+				0,
+				RetransmitStatistics::EMPTY_MEASUREMENT_MARK,
+				RetransmitStatistics::MEASURE_DURATION,
+			),
+			counter,
+			//already_processed_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
+			//acked_original_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
+		}
+	}
 
 	///
 	/// Сбор статистики количества повторно подтверждаемых фреймов
@@ -85,6 +88,7 @@ impl RetransmitStatistics {
 	}
 
 	pub fn on_retransmit_frame(&mut self, now: Instant) {
+		self.counter.inc();
 		self.retransmit_events_collector.on_event(now);
 	}
 
@@ -111,6 +115,7 @@ impl RetransmitStatistics {
 mod tests {
 	use std::ops::Add;
 	use std::time::Instant;
+	use prometheus::IntCounter;
 
 	use crate::protocol::reliable::statistics::RetransmitStatistics;
 
@@ -119,7 +124,7 @@ mod tests {
 	/// Если не было достаточного числа измерений - нельзя получить среднее
 	///
 	fn redundant_should_return_none_in_redundant_statistics() {
-		let mut statistics = RetransmitStatistics::default();
+		let mut statistics = RetransmitStatistics::new(IntCounter::new("name", "help").unwrap().local());
 		let now = Instant::now();
 		statistics.on_ack_received(1, now);
 		assert!(matches!(statistics.get_average_redundant_frames(now), None));
@@ -197,7 +202,7 @@ mod tests {
 	///
 	#[test]
 	fn retransmit_should_average() {
-		let mut statistics = RetransmitStatistics::default();
+		let mut statistics = RetransmitStatistics::new(IntCounter::new("name", "help").unwrap().local());
 		let now = Instant::now();
 
 		statistics.on_retransmit_frame(now);
