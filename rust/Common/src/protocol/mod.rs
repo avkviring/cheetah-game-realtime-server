@@ -1,6 +1,6 @@
+use prometheus::local::{LocalHistogram, LocalIntCounter};
 use std::fmt::Debug;
 use std::time::Instant;
-use prometheus::local::LocalIntCounter;
 
 use crate::network::client::DisconnectedReason;
 use crate::protocol::commands::input::InCommandsCollector;
@@ -57,11 +57,12 @@ pub struct Protocol {
 	pub rtt: RoundTripTime,
 	pub keep_alive: KeepAlive,
 	pub in_frame_counter: u64,
+	ack_sent_histogram: LocalHistogram,
 }
 
 impl Protocol {
 	#[must_use]
-	pub fn new(now: Instant, start_application_time: Instant, retransmit_counter: LocalIntCounter) -> Self {
+	pub fn new(now: Instant, start_application_time: Instant, retransmit_counter: LocalIntCounter, ack_sent_histogram: LocalHistogram) -> Self {
 		Self {
 			next_frame_id: 1,
 			disconnect_by_timeout: DisconnectByTimeout::new(now),
@@ -74,6 +75,7 @@ impl Protocol {
 			rtt: RoundTripTime::new(start_application_time),
 			keep_alive: Default::default(),
 			in_frame_counter: Default::default(),
+			ack_sent_histogram,
 		}
 	}
 
@@ -97,6 +99,7 @@ impl Protocol {
 	///
 	/// Создание фрейма для отправки
 	///
+	#[allow(clippy::cast_precision_loss)]
 	pub fn build_next_frame(&mut self, now: Instant) -> Option<OutFrame> {
 		match self.get_next_retransmit_frame(now) {
 			None => {}
@@ -114,7 +117,9 @@ impl Protocol {
 			let mut frame = OutFrame::new(self.next_frame_id);
 			self.next_frame_id += 1;
 
-			self.ack_sender.build_out_frame(&mut frame, now);
+			let acked_task_count = self.ack_sender.build_out_frame(&mut frame, now);
+			self.ack_sent_histogram.observe(acked_task_count as f64);
+
 			self.out_commands_collector.build_frame(&mut frame);
 			self.disconnect_by_command.build_frame(&mut frame);
 			self.rtt.build_frame(&mut frame, now);

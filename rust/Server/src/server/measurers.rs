@@ -1,7 +1,7 @@
 use std::time::Duration;
 
+use prometheus::local::{LocalHistogram, LocalIntCounter};
 use prometheus::{Histogram, HistogramOpts, IntCounter, IntGauge, Opts, Registry};
-use prometheus::local::LocalIntCounter;
 use prometheus_measures_exporter::measurer::create_and_register_measurer;
 use prometheus_measures_exporter::measurers_by_label::{
 	HistogramMeasurersByLabel, IntCounterMeasurersByLabel, LabelFactoryFactory, MeasurersByLabel,
@@ -63,7 +63,11 @@ pub struct Measurers {
 	///
 	/// Количество ретрансмитов с клиентами
 	///
-	pub retransmit_count: LocalIntCounter
+	pub retransmit_count: LocalIntCounter,
+	///
+	/// количество ACK для отправки
+	///
+	pub ack_sent: LocalHistogram,
 }
 
 impl Default for Measurers {
@@ -87,6 +91,7 @@ impl Measurers {
 			server_cycle_execution_time: Self::create_server_cycle_execution_time(registry),
 			rtt: Self::create_rtt(registry),
 			retransmit_count: Self::create_retransmit_count(registry),
+			ack_sent: Self::create_ack_sent(registry),
 		}
 	}
 
@@ -122,9 +127,16 @@ impl Measurers {
 	}
 
 	fn create_retransmit_count(registry: &Registry) -> LocalIntCounter {
-		let counter = IntCounter::new("protocol_retransmit", "protocol retransmits to clients").unwrap();
-		registry.register(Box::new(counter.clone())).unwrap();
+		let counter = create_and_register_measurer::<IntCounter, _>(registry, Opts::new("protocol_retransmit", "protocol retransmits to clients"));
 		counter.local()
+	}
+
+	fn create_ack_sent(registry: &Registry) -> LocalHistogram {
+		let histogram = create_and_register_measurer::<Histogram, _>(
+			registry,
+			HistogramOpts::new("protocol_ack_sent", "ACK sent to clients clients").buckets(vec![1_f64, 100_f64, 1000_f64, 10000_f64]),
+		);
+		histogram.local()
 	}
 
 	fn create_input_frame_time(registry: &Registry) -> Histogram {

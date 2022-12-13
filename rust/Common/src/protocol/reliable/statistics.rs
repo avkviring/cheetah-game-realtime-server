@@ -24,9 +24,8 @@ pub struct RetransmitStatistics {
 	///
 	retransmit_events_collector: EventCollectorByTime<u8, U8>,
 
-	counter: LocalIntCounter
-	//already_processed_frames: LruCache<FrameId, bool>,
-	//acked_original_frames: LruCache<FrameId, bool>,
+	counter: LocalIntCounter, //already_processed_frames: LruCache<FrameId, bool>,
+	                          //acked_original_frames: LruCache<FrameId, bool>,
 }
 
 impl RetransmitStatistics {
@@ -113,9 +112,9 @@ impl RetransmitStatistics {
 
 #[cfg(test)]
 mod tests {
+	use prometheus::IntCounter;
 	use std::ops::Add;
 	use std::time::Instant;
-	use prometheus::IntCounter;
 
 	use crate::protocol::reliable::statistics::RetransmitStatistics;
 
