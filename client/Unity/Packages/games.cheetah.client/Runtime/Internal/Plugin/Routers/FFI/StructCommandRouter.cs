@@ -1,21 +1,21 @@
 using System;
 using AOT;
-using Games.Cheetah.Client.Internal.FFI;
+using Games.Cheetah.Client.ServerAPI;
 using Games.Cheetah.Client.Types;
 
 namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
 {
-    public class StructCommandRouter : global::Games.Cheetah.Client.Internal.Plugin.Plugin
+    public class StructCommandRouter : Plugin
     {
         private static StructCommandRouter current;
         private CheetahClient client;
-        internal event StructureFFI.Listener ChangeListener;
+        internal event IStructureServerAPI.Listener ChangeListener;
 
         public void Init(CheetahClient client)
         {
             this.client = client;
             client.BeforeUpdateHook += BeforeUpdate;
-            StructureFFI.SetListener(client.Id, OnChange);
+            client.serverAPI.Structure.SetListener(client.Id, OnChange);
         }
 
         private void BeforeUpdate()
@@ -23,7 +23,7 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
             current = this;
         }
 
-        [MonoPInvokeCallback(typeof(StructureFFI.Listener))]
+        [MonoPInvokeCallback(typeof(IStructureServerAPI.Listener))]
         private static void OnChange(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
         {
             try

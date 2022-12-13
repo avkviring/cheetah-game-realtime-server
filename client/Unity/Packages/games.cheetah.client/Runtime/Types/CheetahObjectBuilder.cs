@@ -21,16 +21,16 @@ namespace Games.Cheetah.Client.Types
             this.template = template;
             this.client = client;
             objectId = default;
-            ResultChecker.Check(ObjectFFI.CreateObject(client.Id, template, accessGroup, ref objectId));
+            ResultChecker.Check(client.serverAPI.Object.CreateObject(client.Id, template, accessGroup, ref objectId));
         }
 
         public CheetahObject Build()
         {
             buffer.Clear();
-            ResultChecker.Check(ObjectFFI.Created(client.Id, in objectId, false, ref buffer));
+            ResultChecker.Check(client.serverAPI.Object.CreatedObject(client.Id, in objectId, false, ref buffer));
             createdInfo.OnLocalObjectCreating(in objectId, template);
             createdInfo.OnLocalObjectCreate(in objectId);
-            return new CheetahObject(objectId, template, client);
+            return new CheetahObject(objectId, template);
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Games.Cheetah.Client.Types
         public void BuildRoomObject()
         {
             buffer.Clear();
-            ResultChecker.Check(ObjectFFI.Created(client.Id, in objectId, true, ref buffer));
+            ResultChecker.Check(client.serverAPI.Object.CreatedObject(client.Id, in objectId, true, ref buffer));
         }
 
         /// <summary>
@@ -50,38 +50,38 @@ namespace Games.Cheetah.Client.Types
         {
             buffer.Clear();
             client.CodecRegistry.GetCodec<T>().Encode(in singletonKey, ref buffer);
-            ResultChecker.Check(ObjectFFI.Created(client.Id, in objectId, true, ref buffer));
+            ResultChecker.Check(client.serverAPI.Object.CreatedObject(client.Id, in objectId, true, ref buffer));
         }
 
         public CheetahObjectBuilder SetDouble(ushort fieldId, double value)
         {
-            ResultChecker.Check(DoubleFFI.Set(client.Id, in objectId, fieldId, value));
+            ResultChecker.Check(client.serverAPI.Double.Set(client.Id, in objectId, fieldId, value));
             return this;
         }
 
-        public CheetahObjectBuilder SetStructure<T>(ushort fieldId, ref T item)
+        public CheetahObjectBuilder SetStructure<T>(ushort fieldId, in T item)
         {
             buffer.Clear();
             client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
-            ResultChecker.Check(StructureFFI.Set(client.Id, in objectId, fieldId, ref buffer));
+            ResultChecker.Check(client.serverAPI.Structure.Set(client.Id, in objectId, fieldId, ref buffer));
             return this;
         }
 
         public CheetahObjectBuilder SetLong(ushort fieldId, long value)
         {
-            ResultChecker.Check(LongFFI.Set(client.Id, in objectId, fieldId, value));
+            ResultChecker.Check(client.serverAPI.Long.Set(client.Id, in objectId, fieldId, value));
             return this;
         }
 
         public CheetahObjectBuilder CompareAndSetLong(ushort fieldId, long currentValue, long newValue)
         {
-            ResultChecker.Check(LongFFI.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, false, 0));
+            ResultChecker.Check(client.serverAPI.Long.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, false, 0));
             return this;
         }
 
         public CheetahObjectBuilder CompareAndSetLongWithReset(ushort fieldId, long currentValue, long newValue, long resetValue)
         {
-            ResultChecker.Check(LongFFI.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, true, resetValue));
+            ResultChecker.Check(client.serverAPI.Long.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, true, resetValue));
             return this;
         }
 
@@ -94,7 +94,7 @@ namespace Games.Cheetah.Client.Types
             codec.Encode(in current, ref buffer);
             codec.Encode(in newval, ref newBuffer);
 
-            ResultChecker.Check(StructureFFI.CompareAndSet(
+            ResultChecker.Check(client.serverAPI.Structure.CompareAndSet(
                 client.Id,
                 in objectId,
                 fieldId,
@@ -117,7 +117,7 @@ namespace Games.Cheetah.Client.Types
             codec.Encode(in newval, ref newBuffer);
             codec.Encode(in reset, ref resetBuffer);
 
-            ResultChecker.Check(StructureFFI.CompareAndSet(
+            ResultChecker.Check(client.serverAPI.Structure.CompareAndSet(
                 client.Id,
                 in objectId,
                 fieldId,

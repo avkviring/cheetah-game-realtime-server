@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Games.Cheetah.Client.Internal.Plugin.Routers.FFI;
 using Games.Cheetah.Client.Types;
@@ -41,7 +42,12 @@ namespace Games.Cheetah.Client.Internal
 
         public CheetahObject GetObject(in CheetahObjectId objectId)
         {
-            return new CheetahObject(objectId, templates[objectId], client);
+            if (templates.TryGetValue(objectId, out var template))
+            {
+                return new CheetahObject(objectId, template);
+            }
+
+            throw new Exception("CheetahObject not created " + objectId);
         }
 
         public bool IsCreated(in CheetahObjectId objectId)

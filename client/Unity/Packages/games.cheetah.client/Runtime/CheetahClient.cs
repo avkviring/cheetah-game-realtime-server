@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Internal;
-using Games.Cheetah.Client.Internal.FFI;
 using Games.Cheetah.Client.Internal.Plugin;
+using Games.Cheetah.Client.Internal.Plugin.Routers.FFI;
 using Games.Cheetah.Client.Logger;
+using Games.Cheetah.Client.ServerAPI;
+using Games.Cheetah.Client.ServerAPI.FFI;
 using Games.Cheetah.Client.Types;
 using UnityEngine;
 
@@ -18,25 +20,57 @@ namespace Games.Cheetah.Client
         public readonly CodecRegistry CodecRegistry;
         internal readonly ushort Id;
         public event Action BeforeUpdateHook;
-        private readonly Dictionary<Type, object> plugins = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, object> plugins = new();
         private readonly CheetahObjectsCreateInfo objectsCreateInfo;
         private bool enableClientLog = true;
         private ChannelType currentChannelType;
         private byte currentChannelGroup;
+        private CheetahBuffer buffer;
+        public Writer Writer { get; }
+        public Reader Reader { get; }
 
         static CheetahClient()
         {
             LoggerGateway.Init();
         }
 
+        internal IServerAPI serverAPI;
 
-        public CheetahClient(string serverUdpHost, ushort serverUdpPort, uint memberId, ulong roomId, byte[] privateUserKey, CodecRegistry codecRegistry)
+        public CheetahClient(
+            string serverUdpHost,
+            ushort serverUdpPort,
+            uint memberId,
+            ulong roomId,
+            byte[] privateUserKey,
+            CodecRegistry codecRegistry) : this(new FFIServerAPI(), serverUdpHost, serverUdpPort, memberId, roomId, privateUserKey, codecRegistry)
         {
+        }
+
+        internal CheetahClient(
+            IServerAPI serverAPI,
+            string serverUdpHost,
+            ushort serverUdpPort,
+            uint memberId,
+            ulong roomId,
+            byte[] privateUserKey,
+            CodecRegistry codecRegistry)
+        {
+            this.serverAPI = serverAPI;
             LoggerGateway.CollectLogs(false); // очищаем логи с предыдущего клиента
             CodecRegistry = codecRegistry;
+
             var userPrivateKey = new CheetahBuffer(privateUserKey);
-            ResultChecker.Check(ClientFFI.CreateClient(serverUdpHost + ":" + serverUdpPort, (ushort)memberId, roomId, ref userPrivateKey, 0, out Id));
+            ResultChecker.Check(serverAPI.Client.CreateClient(
+                serverUdpHost + ":" + serverUdpPort,
+                (ushort)memberId,
+                roomId,
+                ref userPrivateKey,
+                0,
+                out Id));
             objectsCreateInfo = GetPlugin<CheetahObjectsCreateInfo>();
+            GetPlugin<LongCommandRouter>();
+            Writer = new Writer(serverAPI, CodecRegistry, Id);
+            Reader = new Reader(this);
         }
 
         /// <summary>
@@ -54,19 +88,19 @@ namespace Games.Cheetah.Client
         public void Update()
         {
             BeforeUpdateHook?.Invoke();
-            ResultChecker.Check(ClientFFI.Receive(Id));
+            ResultChecker.Check(serverAPI.Client.Receive(Id));
             LoggerGateway.CollectLogs(enableClientLog);
         }
 
         public CheetahClientConnectionStatus GetConnectionStatus()
         {
-            ResultChecker.Check(ClientFFI.GetConnectionStatus(Id, out var connectionStatus));
+            ResultChecker.Check(serverAPI.Client.GetConnectionStatus(Id, out var connectionStatus));
             return connectionStatus;
         }
 
         public CheetahClientStatistics GetStatistics()
         {
-            ResultChecker.Check(ClientFFI.GetStatistics(Id, out var statistics));
+            ResultChecker.Check(serverAPI.Client.GetStatistics(Id, out var statistics));
             return statistics;
         }
 
@@ -89,6 +123,7 @@ namespace Games.Cheetah.Client
         /// </summary>
         public CheetahObjectBuilder NewObjectBuilder(ushort template, ulong accessGroup)
         {
+         
             return new CheetahObjectBuilder(template, accessGroup, objectsCreateInfo, this);
         }
 
@@ -102,7 +137,7 @@ namespace Games.Cheetah.Client
         /// </summary>
         public void AttachToRoom()
         {
-            ResultChecker.Check(ClientFFI.AttachToRoom(Id));
+            ResultChecker.Check(serverAPI.Client.AttachToRoom(Id));
         }
 
         /// <summary>
@@ -110,15 +145,15 @@ namespace Games.Cheetah.Client
         /// </summary>
         public void DetachFromRoom()
         {
-            ResultChecker.Check(ClientFFI.DetachFromRoom(Id));
+            ResultChecker.Check(serverAPI.Client.DetachFromRoom(Id));
         }
 
         /// <summary>
         /// Отсоединиться от сервера и удалить информацию о текущем клиенте, после этого методами RelayClient пользоваться нельзя
         /// </summary>
-        public void Destroy()
+        public void Dispose()
         {
-            ResultChecker.Check(ClientFFI.DestroyClient(Id));
+            ResultChecker.Check(serverAPI.Client.DestroyClient(Id));
         }
 
         /// <summary>
@@ -128,7 +163,7 @@ namespace Games.Cheetah.Client
         /// <exception cref="ServerTimeNotDefinedException"></exception>
         public ulong GetServerTimeInMs()
         {
-            ResultChecker.Check(ClientFFI.GetServerTime(Id, out var time));
+            ResultChecker.Check(serverAPI.Client.GetServerTime(Id, out var time));
             if (time == 0)
             {
                 throw new ServerTimeNotDefinedException();
@@ -152,7 +187,7 @@ namespace Games.Cheetah.Client
 
             currentChannelType = channelType;
             currentChannelGroup = group;
-            ResultChecker.Check(ClientFFI.SetChannelType(Id, channelType, group));
+            ResultChecker.Check(serverAPI.Client.SetChannelType(Id, channelType, group));
         }
 
 
@@ -161,7 +196,7 @@ namespace Games.Cheetah.Client
         /// </summary>
         public void ResetEmulation()
         {
-            ResultChecker.Check(ClientFFI.ResetEmulation(Id));
+            ResultChecker.Check(serverAPI.Client.ResetEmulation(Id));
         }
 
         /// <summary>
@@ -170,7 +205,7 @@ namespace Games.Cheetah.Client
         /// </summary>
         public void SetRttEmulation(ulong rttInMs, double rttDispersion)
         {
-            ResultChecker.Check(ClientFFI.SetRttEmulation(Id, rttInMs, rttDispersion));
+            ResultChecker.Check(serverAPI.Client.SetRttEmulation(Id, rttInMs, rttDispersion));
         }
 
         /// <summary>
@@ -179,7 +214,7 @@ namespace Games.Cheetah.Client
         /// </summary>
         public void SetDropEmulation(double dropProbability, ulong dropTimeInMs)
         {
-            ResultChecker.Check(ClientFFI.SetDropEmulation(Id, dropProbability, dropTimeInMs));
+            ResultChecker.Check(serverAPI.Client.SetDropEmulation(Id, dropProbability, dropTimeInMs));
         }
     }
 

@@ -1,21 +1,22 @@
 using System;
 using AOT;
-using Games.Cheetah.Client.Internal.FFI;
+using Games.Cheetah.Client.ServerAPI;
 using Games.Cheetah.Client.Types;
+using UnityEngine;
 
 namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
 {
-    public class LongCommandRouter : global::Games.Cheetah.Client.Internal.Plugin.Plugin
+    public class LongCommandRouter : Plugin
     {
         private static LongCommandRouter current;
         private CheetahClient client;
-        internal event LongFFI.Listener ChangeListener;
+        internal event ILongServerAPI.Listener ChangeListener;
 
         public void Init(CheetahClient client)
         {
             this.client = client;
             client.BeforeUpdateHook += BeforeUpdate;
-            LongFFI.SetListener(client.Id, OnChange);
+            client.serverAPI.Long.SetListener(client.Id, OnChange);
         }
 
         private void BeforeUpdate()
@@ -23,7 +24,7 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
             current = this;
         }
 
-        [MonoPInvokeCallback(typeof(LongFFI.Listener))]
+        [MonoPInvokeCallback(typeof(ILongServerAPI.Listener))]
         private static void OnChange(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, long value)
         {
             try

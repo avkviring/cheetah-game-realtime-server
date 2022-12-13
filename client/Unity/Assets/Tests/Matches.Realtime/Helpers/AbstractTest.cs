@@ -85,8 +85,8 @@ namespace Tests.Matches.Realtime.Helpers
         [TearDown]
         public void TearDown()
         {
-            clientA.Destroy();
-            clientB.Destroy();
+            clientA.Dispose();
+            clientB.Dispose();
             server.Destroy();
         }
     }

@@ -1,6 +1,6 @@
 using System;
 using AOT;
-using Games.Cheetah.Client.Internal.FFI;
+using Games.Cheetah.Client.ServerAPI;
 using Games.Cheetah.Client.Types;
 
 namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
@@ -8,23 +8,23 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
     /// <summary>
     /// Маршрутизация событий жизненного цикла игрового объекта из RelayClient-а произвольным подписчикам
     /// </summary>
-    public class ObjectCommandRouter : global::Games.Cheetah.Client.Internal.Plugin.Plugin
+    public class ObjectCommandRouter : Plugin
     {
         private static ObjectCommandRouter current;
         private CheetahClient client;
-        internal event ObjectFFI.CreateListener ObjectCreatingListener;
-        internal event ObjectFFI.CreatedListener ObjectCreatedListener;
-        internal event ObjectFFI.DeleteListener ObjectDeleteListener;
-        internal event ObjectFFI.DeleteListener ObjectPostDeleteListener;
+        internal event IObjectServerAPI.CreateListener ObjectCreatingListener;
+        internal event IObjectServerAPI.CreatedListener ObjectCreatedListener;
+        internal event IObjectServerAPI.DeleteListener ObjectDeleteListener;
+        internal event IObjectServerAPI.DeleteListener ObjectPostDeleteListener;
 
 
         public void Init(CheetahClient client)
         {
             client.BeforeUpdateHook += BeforeUpdate;
             this.client = client;
-            ObjectFFI.SetCreateListener(client.Id, OnCreateListener);
-            ObjectFFI.SetCreatedListener(client.Id, OnCreatedListener);
-            ObjectFFI.SetDeleteListener(client.Id, OnDeleteListener);
+            client.serverAPI.Object.SetCreateListener(client.Id, OnCreateListener);
+            client.serverAPI.Object.SetCreatedListener(client.Id, OnCreatedListener);
+            client.serverAPI.Object.SetDeleteListener(client.Id, OnDeleteListener);
         }
 
         private void BeforeUpdate()
@@ -32,7 +32,7 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
             current = this;
         }
 
-        [MonoPInvokeCallback(typeof(ObjectFFI.CreateListener))]
+        [MonoPInvokeCallback(typeof(IObjectServerAPI.CreateListener))]
         private static void OnCreateListener(in CheetahObjectId objectId, ushort template)
         {
             try
@@ -45,7 +45,7 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
             }
         }
 
-        [MonoPInvokeCallback(typeof(ObjectFFI.CreatedListener))]
+        [MonoPInvokeCallback(typeof(IObjectServerAPI.CreatedListener))]
         private static void OnCreatedListener(in CheetahObjectId objectId)
         {
             try
@@ -59,7 +59,7 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
         }
 
 
-        [MonoPInvokeCallback(typeof(ObjectFFI.DeleteListener))]
+        [MonoPInvokeCallback(typeof(IObjectServerAPI.DeleteListener))]
         private static void OnDeleteListener(in CheetahObjectId objectId)
         {
             try
