@@ -1,6 +1,7 @@
 using System;
 using Games.Cheetah.Client.Internal;
 using Games.Cheetah.Client.Types;
+using UnityEngine;
 
 namespace Games.Cheetah.Client.DOA.Income.ByField
 {

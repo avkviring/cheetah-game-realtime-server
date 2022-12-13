@@ -1,21 +1,21 @@
 using System;
 using AOT;
-using Games.Cheetah.Client.Internal.FFI;
+using Games.Cheetah.Client.ServerAPI;
 using Games.Cheetah.Client.Types;
 
 namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
 {
-    public class DeleteFieldCommandRouter : global::Games.Cheetah.Client.Internal.Plugin.Plugin
+    public class DeleteFieldCommandRouter : Plugin
     {
         private static DeleteFieldCommandRouter current;
         private CheetahClient client;
-        internal event FieldFFI.Listener DeleteListener;
+        internal event IFieldServerAPI.Listener DeleteListener;
 
         public void Init(CheetahClient client)
         {
             this.client = client;
             client.BeforeUpdateHook += BeforeUpdate;
-            FieldFFI.SetListener(client.Id, OnChange);
+            client.serverAPI.Field.SetListener(client.Id, OnChange);
         }
 
         private void BeforeUpdate()
@@ -23,7 +23,7 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
             current = this;
         }
 
-        [MonoPInvokeCallback(typeof(FieldFFI.Listener))]
+        [MonoPInvokeCallback(typeof(IFieldServerAPI.Listener))]
         private static void OnChange(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, FieldType fieldType)
         {
             try

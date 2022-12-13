@@ -23,7 +23,7 @@ namespace Tests.Matches.Realtime
                 Damage = 1.5,
                 Speed = 154
             };
-            objectBuilder.SetStructure(TurretsParamsFieldId, ref turretsParams);
+            objectBuilder.SetStructure(TurretsParamsFieldId, in turretsParams);
             var createdObject = objectBuilder.Build();
             // ждем отправки команды
             Thread.Sleep(200);
@@ -48,7 +48,7 @@ namespace Tests.Matches.Realtime
             var collector = new DeletedObjectByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
-            createdObject.Delete();
+            clientA.Writer.Delete(in createdObject.ObjectId);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -83,7 +83,7 @@ namespace Tests.Matches.Realtime
             {
                 MineId = 150
             };
-            incomeEvent.cheetahObject.SendEvent(DropMineEventId, ref dropMineEvent);
+            clientB.Writer.SendEvent(in incomeEvent.cheetahObject.ObjectId, DropMineEventId, in dropMineEvent);
 
             // ждем отправки команды
             Thread.Sleep(1000);
@@ -105,8 +105,8 @@ namespace Tests.Matches.Realtime
             var collector = new DeletedFieldByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
-            createdObject.SetLong(fieldId, 5);
-            createdObject.DeleteField(fieldId, FieldType.Long);
+            clientB.Writer.SetLong(in createdObject.ObjectId, fieldId, 5);
+            clientB.Writer.DeleteField(createdObject.ObjectId, FieldType.Long, fieldId);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды

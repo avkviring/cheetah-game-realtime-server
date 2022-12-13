@@ -22,7 +22,7 @@ namespace Tests.Matches.Realtime
             {
                 MineId = 150
             };
-            createdObject.SendEvent(DropMineEventId, ref dropMineEvent);
+            clientA.Writer.SendEvent(in createdObject.ObjectId, DropMineEventId, in dropMineEvent);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -46,7 +46,7 @@ namespace Tests.Matches.Realtime
             {
                 MineId = 150
             };
-            createdObject.SendEvent(DropMineEventId, memberB.UserId, ref dropMineEvent);
+            clientA.Writer.SendEvent(in createdObject.ObjectId, DropMineEventId, memberB.UserId, in dropMineEvent);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -72,7 +72,7 @@ namespace Tests.Matches.Realtime
                 Damage = 1.5,
                 Speed = 154
             };
-            createdObject.SetStructure(TurretsParamsFieldId, ref turretsParams);
+            clientA.Writer.SetStructure(in createdObject.ObjectId, TurretsParamsFieldId, in turretsParams);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -94,7 +94,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new LongIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
             // изменяем значение
-            createdObject.SetLong(HealFieldId, 7799);
+            clientA.Writer.SetLong(in createdObject.ObjectId, HealFieldId, 7799);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -115,7 +115,7 @@ namespace Tests.Matches.Realtime
             // слушаем события определенного типа
             var collector = new DoubleIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
             // изменяем значение
-            createdObject.SetDouble(HealFieldId, 77.99);
+            clientA.Writer.SetDouble(in createdObject.ObjectId, HealFieldId, 77.99);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -134,9 +134,10 @@ namespace Tests.Matches.Realtime
             var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).Build();
             // слушаем события определенного типа
             var collector = new DeleteFieldIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
-            createdObject.SetLong(HealFieldId, 100);
+            clientA.Writer.SetLong(in createdObject.ObjectId, HealFieldId, 100);
             // удаляем поле
-            createdObject.DeleteField(HealFieldId, FieldType.Long);
+            clientA.Writer.DeleteField(in createdObject.ObjectId, FieldType.Long, HealFieldId);
+
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды

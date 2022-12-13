@@ -11,9 +11,9 @@ namespace Games.Cheetah.Client.Types
     {
         public readonly CheetahObject cheetahObject;
         private readonly CodecRegistry codecRegistry;
-        internal readonly Dictionary<ushort, CheetahBuffer> structures = new Dictionary<ushort, CheetahBuffer>();
-        internal readonly Dictionary<ushort, long> longs = new Dictionary<ushort, long>();
-        internal readonly Dictionary<ushort, double> doubles = new Dictionary<ushort, double>();
+        internal readonly Dictionary<ushort, CheetahBuffer> structures = new();
+        internal readonly Dictionary<ushort, long> longs = new();
+        internal readonly Dictionary<ushort, double> doubles = new();
 
         public CheetahObjectConstructor(CheetahObject cheetahObject, CodecRegistry codecRegistry)
         {

@@ -21,7 +21,7 @@ namespace Tests.Matches.Realtime
             {
                 MineId = 150
             };
-            createdObject.SendEvent(DropMineEventId, ref dropMineEvent);
+            clientA.Writer.SendEvent(in createdObject.ObjectId, DropMineEventId, in dropMineEvent);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -45,7 +45,7 @@ namespace Tests.Matches.Realtime
             {
                 MineId = 150
             };
-            createdObject.SendEvent(DropMineEventId, memberB.UserId, ref dropMineEvent);
+            clientA.Writer.SendEvent(in createdObject.ObjectId, DropMineEventId, memberB.UserId, in dropMineEvent);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -70,7 +70,7 @@ namespace Tests.Matches.Realtime
                 Damage = 1.5,
                 Speed = 154
             };
-            createdObject.SetStructure(TurretsParamsFieldId, ref turretsParams);
+            clientA.Writer.SetStructure(in createdObject.ObjectId, TurretsParamsFieldId, in turretsParams);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -103,9 +103,11 @@ namespace Tests.Matches.Realtime
             var turretParamsC = turretParamsB;
             turretParamsC.Damage = 5;
 
-            createdObject.SetStructure(TurretsParamsFieldId, ref turretParamsA);
-            createdObject.CompareAndSetStructure(TurretsParamsFieldId, ref turretParamsA, ref turretParamsB);
-            createdObject.CompareAndSetStructureWithReset(TurretsParamsFieldId, ref turretParamsB, ref turretParamsC, ref turretParamsA);
+
+            clientA.Writer.SetStructure(in createdObject.ObjectId, TurretsParamsFieldId, in turretParamsA);
+            clientA.Writer.CompareAndSet(in createdObject.ObjectId, TurretsParamsFieldId, in turretParamsA, in turretParamsB);
+            clientA.Writer.CompareAndSetWithReset(in createdObject.ObjectId, TurretsParamsFieldId, in turretParamsB, in turretParamsC,
+                in turretParamsA);
 
             // ждем отправки команды
             Thread.Sleep(200);
@@ -129,7 +131,7 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            createdObject.SetLong(HealFieldId, 7799);
+            clientA.Writer.SetLong(in createdObject.ObjectId, HealFieldId, 7799L);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -149,7 +151,7 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            createdObject.IncrementLong(HealFieldId, 1001);
+            clientA.Writer.Increment(in createdObject.ObjectId, HealFieldId, 1001L);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -169,8 +171,8 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            createdObject.CompareAndSetLong(HealFieldId, 0, 555);
-            createdObject.CompareAndSetLongWithReset(HealFieldId, 555, 1000, 0);
+            clientA.Writer.CompareAndSet(in createdObject.ObjectId, HealFieldId, 0L, 555L);
+            clientA.Writer.CompareAndSetWithReset(in createdObject.ObjectId, HealFieldId, 555L, 1000L, 0L);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -192,7 +194,7 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            createdObject.SetDouble(HealFieldId, 77.99);
+            clientA.Writer.SetDouble(in createdObject.ObjectId, HealFieldId, 77.99);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -212,7 +214,7 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            createdObject.IncrementDouble(HealFieldId, 77.99);
+            clientA.Writer.Increment(in createdObject.ObjectId, HealFieldId, 77.99);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды

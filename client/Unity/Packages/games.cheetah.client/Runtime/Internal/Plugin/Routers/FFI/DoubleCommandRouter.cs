@@ -1,21 +1,21 @@
 using System;
 using AOT;
-using Games.Cheetah.Client.Internal.FFI;
+using Games.Cheetah.Client.ServerAPI;
 using Games.Cheetah.Client.Types;
 
 namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
 {
-    public class DoubleCommandRouter : global::Games.Cheetah.Client.Internal.Plugin.Plugin
+    public class DoubleCommandRouter : Plugin
     {
         private static DoubleCommandRouter current;
         private CheetahClient client;
-        internal event DoubleFFI.Listener ChangeListener;
+        internal event IDoubleServerAPI.Listener ChangeListener;
 
         public void Init(CheetahClient client)
         {
             this.client = client;
             client.BeforeUpdateHook += BeforeUpdate;
-            DoubleFFI.SetListener(client.Id, OnChange);
+            client.serverAPI.Double.SetListener(client.Id, OnChange);
         }
 
         private void BeforeUpdate()
@@ -23,7 +23,7 @@ namespace Games.Cheetah.Client.Internal.Plugin.Routers.FFI
             current = this;
         }
 
-        [MonoPInvokeCallback(typeof(DoubleFFI.Listener))]
+        [MonoPInvokeCallback(typeof(IDoubleServerAPI.Listener))]
         private static void OnChange(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, double value)
         {
             try
