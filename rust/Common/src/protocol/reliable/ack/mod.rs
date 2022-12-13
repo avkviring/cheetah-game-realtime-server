@@ -51,25 +51,23 @@ impl AckSender {
 	/// повторной отсылки пакета
 	///
 	///
-	pub fn build_out_frame(&mut self, frame: &mut OutFrame, now: Instant) {
+	pub fn build_out_frame(&mut self, frame: &mut OutFrame, now: Instant) -> u64 {
 		let mut header = AckHeader::default();
+		let mut acked_task_count = 0;
 		self.ack_tasks.iter_mut().for_each(|task| {
 			if now >= task.scheduled_ack && !header.is_full() {
 				header.add_frame_id(task.frame_id);
 				task.ack_count += 1;
 				task.scheduled_ack = now.add(AckSender::SEND_INTERVAL);
+				acked_task_count += 1;
 			}
 		});
 
-		let cloned_tasks = self.ack_tasks.clone();
-		self.ack_tasks.clear();
-		cloned_tasks
-			.into_iter()
-			.filter(|t| t.ack_count < AckSender::MAX_ACK_FOR_FRAME)
-			.for_each(|t| {
-				self.ack_tasks.push(t).unwrap();
-			});
+		self.ack_tasks.retain(|t| t.ack_count < AckSender::MAX_ACK_FOR_FRAME);
+
 		frame.headers.add(Header::Ack(header));
+
+		acked_task_count
 	}
 
 	pub fn on_frame_received(&mut self, frame: &InFrame, now: Instant) {

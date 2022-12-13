@@ -1,8 +1,8 @@
+use prometheus::{Histogram, HistogramOpts, IntCounter};
 use std::collections::VecDeque;
 use std::io::{Cursor, ErrorKind};
 use std::net::SocketAddr;
 use std::time::Instant;
-use prometheus::IntCounter;
 
 use crate::network::channel::NetworkChannel;
 use crate::protocol::codec::cipher::Cipher;
@@ -58,7 +58,12 @@ impl NetworkClient {
 		start_frame_id: u64,
 		start_application_time: Instant,
 	) -> std::io::Result<NetworkClient> {
-		let mut protocol = Protocol::new(Instant::now(), start_application_time, IntCounter::new("name", "help").unwrap().local());
+		let mut protocol = Protocol::new(
+			Instant::now(),
+			start_application_time,
+			IntCounter::new("name", "help").unwrap().local(),
+			Histogram::with_opts(HistogramOpts::new("name", "help")).unwrap().local(),
+		);
 		protocol.next_frame_id = start_frame_id;
 		let channel = NetworkChannel::new()?;
 

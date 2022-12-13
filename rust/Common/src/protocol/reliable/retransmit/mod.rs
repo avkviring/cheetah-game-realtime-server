@@ -176,9 +176,9 @@ impl Retransmit {
 
 #[cfg(test)]
 mod tests {
+	use prometheus::IntCounter;
 	use std::ops::Add;
 	use std::time::Instant;
-	use prometheus::IntCounter;
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
