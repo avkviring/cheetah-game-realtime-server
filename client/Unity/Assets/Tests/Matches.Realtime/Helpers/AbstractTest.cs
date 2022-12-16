@@ -20,9 +20,11 @@ namespace Tests.Matches.Realtime.Helpers
         protected CreateMemberResponse memberA;
         protected CreateMemberResponse memberB;
         private EmbeddedServer server;
-        protected const ushort TurretsParamsFieldId = 333;
-        protected const ushort DropMineEventId = 555;
-        protected const ushort HealFieldId = 777;
+        protected static FieldId.Structure TurretsParamsFieldId = new(100);
+        protected static FieldId.Event DropMineEventId = new(555);
+        protected static FieldId.Double HealFieldId = new(777);
+        protected static FieldId.Long ScoreFieldId = new(999);
+
 
         [SetUp]
         public void SetUp()

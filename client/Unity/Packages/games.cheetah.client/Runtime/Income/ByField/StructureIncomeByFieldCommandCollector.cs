@@ -12,10 +12,10 @@ namespace Games.Cheetah.Client.DOA.Income.ByField
         private readonly StructCommandRouterByField router;
         private readonly Codec<T> codec;
 
-        public StructureIncomeByFieldCommandCollector(CheetahClient client, ushort fieldId) : base(client, fieldId)
+        public StructureIncomeByFieldCommandCollector(CheetahClient client, FieldId.Structure fieldId) : base(client, fieldId.Id)
         {
             router = client.GetPlugin<StructCommandRouterByField>();
-            router.RegisterListener(fieldId, OnStructure);
+            router.RegisterListener(fieldId.Id, OnStructure);
             codec = client.CodecRegistry.GetCodec<T>();
         }
 

@@ -9,10 +9,10 @@ namespace Games.Cheetah.Client.ServerAPI
         public delegate void Listener(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, long value);
 
         byte SetListener(ushort clientId, Listener listener);
-        byte Set(ushort clientId, in CheetahObjectId objectId, ushort fieldId, long value);
-        byte Increment(ushort clientId, in CheetahObjectId objectId, ushort fieldId, long increment);
+        byte Set(ushort clientId, in CheetahObjectId objectId, FieldId.Long fieldId, long value);
+        byte Increment(ushort clientId, in CheetahObjectId objectId, FieldId.Long fieldId, long increment);
 
-        byte CompareAndSet(ushort clientId, in CheetahObjectId objectId, ushort fieldId, long currentValue, long newValue,
+        byte CompareAndSet(ushort clientId, in CheetahObjectId objectId, FieldId.Long fieldId, long currentValue, long newValue,
             bool hasReset, long resetValue);
     }
 }

@@ -92,9 +92,9 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).Build();
             // слушаем события определенного типа
-            var collector = new LongIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
+            var collector = new LongIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, ScoreFieldId);
             // изменяем значение
-            clientA.Writer.SetLong(in createdObject.ObjectId, HealFieldId, 7799);
+            clientA.Writer.SetLong(in createdObject.ObjectId, ScoreFieldId, 7799);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -133,10 +133,10 @@ namespace Tests.Matches.Realtime
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(1, PlayerHelper.PlayerGroup).Build();
             // слушаем события определенного типа
-            var collector = new DeleteFieldIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, HealFieldId);
-            clientA.Writer.SetLong(in createdObject.ObjectId, HealFieldId, 100);
+            var collector = new DeleteFieldIncomeByObjectCommandCollector(clientB, createdObject.ObjectId, ScoreFieldId);
+            clientA.Writer.SetLong(in createdObject.ObjectId, ScoreFieldId, 100);
             // удаляем поле
-            clientA.Writer.DeleteField(in createdObject.ObjectId, FieldType.Long, HealFieldId);
+            clientA.Writer.DeleteField(in createdObject.ObjectId, ScoreFieldId);
 
             // ждем отправки команды
             Thread.Sleep(200);

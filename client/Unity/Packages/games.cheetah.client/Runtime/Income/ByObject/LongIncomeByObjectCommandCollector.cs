@@ -8,11 +8,11 @@ namespace Games.Cheetah.Client.DOA.Income.ByObject
         private CheetahObjectId id;
         private readonly LongCommandRouterByObject router;
 
-        public LongIncomeByObjectCommandCollector(CheetahClient client, CheetahObjectId id, ushort fieldId) : base(client, fieldId)
+        public LongIncomeByObjectCommandCollector(CheetahClient client, CheetahObjectId id, FieldId.Long fieldId) : base(client, fieldId.Id)
         {
             this.id = id;
             router = client.GetPlugin<LongCommandRouterByObject>();
-            router.RegisterListener(in id, fieldId, OnChange);
+            router.RegisterListener(in id, fieldId.Id, OnChange);
         }
 
 

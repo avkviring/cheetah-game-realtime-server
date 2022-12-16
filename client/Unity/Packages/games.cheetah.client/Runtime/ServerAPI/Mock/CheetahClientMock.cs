@@ -34,7 +34,7 @@ namespace Games.Cheetah.Client.ServerAPI.Mock
         }
 
 
-        public T? GetStructureValue<T>(CheetahObjectId objectId, ushort fieldId) where T : struct
+        public T? Get<T>(CheetahObjectId objectId, FieldId.Structure fieldId) where T : struct
         {
             var buffer = new CheetahBuffer();
             if (structures.TryGetFieldValue(objectId, fieldId, out buffer))
@@ -47,7 +47,7 @@ namespace Games.Cheetah.Client.ServerAPI.Mock
             return null;
         }
 
-        public long? GetLongValue(CheetahObjectId objectId, ushort fieldId)
+        public long? Get(CheetahObjectId objectId, FieldId.Long fieldId)
         {
             if (longs.TryGetFieldValue(objectId, fieldId, out var value))
             {
@@ -57,7 +57,7 @@ namespace Games.Cheetah.Client.ServerAPI.Mock
             return null;
         }
 
-        public double? GetDoubleValue(CheetahObjectId objectId, ushort fieldId)
+        public double? Get(CheetahObjectId objectId, FieldId.Double fieldId)
         {
             if (doubles.TryGetFieldValue(objectId, fieldId, out var value))
             {

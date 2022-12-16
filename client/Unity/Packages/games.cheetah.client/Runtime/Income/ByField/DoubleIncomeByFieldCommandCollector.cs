@@ -9,10 +9,10 @@ namespace Games.Cheetah.Client.DOA.Income.ByField
     {
         private readonly DoubleCommandRouterByField router;
 
-        public DoubleIncomeByFieldCommandCollector(CheetahClient client, ushort fieldId) : base(client, fieldId)
+        public DoubleIncomeByFieldCommandCollector(CheetahClient client, FieldId.Double fieldId) : base(client, fieldId.Id)
         {
             router = client.GetPlugin<DoubleCommandRouterByField>();
-            router.RegisterListener(fieldId, OnStructure);
+            router.RegisterListener(fieldId.Id, OnStructure);
         }
 
 

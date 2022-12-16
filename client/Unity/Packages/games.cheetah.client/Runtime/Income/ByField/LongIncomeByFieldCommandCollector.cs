@@ -1,5 +1,4 @@
 using Games.Cheetah.Client.Internal.Plugin.Routers.ByField;
-using UnityEngine;
 
 namespace Games.Cheetah.Client.DOA.Income.ByField
 {
@@ -10,10 +9,10 @@ namespace Games.Cheetah.Client.DOA.Income.ByField
     {
         private readonly LongCommandRouterByField router;
 
-        public LongIncomeByFieldCommandCollector(CheetahClient client, ushort fieldId) : base(client, fieldId)
+        public LongIncomeByFieldCommandCollector(CheetahClient client, FieldId.Long fieldId) : base(client, fieldId.Id)
         {
             router = client.GetPlugin<LongCommandRouterByField>();
-            router.RegisterListener(fieldId, OnChange);
+            router.RegisterListener(fieldId.Id, OnChange);
         }
 
 

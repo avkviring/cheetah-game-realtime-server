@@ -14,11 +14,11 @@ namespace Games.Cheetah.Client.ServerAPI.Mock
          */
         void ScheduleCommandFromServer(ICommandFromServer command);
 
-        T? GetStructureValue<T>(CheetahObjectId objectId, ushort fieldId) where T : struct;
+        T? Get<T>(CheetahObjectId objectId, FieldId.Structure fieldId) where T : struct;
 
-        long? GetLongValue(CheetahObjectId objectId, ushort fieldId);
+        long? Get(CheetahObjectId objectId, FieldId.Long fieldId);
 
-        double? GetDoubleValue(CheetahObjectId objectId, ushort fieldId);
+        double? Get(CheetahObjectId objectId, FieldId.Double fieldId);
 
         void SetMemberIdForNewCheetahObject(ushort memberId);
         long GetCreatedObjectsCount();

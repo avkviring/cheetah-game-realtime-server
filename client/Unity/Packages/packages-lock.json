@@ -49,7 +49,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.core": {
-      "version": "1.6.0",
+      "version": "1.4.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -144,15 +144,6 @@
         "games.cheetah.platform": "999.999.999",
         "games.cheetah.grpc.admin": "999.999.999",
         "games.cheetah.grpc.shared": "999.999.999"
-      }
-    },
-    "games.cheetah.client.doa": {
-      "version": "file:games.cheetah.client.doa",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "games.cheetah.platform": "999.999.999",
-        "games.cheetah.client": "999.999.999"
       }
     },
     "games.cheetah.embedded-server": {

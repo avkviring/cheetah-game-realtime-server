@@ -1,34 +1,35 @@
 using System;
+using System.Collections.Generic;
 using Games.Cheetah.Client.Types;
 
 namespace Games.Cheetah.Client.ServerAPI.Mock.Type
 {
-    public struct FieldKey : IEquatable<FieldKey>
+    public struct FieldKey<FID> : IEquatable<FieldKey<FID>> where FID : FieldId
     {
         private readonly CheetahObjectId objectId;
-        private readonly ushort fieldId;
+        private readonly FID fieldId;
 
-        public FieldKey(CheetahObjectId objectId, ushort fieldId)
+        public FieldKey(CheetahObjectId objectId, FID fieldId)
         {
             this.objectId = objectId;
             this.fieldId = fieldId;
         }
 
-        public bool Equals(FieldKey other)
+        public bool Equals(FieldKey<FID> other)
         {
-            return objectId.Equals(other.objectId) && fieldId == other.fieldId;
+            return objectId.Equals(other.objectId) && EqualityComparer<FID>.Default.Equals(fieldId, other.fieldId);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is FieldKey other && Equals(other);
+            return obj is FieldKey<FID> other && Equals(other);
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                return (objectId.GetHashCode() * 397) ^ fieldId.GetHashCode();
+                return (objectId.GetHashCode() * 397) ^ EqualityComparer<FID>.Default.GetHashCode(fieldId);
             }
         }
     }

@@ -1,4 +1,3 @@
-using System;
 using Games.Cheetah.Client.Types;
 
 namespace Games.Cheetah.Client.ServerAPI.Mock.Storage
@@ -10,41 +9,35 @@ namespace Games.Cheetah.Client.ServerAPI.Mock.Storage
         private Doubles doubles;
         private Longs longs;
         private Structures structures;
-        
 
-        
+
         public Fields(Longs longs, Doubles doubles, Structures structures)
         {
             this.longs = longs;
             this.doubles = doubles;
             this.structures = structures;
         }
-        
+
         public byte SetListener(ushort clientId, IFieldServerAPI.Listener listener)
         {
             this.listener = listener;
             return 0;
         }
-        
-        
 
-        public byte Delete(ushort clientId, in CheetahObjectId objectId, ushort fieldId, FieldType fieldType)
+
+        public byte Delete(ushort clientId, in CheetahObjectId objectId, FieldId fieldId)
         {
-            switch (fieldType)
+            switch (fieldId)
             {
-                case FieldType.Long:
-                    longs.DeleteField(objectId, fieldId);
+                case FieldId.Long longFieldId:
+                    longs.DeleteField(objectId, longFieldId);
                     break;
-                case FieldType.Double:
-                    doubles.DeleteField(objectId, fieldId);
+                case FieldId.Double doubleFieldId:
+                    doubles.DeleteField(objectId, doubleFieldId);
                     break;
-                case FieldType.Structure:
-                    structures.DeleteField(objectId, fieldId);
+                case FieldId.Structure structureFieldId:
+                    structures.DeleteField(objectId, structureFieldId);
                     break;
-                case FieldType.Event:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(fieldType), fieldType, null);
             }
 
             return 0;
