@@ -5,10 +5,10 @@ namespace Games.Cheetah.Client.ServerAPI.Mock.Events
     public class SetDoubleCommandFromServer : ICommandFromServer
     {
         private readonly CheetahObjectId objectId;
-        private readonly ushort fieldId;
+        private readonly FieldId.Double fieldId;
         private readonly double value;
 
-        public SetDoubleCommandFromServer(CheetahObjectId objectId, ushort fieldId, double value)
+        public SetDoubleCommandFromServer(CheetahObjectId objectId, FieldId.Double fieldId, double value)
         {
             this.objectId = objectId;
             this.fieldId = fieldId;
@@ -17,7 +17,7 @@ namespace Games.Cheetah.Client.ServerAPI.Mock.Events
 
         public void Apply(CheetahClientMock cheetahClientMock)
         {
-            cheetahClientMock.doubles.listener?.Invoke(0, in objectId, fieldId, value);
+            cheetahClientMock.doubles.listener?.Invoke(0, in objectId, fieldId.Id, value);
         }
     }
 }
