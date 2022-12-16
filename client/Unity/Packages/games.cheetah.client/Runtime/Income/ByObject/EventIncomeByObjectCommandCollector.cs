@@ -10,11 +10,11 @@ namespace Games.Cheetah.Client.DOA.Income.ByObject
         private readonly EventCommandRouterByObject router;
         private readonly Codec<T> codec;
 
-        public EventIncomeByObjectCommandCollector(CheetahClient client, CheetahObjectId id, ushort fieldId) : base(client, fieldId)
+        public EventIncomeByObjectCommandCollector(CheetahClient client, CheetahObjectId id, FieldId.Event fieldId) : base(client, fieldId.Id)
         {
             this.id = id;
             router = client.GetPlugin<EventCommandRouterByObject>();
-            router.RegisterListener(in id, fieldId, OnEvent);
+            router.RegisterListener(in id, fieldId.Id, OnEvent);
             codec = client.CodecRegistry.GetCodec<T>();
         }
 

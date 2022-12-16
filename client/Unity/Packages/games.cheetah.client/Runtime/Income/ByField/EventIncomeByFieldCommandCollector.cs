@@ -14,10 +14,10 @@ namespace Games.Cheetah.Client.DOA.Income.ByField
         private readonly Codec<T> codec;
 
 
-        public EventIncomeByFieldCommandCollector(CheetahClient client, ushort fieldId) : base(client, fieldId)
+        public EventIncomeByFieldCommandCollector(CheetahClient client, FieldId.Event fieldId) : base(client, fieldId.Id)
         {
             router = client.GetPlugin<EventRouterByField>();
-            router.RegisterListener(fieldId, OnEvent);
+            router.RegisterListener(fieldId.Id, OnEvent);
             codec = client.CodecRegistry.GetCodec<T>();
         }
 

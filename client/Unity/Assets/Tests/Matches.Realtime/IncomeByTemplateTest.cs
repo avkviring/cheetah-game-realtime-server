@@ -1,4 +1,5 @@
 using System.Threading;
+using Games.Cheetah.Client;
 using Games.Cheetah.Client.DOA.Income.ByObject;
 using Games.Cheetah.Client.DOA.Income.ByTemplate;
 using Games.Cheetah.Client.Types;
@@ -36,7 +37,7 @@ namespace Tests.Matches.Realtime
 
             // проверяем структуру
             var incomeTurretsParams = new TurretsParamsStructure();
-            cheetahObjectConstructor.GetStruct(TurretsParamsFieldId, ref incomeTurretsParams);
+            cheetahObjectConstructor.Get(TurretsParamsFieldId, ref incomeTurretsParams);
             Assert.AreEqual(turretsParams, incomeTurretsParams);
         }
 
@@ -100,13 +101,13 @@ namespace Tests.Matches.Realtime
         [Test]
         public void TestDeleteFieldIncomeCommands()
         {
-            const ushort fieldId = 1000;
+            var fieldId = new FieldId.Long(1000);
             // слушаем создание новых объектов на втором клиенте
             var collector = new DeletedFieldByTemplateIncomeCommands(clientB, 777);
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             clientB.Writer.SetLong(in createdObject.ObjectId, fieldId, 5);
-            clientB.Writer.DeleteField(createdObject.ObjectId, FieldType.Long, fieldId);
+            clientB.Writer.DeleteField(createdObject.ObjectId, fieldId);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -115,7 +116,7 @@ namespace Tests.Matches.Realtime
             var stream = collector.GetStream();
             var deletedField = stream.GetItem(0);
             Assert.AreEqual(FieldType.Long, deletedField.fieldType);
-            Assert.AreEqual(fieldId, deletedField.fieldId);
+            Assert.AreEqual(fieldId.Id, deletedField.fieldId);
             Assert.AreEqual(createdObject.ObjectId, deletedField.cheetahObject.ObjectId);
         }
     }

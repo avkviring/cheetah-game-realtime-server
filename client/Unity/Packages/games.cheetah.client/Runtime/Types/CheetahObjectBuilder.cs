@@ -1,5 +1,4 @@
 using Games.Cheetah.Client.Internal;
-using Games.Cheetah.Client.Internal.FFI;
 
 namespace Games.Cheetah.Client.Types
 {
@@ -53,13 +52,13 @@ namespace Games.Cheetah.Client.Types
             ResultChecker.Check(client.serverAPI.Object.CreatedObject(client.Id, in objectId, true, ref buffer));
         }
 
-        public CheetahObjectBuilder SetDouble(ushort fieldId, double value)
+        public CheetahObjectBuilder SetDouble(FieldId.Double fieldId, double value)
         {
             ResultChecker.Check(client.serverAPI.Double.Set(client.Id, in objectId, fieldId, value));
             return this;
         }
 
-        public CheetahObjectBuilder SetStructure<T>(ushort fieldId, in T item)
+        public CheetahObjectBuilder SetStructure<T>(FieldId.Structure fieldId, in T item)
         {
             buffer.Clear();
             client.CodecRegistry.GetCodec<T>().Encode(in item, ref buffer);
@@ -67,25 +66,21 @@ namespace Games.Cheetah.Client.Types
             return this;
         }
 
-        public CheetahObjectBuilder SetLong(ushort fieldId, long value)
+        public CheetahObjectBuilder SetLong(FieldId.Long fieldId, long value)
         {
             ResultChecker.Check(client.serverAPI.Long.Set(client.Id, in objectId, fieldId, value));
             return this;
         }
 
-        public CheetahObjectBuilder CompareAndSetLong(ushort fieldId, long currentValue, long newValue)
+        public CheetahObjectBuilder CompareAndSetLong(FieldId.Long fieldId, long currentValue, long newValue, bool hasReset = false,
+            long resetValue = default)
         {
-            ResultChecker.Check(client.serverAPI.Long.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, false, 0));
+            ResultChecker.Check(client.serverAPI.Long.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, hasReset, resetValue));
             return this;
         }
 
-        public CheetahObjectBuilder CompareAndSetLongWithReset(ushort fieldId, long currentValue, long newValue, long resetValue)
-        {
-            ResultChecker.Check(client.serverAPI.Long.CompareAndSet(client.Id, in objectId, fieldId, currentValue, newValue, true, resetValue));
-            return this;
-        }
 
-        public CheetahObjectBuilder CompareAndSetStructure<T>(ushort fieldId, ref T current, ref T newval)
+        public CheetahObjectBuilder CompareAndSetStructure<T>(FieldId.Structure fieldId, ref T current, ref T newval)
         {
             buffer.Clear();
             var newBuffer = new CheetahBuffer();
@@ -107,7 +102,7 @@ namespace Games.Cheetah.Client.Types
             return this;
         }
 
-        public CheetahObjectBuilder CompareAndSetStructureWithReset<T>(ushort fieldId, ref T current, ref T newval, ref T reset)
+        public CheetahObjectBuilder CompareAndSetStructure<T>(FieldId.Structure fieldId, ref T current, ref T newval, ref T reset)
         {
             buffer.Clear();
             var newBuffer = new CheetahBuffer();

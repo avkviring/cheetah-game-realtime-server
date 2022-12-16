@@ -11,14 +11,14 @@ namespace Games.Cheetah.Client.ServerAPI.FFI
             return EventFFI.SetListener(clientId, listener);
         }
 
-        public byte Send(ushort clientId, in CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
+        public byte Send(ushort clientId, in CheetahObjectId objectId, FieldId.Event fieldId, ref CheetahBuffer data)
         {
-            return EventFFI.Send(clientId, in objectId, fieldId, ref data);
+            return EventFFI.Send(clientId, in objectId, fieldId.Id, ref data);
         }
 
-        public byte Send(ushort clientId, ushort targetUser, in CheetahObjectId objectId, ushort fieldId, ref CheetahBuffer data)
+        public byte Send(ushort clientId, ushort targetUser, in CheetahObjectId objectId, FieldId.Event fieldId, ref CheetahBuffer data)
         {
-            return EventFFI.Send(clientId, targetUser, in objectId, fieldId, ref data);
+            return EventFFI.Send(clientId, targetUser, in objectId, fieldId.Id, ref data);
         }
     }
 }

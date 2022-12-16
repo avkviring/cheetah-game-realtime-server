@@ -21,9 +21,9 @@ namespace Games.Cheetah.Client.Types
             this.codecRegistry = codecRegistry;
         }
 
-        public bool TryGetStruct<T>(ushort fieldId, ref T item) where T : struct
+        public bool TryGet<T>(FieldId.Structure fieldId, ref T item) where T : struct
         {
-            if (structures.TryGetValue(fieldId, out var buffer))
+            if (structures.TryGetValue(fieldId.Id, out var buffer))
             {
                 buffer.pos = 0;
                 codecRegistry.GetCodec<T>().Decode(ref buffer, ref item);
@@ -33,43 +33,43 @@ namespace Games.Cheetah.Client.Types
             return false;
         }
 
-        public void GetStruct<T>(ushort fieldId, ref T item) where T : struct
+        public void Get<T>(FieldId.Structure fieldId, ref T item) where T : struct
         {
-            if (!TryGetStruct(fieldId, ref item))
+            if (!TryGet(fieldId, ref item))
             {
-                throw new CheetahObjectStructFieldNotFoundException(cheetahObject.ObjectId, fieldId);
+                throw new CheetahObjectStructFieldNotFoundException(cheetahObject.ObjectId, fieldId.Id);
             }
         }
 
 
-        public bool TryGetLong(ushort fieldId, out long value)
+        public bool TryGet(FieldId.Long fieldId, out long value)
         {
-            return longs.TryGetValue(fieldId, out value);
+            return longs.TryGetValue(fieldId.Id, out value);
         }
 
-        public long GetLong(ushort fieldId)
+        public long Get(FieldId.Long fieldId)
         {
-            if (TryGetLong(fieldId, out var value))
-            {
-                return value;
-            }
-
-            throw new CheetahObjectLongFieldNotFoundException(cheetahObject.ObjectId, fieldId);
-        }
-
-        public bool TryGetDouble(ushort fieldId, out double value)
-        {
-            return doubles.TryGetValue(fieldId, out value);
-        }
-
-        public double GetDouble(ushort fieldId)
-        {
-            if (TryGetDouble(fieldId, out var value))
+            if (TryGet(fieldId, out var value))
             {
                 return value;
             }
 
-            throw new CheetahObjectDoubleFieldNotFoundException(cheetahObject.ObjectId, fieldId);
+            throw new CheetahObjectLongFieldNotFoundException(cheetahObject.ObjectId, fieldId.Id);
+        }
+
+        public bool TryGet(FieldId.Double fieldId, out double value)
+        {
+            return doubles.TryGetValue(fieldId.Id, out value);
+        }
+
+        public double Get(FieldId.Double fieldId)
+        {
+            if (TryGet(fieldId, out var value))
+            {
+                return value;
+            }
+
+            throw new CheetahObjectDoubleFieldNotFoundException(cheetahObject.ObjectId, fieldId.Id);
         }
     }
 

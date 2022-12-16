@@ -11,22 +11,22 @@ namespace Games.Cheetah.Client.ServerAPI.FFI
         }
 
 
-        public byte Set(ushort clientId, in CheetahObjectId objectId, ushort fieldId, long value)
+        public byte Set(ushort clientId, in CheetahObjectId objectId, FieldId.Long fieldId, long value)
         {
-            return LongFFI.Set(clientId, in objectId, fieldId, value);
+            return LongFFI.Set(clientId, in objectId, fieldId.Id, value);
         }
 
 
-        public byte Increment(ushort clientId, in CheetahObjectId objectId, ushort fieldId, long increment)
+        public byte Increment(ushort clientId, in CheetahObjectId objectId, FieldId.Long fieldId, long increment)
         {
-            return LongFFI.Increment(clientId, in objectId, fieldId, increment);
+            return LongFFI.Increment(clientId, in objectId, fieldId.Id, increment);
         }
 
 
-        public byte CompareAndSet(ushort clientId, in CheetahObjectId objectId, ushort fieldId, long currentValue, long newValue,
+        public byte CompareAndSet(ushort clientId, in CheetahObjectId objectId, FieldId.Long fieldId, long currentValue, long newValue,
             bool hasReset, long resetValue)
         {
-            return LongFFI.CompareAndSet(clientId, in objectId, fieldId, currentValue, newValue, hasReset, resetValue);
+            return LongFFI.CompareAndSet(clientId, in objectId, fieldId.Id, currentValue, newValue, hasReset, resetValue);
         }
     }
 }

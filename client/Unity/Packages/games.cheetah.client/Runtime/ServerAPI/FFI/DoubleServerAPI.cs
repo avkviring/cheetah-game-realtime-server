@@ -10,14 +10,14 @@ namespace Games.Cheetah.Client.ServerAPI.FFI
             return DoubleFFI.SetListener(clientId, listener);
         }
 
-        public byte Set(ushort clientId, in CheetahObjectId objectId, ushort fieldId, double value)
+        public byte Set(ushort clientId, in CheetahObjectId objectId, FieldId.Double fieldId, double value)
         {
-            return DoubleFFI.Set(clientId, objectId, fieldId, value);
+            return DoubleFFI.Set(clientId, objectId, fieldId.Id, value);
         }
 
-        public byte Increment(ushort clientId, in CheetahObjectId objectId, ushort fieldId, double increment)
+        public byte Increment(ushort clientId, in CheetahObjectId objectId, FieldId.Double fieldId, double increment)
         {
-            return DoubleFFI.Increment(clientId, in objectId, fieldId, increment);
+            return DoubleFFI.Increment(clientId, in objectId, fieldId.Id, increment);
         }
     }
 }

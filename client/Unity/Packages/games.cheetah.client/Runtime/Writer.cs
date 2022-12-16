@@ -1,4 +1,3 @@
-using System;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Internal;
 using Games.Cheetah.Client.ServerAPI;
@@ -21,111 +20,102 @@ namespace Games.Cheetah.Client
             this.clientId = clientId;
         }
 
-        public void SetLong(in CheetahObjectId objectId, ushort fieldId, long value)
+        public void SetLong(in CheetahObjectId objectId, FieldId.Long fieldId, long value)
         {
             ResultChecker.Check(serverAPI.Long.Set(clientId, in objectId, fieldId, value));
         }
 
-        public void SetDouble(in CheetahObjectId objectId, ushort fieldId, double value)
+        public void SetDouble(in CheetahObjectId objectId, FieldId.Double fieldId, double value)
         {
             ResultChecker.Check(serverAPI.Double.Set(clientId, in objectId, fieldId, value));
         }
 
-        public void SetStructure<T>(in CheetahObjectId objectId, ushort fieldId, in T value) where T : struct
+        public void SetStructure<T>(in CheetahObjectId objectId, FieldId.Structure fieldId, in T value) where T : struct
         {
             buffer.Clear();
             codecRegistry.GetCodec<T>().Encode(in value, ref buffer);
             ResultChecker.Check(serverAPI.Structure.Set(clientId, in objectId, fieldId, ref buffer));
         }
 
+        public void CompareAndSet(in CheetahObjectId objectId, FieldId.Long fieldId, long current, long newValue, bool hasReset = false,
+            long resetValue = default)
 
-        public void CompareAndSet<T>(in CheetahObjectId objectId, ushort fieldId, in T current, in T newValue) where T : unmanaged
         {
-            DoCompareAndSet(in objectId, fieldId, in current, in newValue, false);
+            ResultChecker.Check(serverAPI.Long.CompareAndSet(clientId, in objectId, fieldId, current, newValue, hasReset, resetValue));
         }
 
-        public void CompareAndSetWithReset<T>(in CheetahObjectId objectId, ushort fieldId, in T current, in T newValue, in T resetValue)
+
+        public void CompareAndSet<T>(in CheetahObjectId objectId, FieldId.Structure fieldId, in T current, in T newValue) where T : unmanaged
+        {
+            buffer.Clear();
+            var newBuffer = new CheetahBuffer();
+            var resetBuffer = new CheetahBuffer();
+            var codec = codecRegistry.GetCodec<T>();
+            codec.Encode(in current, ref buffer);
+            codec.Encode(in newValue, ref newBuffer);
+
+            ResultChecker.Check(serverAPI.Structure.CompareAndSet(
+                clientId,
+                in objectId,
+                fieldId,
+                ref buffer,
+                ref newBuffer,
+                false,
+                ref resetBuffer
+            ));
+        }
+
+        public void CompareAndSet<T>(in CheetahObjectId objectId, FieldId.Structure fieldId, in T current, in T newValue, in T resetValue)
             where T : unmanaged
         {
-            DoCompareAndSet(in objectId, fieldId, in current, in newValue, true, resetValue);
+            buffer.Clear();
+            var newBuffer = new CheetahBuffer();
+            var resetBuffer = new CheetahBuffer();
+            var codec = codecRegistry.GetCodec<T>();
+            codec.Encode(in current, ref buffer);
+            codec.Encode(in newValue, ref newBuffer);
+            codec.Encode(in resetValue, ref resetBuffer);
+
+            ResultChecker.Check(serverAPI.Structure.CompareAndSet(
+                clientId,
+                in objectId,
+                fieldId,
+                ref buffer,
+                ref newBuffer,
+                true,
+                ref resetBuffer
+            ));
         }
 
-        private void DoCompareAndSet<T>(in CheetahObjectId objectId, ushort fieldId, in T current, in T newValue, bool hasReset,
-            T resetValue = default) where T : unmanaged
+
+        public void Increment(in CheetahObjectId objectId, FieldId.Long fieldId, long increment)
         {
-            switch (current)
-            {
-                case long longCurrentValue:
-                    if (newValue is long longNewValue && resetValue is long longResetValue)
-                    {
-                        ResultChecker.Check(serverAPI.Long.CompareAndSet(clientId, in objectId, fieldId, longCurrentValue, longNewValue, hasReset,
-                            longResetValue));
-                    }
-                    else
-                    {
-                        throw new Exception("newValue ist not long");
-                    }
-
-                    break;
-                default:
-                    buffer.Clear();
-                    var newBuffer = new CheetahBuffer();
-                    var resetBuffer = new CheetahBuffer();
-                    var codec = codecRegistry.GetCodec<T>();
-                    codec.Encode(in current, ref buffer);
-                    codec.Encode(in newValue, ref newBuffer);
-                    if (hasReset)
-                    {
-                        codec.Encode(in resetValue, ref resetBuffer);
-                    }
-
-                    ResultChecker.Check(serverAPI.Structure.CompareAndSet(
-                        clientId,
-                        in objectId,
-                        fieldId,
-                        ref buffer,
-                        ref newBuffer,
-                        hasReset,
-                        ref resetBuffer
-                    ));
-                    break;
-            }
+            ResultChecker.Check(serverAPI.Long.Increment(clientId, in objectId, fieldId, increment));
         }
 
-
-        public void Increment<T>(in CheetahObjectId objectId, ushort fieldId, T increment) where T : unmanaged
+        public void Increment(in CheetahObjectId objectId, FieldId.Double fieldId, double increment)
         {
-            switch (increment)
-            {
-                case long longIncrement:
-                    ResultChecker.Check(serverAPI.Long.Increment(clientId, in objectId, fieldId, longIncrement));
-                    break;
-                case double doubleIncrement:
-                    ResultChecker.Check(serverAPI.Double.Increment(clientId, in objectId, fieldId, doubleIncrement));
-                    break;
-                default:
-                    throw new NotSupportedException("Increment is called with a unsupported type");
-            }
+            ResultChecker.Check(serverAPI.Double.Increment(clientId, in objectId, fieldId, increment));
         }
 
 
-        public void SendEvent<T>(in CheetahObjectId objectId, ushort eventId, in T item)
+        public void SendEvent<T>(in CheetahObjectId objectId, FieldId.Event eventId, in T item)
         {
             buffer.Clear();
             codecRegistry.GetCodec<T>().Encode(in item, ref buffer);
             ResultChecker.Check(serverAPI.Event.Send(clientId, in objectId, eventId, ref buffer));
         }
 
-        public void SendEvent<T>(in CheetahObjectId objectId, ushort eventId, uint targetUser, in T item)
+        public void SendEvent<T>(in CheetahObjectId objectId, FieldId.Event eventId, uint targetUser, in T item)
         {
             buffer.Clear();
             codecRegistry.GetCodec<T>().Encode(in item, ref buffer);
             ResultChecker.Check(serverAPI.Event.Send(clientId, (ushort)targetUser, in objectId, eventId, ref buffer));
         }
 
-        public void DeleteField(in CheetahObjectId objectId, FieldType fieldType, ushort fieldId)
+        public void DeleteField(in CheetahObjectId objectId, FieldId fieldId)
         {
-            ResultChecker.Check(serverAPI.Field.Delete(clientId, in objectId, fieldId, fieldType));
+            ResultChecker.Check(serverAPI.Field.Delete(clientId, in objectId, fieldId));
         }
 
 

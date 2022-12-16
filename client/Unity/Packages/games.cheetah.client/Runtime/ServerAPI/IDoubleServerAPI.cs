@@ -9,7 +9,7 @@ namespace Games.Cheetah.Client.ServerAPI
         public delegate void Listener(ushort commandCreator, in CheetahObjectId objectId, ushort fieldId, double value);
 
         byte SetListener(ushort clientId, Listener listener);
-        byte Set(ushort clientId, in CheetahObjectId objectId, ushort fieldId, double value);
-        byte Increment(ushort clientId, in CheetahObjectId objectId, ushort fieldId, double increment);
+        byte Set(ushort clientId, in CheetahObjectId objectId, FieldId.Double fieldId, double value);
+        byte Increment(ushort clientId, in CheetahObjectId objectId, FieldId.Double fieldId, double increment);
     }
 }

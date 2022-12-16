@@ -3,7 +3,7 @@ using Games.Cheetah.Client.Types;
 
 namespace Games.Cheetah.Client.ServerAPI.Mock.Storage
 {
-    public class Structures : AbstractStorage<CheetahBuffer>, IStructureServerAPI
+    public class Structures : AbstractStorage<CheetahBuffer, FieldId.Structure>, IStructureServerAPI
     {
         internal IStructureServerAPI.Listener listener;
 
@@ -16,13 +16,13 @@ namespace Games.Cheetah.Client.ServerAPI.Mock.Storage
         public byte CompareAndSet(
             ushort clientId,
             in CheetahObjectId objectId,
-            ushort fieldId,
+            FieldId.Structure fieldId,
             ref CheetahBuffer currentValue,
             ref CheetahBuffer newValue,
             bool hasReset,
             ref CheetahBuffer resetValue)
         {
-            var key = new FieldKey(objectId, fieldId);
+            var key = new FieldKey<FieldId.Structure>(objectId, fieldId);
             if (fields.TryGetValue(key, out var data) && data.Equals(currentValue))
             {
                 fields[key] = newValue;

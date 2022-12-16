@@ -106,8 +106,7 @@ namespace Tests.Matches.Realtime
 
             clientA.Writer.SetStructure(in createdObject.ObjectId, TurretsParamsFieldId, in turretParamsA);
             clientA.Writer.CompareAndSet(in createdObject.ObjectId, TurretsParamsFieldId, in turretParamsA, in turretParamsB);
-            clientA.Writer.CompareAndSetWithReset(in createdObject.ObjectId, TurretsParamsFieldId, in turretParamsB, in turretParamsC,
-                in turretParamsA);
+            clientA.Writer.CompareAndSet(in createdObject.ObjectId, TurretsParamsFieldId, in turretParamsB, in turretParamsC, in turretParamsA);
 
             // ждем отправки команды
             Thread.Sleep(200);
@@ -127,11 +126,11 @@ namespace Tests.Matches.Realtime
         public void TestLongIncomeCommands()
         {
             // слушаем события определенного типа
-            var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
+            var collector = new LongIncomeByFieldCommandCollector(clientB, ScoreFieldId);
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            clientA.Writer.SetLong(in createdObject.ObjectId, HealFieldId, 7799L);
+            clientA.Writer.SetLong(in createdObject.ObjectId, ScoreFieldId, 7799L);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -147,11 +146,11 @@ namespace Tests.Matches.Realtime
         public void TestIncrementLongIncomeCommands()
         {
             // слушаем события определенного типа
-            var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
+            var collector = new LongIncomeByFieldCommandCollector(clientB, ScoreFieldId);
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            clientA.Writer.Increment(in createdObject.ObjectId, HealFieldId, 1001L);
+            clientA.Writer.Increment(in createdObject.ObjectId, ScoreFieldId, 1001L);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
@@ -167,12 +166,12 @@ namespace Tests.Matches.Realtime
         public void TestCompareAndSetLongIncomeCommands()
         {
             // слушаем события определенного типа
-            var collector = new LongIncomeByFieldCommandCollector(clientB, HealFieldId);
+            var collector = new LongIncomeByFieldCommandCollector(clientB, ScoreFieldId);
             // создаем объект на первом клиенте
             var createdObject = clientA.NewObjectBuilder(777, PlayerHelper.PlayerGroup).Build();
             // изменяем значение
-            clientA.Writer.CompareAndSet(in createdObject.ObjectId, HealFieldId, 0L, 555L);
-            clientA.Writer.CompareAndSetWithReset(in createdObject.ObjectId, HealFieldId, 555L, 1000L, 0L);
+            clientA.Writer.CompareAndSet(in createdObject.ObjectId, ScoreFieldId, 0L, 555L);
+            clientA.Writer.CompareAndSet(in createdObject.ObjectId, ScoreFieldId, 555L, 1000L, true, 0L);
             // ждем отправки команды
             Thread.Sleep(200);
             // прием команды
