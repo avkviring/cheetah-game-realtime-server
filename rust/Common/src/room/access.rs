@@ -3,6 +3,7 @@ use std::ops::{BitAnd, Shl};
 ///
 /// Группа доступа
 ///
+#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Default, Hash, Eq, Ord, PartialOrd)]
 pub struct AccessGroups(pub u64);
 

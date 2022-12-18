@@ -109,11 +109,12 @@ namespace Tests.Matches.Realtime
             clientB.Writer.SetLong(in createdObject.ObjectId, fieldId, 5);
             clientB.Writer.DeleteField(createdObject.ObjectId, fieldId);
             // ждем отправки команды
-            Thread.Sleep(200);
+            Thread.Sleep(1000);
             // прием команды
             clientB.Update();
             // проверяем результат
             var stream = collector.GetStream();
+            Assert.AreEqual(stream.Count, 1);
             var deletedField = stream.GetItem(0);
             Assert.AreEqual(FieldType.Long, deletedField.fieldType);
             Assert.AreEqual(fieldId.Id, deletedField.fieldId);

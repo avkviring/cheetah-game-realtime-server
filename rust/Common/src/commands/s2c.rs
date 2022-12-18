@@ -1,5 +1,8 @@
 use std::io::Cursor;
 
+use strum_macros::AsRefStr;
+
+use crate::commands::binary_value::BinaryValue;
 use crate::commands::field::{Field, FieldId};
 use crate::commands::field_value::FieldValue;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
@@ -12,7 +15,6 @@ use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
 use crate::room::RoomMemberId;
-use strum_macros::AsRefStr;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 #[allow(clippy::large_enum_variant)]
@@ -145,7 +147,7 @@ impl S2CCommand {
 			CommandTypeId::Delete => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::SetLong => S2CCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
 			CommandTypeId::SetDouble => S2CCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
-			CommandTypeId::SetStructure => S2CCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?),
+			CommandTypeId::SetStructure => S2CCommand::SetField(SetFieldCommand::decode::<BinaryValue>(object_id?, field_id?, input)?),
 			CommandTypeId::Event => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::Forwarded => S2CCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
@@ -240,7 +242,7 @@ mod tests {
 			&S2CCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
-				value: vec![1, 2, 3, 4].into(),
+				value: BinaryValue::from([1, 2, 3, 4].as_ref()).into(),
 			}),
 			CommandTypeId::SetStructure,
 			Some(object_id),

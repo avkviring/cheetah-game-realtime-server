@@ -24,12 +24,12 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		let object = if self.room_owner {
 			// создаем объект с владением комнаты
 			let new_room_object_id = GameObjectId::new(room.room_object_id_generator, GameObjectOwner::Room);
-			if let Some(unique_key) = &self.singleton_key {
-				if room.has_object_singleton_key(unique_key) {
+			if let Some(singleton_key) = self.get_singleton_key() {
+				if room.has_object_singleton_key(singleton_key) {
 					room.delete_object(member_object_id, member_id)?;
 					return Ok(());
 				}
-				room.set_singleton_key(unique_key.clone(), new_room_object_id);
+				room.set_singleton_key(*singleton_key, new_room_object_id);
 			}
 			room.room_object_id_generator += 1;
 			let mut object = room.delete_object(member_object_id, member_id)?;
@@ -75,11 +75,7 @@ mod tests {
 		let (mut room, object_id, member1, member2) = setup_two_players();
 		room.test_mark_as_connected(member1).unwrap();
 		room.test_mark_as_connected(member2).unwrap();
-		let command = C2SCreatedGameObjectCommand {
-			object_id,
-			room_owner: false,
-			singleton_key: None,
-		};
+		let command = C2SCreatedGameObjectCommand::new(object_id, false, None);
 		command.execute(&mut room, member1).unwrap();
 
 		assert!(room.test_get_member_out_commands(member1).is_empty());
@@ -100,11 +96,7 @@ mod tests {
 	#[test]
 	pub(crate) fn should_switch_object_to_created_state() {
 		let (mut room, object_id, member1, _) = setup_two_players();
-		let command = C2SCreatedGameObjectCommand {
-			object_id,
-			room_owner: false,
-			singleton_key: None,
-		};
+		let command = C2SCreatedGameObjectCommand::new(object_id, false, None);
 		room.test_out_commands.clear();
 		command.execute(&mut room, member1).unwrap();
 
@@ -121,11 +113,7 @@ mod tests {
 		let (mut room, object_id, member1, _) = setup_two_players();
 		let object = room.get_object_mut(object_id).unwrap();
 		object.created = true;
-		let command = C2SCreatedGameObjectCommand {
-			object_id,
-			room_owner: false,
-			singleton_key: None,
-		};
+		let command = C2SCreatedGameObjectCommand::new(object_id, false, None);
 		room.test_out_commands.clear();
 
 		assert!(matches!(command.execute(&mut room, member1), Err(ServerCommandError::Error(_))));
@@ -146,11 +134,7 @@ mod tests {
 		};
 		create_command.execute(&mut room, member_id).unwrap();
 
-		let created_command = C2SCreatedGameObjectCommand {
-			object_id: member_object_id,
-			room_owner: true,
-			singleton_key: None,
-		};
+		let created_command = C2SCreatedGameObjectCommand::new(member_object_id, true, None);
 		created_command.execute(&mut room, member_id).unwrap();
 
 		// старого объекта уже не должно быть
@@ -187,11 +171,8 @@ mod tests {
 			access_groups,
 		};
 		create_command.execute(&mut room, member_id).unwrap();
-		let created_command = C2SCreatedGameObjectCommand {
-			object_id: member_object_id_1,
-			room_owner: true,
-			singleton_key: singleton_key.clone(),
-		};
+		let created_command = C2SCreatedGameObjectCommand::new(member_object_id_1, true, singleton_key);
+
 		created_command.execute(&mut room, member_id).unwrap();
 		room.test_out_commands.clear();
 
@@ -202,11 +183,7 @@ mod tests {
 			access_groups,
 		};
 		create_command.execute(&mut room, member_id).unwrap();
-		let created_command = C2SCreatedGameObjectCommand {
-			object_id: member_object_id_2,
-			room_owner: true,
-			singleton_key,
-		};
+		let created_command = C2SCreatedGameObjectCommand::new(member_object_id_2, true, singleton_key);
 		created_command.execute(&mut room, member_id).unwrap();
 		assert_eq!(room.objects.len(), 1);
 		assert_eq!(room.test_out_commands.len(), 0);

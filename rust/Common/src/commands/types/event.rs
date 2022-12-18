@@ -10,6 +10,7 @@ use crate::room::RoomMemberId;
 /// Событие по объекту
 /// - C->S, S->C
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(C)]
 pub struct EventCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
@@ -20,6 +21,7 @@ pub struct EventCommand {
 /// Событие по объекту для определенного пользователя
 ///
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(C)]
 pub struct TargetEventCommand {
 	pub target: RoomMemberId,
 	pub event: EventCommand,

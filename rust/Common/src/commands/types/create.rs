@@ -13,6 +13,7 @@ use crate::room::object::GameObjectId;
 /// S->C, C->S
 ///
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[repr(C)]
 pub struct CreateGameObjectCommand {
 	pub object_id: GameObjectId,
 	pub template: GameObjectTemplateId,
@@ -22,6 +23,7 @@ pub struct CreateGameObjectCommand {
 ///
 /// Игровой объект создан
 ///
+#[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct C2SCreatedGameObjectCommand {
 	pub object_id: GameObjectId,
@@ -33,12 +35,13 @@ pub struct C2SCreatedGameObjectCommand {
 	///
 	/// Если задан - то в комнате может быть только один объект с таким идентификатором
 	///
-	pub singleton_key: Option<BinaryValue>,
+	singleton_key: BinaryValue,
 }
 
 ///
 /// Игровой объект загружен на клиента
 ///
+#[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GameObjectCreatedS2CCommand {
 	pub object_id: GameObjectId,
@@ -62,9 +65,25 @@ impl CreateGameObjectCommand {
 }
 
 impl C2SCreatedGameObjectCommand {
+	pub fn new(object_id: GameObjectId, room_owner: bool, singleton_key: Option<BinaryValue>) -> Self {
+		Self {
+			object_id,
+			room_owner,
+			singleton_key: singleton_key.unwrap_or_default(),
+		}
+	}
+
+	pub fn get_singleton_key(&self) -> Option<&BinaryValue> {
+		if self.singleton_key.len == 0 {
+			None
+		} else {
+			Some(&self.singleton_key)
+		}
+	}
+
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_u8(u8::from(self.room_owner))?;
-		match &self.singleton_key {
+		match self.get_singleton_key() {
 			None => out.write_variable_u64(0),
 			Some(buffer) => buffer.encode(out),
 		}
@@ -72,11 +91,11 @@ impl C2SCreatedGameObjectCommand {
 
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let room_owner = input.read_u8()? == 1;
-		let unique_key = BinaryValue::decode(input).map(|v| if v.len() == 0 { None } else { Some(v) })?;
+		let singleton_key = BinaryValue::decode(input)?;
 		Ok(Self {
 			object_id,
 			room_owner,
-			singleton_key: unique_key,
+			singleton_key,
 		})
 	}
 }

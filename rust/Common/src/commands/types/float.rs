@@ -10,6 +10,7 @@ use crate::room::object::GameObjectId;
 /// - C->S
 ///
 #[derive(Debug, PartialEq, Clone)]
+#[repr(C)]
 pub struct IncrementDoubleC2SCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,

@@ -3,11 +3,12 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+use cheetah_common::commands::binary_value::BinaryValue;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_common::commands::FieldValue;
+use cheetah_common::commands::{FieldType, FieldValue};
 use cheetah_common::network::client::ConnectionStatus;
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -20,7 +21,7 @@ use cheetah_common::room::RoomMemberId;
 use crate::clients::network_thread::C2SCommandWithChannel;
 use crate::clients::{ClientRequest, SharedClientStatistics};
 use crate::ffi::channel::Channel;
-use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI};
+use crate::ffi::ForwardedCommandFFI;
 
 ///
 /// Взаимодействие с сетевым потоком клиента, через Sender
@@ -37,9 +38,9 @@ pub struct ApplicationThreadClient {
 	pub shared_statistics: SharedClientStatistics,
 	pub listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, i64)>,
 	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, f64)>,
-	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BufferFFI)>,
-	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BufferFFI)>,
-	pub listener_delete_field: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, FieldTypeFFI)>,
+	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BinaryValue)>,
+	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BinaryValue)>,
+	pub listener_delete_field: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, FieldType)>,
 	pub listener_create_object: Option<extern "C" fn(&GameObjectId, u16)>,
 	pub listener_delete_object: Option<extern "C" fn(&GameObjectId)>,
 	pub listener_created_object: Option<extern "C" fn(&GameObjectId)>,
@@ -155,18 +156,13 @@ impl ApplicationThreadClient {
 						FieldValue::Structure(s) => {
 							if let Some(ref listener) = self.listener_structure {
 								let object_id = command.object_id;
-								listener(member_with_creator.creator, &object_id, command.field_id, &s.into());
+								listener(member_with_creator.creator, &object_id, command.field_id, &s.as_slice().into());
 							}
 						}
 					},
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
-							listener(
-								member_with_creator.creator,
-								&command.object_id,
-								command.field_id,
-								&From::from(&command.event),
-							);
+							listener(member_with_creator.creator, &command.object_id, command.field_id, &command.event);
 						}
 					}
 					S2CCommand::Delete(command) => {
@@ -176,12 +172,7 @@ impl ApplicationThreadClient {
 					}
 					S2CCommand::DeleteField(command) => {
 						if let Some(ref listener) = self.listener_delete_field {
-							listener(
-								member_with_creator.creator,
-								&command.object_id,
-								command.field_id,
-								From::from(&command.field_type),
-							);
+							listener(member_with_creator.creator, &command.object_id, command.field_id, command.field_type);
 						}
 					}
 					S2CCommand::Forwarded(command) => {

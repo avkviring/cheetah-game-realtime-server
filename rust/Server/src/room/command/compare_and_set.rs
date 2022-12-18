@@ -28,7 +28,7 @@ impl ServerCommandExecutor for CompareAndSetLongCommand {
 			self.field_id,
 			&FieldValue::Long(self.current),
 			FieldValue::Long(self.new),
-			&self.reset.as_ref().map(|r| FieldValue::Long(*r)),
+			&self.get_reset().map(|r| FieldValue::Long(r)),
 		)
 	}
 }
@@ -42,7 +42,7 @@ impl ServerCommandExecutor for CompareAndSetStructureCommand {
 			self.field_id,
 			&FieldValue::Structure(self.current.as_slice().into()),
 			FieldValue::Structure(self.new.as_slice().into()),
-			&self.reset.as_ref().map(|r| FieldValue::Structure(r.as_slice().into())),
+			&self.get_reset().map(|r| FieldValue::Structure(r.as_slice().into())),
 		)
 	}
 }
@@ -154,6 +154,8 @@ fn reset_value(
 
 #[cfg(test)]
 mod tests {
+	use cheetah_common::commands::binary_value::BinaryValue;
+	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::field::FieldId;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::long::CompareAndSetLongCommand;
@@ -169,7 +171,6 @@ mod tests {
 		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
 	};
 	use crate::room::Room;
-	use cheetah_common::commands::field::Field;
 
 	///
 	/// Проверяем что при выполнении нескольких команд соблюдаются гарантии `CompareAndSet`
@@ -177,39 +178,21 @@ mod tests {
 	#[test]
 	fn should_compare_and_set_long() {
 		let (mut room, member1_id, _, object_id, field_id) = setup();
-		let command1 = CompareAndSetLongCommand {
-			object_id,
-			field_id,
-			current: 0,
-			new: 100,
-			reset: None,
-		};
+		let command1 = CompareAndSetLongCommand::new(object_id, field_id, 0, 100, None);
 		command1.execute(&mut room, member1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
-		let command2 = CompareAndSetLongCommand {
-			object_id,
-			field_id: command1.field_id,
-			current: 0,
-			new: 200,
-			reset: None,
-		};
+		let command2 = CompareAndSetLongCommand::new(object_id, command1.field_id, 0, 200, None);
 		command2.execute(&mut room, member1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
 			command1.new
 		);
 
-		let command3 = CompareAndSetLongCommand {
-			object_id,
-			field_id: command1.field_id,
-			current: command1.new,
-			new: 300,
-			reset: None,
-		};
+		let command3 = CompareAndSetLongCommand::new(object_id, command1.field_id, command1.new, 300, None);
 		command3.execute(&mut room, member1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command1.field_id).unwrap(),
@@ -220,43 +203,43 @@ mod tests {
 	#[test]
 	fn should_compare_and_set_structure() {
 		let (mut room, member1_id, _, object_id, field_id) = setup();
-		let command1 = CompareAndSetStructureCommand {
-			object_id,
-			field_id,
-			current: vec![0, 1].as_slice().into(),
-			new: vec![1, 0, 0].as_slice().into(),
-			reset: None,
-		};
+		let command1 = CompareAndSetStructureCommand::new(object_id, field_id, vec![0, 1].as_slice().into(), vec![1, 0, 0].as_slice().into(), None);
 		command1.execute(&mut room, member1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
-			command1.new.as_slice()
+			*room
+				.get_object_mut(object_id)
+				.unwrap()
+				.get_field::<BinaryValue>(command1.field_id)
+				.unwrap(),
+			command1.new.as_slice().into()
 		);
 
-		let command2 = CompareAndSetStructureCommand {
+		let command2 = CompareAndSetStructureCommand::new(
 			object_id,
-			field_id: command1.field_id,
-			current: vec![0, 1].as_slice().into(),
-			new: vec![2, 0, 0].as_slice().into(),
-			reset: None,
-		};
+			command1.field_id,
+			vec![0, 1].as_slice().into(),
+			vec![2, 0, 0].as_slice().into(),
+			None,
+		);
 		command2.execute(&mut room, member1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
-			command1.new.as_slice()
+			*room
+				.get_object_mut(object_id)
+				.unwrap()
+				.get_field::<BinaryValue>(command1.field_id)
+				.unwrap(),
+			command1.new
 		);
 
-		let command3 = CompareAndSetStructureCommand {
-			object_id,
-			field_id: command1.field_id,
-			current: command1.new,
-			new: vec![3, 0, 0].as_slice().into(),
-			reset: None,
-		};
+		let command3 = CompareAndSetStructureCommand::new(object_id, command1.field_id, command1.new, vec![3, 0, 0].as_slice().into(), None);
 		command3.execute(&mut room, member1_id).unwrap();
 		assert_eq!(
-			*room.get_object_mut(object_id).unwrap().get_field::<Vec<u8>>(command1.field_id).unwrap(),
-			command3.new.as_slice()
+			*room
+				.get_object_mut(object_id)
+				.unwrap()
+				.get_field::<BinaryValue>(command1.field_id)
+				.unwrap(),
+			command3.new
 		);
 	}
 
@@ -266,13 +249,7 @@ mod tests {
 	#[test]
 	fn should_send_command() {
 		let (mut room, member1_id, _, object_id, field_id) = setup();
-		let command = CompareAndSetLongCommand {
-			object_id,
-			field_id,
-			current: 0,
-			new: 100,
-			reset: Some(555),
-		};
+		let command = CompareAndSetLongCommand::new(object_id, field_id, 0, 100, Some(555));
 
 		room.test_out_commands.clear();
 		command.execute(&mut room, member1_id).unwrap();
@@ -286,13 +263,7 @@ mod tests {
 	#[test]
 	fn should_reset() {
 		let (mut room, member1_id, _, object_id, field_id) = setup();
-		let command = CompareAndSetLongCommand {
-			object_id,
-			field_id,
-			current: 0,
-			new: 100,
-			reset: Some(555),
-		};
+		let command = CompareAndSetLongCommand::new(object_id, field_id, 0, 100, Some(555));
 		command.execute(&mut room, member1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
@@ -302,7 +273,7 @@ mod tests {
 		room.disconnect_member(member1_id).unwrap();
 		assert_eq!(
 			*room.get_object_mut(object_id).unwrap().get_field::<i64>(command.field_id).unwrap(),
-			command.reset.unwrap()
+			command.get_reset().unwrap()
 		);
 	}
 
@@ -313,24 +284,12 @@ mod tests {
 	#[test]
 	fn should_disable_reset() {
 		let (mut room, member1_id, _, object_id, field_id) = setup();
-		CompareAndSetLongCommand {
-			object_id,
-			field_id,
-			current: 0,
-			new: 100,
-			reset: Some(555),
-		}
-		.execute(&mut room, member1_id)
-		.unwrap();
-		CompareAndSetLongCommand {
-			object_id,
-			field_id,
-			current: 100,
-			new: 200,
-			reset: None,
-		}
-		.execute(&mut room, member1_id)
-		.unwrap();
+		CompareAndSetLongCommand::new(object_id, field_id, 0, 100, Some(555))
+			.execute(&mut room, member1_id)
+			.unwrap();
+		CompareAndSetLongCommand::new(object_id, field_id, 100, 200, None)
+			.execute(&mut room, member1_id)
+			.unwrap();
 
 		assert_eq!(*room.get_object_mut(object_id).unwrap().get_field::<i64>(field_id).unwrap(), 200);
 		room.disconnect_member(member1_id).unwrap();
@@ -344,20 +303,8 @@ mod tests {
 	#[test]
 	fn should_correct_reset_when_with_two_members() {
 		let (mut room, member1_id, member2_id, object_id, field_id) = setup();
-		let command_1 = CompareAndSetLongCommand {
-			object_id,
-			field_id,
-			current: 0,
-			new: 100,
-			reset: Some(555),
-		};
-		let command_2 = CompareAndSetLongCommand {
-			object_id,
-			field_id,
-			current: 100,
-			new: 200,
-			reset: Some(1555),
-		};
+		let command_1 = CompareAndSetLongCommand::new(object_id, field_id, 0, 100, Some(555));
+		let command_2 = CompareAndSetLongCommand::new(object_id, field_id, 100, 200, Some(1555));
 		command_1.execute(&mut room, member1_id).unwrap();
 		command_2.execute(&mut room, member2_id).unwrap();
 

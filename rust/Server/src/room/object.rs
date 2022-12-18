@@ -151,6 +151,7 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_common::commands::binary_value::BinaryValue;
 	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 	use cheetah_common::commands::FieldType;
@@ -171,7 +172,7 @@ mod tests {
 		object.set_field(2, 200.200).unwrap();
 		object
 			.fields
-			.insert((1, FieldType::Structure), FieldValue::Structure(vec![1, 2, 3]))
+			.insert((1, FieldType::Structure), FieldValue::Structure([1, 2, 3].as_ref().into()))
 			.unwrap();
 
 		let mut commands = CreateCommandsCollector::new();
@@ -220,7 +221,7 @@ mod tests {
 				creator: u16::MAX,
 				command: S2CCommand::SetField(c)
 			}
-			if c.object_id==id && c.field_id == 1 && c.value == vec![1,2,3].into()
+			if c.object_id==id && c.field_id == 1 && AsRef::<BinaryValue>::as_ref(&c.value).as_slice()==[1,2,3].as_ref()
 		));
 
 		assert!(matches!(
@@ -263,10 +264,10 @@ mod tests {
 	#[test]
 	pub(crate) fn should_update_structure() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
-		object.set_field(1, [1, 2, 3].as_ref()).unwrap();
-		object.set_field(1, [4, 5, 6, 7].as_ref()).unwrap();
+		object.set_field(1, BinaryValue::from([1, 2, 3].as_ref())).unwrap();
+		object.set_field(1, BinaryValue::from([4, 5, 6, 7].as_ref())).unwrap();
 
-		let s: &Vec<u8> = object.get_field(1).unwrap();
-		assert_eq!(*s, [4, 5, 6, 7]);
+		let s: &BinaryValue = object.get_field(1).unwrap();
+		assert_eq!(s.as_slice(), [4, 5, 6, 7]);
 	}
 }
