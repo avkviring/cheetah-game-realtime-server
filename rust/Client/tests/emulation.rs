@@ -5,8 +5,8 @@ use lazy_static::lazy_static;
 
 use cheetah_client::ffi;
 use cheetah_client::ffi::channel::Channel;
-use cheetah_client::ffi::GameObjectIdFFI;
 use cheetah_common::commands::field::FieldId;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
@@ -48,7 +48,7 @@ lazy_static! {
 }
 
 #[allow(dead_code)]
-extern "C" fn should_drop_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn should_drop_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: i64) {
 	SHOULD_DROP_SET.lock().unwrap().replace((field_id, value));
 }
 
@@ -78,6 +78,6 @@ lazy_static! {
 	static ref SHOULD_RTT_SET: Mutex<Option<(FieldId, i64)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn should_rtt_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn should_rtt_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: i64) {
 	SHOULD_RTT_SET.lock().unwrap().replace((field_id, value));
 }

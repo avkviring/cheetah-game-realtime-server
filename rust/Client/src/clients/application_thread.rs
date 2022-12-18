@@ -20,7 +20,7 @@ use cheetah_common::room::RoomMemberId;
 use crate::clients::network_thread::C2SCommandWithChannel;
 use crate::clients::{ClientRequest, SharedClientStatistics};
 use crate::ffi::channel::Channel;
-use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI, GameObjectIdFFI};
+use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI};
 
 ///
 /// Взаимодействие с сетевым потоком клиента, через Sender
@@ -35,14 +35,14 @@ pub struct ApplicationThreadClient {
 	channel: ChannelType,
 	game_object_id_generator: u32,
 	pub shared_statistics: SharedClientStatistics,
-	pub listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, i64)>,
-	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, f64)>,
-	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, &BufferFFI)>,
-	pub listener_delete_field: Option<extern "C" fn(RoomMemberId, &GameObjectIdFFI, FieldId, FieldTypeFFI)>,
-	pub listener_create_object: Option<extern "C" fn(&GameObjectIdFFI, u16)>,
-	pub listener_delete_object: Option<extern "C" fn(&GameObjectIdFFI)>,
-	pub listener_created_object: Option<extern "C" fn(&GameObjectIdFFI)>,
+	pub listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, i64)>,
+	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, f64)>,
+	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BufferFFI)>,
+	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BufferFFI)>,
+	pub listener_delete_field: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, FieldTypeFFI)>,
+	pub listener_create_object: Option<extern "C" fn(&GameObjectId, u16)>,
+	pub listener_delete_object: Option<extern "C" fn(&GameObjectId)>,
+	pub listener_created_object: Option<extern "C" fn(&GameObjectId)>,
 	pub listener_forwarded_command: Option<extern "C" fn(ForwardedCommandFFI)>,
 	pub listener_member_connected: Option<extern "C" fn(RoomMemberId)>,
 }
@@ -129,52 +129,59 @@ impl ApplicationThreadClient {
 				match member_with_creator.command {
 					S2CCommand::Create(command) => {
 						if let Some(ref listener) = self.listener_create_object {
-							let object_id = (&command.object_id).into();
+							let object_id = command.object_id;
 							listener(&object_id, command.template);
 						}
 					}
 					S2CCommand::Created(command) => {
 						if let Some(ref listener) = self.listener_created_object {
-							let object_id = (&command.object_id).into();
+							let object_id = command.object_id;
 							listener(&object_id);
 						}
 					}
 					S2CCommand::SetField(command) => match command.value {
 						FieldValue::Long(v) => {
 							if let Some(ref listener) = self.listener_long_value {
-								let object_id = (&command.object_id).into();
+								let object_id = command.object_id;
 								listener(member_with_creator.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Double(v) => {
 							if let Some(ref listener) = self.listener_float_value {
-								let object_id = (&command.object_id).into();
+								let object_id = command.object_id;
 								listener(member_with_creator.creator, &object_id, command.field_id, v);
 							}
 						}
 						FieldValue::Structure(s) => {
 							if let Some(ref listener) = self.listener_structure {
-								let object_id = (&command.object_id).into();
+								let object_id = command.object_id;
 								listener(member_with_creator.creator, &object_id, command.field_id, &s.into());
 							}
 						}
 					},
 					S2CCommand::Event(command) => {
 						if let Some(ref listener) = self.listener_event {
-							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(member_with_creator.creator, &object_id, command.field_id, &From::from(&command.event));
+							listener(
+								member_with_creator.creator,
+								&command.object_id,
+								command.field_id,
+								&From::from(&command.event),
+							);
 						}
 					}
 					S2CCommand::Delete(command) => {
 						if let Some(ref listener) = self.listener_delete_object {
-							let object_id = From::from(&command.object_id);
-							listener(&object_id);
+							listener(&command.object_id);
 						}
 					}
 					S2CCommand::DeleteField(command) => {
 						if let Some(ref listener) = self.listener_delete_field {
-							let object_id: GameObjectIdFFI = From::from(&command.object_id);
-							listener(member_with_creator.creator, &object_id, command.field_id, From::from(&command.field_type));
+							listener(
+								member_with_creator.creator,
+								&command.object_id,
+								command.field_id,
+								From::from(&command.field_type),
+							);
 						}
 					}
 					S2CCommand::Forwarded(command) => {
@@ -192,7 +199,7 @@ impl ApplicationThreadClient {
 		}
 	}
 
-	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectIdFFI, SendError<ClientRequest>> {
+	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectId, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
 		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.member_id));
 		self.send(C2SCommand::CreateGameObject(CreateGameObjectCommand {
@@ -201,7 +208,7 @@ impl ApplicationThreadClient {
 			access_groups: AccessGroups(access_group),
 		}))?;
 
-		Ok(From::from(&game_object_id))
+		Ok(game_object_id)
 	}
 
 	pub fn set_rtt_emulation(&mut self, rtt: Duration, rtt_dispersion: f64) -> Result<(), SendError<ClientRequest>> {

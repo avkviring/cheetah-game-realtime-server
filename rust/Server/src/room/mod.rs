@@ -264,7 +264,7 @@ impl Room {
 			Some(member) => {
 				let mut objects = Vec::new();
 				self.process_objects(&mut |o| {
-					if let GameObjectOwner::Member(owner) = o.id.owner {
+					if let GameObjectOwner::Member(owner) = o.id.get_owner() {
 						if owner == member.id {
 							objects.push(o.id);
 						}

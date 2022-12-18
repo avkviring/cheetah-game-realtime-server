@@ -99,14 +99,14 @@ impl Rule {
 			Rule::AndRule(rules) => rules.iter().all(|r| r.filter(command)),
 			Rule::RoomOwner => match command.network_command.get_object_id() {
 				None => false,
-				Some(object_id) => match object_id.owner {
+				Some(object_id) => match object_id.get_owner() {
 					GameObjectOwner::Room => true,
 					GameObjectOwner::Member(_) => false,
 				},
 			},
 			Rule::MemberOwner(member_id) => match command.network_command.get_object_id() {
 				None => false,
-				Some(object_id) => match object_id.owner {
+				Some(object_id) => match object_id.get_owner() {
 					GameObjectOwner::Room => false,
 					GameObjectOwner::Member(object_member_id) => object_member_id == *member_id,
 				},

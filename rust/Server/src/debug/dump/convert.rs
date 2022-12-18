@@ -19,7 +19,7 @@ impl From<&Room> for admin::DumpResponse {
 impl From<&GameObject> for admin::DumpObject {
 	fn from(source: &GameObject) -> Self {
 		Self {
-			owner_user_id: match &source.id.owner {
+			owner_user_id: match &source.id.get_owner() {
 				GameObjectOwner::Room => None,
 				GameObjectOwner::Member(id) => Some(u32::from(*id)),
 			},
@@ -55,7 +55,7 @@ impl From<&Member> for admin::DumpUser {
 				.iter()
 				.map(|((object_id, field_id, _), value)| admin::CompareAndSetCleaner {
 					game_object_id: object_id.id,
-					game_object_owner_user: match object_id.owner {
+					game_object_owner_user: match object_id.get_owner() {
 						GameObjectOwner::Room => u32::MAX,
 						GameObjectOwner::Member(id) => u32::from(id),
 					},

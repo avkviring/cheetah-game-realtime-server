@@ -5,7 +5,8 @@ use std::time::Duration;
 use cheetah_client::clients::registry::ClientId;
 use cheetah_client::ffi;
 use cheetah_client::ffi::client::do_create_client;
-use cheetah_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_client::ffi::BufferFFI;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 use cheetah_server::room::template::config::MemberTemplate;
 use cheetah_server::server::manager::RoomsServerManager;
@@ -39,8 +40,8 @@ impl IntegrationTestHelper {
 		thread::sleep(Duration::from_millis(1000));
 	}
 
-	pub fn create_member_object(&self, client_id: ClientId) -> GameObjectIdFFI {
-		let mut object_id = GameObjectIdFFI::default();
+	pub fn create_member_object(&self, client_id: ClientId) -> GameObjectId {
+		let mut object_id = GameObjectId::default();
 		ffi::command::object::create_object(
 			client_id,
 			IntegrationTestServerBuilder::DEFAULT_TEMPLATE,

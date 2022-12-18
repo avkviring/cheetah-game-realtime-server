@@ -128,7 +128,7 @@ impl From<TracedCommand> for admin::Command {
 
 		let object_id = match command.network_command.get_object_id() {
 			None => "none".to_owned(),
-			Some(id) => match &id.owner {
+			Some(id) => match &id.get_owner() {
 				GameObjectOwner::Room => {
 					format!("root({})", id.id)
 				}

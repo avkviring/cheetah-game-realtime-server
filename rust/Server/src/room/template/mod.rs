@@ -70,7 +70,7 @@ mod tests {
 
 		let object = config_object.clone().to_root_game_object();
 		assert_eq!(config_object.id, object.id.id);
-		assert!(matches!(object.id.owner, GameObjectOwner::Room));
+		assert!(matches!(object.id.get_owner(), GameObjectOwner::Room));
 		assert_eq!(config_object.template, object.template_id);
 		assert_eq!(config_object.groups, object.access_groups);
 

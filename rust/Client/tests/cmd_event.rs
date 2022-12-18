@@ -3,8 +3,9 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 
 use cheetah_client::ffi;
-use cheetah_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_client::ffi::BufferFFI;
 use cheetah_common::commands::field::FieldId;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
@@ -20,7 +21,7 @@ fn test() {
 	ffi::command::room::attach_to_room(client2);
 	helper.wait_udp();
 
-	let mut object_id = GameObjectIdFFI::default();
+	let mut object_id = GameObjectId::default();
 	ffi::command::object::create_object(client1, 1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
 	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
 
@@ -42,6 +43,6 @@ lazy_static! {
 	static ref EVENT: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_event_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_event_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, buffer: &BufferFFI) {
 	EVENT.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

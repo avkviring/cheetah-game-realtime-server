@@ -12,7 +12,6 @@ use cheetah_common::commands::types::forwarded::ForwardedCommand;
 use cheetah_common::commands::{CommandTypeId, FieldType, FieldValue};
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_common::room::RoomMemberId;
 
 use crate::clients::application_thread::ApplicationThreadClient;
@@ -93,7 +92,7 @@ pub struct ForwardedCommandFFI {
 	command_type_id: CommandTypeId,
 	creator: RoomMemberId,
 	target: RoomMemberId,
-	object_id: GameObjectIdFFI,
+	object_id: GameObjectId,
 	game_object_template_id: GameObjectTemplateId,
 	field_id: FieldId,
 	field_type: FieldTypeFFI,
@@ -185,59 +184,6 @@ impl From<ForwardedCommand> for ForwardedCommandFFI {
 		};
 
 		ffi_command
-	}
-}
-
-#[repr(C)]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GameObjectIdFFI {
-	id: u32,
-	pub room_owner: bool,
-	member_id: RoomMemberId,
-}
-
-impl Default for GameObjectIdFFI {
-	fn default() -> Self {
-		GameObjectId::default().into()
-	}
-}
-
-impl From<GameObjectId> for GameObjectIdFFI {
-	fn from(source: GameObjectId) -> Self {
-		(&source).into()
-	}
-}
-
-impl From<&GameObjectId> for GameObjectIdFFI {
-	fn from(from: &GameObjectId) -> Self {
-		match from.owner {
-			GameObjectOwner::Room => GameObjectIdFFI {
-				id: from.id,
-				room_owner: true,
-				member_id: RoomMemberId::MAX,
-			},
-			GameObjectOwner::Member(member_id) => GameObjectIdFFI {
-				id: from.id,
-				room_owner: false,
-				member_id,
-			},
-		}
-	}
-}
-
-impl From<&GameObjectIdFFI> for GameObjectId {
-	fn from(from: &GameObjectIdFFI) -> Self {
-		if from.room_owner {
-			Self {
-				owner: GameObjectOwner::Room,
-				id: from.id,
-			}
-		} else {
-			Self {
-				owner: GameObjectOwner::Member(from.member_id),
-				id: from.id,
-			}
-		}
 	}
 }
 
@@ -359,18 +305,7 @@ mod tests {
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 
-	use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI, GameObjectIdFFI};
-
-	#[test]
-	fn should_convert_object_id() {
-		let object_id = GameObjectId {
-			owner: GameObjectOwner::Member(123),
-			id: 100,
-		};
-		let object_id_fff = GameObjectIdFFI::from(&object_id);
-		let converted_object_id = GameObjectId::from(&object_id_fff);
-		assert_eq!(object_id, converted_object_id);
-	}
+	use crate::ffi::{BufferFFI, FieldTypeFFI, ForwardedCommandFFI};
 
 	#[test]
 	fn should_convert_forwarded_to_ffi() {
@@ -417,7 +352,7 @@ mod tests {
 				ForwardedCommandFFI {
 					creator,
 					command_type_id: CommandTypeId::CreateGameObject,
-					object_id: object_id.into(),
+					object_id,
 					game_object_template_id: 1,
 					..Default::default()
 				},
@@ -434,7 +369,7 @@ mod tests {
 				ForwardedCommandFFI {
 					creator,
 					command_type_id: CommandTypeId::CreatedGameObject,
-					object_id: object_id.into(),
+					object_id,
 					..Default::default()
 				},
 			),
@@ -450,7 +385,7 @@ mod tests {
 				ForwardedCommandFFI {
 					creator,
 					command_type_id: CommandTypeId::IncrementLong,
-					object_id: object_id.into(),
+					object_id,
 					field_id,
 					field_type: FieldTypeFFI::Long,
 					long_value_new: 1,

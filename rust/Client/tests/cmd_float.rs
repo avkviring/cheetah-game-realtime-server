@@ -3,8 +3,8 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 
 use cheetah_client::ffi;
-use cheetah_client::ffi::GameObjectIdFFI;
 use cheetah_common::commands::field::FieldId;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
@@ -53,10 +53,10 @@ lazy_static! {
 	static ref SET: Mutex<Option<(FieldId, f64)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
+extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: f64) {
 	SET.lock().unwrap().replace((field_id, value));
 }
 
-extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: f64) {
+extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: f64) {
 	INCR.lock().unwrap().replace((field_id, value));
 }
