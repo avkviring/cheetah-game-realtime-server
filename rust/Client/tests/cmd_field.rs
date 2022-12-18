@@ -3,8 +3,9 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 
 use cheetah_client::ffi;
-use cheetah_client::ffi::{FieldTypeFFI, GameObjectIdFFI};
+use cheetah_client::ffi::FieldTypeFFI;
 use cheetah_common::commands::field::FieldId;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
@@ -53,10 +54,10 @@ lazy_static! {
 	static ref SET_FIELDS: Mutex<Vec<FieldId>> = Mutex::new(Default::default());
 }
 
-extern "C" fn delete_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, field_type: FieldTypeFFI) {
+extern "C" fn delete_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, field_type: FieldTypeFFI) {
 	DELETED_FIELD.lock().unwrap().replace((field_id, field_type));
 }
 
-extern "C" fn set_listener<T>(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, _: T) {
+extern "C" fn set_listener<T>(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, _: T) {
 	SET_FIELDS.lock().unwrap().push(field_id);
 }

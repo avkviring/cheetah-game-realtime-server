@@ -4,9 +4,9 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 
 use cheetah_client::ffi;
-use cheetah_client::ffi::GameObjectIdFFI;
 use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::FieldType;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 use cheetah_server::room::template::config::Permission;
 
@@ -109,14 +109,14 @@ lazy_static! {
 	static ref COMPARE_AND_SET: Mutex<HashMap<FieldId, i64>> = Mutex::new(Default::default());
 }
 
-extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: i64) {
 	SET.lock().unwrap().replace((field_id, value));
 }
 
-extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: i64) {
 	INCR.lock().unwrap().replace((field_id, value));
 }
 
-extern "C" fn listener_for_compare_and_set(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn listener_for_compare_and_set(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: i64) {
 	COMPARE_AND_SET.lock().unwrap().insert(field_id, value);
 }

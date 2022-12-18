@@ -1,17 +1,18 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+use lazy_static::lazy_static;
+
 use cheetah_client::ffi;
-use cheetah_client::ffi::{BufferFFI, GameObjectIdFFI};
+use cheetah_client::ffi::BufferFFI;
 use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::FieldType;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 use cheetah_server::room::template::config::Permission;
 
 use crate::helpers::helper::setup;
 use crate::helpers::server::IntegrationTestServerBuilder;
-
-use lazy_static::lazy_static;
 
 pub mod helpers;
 
@@ -112,10 +113,10 @@ lazy_static! {
 	static ref COMPARE_AND_SET: Mutex<HashMap<FieldId, BufferFFI>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, buffer: &BufferFFI) {
 	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }
 
-extern "C" fn on_compare_and_set_listener(_: RoomMemberId, _object_id: &GameObjectIdFFI, field_id: FieldId, value: &BufferFFI) {
+extern "C" fn on_compare_and_set_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: &BufferFFI) {
 	COMPARE_AND_SET.lock().unwrap().insert(field_id, value.clone());
 }

@@ -8,7 +8,7 @@ use crate::room::Room;
 impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let member = room.get_member(&member_id)?;
-		if let GameObjectOwner::Member(object_id_member) = self.object_id.owner {
+		if let GameObjectOwner::Member(object_id_member) = self.object_id.get_owner() {
 			if object_id_member != member.id {
 				return Err(ServerCommandError::MemberNotOwnerGameObject {
 					object_id: self.object_id,

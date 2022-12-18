@@ -54,7 +54,7 @@ impl Room {
 			});
 		}
 
-		let object_owner = if let GameObjectOwner::Member(owner) = object.id.owner {
+		let object_owner = if let GameObjectOwner::Member(owner) = object.id.get_owner() {
 			Some(owner)
 		} else {
 			None

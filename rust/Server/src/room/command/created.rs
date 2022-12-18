@@ -46,7 +46,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		let mut commands = CreateCommandsCollector::new();
 		object.collect_create_commands(&mut commands, member_id);
 		let template = object.template_id;
-		if object.id.owner == GameObjectOwner::Room {
+		if object.id.get_owner() == GameObjectOwner::Room {
 			room.send_to_members(groups, Some(template), commands.as_slice(), |_| true)?;
 		} else {
 			room.send_to_members(groups, Some(template), commands.as_slice(), |member| member.id != member_id)?;
@@ -160,15 +160,15 @@ mod tests {
 		// это именно тот объект, который мы создали?
 		assert_eq!(object.template_id, 777);
 		// владелец должен быть комнатой
-		assert_eq!(object.id.owner, GameObjectOwner::Room);
+		assert_eq!(object.id.get_owner(), GameObjectOwner::Room);
 
 		// должна быть загрузка объекта на текущий клиент
 		let (_, create_command) = &room.test_out_commands[1];
 		let (_, created_command) = &room.test_out_commands[0];
 		assert!(matches!(create_command, S2CCommand::Create(ref command) if command.object_id
-			.owner==GameObjectOwner::Room));
+			.get_owner()==GameObjectOwner::Room));
 		assert!(matches!(created_command, S2CCommand::Created(ref command) if command.object_id
-			.owner==GameObjectOwner::Room));
+			.get_owner()==GameObjectOwner::Room));
 	}
 
 	///

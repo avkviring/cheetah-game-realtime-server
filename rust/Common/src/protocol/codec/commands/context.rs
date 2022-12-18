@@ -160,7 +160,7 @@ impl CommandContext {
 			return CreatorSource::New;
 		}
 
-		if let GameObjectOwner::Member(member_id) = self.object_id.as_ref().unwrap().owner {
+		if let GameObjectOwner::Member(member_id) = self.object_id.as_ref().unwrap().get_owner() {
 			if member_id == creator {
 				return CreatorSource::AsObjectOwner;
 			}
@@ -209,7 +209,7 @@ impl CommandContext {
 			}
 			CreatorSource::AsObjectOwner => match &self.object_id {
 				None => Err(CommandContextError::ContextNotContainsObjectId),
-				Some(object_id) => match &object_id.owner {
+				Some(object_id) => match &object_id.get_owner() {
 					GameObjectOwner::Room => Err(CommandContextError::ContextNotContainsObjectId),
 					GameObjectOwner::Member(member_id) => {
 						self.creator.replace(*member_id);

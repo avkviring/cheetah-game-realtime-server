@@ -1,24 +1,26 @@
 use std::io::{Cursor, Error, ErrorKind};
 
+use hash32_derive::Hash32;
+
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::owner::GameObjectOwner;
-use hash32_derive::Hash32;
+use crate::room::RoomMemberId;
 
 ///
 /// Идентификатор игрового объекта на клиенте
 ///
+#[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Hash, Eq, Hash32)]
 pub struct GameObjectId {
-	///
-	/// Создатель игрового объекта
-	///
-	pub owner: GameObjectOwner,
-
 	///
 	/// Идентификатор игрового объекта в рамках владельца
 	///
 	pub id: u32,
+	is_room_owner: bool,
+	member_id: RoomMemberId,
 }
+
+impl GameObjectId {}
 
 impl GameObjectId {
 	///
@@ -28,23 +30,54 @@ impl GameObjectId {
 
 	#[must_use]
 	pub fn new(id: u32, owner: GameObjectOwner) -> Self {
-		GameObjectId { owner, id }
+		match owner {
+			GameObjectOwner::Room => GameObjectId {
+				id,
+				is_room_owner: true,
+				member_id: 0,
+			},
+			GameObjectOwner::Member(member_id) => GameObjectId {
+				id,
+				is_room_owner: false,
+				member_id,
+			},
+		}
+	}
+
+	#[must_use]
+	pub fn is_owner(&self, other_member: RoomMemberId) -> bool {
+		!self.is_room_owner && self.member_id == other_member
+	}
+
+	pub fn get_owner(&self) -> GameObjectOwner {
+		if self.is_room_owner {
+			GameObjectOwner::Room
+		} else {
+			GameObjectOwner::Member(self.member_id)
+		}
 	}
 
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_u64(u64::from(self.id))?;
-		match self.owner {
-			GameObjectOwner::Room => out.write_variable_i64(-1),
-			GameObjectOwner::Member(member_id) => out.write_variable_i64(i64::from(member_id)),
+		if self.is_room_owner {
+			out.write_variable_i64(-1)
+		} else {
+			out.write_variable_i64(i64::from(self.member_id))
 		}
 	}
 	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
+		let id = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+		let owner = input.read_variable_i64()?;
+		let room_owner = owner == -1;
+		let member_id = if room_owner {
+			0
+		} else {
+			owner.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?
+		};
 		Ok(GameObjectId {
-			id: input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?,
-			owner: match input.read_variable_i64()? {
-				-1 => GameObjectOwner::Room,
-				member_id => GameObjectOwner::Member(member_id.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?),
-			},
+			id,
+			is_room_owner: room_owner,
+			member_id,
 		})
 	}
 }

@@ -7,8 +7,8 @@ use lazy_static::lazy_static;
 use cheetah_client::ffi;
 use cheetah_client::ffi::channel::Channel;
 use cheetah_client::ffi::logs::{init_logger, set_max_log_level, LogLevel};
-use cheetah_client::ffi::GameObjectIdFFI;
 use cheetah_common::commands::field::FieldId;
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
 
 use crate::helpers::helper::setup;
@@ -37,7 +37,7 @@ pub fn stress_create_lot_of_objects_test() {
 lazy_static! {
 	static ref CREATE_OBJECT_ID: Mutex<usize> = Mutex::new(Default::default());
 }
-extern "C" fn on_object_create(_object_id: &GameObjectIdFFI, _: u16) {
+extern "C" fn on_object_create(_object_id: &GameObjectId, _: u16) {
 	*CREATE_OBJECT_ID.lock().unwrap() += 1;
 }
 
@@ -85,18 +85,18 @@ pub fn stress_test() {
 
 	let result = LONG_VALUE.lock();
 	let result = result.unwrap();
-	let result: Option<&(GameObjectIdFFI, FieldId, i64)> = result.as_ref();
+	let result: Option<&(GameObjectId, FieldId, i64)> = result.as_ref();
 	assert!(result.is_some());
-	let result: &(GameObjectIdFFI, FieldId, i64) = result.unwrap();
+	let result: &(GameObjectId, FieldId, i64) = result.unwrap();
 	assert_eq!(result.0, object_id);
 	assert_eq!(result.1, 1);
 	assert_eq!(result.2, send_inc_long_count);
 }
 
 lazy_static! {
-	static ref LONG_VALUE: Mutex<Option<(GameObjectIdFFI, FieldId, i64)>> = Mutex::new(Default::default());
+	static ref LONG_VALUE: Mutex<Option<(GameObjectId, FieldId, i64)>> = Mutex::new(Default::default());
 }
 
-extern "C" fn listener(_: RoomMemberId, object_id: &GameObjectIdFFI, field_id: FieldId, value: i64) {
+extern "C" fn listener(_: RoomMemberId, object_id: &GameObjectId, field_id: FieldId, value: i64) {
 	LONG_VALUE.lock().unwrap().replace(((*object_id).clone(), field_id, value));
 }
