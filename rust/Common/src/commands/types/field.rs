@@ -5,6 +5,7 @@ use crate::commands::{field::ToFieldType, FieldType, FieldValue};
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[repr(C)]
 pub struct DeleteFieldCommand {
 	pub field_id: FieldId,
 	pub object_id: GameObjectId,
@@ -26,6 +27,7 @@ impl DeleteFieldCommand {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+#[repr(C)]
 pub struct SetFieldCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,

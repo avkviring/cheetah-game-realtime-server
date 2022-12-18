@@ -10,10 +10,11 @@ use crate::{
 use super::{binary_value::BinaryValue, field::ToFieldType};
 
 #[derive(Debug, Clone, PartialEq)]
+#[repr(u8)]
 pub enum FieldValue {
 	Long(i64),
 	Double(f64),
-	Structure(Vec<u8>),
+	Structure(BinaryValue),
 }
 
 impl FieldValue {
@@ -44,7 +45,7 @@ impl FieldValue {
 		Ok(match field_type {
 			FieldType::Long => input.read_variable_i64()?.into(),
 			FieldType::Double => input.read_f64::<BigEndian>()?.into(),
-			FieldType::Structure => BinaryValue::decode(input)?.as_slice().into(),
+			FieldType::Structure => BinaryValue::decode(input)?.into(),
 			FieldType::Event => panic!("Event type is not supported"),
 		})
 	}
@@ -72,15 +73,9 @@ impl From<f64> for FieldValue {
 	}
 }
 
-impl From<&[u8]> for FieldValue {
-	fn from(value: &[u8]) -> Self {
-		FieldValue::Structure(value.into())
-	}
-}
-
-impl From<Vec<u8>> for FieldValue {
-	fn from(vec: Vec<u8>) -> Self {
-		vec.as_slice().into()
+impl From<BinaryValue> for FieldValue {
+	fn from(value: BinaryValue) -> Self {
+		FieldValue::Structure(value)
 	}
 }
 
@@ -104,8 +99,8 @@ impl AsRef<i64> for FieldValue {
 	}
 }
 
-impl AsRef<Vec<u8>> for FieldValue {
-	fn as_ref(&self) -> &Vec<u8> {
+impl AsRef<BinaryValue> for FieldValue {
+	fn as_ref(&self) -> &BinaryValue {
 		if let FieldValue::Structure(v) = self {
 			v
 		} else {

@@ -6,7 +6,7 @@ use cheetah_common::room::object::GameObjectId;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
-use crate::ffi::{execute_with_client, BufferFFI, ForwardedCommandFFI};
+use crate::ffi::{execute_with_client, ForwardedCommandFFI};
 
 #[no_mangle]
 pub extern "C" fn set_create_object_listener(client_id: ClientId, listener: extern "C" fn(&GameObjectId, template: u16)) -> u8 {
@@ -34,15 +34,11 @@ pub extern "C" fn create_object(client_id: ClientId, template: u16, access_group
 }
 
 #[no_mangle]
-pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectId, room_owner: bool, singleton_key: &BufferFFI) -> u8 {
-	let singleton_key = (singleton_key.len > 0).then(|| BinaryValue::from(singleton_key));
+pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectId, room_owner: bool, singleton_key: &BinaryValue) -> u8 {
+	let singleton_key = (singleton_key.len > 0).then(|| *singleton_key);
 	send_command(
 		client_id,
-		C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {
-			object_id: *object_id,
-			room_owner,
-			singleton_key,
-		}),
+		C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(*object_id, room_owner, singleton_key)),
 	)
 }
 

@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 
 use cheetah_client::ffi;
-use cheetah_client::ffi::BufferFFI;
+use cheetah_common::commands::binary_value::BinaryValue;
 use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::FieldType;
 use cheetah_common::room::object::GameObjectId;
@@ -25,7 +25,7 @@ fn should_set() {
 	helper.wait_udp();
 
 	let object_id = helper.create_member_object(client1);
-	let structure_buffer = BufferFFI::from(vec![100]);
+	let structure_buffer = BinaryValue::from(vec![100].as_slice());
 	let structure_field_id = 10;
 	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
 
@@ -75,26 +75,37 @@ fn should_compare_and_set() {
 		client2,
 		&object_id,
 		field_id_with_reset,
-		&vec![0].into(),
-		&vec![100].into(),
+		&vec![0].as_slice().into(),
+		&vec![100].as_slice().into(),
 		true,
-		&vec![42].into(),
+		&vec![42].as_slice().into(),
 	);
-	ffi::command::structure::compare_and_set_structure(client2, &object_id, field_id, &vec![0].into(), &vec![200].into(), false, &vec![0].into());
+	ffi::command::structure::compare_and_set_structure(
+		client2,
+		&object_id,
+		field_id,
+		&vec![0].as_slice().into(),
+		&vec![200].as_slice().into(),
+		false,
+		&vec![0].as_slice().into(),
+	);
 	ffi::command::structure::compare_and_set_structure(
 		client2,
 		&object_id,
 		field_id_with_reset,
-		&vec![0].into(),
-		&vec![200].into(),
+		&vec![0].as_slice().into(),
+		&vec![200].as_slice().into(),
 		true,
-		&vec![24].into(),
+		&vec![24].as_slice().into(),
 	);
 	helper.wait_udp();
 
 	ffi::client::receive(client1);
-	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(), vec![100].into());
-	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id).unwrap(), vec![200].into());
+	assert_eq!(
+		*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(),
+		vec![100].as_slice().into()
+	);
+	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id).unwrap(), vec![200].as_slice().into());
 
 	// теперь второй клиент разрывает соединение
 	// первый наблюдает за тем что значение поменяется на reset
@@ -102,21 +113,24 @@ fn should_compare_and_set() {
 	helper.wait_udp();
 
 	ffi::client::receive(client1);
-	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(), vec![42].into());
+	assert_eq!(
+		*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(),
+		vec![42].as_slice().into()
+	);
 }
 
 lazy_static! {
-	static ref STRUCTURE: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
+	static ref STRUCTURE: Mutex<Option<(FieldId, BinaryValue)>> = Mutex::new(Default::default());
 }
 
 lazy_static! {
-	static ref COMPARE_AND_SET: Mutex<HashMap<FieldId, BufferFFI>> = Mutex::new(Default::default());
+	static ref COMPARE_AND_SET: Mutex<HashMap<FieldId, BinaryValue>> = Mutex::new(Default::default());
 }
 
-extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, buffer: &BinaryValue) {
 	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }
 
-extern "C" fn on_compare_and_set_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: &BufferFFI) {
+extern "C" fn on_compare_and_set_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: &BinaryValue) {
 	COMPARE_AND_SET.lock().unwrap().insert(field_id, value.clone());
 }

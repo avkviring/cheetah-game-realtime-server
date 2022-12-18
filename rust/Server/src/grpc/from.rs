@@ -1,10 +1,10 @@
+use cheetah_common::commands::field::Field;
 use cheetah_common::{commands::FieldValue, room::access::AccessGroups};
 
 use crate::debug::proto::shared::{field_value::Variant as VariantDebug, FieldValue as GRPCFieldValueDebug};
 use crate::grpc::proto::internal;
 use crate::grpc::proto::shared::{self, field_value::Variant, FieldValue as GRPCFieldValue};
 use crate::room::template::config;
-use cheetah_common::commands::field::Field;
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
@@ -50,7 +50,7 @@ impl From<GRPCFieldValue> for FieldValue {
 		match variant {
 			Variant::Double(v) => FieldValue::Double(v),
 			Variant::Long(v) => FieldValue::Long(v),
-			Variant::Structure(s) => FieldValue::Structure(s),
+			Variant::Structure(s) => FieldValue::Structure(s.as_slice().into()),
 		}
 	}
 }
@@ -60,7 +60,7 @@ impl From<FieldValue> for GRPCFieldValueDebug {
 		let value_d = match value {
 			FieldValue::Double(v) => VariantDebug::Double(v),
 			FieldValue::Long(v) => VariantDebug::Long(v),
-			FieldValue::Structure(s) => VariantDebug::Structure(s),
+			FieldValue::Structure(s) => VariantDebug::Structure(s.as_slice().into()),
 		};
 
 		GRPCFieldValueDebug { variant: Some(value_d) }

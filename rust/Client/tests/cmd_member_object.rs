@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 
 use cheetah_client::ffi;
-use cheetah_client::ffi::BufferFFI;
+use cheetah_common::commands::binary_value::BinaryValue;
 use cheetah_common::commands::field::FieldId;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
@@ -31,9 +31,9 @@ fn test() {
 	ffi::command::object::create_object(client1, 1, IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0, &mut object_id);
 
 	let structure_field_id = 10;
-	let structure_buffer = BufferFFI::from(vec![125]);
+	let structure_buffer = BinaryValue::from(vec![125].as_slice());
 	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
-	ffi::command::object::created_object(client1, &object_id, false, &BufferFFI::default());
+	ffi::command::object::created_object(client1, &object_id, false, &BinaryValue::default());
 	ffi::command::object::delete_object(client1, &object_id);
 
 	helper.wait_udp();
@@ -59,7 +59,7 @@ lazy_static! {
 }
 
 lazy_static! {
-	static ref STRUCTURE: Mutex<Option<(FieldId, BufferFFI)>> = Mutex::new(Default::default());
+	static ref STRUCTURE: Mutex<Option<(FieldId, BinaryValue)>> = Mutex::new(Default::default());
 }
 
 extern "C" fn on_object_create(object_id: &GameObjectId, _: u16) {
@@ -73,6 +73,6 @@ extern "C" fn on_object_created(object_id: &GameObjectId) {
 extern "C" fn on_object_delete(object_id: &GameObjectId) {
 	DELETED_OBJECT_ID.lock().unwrap().replace((*object_id).clone());
 }
-extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, buffer: &BufferFFI) {
+extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, buffer: &BinaryValue) {
 	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
 }

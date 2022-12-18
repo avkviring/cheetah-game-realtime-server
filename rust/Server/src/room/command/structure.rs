@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+	use cheetah_common::commands::binary_value::BinaryValue;
+	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::field::SetFieldCommand;
 	use cheetah_common::commands::FieldType;
@@ -14,7 +16,6 @@ mod tests {
 		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
 	};
 	use crate::room::Room;
-	use cheetah_common::commands::field::Field;
 
 	const FIELD_ID: u16 = 100;
 
@@ -32,7 +33,7 @@ mod tests {
 		let command = SetFieldCommand {
 			object_id,
 			field_id: 100,
-			value: vec![1, 2, 3, 4, 5].into(),
+			value: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()).into(),
 		};
 
 		command.execute(&mut room, member_id).unwrap();
@@ -77,7 +78,7 @@ mod tests {
 		let command = SetFieldCommand {
 			object_id,
 			field_id: FIELD_ID,
-			value: vec![1, 2, 3, 4, 5].into(),
+			value: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()).into(),
 		};
 
 		command.execute(room, sender).unwrap();

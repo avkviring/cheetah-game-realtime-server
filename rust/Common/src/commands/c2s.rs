@@ -2,6 +2,7 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
+use crate::commands::binary_value::BinaryValue;
 use crate::commands::field::{Field, FieldId};
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
@@ -153,17 +154,29 @@ impl C2SCommand {
 	pub fn get_trace_string(&self) -> String {
 		match self {
 			C2SCommand::CreateGameObject(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
-			C2SCommand::CreatedGameObject(command) => format!("room_owner({:?}), singleton_key({:?}) ", command.room_owner, command.singleton_key),
+			C2SCommand::CreatedGameObject(command) => {
+				format!("room_owner({:?}), singleton_key ({:?}) ", command.room_owner, command.get_singleton_key())
+			}
 			C2SCommand::IncrementLongValue(command) => format!("{:?}", command.increment),
 			C2SCommand::CompareAndSetLong(command) => {
-				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
+				format!(
+					"new = {:?}, current = {:?}, reset = {:?}",
+					command.new,
+					command.current,
+					command.get_reset()
+				)
 			}
 			C2SCommand::SetField(command) => format!("{:?}", command.value),
 			C2SCommand::IncrementDouble(command) => format!("{:?}", command.increment),
 			C2SCommand::CompareAndSetStructure(command) => {
-				format!("new = {:?}, current = {:?}, reset = {:?}", command.new, command.current, command.reset)
+				format!(
+					"new = {:?}, current = {:?}, reset = {:?}",
+					command.new,
+					command.current,
+					command.get_reset()
+				)
 			}
-			C2SCommand::Event(command) => format!("{:?}", command.event.as_slice()),
+			C2SCommand::Event(command) => format!("{:?}", command.event),
 			C2SCommand::TargetEvent(command) => format!("target_member = {:?}, value = {:?}", command.target, command.event.event),
 			C2SCommand::Delete(_) => String::new(),
 			C2SCommand::DeleteField(command) => format!("field_type = {:?}", command.field_type),
@@ -193,7 +206,7 @@ impl C2SCommand {
 			}
 			CommandTypeId::SetDouble => C2SCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
 			CommandTypeId::SetLong => C2SCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
-			CommandTypeId::SetStructure => C2SCommand::SetField(SetFieldCommand::decode::<Vec<u8>>(object_id?, field_id?, input)?),
+			CommandTypeId::SetStructure => C2SCommand::SetField(SetFieldCommand::decode::<BinaryValue>(object_id?, field_id?, input)?),
 			CommandTypeId::Event => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::TargetEvent => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DeleteField => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
@@ -252,11 +265,7 @@ mod tests {
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			&C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand {
-				object_id,
-				room_owner: false,
-				singleton_key: None,
-			}),
+			&C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(object_id, false, None)),
 			CommandTypeId::CreatedGameObject,
 			Some(object_id),
 			None,
@@ -300,13 +309,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&C2SCommand::CompareAndSetLong(CompareAndSetLongCommand {
-				object_id,
-				field_id,
-				current: 100,
-				new: 101,
-				reset: Some(102),
-			}),
+			&C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::new(object_id, field_id, 100, 101, Some(102))),
 			CommandTypeId::CompareAndSetLong,
 			Some(object_id),
 			Some(field_id),
@@ -318,13 +321,13 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand {
+			&C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand::new(
 				object_id,
 				field_id,
-				current: vec![100].as_slice().into(),
-				new: vec![101].as_slice().into(),
-				reset: Some(vec![102].as_slice().into()),
-			}),
+				vec![100].as_slice().into(),
+				vec![101].as_slice().into(),
+				Some(vec![102].as_slice().into()),
+			)),
 			CommandTypeId::CompareAndSetStructure,
 			Some(object_id),
 			Some(field_id),
@@ -371,7 +374,7 @@ mod tests {
 			&C2SCommand::SetField(SetFieldCommand {
 				object_id,
 				field_id,
-				value: vec![1, 2, 3, 4].into(),
+				value: BinaryValue::from([1, 2, 3, 4].as_ref()).into(),
 			}),
 			CommandTypeId::SetStructure,
 			Some(object_id),

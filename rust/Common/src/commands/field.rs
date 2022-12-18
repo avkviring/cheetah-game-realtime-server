@@ -3,6 +3,8 @@ use std::io::ErrorKind;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
+use crate::commands::binary_value::BinaryValue;
+
 ///
 /// Тип данных поля
 ///
@@ -70,13 +72,7 @@ impl ToFieldType for f64 {
 	}
 }
 
-impl ToFieldType for Vec<u8> {
-	fn to_field_type() -> FieldType {
-		FieldType::Structure
-	}
-}
-
-impl ToFieldType for &[u8] {
+impl ToFieldType for BinaryValue {
 	fn to_field_type() -> FieldType {
 		FieldType::Structure
 	}

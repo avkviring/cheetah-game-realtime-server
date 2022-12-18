@@ -1,3 +1,4 @@
+use cheetah_common::commands::binary_value::BinaryValue;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::types::create::CreateGameObjectCommand;
 use cheetah_common::commands::types::field::SetFieldCommand;
@@ -37,7 +38,7 @@ pub fn create_object_frame() {
 		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
 			object_id: Default::default(),
 			field_id: 30,
-			value: [0].as_ref().into(),
+			value: BinaryValue::from([0].as_ref()).into(),
 		})),
 	});
 	frame.add_command(CommandWithChannel {

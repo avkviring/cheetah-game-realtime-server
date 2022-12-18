@@ -53,12 +53,12 @@ pub extern "C" fn compare_and_set_long_value(
 ) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::CompareAndSetLong(CompareAndSetLongCommand {
-			object_id: *object_id,
+		C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::new(
+			*object_id,
 			field_id,
 			current,
 			new,
-			reset: has_reset.then_some(reset),
-		}),
+			has_reset.then_some(reset),
+		)),
 	)
 }

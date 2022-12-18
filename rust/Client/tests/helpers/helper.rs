@@ -5,7 +5,6 @@ use std::time::Duration;
 use cheetah_client::clients::registry::ClientId;
 use cheetah_client::ffi;
 use cheetah_client::ffi::client::do_create_client;
-use cheetah_client::ffi::BufferFFI;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 use cheetah_server::room::template::config::MemberTemplate;
@@ -48,7 +47,7 @@ impl IntegrationTestHelper {
 			IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP.0,
 			&mut object_id,
 		);
-		ffi::command::object::created_object(client_id, &object_id, false, &BufferFFI::default());
+		ffi::command::object::created_object(client_id, &object_id, false, &Default::default());
 		object_id
 	}
 

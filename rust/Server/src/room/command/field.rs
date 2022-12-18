@@ -32,6 +32,7 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_common::commands::binary_value::BinaryValue;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::field::DeleteFieldCommand;
 	use cheetah_common::commands::FieldType;
@@ -65,7 +66,7 @@ mod tests {
 	pub(crate) fn should_delete_field() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
 
-		object.set_field(1, [1, 2, 3].as_ref()).unwrap();
+		object.set_field(1, BinaryValue::from([1, 2, 3].as_ref())).unwrap();
 		object.delete_field(1, FieldType::Structure);
 
 		object.set_field(2, 10.0).unwrap();
@@ -74,7 +75,7 @@ mod tests {
 		object.set_field(3, 20).unwrap();
 		object.delete_field(3, FieldType::Long);
 
-		assert!(object.get_field::<Vec<u8>>(1).is_none());
+		assert!(object.get_field::<BinaryValue>(1).is_none());
 		assert!(object.get_field::<f64>(2).is_none());
 		assert!(object.get_field::<i64>(3).is_none());
 	}

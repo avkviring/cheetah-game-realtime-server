@@ -3,12 +3,13 @@ use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
+use cheetah_common::commands::binary_value::BinaryValue;
 use cheetah_common::network::client::{ConnectionStatus, DisconnectedReason};
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::clients::registry::ClientId;
-use crate::ffi::{execute, execute_with_client, BufferFFI, ClientError, LAST_ERROR};
+use crate::ffi::{execute, execute_with_client, ClientError, LAST_ERROR};
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -120,7 +121,7 @@ pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistic
 
 #[no_mangle]
 #[allow(clippy::cast_possible_truncation)]
-pub extern "C" fn get_last_error_msg(buffer: &mut BufferFFI) {
+pub extern "C" fn get_last_error_msg(buffer: &mut BinaryValue) {
 	let msg = LAST_ERROR.lock().unwrap();
 	let msg = msg.as_bytes();
 	let length = msg.len();
@@ -147,7 +148,7 @@ pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
 	member_id: RoomMemberId,
 	room_id: RoomId,
-	private_key_buffer: &BufferFFI,
+	private_key_buffer: &BinaryValue,
 	start_frame_id: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
