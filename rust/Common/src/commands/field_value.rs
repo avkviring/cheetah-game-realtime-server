@@ -9,7 +9,7 @@ use crate::{
 
 use super::{binary_value::BinaryValue, field::ToFieldType};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 #[repr(u8)]
 pub enum FieldValue {
 	Long(i64),
@@ -33,10 +33,7 @@ impl FieldValue {
 		match self {
 			FieldValue::Long(v) => out.write_variable_i64(*v),
 			FieldValue::Double(v) => out.write_f64::<BigEndian>(*v),
-			FieldValue::Structure(v) => {
-				let bv: BinaryValue = v.as_slice().into();
-				bv.encode(out)
-			}
+			FieldValue::Structure(v) => v.encode(out),
 		}
 	}
 
@@ -106,5 +103,32 @@ impl AsRef<BinaryValue> for FieldValue {
 		} else {
 			panic!("FieldValue had unexpected variant, expected FieldValue::Structure")
 		}
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use std::io::Cursor;
+
+	use crate::commands::binary_value::BinaryValue;
+	use crate::commands::field::ToFieldType;
+	use crate::commands::FieldValue;
+
+	#[test]
+	fn test() {
+		check::<i64>(FieldValue::Long(100));
+		check::<f64>(FieldValue::Double(100.100));
+		check::<BinaryValue>(FieldValue::Structure(BinaryValue::from([1, 2, 3].as_ref())));
+	}
+
+	fn check<T: Into<FieldValue> + ToFieldType>(original: FieldValue) {
+		let mut buffer = [0_u8; 100];
+		let mut cursor = Cursor::new(buffer.as_mut());
+		original.encode(&mut cursor).unwrap();
+
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let result = FieldValue::decode::<T>(&mut read_cursor).unwrap();
+
+		assert_eq!(original, result);
 	}
 }
