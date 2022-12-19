@@ -24,7 +24,7 @@ pub extern "C" fn delete_field(client_id: ClientId, object_id: &GameObjectId, fi
 		C2SCommand::DeleteField(DeleteFieldCommand {
 			object_id: *object_id,
 			field_id,
-			field_type: From::from(field_type),
+			field_type,
 		}),
 	)
 }

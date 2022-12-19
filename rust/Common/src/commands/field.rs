@@ -11,10 +11,10 @@ use crate::commands::binary_value::BinaryValue;
 #[repr(C)]
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 pub enum FieldType {
-	Long = 1,
-	Double = 2,
-	Structure = 3,
-	Event = 4,
+	Long,
+	Double,
+	Structure,
+	Event,
 }
 
 impl hash32::Hash for FieldType {
@@ -40,7 +40,12 @@ impl ToString for FieldType {
 
 impl FieldType {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		let code: u8 = *self as u8;
+		let code = match self {
+			FieldType::Long => 1,
+			FieldType::Double => 2,
+			FieldType::Structure => 3,
+			FieldType::Event => 4,
+		};
 		out.write_u8(code)
 	}
 
@@ -51,7 +56,7 @@ impl FieldType {
 			2 => FieldType::Double,
 			3 => FieldType::Structure,
 			4 => FieldType::Event,
-			_ => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("{value}"))),
+			_ => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Read FieldType with code {value}"))),
 		})
 	}
 }
@@ -84,4 +89,30 @@ pub type FieldId = u16;
 pub struct Field {
 	pub id: FieldId,
 	pub field_type: FieldType,
+}
+
+#[cfg(test)]
+mod test {
+	use std::io::Cursor;
+
+	use crate::commands::FieldType;
+
+	#[test]
+	fn test() {
+		check(FieldType::Long);
+		check(FieldType::Structure);
+		check(FieldType::Double);
+		check(FieldType::Event);
+	}
+
+	fn check(original: FieldType) {
+		let mut buffer = [0_u8; 100];
+		let mut cursor = Cursor::new(buffer.as_mut());
+		original.encode(&mut cursor).unwrap();
+
+		let mut read_cursor = Cursor::<&[u8]>::new(&buffer);
+		let result = FieldType::decode(&mut read_cursor).unwrap();
+
+		assert_eq!(original, result);
+	}
 }
