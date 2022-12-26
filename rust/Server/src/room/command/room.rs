@@ -65,8 +65,7 @@ mod tests {
 		// не созданный объект - не должен загрузиться
 		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
 		// другая группа + созданный объект - не должен загрузиться
-		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b)
-			.created = true;
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b).created = true;
 		// другая группа - не должен загрузиться
 		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b);
 

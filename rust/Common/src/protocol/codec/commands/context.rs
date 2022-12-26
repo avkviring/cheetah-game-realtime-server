@@ -191,11 +191,7 @@ impl CommandContext {
 	/// Определяем автора команды, есть 4 способа его сохранения.
 	/// Если успешно - сохраняем результат в контекст
 	///
-	fn read_and_set_creator(
-		&mut self,
-		input: &mut Cursor<&[u8]>,
-		creator_source: CreatorSource,
-	) -> Result<Option<RoomMemberId>, CommandContextError> {
+	fn read_and_set_creator(&mut self, input: &mut Cursor<&[u8]>, creator_source: CreatorSource) -> Result<Option<RoomMemberId>, CommandContextError> {
 		match creator_source {
 			CreatorSource::NotSupported => Ok(None),
 			CreatorSource::Current => match &self.creator {

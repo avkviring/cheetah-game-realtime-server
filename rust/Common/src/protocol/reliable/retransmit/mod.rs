@@ -168,9 +168,7 @@ impl Retransmit {
 
 	#[must_use]
 	pub fn disconnected(&self, _: Instant) -> bool {
-		self.max_retransmit_count >= RETRANSMIT_LIMIT
-			|| self.frames.len() > RETRANSMIT_FRAMES_CAPACITY
-			|| self.wait_ack_frames.len() > RETRANSMIT_FRAMES_CAPACITY
+		self.max_retransmit_count >= RETRANSMIT_LIMIT || self.frames.len() > RETRANSMIT_FRAMES_CAPACITY || self.wait_ack_frames.len() > RETRANSMIT_FRAMES_CAPACITY
 	}
 }
 

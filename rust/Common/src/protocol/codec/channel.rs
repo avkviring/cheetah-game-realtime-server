@@ -50,11 +50,7 @@ impl Channel {
 		Ok(())
 	}
 
-	pub fn decode(
-		channel_type: &ChannelType,
-		channel_group: Result<ChannelGroup, CommandContextError>,
-		input: &mut Cursor<&[u8]>,
-	) -> Result<Channel, CommandChannelDecodeError> {
+	pub fn decode(channel_type: &ChannelType, channel_group: Result<ChannelGroup, CommandContextError>, input: &mut Cursor<&[u8]>) -> Result<Channel, CommandChannelDecodeError> {
 		Ok(match *channel_type {
 			ChannelType::RELIABLE_UNORDERED => Channel::ReliableUnordered,
 			ChannelType::UNRELIABLE_UNORDERED => Channel::UnreliableUnordered,
@@ -89,20 +85,12 @@ mod tests {
 
 	#[test]
 	fn test_reliable_unordered() {
-		check(
-			Channel::ReliableUnordered,
-			ChannelType::RELIABLE_UNORDERED,
-			Err(CommandContextError::ContextNotContainsChannelGroupId),
-		);
+		check(Channel::ReliableUnordered, ChannelType::RELIABLE_UNORDERED, Err(CommandContextError::ContextNotContainsChannelGroupId));
 	}
 
 	#[test]
 	fn test_reliable_ordered_by_group() {
-		check(
-			Channel::ReliableOrdered(ChannelGroup(100)),
-			ChannelType::RELIABLE_ORDERED,
-			Ok(ChannelGroup(100)),
-		);
+		check(Channel::ReliableOrdered(ChannelGroup(100)), ChannelType::RELIABLE_ORDERED, Ok(ChannelGroup(100)));
 	}
 
 	#[test]
@@ -116,20 +104,12 @@ mod tests {
 
 	#[test]
 	fn test_unreliable_ordered_by_group() {
-		check(
-			Channel::UnreliableOrdered(ChannelGroup(155)),
-			ChannelType::UNRELIABLE_ORDERED,
-			Ok(ChannelGroup(155)),
-		);
+		check(Channel::UnreliableOrdered(ChannelGroup(155)), ChannelType::UNRELIABLE_ORDERED, Ok(ChannelGroup(155)));
 	}
 
 	#[test]
 	fn test_reliable_sequence_by_group() {
-		check(
-			Channel::ReliableSequence(ChannelGroup(7), ChannelSequence(255)),
-			ChannelType::RELIABLE_SEQUENCE,
-			Ok(ChannelGroup(7)),
-		);
+		check(Channel::ReliableSequence(ChannelGroup(7), ChannelSequence(255)), ChannelType::RELIABLE_SEQUENCE, Ok(ChannelGroup(7)));
 	}
 
 	fn check(original: Channel, channel_type: ChannelType, channel_group_id: Result<ChannelGroup, CommandContextError>) {

@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
-using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Network;
 using Games.Cheetah.EmbeddedServer.API;
 using Games.Cheetah.GRPC.Internal;
 using NUnit.Framework;
@@ -33,7 +33,7 @@ namespace Games.Cheetah.EmbeddedServer.Tests
                 });
 
 
-                var client = new CheetahClient(
+                var client = new NetworkClient(
                     server.GetUdpGameHost(),
                     server.GetUdpGamePort(),
                     member.UserId,
@@ -47,14 +47,14 @@ namespace Games.Cheetah.EmbeddedServer.Tests
                 Thread.Sleep(TimeSpan.FromSeconds(1));
 
                 // проверяем факт соединения
-                Assert.AreEqual(client.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
+                Assert.AreEqual(client.GetConnectionStatus(), ConnectionStatus.Connected);
 
                 // останавливаем сервер
                 server.Destroy();
 
                 // сервер остановлен - выжидаем окончания timeout на клиентские команды
                 Thread.Sleep(TimeSpan.FromSeconds(11));
-                Assert.AreNotEqual(client.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
+                Assert.AreNotEqual(client.GetConnectionStatus(), ConnectionStatus.Connected);
 
                 API.EmbeddedServer.ShowCurrentLogs();
             });

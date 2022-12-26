@@ -194,11 +194,7 @@ fn get_field(query: String) -> Result<(String, Op, String), ParseError> {
 	} else {
 		let eq_index = eq_index.unwrap_or(usize::MAX);
 		let not_index = not_index.unwrap_or(usize::MAX);
-		let (end_item_index, op, size) = if eq_index < not_index {
-			(eq_index, Op::Equal, 1)
-		} else {
-			(not_index, Op::NotEqual, 2)
-		};
+		let (end_item_index, op, size) = if eq_index < not_index { (eq_index, Op::Equal, 1) } else { (not_index, Op::NotEqual, 2) };
 		let field = &query[0..end_item_index];
 		let query = query[end_item_index + size..].to_owned();
 		Ok((field.to_owned(), op, query))
@@ -338,10 +334,7 @@ mod test {
 	fn should_parse_more_two_or() {
 		let query = "c2s || user=55 || template=10";
 		let result = parse(query).unwrap();
-		assert_eq!(
-			result,
-			Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::Member(55), Rule::Template(10)])
-		);
+		assert_eq!(result, Rule::OrRule(vec![Rule::Direction(RuleCommandDirection::C2S), Rule::Member(55), Rule::Template(10)]));
 	}
 
 	#[test]
@@ -354,10 +347,7 @@ mod test {
 	fn should_parse_more_two_and() {
 		let query = "user=55 && c2s && field=100";
 		let result = parse(query).unwrap();
-		assert_eq!(
-			result,
-			Rule::AndRule(vec![Rule::Member(55), Rule::Direction(RuleCommandDirection::C2S), Rule::Field(100)])
-		);
+		assert_eq!(result, Rule::AndRule(vec![Rule::Member(55), Rule::Direction(RuleCommandDirection::C2S), Rule::Field(100)]));
 	}
 
 	#[test]
@@ -366,12 +356,7 @@ mod test {
 		let result = parse(query).unwrap();
 		assert_eq!(
 			result,
-			Rule::AndRule(vec![
-				Rule::Member(55),
-				Rule::Field(10),
-				Rule::OrRule(vec![Rule::Template(20), Rule::Template(30)]),
-				Rule::RoomOwner,
-			])
+			Rule::AndRule(vec![Rule::Member(55), Rule::Field(10), Rule::OrRule(vec![Rule::Template(20), Rule::Template(30)]), Rule::RoomOwner,])
 		);
 	}
 

@@ -62,12 +62,9 @@ impl Room {
 			})),
 		};
 
-		self.send_to_members(
-			AccessGroups::super_group(),
-			self.get_object_template_id(command),
-			slice::from_ref(&s2c),
-			|member| member.template.super_member,
-		)
+		self.send_to_members(AccessGroups::super_group(), self.get_object_template_id(command), slice::from_ref(&s2c), |member| {
+			member.template.super_member
+		})
 	}
 
 	fn get_object_template_id(&self, command: &C2SCommand) -> Option<GameObjectTemplateId> {
@@ -86,9 +83,9 @@ mod tests {
 	use crate::room::Room;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::s2c::S2CCommand;
-	use cheetah_common::commands::types::field::SetFieldCommand;
 	use cheetah_common::commands::types::forwarded::ForwardedCommand;
-	use cheetah_common::commands::{CommandTypeId, FieldValue};
+	use cheetah_common::commands::types::long::SetLongCommand;
+	use cheetah_common::commands::CommandTypeId;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::RoomMemberId;
 
@@ -117,10 +114,10 @@ mod tests {
 			field_id: Some(1_u16),
 			object_template_id: None,
 		});
-		let command = C2SCommand::SetField(SetFieldCommand {
+		let command = C2SCommand::SetLong(SetLongCommand {
 			object_id: Default::default(),
 			field_id: 2_u16,
-			value: FieldValue::Long(1),
+			value: 1,
 		});
 		assert!(!room.should_forward(&command, member));
 	}
@@ -133,10 +130,10 @@ mod tests {
 			field_id: Some(1_u16),
 			object_template_id: None,
 		});
-		let command = C2SCommand::SetField(SetFieldCommand {
+		let command = C2SCommand::SetLong(SetLongCommand {
 			object_id: Default::default(),
 			field_id: 1_u16,
-			value: FieldValue::Long(1),
+			value: 1,
 		});
 		assert!(room.should_forward(&command, member));
 	}
@@ -153,10 +150,7 @@ mod tests {
 
 		assert!(room.test_get_member_out_commands(member_2).is_empty());
 		assert_eq!(
-			S2CCommand::Forwarded(Box::new(ForwardedCommand {
-				creator: member_1,
-				c2s: command,
-			})),
+			S2CCommand::Forwarded(Box::new(ForwardedCommand { creator: member_1, c2s: command })),
 			room.test_get_member_out_commands(super_member)[0]
 		);
 	}

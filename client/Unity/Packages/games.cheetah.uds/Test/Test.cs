@@ -1,21 +1,20 @@
 using System;
 using System.Net;
+using System.Threading.Tasks;
 using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
-using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Network;
 using Games.Cheetah.EmbeddedServer.API;
 using Games.Cheetah.GRPC.Internal;
 using Games.Cheetah.UDS.API;
 using NUnit.Framework;
-using UnityEditor.VersionControl;
-using Task = System.Threading.Tasks.Task;
 
 namespace Games.Cheetah.UDS.Tests.Test
 {
     public class Test
     {
         private ulong createdRoomId;
-        private CheetahClient cheetahClient;
+        private NetworkClient cheetahClient;
         private EmbeddedServer.API.EmbeddedServer server;
         private UDSPlugin plugin;
 
@@ -50,7 +49,7 @@ namespace Games.Cheetah.UDS.Tests.Test
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
                 Assert.AreEqual(room.RoomId, createdRoomId);
-                Assert.AreEqual(cheetahClient.GetConnectionStatus(), CheetahClientConnectionStatus.Connected);
+                Assert.AreEqual(cheetahClient.GetConnectionStatus(), ConnectionStatus.Connected);
             }).GetAwaiter().GetResult();
         }
 
@@ -60,7 +59,7 @@ namespace Games.Cheetah.UDS.Tests.Test
             throw new NotImplementedException();
         }
 
-        private void OnRoomCreated(ulong roomId, Internal.InternalClient internalClient, CheetahClient cheetahClient)
+        private void OnRoomCreated(ulong roomId, Internal.InternalClient internalClient, NetworkClient cheetahClient)
         {
             createdRoomId = roomId;
             this.cheetahClient = cheetahClient;

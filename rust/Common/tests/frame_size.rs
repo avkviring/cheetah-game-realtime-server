@@ -1,7 +1,8 @@
-use cheetah_common::commands::binary_value::BinaryValue;
+use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_common::commands::types::field::SetFieldCommand;
+use cheetah_common::commands::types::long::SetLongCommand;
+use cheetah_common::commands::types::structure::SetStructureCommand;
 use cheetah_common::protocol::codec::cipher::Cipher;
 use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 use cheetah_common::protocol::frame::channel::Channel;
@@ -35,18 +36,18 @@ pub fn create_object_frame() {
 	});
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
-		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetStructure(SetStructureCommand {
 			object_id: Default::default(),
 			field_id: 30,
-			value: BinaryValue::from([0].as_ref()).into(),
+			value: Buffer::from([0].as_ref()),
 		})),
 	});
 	frame.add_command(CommandWithChannel {
 		channel: Channel::ReliableUnordered,
-		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+		both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 			object_id: Default::default(),
 			field_id: 55,
-			value: 100.into(),
+			value: 100,
 		})),
 	});
 

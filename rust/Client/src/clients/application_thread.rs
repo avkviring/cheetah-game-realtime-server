@@ -1,14 +1,13 @@
+use std::slice;
 use std::sync::mpsc::{Receiver, SendError, Sender};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use cheetah_common::commands::binary_value::BinaryValue;
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_common::commands::{FieldType, FieldValue};
+use cheetah_common::commands::CommandTypeId;
 use cheetah_common::network::client::ConnectionStatus;
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -21,14 +20,14 @@ use cheetah_common::room::RoomMemberId;
 use crate::clients::network_thread::C2SCommandWithChannel;
 use crate::clients::{ClientRequest, SharedClientStatistics};
 use crate::ffi::channel::Channel;
-use crate::ffi::ForwardedCommandFFI;
+use crate::ffi::command::S2CCommandFFI;
 
 ///
 /// Взаимодействие с сетевым потоком клиента, через Sender
 ///
 pub struct ApplicationThreadClient {
 	member_id: RoomMemberId,
-	commands_from_server: Receiver<CommandWithChannel>,
+	s2c_receiver: Receiver<CommandWithChannel>,
 	handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
 	server_time: Arc<Mutex<Option<u64>>>,
@@ -36,25 +35,11 @@ pub struct ApplicationThreadClient {
 	channel: ChannelType,
 	game_object_id_generator: u32,
 	pub shared_statistics: SharedClientStatistics,
-	pub listener_long_value: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, i64)>,
-	pub listener_float_value: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, f64)>,
-	pub listener_event: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BinaryValue)>,
-	pub listener_structure: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, &BinaryValue)>,
-	pub listener_delete_field: Option<extern "C" fn(RoomMemberId, &GameObjectId, FieldId, FieldType)>,
-	pub listener_create_object: Option<extern "C" fn(&GameObjectId, u16)>,
-	pub listener_delete_object: Option<extern "C" fn(&GameObjectId)>,
-	pub listener_created_object: Option<extern "C" fn(&GameObjectId)>,
-	pub listener_forwarded_command: Option<extern "C" fn(ForwardedCommandFFI)>,
-	pub listener_member_connected: Option<extern "C" fn(RoomMemberId)>,
 }
 
 impl Drop for ApplicationThreadClient {
 	fn drop(&mut self) {
-		if self
-			.request_to_client
-			.send(ClientRequest::Close(DisconnectByCommandReason::ClientStopped))
-			.is_ok()
-		{
+		if self.request_to_client.send(ClientRequest::Close(DisconnectByCommandReason::ClientStopped)).is_ok() {
 			self.handler.take().unwrap().join().unwrap();
 		}
 	}
@@ -72,7 +57,7 @@ impl ApplicationThreadClient {
 	) -> Self {
 		Self {
 			member_id,
-			commands_from_server: in_commands,
+			s2c_receiver: in_commands,
 			handler: Some(handler),
 			state,
 			server_time,
@@ -80,16 +65,6 @@ impl ApplicationThreadClient {
 			channel: ChannelType::ReliableSequence(ChannelGroup(0)),
 			game_object_id_generator: GameObjectId::CLIENT_OBJECT_ID_OFFSET,
 			shared_statistics,
-			listener_long_value: None,
-			listener_float_value: None,
-			listener_event: None,
-			listener_structure: None,
-			listener_delete_object: None,
-			listener_create_object: None,
-			listener_created_object: None,
-			listener_delete_field: None,
-			listener_forwarded_command: None,
-			listener_member_connected: None,
 		}
 	}
 
@@ -98,10 +73,8 @@ impl ApplicationThreadClient {
 	}
 
 	pub fn send(&mut self, command: C2SCommand) -> Result<(), SendError<ClientRequest>> {
-		let out_command = C2SCommandWithChannel {
-			channel_type: self.channel,
-			command,
-		};
+		let out_command = C2SCommandWithChannel { channel_type: self.channel, command };
+		tracing::info!("{:?}", out_command);
 		self.request_to_client.send(ClientRequest::SendCommandToServer(out_command))
 	}
 
@@ -124,68 +97,59 @@ impl ApplicationThreadClient {
 		}
 	}
 
-	pub fn receive(&mut self) {
-		while let Ok(command) = self.commands_from_server.try_recv() {
+	pub unsafe fn receive(&mut self, commands: *mut S2CCommandFFI, count: &mut u8) {
+		*count = 0;
+		let commands: &mut [S2CCommandFFI] = slice::from_raw_parts_mut(commands, u8::MAX as usize);
+
+		while let Ok(command) = self.s2c_receiver.try_recv() {
 			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.both_direction_command {
+				let mut command_ffi = &mut commands[*count as usize];
 				match member_with_creator.command {
 					S2CCommand::Create(command) => {
-						if let Some(ref listener) = self.listener_create_object {
-							let object_id = command.object_id;
-							listener(&object_id, command.template);
-						}
+						command_ffi.command_type = CommandTypeId::CreateGameObject;
+						command_ffi.command.create = command;
 					}
 					S2CCommand::Created(command) => {
-						if let Some(ref listener) = self.listener_created_object {
-							let object_id = command.object_id;
-							listener(&object_id);
-						}
+						command_ffi.command_type = CommandTypeId::CreatedGameObject;
+						command_ffi.command.created = command;
 					}
-					S2CCommand::SetField(command) => match command.value {
-						FieldValue::Long(v) => {
-							if let Some(ref listener) = self.listener_long_value {
-								let object_id = command.object_id;
-								listener(member_with_creator.creator, &object_id, command.field_id, v);
-							}
-						}
-						FieldValue::Double(v) => {
-							if let Some(ref listener) = self.listener_float_value {
-								let object_id = command.object_id;
-								listener(member_with_creator.creator, &object_id, command.field_id, v);
-							}
-						}
-						FieldValue::Structure(s) => {
-							if let Some(ref listener) = self.listener_structure {
-								let object_id = command.object_id;
-								listener(member_with_creator.creator, &object_id, command.field_id, &s.as_slice().into());
-							}
-						}
-					},
+
+					S2CCommand::SetLong(command) => {
+						command_ffi.command_type = CommandTypeId::SetLong;
+						command_ffi.command.set_long = command;
+					}
+					S2CCommand::SetDouble(command) => {
+						command_ffi.command_type = CommandTypeId::SetDouble;
+						command_ffi.command.set_double = command;
+					}
+					S2CCommand::SetStructure(command) => {
+						command_ffi.command_type = CommandTypeId::SetStructure;
+						command_ffi.command.set_structure = command;
+					}
+
 					S2CCommand::Event(command) => {
-						if let Some(ref listener) = self.listener_event {
-							listener(member_with_creator.creator, &command.object_id, command.field_id, &command.event);
-						}
+						command_ffi.command_type = CommandTypeId::SendEvent;
+						command_ffi.command.event = command;
 					}
 					S2CCommand::Delete(command) => {
-						if let Some(ref listener) = self.listener_delete_object {
-							listener(&command.object_id);
-						}
+						command_ffi.command_type = CommandTypeId::DeleteObject;
+						command_ffi.command.delete = command;
 					}
 					S2CCommand::DeleteField(command) => {
-						if let Some(ref listener) = self.listener_delete_field {
-							listener(member_with_creator.creator, &command.object_id, command.field_id, command.field_type);
-						}
+						command_ffi.command_type = CommandTypeId::DeleteField;
+						command_ffi.command.delete_field = command;
 					}
 					S2CCommand::Forwarded(command) => {
-						if let Some(ref listener) = self.listener_forwarded_command {
-							listener((*command).into());
-						}
+						todo!()
 					}
 					S2CCommand::MemberConnected(command) => {
-						if let Some(ref listener) = self.listener_member_connected {
-							listener(command.member_id);
-						}
+						todo!()
 					}
 				}
+				if *count == u8::MAX {
+					break;
+				}
+				*count += 1;
 			}
 		}
 	}
@@ -207,8 +171,7 @@ impl ApplicationThreadClient {
 	}
 
 	pub fn set_drop_emulation(&mut self, drop_probability: f64, drop_time: Duration) -> Result<(), SendError<ClientRequest>> {
-		self.request_to_client
-			.send(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time))
+		self.request_to_client.send(ClientRequest::ConfigureDropEmulation(drop_probability, drop_time))
 	}
 
 	pub fn reset_emulation(&mut self) -> Result<(), SendError<ClientRequest>> {
@@ -217,7 +180,7 @@ impl ApplicationThreadClient {
 
 	pub fn attach_to_room(&mut self) -> Result<(), SendError<ClientRequest>> {
 		// удаляем все пришедшие команды (ситуация возникает при attach/detach)
-		while self.commands_from_server.try_recv().is_ok() {}
+		while self.s2c_receiver.try_recv().is_ok() {}
 		self.send(C2SCommand::AttachToRoom)
 	}
 }

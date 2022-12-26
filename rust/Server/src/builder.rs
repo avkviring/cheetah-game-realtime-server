@@ -92,17 +92,11 @@ impl ServerBuilder {
 		let server_manager = RoomsServerManager::new(game_socket, self.plugin_names).map_err(ServerBuilderError::RoomsServerManager)?;
 		let manager = Arc::new(Mutex::new(server_manager));
 
-		let internal_grpc_listener = TcpListener::bind(self.internal_grpc_service_bind_address)
-			.await
-			.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
+		let internal_grpc_listener = TcpListener::bind(self.internal_grpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
 
-		let internal_webgrpc_listener = TcpListener::bind(self.internal_webgrpc_service_bind_address)
-			.await
-			.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
+		let internal_webgrpc_listener = TcpListener::bind(self.internal_webgrpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
 
-		let admin_webgrpc_listener = TcpListener::bind(self.admin_webgrpc_service_bind_address)
-			.await
-			.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
+		let admin_webgrpc_listener = TcpListener::bind(self.admin_webgrpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
 
 		Ok(Server {
 			game_socket_addr,

@@ -25,13 +25,7 @@ fn should_disconnect_on_delete_member() {
 	});
 
 	assert!(
-		helper
-			.server
-			.delete_member(MemberAndRoomId {
-				room_id: helper.room_id,
-				member_id,
-			})
-			.is_ok(),
+		helper.server.delete_member(MemberAndRoomId { room_id: helper.room_id, member_id }).is_ok(),
 		"want successful delete_member"
 	);
 

@@ -1,6 +1,6 @@
 using Games_Cheetah_Client_Tests_Codec_Field;
 using Games.Cheetah.Client.Codec;
-using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using NUnit.Framework;
 
 namespace Games.Cheetah.Client.Tests.Codec.Field
@@ -13,7 +13,6 @@ namespace Games.Cheetah.Client.Tests.Codec.Field
             var codecRegistryBuilder = new CodecRegistryBuilder();
             codecRegistryBuilder.Register(_ => new TestCodecArrayFieldInnerCodec());
             codecRegistryBuilder.Register(factory => new TestCodecArrayFieldStructureCodec(factory));
-
             codecRegistryBuilder.Register(_ => new TestCodecFieldInnerCodec());
             codecRegistryBuilder.Register(factory => new TestCodecFieldStructureCodec(factory));
             codecRegistryBuilder.Register(_ => new TestEnumFieldStructureCodec());
@@ -26,7 +25,7 @@ namespace Games.Cheetah.Client.Tests.Codec.Field
             var codecRegistry = codecRegistryBuilder.Build();
             var codec = codecRegistry.GetCodec<T>();
             var source = GetSource();
-            var buffer = new CheetahBuffer();
+            var buffer = new NetworkBuffer();
             codec.Encode(in source, ref buffer);
             var result = GetResult();
             buffer.pos = 0;

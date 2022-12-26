@@ -23,14 +23,7 @@ impl IntegrationTestServerBuilder {
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(55);
 	pub const DEFAULT_TEMPLATE: GameObjectTemplateId = 1;
 
-	pub fn set_permission(
-		&mut self,
-		template: GameObjectTemplateId,
-		field_id: FieldId,
-		field_type: FieldType,
-		group: AccessGroups,
-		permission: Permission,
-	) {
+	pub fn set_permission(&mut self, template: GameObjectTemplateId, field_id: FieldId, field_type: FieldType, group: AccessGroups, permission: Permission) {
 		let field = PermissionField {
 			field: Field { id: field_id, field_type },
 			rules: vec![GroupsPermissionRule { groups: group, permission }],

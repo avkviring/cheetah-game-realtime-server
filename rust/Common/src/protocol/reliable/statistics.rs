@@ -44,18 +44,8 @@ impl RetransmitStatistics {
 	#[must_use]
 	pub fn new(counter: LocalIntCounter) -> Self {
 		Self {
-			redundant_events_collector: EventCollectorByTime::new(
-				0,
-				0,
-				RetransmitStatistics::EMPTY_MEASUREMENT_MARK,
-				RetransmitStatistics::MEASURE_DURATION,
-			),
-			retransmit_events_collector: EventCollectorByTime::new(
-				0,
-				0,
-				RetransmitStatistics::EMPTY_MEASUREMENT_MARK,
-				RetransmitStatistics::MEASURE_DURATION,
-			),
+			redundant_events_collector: EventCollectorByTime::new(0, 0, RetransmitStatistics::EMPTY_MEASUREMENT_MARK, RetransmitStatistics::MEASURE_DURATION),
+			retransmit_events_collector: EventCollectorByTime::new(0, 0, RetransmitStatistics::EMPTY_MEASUREMENT_MARK, RetransmitStatistics::MEASURE_DURATION),
 			counter,
 			//already_processed_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
 			//acked_original_frames: LruCache::new(RetransmitStatistics::FRAMES_STORAGE_LIMIT),
@@ -95,18 +85,14 @@ impl RetransmitStatistics {
 	/// Количество повторных излишних отправленных фреймов (скользящее среднее)
 	///
 	pub fn get_average_redundant_frames(&mut self, now: Instant) -> Option<usize> {
-		self.redundant_events_collector
-			.get_sum_and_count(now)
-			.map(|(sum, count)| (sum / count) as usize)
+		self.redundant_events_collector.get_sum_and_count(now).map(|(sum, count)| (sum / count) as usize)
 	}
 
 	///
 	/// Количество повторно отправленных фреймов
 	///
 	pub fn get_average_retransmit_frames(&mut self, now: Instant) -> Option<usize> {
-		self.retransmit_events_collector
-			.get_sum_and_count(now)
-			.map(|(sum, count)| (sum / count) as usize)
+		self.retransmit_events_collector.get_sum_and_count(now).map(|(sum, count)| (sum / count) as usize)
 	}
 }
 

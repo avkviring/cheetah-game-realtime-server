@@ -1,18 +1,10 @@
-use std::collections::HashMap;
-use std::sync::Mutex;
-
-use lazy_static::lazy_static;
-
 use cheetah_client::ffi;
-use cheetah_common::commands::binary_value::BinaryValue;
-use cheetah_common::commands::field::FieldId;
-use cheetah_common::commands::FieldType;
-use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::RoomMemberId;
-use cheetah_server::room::template::config::Permission;
+use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
+use cheetah_common::commands::binary_value::Buffer;
+use cheetah_common::commands::types::structure::SetStructureCommand;
+use cheetah_common::commands::CommandTypeId;
 
 use crate::helpers::helper::setup;
-use crate::helpers::server::IntegrationTestServerBuilder;
 
 pub mod helpers;
 
@@ -20,117 +12,26 @@ pub mod helpers;
 fn should_set() {
 	let (helper, [client1, client2]) = setup(Default::default());
 
-	ffi::command::structure::set_structure_listener(client2, on_structure_listener);
-	ffi::command::room::attach_to_room(client2);
-	helper.wait_udp();
-
 	let object_id = helper.create_member_object(client1);
-	let structure_buffer = BinaryValue::from(vec![100].as_slice());
+	ffi::command::room::attach_to_room(client2);
+	helper.receive(client2);
+
+	let structure_buffer = Buffer::from(vec![100].as_slice());
 	let structure_field_id = 10;
 	ffi::command::structure::set_structure(client1, &object_id, structure_field_id, &structure_buffer);
 
-	helper.wait_udp();
-	ffi::client::receive(client2);
-
-	assert!(matches!(
-		STRUCTURE.lock().unwrap().as_ref(),
-		Some((field_id, buffer))
-			if *field_id == structure_field_id && *buffer == structure_buffer
-	));
-}
-
-#[test]
-fn should_compare_and_set() {
-	let mut builder = IntegrationTestServerBuilder::default();
-
-	let field_id_with_reset = 1;
-	let field_id = 2;
-
-	// устанавливаем RW для получения команды с сервера на клиента источника команды
-	builder.set_permission(
-		IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
-		field_id_with_reset,
-		FieldType::Structure,
-		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
-		Permission::Rw,
-	);
-
-	builder.set_permission(
-		IntegrationTestServerBuilder::DEFAULT_TEMPLATE,
-		field_id,
-		FieldType::Structure,
-		IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,
-		Permission::Rw,
-	);
-	let (helper, [client1, client2]) = setup(builder);
-
-	ffi::command::structure::set_structure_listener(client1, on_compare_and_set_listener);
-	ffi::command::room::attach_to_room(client1);
-	let object_id = helper.create_member_object(client1);
-	helper.wait_udp();
-
-	ffi::command::room::attach_to_room(client2);
-	// проверяем, что установится только первое значение
-	ffi::command::structure::compare_and_set_structure(
-		client2,
-		&object_id,
-		field_id_with_reset,
-		&vec![0].as_slice().into(),
-		&vec![100].as_slice().into(),
-		true,
-		&vec![42].as_slice().into(),
-	);
-	ffi::command::structure::compare_and_set_structure(
-		client2,
-		&object_id,
-		field_id,
-		&vec![0].as_slice().into(),
-		&vec![200].as_slice().into(),
-		false,
-		&vec![0].as_slice().into(),
-	);
-	ffi::command::structure::compare_and_set_structure(
-		client2,
-		&object_id,
-		field_id_with_reset,
-		&vec![0].as_slice().into(),
-		&vec![200].as_slice().into(),
-		true,
-		&vec![24].as_slice().into(),
-	);
-	helper.wait_udp();
-
-	ffi::client::receive(client1);
+	let commands = helper.receive(client2);
 	assert_eq!(
-		*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(),
-		vec![100].as_slice().into()
+		commands[0],
+		S2CCommandFFI {
+			command_type: CommandTypeId::SetStructure,
+			command: S2CommandUnionFFI {
+				set_structure: SetStructureCommand {
+					object_id,
+					field_id: structure_field_id,
+					value: structure_buffer,
+				}
+			}
+		}
 	);
-	assert_eq!(*COMPARE_AND_SET.lock().unwrap().get(&field_id).unwrap(), vec![200].as_slice().into());
-
-	// теперь второй клиент разрывает соединение
-	// первый наблюдает за тем что значение поменяется на reset
-	ffi::client::destroy_client(client2);
-	helper.wait_udp();
-
-	ffi::client::receive(client1);
-	assert_eq!(
-		*COMPARE_AND_SET.lock().unwrap().get(&field_id_with_reset).unwrap(),
-		vec![42].as_slice().into()
-	);
-}
-
-lazy_static! {
-	static ref STRUCTURE: Mutex<Option<(FieldId, BinaryValue)>> = Mutex::new(Default::default());
-}
-
-lazy_static! {
-	static ref COMPARE_AND_SET: Mutex<HashMap<FieldId, BinaryValue>> = Mutex::new(Default::default());
-}
-
-extern "C" fn on_structure_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, buffer: &BinaryValue) {
-	STRUCTURE.lock().unwrap().replace((field_id, (*buffer).clone()));
-}
-
-extern "C" fn on_compare_and_set_listener(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: &BinaryValue) {
-	COMPARE_AND_SET.lock().unwrap().insert(field_id, value.clone());
 }

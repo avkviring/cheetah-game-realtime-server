@@ -54,19 +54,11 @@ impl Room {
 			});
 		}
 
-		let object_owner = if let GameObjectOwner::Member(owner) = object.id.get_owner() {
-			Some(owner)
-		} else {
-			None
-		};
+		let object_owner = if let GameObjectOwner::Member(owner) = object.id.get_owner() { Some(owner) } else { None };
 
 		let is_creator_object_owner = object_owner == Some(creator_id);
 
-		let allow = is_creator_object_owner
-			|| permission_manager
-				.borrow_mut()
-				.get_permission(object.template_id, field, creator_access_group)
-				>= permission;
+		let allow = is_creator_object_owner || permission_manager.borrow_mut().get_permission(object.template_id, field, creator_access_group) >= permission;
 
 		if !allow {
 			return Err(ServerCommandError::MemberCannotAccessToObjectField {

@@ -1,6 +1,7 @@
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 using Games.Cheetah.Client.Tests.Codec.Field;
 
@@ -12,14 +13,14 @@ namespace Games_Cheetah_Client_Tests_Codec_Field
 		// warning warning warning warning warning
 		public class TestFormatterReferencedArrayFieldStructureCodec:Codec<Games.Cheetah.Client.Tests.Codec.Field.TestFormatterReferencedArrayField.Structure>
 		{
-			public void Decode(ref CheetahBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestFormatterReferencedArrayField.Structure dest)
+			public void Decode(ref NetworkBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestFormatterReferencedArrayField.Structure dest)
 			{
 				dest.size = UIntFormatter.Instance.Read(ref buffer);
 				StringFormatter.Instance.ReadArray(ref buffer, dest.stringArray, dest.size,0);
 				VariableSizeIntFormatter.Instance.ReadArray(ref buffer, dest.variableSizeArray, dest.size,0);
 			}
 	
-			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestFormatterReferencedArrayField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestFormatterReferencedArrayField.Structure source, ref NetworkBuffer buffer)
 			{
 				UIntFormatter.Instance.Write(source.size,ref buffer);
 				StringFormatter.Instance.WriteArray(source.stringArray,source.size, 0,ref buffer);

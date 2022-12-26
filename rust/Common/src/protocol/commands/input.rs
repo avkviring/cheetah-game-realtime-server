@@ -97,10 +97,7 @@ impl InCommandsCollector {
 			if buffer.len() > SEQUENCE_COMMANDS_LIMIT {
 				tracing::error!("Sequence commands buffer overflow");
 			} else {
-				buffer.push(SequenceApplicationCommand {
-					sequence: input_sequence,
-					command,
-				});
+				buffer.push(SequenceApplicationCommand { sequence: input_sequence, command });
 			}
 		}
 	}
@@ -154,7 +151,7 @@ impl Ord for SequenceApplicationCommand {
 #[cfg(test)]
 mod tests {
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::types::field::SetFieldCommand;
+	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::commands::input::InCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
@@ -268,10 +265,10 @@ mod tests {
 	fn create_test_object_command(channel: Channel, object_id: u32, content: i64) -> CommandWithChannel {
 		CommandWithChannel {
 			channel,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
 				field_id: 0,
-				value: content.into(),
+				value: content,
 			})),
 		}
 	}

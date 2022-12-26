@@ -58,20 +58,15 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn create_session(&self, request: Request<admin::CreateSessionRequest>) -> Result<Response<admin::CreateSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let task = TracerSessionCommand::CreateSession(sender);
-		self.execute_task(request.get_ref().room, task, receiver, |session_id| {
-			Ok(admin::CreateSessionResponse { id: u32::from(session_id) })
-		})
-		.await
+		self.execute_task(request.get_ref().room, task, receiver, |session_id| Ok(admin::CreateSessionResponse { id: u32::from(session_id) }))
+			.await
 	}
 
 	async fn set_filter(&self, request: Request<admin::SetFilterRequest>) -> Result<Response<admin::SetFilterResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
 		let task = TracerSessionCommand::SetFilter(
-			request
-				.session
-				.try_into()
-				.map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?,
+			request.session.try_into().map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?,
 			request.filter.clone(),
 			sender,
 		);
@@ -81,20 +76,11 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn get_commands(&self, request: Request<admin::GetCommandsRequest>) -> Result<Response<admin::GetCommandsResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = TracerSessionCommand::GetCommands(
-			request
-				.session
-				.try_into()
-				.map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?,
-			sender,
-		);
+		let task = TracerSessionCommand::GetCommands(request.session.try_into().map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?, sender);
 		self.execute_task(request.room, task, receiver, |result| {
-			result
-				.trace_err("Get commands for trace")
-				.map_err(Status::internal)
-				.map(|commands| admin::GetCommandsResponse {
-					commands: commands.into_iter().map(admin::Command::from).collect(),
-				})
+			result.trace_err("Get commands for trace").map_err(Status::internal).map(|commands| admin::GetCommandsResponse {
+				commands: commands.into_iter().map(admin::Command::from).collect(),
+			})
 		})
 		.await
 	}
@@ -102,18 +88,9 @@ impl admin::command_tracer_server::CommandTracer for CommandTracerGRPCService {
 	async fn close_session(&self, request: Request<admin::CloseSessionRequest>) -> Result<Response<admin::CloseSessionResponse>, Status> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let request = request.get_ref();
-		let task = TracerSessionCommand::CloseSession(
-			request
-				.session
-				.try_into()
-				.map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?,
-			sender,
-		);
+		let task = TracerSessionCommand::CloseSession(request.session.try_into().map_err(|e| Status::invalid_argument(format!("session is too large: {e}")))?, sender);
 		self.execute_task(request.room, task, receiver, |result| {
-			result
-				.trace_err("Close tracer session")
-				.map_err(Status::internal)
-				.map(|_| admin::CloseSessionResponse {})
+			result.trace_err("Close tracer session").map_err(Status::internal).map(|_| admin::CloseSessionResponse {})
 		})
 		.await
 	}
@@ -178,7 +155,6 @@ fn get_string_value(command: &TracedCommand) -> String {
 
 #[cfg(test)]
 pub mod test {
-	use cheetah_common::commands::binary_value::BinaryValue;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::types::event::EventCommand;
 	use cheetah_common::room::object::GameObjectId;
@@ -197,7 +173,7 @@ pub mod test {
 			network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Room),
 				field_id: 555,
-				event: BinaryValue::from(vec![10, 20, 30].as_slice()),
+				event: vec![10, 20, 30].as_slice().into(),
 			})),
 		};
 

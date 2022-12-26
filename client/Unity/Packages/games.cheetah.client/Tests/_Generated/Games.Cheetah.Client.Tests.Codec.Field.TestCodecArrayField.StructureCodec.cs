@@ -1,6 +1,7 @@
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 using Games.Cheetah.Client.Tests.Codec.Field;
 
@@ -12,7 +13,7 @@ namespace Games_Cheetah_Client_Tests_Codec_Field
 		// warning warning warning warning warning
 		public class TestCodecArrayFieldStructureCodec:Codec<Games.Cheetah.Client.Tests.Codec.Field.TestCodecArrayField.Structure>
 		{
-			public void Decode(ref CheetahBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestCodecArrayField.Structure dest)
+			public void Decode(ref NetworkBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestCodecArrayField.Structure dest)
 			{
 				dest.size = ByteFormatter.Instance.Read(ref buffer);
 				for(var i=0;i<dest.size;i++) {
@@ -21,7 +22,7 @@ namespace Games_Cheetah_Client_Tests_Codec_Field
 	
 			}
 	
-			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestCodecArrayField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestCodecArrayField.Structure source, ref NetworkBuffer buffer)
 			{
 				ByteFormatter.Instance.Write(source.size,ref buffer);
 				for(var i=0;i<source.size;i++) {

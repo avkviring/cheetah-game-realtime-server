@@ -108,10 +108,8 @@ impl Protocol {
 			}
 		}
 
-		let contains_data = self.ack_sender.contains_self_data(now)
-			|| self.out_commands_collector.contains_self_data()
-			|| self.disconnect_by_command.contains_self_data()
-			|| self.keep_alive.contains_self_data(now);
+		let contains_data =
+			self.ack_sender.contains_self_data(now) || self.out_commands_collector.contains_self_data() || self.disconnect_by_command.contains_self_data() || self.keep_alive.contains_self_data(now);
 
 		contains_data.then(|| {
 			let mut frame = OutFrame::new(self.next_frame_id);

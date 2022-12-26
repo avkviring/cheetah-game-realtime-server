@@ -11,10 +11,9 @@ use tower::service_fn;
 
 use crate::proto::matches::realtime::internal::internal_server::{Internal, InternalServer};
 use crate::proto::matches::realtime::internal::{
-	CreateMemberRequest, CreateMemberResponse, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest,
-	DeleteRoomResponse, EmptyRequest, GetRoomInfoRequest, GetRoomInfoResponse, MarkRoomAsReadyRequest, MarkRoomAsReadyResponse, ProbeRequest,
-	ProbeResponse, PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, RoomIdResponse, RoomLifecycleResponse, RoomTemplate,
-	UpdateRoomPermissionsRequest, UpdateRoomPermissionsResponse,
+	CreateMemberRequest, CreateMemberResponse, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest, DeleteRoomResponse, EmptyRequest, GetRoomInfoRequest,
+	GetRoomInfoResponse, MarkRoomAsReadyRequest, MarkRoomAsReadyResponse, ProbeRequest, ProbeResponse, PutForwardedCommandConfigRequest, PutForwardedCommandConfigResponse, RoomIdResponse,
+	RoomLifecycleResponse, RoomTemplate, UpdateRoomPermissionsRequest, UpdateRoomPermissionsResponse,
 };
 
 pub struct RealtimeStub<CreatedEventStubFunc, Fut>
@@ -63,10 +62,7 @@ where
 		unreachable!()
 	}
 
-	async fn put_forwarded_command_config(
-		&self,
-		_request: Request<PutForwardedCommandConfigRequest>,
-	) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
+	async fn put_forwarded_command_config(&self, _request: Request<PutForwardedCommandConfigRequest>) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
 		unreachable!()
 	}
 
@@ -78,10 +74,7 @@ where
 		unreachable!()
 	}
 
-	async fn update_room_permissions(
-		&self,
-		_request: Request<UpdateRoomPermissionsRequest>,
-	) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
+	async fn update_room_permissions(&self, _request: Request<UpdateRoomPermissionsRequest>) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
 		unreachable!()
 	}
 }
@@ -93,9 +86,7 @@ where
 {
 	let (client, server) = tokio::io::duplex(1024);
 
-	let service = RealtimeStub {
-		created_event_stub_function: f,
-	};
+	let service = RealtimeStub { created_event_stub_function: f };
 	let runtime = tokio::runtime::Builder::new_multi_thread().worker_threads(2).build().unwrap();
 
 	let server_handler = runtime.spawn(async move {

@@ -1,6 +1,7 @@
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 using Shared.Types;
 
@@ -12,12 +13,12 @@ namespace Shared_Types
 		// warning warning warning warning warning
 		public class DropMineEventCodec:Codec<Shared.Types.DropMineEvent>
 		{
-			public void Decode(ref CheetahBuffer buffer, ref Shared.Types.DropMineEvent dest)
+			public void Decode(ref NetworkBuffer buffer, ref Shared.Types.DropMineEvent dest)
 			{
 				dest.MineId = IntFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(in Shared.Types.DropMineEvent source, ref CheetahBuffer buffer)
+			public void  Encode(in Shared.Types.DropMineEvent source, ref NetworkBuffer buffer)
 			{
 				IntFormatter.Instance.Write(source.MineId,ref buffer);
 			}

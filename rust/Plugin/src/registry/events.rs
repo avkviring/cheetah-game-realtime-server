@@ -58,10 +58,7 @@ impl RoomLifecycleEventReader {
 		let reader = Self::default();
 		let handler = reader.runtime.as_ref().unwrap().block_on(async move {
 			let endpoint = Channel::from_shared(grpc_server_address).map_err(|e| RoomLifecycleEventReaderError::InvalidUri(format!("{e:?}")))?;
-			endpoint
-				.connect()
-				.await
-				.map_err(|e| RoomLifecycleEventReaderError::ChannelError(e.to_string()))
+			endpoint.connect().await.map_err(|e| RoomLifecycleEventReaderError::ChannelError(e.to_string()))
 		});
 		let channel = handler?;
 		Ok(reader.run(channel))
@@ -109,11 +106,7 @@ impl RoomLifecycleEventReader {
 		}
 	}
 
-	async fn reader_loop(
-		server_channel: Channel,
-		created_rooms: Arc<ArrayQueue<RoomId>>,
-		deleted_rooms: Arc<ArrayQueue<RoomId>>,
-	) -> Result<(), RoomLifecycleEventReaderError> {
+	async fn reader_loop(server_channel: Channel, created_rooms: Arc<ArrayQueue<RoomId>>, deleted_rooms: Arc<ArrayQueue<RoomId>>) -> Result<(), RoomLifecycleEventReaderError> {
 		let mut client = InternalClient::new(server_channel);
 		let mut response = client
 			.watch_room_lifecycle_event(EmptyRequest::default())
@@ -121,28 +114,17 @@ impl RoomLifecycleEventReader {
 			.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{e:?}")))?;
 		let stream = response.get_mut();
 		loop {
-			let message = stream
-				.message()
-				.await
-				.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{e:?}")))?;
+			let message = stream.message().await.map_err(|e| RoomLifecycleEventReaderError::GrpcError(format!("{e:?}")))?;
 			Self::process_message(&created_rooms, &deleted_rooms, message)?;
 		}
 	}
 
 	#[allow(clippy::map_err_ignore)]
-	fn process_message(
-		created_rooms: &Arc<ArrayQueue<RoomId>>,
-		deleted_rooms: &Arc<ArrayQueue<RoomId>>,
-		message: Option<RoomLifecycleResponse>,
-	) -> Result<(), RoomLifecycleEventReaderError> {
+	fn process_message(created_rooms: &Arc<ArrayQueue<RoomId>>, deleted_rooms: &Arc<ArrayQueue<RoomId>>, message: Option<RoomLifecycleResponse>) -> Result<(), RoomLifecycleEventReaderError> {
 		if let Some(message) = message {
 			match RoomLifecycleType::from_i32(message.r#type).ok_or(RoomLifecycleEventReaderError::UnknownRoomLifecycleType)? {
-				RoomLifecycleType::Created => created_rooms
-					.push(message.room_id)
-					.map_err(|_| RoomLifecycleEventReaderError::CreatedRoomQueueOverflow)?,
-				RoomLifecycleType::Deleted => deleted_rooms
-					.push(message.room_id)
-					.map_err(|_| RoomLifecycleEventReaderError::DeletedRoomQueueOverflow)?,
+				RoomLifecycleType::Created => created_rooms.push(message.room_id).map_err(|_| RoomLifecycleEventReaderError::CreatedRoomQueueOverflow)?,
+				RoomLifecycleType::Deleted => deleted_rooms.push(message.room_id).map_err(|_| RoomLifecycleEventReaderError::DeletedRoomQueueOverflow)?,
 			}
 		}
 		Ok(())

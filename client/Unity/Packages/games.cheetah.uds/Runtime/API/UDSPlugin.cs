@@ -17,7 +17,7 @@ namespace Games.Cheetah.UDS.API
      */
     public class UDSPlugin
     {
-        public delegate void OnRoomCreated(ulong roomId, InternalClient internalClient, CheetahClient cheetahClient);
+        public delegate void OnRoomCreated(ulong roomId, InternalClient internalClient, NetworkClient cheetahClient);
 
         public delegate void OnRoomDeleted(ulong roomId);
 
@@ -104,7 +104,7 @@ namespace Games.Cheetah.UDS.API
             });
 
 
-            var cheetahClient = new CheetahClient(
+            var cheetahClient = new NetworkClient(
                 udpServerHost,
                 udpServerPort,
                 member.UserId,

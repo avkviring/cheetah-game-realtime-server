@@ -144,13 +144,13 @@ namespace Games.Cheetah.EmbeddedServer.API
             switch (level)
             {
                 case EmeddedServerLogLevel.Info:
-                    Debug.Log(log);
+                    Debug.Log("server:\t" +log);
                     break;
                 case EmeddedServerLogLevel.Warn:
-                    Debug.LogWarning(log);
+                    Debug.LogWarning("server:\t"+log);
                     break;
                 case EmeddedServerLogLevel.Error:
-                    Debug.LogWarning(log);
+                    Debug.LogWarning("server:\t"+log);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(level), level, null);

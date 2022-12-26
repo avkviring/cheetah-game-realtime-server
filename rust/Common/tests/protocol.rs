@@ -41,12 +41,8 @@ fn should_send_from_client() {
 
 	let commands = peer_b.in_commands_collector.get_ready_commands();
 
-	assert!(commands
-		.iter()
-		.any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
-	assert!(commands
-		.iter()
-		.any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::DetachFromRoom)));
+	assert!(commands.iter().any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
+	assert!(commands.iter().any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::DetachFromRoom)));
 }
 
 ///
@@ -85,7 +81,5 @@ fn should_transfer_reliable_on_unreliable_channel() {
 
 	let commands = peer_b.in_commands_collector.get_ready_commands();
 	assert_eq!(commands.len(), 1);
-	assert!(commands
-		.iter()
-		.any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
+	assert!(commands.iter().any(|p| p.both_direction_command == BothDirectionCommand::C2S(C2SCommand::AttachToRoom)));
 }

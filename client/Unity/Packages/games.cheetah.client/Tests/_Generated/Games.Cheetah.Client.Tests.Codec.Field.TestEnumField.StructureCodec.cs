@@ -1,6 +1,7 @@
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 using Games.Cheetah.Client.Tests.Codec.Field;
 
@@ -12,12 +13,12 @@ namespace Games_Cheetah_Client_Tests_Codec_Field
 		// warning warning warning warning warning
 		public class TestEnumFieldStructureCodec:Codec<Games.Cheetah.Client.Tests.Codec.Field.TestEnumField.Structure>
 		{
-			public void Decode(ref CheetahBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestEnumField.Structure dest)
+			public void Decode(ref NetworkBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestEnumField.Structure dest)
 			{
 				dest.enumValue = (Games.Cheetah.Client.Tests.Codec.Field.TestEnumField.EnumTest)ByteFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestEnumField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestEnumField.Structure source, ref NetworkBuffer buffer)
 			{
 				ByteFormatter.Instance.Write((byte)source.enumValue,ref buffer);
 			}

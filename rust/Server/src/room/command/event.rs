@@ -50,7 +50,7 @@ impl ServerCommandExecutor for TargetEventCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::BinaryValue;
+	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::event::{EventCommand, TargetEventCommand};
 	use cheetah_common::room::access::AccessGroups;
@@ -72,7 +72,7 @@ mod tests {
 		let command = EventCommand {
 			object_id,
 			field_id: 100,
-			event: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()),
+			event: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()),
 		};
 
 		command.execute(&mut room, member_id).unwrap();
@@ -105,7 +105,7 @@ mod tests {
 			event: EventCommand {
 				object_id,
 				field_id: 100,
-				event: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()),
+				event: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()),
 			},
 		};
 

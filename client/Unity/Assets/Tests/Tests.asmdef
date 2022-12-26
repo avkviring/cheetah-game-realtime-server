@@ -7,17 +7,17 @@
     "games.cheetah.platform",
     "games.cheetah.platform.tests",
     "games.cheetah.client",
-    "games.cheetah.client.doa",
     "games.cheetah.embedded-server",
     "Shared",
     "games.cheetah.grpc.internal",
-    "games.cheetah.grpc.shared"
+    "games.cheetah.grpc.shared",
+    "Unity.Collections"
   ],
   "includePlatforms": [
     "Editor"
   ],
   "excludePlatforms": [],
-  "allowUnsafeCode": false,
+  "allowUnsafeCode": true,
   "overrideReferences": true,
   "precompiledReferences": [
     "nunit.framework.dll",

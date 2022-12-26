@@ -80,7 +80,7 @@ impl OutCommandsCollector {
 mod tests {
 	use std::collections::VecDeque;
 
-	use crate::commands::binary_value::BinaryValue;
+	use crate::commands::binary_value::Buffer;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
@@ -93,10 +93,7 @@ mod tests {
 	pub(crate) fn test_group_sequence() {
 		let mut output = OutCommandsCollector::default();
 		for _ in 0..3 {
-			output.add_command(
-				ChannelType::ReliableSequence(ChannelGroup(100)),
-				BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-			);
+			output.add_command(ChannelType::ReliableSequence(ChannelGroup(100)), BothDirectionCommand::C2S(C2SCommand::AttachToRoom));
 		}
 		assert!(matches!(output.commands[0].channel, Channel::ReliableSequence(_,sequence)
 			if sequence.0==0));
@@ -115,7 +112,7 @@ mod tests {
 				BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 1,
-					event: BinaryValue::from([1, 2, 3, 4].as_slice()),
+					event: Buffer::from([1, 2, 3, 4].as_slice()),
 				})),
 			);
 		}

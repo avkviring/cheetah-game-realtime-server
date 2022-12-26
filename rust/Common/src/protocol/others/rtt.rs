@@ -154,10 +154,7 @@ mod tests {
 
 		let mut frame_b_a = OutFrame::new(2);
 		handler_b.build_frame(&mut frame_b_a, now);
-		handler_a.on_frame_received(
-			&InFrame::new(frame_b_a.frame_id, frame_b_a.headers, Default::default()),
-			now.add(Duration::from_millis(100)),
-		);
+		handler_a.on_frame_received(&InFrame::new(frame_b_a.frame_id, frame_b_a.headers, Default::default()), now.add(Duration::from_millis(100)));
 
 		assert!(matches!(handler_a.rtt.pop_front(), Some(time) if time == Duration::from_millis(100)));
 	}
@@ -192,9 +189,7 @@ mod tests {
 			original_frame_id: 0,
 			retransmit_count: 1,
 		}));
-		input_frame
-			.headers
-			.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
+		input_frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&input_frame, now);
 
 		let mut output_frame = OutFrame::new(10);
@@ -213,9 +208,7 @@ mod tests {
 		let mut handler = RoundTripTime::new(Instant::now());
 		for i in 0..AVERAGE_RTT_MIN_LEN {
 			let mut frame = InFrame::new(10, Default::default(), Default::default());
-			frame
-				.headers
-				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
+			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, now);
 		}
@@ -231,9 +224,7 @@ mod tests {
 		let mut handler = RoundTripTime::new(Instant::now());
 		for i in 0..2 * AVERAGE_RTT_MIN_LEN {
 			let mut frame = InFrame::new(10, Default::default(), Default::default());
-			frame
-				.headers
-				.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
+			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, now);
 		}

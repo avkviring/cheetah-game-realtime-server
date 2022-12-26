@@ -41,12 +41,7 @@ pub struct RoomsServer {
 }
 
 impl RoomsServer {
-	pub(crate) fn new(
-		socket: UdpSocket,
-		receiver: Receiver<ChannelTask>,
-		halt_signal: Arc<AtomicBool>,
-		plugin_names: FnvHashSet<String>,
-	) -> Result<Self, io::Error> {
+	pub(crate) fn new(socket: UdpSocket, receiver: Receiver<ChannelTask>, halt_signal: Arc<AtomicBool>, plugin_names: FnvHashSet<String>) -> Result<Self, io::Error> {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Ok(Self {
 			network_layer: NetworkLayer::new(socket, Rc::clone(&measures))?,
@@ -85,9 +80,7 @@ impl RoomsServer {
 		let res = match task {
 			ManagementTask::CreateRoom(template) => ManagementTaskResult::CreateRoom(self.rooms.create_room(template)),
 			ManagementTask::DeleteRoom(room_id) => self.delete_room(room_id).map(|_| ManagementTaskResult::DeleteRoom)?,
-			ManagementTask::CreateMember(room_id, member_template) => self
-				.register_member(room_id, member_template, now)
-				.map(ManagementTaskResult::CreateMember)?,
+			ManagementTask::CreateMember(room_id, member_template) => self.register_member(room_id, member_template, now).map(ManagementTaskResult::CreateMember)?,
 			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
 			ManagementTask::Dump(room_id) => self
 				.rooms
@@ -155,8 +148,7 @@ impl RoomsServer {
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
 	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ServerCommandError> {
-		self.network_layer
-			.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
+		self.network_layer.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
 		self.rooms.member_disconnected(&id)
 	}
 

@@ -2,15 +2,16 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
-use crate::commands::binary_value::BinaryValue;
 use crate::commands::field::{Field, FieldId};
-use crate::commands::field_value::FieldValue;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
-use crate::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
+use crate::commands::types::field::DeleteFieldCommand;
+use crate::commands::types::float::SetDoubleCommand;
 use crate::commands::types::forwarded::ForwardedCommand;
+use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::member_connected::MemberConnectedCommand;
+use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::protocol::codec::commands::context::CommandContextError;
 use crate::room::object::GameObjectId;
@@ -21,7 +22,9 @@ use crate::room::RoomMemberId;
 pub enum S2CCommand {
 	Create(CreateGameObjectCommand),
 	Created(GameObjectCreatedS2CCommand),
-	SetField(SetFieldCommand),
+	SetLong(SetLongCommand),
+	SetDouble(SetDoubleCommand),
+	SetStructure(SetStructureCommand),
 	Event(EventCommand),
 	Delete(DeleteGameObjectCommand),
 	DeleteField(DeleteFieldCommand),
@@ -44,21 +47,18 @@ pub struct S2CCommandWithMeta {
 
 impl S2CCommand {
 	#[must_use]
-	pub fn new_set_command(value: FieldValue, object_id: GameObjectId, field_id: u16) -> S2CCommand {
-		S2CCommand::SetField(SetFieldCommand { object_id, field_id, value })
-	}
-
-	#[must_use]
 	pub fn get_field_id(&self) -> Option<FieldId> {
 		match self {
 			S2CCommand::Create(_) => None,
 			S2CCommand::Created(_) => None,
-			S2CCommand::SetField(command) => Some(command.field_id),
 			S2CCommand::Event(command) => Some(command.field_id),
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_id),
 			S2CCommand::Forwarded(command) => command.c2s.get_field_id(),
 			S2CCommand::MemberConnected(_) => None,
+			S2CCommand::SetLong(command) => command.field_id.into(),
+			S2CCommand::SetDouble(command) => command.field_id.into(),
+			S2CCommand::SetStructure(command) => command.field_id.into(),
 		}
 	}
 
@@ -67,12 +67,14 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(command) => Some(command.object_id),
 			S2CCommand::Created(command) => Some(command.object_id),
-			S2CCommand::SetField(command) => Some(command.object_id),
 			S2CCommand::Event(command) => Some(command.object_id),
 			S2CCommand::Delete(command) => Some(command.object_id),
 			S2CCommand::DeleteField(command) => Some(command.object_id),
 			S2CCommand::Forwarded(command) => command.c2s.get_object_id(),
 			S2CCommand::MemberConnected(_) => None,
+			S2CCommand::SetLong(command) => command.object_id.into(),
+			S2CCommand::SetDouble(command) => command.object_id.into(),
+			S2CCommand::SetStructure(command) => command.object_id.into(),
 		}
 	}
 
@@ -81,12 +83,14 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(_) => None,
 			S2CCommand::Created(_) => None,
-			S2CCommand::SetField(command) => Some(command.value.field_type()),
 			S2CCommand::Event(_) => Some(FieldType::Event),
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_type),
 			S2CCommand::Forwarded(command) => command.c2s.get_field_type(),
 			S2CCommand::MemberConnected(_) => None,
+			S2CCommand::SetLong(_) => FieldType::Long.into(),
+			S2CCommand::SetDouble(_) => FieldType::Double.into(),
+			S2CCommand::SetStructure(_) => FieldType::Structure.into(),
 		}
 	}
 
@@ -95,16 +99,14 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(_) => CommandTypeId::CreateGameObject,
 			S2CCommand::Created(_) => CommandTypeId::CreatedGameObject,
-			S2CCommand::SetField(command) => match command.value {
-				FieldValue::Long(_) => CommandTypeId::SetLong,
-				FieldValue::Double(_) => CommandTypeId::SetDouble,
-				FieldValue::Structure(_) => CommandTypeId::SetStructure,
-			},
-			S2CCommand::Event(_) => CommandTypeId::Event,
-			S2CCommand::Delete(_) => CommandTypeId::Delete,
+			S2CCommand::Event(_) => CommandTypeId::SendEvent,
+			S2CCommand::Delete(_) => CommandTypeId::DeleteObject,
 			S2CCommand::DeleteField(_) => CommandTypeId::DeleteField,
 			S2CCommand::Forwarded(_) => CommandTypeId::Forwarded,
 			S2CCommand::MemberConnected(_) => CommandTypeId::MemberConnected,
+			S2CCommand::SetLong(_) => CommandTypeId::SetLong,
+			S2CCommand::SetDouble(_) => CommandTypeId::SetDouble,
+			S2CCommand::SetStructure(_) => CommandTypeId::SetStructure,
 		}
 	}
 
@@ -113,12 +115,14 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
 			S2CCommand::Created(_) => String::new(),
-			S2CCommand::SetField(command) => format!("{:?}", command.value),
 			S2CCommand::Event(command) => format!("{:?}", command.event),
 			S2CCommand::Delete(_) => String::new(),
 			S2CCommand::DeleteField(_) => String::new(),
 			S2CCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
 			S2CCommand::MemberConnected(command) => format!("member connected({:?})", command.member_id),
+			S2CCommand::SetLong(command) => format!("{:?}", command),
+			S2CCommand::SetDouble(command) => format!("{:?}", command),
+			S2CCommand::SetStructure(command) => format!("{:?}", command),
 		}
 	}
 
@@ -126,12 +130,14 @@ impl S2CCommand {
 		match self {
 			S2CCommand::Create(command) => command.encode(out),
 			S2CCommand::Created(_) => Ok(()),
-			S2CCommand::SetField(command) => command.encode(out),
 			S2CCommand::Event(command) => command.encode(out),
 			S2CCommand::Delete(_) => Ok(()),
 			S2CCommand::DeleteField(command) => command.encode(out),
 			S2CCommand::Forwarded(command) => command.encode(out),
 			S2CCommand::MemberConnected(command) => command.encode(out),
+			S2CCommand::SetLong(command) => command.encode(out),
+			S2CCommand::SetDouble(command) => command.encode(out),
+			S2CCommand::SetStructure(command) => command.encode(out),
 		}
 	}
 
@@ -144,11 +150,11 @@ impl S2CCommand {
 		Ok(match *command_type_id {
 			CommandTypeId::CreateGameObject => S2CCommand::Create(CreateGameObjectCommand::decode(object_id?, input)?),
 			CommandTypeId::CreatedGameObject => S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: object_id? }),
-			CommandTypeId::Delete => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
-			CommandTypeId::SetLong => S2CCommand::SetField(SetFieldCommand::decode::<i64>(object_id?, field_id?, input)?),
-			CommandTypeId::SetDouble => S2CCommand::SetField(SetFieldCommand::decode::<f64>(object_id?, field_id?, input)?),
-			CommandTypeId::SetStructure => S2CCommand::SetField(SetFieldCommand::decode::<BinaryValue>(object_id?, field_id?, input)?),
-			CommandTypeId::Event => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::DeleteObject => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
+			CommandTypeId::SetLong => S2CCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::SetDouble => S2CCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::SetStructure => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::SendEvent => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::Forwarded => S2CCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 			CommandTypeId::MemberConnected => S2CCommand::MemberConnected(MemberConnectedCommand::decode(input)?),
@@ -161,19 +167,21 @@ impl S2CCommand {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::commands::binary_value::BinaryValue;
+	use crate::commands::binary_value::Buffer;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::field::FieldId;
 	use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::event::TargetEventCommand;
-	use crate::commands::types::field::SetFieldCommand;
+	use crate::commands::types::float::SetDoubleCommand;
 	use crate::commands::types::forwarded::ForwardedCommand;
+	use crate::commands::types::long::SetLongCommand;
 	use crate::commands::types::member_connected::MemberConnectedCommand;
+	use crate::commands::types::structure::SetStructureCommand;
 	use crate::commands::CommandTypeId;
 	use crate::{
-		commands::s2c::S2CCommand, commands::types::event::EventCommand, protocol::codec::commands::context::CommandContextError,
-		room::access::AccessGroups, room::object::GameObjectId, room::owner::GameObjectOwner,
+		commands::s2c::S2CCommand, commands::types::event::EventCommand, protocol::codec::commands::context::CommandContextError, room::access::AccessGroups, room::object::GameObjectId,
+		room::owner::GameObjectOwner,
 	};
 
 	#[test]
@@ -194,12 +202,7 @@ mod tests {
 	#[test]
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
-		check(
-			&S2CCommand::Created(GameObjectCreatedS2CCommand { object_id }),
-			CommandTypeId::CreatedGameObject,
-			Some(object_id),
-			None,
-		);
+		check(&S2CCommand::Created(GameObjectCreatedS2CCommand { object_id }), CommandTypeId::CreatedGameObject, Some(object_id), None);
 	}
 
 	#[test]
@@ -207,11 +210,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&S2CCommand::SetField(SetFieldCommand {
-				object_id,
-				field_id,
-				value: 100.into(),
-			}),
+			&S2CCommand::SetLong(SetLongCommand { object_id, field_id, value: 100 }),
 			CommandTypeId::SetLong,
 			Some(object_id),
 			Some(field_id),
@@ -223,11 +222,7 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&S2CCommand::SetField(SetFieldCommand {
-				object_id,
-				field_id,
-				value: 3.15.into(),
-			}),
+			&S2CCommand::SetDouble(SetDoubleCommand { object_id, field_id, value: 3.15 }),
 			CommandTypeId::SetDouble,
 			Some(object_id),
 			Some(field_id),
@@ -239,10 +234,10 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&S2CCommand::SetField(SetFieldCommand {
+			&S2CCommand::SetStructure(SetStructureCommand {
 				object_id,
 				field_id,
-				value: BinaryValue::from([1, 2, 3, 4].as_ref()).into(),
+				value: Buffer::from([1, 2, 3, 4].as_ref()).into(),
 			}),
 			CommandTypeId::SetStructure,
 			Some(object_id),
@@ -258,9 +253,9 @@ mod tests {
 			&S2CCommand::Event(EventCommand {
 				object_id,
 				field_id,
-				event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
+				event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
 			}),
-			CommandTypeId::Event,
+			CommandTypeId::SendEvent,
 			Some(object_id),
 			Some(field_id),
 		);
@@ -269,12 +264,7 @@ mod tests {
 	#[test]
 	fn should_decode_encode_delete() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
-		check(
-			&S2CCommand::Delete(DeleteGameObjectCommand { object_id }),
-			CommandTypeId::Delete,
-			Some(object_id),
-			None,
-		);
+		check(&S2CCommand::Delete(DeleteGameObjectCommand { object_id }), CommandTypeId::DeleteObject, Some(object_id), None);
 	}
 
 	#[test]
@@ -289,7 +279,7 @@ mod tests {
 					event: EventCommand {
 						object_id,
 						field_id,
-						event: BinaryValue::from(vec![1, 2, 3, 4].as_slice()),
+						event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
 					},
 				}),
 			})),
@@ -301,12 +291,7 @@ mod tests {
 
 	#[test]
 	fn should_decode_encode_member_connected() {
-		check(
-			&S2CCommand::MemberConnected(MemberConnectedCommand { member_id: 100 }),
-			CommandTypeId::MemberConnected,
-			None,
-			None,
-		);
+		check(&S2CCommand::MemberConnected(MemberConnectedCommand { member_id: 100 }), CommandTypeId::MemberConnected, None, None);
 	}
 
 	fn check(expected: &S2CCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {

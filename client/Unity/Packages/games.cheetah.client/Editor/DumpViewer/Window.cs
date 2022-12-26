@@ -261,7 +261,6 @@ namespace Games.Cheetah.Client.Editor.DumpViewer
                         objects.Append(dumpObject.Groups).Append("\t");
                         objects.Append(dumpObject.Created).Append("\t");
                         objects.Append(string.Join(",", dumpObject.Fields.Select(p => p.Id + "=" + p.Value))).Append("\t");
-                        objects.Append(string.Join(",", dumpObject.CompareAndSetOwners.Select(p => p.Key + "=" + p.Value)));
                         objects.AppendLine();
                     }
 
@@ -276,8 +275,6 @@ namespace Games.Cheetah.Client.Editor.DumpViewer
                         users.Append(dumpUser.Id).Append("\t");
                         users.Append(dumpUser.Groups).Append("\t");
                         users.Append(dumpUser.Attached).Append("\t");
-                        users.Append(string.Join(",",
-                            dumpUser.CompareAndSetCleaners.Select(p => (p.GameObjectId, p.GameObjectOwnerUser, p.FieldId, p.Value)))).Append("\t");
                         users.AppendLine();
                     }
 

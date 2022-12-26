@@ -25,10 +25,7 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 		if let GameObjectOwner::Member(object_id_member) = self.object_id.get_owner() {
 			if object_id_member != member.id {
-				return Err(ServerCommandError::Error(format!(
-					"Incorrect object_id {:?} for member {member:?}",
-					self.object_id
-				)));
+				return Err(ServerCommandError::Error(format!("Incorrect object_id {:?} for member {member:?}", self.object_id)));
 			}
 		}
 

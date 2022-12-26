@@ -2,7 +2,7 @@ use std::io::{Cursor, Error, ErrorKind};
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
-use crate::commands::binary_value::BinaryValue;
+use crate::commands::binary_value::Buffer;
 use crate::constants::GameObjectTemplateId;
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::access::AccessGroups;
@@ -12,7 +12,7 @@ use crate::room::object::GameObjectId;
 /// Создать игровой объект от имени клиента
 /// S->C, C->S
 ///
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[repr(C)]
 pub struct CreateGameObjectCommand {
 	pub object_id: GameObjectId,
@@ -35,14 +35,14 @@ pub struct C2SCreatedGameObjectCommand {
 	///
 	/// Если задан - то в комнате может быть только один объект с таким идентификатором
 	///
-	singleton_key: BinaryValue,
+	singleton_key: Buffer,
 }
 
 ///
 /// Игровой объект загружен на клиента
 ///
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GameObjectCreatedS2CCommand {
 	pub object_id: GameObjectId,
 }
@@ -56,16 +56,12 @@ impl CreateGameObjectCommand {
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let template = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 		let access_groups = AccessGroups(input.read_variable_u64()?);
-		Ok(Self {
-			object_id,
-			template,
-			access_groups,
-		})
+		Ok(Self { object_id, template, access_groups })
 	}
 }
 
 impl C2SCreatedGameObjectCommand {
-	pub fn new(object_id: GameObjectId, room_owner: bool, singleton_key: Option<BinaryValue>) -> Self {
+	pub fn new(object_id: GameObjectId, room_owner: bool, singleton_key: Option<Buffer>) -> Self {
 		Self {
 			object_id,
 			room_owner,
@@ -73,7 +69,7 @@ impl C2SCreatedGameObjectCommand {
 		}
 	}
 
-	pub fn get_singleton_key(&self) -> Option<&BinaryValue> {
+	pub fn get_singleton_key(&self) -> Option<&Buffer> {
 		if self.singleton_key.len == 0 {
 			None
 		} else {
@@ -91,11 +87,7 @@ impl C2SCreatedGameObjectCommand {
 
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let room_owner = input.read_u8()? == 1;
-		let singleton_key = BinaryValue::decode(input)?;
-		Ok(Self {
-			object_id,
-			room_owner,
-			singleton_key,
-		})
+		let singleton_key = Buffer::decode(input)?;
+		Ok(Self { object_id, room_owner, singleton_key })
 	}
 }

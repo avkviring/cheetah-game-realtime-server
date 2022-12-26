@@ -1,9 +1,44 @@
+use cheetah_common::commands::field::Field;
+use cheetah_common::commands::s2c::S2CCommand;
+use cheetah_common::commands::types::structure::SetStructureCommand;
+use cheetah_common::commands::FieldType;
+use cheetah_common::room::RoomMemberId;
+
+use crate::room::command::{ServerCommandError, ServerCommandExecutor};
+use crate::room::object::GameObject;
+use crate::room::template::config::Permission;
+use crate::room::Room;
+
+impl ServerCommandExecutor for SetStructureCommand {
+	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		let field_id = self.field_id;
+		let object_id = self.object_id;
+
+		let action = |object: &mut GameObject| {
+			object.structures.set(self.field_id, self.value.clone());
+			Ok(Some(S2CCommand::SetStructure(self.clone())))
+		};
+
+		room.send_command_from_action(
+			object_id,
+			Field {
+				id: field_id,
+				field_type: FieldType::Structure,
+			},
+			member_id,
+			Permission::Rw,
+			None,
+			action,
+		)
+	}
+}
+
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::BinaryValue;
+	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::s2c::S2CCommand;
-	use cheetah_common::commands::types::field::SetFieldCommand;
+	use cheetah_common::commands::types::structure::SetStructureCommand;
 	use cheetah_common::commands::FieldType;
 	use cheetah_common::protocol::frame::applications::BothDirectionCommand;
 	use cheetah_common::room::access::AccessGroups;
@@ -12,9 +47,7 @@ mod tests {
 	use cheetah_common::room::RoomMemberId;
 
 	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::{
-		GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate,
-	};
+	use crate::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, Permission, PermissionField, RoomTemplate};
 	use crate::room::Room;
 
 	const FIELD_ID: u16 = 100;
@@ -30,20 +63,21 @@ mod tests {
 		let object_id = object.id;
 
 		room.test_out_commands.clear();
-		let command = SetFieldCommand {
+		let command = SetStructureCommand {
 			object_id,
 			field_id: 100,
-			value: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()).into(),
+			value: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()).into(),
 		};
 
 		command.execute(&mut room, member_id).unwrap();
 		let object = room.get_object_mut(object_id).unwrap();
 
-		assert_eq!(*object.get_field_wrapped(100, FieldType::Structure).unwrap(), command.value);
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c == command));
+		assert_eq!(*object.structures.get(100).unwrap(), command.value);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c == 
+			command));
 	}
 
-	fn init_set_structure_test() -> (Room, RoomMemberId, RoomMemberId, GameObjectId) {
+	fn setup() -> (Room, RoomMemberId, RoomMemberId, GameObjectId) {
 		let access_groups = AccessGroups(10);
 		let mut template = RoomTemplate::default();
 		template.permissions.templates.push(GameObjectTemplatePermission {
@@ -75,38 +109,32 @@ mod tests {
 	}
 
 	fn run_set_structure_test(room: &mut Room, member1: RoomMemberId, member2: RoomMemberId, object_id: GameObjectId, sender: RoomMemberId) {
-		let command = SetFieldCommand {
+		let command = SetStructureCommand {
 			object_id,
 			field_id: FIELD_ID,
-			value: BinaryValue::from(vec![1, 2, 3, 4, 5].as_slice()).into(),
+			value: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()).into(),
 		};
 
 		command.execute(room, sender).unwrap();
 		let object = room.get_object_mut(object_id).unwrap();
 
-		assert_eq!(*object.get_field_wrapped(FIELD_ID, FieldType::Structure).unwrap(), command.value);
+		assert_eq!(*object.structures.get(FIELD_ID).unwrap(), command.value);
 
 		let member1 = room.get_member(&member1).unwrap();
-		assert!(matches!(
-			member1.out_commands[0].command.clone(),
-			BothDirectionCommand::S2CWithCreator(_expected)
-		));
+		assert!(matches!(member1.out_commands[0].command.clone(), BothDirectionCommand::S2CWithCreator(_expected)));
 		let member2 = room.get_member(&member2).unwrap();
-		assert!(matches!(
-			member2.out_commands[0].command.clone(),
-			BothDirectionCommand::S2CWithCreator(_expected)
-		));
+		assert!(matches!(member2.out_commands[0].command.clone(), BothDirectionCommand::S2CWithCreator(_expected)));
 	}
 
 	#[test]
 	pub(crate) fn should_send_command_to_all_when_owner_sets_structure_field() {
-		let (mut room, member1, member2, object_id) = init_set_structure_test();
+		let (mut room, member1, member2, object_id) = setup();
 		run_set_structure_test(&mut room, member1, member2, object_id, member1);
 	}
 
 	#[test]
 	pub(crate) fn should_send_command_to_all_when_non_owner_sets_structure_field() {
-		let (mut room, member1, member2, object_id) = init_set_structure_test();
+		let (mut room, member1, member2, object_id) = setup();
 		run_set_structure_test(&mut room, member1, member2, object_id, member2);
 	}
 }

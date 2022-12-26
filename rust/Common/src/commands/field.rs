@@ -3,7 +3,7 @@ use std::io::ErrorKind;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
-use crate::commands::binary_value::BinaryValue;
+use crate::commands::binary_value::Buffer;
 
 ///
 /// Тип данных поля
@@ -77,7 +77,7 @@ impl ToFieldType for f64 {
 	}
 }
 
-impl ToFieldType for BinaryValue {
+impl ToFieldType for Buffer {
 	fn to_field_type() -> FieldType {
 		FieldType::Structure
 	}

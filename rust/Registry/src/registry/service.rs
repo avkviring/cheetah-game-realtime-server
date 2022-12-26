@@ -6,9 +6,7 @@ use tonic::{Request, Response, Status};
 use cheetah_microservice::trace::Trace;
 
 use crate::proto::matches::registry::internal::registry_server::Registry;
-use crate::proto::matches::registry::internal::{
-	FindFreeRelayRequest, FindFreeRelayResponse, RelayState, RelayStatusUpdate, UpdateRelayStatusResponse,
-};
+use crate::proto::matches::registry::internal::{FindFreeRelayRequest, FindFreeRelayResponse, RelayState, RelayStatusUpdate, UpdateRelayStatusResponse};
 use crate::registry::relay_finder::RelayFinder;
 use crate::registry::relay_prober::ReconnectProber;
 use crate::registry::storage::{RedisStorage, Storage, StorageError};
@@ -39,12 +37,7 @@ impl RegistryService {
 #[tonic::async_trait]
 impl Registry for RegistryService {
 	async fn find_free_relay(&self, _request: Request<FindFreeRelayRequest>) -> Result<Response<FindFreeRelayResponse>, Status> {
-		let addrs = self
-			.free_relay_provider
-			.get_random_relay_addr()
-			.await
-			.trace_err("Get random relay addr")
-			.map_err(Status::internal)?;
+		let addrs = self.free_relay_provider.get_random_relay_addr().await.trace_err("Get random relay addr").map_err(Status::internal)?;
 
 		Ok(Response::new(FindFreeRelayResponse { addrs: Some(addrs.into()) }))
 	}
@@ -56,16 +49,9 @@ impl Registry for RegistryService {
 
 		let msg_state = msg.state;
 
-		let state = RelayState::from_i32(msg_state)
-			.ok_or(())
-			.trace_err("Get relayState from i32")
-			.map_err(Status::internal)?;
+		let state = RelayState::from_i32(msg_state).ok_or(()).trace_err("Get relayState from i32").map_err(Status::internal)?;
 
-		self.storage
-			.update_status(&addrs, state)
-			.await
-			.trace_err("Update relay status")
-			.map_err(Status::internal)?;
+		self.storage.update_status(&addrs, state).await.trace_err("Update relay status").map_err(Status::internal)?;
 
 		Ok(Response::new(UpdateRelayStatusResponse::default()))
 	}

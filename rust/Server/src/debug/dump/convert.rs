@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-
-use cheetah_common::commands::field::FieldId;
 use cheetah_common::room::owner::GameObjectOwner;
 
 use crate::debug::proto::admin;
+use crate::debug::proto::shared::field_value;
+use crate::debug::proto::shared::FieldValue;
 use crate::debug::proto::shared::GameObjectField;
+use crate::room::member::Member;
 use crate::room::object::GameObject;
-use crate::room::{Member, Room};
+use crate::room::Room;
 
 impl From<&Room> for admin::DumpResponse {
 	fn from(room: &Room) -> Self {
@@ -18,6 +18,29 @@ impl From<&Room> for admin::DumpResponse {
 
 impl From<&GameObject> for admin::DumpObject {
 	fn from(source: &GameObject) -> Self {
+		let fields = source
+			.longs
+			.get_fields()
+			.map(|(id, v)| GameObjectField {
+				id: u32::from(*id),
+				value: Some(FieldValue {
+					variant: Some(field_value::Variant::Long(*v)),
+				}),
+			})
+			.chain(source.doubles.get_fields().map(|(id, v)| GameObjectField {
+				id: u32::from(*id),
+				value: Some(FieldValue {
+					variant: Some(field_value::Variant::Double(*v)),
+				}),
+			}))
+			.chain(source.structures.get_fields().map(|(id, v)| GameObjectField {
+				id: u32::from(*id),
+				value: Some(FieldValue {
+					variant: Some(field_value::Variant::Structure(v.as_slice().to_vec())),
+				}),
+			}))
+			.collect();
+
 		Self {
 			owner_user_id: match &source.id.get_owner() {
 				GameObjectOwner::Room => None,
@@ -27,21 +50,9 @@ impl From<&GameObject> for admin::DumpObject {
 			template: u32::from(source.template_id),
 			groups: source.access_groups.0,
 			created: source.created,
-			fields: source
-				.fields()
-				.iter()
-				.map(|((id, _), v)| GameObjectField {
-					id: u32::from(*id),
-					value: Some(v.clone().into()),
-				})
-				.collect(),
-			compare_and_set_owners: from(source.get_compare_and_set_owners()),
+			fields,
 		}
 	}
-}
-
-fn from<IN: Clone, OUT: From<IN>, const N: usize>(source: &heapless::FnvIndexMap<FieldId, IN, N>) -> HashMap<u32, OUT> {
-	source.iter().map(|(k, v)| (u32::from(*k), OUT::from(v.clone()))).collect()
 }
 
 impl From<&Member> for admin::DumpUser {
@@ -50,19 +61,6 @@ impl From<&Member> for admin::DumpUser {
 			id: u32::from(member.id),
 			groups: member.template.groups.0,
 			attached: member.attached,
-			compare_and_set_cleaners: member
-				.compare_and_set_cleaners
-				.iter()
-				.map(|((object_id, field_id, _), value)| admin::CompareAndSetCleaner {
-					game_object_id: object_id.id,
-					game_object_owner_user: match object_id.get_owner() {
-						GameObjectOwner::Room => u32::MAX,
-						GameObjectOwner::Member(id) => u32::from(id),
-					},
-					field_id: u32::from(*field_id),
-					value: Some(value.clone().into()),
-				})
-				.collect(),
 		}
 	}
 }

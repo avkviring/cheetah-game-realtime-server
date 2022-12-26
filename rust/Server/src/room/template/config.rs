@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 
-use cheetah_common::commands::field::FieldId;
 use fnv::FnvBuildHasher;
 use num_derive::{FromPrimitive, ToPrimitive};
 
-use cheetah_common::commands::FieldType;
-use cheetah_common::commands::FieldValue;
+use cheetah_common::commands::binary_value::Buffer;
+use cheetah_common::commands::field::Field;
+use cheetah_common::commands::field::FieldId;
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::MemberPrivateKey;
-
-use cheetah_common::commands::field::Field;
 
 ///
 /// Шаблон для создания комнаты
@@ -40,7 +38,9 @@ pub struct GameObjectTemplate {
 	pub id: u32,
 	pub template: GameObjectTemplateId,
 	pub groups: AccessGroups,
-	pub fields: HashMap<(FieldId, FieldType), FieldValue, FnvBuildHasher>,
+	pub longs: HashMap<FieldId, i64, FnvBuildHasher>,
+	pub doubles: HashMap<FieldId, f64, FnvBuildHasher>,
+	pub structures: HashMap<FieldId, Buffer, FnvBuildHasher>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -118,17 +118,14 @@ impl MemberTemplate {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::field::FieldId;
 	use cheetah_common::commands::FieldType;
 	use cheetah_common::constants::GameObjectTemplateId;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 
-	use crate::room::template::config::{
-		GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, MemberTemplateError, Permission, PermissionField,
-		Permissions,
-	};
-	use cheetah_common::commands::field::Field;
+	use crate::room::template::config::{GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, MemberTemplateError, Permission, PermissionField, Permissions};
 
 	impl MemberTemplate {
 		#[must_use]
@@ -142,7 +139,9 @@ mod tests {
 				id,
 				template,
 				groups: access_groups,
-				fields: Default::default(),
+				longs: Default::default(),
+				doubles: Default::default(),
+				structures: Default::default(),
 			});
 			let len = objects.len();
 			let option = objects.get_mut(len - 1);
@@ -151,14 +150,7 @@ mod tests {
 	}
 
 	impl Permissions {
-		pub fn set_permission(
-			&mut self,
-			template: GameObjectTemplateId,
-			field_id: &FieldId,
-			field_type: FieldType,
-			access_group: &AccessGroups,
-			permission: Permission,
-		) {
+		pub fn set_permission(&mut self, template: GameObjectTemplateId, field_id: &FieldId, field_type: FieldType, access_group: &AccessGroups, permission: Permission) {
 			let template_permission = match self.templates.iter_mut().find(|t| t.template == template) {
 				None => {
 					let template_permission = GameObjectTemplatePermission {
@@ -184,10 +176,7 @@ mod tests {
 				Some(permission_field) => permission_field,
 			};
 
-			permission_field.rules.push(GroupsPermissionRule {
-				groups: *access_group,
-				permission,
-			});
+			permission_field.rules.push(GroupsPermissionRule { groups: *access_group, permission });
 		}
 	}
 
@@ -197,7 +186,9 @@ mod tests {
 			id: GameObjectId::CLIENT_OBJECT_ID_OFFSET + 1,
 			template: 0b100,
 			groups: AccessGroups(0b1111),
-			fields: Default::default(),
+			longs: Default::default(),
+			doubles: Default::default(),
+			structures: Default::default(),
 		}];
 		let template = MemberTemplate::new_member(AccessGroups(0b1111), objects);
 		assert!(matches!(template.validate(), Err(MemberTemplateError::MemberObjectHasWrongId(_, _))));

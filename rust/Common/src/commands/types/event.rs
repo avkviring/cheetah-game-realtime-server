@@ -1,6 +1,6 @@
 use std::io::{Cursor, Error, ErrorKind};
 
-use crate::commands::binary_value::BinaryValue;
+use crate::commands::binary_value::Buffer;
 use crate::commands::field::FieldId;
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::object::GameObjectId;
@@ -9,12 +9,12 @@ use crate::room::RoomMemberId;
 ///
 /// Событие по объекту
 /// - C->S, S->C
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 #[repr(C)]
 pub struct EventCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
-	pub event: BinaryValue,
+	pub event: Buffer,
 }
 
 ///
@@ -36,7 +36,7 @@ impl EventCommand {
 		Ok(Self {
 			object_id,
 			field_id,
-			event: BinaryValue::decode(input)?,
+			event: Buffer::decode(input)?,
 		})
 	}
 }

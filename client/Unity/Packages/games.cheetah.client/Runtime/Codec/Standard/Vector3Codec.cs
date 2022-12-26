@@ -1,12 +1,13 @@
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 
 namespace Games.Cheetah.Client.Codec.Standard
 {
     public class Vector3Codec : Codec<Vector3>
     {
-        public void Decode(ref CheetahBuffer buffer, ref Vector3 dest)
+        public void Decode(ref NetworkBuffer buffer, ref Vector3 dest)
         {
             buffer.AssertEnoughData(sizeof(float) * 3);
             dest.x = FloatFormatter.StaticUncheckedRead(ref buffer);
@@ -14,7 +15,7 @@ namespace Games.Cheetah.Client.Codec.Standard
             dest.z = FloatFormatter.StaticUncheckedRead(ref buffer);
         }
 
-        public void Encode(in Vector3 source, ref CheetahBuffer buffer)
+        public void Encode(in Vector3 source, ref NetworkBuffer buffer)
         {
             buffer.AssertFreeSpace(sizeof(float) * 3);
             FloatFormatter.StaticUncheckedWrite(source.x, ref buffer);

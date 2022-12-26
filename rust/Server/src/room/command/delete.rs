@@ -10,10 +10,7 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 		let member = room.get_member(&member_id)?;
 		if let GameObjectOwner::Member(object_id_member) = self.object_id.get_owner() {
 			if object_id_member != member.id {
-				return Err(ServerCommandError::MemberNotOwnerGameObject {
-					object_id: self.object_id,
-					member_id,
-				});
+				return Err(ServerCommandError::MemberNotOwnerGameObject { object_id: self.object_id, member_id });
 			}
 		}
 		room.delete_object(self.object_id, member_id)?;
@@ -43,9 +40,7 @@ mod tests {
 		room.test_mark_as_connected(member_a_id).unwrap();
 		room.test_mark_as_connected(member_b_id).unwrap();
 
-		let object_id = room
-			.test_create_object_with_created_state(GameObjectOwner::Member(member_a_id), access_groups)
-			.id;
+		let object_id = room.test_create_object_with_created_state(GameObjectOwner::Member(member_a_id), access_groups).id;
 		room.test_out_commands.clear();
 		let command = DeleteGameObjectCommand { object_id };
 
@@ -64,16 +59,11 @@ mod tests {
 		let member_a = room.register_member(MemberTemplate::stub(access_groups));
 		let member_b = room.register_member(MemberTemplate::stub(access_groups));
 
-		let object_id = room
-			.test_create_object_with_not_created_state(GameObjectOwner::Member(member_a), access_groups)
-			.id;
+		let object_id = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_a), access_groups).id;
 		room.test_out_commands.clear();
 		let command = DeleteGameObjectCommand { object_id };
 
-		assert!(matches!(
-			command.execute(&mut room, member_b),
-			Err(ServerCommandError::MemberNotOwnerGameObject { .. })
-		));
+		assert!(matches!(command.execute(&mut room, member_b), Err(ServerCommandError::MemberNotOwnerGameObject { .. })));
 		assert!(matches!(room.get_object_mut(object_id), Ok(_)));
 		assert!(matches!(room.test_out_commands.pop_back(), None));
 	}

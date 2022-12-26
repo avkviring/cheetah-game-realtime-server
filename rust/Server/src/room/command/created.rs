@@ -13,10 +13,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		let object = room.get_object_mut(self.object_id)?;
 
 		if object.created {
-			return Err(ServerCommandError::Error(format!(
-				"room[({:?})] object ({:?}) already created",
-				room_id, object.id
-			)));
+			return Err(ServerCommandError::Error(format!("room[({:?})] object ({:?}) already created", room_id, object.id)));
 		}
 
 		let member_object_id = object.id;
@@ -57,7 +54,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::BinaryValue;
+	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use cheetah_common::room::object::GameObjectId;
@@ -162,7 +159,7 @@ mod tests {
 	pub(crate) fn should_dont_create_more_one_object_with_one_singleton_key() {
 		let (mut room, member_id, access_groups) = setup_one_player();
 
-		let singleton_key = Some(BinaryValue::from([1, 2, 3].as_slice()));
+		let singleton_key = Some(Buffer::from([1, 2, 3].as_slice()));
 
 		let member_object_id_1 = GameObjectId::new(100, GameObjectOwner::Member(member_id));
 		let create_command = CreateGameObjectCommand {

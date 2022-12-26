@@ -17,10 +17,7 @@ pub struct RetransmitHeader {
 impl RetransmitHeader {
 	#[must_use]
 	pub fn new(original_frame_id: FrameId, retransmit_count: u8) -> Self {
-		Self {
-			original_frame_id,
-			retransmit_count,
-		}
+		Self { original_frame_id, retransmit_count }
 	}
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		Ok(Self {
