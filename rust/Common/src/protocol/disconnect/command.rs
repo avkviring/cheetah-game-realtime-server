@@ -77,15 +77,12 @@ pub enum DisconnectByCommandReason {
 impl DisconnectHeader {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let reason = input.read_u8()?;
-		Ok(Self(FromPrimitive::from_u8(reason).ok_or_else(|| {
-			Error::new(ErrorKind::InvalidData, "could not read DisconnectByCommandReason from u8".to_owned())
-		})?))
+		Ok(Self(
+			FromPrimitive::from_u8(reason).ok_or_else(|| Error::new(ErrorKind::InvalidData, "could not read DisconnectByCommandReason from u8".to_owned()))?,
+		))
 	}
 	pub(crate) fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		out.write_u8(
-			ToPrimitive::to_u8(&self.0)
-				.ok_or_else(|| Error::new(ErrorKind::InvalidData, "could not write DisconnectByCommandReason to u8".to_owned()))?,
-		)
+		out.write_u8(ToPrimitive::to_u8(&self.0).ok_or_else(|| Error::new(ErrorKind::InvalidData, "could not write DisconnectByCommandReason to u8".to_owned()))?)
 	}
 }
 

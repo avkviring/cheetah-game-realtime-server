@@ -257,23 +257,16 @@ impl CommandTracerSessions {
 				sender.send(result).unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			TracerSessionCommand::GetCommands(session, sender) => {
-				sender
-					.send(self.drain_filtered_commands(session))
-					.unwrap_or_else(|e| tracing::error!("send error {:?}", e));
+				sender.send(self.drain_filtered_commands(session)).unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 			TracerSessionCommand::CloseSession(session, sender) => {
-				sender
-					.send(self.close_session(session))
-					.unwrap_or_else(|e| tracing::error!("send error {:?}", e));
+				sender.send(self.close_session(session)).unwrap_or_else(|e| tracing::error!("send error {:?}", e));
 			}
 		}
 	}
 
 	fn close_session(&mut self, session: SessionId) -> Result<(), TracerSessionCommandError> {
-		self.sessions
-			.remove(&session)
-			.map(|_| ())
-			.ok_or(TracerSessionCommandError::SessionNotFound)
+		self.sessions.remove(&session).map(|_| ()).ok_or(TracerSessionCommandError::SessionNotFound)
 	}
 }
 

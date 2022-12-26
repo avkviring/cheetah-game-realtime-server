@@ -1,6 +1,7 @@
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 using Shared.Types;
 
@@ -12,13 +13,13 @@ namespace Shared_Types
 		// warning warning warning warning warning
 		public class TurretsParamsStructureCodec:Codec<Shared.Types.TurretsParamsStructure>
 		{
-			public void Decode(ref CheetahBuffer buffer, ref Shared.Types.TurretsParamsStructure dest)
+			public void Decode(ref NetworkBuffer buffer, ref Shared.Types.TurretsParamsStructure dest)
 			{
 				dest.Speed = DoubleFormatter.Instance.Read(ref buffer);
 				dest.Damage = DoubleFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(in Shared.Types.TurretsParamsStructure source, ref CheetahBuffer buffer)
+			public void  Encode(in Shared.Types.TurretsParamsStructure source, ref NetworkBuffer buffer)
 			{
 				DoubleFormatter.Instance.Write(source.Speed,ref buffer);
 				DoubleFormatter.Instance.Write(source.Damage,ref buffer);

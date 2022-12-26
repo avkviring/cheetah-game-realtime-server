@@ -60,16 +60,10 @@ mod tests {
 		};
 
 		let res = finder.get_random_relay_addr().await;
-		assert!(
-			matches!(res, Err(StorageError::NoRelayFound)),
-			"if relay is unreachable, error should be returned"
-		);
+		assert!(matches!(res, Err(StorageError::NoRelayFound)), "if relay is unreachable, error should be returned");
 
 		let res = storage.get_random_relay_addr().await;
-		assert!(
-			matches!(res, Err(StorageError::NoRelayFound)),
-			"unreachable relay should be removed from storage"
-		);
+		assert!(matches!(res, Err(StorageError::NoRelayFound)), "unreachable relay should be removed from storage");
 	}
 
 	lazy_static::lazy_static! {

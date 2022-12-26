@@ -10,12 +10,12 @@ namespace Games.Cheetah.Client.Logger
 #if UNITY_EDITOR
         private void Start()
         {
-            LoggerGateway.Init();
+            NetworkClientLogs.Init();
         }
 
         private void Update()
         {
-            LoggerGateway.CollectLogs(true);
+            NetworkClientLogs.CollectLogs(true);
         }
 #endif
     }

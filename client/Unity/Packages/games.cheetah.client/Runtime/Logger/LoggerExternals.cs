@@ -8,19 +8,19 @@ namespace Games.Cheetah.Client.Logger
         /**
          * Инициализировать логер нативной части (без вызова этой функции логи собираться не будут)
          */
-        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "init_logger")]
+        [DllImport(FFIMethods.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "init_logger")]
         public static extern void InitLogger();
 
         /**
          * Установить уровень логирования в нативной части клиента
          */
-        [DllImport(dllName: Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_max_log_level")]
+        [DllImport(dllName: FFIMethods.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_max_log_level")]
         public static extern void SetMaxLogLevel(CheetahLogLevel cheetahLogLevel);
 
         /**
          * Забрать и удалить из нативной части клиента существующие логи
          */
-        [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "collect_logs")]
+        [DllImport(FFIMethods.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "collect_logs")]
         public static extern void CollectLogs(LogCollector collector);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

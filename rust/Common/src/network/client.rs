@@ -141,17 +141,15 @@ impl NetworkClient {
 					let mut cursor = Cursor::new(&buffer[0..size]);
 					let header = InFrame::decode_headers(&mut cursor);
 					match header {
-						Ok((frame_id, headers)) => {
-							match InFrame::decode_frame_commands(self.from_client, frame_id, cursor, Cipher::new(&self.private_key)) {
-								Ok(commands) => {
-									let frame = InFrame::new(frame_id, headers, commands);
-									self.on_frame_received(now, &frame);
-								}
-								Err(e) => {
-									tracing::error!("error decode frame {:?}", e);
-								}
+						Ok((frame_id, headers)) => match InFrame::decode_frame_commands(self.from_client, frame_id, cursor, Cipher::new(&self.private_key)) {
+							Ok(commands) => {
+								let frame = InFrame::new(frame_id, headers, commands);
+								self.on_frame_received(now, &frame);
 							}
-						}
+							Err(e) => {
+								tracing::error!("error decode frame {:?}", e);
+							}
+						},
 						Err(e) => {
 							tracing::error!("error decode header {:?}", e);
 						}

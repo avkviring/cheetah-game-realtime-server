@@ -80,10 +80,7 @@ impl VariableIntReader for Cursor<&[u8]> {
 			U48_MARKER => self.read_u48::<BigEndian>()?,
 			U64_MARKER => self.read_u64::<BigEndian>()?,
 			_ => {
-				return Err(std::io::Error::new(
-					ErrorKind::InvalidData,
-					format!("Variable int marker not valid {first}"),
-				));
+				return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Variable int marker not valid {first}")));
 			}
 		})
 	}

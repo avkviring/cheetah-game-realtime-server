@@ -5,11 +5,11 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 use thiserror::Error;
 
-use cheetah_common::commands::binary_value::BinaryValue;
+use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::types::forwarded::ForwardedCommand;
-use cheetah_common::commands::{CommandTypeId, FieldType, FieldValue};
+use cheetah_common::commands::{CommandTypeId, FieldType};
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::RoomMemberId;
@@ -100,9 +100,9 @@ pub struct ForwardedCommandFFI {
 	long_value_new: i64,
 	long_value_reset: i64,
 	float_value_new: f64,
-	binary_value_old: BinaryValue,
-	binary_value_new: BinaryValue,
-	binary_value_reset: BinaryValue,
+	binary_value_old: Buffer,
+	binary_value_new: Buffer,
+	binary_value_reset: Buffer,
 }
 
 impl Default for ForwardedCommandFFI {
@@ -145,29 +145,19 @@ impl From<ForwardedCommand> for ForwardedCommandFFI {
 			C2SCommand::IncrementLongValue(c) => {
 				ffi_command.long_value_new = c.increment;
 			}
-			C2SCommand::CompareAndSetLong(c) => {
-				ffi_command.long_value_old = c.current;
-				ffi_command.long_value_new = c.new;
-				ffi_command.long_value_reset = c.get_reset().unwrap_or_default();
+
+			C2SCommand::SetLong(c) => {
+				ffi_command.long_value_new = c.value;
 			}
-			C2SCommand::SetField(c) => match c.value {
-				FieldValue::Long(v) => {
-					ffi_command.long_value_new = v;
-				}
-				FieldValue::Double(v) => {
-					ffi_command.float_value_new = v;
-				}
-				FieldValue::Structure(v) => {
-					ffi_command.binary_value_new = v;
-				}
-			},
+			C2SCommand::SetDouble(c) => {
+				ffi_command.float_value_new = c.value;
+			}
+			C2SCommand::SetStructure(c) => {
+				ffi_command.binary_value_new = c.value;
+			}
+
 			C2SCommand::IncrementDouble(c) => {
 				ffi_command.float_value_new = c.increment;
-			}
-			C2SCommand::CompareAndSetStructure(c) => {
-				ffi_command.binary_value_old = c.current;
-				ffi_command.binary_value_new = c.new;
-				ffi_command.binary_value_reset = c.get_reset().cloned().unwrap_or_default();
 			}
 			C2SCommand::Event(c) => {
 				ffi_command.binary_value_new = c.event.into();
@@ -189,17 +179,16 @@ impl From<ForwardedCommand> for ForwardedCommandFFI {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::BinaryValue;
+	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
 	use cheetah_common::commands::types::event::{EventCommand, TargetEventCommand};
-	use cheetah_common::commands::types::field::{DeleteFieldCommand, SetFieldCommand};
+	use cheetah_common::commands::types::field::DeleteFieldCommand;
 	use cheetah_common::commands::types::float::IncrementDoubleC2SCommand;
 	use cheetah_common::commands::types::forwarded::ForwardedCommand;
-	use cheetah_common::commands::types::long::{CompareAndSetLongCommand, IncrementLongC2SCommand};
-	use cheetah_common::commands::types::structure::CompareAndSetStructureCommand;
-	use cheetah_common::commands::{CommandTypeId, FieldType, FieldValue};
+	use cheetah_common::commands::types::long::IncrementLongC2SCommand;
+	use cheetah_common::commands::{CommandTypeId, FieldType};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
@@ -212,9 +201,9 @@ mod tests {
 		let object_id = GameObjectId::new(234, GameObjectOwner::Room);
 		let field_id = 345;
 		let target = 456;
-		let b1 = BinaryValue::from([1, 2, 3, 4].as_slice());
-		let b2 = BinaryValue::from([2, 3, 4].as_slice());
-		let b3 = BinaryValue::from([3, 4].as_slice());
+		let b1 = Buffer::from([1, 2, 3, 4].as_slice());
+		let b2 = Buffer::from([2, 3, 4].as_slice());
+		let b3 = Buffer::from([3, 4].as_slice());
 
 		let tests = [
 			(
@@ -271,11 +260,7 @@ mod tests {
 			(
 				ForwardedCommand {
 					creator,
-					c2s: C2SCommand::IncrementLongValue(IncrementLongC2SCommand {
-						object_id,
-						field_id,
-						increment: 1,
-					}),
+					c2s: C2SCommand::IncrementLongValue(IncrementLongC2SCommand { object_id, field_id, increment: 1 }),
 				},
 				ForwardedCommandFFI {
 					creator,
@@ -290,85 +275,7 @@ mod tests {
 			(
 				ForwardedCommand {
 					creator,
-					c2s: C2SCommand::CompareAndSetLong(CompareAndSetLongCommand::new(object_id, field_id, 1, 2, Some(3))),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::CompareAndSetLong,
-					object_id: object_id.into(),
-					field_id,
-					field_type: FieldType::Long,
-					long_value_old: 1,
-					long_value_new: 2,
-					long_value_reset: 3,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::SetField(SetFieldCommand {
-						object_id,
-						field_id,
-						value: FieldValue::Long(1),
-					}),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::SetLong,
-					object_id: object_id.into(),
-					field_id,
-					field_type: FieldType::Long,
-					long_value_new: 1,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::SetField(SetFieldCommand {
-						object_id,
-						field_id,
-						value: FieldValue::Double(1.2),
-					}),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::SetDouble,
-					object_id: object_id.into(),
-					field_id,
-					field_type: FieldType::Double,
-					float_value_new: 1.2,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::SetField(SetFieldCommand {
-						object_id,
-						field_id,
-						value: FieldValue::Structure(b1.as_slice().into()),
-					}),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::SetStructure,
-					object_id: object_id.into(),
-					field_id,
-					field_type: FieldType::Structure,
-					binary_value_new: b1.clone().into(),
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::IncrementDouble(IncrementDoubleC2SCommand {
-						object_id,
-						field_id,
-						increment: 1.2,
-					}),
+					c2s: C2SCommand::IncrementDouble(IncrementDoubleC2SCommand { object_id, field_id, increment: 1.2 }),
 				},
 				ForwardedCommandFFI {
 					creator,
@@ -383,29 +290,6 @@ mod tests {
 			(
 				ForwardedCommand {
 					creator,
-					c2s: C2SCommand::CompareAndSetStructure(CompareAndSetStructureCommand::new(
-						object_id,
-						field_id,
-						b1.clone(),
-						b2.clone(),
-						Some(b3.clone()),
-					)),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::CompareAndSetStructure,
-					object_id: object_id.into(),
-					field_id,
-					field_type: FieldType::Structure,
-					binary_value_old: b1.clone().into(),
-					binary_value_new: b2.into(),
-					binary_value_reset: b3.into(),
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
 					c2s: C2SCommand::Event(EventCommand {
 						object_id,
 						field_id,
@@ -414,7 +298,7 @@ mod tests {
 				},
 				ForwardedCommandFFI {
 					creator,
-					command_type_id: CommandTypeId::Event,
+					command_type_id: CommandTypeId::SendEvent,
 					object_id: object_id.into(),
 					field_id,
 					field_type: FieldType::Event,
@@ -452,7 +336,7 @@ mod tests {
 				},
 				ForwardedCommandFFI {
 					creator,
-					command_type_id: CommandTypeId::Delete,
+					command_type_id: CommandTypeId::DeleteObject,
 					object_id: object_id.into(),
 					..Default::default()
 				},

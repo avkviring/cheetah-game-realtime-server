@@ -9,13 +9,9 @@ fn main() -> Result<(), Error> {
 	#[cfg(target_os = "windows")]
 	std::env::set_var("PROTOC", PathBuf::from("../../scripts/bin/win/protoc"));
 
-	tonic_build::configure()
-		.build_client(false)
-		.compile(&["../../proto/registry.internal.proto"], &["../../proto/"])?;
+	tonic_build::configure().build_client(false).compile(&["../../proto/registry.internal.proto"], &["../../proto/"])?;
 
-	tonic_build::configure()
-		.build_server(false)
-		.compile(&["../../proto/internal.proto"], &["../../proto/"])?;
+	tonic_build::configure().build_server(false).compile(&["../../proto/internal.proto"], &["../../proto/"])?;
 
 	Ok(())
 }

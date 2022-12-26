@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 
 namespace Games.Cheetah.Client.Codec.Formatter
 {
@@ -9,25 +10,25 @@ namespace Games.Cheetah.Client.Codec.Formatter
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override ushort UncheckedRead(ref CheetahBuffer buffer)
+        public override ushort UncheckedRead(ref NetworkBuffer buffer)
         {
             return StaticUncheckedRead(ref buffer);
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void UncheckedWrite(ushort value, ref CheetahBuffer buffer)
+        public override void UncheckedWrite(ushort value, ref NetworkBuffer buffer)
         {
             StaticUncheckedWrite(value, ref buffer);
         }
 
-        public static unsafe void StaticUncheckedWrite(ushort value, ref CheetahBuffer buffer)
+        public static unsafe void StaticUncheckedWrite(ushort value, ref NetworkBuffer buffer)
         {
             buffer.values[buffer.size++] = (byte)((value & 0xFF00) >> 8);
             buffer.values[buffer.size++] = (byte)(value & 0xFF);
         }
 
-        public static unsafe ushort StaticUncheckedRead(ref CheetahBuffer buffer)
+        public static unsafe ushort StaticUncheckedRead(ref NetworkBuffer buffer)
         {
             return (ushort)((buffer.values[buffer.pos++] << 8) + buffer.values[buffer.pos++]);
         }

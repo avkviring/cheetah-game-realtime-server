@@ -51,9 +51,7 @@ pub enum RoomEventType {
 #[no_mangle]
 pub unsafe extern "C" fn pop_room_event(plugin_id: ServerPluginId, out: &mut RoomEvent) -> ResultCode {
 	execute::<_, String>(|registry| {
-		let plugin = registry
-			.get_plugin(plugin_id)
-			.ok_or_else(|| format!("Plugin with id {plugin_id} not found in registry"))?;
+		let plugin = registry.get_plugin(plugin_id).ok_or_else(|| format!("Plugin with id {plugin_id} not found in registry"))?;
 
 		if let Some(room_id) = plugin.reader.pop_create_room().map_err(|e| format!("{e}"))? {
 			out.room_id = room_id;

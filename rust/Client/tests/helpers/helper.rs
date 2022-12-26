@@ -5,6 +5,8 @@ use std::time::Duration;
 use cheetah_client::clients::registry::ClientId;
 use cheetah_client::ffi;
 use cheetah_client::ffi::client::do_create_client;
+use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
+use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 use cheetah_server::room::template::config::MemberTemplate;
@@ -19,14 +21,24 @@ pub struct IntegrationTestHelper {
 }
 
 impl IntegrationTestHelper {
+	pub fn receive(&self, client: ClientId) -> Vec<S2CCommandFFI> {
+		let mut commands = [S2CCommandFFI {
+			command_type: CommandTypeId::CreateGameObject,
+			command: S2CommandUnionFFI { empty: () },
+		}; 256];
+		self.wait_udp();
+
+		let mut count = 0;
+		ffi::client::receive(client, commands.as_mut_ptr(), &mut count);
+		commands[0..count as usize].to_vec()
+	}
+}
+
+impl IntegrationTestHelper {
 	#[must_use]
 	pub fn new(builder: IntegrationTestServerBuilder) -> Self {
 		let (socket_addr, server, room_id) = builder.build();
-		Self {
-			socket_addr,
-			room_id,
-			server,
-		}
+		Self { socket_addr, room_id, server }
 	}
 
 	pub fn create_client(&self, member_id: RoomMemberId, private_key: &MemberPrivateKey) -> ClientId {
@@ -36,7 +48,7 @@ impl IntegrationTestHelper {
 	}
 
 	pub fn wait_udp(&self) {
-		thread::sleep(Duration::from_millis(1000));
+		thread::sleep(Duration::from_millis(200));
 	}
 
 	pub fn create_member_object(&self, client_id: ClientId) -> GameObjectId {

@@ -11,7 +11,6 @@ use crate::room::object::GameObjectError;
 use crate::room::Room;
 use crate::server::rooms::RoomNotFoundError;
 
-pub mod compare_and_set;
 pub mod create;
 pub mod created;
 pub mod delete;
@@ -84,13 +83,7 @@ pub enum ServerCommandError {
 
 impl ServerCommandError {
 	pub fn log_command_execute_error(&self, command: &C2SCommand, room_id: RoomId, room_member_id: RoomMemberId) {
-		tracing::error!(
-			"Error execute command: {:?} in room {} from client {} : {:?}",
-			command,
-			room_id,
-			room_member_id,
-			self
-		);
+		tracing::error!("Error execute command: {:?} in room {} from client {} : {:?}", command, room_id, room_member_id, self);
 	}
 
 	pub fn log_error(&self, room_id: RoomId, room_member_id: RoomMemberId) {
@@ -101,11 +94,11 @@ impl ServerCommandError {
 pub fn execute(command: &C2SCommand, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	match command {
 		C2SCommand::CreateGameObject(command) => command.execute(room, member_id),
-		C2SCommand::SetField(command) => command.execute(room, member_id),
+		C2SCommand::SetLong(command) => command.execute(room, member_id),
+		C2SCommand::SetDouble(command) => command.execute(room, member_id),
+		C2SCommand::SetStructure(command) => command.execute(room, member_id),
 		C2SCommand::IncrementLongValue(command) => command.execute(room, member_id),
-		C2SCommand::CompareAndSetLong(command) => command.execute(room, member_id),
 		C2SCommand::IncrementDouble(command) => command.execute(room, member_id),
-		C2SCommand::CompareAndSetStructure(command) => command.execute(room, member_id),
 		C2SCommand::Event(command) => command.execute(room, member_id),
 		C2SCommand::Delete(command) => command.execute(room, member_id),
 		C2SCommand::AttachToRoom => room::attach_to_room(room, member_id),
@@ -133,9 +126,7 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
 		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object_id = room
-			.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups)
-			.id;
+		let object_id = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups).id;
 		(room, object_id, member_1, member_2)
 	}
 

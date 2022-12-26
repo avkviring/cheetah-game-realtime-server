@@ -1,11 +1,7 @@
-use std::sync::Mutex;
-
-use lazy_static::lazy_static;
-
 use cheetah_client::ffi;
-use cheetah_common::commands::field::FieldId;
-use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::RoomMemberId;
+use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
+use cheetah_common::commands::types::float::SetDoubleCommand;
+use cheetah_common::commands::CommandTypeId;
 
 use crate::helpers::helper::setup;
 
@@ -14,18 +10,34 @@ pub mod helpers;
 #[test]
 fn should_inc() {
 	let (helper, [client1, client2]) = setup(Default::default());
-
 	let object_id = helper.create_member_object(client1);
-	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
-	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
-
-	ffi::command::float_value::set_double_value_listener(client2, listener_for_inc);
 	ffi::command::room::attach_to_room(client2);
-	helper.wait_udp();
-	ffi::client::receive(client2);
+	helper.receive(client2);
 
-	assert!(matches!(INCR.lock().unwrap().as_ref(),Some((field_id, value)) if *field_id
-		== 1 && (*value - 200.0).abs() < 0.001 ));
+	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
+	ffi::command::float_value::inc_double_value(client1, &object_id, 1, 100.0);
+
+	let commands = helper.receive(client2);
+
+	assert_eq!(
+		commands[0],
+		S2CCommandFFI {
+			command_type: CommandTypeId::SetDouble,
+			command: S2CommandUnionFFI {
+				set_double: SetDoubleCommand { object_id, field_id: 1, value: 100.0 }
+			}
+		}
+	);
+
+	assert_eq!(
+		commands[1],
+		S2CCommandFFI {
+			command_type: CommandTypeId::SetDouble,
+			command: S2CommandUnionFFI {
+				set_double: SetDoubleCommand { object_id, field_id: 1, value: 200.0 }
+			}
+		}
+	);
 }
 
 #[test]
@@ -33,30 +45,30 @@ fn should_set() {
 	let (helper, [client1, client2]) = setup(Default::default());
 
 	let object_id = helper.create_member_object(client1);
+	ffi::command::room::attach_to_room(client2);
+	helper.receive(client2);
+
 	ffi::command::float_value::set_double_value(client1, &object_id, 1, 100.0);
 	ffi::command::float_value::set_double_value(client1, &object_id, 1, 200.0);
 
-	ffi::command::float_value::set_double_value_listener(client2, listener_for_set);
-	ffi::command::room::attach_to_room(client2);
-	helper.wait_udp();
-	ffi::client::receive(client2);
+	let commands = helper.receive(client2);
+	assert_eq!(
+		commands[0],
+		S2CCommandFFI {
+			command_type: CommandTypeId::SetDouble,
+			command: S2CommandUnionFFI {
+				set_double: SetDoubleCommand { object_id, field_id: 1, value: 100.0 }
+			}
+		}
+	);
 
-	assert!(matches!(SET.lock().unwrap().as_ref(),Some((field_id, value)) if *field_id ==
-		1 && (*value - 200.0).abs() < 0.001 ));
-}
-
-lazy_static! {
-	static ref INCR: Mutex<Option<(FieldId, f64)>> = Mutex::new(Default::default());
-}
-
-lazy_static! {
-	static ref SET: Mutex<Option<(FieldId, f64)>> = Mutex::new(Default::default());
-}
-
-extern "C" fn listener_for_set(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: f64) {
-	SET.lock().unwrap().replace((field_id, value));
-}
-
-extern "C" fn listener_for_inc(_: RoomMemberId, _object_id: &GameObjectId, field_id: FieldId, value: f64) {
-	INCR.lock().unwrap().replace((field_id, value));
+	assert_eq!(
+		commands[1],
+		S2CCommandFFI {
+			command_type: CommandTypeId::SetDouble,
+			command: S2CommandUnionFFI {
+				set_double: SetDoubleCommand { object_id, field_id: 1, value: 200.0 }
+			}
+		}
+	);
 }

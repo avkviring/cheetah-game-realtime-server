@@ -32,14 +32,7 @@ pub struct Registry {
 
 impl Registry {
 	#[allow(clippy::unwrap_in_result)]
-	pub fn create_client(
-		&mut self,
-		server_address: &str,
-		member_id: RoomMemberId,
-		room_id: RoomId,
-		private_key: MemberPrivateKey,
-		start_frame_id: u64,
-	) -> std::io::Result<ClientId> {
+	pub fn create_client(&mut self, server_address: &str, member_id: RoomMemberId, room_id: RoomId, private_key: MemberPrivateKey, start_frame_id: u64) -> std::io::Result<ClientId> {
 		Self::set_panic_hook();
 
 		let server_time = Arc::new(Mutex::new(None));
@@ -69,15 +62,7 @@ impl Registry {
 			})
 			.unwrap();
 
-		let application_thread_client = ApplicationThreadClient::new(
-			member_id,
-			handler,
-			state_cloned,
-			in_command_receiver,
-			sender,
-			shared_statistics,
-			server_time,
-		);
+		let application_thread_client = ApplicationThreadClient::new(member_id, handler, state_cloned, in_command_receiver, sender, shared_statistics, server_time);
 		self.client_generator_id += 1;
 		let client_id = self.client_generator_id;
 		self.clients.insert(client_id, application_thread_client);

@@ -24,10 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn get_plugin_names(env_var: &str) -> FnvHashSet<String> {
 	// плагины должны быть в формате PLUGIN_NAMES=plugin_1;plugin_2
-	cheetah_microservice::get_env_or_default(env_var, "")
-		.split_terminator(';')
-		.map(ToString::to_string)
-		.collect()
+	cheetah_microservice::get_env_or_default(env_var, "").split_terminator(';').map(ToString::to_string).collect()
 }
 
 #[cfg(test)]
@@ -43,10 +40,7 @@ mod tests {
 	fn test_get_plugin_names() {
 		let env_var = Alphanumeric.sample_string(&mut rand::thread_rng(), 16);
 		env::set_var(&env_var, "plugin_1;plugin_2");
-		assert_eq!(
-			FnvHashSet::<String>::from_iter(["plugin_1".to_owned(), "plugin_2".to_owned()]),
-			get_plugin_names(&env_var)
-		);
+		assert_eq!(FnvHashSet::<String>::from_iter(["plugin_1".to_owned(), "plugin_2".to_owned()]), get_plugin_names(&env_var));
 		env::remove_var(&env_var);
 	}
 

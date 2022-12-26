@@ -1,5 +1,6 @@
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using NUnit.Framework;
 
 namespace Games.Cheetah.Client.Tests.Codec.Formatter
@@ -12,7 +13,7 @@ namespace Games.Cheetah.Client.Tests.Codec.Formatter
         public void Test(ushort value)
         {
             var formatter = UShortFormatter.Instance;
-            var buffer = new CheetahBuffer();
+            var buffer = new NetworkBuffer();
             formatter.Write(value, ref buffer);
             Assert.AreEqual(formatter.Read(ref buffer), value);
         }

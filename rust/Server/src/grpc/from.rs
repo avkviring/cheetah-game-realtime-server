@@ -1,9 +1,9 @@
-use cheetah_common::commands::field::Field;
-use cheetah_common::{commands::FieldValue, room::access::AccessGroups};
+use cheetah_common::commands::binary_value::Buffer;
+use cheetah_common::commands::field::{Field, FieldId};
+use cheetah_common::room::access::AccessGroups;
 
-use crate::debug::proto::shared::{field_value::Variant as VariantDebug, FieldValue as GRPCFieldValueDebug};
 use crate::grpc::proto::internal;
-use crate::grpc::proto::shared::{self, field_value::Variant, FieldValue as GRPCFieldValue};
+use crate::grpc::proto::shared::{self, field_value::Variant};
 use crate::room::template::config;
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
@@ -18,52 +18,43 @@ impl From<internal::RoomTemplate> for config::RoomTemplate {
 
 impl From<internal::UserTemplate> for config::MemberTemplate {
 	fn from(source: internal::UserTemplate) -> Self {
-		config::MemberTemplate::new_member(
-			AccessGroups(source.groups),
-			source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
-		)
+		config::MemberTemplate::new_member(AccessGroups(source.groups), source.objects.into_iter().map(config::GameObjectTemplate::from).collect())
 	}
 }
 
 impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 	#[allow(clippy::cast_possible_truncation)]
 	fn from(source: internal::GameObjectTemplate) -> Self {
+		let fields: Vec<_> = source
+			.fields
+			.into_iter()
+			.map(|f| {
+				let value = f.value.unwrap();
+				let fieldId = f.id as FieldId;
+				(fieldId, value.variant.unwrap())
+			})
+			.collect();
+
 		config::GameObjectTemplate {
 			id: source.id,
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),
-			fields: source
-				.fields
-				.into_iter()
-				.map(|f| {
-					let field_value: FieldValue = f.value.expect("Field with no value").into();
-					((f.id as u16, field_value.field_type()), field_value)
-				})
+			doubles: fields
+				.iter()
+				.map(|(field_id, value)| if let Variant::Double(v) = value { Some((*field_id, *v)) } else { None })
+				.flatten()
+				.collect(),
+			structures: fields
+				.iter()
+				.map(|(field_id, value)| if let Variant::Structure(v) = value { Some((*field_id, Buffer::from(v.as_ref()))) } else { None })
+				.flatten()
+				.collect(),
+			longs: fields
+				.iter()
+				.map(|(field_id, value)| if let Variant::Long(v) = value { Some((*field_id, *v)) } else { None })
+				.flatten()
 				.collect(),
 		}
-	}
-}
-
-impl From<GRPCFieldValue> for FieldValue {
-	fn from(field: GRPCFieldValue) -> Self {
-		let variant = field.variant.expect("FieldValue was empty");
-		match variant {
-			Variant::Double(v) => FieldValue::Double(v),
-			Variant::Long(v) => FieldValue::Long(v),
-			Variant::Structure(s) => FieldValue::Structure(s.as_slice().into()),
-		}
-	}
-}
-
-impl From<FieldValue> for GRPCFieldValueDebug {
-	fn from(value: FieldValue) -> Self {
-		let value_d = match value {
-			FieldValue::Double(v) => VariantDebug::Double(v),
-			FieldValue::Long(v) => VariantDebug::Long(v),
-			FieldValue::Structure(s) => VariantDebug::Structure(s.as_slice().into()),
-		};
-
-		GRPCFieldValueDebug { variant: Some(value_d) }
 	}
 }
 
@@ -113,10 +104,7 @@ impl From<internal::PermissionField> for config::PermissionField {
 			}
 		};
 		config::PermissionField {
-			field: Field {
-				id: source.id as u16,
-				field_type,
-			},
+			field: Field { id: source.id as u16, field_type },
 			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
 		}
 	}

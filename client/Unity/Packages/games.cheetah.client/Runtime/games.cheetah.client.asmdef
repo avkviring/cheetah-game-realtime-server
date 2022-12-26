@@ -6,6 +6,9 @@
   "precompiledReferences": [
     ""
   ],
+  "references": [
+    "Unity.Collections"
+  ],
   "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],

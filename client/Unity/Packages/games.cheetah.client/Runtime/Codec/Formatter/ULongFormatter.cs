@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 
 namespace Games.Cheetah.Client.Codec.Formatter
 {
@@ -9,20 +10,20 @@ namespace Games.Cheetah.Client.Codec.Formatter
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override ulong UncheckedRead(ref CheetahBuffer buffer)
+        public override ulong UncheckedRead(ref NetworkBuffer buffer)
         {
             return StaticUncheckedRead(ref buffer);
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void UncheckedWrite(ulong value, ref CheetahBuffer buffer)
+        public override void UncheckedWrite(ulong value, ref NetworkBuffer buffer)
         {
             StaticUncheckedWrite(value, ref buffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void StaticUncheckedWrite(ulong value, ref CheetahBuffer buffer)
+        public static unsafe void StaticUncheckedWrite(ulong value, ref NetworkBuffer buffer)
         {
             buffer.values[buffer.size++] = (byte)(value >> 56);
             buffer.values[buffer.size++] = (byte)((value & 0xFF000000000000) >> 48);
@@ -35,7 +36,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe ulong StaticUncheckedRead(ref CheetahBuffer buffer)
+        public static unsafe ulong StaticUncheckedRead(ref NetworkBuffer buffer)
         {
             return ((ulong)buffer.values[buffer.pos++] << 56) + ((ulong)buffer.values[buffer.pos++] << 48) +
                    ((ulong)buffer.values[buffer.pos++] << 40) + ((ulong)buffer.values[buffer.pos++] << 32) +

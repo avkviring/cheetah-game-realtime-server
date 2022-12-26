@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using Games.Cheetah.Client.Editor.Generator.Fields;
 using Games.Cheetah.Client.Editor.Generator.Fields.Array;
+using Games.Cheetah.Client.Types.Field;
 using static Games.Cheetah.Client.Editor.Generator.Utils;
 
 namespace Games.Cheetah.Client.Editor.Generator
@@ -48,10 +49,10 @@ namespace Games.Cheetah.Client.Editor.Generator
             var decodeMethod = new StringBuilder();
             var encodeMethod = new StringBuilder();
 
-            decodeMethod.AppendLine($"public void Decode(ref CheetahBuffer buffer, ref {targetTypeFullName} dest)");
+            decodeMethod.AppendLine($"public void Decode(ref {nameof(NetworkBuffer)} buffer, ref {targetTypeFullName} dest)");
             decodeMethod.AppendLine("{");
 
-            encodeMethod.AppendLine($"public void  Encode(in {targetTypeFullName} source, ref CheetahBuffer buffer)");
+            encodeMethod.AppendLine($"public void  Encode(in {targetTypeFullName} source, ref {nameof(NetworkBuffer)} buffer)");
             encodeMethod.AppendLine("{");
 
             var processedFields = new HashSet<string>();
@@ -130,6 +131,7 @@ namespace Games.Cheetah.Client.Editor.Generator
             result.AppendLine("using Games.Cheetah.Client.Codec;");
             result.AppendLine("using Games.Cheetah.Client.Codec.Formatter;");
             result.AppendLine("using Games.Cheetah.Client.Types;");
+            result.AppendLine("using Games.Cheetah.Client.Types.Field;");
 
             result.AppendLine("using UnityEngine;");
             if (type.Namespace != null)

@@ -84,19 +84,15 @@ impl PermissionManager {
 	pub fn get_permission(&self, template: GameObjectTemplateId, field: Field, groups: AccessGroups) -> Permission {
 		let field_key = PermissionFieldKey { template, field };
 
-		*self
-			.cache
-			.borrow_mut()
-			.entry(PermissionCachedFieldKey { field_key, groups })
-			.or_insert_with(|| {
-				if let Some(field_rules) = self.field_rules.get(&field_key) {
-					Self::get_permission_by_group(groups, field_rules)
-				} else if let Some(template_rules) = self.template_rules.get(&template) {
-					Self::get_permission_by_group(groups, template_rules)
-				} else {
-					Permission::Rw
-				}
-			})
+		*self.cache.borrow_mut().entry(PermissionCachedFieldKey { field_key, groups }).or_insert_with(|| {
+			if let Some(field_rules) = self.field_rules.get(&field_key) {
+				Self::get_permission_by_group(groups, field_rules)
+			} else if let Some(template_rules) = self.template_rules.get(&template) {
+				Self::get_permission_by_group(groups, template_rules)
+			} else {
+				Permission::Rw
+			}
+		})
 	}
 
 	fn get_permission_by_group(member_group: AccessGroups, groups: &FnvHashMap<AccessGroups, Permission>) -> Permission {
@@ -120,17 +116,7 @@ mod tests {
 	#[test]
 	fn should_default_permission() {
 		let permissions_manager = PermissionManager::new(&Permissions::default());
-		assert_eq!(
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 10,
-					field_type: FieldType::Long
-				},
-				AccessGroups(0)
-			),
-			Permission::Rw
-		);
+		assert_eq!(permissions_manager.get_permission(10, Field { id: 10, field_type: FieldType::Long }, AccessGroups(0)), Permission::Rw);
 	}
 
 	#[test]
@@ -155,25 +141,11 @@ mod tests {
 		let permissions_manager = PermissionManager::new(&permissions);
 
 		assert_eq!(
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 10,
-					field_type: FieldType::Long
-				},
-				AccessGroups(0b01)
-			),
+			permissions_manager.get_permission(10, Field { id: 10, field_type: FieldType::Long }, AccessGroups(0b01)),
 			Permission::Rw
 		);
 		assert_eq!(
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 10,
-					field_type: FieldType::Long
-				},
-				AccessGroups(0b1000)
-			),
+			permissions_manager.get_permission(10, Field { id: 10, field_type: FieldType::Long }, AccessGroups(0b1000)),
 			Permission::Deny
 		);
 	}
@@ -192,10 +164,7 @@ mod tests {
 		});
 
 		template_permission.fields.push(PermissionField {
-			field: Field {
-				id: 15,
-				field_type: FieldType::Long,
-			},
+			field: Field { id: 15, field_type: FieldType::Long },
 			rules: vec![GroupsPermissionRule {
 				groups: AccessGroups(0b11),
 				permission: Permission::Rw,
@@ -206,25 +175,11 @@ mod tests {
 		let permissions_manager = PermissionManager::new(&permissions);
 
 		assert_eq!(
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 10,
-					field_type: FieldType::Long
-				},
-				AccessGroups(0b01)
-			),
+			permissions_manager.get_permission(10, Field { id: 10, field_type: FieldType::Long }, AccessGroups(0b01)),
 			Permission::Deny
 		);
 		assert_eq!(
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 15,
-					field_type: FieldType::Long,
-				},
-				AccessGroups(0b01)
-			),
+			permissions_manager.get_permission(10, Field { id: 15, field_type: FieldType::Long }, AccessGroups(0b01)),
 			Permission::Rw
 		);
 	}
@@ -243,10 +198,7 @@ mod tests {
 		});
 
 		template_permission.fields.push(PermissionField {
-			field: Field {
-				id: 15,
-				field_type: FieldType::Long,
-			},
+			field: Field { id: 15, field_type: FieldType::Long },
 			rules: vec![GroupsPermissionRule {
 				groups: AccessGroups(0b11),
 				permission: Permission::Rw,
@@ -256,46 +208,18 @@ mod tests {
 
 		let mut permissions_manager = PermissionManager::new(&permissions);
 		// прогреваем кеш
-		let _ = permissions_manager.get_permission(
-			10,
-			Field {
-				id: 10,
-				field_type: FieldType::Long,
-			},
-			AccessGroups(0b01),
-		);
-		let _ = permissions_manager.get_permission(
-			10,
-			Field {
-				id: 15,
-				field_type: FieldType::Long,
-			},
-			AccessGroups(0b01),
-		);
+		let _ = permissions_manager.get_permission(10, Field { id: 10, field_type: FieldType::Long }, AccessGroups(0b01));
+		let _ = permissions_manager.get_permission(10, Field { id: 15, field_type: FieldType::Long }, AccessGroups(0b01));
 		// удаляем исходные данные
 		permissions_manager.field_rules.clear();
 		permissions_manager.template_rules.clear();
 
 		assert_eq!(
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 10,
-					field_type: FieldType::Long,
-				},
-				AccessGroups(0b01),
-			),
+			permissions_manager.get_permission(10, Field { id: 10, field_type: FieldType::Long }, AccessGroups(0b01),),
 			Permission::Deny
 		);
 		assert_eq!(
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 15,
-					field_type: FieldType::Long,
-				},
-				AccessGroups(0b01),
-			),
+			permissions_manager.get_permission(10, Field { id: 15, field_type: FieldType::Long }, AccessGroups(0b01),),
 			Permission::Rw
 		);
 	}
@@ -304,13 +228,7 @@ mod tests {
 	fn should_not_has_write_access_by_default() {
 		let permissions = Permissions::default();
 		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(
-			10,
-			Field {
-				id: 100,
-				field_type: FieldType::Long
-			}
-		));
+		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long }));
 	}
 
 	#[test]
@@ -325,13 +243,7 @@ mod tests {
 			fields: vec![],
 		});
 		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(permissions_manager.has_write_access(
-			10,
-			Field {
-				id: 100,
-				field_type: FieldType::Long
-			}
-		));
+		assert!(permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long }));
 	}
 
 	#[test]
@@ -346,13 +258,7 @@ mod tests {
 			fields: vec![],
 		});
 		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(
-			10,
-			Field {
-				id: 100,
-				field_type: FieldType::Long
-			}
-		));
+		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long }));
 	}
 
 	#[test]
@@ -362,10 +268,7 @@ mod tests {
 			template: 10,
 			rules: vec![],
 			fields: vec![PermissionField {
-				field: Field {
-					id: 100,
-					field_type: FieldType::Long,
-				},
+				field: Field { id: 100, field_type: FieldType::Long },
 				rules: vec![GroupsPermissionRule {
 					groups: Default::default(),
 					permission: Permission::Rw,
@@ -373,31 +276,19 @@ mod tests {
 			}],
 		});
 		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(permissions_manager.has_write_access(
-			10,
-			Field {
-				id: 100,
-				field_type: FieldType::Long,
-			},
-		));
+		assert!(permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long },));
 	}
 
 	#[test]
 	fn should_update_permissions() {
 		let template = 10;
-		let field = Field {
-			id: 100,
-			field_type: FieldType::Long,
-		};
+		let field = Field { id: 100, field_type: FieldType::Long };
 		let groups = AccessGroups(1);
 
 		let mut permissions = Permissions::default();
 		permissions.templates.push(GameObjectTemplatePermission {
 			template,
-			rules: vec![GroupsPermissionRule {
-				groups,
-				permission: Permission::Rw,
-			}],
+			rules: vec![GroupsPermissionRule { groups, permission: Permission::Rw }],
 			fields: vec![],
 		});
 		let mut permissions_manager = PermissionManager::new(&permissions);
@@ -427,13 +318,7 @@ mod tests {
 
 		// should not have write access
 		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(
-			10,
-			Field {
-				id: 100,
-				field_type: FieldType::Long,
-			},
-		));
+		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long },));
 	}
 
 	#[test]
@@ -443,10 +328,7 @@ mod tests {
 			template: 10,
 			rules: vec![],
 			fields: vec![PermissionField {
-				field: Field {
-					id: 100,
-					field_type: FieldType::Long,
-				},
+				field: Field { id: 100, field_type: FieldType::Long },
 				rules: vec![GroupsPermissionRule {
 					groups: Default::default(),
 					permission: Permission::Deny,
@@ -456,13 +338,7 @@ mod tests {
 
 		// should have write access
 		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(
-			10,
-			Field {
-				id: 100,
-				field_type: FieldType::Long,
-			},
-		));
+		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long },));
 	}
 
 	#[test]
@@ -486,14 +362,7 @@ mod tests {
 		let permissions_manager = PermissionManager::new(&permissions);
 		assert_eq!(
 			Permission::Rw,
-			permissions_manager.get_permission(
-				10,
-				Field {
-					id: 100,
-					field_type: FieldType::Long,
-				},
-				AccessGroups(0b11),
-			)
+			permissions_manager.get_permission(10, Field { id: 100, field_type: FieldType::Long }, AccessGroups(0b11),)
 		);
 	}
 }

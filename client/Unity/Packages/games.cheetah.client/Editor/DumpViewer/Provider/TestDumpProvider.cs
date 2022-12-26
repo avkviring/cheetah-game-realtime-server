@@ -122,10 +122,6 @@ namespace Games.Cheetah.Client.Editor.DumpViewer.Provider
                         Long = random.Next(0, int.MaxValue)
                     }
                 });
-                if (random.NextDouble() > 0.5)
-                {
-                    obj.CompareAndSetOwners.Add(fieldId, random.Next(0, UserCount));
-                }
             }
         }
 

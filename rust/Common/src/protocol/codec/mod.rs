@@ -61,12 +61,7 @@ impl InFrame {
 	///
 	#[allow(clippy::cast_possible_truncation)]
 	#[allow(clippy::map_err_ignore)]
-	pub fn decode_frame_commands(
-		c2s_commands: bool,
-		frame_id: FrameId,
-		cursor: Cursor<&[u8]>,
-		mut cipher: Cipher<'_>,
-	) -> Result<Vec<CommandWithChannel>, FrameDecodeError> {
+	pub fn decode_frame_commands(c2s_commands: bool, frame_id: FrameId, cursor: Cursor<&[u8]>, mut cipher: Cipher<'_>) -> Result<Vec<CommandWithChannel>, FrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -75,8 +70,7 @@ impl InFrame {
 		let ad = &data[0..header_end as usize];
 
 		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
-		vec.extend_from_slice(&data[header_end as usize..data.len()])
-			.map_err(|_| FrameDecodeError::HeaplessError)?;
+		vec.extend_from_slice(&data[header_end as usize..data.len()]).map_err(|_| FrameDecodeError::HeaplessError)?;
 
 		cipher.decrypt(&mut vec, ad, nonce).map_err(FrameDecodeError::DecryptedError)?;
 
@@ -129,7 +123,7 @@ pub mod tests {
 	use std::io::Cursor;
 
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::types::field::SetFieldCommand;
+	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::codec::cipher::Cipher;
 	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
 	use crate::protocol::frame::channel::Channel;
@@ -141,8 +135,7 @@ pub mod tests {
 	use crate::room::owner::GameObjectOwner;
 
 	const PRIVATE_KEY: &[u8] = &[
-		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f, 0x9e, 0x27, 0xad,
-		0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10, 0xe4, 0x94,
+		0x29, 0xfa, 0x35, 0x60, 0x88, 0x45, 0xc6, 0xf9, 0xd8, 0xfe, 0x65, 0xe3, 0x22, 0x0e, 0x5b, 0x05, 0x03, 0x4a, 0xa0, 0x9f, 0x9e, 0x27, 0xad, 0x0f, 0x6c, 0x90, 0xa5, 0x73, 0xa8, 0x10, 0xe4, 0x94,
 	];
 
 	#[test]
@@ -154,10 +147,10 @@ pub mod tests {
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.add_command(CommandWithChannel {
 			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Member(200)),
 				field_id: 78,
-				value: 155.into(),
+				value: 155,
 			})),
 		});
 		let mut buffer = [0; 1024];

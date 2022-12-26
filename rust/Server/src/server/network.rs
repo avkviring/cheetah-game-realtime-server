@@ -61,9 +61,7 @@ impl NetworkLayer {
 		for id in disconnected {
 			self.sessions.remove(&id);
 		}
-		self.measurers
-			.borrow_mut()
-			.on_network_cycle(self.sessions.values().map(|session| &session.protocol.rtt));
+		self.measurers.borrow_mut().on_network_cycle(self.sessions.values().map(|session| &session.protocol.rtt));
 	}
 
 	///
@@ -82,10 +80,7 @@ impl NetworkLayer {
 				Some(session) => {
 					if session.peer_address.is_some() {
 						for command in commands {
-							session
-								.protocol
-								.out_commands_collector
-								.add_command(command.channel_type, command.command.clone());
+							session.protocol.out_commands_collector.add_command(command.channel_type, command.command.clone());
 						}
 						Self::send_frame(&self.socket, session);
 					}
@@ -152,6 +147,7 @@ impl NetworkLayer {
 								let private_key = &session.private_key;
 								match InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
 									Ok(commands) => {
+										tracing::info!("c2s {:?}", commands);
 										let frame = InFrame::new(frame_id, headers, commands);
 										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);
@@ -214,6 +210,7 @@ mod tests {
 	use std::str::FromStr;
 	use std::time::Instant;
 
+	use crate::room::member::Member;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_common::protocol::codec::cipher::Cipher;
 	use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
@@ -223,7 +220,6 @@ mod tests {
 	use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 
 	use crate::room::template::config::MemberTemplate;
-	use crate::room::Member;
 	use crate::server::measurers::Measurers;
 	use crate::server::network::NetworkLayer;
 	use crate::server::rooms::Rooms;
@@ -234,13 +230,7 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let buffer = [0; MAX_FRAME_SIZE];
 		let usize = 100_usize;
-		udp_server.process_in_frame(
-			&mut rooms,
-			&buffer,
-			usize,
-			SocketAddr::from_str("127.0.0.1:5002").unwrap(),
-			Instant::now(),
-		);
+		udp_server.process_in_frame(&mut rooms, &buffer, usize, SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
 	}
 
 	#[test]
@@ -279,16 +269,12 @@ mod tests {
 			connected: false,
 			attached: false,
 			template: member_template.clone(),
-			compare_and_set_cleaners: Default::default(),
 			out_commands: Default::default(),
 		};
 		udp_server.register_member(Instant::now(), 0, member.id, member.template.clone());
 
 		let mut frame = OutFrame::new(100);
-		let member_and_room_id = MemberAndRoomId {
-			member_id: member.id,
-			room_id: 0,
-		};
+		let member_and_room_id = MemberAndRoomId { member_id: member.id, room_id: 0 };
 		frame.headers.add(Header::MemberAndRoomId(member_and_room_id));
 		let size = frame.encode(&mut Cipher::new(&member_template.private_key), &mut buffer).unwrap();
 
@@ -310,12 +296,7 @@ mod tests {
 		let mut udp_server = create_network_layer();
 		let member_template = MemberTemplate::new_member(Default::default(), Default::default());
 		let member_to_delete = MemberAndRoomId { member_id: 0, room_id: 0 };
-		udp_server.register_member(
-			Instant::now(),
-			member_to_delete.room_id,
-			member_to_delete.member_id,
-			member_template.clone(),
-		);
+		udp_server.register_member(Instant::now(), member_to_delete.room_id, member_to_delete.member_id, member_template.clone());
 		udp_server.register_member(Instant::now(), 0, 1, member_template);
 
 		udp_server.disconnect_members(vec![member_to_delete].into_iter(), DisconnectByCommandReason::MemberDeleted);
@@ -324,10 +305,6 @@ mod tests {
 	}
 
 	fn create_network_layer() -> NetworkLayer {
-		NetworkLayer::new(
-			bind_to_free_socket().unwrap(),
-			Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))),
-		)
-		.unwrap()
+		NetworkLayer::new(bind_to_free_socket().unwrap(), Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())))).unwrap()
 	}
 }

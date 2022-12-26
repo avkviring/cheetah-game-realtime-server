@@ -8,25 +8,25 @@ use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter}
 ///
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, Hash, Eq)]
-pub struct BinaryValue {
+pub struct Buffer {
 	pub len: u8,
 	pub pos: u8, // используется в C#
 	pub buffer: [u8; BUFFER_MAX_SIZE],
 }
 
-impl fmt::Debug for BinaryValue {
+impl fmt::Debug for Buffer {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_list().entries(self.buffer[0..self.len as usize].iter()).finish()
 	}
 }
 
-impl BinaryValue {
+impl Buffer {
 	pub fn as_slice(&self) -> &[u8] {
 		&self.buffer[0..self.len as usize]
 	}
 }
 
-impl Default for BinaryValue {
+impl Default for Buffer {
 	fn default() -> Self {
 		Self {
 			len: 0,
@@ -38,7 +38,7 @@ impl Default for BinaryValue {
 
 pub const BUFFER_MAX_SIZE: usize = 255;
 
-impl From<&[u8]> for BinaryValue {
+impl From<&[u8]> for Buffer {
 	fn from(source: &[u8]) -> Self {
 		let mut result = Self {
 			len: source.len() as u8,
@@ -51,9 +51,9 @@ impl From<&[u8]> for BinaryValue {
 	}
 }
 
-impl BinaryValue {
+impl Buffer {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let mut result = BinaryValue::default();
+		let mut result = Buffer::default();
 		let size: usize = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 		if size > BUFFER_MAX_SIZE {
 			return Err(Error::new(ErrorKind::InvalidData, format!("Event buffer size to big {size}")));

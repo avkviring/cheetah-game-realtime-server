@@ -70,9 +70,7 @@ impl Storage for RedisStorage {
 	/// Удалить Relay из хранилища
 	async fn remove_relay(&self, addrs: &Addrs) -> Result<(), StorageError> {
 		tracing::info!("removing relay {:?}", addrs);
-		future::try_join(self.srem(addrs, REDIS_SET_KEY_ALLOCATED), self.srem(addrs, REDIS_SET_KEY_READY))
-			.await
-			.map(|_| ())
+		future::try_join(self.srem(addrs, REDIS_SET_KEY_ALLOCATED), self.srem(addrs, REDIS_SET_KEY_READY)).await.map(|_| ())
 	}
 }
 
@@ -83,47 +81,26 @@ impl RedisStorage {
 	#[allow(clippy::map_err_ignore)]
 	pub(crate) async fn new(dsn: &str) -> Result<Self, StorageError> {
 		tracing::info!("connecting to redis: {:?}", dsn);
-		let mut conn = redis::Client::open(dsn)?
-			.get_multiplexed_tokio_connection()
-			.await
-			.map_err(StorageError::from)?;
+		let mut conn = redis::Client::open(dsn)?.get_multiplexed_tokio_connection().await.map_err(StorageError::from)?;
 
-		let hostname = hostname::get()
-			.map_err(|_| StorageError::UnknownHostname)?
-			.into_string()
-			.map_err(|_| StorageError::UnknownHostname)?;
+		let hostname = hostname::get().map_err(|_| StorageError::UnknownHostname)?.into_string().map_err(|_| StorageError::UnknownHostname)?;
 
 		// AUTH + CLIENT SETNAME
-		redis::cmd("CLIENT")
-			.arg("SETNAME")
-			.arg(hostname)
-			.query_async(&mut conn)
-			.await
-			.map_err(StorageError::from)?;
+		redis::cmd("CLIENT").arg("SETNAME").arg(hostname).query_async(&mut conn).await.map_err(StorageError::from)?;
 
 		Ok(Self { conn })
 	}
 
 	async fn ensure_addrs_in_sets(&self, addrs: &Addrs, remove_from: &str, add_to: &str) -> Result<(), StorageError> {
-		future::try_join(self.srem(addrs, remove_from), self.sadd(addrs, add_to))
-			.await
-			.map(|_| ())
+		future::try_join(self.srem(addrs, remove_from), self.sadd(addrs, add_to)).await.map(|_| ())
 	}
 
 	async fn sadd(&self, addrs: &Addrs, key: &str) -> Result<(), StorageError> {
-		self.conn
-			.clone()
-			.sadd(key, serde_json::to_vec(addrs).map_err(StorageError::from)?)
-			.await
-			.map_err(StorageError::from)
+		self.conn.clone().sadd(key, serde_json::to_vec(addrs).map_err(StorageError::from)?).await.map_err(StorageError::from)
 	}
 
 	async fn srem(&self, addrs: &Addrs, key: &str) -> Result<(), StorageError> {
-		self.conn
-			.clone()
-			.srem(key, serde_json::to_vec(addrs).map_err(StorageError::from)?)
-			.await
-			.map_err(StorageError::from)
+		self.conn.clone().srem(key, serde_json::to_vec(addrs).map_err(StorageError::from)?).await.map_err(StorageError::from)
 	}
 
 	async fn srandmember(&self, key: &str) -> Result<Addrs, StorageError> {
@@ -160,12 +137,7 @@ mod tests {
 		let dsn = format!("redis://127.0.0.1:{}", port);
 
 		let mut conn = redis::Client::open(&*dsn).unwrap().get_connection().unwrap();
-		redis::cmd("CONFIG")
-			.arg("SET")
-			.arg("requirepass")
-			.arg("testpass")
-			.query::<()>(&mut conn)
-			.unwrap();
+		redis::cmd("CONFIG").arg("SET").arg("requirepass").arg("testpass").query::<()>(&mut conn).unwrap();
 
 		RedisStorage::new(&dsn).await.unwrap_err();
 	}

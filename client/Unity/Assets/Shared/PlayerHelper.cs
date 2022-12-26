@@ -2,6 +2,6 @@ namespace Shared
 {
     public static class PlayerHelper
     {
-        public const ulong PlayerGroup = 8;
+        public const ushort PlayerGroup = 8;
     }
 }

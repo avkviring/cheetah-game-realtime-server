@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 
 namespace Games.Cheetah.Client.Codec.Formatter
 {
@@ -8,19 +9,19 @@ namespace Games.Cheetah.Client.Codec.Formatter
         public static readonly VariableSizeUIntFormatter Instance = new();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint Read(ref CheetahBuffer buffer)
+        public uint Read(ref NetworkBuffer buffer)
         {
             return (uint)VariableSizeULongFormatter.StaticRead(ref buffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Write(uint value, ref CheetahBuffer buffer)
+        public void Write(uint value, ref NetworkBuffer buffer)
         {
             VariableSizeULongFormatter.StaticWrite(value, ref buffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void ReadFixedArray(ref CheetahBuffer buffer, uint* value, uint size, uint offset)
+        public unsafe void ReadFixedArray(ref NetworkBuffer buffer, uint* value, uint size, uint offset)
         {
             for (var i = 0; i < size; i++)
             {
@@ -29,7 +30,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void WriteFixedArray(uint* value, uint size, uint offset, ref CheetahBuffer buffer)
+        public unsafe void WriteFixedArray(uint* value, uint size, uint offset, ref NetworkBuffer buffer)
         {
             for (var i = 0; i < size; i++)
             {
@@ -38,7 +39,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ReadArray(ref CheetahBuffer buffer, uint[] value, uint size, uint offset)
+        public void ReadArray(ref NetworkBuffer buffer, uint[] value, uint size, uint offset)
         {
             for (var i = 0; i < size; i++)
             {
@@ -47,7 +48,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteArray(uint[] value, uint size, uint offset, ref CheetahBuffer buffer)
+        public void WriteArray(uint[] value, uint size, uint offset, ref NetworkBuffer buffer)
         {
             for (var i = 0; i < size; i++)
             {

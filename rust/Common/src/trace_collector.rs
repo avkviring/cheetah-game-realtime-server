@@ -51,12 +51,7 @@ impl TracerCollector {
 			event.record(&mut visitor);
 			let message = visitor.result.unwrap_or_default();
 			let level = *event.metadata().level();
-			let message = format!(
-				"{} in {}:{}",
-				message,
-				event.metadata().file().unwrap_or(""),
-				event.metadata().line().unwrap_or(0)
-			);
+			let message = format!("{} in {}:{}", message, event.metadata().file().unwrap_or(""), event.metadata().line().unwrap_or(0));
 			self.items.push_back(Trace { level, message });
 		}
 	}

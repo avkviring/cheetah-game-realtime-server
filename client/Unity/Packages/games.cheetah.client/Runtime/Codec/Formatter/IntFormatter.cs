@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 
 namespace Games.Cheetah.Client.Codec.Formatter
 {
@@ -9,13 +10,13 @@ namespace Games.Cheetah.Client.Codec.Formatter
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int UncheckedRead(ref CheetahBuffer buffer)
+        public override int UncheckedRead(ref NetworkBuffer buffer)
         {
             return (int)UIntFormatter.StaticUncheckedRead(ref buffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void UncheckedWrite(int value, ref CheetahBuffer buffer)
+        public override void UncheckedWrite(int value, ref NetworkBuffer buffer)
         {
             UIntFormatter.StaticUncheckedWrite((uint)value, ref buffer);
         }

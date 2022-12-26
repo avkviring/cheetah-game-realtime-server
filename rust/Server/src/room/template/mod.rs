@@ -25,9 +25,9 @@ impl GameObjectTemplate {
 
 		let mut object = GameObject::new(id, self.template, self.groups, true);
 
-		self.fields
-			.iter()
-			.for_each(|(&(k, _), v)| object.set_field_wrapped(k, v.clone()).unwrap());
+		self.longs.iter().for_each(|(&k, v)| object.longs.set(k, v.clone()));
+		self.doubles.iter().for_each(|(&k, v)| object.doubles.set(k, v.clone()));
+		self.structures.iter().for_each(|(&k, v)| object.structures.set(k, v.clone()));
 
 		object
 	}
@@ -35,11 +35,8 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::BinaryValue;
-	use cheetah_common::{
-		commands::{FieldType, FieldValue},
-		room::owner::GameObjectOwner,
-	};
+	use cheetah_common::commands::binary_value::Buffer;
+	use cheetah_common::room::owner::GameObjectOwner;
 
 	use crate::room::template::config::GameObjectTemplate;
 
@@ -50,7 +47,9 @@ mod tests {
 			id: 0,
 			template: 200,
 			groups: Default::default(),
-			fields: Default::default(),
+			longs: Default::default(),
+			doubles: Default::default(),
+			structures: Default::default(),
 		};
 		let _object = config_object.to_root_game_object();
 	}
@@ -62,14 +61,14 @@ mod tests {
 			id: 100,
 			template: 200,
 			groups: Default::default(),
-			fields: Default::default(),
+			longs: Default::default(),
+			doubles: Default::default(),
+			structures: Default::default(),
 		};
 
-		config_object.fields.insert((0, FieldType::Long), FieldValue::Long(100));
-		config_object.fields.insert((1, FieldType::Double), FieldValue::Double(105.105));
-		config_object
-			.fields
-			.insert((2, FieldType::Structure), FieldValue::Structure([1].as_ref().into()));
+		config_object.longs.insert(0, 100);
+		config_object.doubles.insert(1, 105.105);
+		config_object.structures.insert(2, [1].as_ref().into());
 
 		let object = config_object.clone().to_root_game_object();
 		assert_eq!(config_object.id, object.id.id);
@@ -77,16 +76,16 @@ mod tests {
 		assert_eq!(config_object.template, object.template_id);
 		assert_eq!(config_object.groups, object.access_groups);
 
-		let config_value: &i64 = config_object.fields[&(0, FieldType::Long)].as_ref();
-		let object_value: &i64 = object.get_field(0).unwrap();
+		let config_value: &i64 = config_object.longs.get(&0).unwrap();
+		let object_value: &i64 = object.longs.get(0).unwrap();
 		assert_eq!(*config_value, *object_value);
 
-		let config_value: &f64 = config_object.fields[&(1, FieldType::Double)].as_ref();
-		let object_value: &f64 = object.get_field(1).unwrap();
+		let config_value: &f64 = config_object.doubles.get(&1).unwrap();
+		let object_value: &f64 = object.doubles.get(1).unwrap();
 		assert_eq!(*config_value, *object_value);
 
-		let config_value: &BinaryValue = config_object.fields[&(2, FieldType::Structure)].as_ref();
-		let object_value: &BinaryValue = object.get_field(2).unwrap();
+		let config_value: &Buffer = config_object.structures.get(&2).unwrap();
+		let object_value: &Buffer = object.structures.get(2).unwrap();
 		assert_eq!(*config_value, *object_value);
 	}
 }

@@ -3,25 +3,26 @@ using System.Threading;
 using System.Threading.Tasks;
 using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
+using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.EmbeddedServer.API;
 using Games.Cheetah.GRPC.Internal;
 using NUnit.Framework;
 using Shared;
 using Shared_Types;
+using FieldType = Games.Cheetah.GRPC.Shared.FieldType;
 
 namespace Tests.Matches.Realtime.Helpers
 {
     public abstract class AbstractTest
     {
-        protected CheetahClient clientA;
-
-        protected CheetahClient clientB;
+        protected NetworkClient clientA;
+        protected NetworkClient clientB;
         private RoomIdResponse roomIdResponse;
         protected CreateMemberResponse memberA;
         protected CreateMemberResponse memberB;
         private EmbeddedServer server;
         protected static FieldId.Structure TurretsParamsFieldId = new(100);
-        protected static FieldId.Event DropMineEventId = new(555);
+        protected static FieldId.Event DropMineEventFieldIdId = new(555);
         protected static FieldId.Double HealFieldId = new(777);
         protected static FieldId.Long ScoreFieldId = new(999);
 
@@ -30,10 +31,39 @@ namespace Tests.Matches.Realtime.Helpers
         public void SetUp()
         {
             server = new EmbeddedServer(IPAddress.Loopback);
+            EmbeddedServer.InitLogger(EmeddedServerLogLevel.Error);
             var grpcClient = server.CreateGrpcClient();
             Task.Run(async () =>
             {
-                roomIdResponse = await grpcClient.CreateRoomAsync(new RoomTemplate());
+                roomIdResponse = await grpcClient.CreateRoomAsync(new RoomTemplate
+                {
+                    Permissions = new Permissions
+                    {
+                        Objects =
+                        {
+                            new GameObjectTemplatePermission
+                            {
+                                Template = 777,
+                                Fields =
+                                {
+                                    new PermissionField
+                                    {
+                                        Type = FieldType.Long,
+                                        Id = ScoreFieldId.Id,
+                                        Rules =
+                                        {
+                                            new GroupsPermissionRule
+                                            {
+                                                Groups = PlayerHelper.PlayerGroup,
+                                                Permission = PermissionLevel.Rw
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
                 memberA = await grpcClient.CreateMemberAsync(new CreateMemberRequest
                 {
                     RoomId = roomIdResponse.RoomId,
@@ -74,10 +104,10 @@ namespace Tests.Matches.Realtime.Helpers
             clientB.Update();
         }
 
-        private static CheetahClient ConnectToServer(EmbeddedServer server, ulong roomId, CreateMemberResponse member,
+        private static NetworkClient ConnectToServer(EmbeddedServer server, ulong roomId, CreateMemberResponse member,
             CodecRegistryBuilder codecRegistryBuilder)
         {
-            var client = new CheetahClient(server.GetUdpGameHost(), server.GetUdpGamePort(), member.UserId, roomId,
+            var client = new NetworkClient(server.GetUdpGameHost(), server.GetUdpGamePort(), member.UserId, roomId,
                 member.PrivateKey.ToByteArray(),
                 codecRegistryBuilder.Build());
             client.DisableClientLog();

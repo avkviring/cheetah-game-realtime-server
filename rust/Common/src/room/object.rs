@@ -16,8 +16,8 @@ pub struct GameObjectId {
 	/// Идентификатор игрового объекта в рамках владельца
 	///
 	pub id: u32,
-	is_room_owner: bool,
-	member_id: RoomMemberId,
+	pub is_room_owner: bool,
+	pub member_id: RoomMemberId,
 }
 
 impl GameObjectId {}
@@ -36,11 +36,7 @@ impl GameObjectId {
 				is_room_owner: true,
 				member_id: 0,
 			},
-			GameObjectOwner::Member(member_id) => GameObjectId {
-				id,
-				is_room_owner: false,
-				member_id,
-			},
+			GameObjectOwner::Member(member_id) => GameObjectId { id, is_room_owner: false, member_id },
 		}
 	}
 
@@ -69,11 +65,7 @@ impl GameObjectId {
 		let id = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 		let owner = input.read_variable_i64()?;
 		let room_owner = owner == -1;
-		let member_id = if room_owner {
-			0
-		} else {
-			owner.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?
-		};
+		let member_id = if room_owner { 0 } else { owner.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))? };
 		Ok(GameObjectId {
 			id,
 			is_room_owner: room_owner,

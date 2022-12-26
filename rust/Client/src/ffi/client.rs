@@ -3,12 +3,13 @@ use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use cheetah_common::commands::binary_value::BinaryValue;
+use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::network::client::{ConnectionStatus, DisconnectedReason};
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::clients::registry::ClientId;
+use crate::ffi::command::S2CCommandFFI;
 use crate::ffi::{execute, execute_with_client, ClientError, LAST_ERROR};
 
 #[derive(Debug, Copy, Clone)]
@@ -33,9 +34,7 @@ pub enum ConnectionStatusFFI {
 #[no_mangle]
 pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut ConnectionStatusFFI) -> u8 {
 	execute_with_client(client_id, |client| {
-		let status = client
-			.get_connection_status()
-			.map_err(|e| ClientError::ConnectionStatusMutexError(format!("{e:?}")));
+		let status = client.get_connection_status().map_err(|e| ClientError::ConnectionStatusMutexError(format!("{e:?}")));
 		match status {
 			Ok(status) => {
 				let ffi_status = match status {
@@ -70,9 +69,9 @@ pub extern "C" fn destroy_client(client: ClientId) -> u8 {
 }
 
 #[no_mangle]
-pub extern "C" fn receive(client_id: ClientId) -> u8 {
-	execute_with_client(client_id, |client| {
-		client.receive();
+pub extern "C" fn receive(client_id: ClientId, out_commands: *mut S2CCommandFFI, count: &mut u8) -> u8 {
+	execute_with_client(client_id, |client| unsafe {
+		client.receive(out_commands, count);
 		Ok(())
 	})
 }
@@ -87,16 +86,12 @@ pub extern "C" fn get_server_time(client_id: ClientId, server_out_time: &mut u64
 
 #[no_mangle]
 pub extern "C" fn set_rtt_emulation(client_id: ClientId, rtt_in_ms: u64, rtt_dispersion: f64) -> u8 {
-	execute_with_client(client_id, |client| {
-		Ok(client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)?)
-	})
+	execute_with_client(client_id, |client| Ok(client.set_rtt_emulation(Duration::from_millis(rtt_in_ms), rtt_dispersion)?))
 }
 
 #[no_mangle]
 pub extern "C" fn set_drop_emulation(client_id: ClientId, drop_probability: f64, drop_time_in_ms: u64) -> u8 {
-	execute_with_client(client_id, |client| {
-		Ok(client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms))?)
-	})
+	execute_with_client(client_id, |client| Ok(client.set_drop_emulation(drop_probability, Duration::from_millis(drop_time_in_ms))?))
 }
 
 #[no_mangle]
@@ -121,7 +116,7 @@ pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistic
 
 #[no_mangle]
 #[allow(clippy::cast_possible_truncation)]
-pub extern "C" fn get_last_error_msg(buffer: &mut BinaryValue) {
+pub extern "C" fn get_last_error_msg(buffer: &mut Buffer) {
 	let msg = LAST_ERROR.lock().unwrap();
 	let msg = msg.as_bytes();
 	let length = msg.len();
@@ -144,40 +139,18 @@ pub struct Statistics {
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 #[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn create_client(
-	addr: *const c_char,
-	member_id: RoomMemberId,
-	room_id: RoomId,
-	private_key_buffer: &BinaryValue,
-	start_frame_id: u64,
-	out_client_id: &mut u16,
-) -> u8 {
+pub unsafe extern "C" fn create_client(addr: *const c_char, member_id: RoomMemberId, room_id: RoomId, private_key_buffer: &Buffer, start_frame_id: u64, out_client_id: &mut u16) -> u8 {
 	let server_address = CStr::from_ptr(addr).to_str().unwrap();
 	let mut private_key = [0; 32];
 	private_key.copy_from_slice(&private_key_buffer.buffer[0..32]);
-	do_create_client(
-		server_address,
-		member_id,
-		room_id,
-		&private_key.as_slice().into(),
-		start_frame_id,
-		out_client_id,
-	)
+	do_create_client(server_address, member_id, room_id, &private_key.as_slice().into(), start_frame_id, out_client_id)
 }
 
-pub fn do_create_client(
-	server_address: &str,
-	member_id: RoomMemberId,
-	room_id: RoomId,
-	private_key: &MemberPrivateKey,
-	start_frame_id: u64,
-	out_client_id: &mut u16,
-) -> u8 {
+pub fn do_create_client(server_address: &str, member_id: RoomMemberId, room_id: RoomId, private_key: &MemberPrivateKey, start_frame_id: u64, out_client_id: &mut u16) -> u8 {
 	execute(|api| {
-		api.create_client(server_address, member_id, room_id, private_key.clone(), start_frame_id)
-			.map(|client_id| {
-				*out_client_id = client_id;
-				Ok(())
-			})?
+		api.create_client(server_address, member_id, room_id, private_key.clone(), start_frame_id).map(|client_id| {
+			*out_client_id = client_id;
+			Ok(())
+		})?
 	})
 }

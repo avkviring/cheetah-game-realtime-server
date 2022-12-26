@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using Games.Cheetah.Client.Internal.FFI;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 
 namespace Games.Cheetah.Client.Internal
 {
@@ -21,8 +22,8 @@ namespace Games.Cheetah.Client.Internal
 
         private static string GetLastError()
         {
-            var buffer = new CheetahBuffer();
-            ClientFFI.GetLastErrorMsg(ref buffer);
+            var buffer = new NetworkBuffer();
+            FFIMethods.GetLastErrorMsg(ref buffer);
             var bytes = new byte[buffer.size];
             for (var i = 0; i < buffer.size; i++)
             {

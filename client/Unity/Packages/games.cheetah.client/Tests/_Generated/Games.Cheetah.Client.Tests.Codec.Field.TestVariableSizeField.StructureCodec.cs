@@ -1,6 +1,7 @@
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 using Games.Cheetah.Client.Tests.Codec.Field;
 
@@ -12,7 +13,7 @@ namespace Games_Cheetah_Client_Tests_Codec_Field
 		// warning warning warning warning warning
 		public class TestVariableSizeFieldStructureCodec:Codec<Games.Cheetah.Client.Tests.Codec.Field.TestVariableSizeField.Structure>
 		{
-			public void Decode(ref CheetahBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestVariableSizeField.Structure dest)
+			public void Decode(ref NetworkBuffer buffer, ref Games.Cheetah.Client.Tests.Codec.Field.TestVariableSizeField.Structure dest)
 			{
 				dest.uintValue = VariableSizeUIntFormatter.Instance.Read(ref buffer);
 				dest.ulongValue = VariableSizeULongFormatter.Instance.Read(ref buffer);
@@ -20,7 +21,7 @@ namespace Games_Cheetah_Client_Tests_Codec_Field
 				dest.longValue = VariableSizeLongFormatter.Instance.Read(ref buffer);
 			}
 	
-			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestVariableSizeField.Structure source, ref CheetahBuffer buffer)
+			public void  Encode(in Games.Cheetah.Client.Tests.Codec.Field.TestVariableSizeField.Structure source, ref NetworkBuffer buffer)
 			{
 				VariableSizeUIntFormatter.Instance.Write(source.uintValue,ref buffer);
 				VariableSizeULongFormatter.Instance.Write(source.ulongValue,ref buffer);

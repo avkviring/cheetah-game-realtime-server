@@ -1,6 +1,7 @@
 using System.Linq;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using NUnit.Framework;
 
 namespace Games.Cheetah.Client.Tests.Codec.Formatter
@@ -17,7 +18,7 @@ namespace Games.Cheetah.Client.Tests.Codec.Formatter
             var values = GetValues();
             foreach (var value in values)
             {
-                var buffer = new CheetahBuffer();
+                var buffer = new NetworkBuffer();
                 formatter.Write(value, ref buffer);
                 Assert.AreEqual(formatter.Read(ref buffer), value);
             }
@@ -28,7 +29,7 @@ namespace Games.Cheetah.Client.Tests.Codec.Formatter
         {
             var formatter = new F();
             var source = GetValues();
-            var buffer = new CheetahBuffer();
+            var buffer = new NetworkBuffer();
             formatter.WriteArray(source, (uint)source.Length, 0, ref buffer);
             var read = new T[source.Length];
             formatter.ReadArray(ref buffer, read, (uint)source.Length, 0);

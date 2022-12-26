@@ -15,7 +15,8 @@ mod tests {
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-	use crate::commands::types::field::SetFieldCommand;
+	use crate::commands::types::float::SetDoubleCommand;
+	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::codec::commands::decoder::decode_commands;
 	use crate::protocol::codec::commands::encoder::encode_command;
@@ -29,18 +30,18 @@ mod tests {
 		let commands = vec![
 			CommandWithChannel {
 				channel: Channel::ReliableUnordered,
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetDoubleCommand {
 					object_id: Default::default(),
 					field_id: 10,
-					value: 1.5.into(),
+					value: 1.5,
 				})),
 			},
 			CommandWithChannel {
 				channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetField(SetFieldCommand {
+				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
 					field_id: 15,
-					value: 16.into(),
+					value: 16,
 				})),
 			},
 		];
@@ -54,10 +55,10 @@ mod tests {
 			CommandWithChannel {
 				channel: Channel::ReliableUnordered,
 				both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-					command: S2CCommand::SetField(SetFieldCommand {
+					command: S2CCommand::SetDouble(SetDoubleCommand {
 						object_id: Default::default(),
 						field_id: 10,
-						value: 1.5.into(),
+						value: 1.5,
 					}),
 					creator: 55,
 				}),
@@ -65,10 +66,10 @@ mod tests {
 			CommandWithChannel {
 				channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
 				both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-					command: S2CCommand::SetField(SetFieldCommand {
+					command: S2CCommand::SetLong(SetLongCommand {
 						object_id: Default::default(),
 						field_id: 5,
-						value: 1.into(),
+						value: 1,
 					}),
 					creator: 57,
 				}),

@@ -40,17 +40,12 @@ impl RealtimeInternalService {
 
 	async fn register_member(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
 		let private_key = template.private_key.clone();
-		self.server_manager
-			.lock()
-			.await
-			.create_member(room_id, template)
-			.map_err(Status::from)
-			.map(|member_id| {
-				Response::new(CreateMemberResponse {
-					user_id: u32::from(member_id),
-					private_key: private_key.into(),
-				})
+		self.server_manager.lock().await.create_member(room_id, template).map_err(Status::from).map(|member_id| {
+			Response::new(CreateMemberResponse {
+				user_id: u32::from(member_id),
+				private_key: private_key.into(),
 			})
+		})
 	}
 
 	fn create_super_member_if_need(server: &mut MutexGuard<'_, RoomsServerManager>, room_id: RoomId) {
@@ -75,11 +70,7 @@ impl Internal for RealtimeInternalService {
 
 	async fn create_member(&self, request: Request<CreateMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 		let request = request.into_inner();
-		self.register_member(
-			request.room_id,
-			crate::room::template::config::MemberTemplate::from(request.user.unwrap()),
-		)
-		.await
+		self.register_member(request.room_id, crate::room::template::config::MemberTemplate::from(request.user.unwrap())).await
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
@@ -88,11 +79,7 @@ impl Internal for RealtimeInternalService {
 			.lock()
 			.await
 			.delete_member(MemberAndRoomId {
-				member_id: request
-					.get_ref()
-					.user_id
-					.try_into()
-					.map_err(|e| Status::invalid_argument(format!("member_id is too big: {e}")))?,
+				member_id: request.get_ref().user_id.try_into().map_err(|e| Status::invalid_argument(format!("member_id is too big: {e}")))?,
 				room_id: request.get_ref().room_id,
 			})
 			.map(|_| Response::new(DeleteMemberResponse {}))
@@ -155,19 +142,12 @@ impl Internal for RealtimeInternalService {
 	async fn delete_room(&self, request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
 		let room_id = request.get_ref().id;
 		let mut server = self.server_manager.lock().await;
-		server
-			.delete_room(room_id)
-			.map(|_| Response::new(DeleteRoomResponse {}))
-			.map_err(Status::from)
+		server.delete_room(room_id).map(|_| Response::new(DeleteRoomResponse {})).map_err(Status::from)
 	}
 
-	async fn put_forwarded_command_config(
-		&self,
-		request: Request<PutForwardedCommandConfigRequest>,
-	) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
+	async fn put_forwarded_command_config(&self, request: Request<PutForwardedCommandConfigRequest>) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
 		let command_type_id = request.get_ref().command_type_id;
-		let command_type_id: CommandTypeId = num::FromPrimitive::from_u32(command_type_id)
-			.ok_or_else(|| Status::invalid_argument(format!("unknown command_type_id {command_type_id:?}")))?;
+		let command_type_id: CommandTypeId = num::FromPrimitive::from_u32(command_type_id).ok_or_else(|| Status::invalid_argument(format!("unknown command_type_id {command_type_id:?}")))?;
 
 		let field_id = request.get_ref().field_id;
 		let field_id = if let Some(field_id) = field_id {
@@ -178,10 +158,7 @@ impl Internal for RealtimeInternalService {
 
 		let object_template_id = request.get_ref().template_id;
 		let object_template_id = if let Some(object_template_id) = object_template_id {
-			Some(
-				GameObjectTemplateId::try_from(object_template_id)
-					.map_err(|e| Status::invalid_argument(format!("object_template_id is too large {object_template_id:?} {e:?}")))?,
-			)
+			Some(GameObjectTemplateId::try_from(object_template_id).map_err(|e| Status::invalid_argument(format!("object_template_id is too large {object_template_id:?} {e:?}")))?)
 		} else {
 			None
 		};
@@ -221,10 +198,7 @@ impl Internal for RealtimeInternalService {
 			.map_err(Status::from)
 	}
 
-	async fn update_room_permissions(
-		&self,
-		mut request: Request<UpdateRoomPermissionsRequest>,
-	) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
+	async fn update_room_permissions(&self, mut request: Request<UpdateRoomPermissionsRequest>) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
 		let room_id = request.get_ref().room_id;
 		let permissions = crate::room::template::config::Permissions::from(request.get_mut().permissions.take().unwrap_or_default());
 		self.server_manager
@@ -278,8 +252,8 @@ mod test {
 	use crate::grpc::proto::internal::internal_server::Internal;
 	use crate::grpc::proto::internal::room_lifecycle_response::RoomLifecycleType;
 	use crate::grpc::proto::internal::{
-		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GameObjectTemplatePermission, GetRoomInfoRequest, GroupsPermissionRule,
-		MarkRoomAsReadyRequest, Permissions, PutForwardedCommandConfigRequest, UpdateRoomPermissionsRequest,
+		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GameObjectTemplatePermission, GetRoomInfoRequest, GroupsPermissionRule, MarkRoomAsReadyRequest, Permissions,
+		PutForwardedCommandConfigRequest, UpdateRoomPermissionsRequest,
 	};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
@@ -289,11 +263,7 @@ mod test {
 	async fn test_watch_room_lifecycle_event() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-		let mut stream = service
-			.watch_room_lifecycle_event(Request::new(EmptyRequest {}))
-			.await
-			.unwrap()
-			.into_inner();
+		let mut stream = service.watch_room_lifecycle_event(Request::new(EmptyRequest {})).await.unwrap().into_inner();
 
 		let first_room_id = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
 		let result = stream.try_next().await;
@@ -351,22 +321,11 @@ mod test {
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-		let member_id = service
-			.register_member(room_id, MemberTemplate::default())
-			.await
-			.unwrap()
-			.into_inner()
-			.user_id;
-		assert!(
-			!server_manager.lock().await.dump(room_id).unwrap().users.is_empty(),
-			"room should not be empty"
-		);
+		let member_id = service.register_member(room_id, MemberTemplate::default()).await.unwrap().into_inner().user_id;
+		assert!(!server_manager.lock().await.dump(room_id).unwrap().users.is_empty(), "room should not be empty");
 
 		assert!(
-			service
-				.delete_member(Request::new(DeleteMemberRequest { room_id, user_id: member_id }))
-				.await
-				.is_ok(),
+			service.delete_member(Request::new(DeleteMemberRequest { room_id, user_id: member_id })).await.is_ok(),
 			"delete_member should return ok"
 		);
 
@@ -438,10 +397,7 @@ mod test {
 			}))
 			.await;
 
-		assert!(
-			matches!(res.unwrap_err().code(), Code::NotFound),
-			"put_forwarded_command_config should return not_found"
-		);
+		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "put_forwarded_command_config should return not_found");
 	}
 
 	#[tokio::test]
@@ -462,10 +418,7 @@ mod test {
 				}))
 				.await;
 
-			assert!(
-				matches!(res.unwrap_err().code(), Code::InvalidArgument),
-				"put_forwarded_command_config should return invalid_Argument"
-			);
+			assert!(matches!(res.unwrap_err().code(), Code::InvalidArgument), "put_forwarded_command_config should return invalid_Argument");
 		}
 	}
 
@@ -477,12 +430,7 @@ mod test {
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
 
-		let ready = service
-			.get_room_info(Request::new(GetRoomInfoRequest { room_id }))
-			.await
-			.unwrap()
-			.into_inner()
-			.ready;
+		let ready = service.get_room_info(Request::new(GetRoomInfoRequest { room_id })).await.unwrap().into_inner().ready;
 		assert!(!ready, "room should not be ready after creation if plugins list is configured");
 
 		assert!(
@@ -496,12 +444,7 @@ mod test {
 			"mark_room_as_ready should return ok"
 		);
 
-		let ready = service
-			.get_room_info(Request::new(GetRoomInfoRequest { room_id }))
-			.await
-			.unwrap()
-			.into_inner()
-			.ready;
+		let ready = service.get_room_info(Request::new(GetRoomInfoRequest { room_id })).await.unwrap().into_inner().ready;
 		assert!(ready, "room should be ready after all plugins have called mark_room_as_ready");
 
 		assert!(
@@ -536,10 +479,7 @@ mod test {
 			}))
 			.await;
 
-		assert!(
-			matches!(res.unwrap_err().code(), Code::NotFound),
-			"mark_room_as_ready should return not_found"
-		);
+		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "mark_room_as_ready should return not_found");
 	}
 
 	#[tokio::test]
@@ -555,10 +495,7 @@ mod test {
 			}))
 			.await;
 
-		assert!(
-			matches!(res.unwrap_err().code(), Code::InvalidArgument),
-			"mark_room_as_ready should return invalid_argument"
-		);
+		assert!(matches!(res.unwrap_err().code(), Code::InvalidArgument), "mark_room_as_ready should return invalid_argument");
 	}
 
 	#[tokio::test]

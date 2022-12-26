@@ -18,18 +18,11 @@ pub struct ForwardedCommand {
 impl ForwardedCommand {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_u64(self.creator.into())?;
-		out.write_u8(
-			ToPrimitive::to_u8(&self.c2s.get_type_id())
-				.ok_or_else(|| Error::new(ErrorKind::InvalidData, "could not write CommandTypeId to u8".to_owned()))?,
-		)?;
+		out.write_u8(ToPrimitive::to_u8(&self.c2s.get_type_id()).ok_or_else(|| Error::new(ErrorKind::InvalidData, "could not write CommandTypeId to u8".to_owned()))?)?;
 		self.c2s.encode(out)
 	}
 
-	pub fn decode(
-		object_id: Result<GameObjectId, CommandContextError>,
-		field_id: Result<FieldId, CommandContextError>,
-		input: &mut Cursor<&[u8]>,
-	) -> Result<Self, CommandDecodeError> {
+	pub fn decode(object_id: Result<GameObjectId, CommandContextError>, field_id: Result<FieldId, CommandContextError>, input: &mut Cursor<&[u8]>) -> Result<Self, CommandDecodeError> {
 		let member_id = input
 			.read_variable_u64()?
 			.try_into()

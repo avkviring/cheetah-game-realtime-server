@@ -126,9 +126,7 @@ pub mod tests {
 
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
-		channel_a
-			.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
-			.unwrap();
+		channel_a.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap()).unwrap();
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
 		assert!(matches!(channel_b.recv(now, &mut recv_data), Ok(size) if send_data.len()==size));
@@ -154,9 +152,7 @@ pub mod tests {
 
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
-		channel_a
-			.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
-			.unwrap();
+		channel_a.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap()).unwrap();
 
 		// данных нет - так как включен эмулятор лага
 		std::thread::sleep(Duration::from_millis(10));
@@ -188,9 +184,7 @@ pub mod tests {
 
 		let now = Instant::now();
 		let send_data = vec![1, 2, 3];
-		channel_a
-			.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap())
-			.unwrap();
+		channel_a.send_to(now, send_data.as_slice(), channel_b.socket.local_addr().unwrap()).unwrap();
 		std::thread::sleep(Duration::from_millis(10));
 		let mut recv_data = [0; 1024];
 		channel_b.recv(now, &mut recv_data).unwrap();

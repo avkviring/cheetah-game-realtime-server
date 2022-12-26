@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 
 namespace Games.Cheetah.Client.Codec.Formatter
 {
@@ -19,20 +20,20 @@ namespace Games.Cheetah.Client.Codec.Formatter
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ulong Read(ref CheetahBuffer buffer)
+        public ulong Read(ref NetworkBuffer buffer)
         {
             return StaticRead(ref buffer);
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Write(ulong value, ref CheetahBuffer buffer)
+        public void Write(ulong value, ref NetworkBuffer buffer)
         {
             StaticWrite(value, ref buffer);
         }
 
 
-        public unsafe void ReadFixedArray(ref CheetahBuffer buffer, ulong* value, uint size, uint offset)
+        public unsafe void ReadFixedArray(ref NetworkBuffer buffer, ulong* value, uint size, uint offset)
         {
             for (var i = 0; i < size; i++)
             {
@@ -40,7 +41,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
             }
         }
 
-        public unsafe void WriteFixedArray(ulong* value, uint size, uint offset, ref CheetahBuffer buffer)
+        public unsafe void WriteFixedArray(ulong* value, uint size, uint offset, ref NetworkBuffer buffer)
         {
             for (var i = 0; i < size; i++)
             {
@@ -49,7 +50,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ReadArray(ref CheetahBuffer buffer, ulong[] value, uint size, uint offset)
+        public void ReadArray(ref NetworkBuffer buffer, ulong[] value, uint size, uint offset)
         {
             for (var i = 0; i < size; i++)
             {
@@ -58,7 +59,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteArray(ulong[] value, uint size, uint offset, ref CheetahBuffer buffer)
+        public void WriteArray(ulong[] value, uint size, uint offset, ref NetworkBuffer buffer)
         {
             for (var i = 0; i < size; i++)
             {
@@ -67,7 +68,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe ulong StaticRead(ref CheetahBuffer buffer)
+        public static unsafe ulong StaticRead(ref NetworkBuffer buffer)
         {
             buffer.AssertEnoughData(1);
             var first = buffer.values[buffer.pos++];
@@ -101,7 +102,7 @@ namespace Games.Cheetah.Client.Codec.Formatter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void StaticWrite(ulong value, ref CheetahBuffer buffer)
+        public static unsafe void StaticWrite(ulong value, ref NetworkBuffer buffer)
         {
             switch (value)
             {

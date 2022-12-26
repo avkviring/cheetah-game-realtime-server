@@ -1,12 +1,13 @@
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 
 namespace Games.Cheetah.Client.Codec.Standard
 {
     public class ColorCodec : Codec<Color>
     {
-        public void Decode(ref CheetahBuffer buffer, ref Color dest)
+        public void Decode(ref NetworkBuffer buffer, ref Color dest)
         {
             buffer.AssertEnoughData(sizeof(float) * 4);
             var r = FloatFormatter.StaticUncheckedRead(ref buffer);
@@ -16,7 +17,7 @@ namespace Games.Cheetah.Client.Codec.Standard
             dest = new Color(r, g, b, a);
         }
 
-        public void Encode(in Color source, ref CheetahBuffer buffer)
+        public void Encode(in Color source, ref NetworkBuffer buffer)
         {
             buffer.AssertFreeSpace(sizeof(float) * 4);
             FloatFormatter.StaticUncheckedWrite(source.r, ref buffer);

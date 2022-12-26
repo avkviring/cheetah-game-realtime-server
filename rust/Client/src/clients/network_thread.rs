@@ -155,30 +155,19 @@ impl NetworkThreadClient {
 	fn update_state(&mut self) {
 		let protocol = &mut self.udp_client.protocol;
 		self.shared_statistics.current_frame_id.store(protocol.next_frame_id, Ordering::Relaxed);
-		self.shared_statistics.rtt_in_ms.store(
-			protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64,
-			Ordering::Relaxed,
-		);
-		self.shared_statistics.average_retransmit_frames.store(
-			protocol
-				.retransmitter
-				.statistics
-				.get_average_retransmit_frames(Instant::now())
-				.unwrap_or(0) as u32,
-			Ordering::Relaxed,
-		);
-		self.shared_statistics.rtt_in_ms.store(
-			protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64,
-			Ordering::Relaxed,
-		);
+		self.shared_statistics
+			.rtt_in_ms
+			.store(protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64, Ordering::Relaxed);
+		self.shared_statistics
+			.average_retransmit_frames
+			.store(protocol.retransmitter.statistics.get_average_retransmit_frames(Instant::now()).unwrap_or(0) as u32, Ordering::Relaxed);
+		self.shared_statistics
+			.rtt_in_ms
+			.store(protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64, Ordering::Relaxed);
 
 		let channel = &self.udp_client.channel;
-		self.shared_statistics
-			.recv_packet_count
-			.store(channel.recv_packet_count, Ordering::Relaxed);
-		self.shared_statistics
-			.send_packet_count
-			.store(channel.send_packet_count, Ordering::Relaxed);
+		self.shared_statistics.recv_packet_count.store(channel.recv_packet_count, Ordering::Relaxed);
+		self.shared_statistics.send_packet_count.store(channel.send_packet_count, Ordering::Relaxed);
 		self.shared_statistics.send_size.store(channel.send_size, Ordering::Relaxed);
 		self.shared_statistics.recv_size.store(channel.recv_size, Ordering::Relaxed);
 		*self.connection_status.lock().unwrap() = self.udp_client.state.clone();

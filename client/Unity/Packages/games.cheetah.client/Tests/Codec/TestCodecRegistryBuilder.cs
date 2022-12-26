@@ -1,5 +1,5 @@
 using Games.Cheetah.Client.Codec;
-using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using NUnit.Framework;
 
 namespace Games.Cheetah.Client.Tests.Codec
@@ -12,11 +12,11 @@ namespace Games.Cheetah.Client.Tests.Codec
 
         private class CodecA : Codec<A>
         {
-            public void Decode(ref CheetahBuffer buffer, ref A dest)
+            public void Decode(ref NetworkBuffer buffer, ref A dest)
             {
             }
 
-            public void Encode(in A source, ref CheetahBuffer buffer)
+            public void Encode(in A source, ref NetworkBuffer buffer)
             {
             }
         }
@@ -33,11 +33,11 @@ namespace Games.Cheetah.Client.Tests.Codec
                 codecRegistry.GetCodec<A>();
             }
 
-            public void Decode(ref CheetahBuffer buffer, ref B dest)
+            public void Decode(ref NetworkBuffer buffer, ref B dest)
             {
             }
 
-            public void Encode(in B source, ref CheetahBuffer buffer)
+            public void Encode(in B source, ref NetworkBuffer buffer)
             {
             }
         }

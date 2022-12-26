@@ -3,9 +3,7 @@ use std::time::Duration;
 use prometheus::local::{LocalHistogram, LocalIntCounter};
 use prometheus::{Histogram, HistogramOpts, IntCounter, IntGauge, Opts, Registry};
 use prometheus_measures_exporter::measurer::create_and_register_measurer;
-use prometheus_measures_exporter::measurers_by_label::{
-	HistogramMeasurersByLabel, IntCounterMeasurersByLabel, LabelFactoryFactory, MeasurersByLabel,
-};
+use prometheus_measures_exporter::measurers_by_label::{HistogramMeasurersByLabel, IntCounterMeasurersByLabel, LabelFactoryFactory, MeasurersByLabel};
 
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::field::FieldId;
@@ -163,9 +161,7 @@ impl Measurers {
 		)
 	}
 
-	fn create_execution_command_time_measurers(
-		registry: &Registry,
-	) -> MeasurersByLabel<(MeasureStringId, Option<FieldId>), Histogram, HistogramOpts> {
+	fn create_execution_command_time_measurers(registry: &Registry) -> MeasurersByLabel<(MeasureStringId, Option<FieldId>), Histogram, HistogramOpts> {
 		MeasurersByLabel::new(
 			registry,
 			Box::new(|(command, field_id)| {
@@ -182,59 +178,40 @@ impl Measurers {
 						Duration::from_millis(50).as_secs_f64(),
 					])
 					.const_labels(
-						vec![
-							("command".to_owned(), command.to_string()),
-							("field_id".to_owned(), format!("{field_id:?}")),
-						]
-						.into_iter()
-						.collect(),
+						vec![("command".to_owned(), command.to_string()), ("field_id".to_owned(), format!("{field_id:?}"))]
+							.into_iter()
+							.collect(),
 					)
 			}),
 		)
 	}
 
-	fn create_outcome_command_count_measurers(
-		registry: &Registry,
-	) -> MeasurersByLabel<(Option<FieldType>, Option<FieldId>, MeasureStringId), IntCounter, Opts> {
-		MeasurersByLabel::new(
-			registry,
-			Self::network_command_measurer_label_factory("outcome_command_counter", "Outcome command counter"),
-		)
+	fn create_outcome_command_count_measurers(registry: &Registry) -> MeasurersByLabel<(Option<FieldType>, Option<FieldId>, MeasureStringId), IntCounter, Opts> {
+		MeasurersByLabel::new(registry, Self::network_command_measurer_label_factory("outcome_command_counter", "Outcome command counter"))
 	}
 
-	fn create_income_command_count_measurers(
-		registry: &Registry,
-	) -> MeasurersByLabel<(Option<FieldType>, Option<FieldId>, MeasureStringId), IntCounter, Opts> {
-		MeasurersByLabel::new(
-			registry,
-			Self::network_command_measurer_label_factory("income_command_counter", "Income command counter"),
-		)
+	fn create_income_command_count_measurers(registry: &Registry) -> MeasurersByLabel<(Option<FieldType>, Option<FieldId>, MeasureStringId), IntCounter, Opts> {
+		MeasurersByLabel::new(registry, Self::network_command_measurer_label_factory("income_command_counter", "Income command counter"))
 	}
 
 	fn create_object_count_measurers(registry: &Registry) -> MeasurersByLabel<String, IntGauge, Opts> {
 		MeasurersByLabel::new(
 			registry,
-			Box::new(|template| {
-				Opts::new("object_count", "object count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())
-			}),
+			Box::new(|template| Opts::new("object_count", "object count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())),
 		)
 	}
 
 	fn create_member_count_measurers(registry: &Registry) -> MeasurersByLabel<String, IntGauge, Opts> {
 		MeasurersByLabel::new(
 			registry,
-			Box::new(|template| {
-				Opts::new("member_count", "member count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())
-			}),
+			Box::new(|template| Opts::new("member_count", "member count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())),
 		)
 	}
 
 	fn create_room_count_measurers(registry: &Registry) -> MeasurersByLabel<String, IntGauge, Opts> {
 		MeasurersByLabel::new(
 			registry,
-			Box::new(|template| {
-				Opts::new("room_count", "room count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())
-			}),
+			Box::new(|template| Opts::new("room_count", "room count").const_labels(vec![("template".to_owned(), template.clone())].into_iter().collect())),
 		)
 	}
 
@@ -296,10 +273,7 @@ impl Measurers {
 	}
 
 	#[allow(clippy::type_complexity)]
-	fn network_command_measurer_label_factory(
-		name: &str,
-		help: &str,
-	) -> Box<LabelFactoryFactory<(Option<FieldType>, Option<FieldId>, heapless::String<50>), Opts>> {
+	fn network_command_measurer_label_factory(name: &str, help: &str) -> Box<LabelFactoryFactory<(Option<FieldType>, Option<FieldId>, heapless::String<50>), Opts>> {
 		let name = name.to_owned();
 		let help = help.to_owned();
 		Box::new(move |(t, id, template)| {

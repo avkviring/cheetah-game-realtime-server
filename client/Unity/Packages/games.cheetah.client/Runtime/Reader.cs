@@ -1,114 +1,265 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Games.Cheetah.Client.DOA.Income.ByField;
-using Games.Cheetah.Client.DOA.Income.ByTemplate;
-using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Codec;
+using Games.Cheetah.Client.Types.Command;
+using Games.Cheetah.Client.Types.Field;
+using Games.Cheetah.Client.Types.Object;
+using Unity.Collections;
 
 namespace Games.Cheetah.Client
 {
     public class Reader
     {
-        private readonly CheetahClient client;
-        private readonly Dictionary<ushort, IDisposable> createObjectListeners = new();
-        private readonly Dictionary<ushort, IDisposable> deleteObjectListeners = new();
-        private readonly Dictionary<FieldId, IDisposable> fieldListeners = new();
+        private readonly NetworkClient client;
+        private readonly CodecRegistry codecRegistry;
+        private readonly Dictionary<NetworkObjectId, ushort> templateByObject = new();
+        private readonly Dictionary<NetworkObjectId, ushort> templateByDeletedObject = new();
+        private readonly Dictionary<NetworkObjectId, NetworkObjectConstructor> creatingObjects = new();
+        private readonly Dictionary<NetworkObjectId, NetworkObjectConstructor> createdObjectsInUpdate = new();
 
-        public Reader(CheetahClient client)
+        public Reader(NetworkClient client, CodecRegistry codecRegistry)
         {
             this.client = client;
+            this.codecRegistry = codecRegistry;
         }
 
-        public IReadOnlyList<CheetahObjectConstructor> GetCreatedObjects(ushort template)
+        public IList<NetworkObjectConstructor> GetCreatedObjectsInCurrentUpdate(ushort template)
         {
-            var listener = GetOrCreateListener<CreatedObjectByTemplateIncomeCommands, ushort, ushort>(createObjectListeners, template,
-                CreateObjectsCollectorFactory<CreatedObjectByTemplateIncomeCommands>);
-            return listener.GetStream();
+            return createdObjectsInUpdate
+                .Where(it => it.Value.NetworkObject.Template == template)
+                .Select(it => it.Value)
+                .ToList();
         }
 
-        public ReadonlyReferenceList<CheetahObject> GetDeletedObjects(ushort template)
+
+        public NativeParallelHashMap<NetworkObjectId, double> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
         {
-            var listener = GetOrCreateListener<DeletedObjectByTemplateIncomeCommands, ushort, ushort>(deleteObjectListeners, template,
-                DeleteObjectsCollectorFactory<DeletedObjectByTemplateIncomeCommands>);
-            return listener.GetStream();
-        }
-
-        public ReadonlyReferenceList<AbstractIncomeByFieldCommandCollector<T>.Item> GetModifiedStructures<T>(FieldId.Structure field)
-            where T : struct
-        {
-            var listener = GetOrCreateListener<StructureIncomeByFieldCommandCollector<T>, FieldId, FieldId.Structure>(fieldListeners, field,
-                StructureCollectorFactory<T>);
-
-            return listener.GetStream();
-        }
-
-        public ReadonlyReferenceList<AbstractIncomeByFieldCommandCollector<long>.Item> GetModifiedLongs(FieldId.Long field)
-        {
-            var listener = GetOrCreateListener<LongIncomeByFieldCommandCollector, FieldId, FieldId.Long>(fieldListeners, field, LongCollectorFactory);
-
-            return listener.GetStream();
-        }
-
-        public ReadonlyReferenceList<AbstractIncomeByFieldCommandCollector<double>.Item> GetModifiedDoubles(FieldId.Double field)
-        {
-            var listener = GetOrCreateListener<DoubleIncomeByFieldCommandCollector, FieldId, FieldId.Double>(fieldListeners, field,
-                DoubleCollectorFactory);
-
-            return listener.GetStream();
-        }
-
-        private T GetOrCreateListener<T, K, F>(
-            Dictionary<K, IDisposable> listeners,
-            K key,
-            Func<CheetahClient, F, IDisposable> factory)
-            where T : class
-            where F : K
-        {
-            if (!listeners.TryGetValue(key, out var listener))
+            var result = new NativeParallelHashMap<NetworkObjectId, double>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
             {
-                listener = factory(client, (F)key);
-                listeners[key] = listener;
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.SetDouble) continue;
+                ref var setCommand = ref command.commandUnion.setDouble;
+                var commandObjectId = setCommand.objectId;
+                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
+                {
+                    result[commandObjectId] = setCommand.value;
+                }
             }
 
-            return listener as T;
+            return result;
         }
 
-        private static IDisposable CreateObjectsCollectorFactory<T>(CheetahClient client,
-            ushort field)
+        public NativeParallelHashMap<NetworkObjectId, long> GetModifiedLongs(ushort template, FieldId.Long fieldId)
         {
-            return new CreatedObjectByTemplateIncomeCommands(client, field);
-        }
-
-        private static IDisposable DeleteObjectsCollectorFactory<T>(CheetahClient client,
-            ushort field)
-        {
-            return new DeletedObjectByTemplateIncomeCommands(client, field);
-        }
-
-        private static IDisposable StructureCollectorFactory<T>(CheetahClient client, FieldId.Structure field)
-        {
-            return new StructureIncomeByFieldCommandCollector<T>(client, field);
-        }
-
-        private static IDisposable LongCollectorFactory(CheetahClient client, FieldId.Long field)
-        {
-            return new LongIncomeByFieldCommandCollector(client, field);
-        }
-
-        private static IDisposable DoubleCollectorFactory(CheetahClient client, FieldId.Double field)
-        {
-            return new DoubleIncomeByFieldCommandCollector(client, field);
-        }
-
-        public void Dispose()
-        {
-            var disposables = fieldListeners.Values
-                .Concat(createObjectListeners.Values)
-                .Concat(deleteObjectListeners.Values);
-            foreach (var disposable in disposables)
+            var result = new NativeParallelHashMap<NetworkObjectId, long>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
             {
-                disposable.Dispose();
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.SetLong) continue;
+                ref var setCommand = ref command.commandUnion.setLong;
+                var commandObjectId = setCommand.objectId;
+                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
+                {
+                    result[commandObjectId] = setCommand.value;
+                }
             }
+
+            return result;
+        }
+
+
+        public NativeParallelHashMap<NetworkObjectId, T> GetModifiedStructures<T>(ushort template, FieldId.Structure fieldId)
+            where T : unmanaged
+        {
+            var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
+            {
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.SetStructure) continue;
+                ref var setCommand = ref command.commandUnion.setStructure;
+                var commandObjectId = setCommand.objectId;
+                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
+                {
+                    var item = new T();
+                    var networkBuffer = setCommand.value;
+                    codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
+                    result[commandObjectId] = item;
+                }
+            }
+
+            return result;
+        }
+
+        public NativeParallelHashMap<NetworkObjectId, T> GetEvents<T>(ushort template, FieldId.Event eventId) where T : struct
+        {
+            var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
+            {
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.SendEvent) continue;
+                var networkObjectId = command.commandUnion.setEvent.objectId;
+                ref var eventCommand = ref command.commandUnion.setEvent;
+                if (GetTemplate(networkObjectId) == template && eventCommand.fieldId == eventId.Id)
+                {
+                    var item = new T();
+                    var networkBuffer = eventCommand.eventData;
+                    codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
+                    result[networkObjectId] = item;
+                }
+            }
+
+            return result;
+        }
+
+        private ushort GetTemplate(NetworkObjectId networkObjectId)
+        {
+            if (templateByObject.TryGetValue(networkObjectId, out var template))
+            {
+                return template;
+            }
+
+            if (templateByDeletedObject.TryGetValue(networkObjectId, out var templateDeletedObject))
+            {
+                return templateDeletedObject;
+            }
+
+            throw new Exception("NetworkObject with id = " + networkObjectId + " not created");
+        }
+
+        public NativeParallelHashSet<NetworkObjectId> GetDeletedObjects(ushort template)
+        {
+            var result = new NativeParallelHashSet<NetworkObjectId>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
+            {
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.DeleteObject) continue;
+                var commandObjectId = command.commandUnion.deleteField.objectId;
+                if (GetTemplate(commandObjectId) == template)
+                {
+                    result.Add(commandObjectId);
+                }
+            }
+
+            return result;
+        }
+
+
+        public NativeList<S2CCommands.DeleteField> GetDeleteFields(ushort template, FieldId fieldId)
+        {
+            var result = new NativeList<S2CCommands.DeleteField>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
+            {
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.DeleteField) continue;
+                ref var commandDeleteField = ref command.commandUnion.deleteField;
+                ref var deleteFieldObjectId = ref commandDeleteField.objectId;
+                if (GetTemplate(deleteFieldObjectId) == template && commandDeleteField.fieldId ==
+                    fieldId.Id && commandDeleteField.fieldType == fieldId.Type)
+                {
+                    result.Add(commandDeleteField);
+                }
+            }
+
+            return result;
+        }
+
+        public void Update()
+        {
+            templateByDeletedObject.Clear();
+            createdObjectsInUpdate.Clear();
+            ProcessObjectCommands();
+        }
+
+
+        private void ProcessObjectCommands()
+        {
+            for (var i = 0; i < client.s2cCommandsCount; i++)
+            {
+                ref var command = ref NetworkClient.s2cCommands[i];
+                switch (command.commandType)
+                {
+                    case CommandType.CreateGameObject:
+                        OnObjectCreate(command);
+                        break;
+                    case CommandType.CreatedGameObject:
+                        OnObjectCreated(command);
+                        break;
+                    case CommandType.DeleteObject:
+                        OnObjectDeleted(command);
+                        break;
+                    case CommandType.SetLong:
+                        OnSetLong(command);
+                        break;
+                    case CommandType.SetDouble:
+                        OnSetDouble(command);
+                        break;
+                    case CommandType.SetStructure:
+                        OnSetStructure(command);
+                        break;
+                }
+            }
+        }
+
+
+        private void OnObjectCreate(S2CCommand command)
+        {
+            var createNetworkObjectId = command.commandUnion.createObject.objectId;
+            var template = command.commandUnion.createObject.template;
+            var networkObject = new NetworkObject(createNetworkObjectId, template);
+
+            templateByObject[createNetworkObjectId] = template;
+            creatingObjects[createNetworkObjectId] = new NetworkObjectConstructor(networkObject, codecRegistry);
+        }
+
+        private void OnObjectCreated(S2CCommand command)
+        {
+            var networkObjectId = command.commandUnion.createdObject.objectId;
+            createdObjectsInUpdate.Add(networkObjectId, creatingObjects[networkObjectId]);
+            creatingObjects.Remove(networkObjectId);
+        }
+
+        private void OnObjectDeleted(S2CCommand command)
+        {
+            var objectId = command.commandUnion.deleteObject.objectId;
+            creatingObjects.Remove(objectId);
+            var template = templateByObject[objectId];
+            templateByObject.Remove(objectId);
+            templateByDeletedObject.Add(objectId, template);
+        }
+
+        private void OnSetLong(S2CCommand command)
+        {
+            ref var setField = ref command.commandUnion.setLong;
+            if (creatingObjects.TryGetValue(setField.objectId, out var constructor))
+            {
+                constructor.longs[setField.fieldId] = setField.value;
+            }
+        }
+
+        private void OnSetDouble(S2CCommand command)
+        {
+            ref var setField = ref command.commandUnion.setDouble;
+            if (creatingObjects.TryGetValue(setField.objectId, out var constructor))
+            {
+                constructor.doubles[setField.fieldId] = setField.value;
+            }
+        }
+
+        private void OnSetStructure(S2CCommand command)
+        {
+            ref var setField = ref command.commandUnion.setStructure;
+            if (creatingObjects.TryGetValue(setField.objectId, out var constructor))
+            {
+                constructor.structures[setField.fieldId] = setField.value;
+            }
+        }
+
+
+        public void RegisterSelfObject(NetworkObjectId objectId, ushort template)
+        {
+            templateByObject[objectId] = template;
         }
     }
 }

@@ -1,5 +1,5 @@
 using Games.Cheetah.Client.Codec.Standard;
-using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -16,7 +16,7 @@ namespace Games.Cheetah.Client.Tests.Codec.Standard
                 y = (float)0.2,
                 z = (float)0.3,
             };
-            var buffer = new CheetahBuffer();
+            var buffer = new NetworkBuffer();
             var codec = new Vector3Codec();
             codec.Encode(in id, ref buffer);
 

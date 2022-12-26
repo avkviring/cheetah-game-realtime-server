@@ -1,4 +1,5 @@
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 
 namespace Games.Cheetah.Client.Codec
 {
@@ -8,7 +9,7 @@ namespace Games.Cheetah.Client.Codec
     /// <typeparam name="T"></typeparam>
     public interface Codec<T>
     {
-        void Decode(ref CheetahBuffer buffer, ref T dest);
-        void Encode(in T source, ref CheetahBuffer buffer);
+        void Decode(ref NetworkBuffer buffer, ref T dest);
+        void Encode(in T source, ref NetworkBuffer buffer);
     }
 }

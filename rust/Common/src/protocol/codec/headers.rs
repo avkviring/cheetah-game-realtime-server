@@ -30,9 +30,7 @@ impl Headers {
 					return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Invalid type header {type_header}")));
 				}
 			};
-			headers
-				.push(header)
-				.map_err(|_| std::io::Error::new(ErrorKind::InvalidInput, "Headers count overflow"))?;
+			headers.push(header).map_err(|_| std::io::Error::new(ErrorKind::InvalidInput, "Headers count overflow"))?;
 		}
 		Ok(Self { headers })
 	}

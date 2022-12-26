@@ -1,7 +1,6 @@
 use cheetah_common::commands::field::Field;
 use cheetah_common::commands::s2c::S2CCommand;
-use cheetah_common::commands::types::field::SetFieldCommand;
-use cheetah_common::commands::types::long::IncrementLongC2SCommand;
+use cheetah_common::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 use cheetah_common::commands::FieldType;
 use cheetah_common::room::RoomMemberId;
 
@@ -13,28 +12,25 @@ use crate::room::Room;
 impl ServerCommandExecutor for IncrementLongC2SCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let action = |object: &mut GameObject| {
-			let value = if let Some(value) = object.get_field::<i64>(self.field_id) {
-				match (*value).checked_add(self.increment) {
-					None => {
-						tracing::error!("[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})", value, self.increment);
-						*value
-					}
-					Some(result) => {
-						object.set_field(self.field_id, result)?;
-						result
-					}
+			let current = object.longs.get(self.field_id).cloned().unwrap_or_default();
+			let result = match current.checked_add(self.increment) {
+				None => {
+					tracing::error!("[IncrementLongC2SCommand] overflow, current({:?}) increment({:?})", current, self.increment);
+					current
 				}
-			} else {
-				object.set_field(self.field_id, self.increment)?;
-				self.increment
+				Some(result) => {
+					object.longs.set(self.field_id, result);
+					result
+				}
 			};
 
-			Ok(Some(S2CCommand::SetField(SetFieldCommand {
+			Ok(Some(S2CCommand::SetLong(SetLongCommand {
 				object_id: self.object_id,
 				field_id: self.field_id,
-				value: value.into(),
+				value: result,
 			})))
 		};
+
 		room.send_command_from_action(
 			self.object_id,
 			Field {
@@ -49,21 +45,21 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 	}
 }
 
-impl ServerCommandExecutor for SetFieldCommand {
+impl ServerCommandExecutor for SetLongCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
 
 		let action = |object: &mut GameObject| {
-			object.set_field_wrapped(self.field_id, self.value.clone())?;
-			Ok(Some(S2CCommand::SetField(self.clone())))
+			object.longs.set(self.field_id, self.value.clone());
+			Ok(Some(S2CCommand::SetLong(self.clone())))
 		};
 
 		room.send_command_from_action(
 			object_id,
 			Field {
 				id: field_id,
-				field_type: self.value.field_type(),
+				field_type: FieldType::Long,
 			},
 			member_id,
 			Permission::Rw,
@@ -75,9 +71,9 @@ impl ServerCommandExecutor for SetFieldCommand {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_common::commands::field::FieldId;
 	use cheetah_common::commands::s2c::S2CCommand;
-	use cheetah_common::commands::types::field::SetFieldCommand;
-	use cheetah_common::commands::types::long::IncrementLongC2SCommand;
+	use cheetah_common::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
@@ -88,21 +84,24 @@ mod tests {
 	use crate::room::template::config::RoomTemplate;
 	use crate::room::Room;
 
+	const FIELD_ID: FieldId = 100;
+
 	#[test]
 	fn should_set_long_command() {
 		let (mut room, member_id, object_id) = setup();
 
 		room.test_out_commands.clear();
-		let command = SetFieldCommand {
+		let command = SetLongCommand {
 			object_id,
-			field_id: 10,
-			value: 100.into(),
+			field_id: FIELD_ID,
+			value: 100,
 		};
 		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
-		assert_eq!(*object.get_field::<i64>(10).unwrap(), 100);
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==command));
+		assert_eq!(*object.longs.get(FIELD_ID).unwrap(), 100);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if
+			c==command));
 	}
 
 	#[test]
@@ -112,23 +111,24 @@ mod tests {
 		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id,
-			field_id: 10,
+			field_id: FIELD_ID,
 			increment: 100,
 		};
 		command.clone().execute(&mut room, member_id).unwrap();
 		command.execute(&mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
-		assert_eq!(*object.get_field::<i64>(10).unwrap(), 200);
+		assert_eq!(*object.longs.get(FIELD_ID).unwrap(), 200);
 
-		let result = SetFieldCommand {
+		let result = SetLongCommand {
 			object_id,
-			field_id: 10,
-			value: 200.into(),
+			field_id: FIELD_ID,
+			value: 200,
 		};
 
 		room.test_out_commands.pop_back();
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetField(c))) if c==result));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetLong(c))) if
+			c==result));
 	}
 
 	#[test]
@@ -137,7 +137,7 @@ mod tests {
 		room.test_out_commands.clear();
 		let command = IncrementLongC2SCommand {
 			object_id,
-			field_id: 10,
+			field_id: FIELD_ID,
 			increment: i64::MAX,
 		};
 		command.clone().execute(&mut room, member_id).unwrap();

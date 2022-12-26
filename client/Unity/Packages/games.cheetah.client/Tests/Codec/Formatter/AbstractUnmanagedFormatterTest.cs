@@ -1,6 +1,7 @@
 using System.Linq;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using NUnit.Framework;
 
 namespace Games.Cheetah.Client.Tests.Codec.Formatter
@@ -16,7 +17,7 @@ namespace Games.Cheetah.Client.Tests.Codec.Formatter
             {
                 var formatter = new F();
                 var source = GetValues();
-                var buffer = new CheetahBuffer();
+                var buffer = new NetworkBuffer();
                 fixed (T* sourceBuffer = source)
                 {
                     formatter.WriteFixedArray(sourceBuffer, (uint)source.Length, 0, ref buffer);

@@ -1,6 +1,7 @@
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Codec.Formatter;
 using Games.Cheetah.Client.Types;
+using Games.Cheetah.Client.Types.Field;
 using UnityEngine;
 
 	// warning warning warning warning warning
@@ -8,12 +9,12 @@ using UnityEngine;
 	// warning warning warning warning warning
 	public class GlobalNamespaceObjectCodec:Codec<GlobalNamespaceObject>
 	{
-		public void Decode(ref CheetahBuffer buffer, ref GlobalNamespaceObject dest)
+		public void Decode(ref NetworkBuffer buffer, ref GlobalNamespaceObject dest)
 		{
 			dest.field = IntFormatter.Instance.Read(ref buffer);
 		}
 	
-		public void  Encode(in GlobalNamespaceObject source, ref CheetahBuffer buffer)
+		public void  Encode(in GlobalNamespaceObject source, ref NetworkBuffer buffer)
 		{
 			IntFormatter.Instance.Write(source.field,ref buffer);
 		}
