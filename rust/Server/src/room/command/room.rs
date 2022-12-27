@@ -55,8 +55,8 @@ mod tests {
 		let groups_b = AccessGroups(0b10);
 		let member_b = room.register_member(MemberTemplate::stub(groups_b));
 
-		room.test_mark_as_connected(member_a).unwrap();
-		room.test_mark_as_connected(member_b).unwrap();
+		room.mark_as_connected_in_test(member_a).unwrap();
+		room.mark_as_connected_in_test(member_b).unwrap();
 
 		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
 		object_a_1.created = true;
@@ -71,7 +71,7 @@ mod tests {
 
 		attach_to_room(&mut room, member_a).unwrap();
 
-		let mut commands = room.test_get_member_out_commands(member_a);
+		let mut commands = room.get_member_out_commands_for_test(member_a);
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), None));

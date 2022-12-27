@@ -11,7 +11,7 @@ use indexmap::map::IndexMap;
 use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
-use cheetah_common::commands::types::member_connected::MemberConnectedCommand;
+use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
@@ -152,7 +152,7 @@ impl Room {
 	///
 	/// Если комната не сконфигурирована [`Self::is_ready`] то команды не-суперпользователей будут игнорироваться.
 	///
-	/// Если в конмате настроен форвардинг [`Self::should_forward`],
+	/// Если в комнате настроен форвардинг [`Self::should_forward`],
 	/// то команды не-суперпользователей будут перенаправлены суперпользователям вместо выполнения.
 	///
 	pub fn execute_commands(&mut self, member_id: RoomMemberId, commands: &[CommandWithChannel]) {
@@ -266,6 +266,14 @@ impl Room {
 				}
 			}
 		};
+
+		let s2c = S2CCommandWithMeta {
+			field: None,
+			creator: member_id,
+			command: S2CCommand::MemberDisconnected(MemberDisconnected { member_id }),
+		};
+		self.send_to_members(AccessGroups::any_group(), None, slice::from_ref(&s2c), |member| member.id != member_id)?;
+
 		Ok(())
 	}
 
@@ -325,9 +333,9 @@ impl Room {
 		let s2c = S2CCommandWithMeta {
 			field: None,
 			creator: member_id,
-			command: S2CCommand::MemberConnected(MemberConnectedCommand { member_id }),
+			command: S2CCommand::MemberConnected(MemberConnected { member_id }),
 		};
-		self.send_to_members(AccessGroups::super_group(), None, slice::from_ref(&s2c), |_| true)?;
+		self.send_to_members(AccessGroups::any_group(), None, slice::from_ref(&s2c), |other_member| other_member.id != member_id)?;
 
 		Ok(())
 	}
@@ -362,7 +370,7 @@ mod tests {
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_common::commands::types::create::CreateGameObjectCommand;
 	use cheetah_common::commands::types::long::SetLongCommand;
-	use cheetah_common::commands::types::member_connected::MemberConnectedCommand;
+	use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 	use cheetah_common::commands::{CommandTypeId, FieldType};
 	use cheetah_common::protocol::commands::output::CommandWithChannelType;
 	use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
@@ -407,7 +415,7 @@ mod tests {
 			self.get_object_mut(id).unwrap()
 		}
 
-		pub fn test_mark_as_connected(&mut self, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		pub fn mark_as_connected_in_test(&mut self, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 			let member = self.get_member_mut(&member_id)?;
 			member.connected = true;
 			member.attached = true;
@@ -415,7 +423,7 @@ mod tests {
 		}
 
 		#[must_use]
-		pub fn test_get_member_out_commands(&self, member_id: RoomMemberId) -> VecDeque<S2CCommand> {
+		pub fn get_member_out_commands_for_test(&self, member_id: RoomMemberId) -> VecDeque<S2CCommand> {
 			self.get_member(&member_id)
 				.unwrap()
 				.out_commands
@@ -607,10 +615,10 @@ mod tests {
 		let member1_id = room.register_member(member1_template.clone());
 		let member2 = MemberTemplate::stub(groups);
 		let member2_id = room.register_member(member2);
-		room.test_mark_as_connected(member2_id).unwrap();
+		room.mark_as_connected_in_test(member2_id).unwrap();
 		room.on_member_connect(member1_id, member1_template.clone()).unwrap();
 
-		let commands = room.test_get_member_out_commands(member2_id);
+		let commands = room.get_member_out_commands_for_test(member2_id);
 
 		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
 		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id 
@@ -623,7 +631,7 @@ mod tests {
 		let mut room = Room::default();
 		let member_template = MemberTemplate::stub(AccessGroups(8));
 		let member_id = room.register_member(member_template);
-		room.test_mark_as_connected(member_id).unwrap();
+		room.mark_as_connected_in_test(member_id).unwrap();
 		let member = room.get_member_mut(&member_id).unwrap();
 		member.out_commands.push(CommandWithChannelType {
 			channel_type: ChannelType::ReliableUnordered,
@@ -696,29 +704,37 @@ mod tests {
 	}
 
 	#[test]
-	fn should_send_member_connected_to_super_members() {
+	fn should_send_member_connected() {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
 		let mut room = Room::from_template(template);
-		let super_member = room.register_member(MemberTemplate::new_super_member());
 		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		room.mark_as_connected_in_test(member_1).unwrap();
+
 		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+		room.mark_as_connected_in_test(member_2).unwrap();
+		room.connect_member(member_2).unwrap();
 
-		room.test_mark_as_connected(super_member).unwrap();
-		room.test_mark_as_connected(member_1).unwrap();
+		assert_eq!(S2CCommand::MemberConnected(MemberConnected { member_id: member_2 }), room.get_member_out_commands_for_test(member_1)[0]);
+	}
 
-		let command_1 = CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
-		};
-		room.execute_commands(member_2, slice::from_ref(&command_1));
+	#[test]
+	fn should_send_member_disconnect() {
+		let template = RoomTemplate::default();
+		let access_groups = AccessGroups(10);
+		let mut room = Room::from_template(template);
+		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		room.mark_as_connected_in_test(member_1).unwrap();
+		room.connect_member(member_1).unwrap();
 
-		// MemberConnectedCommand should be sent only to super_member
-		assert!(room.test_get_member_out_commands(member_1).is_empty());
-		assert!(room.test_get_member_out_commands(member_2).is_empty());
+		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+		room.mark_as_connected_in_test(member_2).unwrap();
+		room.connect_member(member_2).unwrap();
+		room.disconnect_member(member_2).unwrap();
+
 		assert_eq!(
-			S2CCommand::MemberConnected(MemberConnectedCommand { member_id: member_2 }),
-			room.test_get_member_out_commands(super_member)[0]
+			S2CCommand::MemberDisconnected(MemberDisconnected { member_id: member_2 }),
+			room.get_member_out_commands_for_test(member_1)[1]
 		);
 	}
 

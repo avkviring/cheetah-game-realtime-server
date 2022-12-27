@@ -99,9 +99,9 @@ mod tests {
 		});
 		let mut room = Room::from_template(template);
 		let member1 = room.register_member(MemberTemplate::stub(access_groups));
-		room.test_mark_as_connected(member1).unwrap();
+		room.mark_as_connected_in_test(member1).unwrap();
 		let member2 = room.register_member(MemberTemplate::stub(access_groups));
-		room.test_mark_as_connected(member2).unwrap();
+		room.mark_as_connected_in_test(member2).unwrap();
 		let object1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member1), access_groups);
 		object1.created = true;
 		let object_id1 = object1.id;

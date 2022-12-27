@@ -189,6 +189,7 @@ impl C2SCommand {
 			CommandTypeId::DeleteField => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::Forwarded => C2SCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 			CommandTypeId::MemberConnected => return Err(CommandDecodeError::UnknownTypeId(command_type_id)),
+			CommandTypeId::MemberDisconnected => return Err(CommandDecodeError::UnknownTypeId(command_type_id)),
 		})
 	}
 }
