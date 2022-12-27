@@ -39,6 +39,7 @@ namespace Games.Cheetah.Client.Types.Command
         [FieldOffset(0)] public S2CCommands.Event setEvent;
         [FieldOffset(0)] public S2CCommands.DeleteObject deleteObject;
         [FieldOffset(0)] public S2CCommands.DeleteField deleteField;
+        [FieldOffset(0)] public S2CCommands.MemberConnected memberConnected;
     }
 
     public interface S2CCommands
@@ -115,7 +116,6 @@ namespace Games.Cheetah.Client.Types.Command
 
             public SetLong(NetworkObjectId id, FieldId.Long field, long value)
             {
-
                 objectId = id;
                 fieldId = field.Id;
                 this.value = value;
@@ -167,6 +167,22 @@ namespace Games.Cheetah.Client.Types.Command
             public override string ToString()
             {
                 return $"{nameof(objectId)}: {objectId}, {nameof(fieldId)}: {fieldId}, {nameof(value)}: {value}";
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MemberConnected
+        {
+            public ushort MemberId;
+
+            public MemberConnected(ushort memberId)
+            {
+                MemberId = memberId;
+            }
+
+            public override string ToString()
+            {
+                return $"{nameof(MemberId)}: {MemberId}";
             }
         }
     }

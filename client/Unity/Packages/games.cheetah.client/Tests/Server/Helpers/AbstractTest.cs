@@ -15,14 +15,16 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
     {
         protected NetworkClient clientA;
         protected NetworkClient clientB;
-        private RoomIdResponse roomIdResponse;
+        protected RoomIdResponse roomIdResponse;
         protected CreateMemberResponse memberA;
         protected CreateMemberResponse memberB;
-        private EmbeddedServer.API.EmbeddedServer server;
+        protected EmbeddedServer.API.EmbeddedServer server;
         protected static FieldId.Structure TurretsParamsFieldId = new(100);
         protected static FieldId.Event DropMineEventFieldIdId = new(555);
         protected static FieldId.Double HealFieldId = new(777);
         protected static FieldId.Long ScoreFieldId = new(999);
+        protected CreateMemberResponse memberC;
+        protected CodecRegistry codecRegistry;
 
 
         [SetUp]
@@ -78,14 +80,24 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
                         Groups = PlayerHelper.PlayerGroup
                     }
                 });
+
+                memberC = await grpcClient.CreateMemberAsync(new CreateMemberRequest
+                {
+                    RoomId = roomIdResponse.RoomId,
+                    User = new UserTemplate
+                    {
+                        Groups = PlayerHelper.PlayerGroup
+                    }
+                });
             }).GetAwaiter().GetResult();
 
 
-            var codecRegistry = new CodecRegistryBuilder();
-            codecRegistry.Register(_ => new GlobalNamespaceObjectCodec());
-            codecRegistry.Register(_ => new DropMineEventCodec());
-            codecRegistry.Register(_ => new SomeSingletonKeyCodec());
-            codecRegistry.Register(_ => new TurretsParamsStructureCodec());
+            codecRegistry =
+                new CodecRegistryBuilder()
+                    .Register(_ => new GlobalNamespaceObjectCodec())
+                    .Register(_ => new DropMineEventCodec())
+                    .Register(_ => new SomeSingletonKeyCodec())
+                    .Register(_ => new TurretsParamsStructureCodec()).Build();
 
 
             // подключаем первого клиента
@@ -102,12 +114,12 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
             clientB.Update();
         }
 
-        private static NetworkClient ConnectToServer(EmbeddedServer.API.EmbeddedServer server, ulong roomId, CreateMemberResponse member,
-            CodecRegistryBuilder codecRegistryBuilder)
+        protected static NetworkClient ConnectToServer(EmbeddedServer.API.EmbeddedServer server, ulong roomId, CreateMemberResponse member,
+            CodecRegistry codecRegistry)
         {
             var client = new NetworkClient(server.GetUdpGameHost(), server.GetUdpGamePort(), member.UserId, roomId,
                 member.PrivateKey.ToByteArray(),
-                codecRegistryBuilder.Build());
+                codecRegistry);
             client.DisableClientLog();
             return client;
         }

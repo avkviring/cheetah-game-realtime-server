@@ -327,7 +327,7 @@ impl Room {
 			creator: member_id,
 			command: S2CCommand::MemberConnected(MemberConnectedCommand { member_id }),
 		};
-		self.send_to_members(AccessGroups::super_group(), None, slice::from_ref(&s2c), |member| member.template.super_member)?;
+		self.send_to_members(AccessGroups::super_group(), None, slice::from_ref(&s2c), |_| true)?;
 
 		Ok(())
 	}

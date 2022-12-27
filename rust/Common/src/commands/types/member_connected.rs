@@ -1,8 +1,10 @@
-use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use crate::room::RoomMemberId;
 use std::io::{Cursor, Error, ErrorKind};
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use crate::room::RoomMemberId;
+
+#[repr(C)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct MemberConnectedCommand {
 	pub member_id: RoomMemberId,
 }

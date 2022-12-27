@@ -40,9 +40,10 @@ namespace Games.Cheetah.Client.Codec
             DefaultFactories.Add(typeof(T), factory);
         }
 
-        public void Register<T>(CodecFactory<T> factory)
+        public CodecRegistryBuilder Register<T>(CodecFactory<T> factory)
         {
             factories.Add(typeof(T), factory);
+            return this;
         }
 
         public CodecRegistry Build()
