@@ -32,6 +32,20 @@ namespace Games.Cheetah.Client
                 .ToList();
         }
 
+        public NativeList<ushort> GetConnectedMemberInUpdate()
+        {
+            var result = new NativeList<ushort>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
+            {
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.MemberConnected) continue;
+                ref var memberConnectedCommand = ref command.commandUnion.memberConnected;
+                result.Add(memberConnectedCommand.MemberId);
+            }
+
+            return result;
+        }
+
 
         public NativeParallelHashMap<NetworkObjectId, double> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
         {
@@ -113,20 +127,6 @@ namespace Games.Cheetah.Client
             return result;
         }
 
-        private ushort GetTemplate(NetworkObjectId networkObjectId)
-        {
-            if (templateByObject.TryGetValue(networkObjectId, out var template))
-            {
-                return template;
-            }
-
-            if (templateByDeletedObject.TryGetValue(networkObjectId, out var templateDeletedObject))
-            {
-                return templateDeletedObject;
-            }
-
-            throw new Exception("NetworkObject with id = " + networkObjectId + " not created");
-        }
 
         public NativeParallelHashSet<NetworkObjectId> GetDeletedObjects(ushort template)
         {
@@ -260,6 +260,21 @@ namespace Games.Cheetah.Client
         public void RegisterSelfObject(NetworkObjectId objectId, ushort template)
         {
             templateByObject[objectId] = template;
+        }
+
+        private ushort GetTemplate(NetworkObjectId networkObjectId)
+        {
+            if (templateByObject.TryGetValue(networkObjectId, out var template))
+            {
+                return template;
+            }
+
+            if (templateByDeletedObject.TryGetValue(networkObjectId, out var templateDeletedObject))
+            {
+                return templateDeletedObject;
+            }
+
+            throw new Exception("NetworkObject with id = " + networkObjectId + " not created");
         }
     }
 }

@@ -139,11 +139,10 @@ impl ApplicationThreadClient {
 						command_ffi.command_type = CommandTypeId::DeleteField;
 						command_ffi.command.delete_field = command;
 					}
-					S2CCommand::Forwarded(command) => {
-						todo!()
-					}
+					S2CCommand::Forwarded(command) => {}
 					S2CCommand::MemberConnected(command) => {
-						todo!()
+						command_ffi.command_type = CommandTypeId::MemberConnected;
+						command_ffi.command.member_connect = command;
 					}
 				}
 				if *count == u8::MAX {
