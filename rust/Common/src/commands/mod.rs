@@ -31,6 +31,7 @@ pub enum CommandTypeId {
 	DeleteField,
 	Forwarded,
 	MemberConnected,
+	MemberDisconnected,
 }
 
 #[derive(Error, Debug)]

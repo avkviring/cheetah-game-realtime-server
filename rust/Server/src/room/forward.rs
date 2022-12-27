@@ -62,7 +62,7 @@ impl Room {
 			})),
 		};
 
-		self.send_to_members(AccessGroups::super_group(), self.get_object_template_id(command), slice::from_ref(&s2c), |member| {
+		self.send_to_members(AccessGroups::any_group(), self.get_object_template_id(command), slice::from_ref(&s2c), |member| {
 			member.template.super_member
 		})
 	}
@@ -143,15 +143,15 @@ mod tests {
 		let (mut room, member_1, super_member) = setup();
 		let command = C2SCommand::AttachToRoom;
 		let member_2 = room.register_member(MemberTemplate::stub(AccessGroups(10)));
-		room.test_mark_as_connected(super_member).unwrap();
-		room.test_mark_as_connected(member_2).unwrap();
+		room.mark_as_connected_in_test(super_member).unwrap();
+		room.mark_as_connected_in_test(member_2).unwrap();
 
 		room.forward_to_super_members(&command, member_1).unwrap();
 
-		assert!(room.test_get_member_out_commands(member_2).is_empty());
+		assert!(room.get_member_out_commands_for_test(member_2).is_empty());
 		assert_eq!(
 			S2CCommand::Forwarded(Box::new(ForwardedCommand { creator: member_1, c2s: command })),
-			room.test_get_member_out_commands(super_member)[0]
+			room.get_member_out_commands_for_test(super_member)[0]
 		);
 	}
 

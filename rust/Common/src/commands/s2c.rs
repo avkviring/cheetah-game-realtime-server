@@ -10,7 +10,7 @@ use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::SetDoubleCommand;
 use crate::commands::types::forwarded::ForwardedCommand;
 use crate::commands::types::long::SetLongCommand;
-use crate::commands::types::member_connected::MemberConnectedCommand;
+use crate::commands::types::member::{MemberConnected, MemberDisconnected};
 use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
 use crate::protocol::codec::commands::context::CommandContextError;
@@ -29,7 +29,8 @@ pub enum S2CCommand {
 	Delete(DeleteGameObjectCommand),
 	DeleteField(DeleteFieldCommand),
 	Forwarded(Box<ForwardedCommand>),
-	MemberConnected(MemberConnectedCommand),
+	MemberConnected(MemberConnected),
+	MemberDisconnected(MemberDisconnected),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -55,10 +56,11 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_id),
 			S2CCommand::Forwarded(command) => command.c2s.get_field_id(),
-			S2CCommand::MemberConnected(_) => None,
 			S2CCommand::SetLong(command) => command.field_id.into(),
 			S2CCommand::SetDouble(command) => command.field_id.into(),
 			S2CCommand::SetStructure(command) => command.field_id.into(),
+			S2CCommand::MemberConnected(_) => None,
+			S2CCommand::MemberDisconnected(_) => None,
 		}
 	}
 
@@ -71,10 +73,11 @@ impl S2CCommand {
 			S2CCommand::Delete(command) => Some(command.object_id),
 			S2CCommand::DeleteField(command) => Some(command.object_id),
 			S2CCommand::Forwarded(command) => command.c2s.get_object_id(),
-			S2CCommand::MemberConnected(_) => None,
 			S2CCommand::SetLong(command) => command.object_id.into(),
 			S2CCommand::SetDouble(command) => command.object_id.into(),
 			S2CCommand::SetStructure(command) => command.object_id.into(),
+			S2CCommand::MemberConnected(_) => None,
+			S2CCommand::MemberDisconnected(_) => None,
 		}
 	}
 
@@ -87,10 +90,11 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_type),
 			S2CCommand::Forwarded(command) => command.c2s.get_field_type(),
-			S2CCommand::MemberConnected(_) => None,
 			S2CCommand::SetLong(_) => FieldType::Long.into(),
 			S2CCommand::SetDouble(_) => FieldType::Double.into(),
 			S2CCommand::SetStructure(_) => FieldType::Structure.into(),
+			S2CCommand::MemberConnected(_) => None,
+			S2CCommand::MemberDisconnected(_) => None,
 		}
 	}
 
@@ -103,10 +107,11 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => CommandTypeId::DeleteObject,
 			S2CCommand::DeleteField(_) => CommandTypeId::DeleteField,
 			S2CCommand::Forwarded(_) => CommandTypeId::Forwarded,
-			S2CCommand::MemberConnected(_) => CommandTypeId::MemberConnected,
 			S2CCommand::SetLong(_) => CommandTypeId::SetLong,
 			S2CCommand::SetDouble(_) => CommandTypeId::SetDouble,
 			S2CCommand::SetStructure(_) => CommandTypeId::SetStructure,
+			S2CCommand::MemberConnected(_) => CommandTypeId::MemberConnected,
+			S2CCommand::MemberDisconnected(_) => CommandTypeId::MemberDisconnected,
 		}
 	}
 
@@ -119,10 +124,11 @@ impl S2CCommand {
 			S2CCommand::Delete(_) => String::new(),
 			S2CCommand::DeleteField(_) => String::new(),
 			S2CCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
-			S2CCommand::MemberConnected(command) => format!("member connected({:?})", command.member_id),
 			S2CCommand::SetLong(command) => format!("{:?}", command),
 			S2CCommand::SetDouble(command) => format!("{:?}", command),
 			S2CCommand::SetStructure(command) => format!("{:?}", command),
+			S2CCommand::MemberConnected(command) => format!("member connected({:?})", command.member_id),
+			S2CCommand::MemberDisconnected(command) => format!("member disconnected({:?})", command.member_id),
 		}
 	}
 
@@ -138,6 +144,7 @@ impl S2CCommand {
 			S2CCommand::SetLong(command) => command.encode(out),
 			S2CCommand::SetDouble(command) => command.encode(out),
 			S2CCommand::SetStructure(command) => command.encode(out),
+			S2CCommand::MemberDisconnected(command) => command.encode(out),
 		}
 	}
 
@@ -157,7 +164,8 @@ impl S2CCommand {
 			CommandTypeId::SendEvent => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::Forwarded => S2CCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
-			CommandTypeId::MemberConnected => S2CCommand::MemberConnected(MemberConnectedCommand::decode(input)?),
+			CommandTypeId::MemberConnected => S2CCommand::MemberConnected(MemberConnected::decode(input)?),
+			CommandTypeId::MemberDisconnected => S2CCommand::MemberDisconnected(MemberDisconnected::decode(input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
 		})
 	}
@@ -176,7 +184,7 @@ mod tests {
 	use crate::commands::types::float::SetDoubleCommand;
 	use crate::commands::types::forwarded::ForwardedCommand;
 	use crate::commands::types::long::SetLongCommand;
-	use crate::commands::types::member_connected::MemberConnectedCommand;
+	use crate::commands::types::member::MemberConnected;
 	use crate::commands::types::structure::SetStructureCommand;
 	use crate::commands::CommandTypeId;
 	use crate::{
@@ -291,7 +299,7 @@ mod tests {
 
 	#[test]
 	fn should_decode_encode_member_connected() {
-		check(&S2CCommand::MemberConnected(MemberConnectedCommand { member_id: 100 }), CommandTypeId::MemberConnected, None, None);
+		check(&S2CCommand::MemberConnected(MemberConnected { member_id: 100 }), CommandTypeId::MemberConnected, None, None);
 	}
 
 	fn check(expected: &S2CCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {

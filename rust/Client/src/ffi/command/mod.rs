@@ -7,7 +7,7 @@ use cheetah_common::commands::types::event::EventCommand;
 use cheetah_common::commands::types::field::DeleteFieldCommand;
 use cheetah_common::commands::types::float::SetDoubleCommand;
 use cheetah_common::commands::types::long::SetLongCommand;
-use cheetah_common::commands::types::member_connected::MemberConnectedCommand;
+use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 use cheetah_common::commands::types::structure::SetStructureCommand;
 use cheetah_common::commands::CommandTypeId;
 
@@ -47,6 +47,7 @@ impl PartialEq for S2CCommandFFI {
 					CommandTypeId::DeleteObject => self.command.delete.eq(&other.command.delete),
 					CommandTypeId::DeleteField => self.command.delete_field.eq(&other.command.delete_field),
 					CommandTypeId::MemberConnected => self.command.member_connect.eq(&other.command.member_connect),
+					CommandTypeId::MemberDisconnected => self.command.member_disconnect.eq(&other.command.member_disconnect),
 					_ => false,
 				}
 		}
@@ -71,5 +72,6 @@ pub union S2CommandUnionFFI {
 	pub event: EventCommand,
 	pub delete: DeleteGameObjectCommand,
 	pub delete_field: DeleteFieldCommand,
-	pub member_connect: MemberConnectedCommand,
+	pub member_connect: MemberConnected,
+	pub member_disconnect: MemberDisconnected,
 }

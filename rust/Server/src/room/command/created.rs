@@ -70,19 +70,19 @@ mod tests {
 	#[test]
 	pub(crate) fn should_send_commands() {
 		let (mut room, object_id, member1, member2) = setup_two_players();
-		room.test_mark_as_connected(member1).unwrap();
-		room.test_mark_as_connected(member2).unwrap();
+		room.mark_as_connected_in_test(member1).unwrap();
+		room.mark_as_connected_in_test(member2).unwrap();
 		let command = C2SCreatedGameObjectCommand::new(object_id, false, None);
 		command.execute(&mut room, member1).unwrap();
 
-		assert!(room.test_get_member_out_commands(member1).is_empty());
+		assert!(room.get_member_out_commands_for_test(member1).is_empty());
 		assert!(matches!(
-			room.test_get_member_out_commands(member2).get(0),
+			room.get_member_out_commands_for_test(member2).get(0),
 			Some(S2CCommand::Create(c)) if c.object_id == object_id
 		));
 
 		assert!(matches!(
-			room.test_get_member_out_commands(member2).get(1),
+			room.get_member_out_commands_for_test(member2).get(1),
 			Some(S2CCommand::Created(c)) if c.object_id == object_id
 		));
 	}

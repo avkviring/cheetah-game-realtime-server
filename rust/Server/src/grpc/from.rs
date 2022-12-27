@@ -30,8 +30,8 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			.into_iter()
 			.map(|f| {
 				let value = f.value.unwrap();
-				let fieldId = f.id as FieldId;
-				(fieldId, value.variant.unwrap())
+				let field_id = f.id as FieldId;
+				(field_id, value.variant.unwrap())
 			})
 			.collect();
 

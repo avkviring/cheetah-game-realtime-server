@@ -37,8 +37,8 @@ mod tests {
 		let mut room = Room::from_template(template);
 		let member_a_id = room.register_member(MemberTemplate::stub(access_groups));
 		let member_b_id = room.register_member(MemberTemplate::stub(access_groups));
-		room.test_mark_as_connected(member_a_id).unwrap();
-		room.test_mark_as_connected(member_b_id).unwrap();
+		room.mark_as_connected_in_test(member_a_id).unwrap();
+		room.mark_as_connected_in_test(member_b_id).unwrap();
 
 		let object_id = room.test_create_object_with_created_state(GameObjectOwner::Member(member_a_id), access_groups).id;
 		room.test_out_commands.clear();
@@ -47,8 +47,8 @@ mod tests {
 		command.execute(&mut room, member_a_id).unwrap();
 
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
-		assert!(matches!(room.test_get_member_out_commands(member_a_id).pop_back(), None));
-		assert!(matches!(room.test_get_member_out_commands(member_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
+		assert!(matches!(room.get_member_out_commands_for_test(member_a_id).pop_back(), None));
+		assert!(matches!(room.get_member_out_commands_for_test(member_b_id).pop_back(), Some(S2CCommand::Delete(c)) if c==command));
 	}
 
 	#[test]

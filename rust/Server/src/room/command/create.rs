@@ -51,7 +51,7 @@ mod tests {
 	#[test]
 	fn should_create() {
 		let (mut room, member_id) = setup(AccessGroups(0b11));
-		room.test_mark_as_connected(member_id).unwrap();
+		room.mark_as_connected_in_test(member_id).unwrap();
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(member_id));
 		let command = CreateGameObjectCommand {

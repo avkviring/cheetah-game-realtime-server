@@ -9,10 +9,10 @@ pub struct AccessGroups(pub u64);
 
 impl AccessGroups {
 	///
-	/// Группа для максимальных прав
+	/// Группа для включения всех групп
 	///
 	#[must_use]
-	pub fn super_group() -> AccessGroups {
+	pub fn any_group() -> AccessGroups {
 		AccessGroups(u64::MAX)
 	}
 }

@@ -46,6 +46,20 @@ namespace Games.Cheetah.Client
             return result;
         }
 
+        public NativeList<ushort> GetDisconnectedMemberInUpdate()
+        {
+            var result = new NativeList<ushort>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.s2cCommandsCount; i++)
+            {
+                ref var command = ref NetworkClient.s2cCommands[i];
+                if (command.commandType != CommandType.MemberDisconnected) continue;
+                ref var memberDisconnected = ref command.commandUnion.memberDisconnected;
+                result.Add(memberDisconnected.MemberId);
+            }
+
+            return result;
+        }
+
 
         public NativeParallelHashMap<NetworkObjectId, double> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
         {

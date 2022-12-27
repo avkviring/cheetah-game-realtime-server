@@ -40,6 +40,7 @@ namespace Games.Cheetah.Client.Types.Command
         [FieldOffset(0)] public S2CCommands.DeleteObject deleteObject;
         [FieldOffset(0)] public S2CCommands.DeleteField deleteField;
         [FieldOffset(0)] public S2CCommands.MemberConnected memberConnected;
+        [FieldOffset(0)] public S2CCommands.MemberDisconnected memberDisconnected;
     }
 
     public interface S2CCommands
@@ -185,6 +186,22 @@ namespace Games.Cheetah.Client.Types.Command
                 return $"{nameof(MemberId)}: {MemberId}";
             }
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MemberDisconnected
+        {
+            public ushort MemberId;
+
+            public MemberDisconnected(ushort memberId)
+            {
+                MemberId = memberId;
+            }
+
+            public override string ToString()
+            {
+                return $"{nameof(MemberId)}: {MemberId}";
+            }
+        }
     }
 
     public enum CommandType
@@ -204,5 +221,6 @@ namespace Games.Cheetah.Client.Types.Command
         DeleteField,
         Forwarded,
         MemberConnected,
+        MemberDisconnected,
     }
 }
