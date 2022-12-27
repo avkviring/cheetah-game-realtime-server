@@ -4,14 +4,14 @@
   "references": [
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
-    "UnityEngine",
+    "Unity.Collections",
     "games.cheetah.client",
     "games.cheetah.client.editor",
     "games.cheetah.grpc.admin",
     "games.cheetah.grpc.shared",
-    "games.cheetah.editor",
-    "games.cheetah.platform",
-    "Shared"
+    "games.cheetah.grpc.internal",
+    "games.cheetah.embedded-server",
+    "games.cheetah.platform"
   ],
   "includePlatforms": [
     "Editor"
@@ -21,7 +21,9 @@
   "precompiledReferences": [
     "nunit.framework.dll",
     "System.Memory.dll",
-    "Google.Protobuf.dll"
+    "Google.Protobuf.dll",
+    "Grpc.Core.Api.dll",
+    "Grpc.Core.Metadata.dll"
   ],
   "autoReferenced": true,
   "defineConstraints": [
