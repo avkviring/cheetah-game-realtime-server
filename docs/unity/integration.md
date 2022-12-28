@@ -17,7 +17,7 @@
     var member = room.CreateMember(0b000111);
 
     // сервер создан, теперь к нему можно подключаться обычным способом
-    var client = new CheetahClient(
+    var client = new NetworkClient(
                server.GetGameHost(),
                server.GetGamePort(),
                member.GetId(),

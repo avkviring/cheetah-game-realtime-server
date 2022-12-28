@@ -3,7 +3,7 @@
 ## Управление RTT
 
 ```csharp
-CheetahClient.SetRttEmulation(ulong rttInMs, double rttDispersion)
+NetworkClient.SetRttEmulation(ulong rttInMs, double rttDispersion)
 ```
 
 - rttInMs - эмуляция времени прохождения пакета от клиента до сервера и обратно, добавляется к реальному rtt сети;
@@ -13,7 +13,7 @@ CheetahClient.SetRttEmulation(ulong rttInMs, double rttDispersion)
 ## Управления потерей пакетов
 
 ```csharp
-CheetahClient.SetDropEmulation(double dropProbability, ulong dropTimeInMs)
+NetworkClient.SetDropEmulation(double dropProbability, ulong dropTimeInMs)
 ```
 
 - dropProbability 0…1 - вероятность поломки сети
@@ -25,5 +25,5 @@ CheetahClient.SetDropEmulation(double dropProbability, ulong dropTimeInMs)
 Отключает эмуляцию сети, все не полученные и не отправленные фреймы будут потеряны.
 
 ```csharp
-CheetahClient.ResetEmulation()
+NetworkClient.ResetEmulation()
 ```

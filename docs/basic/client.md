@@ -4,15 +4,13 @@
 
 ```csharp 
 
-// соединение с боевым сервером
-// ticket получен из MatchMaking
 
-var client = new CheetahClient(
-    ticket.RelayGameHost,
-    ticket.RelayGamePort,
-    ticket.UserId,
-    ticket.RoomId,
-    ticket.PrivateKey.ToByteArray(),
+var client = new NetworkClient(
+    ServerGameHost,
+    ServerGamePort,
+    UserId,
+    RoomId,
+    PrivateKey.ToByteArray(),
     new CodecRegistryBuilder().Build()
 );    
 ```
