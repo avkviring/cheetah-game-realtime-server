@@ -24,6 +24,9 @@ namespace Games.Cheetah.Client
             this.codecRegistry = codecRegistry;
         }
 
+        /**
+         * Получить объекты с сервера, создание которых завершилось в текущем Update
+         */
         public IList<NetworkObjectConstructor> GetCreatedObjectsInCurrentUpdate(ushort template)
         {
             return createdObjectsInUpdate
@@ -32,6 +35,10 @@ namespace Games.Cheetah.Client
                 .ToList();
         }
 
+        /**
+         * Получить список новых игроков полученных в текущем Update. Текущий клиент может получить такой список если только он в состоянии Attached к комнате.
+         * Игроки подключенные до того как текущий игрок подключился не попадают в данный список.
+         */
         public NativeList<ushort> GetConnectedMemberInUpdate()
         {
             var result = new NativeList<ushort>(sbyte.MaxValue, Allocator.TempJob);
@@ -46,6 +53,10 @@ namespace Games.Cheetah.Client
             return result;
         }
 
+        /**
+         * Получить список вышедших из игры игроков. Текущий клиент должен быть в состоянии Attached к комнате.
+         * Все вышедшие игроки до тех пор пока текущий клиент не был в состоянии Attached в данный список не попадают.
+         */
         public NativeList<ushort> GetDisconnectedMemberInUpdate()
         {
             var result = new NativeList<ushort>(sbyte.MaxValue, Allocator.TempJob);
@@ -61,6 +72,9 @@ namespace Games.Cheetah.Client
         }
 
 
+        /**
+         * Получить список изменений double полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
+         */
         public NativeParallelHashMap<NetworkObjectId, double> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
         {
             var result = new NativeParallelHashMap<NetworkObjectId, double>(sbyte.MaxValue, Allocator.TempJob);
@@ -79,6 +93,9 @@ namespace Games.Cheetah.Client
             return result;
         }
 
+        /**
+         * Получить список изменений long полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
+         */
         public NativeParallelHashMap<NetworkObjectId, long> GetModifiedLongs(ushort template, FieldId.Long fieldId)
         {
             var result = new NativeParallelHashMap<NetworkObjectId, long>(sbyte.MaxValue, Allocator.TempJob);
@@ -98,6 +115,9 @@ namespace Games.Cheetah.Client
         }
 
 
+        /**
+         * Получить список изменений structure полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
+         */
         public NativeParallelHashMap<NetworkObjectId, T> GetModifiedStructures<T>(ushort template, FieldId.Structure fieldId)
             where T : unmanaged
         {
@@ -120,6 +140,9 @@ namespace Games.Cheetah.Client
             return result;
         }
 
+        /**
+         * Получить список событий по объекту в текущем цикле.
+         */
         public NativeParallelHashMap<NetworkObjectId, T> GetEvents<T>(ushort template, FieldId.Event eventId) where T : struct
         {
             var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
@@ -142,6 +165,9 @@ namespace Games.Cheetah.Client
         }
 
 
+        /**
+         * Получить список удаленных объектов в текущем Update.
+         */
         public NativeParallelHashSet<NetworkObjectId> GetDeletedObjects(ushort template)
         {
             var result = new NativeParallelHashSet<NetworkObjectId>(sbyte.MaxValue, Allocator.TempJob);
@@ -160,6 +186,9 @@ namespace Games.Cheetah.Client
         }
 
 
+        /**
+         * Получить список удаленных полей объекта в текущем Update.
+         */
         public NativeList<S2CCommands.DeleteField> GetDeleteFields(ushort template, FieldId fieldId)
         {
             var result = new NativeList<S2CCommands.DeleteField>(sbyte.MaxValue, Allocator.TempJob);
