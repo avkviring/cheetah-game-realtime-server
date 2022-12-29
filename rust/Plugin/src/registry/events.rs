@@ -44,7 +44,7 @@ impl Default for RoomLifecycleEventReader {
 	fn default() -> Self {
 		Self {
 			handler: Default::default(),
-			runtime: Some(tokio::runtime::Builder::new_multi_thread().enable_io().build().unwrap()),
+			runtime: Some(tokio::runtime::Builder::new_multi_thread().enable_io().enable_time().build().unwrap()),
 			reader_result: Arc::new(Mutex::new(None)),
 			created_rooms: Arc::new(ArrayQueue::new(100)),
 			deleted_rooms: Arc::new(ArrayQueue::new(100)),
