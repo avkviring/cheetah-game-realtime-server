@@ -12,7 +12,7 @@ lazy_static.workspace = true
 tonic.workspace = true
 prost.workspace = true
 fnv.workspace = true
-tokio = { workspace = true, features = ["rt-multi-thread"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "time"] }
 crossbeam = "0.8.2"
 thiserror.workspace = true
 anyhow.workspace = true

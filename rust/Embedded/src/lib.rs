@@ -32,7 +32,7 @@ pub enum EmbeddedServerWrapperError {
 
 impl EmbeddedServerWrapper {
 	pub fn run_new_server(bind_address: [u8; 4]) -> anyhow::Result<Self> {
-		let runtime = tokio::runtime::Builder::new_multi_thread().worker_threads(2).enable_io().build()?;
+		let runtime = tokio::runtime::Builder::new_multi_thread().worker_threads(2).enable_io().enable_time().build()?;
 
 		let bind_socket_address = SocketAddr::new(IpAddr::from(bind_address), 0);
 
