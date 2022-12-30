@@ -74,7 +74,7 @@ namespace Games.Cheetah.UDS.API
                             onRoomDeleted.Invoke(roomEvent.roomId);
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException();
+                            throw new ArgumentOutOfRangeException("EventType " + roomEvent.eventType);
                     }
 
                     break;
