@@ -202,9 +202,6 @@ mod tests {
 		let field_id = 345;
 		let target = 456;
 		let b1 = Buffer::from([1, 2, 3, 4].as_slice());
-		let b2 = Buffer::from([2, 3, 4].as_slice());
-		let b3 = Buffer::from([3, 4].as_slice());
-
 		let tests = [
 			(
 				ForwardedCommand {

@@ -26,15 +26,19 @@ namespace Games.Cheetah.EmbeddedServer.FFI
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct BindAddress
+        internal struct BindSocket
         {
             internal unsafe fixed byte bindAddress[4];
+            [MarshalAs(UnmanagedType.U2)] internal ushort port;
         }
 
 
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "run_new_server")]
         internal static extern bool RunNewServer(ref Description description, OnServerError onServerError,
-            ref BindAddress bindAddress);
+            ref BindSocket internalGrpcSocket,
+            ref BindSocket internalWebGrpcSocket,
+            ref BindSocket adminWebGrpcSocket,
+            ref BindSocket gameUdpSocket);
 
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_server")]
         internal static extern bool DestroyServer(ulong serverId);
