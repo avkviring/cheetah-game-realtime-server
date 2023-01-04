@@ -1,12 +1,12 @@
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use thiserror::Error;
 
-use cheetah_server::builder::ServerBuilder;
+use thiserror::Error;
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 
+use cheetah_server::builder::ServerBuilder;
 use cheetah_server::server::manager::RoomsServerManager;
 
 mod ffi;
@@ -31,16 +31,15 @@ pub enum EmbeddedServerWrapperError {
 }
 
 impl EmbeddedServerWrapper {
-	pub fn run_new_server(bind_address: [u8; 4]) -> anyhow::Result<Self> {
+	pub fn run_new_server(internal_grpc_address: SocketAddr, internal_webgrpc_address: SocketAddr, admin_webgrpc_address: SocketAddr, game_udp_address: SocketAddr) -> anyhow::Result<Self> {
 		let runtime = tokio::runtime::Builder::new_multi_thread().worker_threads(2).enable_io().enable_time().build()?;
-
-		let bind_socket_address = SocketAddr::new(IpAddr::from(bind_address), 0);
 
 		let server = runtime.block_on(async move {
 			ServerBuilder::default()
-				.set_internal_grpc_service_bind_address(bind_socket_address)
-				.set_admin_webgrpc_service_bind_address(bind_socket_address)
-				.set_games_service_bind_address(bind_socket_address)
+				.set_internal_grpc_service_bind_address(internal_grpc_address)
+				.set_internal_webgrpc_service_bind_address(internal_webgrpc_address)
+				.set_admin_webgrpc_service_bind_address(admin_webgrpc_address)
+				.set_games_service_bind_address(game_udp_address)
 				.build()
 				.await
 		})?;
@@ -88,13 +87,14 @@ impl EmbeddedServerWrapper {
 
 #[cfg(test)]
 mod test {
+	use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 	use std::time::Duration;
 
 	use crate::EmbeddedServerWrapper;
 
 	#[test]
 	fn should_open_tcp_ports_after_start() {
-		let server = EmbeddedServerWrapper::run_new_server(Default::default()).unwrap();
+		let server = create_server();
 		let admin_grpc_port = server.admin_webgrpc_socket_addr.port();
 		let internal_grpc_port = server.internal_grpc_socket_addr.port();
 		assert!(port_scanner::scan_port(admin_grpc_port));
@@ -103,8 +103,8 @@ mod test {
 
 	#[test]
 	fn should_use_different_port_for_different_server() {
-		let server_a = EmbeddedServerWrapper::run_new_server(Default::default()).unwrap();
-		let server_b = EmbeddedServerWrapper::run_new_server(Default::default()).unwrap();
+		let server_a = create_server();
+		let server_b = create_server();
 		assert_ne!(server_a.game_socket_addr, server_b.game_socket_addr);
 		assert_ne!(server_a.admin_webgrpc_socket_addr, server_b.admin_webgrpc_socket_addr);
 		assert_ne!(server_a.internal_grpc_socket_addr, server_b.internal_grpc_socket_addr);
@@ -112,12 +112,23 @@ mod test {
 
 	#[test]
 	fn should_shutdown_server() {
-		let server = EmbeddedServerWrapper::run_new_server(Default::default()).unwrap();
+		let server = create_server();
 		let admin_grpc_port = server.admin_webgrpc_socket_addr.port();
 		let internal_grpc_port = server.internal_grpc_socket_addr.port();
 		server.shutdown();
 		std::thread::sleep(Duration::from_millis(100));
 		assert!(!port_scanner::scan_port(admin_grpc_port));
 		assert!(!port_scanner::scan_port(internal_grpc_port));
+	}
+
+	fn create_server() -> EmbeddedServerWrapper {
+		let server = EmbeddedServerWrapper::run_new_server(
+			SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0),
+			SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0),
+			SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0),
+			SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0),
+		)
+		.unwrap();
+		server
 	}
 }

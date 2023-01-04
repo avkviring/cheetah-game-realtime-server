@@ -1,4 +1,4 @@
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 
 use crate::ffi::{ServerId, REGISTRY};
 use crate::EmbeddedServerWrapper;
@@ -17,13 +17,32 @@ pub(crate) struct EmbeddedServerDescription {
 	admin_webgrpc_port: u16,
 }
 
+#[repr(C)]
+#[derive(Default, Debug)]
+pub(crate) struct BindSocket {
+	ip: [u8; 4],
+	port: u16,
+}
+
 #[no_mangle]
-pub(crate) extern "C" fn run_new_server(result: &mut EmbeddedServerDescription, on_error: extern "C" fn(*const u16), bind_address: &[u8; 4]) -> bool {
+pub(crate) extern "C" fn run_new_server(
+	result: &mut EmbeddedServerDescription,
+	on_error: extern "C" fn(*const u16),
+	internal_grpc_socket: &BindSocket,
+	internal_webgrpc_socket: &BindSocket,
+	admin_webgrpc_socket: &BindSocket,
+	game_udp_socket: &BindSocket,
+) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
 	registry.next_server_id += 1;
 	let server_id = registry.next_server_id;
 
-	match EmbeddedServerWrapper::run_new_server(*bind_address) {
+	let internal_grpc_address = SocketAddr::new(IpAddr::from(internal_grpc_socket.ip), internal_grpc_socket.port);
+	let internal_webgrpc_address = SocketAddr::new(IpAddr::from(internal_webgrpc_socket.ip), internal_webgrpc_socket.port);
+	let admin_webgrpc_address = SocketAddr::new(IpAddr::from(admin_webgrpc_socket.ip), admin_webgrpc_socket.port);
+	let game_udp_address = SocketAddr::new(IpAddr::from(game_udp_socket.ip), game_udp_socket.port);
+
+	match EmbeddedServerWrapper::run_new_server(internal_grpc_address, internal_webgrpc_address, admin_webgrpc_address, game_udp_address) {
 		Ok(server) => {
 			result.id = server_id;
 
@@ -81,14 +100,14 @@ mod test {
 	#[test]
 	pub(crate) fn should_run_new_server() {
 		let mut result = EmbeddedServerDescription::default();
-		let success = run_new_server(&mut result, on_error, &Default::default());
+		let success = setup_server(&mut result);
 		assert!(success);
 	}
 
 	#[test]
 	pub(crate) fn should_destroy_server() {
 		let mut result = EmbeddedServerDescription::default();
-		let success = run_new_server(&mut result, on_error, &Default::default());
+		let success = setup_server(&mut result);
 		assert!(success);
 		assert!(destroy_server(result.id));
 		assert!(!destroy_server(result.id));
@@ -96,5 +115,9 @@ mod test {
 
 	pub(crate) extern "C" fn on_error(message: *const u16) {
 		panic!("Fail create server with message {message:?}")
+	}
+
+	fn setup_server(mut result: &mut EmbeddedServerDescription) -> bool {
+		run_new_server(&mut result, on_error, &Default::default(), &Default::default(), &Default::default(), &Default::default())
 	}
 }

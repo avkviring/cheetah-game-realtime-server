@@ -34,23 +34,48 @@ namespace Games.Cheetah.EmbeddedServer.API
         private readonly Server.Description description;
         private static string? errorMessage;
 
-        public EmbeddedServer(IPAddress bindAddress)
+        public EmbeddedServer(
+            IPAddress internalGrpcAddress, ushort internalGrpcPort,
+            IPAddress internalWebGrpcAddress, ushort internalWebGrpcPort,
+            IPAddress adminWebGrpcAddress, ushort adminWebGrpcPort,
+            IPAddress gameUdpAddress, ushort gameUdpPort
+        )
         {
             unsafe
             {
-                var bindFFIAddress = new Server.BindAddress();
-                var addressBytes = bindAddress.GetAddressBytes();
+                var internalGrpcSocket = NewBindSocket(internalGrpcAddress, internalGrpcPort);
+                var internalWebGrpcSocket = NewBindSocket(internalWebGrpcAddress, internalWebGrpcPort);
+                var adminWebGrpcSocket = NewBindSocket(adminWebGrpcAddress, adminWebGrpcPort);
+                var gameUdpSocket = NewBindSocket(gameUdpAddress, gameUdpPort);
 
-                bindFFIAddress.bindAddress[0] = addressBytes[0];
-                bindFFIAddress.bindAddress[1] = addressBytes[1];
-                bindFFIAddress.bindAddress[2] = addressBytes[2];
-                bindFFIAddress.bindAddress[3] = addressBytes[3];
-
-                if (!Server.RunNewServer(ref description, OnError, ref bindFFIAddress))
+                if (!Server.RunNewServer(ref description, OnError,
+                        ref internalGrpcSocket,
+                        ref internalWebGrpcSocket,
+                        ref adminWebGrpcSocket,
+                        ref gameUdpSocket))
                 {
                     throw new Exception("Cannot run embedded server. " + errorMessage);
                 }
             }
+        }
+
+        public EmbeddedServer(
+            IPAddress address
+        ) : this(address, 0, address, 0, address, 0, address, 0)
+        {
+        }
+
+
+        private static unsafe Server.BindSocket NewBindSocket(IPAddress bindAddress, ushort port)
+        {
+            var result = new Server.BindSocket();
+            var addressBytes = bindAddress.GetAddressBytes();
+            result.port = port;
+            result.bindAddress[0] = addressBytes[0];
+            result.bindAddress[1] = addressBytes[1];
+            result.bindAddress[2] = addressBytes[2];
+            result.bindAddress[3] = addressBytes[3];
+            return result;
         }
 
 
@@ -144,13 +169,13 @@ namespace Games.Cheetah.EmbeddedServer.API
             switch (level)
             {
                 case EmeddedServerLogLevel.Info:
-                    Debug.Log("server:\t" +log);
+                    Debug.Log("server:\t" + log);
                     break;
                 case EmeddedServerLogLevel.Warn:
-                    Debug.LogWarning("server:\t"+log);
+                    Debug.LogWarning("server:\t" + log);
                     break;
                 case EmeddedServerLogLevel.Error:
-                    Debug.LogWarning("server:\t"+log);
+                    Debug.LogWarning("server:\t" + log);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(level), level, null);
