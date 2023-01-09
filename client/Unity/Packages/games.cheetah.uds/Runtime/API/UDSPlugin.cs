@@ -84,7 +84,7 @@ namespace Games.Cheetah.UDS.API
                     ThrowLastError();
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException("ResultCode "+result);
             }
         }
 

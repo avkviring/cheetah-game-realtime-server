@@ -12,7 +12,7 @@ lazy_static! {
 	static ref LAST_ERROR: Mutex<String> = Mutex::new(String::new());
 }
 
-#[repr(u8)]
+#[repr(C)]
 pub enum ResultCode {
 	OK = 0,
 	Empty = 1,
