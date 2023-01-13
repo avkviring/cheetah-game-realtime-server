@@ -149,7 +149,7 @@ impl ApplicationThreadClient {
 						command_ffi.command.member_disconnect = command;
 					}
 				}
-				if *count == u8::MAX {
+				if *count == u8::MAX - 1 {
 					break;
 				}
 				*count += 1;
