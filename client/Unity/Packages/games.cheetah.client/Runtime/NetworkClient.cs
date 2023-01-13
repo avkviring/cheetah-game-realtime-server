@@ -24,8 +24,8 @@ namespace Games.Cheetah.Client
         private ChannelType currentChannelType;
         private byte currentChannelGroup;
         private NetworkBuffer buffer;
-        internal static S2CCommand[] s2cCommands = new S2CCommand[sbyte.MaxValue];
-        internal byte s2cCommandsCount;
+        internal static S2CCommand[] s2cCommands = new S2CCommand[1024];
+        internal ushort s2cCommandsCount;
         public Writer Writer { get; }
         public Reader Reader { get; }
 
@@ -89,7 +89,8 @@ namespace Games.Cheetah.Client
             unsafe
             {
                 current = this;
-                fixed(S2CCommand* commands = s2cCommands) {
+                fixed (S2CCommand* commands = s2cCommands)
+                {
                     ResultChecker.Check(ffi.Receive(Id, commands, ref s2cCommandsCount));
                 }
                 Reader.Update();

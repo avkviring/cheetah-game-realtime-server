@@ -24,7 +24,7 @@ namespace Games.Cheetah.Client.Internal.FFI
         }
 
 
-        public unsafe byte Receive(ushort clientId, S2CCommand* commands, ref byte count)
+        public unsafe byte Receive(ushort clientId, S2CCommand* commands, ref ushort count)
         {
             return FFIMethods.Receive(clientId, commands, ref count);
         }

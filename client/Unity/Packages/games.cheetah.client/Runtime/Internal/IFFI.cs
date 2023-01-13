@@ -18,7 +18,7 @@ namespace Games.Cheetah.Client.Internal
 
         byte GetConnectionStatus(ushort clientId, out ConnectionStatus status);
         byte GetStatistics(ushort clientId, out Statistics clientStatistics);
-        unsafe byte Receive(ushort clientId, S2CCommand* commands, ref byte count);
+        unsafe byte Receive(ushort clientId, S2CCommand* commands, ref ushort count);
         byte DestroyClient(ushort clientId);
         byte AttachToRoom(ushort clientId);
         byte DetachFromRoom(ushort clientId);

@@ -35,7 +35,7 @@ namespace Games.Cheetah.Client.Internal.FFI
 
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "receive")]
-        public static extern unsafe byte Receive(ushort clientId, S2CCommand* commands, ref byte count);
+        public static extern unsafe byte Receive(ushort clientId, S2CCommand* commands, ref ushort count);
 
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_client")]
