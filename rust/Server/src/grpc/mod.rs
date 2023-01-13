@@ -110,23 +110,37 @@ impl Internal for RealtimeInternalService {
 				for room_id in &rooms {
 					if !present_rooms.contains(room_id) {
 						present_rooms.insert(*room_id);
-						tx.send(Ok(RoomLifecycleResponse {
-							room_id: *room_id,
-							r#type: RoomLifecycleType::Created as i32,
-						}))
-						.await
-						.unwrap();
+						match tx
+							.send(Ok(RoomLifecycleResponse {
+								room_id: *room_id,
+								r#type: RoomLifecycleType::Created as i32,
+							}))
+							.await
+						{
+							Ok(_) => {}
+							Err(e) => {
+								tracing::error!("{:?}", e);
+								break;
+							}
+						}
 					}
 				}
 
 				for room_id in &present_rooms {
 					if !rooms.contains(room_id) {
-						tx.send(Ok(RoomLifecycleResponse {
-							room_id: *room_id,
-							r#type: RoomLifecycleType::Deleted as i32,
-						}))
-						.await
-						.unwrap();
+						match tx
+							.send(Ok(RoomLifecycleResponse {
+								room_id: *room_id,
+								r#type: RoomLifecycleType::Deleted as i32,
+							}))
+							.await
+						{
+							Ok(_) => {}
+							Err(e) => {
+								tracing::error!("{:?}", e);
+								break;
+							}
+						}
 					}
 				}
 				present_rooms.clear();
