@@ -69,7 +69,7 @@ pub extern "C" fn destroy_client(client: ClientId) -> u8 {
 }
 
 #[no_mangle]
-pub extern "C" fn receive(client_id: ClientId, out_commands: *mut S2CCommandFFI, count: &mut u8) -> u8 {
+pub extern "C" fn receive(client_id: ClientId, out_commands: *mut S2CCommandFFI, count: &mut u16) -> u8 {
 	execute_with_client(client_id, |client| unsafe {
 		client.receive(out_commands, count);
 		Ok(())

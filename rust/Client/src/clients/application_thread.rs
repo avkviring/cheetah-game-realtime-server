@@ -97,9 +97,9 @@ impl ApplicationThreadClient {
 		}
 	}
 
-	pub unsafe fn receive(&mut self, commands: *mut S2CCommandFFI, count: &mut u8) {
+	pub unsafe fn receive(&mut self, commands: *mut S2CCommandFFI, count: &mut u16) {
 		*count = 0;
-		let commands: &mut [S2CCommandFFI] = slice::from_raw_parts_mut(commands, u8::MAX as usize);
+		let commands: &mut [S2CCommandFFI] = slice::from_raw_parts_mut(commands, 1024);
 
 		while let Ok(command) = self.s2c_receiver.try_recv() {
 			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.both_direction_command {
@@ -149,7 +149,7 @@ impl ApplicationThreadClient {
 						command_ffi.command.member_disconnect = command;
 					}
 				}
-				if *count == u8::MAX - 1 {
+				if *count == 1023 {
 					break;
 				}
 				*count += 1;

@@ -52,7 +52,7 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public unsafe byte Receive(ushort clientId, S2CCommand* commands, ref byte count)
+        public unsafe byte Receive(ushort clientId, S2CCommand* commands, ref ushort count)
         {
             var i = 0;
             foreach (var s2CCommand in s2cCommands)
