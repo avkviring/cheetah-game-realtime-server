@@ -33,7 +33,7 @@ service Internal {
   /**
     Отслеживание операций создания комнаты, при первом вызове отсылаются и уже созданные комнаты.
    */
-  rpc WatchRoomLifecycleEvent(EmptyRequest) returns (stream RoomLifecycleResponse);
+  rpc GetRooms(EmptyRequest) returns (GetRoomsResponse);
 
 
   /**
@@ -241,11 +241,6 @@ message UpdateRoomPermissionsResponse {
 
 }
 
-message RoomLifecycleResponse {
-  uint64 room_id = 1;
-  enum RoomLifecycleType {
-    Created = 0;
-    Deleted = 1;
-  }
-  RoomLifecycleType type = 2;
+message GetRoomsResponse {
+  repeated uint64 rooms = 1;
 }

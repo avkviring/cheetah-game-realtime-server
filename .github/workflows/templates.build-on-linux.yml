@@ -4,7 +4,6 @@ on:
 env:
   REALTIME_CLIENT_MANIFEST_PATH: rust/Client/Cargo.toml
   REALTIME_EMBEDDED_MANIFEST_PATH: rust/Embedded/Cargo.toml
-  REALTIME_UDS_MANIFEST_PATH: rust/Plugin/Cargo.toml
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,7 +16,6 @@ jobs:
           rustup component add rustfmt
           cargo build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --release
           cargo build --manifest-path $REALTIME_EMBEDDED_MANIFEST_PATH --release
-          cargo build --manifest-path $REALTIME_UDS_MANIFEST_PATH --release
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
