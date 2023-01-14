@@ -6,7 +6,6 @@ members = [
     "Common",
     "Embedded",
     "Macro",
-    "Plugin",
     "Registry",
     "Server"
 ]

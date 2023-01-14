@@ -95,14 +95,6 @@ jobs:
           cp build-macos/libcheetah_embedded.dylib $lib_path/libcheetah_embedded.bundle            
           cp build-on-windows-result/cheetah_embedded.dll $lib_path/
           cp build-on-windows-result/cheetah_embedded.pdb $lib_path/
-      - name: Copy Libraries into UDS
-        run: |
-          lib_path=client/Unity/Packages/games.cheetah.uds/Runtime/FFI/Library/
-          mkdir -p $lib_path
-          cp build-on-linux-result/libcheetah_plugin.so $lib_path/          
-          cp build-macos/libcheetah_plugin.dylib $lib_path/libcheetah_plugin.bundle            
-          cp build-on-windows-result/cheetah_plugin.dll $lib_path/
-          cp build-on-windows-result/cheetah_plugin.pdb $lib_path/
       - uses: actions/setup-node@v3
         with:
           node-version: '16.x'

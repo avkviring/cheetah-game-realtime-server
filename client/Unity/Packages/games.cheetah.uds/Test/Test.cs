@@ -25,7 +25,6 @@ namespace Games.Cheetah.UDS.Tests.Test
             EmbeddedServer.API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Warn);
             server = new EmbeddedServer.API.EmbeddedServer(IPAddress.Loopback);
             plugin = new UDSPlugin(
-                server.GetInternalGrpcUri(),
                 server.GetInternalWebGrpcUri(),
                 server.GetUdpGameHost(),
                 server.GetUdpGamePort(),

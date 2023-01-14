@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.GRPC.Internal;
-using Games.Cheetah.UDS.FFI;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using static Games.Cheetah.GRPC.Internal.Internal;
@@ -25,14 +26,13 @@ namespace Games.Cheetah.UDS.API
         private readonly OnRoomCreated onRoomCreated;
         private readonly OnRoomDeleted onRoomDeleted;
         private readonly CodecRegistry codecRegistry;
-        private readonly ushort serverPluginId;
-        private readonly Uri grpcRealtimeServerInternalUri;
         private readonly Uri webGrpcRealtimeServerInternalUri;
         private readonly string udpServerHost;
         private readonly ushort udpServerPort;
+        private HashSet<ulong> processedRooms = new();
+        private HashSet<ulong> tmpRooms = new();
 
         public UDSPlugin(
-            Uri grpcRealtimeServerInternalUri,
             Uri webGrpcRealtimeServerInternalUri,
             string udpServerHost,
             ushort udpServerPort,
@@ -41,18 +41,12 @@ namespace Games.Cheetah.UDS.API
             CodecRegistry codecRegistry
         )
         {
-            this.grpcRealtimeServerInternalUri = grpcRealtimeServerInternalUri;
             this.webGrpcRealtimeServerInternalUri = webGrpcRealtimeServerInternalUri;
             this.udpServerHost = udpServerHost;
             this.udpServerPort = udpServerPort;
             this.onRoomCreated = onRoomCreated;
             this.onRoomDeleted = onRoomDeleted;
             this.codecRegistry = codecRegistry;
-            var result = Plugin.CreatePlugin(grpcRealtimeServerInternalUri.AbsoluteUri, out serverPluginId);
-            if (result != Plugin.ResultCode.OK)
-            {
-                ThrowLastError();
-            }
         }
 
 
@@ -61,30 +55,30 @@ namespace Games.Cheetah.UDS.API
          */
         public async Task OnUpdate()
         {
-            var result = Plugin.PopRoomEvent(serverPluginId, out var roomEvent);
-            switch (result)
-            {
-                case Plugin.ResultCode.OK:
-                    switch (roomEvent.eventType)
-                    {
-                        case Plugin.RoomEventType.Created:
-                            await CreateRoomPlugin(roomEvent.roomId);
-                            break;
-                        case Plugin.RoomEventType.Deleted:
-                            onRoomDeleted.Invoke(roomEvent.roomId);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException("EventType " + roomEvent.eventType);
-                    }
+            var channel = GrpcChannel.ForAddress(
+                webGrpcRealtimeServerInternalUri, new GrpcChannelOptions
+                {
+                    HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
+                }
+            );
 
-                    break;
-                case Plugin.ResultCode.Empty:
-                    break;
-                case Plugin.ResultCode.Error:
-                    ThrowLastError();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("ResultCode "+result);
+            var client = new InternalClient(channel);
+            var rooms = await client.GetRoomsAsync(new EmptyRequest());
+            var roomsOnServer = rooms.Rooms.ToHashSet();
+
+            foreach (var room in roomsOnServer)
+            {
+                if (processedRooms.Contains(room)) continue;
+
+                processedRooms.Add(room);
+                await CreateRoomPlugin(room);
+            }
+
+            foreach (var room in rooms.Rooms)
+            {
+                if (roomsOnServer.Contains(room)) continue;
+                processedRooms.Remove(room);
+                onRoomDeleted(room);
             }
         }
 
@@ -113,12 +107,6 @@ namespace Games.Cheetah.UDS.API
                 codecRegistry);
 
             onRoomCreated(roomId, grpcClient, cheetahClient);
-        }
-
-        private static unsafe void ThrowLastError()
-        {
-            Plugin.GetLastErrorMsg(out var nativeString);
-            throw new Exception(new string(nativeString.values, 0, nativeString.size));
         }
     }
 }

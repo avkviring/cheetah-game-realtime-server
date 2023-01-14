@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
-use fnv::FnvHashSet;
 use tokio::sync::Mutex;
-use tokio::sync::{mpsc, MutexGuard};
-use tokio_stream::wrappers::ReceiverStream;
+use tokio::sync::MutexGuard;
 use tonic::{Request, Response, Status};
 
 use cheetah_common::commands::field::FieldId;
@@ -13,7 +11,6 @@ use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_common::room::RoomId;
 
 use crate::grpc::proto::internal::internal_server::Internal;
-use crate::grpc::proto::internal::room_lifecycle_response::RoomLifecycleType;
 #[allow(clippy::wildcard_imports)]
 use crate::grpc::proto::internal::*;
 use crate::room::command::ServerCommandError;
@@ -95,63 +92,6 @@ impl Internal for RealtimeInternalService {
 		Ok(Response::new(ProbeResponse {}))
 	}
 
-	type WatchRoomLifecycleEventStream = ReceiverStream<Result<RoomLifecycleResponse, Status>>;
-
-	async fn watch_room_lifecycle_event(&self, _request: Request<EmptyRequest>) -> Result<Response<Self::WatchRoomLifecycleEventStream>, Status> {
-		let (tx, rx) = mpsc::channel(64);
-		let server_manager = Arc::clone(&self.server_manager);
-		tokio::spawn(async move {
-			let mut present_rooms = FnvHashSet::default();
-			loop {
-				let server = server_manager.lock().await;
-				let rooms = server.get_rooms().unwrap();
-				drop(server);
-
-				for room_id in &rooms {
-					if !present_rooms.contains(room_id) {
-						present_rooms.insert(*room_id);
-						match tx
-							.send(Ok(RoomLifecycleResponse {
-								room_id: *room_id,
-								r#type: RoomLifecycleType::Created as i32,
-							}))
-							.await
-						{
-							Ok(_) => {}
-							Err(e) => {
-								tracing::error!("{:?}", e);
-								break;
-							}
-						}
-					}
-				}
-
-				for room_id in &present_rooms {
-					if !rooms.contains(room_id) {
-						match tx
-							.send(Ok(RoomLifecycleResponse {
-								room_id: *room_id,
-								r#type: RoomLifecycleType::Deleted as i32,
-							}))
-							.await
-						{
-							Ok(_) => {}
-							Err(e) => {
-								tracing::error!("{:?}", e);
-								break;
-							}
-						}
-					}
-				}
-				present_rooms.clear();
-				present_rooms.extend(rooms.into_iter());
-
-				tokio::task::yield_now().await;
-			}
-		});
-		Ok(Response::new(ReceiverStream::new(rx)))
-	}
-
 	/// удалить комнату с севрера и закрыть соединение со всеми пользователями
 	async fn delete_room(&self, request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
 		let room_id = request.get_ref().id;
@@ -222,6 +162,12 @@ impl Internal for RealtimeInternalService {
 			.map(|_| Response::new(UpdateRoomPermissionsResponse {}))
 			.map_err(Status::from)
 	}
+
+	async fn get_rooms(&self, _: Request<EmptyRequest>) -> Result<Response<GetRoomsResponse>, Status> {
+		let server = self.server_manager.lock().await;
+		let rooms = server.get_rooms().unwrap();
+		Ok(Response::new(GetRoomsResponse { rooms }))
+	}
 }
 
 impl From<TaskError> for Status {
@@ -257,14 +203,12 @@ mod test {
 	use fnv::FnvHashSet;
 	use num_traits::ToPrimitive;
 	use tokio::sync::Mutex;
-	use tokio_stream::StreamExt;
 	use tonic::{Code, Request};
 
 	use cheetah_common::commands::CommandTypeId;
 	use cheetah_common::network::bind_to_free_socket;
 
 	use crate::grpc::proto::internal::internal_server::Internal;
-	use crate::grpc::proto::internal::room_lifecycle_response::RoomLifecycleType;
 	use crate::grpc::proto::internal::{
 		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GameObjectTemplatePermission, GetRoomInfoRequest, GroupsPermissionRule, MarkRoomAsReadyRequest, Permissions,
 		PutForwardedCommandConfigRequest, UpdateRoomPermissionsRequest,
@@ -274,28 +218,17 @@ mod test {
 	use crate::server::manager::RoomsServerManager;
 
 	#[tokio::test]
-	async fn test_watch_room_lifecycle_event() {
+	async fn should_get_rooms() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-		let mut stream = service.watch_room_lifecycle_event(Request::new(EmptyRequest {})).await.unwrap().into_inner();
+		let room_1 = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
+		let room_2 = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
 
-		let first_room_id = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
-		let result = stream.try_next().await;
-		let room_response = result.unwrap().unwrap();
-		assert_eq!(room_response.room_id, first_room_id);
-		assert_eq!(room_response.r#type, RoomLifecycleType::Created as i32);
-
-		let second_room_id = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
-		let result = stream.try_next().await;
-		let room_response = result.unwrap().unwrap();
-		assert_eq!(room_response.room_id, second_room_id);
-		assert_eq!(room_response.r#type, RoomLifecycleType::Created as i32);
-
-		server_manager.lock().await.delete_room(second_room_id).unwrap();
-		let result = stream.try_next().await;
-		let room_response = result.unwrap().unwrap();
-		assert_eq!(room_response.room_id, second_room_id);
-		assert_eq!(room_response.r#type, RoomLifecycleType::Deleted as i32);
+		let rooms_response = service.get_rooms(Request::new(EmptyRequest::default())).await.unwrap();
+		let rooms = rooms_response.get_ref();
+		assert!(rooms.rooms.contains(&room_1));
+		assert!(rooms.rooms.contains(&room_2));
+		assert_eq!(rooms.rooms.len(), 2);
 	}
 
 	#[tokio::test]
