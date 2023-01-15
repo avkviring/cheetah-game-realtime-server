@@ -1,0 +1,37 @@
+syntax = "proto3";
+package cheetah.matches.realtime.status;
+
+service StatusUpdater {
+  rpc SetStatus(StatusRequest) returns(StatusResponse);
+}
+
+
+message StatusRequest {
+  // Публичный UDP адрес для подключения клиентов
+  Addr game = 1;
+  // Внутренний GRPC адрес для взаимодействия с другими сервисами
+  Addr grpc_internal = 2;
+  State state = 3;
+}
+
+
+message StatusResponse {
+
+}
+message Addr {
+  string host = 1;
+  uint32 port = 2;
+}
+
+// Статус Relay сервера в Agones
+// https://agones.dev/site/docs/reference/gameserver/#gameserver-state-diagram
+enum State {
+  // Relay запущен, отправляет health-check в agones, но на сервере нет ни одной комнаты
+  // Подходит для создание комнат, если нет других Allocated серверов
+  Ready = 0;
+  // На Relay сервере есть запущенные комнаты и он может принять еще
+  // Нужно создавать новые комнаты в первую очередь на Allocated серверах
+  Allocated = 1;
+  // Адрес этого Relay не нужно возвращать из Registry: он выключается или полон
+  NotReady = 2;
+}

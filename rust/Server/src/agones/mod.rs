@@ -8,8 +8,7 @@ use tokio::sync::Mutex;
 use cheetah_microservice::tonic::codegen::Arc;
 
 use crate::agones::client::RegistryClient;
-use crate::agones::proto::registry::RelayState;
-use crate::agones::proto::registry::{Addr, RelayAddrs};
+use crate::agones::proto::status::{Addr, State};
 use crate::server::manager::RoomsServerManager;
 
 pub mod client;
@@ -51,14 +50,14 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 				}
 
 				if allocated {
-					match notify_registry(&gameserver, RelayState::Allocated).await {
+					match notify_registry(&gameserver, State::Allocated).await {
 						Ok(_) => {}
 						Err(e) => {
 							tracing::error!("Error notify registry {:?}", e);
 						}
 					};
 				} else {
-					match notify_registry(&gameserver, RelayState::Ready).await {
+					match notify_registry(&gameserver, State::Ready).await {
 						Ok(_) => {}
 						Err(e) => {
 							tracing::error!("Error notify registry {:?}", e);
@@ -79,8 +78,12 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 
 				tokio::time::sleep(Duration::from_secs(2)).await;
 			}
-			// todo(v.zakharov): handle error
-			notify_registry(&gameserver, RelayState::NotReady).await.unwrap();
+			match notify_registry(&gameserver, State::NotReady).await {
+				Ok(_) => {}
+				Err(e) => {
+					tracing::error!("Notify registry with State::NotReady fail {:?}", e);
+				}
+			};
 			sdk.shutdown().await.unwrap();
 		}
 		Err(e) => {
@@ -94,8 +97,7 @@ async fn is_server_running(server_manager: &Arc<Mutex<RoomsServerManager>>) -> b
 	!server_manager.lock().await.get_halt_signal().load(Ordering::Relaxed)
 }
 
-async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), RegistryError> {
-	// todo(v.zakharov): do not reconnect every time
+async fn notify_registry(gs: &GameServer, state: State) -> Result<(), RegistryError> {
 	let registry_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
 	let client = RegistryClient::new(registry_url).await.map_err(RegistryError::from)?;
 
@@ -111,16 +113,14 @@ async fn notify_registry(gs: &GameServer, state: RelayState) -> Result<(), Regis
 		.map(|p| p.port)
 		.ok_or_else(|| RegistryError::InvalidGameServerStatus("could not find port default in GameServer Status".to_owned()))?;
 
-	let addrs = RelayAddrs {
-		game: Some(Addr {
-			host: host.to_string(),
-			port: port.into(),
-		}),
-		grpc_internal: Some(Addr {
-			host: cheetah_microservice::get_env("POD_IP"),
-			port: u32::from(cheetah_microservice::get_internal_grpc_service_default_port()),
-		}),
+	let game = Addr {
+		host: host.to_string(),
+		port: port.into(),
+	};
+	let grpc_internal = Addr {
+		host: cheetah_microservice::get_env("POD_IP"),
+		port: u32::from(cheetah_microservice::get_internal_grpc_service_default_port()),
 	};
 
-	client.update_relay_status(addrs, state).await.map_err(RegistryError::from)
+	client.update_relay_status(game, grpc_internal, state).await.map_err(RegistryError::from)
 }
