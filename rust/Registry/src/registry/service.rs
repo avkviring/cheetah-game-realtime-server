@@ -51,8 +51,18 @@ impl Registry for RegistryService {
 
 		let state = RelayState::from_i32(msg_state).ok_or(()).trace_err("Get relayState from i32").map_err(Status::internal)?;
 
-		self.storage.update_status(&addrs, state).await.trace_err("Update relay status").map_err(Status::internal)?;
-
-		Ok(Response::new(UpdateRelayStatusResponse::default()))
+		let result = self.storage.update_status(&addrs, state).await;
+		match result {
+			Ok(_) => Ok(Response::new(UpdateRelayStatusResponse::default())),
+			Err(e) => match e {
+				StorageError::RedisError(e) => {
+					panic!("{:?}", e);
+				}
+				_ => {
+					tracing::error!("{:?}", e);
+					Err(Status::internal(format!("{:?}", e)))
+				}
+			},
+		}
 	}
 }
