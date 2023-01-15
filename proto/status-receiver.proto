@@ -1,7 +1,7 @@
 syntax = "proto3";
 package cheetah.matches.realtime.status;
 
-service StatusUpdater {
+service StatusReceiver {
   rpc SetStatus(StatusRequest) returns(StatusResponse);
 }
 

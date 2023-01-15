@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <AssemblyName>GamesCheetah.RegistryProto</AssemblyName>
-        <PackageId>GamesCheetah.RegistryProto</PackageId>
+        <AssemblyName>GamesCheetah.StatusReceiver.Proto</AssemblyName>
+        <PackageId>GamesCheetah.StatusReceiver.Proto</PackageId>
         <Version>999.999.999</Version>
         <Authors>Kviring Aleksei</Authors>
         <Company>Games.Cheetah.Platform</Company>
@@ -18,6 +18,6 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <Protobuf Include="..\..\..\..\proto\status-updater.proto" GrpcServices="both" CompileOutputs="true"/>
+        <Protobuf Include="..\..\..\..\proto\status-receiver.proto" GrpcServices="both" CompileOutputs="true"/>
     </ItemGroup>
 </Project>

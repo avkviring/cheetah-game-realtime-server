@@ -9,6 +9,6 @@ fn main() -> Result<(), Error> {
 	#[cfg(target_os = "windows")]
 	std::env::set_var("PROTOC", PathBuf::from("../../scripts/bin/win/protoc"));
 	tonic_build::configure().compile(&["../../proto/internal.proto", "../../proto/admin.proto"], &["../../proto/"])?;
-	tonic_build::configure().build_server(false).compile(&["../../proto/status-updater.proto"], &["../../proto/"])?;
+	tonic_build::configure().build_server(false).compile(&["../../proto/status-receiver.proto"], &["../../proto/"])?;
 	Ok(())
 }

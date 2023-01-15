@@ -6,12 +6,12 @@ use crate::agones::proto::status::Addr;
 use crate::agones::proto::status::State;
 
 pub struct RegistryClient {
-	client: status::status_updater_client::StatusUpdaterClient<tonic::transport::Channel>,
+	client: status::status_receiver_client::StatusReceiverClient<tonic::transport::Channel>,
 }
 
 impl RegistryClient {
 	pub async fn new(uri: Uri) -> Result<Self, tonic::transport::Error> {
-		let client = status::status_updater_client::StatusUpdaterClient::connect(uri).await?;
+		let client = status::status_receiver_client::StatusReceiverClient::connect(uri).await?;
 		Ok(Self { client })
 	}
 
