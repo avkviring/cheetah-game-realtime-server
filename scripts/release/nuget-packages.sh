@@ -13,5 +13,4 @@ function push() {
 }
 
 push client/Net/Embedded/Src/Src.csproj
-push client/Net/Registry/Proto/Proto.csproj
-
+push client/Net/StatusReceiver/Proto/Proto.csproj
