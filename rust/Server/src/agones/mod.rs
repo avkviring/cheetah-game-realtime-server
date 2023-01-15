@@ -51,11 +51,19 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 				}
 
 				if allocated {
-					// todo(v.zakharov): handle error
-					notify_registry(&gameserver, RelayState::Allocated).await.unwrap();
+					match notify_registry(&gameserver, RelayState::Allocated).await {
+						Ok(_) => {}
+						Err(e) => {
+							tracing::error!("Error notify registry {:?}", e);
+						}
+					};
 				} else {
-					// todo(v.zakharov): handle error
-					notify_registry(&gameserver, RelayState::Ready).await.unwrap();
+					match notify_registry(&gameserver, RelayState::Ready).await {
+						Ok(_) => {}
+						Err(e) => {
+							tracing::error!("Error notify registry {:?}", e);
+						}
+					};
 				}
 
 				// подтверждаем что сервер жив
