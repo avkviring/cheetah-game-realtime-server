@@ -2,11 +2,11 @@ syntax = "proto3";
 package cheetah.matches.realtime.status;
 
 service StatusReceiver {
-  rpc SetStatus(StatusRequest) returns(StatusResponse);
+  rpc SetStatus(ServerStatus) returns(EmptyResponse);
 }
 
 
-message StatusRequest {
+message ServerStatus {
   // Публичный UDP адрес для подключения клиентов
   Addr game = 1;
   // Внутренний GRPC адрес для взаимодействия с другими сервисами
@@ -15,7 +15,7 @@ message StatusRequest {
 }
 
 
-message StatusResponse {
+message EmptyResponse {
 
 }
 message Addr {
