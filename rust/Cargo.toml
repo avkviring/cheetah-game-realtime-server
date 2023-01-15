@@ -1,12 +1,10 @@
 [workspace]
 members = [
     "Microservice",
-    "Registry",
     "Client",
     "Common",
     "Embedded",
     "Macro",
-    "Registry",
     "Server"
 ]
 

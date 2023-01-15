@@ -1,4 +1,4 @@
-pub mod registry {
+pub mod status {
 	#![allow(
 		clippy::empty_structs_with_brackets,
 		clippy::derive_partial_eq_without_eq,
@@ -9,5 +9,5 @@ pub mod registry {
 		clippy::must_use_candidate,
 		clippy::doc_markdown
 	)]
-	tonic::include_proto!("cheetah.matches.registry.internal");
+	tonic::include_proto!("cheetah.matches.realtime.status");
 }

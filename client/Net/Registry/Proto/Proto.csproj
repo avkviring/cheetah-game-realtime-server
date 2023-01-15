@@ -18,6 +18,6 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <Protobuf Include="..\..\..\..\proto\registry.internal.proto" GrpcServices="both" CompileOutputs="true"/>
+        <Protobuf Include="..\..\..\..\proto\status-updater.proto" GrpcServices="both" CompileOutputs="true"/>
     </ItemGroup>
 </Project>
