@@ -21,6 +21,7 @@ namespace Games.Cheetah.Client.Tests.Server
                 var stream = clientB.Reader.GetModifiedDoubles(777, HealFieldId);
                 var actual = stream[createdObject.ObjectId];
                 Assert.AreEqual(77.99, actual);
+                stream.Dispose();
         }
 
         [Test]
@@ -39,6 +40,7 @@ namespace Games.Cheetah.Client.Tests.Server
             var stream = clientB.Reader.GetModifiedDoubles(777, HealFieldId);
             var actual = stream[createdObject.ObjectId];
             Assert.AreEqual(177.99, actual);
+            stream.Dispose();
         }
     }
 }

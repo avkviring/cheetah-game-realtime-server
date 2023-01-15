@@ -28,6 +28,7 @@ namespace Games.Cheetah.Client.Tests.Server
             var actual = changes[createdObject.ObjectId];
             Assert.AreEqual(turretsParams.Damage, actual.Damage);
             Assert.AreEqual(turretsParams.Speed, actual.Speed);
+            changes.Dispose();
         }
     }
 }

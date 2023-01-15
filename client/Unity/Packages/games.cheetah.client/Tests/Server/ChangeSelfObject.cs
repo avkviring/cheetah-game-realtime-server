@@ -22,6 +22,7 @@ namespace Games.Cheetah.Client.Tests.Server
             var changes = clientA.Reader.GetModifiedLongs(777, ScoreFieldId);
             var actual = changes[createdObject.ObjectId];
             Assert.AreEqual(155, actual);
+            changes.Dispose();
         }
     }
 }
