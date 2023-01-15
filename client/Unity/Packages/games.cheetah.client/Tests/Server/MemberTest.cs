@@ -16,6 +16,7 @@ namespace Games.Cheetah.Client.Tests.Server
             var connected = clientA.Reader.GetConnectedMemberInUpdate();
             Assert.AreEqual(connected.Length, 1);
             Assert.AreEqual(connected[0], memberC.UserId);
+            connected.Dispose();
         }
 
         [Test]
@@ -29,6 +30,7 @@ namespace Games.Cheetah.Client.Tests.Server
             var disconnected = clientA.Reader.GetDisconnectedMemberInUpdate();
             Assert.AreEqual(disconnected.Length, 1);
             Assert.AreEqual(disconnected[0], memberC.UserId);
+            disconnected.Dispose();
         }
     }
 }
