@@ -15,8 +15,8 @@ impl RegistryClient {
 		Ok(Self { client })
 	}
 
-	pub async fn update_relay_status(&self, game: Addr, grpc_internal: Addr, state: State) -> Result<(), Status> {
-		let req = Request::new(status::StatusRequest {
+	pub async fn update_server_status(&self, game: Addr, grpc_internal: Addr, state: State) -> Result<(), Status> {
+		let req = Request::new(status::ServerStatus {
 			game: Some(game),
 			grpc_internal: Some(grpc_internal),
 			state: state as i32,

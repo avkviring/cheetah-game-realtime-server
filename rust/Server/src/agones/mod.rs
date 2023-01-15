@@ -98,7 +98,7 @@ async fn is_server_running(server_manager: &Arc<Mutex<RoomsServerManager>>) -> b
 }
 
 async fn notify_registry(gs: &GameServer, state: State) -> Result<(), RegistryError> {
-	let registry_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_MATCHES_REGISTRY");
+	let registry_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_SERVER_STATUS_RECEIVER");
 	let client = RegistryClient::new(registry_url).await.map_err(RegistryError::from)?;
 
 	let status = gs
@@ -122,5 +122,5 @@ async fn notify_registry(gs: &GameServer, state: State) -> Result<(), RegistryEr
 		port: u32::from(cheetah_microservice::get_internal_grpc_service_default_port()),
 	};
 
-	client.update_relay_status(game, grpc_internal, state).await.map_err(RegistryError::from)
+	client.update_server_status(game, grpc_internal, state).await.map_err(RegistryError::from)
 }
