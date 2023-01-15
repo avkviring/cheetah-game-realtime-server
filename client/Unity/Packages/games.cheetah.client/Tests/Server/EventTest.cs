@@ -27,6 +27,7 @@ namespace Games.Cheetah.Client.Tests.Server
             var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(777, DropMineEventFieldIdId);
             var firstEvent = eventsStream[createdObject.ObjectId];
             Assert.AreEqual(dropMineEvent.MineId, firstEvent.MineId);
+            eventsStream.Dispose();
         }
 
         [Test]
@@ -47,6 +48,7 @@ namespace Games.Cheetah.Client.Tests.Server
             // проверяем результат
             var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(777, DropMineEventFieldIdId);
             Assert.AreEqual(dropMineEvent.MineId, eventsStream[createdObject.ObjectId].MineId);
+            eventsStream.Dispose();
         }
     }
 }
