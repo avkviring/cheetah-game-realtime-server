@@ -23,6 +23,7 @@ use crate::server::manager::{RoomsServerManager, RoomsServerManagerError};
 pub mod agones;
 pub mod builder;
 pub mod debug;
+pub mod env;
 pub mod grpc;
 pub mod room;
 pub mod server;
