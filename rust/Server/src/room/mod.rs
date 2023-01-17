@@ -232,6 +232,7 @@ impl Room {
 			out_commands: Default::default(),
 		};
 		self.members.insert(member_id, member);
+		tracing::info!("[room({:?})] register member({:?})", self.id, member_id);
 		member_id
 	}
 

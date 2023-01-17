@@ -64,6 +64,9 @@ impl RoomsServer {
 			self.execute_management_tasks(now);
 			self.measurers.borrow_mut().on_server_cycle(now.elapsed());
 			thread::sleep(Duration::from_millis(1));
+			if now.elapsed() > Duration::from_secs(1) {
+				tracing::error!("slow cycle, time ={:?} ", now.elapsed());
+			}
 		}
 	}
 

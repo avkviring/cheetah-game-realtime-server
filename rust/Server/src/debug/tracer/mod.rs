@@ -183,7 +183,7 @@ impl CommandTracerSessions {
 				match self.sessions.get_mut(&session_id) {
 					None => Err(TracerSessionCommandError::SessionNotFound),
 					Some(session) => {
-						tracing::info!("set filter {:?} {:?}", query, filter);
+						tracing::debug!("set filter {:?} {:?}", query, filter);
 						session.apply_filter(filter);
 						Ok(())
 					}
