@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 use std::rc::Rc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use cheetah_common::protocol::codec::cipher::Cipher;
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
@@ -36,7 +36,6 @@ struct MemberSession {
 impl NetworkLayer {
 	pub fn new(socket: UdpSocket, measurers: Rc<RefCell<Measurers>>) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
-		tracing::info!("Starting network server on {:?}", socket);
 		Ok(Self {
 			sessions: Default::default(),
 			socket,
@@ -147,7 +146,7 @@ impl NetworkLayer {
 								let private_key = &session.private_key;
 								match InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
 									Ok(commands) => {
-										tracing::info!("c2s {:?}", commands);
+										tracing::debug!("c2s {:?}", commands);
 										let frame = InFrame::new(frame_id, headers, commands);
 										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
 											session.peer_address.replace(address);
@@ -210,7 +209,6 @@ mod tests {
 	use std::str::FromStr;
 	use std::time::Instant;
 
-	use crate::room::member::Member;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_common::protocol::codec::cipher::Cipher;
 	use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
@@ -219,6 +217,7 @@ mod tests {
 	use cheetah_common::protocol::frame::MAX_FRAME_SIZE;
 	use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 
+	use crate::room::member::Member;
 	use crate::room::template::config::MemberTemplate;
 	use crate::server::measurers::Measurers;
 	use crate::server::network::NetworkLayer;

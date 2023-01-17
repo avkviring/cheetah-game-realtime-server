@@ -164,9 +164,12 @@ impl Internal for RealtimeInternalService {
 	}
 
 	async fn get_rooms(&self, _: Request<EmptyRequest>) -> Result<Response<GetRoomsResponse>, Status> {
-		let server = self.server_manager.lock().await;
-		let rooms = server.get_rooms().unwrap();
-		Ok(Response::new(GetRoomsResponse { rooms }))
+		self.server_manager
+			.lock()
+			.await
+			.get_rooms()
+			.map(|rooms| Response::new(GetRoomsResponse { rooms }))
+			.map_err(Status::from)
 	}
 }
 

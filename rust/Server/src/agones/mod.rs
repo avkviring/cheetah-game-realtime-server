@@ -1,5 +1,5 @@
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use rymder::GameServer;
@@ -29,13 +29,13 @@ pub enum RegistryError {
 /// Если Agones  не запущен - то relay будет остановлен
 ///
 pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
-	tracing::info!("Agones: Starting");
+	tracing::debug!("Agones agones sdk");
 	match rymder::Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
 		Ok((mut sdk, gameserver)) => {
-			tracing::info!("Agones: Connected to SDK");
+			tracing::debug!("Agones: Connected to SDK");
 			// сервер готов к работе
 			sdk.mark_ready().await.unwrap();
-			tracing::info!("Agones: invoked sdk.mark_ready");
+			tracing::debug!("Agones: invoked sdk.mark_ready");
 
 			let mut health = sdk.health_check();
 
@@ -45,7 +45,7 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 				// при создании первой комнаты - вызываем allocate
 				if !allocated && server_manager.lock().await.created_room_counter > 0 {
 					sdk.allocate().await.unwrap();
-					tracing::info!("Agones: invoked allocated");
+					tracing::debug!("Agones: invoked allocated");
 					allocated = true;
 				}
 
@@ -68,7 +68,7 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 				// подтверждаем что сервер жив
 				match health.send(()).await {
 					Ok(_) => {
-						tracing::info!("Agones: invoked health");
+						tracing::debug!("Agones: invoked health");
 					}
 					Err(e) => {
 						tracing::error!("Agones: health receiver was closed {:?}", e);
