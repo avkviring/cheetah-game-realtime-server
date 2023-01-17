@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::io::{Cursor, Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
 use std::rc::Rc;
-use std::time::{Duration, Instant};
+pub use std::time::Instant;
 
 use cheetah_common::protocol::codec::cipher::Cipher;
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;

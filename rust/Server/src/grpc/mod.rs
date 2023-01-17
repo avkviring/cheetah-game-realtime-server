@@ -45,12 +45,14 @@ impl RealtimeInternalService {
 		})
 	}
 
-	fn create_super_member_if_need(server: &mut MutexGuard<'_, RoomsServerManager>, room_id: RoomId) {
+	fn create_super_member_if_need(server: &mut MutexGuard<'_, RoomsServerManager>, room_id: RoomId) -> Result<(), TaskError> {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
-			server.create_member(room_id, MemberTemplate::new_super_member_with_key(key)).unwrap();
+			server.create_member(room_id, MemberTemplate::new_super_member_with_key(key))?;
 		}
+
+		Ok(())
 	}
 }
 
@@ -61,8 +63,9 @@ impl Internal for RealtimeInternalService {
 		let template = crate::room::template::config::RoomTemplate::from(request.into_inner());
 		let room_id = server.create_room(template).map_err(Status::from)?;
 
-		Self::create_super_member_if_need(&mut server, room_id);
-		Ok(Response::new(RoomIdResponse { room_id }))
+		Self::create_super_member_if_need(&mut server, room_id)
+			.map(|_| Response::new(RoomIdResponse { room_id }))
+			.map_err(Status::from)
 	}
 
 	async fn create_member(&self, request: Request<CreateMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {

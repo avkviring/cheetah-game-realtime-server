@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use fnv::FnvHashSet;
 
 use cheetah_server::builder::ServerBuilder;
@@ -7,7 +9,7 @@ use cheetah_server::env::{
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	setup_tracer(tracing::Level::INFO);
+	setup_tracer(tracing::Level::from_str(get_env_or_default("LOG_LEVEL", "info").as_str()).unwrap());
 	setup_panic_hook();
 	prometheus_measures_exporter::start_prometheus_exporter();
 	tracing::info!("start server");
