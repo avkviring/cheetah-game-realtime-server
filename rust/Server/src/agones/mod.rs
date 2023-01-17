@@ -1,14 +1,14 @@
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use std::time::Duration;
 
 use rymder::GameServer;
 use thiserror::Error;
 use tokio::sync::Mutex;
 
-use cheetah_microservice::tonic::codegen::Arc;
-
 use crate::agones::client::RegistryClient;
 use crate::agones::proto::status::{Addr, State};
+use crate::env::{get_env, get_internal_grpc_service_default_port, get_internal_srv_uri_from_env};
 use crate::server::manager::RoomsServerManager;
 
 pub mod client;
@@ -98,7 +98,7 @@ async fn is_server_running(server_manager: &Arc<Mutex<RoomsServerManager>>) -> b
 }
 
 async fn notify_registry(gs: &GameServer, state: State) -> Result<(), RegistryError> {
-	let registry_url = cheetah_microservice::get_internal_srv_uri_from_env("CHEETAH_SERVER_STATUS_RECEIVER");
+	let registry_url = get_internal_srv_uri_from_env("CHEETAH_SERVER_STATUS_RECEIVER");
 	let client = RegistryClient::new(registry_url).await.map_err(RegistryError::from)?;
 
 	let status = gs
@@ -118,8 +118,8 @@ async fn notify_registry(gs: &GameServer, state: State) -> Result<(), RegistryEr
 		port: port.into(),
 	};
 	let grpc_internal = Addr {
-		host: cheetah_microservice::get_env("POD_IP"),
-		port: u32::from(cheetah_microservice::get_internal_grpc_service_default_port()),
+		host: get_env("POD_IP"),
+		port: u32::from(get_internal_grpc_service_default_port()),
 	};
 
 	client.update_server_status(game, grpc_internal, state).await.map_err(RegistryError::from)

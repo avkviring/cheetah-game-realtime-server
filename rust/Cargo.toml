@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "Microservice",
     "Client",
     "Common",
     "Embedded",
@@ -22,10 +21,8 @@ tonic-health = "0.8.0"
 prost = "0.11.3"
 thiserror = "1.0.37"
 futures = "0.3.25"
-tracing = "0.1.31"
 lazy_static = "1.4.0"
 tonic-build = "0.8.4"
-tracing-log = "0.1.2"
 fnv = "1.0.7"
 rand = "0.8.5"
 tokio-stream = "0.1.11"
@@ -33,7 +30,9 @@ strum_macros = "0.24.2"
 prometheus = "0.13.1"
 prometheus-measures-exporter = "0.0.1"
 heapless = "0.7.16"
-tracing-core = "0.1.26"
-tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
 anyhow = "1.0.66"
 widestring = "0.5.1"
+tracing = "0.1.31"
+tracing-log = "0.1.2"
+tracing-core = "0.1.26"
+tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }

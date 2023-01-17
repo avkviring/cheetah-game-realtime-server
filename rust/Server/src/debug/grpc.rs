@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
-use tonic::Status;
+use tonic::{Request, Response, Status};
 
-use cheetah_microservice::tonic::{Request, Response};
-use cheetah_microservice::trace::Trace;
+use cheetah_common::trace::Trace;
 
 use crate::debug::proto::admin;
 use crate::server::manager::RoomsServerManager;

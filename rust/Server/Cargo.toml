@@ -27,16 +27,18 @@ tonic-health.workspace = true
 prost.workspace = true
 rymder = "0.5.0" # agones sdk
 strum_macros.workspace = true
-cheetah-microservice = { path = "../Microservice" }
 tonic-web = "0.5.0"
 thiserror.workspace = true
-tracing.workspace = true
 prometheus.workspace = true
 lazy_static.workspace = true
 prometheus-measures-exporter.workspace = true
 num = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
+tracing.workspace = true
+tracing-core.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
 
 [build-dependencies]
 tonic-build.workspace = true

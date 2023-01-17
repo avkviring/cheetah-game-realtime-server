@@ -1,14 +1,21 @@
-use cheetah_server::builder::ServerBuilder;
 use fnv::FnvHashSet;
+
+use cheetah_server::builder::ServerBuilder;
+use cheetah_server::env::{
+	get_admin_webgrpc_service_default_address, get_env_or_default, get_internal_grpc_service_default_address, get_internal_webgrpc_service_default_address, setup_panic_hook, setup_tracer,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-	cheetah_microservice::init("matches.relay");
+	setup_tracer(tracing::Level::INFO);
+	setup_panic_hook();
+	prometheus_measures_exporter::start_prometheus_exporter();
+	tracing::info!("start server");
 
 	let mut builder = ServerBuilder::default()
-		.set_admin_webgrpc_service_bind_address(cheetah_microservice::get_admin_webgrpc_service_default_address())
-		.set_internal_grpc_service_bind_address(cheetah_microservice::get_internal_grpc_service_default_address())
-		.set_internal_webgrpc_service_bind_address(cheetah_microservice::get_internal_webgrpc_service_default_address())
+		.set_admin_webgrpc_service_bind_address(get_admin_webgrpc_service_default_address())
+		.set_internal_grpc_service_bind_address(get_internal_grpc_service_default_address())
+		.set_internal_webgrpc_service_bind_address(get_internal_webgrpc_service_default_address())
 		.set_games_service_bind_address("0.0.0.0:5555".parse().unwrap())
 		.set_plugin_names(get_plugin_names("PLUGIN_NAMES"));
 
@@ -24,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn get_plugin_names(env_var: &str) -> FnvHashSet<String> {
 	// плагины должны быть в формате PLUGIN_NAMES=plugin_1;plugin_2
-	cheetah_microservice::get_env_or_default(env_var, "").split_terminator(';').map(ToString::to_string).collect()
+	get_env_or_default(env_var, "").split_terminator(';').map(ToString::to_string).collect()
 }
 
 #[cfg(test)]
