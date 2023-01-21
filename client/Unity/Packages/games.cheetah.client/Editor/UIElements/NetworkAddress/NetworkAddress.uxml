@@ -3,7 +3,7 @@
          editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
 >
     <ui:Box style="flex-direction: row;padding: 5px;">
-        <ui:TextField text="127.0.0.1" tooltip="Server grpc address" name="address" max-length="20" style="min-width: 200px; width: 200px"/>
+        <ui:TextField text="127.0.0.1" tooltip="Server grpc address" name="address" max-length="25" style="min-width: 200px; width: 200px"/>
         <ui:Button text="Connect" name="connect-button" style="min-width: 200px; max-width: 200px;" />
     </ui:Box>
     

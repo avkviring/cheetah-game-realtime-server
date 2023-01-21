@@ -51,13 +51,16 @@ namespace Games.Cheetah.Client.Editor.UIElements.NetworkAddress
 
         public void AddConnectCallback(Action<string> action)
         {
-            var address = this.Q<TextField>("address").value.Trim();
-            if (!address.StartsWith("http"))
+            connectButton.RegisterCallback<ClickEvent>(_ =>
             {
-                address = "http://" + address;
-            }
+                var address = this.Q<TextField>("address").value.Trim();
+                if (!address.StartsWith("http"))
+                {
+                    address = "http://" + address;
+                }
 
-            connectButton.RegisterCallback<ClickEvent>(_ => action.Invoke(address));
+                action.Invoke(address);
+            });
         }
     }
 }
