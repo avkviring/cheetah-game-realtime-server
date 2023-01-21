@@ -28,7 +28,7 @@ namespace Games.Cheetah.Client.Editor.CommandsViewer
         /// <summary>
         /// Удаленные провайдеры данных или тестовые
         /// </summary>
-        private const bool RemoteProviders = false;
+        private const bool RemoteProviders = true;
 
         private const string PathToStyleSheet = "Packages/games.cheetah.client/Editor/CommandsViewer/UI/Styles.uss";
         private const string PathToUxml = "Packages/games.cheetah.client/Editor/CommandsViewer/UI/Window.uxml";
