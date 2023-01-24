@@ -29,7 +29,7 @@ pub const RETRANSMIT_MAX_TIME_IN_SEC: usize = 10;
 ///
 /// Время ожидания ACK
 ///
-pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 0.5;
+pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 2.0;
 
 ///
 /// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
