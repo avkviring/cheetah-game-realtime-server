@@ -22,7 +22,7 @@ namespace Games.Cheetah.Client.Internal
         byte DestroyClient(ushort clientId);
         byte AttachToRoom(ushort clientId);
         byte DetachFromRoom(ushort clientId);
-        byte SetChannelType(ushort clientId, ChannelType channelType, byte group);
+        byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group);
         byte SetRttEmulation(ushort clientId, ulong rttInMs, double rttDispersion);
         byte SetDropEmulation(ushort clientId, double dropProbability, ulong dropTimeInMs);
         byte ResetEmulation(ushort clientId);

@@ -49,7 +49,7 @@ namespace Games.Cheetah.Client.Internal.FFI
         public static extern byte DetachFromRoom(ushort clientId);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_channel")]
-        public static extern byte SetChannelType(ushort clientId, ChannelType channelType, byte group);
+        public static extern byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_rtt_emulation")]
         public static extern byte SetRttEmulation(ushort clientId, ulong rttInMs, double rttDispersion);

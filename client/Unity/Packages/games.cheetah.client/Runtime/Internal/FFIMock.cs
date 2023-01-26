@@ -81,7 +81,7 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public byte SetChannelType(ushort clientId, ChannelType channelType, byte group)
+        public byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group)
         {
             return 0;
         }

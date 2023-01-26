@@ -44,9 +44,9 @@ namespace Games.Cheetah.Client.Internal.FFI
             return FFIMethods.DetachFromRoom(clientId);
         }
 
-        public byte SetChannelType(ushort clientId, ChannelType channelType, byte group)
+        public byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group)
         {
-            return FFIMethods.SetChannelType(clientId, channelType, group);
+            return FFIMethods.SetChannelType(clientId, networkChannelType, group);
         }
 
         public byte SetRttEmulation(ushort clientId, ulong rttInMs, double rttDispersion)
