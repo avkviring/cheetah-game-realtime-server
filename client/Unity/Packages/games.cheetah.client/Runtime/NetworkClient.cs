@@ -7,7 +7,6 @@ using Games.Cheetah.Client.Types.Command;
 using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.Client.Types.Network;
 using Games.Cheetah.Client.Types.Object;
-using UnityEngine;
 
 namespace Games.Cheetah.Client
 {
@@ -21,8 +20,7 @@ namespace Games.Cheetah.Client
         public readonly CodecRegistry CodecRegistry;
         internal readonly ushort Id;
         private bool enableClientLog = true;
-        private ChannelType currentChannelType;
-        private byte currentChannelGroup;
+        private NetworkChannel currentNetworkChannel;
         private NetworkBuffer buffer;
         internal static S2CCommand[] s2cCommands = new S2CCommand[1024];
         internal ushort s2cCommandsCount;
@@ -70,6 +68,8 @@ namespace Games.Cheetah.Client
 
             Writer = new Writer(ffi, CodecRegistry, Id);
             Reader = new Reader(this, CodecRegistry);
+
+            SetChannel(NetworkChannel.Default);
         }
 
         /// <summary>
@@ -93,6 +93,7 @@ namespace Games.Cheetah.Client
                 {
                     ResultChecker.Check(ffi.Receive(Id, commands, ref s2cCommandsCount));
                 }
+
                 Reader.Update();
                 NetworkClientLogs.CollectLogs(enableClientLog);
             }
@@ -118,11 +119,6 @@ namespace Games.Cheetah.Client
         public NetworkObjectBuilder NewObjectBuilder(ushort template, ulong accessGroup)
         {
             return new NetworkObjectBuilder(template, accessGroup, this);
-        }
-
-        public void OnException(Exception e)
-        {
-            Debug.LogException(e);
         }
 
         /// <summary>
@@ -171,16 +167,15 @@ namespace Games.Cheetah.Client
         /// </summary>
         /// <param name="channelType">тип канала</param>
         /// <param name="group">группа, для групповых каналов, для остальных игнорируется</param>
-        public void SetChannelType(ChannelType channelType, byte group)
+        public void SetChannel(NetworkChannel networkChannel)
         {
-            if (currentChannelType == channelType && currentChannelGroup == group)
+            if (currentNetworkChannel != null && currentNetworkChannel.Equals(networkChannel))
             {
                 return;
             }
 
-            currentChannelType = channelType;
-            currentChannelGroup = group;
-            ResultChecker.Check(ffi.SetChannelType(Id, channelType, group));
+            currentNetworkChannel = networkChannel;
+            ResultChecker.Check(ffi.SetChannelType(Id, networkChannel.NetworkChannelType, networkChannel.group));
         }
 
 
