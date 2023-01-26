@@ -19,7 +19,7 @@ pub mod header;
 ///
 /// Количество фреймов с командами, требующими надежную доставку в секунду
 ///
-pub const RELIABILITY_FRAME_PER_SECOND: usize = 10;
+pub const RELIABILITY_FRAME_PER_SECOND: usize = 60;
 
 ///
 /// Время ожидания доставки оригинально фрейма (при повторных пересылках)
@@ -29,7 +29,7 @@ pub const RETRANSMIT_MAX_TIME_IN_SEC: usize = 10;
 ///
 /// Время ожидания ACK
 ///
-pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 2.0;
+pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 1.0;
 
 ///
 /// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
@@ -43,7 +43,7 @@ pub const RETRANSMIT_LIMIT: u8 = (RETRANSMIT_MAX_TIME_IN_SEC as f64 / RETRANSMIT
 /// количество фреймов в буферах, должно гарантированно хватить для всех фреймов
 /// как только количество фреймов будет больше - то канал переходит в состояние disconnected
 ///
-pub const RETRANSMIT_FRAMES_CAPACITY: usize = RELIABILITY_FRAME_PER_SECOND * RETRANSMIT_MAX_TIME_IN_SEC;
+pub const RETRANSMIT_FRAMES_CAPACITY: usize = 5 * RELIABILITY_FRAME_PER_SECOND * RETRANSMIT_MAX_TIME_IN_SEC;
 
 #[derive(Debug)]
 pub struct Retransmit {
@@ -174,9 +174,10 @@ impl Retransmit {
 
 #[cfg(test)]
 mod tests {
-	use prometheus::IntCounter;
 	use std::ops::Add;
 	use std::time::Instant;
+
+	use prometheus::IntCounter;
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
