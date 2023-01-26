@@ -11,4 +11,4 @@ pub mod output;
 ///
 pub type FrameId = u64;
 
-pub const MAX_FRAME_SIZE: usize = 1024;
+pub const MAX_FRAME_SIZE: usize = 511;
