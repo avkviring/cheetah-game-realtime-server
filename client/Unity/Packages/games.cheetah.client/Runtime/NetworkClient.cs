@@ -18,6 +18,7 @@ namespace Games.Cheetah.Client
         private static NetworkClient current;
 
         public readonly CodecRegistry CodecRegistry;
+        public readonly uint MemberId;
         internal readonly ushort Id;
         private bool enableClientLog = true;
         private NetworkChannel currentNetworkChannel;
@@ -56,6 +57,7 @@ namespace Games.Cheetah.Client
             this.ffi = ffi;
             NetworkClientLogs.CollectLogs(false); // очищаем логи с предыдущего клиента
             CodecRegistry = codecRegistry;
+            MemberId = memberId;
 
             var userPrivateKey = new NetworkBuffer(privateUserKey);
             ResultChecker.Check(ffi.CreateClient(
