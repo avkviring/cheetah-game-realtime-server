@@ -14,6 +14,7 @@ namespace Games.Cheetah.Client.Internal
         private readonly CodecRegistry codecRegistry;
         private ushort clientIdGenerator;
         private Dictionary<ObjectFieldId, object> fields = new();
+        private Dictionary<ObjectFieldId, Queue<EventPayload>> events = new();
         private readonly List<S2CCommand> s2cCommands = new();
         private readonly Dictionary<NetworkObjectId, NetworkObject> creatingObjects = new();
         private readonly Dictionary<NetworkObjectId, NetworkObject> createdObjects = new();
@@ -25,6 +26,12 @@ namespace Games.Cheetah.Client.Internal
             internal FieldId fieldId;
             internal NetworkObjectId objectId;
         };
+
+        record EventPayload
+        {
+            internal object eventData;
+            internal ushort? targetUserOpt;
+        }
 
         public FFIMock(CodecRegistry codecRegistry)
         {
@@ -179,11 +186,25 @@ namespace Games.Cheetah.Client.Internal
 
         public byte Send(ushort clientId, in NetworkObjectId objectId, FieldId.Event fieldId, ref NetworkBuffer eventData)
         {
+            var key = new ObjectFieldId { fieldId = fieldId, objectId = objectId };
+            if (!events.TryGetValue(key, out var eventQueue))
+            {
+                eventQueue = new Queue<EventPayload>();
+                events[key] = eventQueue;
+            }
+            eventQueue.Enqueue(new EventPayload { eventData = eventData });
             return 0;
         }
 
         public byte Send(ushort clientId, ushort targetUser, in NetworkObjectId objectId, FieldId.Event fieldId, ref NetworkBuffer eventData)
         {
+            var key = new ObjectFieldId { fieldId = fieldId, objectId = objectId };
+            if (!events.TryGetValue(key, out var eventQueue))
+            {
+                eventQueue = new Queue<EventPayload>();
+                events[key] = eventQueue;
+            }
+            eventQueue.Enqueue(new EventPayload { eventData = eventData, targetUserOpt = targetUser });
             return 0;
         }
 
@@ -239,6 +260,19 @@ namespace Games.Cheetah.Client.Internal
                 }
             });
             Set(0, in command.objectId, new FieldId.Double(command.fieldId), command.value);
+        }
+
+        public void ScheduleCommandFromServer(S2CCommands.Event command)
+        {
+            s2cCommands.Add(new S2CCommand
+            {
+                commandType = CommandType.SendEvent,
+                commandUnion = new S2CCommandUnion
+                {
+                    setEvent = command
+                }
+            });
+            Send(0, in command.objectId, new FieldId.Event(command.fieldId), ref command.eventData);
         }
 
         public void ScheduleCommandFromServer(S2CCommands.SetStructure command)
@@ -305,6 +339,26 @@ namespace Games.Cheetah.Client.Internal
             return null;
         }
 
+        public IEnumerable<T?> GetEvents<T>(NetworkObjectId id, FieldId.Event field) where T : struct
+        {
+            var key = new ObjectFieldId { fieldId = field, objectId = id };
+            if (!events.TryGetValue(key, out var eventQueue)) yield break;
+            
+            while (eventQueue.Count > 0)
+            {
+                var ev = eventQueue.Dequeue();
+                NetworkBuffer buffer = (NetworkBuffer)ev.eventData;
+                T item = new();
+                codecRegistry.GetCodec<T>().Decode(ref buffer, ref item);
+                yield return item;
+            }
+        }
+
+        public void ClearEvents()
+        {
+            events.Clear();
+        }
+
         public long GetCreatedObjectsCount()
         {
             return createdObjects.Count;
@@ -323,6 +377,7 @@ namespace Games.Cheetah.Client.Internal
         public void Clear()
         {
             fields.Clear();
+            events.Clear();
         }
     }
 }

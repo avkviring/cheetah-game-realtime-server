@@ -18,18 +18,20 @@ namespace Games.Cheetah.Client
         void ScheduleCommandFromServer(S2CCommands.SetLong command);
         void ScheduleCommandFromServer(S2CCommands.SetDouble command);
         void ScheduleCommandFromServer(S2CCommands.DeleteObject command);
-
+        void ScheduleCommandFromServer(S2CCommands.Event command);
         void ScheduleCommandFromServer(S2CCommands.SetStructure command);
 
 
         long? GetFieldValue(NetworkObjectId id, FieldId.Long field);
         double? GetFieldValue(NetworkObjectId id, FieldId.Double field);
         T? GetFieldValue<T>(NetworkObjectId id, FieldId.Structure field) where T : struct;
+        IEnumerable<T?> GetEvents<T>(NetworkObjectId id, FieldId.Event field) where T : struct;
 
         void SetMemberIdForNewNetworkObject(ushort memberId);
 
         IList<NetworkObjectId> GetCreatedObjects();
         long GetCreatedObjectsCount();
         void Clear();
+        void ClearEvents();
     }
 }
