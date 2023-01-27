@@ -25,6 +25,12 @@ namespace Games.Cheetah.Client
         }
 
         /**
+         * Флаг, создавались ли объекты в текущем Update.
+         * Можно проверять, чтобы не выделять память каждый кадр
+         */
+        public bool HasCreateObjectsInCurrentUpdate => createdObjectsInUpdate.Count > 0;
+        
+        /**
          * Получить объекты с сервера, создание которых завершилось в текущем Update
          */
         public IList<NetworkObjectConstructor> GetCreatedObjectsInCurrentUpdate(ushort template)
