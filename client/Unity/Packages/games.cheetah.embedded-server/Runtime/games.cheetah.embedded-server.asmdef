@@ -2,7 +2,7 @@
   "name": "games.cheetah.embedded-server",
   "rootNamespace": "Games.Cheetah.EmbeddedServer",
   "references": [
-    "games.cheetah.platform",
+    "games.cheetah.grpc",
     "games.cheetah.client",
     "games.cheetah.grpc.internal"
   ],

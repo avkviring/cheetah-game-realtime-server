@@ -11,7 +11,7 @@
     "games.cheetah.grpc.shared",
     "games.cheetah.grpc.internal",
     "games.cheetah.embedded-server",
-    "games.cheetah.platform"
+    "games.cheetah.grpc"
   ],
   "includePlatforms": [
     "Editor"

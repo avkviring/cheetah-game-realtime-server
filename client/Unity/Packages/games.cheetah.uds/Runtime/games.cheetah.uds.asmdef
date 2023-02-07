@@ -3,7 +3,7 @@
   "rootNamespace": "Games.Cheetah.UDS",
   "references": [
     "games.cheetah.client",
-    "games.cheetah.platform",
+    "games.cheetah.grpc",
     "games.cheetah.grpc.internal"
   ],
   "allowUnsafeCode": true,

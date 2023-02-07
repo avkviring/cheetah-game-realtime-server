@@ -4,7 +4,7 @@
   "references": [
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
-    "games.cheetah.platform",
+    "games.cheetah.grpc",
     "games.cheetah.client",
     "games.cheetah.embedded-server",
     "games.cheetah.grpc.internal"

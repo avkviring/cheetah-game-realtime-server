@@ -1,8 +1,8 @@
 {
-  "name": "games.cheetah.platform",
+  "name": "games.cheetah.grpc",
   "version": "999.999.999",
-  "displayName": "games.cheetah.platform",
-  "description": "Enter point to platform services",
+  "displayName": "games.cheetah.grpc",
+  "description": "Grpc library",
   "unity": "2019.1",
   "unityRelease": "0b5",
   "repository": "github:cheetah-game-platform/platform",

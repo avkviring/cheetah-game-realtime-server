@@ -2,7 +2,7 @@
   "name": "games.cheetah.client.editor",
   "rootNamespace": "Games.Cheetah.Client",
   "references": [
-    "games.cheetah.platform",
+    "games.cheetah.grpc",
     "games.cheetah.client",
     "games.cheetah.grpc.admin",
     "games.cheetah.grpc.shared"

@@ -7,7 +7,7 @@
     "UnityEngine",
     "games.cheetah.client",
     "games.cheetah.grpc.internal",
-    "games.cheetah.platform",
+    "games.cheetah.grpc",
     "games.cheetah.embedded-server",
     "games.cheetah.uds"
   ],

@@ -285,7 +285,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999",
+        "games.cheetah.grpc": "999.999.999",
         "games.cheetah.grpc.admin": "999.999.999",
         "games.cheetah.grpc.shared": "999.999.999",
         "com.unity.collections": "1.2.4"
@@ -296,9 +296,17 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999",
+        "games.cheetah.grpc": "999.999.999",
         "games.cheetah.client": "999.999.999",
         "games.cheetah.grpc.internal": "999.999.999"
+      }
+    },
+    "games.cheetah.grpc": {
+      "version": "file:games.cheetah.grpc",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "2.0.0"
       }
     },
     "games.cheetah.grpc.admin": {
@@ -306,7 +314,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999",
+        "games.cheetah.grpc": "999.999.999",
         "games.cheetah.grpc.shared": "999.999.999"
       }
     },
@@ -315,7 +323,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999",
+        "games.cheetah.grpc": "999.999.999",
         "games.cheetah.grpc.shared": "999.999.999"
       }
     },
@@ -324,15 +332,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999"
-      }
-    },
-    "games.cheetah.platform": {
-      "version": "file:games.cheetah.platform",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "2.0.0"
+        "games.cheetah.grpc": "999.999.999"
       }
     },
     "games.cheetah.uds": {
@@ -340,7 +340,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "games.cheetah.platform": "999.999.999",
+        "games.cheetah.grpc": "999.999.999",
         "games.cheetah.client": "999.999.999",
         "games.cheetah.grpc.internal": "999.999.999",
         "games.cheetah.embedded-server": "999.999.999"
