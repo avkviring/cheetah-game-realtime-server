@@ -2,7 +2,7 @@
   "name": "games.cheetah.grpc.shared",
   "rootNamespace": "Games.Cheetah.Grpc.Shared",
   "references": [
-    "games.cheetah.platform"
+    "games.cheetah.grpc"
   ],
   "allowUnsafeCode": true,
   "overrideReferences": false,

@@ -6,7 +6,7 @@ using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using UnityEngine;
 
-namespace Cheetah.Platform
+namespace Games.Cheetah.Client.Editor
 {
     /// <summary>
     /// Параметры соединения кластера

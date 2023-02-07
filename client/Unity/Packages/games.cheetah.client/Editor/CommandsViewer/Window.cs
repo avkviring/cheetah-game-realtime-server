@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Cheetah.Platform;
 using Games.Cheetah.Client.Editor.CommandsViewer.Provider;
 using Games.Cheetah.Client.Editor.CommandsViewer.UI;
 using Games.Cheetah.Client.Editor.CommandsViewer.UI.Controller;

@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Cheetah.Platform;
 using Games.Cheetah.Client.Editor.DumpViewer.Provider;
 using Games.Cheetah.Client.Editor.DumpViewer.Sections.Objects;
 using Games.Cheetah.Client.Editor.DumpViewer.Sections.Users;

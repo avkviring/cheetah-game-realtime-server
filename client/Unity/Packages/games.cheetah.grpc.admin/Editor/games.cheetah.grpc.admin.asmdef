@@ -2,7 +2,7 @@
   "name": "games.cheetah.grpc.admin",
   "rootNamespace": "Games.Cheetah.Grpc.Admin",
   "references": [
-    "games.cheetah.platform",
+    "games.cheetah.grpc",
     "games.cheetah.grpc.shared"
   ],
   "allowUnsafeCode": true,
