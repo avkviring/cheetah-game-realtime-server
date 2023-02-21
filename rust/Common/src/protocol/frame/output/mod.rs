@@ -5,9 +5,9 @@ use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::commands::encoder::encode_command;
 use crate::protocol::frame::applications::CommandWithChannel;
 use crate::protocol::frame::headers::{Header, Headers};
-use crate::protocol::frame::FrameId;
+use crate::protocol::frame::{FrameId, MAX_FRAME_SIZE};
 
-pub const MAX_ENCODED_COMMANDS_SIZE: usize = 512;
+pub const MAX_ENCODED_COMMANDS_SIZE: usize = MAX_FRAME_SIZE;
 
 #[derive(Debug, Clone)]
 pub struct OutFrame {
