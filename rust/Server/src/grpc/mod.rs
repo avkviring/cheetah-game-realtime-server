@@ -8,6 +8,7 @@ use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::protocol::others::member_id::MemberAndRoomId;
+use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::RoomId;
 
 use crate::grpc::proto::internal::internal_server::Internal;
@@ -70,7 +71,11 @@ impl Internal for RealtimeInternalService {
 
 	async fn create_member(&self, request: Request<CreateMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 		let request = request.into_inner();
-		self.register_member(request.room_id, crate::room::template::config::MemberTemplate::from(request.user.unwrap())).await
+		let user_template = request.user.unwrap();
+		if user_template.groups == AccessGroups::super_member_group().0 {
+			return Err(Status::permission_denied("Wrong member group"));
+		}
+		self.register_member(request.room_id, crate::room::template::config::MemberTemplate::from(user_template)).await
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты

@@ -1,20 +1,16 @@
-use fnv::{FnvHashMap, FnvHashSet};
 use std::cell::RefCell;
 
-use cheetah_common::constants::GameObjectTemplateId;
-use cheetah_common::room::access::AccessGroups;
+use fnv::FnvHashMap;
 
 use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
 use cheetah_common::commands::field::Field;
+use cheetah_common::constants::GameObjectTemplateId;
+use cheetah_common::room::access::AccessGroups;
 
 #[derive(Debug, Default)]
 pub struct PermissionManager {
 	template_rules: FnvHashMap<GameObjectTemplateId, FnvHashMap<AccessGroups, Permission>>,
 	field_rules: FnvHashMap<PermissionFieldKey, FnvHashMap<AccessGroups, Permission>>,
-
-	write_access_template: FnvHashSet<GameObjectTemplateId>,
-	write_access_fields: FnvHashSet<PermissionFieldKey>,
-
 	cache: RefCell<FnvHashMap<PermissionCachedFieldKey, Permission>>,
 }
 
@@ -46,12 +42,6 @@ impl PermissionManager {
 				entry.insert(*groups, *permission);
 			}
 
-			if entry.iter().any(|(_, &p)| p == Permission::Rw) {
-				self.write_access_template.insert(template.template);
-			} else {
-				self.write_access_template.remove(&template.template);
-			}
-
 			for field in &template.fields {
 				let key = PermissionFieldKey {
 					template: template.template,
@@ -62,26 +52,16 @@ impl PermissionManager {
 				for GroupsPermissionRule { groups, permission } in &field.rules {
 					entry.insert(*groups, *permission);
 				}
-
-				if entry.iter().any(|(_, &p)| p == Permission::Rw) {
-					self.write_access_fields.insert(key);
-				} else {
-					self.write_access_fields.remove(&key);
-				}
 			}
 		}
 	}
 
-	///
-	/// Доступен ли объект на запись другим пользователем кроме создателя
-	///
-	#[must_use]
-	pub fn has_write_access(&self, template: GameObjectTemplateId, field: Field) -> bool {
-		self.write_access_template.contains(&template) || self.write_access_fields.contains(&PermissionFieldKey { template, field })
-	}
-
 	#[must_use]
 	pub fn get_permission(&self, template: GameObjectTemplateId, field: Field, groups: AccessGroups) -> Permission {
+		if groups == AccessGroups::super_member_group() {
+			return Permission::Rw;
+		}
+
 		let field_key = PermissionFieldKey { template, field };
 
 		*self.cache.borrow_mut().entry(PermissionCachedFieldKey { field_key, groups }).or_insert_with(|| {
@@ -106,12 +86,13 @@ impl PermissionManager {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::FieldType;
+	use cheetah_common::constants::GameObjectTemplateId;
 	use cheetah_common::room::access::AccessGroups;
 
 	use crate::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions};
 	use crate::room::template::permission::PermissionManager;
-	use cheetah_common::commands::field::Field;
 
 	#[test]
 	fn should_default_permission() {
@@ -225,61 +206,6 @@ mod tests {
 	}
 
 	#[test]
-	fn should_not_has_write_access_by_default() {
-		let permissions = Permissions::default();
-		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long }));
-	}
-
-	#[test]
-	fn should_has_write_access_if_object_has_write_permission() {
-		let mut permissions = Permissions::default();
-		permissions.templates.push(GameObjectTemplatePermission {
-			template: 10,
-			rules: vec![GroupsPermissionRule {
-				groups: Default::default(),
-				permission: Permission::Rw,
-			}],
-			fields: vec![],
-		});
-		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long }));
-	}
-
-	#[test]
-	fn should_not_has_write_access_if_object_has_read_permission() {
-		let mut permissions = Permissions::default();
-		permissions.templates.push(GameObjectTemplatePermission {
-			template: 10,
-			rules: vec![GroupsPermissionRule {
-				groups: Default::default(),
-				permission: Permission::Ro,
-			}],
-			fields: vec![],
-		});
-		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long }));
-	}
-
-	#[test]
-	fn should_has_write_access_if_object_has_field_with_write_permission() {
-		let mut permissions = Permissions::default();
-		permissions.templates.push(GameObjectTemplatePermission {
-			template: 10,
-			rules: vec![],
-			fields: vec![PermissionField {
-				field: Field { id: 100, field_type: FieldType::Long },
-				rules: vec![GroupsPermissionRule {
-					groups: Default::default(),
-					permission: Permission::Rw,
-				}],
-			}],
-		});
-		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long },));
-	}
-
-	#[test]
 	fn should_update_permissions() {
 		let template = 10;
 		let field = Field { id: 100, field_type: FieldType::Long };
@@ -294,51 +220,27 @@ mod tests {
 		let mut permissions_manager = PermissionManager::new(&permissions);
 
 		// should have write access
-		assert!(permissions_manager.has_write_access(template, field));
 		assert_eq!(Permission::Rw, permissions_manager.get_permission(template, field, groups));
 
 		// should not have write access after update
 		permissions.templates[0].rules[0].permission = Permission::Ro;
 		permissions_manager.update_permissions(&permissions);
-		assert!(!permissions_manager.has_write_access(template, field));
 		assert_eq!(Permission::Ro, permissions_manager.get_permission(template, field, groups));
 	}
 
 	#[test]
-	fn should_deny_template() {
-		let mut permissions = Permissions::default();
-		permissions.templates.push(GameObjectTemplatePermission {
-			template: 10,
-			rules: vec![GroupsPermissionRule {
-				groups: Default::default(),
-				permission: Permission::Deny,
-			}],
-			fields: vec![],
-		});
-
-		// should not have write access
+	fn should_allow_for_super_user_field() {
+		let permissions = Permissions::default();
 		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long },));
-	}
-
-	#[test]
-	fn should_deny_field() {
-		let mut permissions = Permissions::default();
-		permissions.templates.push(GameObjectTemplatePermission {
-			template: 10,
-			rules: vec![],
-			fields: vec![PermissionField {
-				field: Field { id: 100, field_type: FieldType::Long },
-				rules: vec![GroupsPermissionRule {
-					groups: Default::default(),
-					permission: Permission::Deny,
-				}],
-			}],
-		});
-
-		// should have write access
-		let permissions_manager = PermissionManager::new(&permissions);
-		assert!(!permissions_manager.has_write_access(10, Field { id: 100, field_type: FieldType::Long },));
+		let permission = permissions_manager.get_permission(
+			GameObjectTemplateId::default(),
+			Field {
+				id: Default::default(),
+				field_type: FieldType::Double,
+			},
+			AccessGroups::super_member_group(),
+		);
+		assert_eq!(permission, Permission::Rw);
 	}
 
 	#[test]

@@ -161,18 +161,14 @@ mod tests {
 	}
 
 	///
-	/// Посылка обратной команды зависит от того изменяют ли поле один клиент или множество
+	/// Не посылаем обратную команду, тому кто ее вызвал
 	///
 	#[test]
-	fn test_build_command_and_send_2() {
-		let mut template = RoomTemplate::default();
+	fn should_dont_sent_command_back() {
 		let access_groups = AccessGroups(55);
-		let field_id_1 = 10;
-		let field_id_2 = 20;
-		let field_type = FieldType::Long;
-		template.permissions.set_permission(0, &field_id_2, field_type, &access_groups, Permission::Rw);
+		let field = Field { id: 10, field_type: FieldType::Long };
 
-		let mut room = Room::from_template(template);
+		let mut room = Room::from_template(RoomTemplate::default());
 		let member_id = room.register_member(MemberTemplate::stub(access_groups));
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
 		object.access_groups = access_groups;
@@ -180,36 +176,23 @@ mod tests {
 		let object_id = object.id;
 		room.mark_as_connected_in_test(member_id).unwrap();
 
-		// изменяем поле, которое никто кроме нас не может изменять
-		room.send_command_from_action(object_id, Field { id: field_id_1, field_type }, member_id, Permission::Rw, None, |_| {
+		room.send_command_from_action(object_id, field, member_id, Permission::Rw, None, |_| {
 			Ok(Some(S2CCommand::SetLong(SetLongCommand {
 				object_id,
-				field_id: field_id_1,
+				field_id: field.id,
 				value: 0,
 			})))
 		})
 		.unwrap();
 
 		assert!(room.get_member_out_commands_for_test(member_id).is_empty());
-
-		// изменяем поле, которое могут изменять другие пользователи
-		room.send_command_from_action(object_id, Field { id: field_id_2, field_type }, member_id, Permission::Rw, None, |_| {
-			Ok(Some(S2CCommand::SetLong(SetLongCommand {
-				object_id,
-				field_id: field_id_2,
-				value: 0.into(),
-			})))
-		})
-		.unwrap();
-
-		assert!(matches!(room.get_member_out_commands_for_test(member_id).get(0), Some(S2CCommand::SetLong(_))));
 	}
 
 	///
 	/// Действие не должно выполнится если пользователь не входит в группу объекта
 	///
 	#[test]
-	fn test_build_command_and_send_3() {
+	fn should_skip_action_if_sender_not_in_group() {
 		let template = RoomTemplate::default();
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
