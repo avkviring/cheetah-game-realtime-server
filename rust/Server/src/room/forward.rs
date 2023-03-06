@@ -62,7 +62,7 @@ impl Room {
 			})),
 		};
 
-		self.send_to_members(AccessGroups::any_group(), self.get_object_template_id(command), slice::from_ref(&s2c), |member| {
+		self.send_to_members(AccessGroups::super_member_group(), self.get_object_template_id(command), slice::from_ref(&s2c), |member| {
 			member.template.super_member
 		})
 	}

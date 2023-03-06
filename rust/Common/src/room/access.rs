@@ -12,7 +12,7 @@ impl AccessGroups {
 	/// Группа для включения всех групп
 	///
 	#[must_use]
-	pub fn any_group() -> AccessGroups {
+	pub fn super_member_group() -> AccessGroups {
 		AccessGroups(u64::MAX)
 	}
 }

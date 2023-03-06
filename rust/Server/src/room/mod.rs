@@ -273,7 +273,7 @@ impl Room {
 			creator: member_id,
 			command: S2CCommand::MemberDisconnected(MemberDisconnected { member_id }),
 		};
-		self.send_to_members(AccessGroups::any_group(), None, slice::from_ref(&s2c), |member| member.id != member_id)?;
+		self.send_to_members(AccessGroups::super_member_group(), None, slice::from_ref(&s2c), |member| member.id != member_id)?;
 
 		Ok(())
 	}
@@ -336,7 +336,7 @@ impl Room {
 			creator: member_id,
 			command: S2CCommand::MemberConnected(MemberConnected { member_id }),
 		};
-		self.send_to_members(AccessGroups::any_group(), None, slice::from_ref(&s2c), |other_member| other_member.id != member_id)?;
+		self.send_to_members(AccessGroups::super_member_group(), None, slice::from_ref(&s2c), |other_member| other_member.id != member_id)?;
 
 		Ok(())
 	}

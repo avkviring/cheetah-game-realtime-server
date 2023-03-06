@@ -34,8 +34,6 @@ impl Room {
 	where
 		T: FnOnce(&mut GameObject) -> Result<Option<S2CCommand>, ServerCommandError>,
 	{
-		let сreator_is_super_member = self.members.get(&creator_id).unwrap().template.super_member;
-
 		let room_id = self.id;
 		let permission_manager = Rc::clone(&self.permission_manager);
 		let creator_access_group = match self.members.get(&creator_id) {
@@ -61,7 +59,7 @@ impl Room {
 
 		let is_creator_object_owner = object_owner == Some(creator_id);
 
-		let allow = сreator_is_super_member && is_creator_object_owner || permission_manager.borrow_mut().get_permission(object.template_id, field, creator_access_group) >= permission;
+		let allow = is_creator_object_owner || permission_manager.borrow_mut().get_permission(object.template_id, field, creator_access_group) >= permission;
 
 		if !allow {
 			return Err(ServerCommandError::MemberCannotAccessToObjectField {

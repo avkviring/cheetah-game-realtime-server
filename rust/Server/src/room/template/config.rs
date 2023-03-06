@@ -87,7 +87,7 @@ impl MemberTemplate {
 
 	#[must_use]
 	pub fn new_super_member() -> Self {
-		MemberTemplate::new(true, AccessGroups::any_group(), Default::default())
+		MemberTemplate::new(true, AccessGroups::super_member_group(), Default::default())
 	}
 
 	#[must_use]
