@@ -6,6 +6,7 @@ use std::time::{Duration, Instant};
 use fnv::FnvBuildHasher;
 use prometheus::local::LocalIntCounter;
 
+use crate::network::client::DisconnectedReason;
 use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
@@ -19,17 +20,17 @@ pub mod header;
 ///
 /// Количество фреймов с командами, требующими надежную доставку в секунду
 ///
-pub const RELIABILITY_FRAME_PER_SECOND: usize = 60;
+pub const RELIABILITY_FRAME_PER_SECOND: usize = 120;
 
 ///
 /// Время ожидания доставки оригинально фрейма (при повторных пересылках)
 ///
-pub const RETRANSMIT_MAX_TIME_IN_SEC: usize = 10;
+pub const RETRANSMIT_MAX_TIME_IN_SEC: usize = 20;
 
 ///
 /// Время ожидания ACK
 ///
-pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 1.0;
+pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 0.5;
 
 ///
 /// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
@@ -116,11 +117,7 @@ impl Retransmit {
 						retransmit_frame.frame_id = retransmit_frame_id;
 						let retransmit_header = Header::Retransmit(RetransmitHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
-
-						// мы только-что удалили фрейм, значит место в точно должно быть
-						// поэтому unwrap вполне ок
 						self.frames.push_back(scheduled_frame);
-
 						self.statistics.on_retransmit_frame(now);
 						return Some(retransmit_frame);
 					} else {
@@ -167,8 +164,20 @@ impl Retransmit {
 	}
 
 	#[must_use]
-	pub fn disconnected(&self, _: Instant) -> bool {
-		self.max_retransmit_count >= RETRANSMIT_LIMIT || self.frames.len() > RETRANSMIT_FRAMES_CAPACITY || self.wait_ack_frames.len() > RETRANSMIT_FRAMES_CAPACITY
+	pub fn disconnected(&self, _: Instant) -> Result<(), DisconnectedReason> {
+		if self.max_retransmit_count >= RETRANSMIT_LIMIT {
+			return Err(DisconnectedReason::ByRetransmitWhenMaxCount);
+		}
+
+		if self.frames.len() > RETRANSMIT_FRAMES_CAPACITY {
+			return Err(DisconnectedReason::ByRetransmitWhenMaxFrames);
+		}
+
+		if self.wait_ack_frames.len() > RETRANSMIT_FRAMES_CAPACITY {
+			return Err(DisconnectedReason::ByRetransmitWhenMaxWaitAck);
+		}
+
+		return Ok(());
 	}
 }
 
@@ -311,12 +320,12 @@ mod tests {
 			handler.get_retransmit_frame(get_time, 2);
 		}
 
-		assert!(!handler.disconnected(get_time));
+		assert!(handler.disconnected(get_time).is_ok());
 
 		get_time = get_time.add(handler.ack_wait_duration);
 		handler.get_retransmit_frame(get_time, 3);
 
-		assert!(handler.disconnected(get_time));
+		assert!(handler.disconnected(get_time).is_err());
 	}
 
 	///
