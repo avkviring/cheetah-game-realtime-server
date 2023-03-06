@@ -24,7 +24,9 @@ pub enum ConnectionStatusFFI {
 	/// Соединение закрыто
 	///
 	DisconnectedByIOError,
-	DisconnectedByRetryLimit,
+	DisconnectedByRetransmitWhenMaxCount,
+	DisconnectedByRetransmitWhenMaxFrames,
+	DisconnectedByRetransmitWhenMaxWaitAck,
 	DisconnectedByTimeout,
 	DisconnectedByClientStopped,
 	DisconnectedByRoomDeleted,
@@ -42,13 +44,15 @@ pub extern "C" fn get_connection_status(client_id: ClientId, result: &mut Connec
 					ConnectionStatus::Connected => ConnectionStatusFFI::Connected,
 					ConnectionStatus::Disconnected(disconnect_reason) => match disconnect_reason {
 						DisconnectedReason::IOError(_) => ConnectionStatusFFI::DisconnectedByIOError,
-						DisconnectedReason::ByRetryLimit => ConnectionStatusFFI::DisconnectedByRetryLimit,
 						DisconnectedReason::ByTimeout => ConnectionStatusFFI::DisconnectedByTimeout,
 						DisconnectedReason::ByCommand(reason) => match reason {
 							DisconnectByCommandReason::ClientStopped => ConnectionStatusFFI::DisconnectedByClientStopped,
 							DisconnectByCommandReason::RoomDeleted => ConnectionStatusFFI::DisconnectedByRoomDeleted,
 							DisconnectByCommandReason::MemberDeleted => ConnectionStatusFFI::DisconnectedByMemberDeleted,
 						},
+						DisconnectedReason::ByRetransmitWhenMaxCount => ConnectionStatusFFI::DisconnectedByRetransmitWhenMaxCount,
+						DisconnectedReason::ByRetransmitWhenMaxFrames => ConnectionStatusFFI::DisconnectedByRetransmitWhenMaxFrames,
+						DisconnectedReason::ByRetransmitWhenMaxWaitAck => ConnectionStatusFFI::DisconnectedByRetransmitWhenMaxWaitAck,
 					},
 				};
 				*result = ffi_status;

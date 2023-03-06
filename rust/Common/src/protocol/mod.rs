@@ -1,6 +1,7 @@
-use prometheus::local::{LocalHistogram, LocalIntCounter};
 use std::fmt::Debug;
 use std::time::Instant;
+
+use prometheus::local::{LocalHistogram, LocalIntCounter};
 
 use crate::network::client::DisconnectedReason;
 use crate::protocol::commands::input::InCommandsCollector;
@@ -132,8 +133,8 @@ impl Protocol {
 	///
 	#[must_use]
 	pub fn is_disconnected(&self, now: Instant) -> Option<DisconnectedReason> {
-		if self.retransmitter.disconnected(now) {
-			Some(DisconnectedReason::ByRetryLimit)
+		if let Err(reason) = self.retransmitter.disconnected(now) {
+			Some(reason)
 		} else if self.disconnect_by_timeout.disconnected(now) {
 			Some(DisconnectedReason::ByTimeout)
 		} else {

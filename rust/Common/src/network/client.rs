@@ -1,8 +1,9 @@
-use prometheus::{Histogram, HistogramOpts, IntCounter};
 use std::collections::VecDeque;
 use std::io::{Cursor, ErrorKind};
 use std::net::SocketAddr;
 use std::time::Instant;
+
+use prometheus::{Histogram, HistogramOpts, IntCounter};
 
 use crate::network::channel::NetworkChannel;
 use crate::protocol::codec::cipher::Cipher;
@@ -42,9 +43,11 @@ pub enum ConnectionStatus {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DisconnectedReason {
 	IOError(String),
-	ByRetryLimit,
 	ByTimeout,
 	ByCommand(DisconnectByCommandReason),
+	ByRetransmitWhenMaxCount,
+	ByRetransmitWhenMaxFrames,
+	ByRetransmitWhenMaxWaitAck,
 }
 
 impl NetworkClient {
