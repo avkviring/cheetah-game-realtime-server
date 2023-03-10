@@ -87,10 +87,10 @@ impl Protocol {
 		self.in_frame_counter += 1;
 		self.disconnect_by_timeout.on_frame_received(now);
 		self.retransmitter.on_frame_received(frame, now);
+		self.ack_sender.on_frame_received(frame, now);
 		if let Ok(replayed) = self.replay_protection.set_and_check(frame) {
 			if !replayed {
 				self.disconnect_by_command.on_frame_received(frame);
-				self.ack_sender.on_frame_received(frame, now);
 				self.rtt.on_frame_received(frame, now);
 				self.in_commands_collector.collect(frame);
 			}
