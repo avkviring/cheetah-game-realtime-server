@@ -1,9 +1,10 @@
+use std::rc::Rc;
+
 use cheetah_common::commands::field::Field;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_common::room::RoomMemberId;
-use std::rc::Rc;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::GameObject;
@@ -90,15 +91,8 @@ impl Room {
 					}
 					None => {
 						self.send_to_members(groups, Some(template), &commands, |member| {
-							let permission_manager = permission_manager.borrow_mut();
-							// отправляем себе только если есть права на запись
-							// иначе никто другой не может вносит изменения в данное поле и
-							// отправлять себе как единственному источнику изменений избыточно
-							if object_owner == Some(member.id) {
-								permission_manager.has_write_access(template, field)
-							} else {
-								true
-							}
+							// не отправляем себе
+							creator_id != member.id
 						})?;
 					}
 				}

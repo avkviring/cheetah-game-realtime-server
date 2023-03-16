@@ -231,7 +231,7 @@ mod tests {
 					c2s: C2SCommand::CreateGameObject(CreateGameObjectCommand {
 						object_id,
 						template: 1,
-						access_groups: AccessGroups::any_group(),
+						access_groups: AccessGroups::super_member_group(),
 					}),
 				},
 				ForwardedCommandFFI {

@@ -1,6 +1,7 @@
-use prometheus::local::{LocalHistogram, LocalIntCounter};
 use std::fmt::Debug;
 use std::time::Instant;
+
+use prometheus::local::{LocalHistogram, LocalIntCounter};
 
 use crate::network::client::DisconnectedReason;
 use crate::protocol::commands::input::InCommandsCollector;
@@ -28,7 +29,7 @@ pub mod reliable;
 /// - необходимо для расчетов размеров структур
 /// - в точности нет необходимости, но не должно отличаться на порядки
 ///
-pub const MAX_FRAME_PER_SECONDS: usize = 60;
+pub const MAX_FRAME_PER_SECONDS: usize = 120;
 
 ///
 /// Если от peer не будет фреймов за данное время - считаем что соединение разорвано
@@ -86,12 +87,17 @@ impl Protocol {
 		self.in_frame_counter += 1;
 		self.disconnect_by_timeout.on_frame_received(now);
 		self.retransmitter.on_frame_received(frame, now);
-		if let Ok(replayed) = self.replay_protection.set_and_check(frame) {
-			if !replayed {
-				self.disconnect_by_command.on_frame_received(frame);
-				self.ack_sender.on_frame_received(frame, now);
-				self.rtt.on_frame_received(frame, now);
-				self.in_commands_collector.collect(frame);
+		self.ack_sender.on_frame_received(frame, now);
+		match self.replay_protection.set_and_check(frame) {
+			Ok(replayed) => {
+				if !replayed {
+					self.disconnect_by_command.on_frame_received(frame);
+					self.rtt.on_frame_received(frame, now);
+					self.in_commands_collector.collect(frame);
+				}
+			}
+			Err(..) => {
+				tracing::error!("Replay Protection overflow")
 			}
 		}
 	}
@@ -132,8 +138,8 @@ impl Protocol {
 	///
 	#[must_use]
 	pub fn is_disconnected(&self, now: Instant) -> Option<DisconnectedReason> {
-		if self.retransmitter.disconnected(now) {
-			Some(DisconnectedReason::ByRetryLimit)
+		if let Err(reason) = self.retransmitter.disconnected(now) {
+			Some(reason)
 		} else if self.disconnect_by_timeout.disconnected(now) {
 			Some(DisconnectedReason::ByTimeout)
 		} else {
