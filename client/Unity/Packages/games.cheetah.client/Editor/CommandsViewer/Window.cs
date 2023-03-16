@@ -16,6 +16,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Columns = Games.Cheetah.Client.Editor.CommandsViewer.UI.Columns;
 
 namespace Games.Cheetah.Client.Editor.CommandsViewer
 {
