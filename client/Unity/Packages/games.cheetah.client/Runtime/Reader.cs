@@ -149,7 +149,7 @@ namespace Games.Cheetah.Client
         /**
          * Получить список событий по объекту в текущем цикле.
          */
-        public NativeParallelHashMap<NetworkObjectId, T> GetEvents<T>(ushort template, FieldId.Event eventId) where T : struct
+        public NativeParallelHashMap<NetworkObjectId, T> GetEvents<T>(ushort template, FieldId.Event eventId) where T : unmanaged
         {
             var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.s2cCommandsCount; i++)
