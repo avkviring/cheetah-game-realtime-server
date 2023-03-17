@@ -29,8 +29,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: install rust 1.65.0
+        run: rustup install 1.65.0
+      - name: set rust version
+        run: rustup override set 1.65.0
+      - name: cargo version
+        run: cargo version
       - name: Install Cross
-        run: cargo install --version 0.2.4 cross
+        run: cargo install --version 0.2.5 cross
       - name: Build Android armv7-linux-androideabi
         run: cross build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --target armv7-linux-androideabi --release
       - name: Build Android aarch64-linux-android
