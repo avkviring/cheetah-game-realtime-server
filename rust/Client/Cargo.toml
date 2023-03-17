@@ -24,3 +24,6 @@ tracing-subscriber.workspace = true
 cheetah-server = { path = "../Server" }
 easybench = "1.0.0"
 rand.workspace = true
+
+[build]
+build-std = true
