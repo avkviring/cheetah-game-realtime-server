@@ -13,7 +13,7 @@ path = "src/bin/service.rs"
 
 [dependencies]
 rand.workspace = true
-indexmap = { version = "1.9.1" }
+indexmap = { version = "1.9.2" }
 cheetah-common = { path = "../Common" }
 fnv.workspace = true
 heapless = { workspace = true, features = ["serde"] }
@@ -23,7 +23,7 @@ tokio-stream = { workspace = true, features = ["net"] }
 tonic.workspace = true
 tonic-health.workspace = true
 prost.workspace = true
-rymder = "0.5.0" # agones sdk
+rymder = "0.6.0" # agones sdk
 strum_macros.workspace = true
 tonic-web = "0.5.0"
 thiserror.workspace = true

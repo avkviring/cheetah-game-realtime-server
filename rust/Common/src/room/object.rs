@@ -1,16 +1,13 @@
-use std::io::{Cursor, Error, ErrorKind};
-
-use hash32_derive::Hash32;
-
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::owner::GameObjectOwner;
 use crate::room::RoomMemberId;
+use std::io::{Cursor, Error, ErrorKind};
 
 ///
 /// Идентификатор игрового объекта на клиенте
 ///
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq, Hash32)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq)]
 pub struct GameObjectId {
 	///
 	/// Идентификатор игрового объекта в рамках владельца

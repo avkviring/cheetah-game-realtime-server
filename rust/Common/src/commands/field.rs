@@ -17,15 +17,6 @@ pub enum FieldType {
 	Event,
 }
 
-impl hash32::Hash for FieldType {
-	fn hash<H>(&self, state: &mut H)
-	where
-		H: hash32::Hasher,
-	{
-		(*self as u8).hash(state);
-	}
-}
-
 impl ToString for FieldType {
 	fn to_string(&self) -> String {
 		match self {
