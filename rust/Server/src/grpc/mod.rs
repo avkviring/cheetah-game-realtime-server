@@ -179,6 +179,26 @@ impl Internal for RealtimeInternalService {
 			.map(|rooms| Response::new(GetRoomsResponse { rooms }))
 			.map_err(Status::from)
 	}
+
+	async fn get_rooms_members_count(&self, _request: Request<EmptyRequest>) -> Result<Response<GetRoomsMembersCountResponse>, Status> {
+		self.server_manager
+			.lock()
+			.await
+			.get_rooms_member_count()
+			.map(|rooms| {
+				Response::new(GetRoomsMembersCountResponse {
+					rooms: rooms
+						.into_iter()
+						.map(|r| RoomMembersCountResponse {
+							room: r.room_id,
+							members: r.members as u32,
+							connected_members: r.connected_members as u32,
+						})
+						.collect(),
+				})
+			})
+			.map_err(Status::from)
+	}
 }
 
 impl From<TaskError> for Status {
@@ -220,10 +240,16 @@ mod test {
 	use cheetah_common::network::bind_to_free_socket;
 
 	use crate::grpc::proto::internal::internal_server::Internal;
-	use crate::grpc::proto::internal::{
-		DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, GameObjectTemplatePermission, GetRoomInfoRequest, GroupsPermissionRule, MarkRoomAsReadyRequest, Permissions,
-		PutForwardedCommandConfigRequest, UpdateRoomPermissionsRequest,
-	};
+	use crate::grpc::proto::internal::DeleteRoomRequest;
+	use crate::grpc::proto::internal::EmptyRequest;
+	use crate::grpc::proto::internal::GameObjectTemplatePermission;
+	use crate::grpc::proto::internal::GetRoomInfoRequest;
+	use crate::grpc::proto::internal::GroupsPermissionRule;
+	use crate::grpc::proto::internal::MarkRoomAsReadyRequest;
+	use crate::grpc::proto::internal::Permissions;
+	use crate::grpc::proto::internal::PutForwardedCommandConfigRequest;
+	use crate::grpc::proto::internal::UpdateRoomPermissionsRequest;
+	use crate::grpc::proto::internal::{DeleteMemberRequest, RoomMembersCountResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;
@@ -239,6 +265,41 @@ mod test {
 		let rooms = rooms_response.get_ref();
 		assert!(rooms.rooms.contains(&room_1));
 		assert!(rooms.rooms.contains(&room_2));
+		assert_eq!(rooms.rooms.len(), 2);
+	}
+
+	#[tokio::test]
+	async fn should_get_rooms_members_counts() {
+		let server_manager = Arc::new(Mutex::new(new_server_manager()));
+		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let room_1 = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
+		let room_2 = server_manager.lock().await.create_room(RoomTemplate::default()).unwrap();
+		server_manager
+			.lock()
+			.await
+			.create_member(
+				room_1,
+				MemberTemplate {
+					super_member: false,
+					private_key: Default::default(),
+					groups: Default::default(),
+					objects: vec![],
+				},
+			)
+			.unwrap();
+
+		let rooms_response = service.get_rooms_members_count(Request::new(EmptyRequest::default())).await.unwrap();
+		let rooms = rooms_response.get_ref();
+		assert!(rooms.rooms.contains(&RoomMembersCountResponse {
+			room: room_1,
+			members: 1,
+			connected_members: 0
+		}));
+		assert!(rooms.rooms.contains(&RoomMembersCountResponse {
+			room: room_2,
+			members: 0,
+			connected_members: 0
+		}));
 		assert_eq!(rooms.rooms.len(), 2);
 	}
 
