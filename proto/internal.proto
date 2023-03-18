@@ -58,6 +58,8 @@ service Internal {
   rpc GetRoomInfo(GetRoomInfoRequest) returns(GetRoomInfoResponse);
 
   rpc UpdateRoomPermissions(UpdateRoomPermissionsRequest) returns(UpdateRoomPermissionsResponse);
+
+  rpc GetRoomsMembersCount(EmptyRequest) returns(GetRoomsMembersCountResponse);
 }
 
 
@@ -243,4 +245,14 @@ message UpdateRoomPermissionsResponse {
 
 message GetRoomsResponse {
   repeated uint64 rooms = 1;
+}
+
+message GetRoomsMembersCountResponse {
+  repeated RoomMembersCountResponse rooms = 1;
+}
+
+message RoomMembersCountResponse {
+  uint64 room = 1;
+  uint32 members = 2;
+  uint32 connected_members = 3;
 }

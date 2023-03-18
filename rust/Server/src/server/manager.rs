@@ -1,4 +1,3 @@
-use fnv::FnvHashSet;
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{RecvTimeoutError, SendError, Sender};
@@ -6,6 +5,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use fnv::FnvHashSet;
 use thiserror::Error;
 
 use cheetah_common::protocol::others::member_id::MemberAndRoomId;
@@ -38,6 +38,7 @@ pub enum ManagementTask {
 	DeleteMember(MemberAndRoomId),
 	Dump(RoomId),
 	GetRooms,
+	GetRoomsMemberCount,
 	CommandTracerSessionTask(RoomId, TracerSessionCommand),
 	DeleteRoom(RoomId),
 	PutForwardedCommandConfig(RoomId, ForwardConfig),
@@ -53,12 +54,20 @@ pub enum ManagementTaskResult {
 	DeleteMember,
 	Dump(admin::DumpResponse),
 	GetRooms(Vec<RoomId>),
+	GetRoomsMemberCount(Vec<RoomMembersCount>),
 	CommandTracerSessionTask,
 	DeleteRoom,
 	PutForwardedCommandConfig,
 	MarkRoomAsReady,
 	GetRoomInfo(RoomInfo),
 	UpdateRoomPermissions,
+}
+
+#[derive(Debug)]
+pub struct RoomMembersCount {
+	pub room_id: RoomId,
+	pub members: usize,
+	pub connected_members: usize,
 }
 
 #[derive(Error, Debug)]
@@ -128,6 +137,16 @@ impl RoomsServerManager {
 	pub(crate) fn get_rooms(&self) -> Result<Vec<RoomId>, TaskError> {
 		self.execute_task(ManagementTask::GetRooms).map(|res| {
 			if let ManagementTaskResult::GetRooms(rooms) = res {
+				Ok(rooms)
+			} else {
+				Err(TaskError::UnexpectedResultError)
+			}
+		})?
+	}
+
+	pub(crate) fn get_rooms_member_count(&self) -> Result<Vec<RoomMembersCount>, TaskError> {
+		self.execute_task(ManagementTask::GetRoomsMemberCount).map(|res| {
+			if let ManagementTaskResult::GetRoomsMemberCount(rooms) = res {
 				Ok(rooms)
 			} else {
 				Err(TaskError::UnexpectedResultError)
@@ -227,8 +246,9 @@ impl RoomsServerManager {
 
 #[cfg(test)]
 mod test {
-	use cheetah_common::network::bind_to_free_socket;
 	use fnv::FnvHashSet;
+
+	use cheetah_common::network::bind_to_free_socket;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::RoomsServerManager;

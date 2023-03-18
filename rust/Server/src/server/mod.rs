@@ -16,7 +16,7 @@ use cheetah_common::room::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, Permissions};
-use crate::server::manager::{ChannelTask, ManagementTask, ManagementTaskResult, TaskExecutionError};
+use crate::server::manager::{ChannelTask, ManagementTask, ManagementTaskResult, RoomMembersCount, TaskExecutionError};
 use crate::server::measurers::Measurers;
 use crate::server::network::NetworkLayer;
 use crate::server::rooms::{RoomNotFoundError, Rooms};
@@ -118,6 +118,17 @@ impl RoomsServer {
 				.map(|room| ManagementTaskResult::GetRoomInfo(room.get_info()))
 				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::UpdateRoomPermissions(room_id, permissions) => self.update_room_permissions(room_id, &permissions)?,
+			ManagementTask::GetRoomsMemberCount => ManagementTaskResult::GetRoomsMemberCount(
+				self.rooms
+					.room_by_id
+					.iter()
+					.map(|(room_id, room)| RoomMembersCount {
+						room_id: *room_id,
+						members: room.members.len(),
+						connected_members: room.members.iter().filter(|p| p.1.connected).count(),
+					})
+					.collect(),
+			),
 		};
 		Ok(res)
 	}
