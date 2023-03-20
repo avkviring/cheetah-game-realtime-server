@@ -25,10 +25,9 @@ pub enum RegistryError {
 }
 
 ///
-/// Взаимодействие с AGONES SDK
-/// Если Agones  не запущен - то relay будет остановлен
+/// Цикл оповещения agones и NotifyService
 ///
-pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
+pub async fn run_agones(server_manager: Arc<Mutex<RoomsServerManager>>, max_rooms: usize) {
 	tracing::debug!("Agones agones sdk");
 	match rymder::Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
 		Ok((mut sdk, gameserver)) => {
@@ -49,21 +48,16 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 					allocated = true;
 				}
 
-				if allocated {
-					match notify_registry(&gameserver, State::Allocated).await {
-						Ok(_) => {}
-						Err(e) => {
-							tracing::error!("Error notify registry {:?}", e);
-						}
-					};
+				let state = if allocated {
+					if server_manager.lock().await.created_room_counter >= max_rooms {
+						State::NotReady
+					} else {
+						State::Allocated
+					}
 				} else {
-					match notify_registry(&gameserver, State::Ready).await {
-						Ok(_) => {}
-						Err(e) => {
-							tracing::error!("Error notify registry {:?}", e);
-						}
-					};
-				}
+					State::Ready
+				};
+				notify_registry_with_tracing_error(&gameserver, state).await;
 
 				// подтверждаем что сервер жив
 				match health.send(()).await {
@@ -78,12 +72,7 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 
 				tokio::time::sleep(Duration::from_secs(2)).await;
 			}
-			match notify_registry(&gameserver, State::NotReady).await {
-				Ok(_) => {}
-				Err(e) => {
-					tracing::error!("Notify registry with State::NotReady fail {:?}", e);
-				}
-			};
+			notify_registry_with_tracing_error(&gameserver, State::NotReady).await;
 			sdk.shutdown().await.unwrap();
 		}
 		Err(e) => {
@@ -95,6 +84,15 @@ pub async fn run_agones_sdk(server_manager: Arc<Mutex<RoomsServerManager>>) {
 
 async fn is_server_running(server_manager: &Arc<Mutex<RoomsServerManager>>) -> bool {
 	!server_manager.lock().await.get_halt_signal().load(Ordering::Relaxed)
+}
+
+async fn notify_registry_with_tracing_error(gs: &GameServer, state: State) -> () {
+	match notify_registry(gs, state).await {
+		Ok(_) => {}
+		Err(e) => {
+			tracing::error!("Error notify registry {:?}", e);
+		}
+	}
 }
 
 async fn notify_registry(gs: &GameServer, state: State) -> Result<(), RegistryError> {
