@@ -1,8 +1,7 @@
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 
-use admin::command_tracer_server::CommandTracerServer;
-use admin::dump_server::DumpServer;
 use futures::join;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
@@ -10,7 +9,10 @@ use tokio_stream::wrappers::TcpListenerStream;
 use tonic_health::ServingStatus;
 use tonic_web::GrpcWebLayer;
 
-use crate::agones::run_agones_sdk;
+use admin::command_tracer_server::CommandTracerServer;
+use admin::dump_server::DumpServer;
+
+use crate::agones::run_agones;
 use crate::debug::dump::DumpGrpcService;
 use crate::debug::grpc::RealtimeAdminGRPCService;
 use crate::debug::proto::admin;
@@ -47,7 +49,8 @@ impl Server {
 		let internal_webgrpc_future = Self::new_internal_webgrpc_service(self.internal_webgrpc_listener, Arc::clone(&self.manager));
 		let admin_grpc = Self::configure_admin_grpc_service(self.admin_webgrpc_listener, Arc::clone(&self.manager));
 		if self.is_agones_enabled {
-			let agones = run_agones_sdk(Arc::clone(&self.manager));
+			let max_rooms = usize::from_str(&env::get_env_or_default("MAX_ROOMS", "20")).unwrap();
+			let agones = run_agones(Arc::clone(&self.manager), max_rooms);
 			join!(internal_grpc_future, internal_webgrpc_future, admin_grpc, agones);
 		} else {
 			join!(internal_grpc_future, internal_webgrpc_future, admin_grpc);
