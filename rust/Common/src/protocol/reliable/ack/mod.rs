@@ -16,7 +16,7 @@ pub mod header;
 ///
 #[derive(Debug, Default)]
 pub struct AckSender {
-	ack_tasks: heapless::Vec<AckTask, 100>,
+	ack_tasks: heapless::Vec<AckTask, 1024>,
 }
 
 #[derive(Debug, Copy, Clone)]
