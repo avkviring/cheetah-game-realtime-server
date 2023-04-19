@@ -44,7 +44,7 @@ impl OutFrame {
 		let mut cursor = Cursor::new(self.encoded_commands.as_mut_slice());
 		cursor.set_position(self.encoded_size);
 		encode_command(&mut self.context, &command, &mut cursor).unwrap();
-		if cursor.position() > MAX_ENCODED_COMMANDS_SIZE as u64 {
+		if cursor.position() >= MAX_ENCODED_COMMANDS_SIZE as u64 {
 			self.full = true;
 			return false;
 		}
