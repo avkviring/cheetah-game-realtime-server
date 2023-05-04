@@ -9,7 +9,7 @@ pub struct DisconnectByTimeout {
 }
 
 impl DisconnectByTimeout {
-	pub const TIMEOUT: Duration = Duration::from_secs(10);
+	pub const TIMEOUT: Duration = Duration::from_secs(30);
 	#[must_use]
 	pub fn new(now: Instant) -> Self {
 		Self { last_in_frame_time: now }
