@@ -18,7 +18,7 @@ use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, Permissions};
 use crate::server::manager::{ChannelTask, ManagementTask, ManagementTaskResult, RoomMembersCount, TaskExecutionError};
 use crate::server::measurers::Measurers;
-use crate::server::network::NetworkLayer;
+use crate::server::network::NetworkServer;
 use crate::server::rooms::{RoomNotFoundError, Rooms};
 
 pub mod manager;
@@ -31,7 +31,7 @@ pub mod rooms;
 /// поддерживает одновременно несколько комнат
 ///
 pub struct RoomsServer {
-	network_layer: NetworkLayer,
+	network_server: NetworkServer,
 	rooms: Rooms,
 	receiver: Receiver<ChannelTask>,
 	halt_signal: Arc<AtomicBool>,
@@ -44,7 +44,7 @@ impl RoomsServer {
 	pub(crate) fn new(socket: UdpSocket, receiver: Receiver<ChannelTask>, halt_signal: Arc<AtomicBool>, plugin_names: FnvHashSet<String>) -> Result<Self, io::Error> {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Ok(Self {
-			network_layer: NetworkLayer::new(socket, Rc::clone(&measures))?,
+			network_server: NetworkServer::new(socket, Rc::clone(&measures))?,
 			rooms: Rooms::new(Rc::clone(&measures), plugin_names.clone()),
 			receiver,
 			halt_signal,
@@ -60,7 +60,7 @@ impl RoomsServer {
 			if let Some(time_offset) = self.time_offset {
 				now = now.add(time_offset);
 			}
-			self.network_layer.cycle(&mut self.rooms, now);
+			self.network_server.cycle(&mut self.rooms, now);
 			self.execute_management_tasks(now);
 			self.measurers.borrow_mut().on_server_cycle(now.elapsed());
 			thread::sleep(Duration::from_millis(1));
@@ -148,21 +148,21 @@ impl RoomsServer {
 
 	fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {
 		let room_member_id = self.rooms.register_member(room_id, member_template.clone())?;
-		self.network_layer.register_member(now, room_id, room_member_id, member_template);
+		self.network_server.register_member(now, room_id, room_member_id, member_template);
 		Ok(room_member_id)
 	}
 
-	/// удалить комнату с севрера и закрыть соединение со всеми пользователями
+	/// удалить комнату с сервера и закрыть соединение со всеми пользователями
 	fn delete_room(&mut self, room_id: RoomId) -> Result<(), RoomNotFoundError> {
 		let room = self.rooms.take_room(&room_id)?;
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
-		self.network_layer.disconnect_members(ids, DisconnectByCommandReason::RoomDeleted);
+		self.network_server.disconnect_members(ids, DisconnectByCommandReason::RoomDeleted);
 		Ok(())
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
 	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ServerCommandError> {
-		self.network_layer.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
+		self.network_server.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
 		self.rooms.member_disconnected(&id)
 	}
 

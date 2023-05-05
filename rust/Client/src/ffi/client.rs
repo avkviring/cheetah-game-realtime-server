@@ -4,7 +4,7 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use cheetah_common::commands::binary_value::Buffer;
-use cheetah_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_common::network::channel::{ConnectionStatus, DisconnectedReason};
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
@@ -143,16 +143,16 @@ pub struct Statistics {
 #[no_mangle]
 #[allow(clippy::missing_safety_doc)]
 #[allow(unsafe_op_in_unsafe_fn)]
-pub unsafe extern "C" fn create_client(addr: *const c_char, member_id: RoomMemberId, room_id: RoomId, private_key_buffer: &Buffer, start_frame_id: u64, out_client_id: &mut u16) -> u8 {
+pub unsafe extern "C" fn create_client(connection_id: u64, addr: *const c_char, member_id: RoomMemberId, room_id: RoomId, private_key_buffer: &Buffer, out_client_id: &mut u16) -> u8 {
 	let server_address = CStr::from_ptr(addr).to_str().unwrap();
 	let mut private_key = [0; 32];
 	private_key.copy_from_slice(&private_key_buffer.buffer[0..32]);
-	do_create_client(server_address, member_id, room_id, &private_key.as_slice().into(), start_frame_id, out_client_id)
+	do_create_client(connection_id, server_address, member_id, room_id, &private_key.as_slice().into(), out_client_id)
 }
 
-pub fn do_create_client(server_address: &str, member_id: RoomMemberId, room_id: RoomId, private_key: &MemberPrivateKey, start_frame_id: u64, out_client_id: &mut u16) -> u8 {
+pub fn do_create_client(connection_id: u64, server_address: &str, member_id: RoomMemberId, room_id: RoomId, private_key: &MemberPrivateKey, out_client_id: &mut u16) -> u8 {
 	execute(|api| {
-		api.create_client(server_address, member_id, room_id, private_key.clone(), start_frame_id).map(|client_id| {
+		api.create_client(connection_id, server_address, member_id, room_id, private_key.clone()).map(|client_id| {
 			*out_client_id = client_id;
 			Ok(())
 		})?

@@ -7,10 +7,10 @@ namespace Games.Cheetah.Client.Internal.FFI
 {
     public class FFIImpl : IFFI
     {
-        public byte CreateClient(string serverAddress, ushort memberId, ulong roomId, ref NetworkBuffer userPrivateKey, ulong startFrameId,
+        public byte CreateClient(ulong connectionId, string serverAddress, ushort memberId, ulong roomId, ref NetworkBuffer userPrivateKey,
             out ushort clientId)
         {
-            return FFIMethods.CreateClient(serverAddress, memberId, roomId, ref userPrivateKey, startFrameId, out clientId);
+            return FFIMethods.CreateClient(connectionId, serverAddress, memberId, roomId, ref userPrivateKey, out clientId);
         }
 
         public byte GetConnectionStatus(ushort clientId, out ConnectionStatus status)
@@ -44,9 +44,9 @@ namespace Games.Cheetah.Client.Internal.FFI
             return FFIMethods.DetachFromRoom(clientId);
         }
 
-        public byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group)
+        public byte SetChannelType(ushort clientId, ReliabilityGuarantees reliabilityGuarantees, byte group)
         {
-            return FFIMethods.SetChannelType(clientId, networkChannelType, group);
+            return FFIMethods.SetChannelType(clientId, reliabilityGuarantees, group);
         }
 
         public byte SetRttEmulation(ushort clientId, ulong rttInMs, double rttDispersion)
@@ -94,7 +94,7 @@ namespace Games.Cheetah.Client.Internal.FFI
             return FFIMethods.Send(clientId, targetUser, in objectId, fieldId.Id, ref eventData);
         }
 
-        public byte DeleteField(ushort clientId, in NetworkObjectId objectId, FieldId fieldId) 
+        public byte DeleteField(ushort clientId, in NetworkObjectId objectId, FieldId fieldId)
         {
             return FFIMethods.DeleteField(clientId, in objectId, fieldId.Id, fieldId.Type);
         }
@@ -107,7 +107,7 @@ namespace Games.Cheetah.Client.Internal.FFI
         public byte Increment(ushort clientId, in NetworkObjectId objectId, FieldId.Long fieldId, long increment)
         {
             return FFIMethods.Increment(clientId, in objectId, fieldId.Id, increment);
-        } 
+        }
 
         public byte CreateObject(ushort clientId, ushort template, ulong accessGroup, ref NetworkObjectId objectId)
         {

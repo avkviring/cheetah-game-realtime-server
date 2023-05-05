@@ -8,11 +8,12 @@ use std::{panic, thread};
 
 use fnv::FnvBuildHasher;
 
-use cheetah_common::network::client::ConnectionStatus;
+use cheetah_common::network::channel::ConnectionStatus;
+use cheetah_common::protocol::frame::ConnectionId;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::clients::application_thread::ApplicationThreadClient;
-use crate::clients::network_thread::NetworkThreadClient;
+use crate::clients::network_thread::NetworkChannelManager;
 use crate::clients::SharedClientStatistics;
 
 pub type ClientId = u16;
@@ -32,7 +33,7 @@ pub struct Registry {
 
 impl Registry {
 	#[allow(clippy::unwrap_in_result)]
-	pub fn create_client(&mut self, server_address: &str, member_id: RoomMemberId, room_id: RoomId, private_key: MemberPrivateKey, start_frame_id: u64) -> std::io::Result<ClientId> {
+	pub fn create_client(&mut self, connection_id: ConnectionId, server_address: &str, member_id: RoomMemberId, room_id: RoomId, private_key: MemberPrivateKey) -> std::io::Result<ClientId> {
 		Self::set_panic_hook();
 
 		let server_time = Arc::new(Mutex::new(None));
@@ -42,7 +43,8 @@ impl Registry {
 
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let (in_command_sender, in_command_receiver) = std::sync::mpsc::channel();
-		let client = NetworkThreadClient::new(
+		let client = NetworkChannelManager::new(
+			connection_id,
 			SocketAddr::from_str(server_address).map_err(|e| std::io::Error::new(ErrorKind::AddrNotAvailable, format!("{e:?}")))?,
 			member_id,
 			room_id,
@@ -50,7 +52,6 @@ impl Registry {
 			in_command_sender,
 			state,
 			receiver,
-			start_frame_id,
 			shared_statistics.clone(),
 			Arc::clone(&server_time),
 		)?;

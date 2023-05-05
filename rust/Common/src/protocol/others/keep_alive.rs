@@ -46,7 +46,7 @@ mod tests {
 	pub(crate) fn should_timeout_after_send() {
 		let mut handler = KeepAlive::default();
 		let now = Instant::now();
-		let mut frame = OutFrame::new(1);
+		let mut frame = OutFrame::new(0, 1);
 		handler.build_frame(&mut frame, now);
 		assert!(!handler.contains_self_data(now));
 		assert!(handler.contains_self_data(now.add(KeepAlive::INTERVAL)));

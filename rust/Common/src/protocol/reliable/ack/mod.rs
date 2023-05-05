@@ -94,8 +94,8 @@ mod tests {
 	use std::time::Instant;
 
 	use crate::commands::c2s::C2SCommand;
-	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use crate::protocol::frame::channel::Channel;
+	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
+	use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::frame::output::OutFrame;
@@ -115,7 +115,7 @@ mod tests {
 	fn should_ack() {
 		let mut now = Instant::now();
 		let mut ack_sender = AckSender::default();
-		let in_frame = InFrame::new(10, Default::default(), [create_command()].into_iter().collect());
+		let in_frame = InFrame::new(0, 10, Default::default(), [create_command()].into_iter().collect());
 		ack_sender.on_frame_received(&in_frame, now);
 
 		for _ in 0..AckSender::MAX_ACK_FOR_FRAME {
@@ -137,16 +137,16 @@ mod tests {
 	}
 
 	fn build_out_frame(now: Instant, ack_sender: &mut AckSender) -> AckHeader {
-		let out_frame = &mut OutFrame::new(200);
+		let out_frame = &mut OutFrame::new(0, 200);
 		ack_sender.build_out_frame(out_frame, now);
 		let header: &AckHeader = out_frame.headers.first(Header::predicate_ack).unwrap();
 		header.clone()
 	}
 
-	fn create_command() -> CommandWithChannel {
-		CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+	fn create_command() -> CommandWithReliabilityGuarantees {
+		CommandWithReliabilityGuarantees {
+			reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+			commands: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		}
 	}
 }

@@ -22,7 +22,7 @@ impl Channel {
 			if let Some(frame_a) = frame_a {
 				if self.allow(i as u64) {
 					let commands = frame_a.get_commands().cloned().collect::<Vec<_>>();
-					peer_b.on_frame_received(&InFrame::new(frame_a.frame_id, frame_a.headers, commands), now);
+					peer_b.on_frame_received(&InFrame::new(0, frame_a.frame_id, frame_a.headers, commands), now);
 				}
 			}
 
@@ -30,7 +30,7 @@ impl Channel {
 			if let Some(frame_b) = frame_b {
 				if self.allow(i as u64) {
 					let commands = frame_b.get_commands().cloned().collect::<Vec<_>>();
-					peer_a.on_frame_received(&InFrame::new(frame_b.frame_id, frame_b.headers, commands), now);
+					peer_a.on_frame_received(&InFrame::new(0, frame_b.frame_id, frame_b.headers, commands), now);
 				}
 			}
 

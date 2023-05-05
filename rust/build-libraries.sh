@@ -8,7 +8,7 @@ cd ../
 # macos поддерживается только на macos
 cargo build --manifest-path rust/Cargo.toml --target x86_64-apple-darwin
 cross build --manifest-path rust/Cargo.toml --target x86_64-unknown-linux-gnu
-#cross build --manifest-path rust/Cargo.toml --target x86_64-pc-windows-gnu
+cross build --manifest-path rust/Cargo.toml --target x86_64-pc-windows-gnu
 
 cd rust
 

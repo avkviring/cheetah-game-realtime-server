@@ -3,17 +3,18 @@ use std::slice::Iter;
 
 use crate::protocol::codec::commands::context::CommandContext;
 use crate::protocol::codec::commands::encoder::encode_command;
-use crate::protocol::frame::applications::CommandWithChannel;
+use crate::protocol::frame::applications::CommandWithReliabilityGuarantees;
 use crate::protocol::frame::headers::{Header, Headers};
-use crate::protocol::frame::{FrameId, MAX_FRAME_SIZE};
+use crate::protocol::frame::{ConnectionId, FrameId, MAX_FRAME_SIZE};
 
 pub const MAX_ENCODED_COMMANDS_SIZE: usize = MAX_FRAME_SIZE;
 
 #[derive(Debug, Clone)]
 pub struct OutFrame {
+	pub connection_id: ConnectionId,
 	pub frame_id: FrameId,
 	pub headers: Headers,
-	commands: Vec<CommandWithChannel>,
+	commands: Vec<CommandWithReliabilityGuarantees>,
 	context: CommandContext,
 	encoded_size: u64,
 	encoded_commands: [u8; MAX_ENCODED_COMMANDS_SIZE * 2],
@@ -23,8 +24,9 @@ pub struct OutFrame {
 
 impl OutFrame {
 	#[must_use]
-	pub fn new(frame_id: FrameId) -> Self {
+	pub fn new(connection_id: ConnectionId, frame_id: FrameId) -> Self {
 		Self {
+			connection_id,
 			frame_id,
 			headers: Default::default(),
 			commands: Default::default(),
@@ -37,7 +39,7 @@ impl OutFrame {
 	}
 
 	#[allow(clippy::cast_possible_truncation)]
-	pub fn add_command(&mut self, command: CommandWithChannel) -> bool {
+	pub fn add_command(&mut self, command: CommandWithReliabilityGuarantees) -> bool {
 		if self.full {
 			return false;
 		}
@@ -49,14 +51,14 @@ impl OutFrame {
 			return false;
 		}
 
-		self.contains_reliability_command = self.contains_reliability_command || command.channel.is_reliable();
+		self.contains_reliability_command = self.contains_reliability_command || command.reliability_guarantees.is_reliable();
 		self.encoded_size = cursor.position();
 		self.commands.push(command);
 		self.encoded_commands[0] = self.commands.len() as u8;
 		true
 	}
 
-	pub fn get_commands(&self) -> Iter<'_, CommandWithChannel> {
+	pub fn get_commands(&self) -> Iter<'_, CommandWithReliabilityGuarantees> {
 		self.commands.iter()
 	}
 

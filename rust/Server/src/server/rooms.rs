@@ -6,7 +6,7 @@ use fnv::{FnvBuildHasher, FnvHashSet};
 use thiserror::Error;
 
 use cheetah_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_common::protocol::frame::applications::CommandWithChannel;
+use cheetah_common::protocol::frame::applications::CommandWithReliabilityGuarantees;
 use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_common::room::{RoomId, RoomMemberId};
 
@@ -78,7 +78,7 @@ impl Rooms {
 		}
 	}
 
-	pub fn execute_commands(&mut self, member_and_room_id: MemberAndRoomId, commands: &[CommandWithChannel]) {
+	pub fn execute_commands(&mut self, member_and_room_id: MemberAndRoomId, commands: &[CommandWithReliabilityGuarantees]) {
 		match self.room_by_id.get_mut(&member_and_room_id.room_id) {
 			None => {
 				tracing::error!("[rooms] on_frame_received room({}) not found", member_and_room_id.room_id);

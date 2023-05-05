@@ -148,13 +148,13 @@ mod tests {
 
 		let now = Instant::now();
 
-		let mut frame_a_b = OutFrame::new(1);
+		let mut frame_a_b = OutFrame::new(0, 1);
 		handler_a.build_frame(&mut frame_a_b, now);
-		handler_b.on_frame_received(&InFrame::new(frame_a_b.frame_id, frame_a_b.headers, Default::default()), now);
+		handler_b.on_frame_received(&InFrame::new(0, frame_a_b.frame_id, frame_a_b.headers, Default::default()), now);
 
-		let mut frame_b_a = OutFrame::new(2);
+		let mut frame_b_a = OutFrame::new(0, 2);
 		handler_b.build_frame(&mut frame_b_a, now);
-		handler_a.on_frame_received(&InFrame::new(frame_b_a.frame_id, frame_b_a.headers, Default::default()), now.add(Duration::from_millis(100)));
+		handler_a.on_frame_received(&InFrame::new(0, frame_b_a.frame_id, frame_b_a.headers, Default::default()), now.add(Duration::from_millis(100)));
 
 		assert!(matches!(handler_a.rtt.pop_front(), Some(time) if time == Duration::from_millis(100)));
 	}
@@ -166,7 +166,7 @@ mod tests {
 	pub(crate) fn should_ignore_retransmit_frame_when_receive_response() {
 		let mut handler = RoundTripTime::new(Instant::now());
 		let now = Instant::now();
-		let mut frame = InFrame::new(10, Default::default(), Default::default());
+		let mut frame = InFrame::new(0, 10, Default::default(), Default::default());
 		frame.headers.add(Header::Retransmit(RetransmitHeader {
 			original_frame_id: 0,
 			retransmit_count: 1,
@@ -184,7 +184,7 @@ mod tests {
 		let mut handler = RoundTripTime::new(Instant::now());
 		let now = Instant::now();
 
-		let mut input_frame = InFrame::new(10, Default::default(), Default::default());
+		let mut input_frame = InFrame::new(0, 10, Default::default(), Default::default());
 		input_frame.headers.add(Header::Retransmit(RetransmitHeader {
 			original_frame_id: 0,
 			retransmit_count: 1,
@@ -192,7 +192,7 @@ mod tests {
 		input_frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&input_frame, now);
 
-		let mut output_frame = OutFrame::new(10);
+		let mut output_frame = OutFrame::new(0, 10);
 		handler.build_frame(&mut output_frame, now);
 
 		assert!(matches!(output_frame.headers.first(Header::predicate_round_trip_time_response), None));
@@ -207,7 +207,7 @@ mod tests {
 	pub(crate) fn should_calculate_rtt_average() {
 		let mut handler = RoundTripTime::new(Instant::now());
 		for i in 0..AVERAGE_RTT_MIN_LEN {
-			let mut frame = InFrame::new(10, Default::default(), Default::default());
+			let mut frame = InFrame::new(0, 10, Default::default(), Default::default());
 			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, now);
@@ -223,7 +223,7 @@ mod tests {
 	pub(crate) fn should_limit_on_length_rtt() {
 		let mut handler = RoundTripTime::new(Instant::now());
 		for i in 0..2 * AVERAGE_RTT_MIN_LEN {
-			let mut frame = InFrame::new(10, Default::default(), Default::default());
+			let mut frame = InFrame::new(0, 10, Default::default(), Default::default());
 			frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: i as u64 }));
 			let now = Instant::now().add(Duration::from_millis((i * 2) as u64));
 			handler.on_frame_received(&frame, now);

@@ -34,6 +34,7 @@ namespace Games.Cheetah.EmbeddedServer.Tests
 
 
                 var client = new NetworkClient(
+                    0,
                     server.GetUdpGameHost(),
                     server.GetUdpGamePort(),
                     member.UserId,

@@ -4,7 +4,7 @@ use crate::debug::proto::admin;
 use crate::debug::proto::shared::field_value;
 use crate::debug::proto::shared::FieldValue;
 use crate::debug::proto::shared::GameObjectField;
-use crate::room::member::Member;
+use crate::room::member::RoomMember;
 use crate::room::object::GameObject;
 use crate::room::Room;
 
@@ -55,8 +55,8 @@ impl From<&GameObject> for admin::DumpObject {
 	}
 }
 
-impl From<&Member> for admin::DumpUser {
-	fn from(member: &Member) -> Self {
+impl From<&RoomMember> for admin::DumpUser {
+	fn from(member: &RoomMember) -> Self {
 		Self {
 			id: u32::from(member.id),
 			groups: member.template.groups.0,

@@ -1,6 +1,6 @@
 use crate::commands::c2s::C2SCommand;
 use crate::commands::s2c::S2CCommandWithCreator;
-use crate::protocol::frame::channel::Channel;
+use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
@@ -12,9 +12,9 @@ pub struct ChannelGroup(pub u8);
 pub struct ChannelSequence(pub u32);
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct CommandWithChannel {
-	pub channel: Channel,
-	pub both_direction_command: BothDirectionCommand,
+pub struct CommandWithReliabilityGuarantees {
+	pub reliability_guarantees: ReliabilityGuaranteesChannel,
+	pub commands: BothDirectionCommand,
 }
 
 #[derive(Debug, PartialEq, Clone)]

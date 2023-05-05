@@ -1,10 +1,10 @@
 use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence};
 
 ///
-/// Тип канала для отправки
+/// Тип гарантий
 ///
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum ChannelType {
+pub enum ReliabilityGuarantees {
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -27,11 +27,8 @@ pub enum ChannelType {
 	ReliableSequence(ChannelGroup),
 }
 
-///
-/// Канал для отправки, отличается от [`ApplicationCommandChannelType`] полным набором данных для канала
-///
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum Channel {
+pub enum ReliabilityGuaranteesChannel {
 	///
 	/// Выполняем команды без учета порядка
 	///
@@ -54,37 +51,37 @@ pub enum Channel {
 	ReliableSequence(ChannelGroup, ChannelSequence),
 }
 
-impl From<&Channel> for ChannelType {
-	fn from(channel: &Channel) -> Self {
+impl From<&ReliabilityGuaranteesChannel> for ReliabilityGuarantees {
+	fn from(channel: &ReliabilityGuaranteesChannel) -> Self {
 		match channel {
-			Channel::ReliableUnordered => ChannelType::ReliableUnordered,
-			Channel::ReliableOrdered(channel) => ChannelType::ReliableOrdered(*channel),
-			Channel::UnreliableUnordered => ChannelType::UnreliableUnordered,
-			Channel::UnreliableOrdered(channel) => ChannelType::UnreliableOrdered(*channel),
-			Channel::ReliableSequence(channel, _) => ChannelType::ReliableSequence(*channel),
+			ReliabilityGuaranteesChannel::ReliableUnordered => ReliabilityGuarantees::ReliableUnordered,
+			ReliabilityGuaranteesChannel::ReliableOrdered(channel) => ReliabilityGuarantees::ReliableOrdered(*channel),
+			ReliabilityGuaranteesChannel::UnreliableUnordered => ReliabilityGuarantees::UnreliableUnordered,
+			ReliabilityGuaranteesChannel::UnreliableOrdered(channel) => ReliabilityGuarantees::UnreliableOrdered(*channel),
+			ReliabilityGuaranteesChannel::ReliableSequence(channel, _) => ReliabilityGuarantees::ReliableSequence(*channel),
 		}
 	}
 }
 
-impl Channel {
+impl ReliabilityGuaranteesChannel {
 	#[must_use]
 	pub fn is_reliable(&self) -> bool {
 		match self {
-			Channel::ReliableUnordered => true,
-			Channel::ReliableOrdered(_) => true,
-			Channel::ReliableSequence(_, _) => true,
-			Channel::UnreliableUnordered => false,
-			Channel::UnreliableOrdered(_) => false,
+			ReliabilityGuaranteesChannel::ReliableUnordered => true,
+			ReliabilityGuaranteesChannel::ReliableOrdered(_) => true,
+			ReliabilityGuaranteesChannel::ReliableSequence(_, _) => true,
+			ReliabilityGuaranteesChannel::UnreliableUnordered => false,
+			ReliabilityGuaranteesChannel::UnreliableOrdered(_) => false,
 		}
 	}
 	#[must_use]
 	pub fn get_channel_group_id(&self) -> Option<ChannelGroup> {
 		match self {
-			Channel::ReliableUnordered => None,
-			Channel::ReliableOrdered(group) => Some(*group),
-			Channel::UnreliableUnordered => None,
-			Channel::UnreliableOrdered(group) => Some(*group),
-			Channel::ReliableSequence(group, _) => Some(*group),
+			ReliabilityGuaranteesChannel::ReliableUnordered => None,
+			ReliabilityGuaranteesChannel::ReliableOrdered(group) => Some(*group),
+			ReliabilityGuaranteesChannel::UnreliableUnordered => None,
+			ReliabilityGuaranteesChannel::UnreliableOrdered(group) => Some(*group),
+			ReliabilityGuaranteesChannel::ReliableSequence(group, _) => Some(*group),
 		}
 	}
 }

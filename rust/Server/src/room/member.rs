@@ -4,7 +4,7 @@ use cheetah_common::room::RoomMemberId;
 use crate::room::template::config::MemberTemplate;
 
 #[derive(Debug)]
-pub struct Member {
+pub struct RoomMember {
 	pub id: RoomMemberId,
 	pub connected: bool,
 	pub attached: bool,

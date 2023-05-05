@@ -39,8 +39,7 @@ namespace Games.Cheetah.Client.Internal
         }
 
 
-        public byte CreateClient(string serverAddress, ushort memberId, ulong roomId, ref NetworkBuffer userPrivateKey, ulong startFrameId,
-            out ushort clientId)
+        public byte CreateClient(ulong connectionId, string serverAddress, ushort memberId, ulong roomId, ref NetworkBuffer userPrivateKey, out ushort clientId)
         {
             clientIdGenerator++;
             clientId = clientIdGenerator;
@@ -88,7 +87,7 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group)
+        public byte SetChannelType(ushort clientId, ReliabilityGuarantees reliabilityGuarantees, byte group)
         {
             return 0;
         }
@@ -192,6 +191,7 @@ namespace Games.Cheetah.Client.Internal
                 eventQueue = new Queue<EventPayload>();
                 events[key] = eventQueue;
             }
+
             eventQueue.Enqueue(new EventPayload { eventData = eventData });
             return 0;
         }
@@ -204,6 +204,7 @@ namespace Games.Cheetah.Client.Internal
                 eventQueue = new Queue<EventPayload>();
                 events[key] = eventQueue;
             }
+
             eventQueue.Enqueue(new EventPayload { eventData = eventData, targetUserOpt = targetUser });
             return 0;
         }
@@ -233,7 +234,7 @@ namespace Games.Cheetah.Client.Internal
                 }
             });
             var networkBuffer = new NetworkBuffer();
-            CreatedObject(0, in command.objectId, false,ref networkBuffer);
+            CreatedObject(0, in command.objectId, false, ref networkBuffer);
         }
 
         public void ScheduleCommandFromServer(S2CCommands.SetLong command)
@@ -343,7 +344,7 @@ namespace Games.Cheetah.Client.Internal
         {
             var key = new ObjectFieldId { fieldId = field, objectId = id };
             if (!events.TryGetValue(key, out var eventQueue)) yield break;
-            
+
             while (eventQueue.Count > 0)
             {
                 var ev = eventQueue.Dequeue();
