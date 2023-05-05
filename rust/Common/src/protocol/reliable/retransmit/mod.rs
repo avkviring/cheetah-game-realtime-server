@@ -6,11 +6,11 @@ use std::time::{Duration, Instant};
 use fnv::FnvBuildHasher;
 use prometheus::local::LocalIntCounter;
 
-use crate::network::client::DisconnectedReason;
+use crate::network::channel::DisconnectedReason;
 use crate::protocol::frame::headers::{Header, HeaderVec};
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
-use crate::protocol::frame::FrameId;
+use crate::protocol::frame::{ConnectionId, FrameId};
 use crate::protocol::reliable::ack::header::AckHeader;
 use crate::protocol::reliable::retransmit::header::RetransmitHeader;
 use crate::protocol::reliable::statistics::RetransmitStatistics;
@@ -47,7 +47,9 @@ pub const RETRANSMIT_LIMIT: u8 = (RETRANSMIT_MAX_TIME_IN_SEC as f64 / RETRANSMIT
 pub const RETRANSMIT_FRAMES_CAPACITY: usize = 5 * RELIABILITY_FRAME_PER_SECOND * RETRANSMIT_MAX_TIME_IN_SEC;
 
 #[derive(Debug)]
-pub struct Retransmit {
+pub struct Retransmitter {
+	connection_id: ConnectionId,
+
 	///
 	/// Фреймы, отсортированные по времени отсылки
 	///
@@ -78,10 +80,11 @@ pub struct ScheduledFrame {
 	pub retransmit_count: u8,
 }
 
-impl Retransmit {
+impl Retransmitter {
 	#[must_use]
-	pub fn new(counter: LocalIntCounter) -> Self {
+	pub fn new(connection_id: ConnectionId, counter: LocalIntCounter) -> Self {
 		Self {
+			connection_id,
 			frames: Default::default(),
 			wait_ack_frames: Default::default(),
 			max_retransmit_count: Default::default(),
@@ -146,9 +149,9 @@ impl Retransmit {
 	pub fn build_frame(&mut self, frame: &OutFrame, now: Instant) {
 		if frame.contains_reliability_command() {
 			let original_frame_id = frame.frame_id;
-			let mut reliable_frame = OutFrame::new(original_frame_id);
+			let mut reliable_frame = OutFrame::new(self.connection_id, original_frame_id);
 			reliable_frame.headers = frame.headers.clone();
-			frame.get_commands().filter(|c| c.channel.is_reliable()).for_each(|c| {
+			frame.get_commands().filter(|c| c.reliability_guarantees.is_reliable()).for_each(|c| {
 				reliable_frame.add_command(c.clone());
 			});
 
@@ -190,14 +193,14 @@ mod tests {
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::event::EventCommand;
-	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use crate::protocol::frame::channel::Channel;
+	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
+	use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::frame::output::OutFrame;
 	use crate::protocol::frame::FrameId;
 	use crate::protocol::reliable::ack::header::AckHeader;
-	use crate::protocol::reliable::retransmit::{Retransmit, RETRANSMIT_LIMIT};
+	use crate::protocol::reliable::retransmit::{Retransmitter, RETRANSMIT_LIMIT};
 
 	#[test]
 	///
@@ -334,15 +337,15 @@ mod tests {
 	#[test]
 	fn should_delete_unreliable_commands_for_retransmit_frame() {
 		let mut handler = get_retransmitter();
-		let mut frame = OutFrame::new(0);
-		frame.add_command(CommandWithChannel {
-			channel: Channel::UnreliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+		let mut frame = OutFrame::new(0, 0);
+		frame.add_command(CommandWithReliabilityGuarantees {
+			reliability_guarantees: ReliabilityGuaranteesChannel::UnreliableUnordered,
+			commands: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		});
 
-		let reliable_command = CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
+		let reliable_command = CommandWithReliabilityGuarantees {
+			reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+			commands: BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 				object_id: Default::default(),
 				field_id: 0,
 				event: Default::default(),
@@ -358,27 +361,27 @@ mod tests {
 	}
 
 	fn create_reliability_frame(frame_id: FrameId) -> OutFrame {
-		let mut frame = OutFrame::new(frame_id);
-		frame.add_command(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+		let mut frame = OutFrame::new(0, frame_id);
+		frame.add_command(CommandWithReliabilityGuarantees {
+			reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+			commands: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 		});
 		frame
 	}
 
 	fn create_unreliable_frame(frame_id: FrameId) -> OutFrame {
-		OutFrame::new(frame_id)
+		OutFrame::new(0, frame_id)
 	}
 
 	fn create_ack_frame(frame_id: FrameId, acked_frame_id: FrameId) -> InFrame {
-		let mut frame = InFrame::new(frame_id, Default::default(), Default::default());
+		let mut frame = InFrame::new(0, frame_id, Default::default(), Default::default());
 		let mut ack_header = AckHeader::default();
 		ack_header.add_frame_id(acked_frame_id);
 		frame.headers.add(Header::Ack(ack_header));
 		frame
 	}
 
-	fn get_retransmitter() -> Retransmit {
-		Retransmit::new(IntCounter::new("name", "help").unwrap().local())
+	fn get_retransmitter() -> Retransmitter {
+		Retransmitter::new(0, IntCounter::new("name", "help").unwrap().local())
 	}
 }

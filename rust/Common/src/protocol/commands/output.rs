@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-use crate::protocol::frame::applications::{BothDirectionCommand, ChannelSequence, CommandWithChannel};
-use crate::protocol::frame::channel::{Channel, ChannelType};
+use crate::protocol::frame::applications::{BothDirectionCommand, ChannelSequence, CommandWithReliabilityGuarantees};
+use crate::protocol::frame::channel::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
 use crate::protocol::frame::output::OutFrame;
 
 ///
@@ -12,13 +12,13 @@ use crate::protocol::frame::output::OutFrame;
 ///
 #[derive(Debug)]
 pub struct OutCommandsCollector {
-	pub commands: VecDeque<CommandWithChannel>,
+	pub commands: VecDeque<CommandWithReliabilityGuarantees>,
 	group_sequence: [ChannelSequence; 256],
 }
 
 #[derive(Debug)]
 pub struct CommandWithChannelType {
-	pub channel_type: ChannelType,
+	pub channel_type: ReliabilityGuarantees,
 	pub command: BothDirectionCommand,
 }
 
@@ -32,29 +32,29 @@ impl Default for OutCommandsCollector {
 }
 
 impl OutCommandsCollector {
-	pub fn add_command(&mut self, channel_type: ChannelType, command: BothDirectionCommand) {
+	pub fn add_command(&mut self, channel_type: ReliabilityGuarantees, command: BothDirectionCommand) {
 		match self.create_channel(channel_type) {
 			None => {
 				tracing::error!("can not create channel for {:?} {:?}", channel_type, command);
 			}
 			Some(channel) => {
-				self.commands.push_back(CommandWithChannel {
-					channel,
-					both_direction_command: command,
+				self.commands.push_back(CommandWithReliabilityGuarantees {
+					reliability_guarantees: channel,
+					commands: command,
 				});
 			}
 		}
 	}
 
-	fn create_channel(&mut self, channel_type: ChannelType) -> Option<Channel> {
+	fn create_channel(&mut self, channel_type: ReliabilityGuarantees) -> Option<ReliabilityGuaranteesChannel> {
 		match channel_type {
-			ChannelType::ReliableUnordered => Some(Channel::ReliableUnordered),
-			ChannelType::ReliableOrdered(group_id) => Some(Channel::ReliableOrdered(group_id)),
-			ChannelType::UnreliableUnordered => Some(Channel::UnreliableUnordered),
-			ChannelType::UnreliableOrdered(group_id) => Some(Channel::UnreliableOrdered(group_id)),
-			ChannelType::ReliableSequence(group) => {
+			ReliabilityGuarantees::ReliableUnordered => Some(ReliabilityGuaranteesChannel::ReliableUnordered),
+			ReliabilityGuarantees::ReliableOrdered(group_id) => Some(ReliabilityGuaranteesChannel::ReliableOrdered(group_id)),
+			ReliabilityGuarantees::UnreliableUnordered => Some(ReliabilityGuaranteesChannel::UnreliableUnordered),
+			ReliabilityGuarantees::UnreliableOrdered(group_id) => Some(ReliabilityGuaranteesChannel::UnreliableOrdered(group_id)),
+			ReliabilityGuarantees::ReliableSequence(group) => {
 				let mut sequence = &mut self.group_sequence[group.0 as usize];
-				let result = Some(Channel::ReliableSequence(group, *sequence));
+				let result = Some(ReliabilityGuaranteesChannel::ReliableSequence(group, *sequence));
 				sequence.0 += 1;
 				result
 			}
@@ -85,7 +85,7 @@ mod tests {
 	use crate::commands::types::event::EventCommand;
 	use crate::protocol::commands::output::OutCommandsCollector;
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
-	use crate::protocol::frame::channel::{Channel, ChannelType};
+	use crate::protocol::frame::channel::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
 	use crate::protocol::frame::output::OutFrame;
 	use crate::protocol::frame::MAX_FRAME_SIZE;
 
@@ -93,13 +93,13 @@ mod tests {
 	pub(crate) fn test_group_sequence() {
 		let mut output = OutCommandsCollector::default();
 		for _ in 0..3 {
-			output.add_command(ChannelType::ReliableSequence(ChannelGroup(100)), BothDirectionCommand::C2S(C2SCommand::AttachToRoom));
+			output.add_command(ReliabilityGuarantees::ReliableSequence(ChannelGroup(100)), BothDirectionCommand::C2S(C2SCommand::AttachToRoom));
 		}
-		assert!(matches!(output.commands[0].channel, Channel::ReliableSequence(_,sequence)
+		assert!(matches!(output.commands[0].reliability_guarantees, ReliabilityGuaranteesChannel::ReliableSequence(_,sequence)
 			if sequence.0==0));
-		assert!(matches!(output.commands[1].channel, Channel::ReliableSequence(_,sequence)
+		assert!(matches!(output.commands[1].reliability_guarantees, ReliabilityGuaranteesChannel::ReliableSequence(_,sequence)
 			if sequence.0==1));
-		assert!(matches!(output.commands[2].channel, Channel::ReliableSequence(_,sequence)
+		assert!(matches!(output.commands[2].reliability_guarantees, ReliabilityGuaranteesChannel::ReliableSequence(_,sequence)
 			if sequence.0==2));
 	}
 
@@ -108,7 +108,7 @@ mod tests {
 		let mut output = OutCommandsCollector::default();
 		for _i in 0..MAX_FRAME_SIZE {
 			output.add_command(
-				ChannelType::ReliableSequence(ChannelGroup(100)),
+				ReliabilityGuarantees::ReliableSequence(ChannelGroup(100)),
 				BothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
 					object_id: Default::default(),
 					field_id: 1,
@@ -120,7 +120,7 @@ mod tests {
 		let mut frames_commands = VecDeque::new();
 
 		loop {
-			let mut first_frame = OutFrame::new(0);
+			let mut first_frame = OutFrame::new(0, 0);
 			output.build_frame(&mut first_frame);
 			let iter = first_frame.get_commands();
 			if iter.len() == 0 {

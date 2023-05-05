@@ -1,24 +1,24 @@
-pub mod channel;
-pub mod cipher;
-pub mod commands;
-pub mod compress;
-pub mod headers;
-pub mod variable_int;
-
-use chacha20poly1305::aead;
 use std::io::{Cursor, Write};
 
+use chacha20poly1305::aead;
 use thiserror::Error;
 
 use crate::protocol::codec::cipher::Cipher;
 use crate::protocol::codec::commands::decoder::{decode_commands, CommandsDecoderError};
 use crate::protocol::codec::compress::{packet_compress, packet_decompress};
 use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use crate::protocol::frame::applications::CommandWithChannel;
+use crate::protocol::frame::applications::CommandWithReliabilityGuarantees;
 use crate::protocol::frame::headers::Headers;
 use crate::protocol::frame::input::InFrame;
 use crate::protocol::frame::output::OutFrame;
-use crate::protocol::frame::{FrameId, MAX_FRAME_SIZE};
+use crate::protocol::frame::{ConnectionId, FrameId, MAX_FRAME_SIZE};
+
+pub mod channel;
+pub mod cipher;
+pub mod commands;
+pub mod compress;
+pub mod headers;
+pub mod variable_int;
 
 #[derive(Error, Debug)]
 pub enum FrameDecodeError {
@@ -45,10 +45,11 @@ pub enum FrameEncodeError {
 }
 
 impl InFrame {
-	pub fn decode_headers(cursor: &mut Cursor<&[u8]>) -> Result<(FrameId, Headers), FrameDecodeError> {
+	pub fn decode_meta(cursor: &mut Cursor<&[u8]>) -> Result<(ConnectionId, FrameId, Headers), FrameDecodeError> {
+		let connection_id = cursor.read_variable_u64()?;
 		let frame_id = cursor.read_variable_u64()?;
 		let headers = Headers::decode_headers(cursor)?;
-		Ok((frame_id, headers))
+		Ok((connection_id, frame_id, headers))
 	}
 
 	///
@@ -61,7 +62,7 @@ impl InFrame {
 	///
 	#[allow(clippy::cast_possible_truncation)]
 	#[allow(clippy::map_err_ignore)]
-	pub fn decode_frame_commands(c2s_commands: bool, frame_id: FrameId, cursor: Cursor<&[u8]>, mut cipher: Cipher<'_>) -> Result<Vec<CommandWithChannel>, FrameDecodeError> {
+	pub fn decode_commands(c2s_commands: bool, frame_id: FrameId, cursor: Cursor<&[u8]>, mut cipher: Cipher<'_>) -> Result<Vec<CommandWithReliabilityGuarantees>, FrameDecodeError> {
 		let header_end = cursor.position();
 		let data = cursor.into_inner();
 
@@ -94,7 +95,9 @@ impl OutFrame {
 	#[allow(clippy::cast_possible_truncation)]
 	pub fn encode(&self, cipher: &mut Cipher<'_>, out: &mut [u8]) -> Result<usize, FrameEncodeError> {
 		let mut frame_cursor = Cursor::new(out);
+		frame_cursor.write_variable_u64(self.connection_id).map_err(FrameEncodeError::Io)?;
 		frame_cursor.write_variable_u64(self.frame_id).map_err(FrameEncodeError::Io)?;
+
 		self.headers.encode_headers(&mut frame_cursor).map_err(FrameEncodeError::Io)?;
 		let commands_buffer = self.get_commands_buffer();
 
@@ -125,8 +128,8 @@ pub mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::types::long::SetLongCommand;
 	use crate::protocol::codec::cipher::Cipher;
-	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use crate::protocol::frame::channel::Channel;
+	use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
+	use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 	use crate::protocol::frame::headers::Header;
 	use crate::protocol::frame::input::InFrame;
 	use crate::protocol::frame::output::OutFrame;
@@ -140,14 +143,14 @@ pub mod tests {
 
 	#[test]
 	fn should_encode_decode_frame() {
-		let mut frame = OutFrame::new(55);
+		let mut frame = OutFrame::new(100, 55);
 		let key = PRIVATE_KEY.into();
 		let mut cipher = Cipher::new(&key);
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.headers.add(Header::Ack(AckHeader::default()));
-		frame.add_command(CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+		frame.add_command(CommandWithReliabilityGuarantees {
+			reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+			commands: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 				object_id: GameObjectId::new(100, GameObjectOwner::Member(200)),
 				field_id: 78,
 				value: 155,
@@ -158,9 +161,9 @@ pub mod tests {
 		let buffer = &buffer[0..size];
 
 		let mut cursor = Cursor::new(buffer);
-		let (frame_id, headers) = InFrame::decode_headers(&mut cursor).unwrap();
-		let commands = InFrame::decode_frame_commands(true, frame_id, cursor, cipher.clone()).unwrap();
-		let decoded_frame = InFrame::new(frame_id, headers, commands);
+		let (connection_id, frame_id, headers) = InFrame::decode_meta(&mut cursor).unwrap();
+		let commands = InFrame::decode_commands(true, frame_id, cursor, cipher.clone()).unwrap();
+		let decoded_frame = InFrame::new(connection_id, frame_id, headers, commands);
 
 		assert_eq!(frame.frame_id, decoded_frame.frame_id);
 		assert_eq!(frame.headers, decoded_frame.headers);

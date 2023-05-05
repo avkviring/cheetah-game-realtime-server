@@ -1,21 +1,23 @@
 use std::slice::Iter;
 
-use crate::protocol::frame::applications::CommandWithChannel;
+use crate::protocol::frame::applications::CommandWithReliabilityGuarantees;
 use crate::protocol::frame::headers::{Header, Headers};
-use crate::protocol::frame::FrameId;
+use crate::protocol::frame::{ConnectionId, FrameId};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct InFrame {
+	pub connection_id: ConnectionId,
 	pub frame_id: FrameId,
 	pub headers: Headers,
-	commands: Vec<CommandWithChannel>,
+	commands: Vec<CommandWithReliabilityGuarantees>,
 	contains_reliability_command: bool,
 }
 impl InFrame {
 	#[must_use]
-	pub fn new(frame_id: FrameId, headers: Headers, commands: Vec<CommandWithChannel>) -> Self {
-		let contains_reliability_command = commands.iter().any(|f| f.channel.is_reliable());
+	pub fn new(connection_id: ConnectionId, frame_id: FrameId, headers: Headers, commands: Vec<CommandWithReliabilityGuarantees>) -> Self {
+		let contains_reliability_command = commands.iter().any(|f| f.reliability_guarantees.is_reliable());
 		Self {
+			connection_id,
 			frame_id,
 			headers,
 			commands,
@@ -23,7 +25,7 @@ impl InFrame {
 		}
 	}
 
-	pub fn get_commands(&self) -> Iter<'_, CommandWithChannel> {
+	pub fn get_commands(&self) -> Iter<'_, CommandWithReliabilityGuarantees> {
 		self.commands.iter()
 	}
 

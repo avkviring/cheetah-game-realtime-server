@@ -9,13 +9,13 @@ use crate::commands::CommandDecodeError;
 use crate::protocol::codec::channel::CommandChannelDecodeError;
 use crate::protocol::codec::commands::context::{CommandContext, CommandContextError};
 use crate::protocol::codec::commands::header::CommandHeader;
-use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-use crate::protocol::frame::channel::Channel;
+use crate::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
+use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 
 ///
 /// Преобразование массива байт в список команд
 ///
-pub fn decode_commands(from_client: bool, input: &mut Cursor<&[u8]>, out: &mut Vec<CommandWithChannel>) -> Result<(), CommandsDecoderError> {
+pub fn decode_commands(from_client: bool, input: &mut Cursor<&[u8]>, out: &mut Vec<CommandWithReliabilityGuarantees>) -> Result<(), CommandsDecoderError> {
 	let length = input.read_u8()?;
 	let mut context = CommandContext::default();
 	for _ in 0..length {
@@ -26,10 +26,10 @@ pub fn decode_commands(from_client: bool, input: &mut Cursor<&[u8]>, out: &mut V
 	Ok(())
 }
 
-fn decode_command(from_client: bool, input: &mut Cursor<&[u8]>, header: &CommandHeader, context: &CommandContext) -> Result<CommandWithChannel, CommandsDecoderError> {
-	Ok(CommandWithChannel {
-		channel: Channel::decode(&header.channel_type_id, context.get_channel_group_id(), input)?,
-		both_direction_command: if from_client {
+fn decode_command(from_client: bool, input: &mut Cursor<&[u8]>, header: &CommandHeader, context: &CommandContext) -> Result<CommandWithReliabilityGuarantees, CommandsDecoderError> {
+	Ok(CommandWithReliabilityGuarantees {
+		reliability_guarantees: ReliabilityGuaranteesChannel::decode(&header.channel_type_id, context.get_channel_group_id(), input)?,
+		commands: if from_client {
 			BothDirectionCommand::C2S(C2SCommand::decode(header.command_type_id, context.get_object_id(), context.get_field_id(), input)?)
 		} else {
 			BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {

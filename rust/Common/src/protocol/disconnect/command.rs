@@ -1,10 +1,12 @@
-use crate::protocol::frame::headers::Header;
-use crate::protocol::frame::input::InFrame;
-use crate::protocol::frame::output::OutFrame;
+use std::io::{Cursor, Error, ErrorKind};
+
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use std::io::{Cursor, Error, ErrorKind};
+
+use crate::protocol::frame::headers::Header;
+use crate::protocol::frame::input::InFrame;
+use crate::protocol::frame::output::OutFrame;
 
 ///
 /// Быстрое закрытие соединения по команде с удаленной стороны
@@ -106,9 +108,9 @@ mod tests {
 
 		assert!(self_handler.contains_self_data());
 
-		let mut frame = OutFrame::new(10);
+		let mut frame = OutFrame::new(0, 10);
 		self_handler.build_frame(&mut frame);
-		remote_handler.on_frame_received(&InFrame::new(frame.frame_id, frame.headers, Default::default()));
+		remote_handler.on_frame_received(&InFrame::new(0, frame.frame_id, frame.headers, Default::default()));
 
 		assert_eq!(DisconnectByCommandReason::ClientStopped, self_handler.disconnected().unwrap());
 		assert_eq!(DisconnectByCommandReason::ClientStopped, remote_handler.disconnected().unwrap());
@@ -117,7 +119,7 @@ mod tests {
 	#[test]
 	pub(crate) fn should_not_disconnect() {
 		let mut handler = DisconnectByCommand::default();
-		let mut frame = OutFrame::new(10);
+		let mut frame = OutFrame::new(0, 10);
 		handler.build_frame(&mut frame);
 		assert!(handler.disconnected().is_none());
 		assert!(matches!(frame.headers.first(Header::predicate_disconnect), None));

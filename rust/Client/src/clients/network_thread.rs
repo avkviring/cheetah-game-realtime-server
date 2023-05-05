@@ -7,9 +7,10 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::network::client::{ConnectionStatus, NetworkClient};
-use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-use cheetah_common::protocol::frame::channel::ChannelType;
+use cheetah_common::network::channel::{ConnectionStatus, NetworkChannel};
+use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
+use cheetah_common::protocol::frame::channel::ReliabilityGuarantees;
+use cheetah_common::protocol::frame::ConnectionId;
 use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
 
 use crate::clients::{ClientRequest, SharedClientStatistics};
@@ -18,10 +19,10 @@ use crate::clients::{ClientRequest, SharedClientStatistics};
 /// Управление сетевым клиентом, связывает поток unity и поток сетевого клиента
 ///
 #[derive(Debug)]
-pub struct NetworkThreadClient {
+pub struct NetworkChannelManager {
 	connection_status: Arc<Mutex<ConnectionStatus>>,
-	commands_from_server: Sender<CommandWithChannel>,
-	udp_client: NetworkClient,
+	commands_from_server: Sender<CommandWithReliabilityGuarantees>,
+	channel: NetworkChannel,
 	request_from_controller: Receiver<ClientRequest>,
 	protocol_time_offset_for_test: Option<Duration>,
 	shared_statistics: SharedClientStatistics,
@@ -31,28 +32,28 @@ pub struct NetworkThreadClient {
 
 #[derive(Debug)]
 pub struct C2SCommandWithChannel {
-	pub channel_type: ChannelType,
+	pub channel_type: ReliabilityGuarantees,
 	pub command: C2SCommand,
 }
 
-impl NetworkThreadClient {
+impl NetworkChannelManager {
 	#[allow(clippy::too_many_arguments)]
 	pub fn new(
+		connection_id: ConnectionId,
 		server_address: SocketAddr,
 		member_id: RoomMemberId,
 		room_id: RoomId,
 		private_key: MemberPrivateKey,
-		in_commands: Sender<CommandWithChannel>,
+		in_commands: Sender<CommandWithReliabilityGuarantees>,
 		connection_status: Arc<Mutex<ConnectionStatus>>,
 		receiver: Receiver<ClientRequest>,
-		start_frame_id: u64,
 		shared_statistics: SharedClientStatistics,
 		server_time: Arc<Mutex<Option<u64>>>,
-	) -> std::io::Result<NetworkThreadClient> {
-		Ok(NetworkThreadClient {
+	) -> std::io::Result<NetworkChannelManager> {
+		Ok(NetworkChannelManager {
 			connection_status,
 			commands_from_server: in_commands,
-			udp_client: NetworkClient::new(false, private_key, member_id, room_id, server_address, start_frame_id, Instant::now())?,
+			channel: NetworkChannel::new(connection_id, false, private_key, member_id, room_id, server_address, Instant::now())?,
 			request_from_controller: receiver,
 			protocol_time_offset_for_test: None,
 			shared_statistics,
@@ -65,7 +66,7 @@ impl NetworkThreadClient {
 		self.running = true;
 		while self.running {
 			let now = self.get_now_time();
-			self.udp_client.cycle(now);
+			self.channel.cycle(now);
 			self.update_server_time();
 			self.commands_from_server();
 			self.request_from_controller();
@@ -77,7 +78,7 @@ impl NetworkThreadClient {
 
 	fn update_server_time(&mut self) {
 		let mut server_time: MutexGuard<'_, Option<u64>> = self.server_time.lock().unwrap();
-		match self.udp_client.protocol.rtt.remote_time {
+		match self.channel.protocol.rtt.remote_time {
 			None => {}
 			Some(time) => {
 				server_time.replace(time);
@@ -101,7 +102,7 @@ impl NetworkThreadClient {
 	/// Обработка команд с сервера
 	///
 	fn commands_from_server(&mut self) {
-		let in_commands_from_protocol = self.udp_client.protocol.in_commands_collector.get_ready_commands();
+		let in_commands_from_protocol = self.channel.protocol.in_commands_collector.get_ready_commands();
 		for command in in_commands_from_protocol {
 			match self.commands_from_server.send(command.clone()) {
 				Ok(_) => {}
@@ -120,26 +121,26 @@ impl NetworkThreadClient {
 		while let Ok(command) = self.request_from_controller.try_recv() {
 			match command {
 				ClientRequest::Close(reason) => {
-					self.udp_client.protocol.disconnect_by_command.disconnect(reason);
+					self.channel.protocol.disconnect_by_command.disconnect(reason);
 					let now = Instant::now();
-					self.udp_client.cycle(now);
+					self.channel.cycle(now);
 					self.running = false;
 					tracing::info!("[client] ClientRequest::Close");
 				}
 				ClientRequest::SetProtocolTimeOffsetForTest(duration) => {
 					self.protocol_time_offset_for_test = Some(duration);
 				}
-				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => self.udp_client.channel.config_emulator(|emulator| {
+				ClientRequest::ConfigureRttEmulation(rtt, rtt_dispersion) => self.channel.socket_wrapper.config_emulator(|emulator| {
 					emulator.configure_rtt(rtt, rtt_dispersion);
 				}),
-				ClientRequest::ConfigureDropEmulation(drop_probability, drop_time) => self.udp_client.channel.config_emulator(|emulator| {
+				ClientRequest::ConfigureDropEmulation(drop_probability, drop_time) => self.channel.socket_wrapper.config_emulator(|emulator| {
 					emulator.configure_drop(drop_probability, drop_time);
 				}),
 				ClientRequest::ResetEmulation => {
-					self.udp_client.channel.reset_emulator();
+					self.channel.socket_wrapper.reset_emulator();
 				}
 				ClientRequest::SendCommandToServer(command) => {
-					self.udp_client
+					self.channel
 						.protocol
 						.out_commands_collector
 						.add_command(command.channel_type, BothDirectionCommand::C2S(command.command));
@@ -153,7 +154,7 @@ impl NetworkThreadClient {
 	///
 	#[allow(clippy::cast_possible_truncation)]
 	fn update_state(&mut self) {
-		let protocol = &mut self.udp_client.protocol;
+		let protocol = &mut self.channel.protocol;
 		self.shared_statistics.current_frame_id.store(protocol.next_frame_id, Ordering::Relaxed);
 		self.shared_statistics
 			.rtt_in_ms
@@ -165,11 +166,11 @@ impl NetworkThreadClient {
 			.rtt_in_ms
 			.store(protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64, Ordering::Relaxed);
 
-		let channel = &self.udp_client.channel;
+		let channel = &self.channel.socket_wrapper;
 		self.shared_statistics.recv_packet_count.store(channel.recv_packet_count, Ordering::Relaxed);
 		self.shared_statistics.send_packet_count.store(channel.send_packet_count, Ordering::Relaxed);
 		self.shared_statistics.send_size.store(channel.send_size, Ordering::Relaxed);
 		self.shared_statistics.recv_size.store(channel.recv_size, Ordering::Relaxed);
-		*self.connection_status.lock().unwrap() = self.udp_client.state.clone();
+		*self.connection_status.lock().unwrap() = self.channel.state.clone();
 	}
 }

@@ -2,7 +2,7 @@ use std::thread;
 use std::time::Duration;
 
 use cheetah_client::ffi::execute_with_client;
-use cheetah_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_common::network::channel::{ConnectionStatus, DisconnectedReason};
 use cheetah_common::protocol::disconnect::timeout::DisconnectByTimeout;
 
 use crate::helpers::helper::IntegrationTestHelper;

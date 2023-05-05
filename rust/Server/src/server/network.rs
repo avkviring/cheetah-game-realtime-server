@@ -18,7 +18,7 @@ use crate::room::template::config::MemberTemplate;
 use crate::server::measurers::Measurers;
 use crate::server::rooms::Rooms;
 
-pub struct NetworkLayer {
+pub struct NetworkServer {
 	sessions: HashMap<MemberAndRoomId, MemberSession>,
 	socket: UdpSocket,
 	measurers: Rc<RefCell<Measurers>>,
@@ -29,11 +29,11 @@ pub struct NetworkLayer {
 struct MemberSession {
 	peer_address: Option<SocketAddr>,
 	private_key: MemberPrivateKey,
-	max_receive_frame_id: FrameId,
+	last_receive_frame_id: FrameId,
 	pub(crate) protocol: Protocol,
 }
 
-impl NetworkLayer {
+impl NetworkServer {
 	pub fn new(socket: UdpSocket, measurers: Rc<RefCell<Measurers>>) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		Ok(Self {
@@ -129,8 +129,8 @@ impl NetworkLayer {
 	fn process_in_frame(&mut self, rooms: &mut Rooms, buffer: &[u8; MAX_FRAME_SIZE], size: usize, address: SocketAddr, now: Instant) {
 		let start_time = Instant::now();
 		let mut cursor = Cursor::new(&buffer[0..size]);
-		match InFrame::decode_headers(&mut cursor) {
-			Ok((frame_id, headers)) => {
+		match InFrame::decode_meta(&mut cursor) {
+			Ok((connection_id, frame_id, headers)) => {
 				let member_and_room_id_header: Option<MemberAndRoomId> = headers.first(Header::predicate_member_and_room_id).copied();
 
 				match member_and_room_id_header {
@@ -144,13 +144,13 @@ impl NetworkLayer {
 							}
 							Some(session) => {
 								let private_key = &session.private_key;
-								match InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(private_key)) {
+								match InFrame::decode_commands(true, frame_id, cursor, Cipher::new(private_key)) {
 									Ok(commands) => {
 										tracing::debug!("c2s {:?}", commands);
-										let frame = InFrame::new(frame_id, headers, commands);
-										if frame.frame_id > session.max_receive_frame_id || session.max_receive_frame_id == 0 {
+										let frame = InFrame::new(connection_id, frame_id, headers, commands);
+										if frame.frame_id > session.last_receive_frame_id || session.last_receive_frame_id == 0 {
 											session.peer_address.replace(address);
-											session.max_receive_frame_id = frame.frame_id;
+											session.last_receive_frame_id = frame.frame_id;
 										}
 										session.protocol.on_frame_received(&frame, now);
 										rooms.execute_commands(member_and_room_id, session.protocol.in_commands_collector.get_ready_commands());
@@ -179,8 +179,9 @@ impl NetworkLayer {
 			MemberSession {
 				peer_address: Default::default(),
 				private_key: template.private_key,
-				max_receive_frame_id: 0,
+				last_receive_frame_id: 0,
 				protocol: Protocol::new(
+					0,
 					now,
 					self.start_application_time,
 					self.measurers.borrow().retransmit_count.clone(),
@@ -217,10 +218,10 @@ mod tests {
 	use cheetah_common::protocol::frame::MAX_FRAME_SIZE;
 	use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 
-	use crate::room::member::Member;
+	use crate::room::member::RoomMember;
 	use crate::room::template::config::MemberTemplate;
 	use crate::server::measurers::Measurers;
-	use crate::server::network::NetworkLayer;
+	use crate::server::network::NetworkServer;
 	use crate::server::rooms::Rooms;
 
 	#[test]
@@ -237,7 +238,7 @@ mod tests {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
-		let mut frame = OutFrame::new(0);
+		let mut frame = OutFrame::new(0, 0);
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId { member_id: 0, room_id: 0 }));
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
 		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
@@ -248,7 +249,7 @@ mod tests {
 		let mut udp_server = create_network_layer();
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; MAX_FRAME_SIZE];
-		let frame = OutFrame::new(0);
+		let frame = OutFrame::new(0, 0);
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
 		udp_server.process_in_frame(&mut rooms, &buffer, size, SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
 	}
@@ -263,7 +264,7 @@ mod tests {
 		let mut buffer = [0; MAX_FRAME_SIZE];
 
 		let member_template = MemberTemplate::new_member(Default::default(), Default::default());
-		let member = Member {
+		let member = RoomMember {
 			id: 100,
 			connected: false,
 			attached: false,
@@ -272,7 +273,7 @@ mod tests {
 		};
 		udp_server.register_member(Instant::now(), 0, member.id, member.template.clone());
 
-		let mut frame = OutFrame::new(100);
+		let mut frame = OutFrame::new(0, 100);
 		let member_and_room_id = MemberAndRoomId { member_id: member.id, room_id: 0 };
 		frame.headers.add(Header::MemberAndRoomId(member_and_room_id));
 		let size = frame.encode(&mut Cipher::new(&member_template.private_key), &mut buffer).unwrap();
@@ -282,7 +283,7 @@ mod tests {
 
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_1, Instant::now());
 
-		let mut frame = OutFrame::new(10);
+		let mut frame = OutFrame::new(0, 10);
 		frame.headers.add(Header::MemberAndRoomId(member_and_room_id));
 		let size = frame.encode(&mut Cipher::new(&member_template.private_key), &mut buffer).unwrap();
 		udp_server.process_in_frame(&mut rooms, &buffer, size, addr_2, Instant::now());
@@ -303,7 +304,7 @@ mod tests {
 		assert!(!udp_server.sessions.contains_key(&member_to_delete), "session should be deleted");
 	}
 
-	fn create_network_layer() -> NetworkLayer {
-		NetworkLayer::new(bind_to_free_socket().unwrap(), Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())))).unwrap()
+	fn create_network_layer() -> NetworkServer {
+		NetworkServer::new(bind_to_free_socket().unwrap(), Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())))).unwrap()
 	}
 }

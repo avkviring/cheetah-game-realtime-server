@@ -1,7 +1,7 @@
 use crate::helpers::helper::IntegrationTestHelper;
 use crate::helpers::server::IntegrationTestServerBuilder;
 use cheetah_client::ffi::execute_with_client;
-use cheetah_common::network::client::{ConnectionStatus, DisconnectedReason};
+use cheetah_common::network::channel::{ConnectionStatus, DisconnectedReason};
 use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 use std::thread;

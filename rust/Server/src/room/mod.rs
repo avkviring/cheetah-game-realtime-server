@@ -14,13 +14,13 @@ use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithChannel};
-use cheetah_common::protocol::frame::channel::ChannelType;
+use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithReliabilityGuarantees};
+use cheetah_common::protocol::frame::channel::ReliabilityGuarantees;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_common::room::{RoomId, RoomMemberId};
-use member::Member;
+use member::RoomMember;
 
 use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::{execute, ServerCommandError};
@@ -42,9 +42,9 @@ pub struct Room {
 	pub id: RoomId,
 	pub template_name: String,
 	pub permission_manager: Rc<RefCell<PermissionManager>>,
-	pub members: HashMap<RoomMemberId, Member, FnvBuildHasher>,
+	pub members: HashMap<RoomMemberId, RoomMember, FnvBuildHasher>,
 	pub(crate) objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
-	current_channel: Option<ChannelType>,
+	current_channel: Option<ReliabilityGuarantees>,
 	pub member_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	pub room_object_id_generator: u32,
@@ -155,7 +155,7 @@ impl Room {
 	/// Если в комнате настроен форвардинг [`Self::should_forward`],
 	/// то команды не-суперпользователей будут перенаправлены суперпользователям вместо выполнения.
 	///
-	pub fn execute_commands(&mut self, member_id: RoomMemberId, commands: &[CommandWithChannel]) {
+	pub fn execute_commands(&mut self, member_id: RoomMemberId, commands: &[CommandWithReliabilityGuarantees]) {
 		if let Some(member) = self.members.get(&member_id) {
 			if !self.is_allowed_to_connect(member) {
 				tracing::error!("[room({:?})] member is not allowed to connect {:?}", self.id, member_id);
@@ -178,9 +178,9 @@ impl Room {
 		let mut measurers = measurers.borrow_mut();
 		let tracer = Rc::clone(&self.command_trace_session);
 		for command_with_channel in commands {
-			match &command_with_channel.both_direction_command {
+			match &command_with_channel.commands {
 				BothDirectionCommand::C2S(command) => {
-					self.current_channel.replace(From::from(&command_with_channel.channel));
+					self.current_channel.replace(From::from(&command_with_channel.reliability_guarantees));
 					tracer.borrow_mut().collect_c2s(&self.objects, member_id, command);
 
 					if self.should_forward(command, member_id) {
@@ -208,7 +208,7 @@ impl Room {
 	}
 
 	fn connect_member(&mut self, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		self.current_channel.replace(ChannelType::ReliableSequence(ChannelGroup(0)));
+		self.current_channel.replace(ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 		let member = self.members.get(&member_id).ok_or(ServerCommandError::MemberNotFound(member_id))?;
 		let template = member.template.clone();
 		if let Err(e) = self.on_member_connect(member_id, template) {
@@ -224,7 +224,7 @@ impl Room {
 	pub fn register_member(&mut self, template: MemberTemplate) -> RoomMemberId {
 		self.member_id_generator += 1;
 		let member_id = self.member_id_generator;
-		let member = Member {
+		let member = RoomMember {
 			id: member_id,
 			connected: false,
 			attached: false,
@@ -236,11 +236,11 @@ impl Room {
 		member_id
 	}
 
-	pub fn get_member(&self, member_id: &RoomMemberId) -> Result<&Member, ServerCommandError> {
+	pub fn get_member(&self, member_id: &RoomMemberId) -> Result<&RoomMember, ServerCommandError> {
 		self.members.get(member_id).ok_or(ServerCommandError::MemberNotFound(*member_id))
 	}
 
-	pub fn get_member_mut(&mut self, member_id: &RoomMemberId) -> Result<&mut Member, ServerCommandError> {
+	pub fn get_member_mut(&mut self, member_id: &RoomMemberId) -> Result<&mut RoomMember, ServerCommandError> {
 		self.members.get_mut(member_id).ok_or(ServerCommandError::MemberNotFound(*member_id))
 	}
 
@@ -344,7 +344,7 @@ impl Room {
 	///
 	/// Если конфигурация комнаты плагинами не завершена, только `super_member` пользователи могут подключаться к комнате
 	///
-	fn is_allowed_to_connect(&self, member: &Member) -> bool {
+	fn is_allowed_to_connect(&self, member: &RoomMember) -> bool {
 		if self.is_ready() {
 			true
 		} else {
@@ -374,8 +374,8 @@ mod tests {
 	use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 	use cheetah_common::commands::{CommandTypeId, FieldType};
 	use cheetah_common::protocol::commands::output::CommandWithChannelType;
-	use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithChannel};
-	use cheetah_common::protocol::frame::channel::{Channel, ChannelType};
+	use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
+	use cheetah_common::protocol::frame::channel::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
@@ -548,9 +548,9 @@ mod tests {
 		room.execute_commands(member1_id, &[]);
 		room.execute_commands(
 			member1_id,
-			vec![CommandWithChannel {
-				channel: Channel::ReliableUnordered,
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+			vec![CommandWithReliabilityGuarantees {
+				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+				commands: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			}]
 			.as_slice(),
 		);
@@ -635,7 +635,7 @@ mod tests {
 		room.mark_as_connected_in_test(member_id).unwrap();
 		let member = room.get_member_mut(&member_id).unwrap();
 		member.out_commands.push(CommandWithChannelType {
-			channel_type: ChannelType::ReliableUnordered,
+			channel_type: ReliabilityGuarantees::ReliableUnordered,
 			command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 				command: S2CCommand::SetLong(SetLongCommand {
 					object_id: Default::default(),
@@ -745,10 +745,10 @@ mod tests {
 		(template, member_template)
 	}
 
-	fn get_create_game_object_command(object_id: u32) -> CommandWithChannel {
-		CommandWithChannel {
-			channel: Channel::ReliableUnordered,
-			both_direction_command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
+	fn get_create_game_object_command(object_id: u32) -> CommandWithReliabilityGuarantees {
+		CommandWithReliabilityGuarantees {
+			reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+			commands: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
 				template: 0,
 				access_groups: Default::default(),

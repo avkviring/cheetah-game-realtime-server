@@ -4,12 +4,12 @@ use cheetah_common::commands::s2c::{S2CCommandWithCreator, S2CCommandWithMeta};
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::protocol::commands::output::CommandWithChannelType;
 use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
-use cheetah_common::protocol::frame::channel::ChannelType;
+use cheetah_common::protocol::frame::channel::ReliabilityGuarantees;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
-use crate::room::member::Member;
+use crate::room::member::RoomMember;
 use crate::room::template::config::Permission;
 use crate::room::Room;
 
@@ -20,14 +20,14 @@ use crate::room::Room;
 impl Room {
 	pub fn send_to_members<T>(&mut self, access_groups: AccessGroups, object_template: Option<GameObjectTemplateId>, commands: &[S2CCommandWithMeta], filter: T) -> Result<(), ServerCommandError>
 	where
-		T: Fn(&Member) -> bool,
+		T: Fn(&RoomMember) -> bool,
 	{
 		#[cfg(test)]
 		for command in commands.iter() {
 			self.test_out_commands.push_front((access_groups, command.command.clone()));
 		}
 
-		let channel_type = self.current_channel.as_ref().unwrap_or(&ChannelType::ReliableSequence(ChannelGroup(0)));
+		let channel_type = self.current_channel.as_ref().unwrap_or(&ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 
 		let permission_manager = Rc::clone(&self.permission_manager);
 		let command_trace_session = Rc::clone(&self.command_trace_session);
@@ -73,7 +73,7 @@ impl Room {
 	pub fn send_to_member(&mut self, member_id: &RoomMemberId, object_template: GameObjectTemplateId, commands: &[S2CCommandWithMeta]) -> Result<(), ServerCommandError> {
 		let command_trace_session = Rc::clone(&self.command_trace_session);
 		let permission_manager = Rc::clone(&self.permission_manager);
-		let channel = self.current_channel.unwrap_or(ChannelType::ReliableSequence(ChannelGroup(0)));
+		let channel = self.current_channel.unwrap_or(ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 		let member = self.get_member_mut(member_id)?;
 
 		if member.attached && member.connected {

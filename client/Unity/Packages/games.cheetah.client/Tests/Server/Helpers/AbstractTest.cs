@@ -117,7 +117,7 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
         protected static NetworkClient ConnectToServer(EmbeddedServer.API.EmbeddedServer server, ulong roomId, CreateMemberResponse member,
             CodecRegistry codecRegistry)
         {
-            var client = new NetworkClient(server.GetUdpGameHost(), server.GetUdpGamePort(), member.UserId, roomId,
+            var client = new NetworkClient(0, server.GetUdpGameHost(), server.GetUdpGamePort(), member.UserId, roomId,
                 member.PrivateKey.ToByteArray(),
                 codecRegistry);
             client.DisableClientLog();

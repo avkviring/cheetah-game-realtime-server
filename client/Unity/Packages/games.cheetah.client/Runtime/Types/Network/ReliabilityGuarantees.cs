@@ -3,9 +3,9 @@ using System;
 namespace Games.Cheetah.Client.Types.Network
 {
     /// <summary>
-    /// Тип канала для отправки команд
+    /// Гарантии доставки
     /// </summary>
-    public enum NetworkChannelType
+    public enum ReliabilityGuarantees
     {
         /// <summary>
         /// - гарантия доставки
@@ -39,55 +39,55 @@ namespace Games.Cheetah.Client.Types.Network
     }
 
 
-    public class NetworkChannel : IEquatable<NetworkChannel>
+    public class ReliabilityGuaranteesChannel : IEquatable<ReliabilityGuaranteesChannel>
     {
         /// <summary>
         /// - гарантия доставки
         /// - команды выполняются строго последовательно в рамках группы
         /// </summary>
-        public static readonly NetworkChannel ReliableSequence = new(NetworkChannelType.ReliableSequence, 1);
+        public static readonly ReliabilityGuaranteesChannel ReliableSequence = new(ReliabilityGuarantees.ReliableSequence, 1);
 
         /// <summary>
         /// - гарантия доставки
         /// - не выполняются предыдущие команды в рамках группы
         /// </summary>
-        public static readonly NetworkChannel ReliableOrdered = new(NetworkChannelType.ReliableOrdered, 1);
+        public static readonly ReliabilityGuaranteesChannel ReliableOrdered = new(ReliabilityGuarantees.ReliableOrdered, 1);
 
         /// <summary>
         /// - гарантия доставки
         /// - нет гарантии порядка выполнения
         /// </summary>
-        public static readonly NetworkChannel ReliableUnordered = new(NetworkChannelType.ReliableUnordered);
+        public static readonly ReliabilityGuaranteesChannel ReliableUnordered = new(ReliabilityGuarantees.ReliableUnordered);
 
 
         /// <summary>
         /// - нет гарантии доставки
         /// - нет гарантии порядка выполнения
         /// </summary>
-        public static readonly NetworkChannel UnreliableUnordered = new(NetworkChannelType.UnreliableUnordered);
+        public static readonly ReliabilityGuaranteesChannel UnreliableUnordered = new(ReliabilityGuarantees.UnreliableUnordered);
 
         /// <summary>
         /// - нет гарантии доставки
         /// - не выполняются предыдущие команды в рамках объекта
         /// </summary>
-        public static readonly NetworkChannel UnreliableOrdered = new(NetworkChannelType.UnreliableOrdered);
+        public static readonly ReliabilityGuaranteesChannel UnreliableOrdered = new(ReliabilityGuarantees.UnreliableOrdered);
 
-        public static readonly NetworkChannel Default = ReliableSequence;
+        public static readonly ReliabilityGuaranteesChannel Default = ReliableSequence;
 
-        public readonly NetworkChannelType NetworkChannelType;
+        public readonly ReliabilityGuarantees ReliabilityGuarantees;
         public readonly byte group;
 
-        public NetworkChannel(NetworkChannelType networkChannelType, byte group = 0)
+        public ReliabilityGuaranteesChannel(ReliabilityGuarantees reliabilityGuarantees, byte group = 0)
         {
-            this.NetworkChannelType = networkChannelType;
+            this.ReliabilityGuarantees = reliabilityGuarantees;
             this.group = group;
         }
 
-        public bool Equals(NetworkChannel other)
+        public bool Equals(ReliabilityGuaranteesChannel other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
-            return NetworkChannelType == other.NetworkChannelType && group == other.group;
+            return ReliabilityGuarantees == other.ReliabilityGuarantees && group == other.group;
         }
 
         public override bool Equals(object obj)
@@ -95,14 +95,14 @@ namespace Games.Cheetah.Client.Types.Network
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != this.GetType()) return false;
-            return Equals((NetworkChannel)obj);
+            return Equals((ReliabilityGuaranteesChannel)obj);
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                return ((int)NetworkChannelType * 397) ^ group.GetHashCode();
+                return ((int)ReliabilityGuarantees * 397) ^ group.GetHashCode();
             }
         }
     }

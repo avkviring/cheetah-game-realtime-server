@@ -16,7 +16,7 @@ fn frame_encode(c: &mut Criterion) {
 	group.throughput(Throughput::Elements(1));
 	group.bench_function("frame_encode", |b| {
 		b.iter(|| {
-			let frame = OutFrame::new(100_500);
+			let frame = OutFrame::new(0, 100_500);
 			let mut buffer = [0; 2048];
 			let private_key = MemberPrivateKey([0; 32]);
 			frame.encode(&mut Cipher::new(&private_key), &mut buffer).unwrap();
@@ -30,7 +30,7 @@ fn frame_encode(c: &mut Criterion) {
 /// self - 1.5 Melem/s
 ///
 fn frame_decode(c: &mut Criterion) {
-	let frame = OutFrame::new(100_500);
+	let frame = OutFrame::new(0, 100_500);
 	let mut buffer = [0; 2048];
 	let private_key = MemberPrivateKey([0; 32]);
 	let size = frame.encode(&mut Cipher::new(&private_key), &mut buffer).unwrap();
@@ -40,8 +40,8 @@ fn frame_decode(c: &mut Criterion) {
 	group.bench_function("frame_decode", |b| {
 		b.iter(|| {
 			let mut cursor = Cursor::new(&buffer[0..size]);
-			let (frame_id, _) = InFrame::decode_headers(&mut cursor).unwrap();
-			InFrame::decode_frame_commands(true, frame_id, cursor, Cipher::new(&private_key)).unwrap();
+			let (_, frame_id, _) = InFrame::decode_meta(&mut cursor).unwrap();
+			InFrame::decode_commands(true, frame_id, cursor, Cipher::new(&private_key)).unwrap();
 		});
 	});
 	group.finish();

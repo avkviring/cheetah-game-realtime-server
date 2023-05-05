@@ -8,11 +8,11 @@ namespace Games.Cheetah.Client.Internal
     public interface IFFI
     {
         byte CreateClient(
+            ulong connectionId,
             string serverAddress,
             ushort memberId,
             ulong roomId,
             ref NetworkBuffer userPrivateKey,
-            ulong startFrameId,
             out ushort clientId
         );
 
@@ -22,7 +22,7 @@ namespace Games.Cheetah.Client.Internal
         byte DestroyClient(ushort clientId);
         byte AttachToRoom(ushort clientId);
         byte DetachFromRoom(ushort clientId);
-        byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group);
+        byte SetChannelType(ushort clientId, ReliabilityGuarantees reliabilityGuarantees, byte group);
         byte SetRttEmulation(ushort clientId, ulong rttInMs, double rttDispersion);
         byte SetDropEmulation(ushort clientId, double dropProbability, ulong dropTimeInMs);
         byte ResetEmulation(ushort clientId);

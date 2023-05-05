@@ -21,7 +21,7 @@ namespace Games.Cheetah.Client
         public readonly uint MemberId;
         internal readonly ushort Id;
         private bool enableClientLog = true;
-        private NetworkChannel currentNetworkChannel;
+        private ReliabilityGuaranteesChannel currentReliabilityGuaranteesChannel;
         private NetworkBuffer buffer;
         internal static S2CCommand[] s2cCommands = new S2CCommand[1024];
         internal ushort s2cCommandsCount;
@@ -35,17 +35,26 @@ namespace Games.Cheetah.Client
 
         internal readonly IFFI ffi;
 
+        /**
+         * connectionId
+         *   - идентификатор соединения, изначально 0, если потребуется снова присоединится к данному клиенту на сервере,
+         *     то connectionId должен быть +1 к предыдущему. Данный механизм используется только для переподключения клиента при краше игры.
+         * 
+         */
         public NetworkClient(
+            ulong connectionId,
             string serverUdpHost,
             ushort serverUdpPort,
             uint memberId,
             ulong roomId,
             byte[] privateUserKey,
-            CodecRegistry codecRegistry) : this(new FFIImpl(), serverUdpHost, serverUdpPort, memberId, roomId, privateUserKey, codecRegistry)
+            CodecRegistry codecRegistry) : this(connectionId, new FFIImpl(), serverUdpHost, serverUdpPort, memberId, roomId, privateUserKey,
+            codecRegistry)
         {
         }
 
         internal NetworkClient(
+            ulong connectionId,
             IFFI ffi,
             string serverUdpHost,
             ushort serverUdpPort,
@@ -61,17 +70,17 @@ namespace Games.Cheetah.Client
 
             var userPrivateKey = new NetworkBuffer(privateUserKey);
             ResultChecker.Check(ffi.CreateClient(
+                connectionId,
                 serverUdpHost + ":" + serverUdpPort,
                 (ushort)memberId,
                 roomId,
                 ref userPrivateKey,
-                0,
                 out Id));
 
             Writer = new Writer(ffi, CodecRegistry, Id);
             Reader = new Reader(this, CodecRegistry);
 
-            SetChannel(NetworkChannel.Default);
+            SetReliabilityGuarantees(ReliabilityGuaranteesChannel.Default);
         }
 
         /// <summary>
@@ -169,15 +178,15 @@ namespace Games.Cheetah.Client
         /// </summary>
         /// <param name="channelType">тип канала</param>
         /// <param name="group">группа, для групповых каналов, для остальных игнорируется</param>
-        public void SetChannel(NetworkChannel networkChannel)
+        public void SetReliabilityGuarantees(ReliabilityGuaranteesChannel reliabilityGuaranteesChannel)
         {
-            if (currentNetworkChannel != null && currentNetworkChannel.Equals(networkChannel))
+            if (currentReliabilityGuaranteesChannel != null && currentReliabilityGuaranteesChannel.Equals(reliabilityGuaranteesChannel))
             {
                 return;
             }
 
-            currentNetworkChannel = networkChannel;
-            ResultChecker.Check(ffi.SetChannelType(Id, networkChannel.NetworkChannelType, networkChannel.group));
+            currentReliabilityGuaranteesChannel = reliabilityGuaranteesChannel;
+            ResultChecker.Check(ffi.SetChannelType(Id, reliabilityGuaranteesChannel.ReliabilityGuarantees, reliabilityGuaranteesChannel.group));
         }
 
 

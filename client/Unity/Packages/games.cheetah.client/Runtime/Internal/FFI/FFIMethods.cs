@@ -18,11 +18,11 @@ namespace Games.Cheetah.Client.Internal.FFI
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_client")]
         public static extern byte CreateClient(
+            ulong connectionId,
             [MarshalAs(UnmanagedType.LPStr)] string serverAddress,
             ushort memberId,
             ulong roomId,
             ref NetworkBuffer userPrivateKey,
-            ulong startFrameId,
             out ushort clientId
         );
 
@@ -49,7 +49,7 @@ namespace Games.Cheetah.Client.Internal.FFI
         public static extern byte DetachFromRoom(ushort clientId);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_channel")]
-        public static extern byte SetChannelType(ushort clientId, NetworkChannelType networkChannelType, byte group);
+        public static extern byte SetChannelType(ushort clientId, ReliabilityGuarantees reliabilityGuarantees, byte group);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_rtt_emulation")]
         public static extern byte SetRttEmulation(ushort clientId, ulong rttInMs, double rttDispersion);

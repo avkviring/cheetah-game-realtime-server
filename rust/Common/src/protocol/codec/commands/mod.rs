@@ -20,25 +20,25 @@ mod tests {
 	use crate::protocol::codec::commands::context::CommandContext;
 	use crate::protocol::codec::commands::decoder::decode_commands;
 	use crate::protocol::codec::commands::encoder::encode_command;
-	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithChannel};
-	use crate::protocol::frame::channel::Channel;
+	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithReliabilityGuarantees};
+	use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
 
 	#[test]
 	fn test_c2s() {
 		let commands = vec![
-			CommandWithChannel {
-				channel: Channel::ReliableUnordered,
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetDoubleCommand {
+			CommandWithReliabilityGuarantees {
+				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+				commands: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetDoubleCommand {
 					object_id: Default::default(),
 					field_id: 10,
 					value: 1.5,
 				})),
 			},
-			CommandWithChannel {
-				channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-				both_direction_command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			CommandWithReliabilityGuarantees {
+				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
+				commands: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
 					object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
 					field_id: 15,
 					value: 16,
@@ -52,9 +52,9 @@ mod tests {
 	#[test]
 	fn test_s2s() {
 		let commands = vec![
-			CommandWithChannel {
-				channel: Channel::ReliableUnordered,
-				both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+			CommandWithReliabilityGuarantees {
+				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
+				commands: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 					command: S2CCommand::SetDouble(SetDoubleCommand {
 						object_id: Default::default(),
 						field_id: 10,
@@ -63,9 +63,9 @@ mod tests {
 					creator: 55,
 				}),
 			},
-			CommandWithChannel {
-				channel: Channel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-				both_direction_command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
+			CommandWithReliabilityGuarantees {
+				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
+				commands: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
 					command: S2CCommand::SetLong(SetLongCommand {
 						object_id: Default::default(),
 						field_id: 5,
@@ -79,7 +79,7 @@ mod tests {
 	}
 
 	#[allow(clippy::cast_possible_truncation)]
-	fn check(from_client: bool, commands: &[CommandWithChannel]) {
+	fn check(from_client: bool, commands: &[CommandWithReliabilityGuarantees]) {
 		let mut buffer = [0_u8; 64];
 		let mut cursor = Cursor::new(buffer.as_mut());
 		let mut context = CommandContext::default();
