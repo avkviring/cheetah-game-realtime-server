@@ -16,7 +16,6 @@ use crate::room::Room;
 ///
 /// Методы для отправки команд пользователям
 ///
-///
 impl Room {
 	pub fn send_to_members<T>(&mut self, access_groups: AccessGroups, object_template: Option<GameObjectTemplateId>, commands: &[S2CCommandWithMeta], filter: T) -> Result<(), ServerCommandError>
 	where

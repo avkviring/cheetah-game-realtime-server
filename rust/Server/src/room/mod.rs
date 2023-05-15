@@ -25,7 +25,7 @@ use member::RoomMember;
 use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::forward::ForwardConfig;
-use crate::room::object::{CreateCommandsCollector, GameObject};
+use crate::room::object::{GameObject, S2CCommandsCollector};
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
 use crate::server::measurers::Measurers;
@@ -48,7 +48,7 @@ pub struct Room {
 	pub member_id_generator: RoomMemberId,
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	pub room_object_id_generator: u32,
-	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, CreateCommandsCollector)>>>,
+	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, S2CCommandsCollector)>>>,
 	measurers: Rc<RefCell<Measurers>>,
 	objects_singleton_key: HashMap<Buffer, GameObjectId, FnvBuildHasher>,
 
@@ -323,7 +323,7 @@ impl Room {
 	fn on_member_connect(&mut self, member_id: RoomMemberId, template: MemberTemplate) -> Result<(), ServerCommandError> {
 		for object_template in template.objects {
 			let object = object_template.create_member_game_object(member_id);
-			let mut commands = CreateCommandsCollector::new();
+			let mut commands = S2CCommandsCollector::new();
 			object.collect_create_commands(&mut commands, member_id);
 			let template = object.template_id;
 			let access_groups = object.access_groups;

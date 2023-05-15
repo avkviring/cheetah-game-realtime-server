@@ -2,7 +2,7 @@ use cheetah_common::room::RoomMemberId;
 use std::rc::Rc;
 
 use crate::room::command::ServerCommandError;
-use crate::room::object::CreateCommandsCollector;
+use crate::room::object::S2CCommandsCollector;
 use crate::room::Room;
 
 pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -17,7 +17,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 		.filter(|(_, o)| o.created)
 		.filter(|(_, o)| o.access_groups.contains_any(&access_group))
 		.map(|(_, o)| {
-			let mut commands = CreateCommandsCollector::new();
+			let mut commands = S2CCommandsCollector::new();
 			o.collect_create_commands(&mut commands, member_id);
 			(o.template_id, commands)
 		})
