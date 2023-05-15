@@ -4,7 +4,7 @@ use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_common::room::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::room::object::CreateCommandsCollector;
+use crate::room::object::S2CCommandsCollector;
 use crate::room::Room;
 
 impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
@@ -40,7 +40,7 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		let groups = object.access_groups;
 		object.created = true;
 		// объект полностью загружен - теперь его надо загрузить остальным клиентам
-		let mut commands = CreateCommandsCollector::new();
+		let mut commands = S2CCommandsCollector::new();
 		object.collect_create_commands(&mut commands, member_id);
 		let template = object.template_id;
 		if object.id.get_owner() == GameObjectOwner::Room {

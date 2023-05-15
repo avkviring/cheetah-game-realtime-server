@@ -5,9 +5,6 @@ use thiserror::Error;
 use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
-use cheetah_common::commands::types::float::SetDoubleCommand;
-use cheetah_common::commands::types::long::SetLongCommand;
-use cheetah_common::commands::types::structure::SetStructureCommand;
 use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectId;
@@ -18,7 +15,7 @@ pub mod fields;
 
 pub const MAX_FIELD_COUNT: usize = 64;
 
-pub type CreateCommandsCollector = heapless::Vec<S2CCommandWithMeta, 255>;
+pub type S2CCommandsCollector = Vec<S2CCommandWithMeta>;
 
 ///
 /// Игровой объект - логическая группировка игровых данных
@@ -28,9 +25,6 @@ pub struct GameObject {
 	pub id: GameObjectId,
 	pub template_id: GameObjectTemplateId,
 	pub access_groups: AccessGroups,
-	///
-	/// Объект полностью создан
-	///
 	pub created: bool,
 	pub doubles: Fields<f64>,
 	pub longs: Fields<i64>,
@@ -57,14 +51,8 @@ impl GameObject {
 		}
 	}
 
-	pub fn collect_create_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) {
-		if self.do_collect_create_commands(commands, member_id).is_err() {
-			tracing::error!("Collect create commands overflow {:?}", self);
-		}
-	}
-
-	fn do_collect_create_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
-		commands.push(S2CCommandWithMeta {
+	pub fn collect_create_commands(&self, out_commands: &mut S2CCommandsCollector, member_id: RoomMemberId) {
+		out_commands.push(S2CCommandWithMeta {
 			field: None,
 			creator: member_id,
 			command: S2CCommand::Create(CreateGameObjectCommand {
@@ -72,32 +60,21 @@ impl GameObject {
 				template: self.template_id,
 				access_groups: self.access_groups,
 			}),
-		})?;
-
-		self.fields_to_commands(commands, member_id)?;
-
+		});
+		self.fields_to_commands(out_commands, member_id);
 		if self.created {
-			commands.push(S2CCommandWithMeta {
+			out_commands.push(S2CCommandWithMeta {
 				field: None,
 				creator: member_id,
 				command: S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: self.id }),
-			})?;
+			});
 		}
-		Ok(())
 	}
 
-	fn fields_to_commands(&self, commands: &mut CreateCommandsCollector, member_id: RoomMemberId) -> Result<(), S2CCommandWithMeta> {
-		self.longs
-			.collect_commands(commands, member_id, |field_id, value| S2CCommand::SetLong(SetLongCommand { object_id: self.id, field_id, value }))?;
-
-		self.doubles
-			.collect_commands(commands, member_id, |field_id, value| S2CCommand::SetDouble(SetDoubleCommand { object_id: self.id, field_id, value }))?;
-
-		self.structures.collect_commands(commands, member_id, |field_id, value| {
-			S2CCommand::SetStructure(SetStructureCommand { object_id: self.id, field_id, value })
-		})?;
-
-		Ok(())
+	fn fields_to_commands(&self, commands: &mut S2CCommandsCollector, member_id: RoomMemberId) {
+		self.longs.collect_commands(commands, member_id, self.id.clone());
+		self.doubles.collect_commands(commands, member_id, self.id.clone());
+		self.structures.collect_commands(commands, member_id, self.id.clone());
 	}
 }
 
@@ -115,7 +92,7 @@ mod tests {
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 
-	use crate::room::object::{CreateCommandsCollector, GameObject};
+	use crate::room::object::{GameObject, S2CCommandsCollector};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
@@ -128,7 +105,7 @@ mod tests {
 		object.doubles.set(2, 200.200);
 		object.structures.set(1, [1, 2, 3].as_ref().into());
 
-		let mut commands = CreateCommandsCollector::new();
+		let mut commands = S2CCommandsCollector::new();
 		object.collect_create_commands(&mut commands, u16::MAX);
 
 		assert!(matches!(
@@ -178,7 +155,7 @@ mod tests {
 		let mut object = GameObject::new(id, 0, Default::default(), false);
 		object.longs.set(1, 100);
 
-		let mut commands = CreateCommandsCollector::new();
+		let mut commands = S2CCommandsCollector::new();
 		object.collect_create_commands(&mut commands, u16::MAX);
 		assert_eq!(commands.len(), 2);
 		assert!(matches!(
