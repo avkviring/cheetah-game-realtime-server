@@ -4,7 +4,6 @@ use std::collections::BinaryHeap;
 use crate::protocol::frame::applications::{ChannelGroup, ChannelSequence, CommandWithReliabilityGuarantees};
 use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 use crate::protocol::frame::input::InFrame;
-use crate::protocol::frame::FrameId;
 
 ///
 /// Коллектор входящих команд
@@ -12,7 +11,7 @@ use crate::protocol::frame::FrameId;
 ///
 #[derive(Debug)]
 pub struct InCommandsCollector {
-	last_frame_id_by_group: [FrameId; 256],
+	last_sequence_by_group: [ChannelSequence; 256],
 	sequences: [ChannelSequence; 256],
 	sequence_commands: [Option<BinaryHeap<SequenceApplicationCommand>>; 256],
 	ready_commands: Vec<CommandWithReliabilityGuarantees>,
@@ -29,7 +28,7 @@ const SEQUENCE_COMMANDS_LIMIT: usize = 4096;
 impl Default for InCommandsCollector {
 	fn default() -> Self {
 		Self {
-			last_frame_id_by_group: [0; 256],
+			last_sequence_by_group: [ChannelSequence(0); 256],
 			sequences: [ChannelSequence(0); 256],
 			sequence_commands: [(); 256].map(|_| None),
 			ready_commands: Default::default(),
@@ -53,12 +52,11 @@ impl InCommandsCollector {
 			self.is_get_ready_commands = false;
 		}
 
-		let frame_id = frame.frame_id;
 		frame.get_commands().cloned().for_each(|c| {
 			match c.reliability_guarantees {
 				ReliabilityGuaranteesChannel::ReliableUnordered | ReliabilityGuaranteesChannel::UnreliableUnordered => self.ready_commands.push(c),
-				ReliabilityGuaranteesChannel::ReliableOrdered(group) | ReliabilityGuaranteesChannel::UnreliableOrdered(group) => {
-					self.process_ordered(group, frame_id, c);
+				ReliabilityGuaranteesChannel::ReliableOrdered(group, sequence) | ReliabilityGuaranteesChannel::UnreliableOrdered(group, sequence) => {
+					self.process_ordered(group, sequence, c);
 				}
 				ReliabilityGuaranteesChannel::ReliableSequence(channel_id, sequence) => self.process_sequence(channel_id, sequence, c),
 			};
@@ -102,10 +100,10 @@ impl InCommandsCollector {
 		}
 	}
 
-	fn process_ordered(&mut self, channel_group: ChannelGroup, frame_id: FrameId, command: CommandWithReliabilityGuarantees) {
-		let order = &self.last_frame_id_by_group[channel_group.0 as usize];
-		if frame_id >= *order {
-			self.last_frame_id_by_group[channel_group.0 as usize] = frame_id;
+	fn process_ordered(&mut self, channel_group: ChannelGroup, sequence: ChannelSequence, command: CommandWithReliabilityGuarantees) {
+		let last_sequence = self.last_sequence_by_group[channel_group.0 as usize];
+		if sequence.0 >= last_sequence.0 {
+			self.last_sequence_by_group[channel_group.0 as usize] = sequence;
 			self.ready_commands.push(command);
 		}
 	}
@@ -156,7 +154,6 @@ mod tests {
 	use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithReliabilityGuarantees};
 	use crate::protocol::frame::channel::ReliabilityGuaranteesChannel;
 	use crate::protocol::frame::input::InFrame;
-	use crate::protocol::frame::FrameId;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
 
@@ -187,32 +184,32 @@ mod tests {
 		let cmd_1 = create_test_command(ReliabilityGuaranteesChannel::ReliableUnordered, 1);
 		let cmd_2 = create_test_command(ReliabilityGuaranteesChannel::ReliableUnordered, 2);
 
-		assert(2, &mut in_commands, &[cmd_2.clone()], &[cmd_2]);
-		assert(1, &mut in_commands, &[cmd_1.clone()], &[cmd_1]);
+		assert(&mut in_commands, &[cmd_2.clone()], &[cmd_2]);
+		assert(&mut in_commands, &[cmd_1.clone()], &[cmd_1]);
 	}
 
 	#[test]
 	pub(crate) fn test_group_ordered() {
 		let mut in_commands = InCommandsCollector::default();
 
-		let cmd_1 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1)), 1);
-		let cmd_2 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1)), 2);
-		let cmd_3 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1)), 3);
+		let cmd_1 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1), ChannelSequence(1)), 1);
+		let cmd_2 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1), ChannelSequence(2)), 2);
+		let cmd_3 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1), ChannelSequence(3)), 3);
 
-		assert(1, &mut in_commands, &[cmd_1.clone()], &[cmd_1]);
-		assert(3, &mut in_commands, &[cmd_3.clone()], &[cmd_3]);
-		assert(2, &mut in_commands, &[cmd_2], &[]);
+		assert(&mut in_commands, &[cmd_1.clone()], &[cmd_1]);
+		assert(&mut in_commands, &[cmd_3.clone()], &[cmd_3]);
+		assert(&mut in_commands, &[cmd_2.clone()], &[]);
 	}
 
 	#[test]
 	pub(crate) fn test_group_ordered_when_different_group() {
 		let mut in_commands = InCommandsCollector::default();
 
-		let cmd_1 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1)), 1);
-		let cmd_2 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(2)), 2);
+		let cmd_1 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(1), ChannelSequence(1)), 1);
+		let cmd_2 = create_test_command(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(2), ChannelSequence(1)), 2);
 
-		assert(2, &mut in_commands, &[cmd_2.clone()], &[cmd_2]);
-		assert(1, &mut in_commands, &[cmd_1.clone()], &[cmd_1]);
+		assert(&mut in_commands, &[cmd_2.clone()], &[cmd_2]);
+		assert(&mut in_commands, &[cmd_1.clone()], &[cmd_1]);
 	}
 
 	#[test]
@@ -226,12 +223,12 @@ mod tests {
 		let cmd_5 = create_test_command(ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(1), ChannelSequence(4)), 5);
 		let cmd_6 = create_test_command(ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(1), ChannelSequence(5)), 5);
 
-		assert(3, &mut in_commands, &[cmd_3.clone()], &[]);
-		assert(1, &mut in_commands, &[cmd_1.clone()], &[cmd_1]);
-		assert(5, &mut in_commands, &[cmd_5.clone()], &[]);
-		assert(2, &mut in_commands, &[cmd_2.clone()], &[cmd_2, cmd_3]);
-		assert(4, &mut in_commands, &[cmd_4.clone()], &[cmd_4, cmd_5]);
-		assert(6, &mut in_commands, &[cmd_6.clone()], &[cmd_6]);
+		assert(&mut in_commands, &[cmd_3.clone()], &[]);
+		assert(&mut in_commands, &[cmd_1.clone()], &[cmd_1]);
+		assert(&mut in_commands, &[cmd_5.clone()], &[]);
+		assert(&mut in_commands, &[cmd_2.clone()], &[cmd_2, cmd_3]);
+		assert(&mut in_commands, &[cmd_4.clone()], &[cmd_4, cmd_5]);
+		assert(&mut in_commands, &[cmd_6.clone()], &[cmd_6]);
 	}
 
 	#[test]
@@ -245,19 +242,20 @@ mod tests {
 		let cmd_2_b = create_test_command(ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(2), ChannelSequence(1)), 5);
 		let cmd_2_c = create_test_command(ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(2), ChannelSequence(2)), 6);
 
-		assert(1, &mut in_commands, &[cmd_1_a.clone()], &[cmd_1_a]);
-		assert(6, &mut in_commands, &[cmd_2_b.clone()], &[]);
-		assert(5, &mut in_commands, &[cmd_1_c.clone()], &[]);
-		assert(2, &mut in_commands, &[cmd_2_a.clone()], &[cmd_2_a, cmd_2_b]);
-		assert(3, &mut in_commands, &[cmd_1_b.clone()], &[cmd_1_b, cmd_1_c]);
-		assert(4, &mut in_commands, &[cmd_2_c.clone()], &[cmd_2_c]);
+		assert(&mut in_commands, &[cmd_1_a.clone()], &[cmd_1_a]);
+		assert(&mut in_commands, &[cmd_2_b.clone()], &[]);
+		assert(&mut in_commands, &[cmd_1_c.clone()], &[]);
+		assert(&mut in_commands, &[cmd_2_a.clone()], &[cmd_2_a, cmd_2_b]);
+		assert(&mut in_commands, &[cmd_1_b.clone()], &[cmd_1_b, cmd_1_c]);
+		assert(&mut in_commands, &[cmd_2_c.clone()], &[cmd_2_c]);
 	}
 
-	fn assert(frame_id: FrameId, in_commands: &mut InCommandsCollector, commands: &[CommandWithReliabilityGuarantees], expect: &[CommandWithReliabilityGuarantees]) {
-		let frame = InFrame::new(0, frame_id, Default::default(), commands.to_vec());
+	fn assert(in_commands: &mut InCommandsCollector, commands: &[CommandWithReliabilityGuarantees], expect: &[CommandWithReliabilityGuarantees]) {
+		let frame = InFrame::new(0, 0, Default::default(), commands.to_vec());
 		in_commands.collect(&frame);
 		assert_eq!(in_commands.get_ready_commands(), expect);
 	}
+
 	fn create_test_command(channel: ReliabilityGuaranteesChannel, content: i64) -> CommandWithReliabilityGuarantees {
 		create_test_object_command(channel, 0, content)
 	}
