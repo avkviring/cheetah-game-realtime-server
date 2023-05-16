@@ -1,6 +1,8 @@
 use std::collections::VecDeque;
 
-use crate::protocol::frame::applications::{BothDirectionCommand, ChannelSequence, CommandWithReliabilityGuarantees};
+use fnv::FnvHashMap;
+
+use crate::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, ChannelSequence, CommandWithReliabilityGuarantees};
 use crate::protocol::frame::channel::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
 use crate::protocol::frame::output::OutFrame;
 
@@ -13,8 +15,11 @@ use crate::protocol::frame::output::OutFrame;
 #[derive(Debug)]
 pub struct OutCommandsCollector {
 	pub commands: VecDeque<CommandWithReliabilityGuarantees>,
-	group_sequence: [ChannelSequence; 256],
+	sequences: FnvHashMap<SequenceKey, ChannelSequence>,
 }
+
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+struct SequenceKey(pub ReliabilityGuarantees, pub ChannelGroup);
 
 #[derive(Debug)]
 pub struct CommandWithChannelType {
@@ -26,7 +31,7 @@ impl Default for OutCommandsCollector {
 	fn default() -> Self {
 		Self {
 			commands: VecDeque::with_capacity(64),
-			group_sequence: [ChannelSequence(0); 256],
+			sequences: Default::default(),
 		}
 	}
 }
@@ -49,16 +54,24 @@ impl OutCommandsCollector {
 	fn create_channel(&mut self, channel_type: ReliabilityGuarantees) -> Option<ReliabilityGuaranteesChannel> {
 		match channel_type {
 			ReliabilityGuarantees::ReliableUnordered => Some(ReliabilityGuaranteesChannel::ReliableUnordered),
-			ReliabilityGuarantees::ReliableOrdered(group_id) => Some(ReliabilityGuaranteesChannel::ReliableOrdered(group_id)),
+			ReliabilityGuarantees::ReliableOrdered(group) => Some(ReliabilityGuaranteesChannel::ReliableOrdered(group, self.next_sequence(channel_type, group))),
 			ReliabilityGuarantees::UnreliableUnordered => Some(ReliabilityGuaranteesChannel::UnreliableUnordered),
-			ReliabilityGuarantees::UnreliableOrdered(group_id) => Some(ReliabilityGuaranteesChannel::UnreliableOrdered(group_id)),
-			ReliabilityGuarantees::ReliableSequence(group) => {
-				let mut sequence = &mut self.group_sequence[group.0 as usize];
-				let result = Some(ReliabilityGuaranteesChannel::ReliableSequence(group, *sequence));
-				sequence.0 += 1;
-				result
-			}
+			ReliabilityGuarantees::UnreliableOrdered(group) => Some(ReliabilityGuaranteesChannel::UnreliableOrdered(group, self.next_sequence(channel_type, group))),
+			ReliabilityGuarantees::ReliableSequence(group) => Some(ReliabilityGuaranteesChannel::ReliableSequence(group, self.next_sequence(channel_type, group))),
 		}
+	}
+
+	fn next_sequence(&mut self, guarantees: ReliabilityGuarantees, group: ChannelGroup) -> ChannelSequence {
+		let key = SequenceKey(guarantees, group);
+		let mut sequence = self.sequences.get_mut(&key);
+		if sequence.is_none() {
+			self.sequences.insert(key.clone(), Default::default());
+			sequence = self.sequences.get_mut(&key);
+		}
+		let channel_sequence = sequence.unwrap();
+		let result = channel_sequence.clone();
+		channel_sequence.0 += 1;
+		result
 	}
 
 	#[must_use]

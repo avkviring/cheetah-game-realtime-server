@@ -34,9 +34,9 @@ impl ReliabilityGuaranteesChannel {
 	pub fn get_type(&self) -> ChannelType {
 		let id = match self {
 			ReliabilityGuaranteesChannel::ReliableUnordered => ChannelType::RELIABLE_UNORDERED,
-			ReliabilityGuaranteesChannel::ReliableOrdered(_) => ChannelType::RELIABLE_ORDERED,
+			ReliabilityGuaranteesChannel::ReliableOrdered(_, _) => ChannelType::RELIABLE_ORDERED,
 			ReliabilityGuaranteesChannel::UnreliableUnordered => ChannelType::UNRELIABLE_UNORDERED,
-			ReliabilityGuaranteesChannel::UnreliableOrdered(_) => ChannelType::UNRELIABLE_ORDERED,
+			ReliabilityGuaranteesChannel::UnreliableOrdered(_, _) => ChannelType::UNRELIABLE_ORDERED,
 			ReliabilityGuaranteesChannel::ReliableSequence(_, _) => ChannelType::RELIABLE_SEQUENCE,
 		};
 		assert!(id.0 < 8); // если больше 7 то надо переделывать формат передачи фреймов
@@ -44,9 +44,13 @@ impl ReliabilityGuaranteesChannel {
 	}
 
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-		if let ReliabilityGuaranteesChannel::ReliableSequence(_, sequence) = self {
-			out.write_variable_u64(u64::from(sequence.0))?;
-		};
+		match self {
+			ReliabilityGuaranteesChannel::ReliableUnordered => {}
+			ReliabilityGuaranteesChannel::UnreliableUnordered => {}
+			ReliabilityGuaranteesChannel::ReliableOrdered(_, sequence) | ReliabilityGuaranteesChannel::UnreliableOrdered(_, sequence) | ReliabilityGuaranteesChannel::ReliableSequence(_, sequence) => {
+				out.write_variable_u64(u64::from(sequence.0))?;
+			}
+		}
 		Ok(())
 	}
 
@@ -54,8 +58,8 @@ impl ReliabilityGuaranteesChannel {
 		Ok(match *channel_type {
 			ChannelType::RELIABLE_UNORDERED => ReliabilityGuaranteesChannel::ReliableUnordered,
 			ChannelType::UNRELIABLE_UNORDERED => ReliabilityGuaranteesChannel::UnreliableUnordered,
-			ChannelType::RELIABLE_ORDERED => ReliabilityGuaranteesChannel::ReliableOrdered(channel_group?),
-			ChannelType::UNRELIABLE_ORDERED => ReliabilityGuaranteesChannel::UnreliableOrdered(channel_group?),
+			ChannelType::RELIABLE_ORDERED => ReliabilityGuaranteesChannel::ReliableOrdered(channel_group?, ChannelSequence(input.read_variable_u64()?.try_into()?)),
+			ChannelType::UNRELIABLE_ORDERED => ReliabilityGuaranteesChannel::UnreliableOrdered(channel_group?, ChannelSequence(input.read_variable_u64()?.try_into()?)),
 			ChannelType::RELIABLE_SEQUENCE => ReliabilityGuaranteesChannel::ReliableSequence(channel_group?, ChannelSequence(input.read_variable_u64()?.try_into()?)),
 			_ => return Err(CommandChannelDecodeError::UnknownType(*channel_type)),
 		})
@@ -94,7 +98,11 @@ mod tests {
 
 	#[test]
 	fn test_reliable_ordered_by_group() {
-		check(ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(100)), ChannelType::RELIABLE_ORDERED, Ok(ChannelGroup(100)));
+		check(
+			ReliabilityGuaranteesChannel::ReliableOrdered(ChannelGroup(100), ChannelSequence(255)),
+			ChannelType::RELIABLE_ORDERED,
+			Ok(ChannelGroup(100)),
+		);
 	}
 
 	#[test]
@@ -109,7 +117,7 @@ mod tests {
 	#[test]
 	fn test_unreliable_ordered_by_group() {
 		check(
-			ReliabilityGuaranteesChannel::UnreliableOrdered(ChannelGroup(155)),
+			ReliabilityGuaranteesChannel::UnreliableOrdered(ChannelGroup(155), ChannelSequence(255)),
 			ChannelType::UNRELIABLE_ORDERED,
 			Ok(ChannelGroup(155)),
 		);
