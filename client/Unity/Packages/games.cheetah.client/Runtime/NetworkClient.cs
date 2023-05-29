@@ -15,16 +15,15 @@ namespace Games.Cheetah.Client
     /// </summary>
     public class NetworkClient
     {
-        private static NetworkClient current;
+        public readonly uint MemberId;
 
         public readonly CodecRegistry CodecRegistry;
-        public readonly uint MemberId;
         internal readonly ushort Id;
         private bool enableClientLog = true;
         private ReliabilityGuaranteesChannel currentReliabilityGuaranteesChannel;
         private NetworkBuffer buffer;
-        internal static S2CCommand[] s2cCommands = new S2CCommand[1024];
-        internal ushort s2cCommandsCount;
+        internal readonly S2CCommand[] s2cCommands = new S2CCommand[1024];
+        internal ushort S2CCommandsCount;
         public Writer Writer { get; }
         public Reader Reader { get; }
 
@@ -99,10 +98,9 @@ namespace Games.Cheetah.Client
         {
             unsafe
             {
-                current = this;
                 fixed (S2CCommand* commands = s2cCommands)
                 {
-                    ResultChecker.Check(ffi.Receive(Id, commands, ref s2cCommandsCount));
+                    ResultChecker.Check(ffi.Receive(Id, commands, ref S2CCommandsCount));
                 }
 
                 Reader.Update();
