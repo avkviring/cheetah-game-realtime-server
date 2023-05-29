@@ -48,9 +48,9 @@ namespace Games.Cheetah.Client
         public NativeList<ushort> GetConnectedMemberInUpdate()
         {
             var result = new NativeList<ushort>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.MemberConnected) continue;
                 ref var memberConnectedCommand = ref command.commandUnion.memberConnected;
                 result.Add(memberConnectedCommand.MemberId);
@@ -66,9 +66,9 @@ namespace Games.Cheetah.Client
         public NativeList<ushort> GetDisconnectedMemberInUpdate()
         {
             var result = new NativeList<ushort>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.MemberDisconnected) continue;
                 ref var memberDisconnected = ref command.commandUnion.memberDisconnected;
                 result.Add(memberDisconnected.MemberId);
@@ -84,9 +84,9 @@ namespace Games.Cheetah.Client
         public NativeParallelHashMap<NetworkObjectId, double> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
         {
             var result = new NativeParallelHashMap<NetworkObjectId, double>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetDouble) continue;
                 ref var setCommand = ref command.commandUnion.setDouble;
                 var commandObjectId = setCommand.objectId;
@@ -105,9 +105,9 @@ namespace Games.Cheetah.Client
         public NativeParallelHashMap<NetworkObjectId, long> GetModifiedLongs(ushort template, FieldId.Long fieldId)
         {
             var result = new NativeParallelHashMap<NetworkObjectId, long>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetLong) continue;
                 ref var setCommand = ref command.commandUnion.setLong;
                 var commandObjectId = setCommand.objectId;
@@ -128,9 +128,9 @@ namespace Games.Cheetah.Client
             where T : unmanaged
         {
             var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetStructure) continue;
                 ref var setCommand = ref command.commandUnion.setStructure;
                 var commandObjectId = setCommand.objectId;
@@ -152,9 +152,9 @@ namespace Games.Cheetah.Client
         public NativeParallelHashMap<NetworkObjectId, T> GetEvents<T>(ushort template, FieldId.Event eventId) where T : unmanaged
         {
             var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SendEvent) continue;
                 var networkObjectId = command.commandUnion.setEvent.objectId;
                 ref var eventCommand = ref command.commandUnion.setEvent;
@@ -177,9 +177,9 @@ namespace Games.Cheetah.Client
         public NativeParallelHashSet<NetworkObjectId> GetDeletedObjects(ushort template)
         {
             var result = new NativeParallelHashSet<NetworkObjectId>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.DeleteObject) continue;
                 var commandObjectId = command.commandUnion.deleteField.objectId;
                 if (GetTemplate(commandObjectId) == template)
@@ -198,9 +198,9 @@ namespace Games.Cheetah.Client
         public NativeList<S2CCommands.DeleteField> GetDeleteFields(ushort template, FieldId fieldId)
         {
             var result = new NativeList<S2CCommands.DeleteField>(sbyte.MaxValue, Allocator.TempJob);
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.DeleteField) continue;
                 ref var commandDeleteField = ref command.commandUnion.deleteField;
                 ref var deleteFieldObjectId = ref commandDeleteField.objectId;
@@ -224,9 +224,9 @@ namespace Games.Cheetah.Client
 
         private void ProcessObjectCommands()
         {
-            for (var i = 0; i < client.s2cCommandsCount; i++)
+            for (var i = 0; i < client.S2CCommandsCount; i++)
             {
-                ref var command = ref NetworkClient.s2cCommands[i];
+                ref var command = ref client.s2cCommands[i];
                 switch (command.commandType)
                 {
                     case CommandType.CreateGameObject:
