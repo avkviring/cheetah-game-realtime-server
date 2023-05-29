@@ -74,11 +74,18 @@ namespace Games.Cheetah.UDS.API
                 await CreateRoomPlugin(room);
             }
 
-            foreach (var room in rooms.Rooms)
+            var roomsToRemove = new HashSet<ulong>();
+            foreach (var room in processedRooms)
             {
                 if (roomsOnServer.Contains(room)) continue;
-                processedRooms.Remove(room);
-                onRoomDeleted(room);
+
+                roomsToRemove.Add(room);
+            }
+
+            foreach (var room in roomsToRemove)
+            {
+	            processedRooms.Remove(room);
+	            onRoomDeleted(room);
             }
         }
 
