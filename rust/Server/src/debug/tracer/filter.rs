@@ -1,9 +1,7 @@
-use cheetah_common::commands::field::FieldId;
-use cheetah_common::commands::FieldType;
-use cheetah_common::constants::GameObjectTemplateId;
-use cheetah_common::room::object::GameObjectId;
+use cheetah_common::room::field::{FieldId, FieldType};
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_common::room::RoomMemberId;
+use cheetah_protocol::RoomMemberId;
 
 use crate::debug::tracer::{TracedBothDirectionCommand, TracedCommand};
 
@@ -123,13 +121,12 @@ impl Rule {
 #[cfg(test)]
 mod tests {
 	use cheetah_common::commands::c2s::C2SCommand;
-	use cheetah_common::commands::field::FieldId;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::event::EventCommand;
-	use cheetah_common::constants::GameObjectTemplateId;
-	use cheetah_common::room::object::GameObjectId;
+	use cheetah_common::room::field::FieldId;
+	use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 	use cheetah_common::room::owner::GameObjectOwner;
-	use cheetah_common::room::RoomMemberId;
+	use cheetah_protocol::RoomMemberId;
 
 	use crate::debug::tracer::filter::{Filter, Rule, RuleCommandDirection, TracedBothDirectionCommand, TracedCommand};
 

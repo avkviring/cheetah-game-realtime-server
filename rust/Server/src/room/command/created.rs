@@ -1,7 +1,7 @@
 use cheetah_common::commands::types::create::C2SCreatedGameObjectCommand;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_common::room::RoomMemberId;
+use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::S2CCommandsCollector;
@@ -54,9 +54,9 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
+	use cheetah_common::room::buffer::Buffer;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 

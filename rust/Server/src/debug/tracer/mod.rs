@@ -8,9 +8,8 @@ use indexmap::IndexMap;
 
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::s2c::S2CCommand;
-use cheetah_common::constants::GameObjectTemplateId;
-use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::RoomMemberId;
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
+use cheetah_protocol::RoomMemberId;
 
 use crate::debug::tracer::filter::Filter;
 use crate::debug::tracer::parser::parse;

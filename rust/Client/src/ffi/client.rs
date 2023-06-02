@@ -3,10 +3,12 @@ use std::os::raw::c_char;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use cheetah_common::commands::binary_value::Buffer;
-use cheetah_common::network::channel::{ConnectionStatus, DisconnectedReason};
-use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
-use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
+use cheetah_common::network::ConnectionStatus;
+use cheetah_common::room::buffer::Buffer;
+use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
+use cheetah_protocol::frame::disconnected_reason::DisconnectedReason;
+use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
+use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::clients::registry::ClientId;
 use crate::ffi::command::S2CCommandFFI;
@@ -124,7 +126,7 @@ pub extern "C" fn get_last_error_msg(buffer: &mut Buffer) {
 	let msg = LAST_ERROR.lock().unwrap();
 	let msg = msg.as_bytes();
 	let length = msg.len();
-	buffer.len = length as u8;
+	buffer.len = length;
 	buffer.buffer[0..length].copy_from_slice(msg);
 }
 

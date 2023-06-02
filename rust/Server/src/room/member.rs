@@ -1,5 +1,5 @@
-use cheetah_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_common::room::RoomMemberId;
+use cheetah_common::commands::CommandWithChannelType;
+use cheetah_protocol::RoomMemberId;
 
 use crate::room::template::config::MemberTemplate;
 

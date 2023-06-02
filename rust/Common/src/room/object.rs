@@ -1,7 +1,9 @@
-use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::owner::GameObjectOwner;
-use crate::room::RoomMemberId;
+use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_protocol::RoomMemberId;
 use std::io::{Cursor, Error, ErrorKind};
+
+pub type GameObjectTemplateId = u16;
 
 ///
 /// Идентификатор игрового объекта на клиенте

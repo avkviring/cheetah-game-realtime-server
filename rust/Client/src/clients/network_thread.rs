@@ -7,11 +7,12 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::network::channel::{ConnectionStatus, NetworkChannel};
-use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
-use cheetah_common::protocol::frame::channel::ReliabilityGuarantees;
-use cheetah_common::protocol::frame::ConnectionId;
-use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
+use cheetah_common::commands::guarantees::ReliabilityGuarantees;
+use cheetah_common::commands::{BothDirectionCommand, CommandWithReliabilityGuarantees};
+use cheetah_common::network::{ConnectionStatus, NetworkChannel};
+use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
+use cheetah_protocol::frame::ConnectionId;
+use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::clients::{ClientRequest, SharedClientStatistics};
 
@@ -102,7 +103,7 @@ impl NetworkChannelManager {
 	/// Обработка команд с сервера
 	///
 	fn commands_from_server(&mut self) {
-		let in_commands_from_protocol = self.channel.protocol.in_commands_collector.get_ready_commands();
+		let in_commands_from_protocol = self.channel.protocol.input_data_handler.get_ready_commands();
 		for command in in_commands_from_protocol {
 			match self.commands_from_server.send(command.clone()) {
 				Ok(_) => {}
@@ -140,10 +141,7 @@ impl NetworkChannelManager {
 					self.channel.socket_wrapper.reset_emulator();
 				}
 				ClientRequest::SendCommandToServer(command) => {
-					self.channel
-						.protocol
-						.out_commands_collector
-						.add_command(command.channel_type, BothDirectionCommand::C2S(command.command));
+					self.channel.protocol.output_data_producer.add_command(command.channel_type, BothDirectionCommand::C2S(command.command));
 				}
 			}
 		}

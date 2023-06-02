@@ -5,12 +5,6 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use fnv::FnvHashSet;
-use thiserror::Error;
-
-use cheetah_common::protocol::others::member_id::MemberAndRoomId;
-use cheetah_common::room::{RoomId, RoomMemberId};
-
 use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
 use crate::room::command::ServerCommandError;
@@ -19,6 +13,10 @@ use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::RoomInfo;
 use crate::server::rooms::RoomNotFoundError;
 use crate::server::RoomsServer;
+use cheetah_protocol::others::member_id::MemberAndRoomId;
+use cheetah_protocol::{RoomId, RoomMemberId};
+use fnv::FnvHashSet;
+use thiserror::Error;
 
 ///
 /// Управление сервером

@@ -8,18 +8,16 @@ use std::time::Instant;
 use fnv::{FnvBuildHasher, FnvHashMap, FnvHashSet};
 use indexmap::map::IndexMap;
 
-use cheetah_common::commands::binary_value::Buffer;
+use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
-use cheetah_common::constants::GameObjectTemplateId;
-use cheetah_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithReliabilityGuarantees};
-use cheetah_common::protocol::frame::channel::ReliabilityGuarantees;
+use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::object::GameObjectId;
+use cheetah_common::room::buffer::Buffer;
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_common::room::{RoomId, RoomMemberId};
+use cheetah_protocol::{RoomId, RoomMemberId};
 use member::RoomMember;
 
 use crate::debug::tracer::CommandTracerSessions;
@@ -178,7 +176,7 @@ impl Room {
 		let mut measurers = measurers.borrow_mut();
 		let tracer = Rc::clone(&self.command_trace_session);
 		for command_with_channel in commands {
-			match &command_with_channel.commands {
+			match &command_with_channel.command {
 				BothDirectionCommand::C2S(command) => {
 					self.current_channel.replace(From::from(&command_with_channel.reliability_guarantees));
 					tracer.borrow_mut().collect_c2s(&self.objects, member_id, command);
@@ -366,20 +364,19 @@ mod tests {
 
 	use fnv::FnvHashSet;
 
-	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::c2s::C2SCommand;
+	use cheetah_common::commands::guarantees::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
 	use cheetah_common::commands::types::create::CreateGameObjectCommand;
 	use cheetah_common::commands::types::long::SetLongCommand;
 	use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
-	use cheetah_common::commands::{CommandTypeId, FieldType};
-	use cheetah_common::protocol::commands::output::CommandWithChannelType;
-	use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
-	use cheetah_common::protocol::frame::channel::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
+	use cheetah_common::commands::{BothDirectionCommand, CommandTypeId, CommandWithChannelType, CommandWithReliabilityGuarantees};
 	use cheetah_common::room::access::AccessGroups;
+	use cheetah_common::room::buffer::Buffer;
+	use cheetah_common::room::field::FieldType;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use cheetah_common::room::RoomMemberId;
+	use cheetah_protocol::RoomMemberId;
 
 	use crate::room::forward::ForwardConfig;
 	use crate::room::object::GameObject;
@@ -550,7 +547,7 @@ mod tests {
 			member1_id,
 			vec![CommandWithReliabilityGuarantees {
 				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
-				commands: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
+				command: BothDirectionCommand::C2S(C2SCommand::AttachToRoom),
 			}]
 			.as_slice(),
 		);
@@ -748,7 +745,7 @@ mod tests {
 	fn get_create_game_object_command(object_id: u32) -> CommandWithReliabilityGuarantees {
 		CommandWithReliabilityGuarantees {
 			reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
-			commands: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
+			command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
 				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
 				template: 0,
 				access_groups: Default::default(),

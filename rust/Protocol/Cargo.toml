@@ -1,0 +1,29 @@
+[package]
+name = "cheetah-protocol"
+authors.workspace = true
+edition.workspace = true
+version = "0.1.0"
+
+[dependencies]
+lazy_static.workspace = true
+rand.workspace = true
+snap = "1.1.0"
+byteorder = "1.4.3"
+chacha20poly1305 = { version = "0.10.1", features = ["heapless", "reduced-round"] }
+cheetah-macro = { path = "../Macro" }
+generic-array = "0.14.6"
+heapless.workspace = true
+fnv.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+log.workspace = true
+tracing-core.workspace = true
+tracing-log.workspace = true
+tracing-subscriber.workspace = true
+num-derive = "0.3"
+num-traits = "0.2"
+prometheus.workspace = true
+
+[dev-dependencies]
+criterion = "0.4"
+

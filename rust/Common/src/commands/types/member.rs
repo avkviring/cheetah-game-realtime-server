@@ -1,7 +1,6 @@
+use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_protocol::RoomMemberId;
 use std::io::{Cursor, Error, ErrorKind};
-
-use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use crate::room::RoomMemberId;
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

@@ -6,11 +6,9 @@ use prometheus_measures_exporter::measurer::create_and_register_measurer;
 use prometheus_measures_exporter::measurers_by_label::{HistogramMeasurersByLabel, IntCounterMeasurersByLabel, LabelFactoryFactory, MeasurersByLabel};
 
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::commands::field::FieldId;
-use cheetah_common::commands::FieldType;
-use cheetah_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_common::protocol::frame::applications::{BothDirectionCommand, CommandWithReliabilityGuarantees};
-use cheetah_common::protocol::others::rtt::RoundTripTime;
+use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
+use cheetah_common::room::field::{FieldId, FieldType};
+use cheetah_protocol::others::rtt::RoundTripTime;
 
 pub type MeasureStringId = heapless::String<50>;
 type RoomTemplateString = heapless::String<50>;
@@ -240,7 +238,7 @@ impl Measurers {
 	pub(crate) fn on_input_commands(&mut self, template: &str, commands: &[CommandWithReliabilityGuarantees]) {
 		let template = MeasureStringId::from(template);
 		for c in commands.iter() {
-			if let BothDirectionCommand::C2S(ref c) = c.commands {
+			if let BothDirectionCommand::C2S(ref c) = c.command {
 				let key = (c.get_field_type(), c.get_field_id(), template.clone());
 				self.income_command_count.measurer(&key).inc();
 			}

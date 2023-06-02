@@ -1,6 +1,6 @@
-use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::float::SetDoubleCommand;
+use cheetah_common::room::field::FieldId;
 use cheetah_common::room::object::GameObjectId;
 
 use crate::room::object::fields::FieldValue;

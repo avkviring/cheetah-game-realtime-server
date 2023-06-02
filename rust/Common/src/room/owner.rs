@@ -1,4 +1,4 @@
-use crate::room::RoomMemberId;
+use cheetah_protocol::RoomMemberId;
 
 ///
 /// владелец - клиент или root

@@ -11,6 +11,7 @@ snap = "1.1.0"
 byteorder = "1.4.3"
 chacha20poly1305 = { version = "0.10.1", features = ["heapless", "reduced-round"] }
 cheetah-macro = { path = "../Macro" }
+cheetah-protocol = { path = "../Protocol" }
 generic-array = "0.14.6"
 heapless.workspace = true
 fnv.workspace = true
@@ -28,7 +29,3 @@ prometheus.workspace = true
 
 [dev-dependencies]
 criterion = "0.4"
-
-[[bench]]
-name = "frame_codec"
-harness = false

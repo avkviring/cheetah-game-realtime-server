@@ -2,7 +2,9 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
-use crate::commands::field::{Field, FieldId};
+use cheetah_protocol::RoomMemberId;
+
+use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
@@ -12,10 +14,9 @@ use crate::commands::types::forwarded::ForwardedCommand;
 use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::member::{MemberConnected, MemberDisconnected};
 use crate::commands::types::structure::SetStructureCommand;
-use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
-use crate::protocol::codec::commands::context::CommandContextError;
+use crate::commands::{CommandDecodeError, CommandTypeId};
+use crate::room::field::{Field, FieldId, FieldType};
 use crate::room::object::GameObjectId;
-use crate::room::RoomMemberId;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 #[allow(clippy::large_enum_variant)]
@@ -175,22 +176,23 @@ impl S2CCommand {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::commands::binary_value::Buffer;
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::field::FieldId;
+	use crate::commands::context::CommandContextError;
+	use crate::commands::s2c::S2CCommand;
 	use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
-	use crate::commands::types::event::TargetEventCommand;
+	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::float::SetDoubleCommand;
 	use crate::commands::types::forwarded::ForwardedCommand;
 	use crate::commands::types::long::SetLongCommand;
 	use crate::commands::types::member::MemberConnected;
 	use crate::commands::types::structure::SetStructureCommand;
 	use crate::commands::CommandTypeId;
-	use crate::{
-		commands::s2c::S2CCommand, commands::types::event::EventCommand, protocol::codec::commands::context::CommandContextError, room::access::AccessGroups, room::object::GameObjectId,
-		room::owner::GameObjectOwner,
-	};
+	use crate::room::access::AccessGroups;
+	use crate::room::buffer::Buffer;
+	use crate::room::field::FieldId;
+	use crate::room::object::GameObjectId;
+	use crate::room::owner::GameObjectOwner;
 
 	#[test]
 	fn should_decode_encode_create() {

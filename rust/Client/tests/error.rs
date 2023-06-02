@@ -1,5 +1,5 @@
 use cheetah_client::ffi;
-use cheetah_common::commands::binary_value::Buffer;
+use cheetah_common::room::buffer::Buffer;
 
 #[test]
 pub fn should_last_error() {

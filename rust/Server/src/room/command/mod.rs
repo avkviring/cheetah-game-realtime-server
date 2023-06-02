@@ -1,11 +1,10 @@
 use thiserror::Error;
 
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::commands::field::Field;
-use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::{RoomId, RoomMemberId};
+use cheetah_common::room::field::Field;
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
+use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::object::GameObjectError;
 use crate::room::Room;
@@ -115,7 +114,7 @@ mod tests {
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use cheetah_common::room::RoomMemberId;
+	use cheetah_protocol::RoomMemberId;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::Room;

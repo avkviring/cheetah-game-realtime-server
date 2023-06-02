@@ -225,6 +225,7 @@ name = "cheetah-client"
 version = "0.0.1"
 dependencies = [
  "cheetah-common",
+ "cheetah-protocol",
  "cheetah-server",
  "easybench",
  "fnv",
@@ -246,6 +247,7 @@ dependencies = [
  "byteorder",
  "chacha20poly1305",
  "cheetah-macro",
+ "cheetah-protocol",
  "criterion",
  "fnv",
  "generic-array",
@@ -272,6 +274,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cheetah-common",
+ "cheetah-protocol",
  "cheetah-server",
  "lazy_static",
  "log",
@@ -296,10 +299,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "cheetah-protocol"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "chacha20poly1305",
+ "cheetah-macro",
+ "criterion",
+ "fnv",
+ "generic-array",
+ "heapless",
+ "lazy_static",
+ "log",
+ "num-derive",
+ "num-traits",
+ "prometheus",
+ "rand",
+ "snap",
+ "thiserror",
+ "tracing",
+ "tracing-core",
+ "tracing-log",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "cheetah-server"
 version = "0.1.0"
 dependencies = [
  "cheetah-common",
+ "cheetah-protocol",
  "fnv",
  "futures",
  "heapless",

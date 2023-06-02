@@ -1,4 +1,4 @@
-use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
+use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
 use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::Arc;
 ///

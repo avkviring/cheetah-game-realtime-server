@@ -1,7 +1,7 @@
-use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::types::create::C2SCreatedGameObjectCommand;
 use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
+use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::object::GameObjectId;
 
 use crate::clients::registry::ClientId;

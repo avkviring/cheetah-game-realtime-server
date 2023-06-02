@@ -2,11 +2,10 @@ use std::collections::hash_map::Iter;
 
 use fnv::FnvHashMap;
 
-use cheetah_common::commands::field::{Field, FieldId};
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
-use cheetah_common::commands::FieldType;
+use cheetah_common::room::field::{Field, FieldId, FieldType};
 use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::RoomMemberId;
+use cheetah_protocol::RoomMemberId;
 
 use crate::room::object::S2CCommandsCollector;
 

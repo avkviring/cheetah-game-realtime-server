@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
-use cheetah_common::commands::field::Field;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
+use cheetah_common::room::field::Field;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_common::room::RoomMemberId;
+use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::GameObject;

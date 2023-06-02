@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
-use crate::commands::field::{Field, FieldId};
+use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
@@ -11,8 +11,8 @@ use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand}
 use crate::commands::types::forwarded::ForwardedCommand;
 use crate::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::types::structure::SetStructureCommand;
-use crate::commands::{CommandDecodeError, CommandTypeId, FieldType};
-use crate::protocol::codec::commands::context::CommandContextError;
+use crate::commands::{CommandDecodeError, CommandTypeId};
+use crate::room::field::{Field, FieldId, FieldType};
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
@@ -198,9 +198,8 @@ impl C2SCommand {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::commands::binary_value::Buffer;
 	use crate::commands::c2s::C2SCommand;
-	use crate::commands::field::FieldId;
+	use crate::commands::context::CommandContextError;
 	use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
@@ -209,8 +208,9 @@ mod tests {
 	use crate::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 	use crate::commands::types::structure::SetStructureCommand;
 	use crate::commands::CommandTypeId;
-	use crate::protocol::codec::commands::context::CommandContextError;
 	use crate::room::access::AccessGroups;
+	use crate::room::buffer::Buffer;
+	use crate::room::field::FieldId;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
 

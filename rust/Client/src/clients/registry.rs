@@ -8,9 +8,10 @@ use std::{panic, thread};
 
 use fnv::FnvBuildHasher;
 
-use cheetah_common::network::channel::ConnectionStatus;
-use cheetah_common::protocol::frame::ConnectionId;
-use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
+use cheetah_common::network::ConnectionStatus;
+use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
+use cheetah_protocol::frame::ConnectionId;
+use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::clients::application_thread::ApplicationThreadClient;
 use crate::clients::network_thread::NetworkChannelManager;
