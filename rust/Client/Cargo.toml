@@ -11,6 +11,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [dependencies]
 lazy_static.workspace = true
 cheetah-common = { path = "../Common" }
+cheetah-protocol = { path = "../Protocol" }
 widestring.workspace = true
 fnv.workspace = true
 heapless = { workspace = true, features = ["serde"] }

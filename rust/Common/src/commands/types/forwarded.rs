@@ -1,11 +1,11 @@
 use crate::commands::c2s::C2SCommand;
-use crate::commands::field::FieldId;
+use crate::commands::context::CommandContextError;
 use crate::commands::CommandDecodeError;
-use crate::protocol::codec::commands::context::CommandContextError;
-use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use crate::room::field::FieldId;
 use crate::room::object::GameObjectId;
-use crate::room::RoomMemberId;
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_protocol::RoomMemberId;
 use num_traits::ToPrimitive;
 use std::io::{Cursor, Error, ErrorKind};
 

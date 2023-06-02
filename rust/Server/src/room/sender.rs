@@ -1,12 +1,11 @@
+use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
+use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType};
 use std::rc::Rc;
 
 use cheetah_common::commands::s2c::{S2CCommandWithCreator, S2CCommandWithMeta};
-use cheetah_common::constants::GameObjectTemplateId;
-use cheetah_common::protocol::commands::output::CommandWithChannelType;
-use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup};
-use cheetah_common::protocol::frame::channel::ReliabilityGuarantees;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::RoomMemberId;
+use cheetah_common::room::object::GameObjectTemplateId;
+use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
 use crate::room::member::RoomMember;
@@ -102,11 +101,10 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithCreator, S2CCommandWithMeta};
 	use cheetah_common::commands::types::long::SetLongCommand;
-	use cheetah_common::commands::FieldType;
 	use cheetah_common::room::access::AccessGroups;
+	use cheetah_common::room::field::{Field, FieldType};
 	use cheetah_common::room::owner::GameObjectOwner;
 
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};

@@ -2,13 +2,12 @@ use std::fmt::Debug;
 
 use thiserror::Error;
 
-use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
-use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::RoomMemberId;
+use cheetah_common::room::buffer::Buffer;
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
+use cheetah_protocol::RoomMemberId;
 use fields::Fields;
 
 pub mod fields;
@@ -80,15 +79,14 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::Buffer;
-	use cheetah_common::commands::field::Field;
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 	use cheetah_common::commands::types::create::GameObjectCreatedS2CCommand;
 	use cheetah_common::commands::types::float::SetDoubleCommand;
 	use cheetah_common::commands::types::long::SetLongCommand;
 	use cheetah_common::commands::types::structure::SetStructureCommand;
-	use cheetah_common::commands::FieldType;
 	use cheetah_common::room::access::AccessGroups;
+	use cheetah_common::room::buffer::Buffer;
+	use cheetah_common::room::field::{Field, FieldType};
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 

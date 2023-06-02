@@ -1,10 +1,13 @@
-use crate::helpers::helper::IntegrationTestHelper;
-use crate::helpers::server::IntegrationTestServerBuilder;
-use cheetah_client::ffi::execute_with_client;
-use cheetah_common::network::channel::{ConnectionStatus, DisconnectedReason};
-use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
 use std::thread;
 use std::time::Duration;
+
+use cheetah_client::ffi::execute_with_client;
+use cheetah_common::network::ConnectionStatus;
+use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
+use cheetah_protocol::frame::disconnected_reason::DisconnectedReason;
+
+use crate::helpers::helper::IntegrationTestHelper;
+use crate::helpers::server::IntegrationTestServerBuilder;
 
 pub mod helpers;
 

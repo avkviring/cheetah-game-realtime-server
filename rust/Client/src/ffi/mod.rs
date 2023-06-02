@@ -5,14 +5,13 @@ use std::sync::Mutex;
 use lazy_static::lazy_static;
 use thiserror::Error;
 
-use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::types::forwarded::ForwardedCommand;
-use cheetah_common::commands::{CommandTypeId, FieldType};
-use cheetah_common::constants::GameObjectTemplateId;
-use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::RoomMemberId;
+use cheetah_common::commands::CommandTypeId;
+use cheetah_common::room::buffer::Buffer;
+use cheetah_common::room::field::{FieldId, FieldType};
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
+use cheetah_protocol::RoomMemberId;
 
 use crate::clients::application_thread::ApplicationThreadClient;
 use crate::clients::registry::{ClientId, Registry};
@@ -100,9 +99,9 @@ pub struct ForwardedCommandFFI {
 	long_value_new: i64,
 	long_value_reset: i64,
 	float_value_new: f64,
-	binary_value_old: Buffer,
-	binary_value_new: Buffer,
-	binary_value_reset: Buffer,
+	binary_value_old: Box<Buffer>,
+	binary_value_new: Box<Buffer>,
+	binary_value_reset: Box<Buffer>,
 }
 
 impl Default for ForwardedCommandFFI {
@@ -153,7 +152,7 @@ impl From<ForwardedCommand> for ForwardedCommandFFI {
 				ffi_command.float_value_new = c.value;
 			}
 			C2SCommand::SetStructure(c) => {
-				ffi_command.binary_value_new = c.value;
+				ffi_command.binary_value_new = Box::from(c.value);
 			}
 
 			C2SCommand::IncrementDouble(c) => {
@@ -179,7 +178,6 @@ impl From<ForwardedCommand> for ForwardedCommandFFI {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
@@ -188,8 +186,10 @@ mod tests {
 	use cheetah_common::commands::types::float::IncrementDoubleC2SCommand;
 	use cheetah_common::commands::types::forwarded::ForwardedCommand;
 	use cheetah_common::commands::types::long::IncrementLongC2SCommand;
-	use cheetah_common::commands::{CommandTypeId, FieldType};
+	use cheetah_common::commands::CommandTypeId;
 	use cheetah_common::room::access::AccessGroups;
+	use cheetah_common::room::buffer::Buffer;
+	use cheetah_common::room::field::FieldType;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 
@@ -202,171 +202,173 @@ mod tests {
 		let field_id = 345;
 		let target = 456;
 		let b1 = Buffer::from([1, 2, 3, 4].as_slice());
-		let tests = [
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::AttachToRoom,
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::AttachToRoom,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::DetachFromRoom,
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::DetachFromRoom,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::CreateGameObject(CreateGameObjectCommand {
-						object_id,
-						template: 1,
-						access_groups: AccessGroups::super_member_group(),
-					}),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::CreateGameObject,
+		let mut tests = Vec::new();
+
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::AttachToRoom,
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::AttachToRoom,
+				..Default::default()
+			},
+		));
+
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::DetachFromRoom,
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::DetachFromRoom,
+				..Default::default()
+			},
+		));
+
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::CreateGameObject(CreateGameObjectCommand {
 					object_id,
-					game_object_template_id: 1,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(object_id, false, None)),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::CreatedGameObject,
-					object_id,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::IncrementLongValue(IncrementLongC2SCommand { object_id, field_id, increment: 1 }),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::IncrementLong,
+					template: 1,
+					access_groups: AccessGroups::super_member_group(),
+				}),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::CreateGameObject,
+				object_id,
+				game_object_template_id: 1,
+				..Default::default()
+			},
+		));
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(object_id, false, None)),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::CreatedGameObject,
+				object_id,
+				..Default::default()
+			},
+		));
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::IncrementLongValue(IncrementLongC2SCommand { object_id, field_id, increment: 1 }),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::IncrementLong,
+				object_id,
+				field_id,
+				field_type: FieldType::Long,
+				long_value_new: 1,
+				..Default::default()
+			},
+		));
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::IncrementDouble(IncrementDoubleC2SCommand { object_id, field_id, increment: 1.2 }),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::IncrementDouble,
+				object_id: object_id.into(),
+				field_id,
+				field_type: FieldType::Double,
+				float_value_new: 1.2,
+				..Default::default()
+			},
+		));
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::Event(EventCommand {
 					object_id,
 					field_id,
-					field_type: FieldType::Long,
-					long_value_new: 1,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::IncrementDouble(IncrementDoubleC2SCommand { object_id, field_id, increment: 1.2 }),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::IncrementDouble,
-					object_id: object_id.into(),
-					field_id,
-					field_type: FieldType::Double,
-					float_value_new: 1.2,
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::Event(EventCommand {
+					event: b1.clone(),
+				}),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::SendEvent,
+				object_id: object_id.into(),
+				field_id,
+				field_type: FieldType::Event,
+				binary_value_new: b1.clone().into(),
+				..Default::default()
+			},
+		));
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::TargetEvent(TargetEventCommand {
+					target,
+					event: EventCommand {
 						object_id,
 						field_id,
 						event: b1.clone(),
-					}),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::SendEvent,
-					object_id: object_id.into(),
+					},
+				}),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::TargetEvent,
+				object_id: object_id.into(),
+				field_id,
+				field_type: FieldType::Event,
+				target,
+				binary_value_new: b1.into(),
+				..Default::default()
+			},
+		));
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::Delete(DeleteGameObjectCommand { object_id }),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::DeleteObject,
+				object_id: object_id.into(),
+				..Default::default()
+			},
+		));
+		tests.push((
+			ForwardedCommand {
+				creator,
+				c2s: C2SCommand::DeleteField(DeleteFieldCommand {
 					field_id,
-					field_type: FieldType::Event,
-					binary_value_new: b1.clone().into(),
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::TargetEvent(TargetEventCommand {
-						target,
-						event: EventCommand {
-							object_id,
-							field_id,
-							event: b1.clone(),
-						},
-					}),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::TargetEvent,
-					object_id: object_id.into(),
-					field_id,
-					field_type: FieldType::Event,
-					target,
-					binary_value_new: b1.into(),
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::Delete(DeleteGameObjectCommand { object_id }),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::DeleteObject,
-					object_id: object_id.into(),
-					..Default::default()
-				},
-			),
-			(
-				ForwardedCommand {
-					creator,
-					c2s: C2SCommand::DeleteField(DeleteFieldCommand {
-						field_id,
-						object_id,
-						field_type: FieldType::Structure,
-					}),
-				},
-				ForwardedCommandFFI {
-					creator,
-					command_type_id: CommandTypeId::DeleteField,
-					object_id: object_id.into(),
-					field_id,
+					object_id,
 					field_type: FieldType::Structure,
-					..Default::default()
-				},
-			),
-		];
+				}),
+			},
+			ForwardedCommandFFI {
+				creator,
+				command_type_id: CommandTypeId::DeleteField,
+				object_id: object_id.into(),
+				field_id,
+				field_type: FieldType::Structure,
+				..Default::default()
+			},
+		));
 
 		for (from, want) in tests {
-			assert_eq!(want, from.into());
+			assert_eq!(want, from.into())
 		}
 	}
 
 	#[test]
 	#[should_panic(expected = "received invalid nested ForwardedCommand")]
 	fn should_panic_on_nested_forwarded_command() {
-		let _ = ForwardedCommandFFI::from(ForwardedCommand {
+		ForwardedCommandFFI::from(ForwardedCommand {
 			creator: 0,
 			c2s: C2SCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: 0,

@@ -3,9 +3,9 @@ use std::cell::RefCell;
 use fnv::FnvHashMap;
 
 use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
-use cheetah_common::commands::field::Field;
-use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::access::AccessGroups;
+use cheetah_common::room::field::Field;
+use cheetah_common::room::object::GameObjectTemplateId;
 
 #[derive(Debug, Default)]
 pub struct PermissionManager {
@@ -86,10 +86,9 @@ impl PermissionManager {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::field::Field;
-	use cheetah_common::commands::FieldType;
-	use cheetah_common::constants::GameObjectTemplateId;
 	use cheetah_common::room::access::AccessGroups;
+	use cheetah_common::room::field::{Field, FieldType};
+	use cheetah_common::room::object::GameObjectTemplateId;
 
 	use crate::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, Permissions};
 	use crate::room::template::permission::PermissionManager;

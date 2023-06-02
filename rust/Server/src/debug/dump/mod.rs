@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
+use cheetah_protocol::trace::Trace;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
-
-use cheetah_common::trace::Trace;
 
 use crate::debug::proto::admin;
 use crate::server::manager::RoomsServerManager;

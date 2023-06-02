@@ -1,8 +1,7 @@
+use crate::room::field::{FieldId, FieldType};
 use std::fmt::Debug;
 use std::io::Cursor;
 
-use crate::commands::field::FieldId;
-use crate::commands::FieldType;
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

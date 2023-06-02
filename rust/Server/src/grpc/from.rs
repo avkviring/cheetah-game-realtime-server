@@ -1,6 +1,6 @@
-use cheetah_common::commands::binary_value::Buffer;
-use cheetah_common::commands::field::{Field, FieldId};
 use cheetah_common::room::access::AccessGroups;
+use cheetah_common::room::buffer::Buffer;
+use cheetah_common::room::field::{Field, FieldId, FieldType};
 
 use crate::grpc::proto::internal;
 use crate::grpc::proto::shared::{self, field_value::Variant};
@@ -95,10 +95,10 @@ impl From<internal::PermissionField> for config::PermissionField {
 		let structure = shared::FieldType::Structure as i32;
 
 		let field_type = match source.r#type {
-			x if x == event => cheetah_common::commands::FieldType::Event,
-			x if x == double => cheetah_common::commands::FieldType::Double,
-			x if x == long => cheetah_common::commands::FieldType::Long,
-			x if x == structure => cheetah_common::commands::FieldType::Structure,
+			x if x == event => FieldType::Event,
+			x if x == double => FieldType::Double,
+			x if x == long => FieldType::Long,
+			x if x == structure => FieldType::Structure,
 			_ => {
 				panic!("Enum field_type unrecognized {}", source.r#type)
 			}

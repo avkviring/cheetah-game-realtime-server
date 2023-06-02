@@ -1,8 +1,8 @@
 use cheetah_client::ffi;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
-use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::types::structure::SetStructureCommand;
 use cheetah_common::commands::CommandTypeId;
+use cheetah_common::room::buffer::Buffer;
 
 use crate::helpers::helper::setup;
 

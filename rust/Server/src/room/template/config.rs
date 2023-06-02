@@ -3,13 +3,11 @@ use std::collections::HashMap;
 use fnv::FnvBuildHasher;
 use num_derive::{FromPrimitive, ToPrimitive};
 
-use cheetah_common::commands::binary_value::Buffer;
-use cheetah_common::commands::field::Field;
-use cheetah_common::commands::field::FieldId;
-use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::MemberPrivateKey;
+use cheetah_common::room::buffer::Buffer;
+use cheetah_common::room::field::{Field, FieldId};
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
+use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
 
 ///
 /// Шаблон для создания комнаты
@@ -118,12 +116,9 @@ impl MemberTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::field::Field;
-	use cheetah_common::commands::field::FieldId;
-	use cheetah_common::commands::FieldType;
-	use cheetah_common::constants::GameObjectTemplateId;
 	use cheetah_common::room::access::AccessGroups;
-	use cheetah_common::room::object::GameObjectId;
+	use cheetah_common::room::field::{Field, FieldId, FieldType};
+	use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 
 	use crate::room::template::config::{GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, MemberTemplateError, Permission, PermissionField, Permissions};
 

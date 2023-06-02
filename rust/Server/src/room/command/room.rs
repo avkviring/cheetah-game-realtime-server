@@ -1,4 +1,4 @@
-use cheetah_common::room::RoomMemberId;
+use cheetah_protocol::RoomMemberId;
 use std::rc::Rc;
 
 use crate::room::command::ServerCommandError;

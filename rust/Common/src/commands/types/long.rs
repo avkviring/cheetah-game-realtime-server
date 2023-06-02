@@ -1,7 +1,7 @@
+use crate::room::field::FieldId;
+use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use std::io::Cursor;
 
-use crate::commands::field::FieldId;
-use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]

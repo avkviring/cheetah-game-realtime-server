@@ -1,7 +1,6 @@
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::types::field::DeleteFieldCommand;
-use cheetah_common::commands::FieldType;
+use cheetah_common::room::field::{FieldId, FieldType};
 use cheetah_common::room::object::GameObjectId;
 
 use crate::clients::registry::ClientId;

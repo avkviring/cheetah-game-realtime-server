@@ -1,13 +1,13 @@
 use crate::room::command::ServerCommandError;
 use crate::room::Room;
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::commands::types::forwarded::ForwardedCommand;
 use cheetah_common::commands::CommandTypeId;
-use cheetah_common::constants::GameObjectTemplateId;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::RoomMemberId;
+use cheetah_common::room::field::FieldId;
+use cheetah_common::room::object::GameObjectTemplateId;
+use cheetah_protocol::RoomMemberId;
 use std::slice;
 
 #[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
@@ -87,7 +87,7 @@ mod tests {
 	use cheetah_common::commands::types::long::SetLongCommand;
 	use cheetah_common::commands::CommandTypeId;
 	use cheetah_common::room::access::AccessGroups;
-	use cheetah_common::room::RoomMemberId;
+	use cheetah_protocol::RoomMemberId;
 
 	#[test]
 	fn should_not_forward_from_super_member() {

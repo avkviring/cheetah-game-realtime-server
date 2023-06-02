@@ -1,6 +1,6 @@
 use cheetah_client::ffi;
-use cheetah_common::commands::binary_value::Buffer;
 use cheetah_common::commands::CommandTypeId;
+use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::object::GameObjectId;
 
 use crate::helpers::helper::setup;

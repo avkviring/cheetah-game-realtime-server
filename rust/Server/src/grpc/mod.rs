@@ -4,12 +4,12 @@ use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 use tonic::{Request, Response, Status};
 
-use cheetah_common::commands::field::FieldId;
 use cheetah_common::commands::CommandTypeId;
-use cheetah_common::constants::GameObjectTemplateId;
-use cheetah_common::protocol::others::member_id::MemberAndRoomId;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::RoomId;
+use cheetah_common::room::field::FieldId;
+use cheetah_common::room::object::GameObjectTemplateId;
+use cheetah_protocol::others::member_id::MemberAndRoomId;
+use cheetah_protocol::RoomId;
 
 use crate::grpc::proto::internal::internal_server::Internal;
 #[allow(clippy::wildcard_imports)]
@@ -100,6 +100,15 @@ impl Internal for RealtimeInternalService {
 		Ok(Response::new(ProbeResponse {}))
 	}
 
+	async fn get_rooms(&self, _: Request<EmptyRequest>) -> Result<Response<GetRoomsResponse>, Status> {
+		self.server_manager
+			.lock()
+			.await
+			.get_rooms()
+			.map(|rooms| Response::new(GetRoomsResponse { rooms }))
+			.map_err(Status::from)
+	}
+
 	/// удалить комнату с севрера и закрыть соединение со всеми пользователями
 	async fn delete_room(&self, request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
 		let room_id = request.get_ref().id;
@@ -168,15 +177,6 @@ impl Internal for RealtimeInternalService {
 			.await
 			.update_room_permissions(room_id, permissions)
 			.map(|_| Response::new(UpdateRoomPermissionsResponse {}))
-			.map_err(Status::from)
-	}
-
-	async fn get_rooms(&self, _: Request<EmptyRequest>) -> Result<Response<GetRoomsResponse>, Status> {
-		self.server_manager
-			.lock()
-			.await
-			.get_rooms()
-			.map(|rooms| Response::new(GetRoomsResponse { rooms }))
 			.map_err(Status::from)
 	}
 

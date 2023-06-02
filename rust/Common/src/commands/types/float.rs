@@ -1,8 +1,8 @@
 use std::io::Cursor;
 
+use crate::room::field::FieldId;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::commands::field::FieldId;
 use crate::room::object::GameObjectId;
 
 #[derive(Debug, PartialEq, Clone, Copy)]

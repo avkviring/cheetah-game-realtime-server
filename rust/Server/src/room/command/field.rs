@@ -1,8 +1,7 @@
-use cheetah_common::commands::field::Field;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::field::DeleteFieldCommand;
-use cheetah_common::commands::FieldType;
-use cheetah_common::room::RoomMemberId;
+use cheetah_common::room::field::{Field, FieldType};
+use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
@@ -45,10 +44,10 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::commands::binary_value::Buffer;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::field::DeleteFieldCommand;
-	use cheetah_common::commands::FieldType;
+	use cheetah_common::room::buffer::Buffer;
+	use cheetah_common::room::field::FieldType;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 

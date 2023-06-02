@@ -1,7 +1,6 @@
-use cheetah_common::protocol::frame::applications::ChannelGroup;
-
 use crate::clients::registry::ClientId;
 use crate::ffi::execute_with_client;
+use cheetah_common::commands::guarantees::ChannelGroup;
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]

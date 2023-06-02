@@ -3,7 +3,8 @@ use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
 use cheetah_common::commands::types::field::DeleteFieldCommand;
 use cheetah_common::commands::types::float::SetDoubleCommand;
 use cheetah_common::commands::types::long::SetLongCommand;
-use cheetah_common::commands::{CommandTypeId, FieldType};
+use cheetah_common::commands::CommandTypeId;
+use cheetah_common::room::field::FieldType;
 
 use crate::helpers::helper::setup;
 

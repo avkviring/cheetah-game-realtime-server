@@ -1,12 +1,11 @@
 use std::io::{Cursor, Error, ErrorKind};
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 
-use crate::commands::binary_value::Buffer;
-use crate::constants::GameObjectTemplateId;
-use crate::protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::room::access::AccessGroups;
-use crate::room::object::GameObjectId;
+use crate::room::buffer::Buffer;
+use crate::room::object::{GameObjectId, GameObjectTemplateId};
 
 ///
 /// Создать игровой объект от имени клиента

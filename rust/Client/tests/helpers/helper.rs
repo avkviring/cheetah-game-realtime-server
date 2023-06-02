@@ -8,7 +8,8 @@ use cheetah_client::ffi::client::do_create_client;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::{MemberPrivateKey, RoomId, RoomMemberId};
+use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
+use cheetah_protocol::{RoomId, RoomMemberId};
 use cheetah_server::room::template::config::MemberTemplate;
 use cheetah_server::server::manager::RoomsServerManager;
 
@@ -22,10 +23,13 @@ pub struct IntegrationTestHelper {
 
 impl IntegrationTestHelper {
 	pub fn receive(&self, client: ClientId) -> Vec<S2CCommandFFI> {
-		let mut commands = [S2CCommandFFI {
-			command_type: CommandTypeId::CreateGameObject,
-			command: S2CommandUnionFFI { empty: () },
-		}; 256];
+		let mut commands = vec![
+			S2CCommandFFI {
+				command_type: CommandTypeId::CreateGameObject,
+				command: S2CommandUnionFFI { empty: () },
+			};
+			1024
+		];
 		self.wait_udp();
 
 		let mut count = 0;

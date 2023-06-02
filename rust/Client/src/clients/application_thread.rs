@@ -5,17 +5,16 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use cheetah_common::commands::c2s::C2SCommand;
+use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_common::commands::CommandTypeId;
-use cheetah_common::network::channel::ConnectionStatus;
-use cheetah_common::protocol::disconnect::command::DisconnectByCommandReason;
-use cheetah_common::protocol::frame::applications::{BothDirectionCommand, ChannelGroup, CommandWithReliabilityGuarantees};
-use cheetah_common::protocol::frame::channel::ReliabilityGuarantees;
+use cheetah_common::commands::{BothDirectionCommand, CommandTypeId, CommandWithReliabilityGuarantees};
+use cheetah_common::network::ConnectionStatus;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_common::room::RoomMemberId;
+use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
+use cheetah_protocol::RoomMemberId;
 
 use crate::clients::network_thread::C2SCommandWithChannel;
 use crate::clients::{ClientRequest, SharedClientStatistics};
@@ -74,7 +73,6 @@ impl ApplicationThreadClient {
 
 	pub fn send(&mut self, command: C2SCommand) -> Result<(), SendError<ClientRequest>> {
 		let out_command = C2SCommandWithChannel { channel_type: self.channel, command };
-		tracing::info!("{:?}", out_command);
 		self.request_to_client.send(ClientRequest::SendCommandToServer(out_command))
 	}
 
@@ -102,7 +100,7 @@ impl ApplicationThreadClient {
 		let commands: &mut [S2CCommandFFI] = slice::from_raw_parts_mut(commands, 1024);
 
 		while let Ok(command) = self.s2c_receiver.try_recv() {
-			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.commands {
+			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.command {
 				let mut command_ffi = &mut commands[*count as usize];
 				match member_with_creator.command {
 					S2CCommand::Create(command) => {
