@@ -126,7 +126,7 @@ pub extern "C" fn get_last_error_msg(buffer: &mut Buffer) {
 	let msg = LAST_ERROR.lock().unwrap();
 	let msg = msg.as_bytes();
 	let length = msg.len();
-	buffer.len = length;
+	buffer.len = length as u16;
 	buffer.buffer[0..length].copy_from_slice(msg);
 }
 

@@ -9,8 +9,8 @@ use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, Hash, Eq)]
 pub struct Buffer {
-	pub len: usize,
-	pub pos: usize,
+	pub len: u16,
+	pub pos: u16,
 	// используется в C#
 	pub buffer: [u8; NIO_BUFFER_MAX_SIZE],
 }
@@ -42,7 +42,7 @@ pub const NIO_BUFFER_MAX_SIZE: usize = 255;
 impl From<&[u8]> for Buffer {
 	fn from(source: &[u8]) -> Self {
 		let mut result = Self {
-			len: source.len(),
+			len: source.len() as u16,
 			pos: 0,
 			buffer: [0; NIO_BUFFER_MAX_SIZE],
 		};
@@ -59,7 +59,7 @@ impl Buffer {
 		if size > NIO_BUFFER_MAX_SIZE {
 			return Err(Error::new(ErrorKind::InvalidData, format!("Event buffer size to big {size}")));
 		}
-		result.len = size;
+		result.len = size as u16;
 		result.pos = 0;
 		input.read_exact(&mut result.buffer[0..size])?;
 		Ok(result)
