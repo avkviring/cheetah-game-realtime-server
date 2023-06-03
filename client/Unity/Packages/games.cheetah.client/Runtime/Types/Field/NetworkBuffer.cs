@@ -10,8 +10,8 @@ namespace Games.Cheetah.Client.Types.Field
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct NetworkBuffer
     {
-        public byte size;
-        public byte pos;
+        public ushort size;
+        public ushort pos;
 
         [MarshalAs(UnmanagedType.LPArray)] public fixed byte values[FFIMethods.MaxSizeStruct];
 
