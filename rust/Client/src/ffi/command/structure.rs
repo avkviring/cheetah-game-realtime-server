@@ -11,10 +11,13 @@ use crate::ffi::command::send_command;
 pub extern "C" fn set_structure(client_id: ClientId, object_id: &GameObjectId, field_id: FieldId, structure: &Buffer) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::SetStructure(SetStructureCommand {
-			object_id: *object_id,
-			field_id,
-			value: *structure,
-		}),
+		C2SCommand::SetStructure(
+			SetStructureCommand {
+				object_id: *object_id,
+				field_id,
+				value: *structure,
+			}
+			.into(),
+		),
 	)
 }

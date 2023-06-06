@@ -12,7 +12,7 @@ impl ServerCommandExecutor for EventCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 		let field_id = self.field_id;
 		let object_id = self.object_id;
-		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.clone())));
+		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.clone().into())));
 		room.send_command_from_action(
 			object_id,
 			Field {
@@ -32,7 +32,7 @@ impl ServerCommandExecutor for TargetEventCommand {
 		let field_id = self.event.field_id;
 		let object_id = self.event.object_id;
 		let target = self.target;
-		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.event.clone())));
+		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.event.clone().into())));
 		room.send_command_from_action(
 			object_id,
 			Field {
@@ -75,7 +75,7 @@ mod tests {
 		};
 
 		command.execute(&mut room, member_id).unwrap();
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command.into()));
 	}
 
 	#[test]

@@ -134,11 +134,14 @@ mod tests {
 
 		assert_eq!(
 			commands[3].command,
-			S2CCommand::SetStructure(SetStructureCommand {
-				object_id: id,
-				field_id: 1,
-				value: [1, 2, 3].as_ref().into(),
-			})
+			S2CCommand::SetStructure(
+				SetStructureCommand {
+					object_id: id,
+					field_id: 1,
+					value: [1, 2, 3].as_ref().into(),
+				}
+				.into()
+			)
 		);
 
 		assert_eq!(commands[4].command, S2CCommand::Created(GameObjectCreatedS2CCommand { object_id: id }));

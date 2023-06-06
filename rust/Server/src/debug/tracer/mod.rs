@@ -288,11 +288,14 @@ pub mod tests {
 		tracer.collect_s2c(
 			Some(200),
 			100,
-			&S2CCommand::Event(EventCommand {
-				object_id: Default::default(),
-				field_id: 0,
-				event: Default::default(),
-			}),
+			&S2CCommand::Event(
+				EventCommand {
+					object_id: Default::default(),
+					field_id: 0,
+					event: Default::default(),
+				}
+				.into(),
+			),
 		);
 		let commands = tracer.drain_filtered_commands(session_id).unwrap();
 		assert_eq!(
@@ -320,11 +323,14 @@ pub mod tests {
 					time: Session::now(),
 					template: Some(200),
 					member: 100,
-					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
-						object_id: Default::default(),
-						field_id: 0,
-						event: Default::default(),
-					})),
+					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(
+						EventCommand {
+							object_id: Default::default(),
+							field_id: 0,
+							event: Default::default(),
+						}
+						.into()
+					)),
 				}
 			]
 		);
@@ -342,11 +348,14 @@ pub mod tests {
 		tracer.collect_s2c(
 			Some(200),
 			100,
-			&S2CCommand::Event(EventCommand {
-				object_id: Default::default(),
-				field_id: 0,
-				event: Default::default(),
-			}),
+			&S2CCommand::Event(
+				EventCommand {
+					object_id: Default::default(),
+					field_id: 0,
+					event: Default::default(),
+				}
+				.into(),
+			),
 		);
 		tracer.set_filter(session_id, "(user=100)").unwrap();
 
@@ -364,11 +373,14 @@ pub mod tests {
 					time: Session::now(),
 					template: Some(200),
 					member: 100,
-					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
-						object_id: Default::default(),
-						field_id: 0,
-						event: Default::default(),
-					})),
+					network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(
+						EventCommand {
+							object_id: Default::default(),
+							field_id: 0,
+							event: Default::default(),
+						}
+						.into()
+					)),
 				}
 			]
 		);

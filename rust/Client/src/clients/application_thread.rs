@@ -122,12 +122,12 @@ impl ApplicationThreadClient {
 					}
 					S2CCommand::SetStructure(command) => {
 						command_ffi.command_type = CommandTypeId::SetStructure;
-						command_ffi.command.set_structure = command;
+						command_ffi.command.set_structure = *command;
 					}
 
 					S2CCommand::Event(command) => {
 						command_ffi.command_type = CommandTypeId::SendEvent;
-						command_ffi.command.event = command;
+						command_ffi.command.event = *command;
 					}
 					S2CCommand::Delete(command) => {
 						command_ffi.command_type = CommandTypeId::DeleteObject;
