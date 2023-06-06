@@ -12,11 +12,14 @@ use crate::ffi::command::send_command;
 pub extern "C" fn send_event(client_id: ClientId, object_id: &GameObjectId, field_id: FieldId, event: &Buffer) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::Event(EventCommand {
-			object_id: *object_id,
-			field_id,
-			event: *event,
-		}),
+		C2SCommand::Event(
+			EventCommand {
+				object_id: *object_id,
+				field_id,
+				event: *event,
+			}
+			.into(),
+		),
 	)
 }
 
@@ -29,9 +32,12 @@ pub extern "C" fn send_target_event(client_id: ClientId, target_member_id: RoomM
 	};
 	send_command(
 		client_id,
-		C2SCommand::TargetEvent(TargetEventCommand {
-			target: target_member_id,
-			event: event_command,
-		}),
+		C2SCommand::TargetEvent(
+			TargetEventCommand {
+				target: target_member_id,
+				event: event_command,
+			}
+			.into(),
+		),
 	)
 }

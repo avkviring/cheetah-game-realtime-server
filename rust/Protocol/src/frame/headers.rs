@@ -60,7 +60,6 @@ pub enum Header {
 impl Headers {
 	#[must_use]
 	pub fn is_full(&self) -> bool {
-		tracing::info!("is_full  {:?} {:?}", self.headers.capacity(), self.headers.len());
 		self.headers.capacity() == self.headers.len()
 	}
 

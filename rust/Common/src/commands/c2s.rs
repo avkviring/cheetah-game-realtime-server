@@ -15,18 +15,41 @@ use crate::commands::{CommandDecodeError, CommandTypeId};
 use crate::room::field::{Field, FieldId, FieldType};
 use crate::room::object::GameObjectId;
 
+#[cfg(test)]
+pub mod test {
+	use std::mem::size_of;
+
+	use crate::commands::c2s::C2SCommand;
+	use crate::commands::s2c::S2CCommand;
+
+	#[test]
+	fn test() {
+		println!("{:?}", size_of::<S2CCommand>())
+	}
+}
+
+#[cfg(test)]
+mod test1 {
+	use crate::commands::c2s::C2SCommand;
+	use std::mem::size_of;
+
+	#[test]
+	fn test() {
+		println!("{:?}", size_of::<C2SCommand>())
+	}
+}
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
 #[allow(clippy::large_enum_variant)]
 pub enum C2SCommand {
 	CreateGameObject(CreateGameObjectCommand),
-	CreatedGameObject(C2SCreatedGameObjectCommand),
+	CreatedGameObject(Box<C2SCreatedGameObjectCommand>),
 	IncrementLongValue(IncrementLongC2SCommand),
 	SetLong(SetLongCommand),
 	SetDouble(SetDoubleCommand),
-	SetStructure(SetStructureCommand),
+	SetStructure(Box<SetStructureCommand>),
 	IncrementDouble(IncrementDoubleC2SCommand),
-	Event(EventCommand),
-	TargetEvent(TargetEventCommand),
+	Event(Box<EventCommand>),
+	TargetEvent(Box<TargetEventCommand>),
 	Delete(DeleteGameObjectCommand),
 	DeleteField(DeleteFieldCommand),
 	///
@@ -176,16 +199,16 @@ impl C2SCommand {
 		Ok(match command_type_id {
 			CommandTypeId::AttachToRoom => C2SCommand::AttachToRoom,
 			CommandTypeId::DetachFromRoom => C2SCommand::DetachFromRoom,
-			CommandTypeId::CreatedGameObject => C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::decode(object_id?, input)?),
+			CommandTypeId::CreatedGameObject => C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::decode(object_id?, input)?.into()),
 			CommandTypeId::DeleteObject => C2SCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::CreateGameObject => C2SCommand::CreateGameObject(CreateGameObjectCommand::decode(object_id?, input)?),
 			CommandTypeId::IncrementLong => C2SCommand::IncrementLongValue(IncrementLongC2SCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::IncrementDouble => C2SCommand::IncrementDouble(IncrementDoubleC2SCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SetDouble => C2SCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SetLong => C2SCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::SetStructure => C2SCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::SendEvent => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::TargetEvent => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::SetStructure => C2SCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?.into()),
+			CommandTypeId::SendEvent => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?.into()),
+			CommandTypeId::TargetEvent => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?.into()),
 			CommandTypeId::DeleteField => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::Forwarded => C2SCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 			CommandTypeId::MemberConnected => return Err(CommandDecodeError::UnknownTypeId(command_type_id)),
@@ -242,7 +265,7 @@ mod tests {
 	fn should_decode_encode_created() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(
-			&C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(object_id, false, None)),
+			&C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(object_id, false, None).into()),
 			CommandTypeId::CreatedGameObject,
 			Some(object_id),
 			None,
@@ -302,11 +325,14 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&C2SCommand::SetStructure(SetStructureCommand {
-				object_id,
-				field_id,
-				value: Buffer::from([1, 2, 3, 4].as_ref()),
-			}),
+			&C2SCommand::SetStructure(
+				SetStructureCommand {
+					object_id,
+					field_id,
+					value: Buffer::from([1, 2, 3, 4].as_ref()),
+				}
+				.into(),
+			),
 			CommandTypeId::SetStructure,
 			Some(object_id),
 			Some(field_id),
@@ -318,11 +344,14 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&C2SCommand::Event(EventCommand {
-				object_id,
-				field_id,
-				event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
-			}),
+			&C2SCommand::Event(
+				EventCommand {
+					object_id,
+					field_id,
+					event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+				}
+				.into(),
+			),
 			CommandTypeId::SendEvent,
 			Some(object_id),
 			Some(field_id),
@@ -334,14 +363,17 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&C2SCommand::TargetEvent(TargetEventCommand {
-				target: 10,
-				event: EventCommand {
-					object_id,
-					field_id,
-					event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
-				},
-			}),
+			&C2SCommand::TargetEvent(
+				TargetEventCommand {
+					target: 10,
+					event: EventCommand {
+						object_id,
+						field_id,
+						event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+					},
+				}
+				.into(),
+			),
 			CommandTypeId::TargetEvent,
 			Some(object_id),
 			Some(field_id),
@@ -361,14 +393,17 @@ mod tests {
 		check(
 			&C2SCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: 123,
-				c2s: C2SCommand::TargetEvent(TargetEventCommand {
-					target: 10,
-					event: EventCommand {
-						object_id,
-						field_id,
-						event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
-					},
-				}),
+				c2s: C2SCommand::TargetEvent(
+					TargetEventCommand {
+						target: 10,
+						event: EventCommand {
+							object_id,
+							field_id,
+							event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+						},
+					}
+					.into(),
+				),
 			})),
 			CommandTypeId::Forwarded,
 			Some(object_id),
