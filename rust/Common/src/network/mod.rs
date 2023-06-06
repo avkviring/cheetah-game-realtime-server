@@ -110,7 +110,7 @@ impl NetworkChannel {
 
 		let mut buffer = [0; 2048];
 		while let Some(frame) = self.out_frames.back_mut() {
-			frame.headers.add_if_not_prezent(Header::MemberAndRoomId(self.member_and_room_id));
+			frame.headers.add_if_not_present(Header::MemberAndRoomId(self.member_and_room_id));
 
 			let frame_buffer_size = frame.encode(&mut Cipher::new(&self.private_key), &mut buffer).unwrap();
 			match self.socket_wrapper.send_to(now, &buffer[0..frame_buffer_size], self.server_address) {
