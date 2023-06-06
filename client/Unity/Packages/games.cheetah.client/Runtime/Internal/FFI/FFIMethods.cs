@@ -13,7 +13,7 @@ namespace Games.Cheetah.Client.Internal.FFI
 #else
         public const string Library = "cheetah_client";
 #endif
-        public const ushort MaxSizeStruct = 255;
+        public const ushort MaxSizeStruct = 8192;
         public const ushort MaxFields = 255;
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_client")]

@@ -3,10 +3,10 @@ use std::collections::{HashSet, VecDeque};
 use std::ops::Sub;
 use std::time::{Duration, Instant};
 
-use crate::frame::disconnected_reason::DisconnectedReason;
 use fnv::FnvBuildHasher;
 use prometheus::local::LocalIntCounter;
 
+use crate::frame::disconnected_reason::DisconnectedReason;
 use crate::frame::headers::{Header, HeaderVec};
 use crate::frame::Frame;
 use crate::frame::FrameId;
@@ -106,7 +106,11 @@ impl Retransmitter {
 					} else if now.sub(scheduled_frame.time) >= self.ack_wait_duration {
 						let mut scheduled_frame = self.frames.pop_front().unwrap();
 
-						let retransmit_count = scheduled_frame.retransmit_count + 1;
+						let retransmit_count = scheduled_frame.retransmit_count.checked_add(1).unwrap_or(u8::MAX);
+						if retransmit_count == u8::MAX {
+							tracing::info!("Retransmit count overflow");
+						}
+
 						self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);
 						scheduled_frame.retransmit_count = retransmit_count;
 						scheduled_frame.time = now;
@@ -316,17 +320,15 @@ mod tests {
 	}
 
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {
-		let mut frame = Frame::new(0, frame_id);
-		frame.reliability = true;
-		frame
+		Frame::new(0, frame_id, true, Default::default())
 	}
 
 	fn create_unreliable_frame(frame_id: FrameId) -> Frame {
-		Frame::new(0, frame_id)
+		Frame::new(0, frame_id, false, Default::default())
 	}
 
 	fn create_ack_frame(frame_id: FrameId, acked_frame_id: FrameId) -> Frame {
-		let mut frame = Frame::new(0, frame_id);
+		let mut frame = Frame::new(0, frame_id, false, Default::default());
 		let mut ack_header = AckHeader::default();
 		ack_header.add_frame_id(acked_frame_id);
 		frame.headers.add(Header::Ack(ack_header));

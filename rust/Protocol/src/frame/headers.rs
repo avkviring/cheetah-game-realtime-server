@@ -68,6 +68,10 @@ impl Headers {
 		assert!(self.headers.push(header).is_ok(), "Headers vector overflow {:?}", self.headers);
 	}
 
+	pub fn add_if_not_prezent(&mut self, header: Header) {
+		assert!(self.headers.push(header).is_ok(), "Headers vector overflow {:?}", self.headers);
+	}
+
 	pub fn find<T, F: FnMut(&Header) -> Option<&T>>(&self, p: F) -> HeaderVec<&T> {
 		self.headers.iter().filter_map(p).collect()
 	}

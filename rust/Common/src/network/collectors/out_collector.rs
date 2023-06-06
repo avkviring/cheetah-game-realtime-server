@@ -2,7 +2,6 @@ use std::collections::VecDeque;
 
 use fnv::FnvHashMap;
 
-use cheetah_protocol::frame::FRAME_BODY_CAPACITY;
 use cheetah_protocol::OutputDataProducer;
 
 use crate::commands::codec::encoder::encode_commands;
@@ -29,8 +28,8 @@ impl OutputDataProducer for OutCommandsCollector {
 		!self.commands.is_empty()
 	}
 
-	fn get_output_data(&mut self, buffer: &mut [u8; FRAME_BODY_CAPACITY]) -> (usize, bool) {
-		encode_commands(&mut self.commands, buffer)
+	fn get_output_data(&mut self, packet: &mut [u8]) -> (usize, bool) {
+		encode_commands(&mut self.commands, packet)
 	}
 }
 
@@ -76,6 +75,8 @@ impl OutCommandsCollector {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
+
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::c2s::C2SCommand::IncrementLongValue;
 	use crate::commands::codec::decoder::decode_commands;
@@ -114,8 +115,8 @@ mod tests {
 	fn should_not_contains_data_after_get_data() {
 		let mut collector = OutCommandsCollector::default();
 		collector.add_command(ReliabilityGuarantees::UnreliableUnordered, BothDirectionCommand::C2S(C2SCommand::AttachToRoom));
-		let mut buffer = [0; FRAME_BODY_CAPACITY];
-		collector.get_output_data(&mut buffer);
+		let mut packet = [0; PACKET_SIZE];
+		collector.get_output_data(&mut packet);
 		assert!(!collector.contains_output_data());
 	}
 
@@ -123,9 +124,9 @@ mod tests {
 	fn should_correct_decode() {
 		let mut collector = OutCommandsCollector::default();
 		collector.add_command(ReliabilityGuarantees::UnreliableUnordered, BothDirectionCommand::C2S(C2SCommand::AttachToRoom));
-		let mut buffer = [0; FRAME_BODY_CAPACITY];
-		let (size, _) = collector.get_output_data(&mut buffer);
-		let commands = decode_commands(true, &buffer[0..size]).unwrap();
+		let mut packet = [0; PACKET_SIZE];
+		let (size, _) = collector.get_output_data(&mut packet);
+		let commands = decode_commands(true, &packet[0..size]).unwrap();
 		assert_eq!(
 			commands,
 			vec![CommandWithReliabilityGuarantees {
@@ -141,7 +142,7 @@ mod tests {
 		collector.add_command(ReliabilityGuarantees::UnreliableUnordered, create_command(0));
 		collector.add_command(ReliabilityGuarantees::UnreliableUnordered, create_command(1));
 
-		let commands = send_and_recieve(&mut collector);
+		let commands = send_and_receive(&mut collector);
 
 		assert_eq!(
 			commands[0],
@@ -166,7 +167,7 @@ mod tests {
 		for i in 0..COUNT {
 			collector.add_command(ReliabilityGuarantees::UnreliableUnordered, create_command(i));
 		}
-		let commands = send_and_recieve(&mut collector);
+		let commands = send_and_receive(&mut collector);
 
 		for i in 0..COUNT {
 			assert_eq!(
@@ -179,12 +180,12 @@ mod tests {
 		}
 	}
 
-	fn send_and_recieve(collector: &mut OutCommandsCollector) -> Vec<CommandWithReliabilityGuarantees> {
+	fn send_and_receive(collector: &mut OutCommandsCollector) -> Vec<CommandWithReliabilityGuarantees> {
 		let mut commands = Vec::new();
 		while collector.contains_output_data() {
-			let mut buffer = [0; FRAME_BODY_CAPACITY];
-			let (size, _) = collector.get_output_data(&mut buffer);
-			for command in decode_commands(true, &buffer[0..size]).unwrap() {
+			let mut packet = [0; PACKET_SIZE];
+			let (size, _) = collector.get_output_data(&mut packet);
+			for command in decode_commands(true, &packet[0..size]).unwrap() {
 				commands.push(command);
 			}
 		}

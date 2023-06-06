@@ -1,8 +1,11 @@
 use crate::frame::headers::{Header, Headers};
+use crate::frame::segment::Segment;
 
 pub mod disconnected_reason;
 pub mod headers;
 pub mod member_private_key;
+pub mod packets_collector;
+pub mod segment;
 ///
 /// Уникальный возрастающий идентификатор фрейма
 /// - игнорируем уже принятый фрейм с таким же `frame_id`
@@ -16,35 +19,25 @@ pub type FrameId = u64;
 ///
 pub type ConnectionId = u64;
 
-pub const FRAME_BODY_CAPACITY: usize = 450;
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Frame {
 	pub connection_id: ConnectionId,
 	pub frame_id: FrameId,
 	pub headers: Headers,
-	pub body_size: usize,
 	pub reliability: bool,
-	pub body: [u8; FRAME_BODY_CAPACITY],
+	pub segment: Segment,
 }
 
 impl Frame {
 	#[must_use]
-	pub fn new(connection_id: ConnectionId, frame_id: FrameId) -> Self {
+	pub fn new(connection_id: ConnectionId, frame_id: FrameId, reliability: bool, segment: Segment) -> Self {
 		Self {
 			connection_id,
 			frame_id,
 			headers: Default::default(),
-			body_size: 0,
-			body: [0; FRAME_BODY_CAPACITY],
-			reliability: false,
+			reliability,
+			segment,
 		}
-	}
-
-	#[cfg(test)]
-	pub(crate) fn set_body(&mut self, body: &[u8]) {
-		self.body_size = body.len();
-		self.body[0..self.body_size].copy_from_slice(body);
 	}
 
 	///
@@ -58,9 +51,5 @@ impl Frame {
 			None => self.frame_id,
 			Some(value) => value.original_frame_id,
 		}
-	}
-
-	pub fn get_body(&self) -> &[u8] {
-		&self.body[0..self.body_size]
 	}
 }

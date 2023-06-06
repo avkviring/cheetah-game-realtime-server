@@ -7,9 +7,8 @@ pub mod encoder;
 ///
 #[cfg(test)]
 mod tests {
+	use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
 	use std::collections::VecDeque;
-
-	use cheetah_protocol::frame::FRAME_BODY_CAPACITY;
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::codec::decoder::decode_commands;
@@ -102,9 +101,9 @@ mod tests {
 		let mut cloned_original_commands: VecDeque<_> = original_commands.clone().into();
 		let mut i = 0;
 		while !cloned_original_commands.is_empty() {
-			let mut buffer = [0; FRAME_BODY_CAPACITY];
-			let (size, _) = encode_commands(&mut cloned_original_commands, &mut buffer);
-			for command in decode_commands(server_side, &buffer[0..size]).unwrap() {
+			let mut packet = [0; PACKET_SIZE];
+			let (size, _) = encode_commands(&mut cloned_original_commands, &mut packet);
+			for command in decode_commands(server_side, &packet[0..size]).unwrap() {
 				assert_eq!(original_commands[i], command);
 				i += 1;
 			}

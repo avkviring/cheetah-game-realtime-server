@@ -60,7 +60,7 @@ mod tests {
 	#[test]
 	fn should_protection_replay() {
 		let mut protection = FrameReplayProtection::default();
-		let frame_a = Frame::new(0, 1000);
+		let frame_a = Frame::new(0, 1000, false, Default::default());
 		assert!(!protection.set_and_check(&frame_a).unwrap());
 		assert!(protection.set_and_check(&frame_a).unwrap());
 	}
@@ -68,8 +68,8 @@ mod tests {
 	#[test]
 	fn should_disconnect_when_very_old_frame() {
 		let mut protection = FrameReplayProtection::default();
-		let frame_a = Frame::new(0, 1000 + FrameReplayProtection::BUFFER_SIZE as u64);
-		let frame_b = Frame::new(0, 1000);
+		let frame_a = Frame::new(0, 1000 + FrameReplayProtection::BUFFER_SIZE as u64, false, Default::default());
+		let frame_b = Frame::new(0, 1000, false, Default::default());
 		assert!(!protection.set_and_check(&frame_a).unwrap());
 		protection.set_and_check(&frame_b).unwrap_err();
 	}
@@ -78,7 +78,7 @@ mod tests {
 	fn should_protection_replay_check_all() {
 		let mut protection = FrameReplayProtection::default();
 		for i in 1..(FrameReplayProtection::BUFFER_SIZE * 2) as u64 {
-			let frame = Frame::new(0, i);
+			let frame = Frame::new(0, i, false, Default::default());
 			assert!(!protection.set_and_check(&frame).unwrap());
 			assert!(protection.set_and_check(&frame).unwrap());
 		}
@@ -88,11 +88,11 @@ mod tests {
 	fn should_protection_replay_check_prev_packets() {
 		let mut protection = FrameReplayProtection::default();
 		for i in 1..FrameReplayProtection::BUFFER_SIZE as u64 {
-			let frame = Frame::new(0, i);
+			let frame = Frame::new(0, i, false, Default::default());
 			protection.set_and_check(&frame).unwrap();
 			if i > 2 {
 				for j in 1..i {
-					let frame = Frame::new(0, j);
+					let frame = Frame::new(0, j, false, Default::default());
 					assert!(protection.set_and_check(&frame).unwrap());
 				}
 			}

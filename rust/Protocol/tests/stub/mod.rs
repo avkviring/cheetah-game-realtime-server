@@ -2,45 +2,48 @@ use std::collections::VecDeque;
 use std::ops::{Add, RangeInclusive};
 use std::time::{Duration, Instant};
 
+use prometheus::{Histogram, HistogramOpts, IntCounter};
 use rand::rngs::OsRng;
 use rand::Rng;
 
-use cheetah_protocol::frame::FRAME_BODY_CAPACITY;
+use cheetah_protocol::frame::Frame;
 use cheetah_protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC;
 use cheetah_protocol::{InputDataHandler, OutputDataProducer, Protocol};
 
 #[derive(Default)]
-pub struct StubDataRecvHandler {
+pub struct StubInputDataHandler {
+	pub items: Vec<Vec<u8>>,
 	pub size_recv: usize,
 }
 
-impl InputDataHandler for StubDataRecvHandler {
+impl InputDataHandler for StubInputDataHandler {
 	fn on_input_data(&mut self, data: &[u8]) {
+		self.items.push(data.into());
 		self.size_recv += data.len();
 	}
 }
 
 #[derive(Default)]
-pub struct StubDataSource {
+pub struct StubOutputDataProducer {
 	items: VecDeque<Vec<u8>>,
 }
 
-impl StubDataSource {
-	pub(crate) fn add(&mut self, data: &[u8]) {
+impl StubOutputDataProducer {
+	pub fn add(&mut self, data: &[u8]) {
 		self.items.push_back(data.into());
 	}
 }
 
-impl OutputDataProducer for StubDataSource {
+impl OutputDataProducer for StubOutputDataProducer {
 	fn contains_output_data(&self) -> bool {
 		!self.items.is_empty()
 	}
 
-	fn get_output_data(&mut self, buffer: &mut [u8; FRAME_BODY_CAPACITY]) -> (usize, bool) {
+	fn get_output_data(&mut self, packet: &mut [u8]) -> (usize, bool) {
 		match self.items.pop_front() {
 			None => (0, false),
 			Some(source) => {
-				buffer[0..source.len()].copy_from_slice(source.as_slice());
+				packet[0..source.len()].copy_from_slice(source.as_slice());
 				(source.len(), true)
 			}
 		}
@@ -59,19 +62,22 @@ impl Channel {
 		DS: OutputDataProducer,
 	{
 		let mut now = Instant::now();
+		let mut frames: VecDeque<Frame> = Default::default();
 
 		for i in 0..count {
-			let frame_a = peer_a.build_next_frame(now);
-			if let Some(frame_a) = frame_a {
+			frames.clear();
+			peer_a.collect_out_frames(now, &mut frames);
+			for frame in frames.iter() {
 				if self.allow(i as u64) {
-					peer_b.on_frame_received(&frame_a, now);
+					peer_b.on_frame_received(frame, now);
 				}
 			}
 
-			let frame_b = peer_b.build_next_frame(now);
-			if let Some(frame_b) = frame_b {
+			frames.clear();
+			peer_b.collect_out_frames(now, &mut frames);
+			for frame in frames.iter() {
 				if self.allow(i as u64) {
-					peer_a.on_frame_received(&frame_b, now);
+					peer_a.on_frame_received(frame, now);
 				}
 			}
 
@@ -88,4 +94,16 @@ impl Channel {
 		let find = self.reliable_percents.iter().find_map(|(range, percent)| range.contains(&position).then(|| OsRng.gen_bool(*percent)));
 		find.unwrap_or(true)
 	}
+}
+
+pub fn create_protocol() -> Protocol<StubInputDataHandler, StubOutputDataProducer> {
+	Protocol::<StubInputDataHandler, StubOutputDataProducer>::new(
+		Default::default(),
+		Default::default(),
+		0,
+		Instant::now(),
+		Instant::now(),
+		IntCounter::new("name", "help").unwrap().local(),
+		Histogram::with_opts(HistogramOpts::new("name", "help")).unwrap().local(),
+	)
 }

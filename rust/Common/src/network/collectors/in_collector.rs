@@ -163,6 +163,7 @@ impl Ord for SequenceApplicationCommand {
 
 #[cfg(test)]
 mod tests {
+	use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
 	use cheetah_protocol::InputDataHandler;
 
 	use crate::commands::c2s::C2SCommand;
@@ -178,9 +179,9 @@ mod tests {
 	pub(crate) fn test_clear_after_get_ready_commands() {
 		let mut in_commands = InCommandsCollector::new(true);
 		let cmd_1 = create_test_command(ReliabilityGuaranteesChannel::ReliableUnordered, 1);
-		let mut data = [0; 450];
-		let (size, _) = encode_commands(&mut vec![cmd_1.clone()].into(), &mut data);
-		in_commands.on_input_data(&data[0..size]);
+		let mut packet = [0; PACKET_SIZE];
+		let (size, _) = encode_commands(&mut vec![cmd_1.clone()].into(), &mut packet);
+		in_commands.on_input_data(&packet[0..size]);
 		assert_eq!(in_commands.get_ready_commands(), [cmd_1]);
 		assert_eq!(in_commands.get_ready_commands(), []);
 	}
@@ -189,10 +190,10 @@ mod tests {
 	pub(crate) fn test_not_clear_after_collect() {
 		let mut in_commands = InCommandsCollector::new(true);
 		let cmd_1 = create_test_command(ReliabilityGuaranteesChannel::ReliableUnordered, 1);
-		let mut data = [0; 450];
-		let (size, _) = encode_commands(&mut vec![cmd_1.clone()].into(), &mut data);
-		in_commands.on_input_data(&data[0..size]);
-		in_commands.on_input_data(&data[0..size]);
+		let mut packet = [0; PACKET_SIZE];
+		let (size, _) = encode_commands(&mut vec![cmd_1.clone()].into(), &mut packet);
+		in_commands.on_input_data(&packet[0..size]);
+		in_commands.on_input_data(&packet[0..size]);
 		assert_eq!(in_commands.get_ready_commands(), [cmd_1.clone(), cmd_1]);
 		assert_eq!(in_commands.get_ready_commands(), []);
 	}
@@ -269,7 +270,7 @@ mod tests {
 	}
 
 	fn assert(in_commands: &mut InCommandsCollector, commands: &[CommandWithReliabilityGuarantees], expect: &[CommandWithReliabilityGuarantees]) {
-		let mut data = [0; 450];
+		let mut data = [0; PACKET_SIZE];
 		let (size, _) = encode_commands(&mut commands.to_vec().into(), &mut data);
 		in_commands.on_input_data(&data[0..size]);
 		assert_eq!(in_commands.get_ready_commands(), expect);

@@ -106,7 +106,7 @@ mod tests {
 
 		assert!(self_handler.contains_self_data());
 
-		let mut frame = Frame::new(0, 10);
+		let mut frame = Frame::new(0, 10, true, Default::default());
 		self_handler.build_frame(&mut frame);
 		remote_handler.on_frame_received(&frame);
 
@@ -117,7 +117,7 @@ mod tests {
 	#[test]
 	pub(crate) fn should_not_disconnect() {
 		let mut handler = DisconnectByCommand::default();
-		let mut frame = Frame::new(0, 10);
+		let mut frame = Frame::new(0, 10, true, Default::default());
 		handler.build_frame(&mut frame);
 		assert!(handler.disconnected().is_none());
 		assert!(matches!(frame.headers.first(Header::predicate_disconnect), None));
