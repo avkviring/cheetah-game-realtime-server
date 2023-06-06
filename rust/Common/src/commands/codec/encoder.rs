@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
 use std::io::Cursor;
 
-use cheetah_protocol::frame::FRAME_BODY_CAPACITY;
+use byteorder::WriteBytesExt;
+
 use cheetah_protocol::RoomMemberId;
 
 use crate::commands::context::CommandContext;
@@ -11,27 +12,32 @@ use crate::commands::{BothDirectionCommand, CommandTypeId, CommandWithReliabilit
 use crate::room::field::FieldId;
 use crate::room::object::GameObjectId;
 
-pub(crate) fn encode_commands(commands: &mut VecDeque<CommandWithReliabilityGuarantees>, buffer: &mut [u8; FRAME_BODY_CAPACITY]) -> (usize, bool) {
-	let mut tmp_buffer = [0; FRAME_BODY_CAPACITY * 2];
+pub(crate) fn encode_commands(commands: &mut VecDeque<CommandWithReliabilityGuarantees>, packet: &mut [u8]) -> (usize, bool) {
 	let mut context = CommandContext::default();
 	let mut contains_reliability_command = false;
-	let mut cursor = Cursor::new(tmp_buffer.as_mut_slice());
+	let mut cursor = Cursor::new(packet);
 	cursor.set_position(1);
 	let mut command_count = 0;
 	while let Some(command) = commands.pop_front() {
-		let position = cursor.position();
-		encode_command(&mut context, &command, &mut cursor).unwrap();
-		if cursor.position() >= FRAME_BODY_CAPACITY as u64 {
-			cursor.set_position(position);
+		if command_count > 254 {
 			commands.push_front(command);
 			break;
+		}
+		let position = cursor.position();
+		match encode_command(&mut context, &command, &mut cursor) {
+			Ok(_) => {}
+			Err(_) => {
+				cursor.set_position(position);
+				commands.push_front(command);
+				break;
+			}
 		}
 		command_count += 1;
 		contains_reliability_command = contains_reliability_command || command.reliability_guarantees.is_reliable();
 	}
 	let size = cursor.position() as usize;
-	tmp_buffer[0] = command_count;
-	buffer[0..size].copy_from_slice(&tmp_buffer[0..size]);
+	cursor.set_position(0);
+	cursor.write_u8(command_count).unwrap();
 	(size, contains_reliability_command)
 }
 

@@ -368,7 +368,7 @@ mod tests {
 	#[test]
 	#[should_panic(expected = "received invalid nested ForwardedCommand")]
 	fn should_panic_on_nested_forwarded_command() {
-		ForwardedCommandFFI::from(ForwardedCommand {
+		let _ = ForwardedCommandFFI::from(ForwardedCommand {
 			creator: 0,
 			c2s: C2SCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: 0,

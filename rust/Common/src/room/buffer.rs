@@ -2,6 +2,7 @@ use std::fmt;
 use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
 use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
 
 ///
 /// Бинарное значение поля
@@ -12,7 +13,7 @@ pub struct Buffer {
 	pub len: u16,
 	pub pos: u16,
 	// используется в C#
-	pub buffer: [u8; NIO_BUFFER_MAX_SIZE],
+	pub buffer: [u8; BUFFER_SIZE],
 }
 
 impl fmt::Debug for Buffer {
@@ -32,19 +33,19 @@ impl Default for Buffer {
 		Self {
 			len: 0,
 			pos: 0,
-			buffer: [0; NIO_BUFFER_MAX_SIZE],
+			buffer: [0; BUFFER_SIZE],
 		}
 	}
 }
 
-pub const NIO_BUFFER_MAX_SIZE: usize = 255;
+pub const BUFFER_SIZE: usize = 8192;
 
 impl From<&[u8]> for Buffer {
 	fn from(source: &[u8]) -> Self {
 		let mut result = Self {
 			len: source.len() as u16,
 			pos: 0,
-			buffer: [0; NIO_BUFFER_MAX_SIZE],
+			buffer: [0; BUFFER_SIZE],
 		};
 
 		result.buffer[0..source.len()].copy_from_slice(source);
@@ -56,7 +57,7 @@ impl Buffer {
 	pub(crate) fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let mut result = Buffer::default();
 		let size: usize = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
-		if size > NIO_BUFFER_MAX_SIZE {
+		if size > BUFFER_SIZE {
 			return Err(Error::new(ErrorKind::InvalidData, format!("Event buffer size to big {size}")));
 		}
 		result.len = size as u16;

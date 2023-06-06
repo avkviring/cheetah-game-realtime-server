@@ -1,23 +1,23 @@
-use std::io::{Cursor, Write};
+use std::io::Cursor;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use chacha20poly1305::aead;
 use thiserror::Error;
 
 use crate::codec::cipher::Cipher;
-use crate::codec::compress::{packet_compress, packet_decompress};
 use crate::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use crate::frame::headers::Headers;
+use crate::frame::segment::Segment;
 use crate::frame::Frame;
-use crate::frame::FRAME_BODY_CAPACITY;
 
 pub mod cipher;
 pub mod compress;
 pub mod headers;
+pub mod segment;
 pub mod variable_int;
 
 #[derive(Error, Debug)]
-pub enum FrameDecodeError {
+pub enum DecodeError {
 	#[error("Cipher factory error")]
 	CipherFactoryError(),
 	#[error("DecryptedError {0}")]
@@ -31,7 +31,7 @@ pub enum FrameDecodeError {
 }
 
 #[derive(Error, Debug)]
-pub enum FrameEncodeError {
+pub enum EncodeError {
 	#[error("EncryptedError {0}")]
 	EncryptedError(aead::Error),
 	#[error("CompressError {0}")]
@@ -41,7 +41,7 @@ pub enum FrameEncodeError {
 }
 
 impl Frame {
-	pub fn decode<'a, F>(data: &'a [u8], chiper_factory: F) -> Result<Frame, FrameDecodeError>
+	pub fn decode<'a, F>(data: &'a [u8], chiper_factory: F) -> Result<Frame, DecodeError>
 	where
 		F: FnOnce(&Headers) -> Option<Cipher<'a>>,
 	{
@@ -49,32 +49,19 @@ impl Frame {
 		let connection_id = cursor.read_variable_u64()?;
 		let frame_id = cursor.read_variable_u64()?;
 		let reliability = cursor.read_u8()? == 1;
-
 		let headers = Headers::decode_headers(&mut cursor)?;
-		let header_end = cursor.position();
 
-		let cipher = chiper_factory(&headers).ok_or_else(FrameDecodeError::CipherFactoryError)?;
-		let mut frame = Frame {
+		let cipher = chiper_factory(&headers).ok_or_else(DecodeError::CipherFactoryError)?;
+		let segment = Segment::decode(cursor, cipher, frame_id)?;
+		let frame = Frame {
 			connection_id,
 			frame_id,
 			headers,
-			body_size: 0,
-			body: [0; FRAME_BODY_CAPACITY],
 			reliability,
+			segment,
 		};
-		frame.body_size = Self::decode_body(cursor, cipher, frame_id, header_end, &mut frame.body)?;
-		Ok(frame)
-	}
 
-	fn decode_body<'a>(cursor: Cursor<&'a [u8]>, mut cipher: Cipher<'a>, frame_id: u64, header_end: u64, body: &mut [u8; FRAME_BODY_CAPACITY]) -> Result<usize, FrameDecodeError> {
-		let data = cursor.into_inner();
-		let nonce = frame_id.to_be_bytes();
-		let ad = &data[0..header_end as usize];
-		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
-		vec.extend_from_slice(&data[header_end as usize..data.len()]).map_err(|_| FrameDecodeError::HeaplessError)?;
-		cipher.decrypt(&mut vec, ad, nonce).map_err(FrameDecodeError::DecryptedError)?;
-		let decompressed_size = packet_decompress(&vec, body.as_mut_slice())?;
-		Ok(decompressed_size)
+		Ok(frame)
 	}
 }
 
@@ -83,31 +70,13 @@ impl Frame {
 	/// Преобразуем Frame в набор байт для отправки через сеть
 	///
 	#[allow(clippy::cast_possible_truncation)]
-	pub fn encode(&self, cipher: &mut Cipher<'_>, out: &mut [u8]) -> Result<usize, FrameEncodeError> {
+	pub fn encode(&self, cipher: &mut Cipher<'_>, out: &mut [u8]) -> Result<usize, EncodeError> {
 		let mut frame_cursor = Cursor::new(out);
-		frame_cursor.write_variable_u64(self.connection_id).map_err(FrameEncodeError::Io)?;
-		frame_cursor.write_variable_u64(self.frame_id).map_err(FrameEncodeError::Io)?;
-		frame_cursor.write_u8(if self.reliability { 1 } else { 0 }).map_err(FrameEncodeError::Io)?;
-
-		self.headers.encode_headers(&mut frame_cursor).map_err(FrameEncodeError::Io)?;
-		let commands_buffer = &self.body[0..self.body_size];
-
-		let mut vec: heapless::Vec<u8, 4096> = heapless::Vec::new();
-		unsafe {
-			vec.set_len(4096);
-		}
-		let compressed_size = packet_compress(commands_buffer, &mut vec)?;
-		unsafe {
-			vec.set_len(compressed_size);
-		}
-
-		let frame_position = frame_cursor.position() as usize;
-		cipher
-			.encrypt(&mut vec, &frame_cursor.get_ref()[0..frame_position], self.frame_id.to_be_bytes())
-			.map_err(FrameEncodeError::EncryptedError)?;
-
-		frame_cursor.write_all(&vec)?;
-
+		frame_cursor.write_variable_u64(self.connection_id).map_err(EncodeError::Io)?;
+		frame_cursor.write_variable_u64(self.frame_id).map_err(EncodeError::Io)?;
+		frame_cursor.write_u8(if self.reliability { 1 } else { 0 }).map_err(EncodeError::Io)?;
+		self.headers.encode_headers(&mut frame_cursor).map_err(EncodeError::Io)?;
+		self.segment.encode(&mut frame_cursor, cipher, self.frame_id)?;
 		Ok(frame_cursor.position() as usize)
 	}
 }
@@ -116,6 +85,7 @@ impl Frame {
 pub mod tests {
 	use crate::codec::cipher::Cipher;
 	use crate::frame::headers::Header;
+	use crate::frame::segment::Segment;
 	use crate::frame::Frame;
 	use crate::reliable::ack::header::AckHeader;
 
@@ -125,12 +95,11 @@ pub mod tests {
 
 	#[test]
 	fn should_encode_decode_frame() {
-		let mut frame = Frame::new(100, 55);
+		let mut frame = Frame::new(100, 55, true, Segment::default_with_body(&[1, 2, 3, 4, 6]));
 		let key = PRIVATE_KEY.into();
 		let mut cipher = Cipher::new(&key);
 		frame.headers.add(Header::Ack(AckHeader::default()));
 		frame.headers.add(Header::Ack(AckHeader::default()));
-		frame.set_body(&[1, 2, 3, 4, 6]);
 
 		let mut buffer = [0; 1024];
 		let size = frame.encode(&mut cipher, &mut buffer).unwrap();

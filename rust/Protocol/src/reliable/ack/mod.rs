@@ -110,7 +110,7 @@ mod tests {
 	fn should_ack() {
 		let mut now = Instant::now();
 		let mut ack_sender = AckSender::default();
-		let mut frame = Frame::new(0, 10);
+		let mut frame = Frame::new(0, 10, false, Default::default());
 		frame.reliability = true;
 		ack_sender.on_frame_received(&frame, now);
 
@@ -133,7 +133,7 @@ mod tests {
 	}
 
 	fn build_out_frame(now: Instant, ack_sender: &mut AckSender) -> AckHeader {
-		let mut out_frame = Frame::new(0, 200);
+		let mut out_frame = Frame::new(0, 200, false, Default::default());
 		ack_sender.build_out_frame(&mut out_frame, now);
 		let header: &AckHeader = out_frame.headers.first(Header::predicate_ack).unwrap();
 		header.clone()

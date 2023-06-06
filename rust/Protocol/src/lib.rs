@@ -1,5 +1,6 @@
 extern crate core;
 
+use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::time::Instant;
 
@@ -8,7 +9,9 @@ use prometheus::local::{LocalHistogram, LocalIntCounter};
 use crate::disconnect::command::DisconnectByCommand;
 use crate::disconnect::timeout::DisconnectByTimeout;
 use crate::frame::disconnected_reason::DisconnectedReason;
-use crate::frame::{ConnectionId, Frame, FrameId, FRAME_BODY_CAPACITY};
+use crate::frame::packets_collector::{PacketsCollector, PACKET_SIZE};
+use crate::frame::segment::{Segment, SEGMENT_SIZE};
+use crate::frame::{ConnectionId, Frame, FrameId};
 use crate::others::keep_alive::KeepAlive;
 use crate::others::rtt::RoundTripTime;
 use crate::reliable::ack::AckSender;
@@ -23,7 +26,6 @@ pub mod others;
 pub mod reliable;
 pub mod trace;
 pub mod trace_collector;
-
 pub type RoomMemberId = u16;
 pub type RoomId = u64;
 
@@ -38,8 +40,16 @@ pub const MAX_FRAME_PER_SECONDS: usize = 120;
 /// Если от peer не будет фреймов за данное время - считаем что соединение разорвано
 ///
 pub const DISCONNECT_TIMEOUT_IN_SECONDS: usize = 60;
-
 pub const NOT_EXIST_FRAME_ID: FrameId = 0;
+
+pub trait InputDataHandler {
+	fn on_input_data(&mut self, data: &[u8]);
+}
+
+pub trait OutputDataProducer {
+	fn contains_output_data(&self) -> bool;
+	fn get_output_data(&mut self, out: &mut [u8]) -> (usize, bool);
+}
 
 ///
 /// Реализация игрового протокола, поверх ненадежного канала доставки данных (например, через UDP)
@@ -56,6 +66,7 @@ where
 {
 	pub connection_id: ConnectionId,
 	pub next_frame_id: u64,
+	pub next_packed_id: u64,
 	pub replay_protection: FrameReplayProtection,
 	pub ack_sender: AckSender,
 	pub retransmitter: Retransmitter,
@@ -68,15 +79,7 @@ where
 	pub in_frame_counter: u64,
 	ack_sent_histogram: LocalHistogram,
 	retransmit_counter: LocalIntCounter,
-}
-
-pub trait InputDataHandler {
-	fn on_input_data(&mut self, data: &[u8]);
-}
-
-pub trait OutputDataProducer {
-	fn contains_output_data(&self) -> bool;
-	fn get_output_data(&mut self, buffer: &mut [u8; FRAME_BODY_CAPACITY]) -> (usize, bool);
+	packets_collector: PacketsCollector,
 }
 
 impl<IN, OUT> Protocol<IN, OUT>
@@ -95,20 +98,22 @@ where
 		ack_sent_histogram: LocalHistogram,
 	) -> Self {
 		Self {
+			next_frame_id: 1,
+			next_packed_id: 0,
+			disconnect_by_timeout: DisconnectByTimeout::new(now),
+			retransmitter: Retransmitter::new(retransmit_counter.clone()),
+			rtt: RoundTripTime::new(start_application_time),
 			connection_id,
 			input_data_handler,
 			output_data_producer,
 			ack_sent_histogram,
-			next_frame_id: 1,
-			disconnect_by_timeout: DisconnectByTimeout::new(now),
+			retransmit_counter,
 			replay_protection: Default::default(),
 			ack_sender: Default::default(),
-			retransmitter: Retransmitter::new(retransmit_counter.clone()),
 			disconnect_by_command: Default::default(),
-			rtt: RoundTripTime::new(start_application_time),
 			keep_alive: Default::default(),
 			in_frame_counter: Default::default(),
-			retransmit_counter,
+			packets_collector: Default::default(),
 		}
 	}
 
@@ -135,11 +140,25 @@ where
 				if !replayed {
 					self.disconnect_by_command.on_frame_received(frame);
 					self.rtt.on_frame_received(frame, now);
-					self.input_data_handler.on_input_data(frame.get_body());
+					self.processing_data(frame);
 				}
 			}
 			Err(..) => {
 				tracing::error!("Replay Protection overflow")
+			}
+		}
+	}
+
+	fn processing_data(&mut self, frame: &Frame) {
+		match self.packets_collector.on_segment(&frame.segment) {
+			Ok(packet) => match packet {
+				None => {}
+				Some(packet) => {
+					self.input_data_handler.on_input_data(packet);
+				}
+			},
+			Err(_) => {
+				tracing::error!("PacketsCollector error")
 			}
 		}
 	}
@@ -154,37 +173,47 @@ where
 		self.disconnect_by_command = Default::default();
 		self.keep_alive = Default::default();
 		self.in_frame_counter = Default::default();
+		self.packets_collector = Default::default();
 	}
 
 	///
 	/// Создание фрейма для отправки
 	///
 	#[allow(clippy::cast_precision_loss)]
-	pub fn build_next_frame(&mut self, now: Instant) -> Option<Frame> {
+	pub fn collect_out_frames(&mut self, now: Instant, out: &mut VecDeque<Frame>) {
 		match self.get_next_retransmit_frame(now) {
 			None => {}
 			Some(frame) => {
-				return Some(frame);
+				out.push_back(frame);
+				return;
 			}
 		}
 
 		let contains_data =
 			self.ack_sender.contains_self_data(now) || self.output_data_producer.contains_output_data() || self.disconnect_by_command.contains_self_data() || self.keep_alive.contains_self_data(now);
 
-		contains_data.then(|| {
-			let mut frame = Frame::new(self.connection_id, self.next_frame_id);
+		if !contains_data {
+			return;
+		}
+
+		let mut packet = [0; PACKET_SIZE];
+		let (packet_size, reliability) = self.output_data_producer.get_output_data(&mut packet);
+		let segments = packet[0..packet_size].chunks(SEGMENT_SIZE);
+
+		let count_segments = segments.len();
+		for (segment_number, segment_data) in segments.enumerate() {
 			self.next_frame_id += 1;
-			let (size, reliability) = self.output_data_producer.get_output_data(&mut frame.body);
-			frame.body_size = size;
-			frame.reliability = reliability;
+			let segment = Segment::new(self.next_packed_id, count_segments as u8, segment_number as u8, segment_data);
+			let mut frame = Frame::new(self.connection_id, self.next_frame_id, reliability, segment);
 			let acked_task_count = self.ack_sender.build_out_frame(&mut frame, now);
 			self.ack_sent_histogram.observe(acked_task_count as f64);
 			self.disconnect_by_command.build_frame(&mut frame);
 			self.rtt.build_frame(&mut frame, now);
 			self.keep_alive.build_frame(&mut frame, now);
 			self.retransmitter.build_frame(&frame, now);
-			frame
-		})
+			out.push_back(frame);
+		}
+		self.next_packed_id += 1;
 	}
 
 	///
@@ -227,8 +256,8 @@ pub mod tests {
 
 	use prometheus::{Histogram, HistogramOpts, IntCounter};
 
+	use crate::frame::Frame;
 	use crate::frame::{ConnectionId, FrameId};
-	use crate::frame::{Frame, FRAME_BODY_CAPACITY};
 	use crate::{InputDataHandler, OutputDataProducer, Protocol};
 
 	#[derive(Default)]
@@ -250,7 +279,7 @@ pub mod tests {
 			true
 		}
 
-		fn get_output_data(&mut self, _buffer: &mut [u8; FRAME_BODY_CAPACITY]) -> (usize, bool) {
+		fn get_output_data(&mut self, _packet: &mut [u8]) -> (usize, bool) {
 			(0, false)
 		}
 	}
@@ -263,12 +292,12 @@ pub mod tests {
 	}
 
 	fn create_frame(connection_id: ConnectionId, frame_id: FrameId) -> Frame {
-		Frame::new(connection_id, frame_id)
+		Frame::new(connection_id, frame_id, true, Default::default())
 	}
 
 	fn create_protocol(connection_id: ConnectionId) -> Protocol<StubDataRecvHandler, StubDataSource> {
 		let counter = IntCounter::new("name", "help").unwrap().local();
 		let histogram = Histogram::with_opts(HistogramOpts::new("name", "help")).unwrap().local();
-		return Protocol::<StubDataRecvHandler, StubDataSource>::new(Default::default(), Default::default(), connection_id, Instant::now(), Instant::now(), counter, histogram);
+		Protocol::<StubDataRecvHandler, StubDataSource>::new(Default::default(), Default::default(), connection_id, Instant::now(), Instant::now(), counter, histogram)
 	}
 }

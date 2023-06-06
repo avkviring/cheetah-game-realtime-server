@@ -1,6 +1,7 @@
-use crate::frame::Frame;
 use std::ops::Sub;
 use std::time::{Duration, Instant};
+
+use crate::frame::Frame;
 
 ///
 /// Поддержание канала в открытом состоянии если нет прикладных команд
@@ -29,12 +30,10 @@ impl KeepAlive {
 
 #[cfg(test)]
 mod tests {
-
 	use crate::frame::Frame;
+	use crate::others::keep_alive::KeepAlive;
 	use std::ops::Add;
 	use std::time::Instant;
-
-	use crate::others::keep_alive::KeepAlive;
 
 	#[test]
 	pub(crate) fn should_send_first_time() {
@@ -47,7 +46,7 @@ mod tests {
 	pub(crate) fn should_timeout_after_send() {
 		let mut handler = KeepAlive::default();
 		let now = Instant::now();
-		let mut frame = Frame::new(0, 1);
+		let mut frame = Frame::new(0, 1, true, Default::default());
 		handler.build_frame(&mut frame, now);
 		assert!(!handler.contains_self_data(now));
 		assert!(handler.contains_self_data(now.add(KeepAlive::INTERVAL)));
