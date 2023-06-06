@@ -25,8 +25,8 @@ pub enum S2CCommand {
 	Created(GameObjectCreatedS2CCommand),
 	SetLong(SetLongCommand),
 	SetDouble(SetDoubleCommand),
-	SetStructure(SetStructureCommand),
-	Event(EventCommand),
+	SetStructure(Box<SetStructureCommand>),
+	Event(Box<EventCommand>),
 	Delete(DeleteGameObjectCommand),
 	DeleteField(DeleteFieldCommand),
 	Forwarded(Box<ForwardedCommand>),
@@ -161,8 +161,8 @@ impl S2CCommand {
 			CommandTypeId::DeleteObject => S2CCommand::Delete(DeleteGameObjectCommand { object_id: object_id? }),
 			CommandTypeId::SetLong => S2CCommand::SetLong(SetLongCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::SetDouble => S2CCommand::SetDouble(SetDoubleCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::SetStructure => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::SendEvent => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?),
+			CommandTypeId::SetStructure => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?.into()),
+			CommandTypeId::SendEvent => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?.into()),
 			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
 			CommandTypeId::Forwarded => S2CCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 			CommandTypeId::MemberConnected => S2CCommand::MemberConnected(MemberConnected::decode(input)?),
@@ -244,11 +244,14 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&S2CCommand::SetStructure(SetStructureCommand {
-				object_id,
-				field_id,
-				value: Buffer::from([1, 2, 3, 4].as_ref()).into(),
-			}),
+			&S2CCommand::SetStructure(
+				SetStructureCommand {
+					object_id,
+					field_id,
+					value: Buffer::from([1, 2, 3, 4].as_ref()).into(),
+				}
+				.into(),
+			),
 			CommandTypeId::SetStructure,
 			Some(object_id),
 			Some(field_id),
@@ -260,11 +263,14 @@ mod tests {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		let field_id = 77;
 		check(
-			&S2CCommand::Event(EventCommand {
-				object_id,
-				field_id,
-				event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
-			}),
+			&S2CCommand::Event(
+				EventCommand {
+					object_id,
+					field_id,
+					event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+				}
+				.into(),
+			),
 			CommandTypeId::SendEvent,
 			Some(object_id),
 			Some(field_id),
@@ -284,14 +290,17 @@ mod tests {
 		check(
 			&S2CCommand::Forwarded(Box::new(ForwardedCommand {
 				creator: 123,
-				c2s: C2SCommand::TargetEvent(TargetEventCommand {
-					target: 10,
-					event: EventCommand {
-						object_id,
-						field_id,
-						event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
-					},
-				}),
+				c2s: C2SCommand::TargetEvent(
+					TargetEventCommand {
+						target: 10,
+						event: EventCommand {
+							object_id,
+							field_id,
+							event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+						},
+					}
+					.into(),
+				),
 			})),
 			CommandTypeId::Forwarded,
 			Some(object_id),

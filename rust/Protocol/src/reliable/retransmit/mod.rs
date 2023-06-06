@@ -108,7 +108,7 @@ impl Retransmitter {
 
 						let retransmit_count = scheduled_frame.retransmit_count.checked_add(1).unwrap_or(u8::MAX);
 						if retransmit_count == u8::MAX {
-							tracing::info!("Retransmit count overflow");
+							tracing::error!("Retransmit count overflow");
 						}
 
 						self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);

@@ -15,7 +15,7 @@ pub mod header;
 ///
 #[derive(Debug, Default)]
 pub struct AckSender {
-	ack_tasks: heapless::Vec<AckTask, 1024>,
+	ack_tasks: Vec<AckTask>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -30,6 +30,8 @@ impl AckSender {
 	/// Минимальное количество отсылок подтверждения для одного пакета
 	///
 	pub const MAX_ACK_FOR_FRAME: u8 = 3;
+
+	pub const MAX_ACK_TASK: usize = 1024;
 
 	///
 	/// Интервал между посылками подтверждений
@@ -73,17 +75,17 @@ impl AckSender {
 		if !frame.reliability {
 			return;
 		}
-		if self
-			.ack_tasks
-			.push(AckTask {
-				frame_id: frame.get_original_frame_id(),
-				ack_count: 0,
-				scheduled_ack: now,
-			})
-			.is_err()
-		{
+
+		if self.ack_tasks.len() > AckSender::MAX_ACK_TASK {
 			tracing::error!("AckSender overflow ack_tasks");
+			return;
 		}
+
+		self.ack_tasks.push(AckTask {
+			frame_id: frame.get_original_frame_id(),
+			ack_count: 0,
+			scheduled_ack: now,
+		});
 	}
 }
 

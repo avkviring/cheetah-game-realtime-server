@@ -10,7 +10,7 @@ pub const PACKET_SIZE: usize = 32768;
 #[derive(Default, Debug)]
 pub struct PacketsCollector {
 	packets: FnvHashMap<u64, PacketCollector>,
-	ready_packet: heapless::Vec<u8, PACKET_SIZE>,
+	ready_packet: Vec<u8>,
 }
 
 impl PacketsCollector {
@@ -27,7 +27,7 @@ impl PacketsCollector {
 			Ok(ready) => {
 				if ready {
 					let packet_collector = self.packets.remove(&segment.packet_id).unwrap();
-					packet_collector.to_packet(&mut self.ready_packet)?;
+					packet_collector.to_packet(self.ready_packet.as_mut())?;
 					Ok(Some(self.ready_packet.as_slice()))
 				} else {
 					Ok(None)
@@ -43,23 +43,23 @@ impl PacketsCollector {
 
 #[derive(Default, Debug)]
 struct PacketCollector {
-	segments: heapless::FnvIndexMap<u8, heapless::Vec<u8, SEGMENT_SIZE>, 256>,
+	segments: FnvHashMap<u8, heapless::Vec<u8, SEGMENT_SIZE>>,
 }
 
 impl PacketCollector {
 	pub(crate) fn on_data(&mut self, segment: &Segment) -> Result<bool, ()> {
 		let vec = heapless::Vec::from_slice(&segment.body[0..segment.body_size])?;
-		self.segments.insert(segment.current_segment, vec).map_err(|_| ())?;
+		self.segments.insert(segment.current_segment, vec);
 		Ok(self.segments.len() == segment.count_segments as usize)
 	}
 
-	pub(crate) fn to_packet(self, out: &mut heapless::Vec<u8, PACKET_SIZE>) -> Result<(), ()> {
+	pub(crate) fn to_packet(self, out: &mut Vec<u8>) -> Result<(), ()> {
 		out.clear();
 		for i in 0..self.segments.len() {
 			match self.segments.get(&(i as u8)) {
 				None => return Err(()),
 				Some(data) => {
-					out.extend_from_slice(data.as_slice())?;
+					out.extend_from_slice(data.as_slice());
 				}
 			}
 		}

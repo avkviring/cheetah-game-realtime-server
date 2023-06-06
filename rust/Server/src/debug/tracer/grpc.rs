@@ -167,11 +167,14 @@ pub mod test {
 			time: 1.1,
 			template: Some(155),
 			member: 255,
-			network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
-				object_id: GameObjectId::new(100, GameObjectOwner::Room),
-				field_id: 555,
-				event: vec![10, 20, 30].as_slice().into(),
-			})),
+			network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(
+				EventCommand {
+					object_id: GameObjectId::new(100, GameObjectOwner::Room),
+					field_id: 555,
+					event: vec![10, 20, 30].as_slice().into(),
+				}
+				.into(),
+			)),
 		};
 
 		let grpc_command = admin::Command::from(command);

@@ -20,7 +20,7 @@ pub extern "C" fn create_object(client_id: ClientId, template: u16, access_group
 #[no_mangle]
 pub extern "C" fn created_object(client_id: ClientId, object_id: &GameObjectId, room_owner: bool, singleton_key: &Buffer) -> u8 {
 	let singleton_key = (singleton_key.len > 0).then(|| *singleton_key);
-	send_command(client_id, C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(*object_id, room_owner, singleton_key)))
+	send_command(client_id, C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(*object_id, room_owner, singleton_key).into()))
 }
 
 #[no_mangle]

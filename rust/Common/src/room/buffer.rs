@@ -11,8 +11,8 @@ use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
 #[derive(Copy, Clone, PartialEq, Hash, Eq)]
 pub struct Buffer {
 	pub len: u16,
-	pub pos: u16,
 	// используется в C#
+	pub pos: u16,
 	pub buffer: [u8; BUFFER_SIZE],
 }
 
@@ -38,7 +38,7 @@ impl Default for Buffer {
 	}
 }
 
-pub const BUFFER_SIZE: usize = 8192;
+pub const BUFFER_SIZE: usize = 2048;
 
 impl From<&[u8]> for Buffer {
 	fn from(source: &[u8]) -> Self {

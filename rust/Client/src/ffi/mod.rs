@@ -178,6 +178,7 @@ impl From<ForwardedCommand> for ForwardedCommandFFI {
 
 #[cfg(test)]
 mod tests {
+	use crate::ffi::ForwardedCommandFFI;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
@@ -192,8 +193,6 @@ mod tests {
 	use cheetah_common::room::field::FieldType;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-
-	use crate::ffi::ForwardedCommandFFI;
 
 	#[test]
 	fn should_convert_forwarded_to_ffi() {
@@ -248,7 +247,7 @@ mod tests {
 		tests.push((
 			ForwardedCommand {
 				creator,
-				c2s: C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(object_id, false, None)),
+				c2s: C2SCommand::CreatedGameObject(C2SCreatedGameObjectCommand::new(object_id, false, None).into()),
 			},
 			ForwardedCommandFFI {
 				creator,
@@ -290,11 +289,14 @@ mod tests {
 		tests.push((
 			ForwardedCommand {
 				creator,
-				c2s: C2SCommand::Event(EventCommand {
-					object_id,
-					field_id,
-					event: b1.clone(),
-				}),
+				c2s: C2SCommand::Event(
+					EventCommand {
+						object_id,
+						field_id,
+						event: b1.clone(),
+					}
+					.into(),
+				),
 			},
 			ForwardedCommandFFI {
 				creator,
@@ -309,14 +311,17 @@ mod tests {
 		tests.push((
 			ForwardedCommand {
 				creator,
-				c2s: C2SCommand::TargetEvent(TargetEventCommand {
-					target,
-					event: EventCommand {
-						object_id,
-						field_id,
-						event: b1.clone(),
-					},
-				}),
+				c2s: C2SCommand::TargetEvent(
+					TargetEventCommand {
+						target,
+						event: EventCommand {
+							object_id,
+							field_id,
+							event: b1.clone(),
+						},
+					}
+					.into(),
+				),
 			},
 			ForwardedCommandFFI {
 				creator,

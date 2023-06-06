@@ -15,7 +15,7 @@ impl ServerCommandExecutor for SetStructureCommand {
 
 		let action = |object: &mut GameObject| {
 			object.structures.set(self.field_id, self.value.clone());
-			Ok(Some(S2CCommand::SetStructure(self.clone())))
+			Ok(Some(S2CCommand::SetStructure(self.clone().into())))
 		};
 
 		room.send_command_from_action(
@@ -67,6 +67,6 @@ mod tests {
 
 		assert_eq!(*object.structures.get(100).unwrap(), command.value);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c == 
-			command));
+			command.into()));
 	}
 }

@@ -60,7 +60,6 @@ pub enum Header {
 impl Headers {
 	#[must_use]
 	pub fn is_full(&self) -> bool {
-		tracing::info!("is_full  {:?} {:?}", self.headers.capacity(), self.headers.len());
 		self.headers.capacity() == self.headers.len()
 	}
 
@@ -68,7 +67,10 @@ impl Headers {
 		assert!(self.headers.push(header).is_ok(), "Headers vector overflow {:?}", self.headers);
 	}
 
-	pub fn add_if_not_prezent(&mut self, header: Header) {
+	pub fn add_if_not_present(&mut self, header: Header) {
+		if self.headers.contains(&header) {
+			return;
+		}
 		assert!(self.headers.push(header).is_ok(), "Headers vector overflow {:?}", self.headers);
 	}
 

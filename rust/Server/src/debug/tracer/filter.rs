@@ -137,11 +137,14 @@ mod tests {
 				time: 0.0,
 				template: None,
 				member: 0,
-				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(EventCommand {
-					object_id: Default::default(),
-					field_id: 0,
-					event: Default::default(),
-				})),
+				network_command: TracedBothDirectionCommand::C2S(C2SCommand::Event(
+					EventCommand {
+						object_id: Default::default(),
+						field_id: 0,
+						event: Default::default(),
+					}
+					.into(),
+				)),
 			}
 		}
 
@@ -151,11 +154,14 @@ mod tests {
 				time: 0.0,
 				template: None,
 				member: 0,
-				network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(EventCommand {
-					object_id: Default::default(),
-					field_id: 0,
-					event: Default::default(),
-				})),
+				network_command: TracedBothDirectionCommand::S2C(S2CCommand::Event(
+					EventCommand {
+						object_id: Default::default(),
+						field_id: 0,
+						event: Default::default(),
+					}
+					.into(),
+				)),
 			}
 		}
 

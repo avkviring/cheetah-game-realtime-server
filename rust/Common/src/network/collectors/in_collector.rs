@@ -15,7 +15,7 @@ use crate::commands::CommandWithReliabilityGuarantees;
 pub struct InCommandsCollector {
 	last_sequence_by_group: [ChannelSequence; 256],
 	sequences: [ChannelSequence; 256],
-	sequence_commands: [Option<BinaryHeap<SequenceApplicationCommand>>; 256],
+	sequence_commands: Box<[Option<BinaryHeap<SequenceApplicationCommand>>; 256]>,
 	ready_commands: Vec<CommandWithReliabilityGuarantees>,
 	is_get_ready_commands: bool,
 	pub server_side: bool,
@@ -43,10 +43,11 @@ impl InputDataHandler for InCommandsCollector {
 
 impl InCommandsCollector {
 	pub fn new(server_side: bool) -> Self {
+		const INIT: Option<BinaryHeap<SequenceApplicationCommand>> = None;
 		Self {
 			last_sequence_by_group: [ChannelSequence(0); 256],
 			sequences: [ChannelSequence(0); 256],
-			sequence_commands: [(); 256].map(|_| None),
+			sequence_commands: Box::new([INIT; 256]),
 			ready_commands: Default::default(),
 			is_get_ready_commands: false,
 			server_side,
