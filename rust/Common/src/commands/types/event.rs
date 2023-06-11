@@ -9,12 +9,12 @@ use crate::room::object::GameObjectId;
 ///
 /// Событие по объекту
 /// - C->S, S->C
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[repr(C)]
 pub struct EventCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
-	pub event: Buffer,
+	pub event: Box<Buffer>,
 }
 
 ///
@@ -36,7 +36,7 @@ impl EventCommand {
 		Ok(Self {
 			object_id,
 			field_id,
-			event: Buffer::decode(input)?,
+			event: Buffer::decode(input)?.into(),
 		})
 	}
 }

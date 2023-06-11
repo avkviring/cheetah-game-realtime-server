@@ -263,7 +263,7 @@ mod tests {
 			&S2CCommand::Event(EventCommand {
 				object_id,
 				field_id,
-				event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+				event: Buffer::from(vec![1, 2, 3, 4].as_slice()).into(),
 			}),
 			CommandTypeId::SendEvent,
 			Some(object_id),
@@ -289,7 +289,7 @@ mod tests {
 					event: EventCommand {
 						object_id,
 						field_id,
-						event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+						event: Buffer::from(vec![1, 2, 3, 4].as_slice()).into(),
 					},
 				}),
 			})),

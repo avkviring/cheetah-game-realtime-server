@@ -34,7 +34,7 @@ pub struct C2SCreatedGameObjectCommand {
 	///
 	/// Если задан - то в комнате может быть только один объект с таким идентификатором
 	///
-	singleton_key: Buffer,
+	singleton_key: Box<Buffer>,
 }
 
 ///
@@ -64,7 +64,7 @@ impl C2SCreatedGameObjectCommand {
 		Self {
 			object_id,
 			room_owner,
-			singleton_key: singleton_key.unwrap_or_default(),
+			singleton_key: singleton_key.unwrap_or_default().into(),
 		}
 	}
 
@@ -86,7 +86,7 @@ impl C2SCreatedGameObjectCommand {
 
 	pub fn decode(object_id: GameObjectId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let room_owner = input.read_u8()? == 1;
-		let singleton_key = Buffer::decode(input)?;
+		let singleton_key = Buffer::decode(input)?.into();
 		Ok(Self { object_id, room_owner, singleton_key })
 	}
 }

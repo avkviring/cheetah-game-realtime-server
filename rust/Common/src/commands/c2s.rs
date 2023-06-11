@@ -305,7 +305,7 @@ mod tests {
 			&C2SCommand::SetStructure(SetStructureCommand {
 				object_id,
 				field_id,
-				value: Buffer::from([1, 2, 3, 4].as_ref()),
+				value: Buffer::from([1, 2, 3, 4].as_ref()).into(),
 			}),
 			CommandTypeId::SetStructure,
 			Some(object_id),
@@ -321,7 +321,7 @@ mod tests {
 			&C2SCommand::Event(EventCommand {
 				object_id,
 				field_id,
-				event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+				event: Buffer::from(vec![1, 2, 3, 4].as_slice()).into(),
 			}),
 			CommandTypeId::SendEvent,
 			Some(object_id),
@@ -339,7 +339,7 @@ mod tests {
 				event: EventCommand {
 					object_id,
 					field_id,
-					event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+					event: Buffer::from(vec![1, 2, 3, 4].as_slice()).into(),
 				},
 			}),
 			CommandTypeId::TargetEvent,
@@ -366,7 +366,7 @@ mod tests {
 					event: EventCommand {
 						object_id,
 						field_id,
-						event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
+						event: Buffer::from(vec![1, 2, 3, 4].as_slice()).into(),
 					},
 				}),
 			})),

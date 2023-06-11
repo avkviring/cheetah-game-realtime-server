@@ -4,12 +4,12 @@ use std::io::Cursor;
 
 use crate::room::object::GameObjectId;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct SetStructureCommand {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
-	pub value: Buffer,
+	pub value: Box<Buffer>,
 }
 
 impl SetStructureCommand {
@@ -18,7 +18,7 @@ impl SetStructureCommand {
 	}
 
 	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
-		let value = Buffer::decode(input)?;
+		let value = Buffer::decode(input)?.into();
 		Ok(SetStructureCommand { object_id, field_id, value })
 	}
 }
