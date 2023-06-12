@@ -38,7 +38,7 @@ impl Default for Buffer {
 	}
 }
 
-pub const BUFFER_SIZE: usize = 2048;
+pub const BUFFER_SIZE: usize = 8192;
 
 impl From<&[u8]> for Buffer {
 	fn from(source: &[u8]) -> Self {
