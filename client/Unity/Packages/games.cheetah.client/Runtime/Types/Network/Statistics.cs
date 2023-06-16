@@ -16,11 +16,6 @@ namespace Games.Cheetah.Client.Types.Network
         public ulong RttInMs;
 
         /// <summary>
-        /// Среднее скользящее количество переотправленных фреймов за 5 секунд
-        /// </summary>
-        public uint AverageRetransmitFrames;
-
-        /// <summary>
         /// Количество принятых пакетов
         /// </summary>
         public ulong ReceivePacketCount;
@@ -43,7 +38,7 @@ namespace Games.Cheetah.Client.Types.Network
         public override string ToString()
         {
             return
-                $"{nameof(LastFrameId)}: {LastFrameId}, {nameof(RttInMs)}: {RttInMs}, {nameof(AverageRetransmitFrames)}: {AverageRetransmitFrames}, {nameof(ReceivePacketCount)}: {ReceivePacketCount}, {nameof(SendPacketCount)}: {SendPacketCount}, {nameof(ReceiveSize)}: {ReceiveSize}, {nameof(SendSize)}: {SendSize}";
+                $"{nameof(LastFrameId)}: {LastFrameId}, {nameof(RttInMs)}: {RttInMs}, {nameof(ReceivePacketCount)}: {ReceivePacketCount}, {nameof(SendPacketCount)}: {SendPacketCount}, {nameof(ReceiveSize)}: {ReceiveSize}, {nameof(SendSize)}: {SendSize}";
         }
     }
 }

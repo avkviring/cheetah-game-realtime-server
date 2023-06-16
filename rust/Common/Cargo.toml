@@ -25,7 +25,6 @@ tracing-subscriber.workspace = true
 num = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
-prometheus.workspace = true
 
 [dev-dependencies]
 criterion = "0.4"
