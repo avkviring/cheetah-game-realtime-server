@@ -158,9 +158,6 @@ impl NetworkChannelManager {
 			.rtt_in_ms
 			.store(protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64, Ordering::Relaxed);
 		self.shared_statistics
-			.average_retransmit_frames
-			.store(protocol.retransmitter.statistics.get_average_retransmit_frames(Instant::now()).unwrap_or(0) as u32, Ordering::Relaxed);
-		self.shared_statistics
 			.rtt_in_ms
 			.store(protocol.rtt.get_rtt().unwrap_or_else(|| Duration::from_millis(0)).as_millis() as u64, Ordering::Relaxed);
 

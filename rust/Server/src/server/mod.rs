@@ -17,12 +17,12 @@ use cheetah_protocol::{RoomId, RoomMemberId};
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, Permissions};
 use crate::server::manager::{ChannelTask, ManagementTask, ManagementTaskResult, RoomMembersCount, TaskExecutionError};
-use crate::server::measurers::Measurers;
-use crate::server::network::NetworkServer;
+use crate::server::measurer::Measurer;
+use crate::server::network::Network;
 use crate::server::room_registry::{RoomNotFoundError, RoomRegistry};
 
 pub mod manager;
-pub mod measurers;
+pub mod measurer;
 pub mod network;
 pub mod room_registry;
 
@@ -31,43 +31,46 @@ pub mod room_registry;
 /// поддерживает одновременно несколько комнат
 ///
 pub struct RoomsServer {
-	network_server: NetworkServer,
+	network: Network,
 	room_registry: RoomRegistry,
 	receiver: Receiver<ChannelTask>,
 	halt_signal: Arc<AtomicBool>,
 	time_offset: Option<Duration>,
-	measurers: Rc<RefCell<Measurers>>,
+	measurer: RefCell<Measurer>,
 	plugin_names: FnvHashSet<String>,
 }
 
 impl RoomsServer {
 	pub(crate) fn new(socket: UdpSocket, receiver: Receiver<ChannelTask>, halt_signal: Arc<AtomicBool>, plugin_names: FnvHashSet<String>) -> Result<Self, io::Error> {
-		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
+		let measurer = Measurer::new(prometheus::default_registry()).into();
 		Ok(Self {
-			network_server: NetworkServer::new(socket)?,
+			network: Network::new(socket)?,
 			room_registry: RoomRegistry::new(plugin_names.clone()),
 			receiver,
 			halt_signal,
 			time_offset: None,
-			measurers: measures,
+			measurer,
 			plugin_names,
 		})
 	}
 
 	pub fn run(mut self) {
 		while !self.halt_signal.load(Ordering::Relaxed) {
-			let mut now = Instant::now();
-			if let Some(time_offset) = self.time_offset {
-				now = now.add(time_offset);
-			}
-			self.network_server.cycle(&mut self.room_registry, now);
+			let now = self.get_start_cycle_time();
+			self.network.cycle(&mut self.room_registry, now);
 			self.execute_management_tasks(now);
-			self.measurers.borrow_mut().on_server_cycle(now.elapsed());
-			thread::sleep(Duration::from_millis(1));
-			if now.elapsed() > Duration::from_secs(1) {
-				tracing::error!("slow cycle, time ={:?} ", now.elapsed());
-			}
+			self.measurer.borrow_mut().measure_cycle(&self.network, &self.room_registry, &now);
+			Self::assert_execution_time(now);
+			Self::sleep();
 		}
+	}
+
+	fn get_start_cycle_time(&self) -> Instant {
+		let mut now = Instant::now();
+		if let Some(time_offset) = self.time_offset {
+			now = now.add(time_offset);
+		}
+		now
 	}
 
 	fn execute_management_tasks(&mut self, now: Instant) {
@@ -143,7 +146,7 @@ impl RoomsServer {
 
 	fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {
 		let room_member_id = self.room_registry.register_member(room_id, member_template.clone())?;
-		self.network_server.register_member(now, room_id, room_member_id, member_template);
+		self.network.register_member(now, room_id, room_member_id, member_template);
 		Ok(room_member_id)
 	}
 
@@ -151,13 +154,13 @@ impl RoomsServer {
 	fn delete_room(&mut self, room_id: RoomId) -> Result<(), RoomNotFoundError> {
 		let room = self.room_registry.force_remove_room(&room_id)?;
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
-		self.network_server.disconnect_members(ids, DisconnectByCommandReason::RoomDeleted);
+		self.network.disconnect_members(ids, DisconnectByCommandReason::RoomDeleted);
 		Ok(())
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
 	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ServerCommandError> {
-		self.network_server.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
+		self.network.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
 		self.room_registry.member_disconnected(&id)
 	}
 
@@ -169,5 +172,14 @@ impl RoomsServer {
 				Ok(ManagementTaskResult::UpdateRoomPermissions)
 			})
 			.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?
+	}
+	fn sleep() {
+		thread::sleep(Duration::from_millis(1));
+	}
+
+	fn assert_execution_time(now: Instant) {
+		if now.elapsed() > Duration::from_secs(1) {
+			tracing::error!("slow cycle, time ={:?} ", now.elapsed());
+		}
 	}
 }

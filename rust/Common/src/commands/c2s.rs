@@ -15,31 +15,7 @@ use crate::commands::{CommandDecodeError, CommandTypeId};
 use crate::room::field::{Field, FieldId, FieldType};
 use crate::room::object::GameObjectId;
 
-#[cfg(test)]
-pub mod test {
-	use std::mem::size_of;
-
-	use crate::commands::c2s::C2SCommand;
-	use crate::commands::s2c::S2CCommand;
-
-	#[test]
-	fn test() {
-		println!("{:?}", size_of::<S2CCommand>())
-	}
-}
-
-#[cfg(test)]
-mod test1 {
-	use crate::commands::c2s::C2SCommand;
-	use std::mem::size_of;
-
-	#[test]
-	fn test() {
-		println!("{:?}", size_of::<C2SCommand>())
-	}
-}
 #[derive(Debug, PartialEq, Clone, AsRefStr)]
-#[allow(clippy::large_enum_variant)]
 pub enum C2SCommand {
 	CreateGameObject(CreateGameObjectCommand),
 	CreatedGameObject(Box<C2SCreatedGameObjectCommand>),
