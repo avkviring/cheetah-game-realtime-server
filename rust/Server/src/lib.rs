@@ -20,7 +20,7 @@ use crate::debug::proto::admin::admin_server::AdminServer;
 use crate::debug::tracer::grpc::CommandTracerGRPCService;
 use crate::grpc::proto::internal::internal_server::InternalServer;
 use crate::grpc::RealtimeInternalService;
-use crate::server::manager::{RoomsServerManager, RoomsServerManagerError};
+use crate::server::manager::{RoomsServerManagerError, ServerManager};
 
 pub mod agones;
 pub mod builder;
@@ -40,7 +40,7 @@ pub struct Server {
 	pub internal_grpc_listener: TcpListener,
 	pub admin_webgrpc_listener: TcpListener,
 	pub is_agones_enabled: bool,
-	pub manager: Arc<Mutex<RoomsServerManager>>,
+	pub manager: Arc<Mutex<ServerManager>>,
 }
 
 impl Server {
@@ -57,7 +57,7 @@ impl Server {
 		}
 	}
 
-	async fn new_internal_grpc_service(listener: TcpListener, manager: Arc<Mutex<RoomsServerManager>>) {
+	async fn new_internal_grpc_service(listener: TcpListener, manager: Arc<Mutex<ServerManager>>) {
 		let service = InternalServer::new(RealtimeInternalService::new(manager));
 
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
@@ -71,7 +71,7 @@ impl Server {
 			.unwrap();
 	}
 
-	async fn new_internal_webgrpc_service(listener: TcpListener, manager: Arc<Mutex<RoomsServerManager>>) {
+	async fn new_internal_webgrpc_service(listener: TcpListener, manager: Arc<Mutex<ServerManager>>) {
 		let service = InternalServer::new(RealtimeInternalService::new(manager));
 
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
@@ -87,7 +87,7 @@ impl Server {
 			.unwrap();
 	}
 
-	async fn configure_admin_grpc_service(tcp_listener: TcpListener, manager: Arc<Mutex<RoomsServerManager>>) {
+	async fn configure_admin_grpc_service(tcp_listener: TcpListener, manager: Arc<Mutex<ServerManager>>) {
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 		health_reporter.set_service_status("", ServingStatus::Serving).await;
 

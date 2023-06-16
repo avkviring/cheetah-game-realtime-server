@@ -7,7 +7,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 
 use cheetah_server::builder::ServerBuilder;
-use cheetah_server::server::manager::RoomsServerManager;
+use cheetah_server::server::manager::ServerManager;
 
 mod ffi;
 
@@ -17,7 +17,7 @@ mod ffi;
 ///
 pub struct EmbeddedServerWrapper {
 	runtime: Runtime,
-	pub manager: Arc<Mutex<RoomsServerManager>>,
+	pub manager: Arc<Mutex<ServerManager>>,
 	pub game_socket_addr: SocketAddr,
 	pub internal_grpc_socket_addr: SocketAddr,
 	pub internal_webgrpc_socket_addr: SocketAddr,

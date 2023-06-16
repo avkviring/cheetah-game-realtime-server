@@ -16,7 +16,7 @@ use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, Permissions};
-use crate::server::manager::{ChannelTask, ManagementTask, ManagementTaskResult, RoomMembersCount, TaskExecutionError};
+use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTaskExecutionError, ManagementTaskResult, RoomMembersCount};
 use crate::server::measurer::Measurer;
 use crate::server::network::Network;
 use crate::server::room_registry::{RoomNotFoundError, RoomRegistry};
@@ -30,23 +30,23 @@ pub mod room_registry;
 /// Собственно сетевой сервер, запускается в отдельном потоке, обрабатывает сетевые команды,
 /// поддерживает одновременно несколько комнат
 ///
-pub struct RoomsServer {
+pub struct Server {
 	network: Network,
 	room_registry: RoomRegistry,
-	receiver: Receiver<ChannelTask>,
+	management_task_receiver: Receiver<ManagementTaskChannel>,
 	halt_signal: Arc<AtomicBool>,
 	time_offset: Option<Duration>,
 	measurer: RefCell<Measurer>,
 	plugin_names: FnvHashSet<String>,
 }
 
-impl RoomsServer {
-	pub(crate) fn new(socket: UdpSocket, receiver: Receiver<ChannelTask>, halt_signal: Arc<AtomicBool>, plugin_names: FnvHashSet<String>) -> Result<Self, io::Error> {
+impl Server {
+	pub(crate) fn new(socket: UdpSocket, management_task_receiver: Receiver<ManagementTaskChannel>, halt_signal: Arc<AtomicBool>, plugin_names: FnvHashSet<String>) -> Result<Self, io::Error> {
 		let measurer = Measurer::new(prometheus::default_registry()).into();
 		Ok(Self {
 			network: Network::new(socket)?,
 			room_registry: RoomRegistry::new(plugin_names.clone()),
-			receiver,
+			management_task_receiver,
 			halt_signal,
 			time_offset: None,
 			measurer,
@@ -74,7 +74,7 @@ impl RoomsServer {
 	}
 
 	fn execute_management_tasks(&mut self, now: Instant) {
-		while let Ok(ChannelTask { task, sender }) = self.receiver.try_recv() {
+		while let Ok(ManagementTaskChannel { task, sender }) = self.management_task_receiver.try_recv() {
 			let res = self.execute_task(task, now);
 			if let Err(e) = sender.send(res) {
 				tracing::error!("error send response {:?} with task {:?}", e, e.0);
@@ -82,7 +82,7 @@ impl RoomsServer {
 		}
 	}
 
-	fn execute_task(&mut self, task: ManagementTask, now: Instant) -> Result<ManagementTaskResult, TaskExecutionError> {
+	fn execute_task(&mut self, task: ManagementTask, now: Instant) -> Result<ManagementTaskResult, ManagementTaskExecutionError> {
 		let res = match task {
 			ManagementTask::CreateRoom(template) => ManagementTaskResult::CreateRoom(self.room_registry.create_room(template)),
 			ManagementTask::DeleteRoom(room_id) => self.delete_room(room_id).map(|_| ManagementTaskResult::DeleteRoom)?,
@@ -92,7 +92,7 @@ impl RoomsServer {
 				.room_registry
 				.get(&room_id)
 				.map(|room| ManagementTaskResult::Dump(room.into()))
-				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
+				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.room_registry.rooms().map(|r| r.0).copied().collect()),
 			ManagementTask::CommandTracerSessionTask(room_id, task) => self
 				.room_registry
@@ -101,7 +101,7 @@ impl RoomsServer {
 					Rc::clone(&room.command_trace_session).borrow_mut().execute_task(task);
 					ManagementTaskResult::CommandTracerSessionTask
 				})
-				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
+				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::PutForwardedCommandConfig(room_id, config) => self
 				.room_registry
 				.get_mut(&room_id)
@@ -109,13 +109,13 @@ impl RoomsServer {
 					room.put_forwarded_command_config(config);
 					ManagementTaskResult::PutForwardedCommandConfig
 				})
-				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
+				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::MarkRoomAsReady(room_id, plugin_name) => self.mark_room_as_ready(room_id, plugin_name)?,
 			ManagementTask::GetRoomInfo(room_id) => self
 				.room_registry
 				.get(&room_id)
 				.map(|room| ManagementTaskResult::GetRoomInfo(room.get_info()))
-				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
+				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::UpdateRoomPermissions(room_id, permissions) => self.update_room_permissions(room_id, &permissions)?,
 			ManagementTask::GetRoomsMemberCount => ManagementTaskResult::GetRoomsMemberCount(
 				self.room_registry
@@ -131,16 +131,16 @@ impl RoomsServer {
 		Ok(res)
 	}
 
-	fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<ManagementTaskResult, TaskExecutionError> {
+	fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<ManagementTaskResult, ManagementTaskExecutionError> {
 		if let Some(room) = self.room_registry.get_mut(&room_id) {
 			if self.plugin_names.contains(&plugin_name) {
 				room.mark_room_as_ready(&plugin_name);
 				Ok(ManagementTaskResult::MarkRoomAsReady)
 			} else {
-				Err(TaskExecutionError::UnknownPluginName(plugin_name))
+				Err(ManagementTaskExecutionError::UnknownPluginName(plugin_name))
 			}
 		} else {
-			Err(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))
+			Err(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))
 		}
 	}
 
@@ -164,14 +164,14 @@ impl RoomsServer {
 		self.room_registry.member_disconnected(&id)
 	}
 
-	fn update_room_permissions(&mut self, room_id: RoomId, permissions: &Permissions) -> Result<ManagementTaskResult, TaskExecutionError> {
+	fn update_room_permissions(&mut self, room_id: RoomId, permissions: &Permissions) -> Result<ManagementTaskResult, ManagementTaskExecutionError> {
 		self.room_registry
 			.get_mut(&room_id)
 			.map(|room| {
 				room.update_permissions(permissions);
 				Ok(ManagementTaskResult::UpdateRoomPermissions)
 			})
-			.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?
+			.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?
 	}
 	fn sleep() {
 		thread::sleep(Duration::from_millis(1));

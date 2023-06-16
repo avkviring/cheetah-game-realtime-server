@@ -5,17 +5,17 @@ use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
 use crate::debug::proto::admin;
-use crate::server::manager::RoomsServerManager;
+use crate::server::manager::ServerManager;
 
 pub mod convert;
 
 pub struct DumpGrpcService {
-	pub manager: Arc<Mutex<RoomsServerManager>>,
+	pub manager: Arc<Mutex<ServerManager>>,
 }
 
 impl DumpGrpcService {
 	#[must_use]
-	pub fn new(manager: Arc<Mutex<RoomsServerManager>>) -> Self {
+	pub fn new(manager: Arc<Mutex<ServerManager>>) -> Self {
 		Self { manager }
 	}
 }
