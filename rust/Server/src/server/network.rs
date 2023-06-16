@@ -16,11 +16,15 @@ use cheetah_protocol::{RoomId, RoomMemberId};
 use crate::room::template::config::MemberTemplate;
 use crate::server::room_registry::RoomRegistry;
 
-pub struct NetworkServer {
+pub struct Network {
 	sessions: HashMap<MemberAndRoomId, MemberSession>,
 	socket: UdpSocket,
 	start_application_time: Instant,
 	frames: VecDeque<Frame>,
+	pub income_command_count: usize,
+	pub outcome_command_count: usize,
+	pub income_frame_count: usize,
+	pub outcome_frame_count: usize,
 }
 
 #[derive(Debug)]
@@ -31,7 +35,7 @@ struct MemberSession {
 	pub(crate) protocol: CheetahProtocol,
 }
 
-impl NetworkServer {
+impl Network {
 	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		Ok(Self {
@@ -39,6 +43,10 @@ impl NetworkServer {
 			socket,
 			start_application_time: Instant::now(),
 			frames: Default::default(),
+			income_command_count: 0,
+			outcome_command_count: 0,
+			income_frame_count: 0,
+			outcome_frame_count: 0,
 		})
 	}
 
@@ -65,6 +73,8 @@ impl NetworkServer {
 	///
 	fn send(&mut self, rooms: &mut RoomRegistry) {
 		rooms.collect_out_commands(|room_id, member_id, commands| {
+			self.outcome_command_count += commands.len();
+
 			let id = MemberAndRoomId {
 				member_id: *member_id,
 				room_id: *room_id,
@@ -78,14 +88,14 @@ impl NetworkServer {
 						for command in commands {
 							session.protocol.output_data_producer.add_command(command.channel_type, command.command.clone());
 						}
-						self.send_session_frames(id);
+						self.send_frames(id);
 					}
 				}
 			}
 		});
 	}
 
-	fn send_session_frames(&mut self, id: MemberAndRoomId) {
+	fn send_frames(&mut self, id: MemberAndRoomId) {
 		let session = self.sessions.get_mut(&id);
 		if session.is_none() {
 			return;
@@ -95,6 +105,7 @@ impl NetworkServer {
 		if let Some(peer_address) = session.peer_address {
 			self.frames.clear();
 			session.protocol.collect_out_frames(Instant::now(), &mut self.frames);
+			self.outcome_frame_count += self.frames.len();
 			for frame in &self.frames {
 				let mut buffer = [0; 512];
 				let buffer_size = frame.encode(&mut Cipher::new(&session.private_key), &mut buffer).unwrap();
@@ -149,6 +160,9 @@ impl NetworkServer {
 		}
 	}
 
+	///
+	/// TODO избавиться от передачи Rooms
+	///
 	fn process_in_frame(&mut self, rooms: &mut RoomRegistry, buffer: &[u8], address: SocketAddr, now: Instant) {
 		match Frame::decode(&buffer, |headers| self.get_cipher(headers)) {
 			Ok(frame) => match frame.headers.first(Header::predicate_member_and_room_id).copied() {
@@ -165,7 +179,10 @@ impl NetworkServer {
 							session.last_receive_frame_id = frame.frame_id;
 						}
 						session.protocol.on_frame_received(&frame, now);
-						rooms.execute_commands(member_and_room_id, session.protocol.input_data_handler.get_ready_commands());
+						let commands = session.protocol.input_data_handler.get_ready_commands();
+						self.income_command_count += commands.len();
+						self.income_frame_count += 1;
+						rooms.execute_commands(member_and_room_id, commands);
 					}
 				},
 			},
@@ -192,7 +209,7 @@ impl NetworkServer {
 		for member_and_room_id in member_and_room_ids {
 			if let Some(session) = self.sessions.get_mut(&member_and_room_id) {
 				session.protocol.disconnect_by_command.disconnect(reason);
-				self.send_session_frames(member_and_room_id);
+				self.send_frames(member_and_room_id);
 			}
 
 			self.sessions.remove(&member_and_room_id);
@@ -215,7 +232,7 @@ mod tests {
 
 	use crate::room::member::RoomMember;
 	use crate::room::template::config::MemberTemplate;
-	use crate::server::network::NetworkServer;
+	use crate::server::network::Network;
 	use crate::server::room_registry::RoomRegistry;
 
 	#[test]
@@ -298,7 +315,7 @@ mod tests {
 		assert!(!udp_server.sessions.contains_key(&member_to_delete), "session should be deleted");
 	}
 
-	fn create_network_layer() -> NetworkServer {
-		NetworkServer::new(bind_to_free_socket().unwrap()).unwrap()
+	fn create_network_layer() -> Network {
+		Network::new(bind_to_free_socket().unwrap()).unwrap()
 	}
 }

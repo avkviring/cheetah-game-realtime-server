@@ -1,5 +1,4 @@
-use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
-use std::sync::atomic::{AtomicU32, AtomicU64};
+use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 ///
 /// Сетевой клиент запускается в отдельном потоке, взаимодействие между потоками unity
@@ -7,6 +6,8 @@ use std::sync::Arc;
 ///
 ///
 use std::time::Duration;
+
+use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
 
 use crate::clients::network_thread::C2SCommandWithChannel;
 
@@ -32,7 +33,6 @@ pub enum ClientRequest {
 pub struct SharedClientStatistics {
 	pub current_frame_id: Arc<AtomicU64>,
 	pub rtt_in_ms: Arc<AtomicU64>,
-	pub average_retransmit_frames: Arc<AtomicU32>,
 	pub recv_packet_count: Arc<AtomicU64>,
 	pub send_packet_count: Arc<AtomicU64>,
 	pub recv_size: Arc<AtomicU64>,
