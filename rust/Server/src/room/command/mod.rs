@@ -8,7 +8,7 @@ use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::object::GameObjectError;
 use crate::room::Room;
-use crate::server::rooms::RoomNotFoundError;
+use crate::server::room_registry::RoomNotFoundError;
 
 pub mod create;
 pub mod created;

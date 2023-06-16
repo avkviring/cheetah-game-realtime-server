@@ -4,7 +4,6 @@ use std::ops::Sub;
 use std::time::{Duration, Instant};
 
 use fnv::FnvBuildHasher;
-use prometheus::local::LocalIntCounter;
 
 use crate::frame::disconnected_reason::DisconnectedReason;
 use crate::frame::headers::{Header, HeaderVec};
@@ -12,7 +11,6 @@ use crate::frame::Frame;
 use crate::frame::FrameId;
 use crate::reliable::ack::header::AckHeader;
 use crate::reliable::retransmit::header::RetransmitHeader;
-use crate::reliable::statistics::RetransmitStatistics;
 
 pub mod header;
 
@@ -65,8 +63,6 @@ pub struct Retransmitter {
 	/// Время ожидания подтверждения на фрейм
 	///
 	ack_wait_duration: Duration,
-
-	pub statistics: RetransmitStatistics,
 }
 
 #[derive(Debug)]
@@ -77,23 +73,22 @@ pub struct ScheduledFrame {
 	pub retransmit_count: u8,
 }
 
-impl Retransmitter {
-	#[must_use]
-	pub fn new(counter: LocalIntCounter) -> Self {
+impl Default for Retransmitter {
+	fn default() -> Self {
 		Self {
 			frames: Default::default(),
 			wait_ack_frames: Default::default(),
 			max_retransmit_count: Default::default(),
 			ack_wait_duration: Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC),
-			statistics: RetransmitStatistics::new(counter),
 		}
 	}
+}
 
+impl Retransmitter {
 	///
 	/// Получить фрейм для повторной отправки (если такой есть)
 	/// - метод необходимо вызывать пока результат Some
 	///
-	#[allow(clippy::unwrap_in_result)]
 	pub fn get_retransmit_frame(&mut self, now: Instant, retransmit_frame_id: FrameId) -> Option<Frame> {
 		loop {
 			match self.frames.front() {
@@ -121,7 +116,6 @@ impl Retransmitter {
 						let retransmit_header = Header::Retransmit(RetransmitHeader::new(original_frame_id, retransmit_count));
 						retransmit_frame.headers.add(retransmit_header);
 						self.frames.push_back(scheduled_frame);
-						self.statistics.on_retransmit_frame(now);
 						return Some(retransmit_frame);
 					} else {
 						return None;
@@ -134,12 +128,11 @@ impl Retransmitter {
 	///
 	/// Обрабатываем подтверждения фреймов
 	///
-	pub(crate) fn on_frame_received(&mut self, frame: &Frame, now: Instant) {
+	pub(crate) fn on_frame_received(&mut self, frame: &Frame) {
 		let ack_headers: HeaderVec<&AckHeader> = frame.headers.find(Header::predicate_ack);
 		ack_headers.iter().for_each(|ack_header| {
 			ack_header.get_frames().for_each(|frame_id| {
 				self.wait_ack_frames.remove(frame_id);
-				self.statistics.on_ack_received(*frame_id, now);
 			});
 		});
 	}
@@ -157,6 +150,10 @@ impl Retransmitter {
 			});
 
 			self.wait_ack_frames.insert(original_frame_id);
+			if self.wait_ack_frames.len() > 500 {
+				tracing::error!("Wait ack frames overflow, size = {:?}", self.wait_ack_frames.len());
+				self.wait_ack_frames.clear();
+			}
 		}
 	}
 
@@ -182,8 +179,6 @@ mod tests {
 	use std::ops::Add;
 	use std::time::Instant;
 
-	use prometheus::IntCounter;
-
 	use crate::frame::headers::Header;
 	use crate::frame::Frame;
 	use crate::frame::FrameId;
@@ -195,7 +190,7 @@ mod tests {
 	/// Если не было отосланных фреймов - то нет фреймов и для повтора
 	///
 	fn should_empty_when_get_retransmit_frame() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		assert!(matches!(handler.get_retransmit_frame(Instant::now(), 1), None));
 	}
 
@@ -204,7 +199,7 @@ mod tests {
 	///
 	#[test]
 	fn should_empty_when_no_timeout() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		handler.build_frame(&create_reliability_frame(1), now);
 		assert!(matches!(handler.get_retransmit_frame(now, 2), None));
@@ -215,7 +210,7 @@ mod tests {
 	///
 	#[test]
 	fn should_add_retransmit_header() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		let original_frame = create_reliability_frame(1);
 		handler.build_frame(&original_frame, now);
@@ -234,7 +229,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_retransmit_frame_when_timeout() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -250,7 +245,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_for_unreliable_frame() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		let frame = create_unreliable_frame(1);
 		handler.build_frame(&frame, now);
@@ -264,11 +259,11 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_then_ack() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
-		handler.on_frame_received(&create_ack_frame(100, frame.frame_id), now);
+		handler.on_frame_received(&create_ack_frame(100, frame.frame_id));
 		let get_time = now.add(handler.ack_wait_duration);
 		assert!(matches!(handler.get_retransmit_frame(get_time, 2), None));
 	}
@@ -279,7 +274,7 @@ mod tests {
 	///
 	#[test]
 	fn should_retransmit_after_retransmit() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -300,7 +295,7 @@ mod tests {
 	///
 	#[test]
 	fn should_close_after_fail_retransmits() {
-		let mut handler = get_retransmitter();
+		let mut handler = Retransmitter::default();
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -333,9 +328,5 @@ mod tests {
 		ack_header.add_frame_id(acked_frame_id);
 		frame.headers.add(Header::Ack(ack_header));
 		frame
-	}
-
-	fn get_retransmitter() -> Retransmitter {
-		Retransmitter::new(IntCounter::new("name", "help").unwrap().local())
 	}
 }

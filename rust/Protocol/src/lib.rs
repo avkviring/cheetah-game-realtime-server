@@ -4,8 +4,6 @@ use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::time::Instant;
 
-use prometheus::local::{LocalHistogram, LocalIntCounter};
-
 use crate::disconnect::command::DisconnectByCommand;
 use crate::disconnect::timeout::DisconnectByTimeout;
 use crate::frame::disconnected_reason::DisconnectedReason;
@@ -77,8 +75,6 @@ where
 	pub rtt: RoundTripTime,
 	pub keep_alive: KeepAlive,
 	pub in_frame_counter: u64,
-	ack_sent_histogram: LocalHistogram,
-	retransmit_counter: LocalIntCounter,
 	packets_collector: PacketsCollector,
 }
 
@@ -88,26 +84,16 @@ where
 	OUT: OutputDataProducer,
 {
 	#[must_use]
-	pub fn new(
-		input_data_handler: IN,
-		output_data_producer: OUT,
-		connection_id: ConnectionId,
-		now: Instant,
-		start_application_time: Instant,
-		retransmit_counter: LocalIntCounter,
-		ack_sent_histogram: LocalHistogram,
-	) -> Self {
+	pub fn new(input_data_handler: IN, output_data_producer: OUT, connection_id: ConnectionId, now: Instant, start_application_time: Instant) -> Self {
 		Self {
 			next_frame_id: 1,
 			next_packed_id: 0,
 			disconnect_by_timeout: DisconnectByTimeout::new(now),
-			retransmitter: Retransmitter::new(retransmit_counter.clone()),
+			retransmitter: Retransmitter::default(),
 			rtt: RoundTripTime::new(start_application_time),
 			connection_id,
 			input_data_handler,
 			output_data_producer,
-			ack_sent_histogram,
-			retransmit_counter,
 			replay_protection: Default::default(),
 			ack_sender: Default::default(),
 			disconnect_by_command: Default::default(),
@@ -133,8 +119,8 @@ where
 
 		self.in_frame_counter += 1;
 		self.disconnect_by_timeout.on_frame_received(now);
-		self.retransmitter.on_frame_received(frame, now);
 		self.ack_sender.on_frame_received(frame, now);
+		self.retransmitter.on_frame_received(frame);
 		match self.replay_protection.set_and_check(frame) {
 			Ok(replayed) => {
 				if !replayed {
@@ -169,7 +155,7 @@ where
 		self.disconnect_by_timeout = DisconnectByTimeout::new(now);
 		self.replay_protection = Default::default();
 		self.ack_sender = Default::default();
-		self.retransmitter = Retransmitter::new(self.retransmit_counter.clone());
+		self.retransmitter = Default::default();
 		self.disconnect_by_command = Default::default();
 		self.keep_alive = Default::default();
 		self.in_frame_counter = Default::default();
@@ -205,8 +191,6 @@ where
 			self.next_frame_id += 1;
 			let segment = Segment::new(self.next_packed_id, count_segments as u8, segment_number as u8, segment_data);
 			let mut frame = Frame::new(self.connection_id, self.next_frame_id, reliability, segment);
-			let acked_task_count = self.ack_sender.build_out_frame(&mut frame, now);
-			self.ack_sent_histogram.observe(acked_task_count as f64);
 			self.disconnect_by_command.build_frame(&mut frame);
 			self.rtt.build_frame(&mut frame, now);
 			self.keep_alive.build_frame(&mut frame, now);
@@ -252,13 +236,10 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use std::time::Instant;
-
-	use prometheus::{Histogram, HistogramOpts, IntCounter};
-
 	use crate::frame::Frame;
 	use crate::frame::{ConnectionId, FrameId};
 	use crate::{InputDataHandler, OutputDataProducer, Protocol};
+	use std::time::Instant;
 
 	#[derive(Default)]
 	struct StubDataRecvHandler {
@@ -296,8 +277,6 @@ pub mod tests {
 	}
 
 	fn create_protocol(connection_id: ConnectionId) -> Protocol<StubDataRecvHandler, StubDataSource> {
-		let counter = IntCounter::new("name", "help").unwrap().local();
-		let histogram = Histogram::with_opts(HistogramOpts::new("name", "help")).unwrap().local();
-		Protocol::<StubDataRecvHandler, StubDataSource>::new(Default::default(), Default::default(), connection_id, Instant::now(), Instant::now(), counter, histogram)
+		Protocol::<StubDataRecvHandler, StubDataSource>::new(Default::default(), Default::default(), connection_id, Instant::now(), Instant::now())
 	}
 }

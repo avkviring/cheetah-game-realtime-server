@@ -217,12 +217,12 @@ impl Measurers {
 		self.object_count.measurer(name).add(delta);
 	}
 
-	pub(crate) fn on_change_member_count(&mut self, name: &String, delta: i64) {
-		self.member_count.measurer(name).add(delta);
+	pub(crate) fn on_change_member_count(&mut self, name: &String, count_member: usize) {
+		self.member_count.measurer(name).set(count_member as i64);
 	}
 
-	pub(crate) fn on_create_room(&mut self, name: &String) {
-		self.room_count.measurer(name).inc();
+	pub(crate) fn on_change_rooms_count(&mut self, name: &String, count_rooms: usize) {
+		self.room_count.measurer(name).set(count_rooms as i64);
 	}
 
 	pub(crate) fn on_output_commands(&mut self, template: &MeasureStringId, commands: &[CommandWithChannelType]) {

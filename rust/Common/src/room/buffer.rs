@@ -2,7 +2,6 @@ use std::fmt;
 use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
 use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
 
 ///
 /// Бинарное значение поля
