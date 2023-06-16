@@ -11,7 +11,7 @@ use crate::room::command::ServerCommandError;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::RoomInfo;
-use crate::server::rooms::RoomNotFoundError;
+use crate::server::room_registry::RoomNotFoundError;
 use crate::server::RoomsServer;
 use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};

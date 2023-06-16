@@ -2,7 +2,6 @@ use std::collections::VecDeque;
 use std::ops::{Add, RangeInclusive};
 use std::time::{Duration, Instant};
 
-use prometheus::{Histogram, HistogramOpts, IntCounter};
 use rand::rngs::OsRng;
 use rand::Rng;
 
@@ -97,13 +96,5 @@ impl Channel {
 }
 
 pub fn create_protocol() -> Protocol<StubInputDataHandler, StubOutputDataProducer> {
-	Protocol::<StubInputDataHandler, StubOutputDataProducer>::new(
-		Default::default(),
-		Default::default(),
-		0,
-		Instant::now(),
-		Instant::now(),
-		IntCounter::new("name", "help").unwrap().local(),
-		Histogram::with_opts(HistogramOpts::new("name", "help")).unwrap().local(),
-	)
+	Protocol::<StubInputDataHandler, StubOutputDataProducer>::new(Default::default(), Default::default(), 0, Instant::now(), Instant::now())
 }

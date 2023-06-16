@@ -4,8 +4,6 @@ use std::net::SocketAddr;
 use std::net::UdpSocket;
 use std::time::Instant;
 
-use prometheus::{Histogram, HistogramOpts, IntCounter};
-
 use cheetah_protocol::codec::cipher::Cipher;
 use cheetah_protocol::frame::disconnected_reason::DisconnectedReason;
 use cheetah_protocol::frame::headers::Header;
@@ -64,15 +62,7 @@ impl NetworkChannel {
 		server_address: SocketAddr,
 		start_application_time: Instant,
 	) -> std::io::Result<NetworkChannel> {
-		let protocol = Protocol::new(
-			InCommandsCollector::new(server_side),
-			Default::default(),
-			connection_id,
-			Instant::now(),
-			start_application_time,
-			IntCounter::new("name", "help").unwrap().local(),
-			Histogram::with_opts(HistogramOpts::new("name", "help")).unwrap().local(),
-		);
+		let protocol = Protocol::new(InCommandsCollector::new(server_side), Default::default(), connection_id, Instant::now(), start_application_time);
 		let channel = UdpSocketWrapper::new()?;
 
 		Ok(NetworkChannel {

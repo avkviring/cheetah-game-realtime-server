@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
 use std::slice;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use fnv::{FnvBuildHasher, FnvHashMap, FnvHashSet};
 use indexmap::map::IndexMap;
@@ -26,7 +26,6 @@ use crate::room::forward::ForwardConfig;
 use crate::room::object::{GameObject, S2CCommandsCollector};
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
-use crate::server::measurers::Measurers;
 
 pub mod action;
 pub mod command;
@@ -47,7 +46,6 @@ pub struct Room {
 	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	pub room_object_id_generator: u32,
 	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, S2CCommandsCollector)>>>,
-	measurers: Rc<RefCell<Measurers>>,
 	objects_singleton_key: HashMap<Buffer, GameObjectId, FnvBuildHasher>,
 
 	#[cfg(test)]
@@ -70,7 +68,7 @@ pub struct RoomInfo {
 }
 
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate, measurers: Rc<RefCell<Measurers>>, plugin_names: FnvHashSet<String>) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate, plugin_names: FnvHashSet<String>) -> Self {
 		let mut room = Room {
 			id,
 			members: FnvHashMap::default(),
@@ -86,7 +84,6 @@ impl Room {
 			room_object_id_generator: 65536,
 			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 			template_name: template.name.clone(),
-			measurers,
 			objects_singleton_key: Default::default(),
 			forward_configs: Default::default(),
 			plugins_pending: plugin_names,
@@ -172,8 +169,6 @@ impl Room {
 			return;
 		}
 
-		let measurers = Rc::clone(&self.measurers);
-		let mut measurers = measurers.borrow_mut();
 		let tracer = Rc::clone(&self.command_trace_session);
 		for command_with_channel in commands {
 			match &command_with_channel.command {
@@ -193,7 +188,9 @@ impl Room {
 								e.log_command_execute_error(command, self.id, member_id);
 							}
 						}
-						measurers.on_execute_command(command.get_field_id(), command, instant.elapsed());
+						if instant.elapsed() > Duration::from_millis(100) {
+							tracing::error!("Slow command {:?}", command);
+						}
 					}
 				}
 				BothDirectionCommand::S2CWithCreator(_) => {
@@ -357,9 +354,7 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use std::cell::RefCell;
 	use std::collections::VecDeque;
-	use std::rc::Rc;
 	use std::slice;
 
 	use fnv::FnvHashSet;
@@ -382,18 +377,17 @@ mod tests {
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};
-	use crate::server::measurers::Measurers;
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(0, RoomTemplate::default(), Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))), FnvHashSet::default())
+			Room::new(0, RoomTemplate::default(), FnvHashSet::default())
 		}
 	}
 
 	impl Room {
 		#[must_use]
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template, Rc::new(RefCell::new(Measurers::new(prometheus::default_registry()))), FnvHashSet::default())
+			Room::new(0, template, FnvHashSet::default())
 		}
 
 		pub fn test_create_object_with_not_created_state(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {

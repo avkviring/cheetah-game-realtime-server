@@ -8,21 +8,23 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, iter, thread};
 
+use fnv::FnvHashSet;
+
+use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
+use cheetah_protocol::others::member_id::MemberAndRoomId;
+use cheetah_protocol::{RoomId, RoomMemberId};
+
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, Permissions};
 use crate::server::manager::{ChannelTask, ManagementTask, ManagementTaskResult, RoomMembersCount, TaskExecutionError};
 use crate::server::measurers::Measurers;
 use crate::server::network::NetworkServer;
-use crate::server::rooms::{RoomNotFoundError, Rooms};
-use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
-use cheetah_protocol::others::member_id::MemberAndRoomId;
-use cheetah_protocol::{RoomId, RoomMemberId};
-use fnv::FnvHashSet;
+use crate::server::room_registry::{RoomNotFoundError, RoomRegistry};
 
 pub mod manager;
 pub mod measurers;
 pub mod network;
-pub mod rooms;
+pub mod room_registry;
 
 ///
 /// Собственно сетевой сервер, запускается в отдельном потоке, обрабатывает сетевые команды,
@@ -30,7 +32,7 @@ pub mod rooms;
 ///
 pub struct RoomsServer {
 	network_server: NetworkServer,
-	rooms: Rooms,
+	room_registry: RoomRegistry,
 	receiver: Receiver<ChannelTask>,
 	halt_signal: Arc<AtomicBool>,
 	time_offset: Option<Duration>,
@@ -42,8 +44,8 @@ impl RoomsServer {
 	pub(crate) fn new(socket: UdpSocket, receiver: Receiver<ChannelTask>, halt_signal: Arc<AtomicBool>, plugin_names: FnvHashSet<String>) -> Result<Self, io::Error> {
 		let measures = Rc::new(RefCell::new(Measurers::new(prometheus::default_registry())));
 		Ok(Self {
-			network_server: NetworkServer::new(socket, Rc::clone(&measures))?,
-			rooms: Rooms::new(Rc::clone(&measures), plugin_names.clone()),
+			network_server: NetworkServer::new(socket)?,
+			room_registry: RoomRegistry::new(plugin_names.clone()),
 			receiver,
 			halt_signal,
 			time_offset: None,
@@ -58,7 +60,7 @@ impl RoomsServer {
 			if let Some(time_offset) = self.time_offset {
 				now = now.add(time_offset);
 			}
-			self.network_server.cycle(&mut self.rooms, now);
+			self.network_server.cycle(&mut self.room_registry, now);
 			self.execute_management_tasks(now);
 			self.measurers.borrow_mut().on_server_cycle(now.elapsed());
 			thread::sleep(Duration::from_millis(1));
@@ -79,20 +81,18 @@ impl RoomsServer {
 
 	fn execute_task(&mut self, task: ManagementTask, now: Instant) -> Result<ManagementTaskResult, TaskExecutionError> {
 		let res = match task {
-			ManagementTask::CreateRoom(template) => ManagementTaskResult::CreateRoom(self.rooms.create_room(template)),
+			ManagementTask::CreateRoom(template) => ManagementTaskResult::CreateRoom(self.room_registry.create_room(template)),
 			ManagementTask::DeleteRoom(room_id) => self.delete_room(room_id).map(|_| ManagementTaskResult::DeleteRoom)?,
 			ManagementTask::CreateMember(room_id, member_template) => self.register_member(room_id, member_template, now).map(ManagementTaskResult::CreateMember)?,
 			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
 			ManagementTask::Dump(room_id) => self
-				.rooms
-				.room_by_id
+				.room_registry
 				.get(&room_id)
 				.map(|room| ManagementTaskResult::Dump(room.into()))
 				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
-			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.rooms.room_by_id.keys().copied().collect()),
+			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.room_registry.rooms().map(|r| r.0).copied().collect()),
 			ManagementTask::CommandTracerSessionTask(room_id, task) => self
-				.rooms
-				.room_by_id
+				.room_registry
 				.get_mut(&room_id)
 				.map(|room| {
 					Rc::clone(&room.command_trace_session).borrow_mut().execute_task(task);
@@ -100,8 +100,7 @@ impl RoomsServer {
 				})
 				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::PutForwardedCommandConfig(room_id, config) => self
-				.rooms
-				.room_by_id
+				.room_registry
 				.get_mut(&room_id)
 				.map(|room| {
 					room.put_forwarded_command_config(config);
@@ -110,16 +109,14 @@ impl RoomsServer {
 				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::MarkRoomAsReady(room_id, plugin_name) => self.mark_room_as_ready(room_id, plugin_name)?,
 			ManagementTask::GetRoomInfo(room_id) => self
-				.rooms
-				.room_by_id
+				.room_registry
 				.get(&room_id)
 				.map(|room| ManagementTaskResult::GetRoomInfo(room.get_info()))
 				.ok_or(TaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::UpdateRoomPermissions(room_id, permissions) => self.update_room_permissions(room_id, &permissions)?,
 			ManagementTask::GetRoomsMemberCount => ManagementTaskResult::GetRoomsMemberCount(
-				self.rooms
-					.room_by_id
-					.iter()
+				self.room_registry
+					.rooms()
 					.map(|(room_id, room)| RoomMembersCount {
 						room_id: *room_id,
 						members: room.members.len(),
@@ -132,7 +129,7 @@ impl RoomsServer {
 	}
 
 	fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<ManagementTaskResult, TaskExecutionError> {
-		if let Some(room) = self.rooms.room_by_id.get_mut(&room_id) {
+		if let Some(room) = self.room_registry.get_mut(&room_id) {
 			if self.plugin_names.contains(&plugin_name) {
 				room.mark_room_as_ready(&plugin_name);
 				Ok(ManagementTaskResult::MarkRoomAsReady)
@@ -145,14 +142,14 @@ impl RoomsServer {
 	}
 
 	fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {
-		let room_member_id = self.rooms.register_member(room_id, member_template.clone())?;
+		let room_member_id = self.room_registry.register_member(room_id, member_template.clone())?;
 		self.network_server.register_member(now, room_id, room_member_id, member_template);
 		Ok(room_member_id)
 	}
 
 	/// удалить комнату с сервера и закрыть соединение со всеми пользователями
 	fn delete_room(&mut self, room_id: RoomId) -> Result<(), RoomNotFoundError> {
-		let room = self.rooms.take_room(&room_id)?;
+		let room = self.room_registry.force_remove_room(&room_id)?;
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
 		self.network_server.disconnect_members(ids, DisconnectByCommandReason::RoomDeleted);
 		Ok(())
@@ -161,12 +158,11 @@ impl RoomsServer {
 	/// закрыть соединение с пользователем и удалить его из комнаты
 	fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ServerCommandError> {
 		self.network_server.disconnect_members(iter::once(id), DisconnectByCommandReason::MemberDeleted);
-		self.rooms.member_disconnected(&id)
+		self.room_registry.member_disconnected(&id)
 	}
 
 	fn update_room_permissions(&mut self, room_id: RoomId, permissions: &Permissions) -> Result<ManagementTaskResult, TaskExecutionError> {
-		self.rooms
-			.room_by_id
+		self.room_registry
 			.get_mut(&room_id)
 			.map(|room| {
 				room.update_permissions(permissions);
