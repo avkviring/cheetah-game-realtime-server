@@ -8,7 +8,7 @@ use thiserror::Error;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 
-use crate::{RoomsServerManager, RoomsServerManagerError, Server};
+use crate::{RoomsServerManagerError, Server, ServerManager};
 
 ///
 /// Паттерн Создатель для игрового сервера
@@ -89,7 +89,7 @@ impl ServerBuilder {
 	pub async fn build(self) -> Result<Server, ServerBuilderError> {
 		let game_socket = UdpSocket::bind(self.game_bind_addr).map_err(ServerBuilderError::ErrorBindUdpSocket)?;
 		let game_socket_addr = game_socket.local_addr().map_err(ServerBuilderError::ErrorGetLocalAddrFromUdpSocket)?;
-		let server_manager = RoomsServerManager::new(game_socket, self.plugin_names).map_err(ServerBuilderError::RoomsServerManager)?;
+		let server_manager = ServerManager::new(game_socket, self.plugin_names).map_err(ServerBuilderError::RoomsServerManager)?;
 		let manager = Arc::new(Mutex::new(server_manager));
 
 		let internal_grpc_listener = TcpListener::bind(self.internal_grpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;

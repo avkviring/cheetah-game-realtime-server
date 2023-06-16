@@ -8,7 +8,7 @@ use cheetah_common::room::field::{Field, FieldId, FieldType};
 use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_protocol::RoomId;
 use cheetah_server::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate};
-use cheetah_server::server::manager::RoomsServerManager;
+use cheetah_server::server::manager::ServerManager;
 
 ///
 /// Конфигурируем и создаем сервер для интеграционного тестирования
@@ -40,10 +40,10 @@ impl IntegrationTestServerBuilder {
 	}
 
 	#[must_use]
-	pub fn build(self) -> (SocketAddr, RoomsServerManager, RoomId) {
+	pub fn build(self) -> (SocketAddr, ServerManager, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.local_addr().unwrap();
-		let mut server = RoomsServerManager::new(socket, FnvHashSet::default()).unwrap();
+		let mut server = ServerManager::new(socket, FnvHashSet::default()).unwrap();
 		let room_id = server.create_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}

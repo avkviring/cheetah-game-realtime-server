@@ -5,6 +5,12 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+use fnv::FnvHashSet;
+use thiserror::Error;
+
+use cheetah_protocol::others::member_id::MemberAndRoomId;
+use cheetah_protocol::{RoomId, RoomMemberId};
+
 use crate::debug::proto::admin;
 use crate::debug::tracer::TracerSessionCommand;
 use crate::room::command::ServerCommandError;
@@ -12,19 +18,15 @@ use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::RoomInfo;
 use crate::server::room_registry::RoomNotFoundError;
-use crate::server::RoomsServer;
-use cheetah_protocol::others::member_id::MemberAndRoomId;
-use cheetah_protocol::{RoomId, RoomMemberId};
-use fnv::FnvHashSet;
-use thiserror::Error;
+use crate::server::Server;
 
 ///
 /// Управление сервером
 /// - запуск сервера в отдельном потоке
 /// - связь с сервером через Sender
 ///
-pub struct RoomsServerManager {
-	sender: Sender<ChannelTask>,
+pub struct ServerManager {
+	sender: Sender<ManagementTaskChannel>,
 	halt_signal: Arc<AtomicBool>,
 	pub created_room_counter: usize,
 }
@@ -75,19 +77,19 @@ pub enum RoomsServerManagerError {
 }
 
 #[derive(Error, Debug)]
-pub enum TaskError {
+pub enum ManagementTaskError {
 	#[error("ChannelSendError {0}")]
-	ChannelSendError(SendError<ChannelTask>),
+	ChannelSendError(SendError<ManagementTaskChannel>),
 	#[error("ChannelRecvError {0}")]
 	ChannelRecvError(RecvTimeoutError),
 	#[error("TaskExecutionError {0}")]
-	TaskExecutionError(TaskExecutionError),
+	TaskExecutionError(ManagementTaskExecutionError),
 	#[error("UnexpectedResultError")]
 	UnexpectedResultError,
 }
 
 #[derive(Error, Debug)]
-pub enum TaskExecutionError {
+pub enum ManagementTaskExecutionError {
 	#[error("RoomNotFound {0}")]
 	RoomNotFound(#[from] RoomNotFoundError),
 	#[error("UnknownPluginName {0}")]
@@ -96,25 +98,25 @@ pub enum TaskExecutionError {
 	ServerCommandError(#[from] ServerCommandError),
 }
 
-pub struct ChannelTask {
+pub struct ManagementTaskChannel {
 	pub task: ManagementTask,
-	pub sender: Sender<Result<ManagementTaskResult, TaskExecutionError>>,
+	pub sender: Sender<Result<ManagementTaskResult, ManagementTaskExecutionError>>,
 }
 
-impl Drop for RoomsServerManager {
+impl Drop for ServerManager {
 	fn drop(&mut self) {
 		self.halt_signal.store(true, Ordering::Relaxed);
 	}
 }
 
-impl RoomsServerManager {
+impl ServerManager {
 	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>) -> Result<Self, RoomsServerManagerError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = Arc::clone(&halt_signal);
 		thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
-			.spawn(move || match RoomsServer::new(socket, receiver, halt_signal, plugin_names) {
+			.spawn(move || match Server::new(socket, receiver, halt_signal, plugin_names) {
 				Ok(server) => {
 					server.run();
 					Ok(())
@@ -132,85 +134,85 @@ impl RoomsServerManager {
 		})
 	}
 
-	pub(crate) fn get_rooms(&self) -> Result<Vec<RoomId>, TaskError> {
+	pub(crate) fn get_rooms(&self) -> Result<Vec<RoomId>, ManagementTaskError> {
 		self.execute_task(ManagementTask::GetRooms).map(|res| {
 			if let ManagementTaskResult::GetRooms(rooms) = res {
 				Ok(rooms)
 			} else {
-				Err(TaskError::UnexpectedResultError)
+				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
 	}
 
-	pub(crate) fn get_rooms_member_count(&self) -> Result<Vec<RoomMembersCount>, TaskError> {
+	pub(crate) fn get_rooms_member_count(&self) -> Result<Vec<RoomMembersCount>, ManagementTaskError> {
 		self.execute_task(ManagementTask::GetRoomsMemberCount).map(|res| {
 			if let ManagementTaskResult::GetRoomsMemberCount(rooms) = res {
 				Ok(rooms)
 			} else {
-				Err(TaskError::UnexpectedResultError)
+				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
 	}
 
-	pub fn create_room(&mut self, template: RoomTemplate) -> Result<RoomId, TaskError> {
+	pub fn create_room(&mut self, template: RoomTemplate) -> Result<RoomId, ManagementTaskError> {
 		self.execute_task(ManagementTask::CreateRoom(template)).map(|res| {
 			if let ManagementTaskResult::CreateRoom(room_id) = res {
 				self.created_room_counter += 1;
 				Ok(room_id)
 			} else {
-				Err(TaskError::UnexpectedResultError)
+				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
-	pub fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), TaskError> {
+	pub fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::DeleteMember(id)).map(|_| ())
 	}
 
 	/// удалить комнату с сервера и закрыть соединение со всеми пользователями
-	pub fn delete_room(&mut self, room_id: RoomId) -> Result<(), TaskError> {
+	pub fn delete_room(&mut self, room_id: RoomId) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::DeleteRoom(room_id)).map(|_| ())
 	}
 
-	pub fn create_member(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, TaskError> {
+	pub fn create_member(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, ManagementTaskError> {
 		self.execute_task(ManagementTask::CreateMember(room_id, template)).map(|res| {
 			if let ManagementTaskResult::CreateMember(id) = res {
 				Ok(id)
 			} else {
-				Err(TaskError::UnexpectedResultError)
+				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
 	}
 
-	pub(crate) fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardConfig) -> Result<(), TaskError> {
+	pub(crate) fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardConfig) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::PutForwardedCommandConfig(room_id, config)).map(|_| ())
 	}
 
-	pub(crate) fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), TaskError> {
+	pub(crate) fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::MarkRoomAsReady(room_id, plugin_name)).map(|_| ())
 	}
 
-	pub(crate) fn update_room_permissions(&mut self, room_id: RoomId, permissions: Permissions) -> Result<(), TaskError> {
+	pub(crate) fn update_room_permissions(&mut self, room_id: RoomId, permissions: Permissions) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::UpdateRoomPermissions(room_id, permissions)).map(|_| ())
 	}
 
-	pub(crate) fn get_room_info(&mut self, room_id: RoomId) -> Result<RoomInfo, TaskError> {
+	pub(crate) fn get_room_info(&mut self, room_id: RoomId) -> Result<RoomInfo, ManagementTaskError> {
 		self.execute_task(ManagementTask::GetRoomInfo(room_id)).map(|res| {
 			if let ManagementTaskResult::GetRoomInfo(room_info) = res {
 				Ok(room_info)
 			} else {
-				Err(TaskError::UnexpectedResultError)
+				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
 	}
 
-	pub(crate) fn dump(&self, room_id: u64) -> Result<admin::DumpResponse, TaskError> {
+	pub(crate) fn dump(&self, room_id: u64) -> Result<admin::DumpResponse, ManagementTaskError> {
 		self.execute_task(ManagementTask::Dump(room_id)).map(|res| {
 			if let ManagementTaskResult::Dump(resp) = res {
 				Ok(resp)
 			} else {
-				Err(TaskError::UnexpectedResultError)
+				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
 	}
@@ -219,17 +221,17 @@ impl RoomsServerManager {
 	/// Выполнить задачу в `CommandTracerSessions` конкретной комнаты
 	/// Подход с вложенным enum для отдельного класса задач применяется для изолирования функционала
 	///
-	pub(crate) fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: TracerSessionCommand) -> Result<(), TaskError> {
+	pub(crate) fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: TracerSessionCommand) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::CommandTracerSessionTask(room_id, task)).map(|_| ())
 	}
 
-	fn execute_task(&self, task: ManagementTask) -> Result<ManagementTaskResult, TaskError> {
+	fn execute_task(&self, task: ManagementTask) -> Result<ManagementTaskResult, ManagementTaskError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		self.sender.send(ChannelTask { task, sender }).map_err(TaskError::ChannelSendError)?;
+		self.sender.send(ManagementTaskChannel { task, sender }).map_err(ManagementTaskError::ChannelSendError)?;
 		match receiver.recv_timeout(Duration::from_secs(1)) {
 			Ok(Ok(result)) => Ok(result),
-			Ok(Err(e)) => Err(TaskError::TaskExecutionError(e)),
-			Err(e) => Err(TaskError::ChannelRecvError(e)),
+			Ok(Err(e)) => Err(ManagementTaskError::TaskExecutionError(e)),
+			Err(e) => Err(ManagementTaskError::ChannelRecvError(e)),
 		}
 	}
 
@@ -249,7 +251,7 @@ mod test {
 	use cheetah_common::network::bind_to_free_socket;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
-	use crate::server::manager::RoomsServerManager;
+	use crate::server::manager::ServerManager;
 
 	#[test]
 	fn should_increment_created_room_count() {
@@ -275,7 +277,7 @@ mod test {
 		assert_eq!(member_id, 1);
 	}
 
-	fn new_server_manager() -> RoomsServerManager {
-		RoomsServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
+	fn new_server_manager() -> ServerManager {
+		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
 	}
 }

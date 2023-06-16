@@ -53,7 +53,10 @@ impl Network {
 	pub fn cycle(&mut self, rooms: &mut RoomRegistry, now: Instant) {
 		self.receive(rooms, now);
 		self.send(rooms);
+		self.process_disconnected_members(rooms, now);
+	}
 
+	fn process_disconnected_members(&mut self, rooms: &mut RoomRegistry, now: Instant) {
 		let mut disconnected = heapless::Vec::<MemberAndRoomId, 1000>::new();
 		self.sessions.iter_mut().for_each(|(id, session)| {
 			if session.protocol.is_disconnected(now).is_some() && !disconnected.is_full() {
@@ -130,7 +133,7 @@ impl Network {
 		let mut buffer = [0; 512];
 		loop {
 			match self.socket.recv_from(&mut buffer) {
-				Ok((size, address)) => self.process_in_frame(rooms, &buffer[0..size], address, now),
+				Ok((size, address)) => self.on_frame_receive(rooms, &buffer[0..size], address, now),
 				Err(e) => match e.kind() {
 					ErrorKind::WouldBlock => {
 						return;
@@ -160,11 +163,8 @@ impl Network {
 		}
 	}
 
-	///
-	/// TODO избавиться от передачи Rooms
-	///
-	fn process_in_frame(&mut self, rooms: &mut RoomRegistry, buffer: &[u8], address: SocketAddr, now: Instant) {
-		match Frame::decode(&buffer, |headers| self.get_cipher(headers)) {
+	fn on_frame_receive(&mut self, rooms: &mut RoomRegistry, source: &[u8], address: SocketAddr, now: Instant) {
+		match Frame::decode(&source, |headers| self.get_cipher(headers)) {
 			Ok(frame) => match frame.headers.first(Header::predicate_member_and_room_id).copied() {
 				None => {
 					tracing::error!("[network] MemberAndRoomId header not found {:?}", frame.headers);
@@ -241,7 +241,7 @@ mod tests {
 		let mut rooms = RoomRegistry::default();
 		let buffer = [0; 512];
 		let size = 100_usize;
-		udp_server.process_in_frame(&mut rooms, &buffer[0..size], SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
+		udp_server.on_frame_receive(&mut rooms, &buffer[0..size], SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
 	}
 
 	#[test]
@@ -252,7 +252,7 @@ mod tests {
 		let mut frame = Frame::new(0, 0, false, Default::default());
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId { member_id: 0, room_id: 0 }));
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
-		udp_server.process_in_frame(&mut rooms, &buffer[0..size], SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
+		udp_server.on_frame_receive(&mut rooms, &buffer[0..size], SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
 	}
 
 	#[test]
@@ -262,7 +262,7 @@ mod tests {
 		let mut buffer = [0; 512];
 		let frame = Frame::new(0, 0, false, Default::default());
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
-		udp_server.process_in_frame(&mut rooms, &buffer[0..size], SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
+		udp_server.on_frame_receive(&mut rooms, &buffer[0..size], SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
 	}
 
 	///
@@ -292,12 +292,12 @@ mod tests {
 		let addr_1 = SocketAddr::from_str("127.0.0.1:5002").unwrap();
 		let addr_2 = SocketAddr::from_str("127.0.0.1:5003").unwrap();
 
-		udp_server.process_in_frame(&mut rooms, &buffer[0..size], addr_1, Instant::now());
+		udp_server.on_frame_receive(&mut rooms, &buffer[0..size], addr_1, Instant::now());
 
 		let mut frame = Frame::new(0, 10, false, Default::default());
 		frame.headers.add(Header::MemberAndRoomId(member_and_room_id));
 		let size = frame.encode(&mut Cipher::new(&member_template.private_key), &mut buffer).unwrap();
-		udp_server.process_in_frame(&mut rooms, &buffer[0..size], addr_2, Instant::now());
+		udp_server.on_frame_receive(&mut rooms, &buffer[0..size], addr_2, Instant::now());
 
 		assert_eq!(udp_server.sessions[&member_and_room_id].peer_address.unwrap(), addr_1);
 	}

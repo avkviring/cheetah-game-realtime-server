@@ -148,12 +148,7 @@ impl Retransmitter {
 				frame: frame.clone(),
 				retransmit_count: 0,
 			});
-
 			self.wait_ack_frames.insert(original_frame_id);
-			if self.wait_ack_frames.len() > 500 {
-				tracing::error!("Wait ack frames overflow, size = {:?}", self.wait_ack_frames.len());
-				self.wait_ack_frames.clear();
-			}
 		}
 	}
 
@@ -170,7 +165,7 @@ impl Retransmitter {
 			return Err(DisconnectedReason::ByRetransmitWhenMaxWaitAck);
 		}
 
-		return Ok(());
+		Ok(())
 	}
 }
 

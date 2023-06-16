@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 use crate::agones::client::RegistryClient;
 use crate::agones::proto::status::{Addr, State};
 use crate::env::{get_env, get_internal_grpc_service_default_port, get_internal_srv_uri_from_env};
-use crate::server::manager::RoomsServerManager;
+use crate::server::manager::ServerManager;
 
 pub mod client;
 pub mod proto;
@@ -27,7 +27,7 @@ pub enum RegistryError {
 ///
 /// Цикл оповещения agones и NotifyService
 ///
-pub async fn run_agones(server_manager: Arc<Mutex<RoomsServerManager>>, max_rooms: usize) {
+pub async fn run_agones(server_manager: Arc<Mutex<ServerManager>>, max_rooms: usize) {
 	tracing::debug!("Agones agones sdk");
 	match rymder::Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
 		Ok((mut sdk, gameserver)) => {
@@ -82,7 +82,7 @@ pub async fn run_agones(server_manager: Arc<Mutex<RoomsServerManager>>, max_room
 	}
 }
 
-async fn is_server_running(server_manager: &Arc<Mutex<RoomsServerManager>>) -> bool {
+async fn is_server_running(server_manager: &Arc<Mutex<ServerManager>>) -> bool {
 	!server_manager.lock().await.get_halt_signal().load(Ordering::Relaxed)
 }
 

@@ -18,21 +18,21 @@ use crate::room::command::ServerCommandError;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::MemberTemplate;
 use crate::room::RoomInfo;
-use crate::server::manager::{TaskError, TaskExecutionError};
-use crate::RoomsServerManager;
+use crate::server::manager::{ManagementTaskError, ManagementTaskExecutionError};
+use crate::ServerManager;
 
 mod from;
 pub mod proto;
 
 pub struct RealtimeInternalService {
-	pub server_manager: Arc<Mutex<RoomsServerManager>>,
+	pub server_manager: Arc<Mutex<ServerManager>>,
 }
 
 const SUPER_MEMBER_KEY_ENV: &str = "SUPER_MEMBER_KEY";
 
 impl RealtimeInternalService {
 	#[must_use]
-	pub fn new(server_manager: Arc<Mutex<RoomsServerManager>>) -> Self {
+	pub fn new(server_manager: Arc<Mutex<ServerManager>>) -> Self {
 		RealtimeInternalService { server_manager }
 	}
 
@@ -46,7 +46,7 @@ impl RealtimeInternalService {
 		})
 	}
 
-	fn create_super_member_if_need(server: &mut MutexGuard<'_, RoomsServerManager>, room_id: RoomId) -> Result<(), TaskError> {
+	fn create_super_member_if_need(server: &mut MutexGuard<'_, ServerManager>, room_id: RoomId) -> Result<(), ManagementTaskError> {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
@@ -201,15 +201,15 @@ impl Internal for RealtimeInternalService {
 	}
 }
 
-impl From<TaskError> for Status {
-	fn from(task_err: TaskError) -> Self {
+impl From<ManagementTaskError> for Status {
+	fn from(task_err: ManagementTaskError) -> Self {
 		match task_err {
-			TaskError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
-			TaskError::ChannelSendError(e) => Status::unavailable(e.to_string()),
-			TaskError::UnexpectedResultError => Status::internal("unexpected management task result type"),
-			TaskError::TaskExecutionError(TaskExecutionError::RoomNotFound(e)) => Status::not_found(e.to_string()),
-			TaskError::TaskExecutionError(TaskExecutionError::UnknownPluginName(e)) => Status::invalid_argument(e),
-			TaskError::TaskExecutionError(TaskExecutionError::ServerCommandError(server_err)) => match server_err {
+			ManagementTaskError::ChannelRecvError(e) => Status::deadline_exceeded(e.to_string()),
+			ManagementTaskError::ChannelSendError(e) => Status::unavailable(e.to_string()),
+			ManagementTaskError::UnexpectedResultError => Status::internal("unexpected management task result type"),
+			ManagementTaskError::TaskExecutionError(ManagementTaskExecutionError::RoomNotFound(e)) => Status::not_found(e.to_string()),
+			ManagementTaskError::TaskExecutionError(ManagementTaskExecutionError::UnknownPluginName(e)) => Status::invalid_argument(e),
+			ManagementTaskError::TaskExecutionError(ManagementTaskExecutionError::ServerCommandError(server_err)) => match server_err {
 				ServerCommandError::MemberNotFound(e) => Status::not_found(e.to_string()),
 				ServerCommandError::RoomNotFound(e) => Status::not_found(e.to_string()),
 				e => Status::internal(e.to_string()),
@@ -252,7 +252,7 @@ mod test {
 	use crate::grpc::proto::internal::{DeleteMemberRequest, RoomMembersCountResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
 	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
-	use crate::server::manager::RoomsServerManager;
+	use crate::server::manager::ServerManager;
 
 	#[tokio::test]
 	async fn should_get_rooms() {
@@ -445,7 +445,7 @@ mod test {
 	async fn test_mark_room_as_ready() {
 		let plugin_name = "plugin_1";
 		let plugin_names = FnvHashSet::from_iter([plugin_name.to_owned()]);
-		let server_manager = Arc::new(Mutex::new(RoomsServerManager::new(bind_to_free_socket().unwrap(), plugin_names).unwrap()));
+		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap(), plugin_names).unwrap()));
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
 
@@ -542,7 +542,7 @@ mod test {
 		status.unwrap();
 	}
 
-	fn new_server_manager() -> RoomsServerManager {
-		RoomsServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
+	fn new_server_manager() -> ServerManager {
+		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
 	}
 }

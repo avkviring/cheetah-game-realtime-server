@@ -5,7 +5,7 @@ use std::time::Duration;
 use crate::debug::proto::admin;
 use crate::debug::proto::shared;
 use crate::debug::tracer::{TracedBothDirectionCommand, TracedCommand, TracerSessionCommand};
-use crate::server::manager::RoomsServerManager;
+use crate::server::manager::ServerManager;
 use cheetah_common::room::field::FieldType;
 use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_protocol::trace::Trace;
@@ -14,12 +14,12 @@ use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
 pub struct CommandTracerGRPCService {
-	pub manager: Arc<Mutex<RoomsServerManager>>,
+	pub manager: Arc<Mutex<ServerManager>>,
 }
 
 impl CommandTracerGRPCService {
 	#[must_use]
-	pub fn new(relay_server: Arc<Mutex<RoomsServerManager>>) -> Self {
+	pub fn new(relay_server: Arc<Mutex<ServerManager>>) -> Self {
 		Self { manager: relay_server }
 	}
 

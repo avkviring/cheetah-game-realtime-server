@@ -11,14 +11,14 @@ use cheetah_common::room::object::GameObjectId;
 use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
 use cheetah_protocol::{RoomId, RoomMemberId};
 use cheetah_server::room::template::config::MemberTemplate;
-use cheetah_server::server::manager::RoomsServerManager;
+use cheetah_server::server::manager::ServerManager;
 
 use crate::helpers::server::IntegrationTestServerBuilder;
 
 pub struct IntegrationTestHelper {
 	socket_addr: SocketAddr,
 	pub room_id: RoomId,
-	pub server: RoomsServerManager,
+	pub server: ServerManager,
 }
 
 impl IntegrationTestHelper {
