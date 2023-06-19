@@ -195,6 +195,7 @@ where
 			self.rtt.build_frame(&mut frame, now);
 			self.keep_alive.build_frame(&mut frame, now);
 			self.retransmitter.build_frame(&frame, now);
+			self.ack_sender.build_out_frame(&mut frame, now);
 			out.push_back(frame);
 		}
 		self.next_packed_id += 1;
