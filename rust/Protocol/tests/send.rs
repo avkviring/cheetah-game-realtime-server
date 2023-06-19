@@ -1,4 +1,4 @@
-use crate::stub::{create_protocol, Channel};
+use crate::stub::{create_protocol, Channel, Data};
 
 pub mod stub;
 
@@ -9,7 +9,7 @@ pub mod stub;
 fn should_send_from_client() {
 	let mut peer_a = create_protocol();
 	let mut peer_b = create_protocol();
-	peer_a.output_data_producer.add(&[1, 2, 3]);
+	peer_a.output_data_producer.add(Data::reliable(&[1, 2, 3]));
 
 	let mut channel = Channel::default();
 	channel.cycle(1, &mut peer_a, &mut peer_b);

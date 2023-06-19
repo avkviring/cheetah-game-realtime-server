@@ -63,9 +63,7 @@ impl Frame {
 
 		Ok(frame)
 	}
-}
 
-impl Frame {
 	///
 	/// Преобразуем Frame в набор байт для отправки через сеть
 	///
@@ -74,7 +72,7 @@ impl Frame {
 		let mut frame_cursor = Cursor::new(out);
 		frame_cursor.write_variable_u64(self.connection_id).map_err(EncodeError::Io)?;
 		frame_cursor.write_variable_u64(self.frame_id).map_err(EncodeError::Io)?;
-		frame_cursor.write_u8(if self.reliability { 1 } else { 0 }).map_err(EncodeError::Io)?;
+		frame_cursor.write_u8(u8::from(self.reliability)).map_err(EncodeError::Io)?;
 		self.headers.encode_headers(&mut frame_cursor).map_err(EncodeError::Io)?;
 		self.segment.encode(&mut frame_cursor, cipher, self.frame_id)?;
 		Ok(frame_cursor.position() as usize)

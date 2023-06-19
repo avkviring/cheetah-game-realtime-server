@@ -24,11 +24,35 @@ impl InputDataHandler for StubInputDataHandler {
 
 #[derive(Default)]
 pub struct StubOutputDataProducer {
-	items: VecDeque<Vec<u8>>,
+	items: VecDeque<Data>,
+}
+
+pub struct Data {
+	pub bytes: Vec<u8>,
+	pub reliable: bool,
+}
+
+impl From<&[u8]> for Data {
+	fn from(source: &[u8]) -> Self {
+		Self::unreliable(source)
+	}
+}
+
+impl Data {
+	pub fn reliable(bytes: &[u8]) -> Self {
+		Self { bytes: bytes.into(), reliable: true }
+	}
+
+	pub fn unreliable(bytes: &[u8]) -> Self {
+		Self { bytes: bytes.into(), reliable: false }
+	}
 }
 
 impl StubOutputDataProducer {
-	pub fn add(&mut self, data: &[u8]) {
+	pub fn add<T>(&mut self, data: T)
+	where
+		T: Into<Data>,
+	{
 		self.items.push_back(data.into());
 	}
 }
@@ -42,8 +66,8 @@ impl OutputDataProducer for StubOutputDataProducer {
 		match self.items.pop_front() {
 			None => (0, false),
 			Some(source) => {
-				packet[0..source.len()].copy_from_slice(source.as_slice());
-				(source.len(), true)
+				packet[0..source.bytes.len()].copy_from_slice(source.bytes.as_slice());
+				(source.bytes.len(), source.reliable)
 			}
 		}
 	}

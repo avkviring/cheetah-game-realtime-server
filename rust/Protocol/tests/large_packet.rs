@@ -1,4 +1,4 @@
-use crate::stub::{create_protocol, Channel};
+use crate::stub::{create_protocol, Channel, Data};
 
 pub mod stub;
 
@@ -8,7 +8,7 @@ fn should_transfer_large_packet() {
 	let mut peer_b = create_protocol();
 
 	let original: [u8; 16384] = rand::random();
-	peer_a.output_data_producer.add(&original);
+	peer_a.output_data_producer.add(Data::reliable(&original));
 
 	let mut channel = Channel::default();
 	channel.cycle(20, &mut peer_a, &mut peer_b);
