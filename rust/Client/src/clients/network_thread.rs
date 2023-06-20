@@ -72,7 +72,7 @@ impl NetworkChannelManager {
 			self.commands_from_server();
 			self.request_from_controller();
 			self.update_state();
-			thread::sleep(Duration::from_millis(7));
+			thread::sleep(Duration::from_millis(1));
 		}
 		tracing::info!("Close network_thread client");
 	}
