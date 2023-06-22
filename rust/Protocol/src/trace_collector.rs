@@ -7,7 +7,7 @@ use tracing_core::field::Visit;
 use tracing_core::{Field, LevelFilter};
 use tracing_log::{log, LogTracer};
 use tracing_subscriber::layer::{Context, SubscriberExt};
-use tracing_subscriber::{fmt, Layer, Registry};
+use tracing_subscriber::{Layer, Registry};
 
 lazy_static! {
 	pub static ref TRACER_COLLECTOR: Mutex<TracerCollector> = Mutex::new(TracerCollector::setup());
@@ -31,8 +31,7 @@ pub struct Trace {
 impl TracerCollector {
 	fn setup() -> Self {
 		LogTracer::builder().with_max_level(log::LevelFilter::Info).init().unwrap();
-		let fmt_layer = fmt::layer().with_target(false);
-		let subscriber = Registry::default().with(fmt_layer).with(TracerCollectorLayer);
+		let subscriber = Registry::default().with(TracerCollectorLayer);
 		tracing::subscriber::set_global_default(subscriber).expect("Setting default subscriber failed");
 		Self {
 			level: tracing_core::Level::INFO,

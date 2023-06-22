@@ -5,6 +5,8 @@ use cheetah_protocol::trace_collector::TRACER_COLLECTOR;
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) enum LogLevel {
+	Trace,
+	Debug,
 	Info,
 	Warn,
 	Error,
@@ -22,6 +24,8 @@ pub(crate) extern "C" fn set_max_log_level(log_level: LogLevel) {
 		LogLevel::Info => tracing_core::Level::INFO,
 		LogLevel::Warn => tracing_core::Level::WARN,
 		LogLevel::Error => tracing_core::Level::ERROR,
+		LogLevel::Trace => tracing_core::Level::TRACE,
+		LogLevel::Debug => tracing_core::Level::DEBUG,
 	});
 }
 
@@ -40,8 +44,8 @@ pub(crate) extern "C" fn collect_logs(on_log_message: extern "C" fn(LogLevel, *c
 					tracing_core::Level::ERROR => LogLevel::Error,
 					tracing_core::Level::INFO => LogLevel::Info,
 					tracing_core::Level::WARN => LogLevel::Warn,
-					tracing_core::Level::DEBUG => LogLevel::Warn,
-					tracing_core::Level::TRACE => LogLevel::Warn,
+					tracing_core::Level::DEBUG => LogLevel::Debug,
+					tracing_core::Level::TRACE => LogLevel::Trace,
 				};
 				on_log_message(level, string.as_ptr());
 			}
