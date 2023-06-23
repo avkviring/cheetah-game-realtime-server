@@ -177,8 +177,12 @@ namespace Games.Cheetah.EmbeddedServer.API
                 case EmeddedServerLogLevel.Error:
                     Debug.LogWarning("server:\t" + log);
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(level), level, null);
+                case EmeddedServerLogLevel.Trace:
+                    Debug.Log("server:\t" + log);
+                    break;
+                case EmeddedServerLogLevel.Debug:
+                    Debug.Log("server:\t" + log);
+                    break;
             }
         }
 #else
@@ -194,6 +198,12 @@ namespace Games.Cheetah.EmbeddedServer.API
                     break;
                 case EmeddedServerLogLevel.Error:
                     Log.Error(log);
+                    break;
+                case EmeddedServerLogLevel.Trace:
+                    Log.Debug(log);
+                    break;
+                case EmeddedServerLogLevel.Debug:
+                    Log.Debug(log);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(level), level, null);

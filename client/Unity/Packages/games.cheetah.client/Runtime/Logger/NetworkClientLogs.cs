@@ -29,8 +29,12 @@ namespace Games.Cheetah.Client.Logger
                 case CheetahLogLevel.Error:
                     Debug.LogError("client:\t" + log);
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(level), level, null);
+                case CheetahLogLevel.Trace:
+                    Debug.Log("client:\t" + log);
+                    break;
+                case CheetahLogLevel.Debug:
+                    Debug.Log("client:\t" + log);
+                    break;
             }
         }
 
