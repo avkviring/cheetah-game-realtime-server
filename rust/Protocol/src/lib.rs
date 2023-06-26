@@ -150,6 +150,7 @@ where
 	}
 
 	fn reset_protocol(&mut self, frame: &Frame, now: Instant) {
+		tracing::info!("Protocol: reset protocol");
 		self.connection_id = frame.connection_id;
 		self.next_frame_id = 1;
 		self.disconnect_by_timeout = DisconnectByTimeout::new(now);
@@ -206,13 +207,17 @@ where
 	///
 	#[must_use]
 	pub fn is_disconnected(&self, now: Instant) -> Option<DisconnectedReason> {
-		if let Err(reason) = self.retransmitter.disconnected(now) {
+		let reason = if let Err(reason) = self.retransmitter.disconnected(now) {
 			Some(reason)
 		} else if self.disconnect_by_timeout.disconnected(now) {
 			Some(DisconnectedReason::ByTimeout)
 		} else {
 			self.disconnect_by_command.disconnected().map(DisconnectedReason::ByCommand)
+		};
+		if reason.is_some() {
+			tracing::info!("Protocol: is disconnected {:?}", reason);
 		}
+		reason
 	}
 
 	///
@@ -237,10 +242,11 @@ where
 
 #[cfg(test)]
 pub mod tests {
+	use std::time::Instant;
+
 	use crate::frame::Frame;
 	use crate::frame::{ConnectionId, FrameId};
 	use crate::{InputDataHandler, OutputDataProducer, Protocol};
-	use std::time::Instant;
 
 	#[derive(Default)]
 	struct StubDataRecvHandler {

@@ -16,6 +16,10 @@ namespace Games.Cheetah.Client
     public class NetworkClient
     {
         public readonly uint MemberId;
+        public readonly ulong roomId;
+        public readonly byte[] privateUserKey;
+        public readonly string serverUdpHost;
+        public readonly ushort serverUdpPort;
 
         public readonly CodecRegistry CodecRegistry;
         internal readonly ushort Id;
@@ -63,11 +67,15 @@ namespace Games.Cheetah.Client
             CodecRegistry codecRegistry)
         {
             this.ffi = ffi;
-            NetworkClientLogs.CollectLogs(false); // очищаем логи с предыдущего клиента
+            this.serverUdpHost = serverUdpHost;
+            this.serverUdpPort = serverUdpPort; // очищаем логи с предыдущего клиента
             CodecRegistry = codecRegistry;
             MemberId = memberId;
+            this.roomId = roomId;
+            this.privateUserKey = privateUserKey;
 
             var userPrivateKey = new NetworkBuffer(privateUserKey);
+
             ResultChecker.Check(ffi.CreateClient(
                 connectionId,
                 serverUdpHost + ":" + serverUdpPort,
