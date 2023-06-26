@@ -174,7 +174,7 @@ impl Network {
 						tracing::error!("[network] member session not found {:?}", member_and_room_id);
 					}
 					Some(session) => {
-						if frame.frame_id > session.last_receive_frame_id || session.last_receive_frame_id == 0 {
+						if Self::is_possible_peer_address_changed(&frame, session) {
 							session.peer_address.replace(address);
 							session.last_receive_frame_id = frame.frame_id;
 						}
@@ -190,6 +190,10 @@ impl Network {
 				tracing::error!("[network] Frame Decode error {:?}", e);
 			}
 		}
+	}
+
+	fn is_possible_peer_address_changed(frame: &Frame, session: &mut MemberSession) -> bool {
+		frame.connection_id > session.protocol.connection_id || frame.frame_id > session.last_receive_frame_id || session.last_receive_frame_id == 0
 	}
 
 	pub fn register_member(&mut self, now: Instant, room_id: RoomId, member_id: RoomMemberId, template: MemberTemplate) {

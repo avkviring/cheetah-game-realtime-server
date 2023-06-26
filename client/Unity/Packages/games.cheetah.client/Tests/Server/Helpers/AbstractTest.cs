@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Games_Cheetah_Client_Tests_Server_Types;
 using Games.Cheetah.Client.Codec;
+using Games.Cheetah.Client.Logger;
 using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.EmbeddedServer.API;
 using Games.Cheetah.GRPC.Internal;
@@ -26,12 +27,14 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
         protected CreateMemberResponse memberC;
         protected CodecRegistry codecRegistry;
 
+        public ulong RoomId { get; private set; }
+
 
         [SetUp]
         public void SetUp()
         {
             server = new EmbeddedServer.API.EmbeddedServer(IPAddress.Loopback);
-            EmbeddedServer.API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Error);
+            EmbeddedServer.API.EmbeddedServer.InitLogger(EmeddedServerLogLevel.Info);
             var grpcClient = server.CreateGrpcClient();
             Task.Run(async () =>
             {
@@ -100,6 +103,7 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
                     .Register(_ => new TurretsParamsStructureCodec()).Build();
 
 
+            RoomId = roomIdResponse.RoomId;
             // подключаем первого клиента
             clientA = ConnectToServer(server, roomIdResponse.RoomId, memberA, codecRegistry);
             clientA.AttachToRoom();
