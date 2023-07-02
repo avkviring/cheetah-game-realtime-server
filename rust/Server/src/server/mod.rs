@@ -41,10 +41,16 @@ pub struct Server {
 }
 
 impl Server {
-	pub(crate) fn new(socket: UdpSocket, management_task_receiver: Receiver<ManagementTaskChannel>, halt_signal: Arc<AtomicBool>, plugin_names: FnvHashSet<String>) -> Result<Self, io::Error> {
+	pub(crate) fn new(
+		socket: UdpSocket,
+		management_task_receiver: Receiver<ManagementTaskChannel>,
+		halt_signal: Arc<AtomicBool>,
+		plugin_names: FnvHashSet<String>,
+		disconnect_duration: Duration,
+	) -> Result<Self, io::Error> {
 		let measurer = Measurer::new(prometheus::default_registry()).into();
 		Ok(Self {
-			network: Network::new(socket)?,
+			network: Network::new(socket, disconnect_duration)?,
 			room_registry: RoomRegistry::new(plugin_names.clone()),
 			management_task_receiver,
 			halt_signal,

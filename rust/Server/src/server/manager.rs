@@ -110,13 +110,13 @@ impl Drop for ServerManager {
 }
 
 impl ServerManager {
-	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>) -> Result<Self, RoomsServerManagerError> {
+	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>, disconnect_duration: Duration) -> Result<Self, RoomsServerManagerError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = Arc::clone(&halt_signal);
 		thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
-			.spawn(move || match Server::new(socket, receiver, halt_signal, plugin_names) {
+			.spawn(move || match Server::new(socket, receiver, halt_signal, plugin_names, disconnect_duration) {
 				Ok(server) => {
 					server.run();
 					Ok(())
@@ -246,6 +246,8 @@ impl ServerManager {
 
 #[cfg(test)]
 mod test {
+	use std::time::Duration;
+
 	use fnv::FnvHashSet;
 
 	use cheetah_common::network::bind_to_free_socket;
@@ -278,6 +280,6 @@ mod test {
 	}
 
 	fn new_server_manager() -> ServerManager {
-		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
+		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default(), Duration::from_secs(30)).unwrap()
 	}
 }

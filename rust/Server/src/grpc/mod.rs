@@ -230,6 +230,7 @@ impl From<RoomInfo> for GetRoomInfoResponse {
 #[cfg(test)]
 mod test {
 	use std::sync::Arc;
+	use std::time::Duration;
 
 	use fnv::FnvHashSet;
 	use num_traits::ToPrimitive;
@@ -445,7 +446,7 @@ mod test {
 	async fn test_mark_room_as_ready() {
 		let plugin_name = "plugin_1";
 		let plugin_names = FnvHashSet::from_iter([plugin_name.to_owned()]);
-		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap(), plugin_names).unwrap()));
+		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap(), plugin_names, Duration::from_secs(30)).unwrap()));
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
 
@@ -543,6 +544,6 @@ mod test {
 	}
 
 	fn new_server_manager() -> ServerManager {
-		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default()).unwrap()
+		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default(), Duration::from_secs(30)).unwrap()
 	}
 }

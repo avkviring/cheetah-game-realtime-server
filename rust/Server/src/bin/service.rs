@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::time::Duration;
 
 use fnv::FnvHashSet;
 
@@ -19,7 +20,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.set_internal_grpc_service_bind_address(get_internal_grpc_service_default_address())
 		.set_internal_webgrpc_service_bind_address(get_internal_webgrpc_service_default_address())
 		.set_games_service_bind_address("0.0.0.0:5555".parse().unwrap())
-		.set_plugin_names(get_plugin_names("PLUGIN_NAMES"));
+		.set_plugin_names(get_plugin_names("PLUGIN_NAMES"))
+		.set_disconnect_duration(Duration::from_secs(get_env_or_default("DISCONNET_TIMEOUT_IN_SEC", "30").parse().unwrap()));
 
 	if std::env::var("ENABLE_AGONES").is_ok() {
 		builder = builder.enable_agones();

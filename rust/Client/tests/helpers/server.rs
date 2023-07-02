@@ -1,4 +1,5 @@
 use std::net::SocketAddr;
+use std::time::Duration;
 
 use fnv::FnvHashSet;
 
@@ -21,6 +22,7 @@ pub struct IntegrationTestServerBuilder {
 impl IntegrationTestServerBuilder {
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(55);
 	pub const DEFAULT_TEMPLATE: GameObjectTemplateId = 1;
+	pub const DISCONNECT_DURATION: Duration = Duration::from_secs(30);
 
 	pub fn set_permission(&mut self, template: GameObjectTemplateId, field_id: FieldId, field_type: FieldType, group: AccessGroups, permission: Permission) {
 		let field = PermissionField {
@@ -43,7 +45,7 @@ impl IntegrationTestServerBuilder {
 	pub fn build(self) -> (SocketAddr, ServerManager, RoomId) {
 		let socket = bind_to_free_socket().unwrap();
 		let addr = socket.local_addr().unwrap();
-		let mut server = ServerManager::new(socket, FnvHashSet::default()).unwrap();
+		let mut server = ServerManager::new(socket, FnvHashSet::default(), Self::DISCONNECT_DURATION).unwrap();
 		let room_id = server.create_room(self.template).ok().unwrap();
 		(addr, server, room_id)
 	}
