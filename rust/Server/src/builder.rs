@@ -35,7 +35,7 @@ impl Default for ServerBuilder {
 			internal_webgrpc_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			is_agones_enabled: false,
 			plugin_names: FnvHashSet::default(),
-			disconnect_duration: Duration::from_secs(30),
+			disconnect_duration: Duration::from_secs(180),
 		}
 	}
 }
