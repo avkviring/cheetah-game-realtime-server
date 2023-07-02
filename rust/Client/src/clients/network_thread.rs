@@ -54,7 +54,7 @@ impl NetworkChannelManager {
 		Ok(NetworkChannelManager {
 			connection_status,
 			commands_from_server: in_commands,
-			channel: NetworkChannel::new(connection_id, false, private_key, member_id, room_id, server_address, Instant::now())?,
+			channel: NetworkChannel::new(connection_id, false, private_key, member_id, room_id, server_address, Instant::now(), Duration::from_secs(30))?,
 			request_from_controller: receiver,
 			protocol_time_offset_for_test: None,
 			shared_statistics,

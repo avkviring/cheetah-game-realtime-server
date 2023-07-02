@@ -2,7 +2,7 @@ extern crate core;
 
 use std::collections::VecDeque;
 use std::fmt::Debug;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crate::disconnect::command::DisconnectByCommand;
 use crate::disconnect::timeout::DisconnectByTimeout;
@@ -84,11 +84,11 @@ where
 	OUT: OutputDataProducer,
 {
 	#[must_use]
-	pub fn new(input_data_handler: IN, output_data_producer: OUT, connection_id: ConnectionId, now: Instant, start_application_time: Instant) -> Self {
+	pub fn new(input_data_handler: IN, output_data_producer: OUT, connection_id: ConnectionId, now: Instant, start_application_time: Instant, disconnect_timeout: Duration) -> Self {
 		Self {
 			next_frame_id: 1,
 			next_packed_id: 0,
-			disconnect_by_timeout: DisconnectByTimeout::new(now),
+			disconnect_by_timeout: DisconnectByTimeout::new(now, disconnect_timeout),
 			retransmitter: Retransmitter::default(),
 			rtt: RoundTripTime::new(start_application_time),
 			connection_id,
@@ -153,7 +153,7 @@ where
 		tracing::info!("Protocol: reset protocol");
 		self.connection_id = frame.connection_id;
 		self.next_frame_id = 1;
-		self.disconnect_by_timeout = DisconnectByTimeout::new(now);
+		self.disconnect_by_timeout = DisconnectByTimeout::new(now, self.disconnect_by_timeout.timeout);
 		self.replay_protection = Default::default();
 		self.ack_sender = Default::default();
 		self.retransmitter = Default::default();
@@ -242,7 +242,7 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use std::time::Instant;
+	use std::time::{Duration, Instant};
 
 	use crate::frame::Frame;
 	use crate::frame::{ConnectionId, FrameId};
@@ -284,6 +284,6 @@ pub mod tests {
 	}
 
 	fn create_protocol(connection_id: ConnectionId) -> Protocol<StubDataRecvHandler, StubDataSource> {
-		Protocol::<StubDataRecvHandler, StubDataSource>::new(Default::default(), Default::default(), connection_id, Instant::now(), Instant::now())
+		Protocol::<StubDataRecvHandler, StubDataSource>::new(Default::default(), Default::default(), connection_id, Instant::now(), Instant::now(), Duration::from_millis(100))
 	}
 }

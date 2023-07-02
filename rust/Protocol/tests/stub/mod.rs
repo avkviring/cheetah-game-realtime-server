@@ -120,5 +120,5 @@ impl Channel {
 }
 
 pub fn create_protocol() -> Protocol<StubInputDataHandler, StubOutputDataProducer> {
-	Protocol::<StubInputDataHandler, StubOutputDataProducer>::new(Default::default(), Default::default(), 0, Instant::now(), Instant::now())
+	Protocol::<StubInputDataHandler, StubOutputDataProducer>::new(Default::default(), Default::default(), 0, Instant::now(), Instant::now(), Duration::from_millis(100))
 }

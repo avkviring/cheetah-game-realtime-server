@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::{Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
+use std::time::Duration;
 pub use std::time::Instant;
 
 use cheetah_common::network::collectors::in_collector::InCommandsCollector;
@@ -21,6 +22,7 @@ pub struct Network {
 	socket: UdpSocket,
 	start_application_time: Instant,
 	frames: VecDeque<Frame>,
+	disconnect_duration: Duration,
 	pub income_command_count: usize,
 	pub outcome_command_count: usize,
 	pub income_frame_count: usize,
@@ -36,7 +38,7 @@ struct MemberSession {
 }
 
 impl Network {
-	pub fn new(socket: UdpSocket) -> Result<Self, Error> {
+	pub fn new(socket: UdpSocket, disconnect_duration: Duration) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		Ok(Self {
 			sessions: Default::default(),
@@ -47,6 +49,7 @@ impl Network {
 			outcome_command_count: 0,
 			income_frame_count: 0,
 			outcome_frame_count: 0,
+			disconnect_duration,
 		})
 	}
 
@@ -203,7 +206,7 @@ impl Network {
 				peer_address: Default::default(),
 				private_key: template.private_key,
 				last_receive_frame_id: 0,
-				protocol: CheetahProtocol::new(InCommandsCollector::new(true), Default::default(), 0, now, self.start_application_time),
+				protocol: CheetahProtocol::new(InCommandsCollector::new(true), Default::default(), 0, now, self.start_application_time, self.disconnect_duration),
 			},
 		);
 	}
@@ -225,7 +228,7 @@ impl Network {
 mod tests {
 	use std::net::SocketAddr;
 	use std::str::FromStr;
-	use std::time::Instant;
+	use std::time::{Duration, Instant};
 
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_protocol::codec::cipher::Cipher;
@@ -320,6 +323,6 @@ mod tests {
 	}
 
 	fn create_network_layer() -> Network {
-		Network::new(bind_to_free_socket().unwrap()).unwrap()
+		Network::new(bind_to_free_socket().unwrap(), Duration::from_millis(1000)).unwrap()
 	}
 }
