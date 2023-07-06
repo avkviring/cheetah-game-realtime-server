@@ -35,6 +35,7 @@ impl OutputDataProducer for OutCommandsCollector {
 
 impl OutCommandsCollector {
 	pub fn add_command(&mut self, channel_type: ReliabilityGuarantees, command: BothDirectionCommand) {
+		tracing::trace!("s2c: {:?}", command);
 		match self.create_channel(channel_type) {
 			None => {
 				tracing::error!("can not create channel for {:?} {:?}", channel_type, command);
