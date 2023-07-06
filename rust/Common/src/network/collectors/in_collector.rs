@@ -1,8 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
-use log::trace;
-
 use cheetah_protocol::InputDataHandler;
 
 use crate::commands::codec::decoder::decode_commands;

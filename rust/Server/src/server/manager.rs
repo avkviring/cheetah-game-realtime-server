@@ -12,7 +12,6 @@ use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::debug::proto::admin;
-use crate::debug::tracer::TracerSessionCommand;
 use crate::room::command::ServerCommandError;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
@@ -39,7 +38,6 @@ pub enum ManagementTask {
 	Dump(RoomId),
 	GetRooms,
 	GetRoomsMemberCount,
-	CommandTracerSessionTask(RoomId, TracerSessionCommand),
 	DeleteRoom(RoomId),
 	PutForwardedCommandConfig(RoomId, ForwardConfig),
 	MarkRoomAsReady(RoomId, String),
@@ -55,7 +53,6 @@ pub enum ManagementTaskResult {
 	Dump(admin::DumpResponse),
 	GetRooms(Vec<RoomId>),
 	GetRoomsMemberCount(Vec<RoomMembersCount>),
-	CommandTracerSessionTask,
 	DeleteRoom,
 	PutForwardedCommandConfig,
 	MarkRoomAsReady,
@@ -215,14 +212,6 @@ impl ServerManager {
 				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
-	}
-
-	///
-	/// Выполнить задачу в `CommandTracerSessions` конкретной комнаты
-	/// Подход с вложенным enum для отдельного класса задач применяется для изолирования функционала
-	///
-	pub(crate) fn execute_command_trace_sessions_task(&self, room_id: RoomId, task: TracerSessionCommand) -> Result<(), ManagementTaskError> {
-		self.execute_task(ManagementTask::CommandTracerSessionTask(room_id, task)).map(|_| ())
 	}
 
 	fn execute_task(&self, task: ManagementTask) -> Result<ManagementTaskResult, ManagementTaskError> {

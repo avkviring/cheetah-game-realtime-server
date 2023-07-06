@@ -20,7 +20,6 @@ use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_protocol::{RoomId, RoomMemberId};
 use member::RoomMember;
 
-use crate::debug::tracer::CommandTracerSessions;
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::forward::ForwardConfig;
 use crate::room::object::{GameObject, S2CCommandsCollector};
@@ -43,7 +42,6 @@ pub struct Room {
 	pub(crate) objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ReliabilityGuarantees>,
 	pub member_id_generator: RoomMemberId,
-	pub command_trace_session: Rc<RefCell<CommandTracerSessions>>,
 	pub room_object_id_generator: u32,
 	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, S2CCommandsCollector)>>>,
 	objects_singleton_key: HashMap<Buffer, GameObjectId, FnvBuildHasher>,
@@ -80,7 +78,6 @@ impl Room {
 			#[cfg(test)]
 			test_out_commands: Default::default(),
 			member_id_generator: 0,
-			command_trace_session: Default::default(),
 			room_object_id_generator: 65536,
 			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 			template_name: template.name.clone(),
@@ -169,13 +166,10 @@ impl Room {
 			return;
 		}
 
-		let tracer = Rc::clone(&self.command_trace_session);
 		for command_with_channel in commands {
 			match &command_with_channel.command {
 				BothDirectionCommand::C2S(command) => {
 					self.current_channel.replace(From::from(&command_with_channel.reliability_guarantees));
-					tracer.borrow_mut().collect_c2s(&self.objects, member_id, command);
-
 					if self.should_forward(command, member_id) {
 						if let Err(e) = self.forward_to_super_members(command, member_id) {
 							e.log_error(self.id, member_id);

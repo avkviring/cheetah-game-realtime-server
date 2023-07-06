@@ -144,28 +144,6 @@ impl C2SCommand {
 		}
 	}
 
-	#[must_use]
-	pub fn get_trace_string(&self) -> String {
-		match self {
-			C2SCommand::CreateGameObject(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
-			C2SCommand::CreatedGameObject(command) => {
-				format!("room_owner({:?}), singleton_key ({:?}) ", command.room_owner, command.get_singleton_key())
-			}
-			C2SCommand::IncrementLongValue(command) => format!("{:?}", command.increment),
-			C2SCommand::IncrementDouble(command) => format!("{:?}", command.increment),
-			C2SCommand::Event(command) => format!("{:?}", command.event),
-			C2SCommand::TargetEvent(command) => format!("target_member = {:?}, value = {:?}", command.target, command.event.event),
-			C2SCommand::Delete(_) => String::new(),
-			C2SCommand::DeleteField(command) => format!("field_type = {:?}", command.field_type),
-			C2SCommand::AttachToRoom => String::new(),
-			C2SCommand::DetachFromRoom => String::new(),
-			C2SCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
-			C2SCommand::SetLong(command) => format!("{:?}", command),
-			C2SCommand::SetDouble(command) => format!("{:?}", command),
-			C2SCommand::SetStructure(command) => format!("{:?}", command),
-		}
-	}
-
 	pub(crate) fn decode(
 		command_type_id: CommandTypeId,
 		object_id: Result<GameObjectId, CommandContextError>,
