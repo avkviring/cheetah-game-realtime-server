@@ -116,23 +116,6 @@ impl S2CCommand {
 		}
 	}
 
-	#[must_use]
-	pub fn get_trace_string(&self) -> String {
-		match self {
-			S2CCommand::Create(command) => format!("access({:?}), template({:?}) ", command.access_groups.0, command.template),
-			S2CCommand::Created(_) => String::new(),
-			S2CCommand::Event(command) => format!("{:?}", command.event),
-			S2CCommand::Delete(_) => String::new(),
-			S2CCommand::DeleteField(_) => String::new(),
-			S2CCommand::Forwarded(command) => format!("forward: member({:?}) command({:?})", command.creator, command.c2s.get_trace_string()),
-			S2CCommand::SetLong(command) => format!("{:?}", command),
-			S2CCommand::SetDouble(command) => format!("{:?}", command),
-			S2CCommand::SetStructure(command) => format!("{:?}", command),
-			S2CCommand::MemberConnected(command) => format!("member connected({:?})", command.member_id),
-			S2CCommand::MemberDisconnected(command) => format!("member disconnected({:?})", command.member_id),
-		}
-	}
-
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		match self {
 			S2CCommand::Create(command) => command.encode(out),

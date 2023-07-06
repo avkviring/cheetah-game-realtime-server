@@ -9,7 +9,6 @@ use tokio_stream::wrappers::TcpListenerStream;
 use tonic_health::ServingStatus;
 use tonic_web::GrpcWebLayer;
 
-use admin::command_tracer_server::CommandTracerServer;
 use admin::dump_server::DumpServer;
 
 use crate::agones::run_agones;
@@ -17,11 +16,9 @@ use crate::debug::dump::DumpGrpcService;
 use crate::debug::grpc::RealtimeAdminGRPCService;
 use crate::debug::proto::admin;
 use crate::debug::proto::admin::admin_server::AdminServer;
-use crate::debug::tracer::grpc::CommandTracerGRPCService;
 use crate::grpc::proto::internal::internal_server::InternalServer;
 use crate::grpc::RealtimeInternalService;
 use crate::server::manager::{RoomsServerManagerError, ServerManager};
-
 pub mod agones;
 pub mod builder;
 pub mod debug;
@@ -92,7 +89,6 @@ impl Server {
 		health_reporter.set_service_status("", ServingStatus::Serving).await;
 
 		let admin = AdminServer::new(RealtimeAdminGRPCService::new(Arc::clone(&manager)));
-		let tracer = CommandTracerServer::new(CommandTracerGRPCService::new(Arc::clone(&manager)));
 		let dumper = DumpServer::new(DumpGrpcService::new(manager));
 
 		tonic::transport::Server::builder()
@@ -101,7 +97,6 @@ impl Server {
 			.add_service(health_service)
 			.add_service(dumper)
 			.add_service(admin)
-			.add_service(tracer)
 			.serve_with_incoming(TcpListenerStream::new(tcp_listener))
 			.await
 			.unwrap();

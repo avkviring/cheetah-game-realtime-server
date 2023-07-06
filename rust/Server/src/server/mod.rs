@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 use std::net::UdpSocket;
 use std::ops::Add;
-use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
@@ -100,14 +99,6 @@ impl Server {
 				.map(|room| ManagementTaskResult::Dump(room.into()))
 				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.room_registry.rooms().map(|r| r.0).copied().collect()),
-			ManagementTask::CommandTracerSessionTask(room_id, task) => self
-				.room_registry
-				.get_mut(&room_id)
-				.map(|room| {
-					Rc::clone(&room.command_trace_session).borrow_mut().execute_task(task);
-					ManagementTaskResult::CommandTracerSessionTask
-				})
-				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::PutForwardedCommandConfig(room_id, config) => self
 				.room_registry
 				.get_mut(&room_id)

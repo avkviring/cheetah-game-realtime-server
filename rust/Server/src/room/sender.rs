@@ -28,8 +28,6 @@ impl Room {
 		let channel_type = self.current_channel.as_ref().unwrap_or(&ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 
 		let permission_manager = Rc::clone(&self.permission_manager);
-		let command_trace_session = Rc::clone(&self.command_trace_session);
-
 		let members_for_send = self
 			.members
 			.values_mut()
@@ -52,8 +50,6 @@ impl Room {
 					}
 				})
 				.for_each(|command| {
-					command_trace_session.borrow_mut().collect_s2c(object_template, member.id, &command.command);
-
 					let member_with_creator = S2CCommandWithCreator {
 						creator: command.creator,
 						command: command.command.clone(),
@@ -69,7 +65,6 @@ impl Room {
 	}
 
 	pub fn send_to_member(&mut self, member_id: &RoomMemberId, object_template: GameObjectTemplateId, commands: &[S2CCommandWithMeta]) -> Result<(), ServerCommandError> {
-		let command_trace_session = Rc::clone(&self.command_trace_session);
 		let permission_manager = Rc::clone(&self.permission_manager);
 		let channel = self.current_channel.unwrap_or(ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 		let member = self.get_member_mut(member_id)?;
@@ -86,8 +81,6 @@ impl Room {
 						creator: command.creator,
 						command: command.command.clone(),
 					};
-					command_trace_session.borrow_mut().collect_s2c(Some(object_template), member.id, &command.command);
-
 					member.out_commands.push(CommandWithChannelType {
 						channel_type: channel,
 						command: BothDirectionCommand::S2CWithCreator(command_with_meta),
