@@ -1,6 +1,8 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
+use log::trace;
+
 use cheetah_protocol::InputDataHandler;
 
 use crate::commands::codec::decoder::decode_commands;
@@ -32,6 +34,7 @@ impl InputDataHandler for InCommandsCollector {
 	fn on_input_data(&mut self, data: &[u8]) {
 		match decode_commands(self.server_side, data) {
 			Ok(commands) => {
+				tracing::trace!("c2s: {:?}", commands);
 				self.collect(commands.as_slice());
 			}
 			Err(e) => {
@@ -68,7 +71,7 @@ impl InCommandsCollector {
 			self.is_get_ready_commands = false;
 		}
 
-		commands.into_iter().cloned().for_each(|c| {
+		commands.iter().cloned().for_each(|c| {
 			match c.reliability_guarantees {
 				ReliabilityGuaranteesChannel::ReliableUnordered | ReliabilityGuaranteesChannel::UnreliableUnordered => self.ready_commands.push(c),
 				ReliabilityGuaranteesChannel::ReliableOrdered(group, sequence) | ReliabilityGuaranteesChannel::UnreliableOrdered(group, sequence) => {
