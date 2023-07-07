@@ -78,6 +78,7 @@ where
 	pub keep_alive: KeepAlive,
 	pub in_frame_counter: u64,
 	packets_collector: PacketsCollector,
+	pub configuration: ProtocolConfiguration,
 }
 
 impl<IN, OUT> Protocol<IN, OUT>
@@ -91,7 +92,7 @@ where
 			next_frame_id: 1,
 			next_packed_id: 0,
 			disconnect_by_timeout: DisconnectByTimeout::new(now, configuration.disconnect_timeout),
-			retransmitter: Retransmitter::default(),
+			retransmitter: Retransmitter::new(configuration.disconnect_timeout),
 			rtt: RoundTripTime::new(start_application_time),
 			connection_id,
 			input_data_handler,
@@ -102,6 +103,7 @@ where
 			keep_alive: Default::default(),
 			in_frame_counter: Default::default(),
 			packets_collector: Default::default(),
+			configuration,
 		}
 	}
 
@@ -158,7 +160,7 @@ where
 		self.disconnect_by_timeout = DisconnectByTimeout::new(now, self.disconnect_by_timeout.timeout);
 		self.replay_protection = Default::default();
 		self.ack_sender = Default::default();
-		self.retransmitter = Default::default();
+		self.retransmitter = Retransmitter::new(self.configuration.disconnect_timeout);
 		self.disconnect_by_command = Default::default();
 		self.keep_alive = Default::default();
 		self.in_frame_counter = Default::default();
@@ -209,12 +211,12 @@ where
 	///
 	#[must_use]
 	pub fn is_disconnected(&self, now: Instant) -> Option<DisconnectedReason> {
-		let reason = if let Err(reason) = self.retransmitter.disconnected(now) {
-			Some(reason)
-		} else if self.disconnect_by_timeout.disconnected(now) {
-			Some(DisconnectedReason::ByTimeout)
+		let reason = if self.retransmitter.is_disconnected(now) {
+			Some(DisconnectedReason::RetransmitOverflow)
+		} else if self.disconnect_by_timeout.is_disconnected(now) {
+			Some(DisconnectedReason::Timeout)
 		} else {
-			self.disconnect_by_command.disconnected().map(DisconnectedReason::ByCommand)
+			self.disconnect_by_command.disconnected().map(DisconnectedReason::Command)
 		};
 		if reason.is_some() {
 			tracing::info!("Protocol: is disconnected {:?}", reason);

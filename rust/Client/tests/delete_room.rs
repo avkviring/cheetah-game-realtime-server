@@ -32,7 +32,7 @@ fn should_disconnect_on_delete_room() {
 
 	execute_with_client(client, |api| {
 		let status = api.get_connection_status().unwrap();
-		assert!(matches!(status, ConnectionStatus::Disconnected(DisconnectedReason::ByCommand(DisconnectByCommandReason::RoomDeleted))));
+		assert!(matches!(status, ConnectionStatus::Disconnected(DisconnectedReason::Command(DisconnectByCommandReason::RoomDeleted))));
 		Ok(())
 	});
 }

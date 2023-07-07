@@ -49,7 +49,7 @@ fn should_disconnect_when_server_closed() {
 
 	execute_with_client(client, |api| {
 		let status = api.get_connection_status().unwrap();
-		assert!(matches!(status, ConnectionStatus::Disconnected(DisconnectedReason::ByTimeout)));
+		assert!(matches!(status, ConnectionStatus::Disconnected(DisconnectedReason::Timeout)));
 		Ok(())
 	});
 }
