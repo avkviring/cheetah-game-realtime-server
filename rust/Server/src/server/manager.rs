@@ -28,7 +28,6 @@ use crate::server::Server;
 pub struct ServerManager {
 	sender: Sender<ManagementTaskChannel>,
 	halt_signal: Arc<AtomicBool>,
-	pub created_room_counter: usize,
 }
 
 #[derive(Debug)]
@@ -128,7 +127,6 @@ impl ServerManager {
 		Ok(Self {
 			sender,
 			halt_signal: cloned_halt_signal,
-			created_room_counter: 0,
 		})
 	}
 
@@ -155,7 +153,6 @@ impl ServerManager {
 	pub fn create_room(&mut self, template: RoomTemplate) -> Result<RoomId, ManagementTaskError> {
 		self.execute_task(ManagementTask::CreateRoom(template)).map(|res| {
 			if let ManagementTaskResult::CreateRoom(room_id) = res {
-				self.created_room_counter += 1;
 				Ok(room_id)
 			} else {
 				Err(ManagementTaskError::UnexpectedResultError)
@@ -245,13 +242,6 @@ mod test {
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::ServerManager;
-
-	#[test]
-	fn should_increment_created_room_count() {
-		let mut server = new_server_manager();
-		server.create_room(RoomTemplate::default()).unwrap();
-		assert_eq!(server.created_room_counter, 1);
-	}
 
 	#[test]
 	fn should_get_rooms() {

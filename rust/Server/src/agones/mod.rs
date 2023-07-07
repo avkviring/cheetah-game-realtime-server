@@ -42,14 +42,15 @@ pub async fn run_agones(server_manager: Arc<Mutex<ServerManager>>, max_rooms: us
 
 			while is_server_running(&server_manager).await {
 				// при создании первой комнаты - вызываем allocate
-				if !allocated && server_manager.lock().await.created_room_counter > 0 {
+				let count_rooms = server_manager.lock().await.get_rooms().unwrap_or_default().len();
+				if !allocated && count_rooms > 0 {
 					sdk.allocate().await.unwrap();
 					tracing::debug!("Agones: invoked allocated");
 					allocated = true;
 				}
 
 				let state = if allocated {
-					if server_manager.lock().await.created_room_counter >= max_rooms {
+					if count_rooms >= max_rooms {
 						State::NotReady
 					} else {
 						State::Allocated
