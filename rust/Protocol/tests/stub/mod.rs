@@ -7,7 +7,7 @@ use rand::Rng;
 
 use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::frame::Frame;
-use cheetah_protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC;
+use cheetah_protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT;
 use cheetah_protocol::{InputDataHandler, OutputDataProducer, Protocol};
 
 #[derive(Default)]
@@ -105,7 +105,7 @@ impl Channel {
 				}
 			}
 
-			now = now.add(Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC));
+			now = now.add(RETRANSMIT_DEFAULT_ACK_TIMEOUT);
 		}
 	}
 
@@ -128,7 +128,7 @@ pub fn create_protocol() -> Protocol<StubInputDataHandler, StubOutputDataProduce
 		Instant::now(),
 		Instant::now(),
 		ProtocolConfiguration {
-			disconnect_timeout: Duration::from_millis(100),
+			disconnect_timeout: Duration::from_secs(10),
 		},
 	)
 }

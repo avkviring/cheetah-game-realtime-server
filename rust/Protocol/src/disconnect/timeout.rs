@@ -19,7 +19,7 @@ impl DisconnectByTimeout {
 		self.last_in_frame_time = now;
 	}
 	#[must_use]
-	pub fn disconnected(&self, now: Instant) -> bool {
+	pub fn is_disconnected(&self, now: Instant) -> bool {
 		now.sub(self.last_in_frame_time) > self.timeout
 	}
 }
@@ -38,7 +38,7 @@ mod tests {
 	pub(crate) fn should_not_disconnect_when_start() {
 		let now = Instant::now();
 		let handler = DisconnectByTimeout::new(now, Duration::from_millis(1));
-		assert!(!handler.disconnected(now));
+		assert!(!handler.is_disconnected(now));
 	}
 
 	///
@@ -49,7 +49,7 @@ mod tests {
 		let now = Instant::now();
 		let timeout = Duration::from_millis(100);
 		let handler = DisconnectByTimeout::new(now, timeout.clone());
-		assert!(handler.disconnected(now.add(timeout).add(Duration::from_millis(1))));
+		assert!(handler.is_disconnected(now.add(timeout).add(Duration::from_millis(1))));
 	}
 
 	///
@@ -61,7 +61,7 @@ mod tests {
 		let timeout = Duration::from_millis(100);
 		let mut handler = DisconnectByTimeout::new(now, timeout.clone());
 		handler.on_frame_received(now);
-		assert!(!handler.disconnected(now.add(timeout - Duration::from_millis(1))));
+		assert!(!handler.is_disconnected(now.add(timeout - Duration::from_millis(1))));
 	}
 
 	///
@@ -73,6 +73,6 @@ mod tests {
 		let timeout = Duration::from_millis(100);
 		let mut handler = DisconnectByTimeout::new(now, timeout.clone());
 		handler.on_frame_received(now);
-		assert!(handler.disconnected(now.add(timeout + Duration::from_millis(1))));
+		assert!(handler.is_disconnected(now.add(timeout + Duration::from_millis(1))));
 	}
 }

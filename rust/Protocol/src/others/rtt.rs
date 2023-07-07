@@ -165,10 +165,7 @@ mod tests {
 		let mut handler = RoundTripTime::new(Instant::now());
 		let now = Instant::now();
 		let mut frame = Frame::new(0, 10, false, Default::default());
-		frame.headers.add(Header::Retransmit(RetransmitHeader {
-			original_frame_id: 0,
-			retransmit_count: 1,
-		}));
+		frame.headers.add(Header::Retransmit(RetransmitHeader { original_frame_id: 0 }));
 		frame.headers.add(Header::RoundTripTimeResponse(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&frame, now);
 		assert!(handler.rtt.is_empty(), "{}", true);
@@ -183,10 +180,7 @@ mod tests {
 		let now = Instant::now();
 
 		let mut input_frame = Frame::new(0, 10, false, Default::default());
-		input_frame.headers.add(Header::Retransmit(RetransmitHeader {
-			original_frame_id: 0,
-			retransmit_count: 1,
-		}));
+		input_frame.headers.add(Header::Retransmit(RetransmitHeader { original_frame_id: 0 }));
 		input_frame.headers.add(Header::RoundTripTimeRequest(RoundTripTimeHeader { self_time: 100 }));
 		handler.on_frame_received(&input_frame, now);
 

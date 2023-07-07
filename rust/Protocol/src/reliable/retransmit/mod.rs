@@ -2,10 +2,10 @@ use std::cmp::max;
 use std::collections::{HashSet, VecDeque};
 use std::ops::Sub;
 use std::time::{Duration, Instant};
+use std::usize;
 
 use fnv::FnvBuildHasher;
 
-use crate::frame::disconnected_reason::DisconnectedReason;
 use crate::frame::headers::{Header, HeaderVec};
 use crate::frame::Frame;
 use crate::frame::FrameId;
@@ -15,33 +15,9 @@ use crate::reliable::retransmit::header::RetransmitHeader;
 pub mod header;
 
 ///
-/// Количество фреймов с командами, требующими надежную доставку в секунду
-///
-pub const RELIABILITY_FRAME_PER_SECOND: usize = 120;
-
-///
-/// Время ожидания доставки оригинально фрейма (при повторных пересылках)
-///
-pub const RETRANSMIT_MAX_TIME_IN_SEC: usize = 20;
-
-///
 /// Время ожидания ACK
 ///
-pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC: f64 = 0.5;
-
-///
-/// Количество повторных пересылок фрейма, после которого соединение будет считаться разорванным
-///
-#[allow(clippy::cast_sign_loss)]
-#[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::cast_precision_loss)]
-pub const RETRANSMIT_LIMIT: u8 = (RETRANSMIT_MAX_TIME_IN_SEC as f64 / RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC) as u8;
-
-///
-/// количество фреймов в буферах, должно гарантированно хватить для всех фреймов
-/// как только количество фреймов будет больше - то канал переходит в состояние disconnected
-///
-pub const RETRANSMIT_FRAMES_CAPACITY: usize = 5 * RELIABILITY_FRAME_PER_SECOND * RETRANSMIT_MAX_TIME_IN_SEC;
+pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT: Duration = Duration::from_millis(200);
 
 #[derive(Debug)]
 pub struct Retransmitter {
@@ -58,11 +34,13 @@ pub struct Retransmitter {
 	///
 	/// Текущее максимальное количество повтора пакета
 	///
-	max_retransmit_count: u8,
+	current_max_retransmit_count: usize,
 	///
 	/// Время ожидания подтверждения на фрейм
 	///
 	ack_wait_duration: Duration,
+
+	retransmit_limit: usize,
 }
 
 #[derive(Debug)]
@@ -70,21 +48,21 @@ pub struct ScheduledFrame {
 	pub time: Instant,
 	pub original_frame_id: FrameId,
 	pub frame: Frame,
-	pub retransmit_count: u8,
-}
-
-impl Default for Retransmitter {
-	fn default() -> Self {
-		Self {
-			frames: Default::default(),
-			wait_ack_frames: Default::default(),
-			max_retransmit_count: Default::default(),
-			ack_wait_duration: Duration::from_secs_f64(RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC),
-		}
-	}
+	pub retransmit_count: usize,
 }
 
 impl Retransmitter {
+	pub(crate) fn new(disconnect_timeout: Duration) -> Self {
+		let retransmit_limit = (disconnect_timeout.as_secs_f64() / RETRANSMIT_DEFAULT_ACK_TIMEOUT.as_secs_f64()) as usize;
+
+		Self {
+			frames: Default::default(),
+			wait_ack_frames: Default::default(),
+			current_max_retransmit_count: Default::default(),
+			ack_wait_duration: RETRANSMIT_DEFAULT_ACK_TIMEOUT,
+			retransmit_limit,
+		}
+	}
 	///
 	/// Получить фрейм для повторной отправки (если такой есть)
 	/// - метод необходимо вызывать пока результат Some
@@ -101,19 +79,19 @@ impl Retransmitter {
 					} else if now.sub(scheduled_frame.time) >= self.ack_wait_duration {
 						let mut scheduled_frame = self.frames.pop_front().unwrap();
 
-						let retransmit_count = scheduled_frame.retransmit_count.checked_add(1).unwrap_or(u8::MAX);
-						if retransmit_count == u8::MAX {
+						let retransmit_count = scheduled_frame.retransmit_count.checked_add(1).unwrap_or(usize::MAX);
+						if retransmit_count == usize::MAX {
 							tracing::error!("Retransmit count overflow");
 						}
 
-						self.max_retransmit_count = max(self.max_retransmit_count, retransmit_count);
+						self.current_max_retransmit_count = max(self.current_max_retransmit_count, retransmit_count);
 						scheduled_frame.retransmit_count = retransmit_count;
 						scheduled_frame.time = now;
 
 						let original_frame_id = scheduled_frame.original_frame_id;
 						let mut retransmit_frame = scheduled_frame.frame.clone();
 						retransmit_frame.frame_id = retransmit_frame_id;
-						let retransmit_header = Header::Retransmit(RetransmitHeader::new(original_frame_id, retransmit_count));
+						let retransmit_header = Header::Retransmit(RetransmitHeader::new(original_frame_id));
 						retransmit_frame.headers.add(retransmit_header);
 						self.frames.push_back(scheduled_frame);
 						return Some(retransmit_frame);
@@ -152,40 +130,28 @@ impl Retransmitter {
 		}
 	}
 
-	pub fn disconnected(&self, _: Instant) -> Result<(), DisconnectedReason> {
-		if self.max_retransmit_count >= RETRANSMIT_LIMIT {
-			return Err(DisconnectedReason::ByRetransmitWhenMaxCount);
-		}
-
-		if self.frames.len() > RETRANSMIT_FRAMES_CAPACITY {
-			return Err(DisconnectedReason::ByRetransmitWhenMaxFrames);
-		}
-
-		if self.wait_ack_frames.len() > RETRANSMIT_FRAMES_CAPACITY {
-			return Err(DisconnectedReason::ByRetransmitWhenMaxWaitAck);
-		}
-
-		Ok(())
+	pub fn is_disconnected(&self, _: Instant) -> bool {
+		self.current_max_retransmit_count >= self.retransmit_limit
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use std::ops::Add;
-	use std::time::Instant;
+	use std::time::{Duration, Instant};
 
 	use crate::frame::headers::Header;
 	use crate::frame::Frame;
 	use crate::frame::FrameId;
 	use crate::reliable::ack::header::AckHeader;
-	use crate::reliable::retransmit::{Retransmitter, RETRANSMIT_LIMIT};
+	use crate::reliable::retransmit::Retransmitter;
 
 	#[test]
 	///
 	/// Если не было отосланных фреймов - то нет фреймов и для повтора
 	///
 	fn should_empty_when_get_retransmit_frame() {
-		let mut handler = Retransmitter::default();
+		let mut handler = Retransmitter::new(Duration::default());
 		assert!(matches!(handler.get_retransmit_frame(Instant::now(), 1), None));
 	}
 
@@ -194,7 +160,7 @@ mod tests {
 	///
 	#[test]
 	fn should_empty_when_no_timeout() {
-		let mut handler = Retransmitter::default();
+		let mut handler = Retransmitter::new(Duration::default());
 		let now = Instant::now();
 		handler.build_frame(&create_reliability_frame(1), now);
 		assert!(matches!(handler.get_retransmit_frame(now, 2), None));
@@ -205,7 +171,7 @@ mod tests {
 	///
 	#[test]
 	fn should_add_retransmit_header() {
-		let mut handler = Retransmitter::default();
+		let mut handler = Retransmitter::new(Duration::default());
 		let now = Instant::now();
 		let original_frame = create_reliability_frame(1);
 		handler.build_frame(&original_frame, now);
@@ -224,7 +190,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_retransmit_frame_when_timeout() {
-		let mut handler = Retransmitter::default();
+		let mut handler = Retransmitter::new(Duration::default());
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -240,7 +206,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_for_unreliable_frame() {
-		let mut handler = Retransmitter::default();
+		let mut handler = Retransmitter::new(Duration::default());
 		let now = Instant::now();
 		let frame = create_unreliable_frame(1);
 		handler.build_frame(&frame, now);
@@ -254,7 +220,7 @@ mod tests {
 	///
 	#[test]
 	fn should_return_none_then_ack() {
-		let mut handler = Retransmitter::default();
+		let mut handler = Retransmitter::new(Duration::default());
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -269,7 +235,7 @@ mod tests {
 	///
 	#[test]
 	fn should_retransmit_after_retransmit() {
-		let mut handler = Retransmitter::default();
+		let mut handler = Retransmitter::new(Duration::default());
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
@@ -289,24 +255,24 @@ mod tests {
 	/// Канал должен быть закрыт, после N не успешных попыток отправок
 	///
 	#[test]
-	fn should_close_after_fail_retransmits() {
-		let mut handler = Retransmitter::default();
+	fn should_disconnet_by_timeout() {
+		let mut handler = Retransmitter::new(Duration::from_secs(1));
 		let now = Instant::now();
 		let frame = create_reliability_frame(1);
 		handler.build_frame(&frame, now);
 
 		let mut get_time = now;
-		for _ in 0..RETRANSMIT_LIMIT - 1 {
+		for _ in 0..handler.retransmit_limit - 1 {
 			get_time = get_time.add(handler.ack_wait_duration);
 			handler.get_retransmit_frame(get_time, 2);
 		}
 
-		assert!(handler.disconnected(get_time).is_ok());
+		assert!(!handler.is_disconnected(get_time));
 
 		get_time = get_time.add(handler.ack_wait_duration);
 		handler.get_retransmit_frame(get_time, 3);
 
-		assert!(handler.disconnected(get_time).is_err());
+		assert!(handler.is_disconnected(get_time));
 	}
 
 	fn create_reliability_frame(frame_id: FrameId) -> Frame {

@@ -99,10 +99,7 @@ mod tests {
 
 	#[test]
 	fn test_retransmit_frame() {
-		check(&[Header::Retransmit(RetransmitHeader {
-			original_frame_id: 100,
-			retransmit_count: 55,
-		})]);
+		check(&[Header::Retransmit(RetransmitHeader { original_frame_id: 100 })]);
 	}
 
 	#[test]
