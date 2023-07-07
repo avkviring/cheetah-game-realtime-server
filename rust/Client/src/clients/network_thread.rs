@@ -10,6 +10,7 @@ use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::guarantees::ReliabilityGuarantees;
 use cheetah_common::commands::{BothDirectionCommand, CommandWithReliabilityGuarantees};
 use cheetah_common::network::{ConnectionStatus, NetworkChannel};
+use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
 use cheetah_protocol::frame::ConnectionId;
 use cheetah_protocol::{RoomId, RoomMemberId};
@@ -54,7 +55,18 @@ impl NetworkChannelManager {
 		Ok(NetworkChannelManager {
 			connection_status,
 			commands_from_server: in_commands,
-			channel: NetworkChannel::new(connection_id, false, private_key, member_id, room_id, server_address, Instant::now(), Duration::from_secs(30))?,
+			channel: NetworkChannel::new(
+				connection_id,
+				false,
+				private_key,
+				member_id,
+				room_id,
+				server_address,
+				Instant::now(),
+				ProtocolConfiguration {
+					disconnect_timeout: Duration::from_secs(30),
+				},
+			)?,
 			request_from_controller: receiver,
 			protocol_time_offset_for_test: None,
 			shared_statistics,

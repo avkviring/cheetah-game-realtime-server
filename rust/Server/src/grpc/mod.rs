@@ -239,6 +239,7 @@ mod test {
 
 	use cheetah_common::commands::CommandTypeId;
 	use cheetah_common::network::bind_to_free_socket;
+	use cheetah_protocol::coniguration::ProtocolConfiguration;
 
 	use crate::grpc::proto::internal::internal_server::Internal;
 	use crate::grpc::proto::internal::DeleteRoomRequest;
@@ -446,7 +447,16 @@ mod test {
 	async fn test_mark_room_as_ready() {
 		let plugin_name = "plugin_1";
 		let plugin_names = FnvHashSet::from_iter([plugin_name.to_owned()]);
-		let server_manager = Arc::new(Mutex::new(ServerManager::new(bind_to_free_socket().unwrap(), plugin_names, Duration::from_secs(30)).unwrap()));
+		let server_manager = Arc::new(Mutex::new(
+			ServerManager::new(
+				bind_to_free_socket().unwrap(),
+				plugin_names,
+				ProtocolConfiguration {
+					disconnect_timeout: Duration::from_secs(30),
+				},
+			)
+			.unwrap(),
+		));
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
 
@@ -544,6 +554,13 @@ mod test {
 	}
 
 	fn new_server_manager() -> ServerManager {
-		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default(), Duration::from_secs(30)).unwrap()
+		ServerManager::new(
+			bind_to_free_socket().unwrap(),
+			FnvHashSet::default(),
+			ProtocolConfiguration {
+				disconnect_timeout: Duration::from_secs(30),
+			},
+		)
+		.unwrap()
 	}
 }

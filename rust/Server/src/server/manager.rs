@@ -8,6 +8,7 @@ use std::time::Duration;
 use fnv::FnvHashSet;
 use thiserror::Error;
 
+use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
 
@@ -107,13 +108,13 @@ impl Drop for ServerManager {
 }
 
 impl ServerManager {
-	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>, disconnect_duration: Duration) -> Result<Self, RoomsServerManagerError> {
+	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>, protocol_configuration: ProtocolConfiguration) -> Result<Self, RoomsServerManagerError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = Arc::clone(&halt_signal);
 		thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
-			.spawn(move || match Server::new(socket, receiver, halt_signal, plugin_names, disconnect_duration) {
+			.spawn(move || match Server::new(socket, receiver, halt_signal, plugin_names, protocol_configuration) {
 				Ok(server) => {
 					server.run();
 					Ok(())
@@ -240,6 +241,7 @@ mod test {
 	use fnv::FnvHashSet;
 
 	use cheetah_common::network::bind_to_free_socket;
+	use cheetah_protocol::coniguration::ProtocolConfiguration;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::ServerManager;
@@ -269,6 +271,13 @@ mod test {
 	}
 
 	fn new_server_manager() -> ServerManager {
-		ServerManager::new(bind_to_free_socket().unwrap(), FnvHashSet::default(), Duration::from_secs(30)).unwrap()
+		ServerManager::new(
+			bind_to_free_socket().unwrap(),
+			FnvHashSet::default(),
+			ProtocolConfiguration {
+				disconnect_timeout: Duration::from_secs(30),
+			},
+		)
+		.unwrap()
 	}
 }

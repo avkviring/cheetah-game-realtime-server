@@ -9,6 +9,7 @@ use std::{io, iter, thread};
 
 use fnv::FnvHashSet;
 
+use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
@@ -45,11 +46,11 @@ impl Server {
 		management_task_receiver: Receiver<ManagementTaskChannel>,
 		halt_signal: Arc<AtomicBool>,
 		plugin_names: FnvHashSet<String>,
-		disconnect_duration: Duration,
+		protocol_configuration: ProtocolConfiguration,
 	) -> Result<Self, io::Error> {
 		let measurer = Measurer::new(prometheus::default_registry()).into();
 		Ok(Self {
-			network: Network::new(socket, disconnect_duration)?,
+			network: Network::new(socket, protocol_configuration)?,
 			room_registry: RoomRegistry::new(plugin_names.clone()),
 			management_task_receiver,
 			halt_signal,

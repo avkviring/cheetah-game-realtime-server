@@ -9,6 +9,8 @@ use thiserror::Error;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 
+use cheetah_protocol::coniguration::ProtocolConfiguration;
+
 use crate::{RoomsServerManagerError, Server, ServerManager};
 
 ///
@@ -22,7 +24,7 @@ pub struct ServerBuilder {
 	internal_grpc_service_bind_address: SocketAddr,
 	internal_webgrpc_service_bind_address: SocketAddr,
 	is_agones_enabled: bool,
-	disconnect_duration: Duration,
+	protocol_configuration: ProtocolConfiguration,
 	plugin_names: FnvHashSet<String>,
 }
 
@@ -35,7 +37,9 @@ impl Default for ServerBuilder {
 			internal_webgrpc_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			is_agones_enabled: false,
 			plugin_names: FnvHashSet::default(),
-			disconnect_duration: Duration::from_secs(180),
+			protocol_configuration: ProtocolConfiguration {
+				disconnect_timeout: Duration::from_secs(180),
+			},
 		}
 	}
 }
@@ -90,15 +94,15 @@ impl ServerBuilder {
 	}
 
 	#[must_use]
-	pub fn set_disconnect_duration(mut self, disconnect_duration: Duration) -> Self {
-		self.disconnect_duration = disconnect_duration;
+	pub fn set_disconnect_duration(mut self, disconnect_timeout: Duration) -> Self {
+		self.protocol_configuration.disconnect_timeout = disconnect_timeout;
 		self
 	}
 
 	pub async fn build(self) -> Result<Server, ServerBuilderError> {
 		let game_socket = UdpSocket::bind(self.game_bind_addr).map_err(ServerBuilderError::ErrorBindUdpSocket)?;
 		let game_socket_addr = game_socket.local_addr().map_err(ServerBuilderError::ErrorGetLocalAddrFromUdpSocket)?;
-		let server_manager = ServerManager::new(game_socket, self.plugin_names, self.disconnect_duration).map_err(ServerBuilderError::RoomsServerManager)?;
+		let server_manager = ServerManager::new(game_socket, self.plugin_names, self.protocol_configuration).map_err(ServerBuilderError::RoomsServerManager)?;
 		let manager = Arc::new(Mutex::new(server_manager));
 
 		let internal_grpc_listener = TcpListener::bind(self.internal_grpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;

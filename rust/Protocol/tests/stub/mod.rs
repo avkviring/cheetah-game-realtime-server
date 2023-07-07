@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use rand::rngs::OsRng;
 use rand::Rng;
 
+use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::frame::Frame;
 use cheetah_protocol::reliable::retransmit::RETRANSMIT_DEFAULT_ACK_TIMEOUT_IN_SEC;
 use cheetah_protocol::{InputDataHandler, OutputDataProducer, Protocol};
@@ -120,5 +121,14 @@ impl Channel {
 }
 
 pub fn create_protocol() -> Protocol<StubInputDataHandler, StubOutputDataProducer> {
-	Protocol::<StubInputDataHandler, StubOutputDataProducer>::new(Default::default(), Default::default(), 0, Instant::now(), Instant::now(), Duration::from_millis(100))
+	Protocol::<StubInputDataHandler, StubOutputDataProducer>::new(
+		Default::default(),
+		Default::default(),
+		0,
+		Instant::now(),
+		Instant::now(),
+		ProtocolConfiguration {
+			disconnect_timeout: Duration::from_millis(100),
+		},
+	)
 }
