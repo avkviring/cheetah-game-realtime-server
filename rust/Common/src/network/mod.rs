@@ -2,9 +2,10 @@ use std::collections::VecDeque;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use cheetah_protocol::codec::cipher::Cipher;
+use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::frame::disconnected_reason::DisconnectedReason;
 use cheetah_protocol::frame::headers::Header;
 use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
@@ -61,7 +62,7 @@ impl NetworkChannel {
 		room_id: RoomId,
 		server_address: SocketAddr,
 		start_application_time: Instant,
-		disconnect_timeout: Duration,
+		configuration: ProtocolConfiguration,
 	) -> std::io::Result<NetworkChannel> {
 		let protocol = Protocol::new(
 			InCommandsCollector::new(server_side),
@@ -69,7 +70,7 @@ impl NetworkChannel {
 			connection_id,
 			Instant::now(),
 			start_application_time,
-			disconnect_timeout,
+			configuration,
 		);
 		let channel = UdpSocketWrapper::new()?;
 

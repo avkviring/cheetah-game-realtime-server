@@ -1,12 +1,12 @@
 use std::collections::{HashMap, VecDeque};
 use std::io::{Error, ErrorKind};
 use std::net::{SocketAddr, UdpSocket};
-use std::time::Duration;
 pub use std::time::Instant;
 
 use cheetah_common::network::collectors::in_collector::InCommandsCollector;
 use cheetah_common::network::CheetahProtocol;
 use cheetah_protocol::codec::cipher::Cipher;
+use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_protocol::frame::headers::{Header, Headers};
 use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
@@ -22,7 +22,7 @@ pub struct Network {
 	socket: UdpSocket,
 	start_application_time: Instant,
 	frames: VecDeque<Frame>,
-	disconnect_duration: Duration,
+	protocol_configuration: ProtocolConfiguration,
 	pub income_command_count: usize,
 	pub outcome_command_count: usize,
 	pub income_frame_count: usize,
@@ -38,7 +38,7 @@ struct MemberSession {
 }
 
 impl Network {
-	pub fn new(socket: UdpSocket, disconnect_duration: Duration) -> Result<Self, Error> {
+	pub fn new(socket: UdpSocket, protocol_configuration: ProtocolConfiguration) -> Result<Self, Error> {
 		socket.set_nonblocking(true)?;
 		Ok(Self {
 			sessions: Default::default(),
@@ -49,7 +49,7 @@ impl Network {
 			outcome_command_count: 0,
 			income_frame_count: 0,
 			outcome_frame_count: 0,
-			disconnect_duration,
+			protocol_configuration,
 		})
 	}
 
@@ -206,7 +206,7 @@ impl Network {
 				peer_address: Default::default(),
 				private_key: template.private_key,
 				last_receive_frame_id: 0,
-				protocol: CheetahProtocol::new(InCommandsCollector::new(true), Default::default(), 0, now, self.start_application_time, self.disconnect_duration),
+				protocol: CheetahProtocol::new(InCommandsCollector::new(true), Default::default(), 0, now, self.start_application_time, self.protocol_configuration),
 			},
 		);
 	}
@@ -232,6 +232,7 @@ mod tests {
 
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_protocol::codec::cipher::Cipher;
+	use cheetah_protocol::coniguration::ProtocolConfiguration;
 	use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
 	use cheetah_protocol::frame::headers::Header;
 	use cheetah_protocol::frame::Frame;
@@ -323,6 +324,12 @@ mod tests {
 	}
 
 	fn create_network_layer() -> Network {
-		Network::new(bind_to_free_socket().unwrap(), Duration::from_millis(1000)).unwrap()
+		Network::new(
+			bind_to_free_socket().unwrap(),
+			ProtocolConfiguration {
+				disconnect_timeout: Duration::from_millis(1000),
+			},
+		)
+		.unwrap()
 	}
 }

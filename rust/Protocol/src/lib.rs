@@ -2,8 +2,9 @@ extern crate core;
 
 use std::collections::VecDeque;
 use std::fmt::Debug;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
+use crate::coniguration::ProtocolConfiguration;
 use crate::disconnect::command::DisconnectByCommand;
 use crate::disconnect::timeout::DisconnectByTimeout;
 use crate::frame::disconnected_reason::DisconnectedReason;
@@ -18,6 +19,7 @@ use crate::reliable::retransmit::Retransmitter;
 
 pub mod codec;
 pub mod collections;
+pub mod coniguration;
 pub mod disconnect;
 pub mod frame;
 pub mod others;
@@ -84,11 +86,11 @@ where
 	OUT: OutputDataProducer,
 {
 	#[must_use]
-	pub fn new(input_data_handler: IN, output_data_producer: OUT, connection_id: ConnectionId, now: Instant, start_application_time: Instant, disconnect_timeout: Duration) -> Self {
+	pub fn new(input_data_handler: IN, output_data_producer: OUT, connection_id: ConnectionId, now: Instant, start_application_time: Instant, configuration: ProtocolConfiguration) -> Self {
 		Self {
 			next_frame_id: 1,
 			next_packed_id: 0,
-			disconnect_by_timeout: DisconnectByTimeout::new(now, disconnect_timeout),
+			disconnect_by_timeout: DisconnectByTimeout::new(now, configuration.disconnect_timeout),
 			retransmitter: Retransmitter::default(),
 			rtt: RoundTripTime::new(start_application_time),
 			connection_id,
@@ -244,6 +246,7 @@ where
 pub mod tests {
 	use std::time::{Duration, Instant};
 
+	use crate::coniguration::ProtocolConfiguration;
 	use crate::frame::Frame;
 	use crate::frame::{ConnectionId, FrameId};
 	use crate::{InputDataHandler, OutputDataProducer, Protocol};
@@ -284,6 +287,15 @@ pub mod tests {
 	}
 
 	fn create_protocol(connection_id: ConnectionId) -> Protocol<StubDataRecvHandler, StubDataSource> {
-		Protocol::<StubDataRecvHandler, StubDataSource>::new(Default::default(), Default::default(), connection_id, Instant::now(), Instant::now(), Duration::from_millis(100))
+		Protocol::<StubDataRecvHandler, StubDataSource>::new(
+			Default::default(),
+			Default::default(),
+			connection_id,
+			Instant::now(),
+			Instant::now(),
+			ProtocolConfiguration {
+				disconnect_timeout: Duration::from_millis(100),
+			},
+		)
 	}
 }
