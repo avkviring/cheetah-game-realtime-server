@@ -1,6 +1,6 @@
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use rymder::GameServer;
 use thiserror::Error;
@@ -28,24 +28,26 @@ pub enum RegistryError {
 /// Цикл оповещения agones и NotifyService
 ///
 pub async fn run_agones(server_manager: Arc<Mutex<ServerManager>>, max_rooms: usize) {
+	let start_time = SystemTime::now();
 	tracing::debug!("Agones agones sdk");
 	match rymder::Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
 		Ok((mut sdk, gameserver)) => {
-			tracing::debug!("Agones: Connected to SDK");
+			tracing::error!("Agones: Connected to SDK");
 			// сервер готов к работе
 			sdk.mark_ready().await.unwrap();
-			tracing::debug!("Agones: invoked sdk.mark_ready");
+			tracing::error!("Agones: invoked sdk.mark_ready");
 
 			let mut health = sdk.health_check();
 
 			let mut allocated = false;
 
 			while is_server_running(&server_manager).await {
+				tracing::error!("Agones: cycle");
 				// при создании первой комнаты - вызываем allocate
 				let count_rooms = server_manager.lock().await.get_rooms().unwrap_or_default().len();
 				if !allocated && count_rooms > 0 {
 					sdk.allocate().await.unwrap();
-					tracing::debug!("Agones: invoked allocated");
+					tracing::error!("Agones: invoked allocated");
 					allocated = true;
 				}
 
@@ -63,7 +65,7 @@ pub async fn run_agones(server_manager: Arc<Mutex<ServerManager>>, max_rooms: us
 				// подтверждаем что сервер жив
 				match health.send(()).await {
 					Ok(_) => {
-						tracing::debug!("Agones: invoked health");
+						tracing::error!("Agones: invoked health {:?}", start_time.elapsed().unwrap().as_secs());
 					}
 					Err(e) => {
 						tracing::error!("Agones: health receiver was closed {:?}", e);
@@ -73,8 +75,10 @@ pub async fn run_agones(server_manager: Arc<Mutex<ServerManager>>, max_rooms: us
 
 				tokio::time::sleep(Duration::from_secs(2)).await;
 			}
+			tracing::error!("Agones: server stopped");
 			notify_registry_with_tracing_error(&gameserver, State::NotReady).await;
 			sdk.shutdown().await.unwrap();
+			tracing::error!("Agones: schutdown");
 		}
 		Err(e) => {
 			tracing::error!("Agones: Fail connect {:?}", e);
