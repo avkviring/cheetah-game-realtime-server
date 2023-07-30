@@ -12,11 +12,10 @@ use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
 
-use crate::debug::proto::admin;
 use crate::room::command::ServerCommandError;
 use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
-use crate::room::RoomInfo;
+use crate::room::{Room, RoomInfo};
 use crate::server::room_registry::RoomNotFoundError;
 use crate::server::Server;
 
@@ -50,7 +49,7 @@ pub enum ManagementTaskResult {
 	CreateRoom(RoomId),
 	CreateMember(RoomMemberId),
 	DeleteMember,
-	Dump(admin::DumpResponse),
+	Dump(Option<Room>),
 	GetRooms(Vec<RoomId>),
 	GetRoomsMemberCount(Vec<RoomMembersCount>),
 	DeleteRoom,
@@ -202,7 +201,7 @@ impl ServerManager {
 		})?
 	}
 
-	pub(crate) fn dump(&self, room_id: u64) -> Result<admin::DumpResponse, ManagementTaskError> {
+	pub(crate) fn dump(&self, room_id: u64) -> Result<Option<Room>, ManagementTaskError> {
 		self.execute_task(ManagementTask::Dump(room_id)).map(|res| {
 			if let ManagementTaskResult::Dump(resp) = res {
 				Ok(resp)

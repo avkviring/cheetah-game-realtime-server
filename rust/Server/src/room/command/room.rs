@@ -1,5 +1,5 @@
+use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_protocol::RoomMemberId;
-use std::rc::Rc;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::S2CCommandsCollector;
@@ -9,9 +9,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 	let member = room.get_member_mut(&member_id)?;
 	member.attached = true;
 	let access_group = member.template.groups;
-	let command_collector_rc = Rc::clone(&room.tmp_command_collector);
-	let mut command_collector = (*command_collector_rc).borrow_mut();
-	command_collector.clear();
+	let mut command_collector = Vec::<(GameObjectTemplateId, S2CCommandsCollector)>::new();
 	room.objects
 		.iter()
 		.filter(|(_, o)| o.created)

@@ -109,7 +109,6 @@ impl Internal for RealtimeInternalService {
 			.map_err(Status::from)
 	}
 
-	/// удалить комнату с севрера и закрыть соединение со всеми пользователями
 	async fn delete_room(&self, request: Request<DeleteRoomRequest>) -> Result<Response<DeleteRoomResponse>, Status> {
 		let room_id = request.get_ref().id;
 		let mut server = self.server_manager.lock().await;
@@ -314,7 +313,7 @@ mod test {
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner();
 
 		let dump_response = server_manager.lock().await.dump(room_id.room_id).unwrap();
-		assert!(!dump_response.users.is_empty());
+		assert_eq!(dump_response.unwrap().members.len(), 1);
 	}
 
 	#[tokio::test]
@@ -343,7 +342,7 @@ mod test {
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
 		let member_id = service.register_member(room_id, MemberTemplate::default()).await.unwrap().into_inner().user_id;
-		assert!(!server_manager.lock().await.dump(room_id).unwrap().users.is_empty(), "room should not be empty");
+		assert!(!server_manager.lock().await.dump(room_id).unwrap().unwrap().members.is_empty(), "room should not be empty");
 
 		assert!(
 			service.delete_member(Request::new(DeleteMemberRequest { room_id, user_id: member_id })).await.is_ok(),
@@ -356,7 +355,7 @@ mod test {
 		// 	server_manager.lock().await.dump(room_id).unwrap().users
 		// );
 		assert!(
-			!server_manager.lock().await.dump(room_id).unwrap().users.iter().any(|u| u.id == member_id),
+			!server_manager.lock().await.dump(room_id).unwrap().unwrap().members.iter().any(|u| *u.0 == member_id as u16),
 			"deleted member should not be in the room"
 		);
 	}

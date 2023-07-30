@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::GameObjectId;
@@ -35,13 +33,16 @@ impl Room {
 		T: FnOnce(&mut GameObject) -> Result<Option<S2CCommand>, ServerCommandError>,
 	{
 		let room_id = self.id;
-		let permission_manager = Rc::clone(&self.permission_manager);
+		let permission_manager = &self.permission_manager;
 		let creator_access_group = match self.members.get(&creator_id) {
 			None => {
 				return Err(ServerCommandError::MemberNotFound(creator_id));
 			}
 			Some(member) => member.template.groups,
 		};
+
+		let template_id = self.get_object(game_object_id)?.template_id;
+		let allowed_permission = permission_manager.get_permission(template_id, field, creator_access_group);
 
 		let object = self.get_object_mut(game_object_id)?;
 		// проверяем группу доступа
@@ -59,7 +60,7 @@ impl Room {
 
 		let is_creator_object_owner = object_owner == Some(creator_id);
 
-		let allow = is_creator_object_owner || permission_manager.borrow_mut().get_permission(object.template_id, field, creator_access_group) >= permission;
+		let allow = is_creator_object_owner || allowed_permission >= permission;
 
 		if !allow {
 			return Err(ServerCommandError::MemberCannotAccessToObjectField {

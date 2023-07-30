@@ -31,14 +31,14 @@ pub enum EmbeddedServerWrapperError {
 }
 
 impl EmbeddedServerWrapper {
-	pub fn run_new_server(internal_grpc_address: SocketAddr, internal_webgrpc_address: SocketAddr, admin_webgrpc_address: SocketAddr, game_udp_address: SocketAddr) -> anyhow::Result<Self> {
+	pub fn run_new_server(internal_grpc_address: SocketAddr, internal_webgrpc_address: SocketAddr, dump_rest_service_address: SocketAddr, game_udp_address: SocketAddr) -> anyhow::Result<Self> {
 		let runtime = tokio::runtime::Builder::new_multi_thread().worker_threads(2).enable_io().enable_time().build()?;
 
 		let server = runtime.block_on(async move {
 			ServerBuilder::default()
 				.set_internal_grpc_service_bind_address(internal_grpc_address)
 				.set_internal_webgrpc_service_bind_address(internal_webgrpc_address)
-				.set_admin_webgrpc_service_bind_address(admin_webgrpc_address)
+				.set_debug_rest_service_bind_address(dump_rest_service_address)
 				.set_games_service_bind_address(game_udp_address)
 				.build()
 				.await
@@ -46,7 +46,7 @@ impl EmbeddedServerWrapper {
 		let manager = Arc::clone(&server.manager);
 		let game_socket_addr = server.game_socket_addr;
 		let internal_grpc_socket_addr = server.internal_grpc_listener.local_addr()?;
-		let admin_webgrpc_socket_addr = server.admin_webgrpc_listener.local_addr()?;
+		let admin_webgrpc_socket_addr = server.debug_rest_service_listener.local_addr()?;
 		let internal_webgrpc_socket_addr = server.internal_webgrpc_listener.local_addr()?;
 		runtime.spawn(async move {
 			server.run().await;

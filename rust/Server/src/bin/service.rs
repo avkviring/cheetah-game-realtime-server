@@ -5,7 +5,7 @@ use fnv::FnvHashSet;
 
 use cheetah_server::builder::ServerBuilder;
 use cheetah_server::env::{
-	get_admin_webgrpc_service_default_address, get_env_or_default, get_internal_grpc_service_default_address, get_internal_webgrpc_service_default_address, setup_panic_hook, setup_tracer,
+	get_debug_rest_service_default_address, get_env_or_default, get_internal_grpc_service_default_address, get_internal_webgrpc_service_default_address, setup_panic_hook, setup_tracer,
 };
 
 #[tokio::main]
@@ -16,9 +16,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	tracing::info!("start server");
 
 	let mut builder = ServerBuilder::default()
-		.set_admin_webgrpc_service_bind_address(get_admin_webgrpc_service_default_address())
 		.set_internal_grpc_service_bind_address(get_internal_grpc_service_default_address())
 		.set_internal_webgrpc_service_bind_address(get_internal_webgrpc_service_default_address())
+		.set_debug_rest_service_bind_address(get_debug_rest_service_default_address())
 		.set_games_service_bind_address("0.0.0.0:5555".parse().unwrap())
 		.set_plugin_names(get_plugin_names("PLUGIN_NAMES"))
 		.set_disconnect_duration(Duration::from_secs(get_env_or_default("DISCONNECT_TIMEOUT_IN_SEC", "180").parse().unwrap()));

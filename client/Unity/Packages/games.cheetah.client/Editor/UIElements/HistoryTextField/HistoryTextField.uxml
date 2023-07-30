@@ -1,8 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance"
-         engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
-         editor-extension-mode="True"
-         class="main"
->
-    <ui:Style src="Styles.uss"/>
-    <ui:TextField name="textField" class="text-field"/>
-</ui:UXML>

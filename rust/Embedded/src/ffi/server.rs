@@ -30,7 +30,7 @@ pub(crate) extern "C" fn run_new_server(
 	on_error: extern "C" fn(*const u16),
 	internal_grpc_socket: &BindSocket,
 	internal_webgrpc_socket: &BindSocket,
-	admin_webgrpc_socket: &BindSocket,
+	dump_rest_service_socket: &BindSocket,
 	game_udp_socket: &BindSocket,
 ) -> bool {
 	let mut registry = REGISTRY.lock().unwrap();
@@ -39,10 +39,10 @@ pub(crate) extern "C" fn run_new_server(
 
 	let internal_grpc_address = SocketAddr::new(IpAddr::from(internal_grpc_socket.ip), internal_grpc_socket.port);
 	let internal_webgrpc_address = SocketAddr::new(IpAddr::from(internal_webgrpc_socket.ip), internal_webgrpc_socket.port);
-	let admin_webgrpc_address = SocketAddr::new(IpAddr::from(admin_webgrpc_socket.ip), admin_webgrpc_socket.port);
+	let dump_rest_service_address = SocketAddr::new(IpAddr::from(dump_rest_service_socket.ip), dump_rest_service_socket.port);
 	let game_udp_address = SocketAddr::new(IpAddr::from(game_udp_socket.ip), game_udp_socket.port);
 
-	match EmbeddedServerWrapper::run_new_server(internal_grpc_address, internal_webgrpc_address, admin_webgrpc_address, game_udp_address) {
+	match EmbeddedServerWrapper::run_new_server(internal_grpc_address, internal_webgrpc_address, dump_rest_service_address, game_udp_address) {
 		Ok(server) => {
 			result.id = server_id;
 

@@ -21,8 +21,8 @@ namespace Games.Cheetah.EmbeddedServer.FFI
             internal unsafe fixed byte internal_webgrpc_ip[4];
             [MarshalAs(UnmanagedType.U2)] internal ushort internal_webgrpc_port;
 
-            internal unsafe fixed byte admin_webgrpc_ip[4];
-            [MarshalAs(UnmanagedType.U2)] internal ushort admin_webgrpc_port;
+            internal unsafe fixed byte debug_rest_service_ip[4];
+            [MarshalAs(UnmanagedType.U2)] internal ushort debug_rest_service_port;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -37,7 +37,7 @@ namespace Games.Cheetah.EmbeddedServer.FFI
         internal static extern bool RunNewServer(ref Description description, OnServerError onServerError,
             ref BindSocket internalGrpcSocket,
             ref BindSocket internalWebGrpcSocket,
-            ref BindSocket adminWebGrpcSocket,
+            ref BindSocket debugRestServiceSocket,
             ref BindSocket gameUdpSocket);
 
         [DllImport(Const.Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_server")]

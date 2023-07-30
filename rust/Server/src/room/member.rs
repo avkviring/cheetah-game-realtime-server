@@ -3,7 +3,7 @@ use cheetah_protocol::RoomMemberId;
 
 use crate::room::template::config::MemberTemplate;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RoomMember {
 	pub id: RoomMemberId,
 	pub connected: bool,
