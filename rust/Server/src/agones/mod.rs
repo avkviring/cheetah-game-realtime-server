@@ -1,9 +1,10 @@
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
-use rymder::GameServer;
+use rymder::{GameServer, Sdk};
 use thiserror::Error;
+use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 
 use crate::agones::client::RegistryClient;
@@ -27,33 +28,18 @@ pub enum RegistryError {
 ///
 /// Цикл оповещения agones и NotifyService
 ///
-pub async fn run_agones(server_manager: Arc<Mutex<ServerManager>>, max_rooms: usize) {
-	let start_time = SystemTime::now();
-	tracing::info!("Agones agones sdk");
-	match rymder::Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
+pub async fn agones_und_notifyservice_cycle(server_manager: Arc<Mutex<ServerManager>>, max_rooms: usize) {
+	match Sdk::connect(None, Some(Duration::from_secs(2)), Some(Duration::from_secs(2))).await {
 		Ok((mut sdk, gameserver)) => {
-			tracing::info!("Agones: Connected to SDK");
-			// сервер готов к работе
 			sdk.mark_ready().await.unwrap();
-			tracing::info!("Agones: invoked sdk.mark_ready");
 
 			let mut health = sdk.health_check();
-
 			let mut allocated = false;
 
 			while is_server_running(&server_manager).await {
-				tracing::info!("Agones: cycle start");
-
-				let start_time = SystemTime::now();
-				tracing::info!("Agones: start get count rooms");
 				let count_rooms = server_manager.lock().await.get_rooms().unwrap_or_default().len();
-				tracing::info!("Agones: end get count rooms {:?}", start_time.elapsed().unwrap().as_secs());
-
 				if !allocated && count_rooms > 0 {
-					let start_time = SystemTime::now();
-					tracing::info!("Agones: start allocate");
 					sdk.allocate().await.unwrap();
-					tracing::info!("Agones: end allocate {:?}", start_time.elapsed().unwrap().as_secs());
 					allocated = true;
 				}
 
@@ -66,39 +52,30 @@ pub async fn run_agones(server_manager: Arc<Mutex<ServerManager>>, max_rooms: us
 				} else {
 					State::Ready
 				};
-				tracing::info!("Agones: state {:?}", state);
-
-				let start_time = SystemTime::now();
-				tracing::info!("Agones: start notify registry");
 				notify_registry_with_tracing_error(&gameserver, state).await;
-				tracing::info!("Agones: end notify registry {:?}", start_time.elapsed().unwrap().as_secs());
 
-				let start_time = SystemTime::now();
-				tracing::info!("Agones: start notify health");
-				// подтверждаем что сервер жив
-				match health.send(()).await {
-					Ok(_) => {
-						tracing::error!("Agones: invoked health {:?}", start_time.elapsed().unwrap().as_secs());
-					}
-					Err(e) => {
-						tracing::error!("Agones: health receiver was closed {:?}", e);
-						health = sdk.health_check();
-					}
-				}
-				tracing::info!("Agones: end notify health {:?}", start_time.elapsed().unwrap().as_secs());
-
+				health = send_health(&mut sdk, health).await;
 				tokio::time::sleep(Duration::from_secs(2)).await;
 			}
-			tracing::error!("Agones: server stopped");
 			notify_registry_with_tracing_error(&gameserver, State::NotReady).await;
 			sdk.shutdown().await.unwrap();
-			tracing::error!("Agones: schutdown");
 		}
 		Err(e) => {
-			tracing::error!("Agones: Fail connect {:?}", e);
 			panic!("Agones: Fail connect {e:?}");
 		}
 	}
+}
+
+async fn send_health(sdk: &mut Sdk, health: Sender<()>) -> Sender<()> {
+	let result = match health.send(()).await {
+		Ok(_) => health,
+		Err(e) => {
+			tracing::error!("Agones: health receiver was closed {:?}", e);
+			sdk.health_check()
+		}
+	};
+	tracing::info!("Agones: sended agones health signal");
+	result
 }
 
 async fn is_server_running(server_manager: &Arc<Mutex<ServerManager>>) -> bool {

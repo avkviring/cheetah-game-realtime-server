@@ -1,13 +1,9 @@
-use std::collections::hash_map::Iter;
-
-use fnv::FnvHashMap;
-
+use crate::room::object::S2CCommandsCollector;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::room::field::{Field, FieldId, FieldType};
 use cheetah_common::room::object::GameObjectId;
 use cheetah_protocol::RoomMemberId;
-
-use crate::room::object::S2CCommandsCollector;
+use fnv::FnvHashMap;
 
 pub mod f64;
 pub mod i64;
@@ -48,10 +44,6 @@ where
 			};
 			out_commands.push(s2c_command_with_meta);
 		}
-	}
-
-	pub(crate) fn get_fields(&self) -> Iter<'_, FieldId, T> {
-		self.values.iter()
 	}
 }
 

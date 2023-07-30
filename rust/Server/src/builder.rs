@@ -20,7 +20,7 @@ use crate::{RoomsServerManagerError, Server, ServerManager};
 ///
 pub struct ServerBuilder {
 	game_bind_addr: SocketAddr,
-	admin_webgrpc_service_bind_address: SocketAddr,
+	debug_rest_service_bind_address: SocketAddr,
 	internal_grpc_service_bind_address: SocketAddr,
 	internal_webgrpc_service_bind_address: SocketAddr,
 	is_agones_enabled: bool,
@@ -32,7 +32,7 @@ impl Default for ServerBuilder {
 	fn default() -> Self {
 		Self {
 			game_bind_addr: SocketAddr::from_str("127.0.0.1:0").unwrap(),
-			admin_webgrpc_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
+			debug_rest_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			internal_grpc_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			internal_webgrpc_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			is_agones_enabled: false,
@@ -64,8 +64,8 @@ impl ServerBuilder {
 	}
 
 	#[must_use]
-	pub fn set_admin_webgrpc_service_bind_address(mut self, addr: SocketAddr) -> Self {
-		self.admin_webgrpc_service_bind_address = addr;
+	pub fn set_debug_rest_service_bind_address(mut self, addr: SocketAddr) -> Self {
+		self.debug_rest_service_bind_address = addr;
 		self
 	}
 
@@ -106,16 +106,14 @@ impl ServerBuilder {
 		let manager = Arc::new(Mutex::new(server_manager));
 
 		let internal_grpc_listener = TcpListener::bind(self.internal_grpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
-
 		let internal_webgrpc_listener = TcpListener::bind(self.internal_webgrpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
-
-		let admin_webgrpc_listener = TcpListener::bind(self.admin_webgrpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
+		let debug_rest_service_listener = TcpListener::bind(self.debug_rest_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
 
 		Ok(Server {
 			game_socket_addr,
 			internal_webgrpc_listener,
 			internal_grpc_listener,
-			admin_webgrpc_listener,
+			debug_rest_service_listener,
 			is_agones_enabled: self.is_agones_enabled,
 			manager,
 		})

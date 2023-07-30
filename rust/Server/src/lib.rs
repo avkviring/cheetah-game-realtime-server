@@ -9,21 +9,17 @@ use tokio_stream::wrappers::TcpListenerStream;
 use tonic_health::ServingStatus;
 use tonic_web::GrpcWebLayer;
 
-use admin::dump_server::DumpServer;
-
-use crate::agones::run_agones;
-use crate::debug::dump::DumpGrpcService;
-use crate::debug::grpc::RealtimeAdminGRPCService;
-use crate::debug::proto::admin;
-use crate::debug::proto::admin::admin_server::AdminServer;
+use crate::agones::agones_und_notifyservice_cycle;
 use crate::grpc::proto::internal::internal_server::InternalServer;
 use crate::grpc::RealtimeInternalService;
+use crate::rest::run_rest_server;
 use crate::server::manager::{RoomsServerManagerError, ServerManager};
+
 pub mod agones;
 pub mod builder;
-pub mod debug;
 pub mod env;
 pub mod grpc;
+pub mod rest;
 pub mod room;
 pub mod server;
 
@@ -35,7 +31,7 @@ pub struct Server {
 	pub game_socket_addr: SocketAddr,
 	pub internal_webgrpc_listener: TcpListener,
 	pub internal_grpc_listener: TcpListener,
-	pub admin_webgrpc_listener: TcpListener,
+	pub debug_rest_service_listener: TcpListener,
 	pub is_agones_enabled: bool,
 	pub manager: Arc<Mutex<ServerManager>>,
 }
@@ -44,13 +40,13 @@ impl Server {
 	pub async fn run(self) {
 		let internal_grpc_future = Self::new_internal_grpc_service(self.internal_grpc_listener, Arc::clone(&self.manager));
 		let internal_webgrpc_future = Self::new_internal_webgrpc_service(self.internal_webgrpc_listener, Arc::clone(&self.manager));
-		let admin_grpc = Self::configure_admin_grpc_service(self.admin_webgrpc_listener, Arc::clone(&self.manager));
+		let debug_rest_service = run_rest_server(Arc::clone(&self.manager), self.debug_rest_service_listener);
 		if self.is_agones_enabled {
 			let max_rooms = usize::from_str(&env::get_env_or_default("MAX_ROOMS", "20")).unwrap();
-			let agones = run_agones(Arc::clone(&self.manager), max_rooms);
-			join!(internal_grpc_future, internal_webgrpc_future, admin_grpc, agones);
+			let agones = agones_und_notifyservice_cycle(Arc::clone(&self.manager), max_rooms);
+			join!(internal_grpc_future, internal_webgrpc_future, debug_rest_service, agones);
 		} else {
-			join!(internal_grpc_future, internal_webgrpc_future, admin_grpc);
+			join!(internal_grpc_future, internal_webgrpc_future, debug_rest_service);
 		}
 	}
 
@@ -80,24 +76,6 @@ impl Server {
 			.add_service(health_service)
 			.add_service(service)
 			.serve_with_incoming(TcpListenerStream::new(listener))
-			.await
-			.unwrap();
-	}
-
-	async fn configure_admin_grpc_service(tcp_listener: TcpListener, manager: Arc<Mutex<ServerManager>>) {
-		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-		health_reporter.set_service_status("", ServingStatus::Serving).await;
-
-		let admin = AdminServer::new(RealtimeAdminGRPCService::new(Arc::clone(&manager)));
-		let dumper = DumpServer::new(DumpGrpcService::new(manager));
-
-		tonic::transport::Server::builder()
-			.accept_http1(true)
-			.layer(GrpcWebLayer::new())
-			.add_service(health_service)
-			.add_service(dumper)
-			.add_service(admin)
-			.serve_with_incoming(TcpListenerStream::new(tcp_listener))
 			.await
 			.unwrap();
 	}

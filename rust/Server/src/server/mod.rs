@@ -94,11 +94,7 @@ impl Server {
 			ManagementTask::DeleteRoom(room_id) => self.delete_room(room_id).map(|_| ManagementTaskResult::DeleteRoom)?,
 			ManagementTask::CreateMember(room_id, member_template) => self.register_member(room_id, member_template, now).map(ManagementTaskResult::CreateMember)?,
 			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
-			ManagementTask::Dump(room_id) => self
-				.room_registry
-				.get(&room_id)
-				.map(|room| ManagementTaskResult::Dump(room.into()))
-				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
+			ManagementTask::Dump(room_id) => ManagementTaskResult::Dump(self.room_registry.get(&room_id).cloned()),
 			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.room_registry.rooms().map(|r| r.0).copied().collect()),
 			ManagementTask::PutForwardedCommandConfig(room_id, config) => self
 				.room_registry
@@ -151,6 +147,7 @@ impl Server {
 	/// удалить комнату с сервера и закрыть соединение со всеми пользователями
 	fn delete_room(&mut self, room_id: RoomId) -> Result<(), RoomNotFoundError> {
 		let room = self.room_registry.force_remove_room(&room_id)?;
+		tracing::info!("Delete room {:?}, counts rooms after {:?}", room_id, self.room_registry.rooms().len());
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });
 		self.network.disconnect_members(ids, DisconnectByCommandReason::RoomDeleted);
 		Ok(())

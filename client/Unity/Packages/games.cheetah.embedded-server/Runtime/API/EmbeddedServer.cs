@@ -37,7 +37,7 @@ namespace Games.Cheetah.EmbeddedServer.API
         public EmbeddedServer(
             IPAddress internalGrpcAddress, ushort internalGrpcPort,
             IPAddress internalWebGrpcAddress, ushort internalWebGrpcPort,
-            IPAddress adminWebGrpcAddress, ushort adminWebGrpcPort,
+            IPAddress debugRestServiceAddress, ushort debugRestServicePort,
             IPAddress gameUdpAddress, ushort gameUdpPort
         )
         {
@@ -45,13 +45,13 @@ namespace Games.Cheetah.EmbeddedServer.API
             {
                 var internalGrpcSocket = NewBindSocket(internalGrpcAddress, internalGrpcPort);
                 var internalWebGrpcSocket = NewBindSocket(internalWebGrpcAddress, internalWebGrpcPort);
-                var adminWebGrpcSocket = NewBindSocket(adminWebGrpcAddress, adminWebGrpcPort);
+                var debugRestServiceSocket = NewBindSocket(debugRestServiceAddress, debugRestServicePort);
                 var gameUdpSocket = NewBindSocket(gameUdpAddress, gameUdpPort);
 
                 if (!Server.RunNewServer(ref description, OnError,
                         ref internalGrpcSocket,
                         ref internalWebGrpcSocket,
-                        ref adminWebGrpcSocket,
+                        ref debugRestServiceSocket,
                         ref gameUdpSocket))
                 {
                     throw new Exception("Cannot run embedded server. " + errorMessage);
@@ -116,8 +116,8 @@ namespace Games.Cheetah.EmbeddedServer.API
             unsafe
             {
                 var ip =
-                    $"{description.admin_webgrpc_ip[0]}.{description.admin_webgrpc_ip[1]}.{description.admin_webgrpc_ip[2]}.{description.admin_webgrpc_ip[3]}";
-                return new Uri($"http://{ip}:{description.admin_webgrpc_port}");
+                    $"{description.debug_rest_service_ip[0]}.{description.debug_rest_service_ip[1]}.{description.debug_rest_service_ip[2]}.{description.debug_rest_service_ip[3]}";
+                return new Uri($"http://{ip}:{description.debug_rest_service_port}");
             }
         }
 

@@ -7,7 +7,7 @@ use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::GameObjectTemplateId;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct PermissionManager {
 	template_rules: FnvHashMap<GameObjectTemplateId, FnvHashMap<AccessGroups, Permission>>,
 	field_rules: FnvHashMap<PermissionFieldKey, FnvHashMap<AccessGroups, Permission>>,
@@ -20,7 +20,7 @@ struct PermissionFieldKey {
 	field: Field,
 }
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone)]
 struct PermissionCachedFieldKey {
 	field_key: PermissionFieldKey,
 	groups: AccessGroups,

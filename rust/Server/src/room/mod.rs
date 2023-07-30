@@ -1,7 +1,5 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::rc::Rc;
 use std::slice;
 use std::time::{Duration, Instant};
 
@@ -15,7 +13,7 @@ use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnecte
 use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
-use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
+use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_protocol::{RoomId, RoomMemberId};
 use member::RoomMember;
@@ -34,16 +32,16 @@ pub mod object;
 pub mod sender;
 pub mod template;
 
+#[derive(Clone, Debug)]
 pub struct Room {
 	pub id: RoomId,
 	pub template_name: String,
-	pub permission_manager: Rc<RefCell<PermissionManager>>,
+	pub permission_manager: PermissionManager,
 	pub members: HashMap<RoomMemberId, RoomMember, FnvBuildHasher>,
 	pub(crate) objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ReliabilityGuarantees>,
 	pub member_id_generator: RoomMemberId,
 	pub room_object_id_generator: u32,
-	tmp_command_collector: Rc<RefCell<Vec<(GameObjectTemplateId, S2CCommandsCollector)>>>,
 	objects_singleton_key: HashMap<Buffer, GameObjectId, FnvBuildHasher>,
 
 	#[cfg(test)]
@@ -72,14 +70,13 @@ impl Room {
 			members: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
-			permission_manager: Rc::new(RefCell::new(PermissionManager::new(&template.permissions))),
+			permission_manager: PermissionManager::new(&template.permissions),
 			#[cfg(test)]
 			test_object_id_generator: 0,
 			#[cfg(test)]
 			test_out_commands: Default::default(),
 			member_id_generator: 0,
 			room_object_id_generator: 65536,
-			tmp_command_collector: Rc::new(RefCell::new(Vec::with_capacity(100))),
 			template_name: template.name.clone(),
 			objects_singleton_key: Default::default(),
 			forward_configs: Default::default(),
@@ -342,7 +339,7 @@ impl Room {
 	}
 
 	pub(crate) fn update_permissions(&mut self, permissions: &Permissions) {
-		self.permission_manager.borrow_mut().update_permissions(permissions);
+		self.permission_manager.update_permissions(permissions);
 	}
 }
 

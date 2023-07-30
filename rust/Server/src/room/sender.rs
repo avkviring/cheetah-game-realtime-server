@@ -1,8 +1,6 @@
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
-use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType};
-use std::rc::Rc;
-
 use cheetah_common::commands::s2c::{S2CCommandWithCreator, S2CCommandWithMeta};
+use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType};
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_protocol::RoomMemberId;
@@ -27,7 +25,7 @@ impl Room {
 
 		let channel_type = self.current_channel.as_ref().unwrap_or(&ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 
-		let permission_manager = Rc::clone(&self.permission_manager);
+		let permission_manager = &self.permission_manager;
 		let members_for_send = self
 			.members
 			.values_mut()
@@ -43,7 +41,7 @@ impl Room {
 					if let Some(template) = object_template {
 						match command.field {
 							None => true,
-							Some(field) => permission_manager.borrow_mut().get_permission(template, field, member.template.groups) > Permission::Deny,
+							Some(field) => permission_manager.get_permission(template, field, member.template.groups) > Permission::Deny,
 						}
 					} else {
 						true
@@ -65,7 +63,6 @@ impl Room {
 	}
 
 	pub fn send_to_member(&mut self, member_id: &RoomMemberId, object_template: GameObjectTemplateId, commands: &[S2CCommandWithMeta]) -> Result<(), ServerCommandError> {
-		let permission_manager = Rc::clone(&self.permission_manager);
 		let channel = self.current_channel.unwrap_or(ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 		let member = self.get_member_mut(member_id)?;
 
@@ -74,13 +71,14 @@ impl Room {
 			for command in commands {
 				let allow = match command.field {
 					None => true,
-					Some(field) => permission_manager.borrow_mut().get_permission(object_template, field, groups) > Permission::Deny,
+					Some(field) => self.permission_manager.get_permission(object_template, field, groups) > Permission::Deny,
 				};
 				if allow {
 					let command_with_meta = S2CCommandWithCreator {
 						creator: command.creator,
 						command: command.command.clone(),
 					};
+					let member = self.get_member_mut(member_id)?;
 					member.out_commands.push(CommandWithChannelType {
 						channel_type: channel,
 						command: BothDirectionCommand::S2CWithCreator(command_with_meta),

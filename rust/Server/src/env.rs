@@ -61,13 +61,13 @@ pub fn get_internal_webgrpc_service_default_address() -> SocketAddr {
 }
 
 #[must_use]
-pub fn get_public_htt11_service_binding_addr() -> SocketAddr {
-	format!("0.0.0.0:{}", get_public_grpc_service_default_port()).parse().unwrap()
+pub fn get_debug_rest_service_default_address() -> SocketAddr {
+	format!("0.0.0.0:{}", get_debug_rest_service_default_port()).parse().unwrap()
 }
 
 #[must_use]
-pub fn get_admin_webgrpc_service_default_address() -> SocketAddr {
-	format!("0.0.0.0:{}", get_admin_webgrpc_service_default_port()).parse().unwrap()
+pub fn get_public_htt11_service_binding_addr() -> SocketAddr {
+	format!("0.0.0.0:{}", get_public_grpc_service_default_port()).parse().unwrap()
 }
 
 #[must_use]
@@ -84,7 +84,7 @@ pub fn get_internal_webgrpc_service_default_port() -> u16 {
 }
 
 #[must_use]
-pub fn get_admin_webgrpc_service_default_port() -> u16 {
+pub fn get_debug_rest_service_default_port() -> u16 {
 	5002
 }
 

@@ -40,7 +40,7 @@ pub struct S2CCommandWithCreator {
 	pub creator: RoomMemberId,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct S2CCommandWithMeta {
 	pub field: Option<Field>,
 	pub creator: RoomMemberId,

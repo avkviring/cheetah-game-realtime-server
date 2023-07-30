@@ -226,7 +226,6 @@
       "source": "embedded",
       "dependencies": {
         "games.cheetah.grpc": "999.999.999",
-        "games.cheetah.grpc.admin": "999.999.999",
         "games.cheetah.grpc.shared": "999.999.999",
         "com.unity.collections": "1.2.4"
       }
@@ -247,15 +246,6 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "2.0.0"
-      }
-    },
-    "games.cheetah.grpc.admin": {
-      "version": "file:games.cheetah.grpc.admin",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "games.cheetah.grpc": "999.999.999",
-        "games.cheetah.grpc.shared": "999.999.999"
       }
     },
     "games.cheetah.grpc.internal": {
