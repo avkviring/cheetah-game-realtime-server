@@ -31,6 +31,7 @@ namespace Games.Cheetah.UDS.API
         private readonly ushort udpServerPort;
         private HashSet<ulong> processedRooms = new();
         private HashSet<ulong> tmpRooms = new();
+        private readonly InternalClient internalClient;
 
         public UDSPlugin(
             Uri webGrpcRealtimeServerInternalUri,
@@ -47,6 +48,14 @@ namespace Games.Cheetah.UDS.API
             this.onRoomCreated = onRoomCreated;
             this.onRoomDeleted = onRoomDeleted;
             this.codecRegistry = codecRegistry;
+            var channel = GrpcChannel.ForAddress(
+                webGrpcRealtimeServerInternalUri, new GrpcChannelOptions
+                {
+                    HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
+                }
+            );
+
+            internalClient = new InternalClient(channel);
         }
 
 
@@ -55,15 +64,7 @@ namespace Games.Cheetah.UDS.API
          */
         public async Task OnUpdate()
         {
-            var channel = GrpcChannel.ForAddress(
-                webGrpcRealtimeServerInternalUri, new GrpcChannelOptions
-                {
-                    HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
-                }
-            );
-
-            var client = new InternalClient(channel);
-            var rooms = await client.GetRoomsAsync(new EmptyRequest());
+            var rooms = await internalClient.GetRoomsAsync(new EmptyRequest());
             var roomsOnServer = rooms.Rooms.ToHashSet();
 
             foreach (var room in roomsOnServer)
@@ -91,19 +92,10 @@ namespace Games.Cheetah.UDS.API
 
         private async Task CreateRoomPlugin(ulong roomId)
         {
-            var channel = GrpcChannel.ForAddress(
-                webGrpcRealtimeServerInternalUri, new GrpcChannelOptions
-                {
-                    HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
-                }
-            );
-
-            var grpcClient = new InternalClient(channel);
-            var member = await grpcClient.CreateSuperMemberAsync(new CreateSuperMemberRequest
+            var member = await internalClient.CreateSuperMemberAsync(new CreateSuperMemberRequest
             {
                 RoomId = roomId
             });
-
 
             var cheetahClient = new NetworkClient(
                 0,
@@ -114,7 +106,7 @@ namespace Games.Cheetah.UDS.API
                 member.PrivateKey.ToByteArray(),
                 codecRegistry);
 
-            onRoomCreated(roomId, grpcClient, cheetahClient);
+            onRoomCreated(roomId, internalClient, cheetahClient);
         }
     }
 }
