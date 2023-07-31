@@ -11,7 +11,10 @@ pub async fn run_rest_server(server_manager: Arc<Mutex<ServerManager>>, listener
 	let routes = warp::any().map(move || {
 		let server_manager = server_manager.try_lock().unwrap();
 		match server_manager.get_rooms() {
-			Ok(rooms) => format!("{:?}", rooms.into_iter().map(|id| server_manager.dump(id).unwrap())),
+			Ok(rooms) => {
+				let rooms: Vec<_> = rooms.into_iter().map(|id| server_manager.dump(id).unwrap()).collect();
+				format!("{:#?}", rooms)
+			}
 			Err(e) => format!("{:?}", e),
 		}
 	});
