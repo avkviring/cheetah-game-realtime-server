@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading;
 using Games.Cheetah.Client.Tests.Server.Helpers;
 using Games.Cheetah.Client.Types.Network;
@@ -26,14 +25,14 @@ namespace Games.Cheetah.Client.Tests.Server
 
             var newClientA = new NetworkClient(2, clientA.serverUdpHost, clientA.serverUdpPort, clientA.MemberId, clientA.roomId,
                 clientA.privateUserKey,
-                clientA.CodecRegistry);
+                clientA.CodecRegistry, 10);
 
 
             newClientA.AttachToRoom();
             Thread.Sleep(500);
             newClientA.Update();
             Assert.AreEqual(newClientA.GetConnectionStatus(), ConnectionStatus.Connected);
-            
+
             var objectsClientA = newClientA.Reader.GetCreatedObjectsInCurrentUpdate(55);
             Assert.AreEqual(objectsClientA.Count, 1);
         }

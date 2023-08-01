@@ -47,7 +47,7 @@ impl IntegrationTestHelper {
 
 	pub fn create_client(&self, member_id: RoomMemberId, private_key: &MemberPrivateKey) -> ClientId {
 		let mut client: ClientId = 0;
-		do_create_client(0, &self.socket_addr.to_string(), member_id, self.room_id, private_key, &mut client);
+		do_create_client(0, &self.socket_addr.to_string(), member_id, self.room_id, private_key, 10, &mut client);
 		client
 	}
 
