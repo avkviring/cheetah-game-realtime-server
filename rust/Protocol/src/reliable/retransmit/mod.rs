@@ -17,7 +17,7 @@ pub mod header;
 ///
 /// Время ожидания ACK
 ///
-pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT: Duration = Duration::from_millis(200);
+pub const RETRANSMIT_DEFAULT_ACK_TIMEOUT: Duration = Duration::from_millis(300);
 
 #[derive(Debug)]
 pub struct Retransmitter {
