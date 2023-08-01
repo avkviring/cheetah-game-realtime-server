@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Games_Cheetah_Client_Tests_Server_Types;
 using Games.Cheetah.Client.Codec;
-using Games.Cheetah.Client.Logger;
 using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.EmbeddedServer.API;
 using Games.Cheetah.GRPC.Internal;
@@ -123,7 +122,7 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
         {
             var client = new NetworkClient(0, server.GetUdpGameHost(), server.GetUdpGamePort(), member.UserId, roomId,
                 member.PrivateKey.ToByteArray(),
-                codecRegistry);
+                codecRegistry, 10);
             client.DisableClientLog();
             return client;
         }

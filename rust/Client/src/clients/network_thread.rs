@@ -51,6 +51,7 @@ impl NetworkChannelManager {
 		receiver: Receiver<ClientRequest>,
 		shared_statistics: SharedClientStatistics,
 		server_time: Arc<Mutex<Option<u64>>>,
+		disconnect_timeout_in_sec: u64,
 	) -> std::io::Result<NetworkChannelManager> {
 		Ok(NetworkChannelManager {
 			connection_status,
@@ -64,7 +65,7 @@ impl NetworkChannelManager {
 				server_address,
 				Instant::now(),
 				ProtocolConfiguration {
-					disconnect_timeout: Duration::from_secs(30),
+					disconnect_timeout: Duration::from_secs(disconnect_timeout_in_sec),
 				},
 			)?,
 			request_from_controller: receiver,

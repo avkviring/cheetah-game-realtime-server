@@ -51,8 +51,12 @@ namespace Games.Cheetah.Client
             uint memberId,
             ulong roomId,
             byte[] privateUserKey,
-            CodecRegistry codecRegistry) : this(connectionId, new FFIImpl(), serverUdpHost, serverUdpPort, memberId, roomId, privateUserKey,
-            codecRegistry)
+            CodecRegistry codecRegistry,
+            ulong disconnectTimeInSec
+        ) : this(connectionId, new FFIImpl(), serverUdpHost, serverUdpPort, memberId, roomId,
+            privateUserKey,
+            codecRegistry,
+            disconnectTimeInSec)
         {
         }
 
@@ -64,7 +68,8 @@ namespace Games.Cheetah.Client
             uint memberId,
             ulong roomId,
             byte[] privateUserKey,
-            CodecRegistry codecRegistry)
+            CodecRegistry codecRegistry,
+            ulong disconnectTimeInSec)
         {
             this.ffi = ffi;
             this.serverUdpHost = serverUdpHost;
@@ -82,6 +87,7 @@ namespace Games.Cheetah.Client
                 (ushort)memberId,
                 roomId,
                 ref userPrivateKey,
+                disconnectTimeInSec,
                 out Id));
 
             Writer = new Writer(ffi, CodecRegistry, Id);

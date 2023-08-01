@@ -13,6 +13,7 @@ namespace Games.Cheetah.Client.Internal
             ushort memberId,
             ulong roomId,
             ref NetworkBuffer userPrivateKey,
+            ulong disconnectTimeInSec,
             out ushort clientId
         );
 

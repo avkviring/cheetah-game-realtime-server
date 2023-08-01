@@ -8,9 +8,10 @@ namespace Games.Cheetah.Client.Internal.FFI
     public class FFIImpl : IFFI
     {
         public byte CreateClient(ulong connectionId, string serverAddress, ushort memberId, ulong roomId, ref NetworkBuffer userPrivateKey,
+            ulong disconnectTimeInSec,
             out ushort clientId)
         {
-            return FFIMethods.CreateClient(connectionId, serverAddress, memberId, roomId, ref userPrivateKey, out clientId);
+            return FFIMethods.CreateClient(connectionId, serverAddress, memberId, roomId, ref userPrivateKey, disconnectTimeInSec, out clientId);
         }
 
         public byte GetConnectionStatus(ushort clientId, out ConnectionStatus status)

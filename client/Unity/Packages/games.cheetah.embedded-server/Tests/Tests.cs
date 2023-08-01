@@ -40,7 +40,8 @@ namespace Games.Cheetah.EmbeddedServer.Tests
                     member.UserId,
                     room.RoomId,
                     member.PrivateKey.ToByteArray(),
-                    new CodecRegistryBuilder().Build());
+                    new CodecRegistryBuilder().Build(),
+                    10);
                 client.DisableClientLog();
                 client.Update();
 

@@ -85,8 +85,8 @@ namespace Games.Cheetah.UDS.API
 
             foreach (var room in roomsToRemove)
             {
-	            processedRooms.Remove(room);
-	            onRoomDeleted(room);
+                processedRooms.Remove(room);
+                onRoomDeleted(room);
             }
         }
 
@@ -104,7 +104,7 @@ namespace Games.Cheetah.UDS.API
                 member.UserId,
                 roomId,
                 member.PrivateKey.ToByteArray(),
-                codecRegistry);
+                codecRegistry, 10);
 
             onRoomCreated(roomId, internalClient, cheetahClient);
         }
