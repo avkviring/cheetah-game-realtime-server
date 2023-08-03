@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using Games.Cheetah.Client.Tests.Server.Helpers;
 using Games.Cheetah.Client.Tests.Server.Types;
@@ -25,7 +26,7 @@ namespace Games.Cheetah.Client.Tests.Server
             clientB.Update();
             // проверяем результат
             var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(777, DropMineEventFieldIdId);
-            var firstEvent = eventsStream[createdObject.ObjectId];
+            var firstEvent = eventsStream.SearchFirst(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(dropMineEvent.MineId, firstEvent.MineId);
             eventsStream.Dispose();
         }
@@ -47,7 +48,8 @@ namespace Games.Cheetah.Client.Tests.Server
             clientB.Update();
             // проверяем результат
             var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(777, DropMineEventFieldIdId);
-            Assert.AreEqual(dropMineEvent.MineId, eventsStream[createdObject.ObjectId].MineId);
+            var firstEvent = eventsStream.SearchFirst(it=>it.Item1==createdObject.ObjectId).Item2;
+            Assert.AreEqual(dropMineEvent.MineId, firstEvent.MineId);
             eventsStream.Dispose();
         }
     }

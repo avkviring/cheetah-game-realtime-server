@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using Games.Cheetah.Client.Tests.Server.Helpers;
 using Games.Cheetah.Client.Tests.Server.Types;
@@ -25,7 +26,7 @@ namespace Games.Cheetah.Client.Tests.Server
             clientB.Update();
             // проверяем результат
             var changes = clientB.Reader.GetModifiedStructures<TurretsParamsStructure>(777, TurretsParamsFieldId);
-            var actual = changes[createdObject.ObjectId];
+            var actual = changes.SearchFirst(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(turretsParams.Damage, actual.Damage);
             Assert.AreEqual(turretsParams.Speed, actual.Speed);
             changes.Dispose();
