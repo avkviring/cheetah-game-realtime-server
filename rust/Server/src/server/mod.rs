@@ -38,6 +38,7 @@ pub struct Server {
 	time_offset: Option<Duration>,
 	measurer: RefCell<Measurer>,
 	plugin_names: FnvHashSet<String>,
+	allow_delete_rooms: bool,
 }
 
 impl Server {
@@ -57,6 +58,7 @@ impl Server {
 			time_offset: None,
 			measurer,
 			plugin_names,
+			allow_delete_rooms: true,
 		})
 	}
 
@@ -121,6 +123,10 @@ impl Server {
 					})
 					.collect(),
 			),
+			ManagementTask::AllowDeleteRooms(allow) => {
+				self.allow_delete_rooms = allow;
+				ManagementTaskResult::AllowDeleteRooms
+			}
 		};
 		Ok(res)
 	}
@@ -146,6 +152,9 @@ impl Server {
 
 	/// удалить комнату с сервера и закрыть соединение со всеми пользователями
 	fn delete_room(&mut self, room_id: RoomId) -> Result<(), RoomNotFoundError> {
+		if !self.allow_delete_rooms {
+			return Ok(());
+		}
 		let room = self.room_registry.force_remove_room(&room_id)?;
 		tracing::info!("Delete room {:?}, counts rooms after {:?}", room_id, self.room_registry.rooms().len());
 		let ids = room.members.into_keys().map(|member_id| MemberAndRoomId { member_id, room_id });

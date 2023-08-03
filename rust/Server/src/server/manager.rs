@@ -42,6 +42,7 @@ pub enum ManagementTask {
 	MarkRoomAsReady(RoomId, String),
 	GetRoomInfo(RoomId),
 	UpdateRoomPermissions(RoomId, Permissions),
+	AllowDeleteRooms(bool),
 }
 
 #[derive(Debug)]
@@ -57,6 +58,7 @@ pub enum ManagementTaskResult {
 	MarkRoomAsReady,
 	GetRoomInfo(RoomInfo),
 	UpdateRoomPermissions,
+	AllowDeleteRooms,
 }
 
 #[derive(Debug)]
@@ -129,6 +131,16 @@ impl ServerManager {
 		})
 	}
 
+	pub(crate) fn set_allow_delete_rooms(&self, allow: bool) -> Result<(), ManagementTaskError> {
+		self.execute_task(ManagementTask::AllowDeleteRooms(allow)).map(|res| {
+			if let ManagementTaskResult::AllowDeleteRooms = res {
+				Ok(())
+			} else {
+				Err(ManagementTaskError::UnexpectedResultError)
+			}
+		})?
+	}
+
 	pub(crate) fn get_rooms(&self) -> Result<Vec<RoomId>, ManagementTaskError> {
 		self.execute_task(ManagementTask::GetRooms).map(|res| {
 			if let ManagementTaskResult::GetRooms(rooms) = res {
@@ -160,7 +172,7 @@ impl ServerManager {
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
-	pub fn delete_member(&mut self, id: MemberAndRoomId) -> Result<(), ManagementTaskError> {
+	pub fn delete_member(&self, id: MemberAndRoomId) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::DeleteMember(id)).map(|_| ())
 	}
 
