@@ -10,16 +10,16 @@ use tonic_health::ServingStatus;
 use tonic_web::GrpcWebLayer;
 
 use crate::agones::agones_und_notifyservice_cycle;
+use crate::debug::run_debug_server;
 use crate::grpc::proto::internal::internal_server::InternalServer;
 use crate::grpc::RealtimeInternalService;
-use crate::rest::run_rest_server;
 use crate::server::manager::{RoomsServerManagerError, ServerManager};
 
 pub mod agones;
 pub mod builder;
+pub mod debug;
 pub mod env;
 pub mod grpc;
-pub mod rest;
 pub mod room;
 pub mod server;
 
@@ -40,7 +40,7 @@ impl Server {
 	pub async fn run(self) {
 		let internal_grpc_future = Self::new_internal_grpc_service(self.internal_grpc_listener, Arc::clone(&self.manager));
 		let internal_webgrpc_future = Self::new_internal_webgrpc_service(self.internal_webgrpc_listener, Arc::clone(&self.manager));
-		let debug_rest_service = run_rest_server(Arc::clone(&self.manager), self.debug_rest_service_listener);
+		let debug_rest_service = run_debug_server(Arc::clone(&self.manager), self.debug_rest_service_listener);
 		if self.is_agones_enabled {
 			let max_rooms = usize::from_str(&env::get_env_or_default("MAX_ROOMS", "20")).unwrap();
 			let agones = agones_und_notifyservice_cycle(Arc::clone(&self.manager), max_rooms);
