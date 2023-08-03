@@ -7,8 +7,8 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use cheetah_protocol::RoomMemberId;
 use num_traits::ToPrimitive;
-use std::io::{Cursor, Error, ErrorKind};
 use serde::{Deserialize, Serialize};
+use std::io::{Cursor, Error, ErrorKind};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct ForwardedCommand {

@@ -331,7 +331,6 @@ dependencies = [
  "num-traits",
  "rand",
  "serde",
- "serde_arrays",
  "snap",
  "thiserror",
  "tracing",

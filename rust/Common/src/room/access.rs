@@ -40,7 +40,7 @@ impl AccessGroups {
 #[cfg(test)]
 mod tests {
 	use crate::room::access::AccessGroups;
-	
+
 	#[test]
 	fn create_group_from_vec() {
 		let group = AccessGroups(0b1001);
