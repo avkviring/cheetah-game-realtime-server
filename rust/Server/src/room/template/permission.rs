@@ -1,26 +1,25 @@
-use std::cell::RefCell;
-
-use fnv::FnvHashMap;
-
 use crate::room::template::config::{GroupsPermissionRule, Permission, Permissions};
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::GameObjectTemplateId;
+use fnv::FnvHashMap;
+use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PermissionManager {
 	template_rules: FnvHashMap<GameObjectTemplateId, FnvHashMap<AccessGroups, Permission>>,
 	field_rules: FnvHashMap<PermissionFieldKey, FnvHashMap<AccessGroups, Permission>>,
 	cache: RefCell<FnvHashMap<PermissionCachedFieldKey, Permission>>,
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
 struct PermissionFieldKey {
 	template: GameObjectTemplateId,
 	field: Field,
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Clone)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
 struct PermissionCachedFieldKey {
 	field_key: PermissionFieldKey,
 	groups: AccessGroups,

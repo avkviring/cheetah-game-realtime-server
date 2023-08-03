@@ -8,8 +8,9 @@ use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter
 use cheetah_protocol::RoomMemberId;
 use num_traits::ToPrimitive;
 use std::io::{Cursor, Error, ErrorKind};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct ForwardedCommand {
 	pub creator: RoomMemberId,
 	pub c2s: C2SCommand,

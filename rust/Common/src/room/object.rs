@@ -1,6 +1,7 @@
 use crate::room::owner::GameObjectOwner;
 use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use cheetah_protocol::RoomMemberId;
+use serde::{Deserialize, Serialize};
 use std::io::{Cursor, Error, ErrorKind};
 
 pub type GameObjectTemplateId = u16;
@@ -9,7 +10,7 @@ pub type GameObjectTemplateId = u16;
 /// Идентификатор игрового объекта на клиенте
 ///
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct GameObjectId {
 	///
 	/// Идентификатор игрового объекта в рамках владельца
@@ -18,8 +19,6 @@ pub struct GameObjectId {
 	pub is_room_owner: bool,
 	pub member_id: RoomMemberId,
 }
-
-impl GameObjectId {}
 
 impl GameObjectId {
 	///

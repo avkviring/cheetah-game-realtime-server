@@ -2,16 +2,18 @@ use std::fmt;
 use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
 use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use serde::{Deserialize, Serialize};
 
 ///
 /// Бинарное значение поля
 ///
 #[repr(C)]
-#[derive(Copy, Clone, PartialEq, Hash, Eq)]
+#[derive(Copy, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
 pub struct Buffer {
 	pub len: u16,
 	// используется в C#
 	pub pos: u16,
+	#[serde(with = "serde_arrays")]
 	pub buffer: [u8; BUFFER_SIZE],
 }
 

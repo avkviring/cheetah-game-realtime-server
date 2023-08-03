@@ -2,7 +2,9 @@ use std::cmp::min;
 
 use rand::Rng;
 
-#[derive(Debug, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemberPrivateKey(pub [u8; 32]);
 
 impl MemberPrivateKey {

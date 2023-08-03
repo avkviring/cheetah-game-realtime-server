@@ -3,13 +3,15 @@ use std::io::ErrorKind;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
+use serde::{Deserialize, Serialize};
+
 use crate::room::buffer::Buffer;
 
 ///
 /// Тип данных поля
 ///
 #[repr(C)]
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum FieldType {
 	Long,
 	Double,
@@ -76,7 +78,7 @@ impl ToFieldType for Buffer {
 
 pub type FieldId = u16;
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Field {
 	pub id: FieldId,
 	pub field_type: FieldType,

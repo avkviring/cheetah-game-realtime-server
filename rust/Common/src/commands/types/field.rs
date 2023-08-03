@@ -3,8 +3,9 @@ use std::fmt::Debug;
 use std::io::Cursor;
 
 use crate::room::object::GameObjectId;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(C)]
 pub struct DeleteFieldCommand {
 	pub field_id: FieldId,

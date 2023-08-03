@@ -9,6 +9,7 @@ use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 use cheetah_protocol::RoomMemberId;
 use fields::Fields;
+use serde::{Deserialize, Serialize};
 
 pub mod fields;
 
@@ -19,7 +20,7 @@ pub type S2CCommandsCollector = Vec<S2CCommandWithMeta>;
 ///
 /// Игровой объект - логическая группировка игровых данных
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameObject {
 	pub id: GameObjectId,
 	pub template_id: GameObjectTemplateId,

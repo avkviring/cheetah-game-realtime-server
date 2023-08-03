@@ -8,9 +8,10 @@ use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::field::FieldId;
 use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_protocol::RoomMemberId;
+use serde::{Deserialize, Serialize};
 use std::slice;
 
-#[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct ForwardConfig {
 	pub(crate) command_type_id: CommandTypeId,
 	pub(crate) field_id: Option<FieldId>,

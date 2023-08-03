@@ -6,12 +6,13 @@ use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter
 use crate::room::access::AccessGroups;
 use crate::room::buffer::Buffer;
 use crate::room::object::{GameObjectId, GameObjectTemplateId};
+use serde::{Deserialize, Serialize};
 
 ///
 /// Создать игровой объект от имени клиента
 /// S->C, C->S
 ///
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(C)]
 pub struct CreateGameObjectCommand {
 	pub object_id: GameObjectId,
@@ -23,7 +24,7 @@ pub struct CreateGameObjectCommand {
 /// Игровой объект создан
 ///
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct C2SCreatedGameObjectCommand {
 	pub object_id: GameObjectId,
 	///
@@ -41,7 +42,7 @@ pub struct C2SCreatedGameObjectCommand {
 /// Игровой объект загружен на клиента
 ///
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct GameObjectCreatedS2CCommand {
 	pub object_id: GameObjectId,
 }

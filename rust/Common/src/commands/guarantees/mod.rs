@@ -1,17 +1,19 @@
+use serde::{Deserialize, Serialize};
+
 pub mod codec;
 
-#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
+#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default, Serialize, Deserialize)]
 #[repr(C)]
 pub struct ChannelGroup(pub u8);
 
-#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default)]
+#[derive(Debug, PartialEq, Copy, Clone, Hash, Eq, Default, Serialize, Deserialize)]
 #[repr(C)]
 pub struct ChannelSequence(pub u32);
 
 ///
 /// Тип гарантий
 ///
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
 pub enum ReliabilityGuarantees {
 	///
 	/// Выполняем команды без учета порядка
@@ -35,7 +37,7 @@ pub enum ReliabilityGuarantees {
 	ReliableSequence(ChannelGroup),
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]
 pub enum ReliabilityGuaranteesChannel {
 	///
 	/// Выполняем команды без учета порядка, гарантированная доставка
