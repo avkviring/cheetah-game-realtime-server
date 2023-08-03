@@ -29,7 +29,7 @@ namespace Games.Cheetah.Client
          * Можно проверять, чтобы не выделять память каждый кадр
          */
         public bool HasCreateObjectsInCurrentUpdate => createdObjectsInUpdate.Count > 0;
-        
+
         /**
          * Получить объекты с сервера, создание которых завершилось в текущем Update
          */
@@ -81,9 +81,9 @@ namespace Games.Cheetah.Client
         /**
          * Получить список изменений double полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
          */
-        public NativeParallelHashMap<NetworkObjectId, double> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
+        public NativeList<(NetworkObjectId, double)> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
         {
-            var result = new NativeParallelHashMap<NetworkObjectId, double>(sbyte.MaxValue, Allocator.TempJob);
+            var result = new NativeList<(NetworkObjectId, double)>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
                 ref var command = ref client.s2cCommands[i];
@@ -92,7 +92,7 @@ namespace Games.Cheetah.Client
                 var commandObjectId = setCommand.objectId;
                 if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
                 {
-                    result[commandObjectId] = setCommand.value;
+                    result.Add((commandObjectId, setCommand.value));
                 }
             }
 
@@ -102,18 +102,18 @@ namespace Games.Cheetah.Client
         /**
          * Получить список изменений long полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
          */
-        public NativeParallelHashMap<NetworkObjectId, long> GetModifiedLongs(ushort template, FieldId.Long fieldId)
+        public NativeList<(NetworkObjectId, long)> GetModifiedLongs(ushort template, FieldId.Long fieldId)
         {
-            var result = new NativeParallelHashMap<NetworkObjectId, long>(sbyte.MaxValue, Allocator.TempJob);
+            var result = new NativeList<(NetworkObjectId, long)>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
                 ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetLong) continue;
-                ref var setCommand = ref command.commandUnion.setLong;
-                var commandObjectId = setCommand.objectId;
-                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
+                ref var setLongCommand = ref command.commandUnion.setLong;
+                var commandObjectId = setLongCommand.objectId;
+                if (GetTemplate(commandObjectId) == template && setLongCommand.fieldId == fieldId.Id)
                 {
-                    result[commandObjectId] = setCommand.value;
+                    result.Add((commandObjectId, setLongCommand.value));
                 }
             }
 
@@ -124,22 +124,22 @@ namespace Games.Cheetah.Client
         /**
          * Получить список изменений structure полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
          */
-        public NativeParallelHashMap<NetworkObjectId, T> GetModifiedStructures<T>(ushort template, FieldId.Structure fieldId)
+        public NativeList<(NetworkObjectId, T)> GetModifiedStructures<T>(ushort template, FieldId.Structure fieldId)
             where T : unmanaged
         {
-            var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
+            var result = new NativeList<(NetworkObjectId, T)>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
                 ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetStructure) continue;
                 ref var setCommand = ref command.commandUnion.setStructure;
-                var commandObjectId = setCommand.objectId;
-                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
+                var networkObjectId = setCommand.objectId;
+                if (GetTemplate(networkObjectId) == template && setCommand.fieldId == fieldId.Id)
                 {
                     var item = new T();
                     var networkBuffer = setCommand.value;
                     codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
-                    result[commandObjectId] = item;
+                    result.Add((networkObjectId, item));
                 }
             }
 
@@ -147,11 +147,11 @@ namespace Games.Cheetah.Client
         }
 
         /**
-         * Получить список событий по объекту в текущем цикле.
-         */
-        public NativeParallelHashMap<NetworkObjectId, T> GetEvents<T>(ushort template, FieldId.Event eventId) where T : unmanaged
+             * Получить список событий по объекту в текущем цикле.
+             */
+        public NativeList<(NetworkObjectId, T)> GetEvents<T>(ushort template, FieldId.Event eventId) where T : unmanaged
         {
-            var result = new NativeParallelHashMap<NetworkObjectId, T>(sbyte.MaxValue, Allocator.TempJob);
+            var result = new NativeList<(NetworkObjectId, T)>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
                 ref var command = ref client.s2cCommands[i];
@@ -163,7 +163,7 @@ namespace Games.Cheetah.Client
                     var item = new T();
                     var networkBuffer = eventCommand.eventData;
                     codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
-                    result[networkObjectId] = item;
+                    result.Add((networkObjectId, item));
                 }
             }
 

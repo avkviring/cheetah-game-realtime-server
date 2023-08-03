@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using Games.Cheetah.Client.Tests.Server.Helpers;
 using NUnit.Framework;
@@ -18,7 +19,7 @@ namespace Games.Cheetah.Client.Tests.Server
             clientB.Update();
             // проверяем результат
             var changes = clientB.Reader.GetModifiedLongs(777, ScoreFieldId);
-            var actual = changes[createdObject.ObjectId];
+            var actual = changes.SearchLast(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(155, actual);
             changes.Dispose();
         }
@@ -38,7 +39,7 @@ namespace Games.Cheetah.Client.Tests.Server
             clientB.Update();
             // проверяем результат
             var changes = clientB.Reader.GetModifiedLongs (777, ScoreFieldId);
-            var actual = changes[createdObject.ObjectId];
+            var actual = changes.SearchLast(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(3003, actual);
             changes.Dispose();
         }

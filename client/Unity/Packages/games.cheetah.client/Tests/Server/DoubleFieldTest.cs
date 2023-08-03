@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using Games.Cheetah.Client.Tests.Server.Helpers;
 using NUnit.Framework;
@@ -19,7 +20,7 @@ namespace Games.Cheetah.Client.Tests.Server
                 clientB.Update();
                 // проверяем результат
                 var stream = clientB.Reader.GetModifiedDoubles(777, HealFieldId);
-                var actual = stream[createdObject.ObjectId];
+                var actual = stream.SearchLast(it=>it.Item1==createdObject.ObjectId).Item2;
                 Assert.AreEqual(77.99, actual);
                 stream.Dispose();
         }
@@ -38,7 +39,7 @@ namespace Games.Cheetah.Client.Tests.Server
             clientB.Update();
             // проверяем результат
             var stream = clientB.Reader.GetModifiedDoubles(777, HealFieldId);
-            var actual = stream[createdObject.ObjectId];
+            var actual = stream.SearchLast(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(177.99, actual);
             stream.Dispose();
         }
