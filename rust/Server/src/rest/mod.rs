@@ -13,7 +13,10 @@ pub async fn run_rest_server(server_manager: Arc<Mutex<ServerManager>>, listener
 		match server_manager.get_rooms() {
 			Ok(rooms) => {
 				let rooms: Vec<_> = rooms.into_iter().map(|id| server_manager.dump(id).unwrap()).collect();
-				format!("{:#?}", rooms)
+				match serde_json::to_string(&rooms) {
+					Ok(s) => { s }
+					Err(e) => { format!("Error {:?}", e) }
+				}
 			}
 			Err(e) => format!("{:?}", e),
 		}

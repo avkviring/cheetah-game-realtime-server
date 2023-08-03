@@ -3,6 +3,7 @@ use std::io::Cursor;
 use strum_macros::AsRefStr;
 
 use cheetah_protocol::RoomMemberId;
+use serde::{Deserialize, Serialize};
 
 use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
@@ -18,7 +19,7 @@ use crate::commands::{CommandDecodeError, CommandTypeId};
 use crate::room::field::{Field, FieldId, FieldType};
 use crate::room::object::GameObjectId;
 
-#[derive(Debug, PartialEq, Clone, AsRefStr)]
+#[derive(Debug, PartialEq, Clone, AsRefStr, Serialize, Deserialize)]
 #[allow(clippy::large_enum_variant)]
 pub enum S2CCommand {
 	Create(CreateGameObjectCommand),
@@ -34,7 +35,7 @@ pub enum S2CCommand {
 	MemberDisconnected(MemberDisconnected),
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct S2CCommandWithCreator {
 	pub command: S2CCommand,
 	pub creator: RoomMemberId,

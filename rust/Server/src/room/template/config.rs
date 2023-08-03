@@ -8,6 +8,7 @@ use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::field::{Field, FieldId};
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
+use serde::{Deserialize, Serialize};
 
 ///
 /// Шаблон для создания комнаты
@@ -19,7 +20,7 @@ pub struct RoomTemplate {
 	pub permissions: Permissions,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct MemberTemplate {
 	///
 	/// Пользователь для которого игнорируются все настройки безопасности
@@ -31,7 +32,7 @@ pub struct MemberTemplate {
 	pub objects: Vec<GameObjectTemplate>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct GameObjectTemplate {
 	pub id: u32,
 	pub template: GameObjectTemplateId,
@@ -65,7 +66,7 @@ pub struct PermissionField {
 	pub rules: Vec<GroupsPermissionRule>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Ord, PartialOrd, Eq, FromPrimitive, ToPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Ord, PartialOrd, Eq, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
 pub enum Permission {
 	Deny = 0,
 	Ro,

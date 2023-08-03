@@ -1,6 +1,8 @@
 use num_derive::{FromPrimitive, ToPrimitive};
 use thiserror::Error;
 
+use serde::{Deserialize, Serialize};
+
 use crate::commands::c2s::C2SCommand;
 use crate::commands::context::CommandContextError;
 use crate::commands::guarantees::{ChannelSequence, ReliabilityGuarantees, ReliabilityGuaranteesChannel};
@@ -14,19 +16,19 @@ pub mod guarantees;
 pub mod s2c;
 pub mod types;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct CommandWithReliabilityGuarantees {
 	pub reliability_guarantees: ReliabilityGuaranteesChannel,
 	pub command: BothDirectionCommand,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct CommandWithChannelType {
 	pub command: BothDirectionCommand,
 	pub channel_type: ReliabilityGuarantees,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[allow(clippy::large_enum_variant)]
 pub enum BothDirectionCommand {
 	S2CWithCreator(S2CCommandWithCreator),
@@ -56,7 +58,7 @@ impl BothDirectionCommand {
 /// Идентификатор типа команды
 ///
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, FromPrimitive, ToPrimitive, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, FromPrimitive, ToPrimitive, Hash, Serialize, Deserialize)]
 pub enum CommandTypeId {
 	CreateGameObject = 0,
 	CreatedGameObject,

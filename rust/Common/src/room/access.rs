@@ -1,10 +1,12 @@
 use std::ops::{BitAnd, Shl};
 
+use serde::{Deserialize, Serialize};
+
 ///
 /// Группа доступа
 ///
 #[repr(C)]
-#[derive(Debug, Clone, Copy, PartialEq, Default, Hash, Eq, Ord, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Default, Hash, Eq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct AccessGroups(pub u64);
 
 impl AccessGroups {
@@ -38,7 +40,7 @@ impl AccessGroups {
 #[cfg(test)]
 mod tests {
 	use crate::room::access::AccessGroups;
-
+	
 	#[test]
 	fn create_group_from_vec() {
 		let group = AccessGroups(0b1001);

@@ -23,6 +23,7 @@ use crate::room::forward::ForwardConfig;
 use crate::room::object::{GameObject, S2CCommandsCollector};
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
+use serde::{Deserialize, Serialize};
 
 pub mod action;
 pub mod command;
@@ -32,7 +33,7 @@ pub mod object;
 pub mod sender;
 pub mod template;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Room {
 	pub id: RoomId,
 	pub template_name: String,

@@ -1,15 +1,17 @@
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_protocol::RoomMemberId;
 use std::io::{Cursor, Error, ErrorKind};
 
+use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_protocol::RoomMemberId;
+use serde::{Deserialize, Serialize};
+
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct MemberConnected {
 	pub member_id: RoomMemberId,
 }
 
 #[repr(C)]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct MemberDisconnected {
 	pub member_id: RoomMemberId,
 }

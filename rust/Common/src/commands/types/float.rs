@@ -4,8 +4,9 @@ use crate::room::field::FieldId;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::room::object::GameObjectId;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Deserialize, Serialize)]
 #[repr(C)]
 pub struct SetDoubleCommand {
 	pub object_id: GameObjectId,
@@ -17,7 +18,7 @@ pub struct SetDoubleCommand {
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[repr(C)]
 pub struct IncrementDoubleC2SCommand {
 	pub object_id: GameObjectId,

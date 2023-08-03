@@ -3,8 +3,9 @@ use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter
 use std::io::Cursor;
 
 use crate::room::object::GameObjectId;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Serialize, Deserialize)]
 #[repr(C)]
 pub struct SetLongCommand {
 	pub object_id: GameObjectId,
@@ -16,7 +17,7 @@ pub struct SetLongCommand {
 /// Обновление счетчика
 /// - C->S
 ///
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[repr(C)]
 pub struct IncrementLongC2SCommand {
 	pub object_id: GameObjectId,

@@ -2,6 +2,8 @@ use std::io::Cursor;
 
 use strum_macros::AsRefStr;
 
+use serde::{Deserialize, Serialize};
+
 use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
@@ -15,7 +17,7 @@ use crate::commands::{CommandDecodeError, CommandTypeId};
 use crate::room::field::{Field, FieldId, FieldType};
 use crate::room::object::GameObjectId;
 
-#[derive(Debug, PartialEq, Clone, AsRefStr)]
+#[derive(Debug, PartialEq, Clone, AsRefStr, Serialize, Deserialize)]
 pub enum C2SCommand {
 	CreateGameObject(CreateGameObjectCommand),
 	CreatedGameObject(Box<C2SCreatedGameObjectCommand>),

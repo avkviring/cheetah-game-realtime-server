@@ -3,8 +3,9 @@ use crate::room::field::FieldId;
 use std::io::Cursor;
 
 use crate::room::object::GameObjectId;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(C)]
 pub struct SetStructureCommand {
 	pub object_id: GameObjectId,

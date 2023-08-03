@@ -4,12 +4,13 @@ use cheetah_common::room::field::{Field, FieldId, FieldType};
 use cheetah_common::room::object::GameObjectId;
 use cheetah_protocol::RoomMemberId;
 use fnv::FnvHashMap;
+use serde::{Deserialize, Serialize};
 
 pub mod f64;
 pub mod i64;
 pub mod structure;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Fields<T>
 where
 	T: FieldValue,

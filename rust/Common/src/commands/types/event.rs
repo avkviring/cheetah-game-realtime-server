@@ -1,15 +1,17 @@
-use crate::room::buffer::Buffer;
-use crate::room::field::FieldId;
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_protocol::RoomMemberId;
 use std::io::{Cursor, Error, ErrorKind};
 
+use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_protocol::RoomMemberId;
+use serde::{Deserialize, Serialize};
+
+use crate::room::buffer::Buffer;
+use crate::room::field::FieldId;
 use crate::room::object::GameObjectId;
 
 ///
 /// Событие по объекту
 /// - C->S, S->C
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Serialize, Deserialize)]
 #[repr(C)]
 pub struct EventCommand {
 	pub object_id: GameObjectId,
@@ -20,7 +22,7 @@ pub struct EventCommand {
 ///
 /// Событие по объекту для определенного пользователя
 ///
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(C)]
 pub struct TargetEventCommand {
 	pub target: RoomMemberId,

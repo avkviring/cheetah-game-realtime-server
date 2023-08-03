@@ -2,8 +2,9 @@ use cheetah_common::commands::CommandWithChannelType;
 use cheetah_protocol::RoomMemberId;
 
 use crate::room::template::config::MemberTemplate;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoomMember {
 	pub id: RoomMemberId,
 	pub connected: bool,
