@@ -90,6 +90,12 @@ namespace Games.Cheetah.Client
                 if (command.commandType != CommandType.SetDouble) continue;
                 ref var setCommand = ref command.commandUnion.setDouble;
                 var commandObjectId = setCommand.objectId;
+
+                if (IsCreatingObject(commandObjectId))
+                {
+                    continue;
+                }
+
                 if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
                 {
                     result.Add((commandObjectId, setCommand.value));
@@ -111,6 +117,12 @@ namespace Games.Cheetah.Client
                 if (command.commandType != CommandType.SetLong) continue;
                 ref var setLongCommand = ref command.commandUnion.setLong;
                 var commandObjectId = setLongCommand.objectId;
+
+                if (IsCreatingObject(commandObjectId))
+                {
+                    continue;
+                }
+
                 if (GetTemplate(commandObjectId) == template && setLongCommand.fieldId == fieldId.Id)
                 {
                     result.Add((commandObjectId, setLongCommand.value));
@@ -133,13 +145,19 @@ namespace Games.Cheetah.Client
                 ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetStructure) continue;
                 ref var setCommand = ref command.commandUnion.setStructure;
-                var networkObjectId = setCommand.objectId;
-                if (GetTemplate(networkObjectId) == template && setCommand.fieldId == fieldId.Id)
+                var commandObjectId = setCommand.objectId;
+
+                if (IsCreatingObject(commandObjectId))
+                {
+                    continue;
+                }
+
+                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
                 {
                     var item = new T();
                     var networkBuffer = setCommand.value;
                     codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
-                    result.Add((networkObjectId, item));
+                    result.Add((commandObjectId, item));
                 }
             }
 
@@ -324,6 +342,11 @@ namespace Games.Cheetah.Client
             }
 
             throw new Exception("NetworkObject with id = " + networkObjectId + " not created");
+        }
+
+        private bool IsCreatingObject(NetworkObjectId objectId)
+        {
+            return creatingObjects.ContainsKey(objectId);
         }
     }
 }
