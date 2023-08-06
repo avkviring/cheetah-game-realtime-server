@@ -149,10 +149,10 @@ impl ApplicationThreadClient {
 						command_ffi.command.member_disconnect = command;
 					}
 				}
-				if *count == 1023 {
+				*count += 1;
+				if *count == 1024 {
 					break;
 				}
-				*count += 1;
 			}
 		}
 	}
