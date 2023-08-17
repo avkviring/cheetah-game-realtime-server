@@ -219,7 +219,6 @@ namespace Games.Cheetah.Client.Types.Command
         AttachToRoom,
         DetachFromRoom,
         DeleteField,
-        Forwarded,
         MemberConnected,
         MemberDisconnected,
     }

@@ -139,7 +139,6 @@ impl ApplicationThreadClient {
 						command_ffi.command_type = CommandTypeId::DeleteField;
 						command_ffi.command.delete_field = command;
 					}
-					S2CCommand::Forwarded(_s) => {}
 					S2CCommand::MemberConnected(command) => {
 						command_ffi.command_type = CommandTypeId::MemberConnected;
 						command_ffi.command.member_connect = command;

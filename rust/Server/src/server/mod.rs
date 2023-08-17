@@ -98,14 +98,6 @@ impl Server {
 			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
 			ManagementTask::Dump(room_id) => ManagementTaskResult::Dump(self.room_registry.get(&room_id).cloned()),
 			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.room_registry.rooms().map(|r| r.0).copied().collect()),
-			ManagementTask::PutForwardedCommandConfig(room_id, config) => self
-				.room_registry
-				.get_mut(&room_id)
-				.map(|room| {
-					room.put_forwarded_command_config(config);
-					ManagementTaskResult::PutForwardedCommandConfig
-				})
-				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::MarkRoomAsReady(room_id, plugin_name) => self.mark_room_as_ready(room_id, plugin_name)?,
 			ManagementTask::GetRoomInfo(room_id) => self
 				.room_registry

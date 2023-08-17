@@ -1,8 +1,7 @@
 use std::io::Cursor;
 
-use strum_macros::AsRefStr;
-
 use serde::{Deserialize, Serialize};
+use strum_macros::AsRefStr;
 
 use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
@@ -10,7 +9,6 @@ use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::{EventCommand, TargetEventCommand};
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-use crate::commands::types::forwarded::ForwardedCommand;
 use crate::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId};
@@ -35,7 +33,6 @@ pub enum C2SCommand {
 	///
 	AttachToRoom,
 	DetachFromRoom,
-	Forwarded(Box<ForwardedCommand>),
 }
 
 impl C2SCommand {
@@ -52,7 +49,6 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.field_id),
-			C2SCommand::Forwarded(command) => command.c2s.get_field_id(),
 			C2SCommand::SetLong(command) => command.field_id.into(),
 			C2SCommand::SetDouble(command) => command.field_id.into(),
 			C2SCommand::SetStructure(command) => command.field_id.into(),
@@ -71,7 +67,6 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.object_id),
-			C2SCommand::Forwarded(command) => command.c2s.get_object_id(),
 			C2SCommand::SetLong(command) => command.object_id.into(),
 			C2SCommand::SetDouble(command) => command.object_id.into(),
 			C2SCommand::SetStructure(command) => command.object_id.into(),
@@ -91,7 +86,6 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => None,
 			C2SCommand::DetachFromRoom => None,
 			C2SCommand::DeleteField(command) => Some(command.field_type),
-			C2SCommand::Forwarded(command) => command.c2s.get_field_type(),
 			C2SCommand::SetLong(_) => FieldType::Long.into(),
 			C2SCommand::SetDouble(_) => FieldType::Double.into(),
 			C2SCommand::SetStructure(_) => FieldType::Structure.into(),
@@ -111,7 +105,6 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => CommandTypeId::AttachToRoom,
 			C2SCommand::DetachFromRoom => CommandTypeId::DetachFromRoom,
 			C2SCommand::DeleteField(_) => CommandTypeId::DeleteField,
-			C2SCommand::Forwarded(_) => CommandTypeId::Forwarded,
 			C2SCommand::SetLong(_) => CommandTypeId::SetLong,
 			C2SCommand::SetDouble(_) => CommandTypeId::SetDouble,
 			C2SCommand::SetStructure(_) => CommandTypeId::SetStructure,
@@ -139,7 +132,6 @@ impl C2SCommand {
 			C2SCommand::AttachToRoom => Ok(()),
 			C2SCommand::DetachFromRoom => Ok(()),
 			C2SCommand::DeleteField(command) => command.encode(out),
-			C2SCommand::Forwarded(command) => command.encode(out),
 			C2SCommand::SetLong(command) => command.encode(out),
 			C2SCommand::SetDouble(command) => command.encode(out),
 			C2SCommand::SetStructure(command) => command.encode(out),
@@ -166,7 +158,6 @@ impl C2SCommand {
 			CommandTypeId::SendEvent => C2SCommand::Event(EventCommand::decode(object_id?, field_id?, input)?.into()),
 			CommandTypeId::TargetEvent => C2SCommand::TargetEvent(TargetEventCommand::decode(object_id?, field_id?, input)?.into()),
 			CommandTypeId::DeleteField => C2SCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::Forwarded => C2SCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 			CommandTypeId::MemberConnected => return Err(CommandDecodeError::UnknownTypeId(command_type_id)),
 			CommandTypeId::MemberDisconnected => return Err(CommandDecodeError::UnknownTypeId(command_type_id)),
 		})
@@ -183,7 +174,6 @@ mod tests {
 	use crate::commands::types::delete::DeleteGameObjectCommand;
 	use crate::commands::types::event::{EventCommand, TargetEventCommand};
 	use crate::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-	use crate::commands::types::forwarded::ForwardedCommand;
 	use crate::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 	use crate::commands::types::structure::SetStructureCommand;
 	use crate::commands::CommandTypeId;
@@ -340,31 +330,6 @@ mod tests {
 	fn should_decode_encode_delete() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(&C2SCommand::Delete(DeleteGameObjectCommand { object_id }), CommandTypeId::DeleteObject, Some(object_id), None);
-	}
-
-	#[test]
-	fn should_decode_encode_forwarded() {
-		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
-		let field_id = 77;
-		check(
-			&C2SCommand::Forwarded(Box::new(ForwardedCommand {
-				creator: 123,
-				c2s: C2SCommand::TargetEvent(
-					TargetEventCommand {
-						target: 10,
-						event: EventCommand {
-							object_id,
-							field_id,
-							event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
-						},
-					}
-					.into(),
-				),
-			})),
-			CommandTypeId::Forwarded,
-			Some(object_id),
-			Some(field_id),
-		);
 	}
 
 	fn check(expected: &C2SCommand, command_type_id: CommandTypeId, object_id: Option<GameObjectId>, field_id: Option<FieldId>) {

@@ -16,7 +16,6 @@ pub mod delete;
 pub mod double;
 pub mod event;
 pub mod field;
-pub mod forwarded;
 pub mod long;
 pub mod room;
 pub mod structure;
@@ -105,7 +104,6 @@ pub fn execute(command: &C2SCommand, room: &mut Room, member_id: RoomMemberId) -
 		C2SCommand::CreatedGameObject(command) => command.execute(room, member_id),
 		C2SCommand::TargetEvent(command) => command.execute(room, member_id),
 		C2SCommand::DeleteField(command) => command.execute(room, member_id),
-		C2SCommand::Forwarded(command) => command.execute(room, member_id),
 	}
 }
 

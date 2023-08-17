@@ -4,10 +4,7 @@ use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 use tonic::{Request, Response, Status};
 
-use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::field::FieldId;
-use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::RoomId;
 
@@ -15,7 +12,6 @@ use crate::grpc::proto::internal::internal_server::Internal;
 #[allow(clippy::wildcard_imports)]
 use crate::grpc::proto::internal::*;
 use crate::room::command::ServerCommandError;
-use crate::room::forward::ForwardConfig;
 use crate::room::template::config::MemberTemplate;
 use crate::room::RoomInfo;
 use crate::server::manager::{ManagementTaskError, ManagementTaskExecutionError};
@@ -115,39 +111,6 @@ impl Internal for RealtimeInternalService {
 		server.delete_room(room_id).map(|_| Response::new(DeleteRoomResponse {})).map_err(Status::from)
 	}
 
-	async fn put_forwarded_command_config(&self, request: Request<PutForwardedCommandConfigRequest>) -> Result<Response<PutForwardedCommandConfigResponse>, Status> {
-		let command_type_id = request.get_ref().command_type_id;
-		let command_type_id: CommandTypeId = num::FromPrimitive::from_u32(command_type_id).ok_or_else(|| Status::invalid_argument(format!("unknown command_type_id {command_type_id:?}")))?;
-
-		let field_id = request.get_ref().field_id;
-		let field_id = if let Some(field_id) = field_id {
-			Some(FieldId::try_from(field_id).map_err(|e| Status::invalid_argument(format!("field_id is too large {field_id:?} {e:?}")))?)
-		} else {
-			None
-		};
-
-		let object_template_id = request.get_ref().template_id;
-		let object_template_id = if let Some(object_template_id) = object_template_id {
-			Some(GameObjectTemplateId::try_from(object_template_id).map_err(|e| Status::invalid_argument(format!("object_template_id is too large {object_template_id:?} {e:?}")))?)
-		} else {
-			None
-		};
-
-		self.server_manager
-			.lock()
-			.await
-			.put_forwarded_command_config(
-				request.get_ref().room_id,
-				ForwardConfig {
-					command_type_id,
-					field_id,
-					object_template_id,
-				},
-			)
-			.map(|_| Response::new(PutForwardedCommandConfigResponse {}))
-			.map_err(Status::from)
-	}
-
 	async fn mark_room_as_ready(&self, request: Request<MarkRoomAsReadyRequest>) -> Result<Response<MarkRoomAsReadyResponse>, Status> {
 		self.server_manager
 			.lock()
@@ -236,7 +199,6 @@ mod test {
 	use tokio::sync::Mutex;
 	use tonic::{Code, Request};
 
-	use cheetah_common::commands::CommandTypeId;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_protocol::coniguration::ProtocolConfiguration;
 
@@ -248,7 +210,6 @@ mod test {
 	use crate::grpc::proto::internal::GroupsPermissionRule;
 	use crate::grpc::proto::internal::MarkRoomAsReadyRequest;
 	use crate::grpc::proto::internal::Permissions;
-	use crate::grpc::proto::internal::PutForwardedCommandConfigRequest;
 	use crate::grpc::proto::internal::UpdateRoomPermissionsRequest;
 	use crate::grpc::proto::internal::{DeleteMemberRequest, RoomMembersCountResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
@@ -349,11 +310,6 @@ mod test {
 			"delete_member should return ok"
 		);
 
-		// println!(
-		// 	"member_id={:?} dump={:?}",
-		// 	member_id,
-		// 	server_manager.lock().await.dump(room_id).unwrap().users
-		// );
 		assert!(
 			!server_manager.lock().await.dump(room_id).unwrap().unwrap().members.iter().any(|u| *u.0 == member_id as u16),
 			"deleted member should not be in the room"
@@ -368,78 +324,6 @@ mod test {
 		let res = service.delete_member(Request::new(DeleteMemberRequest { user_id: 0, room_id: 0 })).await;
 
 		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "delete_member should return not_found");
-	}
-
-	#[tokio::test]
-	async fn test_put_forwarded_command_config() {
-		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-
-		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-
-		assert!(
-			service
-				.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
-					room_id,
-					command_type_id: ToPrimitive::to_u32(&CommandTypeId::AttachToRoom).unwrap(),
-					field_id: None,
-					template_id: None,
-				}))
-				.await
-				.is_ok(),
-			"put_forwarded_command_config should return ok"
-		);
-		assert!(
-			service
-				.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
-					room_id,
-					command_type_id: ToPrimitive::to_u32(&CommandTypeId::AttachToRoom).unwrap(),
-					field_id: None,
-					template_id: None,
-				}))
-				.await
-				.is_ok(),
-			"put_forwarded_command_config should be idempotent"
-		);
-	}
-
-	#[tokio::test]
-	async fn test_put_forwarded_command_config_room_not_found() {
-		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-
-		let res = service
-			.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
-				room_id: 0,
-				command_type_id: ToPrimitive::to_u32(&CommandTypeId::AttachToRoom).unwrap(),
-				field_id: None,
-				template_id: None,
-			}))
-			.await;
-
-		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "put_forwarded_command_config should return not_found");
-	}
-
-	#[tokio::test]
-	async fn test_put_forwarded_command_config_invalid_argument() {
-		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-
-		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-
-		let tests = [(30, 0, 0), (0, u32::from(u16::MAX) + 1, 0), (0, 0, u32::from(u16::MAX) + 1)];
-		for (command_type_id, field_id, template_id) in tests {
-			let res = service
-				.put_forwarded_command_config(Request::new(PutForwardedCommandConfigRequest {
-					room_id,
-					command_type_id,
-					field_id: Some(field_id),
-					template_id: Some(template_id),
-				}))
-				.await;
-
-			assert!(matches!(res.unwrap_err().code(), Code::InvalidArgument), "put_forwarded_command_config should return invalid_Argument");
-		}
 	}
 
 	#[tokio::test]

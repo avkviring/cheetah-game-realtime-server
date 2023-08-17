@@ -1,9 +1,9 @@
 use std::io::Cursor;
 
+use serde::{Deserialize, Serialize};
 use strum_macros::AsRefStr;
 
 use cheetah_protocol::RoomMemberId;
-use serde::{Deserialize, Serialize};
 
 use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
@@ -11,7 +11,6 @@ use crate::commands::types::delete::DeleteGameObjectCommand;
 use crate::commands::types::event::EventCommand;
 use crate::commands::types::field::DeleteFieldCommand;
 use crate::commands::types::float::SetDoubleCommand;
-use crate::commands::types::forwarded::ForwardedCommand;
 use crate::commands::types::long::SetLongCommand;
 use crate::commands::types::member::{MemberConnected, MemberDisconnected};
 use crate::commands::types::structure::SetStructureCommand;
@@ -30,7 +29,6 @@ pub enum S2CCommand {
 	Event(Box<EventCommand>),
 	Delete(DeleteGameObjectCommand),
 	DeleteField(DeleteFieldCommand),
-	Forwarded(Box<ForwardedCommand>),
 	MemberConnected(MemberConnected),
 	MemberDisconnected(MemberDisconnected),
 }
@@ -57,7 +55,6 @@ impl S2CCommand {
 			S2CCommand::Event(command) => Some(command.field_id),
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_id),
-			S2CCommand::Forwarded(command) => command.c2s.get_field_id(),
 			S2CCommand::SetLong(command) => command.field_id.into(),
 			S2CCommand::SetDouble(command) => command.field_id.into(),
 			S2CCommand::SetStructure(command) => command.field_id.into(),
@@ -74,7 +71,6 @@ impl S2CCommand {
 			S2CCommand::Event(command) => Some(command.object_id),
 			S2CCommand::Delete(command) => Some(command.object_id),
 			S2CCommand::DeleteField(command) => Some(command.object_id),
-			S2CCommand::Forwarded(command) => command.c2s.get_object_id(),
 			S2CCommand::SetLong(command) => command.object_id.into(),
 			S2CCommand::SetDouble(command) => command.object_id.into(),
 			S2CCommand::SetStructure(command) => command.object_id.into(),
@@ -91,7 +87,6 @@ impl S2CCommand {
 			S2CCommand::Event(_) => Some(FieldType::Event),
 			S2CCommand::Delete(_) => None,
 			S2CCommand::DeleteField(command) => Some(command.field_type),
-			S2CCommand::Forwarded(command) => command.c2s.get_field_type(),
 			S2CCommand::SetLong(_) => FieldType::Long.into(),
 			S2CCommand::SetDouble(_) => FieldType::Double.into(),
 			S2CCommand::SetStructure(_) => FieldType::Structure.into(),
@@ -108,7 +103,6 @@ impl S2CCommand {
 			S2CCommand::Event(_) => CommandTypeId::SendEvent,
 			S2CCommand::Delete(_) => CommandTypeId::DeleteObject,
 			S2CCommand::DeleteField(_) => CommandTypeId::DeleteField,
-			S2CCommand::Forwarded(_) => CommandTypeId::Forwarded,
 			S2CCommand::SetLong(_) => CommandTypeId::SetLong,
 			S2CCommand::SetDouble(_) => CommandTypeId::SetDouble,
 			S2CCommand::SetStructure(_) => CommandTypeId::SetStructure,
@@ -124,7 +118,6 @@ impl S2CCommand {
 			S2CCommand::Event(command) => command.encode(out),
 			S2CCommand::Delete(_) => Ok(()),
 			S2CCommand::DeleteField(command) => command.encode(out),
-			S2CCommand::Forwarded(command) => command.encode(out),
 			S2CCommand::MemberConnected(command) => command.encode(out),
 			S2CCommand::SetLong(command) => command.encode(out),
 			S2CCommand::SetDouble(command) => command.encode(out),
@@ -148,7 +141,6 @@ impl S2CCommand {
 			CommandTypeId::SetStructure => S2CCommand::SetStructure(SetStructureCommand::decode(object_id?, field_id?, input)?.into()),
 			CommandTypeId::SendEvent => S2CCommand::Event(EventCommand::decode(object_id?, field_id?, input)?.into()),
 			CommandTypeId::DeleteField => S2CCommand::DeleteField(DeleteFieldCommand::decode(object_id?, field_id?, input)?),
-			CommandTypeId::Forwarded => S2CCommand::Forwarded(Box::new(ForwardedCommand::decode(object_id, field_id, input)?)),
 			CommandTypeId::MemberConnected => S2CCommand::MemberConnected(MemberConnected::decode(input)?),
 			CommandTypeId::MemberDisconnected => S2CCommand::MemberDisconnected(MemberDisconnected::decode(input)?),
 			_ => return Err(CommandDecodeError::UnknownTypeId(*command_type_id)),
@@ -160,14 +152,12 @@ impl S2CCommand {
 mod tests {
 	use std::io::Cursor;
 
-	use crate::commands::c2s::C2SCommand;
 	use crate::commands::context::CommandContextError;
 	use crate::commands::s2c::S2CCommand;
 	use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 	use crate::commands::types::delete::DeleteGameObjectCommand;
-	use crate::commands::types::event::{EventCommand, TargetEventCommand};
+	use crate::commands::types::event::EventCommand;
 	use crate::commands::types::float::SetDoubleCommand;
-	use crate::commands::types::forwarded::ForwardedCommand;
 	use crate::commands::types::long::SetLongCommand;
 	use crate::commands::types::member::MemberConnected;
 	use crate::commands::types::structure::SetStructureCommand;
@@ -265,31 +255,6 @@ mod tests {
 	fn should_decode_encode_delete() {
 		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
 		check(&S2CCommand::Delete(DeleteGameObjectCommand { object_id }), CommandTypeId::DeleteObject, Some(object_id), None);
-	}
-
-	#[test]
-	fn should_decode_encode_forwarded() {
-		let object_id = GameObjectId::new(100, GameObjectOwner::Room);
-		let field_id = 77;
-		check(
-			&S2CCommand::Forwarded(Box::new(ForwardedCommand {
-				creator: 123,
-				c2s: C2SCommand::TargetEvent(
-					TargetEventCommand {
-						target: 10,
-						event: EventCommand {
-							object_id,
-							field_id,
-							event: Buffer::from(vec![1, 2, 3, 4].as_slice()),
-						},
-					}
-					.into(),
-				),
-			})),
-			CommandTypeId::Forwarded,
-			Some(object_id),
-			Some(field_id),
-		);
 	}
 
 	#[test]
