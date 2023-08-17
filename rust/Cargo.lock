@@ -269,7 +269,6 @@ dependencies = [
  "heapless",
  "lazy_static",
  "log",
- "num",
  "num-derive",
  "num-traits",
  "rand",

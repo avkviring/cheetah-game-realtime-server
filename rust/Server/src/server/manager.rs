@@ -13,7 +13,6 @@ use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
-use crate::room::forward::ForwardConfig;
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::{Room, RoomInfo};
 use crate::server::room_registry::RoomNotFoundError;
@@ -38,7 +37,6 @@ pub enum ManagementTask {
 	GetRooms,
 	GetRoomsMemberCount,
 	DeleteRoom(RoomId),
-	PutForwardedCommandConfig(RoomId, ForwardConfig),
 	MarkRoomAsReady(RoomId, String),
 	GetRoomInfo(RoomId),
 	UpdateRoomPermissions(RoomId, Permissions),
@@ -54,7 +52,6 @@ pub enum ManagementTaskResult {
 	GetRooms(Vec<RoomId>),
 	GetRoomsMemberCount(Vec<RoomMembersCount>),
 	DeleteRoom,
-	PutForwardedCommandConfig,
 	MarkRoomAsReady,
 	GetRoomInfo(RoomInfo),
 	UpdateRoomPermissions,
@@ -189,10 +186,6 @@ impl ServerManager {
 				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
-	}
-
-	pub(crate) fn put_forwarded_command_config(&mut self, room_id: RoomId, config: ForwardConfig) -> Result<(), ManagementTaskError> {
-		self.execute_task(ManagementTask::PutForwardedCommandConfig(room_id, config)).map(|_| ())
 	}
 
 	pub(crate) fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), ManagementTaskError> {

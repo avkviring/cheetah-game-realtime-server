@@ -42,11 +42,6 @@ service Internal {
   rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse);
 
   /**
-  Настроить форвардинг команд суперпользователям совпадающих с фильтром вместо execute для комнаты
-   */
-  rpc PutForwardedCommandConfig(PutForwardedCommandConfigRequest) returns (PutForwardedCommandConfigResponse);
-
-  /**
   Метод вызывается плагином, когда он закончил настройку новой комнаты и разрешает выполнять команды от пользователей.
   Чтобы статус комнаты переключился в ready, все плагины переданные в env PLUGIN_NAMES должны вызвать этот метод.
    */
@@ -198,17 +193,6 @@ message DeleteMemberRequest {
 }
 
 message  DeleteMemberResponse {
-
-}
-
-message PutForwardedCommandConfigRequest {
-  uint64 room_id = 1;
-  uint32 command_type_id = 2;
-  optional uint32 field_id = 3;
-  optional uint32 template_id = 4;
-}
-
-message PutForwardedCommandConfigResponse {
 
 }
 

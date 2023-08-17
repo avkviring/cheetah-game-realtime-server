@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 
 use fnv::{FnvBuildHasher, FnvHashMap, FnvHashSet};
 use indexmap::map::IndexMap;
+use serde::{Deserialize, Serialize};
 
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
@@ -19,15 +20,12 @@ use cheetah_protocol::{RoomId, RoomMemberId};
 use member::RoomMember;
 
 use crate::room::command::{execute, ServerCommandError};
-use crate::room::forward::ForwardConfig;
 use crate::room::object::{GameObject, S2CCommandsCollector};
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
 use crate::room::template::permission::PermissionManager;
-use serde::{Deserialize, Serialize};
 
 pub mod action;
 pub mod command;
-pub mod forward;
 pub mod member;
 pub mod object;
 pub mod sender;
@@ -52,8 +50,6 @@ pub struct Room {
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
-
-	forward_configs: FnvHashSet<ForwardConfig>,
 
 	plugins_pending: FnvHashSet<String>,
 }
@@ -80,7 +76,6 @@ impl Room {
 			room_object_id_generator: 65536,
 			template_name: template.name.clone(),
 			objects_singleton_key: Default::default(),
-			forward_configs: Default::default(),
 			plugins_pending: plugin_names,
 		};
 
@@ -168,21 +163,16 @@ impl Room {
 			match &command_with_channel.command {
 				BothDirectionCommand::C2S(command) => {
 					self.current_channel.replace(From::from(&command_with_channel.reliability_guarantees));
-					if self.should_forward(command, member_id) {
-						if let Err(e) = self.forward_to_super_members(command, member_id) {
-							e.log_error(self.id, member_id);
+
+					let instant = Instant::now();
+					match execute(command, self, member_id) {
+						Ok(_) => {}
+						Err(e) => {
+							e.log_command_execute_error(command, self.id, member_id);
 						}
-					} else {
-						let instant = Instant::now();
-						match execute(command, self, member_id) {
-							Ok(_) => {}
-							Err(e) => {
-								e.log_command_execute_error(command, self.id, member_id);
-							}
-						}
-						if instant.elapsed() > Duration::from_millis(100) {
-							tracing::error!("Slow command {:?}", command);
-						}
+					}
+					if instant.elapsed() > Duration::from_millis(100) {
+						tracing::error!("Slow command {:?}", command);
 					}
 				}
 				BothDirectionCommand::S2CWithCreator(_) => {
@@ -357,7 +347,7 @@ mod tests {
 	use cheetah_common::commands::types::create::CreateGameObjectCommand;
 	use cheetah_common::commands::types::long::SetLongCommand;
 	use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
-	use cheetah_common::commands::{BothDirectionCommand, CommandTypeId, CommandWithChannelType, CommandWithReliabilityGuarantees};
+	use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::buffer::Buffer;
 	use cheetah_common::room::field::FieldType;
@@ -365,7 +355,6 @@ mod tests {
 	use cheetah_common::room::owner::GameObjectOwner;
 	use cheetah_protocol::RoomMemberId;
 
-	use crate::room::forward::ForwardConfig;
 	use crate::room::object::GameObject;
 	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};
@@ -643,21 +632,6 @@ mod tests {
 		assert!(room.has_object_singleton_key(&unique_key));
 		room.delete_object(object_id, u16::MAX).unwrap();
 		assert!(!room.has_object_singleton_key(&unique_key));
-	}
-
-	#[test]
-	fn should_not_execute_when_forward() {
-		let mut room = Room::default();
-		room.put_forwarded_command_config(ForwardConfig {
-			command_type_id: CommandTypeId::CreateGameObject,
-			field_id: None,
-			object_template_id: None,
-		});
-
-		let member_id = room.register_member(MemberTemplate::stub(AccessGroups(10)));
-		let command = get_create_game_object_command(1);
-		room.execute_commands(member_id, slice::from_ref(&command));
-		assert!(room.objects.is_empty());
 	}
 
 	#[test]

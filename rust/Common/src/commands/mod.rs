@@ -73,7 +73,6 @@ pub enum CommandTypeId {
 	AttachToRoom,
 	DetachFromRoom,
 	DeleteField,
-	Forwarded,
 	MemberConnected,
 	MemberDisconnected,
 }
