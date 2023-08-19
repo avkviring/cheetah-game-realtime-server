@@ -40,7 +40,6 @@ pub enum ManagementTask {
 	MarkRoomAsReady(RoomId, String),
 	GetRoomInfo(RoomId),
 	UpdateRoomPermissions(RoomId, Permissions),
-	AllowDeleteRooms(bool),
 }
 
 #[derive(Debug)]
@@ -55,7 +54,6 @@ pub enum ManagementTaskResult {
 	MarkRoomAsReady,
 	GetRoomInfo(RoomInfo),
 	UpdateRoomPermissions,
-	AllowDeleteRooms,
 }
 
 #[derive(Debug)]
@@ -126,16 +124,6 @@ impl ServerManager {
 			sender,
 			halt_signal: cloned_halt_signal,
 		})
-	}
-
-	pub(crate) fn set_allow_delete_rooms(&self, allow: bool) -> Result<(), ManagementTaskError> {
-		self.execute_task(ManagementTask::AllowDeleteRooms(allow)).map(|res| {
-			if let ManagementTaskResult::AllowDeleteRooms = res {
-				Ok(())
-			} else {
-				Err(ManagementTaskError::UnexpectedResultError)
-			}
-		})?
 	}
 
 	pub(crate) fn get_rooms(&self) -> Result<Vec<RoomId>, ManagementTaskError> {
