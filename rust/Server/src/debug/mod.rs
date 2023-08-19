@@ -27,7 +27,7 @@ fn get_rooms(server_manager: Arc<Mutex<ServerManager>>) -> String {
 	match server_manager.get_rooms() {
 		Ok(rooms) => {
 			let rooms: Vec<_> = rooms.into_iter().map(|id| server_manager.dump(id).unwrap()).collect();
-			match serde_json::to_string(&rooms) {
+			match ron::to_string(&rooms) {
 				Ok(s) => s,
 				Err(e) => {
 					format!("Error {:?}", e)
