@@ -1,8 +1,3 @@
-use std::net::SocketAddr;
-use std::time::Duration;
-
-use fnv::FnvHashSet;
-
 use cheetah_common::network::bind_to_free_socket;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::field::{Field, FieldId, FieldType};
@@ -11,6 +6,8 @@ use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::RoomId;
 use cheetah_server::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate};
 use cheetah_server::server::manager::ServerManager;
+use std::net::SocketAddr;
+use std::time::Duration;
 
 ///
 /// Конфигурируем и создаем сервер для интеграционного тестирования
@@ -48,7 +45,6 @@ impl IntegrationTestServerBuilder {
 		let addr = socket.local_addr().unwrap();
 		let mut server = ServerManager::new(
 			socket,
-			FnvHashSet::default(),
 			ProtocolConfiguration {
 				disconnect_timeout: Self::DISCONNECT_DURATION,
 			},

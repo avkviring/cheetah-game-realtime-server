@@ -5,7 +5,6 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use fnv::FnvHashSet;
 use thiserror::Error;
 
 use cheetah_protocol::coniguration::ProtocolConfiguration;
@@ -14,7 +13,7 @@ use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
-use crate::room::{Room, RoomInfo};
+use crate::room::Room;
 use crate::server::room_registry::RoomNotFoundError;
 use crate::server::Server;
 
@@ -37,8 +36,6 @@ pub enum ManagementTask {
 	GetRooms,
 	GetRoomsMemberCount,
 	DeleteRoom(RoomId),
-	MarkRoomAsReady(RoomId, String),
-	GetRoomInfo(RoomId),
 	UpdateRoomPermissions(RoomId, Permissions),
 }
 
@@ -51,8 +48,6 @@ pub enum ManagementTaskResult {
 	GetRooms(Vec<RoomId>),
 	GetRoomsMemberCount(Vec<RoomMembersCount>),
 	DeleteRoom,
-	MarkRoomAsReady,
-	GetRoomInfo(RoomInfo),
 	UpdateRoomPermissions,
 }
 
@@ -103,13 +98,13 @@ impl Drop for ServerManager {
 }
 
 impl ServerManager {
-	pub fn new(socket: UdpSocket, plugin_names: FnvHashSet<String>, protocol_configuration: ProtocolConfiguration) -> Result<Self, RoomsServerManagerError> {
+	pub fn new(socket: UdpSocket, protocol_configuration: ProtocolConfiguration) -> Result<Self, RoomsServerManagerError> {
 		let (sender, receiver) = std::sync::mpsc::channel();
 		let halt_signal = Arc::new(AtomicBool::new(false));
 		let cloned_halt_signal = Arc::clone(&halt_signal);
 		thread::Builder::new()
 			.name(format!("server({:?})", socket.local_addr()))
-			.spawn(move || match Server::new(socket, receiver, halt_signal, plugin_names, protocol_configuration) {
+			.spawn(move || match Server::new(socket, receiver, halt_signal, protocol_configuration) {
 				Ok(server) => {
 					server.run();
 					Ok(())
@@ -176,22 +171,8 @@ impl ServerManager {
 		})?
 	}
 
-	pub(crate) fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<(), ManagementTaskError> {
-		self.execute_task(ManagementTask::MarkRoomAsReady(room_id, plugin_name)).map(|_| ())
-	}
-
 	pub(crate) fn update_room_permissions(&mut self, room_id: RoomId, permissions: Permissions) -> Result<(), ManagementTaskError> {
 		self.execute_task(ManagementTask::UpdateRoomPermissions(room_id, permissions)).map(|_| ())
-	}
-
-	pub(crate) fn get_room_info(&mut self, room_id: RoomId) -> Result<RoomInfo, ManagementTaskError> {
-		self.execute_task(ManagementTask::GetRoomInfo(room_id)).map(|res| {
-			if let ManagementTaskResult::GetRoomInfo(room_info) = res {
-				Ok(room_info)
-			} else {
-				Err(ManagementTaskError::UnexpectedResultError)
-			}
-		})?
 	}
 
 	pub(crate) fn dump(&self, room_id: u64) -> Result<Option<Room>, ManagementTaskError> {
@@ -227,8 +208,6 @@ impl ServerManager {
 mod test {
 	use std::time::Duration;
 
-	use fnv::FnvHashSet;
-
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_protocol::coniguration::ProtocolConfiguration;
 
@@ -255,7 +234,6 @@ mod test {
 	fn new_server_manager() -> ServerManager {
 		ServerManager::new(
 			bind_to_free_socket().unwrap(),
-			FnvHashSet::default(),
 			ProtocolConfiguration {
 				disconnect_timeout: Duration::from_secs(30),
 			},

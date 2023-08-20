@@ -4,7 +4,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use fnv::FnvHashSet;
 use thiserror::Error;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
@@ -25,7 +24,6 @@ pub struct ServerBuilder {
 	internal_webgrpc_service_bind_address: SocketAddr,
 	is_agones_enabled: bool,
 	protocol_configuration: ProtocolConfiguration,
-	plugin_names: FnvHashSet<String>,
 }
 
 impl Default for ServerBuilder {
@@ -36,7 +34,6 @@ impl Default for ServerBuilder {
 			internal_grpc_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			internal_webgrpc_service_bind_address: SocketAddr::from_str("127.0.0.1:0").unwrap(),
 			is_agones_enabled: false,
-			plugin_names: FnvHashSet::default(),
 			protocol_configuration: ProtocolConfiguration {
 				disconnect_timeout: Duration::from_secs(180),
 			},
@@ -88,12 +85,6 @@ impl ServerBuilder {
 	}
 
 	#[must_use]
-	pub fn set_plugin_names(mut self, plugin_names: FnvHashSet<String>) -> Self {
-		self.plugin_names = plugin_names;
-		self
-	}
-
-	#[must_use]
 	pub fn set_disconnect_duration(mut self, disconnect_timeout: Duration) -> Self {
 		self.protocol_configuration.disconnect_timeout = disconnect_timeout;
 		self
@@ -102,7 +93,7 @@ impl ServerBuilder {
 	pub async fn build(self) -> Result<Server, ServerBuilderError> {
 		let game_socket = UdpSocket::bind(self.game_bind_addr).map_err(ServerBuilderError::ErrorBindUdpSocket)?;
 		let game_socket_addr = game_socket.local_addr().map_err(ServerBuilderError::ErrorGetLocalAddrFromUdpSocket)?;
-		let server_manager = ServerManager::new(game_socket, self.plugin_names, self.protocol_configuration).map_err(ServerBuilderError::RoomsServerManager)?;
+		let server_manager = ServerManager::new(game_socket, self.protocol_configuration).map_err(ServerBuilderError::RoomsServerManager)?;
 		let manager = Arc::new(Mutex::new(server_manager));
 
 		let internal_grpc_listener = TcpListener::bind(self.internal_grpc_service_bind_address).await.map_err(ServerBuilderError::ErrorOpenGrpcSocket)?;
