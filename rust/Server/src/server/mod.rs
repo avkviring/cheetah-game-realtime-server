@@ -7,8 +7,6 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, iter, thread};
 
-use fnv::FnvHashSet;
-
 use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_protocol::others::member_id::MemberAndRoomId;
@@ -37,7 +35,6 @@ pub struct Server {
 	halt_signal: Arc<AtomicBool>,
 	time_offset: Option<Duration>,
 	measurer: RefCell<Measurer>,
-	plugin_names: FnvHashSet<String>,
 }
 
 impl Server {
@@ -45,18 +42,16 @@ impl Server {
 		socket: UdpSocket,
 		management_task_receiver: Receiver<ManagementTaskChannel>,
 		halt_signal: Arc<AtomicBool>,
-		plugin_names: FnvHashSet<String>,
 		protocol_configuration: ProtocolConfiguration,
 	) -> Result<Self, io::Error> {
 		let measurer = Measurer::new(prometheus::default_registry()).into();
 		Ok(Self {
 			network: Network::new(socket, protocol_configuration)?,
-			room_registry: RoomRegistry::new(plugin_names.clone()),
+			room_registry: RoomRegistry::new(),
 			management_task_receiver,
 			halt_signal,
 			time_offset: None,
 			measurer,
-			plugin_names,
 		})
 	}
 
@@ -96,12 +91,6 @@ impl Server {
 			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
 			ManagementTask::Dump(room_id) => ManagementTaskResult::Dump(self.room_registry.get(&room_id).cloned()),
 			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.room_registry.rooms().map(|r| r.0).copied().collect()),
-			ManagementTask::MarkRoomAsReady(room_id, plugin_name) => self.mark_room_as_ready(room_id, plugin_name)?,
-			ManagementTask::GetRoomInfo(room_id) => self
-				.room_registry
-				.get(&room_id)
-				.map(|room| ManagementTaskResult::GetRoomInfo(room.get_info()))
-				.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?,
 			ManagementTask::UpdateRoomPermissions(room_id, permissions) => self.update_room_permissions(room_id, &permissions)?,
 			ManagementTask::GetRoomsMemberCount => ManagementTaskResult::GetRoomsMemberCount(
 				self.room_registry
@@ -115,19 +104,6 @@ impl Server {
 			),
 		};
 		Ok(res)
-	}
-
-	fn mark_room_as_ready(&mut self, room_id: RoomId, plugin_name: String) -> Result<ManagementTaskResult, ManagementTaskExecutionError> {
-		if let Some(room) = self.room_registry.get_mut(&room_id) {
-			if self.plugin_names.contains(&plugin_name) {
-				room.mark_room_as_ready(&plugin_name);
-				Ok(ManagementTaskResult::MarkRoomAsReady)
-			} else {
-				Err(ManagementTaskExecutionError::UnknownPluginName(plugin_name))
-			}
-		} else {
-			Err(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))
-		}
 	}
 
 	fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {

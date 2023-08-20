@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::slice;
 use std::time::{Duration, Instant};
 
-use fnv::{FnvBuildHasher, FnvHashMap, FnvHashSet};
+use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 use serde::{Deserialize, Serialize};
 
@@ -50,18 +50,9 @@ pub struct Room {
 	/// Исходящие команды, без проверки на прав доступа, наличия пользователей и так далее
 	///
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
-
-	plugins_pending: FnvHashSet<String>,
 }
-
-#[derive(Debug)]
-pub struct RoomInfo {
-	pub(crate) room_id: RoomId,
-	pub(crate) ready: bool,
-}
-
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate, plugin_names: FnvHashSet<String>) -> Self {
+	pub fn new(id: RoomId, template: RoomTemplate) -> Self {
 		let mut room = Room {
 			id,
 			members: FnvHashMap::default(),
@@ -76,7 +67,6 @@ impl Room {
 			room_object_id_generator: 65536,
 			template_name: template.name.clone(),
 			objects_singleton_key: Default::default(),
-			plugins_pending: plugin_names,
 		};
 
 		template.objects.into_iter().for_each(|object| {
@@ -85,24 +75,6 @@ impl Room {
 		});
 
 		room
-	}
-
-	pub(crate) fn get_info(&self) -> RoomInfo {
-		RoomInfo {
-			room_id: self.id,
-			ready: self.is_ready(),
-		}
-	}
-
-	///
-	/// Получено ли подтверждение от всех плагинов что конфигурация комнаты закончена
-	///
-	fn is_ready(&self) -> bool {
-		self.plugins_pending.is_empty()
-	}
-
-	pub(crate) fn mark_room_as_ready(&mut self, plugin_name: &str) {
-		self.plugins_pending.remove(plugin_name);
 	}
 
 	pub(crate) fn has_object_singleton_key(&self, value: &Buffer) -> bool {
@@ -142,11 +114,6 @@ impl Room {
 	///
 	pub fn execute_commands(&mut self, member_id: RoomMemberId, commands: &[CommandWithReliabilityGuarantees]) {
 		if let Some(member) = self.members.get(&member_id) {
-			if !self.is_allowed_to_connect(member) {
-				tracing::error!("[room({:?})] member is not allowed to connect {:?}", self.id, member_id);
-				self.current_channel = None;
-				return;
-			}
 			if !member.connected {
 				if let Err(e) = self.connect_member(member_id) {
 					e.log_error(self.id, member_id);
@@ -318,17 +285,6 @@ impl Room {
 		Ok(())
 	}
 
-	///
-	/// Если конфигурация комнаты плагинами не завершена, только `super_member` пользователи могут подключаться к комнате
-	///
-	fn is_allowed_to_connect(&self, member: &RoomMember) -> bool {
-		if self.is_ready() {
-			true
-		} else {
-			member.template.super_member
-		}
-	}
-
 	pub(crate) fn update_permissions(&mut self, permissions: &Permissions) {
 		self.permission_manager.update_permissions(permissions);
 	}
@@ -337,14 +293,10 @@ impl Room {
 #[cfg(test)]
 mod tests {
 	use std::collections::VecDeque;
-	use std::slice;
-
-	use fnv::FnvHashSet;
 
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::guarantees::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-	use cheetah_common::commands::types::create::CreateGameObjectCommand;
 	use cheetah_common::commands::types::long::SetLongCommand;
 	use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 	use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
@@ -361,14 +313,14 @@ mod tests {
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(0, RoomTemplate::default(), FnvHashSet::default())
+			Room::new(0, RoomTemplate::default())
 		}
 	}
 
 	impl Room {
 		#[must_use]
 		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template, FnvHashSet::default())
+			Room::new(0, template)
 		}
 
 		pub fn test_create_object_with_not_created_state(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {
@@ -635,33 +587,6 @@ mod tests {
 	}
 
 	#[test]
-	fn should_not_execute_when_not_ready() {
-		let plugin_name = "plugin_1";
-		let mut room = Room {
-			plugins_pending: FnvHashSet::from_iter([plugin_name.to_owned()]),
-			..Default::default()
-		};
-		let member_1 = room.register_member(MemberTemplate::stub(AccessGroups(10)));
-		let super_member_1 = room.register_member(MemberTemplate::new_super_member());
-		let command_1 = get_create_game_object_command(1);
-
-		// should not execute commands from non-supermembers
-		room.execute_commands(member_1, slice::from_ref(&command_1));
-		assert!(room.objects.is_empty());
-
-		// should execute commands from supermembers
-		room.execute_commands(super_member_1, slice::from_ref(&command_1));
-		assert_eq!(1, room.objects.len());
-
-		room.mark_room_as_ready(plugin_name);
-
-		// should execute commands from all members when room is ready
-		let command_2 = get_create_game_object_command(2);
-		room.execute_commands(member_1, slice::from_ref(&command_2));
-		assert_eq!(2, room.objects.len());
-	}
-
-	#[test]
 	fn should_send_member_connected() {
 		let template = RoomTemplate::default();
 		let access_groups = AccessGroups(10);
@@ -700,16 +625,5 @@ mod tests {
 		let template = RoomTemplate::default();
 		let member_template = MemberTemplate::new_member(AccessGroups(55), Default::default());
 		(template, member_template)
-	}
-
-	fn get_create_game_object_command(object_id: u32) -> CommandWithReliabilityGuarantees {
-		CommandWithReliabilityGuarantees {
-			reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
-			command: BothDirectionCommand::C2S(C2SCommand::CreateGameObject(CreateGameObjectCommand {
-				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
-				template: 0,
-				access_groups: Default::default(),
-			})),
-		}
 	}
 }

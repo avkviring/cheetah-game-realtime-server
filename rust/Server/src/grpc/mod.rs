@@ -13,7 +13,6 @@ use crate::grpc::proto::internal::internal_server::Internal;
 use crate::grpc::proto::internal::*;
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::MemberTemplate;
-use crate::room::RoomInfo;
 use crate::server::manager::{ManagementTaskError, ManagementTaskExecutionError};
 use crate::ServerManager;
 
@@ -111,26 +110,6 @@ impl Internal for RealtimeInternalService {
 		server.delete_room(room_id).map(|_| Response::new(DeleteRoomResponse {})).map_err(Status::from)
 	}
 
-	async fn mark_room_as_ready(&self, request: Request<MarkRoomAsReadyRequest>) -> Result<Response<MarkRoomAsReadyResponse>, Status> {
-		self.server_manager
-			.lock()
-			.await
-			.mark_room_as_ready(request.get_ref().room_id, request.get_ref().plugin_name.clone())
-			.map(|_| Response::new(MarkRoomAsReadyResponse {}))
-			.map_err(Status::from)
-	}
-
-	async fn get_room_info(&self, request: Request<GetRoomInfoRequest>) -> Result<Response<GetRoomInfoResponse>, Status> {
-		let room_id = request.get_ref().room_id;
-
-		self.server_manager
-			.lock()
-			.await
-			.get_room_info(room_id)
-			.map(|room_info| Response::new(GetRoomInfoResponse::from(room_info)))
-			.map_err(Status::from)
-	}
-
 	async fn update_room_permissions(&self, mut request: Request<UpdateRoomPermissionsRequest>) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
 		let room_id = request.get_ref().room_id;
 		let permissions = crate::room::template::config::Permissions::from(request.get_mut().permissions.take().unwrap_or_default());
@@ -180,22 +159,11 @@ impl From<ManagementTaskError> for Status {
 	}
 }
 
-impl From<RoomInfo> for GetRoomInfoResponse {
-	fn from(room_info: RoomInfo) -> Self {
-		Self {
-			room_id: room_info.room_id,
-			ready: room_info.ready,
-		}
-	}
-}
-
 #[cfg(test)]
 mod test {
+	use num_traits::ToPrimitive;
 	use std::sync::Arc;
 	use std::time::Duration;
-
-	use fnv::FnvHashSet;
-	use num_traits::ToPrimitive;
 	use tokio::sync::Mutex;
 	use tonic::{Code, Request};
 
@@ -206,9 +174,7 @@ mod test {
 	use crate::grpc::proto::internal::DeleteRoomRequest;
 	use crate::grpc::proto::internal::EmptyRequest;
 	use crate::grpc::proto::internal::GameObjectTemplatePermission;
-	use crate::grpc::proto::internal::GetRoomInfoRequest;
 	use crate::grpc::proto::internal::GroupsPermissionRule;
-	use crate::grpc::proto::internal::MarkRoomAsReadyRequest;
 	use crate::grpc::proto::internal::Permissions;
 	use crate::grpc::proto::internal::UpdateRoomPermissionsRequest;
 	use crate::grpc::proto::internal::{DeleteMemberRequest, RoomMembersCountResponse};
@@ -327,91 +293,6 @@ mod test {
 	}
 
 	#[tokio::test]
-	async fn test_mark_room_as_ready() {
-		let plugin_name = "plugin_1";
-		let plugin_names = FnvHashSet::from_iter([plugin_name.to_owned()]);
-		let server_manager = Arc::new(Mutex::new(
-			ServerManager::new(
-				bind_to_free_socket().unwrap(),
-				plugin_names,
-				ProtocolConfiguration {
-					disconnect_timeout: Duration::from_secs(30),
-				},
-			)
-			.unwrap(),
-		));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-
-		let ready = service.get_room_info(Request::new(GetRoomInfoRequest { room_id })).await.unwrap().into_inner().ready;
-		assert!(!ready, "room should not be ready after creation if plugins list is configured");
-
-		assert!(
-			service
-				.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
-					room_id,
-					plugin_name: plugin_name.to_owned(),
-				}))
-				.await
-				.is_ok(),
-			"mark_room_as_ready should return ok"
-		);
-
-		let ready = service.get_room_info(Request::new(GetRoomInfoRequest { room_id })).await.unwrap().into_inner().ready;
-		assert!(ready, "room should be ready after all plugins have called mark_room_as_ready");
-
-		assert!(
-			service
-				.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
-					room_id,
-					plugin_name: plugin_name.to_owned(),
-				}))
-				.await
-				.is_ok(),
-			"mark_room_as_ready should return after retries"
-		);
-	}
-
-	#[tokio::test]
-	async fn test_get_room_info_not_found() {
-		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-		let res = service.get_room_info(Request::new(GetRoomInfoRequest { room_id: 0 })).await;
-
-		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "get_room_info should return not_found");
-	}
-
-	#[tokio::test]
-	async fn test_mark_room_as_ready_room_not_found() {
-		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-		let res = service
-			.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
-				room_id: 0,
-				plugin_name: "plugin_1".to_owned(),
-			}))
-			.await;
-
-		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "mark_room_as_ready should return not_found");
-	}
-
-	#[tokio::test]
-	async fn test_mark_room_as_ready_unknown_plugin_name() {
-		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-
-		let res = service
-			.mark_room_as_ready(Request::new(MarkRoomAsReadyRequest {
-				room_id,
-				plugin_name: "unknown_plugin_name".to_owned(),
-			}))
-			.await;
-
-		assert!(matches!(res.unwrap_err().code(), Code::InvalidArgument), "mark_room_as_ready should return invalid_argument");
-	}
-
-	#[tokio::test]
 	async fn test_update_room_permissions() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
@@ -439,7 +320,6 @@ mod test {
 	fn new_server_manager() -> ServerManager {
 		ServerManager::new(
 			bind_to_free_socket().unwrap(),
-			FnvHashSet::default(),
 			ProtocolConfiguration {
 				disconnect_timeout: Duration::from_secs(30),
 			},

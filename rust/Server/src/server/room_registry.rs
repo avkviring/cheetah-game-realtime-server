@@ -1,7 +1,7 @@
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
-use fnv::{FnvBuildHasher, FnvHashSet};
+use fnv::FnvBuildHasher;
 use thiserror::Error;
 
 use cheetah_common::commands::{CommandWithChannelType, CommandWithReliabilityGuarantees};
@@ -16,7 +16,6 @@ use crate::room::Room;
 pub struct RoomRegistry {
 	rooms: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
-	plugin_names: FnvHashSet<String>,
 }
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
@@ -24,11 +23,10 @@ pub struct RoomRegistry {
 pub struct RoomNotFoundError(pub RoomId);
 
 impl RoomRegistry {
-	pub fn new(plugin_names: FnvHashSet<String>) -> Self {
+	pub fn new() -> Self {
 		Self {
 			rooms: Default::default(),
 			room_id_generator: 0,
-			plugin_names,
 		}
 	}
 
@@ -47,7 +45,7 @@ impl RoomRegistry {
 	pub fn create_room(&mut self, template: RoomTemplate) -> RoomId {
 		self.room_id_generator += 1;
 		let room_id = self.room_id_generator;
-		let room = Room::new(room_id, template, self.plugin_names.clone());
+		let room = Room::new(room_id, template);
 		self.rooms.insert(room_id, room);
 		room_id
 	}
