@@ -42,8 +42,9 @@ impl Server {
 		let internal_webgrpc_future = Self::new_internal_webgrpc_service(self.internal_webgrpc_listener, Arc::clone(&self.manager));
 		let debug_rest_service = run_debug_server(Arc::clone(&self.manager), self.debug_rest_service_listener);
 		if self.is_agones_enabled {
-			let max_rooms = usize::from_str(&env::get_env_or_default("MAX_ROOMS", "20")).unwrap();
-			let agones = agones_und_notifyservice_cycle(Arc::clone(&self.manager), max_rooms);
+			let max_alive_rooms = usize::from_str(&env::get_env_or_default("MAX_ALIVE_ROOMS", "20")).unwrap();
+			let max_created_rooms = usize::from_str(&env::get_env_or_default("MAX_CREATED_ROOMS", "80")).unwrap();
+			let agones = agones_und_notifyservice_cycle(Arc::clone(&self.manager), max_alive_rooms, max_created_rooms);
 			join!(internal_grpc_future, internal_webgrpc_future, debug_rest_service, agones);
 		} else {
 			join!(internal_grpc_future, internal_webgrpc_future, debug_rest_service);

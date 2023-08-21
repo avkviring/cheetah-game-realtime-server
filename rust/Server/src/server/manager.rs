@@ -34,6 +34,7 @@ pub enum ManagementTask {
 	DeleteMember(MemberAndRoomId),
 	Dump(RoomId),
 	GetRooms,
+	GetCreatedRoomsCount,
 	GetRoomsMemberCount,
 	DeleteRoom(RoomId),
 	UpdateRoomPermissions(RoomId, Permissions),
@@ -47,6 +48,7 @@ pub enum ManagementTaskResult {
 	Dump(Option<Room>),
 	GetRooms(Vec<RoomId>),
 	GetRoomsMemberCount(Vec<RoomMembersCount>),
+	GetCreatedRoomsCount(usize),
 	DeleteRoom,
 	UpdateRoomPermissions,
 }
@@ -124,6 +126,15 @@ impl ServerManager {
 	pub(crate) fn get_rooms(&self) -> Result<Vec<RoomId>, ManagementTaskError> {
 		self.execute_task(ManagementTask::GetRooms).map(|res| {
 			if let ManagementTaskResult::GetRooms(rooms) = res {
+				Ok(rooms)
+			} else {
+				Err(ManagementTaskError::UnexpectedResultError)
+			}
+		})?
+	}
+	pub(crate) fn get_created_rooms_count(&self) -> Result<usize, ManagementTaskError> {
+		self.execute_task(ManagementTask::GetCreatedRoomsCount).map(|res| {
+			if let ManagementTaskResult::GetCreatedRoomsCount(rooms) = res {
 				Ok(rooms)
 			} else {
 				Err(ManagementTaskError::UnexpectedResultError)
