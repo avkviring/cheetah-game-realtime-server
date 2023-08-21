@@ -15,7 +15,7 @@ use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::template::config::MemberTemplate;
-use crate::server::room_registry::RoomRegistry;
+use crate::server::room_registry::Rooms;
 
 pub struct Network {
 	sessions: HashMap<MemberAndRoomId, MemberSession>,
@@ -53,13 +53,13 @@ impl Network {
 		})
 	}
 
-	pub fn cycle(&mut self, rooms: &mut RoomRegistry, now: Instant) {
+	pub fn cycle(&mut self, rooms: &mut Rooms, now: Instant) {
 		self.receive(rooms, now);
 		self.send(rooms);
 		self.process_disconnected_members(rooms, now);
 	}
 
-	fn process_disconnected_members(&mut self, rooms: &mut RoomRegistry, now: Instant) {
+	fn process_disconnected_members(&mut self, rooms: &mut Rooms, now: Instant) {
 		let mut disconnected = heapless::Vec::<MemberAndRoomId, 1000>::new();
 		self.sessions.iter_mut().for_each(|(id, session)| {
 			if session.protocol.is_disconnected(now).is_some() && !disconnected.is_full() {
@@ -77,7 +77,7 @@ impl Network {
 	///
 	/// Отправить команды клиентам
 	///
-	fn send(&mut self, rooms: &mut RoomRegistry) {
+	fn send(&mut self, rooms: &mut Rooms) {
 		rooms.collect_out_commands(|room_id, member_id, commands| {
 			self.outcome_command_count += commands.len();
 
@@ -132,7 +132,7 @@ impl Network {
 		}
 	}
 
-	fn receive(&mut self, rooms: &mut RoomRegistry, now: Instant) {
+	fn receive(&mut self, rooms: &mut Rooms, now: Instant) {
 		let mut buffer = [0; 512];
 		loop {
 			match self.socket.recv_from(&mut buffer) {
@@ -166,7 +166,7 @@ impl Network {
 		}
 	}
 
-	fn on_frame_receive(&mut self, rooms: &mut RoomRegistry, source: &[u8], address: SocketAddr, now: Instant) {
+	fn on_frame_receive(&mut self, rooms: &mut Rooms, source: &[u8], address: SocketAddr, now: Instant) {
 		match Frame::decode(&source, |headers| self.get_cipher(headers)) {
 			Ok(frame) => match frame.headers.first(Header::predicate_member_and_room_id).copied() {
 				None => {
@@ -241,12 +241,12 @@ mod tests {
 	use crate::room::member::RoomMember;
 	use crate::room::template::config::MemberTemplate;
 	use crate::server::network::Network;
-	use crate::server::room_registry::RoomRegistry;
+	use crate::server::room_registry::Rooms;
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = RoomRegistry::default();
+		let mut rooms = Rooms::default();
 		let buffer = [0; 512];
 		let size = 100_usize;
 		udp_server.on_frame_receive(&mut rooms, &buffer[0..size], SocketAddr::from_str("127.0.0.1:5002").unwrap(), Instant::now());
@@ -255,7 +255,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_wrong_member() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = RoomRegistry::default();
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; 512];
 		let mut frame = Frame::new(0, 0, false, Default::default());
 		frame.headers.add(Header::MemberAndRoomId(MemberAndRoomId { member_id: 0, room_id: 0 }));
@@ -266,7 +266,7 @@ mod tests {
 	#[test]
 	fn should_not_panic_when_missing_member_header() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = RoomRegistry::default();
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; 512];
 		let frame = Frame::new(0, 0, false, Default::default());
 		let size = frame.encode(&mut Cipher::new(&[0; 32].as_slice().into()), &mut buffer).unwrap();
@@ -279,7 +279,7 @@ mod tests {
 	#[test]
 	fn should_keep_address_from_last_frame() {
 		let mut udp_server = create_network_layer();
-		let mut rooms = RoomRegistry::default();
+		let mut rooms = Rooms::default();
 		let mut buffer = [0; 512];
 
 		let member_template = MemberTemplate::new_member(Default::default(), Default::default());

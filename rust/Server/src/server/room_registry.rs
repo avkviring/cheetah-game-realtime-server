@@ -13,20 +13,22 @@ use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
 
 #[derive(Default)]
-pub struct RoomRegistry {
+pub struct Rooms {
 	rooms: HashMap<RoomId, Room, FnvBuildHasher>,
 	room_id_generator: RoomId,
+	pub created_rooms_count: usize,
 }
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 #[error("room not found {0}")]
 pub struct RoomNotFoundError(pub RoomId);
 
-impl RoomRegistry {
+impl Rooms {
 	pub fn new() -> Self {
 		Self {
 			rooms: Default::default(),
 			room_id_generator: 0,
+			created_rooms_count: 0,
 		}
 	}
 
@@ -44,6 +46,7 @@ impl RoomRegistry {
 
 	pub fn create_room(&mut self, template: RoomTemplate) -> RoomId {
 		self.room_id_generator += 1;
+		self.created_rooms_count += 1;
 		let room_id = self.room_id_generator;
 		let room = Room::new(room_id, template);
 		self.rooms.insert(room_id, room);
@@ -101,7 +104,7 @@ mod tests {
 
 	#[test]
 	fn should_remove_room() {
-		let mut rooms = RoomRegistry::default();
+		let mut rooms = Rooms::default();
 		let room_id = rooms.create_room(RoomTemplate::default());
 		let room = rooms.force_remove_room(&room_id);
 		assert!(room.is_ok(), "want room when take by room_id");
@@ -110,8 +113,18 @@ mod tests {
 	}
 
 	#[test]
+	fn should_created_rooms_count() {
+		let mut rooms = Rooms::default();
+		let room_a = rooms.create_room(RoomTemplate::default());
+		rooms.create_room(RoomTemplate::default());
+		assert_eq!(rooms.created_rooms_count, 2);
+		rooms.force_remove_room(&room_a).unwrap();
+		assert_eq!(rooms.created_rooms_count, 2);
+	}
+
+	#[test]
 	fn should_remove_room_room_not_found() {
-		let mut rooms = RoomRegistry::default();
+		let mut rooms = Rooms::default();
 		let room_id = 123;
 		let room = rooms.force_remove_room(&room_id);
 		assert!(room.is_err(), "want error when take non existing room");

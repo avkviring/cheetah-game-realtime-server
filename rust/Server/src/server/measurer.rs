@@ -8,7 +8,7 @@ use prometheus::Registry;
 use prometheus_measures_exporter::measurer::create_and_register_measurer;
 
 use crate::server::network::Network;
-use crate::server::room_registry::RoomRegistry;
+use crate::server::room_registry::Rooms;
 
 ///
 /// Измерение параметров сервера - сохранение в prometheus
@@ -62,7 +62,7 @@ impl Measurer {
 		)
 	}
 
-	pub(crate) fn measure_cycle(&mut self, network_server: &Network, rooms_registry: &RoomRegistry, start_cycle_time: &Instant) {
+	pub(crate) fn measure_cycle(&mut self, network_server: &Network, rooms_registry: &Rooms, start_cycle_time: &Instant) {
 		self.measure_execution_time(start_cycle_time);
 		self.measure_rooms(rooms_registry);
 		self.measure_network_server(network_server);
@@ -80,7 +80,7 @@ impl Measurer {
 		self.outcome_frame_count.set(network_server.outcome_frame_count as i64);
 	}
 
-	fn measure_rooms(&mut self, rooms_registry: &RoomRegistry) {
+	fn measure_rooms(&mut self, rooms_registry: &Rooms) {
 		self.room_count.set(rooms_registry.rooms().len() as i64);
 		let mut member_count = 0;
 		let mut object_count = 0;
