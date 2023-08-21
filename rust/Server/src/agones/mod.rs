@@ -74,7 +74,7 @@ async fn send_health(sdk: &mut Sdk, health: Sender<()>) -> Sender<()> {
 			sdk.health_check()
 		}
 	};
-	tracing::info!("Agones: sended agones health signal");
+	tracing::debug!("Agones: sended agones health signal");
 	result
 }
 
