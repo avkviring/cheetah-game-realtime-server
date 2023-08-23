@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Types.Command;
 using Games.Cheetah.Client.Types.Field;
@@ -33,12 +32,23 @@ namespace Games.Cheetah.Client
         /**
          * Получить объекты с сервера, создание которых завершилось в текущем Update
          */
+        public void CollectCreatedObjectsInCurrentUpdate(ushort template, IList<NetworkObjectConstructor> result)
+        {
+            foreach (var (key, value) in createdObjectsInUpdate)
+            {
+                if (value.NetworkObject.Template == template)
+                {
+                    result.Add(value);
+                }
+            }
+        }
+
+        [Obsolete]
         public IList<NetworkObjectConstructor> GetCreatedObjectsInCurrentUpdate(ushort template)
         {
-            return createdObjectsInUpdate
-                .Where(it => it.Value.NetworkObject.Template == template)
-                .Select(it => it.Value)
-                .ToList();
+            var result = new List<NetworkObjectConstructor> ();
+            CollectCreatedObjectsInCurrentUpdate(template, result);
+            return result;
         }
 
         /**
