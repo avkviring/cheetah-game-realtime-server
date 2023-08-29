@@ -5,6 +5,7 @@ using Games.Cheetah.Client.Types.Command;
 using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.Client.Types.Object;
 using Unity.Collections;
+using UnityEngine;
 
 namespace Games.Cheetah.Client
 {
@@ -46,7 +47,7 @@ namespace Games.Cheetah.Client
         [Obsolete]
         public IList<NetworkObjectConstructor> GetCreatedObjectsInCurrentUpdate(ushort template)
         {
-            var result = new List<NetworkObjectConstructor> ();
+            var result = new List<NetworkObjectConstructor>();
             CollectCreatedObjectsInCurrentUpdate(template, result);
             return result;
         }
@@ -106,13 +107,21 @@ namespace Games.Cheetah.Client
                     continue;
                 }
 
-                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
+                if (FilterCommand(template, fieldId, setCommand.fieldId, commandObjectId))
                 {
                     result.Add((commandObjectId, setCommand.value));
                 }
             }
 
             return result;
+        }
+
+        private bool FilterCommand(ushort template, FieldId fieldId, ushort commandFieldId, NetworkObjectId commandObjectId)
+        {
+            if (commandFieldId != fieldId.Id) return false;
+            if (TryGetTemplate(commandObjectId, out var objectTemplate)) return template == objectTemplate;
+            Debug.LogError("Template not found for object = " + commandObjectId + ", for field " + fieldId);
+            return false;
         }
 
         /**
@@ -133,7 +142,7 @@ namespace Games.Cheetah.Client
                     continue;
                 }
 
-                if (GetTemplate(commandObjectId) == template && setLongCommand.fieldId == fieldId.Id)
+                if (FilterCommand(template, fieldId, setLongCommand.fieldId, commandObjectId))
                 {
                     result.Add((commandObjectId, setLongCommand.value));
                 }
@@ -162,7 +171,7 @@ namespace Games.Cheetah.Client
                     continue;
                 }
 
-                if (GetTemplate(commandObjectId) == template && setCommand.fieldId == fieldId.Id)
+                if (FilterCommand(template, fieldId, setCommand.fieldId, commandObjectId))
                 {
                     var item = new T();
                     var networkBuffer = setCommand.value;
@@ -184,14 +193,15 @@ namespace Games.Cheetah.Client
             {
                 ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SendEvent) continue;
-                var networkObjectId = command.commandUnion.setEvent.objectId;
+                var commandObjectId = command.commandUnion.setEvent.objectId;
                 ref var eventCommand = ref command.commandUnion.setEvent;
-                if (GetTemplate(networkObjectId) == template && eventCommand.fieldId == eventId.Id)
+
+                if (FilterCommand(template, eventId, eventCommand.fieldId, commandObjectId))
                 {
                     var item = new T();
                     var networkBuffer = eventCommand.eventData;
                     codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
-                    result.Add((networkObjectId, item));
+                    result.Add((commandObjectId, item));
                 }
             }
 
@@ -210,7 +220,7 @@ namespace Games.Cheetah.Client
                 ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.DeleteObject) continue;
                 var commandObjectId = command.commandUnion.deleteField.objectId;
-                if (GetTemplate(commandObjectId) == template)
+                if (TryGetTemplate(commandObjectId, out var objectTemplate) && objectTemplate == template)
                 {
                     result.Add(commandObjectId);
                 }
@@ -232,7 +242,8 @@ namespace Games.Cheetah.Client
                 if (command.commandType != CommandType.DeleteField) continue;
                 ref var commandDeleteField = ref command.commandUnion.deleteField;
                 ref var deleteFieldObjectId = ref commandDeleteField.objectId;
-                if (GetTemplate(deleteFieldObjectId) == template && commandDeleteField.fieldId ==
+                
+                if (TryGetTemplate(deleteFieldObjectId, out var objectTemplate) && objectTemplate== template && commandDeleteField.fieldId ==
                     fieldId.Id && commandDeleteField.fieldType == fieldId.Type)
                 {
                     result.Add(commandDeleteField);
@@ -339,19 +350,20 @@ namespace Games.Cheetah.Client
             templateByObject[objectId] = template;
         }
 
-        private ushort GetTemplate(NetworkObjectId networkObjectId)
+        private bool TryGetTemplate(NetworkObjectId networkObjectId, out ushort template)
         {
-            if (templateByObject.TryGetValue(networkObjectId, out var template))
+            if (templateByObject.TryGetValue(networkObjectId, out template))
             {
-                return template;
+                return true;
             }
 
-            if (templateByDeletedObject.TryGetValue(networkObjectId, out var templateDeletedObject))
+            if (templateByDeletedObject.TryGetValue(networkObjectId, out template))
             {
-                return templateDeletedObject;
+                return true;
             }
 
-            throw new Exception("NetworkObject with id = " + networkObjectId + " not created");
+            template = 0;
+            return false;
         }
 
         private bool IsCreatingObject(NetworkObjectId objectId)
