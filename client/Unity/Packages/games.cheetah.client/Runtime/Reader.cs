@@ -182,6 +182,31 @@ namespace Games.Cheetah.Client
 
             return result;
         }
+        
+        public void CollectModifiedStructures<T>(ushort template, FieldId.Structure fieldId, List<(NetworkObjectId,T)> structures) where T:new()
+        {
+            for (var i = 0; i < client.S2CCommandsCount; i++)
+            {
+                ref var command = ref client.s2cCommands[i];
+                if (command.commandType != CommandType.SetStructure) continue;
+                ref var setCommand = ref command.commandUnion.setStructure;
+                var commandObjectId = setCommand.objectId;
+
+                if (IsCreatingObject(commandObjectId))
+                {
+                    continue;
+                }
+
+                if (FilterCommand(template, fieldId, setCommand.fieldId, commandObjectId))
+                {
+                    var item = new T();
+                    var networkBuffer = setCommand.value;
+                    codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
+                    structures.Add((commandObjectId, item));
+                }
+            }
+            
+        }
 
         /**
              * Получить список событий по объекту в текущем цикле.
@@ -206,6 +231,24 @@ namespace Games.Cheetah.Client
             }
 
             return result;
+        }
+        
+        public void CollectEvents<T>(ushort template, FieldId.Event eventId, List<(NetworkObjectId, T)> events) where T : new()
+        {            
+            for (var i = 0; i < client.S2CCommandsCount; i++)
+            {
+                ref var command = ref client.s2cCommands[i];
+                if (command.commandType != CommandType.SendEvent) continue;
+                var commandObjectId = command.commandUnion.setEvent.objectId;
+                ref var eventCommand = ref command.commandUnion.setEvent;
+                if (FilterCommand(template, eventId, eventCommand.fieldId, commandObjectId))
+                {
+                    var item = new T();
+                    var networkBuffer = eventCommand.eventData;
+                    codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
+                    events.Add((commandObjectId, item));
+                }
+            }
         }
 
 
