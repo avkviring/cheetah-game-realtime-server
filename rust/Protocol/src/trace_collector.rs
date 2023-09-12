@@ -29,6 +29,7 @@ pub struct Trace {
 }
 
 impl TracerCollector {
+	const MAX_SIZE: usize = 100;
 	fn setup() -> Self {
 		LogTracer::builder().with_max_level(log::LevelFilter::Info).init().unwrap();
 		let subscriber = Registry::default().with(TracerCollectorLayer);
@@ -52,6 +53,9 @@ impl TracerCollector {
 			let level = *event.metadata().level();
 			let message = format!("{} in {}:{}", message, event.metadata().file().unwrap_or(""), event.metadata().line().unwrap_or(0));
 			self.items.push_back(Trace { level, message });
+			if self.items.len() > TracerCollector::MAX_SIZE {
+				self.items.pop_front();
+			}
 		}
 	}
 }

@@ -12,7 +12,7 @@ namespace Games.Cheetah.Client.Logger
         public static void Init()
         {
             LoggerExternals.InitLogger();
-            LoggerExternals.SetMaxLogLevel(CheetahLogLevel.Info);
+            LoggerExternals.SetMaxLogLevel(CheetahLogLevel.Error);
         }
 
         [MonoPInvokeCallback(typeof(LoggerExternals.LogCollector))]
@@ -37,21 +37,12 @@ namespace Games.Cheetah.Client.Logger
                     break;
             }
         }
-
-        [MonoPInvokeCallback(typeof(LoggerExternals.LogCollector))]
-        private static void SkipLog(CheetahLogLevel level, string log)
-        {
-        }
-
+        
         public static void CollectLogs(bool showLog)
         {
             if (showLog)
             {
                 LoggerExternals.CollectLogs(ShowLog);
-            }
-            else
-            {
-                LoggerExternals.CollectLogs(SkipLog);
             }
         }
     }
