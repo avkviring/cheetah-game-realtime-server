@@ -120,6 +120,7 @@ jobs:
       - build-macos
       - build-on-linux
       - build-on-windows
+      - build-android
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
