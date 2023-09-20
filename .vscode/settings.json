@@ -1,7 +1,0 @@
-{
-    "omnisharp.useGlobalMono": "always",
-    "omnisharp.useModernNet": false,
-    "[rust]": {
-        "editor.formatOnSave": true
-    }
-}
