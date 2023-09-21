@@ -22,7 +22,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 		.clone()
 		.for_each(|v| command_collector.push(v));
 
-	for (template, commands) in command_collector.iter() {
+	for (_template, commands) in command_collector.iter() {
 		room.send_to_member(&member_id, commands.as_slice())?;
 	}
 	Ok(())
