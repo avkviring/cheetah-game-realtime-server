@@ -6,7 +6,6 @@ use crate::room::object::GameObject;
 use crate::room::template::config::GameObjectTemplate;
 
 pub mod config;
-pub mod permission;
 
 impl GameObjectTemplate {
 	#[must_use]
@@ -35,8 +34,9 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use crate::room::template::config::GameObjectTemplate;
 	use cheetah_common::room::owner::GameObjectOwner;
+
+	use crate::room::template::config::GameObjectTemplate;
 
 	#[test]
 	#[should_panic]

@@ -5,7 +5,6 @@ use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
-use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for EventCommand {
@@ -20,7 +19,6 @@ impl ServerCommandExecutor for EventCommand {
 				field_type: FieldType::Long,
 			},
 			member_id,
-			Permission::Rw,
 			None,
 			action,
 		)
@@ -40,7 +38,6 @@ impl ServerCommandExecutor for TargetEventCommand {
 				field_type: FieldType::Event,
 			},
 			member_id,
-			Permission::Rw,
 			Some(target),
 			action,
 		)

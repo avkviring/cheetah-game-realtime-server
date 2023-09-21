@@ -5,7 +5,6 @@ use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
-use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for IncrementLongC2SCommand {
@@ -37,7 +36,6 @@ impl ServerCommandExecutor for IncrementLongC2SCommand {
 				field_type: FieldType::Long,
 			},
 			member_id,
-			Permission::Rw,
 			None,
 			action,
 		)
@@ -61,7 +59,6 @@ impl ServerCommandExecutor for SetLongCommand {
 				field_type: FieldType::Long,
 			},
 			member_id,
-			Permission::Rw,
 			None,
 			action,
 		)

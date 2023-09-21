@@ -4,7 +4,7 @@ use cheetah_common::room::field::{Field, FieldId, FieldType};
 use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::RoomId;
-use cheetah_server::room::template::config::{GameObjectTemplatePermission, GroupsPermissionRule, Permission, PermissionField, RoomTemplate};
+use cheetah_server::room::template::config::RoomTemplate;
 use cheetah_server::server::manager::ServerManager;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -21,23 +21,6 @@ impl IntegrationTestServerBuilder {
 	pub const DEFAULT_ACCESS_GROUP: AccessGroups = AccessGroups(55);
 	pub const DEFAULT_TEMPLATE: GameObjectTemplateId = 1;
 	pub const DISCONNECT_DURATION: Duration = Duration::from_secs(30);
-
-	pub fn set_permission(&mut self, template: GameObjectTemplateId, field_id: FieldId, field_type: FieldType, group: AccessGroups, permission: Permission) {
-		let field = PermissionField {
-			field: Field { id: field_id, field_type },
-			rules: vec![GroupsPermissionRule { groups: group, permission }],
-		};
-		match self.template.permissions.templates.iter_mut().find(|tp| tp.template == template) {
-			None => self.template.permissions.templates.push(GameObjectTemplatePermission {
-				template,
-				rules: Default::default(),
-				fields: vec![field],
-			}),
-			Some(template) => {
-				template.fields.push(field);
-			}
-		}
-	}
 
 	#[must_use]
 	pub fn build(self) -> (SocketAddr, ServerManager, RoomId) {

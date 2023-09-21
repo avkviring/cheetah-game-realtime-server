@@ -110,17 +110,6 @@ impl Internal for RealtimeInternalService {
 		server.delete_room(room_id).map(|_| Response::new(DeleteRoomResponse {})).map_err(Status::from)
 	}
 
-	async fn update_room_permissions(&self, mut request: Request<UpdateRoomPermissionsRequest>) -> Result<Response<UpdateRoomPermissionsResponse>, Status> {
-		let room_id = request.get_ref().room_id;
-		let permissions = crate::room::template::config::Permissions::from(request.get_mut().permissions.take().unwrap_or_default());
-		self.server_manager
-			.lock()
-			.await
-			.update_room_permissions(room_id, permissions)
-			.map(|_| Response::new(UpdateRoomPermissionsResponse {}))
-			.map_err(Status::from)
-	}
-
 	async fn get_rooms_members_count(&self, _request: Request<EmptyRequest>) -> Result<Response<GetRoomsMembersCountResponse>, Status> {
 		self.server_manager
 			.lock()
@@ -161,7 +150,6 @@ impl From<ManagementTaskError> for Status {
 
 #[cfg(test)]
 mod test {
-	use num_traits::ToPrimitive;
 	use std::sync::Arc;
 	use std::time::Duration;
 	use tokio::sync::Mutex;
@@ -173,13 +161,9 @@ mod test {
 	use crate::grpc::proto::internal::internal_server::Internal;
 	use crate::grpc::proto::internal::DeleteRoomRequest;
 	use crate::grpc::proto::internal::EmptyRequest;
-	use crate::grpc::proto::internal::GameObjectTemplatePermission;
-	use crate::grpc::proto::internal::GroupsPermissionRule;
-	use crate::grpc::proto::internal::Permissions;
-	use crate::grpc::proto::internal::UpdateRoomPermissionsRequest;
 	use crate::grpc::proto::internal::{DeleteMemberRequest, RoomMembersCountResponse};
 	use crate::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
-	use crate::room::template::config::{MemberTemplate, Permission, RoomTemplate};
+	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::ServerManager;
 
 	#[tokio::test]
@@ -290,31 +274,6 @@ mod test {
 		let res = service.delete_member(Request::new(DeleteMemberRequest { user_id: 0, room_id: 0 })).await;
 
 		assert!(matches!(res.unwrap_err().code(), Code::NotFound), "delete_member should return not_found");
-	}
-
-	#[tokio::test]
-	async fn test_update_room_permissions() {
-		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
-		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-
-		let mut permissions = Permissions::default();
-		permissions.objects.push(GameObjectTemplatePermission {
-			template: 10,
-			rules: vec![GroupsPermissionRule {
-				groups: Default::default(),
-				permission: ToPrimitive::to_i32(&Permission::Rw).unwrap(),
-			}],
-			fields: vec![],
-		});
-
-		let status = service
-			.update_room_permissions(Request::new(UpdateRoomPermissionsRequest {
-				room_id,
-				permissions: Some(permissions),
-			}))
-			.await;
-		status.unwrap();
 	}
 
 	fn new_server_manager() -> ServerManager {

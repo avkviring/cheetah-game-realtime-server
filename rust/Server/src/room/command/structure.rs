@@ -5,7 +5,6 @@ use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
-use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for SetStructureCommand {
@@ -25,7 +24,6 @@ impl ServerCommandExecutor for SetStructureCommand {
 				field_type: FieldType::Structure,
 			},
 			member_id,
-			Permission::Rw,
 			None,
 			action,
 		)
