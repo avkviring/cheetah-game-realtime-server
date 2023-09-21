@@ -41,8 +41,6 @@ service Internal {
    */
   rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse);
 
-  rpc UpdateRoomPermissions(UpdateRoomPermissionsRequest) returns(UpdateRoomPermissionsResponse);
-
   rpc GetRoomsMembersCount(EmptyRequest) returns(GetRoomsMembersCountResponse);
 }
 
@@ -87,66 +85,6 @@ message RoomTemplate {
     Начальные игровые объекты комнаты
    */
   repeated GameObjectTemplate objects = 2;
-  /**
-    Права доступа для комнаты
-   */
-  Permissions permissions = 3;
-}
-
-
-/**
-  Описание прав доступа для комнаты
- */
-message Permissions {
-  /**
-    Права доступа для объектов комнаты
-   */
-  repeated GameObjectTemplatePermission objects = 1;
-}
-
-/**
-  Права доступа для объектов
- */
-message GameObjectTemplatePermission {
-  /**
-    Шаблон игрового объекта, к которому применимы данные права
-   */
-  uint32 template = 1;
-  /**
-    Права доступа к полям для групп
-   */
-  repeated GroupsPermissionRule rules = 2;
-
-  /**
-    Права доступа к конкретным полям
-   */
-  repeated PermissionField fields = 3;
-}
-
-
-/**
-  Права доступа для группы
- */
-message GroupsPermissionRule {
-  uint64 groups = 1;
-  PermissionLevel permission = 2;
-}
-
-
-/**
-  Права доступа для поля
- */
-message PermissionField {
-  uint32 id = 1;
-  cheetah.matches.realtime.shared.FieldType type = 2;
-  repeated GroupsPermissionRule rules = 3;
-}
-
-
-enum PermissionLevel {
-  Deny = 0;
-  Ro = 1;
-  Rw = 2;
 }
 
 message UserTemplate {
@@ -182,17 +120,6 @@ message DeleteMemberRequest {
 }
 
 message  DeleteMemberResponse {
-
-}
-
-
-message UpdateRoomPermissionsRequest {
-  uint64 room_id = 1;
-  // Права доступа для комнаты
-  Permissions permissions = 2;
-}
-
-message UpdateRoomPermissionsResponse {
 
 }
 

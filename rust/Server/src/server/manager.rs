@@ -12,7 +12,7 @@ use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
-use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
+use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
 use crate::server::room_registry::RoomNotFoundError;
 use crate::server::Server;
@@ -37,7 +37,6 @@ pub enum ManagementTask {
 	GetCreatedRoomsCount,
 	GetRoomsMemberCount,
 	DeleteRoom(RoomId),
-	UpdateRoomPermissions(RoomId, Permissions),
 }
 
 #[derive(Debug)]
@@ -50,7 +49,6 @@ pub enum ManagementTaskResult {
 	GetRoomsMemberCount(Vec<RoomMembersCount>),
 	GetCreatedRoomsCount(usize),
 	DeleteRoom,
-	UpdateRoomPermissions,
 }
 
 #[derive(Debug)]
@@ -180,10 +178,6 @@ impl ServerManager {
 				Err(ManagementTaskError::UnexpectedResultError)
 			}
 		})?
-	}
-
-	pub(crate) fn update_room_permissions(&mut self, room_id: RoomId, permissions: Permissions) -> Result<(), ManagementTaskError> {
-		self.execute_task(ManagementTask::UpdateRoomPermissions(room_id, permissions)).map(|_| ())
 	}
 
 	pub(crate) fn dump(&self, room_id: u64) -> Result<Option<Room>, ManagementTaskError> {

@@ -88,7 +88,6 @@ pub mod test {
 			.create_room(RoomTemplate {
 				name: "".to_string(),
 				objects: vec![],
-				permissions: Default::default(),
 			})
 			.unwrap();
 
@@ -110,7 +109,6 @@ pub mod test {
 			.create_room(RoomTemplate {
 				name: "perm_room".to_string(),
 				objects: vec![],
-				permissions: Default::default(),
 			})
 			.unwrap();
 

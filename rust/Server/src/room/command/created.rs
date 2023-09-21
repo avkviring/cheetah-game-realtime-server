@@ -44,9 +44,9 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		object.collect_create_commands(&mut commands, member_id);
 		let template = object.template_id;
 		if object.id.get_owner() == GameObjectOwner::Room {
-			room.send_to_members(groups, Some(template), commands.as_slice(), |_| true)?;
+			room.send_to_members(groups, commands.as_slice(), |_| true)?;
 		} else {
-			room.send_to_members(groups, Some(template), commands.as_slice(), |member| member.id != member_id)?;
+			room.send_to_members(groups, commands.as_slice(), |member| member.id != member_id)?;
 		}
 		Ok(())
 	}

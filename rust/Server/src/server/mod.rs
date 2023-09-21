@@ -13,7 +13,7 @@ use cheetah_protocol::others::member_id::MemberAndRoomId;
 use cheetah_protocol::{RoomId, RoomMemberId};
 
 use crate::room::command::ServerCommandError;
-use crate::room::template::config::{MemberTemplate, Permissions};
+use crate::room::template::config::MemberTemplate;
 use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTaskExecutionError, ManagementTaskResult, RoomMembersCount};
 use crate::server::measurer::Measurer;
 use crate::server::network::Network;
@@ -90,7 +90,6 @@ impl Server {
 			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
 			ManagementTask::Dump(room_id) => ManagementTaskResult::Dump(self.rooms.get(&room_id).cloned()),
 			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.rooms.rooms().map(|r| r.0).copied().collect()),
-			ManagementTask::UpdateRoomPermissions(room_id, permissions) => self.update_room_permissions(room_id, &permissions)?,
 			ManagementTask::GetRoomsMemberCount => ManagementTaskResult::GetRoomsMemberCount(
 				self.rooms
 					.rooms()
@@ -127,15 +126,6 @@ impl Server {
 		self.rooms.member_disconnected(&id)
 	}
 
-	fn update_room_permissions(&mut self, room_id: RoomId, permissions: &Permissions) -> Result<ManagementTaskResult, ManagementTaskExecutionError> {
-		self.rooms
-			.get_mut(&room_id)
-			.map(|room| {
-				room.update_permissions(permissions);
-				Ok(ManagementTaskResult::UpdateRoomPermissions)
-			})
-			.ok_or(ManagementTaskExecutionError::RoomNotFound(RoomNotFoundError(room_id)))?
-	}
 	fn sleep() {
 		thread::sleep(Duration::from_millis(1));
 	}

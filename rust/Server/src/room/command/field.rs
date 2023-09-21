@@ -5,7 +5,6 @@ use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
-use crate::room::template::config::Permission;
 use crate::room::Room;
 
 impl ServerCommandExecutor for DeleteFieldCommand {
@@ -35,7 +34,6 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 				field_type: self.field_type,
 			},
 			member_id,
-			Permission::Rw,
 			None,
 			action,
 		)

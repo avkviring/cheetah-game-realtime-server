@@ -1,9 +1,9 @@
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
-use cheetah_common::room::field::{Field, FieldId, FieldType};
+use cheetah_common::room::field::FieldId;
 
 use crate::grpc::proto::internal;
-use crate::grpc::proto::shared::{self, field_value::Variant};
+use crate::grpc::proto::shared::field_value::Variant;
 use crate::room::template::config;
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
@@ -11,7 +11,6 @@ impl From<internal::RoomTemplate> for config::RoomTemplate {
 		config::RoomTemplate {
 			name: source.template_name,
 			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
-			permissions: config::Permissions::from(source.permissions.unwrap_or_default()),
 		}
 	}
 }
@@ -54,58 +53,6 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 				.map(|(field_id, value)| if let Variant::Long(v) = value { Some((*field_id, *v)) } else { None })
 				.flatten()
 				.collect(),
-		}
-	}
-}
-
-impl From<internal::Permissions> for config::Permissions {
-	fn from(source: internal::Permissions) -> Self {
-		config::Permissions {
-			templates: source.objects.into_iter().map(config::GameObjectTemplatePermission::from).collect(),
-		}
-	}
-}
-
-impl From<internal::GameObjectTemplatePermission> for config::GameObjectTemplatePermission {
-	#[allow(clippy::cast_possible_truncation)]
-	fn from(source: internal::GameObjectTemplatePermission) -> Self {
-		config::GameObjectTemplatePermission {
-			template: source.template as u16,
-			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
-			fields: source.fields.into_iter().map(config::PermissionField::from).collect(),
-		}
-	}
-}
-
-impl From<internal::GroupsPermissionRule> for config::GroupsPermissionRule {
-	fn from(source: internal::GroupsPermissionRule) -> Self {
-		config::GroupsPermissionRule {
-			groups: AccessGroups(source.groups),
-			permission: num::FromPrimitive::from_i32(source.permission).expect("Enum permission unrecognized"),
-		}
-	}
-}
-
-impl From<internal::PermissionField> for config::PermissionField {
-	#[allow(clippy::cast_possible_truncation)]
-	fn from(source: internal::PermissionField) -> Self {
-		let event = shared::FieldType::Event as i32;
-		let double = shared::FieldType::Double as i32;
-		let long = shared::FieldType::Long as i32;
-		let structure = shared::FieldType::Structure as i32;
-
-		let field_type = match source.r#type {
-			x if x == event => FieldType::Event,
-			x if x == double => FieldType::Double,
-			x if x == long => FieldType::Long,
-			x if x == structure => FieldType::Structure,
-			_ => {
-				panic!("Enum field_type unrecognized {}", source.r#type)
-			}
-		};
-		config::PermissionField {
-			field: Field { id: source.id as u16, field_type },
-			rules: source.rules.into_iter().map(config::GroupsPermissionRule::from).collect(),
 		}
 	}
 }

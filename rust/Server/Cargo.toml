@@ -31,7 +31,6 @@ thiserror.workspace = true
 prometheus.workspace = true
 lazy_static.workspace = true
 prometheus-measures-exporter.workspace = true
-num = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
 tracing.workspace = true

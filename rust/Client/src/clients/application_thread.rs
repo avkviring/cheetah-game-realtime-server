@@ -103,7 +103,7 @@ impl ApplicationThreadClient {
 		while let Ok(command) = self.s2c_receiver.try_recv() {
 			tracing::trace!("s2c {:?}", command);
 			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.command {
-				let mut command_ffi = &mut commands[*count as usize];
+				let command_ffi = &mut commands[*count as usize];
 				match member_with_creator.command {
 					S2CCommand::Create(command) => {
 						command_ffi.command_type = CommandTypeId::CreateGameObject;

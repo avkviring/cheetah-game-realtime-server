@@ -21,8 +21,7 @@ use member::RoomMember;
 
 use crate::room::command::{execute, ServerCommandError};
 use crate::room::object::{GameObject, S2CCommandsCollector};
-use crate::room::template::config::{MemberTemplate, Permissions, RoomTemplate};
-use crate::room::template::permission::PermissionManager;
+use crate::room::template::config::{MemberTemplate, RoomTemplate};
 
 pub mod action;
 pub mod command;
@@ -35,7 +34,6 @@ pub mod template;
 pub struct Room {
 	pub id: RoomId,
 	pub template_name: String,
-	pub permission_manager: PermissionManager,
 	pub members: HashMap<RoomMemberId, RoomMember, FnvBuildHasher>,
 	pub(crate) objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ReliabilityGuarantees>,
@@ -58,7 +56,6 @@ impl Room {
 			members: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
-			permission_manager: PermissionManager::new(&template.permissions),
 			#[cfg(test)]
 			test_object_id_generator: 0,
 			#[cfg(test)]
@@ -217,7 +214,7 @@ impl Room {
 			creator: member_id,
 			command: S2CCommand::MemberDisconnected(MemberDisconnected { member_id }),
 		};
-		self.send_to_members(AccessGroups::super_member_group(), None, slice::from_ref(&s2c), |member| member.id != member_id)?;
+		self.send_to_members(AccessGroups::super_member_group(), slice::from_ref(&s2c), |member| member.id != member_id)?;
 
 		Ok(())
 	}
@@ -246,7 +243,6 @@ impl Room {
 				if object.created {
 					self.send_to_members(
 						object.access_groups,
-						Some(object.template_id),
 						&[S2CCommandWithMeta {
 							field: None,
 							creator: member_id,
@@ -269,9 +265,8 @@ impl Room {
 			let object = object_template.create_member_game_object(member_id);
 			let mut commands = S2CCommandsCollector::new();
 			object.collect_create_commands(&mut commands, member_id);
-			let template = object.template_id;
 			let access_groups = object.access_groups;
-			self.send_to_members(access_groups, Some(template), commands.as_slice(), |_member_id| true)?;
+			self.send_to_members(access_groups, commands.as_slice(), |_member_id| true)?;
 			self.insert_object(object);
 		}
 
@@ -280,13 +275,9 @@ impl Room {
 			creator: member_id,
 			command: S2CCommand::MemberConnected(MemberConnected { member_id }),
 		};
-		self.send_to_members(AccessGroups::super_member_group(), None, slice::from_ref(&s2c), |other_member| other_member.id != member_id)?;
+		self.send_to_members(AccessGroups::super_member_group(), slice::from_ref(&s2c), |other_member| other_member.id != member_id)?;
 
 		Ok(())
-	}
-
-	pub(crate) fn update_permissions(&mut self, permissions: &Permissions) {
-		self.permission_manager.update_permissions(permissions);
 	}
 }
 
@@ -302,13 +293,12 @@ mod tests {
 	use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::buffer::Buffer;
-	use cheetah_common::room::field::FieldType;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 	use cheetah_protocol::RoomMemberId;
 
 	use crate::room::object::GameObject;
-	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, Permission, RoomTemplate};
+	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, RoomTemplate};
 	use crate::room::{Room, ServerCommandError};
 
 	impl Default for Room {
@@ -518,37 +508,6 @@ mod tests {
 			order = format!("{order}{}", o.id.id);
 		});
 		assert_eq!(order, "5200");
-	}
-
-	///
-	/// При загрузки пользовательских предопределенных объектов должны быть учтены правила доступа
-	///
-	#[test]
-	pub(crate) fn should_apply_permissions_for_self_object() {
-		let mut template = RoomTemplate::default();
-		let groups = AccessGroups(55);
-
-		let mut member1_template = MemberTemplate::stub(groups);
-		let object1_template = member1_template.configure_object(1, 100, groups);
-		let allow_field_id = 5;
-		let deny_field_id = 10;
-		object1_template.longs.insert(allow_field_id, 555);
-		object1_template.longs.insert(deny_field_id, 111);
-		template.permissions.set_permission(100, &deny_field_id, FieldType::Long, &groups, Permission::Deny);
-
-		let mut room = Room::from_template(template);
-		let member1_id = room.register_member(member1_template.clone());
-		let member2 = MemberTemplate::stub(groups);
-		let member2_id = room.register_member(member2);
-		room.mark_as_connected_in_test(member2_id).unwrap();
-		room.on_member_connect(member1_id, member1_template.clone()).unwrap();
-
-		let commands = room.get_member_out_commands_for_test(member2_id);
-
-		assert!(matches!(commands.get(0), Some(S2CCommand::Create(_))));
-		assert!(matches!(commands.get(1), Some(S2CCommand::SetLong(command)) if command.field_id 
-			== allow_field_id));
-		assert!(matches!(commands.get(2), Some(S2CCommand::Created(_))));
 	}
 
 	#[test]

@@ -1,6 +1,5 @@
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
-use crate::room::template::config::Permission;
 use crate::room::Room;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
@@ -24,7 +23,6 @@ impl ServerCommandExecutor for SetDoubleCommand {
 				field_type: FieldType::Double,
 			},
 			member_id,
-			Permission::Rw,
 			None,
 			action,
 		)
@@ -53,7 +51,6 @@ impl ServerCommandExecutor for IncrementDoubleC2SCommand {
 				field_type: FieldType::Double,
 			},
 			member_id,
-			Permission::Rw,
 			None,
 			action,
 		)

@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
-use num_derive::{FromPrimitive, ToPrimitive};
 
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
-use cheetah_common::room::field::{Field, FieldId};
+use cheetah_common::room::field::FieldId;
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
 use serde::{Deserialize, Serialize};
@@ -17,7 +16,6 @@ use serde::{Deserialize, Serialize};
 pub struct RoomTemplate {
 	pub name: String,
 	pub objects: Vec<GameObjectTemplate>,
-	pub permissions: Permissions,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -41,38 +39,6 @@ pub struct GameObjectTemplate {
 	pub doubles: HashMap<FieldId, f64, FnvBuildHasher>,
 	pub structures: HashMap<FieldId, Buffer, FnvBuildHasher>,
 }
-
-#[derive(Debug, Default, Clone)]
-pub struct Permissions {
-	pub templates: Vec<GameObjectTemplatePermission>,
-}
-
-#[derive(Debug, Default, Clone)]
-pub struct GameObjectTemplatePermission {
-	pub template: GameObjectTemplateId,
-	pub rules: Vec<GroupsPermissionRule>,
-	pub fields: Vec<PermissionField>,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct GroupsPermissionRule {
-	pub groups: AccessGroups,
-	pub permission: Permission,
-}
-
-#[derive(Debug, Clone)]
-pub struct PermissionField {
-	pub field: Field,
-	pub rules: Vec<GroupsPermissionRule>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Ord, PartialOrd, Eq, FromPrimitive, ToPrimitive, Serialize, Deserialize)]
-pub enum Permission {
-	Deny = 0,
-	Ro,
-	Rw,
-}
-
 #[derive(Debug)]
 pub enum MemberTemplateError {
 	MemberObjectHasWrongId(MemberPrivateKey, u32),
@@ -118,10 +84,9 @@ impl MemberTemplate {
 #[cfg(test)]
 mod tests {
 	use cheetah_common::room::access::AccessGroups;
-	use cheetah_common::room::field::{Field, FieldId, FieldType};
 	use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 
-	use crate::room::template::config::{GameObjectTemplate, GameObjectTemplatePermission, GroupsPermissionRule, MemberTemplate, MemberTemplateError, Permission, PermissionField, Permissions};
+	use crate::room::template::config::{GameObjectTemplate, MemberTemplate, MemberTemplateError};
 
 	impl MemberTemplate {
 		#[must_use]
@@ -142,37 +107,6 @@ mod tests {
 			let len = objects.len();
 			let option = objects.get_mut(len - 1);
 			option.unwrap()
-		}
-	}
-
-	impl Permissions {
-		pub fn set_permission(&mut self, template: GameObjectTemplateId, field_id: &FieldId, field_type: FieldType, access_group: &AccessGroups, permission: Permission) {
-			let template_permission = match self.templates.iter_mut().find(|t| t.template == template) {
-				None => {
-					let template_permission = GameObjectTemplatePermission {
-						template,
-						rules: vec![],
-						fields: vec![],
-					};
-					self.templates.push(template_permission);
-					self.templates.iter_mut().find(|t| t.template == template).unwrap()
-				}
-				Some(template) => template,
-			};
-
-			let permission_field = match template_permission.fields.iter_mut().find(|f| f.field.id == *field_id) {
-				None => {
-					let permission_field = PermissionField {
-						field: Field { id: *field_id, field_type },
-						rules: vec![],
-					};
-					template_permission.fields.push(permission_field);
-					template_permission.fields.iter_mut().find(|f| f.field.id == *field_id).unwrap()
-				}
-				Some(permission_field) => permission_field,
-			};
-
-			permission_field.rules.push(GroupsPermissionRule { groups: *access_group, permission });
 		}
 	}
 

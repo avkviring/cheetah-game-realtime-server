@@ -1,12 +1,10 @@
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::GameObjectId;
-use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_protocol::RoomMemberId;
 
 use crate::room::command::ServerCommandError;
 use crate::room::object::GameObject;
-use crate::room::template::config::Permission;
 use crate::room::Room;
 
 ///
@@ -20,29 +18,17 @@ impl Room {
 	/// - владелец объекта получает обновления если только данные доступны на запись другим клиентам
 	/// - владелец объекта имеет полный доступ к полям объекта, информация о правах игнорируется
 	///
-	pub fn send_command_from_action<T>(
-		&mut self,
-		game_object_id: GameObjectId,
-		field: Field,
-		creator_id: RoomMemberId,
-		permission: Permission,
-		target: Option<RoomMemberId>,
-		action: T,
-	) -> Result<(), ServerCommandError>
+	pub fn send_command_from_action<T>(&mut self, game_object_id: GameObjectId, field: Field, creator_id: RoomMemberId, target: Option<RoomMemberId>, action: T) -> Result<(), ServerCommandError>
 	where
 		T: FnOnce(&mut GameObject) -> Result<Option<S2CCommand>, ServerCommandError>,
 	{
 		let room_id = self.id;
-		let permission_manager = &self.permission_manager;
 		let creator_access_group = match self.members.get(&creator_id) {
 			None => {
 				return Err(ServerCommandError::MemberNotFound(creator_id));
 			}
 			Some(member) => member.template.groups,
 		};
-
-		let template_id = self.get_object(game_object_id)?.template_id;
-		let allowed_permission = permission_manager.get_permission(template_id, field, creator_access_group);
 
 		let object = self.get_object_mut(game_object_id)?;
 		// проверяем группу доступа
@@ -56,29 +42,11 @@ impl Room {
 			});
 		}
 
-		let object_owner = if let GameObjectOwner::Member(owner) = object.id.get_owner() { Some(owner) } else { None };
-
-		let is_creator_object_owner = object_owner == Some(creator_id);
-
-		let allow = is_creator_object_owner || allowed_permission >= permission;
-
-		if !allow {
-			return Err(ServerCommandError::MemberCannotAccessToObjectField {
-				room_id,
-				member_id: creator_id,
-				object_id: object.id,
-				template_id: object.template_id,
-				field,
-			});
-		}
-
 		let command = action(object)?;
 		if let Some(command) = command {
 			// отправляем команду только для созданного объекта
 			if object.created {
 				let groups = object.access_groups;
-				let template = object.template_id;
-
 				let commands_with_field = S2CCommandWithMeta {
 					field: Some(field),
 					creator: creator_id,
@@ -88,10 +56,10 @@ impl Room {
 
 				match target {
 					Some(target_member_id) => {
-						self.send_to_member(&target_member_id, template, &commands)?;
+						self.send_to_member(&target_member_id, &commands)?;
 					}
 					None => {
-						self.send_to_members(groups, Some(template), &commands, |member| {
+						self.send_to_members(groups, &commands, |member| {
 							// не отправляем себе
 							creator_id != member.id
 						})?;
