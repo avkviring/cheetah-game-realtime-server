@@ -1,6 +1,5 @@
 use cheetah_common::network::bind_to_free_socket;
 use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::field::{Field, FieldId, FieldType};
 use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_protocol::coniguration::ProtocolConfiguration;
 use cheetah_protocol::RoomId;

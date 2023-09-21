@@ -12,7 +12,7 @@ use std::fmt::Debug;
 ///
 ///
 #[derive(Debug)]
-pub struct EventCollectorByTime<T: Debug, N: ArrayLength<T>> {
+pub struct EventCollectorByTime<T: Debug, N: ArrayLength> {
 	current_value: T,
 	default_value: T,
 	unset_cell_value: T,
@@ -35,7 +35,7 @@ pub struct EventCollectorByTime<T: Debug, N: ArrayLength<T>> {
 	position: usize,
 }
 
-impl<T: Copy + PartialEq + AddAssign<T> + Int + Debug, N: ArrayLength<T>> EventCollectorByTime<T, N> {
+impl<T: Copy + PartialEq + AddAssign<T> + Int + Debug, N: ArrayLength> EventCollectorByTime<T, N> {
 	pub fn new(current_value: T, default_value: T, unset_cell_value: T, aggregation_time: Duration) -> Self {
 		Self {
 			default_value,

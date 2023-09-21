@@ -35,11 +35,6 @@ impl Rooms {
 	pub(crate) fn get(&self, room_id: &RoomId) -> Option<&Room> {
 		self.rooms.get(room_id)
 	}
-
-	pub(crate) fn get_mut(&mut self, room_id: &RoomId) -> Option<&mut Room> {
-		self.rooms.get_mut(room_id)
-	}
-
 	pub(crate) fn rooms(&self) -> Iter<'_, RoomId, Room> {
 		self.rooms.iter()
 	}

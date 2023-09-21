@@ -23,5 +23,5 @@ tracing-subscriber.workspace = true
 
 [dev-dependencies]
 cheetah-server = { path = "../Server" }
-easybench = "1.1.0"
+easybench = "1.1.1"
 rand.workspace = true

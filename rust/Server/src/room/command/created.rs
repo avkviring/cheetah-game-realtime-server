@@ -42,7 +42,6 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 		// объект полностью загружен - теперь его надо загрузить остальным клиентам
 		let mut commands = S2CCommandsCollector::new();
 		object.collect_create_commands(&mut commands, member_id);
-		let template = object.template_id;
 		if object.id.get_owner() == GameObjectOwner::Room {
 			room.send_to_members(groups, commands.as_slice(), |_| true)?;
 		} else {
