@@ -14,6 +14,7 @@ namespace Games.Cheetah.Client.Codec
             var factories = new Dictionary<Type, object>(CodecRegistryBuilder.DefaultFactories);
             foreach (var pair in builder.factories)
             {
+                factories.Remove(pair.Key);
                 factories.Add(pair.Key, pair.Value);
             }
 
