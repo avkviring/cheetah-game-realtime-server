@@ -10,7 +10,6 @@ rand.workspace = true
 snap = "1.1.0"
 byteorder = "1.4.3"
 chacha20poly1305 = { version = "0.10.1", features = ["heapless", "reduced-round"] }
-cheetah-macro = { path = "../Macro" }
 cheetah-game-realtime-protocol.workspace=true
 generic-array = "1.0.0"
 heapless.workspace = true

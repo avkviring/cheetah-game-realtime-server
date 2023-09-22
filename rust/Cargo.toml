@@ -4,7 +4,6 @@ members = [
     "Client",
     "Common",
     "Embedded",
-    "Macro",
     "Server"
 ]
 
