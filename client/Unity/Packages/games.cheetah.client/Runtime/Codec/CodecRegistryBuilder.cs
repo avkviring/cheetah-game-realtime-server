@@ -37,7 +37,14 @@ namespace Games.Cheetah.Client.Codec
 
         public static void RegisterDefault<T>(CodecFactory<T> factory)
         {
-            DefaultFactories.Add(typeof(T), factory);
+            var type = typeof(T);
+            RemoveExistDefaultFactoryForDisableDomainReloadSuppor(type);
+            DefaultFactories.Add(type, factory);
+        }
+
+        private static void RemoveExistDefaultFactoryForDisableDomainReloadSuppor(Type type)
+        {
+            DefaultFactories.Remove(type);
         }
 
         public CodecRegistryBuilder Register<T>(CodecFactory<T> factory)
