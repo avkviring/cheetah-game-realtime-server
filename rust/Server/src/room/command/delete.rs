@@ -1,8 +1,8 @@
-use cheetah_game_realtime_protocol::RoomMemberId;
-use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
-use cheetah_common::room::owner::GameObjectOwner;
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::Room;
+use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
+use cheetah_common::room::owner::GameObjectOwner;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {

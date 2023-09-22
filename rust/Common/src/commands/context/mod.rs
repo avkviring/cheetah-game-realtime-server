@@ -2,10 +2,6 @@ use std::convert::TryFrom;
 use std::io::{Cursor, ErrorKind};
 use std::num::TryFromIntError;
 
-use byteorder::{ReadBytesExt, WriteBytesExt};
-use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_game_realtime_protocol::RoomMemberId;
-use thiserror::Error;
 use crate::commands::context::header::CommandHeader;
 use crate::commands::guarantees::codec::ChannelType;
 use crate::commands::guarantees::ChannelGroup;
@@ -13,6 +9,10 @@ use crate::commands::CommandTypeId;
 use crate::room::field::FieldId;
 use crate::room::object::GameObjectId;
 use crate::room::owner::GameObjectOwner;
+use byteorder::{ReadBytesExt, WriteBytesExt};
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_game_realtime_protocol::RoomMemberId;
+use thiserror::Error;
 
 pub mod header;
 
@@ -262,9 +262,8 @@ impl From<&CreatorSource> for u8 {
 
 #[cfg(test)]
 pub mod tests {
-	use std::io::Cursor;
 	use cheetah_game_realtime_protocol::RoomMemberId;
-
+	use std::io::Cursor;
 
 	use crate::commands::context::CommandContext;
 	use crate::commands::guarantees::codec::ChannelType;

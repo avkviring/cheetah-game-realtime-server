@@ -7,8 +7,8 @@ pub mod encoder;
 ///
 #[cfg(test)]
 mod tests {
-	use std::collections::VecDeque;
 	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
+	use std::collections::VecDeque;
 
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::codec::decoder::decode_commands;

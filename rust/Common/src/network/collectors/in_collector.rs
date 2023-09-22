@@ -1,9 +1,9 @@
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
-use cheetah_game_realtime_protocol::InputDataHandler;
 use crate::commands::codec::decoder::decode_commands;
 use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuaranteesChannel};
 use crate::commands::CommandWithReliabilityGuarantees;
+use cheetah_game_realtime_protocol::InputDataHandler;
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 
 ///
 /// Коллектор входящих команд
@@ -163,8 +163,6 @@ impl Ord for SequenceApplicationCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
-	use cheetah_game_realtime_protocol::InputDataHandler;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::codec::encoder::encode_commands;
 	use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuaranteesChannel};
@@ -173,6 +171,8 @@ mod tests {
 	use crate::network::collectors::in_collector::InCommandsCollector;
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
+	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
+	use cheetah_game_realtime_protocol::InputDataHandler;
 
 	#[test]
 	pub(crate) fn test_clear_after_get_ready_commands() {

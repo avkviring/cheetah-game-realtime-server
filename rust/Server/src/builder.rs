@@ -1,14 +1,14 @@
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 use std::io;
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 
+use crate::{RoomsServerManagerError, Server, ServerManager};
 use thiserror::Error;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
-use crate::{RoomsServerManagerError, Server, ServerManager};
 
 ///
 /// Паттерн Создатель для игрового сервера

@@ -1,10 +1,10 @@
-use std::io::{Cursor, Error, ErrorKind};
-use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_game_realtime_protocol::RoomMemberId;
-use serde::{Deserialize, Serialize};
 use crate::room::buffer::Buffer;
 use crate::room::field::FieldId;
 use crate::room::object::GameObjectId;
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_game_realtime_protocol::RoomMemberId;
+use serde::{Deserialize, Serialize};
+use std::io::{Cursor, Error, ErrorKind};
 
 ///
 /// Событие по объекту

@@ -1,5 +1,5 @@
-use std::collections::VecDeque;
 use cheetah_game_realtime_protocol::OutputDataProducer;
+use std::collections::VecDeque;
 
 use fnv::FnvHashMap;
 
@@ -75,7 +75,6 @@ impl OutCommandsCollector {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::c2s::C2SCommand::IncrementLongValue;
 	use crate::commands::codec::decoder::decode_commands;
@@ -84,6 +83,7 @@ mod tests {
 	use crate::commands::BothDirectionCommand;
 	use crate::network::collectors::out_collector::*;
 	use crate::room::field::FieldId;
+	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
 
 	#[test]
 	fn test_group_sequence() {

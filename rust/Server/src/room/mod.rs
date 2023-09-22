@@ -1,8 +1,8 @@
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::slice;
 use std::time::{Duration, Instant};
-use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 
 use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
@@ -283,8 +283,8 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
-	use std::collections::VecDeque;
 	use cheetah_game_realtime_protocol::RoomMemberId;
+	use std::collections::VecDeque;
 
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::guarantees::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};

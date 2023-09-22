@@ -1,10 +1,10 @@
-use cheetah_game_realtime_protocol::RoomMemberId;
-use cheetah_common::commands::s2c::S2CCommand;
-use cheetah_common::commands::types::structure::SetStructureCommand;
-use cheetah_common::room::field::{Field, FieldType};
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;
+use cheetah_common::commands::s2c::S2CCommand;
+use cheetah_common::commands::types::structure::SetStructureCommand;
+use cheetah_common::room::field::{Field, FieldType};
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 impl ServerCommandExecutor for SetStructureCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {

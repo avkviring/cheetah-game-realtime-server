@@ -1,8 +1,6 @@
-use std::io::Cursor;
 use cheetah_game_realtime_protocol::RoomMemberId;
+use std::io::Cursor;
 
-use serde::{Deserialize, Serialize};
-use strum_macros::AsRefStr;
 use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;
@@ -15,6 +13,8 @@ use crate::commands::types::structure::SetStructureCommand;
 use crate::commands::{CommandDecodeError, CommandTypeId};
 use crate::room::field::{Field, FieldId, FieldType};
 use crate::room::object::GameObjectId;
+use serde::{Deserialize, Serialize};
+use strum_macros::AsRefStr;
 
 #[derive(Debug, PartialEq, Clone, AsRefStr, Serialize, Deserialize)]
 #[allow(clippy::large_enum_variant)]

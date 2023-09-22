@@ -1,6 +1,6 @@
-use cheetah_game_realtime_protocol::RoomMemberId;
-use cheetah_common::commands::CommandWithChannelType;
 use crate::room::template::config::MemberTemplate;
+use cheetah_common::commands::CommandWithChannelType;
+use cheetah_game_realtime_protocol::RoomMemberId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

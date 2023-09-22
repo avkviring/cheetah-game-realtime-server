@@ -1,18 +1,18 @@
+use crate::room::command::ServerCommandError;
+use crate::room::template::config::{MemberTemplate, RoomTemplate};
+use crate::room::Room;
+use crate::server::room_registry::RoomNotFoundError;
+use crate::server::Server;
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{RecvTimeoutError, SendError, Sender};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
-use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
-use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 use thiserror::Error;
-use crate::room::command::ServerCommandError;
-use crate::room::template::config::{MemberTemplate, RoomTemplate};
-use crate::room::Room;
-use crate::server::room_registry::RoomNotFoundError;
-use crate::server::Server;
 
 ///
 /// Управление сервером
@@ -208,11 +208,11 @@ impl ServerManager {
 
 #[cfg(test)]
 mod test {
-	use std::time::Duration;
-	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
-	use cheetah_common::network::bind_to_free_socket;
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::ServerManager;
+	use cheetah_common::network::bind_to_free_socket;
+	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+	use std::time::Duration;
 
 	#[test]
 	fn should_get_rooms() {

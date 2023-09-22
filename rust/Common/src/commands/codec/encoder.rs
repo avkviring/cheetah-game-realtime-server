@@ -4,7 +4,6 @@ use std::io::Cursor;
 use byteorder::WriteBytesExt;
 use cheetah_game_realtime_protocol::RoomMemberId;
 
-
 use crate::commands::context::CommandContext;
 use crate::commands::guarantees::codec::ChannelType;
 use crate::commands::guarantees::ChannelGroup;

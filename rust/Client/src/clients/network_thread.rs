@@ -1,3 +1,7 @@
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
+use cheetah_game_realtime_protocol::frame::ConnectionId;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use std::net::SocketAddr;
 use std::ops::Add;
 use std::sync::atomic::Ordering;
@@ -5,16 +9,12 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant};
-use cheetah_game_realtime_protocol::frame::ConnectionId;
-use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
-use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
-use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
 
+use crate::clients::{ClientRequest, SharedClientStatistics};
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::guarantees::ReliabilityGuarantees;
 use cheetah_common::commands::{BothDirectionCommand, CommandWithReliabilityGuarantees};
 use cheetah_common::network::{ConnectionStatus, NetworkChannel};
-use crate::clients::{ClientRequest, SharedClientStatistics};
 
 ///
 /// Управление сетевым клиентом, связывает поток unity и поток сетевого клиента

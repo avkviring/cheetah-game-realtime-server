@@ -1,8 +1,8 @@
-use cheetah_game_realtime_protocol::RoomMemberId;
-use cheetah_common::room::object::GameObjectTemplateId;
 use crate::room::command::ServerCommandError;
 use crate::room::object::S2CCommandsCollector;
 use crate::room::Room;
+use cheetah_common::room::object::GameObjectTemplateId;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(&member_id)?;
