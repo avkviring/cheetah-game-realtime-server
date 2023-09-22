@@ -5,9 +5,6 @@ using Games.Cheetah.Client.Codec.Standard;
 
 namespace Games.Cheetah.Client.Codec
 {
-    /**
-     * Builder для создания реестра кодеков
-     */
     public class CodecRegistryBuilder
     {
         internal static readonly Dictionary<Type, object> DefaultFactories = new();
@@ -35,14 +32,21 @@ namespace Games.Cheetah.Client.Codec
             RegisterDefault(_ => DoubleFormatter.Instance);
         }
 
+
+        public static void ClearDefaultRegistration()
+        {
+            DefaultFactories.Clear();
+        }
+        
+        
         public static void RegisterDefault<T>(CodecFactory<T> factory)
         {
             var type = typeof(T);
-            RemoveExistDefaultFactoryForDisableDomainReloadSuppor(type);
+            RemoveExistDefaultFactoryForDisableDomainReloadSupport(type);
             DefaultFactories.Add(type, factory);
         }
 
-        private static void RemoveExistDefaultFactoryForDisableDomainReloadSuppor(Type type)
+        private static void RemoveExistDefaultFactoryForDisableDomainReloadSupport(Type type)
         {
             DefaultFactories.Remove(type);
         }
