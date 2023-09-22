@@ -1,7 +1,7 @@
-use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 use cheetah_common::room::field::{Field, FieldType};
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
@@ -67,17 +67,17 @@ impl ServerCommandExecutor for SetLongCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_game_realtime_protocol::RoomMemberId;
+	use crate::room::command::ServerCommandExecutor;
+	use crate::room::template::config::MemberTemplate;
+	use crate::room::template::config::RoomTemplate;
+	use crate::room::Room;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::long::{IncrementLongC2SCommand, SetLongCommand};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::field::FieldId;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::room::command::ServerCommandExecutor;
-	use crate::room::template::config::MemberTemplate;
-	use crate::room::template::config::RoomTemplate;
-	use crate::room::Room;
+	use cheetah_game_realtime_protocol::RoomMemberId;
 
 	const FIELD_ID: FieldId = 100;
 

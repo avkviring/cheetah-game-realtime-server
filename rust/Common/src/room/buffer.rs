@@ -1,7 +1,7 @@
-use std::fmt;
-use std::io::{Cursor, Error, ErrorKind, Read, Write};
 use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::io::{Cursor, Error, ErrorKind, Read, Write};
 
 ///
 /// Бинарное значение поля

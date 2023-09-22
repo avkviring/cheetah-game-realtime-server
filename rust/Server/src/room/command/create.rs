@@ -1,6 +1,6 @@
-use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::commands::types::create::CreateGameObjectCommand;
 use cheetah_common::room::owner::GameObjectOwner;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;

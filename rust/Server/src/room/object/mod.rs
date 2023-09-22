@@ -1,5 +1,5 @@
-use std::fmt::Debug;
 use cheetah_game_realtime_protocol::RoomMemberId;
+use std::fmt::Debug;
 
 use thiserror::Error;
 

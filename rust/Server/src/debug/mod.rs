@@ -64,13 +64,13 @@ where
 
 #[cfg(test)]
 pub mod test {
-	use std::sync::Arc;
-	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
-	use tokio::sync::Mutex;
-	use cheetah_common::network::bind_to_free_socket;
 	use crate::debug::{full_dump_rooms, simple_dump_rooms};
 	use crate::room::template::config::RoomTemplate;
 	use crate::server::manager::ServerManager;
+	use cheetah_common::network::bind_to_free_socket;
+	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+	use std::sync::Arc;
+	use tokio::sync::Mutex;
 
 	#[test]
 	pub fn test_simple_dump_rooms() {

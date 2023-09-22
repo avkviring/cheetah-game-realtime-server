@@ -1,8 +1,8 @@
+use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use std::net::SocketAddr;
 use std::thread;
 use std::time::Duration;
-use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
-use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
 
 use cheetah_client::clients::registry::ClientId;
 use cheetah_client::ffi;

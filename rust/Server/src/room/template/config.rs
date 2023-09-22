@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
+use std::collections::HashMap;
 
 use fnv::FnvBuildHasher;
 
