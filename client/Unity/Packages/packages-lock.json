@@ -241,12 +241,13 @@
       }
     },
     "games.cheetah.grpc": {
-      "version": "file:games.cheetah.grpc",
+      "version": "https://github.com/avkviring/games-cheetah-unity-grpc.git#1.0.1",
       "depth": 0,
-      "source": "embedded",
+      "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "2.0.0"
-      }
+      },
+      "hash": "a528eb1f83d995ed8ba1497af70fa63f3b9b2937"
     },
     "games.cheetah.grpc.internal": {
       "version": "file:games.cheetah.grpc.internal",
