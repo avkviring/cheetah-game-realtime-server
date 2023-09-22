@@ -32,9 +32,7 @@ jobs:
       - name: install rust 1.72.1
         run: rustup install 1.72.1
       - name: set rust version
-        run: rustup override set 1.72.1
-      - name: cargo version
-        run: cargo version
+        run: rustup toolchain install stable
       - name: Install Cross
         run: cargo install сross
       - name: Build Android armv7-linux-androideabi
