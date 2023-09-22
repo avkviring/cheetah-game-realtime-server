@@ -34,7 +34,7 @@ jobs:
       - name: set rust version
         run: rustup toolchain install stable
       - name: Install Cross
-        run: cargo install сross
+        run: cargo install cross --git https://github.com/cross-rs/cross
       - name: Build Android armv7-linux-androideabi
         run: cross build --manifest-path $REALTIME_CLIENT_MANIFEST_PATH --target armv7-linux-androideabi --release
       - name: Build Android aarch64-linux-android
