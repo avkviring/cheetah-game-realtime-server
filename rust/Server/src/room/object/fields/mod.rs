@@ -1,8 +1,8 @@
+use cheetah_game_realtime_protocol::RoomMemberId;
 use crate::room::object::S2CCommandsCollector;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::room::field::{Field, FieldId, FieldType};
 use cheetah_common::room::object::GameObjectId;
-use cheetah_protocol::RoomMemberId;
 use fnv::FnvHashMap;
 use serde::{Deserialize, Serialize};
 

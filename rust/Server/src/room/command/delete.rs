@@ -1,7 +1,6 @@
+use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_protocol::RoomMemberId;
-
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::Room;
 

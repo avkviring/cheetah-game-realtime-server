@@ -1,8 +1,7 @@
+use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::commands::types::create::C2SCreatedGameObjectCommand;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_protocol::RoomMemberId;
-
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::S2CCommandsCollector;
 use crate::room::Room;

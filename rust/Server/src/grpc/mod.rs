@@ -1,13 +1,12 @@
 use std::sync::Arc;
+use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
+use cheetah_game_realtime_protocol::RoomId;
 
 use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 use tonic::{Request, Response, Status};
 
 use cheetah_common::room::access::AccessGroups;
-use cheetah_protocol::others::member_id::MemberAndRoomId;
-use cheetah_protocol::RoomId;
-
 use crate::grpc::proto::internal::internal_server::Internal;
 #[allow(clippy::wildcard_imports)]
 use crate::grpc::proto::internal::*;
@@ -152,12 +151,10 @@ impl From<ManagementTaskError> for Status {
 mod test {
 	use std::sync::Arc;
 	use std::time::Duration;
+	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 	use tokio::sync::Mutex;
 	use tonic::{Code, Request};
-
 	use cheetah_common::network::bind_to_free_socket;
-	use cheetah_protocol::coniguration::ProtocolConfiguration;
-
 	use crate::grpc::proto::internal::internal_server::Internal;
 	use crate::grpc::proto::internal::DeleteRoomRequest;
 	use crate::grpc::proto::internal::EmptyRequest;

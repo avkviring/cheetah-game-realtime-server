@@ -1,12 +1,12 @@
 use cheetah_common::network::bind_to_free_socket;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectTemplateId;
-use cheetah_protocol::coniguration::ProtocolConfiguration;
-use cheetah_protocol::RoomId;
 use cheetah_server::room::template::config::RoomTemplate;
 use cheetah_server::server::manager::ServerManager;
 use std::net::SocketAddr;
 use std::time::Duration;
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+use cheetah_game_realtime_protocol::RoomId;
 
 ///
 /// Конфигурируем и создаем сервер для интеграционного тестирования

@@ -1,8 +1,8 @@
 use crate::room::owner::GameObjectOwner;
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_protocol::RoomMemberId;
 use serde::{Deserialize, Serialize};
 use std::io::{Cursor, Error, ErrorKind};
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 pub type GameObjectTemplateId = u16;
 

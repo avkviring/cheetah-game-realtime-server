@@ -15,7 +15,7 @@ path = "src/bin/service.rs"
 rand.workspace = true
 indexmap = { version = "1.9.2", features = ["serde"] }
 cheetah-common = { path = "../Common" }
-cheetah-protocol = { path = "../Protocol" }
+cheetah-game-realtime-protocol.workspace=true
 fnv.workspace = true
 heapless = { workspace = true, features = ["serde"] }
 futures.workspace = true

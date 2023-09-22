@@ -1,8 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-
-use cheetah_protocol::InputDataHandler;
-
+use cheetah_game_realtime_protocol::InputDataHandler;
 use crate::commands::codec::decoder::decode_commands;
 use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuaranteesChannel};
 use crate::commands::CommandWithReliabilityGuarantees;
@@ -165,9 +163,8 @@ impl Ord for SequenceApplicationCommand {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
-	use cheetah_protocol::InputDataHandler;
-
+	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
+	use cheetah_game_realtime_protocol::InputDataHandler;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::codec::encoder::encode_commands;
 	use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuaranteesChannel};

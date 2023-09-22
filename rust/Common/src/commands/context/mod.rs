@@ -3,11 +3,9 @@ use std::io::{Cursor, ErrorKind};
 use std::num::TryFromIntError;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_game_realtime_protocol::RoomMemberId;
 use thiserror::Error;
-
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_protocol::RoomMemberId;
-
 use crate::commands::context::header::CommandHeader;
 use crate::commands::guarantees::codec::ChannelType;
 use crate::commands::guarantees::ChannelGroup;
@@ -265,8 +263,8 @@ impl From<&CreatorSource> for u8 {
 #[cfg(test)]
 pub mod tests {
 	use std::io::Cursor;
+	use cheetah_game_realtime_protocol::RoomMemberId;
 
-	use cheetah_protocol::RoomMemberId;
 
 	use crate::commands::context::CommandContext;
 	use crate::commands::guarantees::codec::ChannelType;

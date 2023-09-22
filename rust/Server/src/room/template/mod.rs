@@ -1,7 +1,6 @@
+use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_protocol::RoomMemberId;
-
 use crate::room::object::GameObject;
 use crate::room::template::config::GameObjectTemplate;
 

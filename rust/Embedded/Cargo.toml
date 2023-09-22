@@ -10,7 +10,7 @@ crate-type = ["cdylib","staticlib"]
 
 [dependencies]
 cheetah-common = { path = "../Common" }
-cheetah-protocol = { path = "../Protocol" }
+cheetah-game-realtime-protocol.workspace=true
 cheetah-server = { path = "../Server" }
 tokio = { workspace = true, features = ["rt-multi-thread", "time", "fs", "macros", "net", "sync"] }
 anyhow.workspace = true

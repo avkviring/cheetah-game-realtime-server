@@ -1,7 +1,7 @@
 use std::io::{Cursor, Error, ErrorKind};
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_game_realtime_protocol::RoomMemberId;
 
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
-use cheetah_protocol::RoomMemberId;
 use serde::{Deserialize, Serialize};
 
 #[repr(C)]

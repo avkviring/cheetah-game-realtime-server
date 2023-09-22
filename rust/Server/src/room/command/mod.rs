@@ -1,11 +1,10 @@
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use thiserror::Error;
 
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
-use cheetah_protocol::{RoomId, RoomMemberId};
-
 use crate::room::object::GameObjectError;
 use crate::room::Room;
 use crate::server::room_registry::RoomNotFoundError;
@@ -109,10 +108,10 @@ pub fn execute(command: &C2SCommand, room: &mut Room, member_id: RoomMemberId) -
 
 #[cfg(test)]
 mod tests {
+	use cheetah_game_realtime_protocol::RoomMemberId;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use cheetah_protocol::RoomMemberId;
 
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::room::Room;

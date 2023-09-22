@@ -1,4 +1,4 @@
-use cheetah_protocol::RoomMemberId;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 ///
 /// владелец - клиент или root

@@ -3,16 +3,14 @@ use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::net::UdpSocket;
 use std::time::Instant;
-
-use cheetah_protocol::codec::cipher::Cipher;
-use cheetah_protocol::coniguration::ProtocolConfiguration;
-use cheetah_protocol::frame::disconnected_reason::DisconnectedReason;
-use cheetah_protocol::frame::headers::Header;
-use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
-use cheetah_protocol::frame::{ConnectionId, Frame};
-use cheetah_protocol::others::member_id::MemberAndRoomId;
-use cheetah_protocol::{Protocol, RoomId, RoomMemberId};
-
+use cheetah_game_realtime_protocol::frame::{ConnectionId, Frame};
+use cheetah_game_realtime_protocol::frame::disconnected_reason::DisconnectedReason;
+use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
+use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
+use cheetah_game_realtime_protocol::{Protocol, RoomId, RoomMemberId};
+use cheetah_game_realtime_protocol::codec::cipher::Cipher;
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+use cheetah_game_realtime_protocol::frame::headers::Header;
 use crate::network::collectors::in_collector::InCommandsCollector;
 use crate::network::collectors::out_collector::OutCommandsCollector;
 use crate::network::socket::UdpSocketWrapper;

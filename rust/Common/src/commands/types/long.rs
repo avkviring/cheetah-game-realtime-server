@@ -1,6 +1,6 @@
 use crate::room::field::FieldId;
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 use std::io::Cursor;
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 
 use crate::room::object::GameObjectId;
 use serde::{Deserialize, Serialize};

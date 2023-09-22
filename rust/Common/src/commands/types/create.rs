@@ -1,7 +1,7 @@
 use std::io::{Cursor, Error, ErrorKind};
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 
 use crate::room::access::AccessGroups;
 use crate::room::buffer::Buffer;

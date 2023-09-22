@@ -1,9 +1,9 @@
 use std::io::Cursor;
 use std::num::TryFromIntError;
+use cheetah_game_realtime_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 
 use thiserror::Error;
 
-use cheetah_protocol::codec::variable_int::{VariableIntReader, VariableIntWriter};
 
 use crate::commands::context::CommandContextError;
 use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuaranteesChannel};

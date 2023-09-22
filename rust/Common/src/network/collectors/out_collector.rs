@@ -1,8 +1,7 @@
 use std::collections::VecDeque;
+use cheetah_game_realtime_protocol::OutputDataProducer;
 
 use fnv::FnvHashMap;
-
-use cheetah_protocol::OutputDataProducer;
 
 use crate::commands::codec::encoder::encode_commands;
 use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuarantees, ReliabilityGuaranteesChannel};
@@ -76,8 +75,7 @@ impl OutCommandsCollector {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_protocol::frame::packets_collector::PACKET_SIZE;
-
+	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::c2s::C2SCommand::IncrementLongValue;
 	use crate::commands::codec::decoder::decode_commands;
