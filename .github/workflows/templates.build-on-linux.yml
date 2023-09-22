@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/avkviring/rust-builder-x86_64-unknown-linux-gnu-old-glib:0.0.7
+      image: ghcr.io/avkviring/rust-builder-x86_64-unknown-linux-gnu-old-glib:0.0.8
     steps:
       - uses: actions/checkout@v3
       - name: Build Client
