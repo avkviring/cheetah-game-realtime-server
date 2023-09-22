@@ -1,10 +1,8 @@
 use std::io::Cursor;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 use serde::{Deserialize, Serialize};
 use strum_macros::AsRefStr;
-
-use cheetah_protocol::RoomMemberId;
-
 use crate::commands::context::CommandContextError;
 use crate::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
 use crate::commands::types::delete::DeleteGameObjectCommand;

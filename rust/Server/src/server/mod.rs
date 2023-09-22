@@ -6,12 +6,10 @@ use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, iter, thread};
-
-use cheetah_protocol::coniguration::ProtocolConfiguration;
-use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
-use cheetah_protocol::others::member_id::MemberAndRoomId;
-use cheetah_protocol::{RoomId, RoomMemberId};
-
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+use cheetah_game_realtime_protocol::disconnect::command::DisconnectByCommandReason;
+use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::MemberTemplate;
 use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTaskExecutionError, ManagementTaskResult, RoomMembersCount};

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
 
 use fnv::FnvBuildHasher;
 
@@ -6,7 +7,6 @@ use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::field::FieldId;
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
-use cheetah_protocol::frame::member_private_key::MemberPrivateKey;
 use serde::{Deserialize, Serialize};
 
 ///

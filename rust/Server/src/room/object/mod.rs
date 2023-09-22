@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 use thiserror::Error;
 
@@ -7,7 +8,6 @@ use cheetah_common::commands::types::create::{CreateGameObjectCommand, GameObjec
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
-use cheetah_protocol::RoomMemberId;
 use fields::Fields;
 use serde::{Deserialize, Serialize};
 

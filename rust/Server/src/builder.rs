@@ -3,13 +3,11 @@ use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 
 use thiserror::Error;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
-
-use cheetah_protocol::coniguration::ProtocolConfiguration;
-
 use crate::{RoomsServerManagerError, Server, ServerManager};
 
 ///

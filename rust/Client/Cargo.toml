@@ -9,9 +9,9 @@ version = "0.0.1"
 crate-type = ["staticlib", "cdylib", "lib"]
 
 [dependencies]
+cheetah-game-realtime-protocol.workspace=true
 lazy_static.workspace = true
 cheetah-common = { path = "../Common" }
-cheetah-protocol = { path = "../Protocol" }
 widestring.workspace = true
 fnv.workspace = true
 heapless = { workspace = true, features = ["serde"] }

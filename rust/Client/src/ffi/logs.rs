@@ -1,6 +1,5 @@
 use widestring::U16CString;
-
-use cheetah_protocol::trace_collector::TRACER_COLLECTOR;
+use cheetah_common::tracer::TRACER_COLLECTOR;
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -19,7 +18,7 @@ pub extern "C" fn init_logger() {
 
 #[no_mangle]
 pub extern "C" fn set_max_log_level(log_level: LogLevel) {
-	let collector = &mut TRACER_COLLECTOR.lock().unwrap();
+	let collector = &mut cheetah_common::tracer::TRACER_COLLECTOR.lock().unwrap();
 	collector.set_log_level(match log_level {
 		LogLevel::Info => tracing_core::Level::INFO,
 		LogLevel::Warn => tracing_core::Level::WARN,

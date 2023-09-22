@@ -1,8 +1,7 @@
+use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::structure::SetStructureCommand;
 use cheetah_common::room::field::{Field, FieldType};
-use cheetah_protocol::RoomMemberId;
-
 use crate::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::room::object::GameObject;
 use crate::room::Room;

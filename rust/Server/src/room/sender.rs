@@ -1,9 +1,8 @@
+use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::{S2CCommandWithCreator, S2CCommandWithMeta};
 use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType};
 use cheetah_common::room::access::AccessGroups;
-use cheetah_protocol::RoomMemberId;
-
 use crate::room::command::ServerCommandError;
 use crate::room::member::RoomMember;
 use crate::room::Room;

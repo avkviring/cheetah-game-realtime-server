@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 use std::io::Cursor;
 
 use byteorder::WriteBytesExt;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
-use cheetah_protocol::RoomMemberId;
 
 use crate::commands::context::CommandContext;
 use crate::commands::guarantees::codec::ChannelType;

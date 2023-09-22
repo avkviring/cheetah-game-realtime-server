@@ -6,9 +6,7 @@ use std::sync::Arc;
 ///
 ///
 use std::time::Duration;
-
-use cheetah_protocol::disconnect::command::DisconnectByCommandReason;
-
+use cheetah_game_realtime_protocol::disconnect::command::DisconnectByCommandReason;
 use crate::clients::network_thread::C2SCommandWithChannel;
 
 pub mod application_thread;

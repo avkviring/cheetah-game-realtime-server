@@ -1,6 +1,5 @@
 use widestring::U16CString;
-
-use cheetah_protocol::trace_collector::TRACER_COLLECTOR;
+use cheetah_common::tracer::TRACER_COLLECTOR;
 
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone)]

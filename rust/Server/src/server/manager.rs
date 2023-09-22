@@ -4,13 +4,10 @@ use std::sync::mpsc::{RecvTimeoutError, SendError, Sender};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-
+use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 use thiserror::Error;
-
-use cheetah_protocol::coniguration::ProtocolConfiguration;
-use cheetah_protocol::others::member_id::MemberAndRoomId;
-use cheetah_protocol::{RoomId, RoomMemberId};
-
 use crate::room::command::ServerCommandError;
 use crate::room::template::config::{MemberTemplate, RoomTemplate};
 use crate::room::Room;
@@ -212,10 +209,8 @@ impl ServerManager {
 #[cfg(test)]
 mod test {
 	use std::time::Duration;
-
+	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 	use cheetah_common::network::bind_to_free_socket;
-	use cheetah_protocol::coniguration::ProtocolConfiguration;
-
 	use crate::room::template::config::{MemberTemplate, RoomTemplate};
 	use crate::server::manager::ServerManager;
 

@@ -1,10 +1,9 @@
+use cheetah_game_realtime_protocol::RoomMemberId;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::types::event::{EventCommand, TargetEventCommand};
 use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::field::FieldId;
 use cheetah_common::room::object::GameObjectId;
-use cheetah_protocol::RoomMemberId;
-
 use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
 
