@@ -11,7 +11,7 @@ use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_server::room::template::config::MemberTemplate;
-use cheetah_server::server::manager::ServerManager;
+use cheetah_server::server::manager1::ServerManager;
 
 use crate::helpers::server::IntegrationTestServerBuilder;
 

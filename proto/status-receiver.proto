@@ -12,6 +12,8 @@ message ServerStatus {
   // Внутренний GRPC адрес для взаимодействия с другими сервисами
   Addr grpc_internal = 2;
   State state = 3;
+  // описание сервера из env
+  map<string, string> envs = 4;
 }
 
 

@@ -5,10 +5,11 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::{RoomsServerManagerError, Server, ServerManager};
+use crate::{Server, ServerManager};
 use thiserror::Error;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
+use crate::server::manager::RoomsServerManagerError;
 
 ///
 /// Паттерн Создатель для игрового сервера

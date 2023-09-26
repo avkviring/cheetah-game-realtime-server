@@ -14,8 +14,7 @@ use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 
 use cheetah_common::network::collectors::in_collector::InCommandsCollector;
 use cheetah_common::network::CheetahProtocol;
-
-use crate::room::template::config::MemberTemplate;
+use crate::server::room::template::config::MemberTemplate;
 use crate::server::room_registry::Rooms;
 
 pub struct Network {
@@ -249,12 +248,10 @@ mod tests {
 	use cheetah_game_realtime_protocol::frame::headers::Header;
 	use cheetah_game_realtime_protocol::frame::Frame;
 	use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
-
 	use cheetah_common::network::bind_to_free_socket;
-
-	use crate::room::member::RoomMember;
-	use crate::room::template::config::MemberTemplate;
 	use crate::server::network::Network;
+	use crate::server::room::member::RoomMember;
+	use crate::server::room::template::config::MemberTemplate;
 	use crate::server::room_registry::Rooms;
 
 	#[test]

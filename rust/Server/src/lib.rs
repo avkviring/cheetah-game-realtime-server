@@ -8,21 +8,17 @@ use tokio::sync::Mutex;
 use tokio_stream::wrappers::TcpListenerStream;
 use tonic_health::ServingStatus;
 use tonic_web::GrpcWebLayer;
+use crate::intergration::agones::agones_und_notifyservice_cycle;
+use crate::server::debug::run_debug_server;
+use crate::server::manager::grpc::proto::internal::internal_server::InternalServer;
+use crate::server::manager::grpc::RealtimeInternalService;
+use crate::server::manager::ServerManager;
 
-use crate::agones::agones_und_notifyservice_cycle;
-use crate::debug::run_debug_server;
-use crate::grpc::proto::internal::internal_server::InternalServer;
-use crate::grpc::RealtimeInternalService;
-use crate::server::manager::{RoomsServerManagerError, ServerManager};
-
-pub mod agones;
 pub mod builder;
-pub mod debug;
 pub mod env;
-pub mod grpc;
-pub mod room;
 pub mod server;
 
+pub mod intergration;
 ///
 /// Server = Agones + Grpc + `NetworkRoomsServerManager`
 /// `NetworkRoomsServerManager` = Manager + `NetworkRoomsServer`

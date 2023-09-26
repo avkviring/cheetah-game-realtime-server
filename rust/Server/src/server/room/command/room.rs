@@ -1,0 +1,75 @@
+use cheetah_common::room::object::GameObjectTemplateId;
+use cheetah_game_realtime_protocol::RoomMemberId;
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::object::S2CCommandsCollector;
+use crate::server::room::Room;
+
+pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	let member = room.get_member_mut(&member_id)?;
+	member.attached = true;
+	let access_group = member.template.groups;
+	let mut command_collector = Vec::<(GameObjectTemplateId, S2CCommandsCollector)>::new();
+	room.objects
+		.iter()
+		.filter(|(_, o)| o.created)
+		.filter(|(_, o)| o.access_groups.contains_any(&access_group))
+		.map(|(_, o)| {
+			let mut commands = S2CCommandsCollector::new();
+			o.collect_create_commands(&mut commands, member_id);
+			(o.template_id, commands)
+		})
+		.clone()
+		.for_each(|v| command_collector.push(v));
+
+	for (_template, commands) in command_collector.iter() {
+		room.send_to_member(&member_id, commands.as_slice())?;
+	}
+	Ok(())
+}
+
+pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	let member = room.get_member_mut(&member_id)?;
+	member.attached = false;
+	Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+	use cheetah_common::commands::s2c::S2CCommand;
+	use cheetah_common::room::access::AccessGroups;
+	use cheetah_common::room::owner::GameObjectOwner;
+	use crate::server::room::command::room::attach_to_room;
+	use crate::server::room::Room;
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+
+	#[test]
+	pub(crate) fn should_load_object_when_attach_to_room() {
+		let template = RoomTemplate::default();
+		let mut room = Room::from_template(template);
+		let groups_a = AccessGroups(0b100);
+		let member_a = room.register_member(MemberTemplate::stub(groups_a));
+		let groups_b = AccessGroups(0b10);
+		let member_b = room.register_member(MemberTemplate::stub(groups_b));
+
+		room.mark_as_connected_in_test(member_a).unwrap();
+		room.mark_as_connected_in_test(member_b).unwrap();
+
+		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
+		object_a_1.created = true;
+		let object_a_1_id = object_a_1.id;
+
+		// не созданный объект - не должен загрузиться
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
+		// другая группа + созданный объект - не должен загрузиться
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b).created = true;
+		// другая группа - не должен загрузиться
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b);
+
+		attach_to_room(&mut room, member_a).unwrap();
+
+		let mut commands = room.get_member_out_commands_for_test(member_a);
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id));
+		assert!(matches!(commands.pop_front(), None));
+	}
+}

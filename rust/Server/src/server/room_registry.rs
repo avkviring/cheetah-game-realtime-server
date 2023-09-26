@@ -2,13 +2,12 @@ use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
 use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
-
-use crate::room::command::ServerCommandError;
-use crate::room::template::config::{MemberTemplate, RoomTemplate};
-use crate::room::Room;
 use cheetah_common::commands::{CommandWithChannelType, CommandWithReliabilityGuarantees};
 use fnv::FnvBuildHasher;
 use thiserror::Error;
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::Room;
+use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 
 #[derive(Default)]
 pub struct Rooms {
