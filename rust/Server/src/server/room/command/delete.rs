@@ -1,8 +1,8 @@
+use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
+use crate::server::room::Room;
 use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
 use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_game_realtime_protocol::RoomMemberId;
-use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::server::room::Room;
 
 impl ServerCommandExecutor for DeleteGameObjectCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -19,13 +19,13 @@ impl ServerCommandExecutor for DeleteGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-	use crate::server::room::Room;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 
 	#[test]
 	fn should_delete() {

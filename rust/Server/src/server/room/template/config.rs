@@ -83,10 +83,9 @@ impl MemberTemplate {
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::template::config::{GameObjectTemplate, MemberTemplate, MemberTemplateError};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
-	use crate::server::room::template::config::{GameObjectTemplate, MemberTemplate, MemberTemplateError};
-
 
 	impl MemberTemplate {
 		#[must_use]

@@ -1,10 +1,10 @@
+use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
+use crate::server::room::object::GameObject;
+use crate::server::room::Room;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::field::DeleteFieldCommand;
 use cheetah_common::room::field::{Field, FieldType};
 use cheetah_game_realtime_protocol::RoomMemberId;
-use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::server::room::object::GameObject;
-use crate::server::room::Room;
 
 impl ServerCommandExecutor for DeleteFieldCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -41,15 +41,15 @@ impl ServerCommandExecutor for DeleteFieldCommand {
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::command::tests::setup_one_player;
+	use crate::server::room::command::ServerCommandExecutor;
+	use crate::server::room::object::GameObject;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::field::DeleteFieldCommand;
 	use cheetah_common::room::buffer::Buffer;
 	use cheetah_common::room::field::FieldType;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::command::ServerCommandExecutor;
-	use crate::server::room::command::tests::setup_one_player;
-	use crate::server::room::object::GameObject;
 
 	#[test]
 	fn should_command() {

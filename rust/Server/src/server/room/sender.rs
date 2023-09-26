@@ -1,11 +1,11 @@
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::member::RoomMember;
+use crate::server::room::Room;
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::{S2CCommandWithCreator, S2CCommandWithMeta};
 use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType};
 use cheetah_common::room::access::AccessGroups;
 use cheetah_game_realtime_protocol::RoomMemberId;
-use crate::server::room::command::ServerCommandError;
-use crate::server::room::member::RoomMember;
-use crate::server::room::Room;
 
 ///
 /// Методы для отправки команд пользователям
@@ -68,14 +68,13 @@ impl Room {
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithCreator, S2CCommandWithMeta};
 	use cheetah_common::commands::types::long::SetLongCommand;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::field::{Field, FieldType};
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::Room;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
-
 
 	///
 	/// Не посылаем обратную команду, тому кто ее вызвал

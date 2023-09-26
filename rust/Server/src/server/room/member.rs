@@ -1,7 +1,7 @@
+use crate::server::room::template::config::MemberTemplate;
 use cheetah_common::commands::CommandWithChannelType;
 use cheetah_game_realtime_protocol::RoomMemberId;
 use serde::{Deserialize, Serialize};
-use crate::server::room::template::config::MemberTemplate;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoomMember {

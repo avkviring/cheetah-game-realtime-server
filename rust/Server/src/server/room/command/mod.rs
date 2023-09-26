@@ -1,12 +1,12 @@
-use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
-use thiserror::Error;
+use crate::server::room::object::GameObjectError;
+use crate::server::room::Room;
 use crate::server::room_registry::RoomNotFoundError;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
-use crate::server::room::object::GameObjectError;
-use crate::server::room::Room;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
+use thiserror::Error;
 
 pub mod create;
 pub mod created;
@@ -107,12 +107,12 @@ pub fn execute(command: &C2SCommand, room: &mut Room, member_id: RoomMemberId) -
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 	use cheetah_game_realtime_protocol::RoomMemberId;
-	use crate::server::room::Room;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 
 	pub(crate) fn setup_two_players() -> (Room, GameObjectId, RoomMemberId, RoomMemberId) {
 		let template = RoomTemplate::default();

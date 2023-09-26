@@ -8,6 +8,9 @@ use fnv::{FnvBuildHasher, FnvHashMap};
 use indexmap::map::IndexMap;
 use serde::{Deserialize, Serialize};
 
+use crate::server::room::command::{execute, ServerCommandError};
+use crate::server::room::object::{GameObject, S2CCommandsCollector};
+use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
@@ -18,9 +21,6 @@ use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
 use member::RoomMember;
-use crate::server::room::command::{execute, ServerCommandError};
-use crate::server::room::object::{GameObject, S2CCommandsCollector};
-use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 
 pub mod action;
 pub mod command;
@@ -285,6 +285,10 @@ mod tests {
 	use cheetah_game_realtime_protocol::RoomMemberId;
 	use std::collections::VecDeque;
 
+	use crate::server::room::command::ServerCommandError;
+	use crate::server::room::object::GameObject;
+	use crate::server::room::template::config::{GameObjectTemplate, MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::guarantees::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
@@ -295,10 +299,6 @@ mod tests {
 	use cheetah_common::room::buffer::Buffer;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::command::ServerCommandError;
-	use crate::server::room::object::GameObject;
-	use crate::server::room::Room;
-	use crate::server::room::template::config::{GameObjectTemplate, MemberTemplate, RoomTemplate};
 
 	impl Default for Room {
 		fn default() -> Self {

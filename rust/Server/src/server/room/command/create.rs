@@ -1,9 +1,9 @@
-use cheetah_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_common::room::owner::GameObjectOwner;
-use cheetah_game_realtime_protocol::RoomMemberId;
 use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
 use crate::server::room::object::GameObject;
 use crate::server::room::Room;
+use cheetah_common::commands::types::create::CreateGameObjectCommand;
+use cheetah_common::room::owner::GameObjectOwner;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 impl ServerCommandExecutor for CreateGameObjectCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -38,13 +38,13 @@ impl ServerCommandExecutor for CreateGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 	use cheetah_common::commands::types::create::CreateGameObjectCommand;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-	use crate::server::room::Room;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 
 	#[test]
 	fn should_create() {

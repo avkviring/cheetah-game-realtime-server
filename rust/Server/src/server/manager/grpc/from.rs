@@ -1,10 +1,9 @@
-use cheetah_common::room::access::AccessGroups;
-use cheetah_common::room::buffer::Buffer;
-use cheetah_common::room::field::FieldId;
 use crate::server::manager::grpc::proto::internal;
 use crate::server::manager::grpc::proto::shared::field_value::Variant;
 use crate::server::room::template::config;
-
+use cheetah_common::room::access::AccessGroups;
+use cheetah_common::room::buffer::Buffer;
+use cheetah_common::room::field::FieldId;
 
 impl From<internal::RoomTemplate> for config::RoomTemplate {
 	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
