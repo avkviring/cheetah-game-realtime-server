@@ -1,8 +1,8 @@
-use cheetah_common::room::object::GameObjectTemplateId;
-use cheetah_game_realtime_protocol::RoomMemberId;
 use crate::server::room::command::ServerCommandError;
 use crate::server::room::object::S2CCommandsCollector;
 use crate::server::room::Room;
+use cheetah_common::room::object::GameObjectTemplateId;
+use cheetah_game_realtime_protocol::RoomMemberId;
 
 pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(&member_id)?;
@@ -35,12 +35,12 @@ pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), 
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::command::room::attach_to_room;
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::command::room::attach_to_room;
-	use crate::server::room::Room;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 
 	#[test]
 	pub(crate) fn should_load_object_when_attach_to_room() {

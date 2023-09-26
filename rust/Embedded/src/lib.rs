@@ -7,7 +7,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 
 use cheetah_server::builder::ServerBuilder;
-use cheetah_server::server::manager1::ServerManager;
+use cheetah_server::server::manager::ServerManager;
 
 mod ffi;
 

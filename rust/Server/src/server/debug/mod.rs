@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
+use crate::server::manager::ServerManager;
+use crate::server::room::Room;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tokio_stream::wrappers::TcpListenerStream;
 use warp::Filter;
-use crate::server::manager::ServerManager;
-use crate::server::room::Room;
 
 pub async fn run_debug_server(server_manager: Arc<Mutex<ServerManager>>, listener: TcpListener) {
 	let cloned_server_manager = server_manager.clone();
@@ -63,13 +63,13 @@ where
 
 #[cfg(test)]
 pub mod test {
+	use crate::server::debug::{full_dump_rooms, simple_dump_rooms};
+	use crate::server::manager::ServerManager;
+	use crate::server::room::template::config::RoomTemplate;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 	use std::sync::Arc;
 	use tokio::sync::Mutex;
-	use crate::server::debug::{full_dump_rooms, simple_dump_rooms};
-	use crate::server::manager::ServerManager;
-	use crate::server::room::template::config::RoomTemplate;
 
 	#[test]
 	pub fn test_simple_dump_rooms() {

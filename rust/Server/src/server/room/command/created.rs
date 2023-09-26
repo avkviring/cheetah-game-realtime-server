@@ -1,10 +1,10 @@
+use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
+use crate::server::room::object::S2CCommandsCollector;
+use crate::server::room::Room;
 use cheetah_common::commands::types::create::C2SCreatedGameObjectCommand;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_game_realtime_protocol::RoomMemberId;
-use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::server::room::object::S2CCommandsCollector;
-use crate::server::room::Room;
 
 impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
@@ -52,13 +52,13 @@ impl ServerCommandExecutor for C2SCreatedGameObjectCommand {
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::command::tests::{setup_one_player, setup_two_players};
+	use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::commands::types::create::{C2SCreatedGameObjectCommand, CreateGameObjectCommand};
 	use cheetah_common::room::buffer::Buffer;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-	use crate::server::room::command::tests::{setup_one_player, setup_two_players};
 
 	///
 	/// - Команда должна приводить к рассылки оповещения для пользователей

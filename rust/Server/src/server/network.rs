@@ -12,10 +12,10 @@ use cheetah_game_realtime_protocol::frame::{Frame, FrameId};
 use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
 use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 
-use cheetah_common::network::collectors::in_collector::InCommandsCollector;
-use cheetah_common::network::CheetahProtocol;
 use crate::server::room::template::config::MemberTemplate;
 use crate::server::room_registry::Rooms;
+use cheetah_common::network::collectors::in_collector::InCommandsCollector;
+use cheetah_common::network::CheetahProtocol;
 
 pub struct Network {
 	sessions: HashMap<MemberAndRoomId, MemberSession>,
@@ -242,17 +242,17 @@ mod tests {
 	use std::str::FromStr;
 	use std::time::{Duration, Instant};
 
+	use crate::server::network::Network;
+	use crate::server::room::member::RoomMember;
+	use crate::server::room::template::config::MemberTemplate;
+	use crate::server::room_registry::Rooms;
+	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_game_realtime_protocol::codec::cipher::Cipher;
 	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 	use cheetah_game_realtime_protocol::disconnect::command::DisconnectByCommandReason;
 	use cheetah_game_realtime_protocol::frame::headers::Header;
 	use cheetah_game_realtime_protocol::frame::Frame;
 	use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
-	use cheetah_common::network::bind_to_free_socket;
-	use crate::server::network::Network;
-	use crate::server::room::member::RoomMember;
-	use crate::server::room::template::config::MemberTemplate;
-	use crate::server::room_registry::Rooms;
 
 	#[test]
 	fn should_not_panic_when_wrong_in_data() {

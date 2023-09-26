@@ -3,8 +3,8 @@ use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 use cheetah_game_realtime_protocol::RoomId;
-use cheetah_server::room::template::config::RoomTemplate;
-use cheetah_server::server::manager1::ServerManager;
+use cheetah_server::server::manager::ServerManager;
+use cheetah_server::server::room::template::config::RoomTemplate;
 use std::net::SocketAddr;
 use std::time::Duration;
 

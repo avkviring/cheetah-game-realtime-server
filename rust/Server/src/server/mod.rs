@@ -1,5 +1,8 @@
+use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTaskExecutionError, ManagementTaskResult, RoomMembersCount};
 use crate::server::measurer::Measurer;
 use crate::server::network::Network;
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::template::config::MemberTemplate;
 use crate::server::room_registry::{RoomNotFoundError, Rooms};
 use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 use cheetah_game_realtime_protocol::disconnect::command::DisconnectByCommandReason;
@@ -13,16 +16,13 @@ use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use std::{io, iter, thread};
-use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTaskExecutionError, ManagementTaskResult, RoomMembersCount};
-use crate::server::room::command::ServerCommandError;
-use crate::server::room::template::config::MemberTemplate;
 
+pub mod debug;
 pub mod manager;
 pub mod measurer;
 pub mod network;
-pub mod room_registry;
 pub mod room;
-pub mod debug;
+pub mod room_registry;
 
 ///
 /// Собственно сетевой сервер, запускается в отдельном потоке, обрабатывает сетевые команды,

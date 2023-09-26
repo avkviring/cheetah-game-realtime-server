@@ -1,8 +1,8 @@
+use crate::server::room::object::GameObject;
+use crate::server::room::template::config::GameObjectTemplate;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_game_realtime_protocol::RoomMemberId;
-use crate::server::room::object::GameObject;
-use crate::server::room::template::config::GameObjectTemplate;
 
 pub mod config;
 
@@ -33,8 +33,8 @@ impl GameObjectTemplate {
 
 #[cfg(test)]
 mod tests {
-	use cheetah_common::room::owner::GameObjectOwner;
 	use crate::server::room::template::config::GameObjectTemplate;
+	use cheetah_common::room::owner::GameObjectOwner;
 
 	#[test]
 	#[should_panic]

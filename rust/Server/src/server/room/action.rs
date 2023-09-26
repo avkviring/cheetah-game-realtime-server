@@ -1,10 +1,10 @@
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::object::GameObject;
+use crate::server::room::Room;
 use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_game_realtime_protocol::RoomMemberId;
-use crate::server::room::command::ServerCommandError;
-use crate::server::room::object::GameObject;
-use crate::server::room::Room;
 
 ///
 /// Выполнение действий по изменению данных игровых объектов с проверкой прав доступа и отсылки

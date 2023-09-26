@@ -80,6 +80,7 @@ impl GameObject {
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::object::{GameObject, S2CCommandsCollector};
 	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
 	use cheetah_common::commands::types::create::GameObjectCreatedS2CCommand;
 	use cheetah_common::commands::types::float::SetDoubleCommand;
@@ -90,7 +91,6 @@ mod tests {
 	use cheetah_common::room::field::{Field, FieldType};
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use crate::server::room::object::{GameObject, S2CCommandsCollector};
 
 	///
 	/// Проверяем что все типы данных преобразованы в команды
