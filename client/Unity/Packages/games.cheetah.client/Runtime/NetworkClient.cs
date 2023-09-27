@@ -125,8 +125,15 @@ namespace Games.Cheetah.Client
 
         public ConnectionStatus GetConnectionStatus()
         {
-            ResultChecker.Check(ffi.GetConnectionStatus(Id, out var connectionStatus));
-            return connectionStatus;
+            try
+            {
+                ResultChecker.Check(ffi.GetConnectionStatus(Id, out var connectionStatus));
+                return connectionStatus;
+            }
+            catch (ClientNotFoundError e)
+            {
+                return ConnectionStatus.DisconnectedByClientStopped;
+            }
         }
 
         public Statistics GetStatistics()
