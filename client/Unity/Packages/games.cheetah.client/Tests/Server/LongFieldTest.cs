@@ -18,7 +18,7 @@ namespace Games.Cheetah.Client.Tests.Server
             // прием команды
             clientB.Update();
             // проверяем результат
-            var changes = clientB.Reader.GetModifiedLongs(777, ScoreFieldId);
+            var changes = clientB.Reader.GetModifiedLongs(ScoreFieldId);
             var actual = changes.SearchLast(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(155, actual);
             changes.Dispose();
@@ -38,7 +38,7 @@ namespace Games.Cheetah.Client.Tests.Server
             // прием команды
             clientB.Update();
             // проверяем результат
-            var changes = clientB.Reader.GetModifiedLongs (777, ScoreFieldId);
+            var changes = clientB.Reader.GetModifiedLongs (ScoreFieldId);
             var actual = changes.SearchLast(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(3003, actual);
             changes.Dispose();

@@ -31,7 +31,7 @@ namespace Games.Cheetah.Client.Tests.Server
         [Test]
         public void ShouldStructureWithNativeList()
         {
-            var changes = clientB.Reader.GetModifiedStructures<TurretsParamsStructure>(777, TurretsParamsFieldId);
+            var changes = clientB.Reader.GetModifiedStructures<TurretsParamsStructure>(TurretsParamsFieldId);
             var actual = changes.SearchFirst(it => it.Item1 == networkObject.ObjectId).Item2;
             Assert.AreEqual(turretsParams.Damage, actual.Damage);
             Assert.AreEqual(turretsParams.Speed, actual.Speed);
@@ -42,7 +42,7 @@ namespace Games.Cheetah.Client.Tests.Server
         public void ShouldStructureWithList()
         {
             var changes = new List<(NetworkObjectId, TurretsParamsStructure)>();
-            clientB.Reader.CollectModifiedStructures<TurretsParamsStructure>(777, TurretsParamsFieldId, changes);
+            clientB.Reader.CollectModifiedStructures<TurretsParamsStructure>(TurretsParamsFieldId, changes);
             var actual = changes.First(it => it.Item1 == networkObject.ObjectId).Item2;
             Assert.AreEqual(turretsParams.Damage, actual.Damage);
             Assert.AreEqual(turretsParams.Speed, actual.Speed);

@@ -20,7 +20,7 @@ namespace Games.Cheetah.Client.Tests.Server
             // прием команды
             clientA.Update();
             // проверяем результат
-            var changes = clientA.Reader.GetModifiedLongs(777, ScoreFieldId);
+            var changes = clientA.Reader.GetModifiedLongs(ScoreFieldId);
             var actual = changes.SearchFirst(it=>it.Item1==createdObject.ObjectId).Item2;
             Assert.AreEqual(155, actual);
             changes.Dispose();
