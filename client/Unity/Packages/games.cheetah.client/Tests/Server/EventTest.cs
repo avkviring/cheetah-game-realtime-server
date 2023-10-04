@@ -29,7 +29,7 @@ namespace Games.Cheetah.Client.Tests.Server
             clientA.Writer.SendEvent(in networkObject.ObjectId, DropMineEventFieldIdId, in dropMineEvent);
             Thread.Sleep(200);
             clientB.Update();
-            var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(777, DropMineEventFieldIdId);
+            var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(DropMineEventFieldIdId);
             var firstEvent = eventsStream.SearchFirst(it=>it.Item1==networkObject.ObjectId).Item2;
             Assert.AreEqual(dropMineEvent.MineId, firstEvent.MineId);
             eventsStream.Dispose();
@@ -41,7 +41,7 @@ namespace Games.Cheetah.Client.Tests.Server
             clientA.Writer.SendEvent(in networkObject.ObjectId, DropMineEventFieldIdId, memberB.UserId, in dropMineEvent);
             Thread.Sleep(200);
             clientB.Update();
-            var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(777, DropMineEventFieldIdId);
+            var eventsStream = clientB.Reader.GetEvents<DropMineEvent>(DropMineEventFieldIdId);
             var firstEvent = eventsStream.SearchFirst(it=>it.Item1==networkObject.ObjectId).Item2;
             Assert.AreEqual(dropMineEvent.MineId, firstEvent.MineId);
             eventsStream.Dispose();
@@ -54,7 +54,7 @@ namespace Games.Cheetah.Client.Tests.Server
             Thread.Sleep(200);
             clientB.Update();
             var eventsStream = new List<(NetworkObjectId, DropMineEvent)>();
-            clientB.Reader.CollectEvents<DropMineEvent>(777, DropMineEventFieldIdId, eventsStream);
+            clientB.Reader.CollectEvents<DropMineEvent>(DropMineEventFieldIdId, eventsStream);
             var firstEvent = eventsStream.First(it=>it.Item1==networkObject.ObjectId).Item2;
             Assert.AreEqual(dropMineEvent.MineId, firstEvent.MineId);
         }

@@ -5,7 +5,6 @@ using Games.Cheetah.Client.Types.Command;
 using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.Client.Types.Object;
 using Unity.Collections;
-using UnityEngine;
 
 namespace Games.Cheetah.Client
 {
@@ -92,7 +91,7 @@ namespace Games.Cheetah.Client
         /**
          * Получить список изменений double полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
          */
-        public NativeList<(NetworkObjectId, double)> GetModifiedDoubles(ushort template, FieldId.Double fieldId)
+        public NativeList<(NetworkObjectId, double)> GetModifiedDoubles(FieldId.Double fieldId)
         {
             var result = new NativeList<(NetworkObjectId, double)>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.S2CCommandsCount; i++)
@@ -107,7 +106,7 @@ namespace Games.Cheetah.Client
                     continue;
                 }
 
-                if (FilterCommand(template, fieldId, setCommand.fieldId, commandObjectId))
+                if (FilterCommand(fieldId, setCommand.fieldId))
                 {
                     result.Add((commandObjectId, setCommand.value));
                 }
@@ -116,18 +115,15 @@ namespace Games.Cheetah.Client
             return result;
         }
 
-        private bool FilterCommand(ushort template, FieldId fieldId, ushort commandFieldId, NetworkObjectId commandObjectId)
+        private bool FilterCommand(FieldId fieldId, ushort commandFieldId)
         {
-            if (commandFieldId != fieldId.Id) return false;
-            if (TryGetTemplate(commandObjectId, out var objectTemplate)) return template == objectTemplate;
-            Debug.LogError("Template not found for object = " + commandObjectId + ", for field " + fieldId);
-            return false;
+            return commandFieldId == fieldId.Id;
         }
 
         /**
          * Получить список изменений long полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
          */
-        public NativeList<(NetworkObjectId, long)> GetModifiedLongs(ushort template, FieldId.Long fieldId)
+        public NativeList<(NetworkObjectId, long)> GetModifiedLongs(FieldId.Long fieldId)
         {
             var result = new NativeList<(NetworkObjectId, long)>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.S2CCommandsCount; i++)
@@ -142,7 +138,7 @@ namespace Games.Cheetah.Client
                     continue;
                 }
 
-                if (FilterCommand(template, fieldId, setLongCommand.fieldId, commandObjectId))
+                if (FilterCommand(fieldId, setLongCommand.fieldId))
                 {
                     result.Add((commandObjectId, setLongCommand.value));
                 }
@@ -155,7 +151,7 @@ namespace Games.Cheetah.Client
         /**
          * Получить список изменений structure полей объекта в текущем цикле. Если для одного поля было несколько изменений - вовзвращается последнее.
          */
-        public NativeList<(NetworkObjectId, T)> GetModifiedStructures<T>(ushort template, FieldId.Structure fieldId)
+        public NativeList<(NetworkObjectId, T)> GetModifiedStructures<T>(FieldId.Structure fieldId)
             where T : unmanaged
         {
             var result = new NativeList<(NetworkObjectId, T)>(sbyte.MaxValue, Allocator.TempJob);
@@ -171,7 +167,7 @@ namespace Games.Cheetah.Client
                     continue;
                 }
 
-                if (FilterCommand(template, fieldId, setCommand.fieldId, commandObjectId))
+                if (FilterCommand(fieldId, setCommand.fieldId))
                 {
                     var item = new T();
                     var networkBuffer = setCommand.value;
@@ -183,7 +179,7 @@ namespace Games.Cheetah.Client
             return result;
         }
         
-        public void CollectModifiedStructures<T>(ushort template, FieldId.Structure fieldId, List<(NetworkObjectId,T)> structures) where T:new()
+        public void CollectModifiedStructures<T>(FieldId.Structure fieldId, List<(NetworkObjectId,T)> structures) where T:new()
         {
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
@@ -197,7 +193,7 @@ namespace Games.Cheetah.Client
                     continue;
                 }
 
-                if (FilterCommand(template, fieldId, setCommand.fieldId, commandObjectId))
+                if (FilterCommand(fieldId, setCommand.fieldId))
                 {
                     var item = new T();
                     var networkBuffer = setCommand.value;
@@ -211,7 +207,7 @@ namespace Games.Cheetah.Client
         /**
              * Получить список событий по объекту в текущем цикле.
              */
-        public NativeList<(NetworkObjectId, T)> GetEvents<T>(ushort template, FieldId.Event eventId) where T : unmanaged
+        public NativeList<(NetworkObjectId, T)> GetEvents<T>(FieldId.Event eventId) where T : unmanaged
         {
             var result = new NativeList<(NetworkObjectId, T)>(sbyte.MaxValue, Allocator.TempJob);
             for (var i = 0; i < client.S2CCommandsCount; i++)
@@ -221,7 +217,7 @@ namespace Games.Cheetah.Client
                 var commandObjectId = command.commandUnion.setEvent.objectId;
                 ref var eventCommand = ref command.commandUnion.setEvent;
 
-                if (FilterCommand(template, eventId, eventCommand.fieldId, commandObjectId))
+                if (FilterCommand(eventId, eventCommand.fieldId))
                 {
                     var item = new T();
                     var networkBuffer = eventCommand.eventData;
@@ -233,7 +229,7 @@ namespace Games.Cheetah.Client
             return result;
         }
         
-        public void CollectEvents<T>(ushort template, FieldId.Event eventId, List<(NetworkObjectId, T)> events) where T : new()
+        public void CollectEvents<T>(FieldId.Event eventId, List<(NetworkObjectId, T)> events) where T : new()
         {            
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
@@ -241,7 +237,7 @@ namespace Games.Cheetah.Client
                 if (command.commandType != CommandType.SendEvent) continue;
                 var commandObjectId = command.commandUnion.setEvent.objectId;
                 ref var eventCommand = ref command.commandUnion.setEvent;
-                if (FilterCommand(template, eventId, eventCommand.fieldId, commandObjectId))
+                if (FilterCommand(eventId, eventCommand.fieldId))
                 {
                     var item = new T();
                     var networkBuffer = eventCommand.eventData;
