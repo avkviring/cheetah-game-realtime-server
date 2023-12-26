@@ -1,21 +1,12 @@
-**Cheetah Realtime Server** - клиент-серверное решение для создания арен PvP/PvE игр.
+## Realtime Game Server
 
-[Документация](docs/index.md)
+- Inspired by netcode.
+- Fast, realtime, thanks rust-lang.
+- Unity full support (unity dedicated server also)  
+- Can used without uds (chat, simple battle, etc)
 
-### Технические характеристики
-
-- микросервисная архитектура (по-возможности stateless);
-- UDP с разными уровнями гарантий доставки/надежности для PvP комнат;
-- сервисы разрабатываются на [rust](https://www.rust-lang.org);
-- масштабирование игровых серверов на основе [agones](https://agones.dev)
-
-### Клиентские платформы
-
-В настоящий момент поддерживается только Unity. Поддержка других клиентских платформ возможна, однако не планируется в
-ближайшем времени.
-
-## Контакты
+# Contacts
 
 - E-mail: alex@kviring.com
-- [Telegram](https://t.me/alexkviring) (предпочтительный способ)
-- [Канал разработки](https://t.me/cheetah_game_serv)
+- [Telegram](https://t.me/alexkviring)
+- [Channel](https://t.me/cheetah_game_serv)
