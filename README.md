@@ -1,5 +1,10 @@
 ## Realtime Game Server
 
+- In memory room with udp update client-server
+  - Room
+  - Network Object
+  - Event
+  - Fields
 - Inspired by netcode.
 - Fast, realtime, thanks rust-lang.
 - Unity full support (unity dedicated server also)  
