@@ -55,7 +55,7 @@ jobs:
       - build-on-windows
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Generate GRPC Implementations
         run: cd scripts && ./generate-all.sh
       - uses: actions/download-artifact@v3
@@ -96,23 +96,29 @@ jobs:
           lib_path=client/Unity/Packages/games.cheetah.embedded-server/Runtime/FFI/Library/
           mkdir -p $lib_path
           cp build-on-linux-result/libcheetah_embedded.so $lib_path/          
-          cp build-macos/libcheetah_embedded.dylib $lib_path/libcheetah_embedded.bundle            
+          cp build-macos/libcheetah_embedded.dylib $lib_path/libcheetah_embedded.bundle
           cp build-on-windows-result/cheetah_embedded.dll $lib_path/
           cp build-on-windows-result/cheetah_embedded.pdb $lib_path/
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.x'
-          registry-url: 'https://npm.cheetah.games'
-          scope: ''
-      - name: Publish Packages
+      - name: Clean
+        run: |          
+          rm -rf build-on-windows-result
+          rm -rf build-macos
+          rm -rf build-on-linux-result
+          rm -rf build-android 
+          rm -rf build-ios
+      - name: Set version
         run: |
           package_files=$(find client/Unity/Packages/ -name 'package.json')
           for f in $package_files; do
-            sed -i 's/999.999.999/${{ github.event.release.tag_name }}/' $f
-            npm publish $(dirname $f)
+            sed -i 's/999.999.999/${{ github.event.release.tag_name }}/' $f            
           done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
+      - name: git push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "generated"
+          git push origin HEAD:${{ github.event.release.tag_name }} --force
   publish-nuget-packages:
     needs:
       - build-macos
