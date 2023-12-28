@@ -44,7 +44,6 @@ ExportedObj/
 *.pidb
 *.booproj
 *.svd
-*.pdb
 *.mdb
 *.opendb
 *.VC.db
@@ -71,6 +70,4 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 InitTestScene*
-*.so
-*.bundle
 

@@ -299,9 +299,9 @@ dependencies = [
 
 [[package]]
 name = "cheetah-game-realtime-protocol"
-version = "0.0.2"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2ecce684b947f463cbd243fdf28fa76e576f43e55d20262fda006a0ebe44938"
+checksum = "28e664fed1cd2da6a251934d26c1734477c2c084a9ffcc76993ecd8c447ae0b6"
 dependencies = [
  "byteorder",
  "chacha20poly1305",
