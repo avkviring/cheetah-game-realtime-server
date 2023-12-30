@@ -6,7 +6,7 @@
   "unity": "2019.1",
   "unityRelease": "0b5",
   "dependencies": {
-    "games.cheetah.grpc": "1.0.1",
+    "games.cheetah.grpc": "999.999.999",
     "games.cheetah.client": "999.999.999",
     "games.cheetah.grpc.internal": "999.999.999",
     "games.cheetah.embedded-server": "999.999.999"
