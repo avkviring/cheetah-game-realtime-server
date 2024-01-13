@@ -18,6 +18,7 @@ jobs:
           key: cargo-windows-${{ hashFiles('**/Cargo.lock') }}
       - name: Build windows
         run: |
+          rustup override set 1.75.0 
           cargo build --manifest-path $env:REALTIME_CLIENT_MANIFEST_PATH
           cargo build --manifest-path $env:REALTIME_EMBEDDED_MANIFEST_PATH
       - name: Upload Artifact
