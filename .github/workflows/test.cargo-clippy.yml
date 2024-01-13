@@ -8,7 +8,7 @@ jobs:
   test-cargo-clippy:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/avkviring/rust-builder-x86_64-unknown-linux-musl:0.0.8
+      image: ghcr.io/avkviring/rust-builder-x86_64-unknown-linux-musl:1.75.0_1
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v3
