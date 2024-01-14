@@ -1,4 +1,4 @@
-[package]
+ [package]
 name = "cheetah-server"
 authors.workspace = true
 edition.workspace = true
@@ -13,7 +13,7 @@ path = "src/bin/service.rs"
 
 [dependencies]
 rand.workspace = true
-indexmap = { version = "1.9.2", features = ["serde"] }
+indexmap = { version = "2.1.0", features = ["serde"] }
 cheetah-common = { path = "../Common" }
 cheetah-game-realtime-protocol.workspace=true
 fnv.workspace = true
@@ -24,9 +24,9 @@ tokio-stream = { workspace = true, features = ["net"] }
 tonic.workspace = true
 tonic-health.workspace = true
 prost.workspace = true
-rymder = "0.6.0" # agones sdk
+rymder = "0.8.0" # agones sdk
 strum_macros.workspace = true
-tonic-web = "0.9.2"
+tonic-web.workspace = true
 thiserror.workspace = true
 prometheus.workspace = true
 lazy_static.workspace = true
