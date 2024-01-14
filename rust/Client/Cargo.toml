@@ -15,7 +15,6 @@ lazy_static.workspace = true
 cheetah-common = { path = "../Common" }
 widestring.workspace = true
 fnv.workspace = true
-heapless = { workspace = true, features = ["serde"] }
 thiserror.workspace = true
 tracing.workspace = true
 tracing-core.workspace = true
