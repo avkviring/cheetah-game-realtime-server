@@ -2,21 +2,20 @@ use std::io::Cursor;
 use std::io::ErrorKind;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
-
 use serde::{Deserialize, Serialize};
-
-use crate::room::buffer::Buffer;
+use strum_macros::EnumIter;
 
 ///
 /// Тип данных поля
 ///
 #[repr(C)]
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Serialize, Deserialize, EnumIter)]
 pub enum FieldType {
 	Long,
 	Double,
 	Structure,
 	Event,
+	Items,
 }
 
 impl ToString for FieldType {
@@ -26,6 +25,7 @@ impl ToString for FieldType {
 			FieldType::Double => "double",
 			FieldType::Structure => "structure",
 			FieldType::Event => "event",
+			FieldType::Items => "items",
 		}
 		.into()
 	}
@@ -38,6 +38,7 @@ impl FieldType {
 			FieldType::Double => 2,
 			FieldType::Structure => 3,
 			FieldType::Event => 4,
+			FieldType::Items => 5,
 		};
 		out.write_u8(code)
 	}
@@ -49,30 +50,9 @@ impl FieldType {
 			2 => FieldType::Double,
 			3 => FieldType::Structure,
 			4 => FieldType::Event,
+			5 => FieldType::Items,
 			_ => return Err(std::io::Error::new(ErrorKind::InvalidData, format!("Read FieldType with code {value}"))),
 		})
-	}
-}
-
-pub trait ToFieldType {
-	fn to_field_type() -> FieldType;
-}
-
-impl ToFieldType for i64 {
-	fn to_field_type() -> FieldType {
-		FieldType::Long
-	}
-}
-
-impl ToFieldType for f64 {
-	fn to_field_type() -> FieldType {
-		FieldType::Double
-	}
-}
-
-impl ToFieldType for Buffer {
-	fn to_field_type() -> FieldType {
-		FieldType::Structure
 	}
 }
 
@@ -87,15 +67,15 @@ pub struct Field {
 #[cfg(test)]
 mod test {
 	use std::io::Cursor;
+	use strum::IntoEnumIterator;
 
 	use crate::room::field::FieldType;
 
 	#[test]
 	fn test() {
-		check(FieldType::Long);
-		check(FieldType::Structure);
-		check(FieldType::Double);
-		check(FieldType::Event);
+		FieldType::iter().for_each(|f| {
+			check(f);
+		})
 	}
 
 	fn check(original: FieldType) {

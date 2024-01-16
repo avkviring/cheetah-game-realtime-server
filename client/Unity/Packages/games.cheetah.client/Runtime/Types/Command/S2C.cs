@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.Client.Types.Object;
+using UnityEngine.Serialization;
 
 namespace Games.Cheetah.Client.Types.Command
 {
@@ -18,7 +19,7 @@ namespace Games.Cheetah.Client.Types.Command
                 CommandType.CreatedGameObject => commandUnion.createdObject.ToString(),
                 CommandType.SetLong => commandUnion.setLong.ToString(),
                 CommandType.SetDouble => commandUnion.setDouble.ToString(),
-                CommandType.SetStructure => commandUnion.setStructure.ToString(),
+                CommandType.SetStructure => commandUnion.binaryField.ToString(),
                 CommandType.SendEvent => commandUnion.setEvent.ToString(),
                 CommandType.DeleteObject => commandUnion.deleteObject.ToString(),
                 CommandType.DeleteField => commandUnion.deleteField.ToString(),
@@ -35,7 +36,7 @@ namespace Games.Cheetah.Client.Types.Command
         [FieldOffset(0)] public S2CCommands.CreatedObject createdObject;
         [FieldOffset(0)] public S2CCommands.SetLong setLong;
         [FieldOffset(0)] public S2CCommands.SetDouble setDouble;
-        [FieldOffset(0)] public S2CCommands.SetStructure setStructure;
+        [FieldOffset(0)] public S2CCommands.BinaryField binaryField;
         [FieldOffset(0)] public S2CCommands.Event setEvent;
         [FieldOffset(0)] public S2CCommands.DeleteObject deleteObject;
         [FieldOffset(0)] public S2CCommands.DeleteField deleteField;
@@ -151,13 +152,13 @@ namespace Games.Cheetah.Client.Types.Command
 
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct SetStructure
+        public struct BinaryField
         {
             public NetworkObjectId objectId;
             public ushort fieldId;
             public NetworkBuffer value;
 
-            public SetStructure(NetworkObjectId id, FieldId.Structure field, NetworkBuffer value)
+            public BinaryField(NetworkObjectId id, FieldId.Structure field, NetworkBuffer value)
             {
                 objectId = id;
                 fieldId = field.Id;
@@ -221,5 +222,6 @@ namespace Games.Cheetah.Client.Types.Command
         DeleteField,
         MemberConnected,
         MemberDisconnected,
+        AddItem
     }
 }

@@ -1,6 +1,6 @@
 use cheetah_client::ffi;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
-use cheetah_common::commands::types::event::EventCommand;
+use cheetah_common::commands::types::structure::BinaryField;
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::object::GameObjectId;
@@ -30,10 +30,10 @@ fn test() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SendEvent,
 			command: S2CommandUnionFFI {
-				event: EventCommand {
+				buffer_field: BinaryField {
 					object_id,
 					field_id: event_field_id,
-					event: event_buffer,
+					value: event_buffer,
 				}
 			}
 		}

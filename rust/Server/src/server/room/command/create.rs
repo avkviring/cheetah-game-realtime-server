@@ -1,50 +1,52 @@
-use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::server::room::object::GameObject;
-use crate::server::room::Room;
-use cheetah_common::commands::types::create::CreateGameObjectCommand;
-use cheetah_common::room::owner::GameObjectOwner;
 use cheetah_game_realtime_protocol::RoomMemberId;
 
-impl ServerCommandExecutor for CreateGameObjectCommand {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let member = room.get_member(&member_id)?;
+use cheetah_common::commands::types::create::CreateGameObject;
+use cheetah_common::room::owner::GameObjectOwner;
 
-		if self.object_id.id == 0 {
-			return Err(ServerCommandError::Error("0 is forbidden for game object id".to_owned()));
-		}
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::object::GameObject;
+use crate::server::room::Room;
 
-		let groups = self.access_groups;
+pub(crate) fn create_object(command: &CreateGameObject, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	let member = room.get_member(&member_id)?;
 
-		if !groups.is_sub_groups(&member.template.groups) {
-			return Err(ServerCommandError::Error(format!(
-				"Incorrect access group {:?} with client groups {:?}",
-				groups, member.template.groups
-			)));
-		}
-
-		if let GameObjectOwner::Member(object_id_member) = self.object_id.get_owner() {
-			if object_id_member != member.id {
-				return Err(ServerCommandError::Error(format!("Incorrect object_id {:?} for member {member:?}", self.object_id)));
-			}
-		}
-
-		if room.contains_object(&self.object_id) {
-			return Err(ServerCommandError::Error(format!("Object already exists with id {:?}", self.object_id)));
-		}
-		room.insert_object(GameObject::new(self.object_id, self.template, groups, false));
-		Ok(())
+	if command.object_id.id == 0 {
+		return Err(ServerCommandError::Error("0 is forbidden for game object id".to_owned()));
 	}
+
+	let groups = command.access_groups;
+
+	if !groups.is_sub_groups(&member.template.groups) {
+		return Err(ServerCommandError::Error(format!(
+			"Incorrect access group {:?} with client groups {:?}",
+			groups, member.template.groups
+		)));
+	}
+
+	if let GameObjectOwner::Member(object_id_member) = command.object_id.get_owner() {
+		if object_id_member != member.id {
+			return Err(ServerCommandError::Error(format!("Incorrect object_id {:?} for member {member:?}", command.object_id)));
+		}
+	}
+
+	if room.contains_object(&command.object_id) {
+		return Err(ServerCommandError::Error(format!("Object already exists with id {:?}", command.object_id)));
+	}
+	room.insert_object(GameObject::new(command.object_id, command.template, groups, false));
+	Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
-	use crate::server::room::Room;
-	use cheetah_common::commands::types::create::CreateGameObjectCommand;
+	use crate::server::room::command::create::create_object;
+	use cheetah_common::commands::types::create::CreateGameObject;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
+
+	use crate::server::room::command::ServerCommandError;
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 
 	#[test]
 	fn should_create() {
@@ -52,12 +54,12 @@ mod tests {
 		room.mark_as_connected_in_test(member_id).unwrap();
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(member_id));
-		let command = CreateGameObjectCommand {
+		let command = CreateGameObject {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b10),
 		};
-		command.execute(&mut room, member_id).unwrap();
+		create_object(&command, &mut room, member_id).unwrap();
 
 		assert!(matches!(
 			room.get_object_mut(object_id),
@@ -75,13 +77,13 @@ mod tests {
 		let (mut room, member_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(1000));
-		let command = CreateGameObjectCommand {
+		let command = CreateGameObject {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b10),
 		};
 
-		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(create_object(&command, &mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
@@ -92,13 +94,13 @@ mod tests {
 	fn should_not_create_when_access_group_is_wrong() {
 		let (mut room, member_id) = setup(AccessGroups(0b11));
 		let object_id = GameObjectId::new(1, GameObjectOwner::Member(member_id));
-		let command = CreateGameObjectCommand {
+		let command = CreateGameObject {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
 
-		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(create_object(&command, &mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
@@ -110,12 +112,12 @@ mod tests {
 		let (mut room, member_id) = setup(AccessGroups(0b11));
 
 		let object_id = GameObjectId::new(0, GameObjectOwner::Member(member_id));
-		let command = CreateGameObjectCommand {
+		let command = CreateGameObject {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b11),
 		};
-		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(create_object(&command, &mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Err(_)));
 	}
 
@@ -130,13 +132,13 @@ mod tests {
 		object.template_id = 777;
 		let object_id = object.id;
 		room.test_out_commands.clear();
-		let command = CreateGameObjectCommand {
+		let command = CreateGameObject {
 			object_id,
 			template: 100,
 			access_groups: AccessGroups(0b1000),
 		};
 
-		assert!(matches!(command.execute(&mut room, member_id), Err(ServerCommandError::Error(_))));
+		assert!(matches!(create_object(&command, &mut room, member_id), Err(ServerCommandError::Error(_))));
 		assert!(matches!(room.get_object_mut(object_id), Ok(object) if object.template_id == 777));
 	}
 

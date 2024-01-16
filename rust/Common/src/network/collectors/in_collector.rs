@@ -166,7 +166,7 @@ mod tests {
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::codec::encoder::encode_commands;
 	use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuaranteesChannel};
-	use crate::commands::types::long::SetLongCommand;
+	use crate::commands::types::long::LongField;
 	use crate::commands::{BothDirectionCommand, CommandWithReliabilityGuarantees};
 	use crate::network::collectors::in_collector::InCommandsCollector;
 	use crate::room::object::GameObjectId;
@@ -282,7 +282,7 @@ mod tests {
 	fn create_test_object_command(channel: ReliabilityGuaranteesChannel, object_id: u32, content: i64) -> CommandWithReliabilityGuarantees {
 		CommandWithReliabilityGuarantees {
 			reliability_guarantees: channel,
-			command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+			command: BothDirectionCommand::C2S(C2SCommand::SetLong(LongField {
 				object_id: GameObjectId::new(object_id, GameObjectOwner::Room),
 				field_id: 0,
 				value: content,

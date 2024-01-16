@@ -1,8 +1,8 @@
 use cheetah_client::ffi;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
-use cheetah_common::commands::types::field::DeleteFieldCommand;
-use cheetah_common::commands::types::float::SetDoubleCommand;
-use cheetah_common::commands::types::long::SetLongCommand;
+use cheetah_common::commands::types::field::DeleteField;
+use cheetah_common::commands::types::float::DoubleField;
+use cheetah_common::commands::types::long::LongField;
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::field::FieldType;
 
@@ -26,7 +26,7 @@ fn should_delete_field_ffi() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::DeleteField,
 			command: S2CommandUnionFFI {
-				delete_field: DeleteFieldCommand {
+				delete_field: DeleteField {
 					field_id: 1,
 					object_id,
 					field_type: FieldType::Long,
@@ -53,7 +53,7 @@ fn should_allow_fields_with_different_types_but_same_id() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetDouble,
 			command: S2CommandUnionFFI {
-				set_double: SetDoubleCommand { object_id, field_id: 1, value: 100.0 }
+				set_double: DoubleField { object_id, field_id: 1, value: 100.0 }
 			}
 		}
 	);
@@ -63,7 +63,7 @@ fn should_allow_fields_with_different_types_but_same_id() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetLong,
 			command: S2CommandUnionFFI {
-				set_long: SetLongCommand { object_id, field_id: 1, value: 50 }
+				set_long: LongField { object_id, field_id: 1, value: 50 }
 			}
 		}
 	);

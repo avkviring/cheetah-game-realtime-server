@@ -1,10 +1,9 @@
+use rand::random;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::net::SocketAddr;
 use std::ops::{Add, Div, Sub};
 use std::time::{Duration, Instant};
-
-use rand::Rng;
 
 ///
 /// Эмуляция характеристик сети
@@ -114,9 +113,9 @@ impl NetworkLatencyEmulator {
 		let rtt = *self.rtt.as_ref().unwrap_or(&Duration::from_millis(0));
 		let half_rtt = rtt.div(2);
 		let mut time = now.add(half_rtt);
-		let rand: f64 = rand::thread_rng().gen();
+		let rand: f64 = random();
 		let delta = half_rtt.mul_f64(self.rtt_dispersion.unwrap_or(0.0) * rand);
-		if rand::thread_rng().gen() {
+		if random() {
 			time = time.add(delta);
 		} else {
 			time = time.sub(delta);
@@ -135,7 +134,7 @@ impl NetworkLatencyEmulator {
 		match self.drop_probability {
 			None => false,
 			Some(drop_probability) => {
-				if drop_probability > rand::thread_rng().gen() {
+				if drop_probability > random() {
 					self.drop_start = Some(now);
 					true
 				} else {

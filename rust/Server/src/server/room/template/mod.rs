@@ -23,9 +23,9 @@ impl GameObjectTemplate {
 
 		let mut object = GameObject::new(id, self.template, self.groups, true);
 
-		self.longs.iter().for_each(|(&k, v)| object.longs.set(k, v.clone()));
-		self.doubles.iter().for_each(|(&k, v)| object.doubles.set(k, v.clone()));
-		self.structures.iter().for_each(|(&k, v)| object.structures.set(k, v.clone()));
+		self.longs.iter().for_each(|(&k, v)| object.long_fields.set(k, v.clone()));
+		self.doubles.iter().for_each(|(&k, v)| object.double_fields.set(k, v.clone()));
+		self.structures.iter().for_each(|(&k, v)| object.structure_fields.set(k, v.clone()));
 
 		object
 	}
@@ -73,15 +73,15 @@ mod tests {
 		assert_eq!(config_object.groups, object.access_groups);
 
 		let config_value = config_object.longs.get(&0).unwrap();
-		let object_value = object.longs.get(0).unwrap();
+		let object_value = object.long_fields.get(0).unwrap();
 		assert_eq!(*config_value, *object_value);
 
 		let config_value = config_object.doubles.get(&1).unwrap();
-		let object_value = object.doubles.get(1).unwrap();
+		let object_value = object.double_fields.get(1).unwrap();
 		assert_eq!(*config_value, *object_value);
 
 		let config_value = config_object.structures.get(&2).unwrap();
-		let object_value = object.structures.get(2).unwrap();
+		let object_value = object.structure_fields.get(2).unwrap();
 		assert_eq!(*config_value, *object_value);
 	}
 }

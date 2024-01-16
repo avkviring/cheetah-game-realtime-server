@@ -39,32 +39,7 @@ namespace Games.Cheetah.Client.Tests.Server.Helpers
             {
                 roomIdResponse = await grpcClient.CreateRoomAsync(new RoomTemplate
                 {
-                    Permissions = new Permissions
-                    {
-                        Objects =
-                        {
-                            new GameObjectTemplatePermission
-                            {
-                                Template = 777,
-                                Fields =
-                                {
-                                    new PermissionField
-                                    {
-                                        Type = FieldType.Long,
-                                        Id = ScoreFieldId.Id,
-                                        Rules =
-                                        {
-                                            new GroupsPermissionRule
-                                            {
-                                                Groups = PlayerHelper.PlayerGroup,
-                                                Permission = PermissionLevel.Rw
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    TemplateName = "test"
                 });
                 memberA = await grpcClient.CreateMemberAsync(new CreateMemberRequest
                 {

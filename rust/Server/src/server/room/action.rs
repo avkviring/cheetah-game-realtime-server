@@ -1,8 +1,7 @@
 use crate::server::room::command::ServerCommandError;
 use crate::server::room::object::GameObject;
 use crate::server::room::Room;
-use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
-use cheetah_common::room::field::Field;
+use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_game_realtime_protocol::RoomMemberId;
 
@@ -17,7 +16,7 @@ impl Room {
 	/// - владелец объекта получает обновления если только данные доступны на запись другим клиентам
 	/// - владелец объекта имеет полный доступ к полям объекта, информация о правах игнорируется
 	///
-	pub fn send_command_from_action<T>(&mut self, game_object_id: GameObjectId, field: Field, creator_id: RoomMemberId, target: Option<RoomMemberId>, action: T) -> Result<(), ServerCommandError>
+	pub fn send_command_from_action<T>(&mut self, game_object_id: GameObjectId, creator_id: RoomMemberId, target: Option<RoomMemberId>, action: T) -> Result<(), ServerCommandError>
 	where
 		T: FnOnce(&mut GameObject) -> Result<Option<S2CCommand>, ServerCommandError>,
 	{
@@ -46,13 +45,7 @@ impl Room {
 			// отправляем команду только для созданного объекта
 			if object.created {
 				let groups = object.access_groups;
-				let commands_with_field = S2CCommandWithMeta {
-					field: Some(field),
-					creator: creator_id,
-					command,
-				};
-				let commands = [commands_with_field];
-
+				let commands = [command];
 				match target {
 					Some(target_member_id) => {
 						self.send_to_member(&target_member_id, &commands)?;

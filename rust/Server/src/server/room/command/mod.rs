@@ -1,12 +1,14 @@
-use crate::server::room::object::GameObjectError;
-use crate::server::room::Room;
-use crate::server::room_registry::RoomNotFoundError;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
+use thiserror::Error;
+
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::field::Field;
 use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
-use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
-use thiserror::Error;
+
+use crate::server::room::object::GameObjectError;
+use crate::server::room::Room;
+use crate::server::room_registry::RoomNotFoundError;
 
 pub mod create;
 pub mod created;
@@ -14,16 +16,10 @@ pub mod delete;
 pub mod double;
 pub mod event;
 pub mod field;
+pub mod items;
 pub mod long;
 pub mod room;
 pub mod structure;
-
-///
-/// Выполнение серверной команды
-///
-pub trait ServerCommandExecutor {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError>;
-}
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum ServerCommandError {
@@ -89,30 +85,33 @@ impl ServerCommandError {
 
 pub fn execute(command: &C2SCommand, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	match command {
-		C2SCommand::CreateGameObject(command) => command.execute(room, member_id),
-		C2SCommand::SetLong(command) => command.execute(room, member_id),
-		C2SCommand::SetDouble(command) => command.execute(room, member_id),
-		C2SCommand::SetStructure(command) => command.execute(room, member_id),
-		C2SCommand::IncrementLongValue(command) => command.execute(room, member_id),
-		C2SCommand::IncrementDouble(command) => command.execute(room, member_id),
-		C2SCommand::Event(command) => command.execute(room, member_id),
-		C2SCommand::Delete(command) => command.execute(room, member_id),
+		C2SCommand::CreateGameObject(command) => create::create_object(command, room, member_id),
+		C2SCommand::SetLong(command) => long::set(command, room, member_id),
+		C2SCommand::SetDouble(command) => double::set(command, room, member_id),
+		C2SCommand::SetStructure(command) => structure::set(command, room, member_id),
+		C2SCommand::IncrementLongValue(command) => long::increment(command, room, member_id),
+		C2SCommand::IncrementDouble(command) => double::increment(command, room, member_id),
+		C2SCommand::Event(command) => event::send(command, room, member_id),
+		C2SCommand::Delete(command) => delete::delete(command, room, member_id),
 		C2SCommand::AttachToRoom => room::attach_to_room(room, member_id),
 		C2SCommand::DetachFromRoom => room::detach_from_room(room, member_id),
-		C2SCommand::CreatedGameObject(command) => command.execute(room, member_id),
-		C2SCommand::TargetEvent(command) => command.execute(room, member_id),
-		C2SCommand::DeleteField(command) => command.execute(room, member_id),
+		C2SCommand::CreatedGameObject(command) => created::created_object(command, room, member_id),
+		C2SCommand::TargetEvent(command) => event::send_target(command, room, member_id),
+		C2SCommand::DeleteField(command) => field::delete(command, room, member_id),
+		C2SCommand::AddItem(command) => items::add(command, room, member_id),
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
-	use crate::server::room::Room;
+	use cheetah_game_realtime_protocol::RoomMemberId;
+
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
-	use cheetah_game_realtime_protocol::RoomMemberId;
+
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 
 	pub(crate) fn setup_two_players() -> (Room, GameObjectId, RoomMemberId, RoomMemberId) {
 		let template = RoomTemplate::default();

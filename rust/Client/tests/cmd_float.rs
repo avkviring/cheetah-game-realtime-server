@@ -1,6 +1,6 @@
 use cheetah_client::ffi;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
-use cheetah_common::commands::types::float::SetDoubleCommand;
+use cheetah_common::commands::types::float::DoubleField;
 use cheetah_common::commands::CommandTypeId;
 
 use crate::helpers::helper::setup;
@@ -24,7 +24,7 @@ fn should_inc() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetDouble,
 			command: S2CommandUnionFFI {
-				set_double: SetDoubleCommand { object_id, field_id: 1, value: 100.0 }
+				set_double: DoubleField { object_id, field_id: 1, value: 100.0 }
 			}
 		}
 	);
@@ -34,7 +34,7 @@ fn should_inc() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetDouble,
 			command: S2CommandUnionFFI {
-				set_double: SetDoubleCommand { object_id, field_id: 1, value: 200.0 }
+				set_double: DoubleField { object_id, field_id: 1, value: 200.0 }
 			}
 		}
 	);
@@ -57,7 +57,7 @@ fn should_set() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetDouble,
 			command: S2CommandUnionFFI {
-				set_double: SetDoubleCommand { object_id, field_id: 1, value: 100.0 }
+				set_double: DoubleField { object_id, field_id: 1, value: 100.0 }
 			}
 		}
 	);
@@ -67,7 +67,7 @@ fn should_set() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetDouble,
 			command: S2CommandUnionFFI {
-				set_double: SetDoubleCommand { object_id, field_id: 1, value: 200.0 }
+				set_double: DoubleField { object_id, field_id: 1, value: 200.0 }
 			}
 		}
 	);

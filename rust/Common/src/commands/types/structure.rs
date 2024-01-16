@@ -7,19 +7,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(C)]
-pub struct SetStructureCommand {
+pub struct BinaryField {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub value: Buffer,
 }
 
-impl SetStructureCommand {
+impl BinaryField {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		self.value.encode(out)
 	}
 
 	pub fn decode(object_id: GameObjectId, field_id: FieldId, input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let value = Buffer::decode(input)?;
-		Ok(SetStructureCommand { object_id, field_id, value })
+		Ok(BinaryField { object_id, field_id, value })
 	}
 }

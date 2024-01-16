@@ -66,9 +66,16 @@ namespace Games.Cheetah.Client.Types.Field
             }
         }
 
+        public class Items : FieldId
+        {
+            public Items(ushort id) : base(id, FieldType.Items)
+            {
+            }
+        }
+
         public class Event : FieldId
         {
-            public Event(ushort id) : base(id, FieldType.Structure)
+            public Event(ushort id) : base(id, FieldType.Event)
             {
             }
         }

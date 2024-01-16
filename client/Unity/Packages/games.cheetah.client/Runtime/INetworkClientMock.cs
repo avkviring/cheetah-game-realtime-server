@@ -19,7 +19,7 @@ namespace Games.Cheetah.Client
         void ScheduleCommandFromServer(S2CCommands.SetDouble command);
         void ScheduleCommandFromServer(S2CCommands.DeleteObject command);
         void ScheduleCommandFromServer(S2CCommands.Event command);
-        void ScheduleCommandFromServer(S2CCommands.SetStructure command);
+        void ScheduleCommandFromServer(S2CCommands.BinaryField command);
 
 
         long? GetFieldValue(NetworkObjectId id, FieldId.Long field);

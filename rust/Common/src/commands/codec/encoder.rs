@@ -1,15 +1,12 @@
-use std::collections::VecDeque;
-use std::io::Cursor;
-
-use byteorder::WriteBytesExt;
-use cheetah_game_realtime_protocol::RoomMemberId;
-
 use crate::commands::context::CommandContext;
 use crate::commands::guarantees::codec::ChannelType;
 use crate::commands::guarantees::ChannelGroup;
 use crate::commands::{BothDirectionCommand, CommandTypeId, CommandWithReliabilityGuarantees};
 use crate::room::field::FieldId;
 use crate::room::object::GameObjectId;
+use byteorder::WriteBytesExt;
+use std::collections::VecDeque;
+use std::io::Cursor;
 
 pub(crate) fn encode_commands(commands: &mut VecDeque<CommandWithReliabilityGuarantees>, packet: &mut [u8]) -> (usize, bool) {
 	let mut context = CommandContext::default();
@@ -41,12 +38,12 @@ pub(crate) fn encode_commands(commands: &mut VecDeque<CommandWithReliabilityGuar
 }
 
 fn encode_command(context: &mut CommandContext, command: &CommandWithReliabilityGuarantees, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
-	let (object_id, field_id, command_type_id, creator) = get_command_info(command);
+	let (object_id, field_id, command_type_id) = get_command_info(command);
 	let (channel_type_id, channel_group) = get_channel_info(command);
-	context.write_next(object_id, field_id, channel_group, channel_type_id, command_type_id, creator, out)?;
+	context.write_next(object_id, field_id, channel_group, channel_type_id, command_type_id, out)?;
 	command.reliability_guarantees.encode(out)?;
 	match &command.command {
-		BothDirectionCommand::S2CWithCreator(command) => command.command.encode(out),
+		BothDirectionCommand::S2C(command) => command.encode(out),
 		BothDirectionCommand::C2S(command) => command.encode(out),
 	}
 }
@@ -57,14 +54,9 @@ fn get_channel_info(command: &CommandWithReliabilityGuarantees) -> (ChannelType,
 	(channel.get_type(), group)
 }
 
-fn get_command_info(command: &CommandWithReliabilityGuarantees) -> (Option<GameObjectId>, Option<FieldId>, CommandTypeId, Option<RoomMemberId>) {
+fn get_command_info(command: &CommandWithReliabilityGuarantees) -> (Option<GameObjectId>, Option<FieldId>, CommandTypeId) {
 	match &command.command {
-		BothDirectionCommand::S2CWithCreator(command_with_creator) => (
-			command_with_creator.command.get_object_id(),
-			command_with_creator.command.get_field_id(),
-			command_with_creator.command.get_type_id(),
-			Some(command_with_creator.creator),
-		),
-		BothDirectionCommand::C2S(c2s_command) => (c2s_command.get_object_id(), c2s_command.get_field_id(), c2s_command.get_type_id(), None),
+		BothDirectionCommand::S2C(command) => (command.get_object_id(), command.get_field_id(), command.get_type_id()),
+		BothDirectionCommand::C2S(c2s_command) => (c2s_command.get_object_id(), c2s_command.get_field_id(), c2s_command.get_type_id()),
 	}
 }

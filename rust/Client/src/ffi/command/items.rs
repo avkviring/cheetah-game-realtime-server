@@ -8,10 +8,10 @@ use crate::clients::registry::ClientId;
 use crate::ffi::command::send_command;
 
 #[no_mangle]
-pub extern "C" fn set_structure(client_id: ClientId, object_id: &GameObjectId, field_id: FieldId, structure: &Buffer) -> u8 {
+pub extern "C" fn add_item(client_id: ClientId, object_id: &GameObjectId, field_id: FieldId, structure: &Buffer) -> u8 {
 	send_command(
 		client_id,
-		C2SCommand::SetStructure(
+		C2SCommand::AddItem(
 			BinaryField {
 				object_id: *object_id,
 				field_id,

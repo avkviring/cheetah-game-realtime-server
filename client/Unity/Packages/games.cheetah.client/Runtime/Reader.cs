@@ -159,7 +159,7 @@ namespace Games.Cheetah.Client
             {
                 ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetStructure) continue;
-                ref var setCommand = ref command.commandUnion.setStructure;
+                ref var setCommand = ref command.commandUnion.binaryField;
                 var commandObjectId = setCommand.objectId;
 
                 if (IsCreatingObject(commandObjectId))
@@ -178,14 +178,45 @@ namespace Games.Cheetah.Client
 
             return result;
         }
-        
-        public void CollectModifiedStructures<T>(FieldId.Structure fieldId, List<(NetworkObjectId,T)> structures) where T:new()
+
+        /**
+       * Получить список добавленных элементов.
+       */
+        public NativeList<(NetworkObjectId, T)> GetAddedItems<T>(FieldId.Items fieldId)
+            where T : unmanaged
+        {
+            var result = new NativeList<(NetworkObjectId, T)>(sbyte.MaxValue, Allocator.TempJob);
+            for (var i = 0; i < client.S2CCommandsCount; i++)
+            {
+                ref var command = ref client.s2cCommands[i];
+                if (command.commandType != CommandType.AddItem) continue;
+                ref var binaryField = ref command.commandUnion.binaryField;
+                var commandObjectId = binaryField.objectId;
+
+                if (IsCreatingObject(commandObjectId))
+                {
+                    continue;
+                }
+
+                if (!FilterCommand(fieldId, binaryField.fieldId)) continue;
+
+                var item = new T();
+                var networkBuffer = binaryField.value;
+                codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
+                result.Add((commandObjectId, item));
+            }
+
+            return result;
+        }
+
+        public void CollectModifiedStructures<T>(FieldId.Structure fieldId, List<(NetworkObjectId, T)> structures)
+            where T : new()
         {
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
                 ref var command = ref client.s2cCommands[i];
                 if (command.commandType != CommandType.SetStructure) continue;
-                ref var setCommand = ref command.commandUnion.setStructure;
+                ref var setCommand = ref command.commandUnion.binaryField;
                 var commandObjectId = setCommand.objectId;
 
                 if (IsCreatingObject(commandObjectId))
@@ -201,7 +232,6 @@ namespace Games.Cheetah.Client
                     structures.Add((commandObjectId, item));
                 }
             }
-            
         }
 
         /**
@@ -228,9 +258,9 @@ namespace Games.Cheetah.Client
 
             return result;
         }
-        
+
         public void CollectEvents<T>(FieldId.Event eventId, List<(NetworkObjectId, T)> events) where T : new()
-        {            
+        {
             for (var i = 0; i < client.S2CCommandsCount; i++)
             {
                 ref var command = ref client.s2cCommands[i];
@@ -281,8 +311,9 @@ namespace Games.Cheetah.Client
                 if (command.commandType != CommandType.DeleteField) continue;
                 ref var commandDeleteField = ref command.commandUnion.deleteField;
                 ref var deleteFieldObjectId = ref commandDeleteField.objectId;
-                
-                if (TryGetTemplate(deleteFieldObjectId, out var objectTemplate) && objectTemplate== template && commandDeleteField.fieldId ==
+
+                if (TryGetTemplate(deleteFieldObjectId, out var objectTemplate) && objectTemplate == template &&
+                    commandDeleteField.fieldId ==
                     fieldId.Id && commandDeleteField.fieldType == fieldId.Type)
                 {
                     result.Add(commandDeleteField);
@@ -376,7 +407,7 @@ namespace Games.Cheetah.Client
 
         private void OnSetStructure(S2CCommand command)
         {
-            ref var setField = ref command.commandUnion.setStructure;
+            ref var setField = ref command.commandUnion.binaryField;
             if (creatingObjects.TryGetValue(setField.objectId, out var constructor))
             {
                 constructor.structures[setField.fieldId] = setField.value;
