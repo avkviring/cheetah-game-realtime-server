@@ -230,7 +230,7 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.CreateObject command)
+        public void ScheduleCreateObjectCommandFromServer(S2CCommands.CreateObject command)
         {
             s2cCommands.Add(new S2CCommand
             {
@@ -244,7 +244,7 @@ namespace Games.Cheetah.Client.Internal
             creatingObjects.Add(command.objectId, new NetworkObject(command.objectId, command.template));
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.CreatedObject command)
+        public void ScheduleCreatedObjectCommandFromServer(S2CCommands.CreatedObject command)
         {
             s2cCommands.Add(new S2CCommand
             {
@@ -258,7 +258,7 @@ namespace Games.Cheetah.Client.Internal
             CreatedObject(0, in command.objectId, false, ref networkBuffer);
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.SetLong command)
+        public void ScheduleSetLongCommandFromServer(S2CCommands.SetLong command)
         {
             s2cCommands.Add(new S2CCommand
             {
@@ -271,7 +271,7 @@ namespace Games.Cheetah.Client.Internal
             Set(0, in command.objectId, new FieldId.Long(command.fieldId), command.value);
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.SetDouble command)
+        public void ScheduleSetDoubleCommandFromServer(S2CCommands.SetDouble command)
         {
             s2cCommands.Add(new S2CCommand
             {
@@ -284,7 +284,7 @@ namespace Games.Cheetah.Client.Internal
             Set(0, in command.objectId, new FieldId.Double(command.fieldId), command.value);
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.Event command)
+        public void ScheduleSendEventCommandFromServer(S2CCommands.Event command)
         {
             s2cCommands.Add(new S2CCommand
             {
@@ -297,7 +297,7 @@ namespace Games.Cheetah.Client.Internal
             Send(0, in command.objectId, new FieldId.Event(command.fieldId), ref command.eventData);
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.BinaryField command)
+        public void ScheduleSetStructureCommandFromServer(S2CCommands.BinaryField command)
         {
             s2cCommands.Add(new S2CCommand
             {
@@ -310,7 +310,21 @@ namespace Games.Cheetah.Client.Internal
             Set(0, in command.objectId, new FieldId.Structure(command.fieldId), ref command.value);
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.DeleteObject command)
+        public void ScheduleAddItemCommandFromServer(S2CCommands.BinaryField command)
+        {
+            s2cCommands.Add(new S2CCommand
+            {
+                commandType = CommandType.AddItem,
+                commandUnion = new S2CCommandUnion
+                {
+                    binaryField = command
+                }
+            });
+            AddItem(0, in command.objectId, new FieldId.Items(command.fieldId), ref command.value);
+        }
+
+
+        public void ScheduleDeleteObjectCommandFromServer(S2CCommands.DeleteObject command)
         {
             s2cCommands.Add(new S2CCommand
             {
