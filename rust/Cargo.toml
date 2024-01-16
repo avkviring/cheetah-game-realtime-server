@@ -29,6 +29,7 @@ fnv = "1.0.7"
 rand = { version = "0.8.5", features = ['min_const_gen'] }
 tokio-stream = "0.1.12"
 strum_macros = "0.25.2"
+strum = "0.25.0"
 prometheus = "0.13.3"
 prometheus-measures-exporter = "0.0.1"
 heapless = "0.8.0"

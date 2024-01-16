@@ -7,26 +7,25 @@ pub mod encoder;
 ///
 #[cfg(test)]
 mod tests {
-	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
-	use std::collections::VecDeque;
-
 	use crate::commands::c2s::C2SCommand;
 	use crate::commands::codec::decoder::decode_commands;
 	use crate::commands::codec::encoder::encode_commands;
 	use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuaranteesChannel};
-	use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-	use crate::commands::types::float::SetDoubleCommand;
-	use crate::commands::types::long::SetLongCommand;
+	use crate::commands::s2c::S2CCommand;
+	use crate::commands::types::float::DoubleField;
+	use crate::commands::types::long::LongField;
 	use crate::commands::{BothDirectionCommand, CommandWithReliabilityGuarantees};
 	use crate::room::object::GameObjectId;
 	use crate::room::owner::GameObjectOwner;
+	use cheetah_game_realtime_protocol::frame::packets_collector::PACKET_SIZE;
+	use std::collections::VecDeque;
 
 	#[test]
 	fn test_c2s() {
 		let commands = vec![
 			CommandWithReliabilityGuarantees {
 				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
-				command: BothDirectionCommand::C2S(C2SCommand::SetDouble(SetDoubleCommand {
+				command: BothDirectionCommand::C2S(C2SCommand::SetDouble(DoubleField {
 					object_id: Default::default(),
 					field_id: 10,
 					value: 1.5,
@@ -34,7 +33,7 @@ mod tests {
 			},
 			CommandWithReliabilityGuarantees {
 				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-				command: BothDirectionCommand::C2S(C2SCommand::SetLong(SetLongCommand {
+				command: BothDirectionCommand::C2S(C2SCommand::SetLong(LongField {
 					object_id: GameObjectId::new(13, GameObjectOwner::Member(14)),
 					field_id: 15,
 					value: 16,
@@ -51,25 +50,19 @@ mod tests {
 		let commands = vec![
 			CommandWithReliabilityGuarantees {
 				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
-				command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-					command: S2CCommand::SetDouble(SetDoubleCommand {
-						object_id: Default::default(),
-						field_id: 10,
-						value: 1.5,
-					}),
-					creator: 55,
-				}),
+				command: BothDirectionCommand::S2C(S2CCommand::SetDouble(DoubleField {
+					object_id: Default::default(),
+					field_id: 10,
+					value: 1.5,
+				})),
 			},
 			CommandWithReliabilityGuarantees {
 				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableSequence(ChannelGroup(11), ChannelSequence(12)),
-				command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-					command: S2CCommand::SetLong(SetLongCommand {
-						object_id: Default::default(),
-						field_id: 5,
-						value: 1,
-					}),
-					creator: 57,
-				}),
+				command: BothDirectionCommand::S2C(S2CCommand::SetLong(LongField {
+					object_id: Default::default(),
+					field_id: 5,
+					value: 1,
+				})),
 			},
 		];
 		check(false, commands);
@@ -81,16 +74,12 @@ mod tests {
 		for i in 0..1000 {
 			let command = CommandWithReliabilityGuarantees {
 				reliability_guarantees: ReliabilityGuaranteesChannel::ReliableUnordered,
-				command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-					command: S2CCommand::SetDouble(SetDoubleCommand {
-						object_id: Default::default(),
-						field_id: i,
-						value: 1.5,
-					}),
-					creator: 55,
-				}),
+				command: BothDirectionCommand::S2C(S2CCommand::SetDouble(DoubleField {
+					object_id: Default::default(),
+					field_id: i,
+					value: 1.5,
+				})),
 			};
-
 			commands.push(command);
 		}
 		check(false, commands);

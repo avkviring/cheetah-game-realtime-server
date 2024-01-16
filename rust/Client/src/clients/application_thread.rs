@@ -13,7 +13,7 @@ use crate::ffi::command::S2CCommandFFI;
 use cheetah_common::commands::c2s::C2SCommand;
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::S2CCommand;
-use cheetah_common::commands::types::create::CreateGameObjectCommand;
+use cheetah_common::commands::types::create::CreateGameObject;
 use cheetah_common::commands::{BothDirectionCommand, CommandTypeId, CommandWithReliabilityGuarantees};
 use cheetah_common::network::ConnectionStatus;
 use cheetah_common::room::access::AccessGroups;
@@ -101,9 +101,9 @@ impl ApplicationThreadClient {
 
 		while let Ok(command) = self.s2c_receiver.try_recv() {
 			tracing::trace!("s2c {:?}", command);
-			if let BothDirectionCommand::S2CWithCreator(member_with_creator) = command.command {
+			if let BothDirectionCommand::S2C(command) = command.command {
 				let command_ffi = &mut commands[*count as usize];
-				match member_with_creator.command {
+				match command {
 					S2CCommand::Create(command) => {
 						command_ffi.command_type = CommandTypeId::CreateGameObject;
 						command_ffi.command.create = command;
@@ -123,16 +123,16 @@ impl ApplicationThreadClient {
 					}
 					S2CCommand::SetStructure(command) => {
 						command_ffi.command_type = CommandTypeId::SetStructure;
-						command_ffi.command.set_structure = *command;
+						command_ffi.command.buffer_field = *command;
 					}
 
 					S2CCommand::Event(command) => {
 						command_ffi.command_type = CommandTypeId::SendEvent;
-						command_ffi.command.event = *command;
+						command_ffi.command.buffer_field = *command;
 					}
 					S2CCommand::Delete(command) => {
 						command_ffi.command_type = CommandTypeId::DeleteObject;
-						command_ffi.command.delete = command;
+						command_ffi.command.game_object_id = command;
 					}
 					S2CCommand::DeleteField(command) => {
 						command_ffi.command_type = CommandTypeId::DeleteField;
@@ -146,6 +146,10 @@ impl ApplicationThreadClient {
 						command_ffi.command_type = CommandTypeId::MemberDisconnected;
 						command_ffi.command.member_disconnect = command;
 					}
+					S2CCommand::AddItem(command) => {
+						command_ffi.command_type = CommandTypeId::AddItem;
+						command_ffi.command.buffer_field = *command;
+					}
 				}
 				*count += 1;
 				if *count == 1024 {
@@ -158,7 +162,7 @@ impl ApplicationThreadClient {
 	pub fn create_game_object(&mut self, template: u16, access_group: u64) -> Result<GameObjectId, SendError<ClientRequest>> {
 		self.game_object_id_generator += 1;
 		let game_object_id = GameObjectId::new(self.game_object_id_generator, GameObjectOwner::Member(self.member_id));
-		self.send(C2SCommand::CreateGameObject(CreateGameObjectCommand {
+		self.send(C2SCommand::CreateGameObject(CreateGameObject {
 			object_id: game_object_id,
 			template,
 			access_groups: AccessGroups(access_group),

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Clone, Copy, Deserialize, Serialize)]
 #[repr(C)]
-pub struct SetDoubleCommand {
+pub struct DoubleField {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub value: f64,
@@ -20,13 +20,13 @@ pub struct SetDoubleCommand {
 ///
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[repr(C)]
-pub struct IncrementDoubleC2SCommand {
+pub struct IncrementDouble {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub increment: f64,
 }
 
-impl SetDoubleCommand {
+impl DoubleField {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_f64::<BigEndian>(self.value)
 	}
@@ -37,7 +37,7 @@ impl SetDoubleCommand {
 	}
 }
 
-impl IncrementDoubleC2SCommand {
+impl IncrementDouble {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_f64::<BigEndian>(self.increment)
 	}

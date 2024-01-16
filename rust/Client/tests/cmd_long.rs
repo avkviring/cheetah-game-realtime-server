@@ -1,6 +1,6 @@
 use cheetah_client::ffi;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
-use cheetah_common::commands::types::long::SetLongCommand;
+use cheetah_common::commands::types::long::LongField;
 use cheetah_common::commands::CommandTypeId;
 
 use crate::helpers::helper::setup;
@@ -25,7 +25,7 @@ fn should_inc() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetLong,
 			command: S2CommandUnionFFI {
-				set_long: SetLongCommand { object_id, field_id: 1, value: 100 }
+				set_long: LongField { object_id, field_id: 1, value: 100 }
 			}
 		}
 	);
@@ -35,7 +35,7 @@ fn should_inc() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetLong,
 			command: S2CommandUnionFFI {
-				set_long: SetLongCommand { object_id, field_id: 1, value: 300 }
+				set_long: LongField { object_id, field_id: 1, value: 300 }
 			}
 		}
 	);
@@ -59,7 +59,7 @@ fn should_set() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetLong,
 			command: S2CommandUnionFFI {
-				set_long: SetLongCommand { object_id, field_id: 1, value: 100 }
+				set_long: LongField { object_id, field_id: 1, value: 100 }
 			}
 		}
 	);
@@ -69,7 +69,7 @@ fn should_set() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetLong,
 			command: S2CommandUnionFFI {
-				set_long: SetLongCommand { object_id, field_id: 1, value: 200 }
+				set_long: LongField { object_id, field_id: 1, value: 200 }
 			}
 		}
 	);

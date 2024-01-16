@@ -4,6 +4,8 @@ namespace Games.Cheetah.Client.Types.Field
     {
         Long = 0,
         Double = 1,
-        Structure =2
+        Structure = 2,
+        Event = 3,
+        Items = 4
     }
 }

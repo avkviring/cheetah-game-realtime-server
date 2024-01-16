@@ -46,5 +46,6 @@ namespace Games.Cheetah.Client.Internal
         byte DeleteObject(ushort clientId, in NetworkObjectId objectId);
 
         byte Set(ushort clientId, in NetworkObjectId objectId, FieldId.Structure fieldId, ref NetworkBuffer value);
+        byte AddItem(ushort clientId, in NetworkObjectId objectId, FieldId.Items fieldId, ref NetworkBuffer buffer);
     }
 }

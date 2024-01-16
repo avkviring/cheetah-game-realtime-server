@@ -1,6 +1,6 @@
 use cheetah_client::ffi;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
-use cheetah_common::commands::types::structure::SetStructureCommand;
+use cheetah_common::commands::types::structure::BinaryField;
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::buffer::Buffer;
 
@@ -26,7 +26,7 @@ fn should_set() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::SetStructure,
 			command: S2CommandUnionFFI {
-				set_structure: SetStructureCommand {
+				buffer_field: BinaryField {
 					object_id,
 					field_id: structure_field_id,
 					value: structure_buffer,

@@ -1,59 +1,39 @@
-use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::server::room::object::GameObject;
-use crate::server::room::Room;
-use cheetah_common::commands::s2c::S2CCommand;
-use cheetah_common::commands::types::event::{EventCommand, TargetEventCommand};
-use cheetah_common::room::field::{Field, FieldType};
 use cheetah_game_realtime_protocol::RoomMemberId;
 
-impl ServerCommandExecutor for EventCommand {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let field_id = self.field_id;
-		let object_id = self.object_id;
-		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.clone().into())));
-		room.send_command_from_action(
-			object_id,
-			Field {
-				id: field_id,
-				field_type: FieldType::Long,
-			},
-			member_id,
-			None,
-			action,
-		)
-	}
+use cheetah_common::commands::s2c::S2CCommand;
+use cheetah_common::commands::types::event::TargetEvent;
+use cheetah_common::commands::types::structure::BinaryField;
+
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::object::GameObject;
+use crate::server::room::Room;
+
+pub(crate) fn send(event: &BinaryField, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	let object_id = event.object_id;
+	let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event((*event).into())));
+	room.send_command_from_action(object_id, member_id, None, action)
 }
 
-impl ServerCommandExecutor for TargetEventCommand {
-	fn execute(&self, room: &mut Room, member_id: u16) -> Result<(), ServerCommandError> {
-		let field_id = self.event.field_id;
-		let object_id = self.event.object_id;
-		let target = self.target;
-		let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(self.event.clone().into())));
-		room.send_command_from_action(
-			object_id,
-			Field {
-				id: field_id,
-				field_type: FieldType::Event,
-			},
-			member_id,
-			Some(target),
-			action,
-		)
-	}
+pub(crate) fn send_target(target_event: &TargetEvent, room: &mut Room, member_id: u16) -> Result<(), ServerCommandError> {
+	let object_id = target_event.event.object_id;
+	let target = target_event.target;
+	let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(target_event.event.clone().into())));
+	room.send_command_from_action(object_id, member_id, Some(target), action)
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::server::room::command::tests::setup_one_player;
-	use crate::server::room::command::ServerCommandExecutor;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
-	use crate::server::room::Room;
+	use crate::server::room::command::event::{send, send_target};
 	use cheetah_common::commands::s2c::S2CCommand;
-	use cheetah_common::commands::types::event::{EventCommand, TargetEventCommand};
+	use cheetah_common::commands::types::event::TargetEvent;
+	use cheetah_common::commands::types::structure::BinaryField;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::buffer::Buffer;
 	use cheetah_common::room::owner::GameObjectOwner;
+
+	use crate::server::room::command::tests::setup_one_player;
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 
 	#[test]
 	pub(crate) fn should_send_event() {
@@ -63,13 +43,13 @@ mod tests {
 		let object_id = object.id;
 		room.test_out_commands.clear();
 
-		let command = EventCommand {
+		let command = BinaryField {
 			object_id,
 			field_id: 100,
-			event: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()),
+			value: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()),
 		};
 
-		command.execute(&mut room, member_id).unwrap();
+		send(&command, &mut room, member_id).unwrap();
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::Event(c))) if c==command.into()));
 	}
 
@@ -94,16 +74,16 @@ mod tests {
 		room.get_member_out_commands_for_test(member2).clear();
 		room.get_member_out_commands_for_test(member3).clear();
 
-		let command = TargetEventCommand {
+		let command = TargetEvent {
 			target: member2,
-			event: EventCommand {
+			event: BinaryField {
 				object_id,
 				field_id: 100,
-				event: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()),
+				value: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()),
 			},
 		};
 
-		command.execute(&mut room, member1).unwrap();
+		send_target(&command, &mut room, member1).unwrap();
 		assert!(matches!(room.get_member_out_commands_for_test(member1).pop_back(), None));
 		assert!(matches!(room.get_member_out_commands_for_test(member2).pop_back(), Some(S2CCommand::Event(c)) if c.field_id == command.event.field_id));
 		assert!(matches!(room.get_member_out_commands_for_test(member3).pop_back(), None));

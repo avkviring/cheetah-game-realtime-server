@@ -36,6 +36,13 @@ namespace Games.Cheetah.Client
             codecRegistry.GetCodec<T>().Encode(in value, ref buffer);
             ResultChecker.Check(ffi.Set(clientId, in objectId, fieldId, ref buffer));
         }
+        
+        public void AddItem<T>(in NetworkObjectId objectId, FieldId.Items fieldId, in T value) where T : struct
+        {
+            buffer.Clear();
+            codecRegistry.GetCodec<T>().Encode(in value, ref buffer);
+            ResultChecker.Check(ffi.AddItem(clientId, in objectId, fieldId, ref buffer));
+        }
 
 
         public void Increment(in NetworkObjectId objectId, FieldId.Long fieldId, long increment)

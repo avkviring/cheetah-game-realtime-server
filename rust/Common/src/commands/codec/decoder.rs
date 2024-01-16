@@ -8,7 +8,7 @@ use crate::commands::context::header::CommandHeader;
 use crate::commands::context::{CommandContext, CommandContextError};
 use crate::commands::guarantees::codec::CommandChannelDecodeError;
 use crate::commands::guarantees::ReliabilityGuaranteesChannel;
-use crate::commands::s2c::{S2CCommand, S2CCommandWithCreator};
+use crate::commands::s2c::S2CCommand;
 use crate::commands::{BothDirectionCommand, CommandDecodeError, CommandWithReliabilityGuarantees};
 
 pub fn decode_commands(server_side: bool, body: &[u8]) -> Result<Vec<CommandWithReliabilityGuarantees>, CommandsDecoderError> {
@@ -31,10 +31,7 @@ fn decode_command(server_side: bool, input: &mut Cursor<&[u8]>, header: &Command
 		command: if server_side {
 			BothDirectionCommand::C2S(C2SCommand::decode(header.command_type_id, context.get_object_id(), context.get_field_id(), input)?)
 		} else {
-			BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-				creator: context.get_creator()?,
-				command: S2CCommand::decode(&header.command_type_id, context.get_object_id(), context.get_field_id(), input)?,
-			})
+			BothDirectionCommand::S2C(S2CCommand::decode(&header.command_type_id, context.get_object_id(), context.get_field_id(), input)?)
 		},
 	})
 }

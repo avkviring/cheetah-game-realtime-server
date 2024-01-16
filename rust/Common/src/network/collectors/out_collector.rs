@@ -79,7 +79,7 @@ mod tests {
 	use crate::commands::c2s::C2SCommand::IncrementLongValue;
 	use crate::commands::codec::decoder::decode_commands;
 	use crate::commands::guarantees::{ChannelGroup, ChannelSequence, ReliabilityGuarantees};
-	use crate::commands::types::long::IncrementLongC2SCommand;
+	use crate::commands::types::long::IncrementLong;
 	use crate::commands::BothDirectionCommand;
 	use crate::network::collectors::out_collector::*;
 	use crate::room::field::FieldId;
@@ -192,7 +192,7 @@ mod tests {
 	}
 
 	fn create_command(i: usize) -> BothDirectionCommand {
-		BothDirectionCommand::C2S(IncrementLongValue(IncrementLongC2SCommand {
+		BothDirectionCommand::C2S(IncrementLongValue(IncrementLong {
 			object_id: Default::default(),
 			field_id: i as FieldId,
 			increment: 0,

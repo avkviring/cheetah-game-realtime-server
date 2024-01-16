@@ -39,7 +39,8 @@ namespace Games.Cheetah.Client.Internal
         }
 
 
-        public byte CreateClient(ulong connectionId, string serverAddress, ushort memberId, ulong roomId, ref NetworkBuffer userPrivateKey,
+        public byte CreateClient(ulong connectionId, string serverAddress, ushort memberId, ulong roomId,
+            ref NetworkBuffer userPrivateKey,
             ulong disconnectTimeInSec, out ushort clientId)
         {
             clientIdGenerator++;
@@ -132,10 +133,26 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public byte Set(ushort clientId, in NetworkObjectId objectId, FieldId.Structure fieldId, ref NetworkBuffer value)
+        public byte Set(ushort clientId, in NetworkObjectId objectId, FieldId.Structure fieldId,
+            ref NetworkBuffer value)
         {
             var key = new ObjectFieldId { fieldId = fieldId, objectId = objectId };
             fields[key] = value;
+            return 0;
+        }
+
+        public byte AddItem(ushort clientId, in NetworkObjectId objectId, FieldId.Items fieldId,
+            ref NetworkBuffer buffer)
+        {
+            var key = new ObjectFieldId { fieldId = fieldId, objectId = objectId };
+
+            if (!fields.TryGetValue(key, out var items))
+            {
+                items = new List<NetworkBuffer>();
+                fields[key] = items;
+            }
+
+            ((List<NetworkBuffer>)items).Add(buffer);
             return 0;
         }
 
@@ -169,7 +186,8 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public byte CreatedObject(ushort clientId, in NetworkObjectId objectId, bool roomOwner, ref NetworkBuffer singletonKey)
+        public byte CreatedObject(ushort clientId, in NetworkObjectId objectId, bool roomOwner,
+            ref NetworkBuffer singletonKey)
         {
             var createdObject = creatingObjects[objectId];
             creatingObjects.Remove(objectId);
@@ -184,7 +202,8 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public byte Send(ushort clientId, in NetworkObjectId objectId, FieldId.Event fieldId, ref NetworkBuffer eventData)
+        public byte Send(ushort clientId, in NetworkObjectId objectId, FieldId.Event fieldId,
+            ref NetworkBuffer eventData)
         {
             var key = new ObjectFieldId { fieldId = fieldId, objectId = objectId };
             if (!events.TryGetValue(key, out var eventQueue))
@@ -197,7 +216,8 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public byte Send(ushort clientId, ushort targetUser, in NetworkObjectId objectId, FieldId.Event fieldId, ref NetworkBuffer eventData)
+        public byte Send(ushort clientId, ushort targetUser, in NetworkObjectId objectId, FieldId.Event fieldId,
+            ref NetworkBuffer eventData)
         {
             var key = new ObjectFieldId { fieldId = fieldId, objectId = objectId };
             if (!events.TryGetValue(key, out var eventQueue))
@@ -277,14 +297,14 @@ namespace Games.Cheetah.Client.Internal
             Send(0, in command.objectId, new FieldId.Event(command.fieldId), ref command.eventData);
         }
 
-        public void ScheduleCommandFromServer(S2CCommands.SetStructure command)
+        public void ScheduleCommandFromServer(S2CCommands.BinaryField command)
         {
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.SetStructure,
                 commandUnion = new S2CCommandUnion
                 {
-                    setStructure = command
+                    binaryField = command
                 }
             });
             Set(0, in command.objectId, new FieldId.Structure(command.fieldId), ref command.value);

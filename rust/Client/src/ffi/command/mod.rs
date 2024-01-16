@@ -1,15 +1,14 @@
 use std::fmt::{Debug, Formatter};
 
 use cheetah_common::commands::c2s::C2SCommand;
-use cheetah_common::commands::types::create::{CreateGameObjectCommand, GameObjectCreatedS2CCommand};
-use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
-use cheetah_common::commands::types::event::EventCommand;
-use cheetah_common::commands::types::field::DeleteFieldCommand;
-use cheetah_common::commands::types::float::SetDoubleCommand;
-use cheetah_common::commands::types::long::SetLongCommand;
+use cheetah_common::commands::types::create::{CreateGameObject, GameObjectCreated};
+use cheetah_common::commands::types::field::DeleteField;
+use cheetah_common::commands::types::float::DoubleField;
+use cheetah_common::commands::types::long::LongField;
 use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
-use cheetah_common::commands::types::structure::SetStructureCommand;
+use cheetah_common::commands::types::structure::BinaryField;
 use cheetah_common::commands::CommandTypeId;
+use cheetah_common::room::object::GameObjectId;
 
 use crate::clients::registry::ClientId;
 use crate::ffi::execute_with_client;
@@ -17,6 +16,7 @@ use crate::ffi::execute_with_client;
 pub mod event;
 pub mod field;
 pub mod float_value;
+pub mod items;
 pub mod long_value;
 pub mod object;
 pub mod room;
@@ -42,12 +42,13 @@ impl PartialEq for S2CCommandFFI {
 					CommandTypeId::CreatedGameObject => self.command.created.eq(&other.command.created),
 					CommandTypeId::SetLong => self.command.set_long.eq(&other.command.set_long),
 					CommandTypeId::SetDouble => self.command.set_double.eq(&other.command.set_double),
-					CommandTypeId::SetStructure => self.command.set_structure.eq(&other.command.set_structure),
-					CommandTypeId::SendEvent => self.command.event.eq(&other.command.event),
-					CommandTypeId::DeleteObject => self.command.delete.eq(&other.command.delete),
+					CommandTypeId::SetStructure => self.command.buffer_field.eq(&other.command.buffer_field),
+					CommandTypeId::SendEvent => self.command.buffer_field.eq(&other.command.buffer_field),
+					CommandTypeId::DeleteObject => self.command.game_object_id.eq(&other.command.game_object_id),
 					CommandTypeId::DeleteField => self.command.delete_field.eq(&other.command.delete_field),
 					CommandTypeId::MemberConnected => self.command.member_connect.eq(&other.command.member_connect),
 					CommandTypeId::MemberDisconnected => self.command.member_disconnect.eq(&other.command.member_disconnect),
+					CommandTypeId::AddItem => self.command.buffer_field.eq(&other.command.buffer_field),
 					_ => false,
 				}
 		}
@@ -64,14 +65,13 @@ impl Debug for S2CCommandFFI {
 #[derive(Copy, Clone)]
 pub union S2CommandUnionFFI {
 	pub empty: (),
-	pub create: CreateGameObjectCommand,
-	pub created: GameObjectCreatedS2CCommand,
-	pub set_long: SetLongCommand,
-	pub set_double: SetDoubleCommand,
-	pub set_structure: SetStructureCommand,
-	pub event: EventCommand,
-	pub delete: DeleteGameObjectCommand,
-	pub delete_field: DeleteFieldCommand,
+	pub create: CreateGameObject,
+	pub created: GameObjectCreated,
+	pub set_long: LongField,
+	pub set_double: DoubleField,
+	pub buffer_field: BinaryField,
+	pub game_object_id: GameObjectId,
+	pub delete_field: DeleteField,
 	pub member_connect: MemberConnected,
 	pub member_disconnect: MemberDisconnected,
 }

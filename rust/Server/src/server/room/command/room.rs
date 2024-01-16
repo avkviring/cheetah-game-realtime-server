@@ -10,15 +10,14 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 	let access_group = member.template.groups;
 	let mut command_collector = Vec::<(GameObjectTemplateId, S2CCommandsCollector)>::new();
 	room.objects
-		.iter()
+		.iter_mut()
 		.filter(|(_, o)| o.created)
 		.filter(|(_, o)| o.access_groups.contains_any(&access_group))
 		.map(|(_, o)| {
 			let mut commands = S2CCommandsCollector::new();
-			o.collect_create_commands(&mut commands, member_id);
+			o.collect_create_commands(&mut commands);
 			(o.template_id, commands)
 		})
-		.clone()
 		.for_each(|v| command_collector.push(v));
 
 	for (_template, commands) in command_collector.iter() {

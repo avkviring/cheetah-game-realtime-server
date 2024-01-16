@@ -129,5 +129,10 @@ namespace Games.Cheetah.Client.Internal.FFI
         {
             return FFIMethods.Set(clientId, in objectId, fieldId.Id, ref value);
         }
+
+        public byte AddItem(ushort clientId, in NetworkObjectId objectId, FieldId.Items fieldId, ref NetworkBuffer buffer)
+        {
+            return FFIMethods.AddItem(clientId, in objectId, fieldId.Id, ref buffer);
+        }
     }
 }

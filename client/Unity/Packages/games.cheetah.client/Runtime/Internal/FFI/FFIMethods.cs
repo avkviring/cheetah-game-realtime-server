@@ -50,7 +50,8 @@ namespace Games.Cheetah.Client.Internal.FFI
         public static extern byte DetachFromRoom(ushort clientId);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_channel")]
-        public static extern byte SetChannelType(ushort clientId, ReliabilityGuarantees reliabilityGuarantees, byte group);
+        public static extern byte SetChannelType(ushort clientId, ReliabilityGuarantees reliabilityGuarantees,
+            byte group);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_rtt_emulation")]
         public static extern byte SetRttEmulation(ushort clientId, ulong rttInMs, double rttDispersion);
@@ -71,33 +72,45 @@ namespace Games.Cheetah.Client.Internal.FFI
         public static extern byte Set(ushort clientId, in NetworkObjectId objectId, ushort fieldId, double value);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "inc_double_value")]
-        public static extern byte Increment(ushort clientId, in NetworkObjectId objectId, ushort fieldId, double increment);
+        public static extern byte Increment(ushort clientId, in NetworkObjectId objectId, ushort fieldId,
+            double increment);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "send_event")]
-        public static extern byte Send(ushort clientId, in NetworkObjectId objectId, ushort fieldId, ref NetworkBuffer data);
+        public static extern byte Send(ushort clientId, in NetworkObjectId objectId, ushort fieldId,
+            ref NetworkBuffer data);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "send_target_event")]
-        public static extern byte Send(ushort clientId, ushort targetUser, in NetworkObjectId objectId, ushort fieldId, ref NetworkBuffer data);
+        public static extern byte Send(ushort clientId, ushort targetUser, in NetworkObjectId objectId, ushort fieldId,
+            ref NetworkBuffer data);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "delete_field")]
-        public static extern byte DeleteField(ushort clientId, in NetworkObjectId objectId, ushort fieldId, FieldType value);
+        public static extern byte DeleteField(ushort clientId, in NetworkObjectId objectId, ushort fieldId,
+            FieldType value);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_long_value")]
         public static extern byte Set(ushort clientId, in NetworkObjectId objectId, ushort fieldId, long value);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "inc_long_value")]
-        public static extern byte Increment(ushort clientId, in NetworkObjectId objectId, ushort fieldId, long increment);
+        public static extern byte Increment(ushort clientId, in NetworkObjectId objectId, ushort fieldId,
+            long increment);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "create_object")]
-        public static extern byte CreateObject(ushort clientId, ushort template, ulong accessGroup, ref NetworkObjectId objectId);
+        public static extern byte CreateObject(ushort clientId, ushort template, ulong accessGroup,
+            ref NetworkObjectId objectId);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "created_object")]
-        public static extern byte CreatedObject(ushort clientId, in NetworkObjectId objectId, bool roomOwner, ref NetworkBuffer singletonKey);
+        public static extern byte CreatedObject(ushort clientId, in NetworkObjectId objectId, bool roomOwner,
+            ref NetworkBuffer singletonKey);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "delete_object")]
         public static extern byte DeleteObject(ushort clientId, in NetworkObjectId objectId);
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "set_structure")]
-        public static extern byte Set(ushort clientId, in NetworkObjectId objectId, ushort fieldId, ref NetworkBuffer data);
+        public static extern byte Set(ushort clientId, in NetworkObjectId objectId, ushort fieldId,
+            ref NetworkBuffer data);
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "add_item")]
+        public static extern byte AddItem(ushort clientId, in NetworkObjectId objectId, ushort fieldIdId,
+            ref NetworkBuffer buffer);
     }
 }

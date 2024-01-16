@@ -1,44 +1,32 @@
-use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
-use crate::server::room::object::GameObject;
-use crate::server::room::Room;
-use cheetah_common::commands::s2c::S2CCommand;
-use cheetah_common::commands::types::structure::SetStructureCommand;
-use cheetah_common::room::field::{Field, FieldType};
 use cheetah_game_realtime_protocol::RoomMemberId;
 
-impl ServerCommandExecutor for SetStructureCommand {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let field_id = self.field_id;
-		let object_id = self.object_id;
+use cheetah_common::commands::s2c::S2CCommand;
+use cheetah_common::commands::types::structure::BinaryField;
 
-		let action = |object: &mut GameObject| {
-			object.structures.set(self.field_id, self.value.clone());
-			Ok(Some(S2CCommand::SetStructure(self.clone().into())))
-		};
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::object::GameObject;
+use crate::server::room::Room;
 
-		room.send_command_from_action(
-			object_id,
-			Field {
-				id: field_id,
-				field_type: FieldType::Structure,
-			},
-			member_id,
-			None,
-			action,
-		)
-	}
+pub(crate) fn set(field: &BinaryField, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	let object_id = field.object_id;
+	let action = |object: &mut GameObject| {
+		object.structure_fields.set(field.field_id, field.value);
+		Ok(Some(S2CCommand::SetStructure(field.clone().into())))
+	};
+	room.send_command_from_action(object_id, member_id, None, action)
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::server::room::command::ServerCommandExecutor;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
-	use crate::server::room::Room;
 	use cheetah_common::commands::s2c::S2CCommand;
-	use cheetah_common::commands::types::structure::SetStructureCommand;
+	use cheetah_common::commands::types::structure::BinaryField;
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::buffer::Buffer;
 	use cheetah_common::room::owner::GameObjectOwner;
+
+	use crate::server::room::command::structure;
+	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::Room;
 
 	#[test]
 	pub(crate) fn should_set_structure() {
@@ -51,16 +39,16 @@ mod tests {
 		let object_id = object.id;
 
 		room.test_out_commands.clear();
-		let command = SetStructureCommand {
+		let command = BinaryField {
 			object_id,
 			field_id: 100,
 			value: Buffer::from(vec![1, 2, 3, 4, 5].as_slice()).into(),
 		};
 
-		command.execute(&mut room, member_id).unwrap();
+		structure::set(&command, &mut room, member_id).unwrap();
 		let object = room.get_object_mut(object_id).unwrap();
 
-		assert_eq!(*object.structures.get(100).unwrap(), command.value);
+		assert_eq!(*object.structure_fields.get(100).unwrap(), command.value);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c == 
 			command.into()));
 	}

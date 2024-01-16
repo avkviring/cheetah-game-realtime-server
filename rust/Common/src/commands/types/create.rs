@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 ///
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 #[repr(C)]
-pub struct CreateGameObjectCommand {
+pub struct CreateGameObject {
 	pub object_id: GameObjectId,
 	pub template: GameObjectTemplateId,
 	pub access_groups: AccessGroups,
@@ -25,7 +25,7 @@ pub struct CreateGameObjectCommand {
 ///
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct C2SCreatedGameObjectCommand {
+pub struct C2SCreatedGameObject {
 	pub object_id: GameObjectId,
 	///
 	/// Если room_owner true - то объект меняет идентификатор на идентификатор с owner=Room
@@ -43,11 +43,11 @@ pub struct C2SCreatedGameObjectCommand {
 ///
 #[repr(C)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
-pub struct GameObjectCreatedS2CCommand {
+pub struct GameObjectCreated {
 	pub object_id: GameObjectId,
 }
 
-impl CreateGameObjectCommand {
+impl CreateGameObject {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_u64(u64::from(self.template))?;
 		out.write_variable_u64(self.access_groups.0)
@@ -60,7 +60,7 @@ impl CreateGameObjectCommand {
 	}
 }
 
-impl C2SCreatedGameObjectCommand {
+impl C2SCreatedGameObject {
 	pub fn new(object_id: GameObjectId, room_owner: bool, singleton_key: Option<Buffer>) -> Self {
 		Self {
 			object_id,

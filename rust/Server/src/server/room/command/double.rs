@@ -1,68 +1,42 @@
-use crate::server::room::command::{ServerCommandError, ServerCommandExecutor};
+use crate::server::room::command::ServerCommandError;
 use crate::server::room::object::GameObject;
 use crate::server::room::Room;
 use cheetah_common::commands::s2c::S2CCommand;
-use cheetah_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
-use cheetah_common::room::field::{Field, FieldType};
+use cheetah_common::commands::types::float::{DoubleField, IncrementDouble};
 use cheetah_game_realtime_protocol::RoomMemberId;
 
-impl ServerCommandExecutor for SetDoubleCommand {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let field_id = self.field_id;
-		let object_id = self.object_id;
-
-		let action = |object: &mut GameObject| {
-			object.doubles.set(self.field_id, self.value.clone());
-			Ok(Some(S2CCommand::SetDouble(self.clone())))
-		};
-
-		room.send_command_from_action(
-			object_id,
-			Field {
-				id: field_id,
-				field_type: FieldType::Double,
-			},
-			member_id,
-			None,
-			action,
-		)
-	}
+pub(crate) fn set(command: &DoubleField, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	let object_id = command.object_id;
+	let action = |object: &mut GameObject| {
+		object.double_fields.set(command.field_id, command.value);
+		Ok(Some(S2CCommand::SetDouble(command.clone())))
+	};
+	room.send_command_from_action(object_id, member_id, None, action)
 }
 
-impl ServerCommandExecutor for IncrementDoubleC2SCommand {
-	fn execute(&self, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
-		let field_id = self.field_id;
-		let object_id = self.object_id;
+pub(crate) fn increment(increment: &IncrementDouble, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+	let field_id = increment.field_id;
+	let object_id = increment.object_id;
 
-		let action = |object: &mut GameObject| {
-			let value = object.doubles.get(field_id).cloned().unwrap_or_default() + self.increment;
-			object.doubles.set(field_id, value);
-			Ok(Some(S2CCommand::SetDouble(SetDoubleCommand {
-				object_id: self.object_id,
-				field_id,
-				value,
-			})))
-		};
+	let action = |object: &mut GameObject| {
+		let value = object.double_fields.get(field_id).cloned().unwrap_or_default() + increment.increment;
+		object.double_fields.set(field_id, value);
+		Ok(Some(S2CCommand::SetDouble(DoubleField {
+			object_id: increment.object_id,
+			field_id,
+			value,
+		})))
+	};
 
-		room.send_command_from_action(
-			object_id,
-			Field {
-				id: field_id,
-				field_type: FieldType::Double,
-			},
-			member_id,
-			None,
-			action,
-		)
-	}
+	room.send_command_from_action(object_id, member_id, None, action)
 }
 
 #[cfg(test)]
 mod tests {
+	use crate::server::room::command::double::{increment, set};
 	use crate::server::room::command::tests::setup_one_player;
-	use crate::server::room::command::ServerCommandExecutor;
 	use cheetah_common::commands::s2c::S2CCommand;
-	use cheetah_common::commands::types::float::{IncrementDoubleC2SCommand, SetDoubleCommand};
+	use cheetah_common::commands::types::float::{DoubleField, IncrementDouble};
 	use cheetah_common::room::owner::GameObjectOwner;
 
 	#[test]
@@ -72,17 +46,16 @@ mod tests {
 		let object_id = object.id;
 		object.created = true;
 		room.test_out_commands.clear();
-		let command = SetDoubleCommand {
+		let command = DoubleField {
 			object_id,
 			field_id: 10,
 			value: 100.100.into(),
 		};
-		command.execute(&mut room, member_id).unwrap();
+		set(&command, &mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
-		assert_eq!(*object.doubles.get(10).unwrap(), 100.100);
-		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetDouble(c))) 
-			if c==command));
+		assert_eq!(*object.double_fields.get(10).unwrap(), 100.100);
+		assert!(matches!(room.test_out_commands.pop_back(), Some((..,S2CCommand::SetDouble(c))) if c==command));
 	}
 
 	#[test]
@@ -93,18 +66,18 @@ mod tests {
 		object.created = true;
 		let object_id = object.id;
 		room.test_out_commands.clear();
-		let command = IncrementDoubleC2SCommand {
+		let command = IncrementDouble {
 			object_id,
 			field_id: 10,
 			increment: 100.100,
 		};
-		command.clone().execute(&mut room, member_id).unwrap();
-		command.execute(&mut room, member_id).unwrap();
+		increment(&command, &mut room, member_id).unwrap();
+		increment(&command, &mut room, member_id).unwrap();
 
 		let object = room.get_object_mut(object_id).unwrap();
-		assert_eq!(*object.doubles.get(10).unwrap(), 200.200);
+		assert_eq!(*object.double_fields.get(10).unwrap(), 200.200);
 
-		let result = SetDoubleCommand {
+		let result = DoubleField {
 			object_id,
 			field_id: 10,
 			value: 200.200,

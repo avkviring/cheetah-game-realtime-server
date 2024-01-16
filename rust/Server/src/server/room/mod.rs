@@ -12,8 +12,7 @@ use crate::server::room::command::{execute, ServerCommandError};
 use crate::server::room::object::{GameObject, S2CCommandsCollector};
 use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
-use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithMeta};
-use cheetah_common::commands::types::delete::DeleteGameObjectCommand;
+use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 use cheetah_common::room::access::AccessGroups;
@@ -138,7 +137,7 @@ impl Room {
 						tracing::error!("Slow command {:?}", command);
 					}
 				}
-				BothDirectionCommand::S2CWithCreator(_) => {
+				BothDirectionCommand::S2C(_) => {
 					tracing::error!("[room({:?})] receive unsupported command {:?}", self.id, command_with_channel);
 				}
 			}
@@ -208,11 +207,7 @@ impl Room {
 			}
 		};
 
-		let s2c = S2CCommandWithMeta {
-			field: None,
-			creator: member_id,
-			command: S2CCommand::MemberDisconnected(MemberDisconnected { member_id }),
-		};
+		let s2c = S2CCommand::MemberDisconnected(MemberDisconnected { member_id });
 		self.send_to_members(AccessGroups::super_member_group(), slice::from_ref(&s2c), |member| member.id != member_id)?;
 
 		Ok(())
@@ -240,15 +235,7 @@ impl Room {
 			None => Err(ServerCommandError::GameObjectNotFound { object_id }),
 			Some(object) => {
 				if object.created {
-					self.send_to_members(
-						object.access_groups,
-						&[S2CCommandWithMeta {
-							field: None,
-							creator: member_id,
-							command: S2CCommand::Delete(DeleteGameObjectCommand { object_id: object.id }),
-						}],
-						|member| member.id != member_id,
-					)?;
+					self.send_to_members(object.access_groups, &[S2CCommand::Delete(object.id)], |member| member.id != member_id)?;
 				}
 				Ok(object)
 			}
@@ -261,19 +248,15 @@ impl Room {
 
 	fn on_member_connect(&mut self, member_id: RoomMemberId, template: MemberTemplate) -> Result<(), ServerCommandError> {
 		for object_template in template.objects {
-			let object = object_template.create_member_game_object(member_id);
+			let mut object = object_template.create_member_game_object(member_id);
 			let mut commands = S2CCommandsCollector::new();
-			object.collect_create_commands(&mut commands, member_id);
+			object.collect_create_commands(&mut commands);
 			let access_groups = object.access_groups;
 			self.send_to_members(access_groups, commands.as_slice(), |_member_id| true)?;
 			self.insert_object(object);
 		}
 
-		let s2c = S2CCommandWithMeta {
-			field: None,
-			creator: member_id,
-			command: S2CCommand::MemberConnected(MemberConnected { member_id }),
-		};
+		let s2c = S2CCommand::MemberConnected(MemberConnected { member_id });
 		self.send_to_members(AccessGroups::super_member_group(), slice::from_ref(&s2c), |other_member| other_member.id != member_id)?;
 
 		Ok(())
@@ -291,8 +274,8 @@ mod tests {
 	use crate::server::room::Room;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::guarantees::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
-	use cheetah_common::commands::s2c::{S2CCommand, S2CCommandWithCreator};
-	use cheetah_common::commands::types::long::SetLongCommand;
+	use cheetah_common::commands::s2c::S2CCommand;
+	use cheetah_common::commands::types::long::LongField;
 	use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 	use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 	use cheetah_common::room::access::AccessGroups;
@@ -344,21 +327,21 @@ mod tests {
 				.iter()
 				.map(|c| &c.command)
 				.filter_map(|c| match c {
-					BothDirectionCommand::S2CWithCreator(c) => Some(c.command.clone()),
+					BothDirectionCommand::S2C(c) => Some(c.clone()),
 					BothDirectionCommand::C2S(_) => None,
 				})
 				.collect()
 		}
 
 		#[must_use]
-		pub fn test_get_member_out_commands_with_meta(&self, member_id: RoomMemberId) -> VecDeque<S2CCommandWithCreator> {
+		pub fn test_get_member_out_commands_with_meta(&self, member_id: RoomMemberId) -> VecDeque<S2CCommand> {
 			self.get_member(&member_id)
 				.unwrap()
 				.out_commands
 				.iter()
 				.map(|c| &c.command)
 				.filter_map(|c| match c {
-					BothDirectionCommand::S2CWithCreator(c) => Some(c.clone()),
+					BothDirectionCommand::S2C(c) => Some(c.clone()),
 					BothDirectionCommand::C2S(_) => None,
 				})
 				.collect()
@@ -390,8 +373,8 @@ mod tests {
 		assert!(room.contains_object(&object_b_1));
 		assert!(room.contains_object(&object_b_2));
 
-		assert!(matches!(room.test_out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_1));
-		assert!(matches!(room.test_out_commands.pop_back(), Some((..,S2CCommand::Delete(command))) if command.object_id == object_a_2));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((..,S2CCommand::Delete(object_id))) if object_id == object_a_1));
+		assert!(matches!(room.test_out_commands.pop_back(), Some((..,S2CCommand::Delete(object_id))) if object_id == object_a_2));
 	}
 
 	#[test]
@@ -518,14 +501,11 @@ mod tests {
 		let member = room.get_member_mut(&member_id).unwrap();
 		member.out_commands.push(CommandWithChannelType {
 			channel_type: ReliabilityGuarantees::ReliableUnordered,
-			command: BothDirectionCommand::S2CWithCreator(S2CCommandWithCreator {
-				command: S2CCommand::SetLong(SetLongCommand {
-					object_id: Default::default(),
-					field_id: 0,
-					value: 0,
-				}),
-				creator: 0,
-			}),
+			command: BothDirectionCommand::S2C(S2CCommand::SetLong(LongField {
+				object_id: Default::default(),
+				field_id: 0,
+				value: 0,
+			})),
 		});
 		room.collect_out_commands(|_, _| {});
 		let member = room.get_member(&member_id).unwrap();

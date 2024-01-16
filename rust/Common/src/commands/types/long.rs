@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Serialize, Deserialize)]
 #[repr(C)]
-pub struct SetLongCommand {
+pub struct LongField {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub value: i64,
@@ -19,13 +19,13 @@ pub struct SetLongCommand {
 ///
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[repr(C)]
-pub struct IncrementLongC2SCommand {
+pub struct IncrementLong {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,
 	pub increment: i64,
 }
 
-impl SetLongCommand {
+impl LongField {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_i64(self.value)
 	}
@@ -36,7 +36,7 @@ impl SetLongCommand {
 	}
 }
 
-impl IncrementLongC2SCommand {
+impl IncrementLong {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_i64(self.increment)
 	}
