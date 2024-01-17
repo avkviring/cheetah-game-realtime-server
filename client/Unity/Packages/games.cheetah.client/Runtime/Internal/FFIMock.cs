@@ -230,8 +230,10 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
-        public void ScheduleCreateObjectCommandFromServer(S2CCommands.CreateObject command)
+
+        public void ScheduleCreateObjectCommand(NetworkObjectId objectId, ushort template, ulong accessGroup)
         {
+            var command = new S2CCommands.CreateObject(objectId, template, accessGroup);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.CreateGameObject,
@@ -244,8 +246,9 @@ namespace Games.Cheetah.Client.Internal
             creatingObjects.Add(command.objectId, new NetworkObject(command.objectId, command.template));
         }
 
-        public void ScheduleCreatedObjectCommandFromServer(S2CCommands.CreatedObject command)
+        public void ScheduleCreatedObjectCommand(NetworkObjectId objectId)
         {
+            var command = new S2CCommands.CreatedObject(objectId);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.CreatedGameObject,
@@ -258,8 +261,10 @@ namespace Games.Cheetah.Client.Internal
             CreatedObject(0, in command.objectId, false, ref networkBuffer);
         }
 
-        public void ScheduleSetLongCommandFromServer(S2CCommands.SetLong command)
+
+        public void ScheduleSetLongCommand(NetworkObjectId id, FieldId.Long field, long value)
         {
+            var command = new S2CCommands.SetLong(id, field, value);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.SetLong,
@@ -271,8 +276,9 @@ namespace Games.Cheetah.Client.Internal
             Set(0, in command.objectId, new FieldId.Long(command.fieldId), command.value);
         }
 
-        public void ScheduleSetDoubleCommandFromServer(S2CCommands.SetDouble command)
+        public void ScheduleSetDoubleCommand(NetworkObjectId id, FieldId.Double field, float value)
         {
+            var command = new S2CCommands.SetDouble(id, field, value);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.SetDouble,
@@ -284,8 +290,9 @@ namespace Games.Cheetah.Client.Internal
             Set(0, in command.objectId, new FieldId.Double(command.fieldId), command.value);
         }
 
-        public void ScheduleSendEventCommandFromServer(S2CCommands.Event command)
+        public void ScheduleSendEventCommand(NetworkObjectId id, FieldId.Event field, NetworkBuffer value)
         {
+            var command = new S2CCommands.Event(id, field, value);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.SendEvent,
@@ -297,8 +304,10 @@ namespace Games.Cheetah.Client.Internal
             Send(0, in command.objectId, new FieldId.Event(command.fieldId), ref command.eventData);
         }
 
-        public void ScheduleSetStructureCommandFromServer(S2CCommands.BinaryField command)
+
+        public void ScheduleSetStructureCommand(NetworkObjectId id, FieldId.Structure field, NetworkBuffer value)
         {
+            var command = new S2CCommands.BinaryField(id, field, value);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.SetStructure,
@@ -310,8 +319,10 @@ namespace Games.Cheetah.Client.Internal
             Set(0, in command.objectId, new FieldId.Structure(command.fieldId), ref command.value);
         }
 
-        public void ScheduleAddItemCommandFromServer(S2CCommands.BinaryField command)
+
+        public void ScheduleAddItemCommand(NetworkObjectId id, FieldId.Items field, NetworkBuffer value)
         {
+            var command = new S2CCommands.BinaryField(id, field, value);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.AddItem,
@@ -324,8 +335,9 @@ namespace Games.Cheetah.Client.Internal
         }
 
 
-        public void ScheduleDeleteObjectCommandFromServer(S2CCommands.DeleteObject command)
+        public void ScheduleDeleteObjectCommand(NetworkObjectId objectId)
         {
+            var command = new S2CCommands.DeleteObject(objectId);
             s2cCommands.Add(new S2CCommand
             {
                 commandType = CommandType.DeleteObject,

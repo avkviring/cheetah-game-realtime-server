@@ -13,15 +13,15 @@ namespace Games.Cheetah.Client
      */
     public interface INetworkClientMock
     {
-        void ScheduleCreateObjectCommandFromServer(S2CCommands.CreateObject command);
-        void ScheduleCreatedObjectCommandFromServer(S2CCommands.CreatedObject command);
-        void ScheduleSetLongCommandFromServer(S2CCommands.SetLong command);
-        void ScheduleSetDoubleCommandFromServer(S2CCommands.SetDouble command);
-        void ScheduleDeleteObjectCommandFromServer(S2CCommands.DeleteObject command);
-        void ScheduleSendEventCommandFromServer(S2CCommands.Event command);
-        void ScheduleSetStructureCommandFromServer(S2CCommands.BinaryField command);
-        void ScheduleAddItemCommandFromServer(S2CCommands.BinaryField command);
-        
+        void ScheduleCreateObjectCommand(NetworkObjectId objectId, ushort template, ulong accessGroup);
+        void ScheduleCreatedObjectCommand(NetworkObjectId objectId);
+        void ScheduleSetLongCommand(NetworkObjectId id, FieldId.Long field, long value);
+        void ScheduleSetDoubleCommand(NetworkObjectId id, FieldId.Double field, float value);
+        void ScheduleDeleteObjectCommand(NetworkObjectId objectId);
+        void ScheduleSendEventCommand(NetworkObjectId id, FieldId.Event field, NetworkBuffer value);
+        void ScheduleSetStructureCommand(NetworkObjectId id, FieldId.Structure field, NetworkBuffer value);
+        void ScheduleAddItemCommand(NetworkObjectId id, FieldId.Items field, NetworkBuffer value);
+
         long? GetFieldValue(NetworkObjectId id, FieldId.Long field);
         double? GetFieldValue(NetworkObjectId id, FieldId.Double field);
         T? GetFieldValue<T>(NetworkObjectId id, FieldId.Structure field) where T : struct;

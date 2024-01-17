@@ -62,7 +62,8 @@ namespace Games.Cheetah.Client.Types.Command
 
             public override string ToString()
             {
-                return $"{nameof(objectId)}: {objectId}, {nameof(template)}: {template}, {nameof(accessGroup)}: {accessGroup}";
+                return
+                    $"{nameof(objectId)}: {objectId}, {nameof(template)}: {template}, {nameof(accessGroup)}: {accessGroup}";
             }
         }
 
@@ -99,6 +100,20 @@ namespace Games.Cheetah.Client.Types.Command
             public NetworkObjectId objectId;
             public ushort fieldId;
             public NetworkBuffer eventData;
+
+            public Event(NetworkObjectId objectId, FieldId.Event fieldId, NetworkBuffer eventData)
+            {
+                this.objectId = objectId;
+                this.fieldId = fieldId.Id;
+                this.eventData = eventData;
+            }
+
+
+            public override string ToString()
+            {
+                return
+                    $"{nameof(objectId)}: {objectId}, {nameof(fieldId)}: {fieldId}, {nameof(eventData)}: {eventData}";
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -159,6 +174,13 @@ namespace Games.Cheetah.Client.Types.Command
             public NetworkBuffer value;
 
             public BinaryField(NetworkObjectId id, FieldId.Structure field, NetworkBuffer value)
+            {
+                objectId = id;
+                fieldId = field.Id;
+                this.value = value;
+            }
+            
+            public BinaryField(NetworkObjectId id, FieldId.Items field, NetworkBuffer value)
             {
                 objectId = id;
                 fieldId = field.Id;
