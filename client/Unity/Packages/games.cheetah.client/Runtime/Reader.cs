@@ -208,6 +208,31 @@ namespace Games.Cheetah.Client
 
             return result;
         }
+        public void CollectAddedItems<T>(FieldId.Items fieldId, List<(NetworkObjectId, T)> items)
+            where T : new()
+        {
+            for (var i = 0; i < client.S2CCommandsCount; i++)
+            {
+                ref var command = ref client.s2cCommands[i];
+                if (command.commandType != CommandType.AddItem) continue;
+                ref var setCommand = ref command.commandUnion.binaryField;
+                var commandObjectId = setCommand.objectId;
+
+                if (IsCreatingObject(commandObjectId))
+                {
+                    continue;
+                }
+
+                if (FilterCommand(fieldId, setCommand.fieldId))
+                {
+                    var item = new T();
+                    var networkBuffer = setCommand.value;
+                    codecRegistry.GetCodec<T>().Decode(ref networkBuffer, ref item);
+                    items.Add((commandObjectId, item));
+                }
+            }
+        }
+
 
         public void CollectModifiedStructures<T>(FieldId.Structure fieldId, List<(NetworkObjectId, T)> structures)
             where T : new()
