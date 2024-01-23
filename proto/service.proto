@@ -95,7 +95,7 @@ message GameObjectTemplate {
   uint32 id = 1;
   uint32 template = 2;
   uint64 groups = 3;
-  GameObjectField fields = 4;
+  repeated GameObjectField fields = 4;
 }
 
 message GameObjectConfig {
