@@ -1,6 +1,6 @@
 {
-  "name": "games.cheetah.grpc.shared",
-  "rootNamespace": "Games.Cheetah.Grpc.Shared",
+  "name": "games.cheetah.realtime.grpc",
+  "rootNamespace": "Games.Cheetah.Realtime.Grpc",
   "references": [
     "games.cheetah.grpc"
   ],

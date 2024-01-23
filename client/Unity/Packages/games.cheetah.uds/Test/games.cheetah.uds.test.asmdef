@@ -6,7 +6,7 @@
     "UnityEditor.TestRunner",
     "UnityEngine",
     "games.cheetah.client",
-    "games.cheetah.grpc.internal",
+    "games.cheetah.realtime.grpc",
     "games.cheetah.grpc",
     "games.cheetah.embedded-server",
     "games.cheetah.uds"

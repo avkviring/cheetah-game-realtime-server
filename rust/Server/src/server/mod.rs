@@ -2,7 +2,7 @@ use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTa
 use crate::server::measurer::Measurer;
 use crate::server::network::Network;
 use crate::server::room::command::ServerCommandError;
-use crate::server::room::template::config::MemberTemplate;
+use crate::server::room::config::member::MemberCreateParams;
 use crate::server::room_registry::{RoomNotFoundError, Rooms};
 use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 use cheetah_game_realtime_protocol::disconnect::command::DisconnectByCommandReason;
@@ -106,7 +106,7 @@ impl Server {
 		Ok(res)
 	}
 
-	fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {
+	fn register_member(&mut self, room_id: RoomId, member_template: MemberCreateParams, now: Instant) -> Result<RoomMemberId, RoomNotFoundError> {
 		let room_member_id = self.rooms.register_member(room_id, member_template.clone())?;
 		self.network.register_member(now, room_id, room_member_id, member_template);
 		Ok(room_member_id)

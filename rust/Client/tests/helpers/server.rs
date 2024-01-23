@@ -4,7 +4,7 @@ use cheetah_common::room::object::GameObjectTemplateId;
 use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 use cheetah_game_realtime_protocol::RoomId;
 use cheetah_server::server::manager::ServerManager;
-use cheetah_server::server::room::template::config::RoomTemplate;
+use cheetah_server::server::room::config::room::RoomCreateParams;
 use std::net::SocketAddr;
 use std::time::Duration;
 
@@ -13,7 +13,7 @@ use std::time::Duration;
 ///
 #[derive(Debug, Default)]
 pub struct IntegrationTestServerBuilder {
-	template: RoomTemplate,
+	template: RoomCreateParams,
 }
 
 impl IntegrationTestServerBuilder {

@@ -8,7 +8,6 @@
   "repository": "github:cheetah-game-platform/platform",
   "dependencies": {
     "games.cheetah.grpc": "999.999.999",
-    "games.cheetah.grpc.shared": "999.999.999",
     "com.unity.collections": "1.2.4"
   },
   "hideInEditor": false,

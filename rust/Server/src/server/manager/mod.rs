@@ -1,6 +1,7 @@
 pub mod grpc;
 use crate::server::room::command::ServerCommandError;
-use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+use crate::server::room::config::member::MemberCreateParams;
+use crate::server::room::config::room::RoomCreateParams;
 use crate::server::room::Room;
 use crate::server::room_registry::RoomNotFoundError;
 use crate::server::Server;
@@ -27,8 +28,8 @@ pub struct ServerManager {
 
 #[derive(Debug)]
 pub enum ManagementTask {
-	CreateRoom(RoomTemplate),
-	CreateMember(RoomId, MemberTemplate),
+	CreateRoom(RoomCreateParams),
+	CreateMember(RoomId, MemberCreateParams),
 	DeleteMember(MemberAndRoomId),
 	Dump(RoomId),
 	GetRooms,
@@ -148,7 +149,7 @@ impl ServerManager {
 		})?
 	}
 
-	pub fn create_room(&mut self, template: RoomTemplate) -> Result<RoomId, ManagementTaskError> {
+	pub fn create_room(&mut self, template: RoomCreateParams) -> Result<RoomId, ManagementTaskError> {
 		self.execute_task(ManagementTask::CreateRoom(template)).map(|res| {
 			if let ManagementTaskResult::CreateRoom(room_id) = res {
 				Ok(room_id)
@@ -168,7 +169,7 @@ impl ServerManager {
 		self.execute_task(ManagementTask::DeleteRoom(room_id)).map(|_| ())
 	}
 
-	pub fn create_member(&mut self, room_id: RoomId, template: MemberTemplate) -> Result<RoomMemberId, ManagementTaskError> {
+	pub fn create_member(&mut self, room_id: RoomId, template: MemberCreateParams) -> Result<RoomMemberId, ManagementTaskError> {
 		self.execute_task(ManagementTask::CreateMember(room_id, template)).map(|res| {
 			if let ManagementTaskResult::CreateMember(id) = res {
 				Ok(id)
@@ -210,7 +211,8 @@ impl ServerManager {
 #[cfg(test)]
 mod test {
 	use crate::server::manager::ServerManager;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 	use std::time::Duration;
@@ -218,7 +220,7 @@ mod test {
 	#[test]
 	fn should_get_rooms() {
 		let mut server = new_server_manager();
-		let room_id = server.create_room(RoomTemplate::default()).unwrap();
+		let room_id = server.create_room(RoomCreateParams::default()).unwrap();
 		let rooms = server.get_rooms().unwrap();
 		assert_eq!(rooms, vec![room_id]);
 	}
@@ -226,8 +228,8 @@ mod test {
 	#[test]
 	fn should_create_member() {
 		let mut server = new_server_manager();
-		let room_id = server.create_room(RoomTemplate::default()).unwrap();
-		let member_id = server.create_member(room_id, MemberTemplate::default()).unwrap();
+		let room_id = server.create_room(RoomCreateParams::default()).unwrap();
+		let member_id = server.create_member(room_id, MemberCreateParams::default()).unwrap();
 
 		assert_eq!(member_id, 1);
 	}

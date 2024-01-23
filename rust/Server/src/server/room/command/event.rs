@@ -32,13 +32,14 @@ mod tests {
 	use cheetah_common::room::owner::GameObjectOwner;
 
 	use crate::server::room::command::tests::setup_one_player;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::Room;
 
 	#[test]
 	pub(crate) fn should_send_event() {
 		let (mut room, member_id, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		object.created = true;
 		let object_id = object.id;
 		room.test_out_commands.clear();
@@ -55,19 +56,19 @@ mod tests {
 
 	#[test]
 	pub(crate) fn should_send_event_to_member() {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(10);
 
-		let mut room = Room::from_template(template);
-		let member1 = room.register_member(MemberTemplate::stub(access_groups));
-		let member2 = room.register_member(MemberTemplate::stub(access_groups));
-		let member3 = room.register_member(MemberTemplate::stub(access_groups));
+		let mut room = Room::new(0, template);
+		let member1 = room.register_member(MemberCreateParams::stub(access_groups));
+		let member2 = room.register_member(MemberCreateParams::stub(access_groups));
+		let member3 = room.register_member(MemberCreateParams::stub(access_groups));
 
 		room.mark_as_connected_in_test(member1).unwrap();
 		room.mark_as_connected_in_test(member2).unwrap();
 		room.mark_as_connected_in_test(member3).unwrap();
 
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member1), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member1), access_groups, Default::default());
 		object.created = true;
 		let object_id = object.id;
 		room.get_member_out_commands_for_test(member1).clear();

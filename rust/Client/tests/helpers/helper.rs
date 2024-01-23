@@ -11,7 +11,7 @@ use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::object::GameObjectId;
 use cheetah_server::server::manager::ServerManager;
-use cheetah_server::server::room::template::config::MemberTemplate;
+use cheetah_server::server::room::config::member::MemberCreateParams;
 
 use crate::helpers::server::IntegrationTestServerBuilder;
 
@@ -69,7 +69,7 @@ impl IntegrationTestHelper {
 
 	pub fn create_member(&mut self) -> (RoomMemberId, MemberPrivateKey) {
 		let private_key = MemberPrivateKey::new_random();
-		let member_template = MemberTemplate {
+		let member_template = MemberCreateParams {
 			super_member: false,
 			private_key: private_key.clone(),
 			groups: IntegrationTestServerBuilder::DEFAULT_ACCESS_GROUP,

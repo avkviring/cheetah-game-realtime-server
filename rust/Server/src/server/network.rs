@@ -12,7 +12,7 @@ use cheetah_game_realtime_protocol::frame::{Frame, FrameId};
 use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
 use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 
-use crate::server::room::template::config::MemberTemplate;
+use crate::server::room::config::member::MemberCreateParams;
 use crate::server::room_registry::Rooms;
 use cheetah_common::network::collectors::in_collector::InCommandsCollector;
 use cheetah_common::network::CheetahProtocol;
@@ -211,7 +211,7 @@ impl Network {
 		frame.connection_id > session.protocol.connection_id || frame.frame_id > session.last_receive_frame_id || session.last_receive_frame_id == 0
 	}
 
-	pub fn register_member(&mut self, now: Instant, room_id: RoomId, member_id: RoomMemberId, template: MemberTemplate) {
+	pub fn register_member(&mut self, now: Instant, room_id: RoomId, member_id: RoomMemberId, template: MemberCreateParams) {
 		self.sessions.insert(
 			MemberAndRoomId { member_id, room_id },
 			MemberSession {
@@ -243,8 +243,8 @@ mod tests {
 	use std::time::{Duration, Instant};
 
 	use crate::server::network::Network;
+	use crate::server::room::config::member::MemberCreateParams;
 	use crate::server::room::member::RoomMember;
-	use crate::server::room::template::config::MemberTemplate;
 	use crate::server::room_registry::Rooms;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_game_realtime_protocol::codec::cipher::Cipher;
@@ -293,7 +293,7 @@ mod tests {
 		let mut rooms = Rooms::default();
 		let mut buffer = [0; 512];
 
-		let member_template = MemberTemplate::new_member(Default::default(), Default::default());
+		let member_template = MemberCreateParams::new_member(Default::default(), Default::default());
 		let member = RoomMember {
 			id: 100,
 			connected: false,
@@ -324,7 +324,7 @@ mod tests {
 	#[test]
 	fn should_disconnect_members() {
 		let mut udp_server = create_network_layer();
-		let member_template = MemberTemplate::new_member(Default::default(), Default::default());
+		let member_template = MemberCreateParams::new_member(Default::default(), Default::default());
 		let member_to_delete = MemberAndRoomId { member_id: 0, room_id: 0 };
 		udp_server.register_member(Instant::now(), member_to_delete.room_id, member_to_delete.member_id, member_template.clone());
 		udp_server.register_member(Instant::now(), 0, 1, member_template);

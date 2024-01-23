@@ -1,17 +1,16 @@
-use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
-use cheetah_game_realtime_protocol::RoomId;
-use std::sync::Arc;
-
-use crate::server::manager::grpc::proto::internal::internal_server::Internal;
-use crate::server::manager::grpc::proto::internal::{
+use crate::server::manager::grpc::proto::realtime_server_management_service_server::RealtimeServerManagementService;
+use crate::server::manager::grpc::proto::{
 	CreateMemberRequest, CreateMemberResponse, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest, DeleteRoomResponse, EmptyRequest, GetRoomsMembersCountResponse,
 	GetRoomsResponse, ProbeRequest, ProbeResponse, RoomIdResponse, RoomMembersCountResponse, RoomTemplate,
 };
 use crate::server::manager::{ManagementTaskError, ManagementTaskExecutionError};
 use crate::server::room::command::ServerCommandError;
-use crate::server::room::template::config::MemberTemplate;
+use crate::server::room::config::member::MemberCreateParams;
 use crate::ServerManager;
 use cheetah_common::room::access::AccessGroups;
+use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
+use cheetah_game_realtime_protocol::RoomId;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 use tonic::{Request, Response, Status};
@@ -19,19 +18,19 @@ use tonic::{Request, Response, Status};
 mod from;
 pub mod proto;
 
-pub struct RealtimeInternalService {
+pub struct RealtimeServerManagementServiceImpl {
 	pub server_manager: Arc<Mutex<ServerManager>>,
 }
 
 const SUPER_MEMBER_KEY_ENV: &str = "SUPER_MEMBER_KEY";
 
-impl RealtimeInternalService {
+impl RealtimeServerManagementServiceImpl {
 	#[must_use]
 	pub fn new(server_manager: Arc<Mutex<ServerManager>>) -> Self {
-		RealtimeInternalService { server_manager }
+		RealtimeServerManagementServiceImpl { server_manager }
 	}
 
-	async fn register_member(&self, room_id: RoomId, template: MemberTemplate) -> Result<Response<CreateMemberResponse>, Status> {
+	async fn register_member(&self, room_id: RoomId, template: MemberCreateParams) -> Result<Response<CreateMemberResponse>, Status> {
 		let private_key = template.private_key.clone();
 		self.server_manager.lock().await.create_member(room_id, template).map_err(Status::from).map(|member_id| {
 			Response::new(CreateMemberResponse {
@@ -45,7 +44,7 @@ impl RealtimeInternalService {
 		if let Ok(key_from_env) = std::env::var(SUPER_MEMBER_KEY_ENV) {
 			let key_from_env_bytes = key_from_env.as_bytes();
 			let key = key_from_env_bytes.into();
-			server.create_member(room_id, MemberTemplate::new_super_member_with_key(key))?;
+			server.create_member(room_id, MemberCreateParams::new_super_member_with_key(key))?;
 		}
 
 		Ok(())
@@ -53,7 +52,7 @@ impl RealtimeInternalService {
 }
 
 #[tonic::async_trait]
-impl Internal for RealtimeInternalService {
+impl RealtimeServerManagementService for RealtimeServerManagementServiceImpl {
 	async fn create_room(&self, request: Request<RoomTemplate>) -> Result<Response<RoomIdResponse>, Status> {
 		let mut server = self.server_manager.lock().await;
 		let template = From::from(request.into_inner());
@@ -70,7 +69,7 @@ impl Internal for RealtimeInternalService {
 		if user_template.groups == AccessGroups::super_member_group().0 {
 			return Err(Status::permission_denied("Wrong member group"));
 		}
-		self.register_member(request.room_id, MemberTemplate::from(user_template)).await
+		self.register_member(request.room_id, MemberCreateParams::from(user_template)).await
 	}
 
 	/// закрыть соединение с пользователем и удалить его из комнаты
@@ -88,7 +87,7 @@ impl Internal for RealtimeInternalService {
 
 	async fn create_super_member(&self, request: Request<CreateSuperMemberRequest>) -> Result<Response<CreateMemberResponse>, Status> {
 		let request = request.into_inner();
-		self.register_member(request.room_id, MemberTemplate::new_super_member()).await
+		self.register_member(request.room_id, MemberCreateParams::new_super_member()).await
 	}
 
 	async fn probe(&self, _request: Request<ProbeRequest>) -> Result<Response<ProbeResponse>, Status> {
@@ -150,11 +149,11 @@ impl From<ManagementTaskError> for Status {
 
 #[cfg(test)]
 mod test {
-	use crate::server::manager::grpc::proto::internal::internal_server::Internal;
-	use crate::server::manager::grpc::proto::internal::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, RoomMembersCountResponse};
-	use crate::server::manager::grpc::{RealtimeInternalService, SUPER_MEMBER_KEY_ENV};
+	use crate::server::manager::grpc::proto::realtime_server_management_service_server::RealtimeServerManagementService;
+	use crate::server::manager::grpc::proto::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, RoomMembersCountResponse};
+	use crate::server::manager::grpc::{RealtimeServerManagementServiceImpl, SUPER_MEMBER_KEY_ENV};
 	use crate::server::manager::ServerManager;
-	use crate::server::room::template::config::MemberTemplate;
+	use crate::server::room::config::member::MemberCreateParams;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 	use std::sync::Arc;
@@ -165,7 +164,7 @@ mod test {
 	#[tokio::test]
 	async fn should_get_rooms() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 		let room_1 = server_manager.lock().await.create_room(Default::default()).unwrap();
 		let room_2 = server_manager.lock().await.create_room(Default::default()).unwrap();
 
@@ -179,7 +178,7 @@ mod test {
 	#[tokio::test]
 	async fn should_get_rooms_members_counts() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 		let room_1 = server_manager.lock().await.create_room(Default::default()).unwrap();
 		let room_2 = server_manager.lock().await.create_room(Default::default()).unwrap();
 		server_manager
@@ -187,7 +186,7 @@ mod test {
 			.await
 			.create_member(
 				room_1,
-				MemberTemplate {
+				MemberCreateParams {
 					super_member: false,
 					private_key: Default::default(),
 					groups: Default::default(),
@@ -216,7 +215,7 @@ mod test {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 
 		std::env::set_var(SUPER_MEMBER_KEY_ENV, "some-key");
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner();
 
 		let dump_response = server_manager.lock().await.dump(room_id.room_id).unwrap();
@@ -227,7 +226,7 @@ mod test {
 	async fn test_delete_room() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
 
 		service.delete_room(Request::new(DeleteRoomRequest { id: room_id })).await.unwrap();
@@ -237,7 +236,7 @@ mod test {
 	async fn test_delete_room_not_exist() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
 
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 
 		service.delete_room(Request::new(Default::default())).await.unwrap_err();
 	}
@@ -245,10 +244,10 @@ mod test {
 	#[tokio::test]
 	async fn test_delete_member() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 
 		let room_id = service.create_room(Request::new(Default::default())).await.unwrap().into_inner().room_id;
-		let member_id = service.register_member(room_id, MemberTemplate::default()).await.unwrap().into_inner().user_id;
+		let member_id = service.register_member(room_id, MemberCreateParams::default()).await.unwrap().into_inner().user_id;
 		assert!(!server_manager.lock().await.dump(room_id).unwrap().unwrap().members.is_empty(), "room should not be empty");
 
 		assert!(
@@ -265,7 +264,7 @@ mod test {
 	#[tokio::test]
 	async fn test_delete_member_room_not_exist() {
 		let server_manager = Arc::new(Mutex::new(new_server_manager()));
-		let service = RealtimeInternalService::new(Arc::clone(&server_manager));
+		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 
 		let res = service.delete_member(Request::new(DeleteMemberRequest { user_id: 0, room_id: 0 })).await;
 

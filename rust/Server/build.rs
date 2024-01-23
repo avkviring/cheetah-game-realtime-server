@@ -8,7 +8,7 @@ fn main() -> Result<(), Error> {
 	std::env::set_var("PROTOC", PathBuf::from("../../scripts/bin/lin/protoc"));
 	#[cfg(target_os = "windows")]
 	std::env::set_var("PROTOC", PathBuf::from("../../scripts/bin/win/protoc"));
-	tonic_build::configure().compile(&["../../proto/internal.proto"], &["../../proto/"])?;
+	tonic_build::configure().compile(&["../../proto/service.proto"], &["../../proto/"])?;
 	tonic_build::configure().build_server(false).compile(&["../../proto/status-receiver.proto"], &["../../proto/"])?;
 	Ok(())
 }

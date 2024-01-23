@@ -226,7 +226,6 @@
       "source": "embedded",
       "dependencies": {
         "games.cheetah.grpc": "999.999.999",
-        "games.cheetah.grpc.shared": "999.999.999",
         "com.unity.collections": "1.2.4"
       }
     },
@@ -237,7 +236,7 @@
       "dependencies": {
         "games.cheetah.grpc": "999.999.999",
         "games.cheetah.client": "999.999.999",
-        "games.cheetah.grpc.internal": "999.999.999"
+        "games.cheetah.realtime.grpc": "999.999.999"
       }
     },
     "games.cheetah.grpc": {
@@ -249,17 +248,8 @@
       },
       "hash": "a528eb1f83d995ed8ba1497af70fa63f3b9b2937"
     },
-    "games.cheetah.grpc.internal": {
-      "version": "file:games.cheetah.grpc.internal",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "games.cheetah.grpc": "999.999.999",
-        "games.cheetah.grpc.shared": "999.999.999"
-      }
-    },
-    "games.cheetah.grpc.shared": {
-      "version": "file:games.cheetah.grpc.shared",
+    "games.cheetah.realtime.grpc": {
+      "version": "file:games.cheetah.realtime.grpc",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
@@ -273,7 +263,7 @@
       "dependencies": {
         "games.cheetah.grpc": "999.999.999",
         "games.cheetah.client": "999.999.999",
-        "games.cheetah.grpc.internal": "999.999.999",
+        "games.cheetah.realtime.grpc": "999.999.999",
         "games.cheetah.embedded-server": "999.999.999"
       }
     },

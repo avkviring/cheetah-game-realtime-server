@@ -52,7 +52,7 @@ pub enum ServerCommandError {
 
 	#[error(
 		"Member {member_id:?} cannot access to field {field:?} in object {object_id:?} with \
-		template {template_id:?} in room {room_id:?}"
+		config {template_id:?} in room {room_id:?}"
 	)]
 	MemberCannotAccessToObjectField {
 		room_id: RoomId,
@@ -110,24 +110,25 @@ mod tests {
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::Room;
 
 	pub(crate) fn setup_two_players() -> (Room, GameObjectId, RoomMemberId, RoomMemberId) {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(0b11);
-		let mut room = Room::from_template(template);
-		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
-		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object_id = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups).id;
+		let mut room = Room::new(0, template);
+		let member_1 = room.register_member(MemberCreateParams::stub(access_groups));
+		let member_2 = room.register_member(MemberCreateParams::stub(access_groups));
+		let object_id = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups, Default::default()).id;
 		(room, object_id, member_1, member_2)
 	}
 
 	pub(crate) fn setup_one_player() -> (Room, RoomMemberId, AccessGroups) {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(10);
-		let mut room = Room::from_template(template);
-		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		let mut room = Room::new(0, template);
+		let member_id = room.register_member(MemberCreateParams::stub(access_groups));
 		(room, member_id, access_groups)
 	}
 }

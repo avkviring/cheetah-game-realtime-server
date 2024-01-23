@@ -65,7 +65,7 @@ where
 pub mod test {
 	use crate::server::debug::{full_dump_rooms, simple_dump_rooms};
 	use crate::server::manager::ServerManager;
-	use crate::server::room::template::config::RoomTemplate;
+	use crate::server::room::config::room::RoomCreateParams;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
 	use std::sync::Arc;
@@ -81,9 +81,9 @@ pub mod test {
 		)
 		.unwrap();
 		let room_id = server_manager
-			.create_room(RoomTemplate {
+			.create_room(RoomCreateParams {
 				name: "".to_string(),
-				objects: vec![],
+				..Default::default()
 			})
 			.unwrap();
 
@@ -102,9 +102,9 @@ pub mod test {
 		)
 		.unwrap();
 		let room_id = server_manager
-			.create_room(RoomTemplate {
+			.create_room(RoomCreateParams {
 				name: "perm_room".to_string(),
-				objects: vec![],
+				..Default::default()
 			})
 			.unwrap();
 

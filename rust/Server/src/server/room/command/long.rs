@@ -54,7 +54,8 @@ mod tests {
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
 
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::Room;
 
 	const FIELD_ID: FieldId = 100;
@@ -119,11 +120,11 @@ mod tests {
 	}
 
 	fn setup() -> (Room, RoomMemberId, GameObjectId) {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(10);
-		let mut room = Room::from_template(template);
-		let member_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let mut room = Room::new(0, template);
+		let member_id = room.register_member(MemberCreateParams::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		object.created = true;
 		let object_id = object.id;
 		(room, member_id, object_id)

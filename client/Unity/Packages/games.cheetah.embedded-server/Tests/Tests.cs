@@ -6,7 +6,7 @@ using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Types.Network;
 using Games.Cheetah.EmbeddedServer.API;
-using Games.Cheetah.GRPC.Internal;
+using Games.Cheetah.Realtime.GRPC;
 using NUnit.Framework;
 
 namespace Games.Cheetah.EmbeddedServer.Tests

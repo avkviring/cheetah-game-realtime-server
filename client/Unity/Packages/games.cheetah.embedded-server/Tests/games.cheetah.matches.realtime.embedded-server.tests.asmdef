@@ -7,7 +7,7 @@
     "games.cheetah.grpc",
     "games.cheetah.client",
     "games.cheetah.embedded-server",
-    "games.cheetah.grpc.internal"
+    "games.cheetah.realtime.grpc"
   ],
   "includePlatforms": [
     "Editor"

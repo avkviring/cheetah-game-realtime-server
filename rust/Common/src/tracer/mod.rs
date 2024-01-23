@@ -133,7 +133,7 @@ mod tests {
 		path.push("Common");
 		path.push("src");
 		path.push("tracer");
-		path.push("mod.rs");
+		path.push("mod");
 
 		let view_path = path.display();
 		let error = format!("some error in {view_path}");

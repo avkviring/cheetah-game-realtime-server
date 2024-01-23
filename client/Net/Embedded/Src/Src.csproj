@@ -40,8 +40,7 @@
           <Pack>true</Pack>
           <PackagePath>runtimes/osx-x64/native/libcheetah_embedded.dylib</PackagePath>
         </Content>
-        <Protobuf Include="..\..\..\..\proto\shared.proto" GrpcServices="both" CompileOutputs="true" />
-        <Protobuf Include="..\..\..\..\proto\internal.proto" GrpcServices="both" CompileOutputs="true" />
+        <Protobuf Include="..\..\..\..\proto\service.proto" GrpcServices="both" CompileOutputs="true" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />

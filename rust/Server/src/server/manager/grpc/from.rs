@@ -1,28 +1,46 @@
-use crate::server::manager::grpc::proto::internal;
-use crate::server::manager::grpc::proto::shared::field_value::Variant;
-use crate::server::room::template::config;
+use crate::server::manager::grpc;
+use crate::server::manager::grpc::proto;
+use crate::server::manager::grpc::proto::field_value::Variant;
+use crate::server::manager::grpc::proto::{GameObjectConfig, GameObjectTemplate, ItemConfig};
+use crate::server::room::config::{member, object, room};
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::field::FieldId;
+use cheetah_common::room::object::GameObjectTemplateId;
 
-impl From<internal::RoomTemplate> for config::RoomTemplate {
-	fn from(source: internal::RoomTemplate) -> config::RoomTemplate {
-		config::RoomTemplate {
+impl From<grpc::RoomTemplate> for room::RoomCreateParams {
+	fn from(source: grpc::RoomTemplate) -> room::RoomCreateParams {
+		Self {
 			name: source.template_name,
-			objects: source.objects.into_iter().map(config::GameObjectTemplate::from).collect(),
+			objects: source.objects.into_iter().map(From::from).collect(),
+			configs: source.configs.into_iter().map(|config| (config.template as GameObjectTemplateId, From::from(config))).collect(),
 		}
 	}
 }
 
-impl From<internal::UserTemplate> for config::MemberTemplate {
-	fn from(source: internal::UserTemplate) -> Self {
-		config::MemberTemplate::new_member(AccessGroups(source.groups), source.objects.into_iter().map(config::GameObjectTemplate::from).collect())
+impl From<proto::GameObjectConfig> for object::GameObjectConfig {
+	fn from(source: GameObjectConfig) -> Self {
+		Self {
+			items_config: source.items_config.into_iter().map(|item| (item.0 as FieldId, From::from(item.1))).collect(),
+		}
 	}
 }
 
-impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
+impl From<proto::ItemConfig> for object::ItemConfig {
+	fn from(source: ItemConfig) -> Self {
+		Self { capacity: source.capacity as usize }
+	}
+}
+
+impl From<proto::UserTemplate> for member::MemberCreateParams {
+	fn from(source: proto::UserTemplate) -> Self {
+		member::MemberCreateParams::new_member(AccessGroups(source.groups), source.objects.into_iter().map(object::GameObjectCreateParams::from).collect())
+	}
+}
+
+impl From<GameObjectTemplate> for object::GameObjectCreateParams {
 	#[allow(clippy::cast_possible_truncation)]
-	fn from(source: internal::GameObjectTemplate) -> Self {
+	fn from(source: proto::GameObjectTemplate) -> Self {
 		let fields: Vec<_> = source
 			.fields
 			.into_iter()
@@ -33,7 +51,7 @@ impl From<internal::GameObjectTemplate> for config::GameObjectTemplate {
 			})
 			.collect();
 
-		config::GameObjectTemplate {
+		object::GameObjectCreateParams {
 			id: source.id,
 			template: source.template as u16,
 			groups: AccessGroups(source.groups),

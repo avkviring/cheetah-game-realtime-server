@@ -68,7 +68,8 @@ mod tests {
 	use cheetah_common::room::field::{Field, FieldType};
 	use cheetah_common::room::owner::GameObjectOwner;
 
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::Room;
 
 	///
@@ -79,9 +80,9 @@ mod tests {
 		let access_groups = AccessGroups(55);
 		let field = Field { id: 10, field_type: FieldType::Long };
 
-		let mut room = Room::from_template(RoomTemplate::default());
-		let member_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let mut room = Room::new(0, RoomCreateParams::default());
+		let member_id = room.register_member(MemberCreateParams::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id;
@@ -104,13 +105,13 @@ mod tests {
 	///
 	#[test]
 	fn should_skip_action_if_sender_not_in_group() {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups_a = AccessGroups(0b01);
 		let access_groups_b = AccessGroups(0b10);
-		let mut room = Room::from_template(template);
-		let member_1 = room.register_member(MemberTemplate::stub(access_groups_a));
-		let member_2 = room.register_member(MemberTemplate::stub(access_groups_b));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups_a);
+		let mut room = Room::new(0, template);
+		let member_1 = room.register_member(MemberCreateParams::stub(access_groups_a));
+		let member_2 = room.register_member(MemberCreateParams::stub(access_groups_b));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups_a, Default::default());
 		object.created = true;
 		let object_id = object.id;
 		room.send_command_from_action(object_id, member_2, None, |_| Ok(None)).unwrap_err();
@@ -122,14 +123,14 @@ mod tests {
 		let object_template = 5;
 		let allow_field_id = 70;
 
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 
-		let mut room = Room::from_template(template);
-		let _member_source_id = room.register_member(MemberTemplate::stub(groups));
-		let member_target_id = room.register_member(MemberTemplate::stub(groups));
+		let mut room = Room::new(0, template);
+		let _member_source_id = room.register_member(MemberCreateParams::stub(groups));
+		let member_target_id = room.register_member(MemberCreateParams::stub(groups));
 
 		room.mark_as_connected_in_test(member_target_id).unwrap();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_target_id), groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_target_id), groups, Default::default());
 		object.created = true;
 		object.template_id = object_template;
 		let object_id = object.id;
@@ -141,7 +142,7 @@ mod tests {
 		})];
 		room.send_to_member(&member_target_id, &commands).unwrap();
 
-		let out_commands = room.test_get_member_out_commands_with_meta(member_target_id);
+		let out_commands = room.get_member_out_commands_for_test(member_target_id);
 		let command = out_commands.get(0);
 
 		assert!(matches!(command, Some(S2CCommand::SetLong(command)) if command.field_id == allow_field_id));
@@ -150,12 +151,12 @@ mod tests {
 
 	#[test]
 	fn should_do_action_not_send_if_object_not_created() {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(55);
-		let mut room = Room::from_template(template);
-		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
-		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups);
+		let mut room = Room::new(0, template);
+		let member_1 = room.register_member(MemberCreateParams::stub(access_groups));
+		let member_2 = room.register_member(MemberCreateParams::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups, Default::default());
 		let object_id = object.id;
 		room.mark_as_connected_in_test(member_1).unwrap();
 		room.mark_as_connected_in_test(member_2).unwrap();

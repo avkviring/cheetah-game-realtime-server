@@ -25,16 +25,17 @@ mod tests {
 	use cheetah_common::room::owner::GameObjectOwner;
 
 	use crate::server::room::command::structure;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::Room;
 
 	#[test]
 	pub(crate) fn should_set_structure() {
-		let template = RoomTemplate::default();
-		let mut room = Room::from_template(template);
+		let template = RoomCreateParams::default();
+		let mut room = Room::new(0, template);
 		let access_groups = AccessGroups(10);
-		let member_id = room.register_member(MemberTemplate::stub(access_groups));
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let member_id = room.register_member(MemberCreateParams::stub(access_groups));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		object.created = true;
 		let object_id = object.id;
 

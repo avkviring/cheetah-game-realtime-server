@@ -5,9 +5,8 @@ using Games_Cheetah_Client_Tests_Server_Types;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Types.Field;
 using Games.Cheetah.EmbeddedServer.API;
-using Games.Cheetah.GRPC.Internal;
+using Games.Cheetah.Realtime.GRPC;
 using NUnit.Framework;
-using FieldType = Games.Cheetah.GRPC.Shared.FieldType;
 
 namespace Games.Cheetah.Client.Tests.Server.Helpers
 {

@@ -5,7 +5,7 @@ using Games.Cheetah.Client;
 using Games.Cheetah.Client.Codec;
 using Games.Cheetah.Client.Types.Network;
 using Games.Cheetah.EmbeddedServer.API;
-using Games.Cheetah.GRPC.Internal;
+using Games.Cheetah.Realtime.GRPC;
 using Games.Cheetah.UDS.API;
 using NUnit.Framework;
 
@@ -58,7 +58,9 @@ namespace Games.Cheetah.UDS.Tests.Test
             throw new NotImplementedException();
         }
 
-        private void OnRoomCreated(ulong roomId, Internal.InternalClient internalClient, NetworkClient cheetahClient)
+        private void OnRoomCreated(ulong roomId,
+            RealtimeServerManagementService.RealtimeServerManagementServiceClient internalClient,
+            NetworkClient cheetahClient)
         {
             createdRoomId = roomId;
             this.cheetahClient = cheetahClient;
