@@ -48,7 +48,7 @@ mod tests {
 	#[test]
 	fn should_command() {
 		let (mut room, member_id, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		let object_id = object.id;
 		object.created = true;
 		object.long_fields.set(1, Default::default());
@@ -85,7 +85,7 @@ mod tests {
 
 	#[test]
 	pub(crate) fn should_delete_field() {
-		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
+		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), Default::default(), false);
 
 		object.structure_fields.set(1, Buffer::from([1, 2, 3].as_ref()));
 		object.structure_fields.delete(1);

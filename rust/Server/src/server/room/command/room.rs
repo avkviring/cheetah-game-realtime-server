@@ -35,7 +35,8 @@ pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), 
 #[cfg(test)]
 mod tests {
 	use crate::server::room::command::room::attach_to_room;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::Room;
 	use cheetah_common::commands::s2c::S2CCommand;
 	use cheetah_common::room::access::AccessGroups;
@@ -43,26 +44,26 @@ mod tests {
 
 	#[test]
 	pub(crate) fn should_load_object_when_attach_to_room() {
-		let template = RoomTemplate::default();
-		let mut room = Room::from_template(template);
+		let template = RoomCreateParams::default();
+		let mut room = Room::new(0, template);
 		let groups_a = AccessGroups(0b100);
-		let member_a = room.register_member(MemberTemplate::stub(groups_a));
+		let member_a = room.register_member(MemberCreateParams::stub(groups_a));
 		let groups_b = AccessGroups(0b10);
-		let member_b = room.register_member(MemberTemplate::stub(groups_b));
+		let member_b = room.register_member(MemberCreateParams::stub(groups_b));
 
 		room.mark_as_connected_in_test(member_a).unwrap();
 		room.mark_as_connected_in_test(member_b).unwrap();
 
-		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
+		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a, Default::default());
 		object_a_1.created = true;
 		let object_a_1_id = object_a_1.id;
 
 		// не созданный объект - не должен загрузиться
-		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a);
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a, Default::default());
 		// другая группа + созданный объект - не должен загрузиться
-		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b).created = true;
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b, Default::default()).created = true;
 		// другая группа - не должен загрузиться
-		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b);
+		room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_b, Default::default());
 
 		attach_to_room(&mut room, member_a).unwrap();
 

@@ -2,9 +2,9 @@ using System;
 using System.Net;
 using System.Net.Http;
 using Games.Cheetah.EmbeddedServer.FFI;
+using Games.Cheetah.Realtime.GRPC;
 using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
-using static Games.Cheetah.GRPC.Internal.Internal;
 using Logger = Games.Cheetah.EmbeddedServer.FFI.Logger;
 
 #if UNITY_5_3_OR_NEWER
@@ -79,7 +79,7 @@ namespace Games.Cheetah.EmbeddedServer.API
         }
 
 
-        public InternalClient CreateGrpcClient()
+        public RealtimeServerManagementService.RealtimeServerManagementServiceClient CreateGrpcClient()
         {
             var channel = GrpcChannel.ForAddress(
                 GetInternalWebGrpcUri(), new GrpcChannelOptions
@@ -87,7 +87,7 @@ namespace Games.Cheetah.EmbeddedServer.API
                     HttpHandler = new GrpcWebHandler(new HttpClientHandler()),
                 }
             );
-            return new InternalClient(channel);
+            return new RealtimeServerManagementService.RealtimeServerManagementServiceClient(channel);
         }
 
         public void Destroy()
@@ -102,7 +102,8 @@ namespace Games.Cheetah.EmbeddedServer.API
         {
             unsafe
             {
-                return $"{description.gameIp[0]}.{description.gameIp[1]}.{description.gameIp[2]}.{description.gameIp[3]}";
+                return
+                    $"{description.gameIp[0]}.{description.gameIp[1]}.{description.gameIp[2]}.{description.gameIp[3]}";
             }
         }
 

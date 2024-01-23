@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use std::sync::Arc;
 use thiserror::Error;
 
+use crate::server::room::config::object::GameObjectConfig;
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::create::{CreateGameObject, GameObjectCreated};
 use cheetah_common::room::access::AccessGroups;
@@ -24,6 +26,7 @@ pub type S2CCommandsCollector = Vec<S2CCommand>;
 pub struct GameObject {
 	pub id: GameObjectId,
 	pub template_id: GameObjectTemplateId,
+	pub config: Arc<GameObjectConfig>,
 	pub access_groups: AccessGroups,
 	pub created: bool,
 	pub double_fields: Fields<f64>,
@@ -34,16 +37,17 @@ pub struct GameObject {
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum GameObjectError {
-	#[error("Field count overflow in game object {0:?} with template {1:?}")]
+	#[error("Field count overflow in game object {0:?} with config {1:?}")]
 	FieldCountOverflow(GameObjectId, GameObjectTemplateId),
 }
 
 impl GameObject {
 	#[must_use]
-	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, created: bool) -> Self {
+	pub fn new(id: GameObjectId, template_id: GameObjectTemplateId, access_groups: AccessGroups, config: Arc<GameObjectConfig>, created: bool) -> Self {
 		Self {
 			id,
 			template_id,
+			config,
 			access_groups,
 			created,
 			double_fields: Default::default(),
@@ -93,7 +97,7 @@ mod tests {
 	#[test]
 	pub(crate) fn should_collect_command() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id, 55, AccessGroups(63), true);
+		let mut object = GameObject::new(id, 55, AccessGroups(63), Default::default(), true);
 		object.long_fields.set(1, 100);
 		object.double_fields.set(2, 200.200);
 		object.structure_fields.set(1, [1, 2, 3].as_ref().into());
@@ -172,7 +176,7 @@ mod tests {
 	#[test]
 	pub(crate) fn should_collect_command_for_not_created_object() {
 		let id = GameObjectId::new(1, GameObjectOwner::Room);
-		let mut object = GameObject::new(id, 0, Default::default(), false);
+		let mut object = GameObject::new(id, 0, Default::default(), Default::default(), false);
 		object.long_fields.set(1, 100);
 
 		let mut commands = S2CCommandsCollector::new();
@@ -186,7 +190,7 @@ mod tests {
 
 	#[test]
 	pub(crate) fn should_update_structure() {
-		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), false);
+		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), Default::default(), false);
 		object.structure_fields.set(1, Buffer::from([1, 2, 3].as_ref()));
 		object.structure_fields.set(1, Buffer::from([4, 5, 6, 7].as_ref()));
 

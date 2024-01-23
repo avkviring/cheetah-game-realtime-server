@@ -4,7 +4,7 @@
   "references": [
     "games.cheetah.grpc",
     "games.cheetah.client",
-    "games.cheetah.grpc.internal"
+    "games.cheetah.realtime.grpc"
   ],
   "allowUnsafeCode": true,
   "overrideReferences": false,

@@ -1,5 +1,6 @@
 use crate::server::room::command::ServerCommandError;
-use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+use crate::server::room::config::member::MemberCreateParams;
+use crate::server::room::config::room::RoomCreateParams;
 use crate::server::room::Room;
 use cheetah_common::commands::{CommandWithChannelType, CommandWithReliabilityGuarantees};
 use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
@@ -36,7 +37,7 @@ impl Rooms {
 		self.rooms.iter()
 	}
 
-	pub fn create_room(&mut self, template: RoomTemplate) -> RoomId {
+	pub fn create_room(&mut self, template: RoomCreateParams) -> RoomId {
 		self.room_id_generator += 1;
 		self.created_rooms_count += 1;
 		let room_id = self.room_id_generator;
@@ -50,7 +51,7 @@ impl Rooms {
 		self.rooms.remove(room_id).ok_or(RoomNotFoundError(*room_id))
 	}
 
-	pub fn register_member(&mut self, room_id: RoomId, member_template: MemberTemplate) -> Result<RoomMemberId, RoomNotFoundError> {
+	pub fn register_member(&mut self, room_id: RoomId, member_template: MemberCreateParams) -> Result<RoomMemberId, RoomNotFoundError> {
 		match self.rooms.get_mut(&room_id) {
 			None => Err(RoomNotFoundError(room_id)),
 			Some(room) => Ok(room.register_member(member_template)),
@@ -97,7 +98,7 @@ mod tests {
 	#[test]
 	fn should_remove_room() {
 		let mut rooms = Rooms::default();
-		let room_id = rooms.create_room(RoomTemplate::default());
+		let room_id = rooms.create_room(RoomCreateParams::default());
 		let room = rooms.force_remove_room(&room_id);
 		assert!(room.is_ok(), "want room when take by room_id");
 		assert_eq!(room_id, room.unwrap().id, "want taken room_id to match with room_id parameter");
@@ -107,8 +108,8 @@ mod tests {
 	#[test]
 	fn should_created_rooms_count() {
 		let mut rooms = Rooms::default();
-		let room_a = rooms.create_room(RoomTemplate::default());
-		rooms.create_room(RoomTemplate::default());
+		let room_a = rooms.create_room(RoomCreateParams::default());
+		rooms.create_room(RoomCreateParams::default());
 		assert_eq!(rooms.created_rooms_count, 2);
 		rooms.force_remove_room(&room_a).unwrap();
 		assert_eq!(rooms.created_rooms_count, 2);

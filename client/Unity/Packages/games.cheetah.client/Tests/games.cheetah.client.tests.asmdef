@@ -7,9 +7,7 @@
     "Unity.Collections",
     "games.cheetah.client",
     "games.cheetah.client.editor",
-    "games.cheetah.grpc.admin",
-    "games.cheetah.grpc.shared",
-    "games.cheetah.grpc.internal",
+    "games.cheetah.realtime.grpc",
     "games.cheetah.embedded-server",
     "games.cheetah.grpc"
   ],

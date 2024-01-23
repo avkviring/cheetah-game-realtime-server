@@ -1,10 +1,8 @@
 syntax = "proto3";
-package cheetah.matches.realtime.internal;
-option csharp_namespace = "Games.Cheetah.GRPC.Internal";
+package cheetah.matches.realtime.grpc;
+option csharp_namespace = "Games.Cheetah.Realtime.GRPC";
 
-import public "shared.proto";
-
-service Internal {
+service RealtimeServerManagementService {
   /**
     Создать комнату
    */
@@ -85,6 +83,7 @@ message RoomTemplate {
     Начальные игровые объекты комнаты
    */
   repeated GameObjectTemplate objects = 2;
+  repeated GameObjectConfig configs = 3;
 }
 
 message UserTemplate {
@@ -96,7 +95,16 @@ message GameObjectTemplate {
   uint32 id = 1;
   uint32 template = 2;
   uint64 groups = 3;
-  repeated cheetah.matches.realtime.shared.GameObjectField fields = 4;
+  GameObjectField fields = 4;
+}
+
+message GameObjectConfig {
+  uint32 template = 1;
+  map<uint32, ItemConfig>  itemsConfig = 2 ;
+}
+
+message ItemConfig {
+  uint32 capacity = 1;
 }
 
 
@@ -135,4 +143,23 @@ message RoomMembersCountResponse {
   uint64 room = 1;
   uint32 members = 2;
   uint32 connected_members = 3;
+}
+enum FieldType {
+  Long = 0;
+  Double = 1;
+  Structure = 2;
+  Event = 3;
+}
+
+message GameObjectField {
+  uint32 id = 1;
+  FieldValue value = 2;
+}
+
+message FieldValue {
+  oneof Variant {
+    int64 long = 1;
+    double double = 2;
+    bytes structure = 3;
+  }
 }

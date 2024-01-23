@@ -42,7 +42,7 @@ mod tests {
 	#[test]
 	fn should_set_double_command() {
 		let (mut room, member_id, access_groups) = setup_one_player();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		let object_id = object.id;
 		object.created = true;
 		room.test_out_commands.clear();
@@ -62,7 +62,7 @@ mod tests {
 	fn should_increment_double_command() {
 		let (mut room, member_id, access_groups) = setup_one_player();
 
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		object.created = true;
 		let object_id = object.id;
 		room.test_out_commands.clear();

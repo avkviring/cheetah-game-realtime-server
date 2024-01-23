@@ -3,9 +3,7 @@
   "rootNamespace": "Games.Cheetah.Client",
   "references": [
     "games.cheetah.grpc",
-    "games.cheetah.client",
-    "games.cheetah.grpc.admin",
-    "games.cheetah.grpc.shared"
+    "games.cheetah.client"
   ],
   "includePlatforms": [
     "Editor"

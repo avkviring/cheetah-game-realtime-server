@@ -2,6 +2,7 @@ use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::slice;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use fnv::{FnvBuildHasher, FnvHashMap};
@@ -9,31 +10,34 @@ use indexmap::map::IndexMap;
 use serde::{Deserialize, Serialize};
 
 use crate::server::room::command::{execute, ServerCommandError};
+use crate::server::room::config::member::MemberCreateParams;
+use crate::server::room::config::object::GameObjectConfig;
 use crate::server::room::object::{GameObject, S2CCommandsCollector};
-use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::S2CCommand;
 use cheetah_common::commands::types::member::{MemberConnected, MemberDisconnected};
 use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
-use cheetah_common::room::object::GameObjectId;
+use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 use cheetah_common::room::owner::GameObjectOwner;
+use config::room::RoomCreateParams;
 use member::RoomMember;
 
 pub mod action;
 pub mod command;
+pub mod config;
 pub mod member;
 pub mod object;
 pub mod sender;
-pub mod template;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Room {
 	pub id: RoomId,
 	pub template_name: String,
 	pub members: HashMap<RoomMemberId, RoomMember, FnvBuildHasher>,
-	pub(crate) objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
+	configs: FnvHashMap<GameObjectTemplateId, Arc<GameObjectConfig>>,
+	pub objects: IndexMap<GameObjectId, GameObject, FnvBuildHasher>,
 	current_channel: Option<ReliabilityGuarantees>,
 	pub member_id_generator: RoomMemberId,
 	pub room_object_id_generator: u32,
@@ -47,25 +51,27 @@ pub struct Room {
 	///
 	pub test_out_commands: std::collections::VecDeque<(AccessGroups, S2CCommand)>,
 }
+
 impl Room {
-	pub fn new(id: RoomId, template: RoomTemplate) -> Self {
+	pub fn new(id: RoomId, create_params: RoomCreateParams) -> Self {
 		let mut room = Room {
 			id,
 			members: FnvHashMap::default(),
 			objects: Default::default(),
 			current_channel: Default::default(),
+			objects_singleton_key: Default::default(),
 			#[cfg(test)]
 			test_object_id_generator: 0,
 			#[cfg(test)]
 			test_out_commands: Default::default(),
 			member_id_generator: 0,
 			room_object_id_generator: 65536,
-			template_name: template.name.clone(),
-			objects_singleton_key: Default::default(),
+			template_name: create_params.name.clone(),
+			configs: create_params.configs.into_iter().map(|item| (item.0, From::from(item.1))).collect(),
 		};
 
-		template.objects.into_iter().for_each(|object| {
-			let game_object: GameObject = object.to_root_game_object();
+		create_params.objects.into_iter().for_each(|object| {
+			let game_object: GameObject = object.to_root_game_object(&room);
 			room.insert_object(game_object);
 		});
 
@@ -160,7 +166,7 @@ impl Room {
 		Ok(())
 	}
 
-	pub fn register_member(&mut self, template: MemberTemplate) -> RoomMemberId {
+	pub fn register_member(&mut self, template: MemberCreateParams) -> RoomMemberId {
 		self.member_id_generator += 1;
 		let member_id = self.member_id_generator;
 		let member = RoomMember {
@@ -246,9 +252,9 @@ impl Room {
 		self.objects.iter().for_each(|(_, o)| f(o));
 	}
 
-	fn on_member_connect(&mut self, member_id: RoomMemberId, template: MemberTemplate) -> Result<(), ServerCommandError> {
+	fn on_member_connect(&mut self, member_id: RoomMemberId, template: MemberCreateParams) -> Result<(), ServerCommandError> {
 		for object_template in template.objects {
-			let mut object = object_template.create_member_game_object(member_id);
+			let mut object = object_template.create_member_game_object(member_id, self);
 			let mut commands = S2CCommandsCollector::new();
 			object.collect_create_commands(&mut commands);
 			let access_groups = object.access_groups;
@@ -261,6 +267,10 @@ impl Room {
 
 		Ok(())
 	}
+
+	pub(crate) fn get_object_config(&self, template_id: &GameObjectTemplateId) -> Arc<GameObjectConfig> {
+		self.configs.get(template_id).cloned().unwrap_or_default()
+	}
 }
 
 #[cfg(test)]
@@ -269,8 +279,10 @@ mod tests {
 	use std::collections::VecDeque;
 
 	use crate::server::room::command::ServerCommandError;
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::object::GameObjectCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::object::GameObject;
-	use crate::server::room::template::config::{GameObjectTemplate, MemberTemplate, RoomTemplate};
 	use crate::server::room::Room;
 	use cheetah_common::commands::c2s::C2SCommand;
 	use cheetah_common::commands::guarantees::{ReliabilityGuarantees, ReliabilityGuaranteesChannel};
@@ -280,33 +292,28 @@ mod tests {
 	use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType, CommandWithReliabilityGuarantees};
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::buffer::Buffer;
-	use cheetah_common::room::object::GameObjectId;
+	use cheetah_common::room::object::{GameObjectId, GameObjectTemplateId};
 	use cheetah_common::room::owner::GameObjectOwner;
 
 	impl Default for Room {
 		fn default() -> Self {
-			Room::new(0, RoomTemplate::default())
+			Room::new(0, RoomCreateParams::default())
 		}
 	}
 
 	impl Room {
-		#[must_use]
-		pub fn from_template(template: RoomTemplate) -> Self {
-			Room::new(0, template)
+		pub fn test_create_object_with_not_created_state(&mut self, owner: GameObjectOwner, access_groups: AccessGroups, template_id: GameObjectTemplateId) -> &mut GameObject {
+			self.test_do_create_object(owner, access_groups, false, template_id)
 		}
 
-		pub fn test_create_object_with_not_created_state(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {
-			self.test_do_create_object(owner, access_groups, false)
+		pub fn test_create_object_with_created_state(&mut self, owner: GameObjectOwner, access_groups: AccessGroups, template_id: GameObjectTemplateId) -> &mut GameObject {
+			self.test_do_create_object(owner, access_groups, true, template_id)
 		}
 
-		pub fn test_create_object_with_created_state(&mut self, owner: GameObjectOwner, access_groups: AccessGroups) -> &mut GameObject {
-			self.test_do_create_object(owner, access_groups, true)
-		}
-
-		fn test_do_create_object(&mut self, owner: GameObjectOwner, access_groups: AccessGroups, created: bool) -> &mut GameObject {
+		fn test_do_create_object(&mut self, owner: GameObjectOwner, access_groups: AccessGroups, created: bool, template_id: GameObjectTemplateId) -> &mut GameObject {
 			self.test_object_id_generator += 1;
 			let id = GameObjectId::new(self.test_object_id_generator, owner);
-			let mut object = GameObject::new(id, 0, access_groups, false);
+			let mut object = GameObject::new(id, template_id, access_groups, self.get_object_config(&template_id), false);
 			object.created = created;
 			self.insert_object(object);
 			self.get_object_mut(id).unwrap()
@@ -332,21 +339,6 @@ mod tests {
 				})
 				.collect()
 		}
-
-		#[must_use]
-		pub fn test_get_member_out_commands_with_meta(&self, member_id: RoomMemberId) -> VecDeque<S2CCommand> {
-			self.get_member(&member_id)
-				.unwrap()
-				.out_commands
-				.iter()
-				.map(|c| &c.command)
-				.filter_map(|c| match c {
-					BothDirectionCommand::S2C(c) => Some(c.clone()),
-					BothDirectionCommand::C2S(_) => None,
-				})
-				.collect()
-		}
-
 		pub fn test_clear_member_out_commands(&mut self, member_id: RoomMemberId) {
 			self.get_member_mut(&member_id).unwrap().out_commands.clear();
 		}
@@ -354,15 +346,15 @@ mod tests {
 
 	#[test]
 	fn should_remove_objects_when_disconnect() {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(0b111);
-		let mut room = Room::from_template(template);
-		let member_a = room.register_member(MemberTemplate::stub(access_groups));
-		let member_b = room.register_member(MemberTemplate::stub(access_groups));
-		let object_a_1 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_a), access_groups).id;
-		let object_a_2 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_a), access_groups).id;
-		let object_b_1 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_b), access_groups).id;
-		let object_b_2 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_b), access_groups).id;
+		let mut room = Room::new(0, template);
+		let member_a = room.register_member(MemberCreateParams::stub(access_groups));
+		let member_b = room.register_member(MemberCreateParams::stub(access_groups));
+		let object_a_1 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_a), access_groups, Default::default()).id;
+		let object_a_2 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_a), access_groups, Default::default()).id;
+		let object_b_1 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_b), access_groups, Default::default()).id;
+		let object_b_2 = room.test_create_object_with_created_state(GameObjectOwner::Member(member_b), access_groups, Default::default()).id;
 
 		room.test_out_commands.clear();
 		room.disconnect_member(member_a).unwrap();
@@ -379,8 +371,8 @@ mod tests {
 
 	#[test]
 	fn should_create_object_from_config() {
-		let mut template = RoomTemplate::default();
-		let object_template = GameObjectTemplate {
+		let mut template = RoomCreateParams::default();
+		let object_template = GameObjectCreateParams {
 			id: 155,
 			template: 5,
 			groups: Default::default(),
@@ -390,14 +382,14 @@ mod tests {
 		};
 		template.objects = vec![object_template.clone()];
 
-		let room = Room::from_template(template);
+		let room = Room::new(0, template);
 		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::Room)));
 	}
 
 	#[test]
 	fn should_create_object_from_config_for_member() {
-		let template = RoomTemplate::default();
-		let object_template = GameObjectTemplate {
+		let template = RoomCreateParams::default();
+		let object_template = GameObjectCreateParams {
 			id: 155,
 			template: 5,
 			groups: AccessGroups(55),
@@ -405,8 +397,8 @@ mod tests {
 			doubles: Default::default(),
 			structures: Default::default(),
 		};
-		let member_template = MemberTemplate::new_member(AccessGroups(55), vec![object_template.clone()]);
-		let mut room = Room::from_template(template);
+		let member_template = MemberCreateParams::new_member(AccessGroups(55), vec![object_template.clone()]);
+		let mut room = Room::new(0, template);
 		let member_id = room.register_member(member_template);
 		room.execute_commands(member_id, &[]);
 		assert!(room.objects.contains_key(&GameObjectId::new(object_template.id, GameObjectOwner::Member(member_id))));
@@ -417,8 +409,8 @@ mod tests {
 	///
 	#[test]
 	fn should_load_member_object_when_connect_other_member() {
-		let template = RoomTemplate::default();
-		let object1_template = GameObjectTemplate {
+		let template = RoomCreateParams::default();
+		let object1_template = GameObjectCreateParams {
 			id: 100,
 			template: 5,
 			groups: AccessGroups(55),
@@ -426,9 +418,9 @@ mod tests {
 			doubles: Default::default(),
 			structures: Default::default(),
 		};
-		let member1_template = MemberTemplate::new_member(AccessGroups(55), vec![object1_template.clone()]);
+		let member1_template = MemberCreateParams::new_member(AccessGroups(55), vec![object1_template.clone()]);
 
-		let object2_template = GameObjectTemplate {
+		let object2_template = GameObjectCreateParams {
 			id: 200,
 			template: 5,
 			groups: AccessGroups(55),
@@ -436,9 +428,9 @@ mod tests {
 			doubles: Default::default(),
 			structures: Default::default(),
 		};
-		let member2_template = MemberTemplate::new_member(AccessGroups(55), vec![object2_template.clone()]);
+		let member2_template = MemberCreateParams::new_member(AccessGroups(55), vec![object2_template.clone()]);
 
-		let mut room = Room::from_template(template);
+		let mut room = Room::new(0, template);
 		let member1_id = room.register_member(member1_template);
 		let member2_id = room.register_member(member2_template);
 		room.execute_commands(member1_id, &[]);
@@ -469,13 +461,13 @@ mod tests {
 	#[test]
 	pub(crate) fn should_keep_order_object() {
 		let (template, member_template) = create_template();
-		let mut room = Room::from_template(template);
+		let mut room = Room::new(0, template);
 		room.register_member(member_template);
-		room.insert_object(GameObject::new(GameObjectId::new(100, GameObjectOwner::Room), 0, Default::default(), false));
+		room.insert_object(GameObject::new(GameObjectId::new(100, GameObjectOwner::Room), 0, Default::default(), Default::default(), false));
 
-		room.insert_object(GameObject::new(GameObjectId::new(5, GameObjectOwner::Room), 0, Default::default(), false));
+		room.insert_object(GameObject::new(GameObjectId::new(5, GameObjectOwner::Room), 0, Default::default(), Default::default(), false));
 
-		room.insert_object(GameObject::new(GameObjectId::new(200, GameObjectOwner::Room), 0, Default::default(), false));
+		room.insert_object(GameObject::new(GameObjectId::new(200, GameObjectOwner::Room), 0, Default::default(), Default::default(), false));
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
@@ -495,7 +487,7 @@ mod tests {
 	#[test]
 	pub(crate) fn should_clear_out_commands_after_collect() {
 		let mut room = Room::default();
-		let member_template = MemberTemplate::stub(AccessGroups(8));
+		let member_template = MemberCreateParams::stub(AccessGroups(8));
 		let member_id = room.register_member(member_template);
 		room.mark_as_connected_in_test(member_id).unwrap();
 		let member = room.get_member_mut(&member_id).unwrap();
@@ -515,7 +507,7 @@ mod tests {
 	#[test]
 	fn should_check_singleton_key() {
 		let mut room = Room::default();
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Room, AccessGroups(7));
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Room, AccessGroups(7), Default::default());
 		let object_id = object.id;
 		let unique_key = Buffer::from([1, 2, 3, 4].as_slice());
 		room.set_singleton_key(unique_key.clone(), object_id);
@@ -526,13 +518,13 @@ mod tests {
 
 	#[test]
 	fn should_send_member_connected() {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(10);
-		let mut room = Room::from_template(template);
-		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let mut room = Room::new(0, template);
+		let member_1 = room.register_member(MemberCreateParams::stub(access_groups));
 		room.mark_as_connected_in_test(member_1).unwrap();
 
-		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberCreateParams::stub(access_groups));
 		room.mark_as_connected_in_test(member_2).unwrap();
 		room.connect_member(member_2).unwrap();
 
@@ -541,14 +533,14 @@ mod tests {
 
 	#[test]
 	fn should_send_member_disconnect() {
-		let template = RoomTemplate::default();
+		let template = RoomCreateParams::default();
 		let access_groups = AccessGroups(10);
-		let mut room = Room::from_template(template);
-		let member_1 = room.register_member(MemberTemplate::stub(access_groups));
+		let mut room = Room::new(0, template);
+		let member_1 = room.register_member(MemberCreateParams::stub(access_groups));
 		room.mark_as_connected_in_test(member_1).unwrap();
 		room.connect_member(member_1).unwrap();
 
-		let member_2 = room.register_member(MemberTemplate::stub(access_groups));
+		let member_2 = room.register_member(MemberCreateParams::stub(access_groups));
 		room.mark_as_connected_in_test(member_2).unwrap();
 		room.connect_member(member_2).unwrap();
 		room.disconnect_member(member_2).unwrap();
@@ -559,9 +551,9 @@ mod tests {
 		);
 	}
 
-	pub(crate) fn create_template() -> (RoomTemplate, MemberTemplate) {
-		let template = RoomTemplate::default();
-		let member_template = MemberTemplate::new_member(AccessGroups(55), Default::default());
+	pub(crate) fn create_template() -> (RoomCreateParams, MemberCreateParams) {
+		let template = RoomCreateParams::default();
+		let member_template = MemberCreateParams::new_member(AccessGroups(55), Default::default());
 		(template, member_template)
 	}
 }

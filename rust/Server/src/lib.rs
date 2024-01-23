@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use crate::intergration::agones::agones_und_notifyservice_cycle;
 use crate::server::debug::run_debug_server;
-use crate::server::manager::grpc::proto::internal::internal_server::InternalServer;
-use crate::server::manager::grpc::RealtimeInternalService;
+use crate::server::manager::grpc::proto::realtime_server_management_service_server::RealtimeServerManagementServiceServer;
+use crate::server::manager::grpc::RealtimeServerManagementServiceImpl;
 use crate::server::manager::ServerManager;
 use futures::join;
 use tokio::net::TcpListener;
@@ -48,7 +48,7 @@ impl Server {
 	}
 
 	async fn new_internal_grpc_service(listener: TcpListener, manager: Arc<Mutex<ServerManager>>) {
-		let service = InternalServer::new(RealtimeInternalService::new(manager));
+		let service = RealtimeServerManagementServiceServer::new(RealtimeServerManagementServiceImpl::new(manager));
 
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 		health_reporter.set_service_status("", ServingStatus::Serving).await;
@@ -62,7 +62,7 @@ impl Server {
 	}
 
 	async fn new_internal_webgrpc_service(listener: TcpListener, manager: Arc<Mutex<ServerManager>>) {
-		let service = InternalServer::new(RealtimeInternalService::new(manager));
+		let service = RealtimeServerManagementServiceServer::new(RealtimeServerManagementServiceImpl::new(manager));
 
 		let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
 		health_reporter.set_service_status("", ServingStatus::Serving).await;

@@ -32,7 +32,8 @@ pub(crate) fn create_object(command: &CreateGameObject, room: &mut Room, member_
 	if room.contains_object(&command.object_id) {
 		return Err(ServerCommandError::Error(format!("Object already exists with id {:?}", command.object_id)));
 	}
-	room.insert_object(GameObject::new(command.object_id, command.template, groups, false));
+	let config = room.get_object_config(&command.template);
+	room.insert_object(GameObject::new(command.object_id, command.template, groups, config, false));
 	Ok(())
 }
 
@@ -45,7 +46,8 @@ mod tests {
 	use cheetah_common::room::owner::GameObjectOwner;
 
 	use crate::server::room::command::ServerCommandError;
-	use crate::server::room::template::config::{MemberTemplate, RoomTemplate};
+	use crate::server::room::config::member::MemberCreateParams;
+	use crate::server::room::config::room::RoomCreateParams;
 	use crate::server::room::Room;
 
 	#[test]
@@ -128,7 +130,7 @@ mod tests {
 	fn should_not_replace_exists_object() {
 		let access_groups = AccessGroups(0b11);
 		let (mut room, member_id) = setup(access_groups);
-		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups);
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_id), access_groups, Default::default());
 		object.template_id = 777;
 		let object_id = object.id;
 		room.test_out_commands.clear();
@@ -143,9 +145,9 @@ mod tests {
 	}
 
 	fn setup(access_groups: AccessGroups) -> (Room, u16) {
-		let template = RoomTemplate::default();
-		let mut room = Room::from_template(template);
-		let member_id = room.register_member(MemberTemplate::stub(access_groups));
+		let template = RoomCreateParams::default();
+		let mut room = Room::new(0, template);
+		let member_id = room.register_member(MemberCreateParams::stub(access_groups));
 		(room, member_id)
 	}
 }
