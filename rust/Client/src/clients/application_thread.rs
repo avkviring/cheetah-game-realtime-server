@@ -1,4 +1,3 @@
-use cheetah_game_realtime_protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_game_realtime_protocol::RoomMemberId;
 use std::slice;
 use std::sync::mpsc::{Receiver, SendError, Sender};
@@ -26,10 +25,10 @@ use cheetah_common::room::owner::GameObjectOwner;
 pub struct ApplicationThreadClient {
 	member_id: RoomMemberId,
 	s2c_receiver: Receiver<CommandWithReliabilityGuarantees>,
-	handler: Option<JoinHandle<()>>,
+	pub(crate) handler: Option<JoinHandle<()>>,
 	state: Arc<Mutex<ConnectionStatus>>,
 	server_time: Arc<Mutex<Option<u64>>>,
-	request_to_client: Sender<ClientRequest>,
+	pub(crate) request_to_client: Sender<ClientRequest>,
 	channel: ReliabilityGuarantees,
 	game_object_id_generator: u32,
 	pub shared_statistics: SharedClientStatistics,
@@ -37,9 +36,7 @@ pub struct ApplicationThreadClient {
 
 impl Drop for ApplicationThreadClient {
 	fn drop(&mut self) {
-		if self.request_to_client.send(ClientRequest::Close(DisconnectByCommandReason::ClientStopped)).is_ok() {
-			self.handler.take().unwrap().join().unwrap();
-		}
+		self.handler.take().unwrap().join().unwrap();
 	}
 }
 
