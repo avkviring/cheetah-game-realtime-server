@@ -1,3 +1,4 @@
+use cheetah_game_realtime_protocol::disconnect::command::DisconnectByCommandReason;
 use cheetah_game_realtime_protocol::frame::member_private_key::MemberPrivateKey;
 use cheetah_game_realtime_protocol::frame::ConnectionId;
 use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
@@ -13,8 +14,9 @@ use fnv::FnvBuildHasher;
 
 use crate::clients::application_thread::ApplicationThreadClient;
 use crate::clients::network_thread::NetworkChannelManager;
-use crate::clients::SharedClientStatistics;
+use crate::clients::{ClientRequest, SharedClientStatistics};
 use cheetah_common::network::ConnectionStatus;
+use cheetah_common::tracer::Trace;
 
 pub type ClientId = u16;
 
@@ -93,7 +95,16 @@ impl Registry {
 		}));
 	}
 
-	pub fn destroy_client(&mut self, client: ClientId) -> Option<ApplicationThreadClient> {
-		self.clients.remove(&client)
+	pub fn destroy_client(&mut self, client_id: ClientId) -> Option<ApplicationThreadClient> {
+		match self.clients.remove(&client_id) {
+			None => None,
+			Some(client) => {
+				client
+					.request_to_client
+					.send(ClientRequest::Close(DisconnectByCommandReason::ClientStopped))
+					.trace_err("Error send ClientStopped");
+				Some(client)
+			}
+		}
 	}
 }
