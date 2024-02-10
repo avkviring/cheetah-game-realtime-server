@@ -30,13 +30,17 @@ impl InputDataHandler for InCommandsCollector {
 	fn on_input_data(&mut self, data: &[u8]) {
 		match decode_commands(self.server_side, data) {
 			Ok(commands) => {
-				tracing::trace!("c2s: {:?}", commands);
+				tracing::debug!("c2s: {:?}", commands);
 				self.collect(commands.as_slice());
 			}
 			Err(e) => {
 				tracing::error!("Error decode commands {:?}", e)
 			}
 		}
+	}
+
+	fn reset(&mut self) {
+		*self = InCommandsCollector::new(self.server_side)
 	}
 }
 

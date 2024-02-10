@@ -130,6 +130,7 @@ impl Room {
 		for command_with_channel in commands {
 			match &command_with_channel.command {
 				BothDirectionCommand::C2S(command) => {
+					tracing::info!("execute c2s {:?}", command);
 					self.current_channel.replace(From::from(&command_with_channel.reliability_guarantees));
 
 					let instant = Instant::now();

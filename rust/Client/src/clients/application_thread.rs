@@ -69,7 +69,7 @@ impl ApplicationThreadClient {
 
 	pub fn send(&mut self, command: C2SCommand) -> Result<(), SendError<ClientRequest>> {
 		let command_with_channel = C2SCommandWithChannel { channel_type: self.channel, command };
-		tracing::trace!("c2s {:?}", command_with_channel);
+		tracing::debug!("c2s {:?}", command_with_channel);
 		self.request_to_client.send(ClientRequest::SendCommandToServer(command_with_channel))
 	}
 
@@ -97,7 +97,7 @@ impl ApplicationThreadClient {
 		let commands: &mut [S2CCommandFFI] = slice::from_raw_parts_mut(commands, 1024);
 
 		while let Ok(command) = self.s2c_receiver.try_recv() {
-			tracing::trace!("s2c {:?}", command);
+			tracing::debug!("s2c {:?}", command);
 			if let BothDirectionCommand::S2C(command) = command.command {
 				let command_ffi = &mut commands[*count as usize];
 				match command {

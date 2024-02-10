@@ -19,7 +19,6 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 			(o.template_id, commands)
 		})
 		.for_each(|v| command_collector.push(v));
-
 	for (_template, commands) in command_collector.iter() {
 		room.send_to_member(&member_id, commands.as_slice())?;
 	}
@@ -71,5 +70,27 @@ mod tests {
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), Some(S2CCommand::Created(c)) if c.object_id==object_a_1_id));
 		assert!(matches!(commands.pop_front(), None));
+	}
+
+	#[test]
+	pub(crate) fn should_self_object_attach_to_room() {
+		let template = RoomCreateParams::default();
+		let mut room = Room::new(0, template);
+		let groups = AccessGroups(0b100);
+		let member = room.register_member(MemberCreateParams::stub(groups));
+		room.mark_as_connected_in_test(member).unwrap();
+
+		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member), groups, Default::default());
+		object.created = true;
+		let object_id = object.id;
+
+		attach_to_room(&mut room, member).unwrap();
+		let mut commands = room.get_member_out_commands_for_test(member);
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_id));
+
+		// проверяем на второй attach, он должен сработать аналогично
+		attach_to_room(&mut room, member).unwrap();
+		let mut commands = room.get_member_out_commands_for_test(member);
+		assert!(matches!(commands.pop_front(), Some(S2CCommand::Create(c)) if c.object_id==object_id));
 	}
 }
