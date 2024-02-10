@@ -30,11 +30,15 @@ impl OutputDataProducer for OutCommandsCollector {
 	fn get_output_data(&mut self, packet: &mut [u8]) -> (usize, bool) {
 		encode_commands(&mut self.commands, packet)
 	}
+
+	fn reset(&mut self) {
+		*self = Default::default();
+	}
 }
 
 impl OutCommandsCollector {
 	pub fn add_command(&mut self, channel_type: ReliabilityGuarantees, command: BothDirectionCommand) {
-		tracing::trace!("s2c: {:?}", command);
+		tracing::debug!("OutCommandsCollector: {:?}", command);
 		match self.create_channel(channel_type) {
 			None => {
 				tracing::error!("can not create channel for {:?} {:?}", channel_type, command);

@@ -17,9 +17,9 @@ fn test() {
 	let (member1, member1_key) = helper.create_member();
 	let (member2, member2_key) = helper.create_member();
 	let (member3, member3_key) = helper.create_member();
-	let client1 = helper.create_client(member1, &member1_key);
-	let client2 = helper.create_client(member2, &member2_key);
-	let client3 = helper.create_client(member3, &member3_key);
+	let client1 = helper.create_client(member1, &member1_key, 0);
+	let client2 = helper.create_client(member2, &member2_key, 0);
+	let client3 = helper.create_client(member3, &member3_key, 0);
 
 	ffi::command::room::attach_to_room(client2);
 	ffi::command::room::attach_to_room(client3);

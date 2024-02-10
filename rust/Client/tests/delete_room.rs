@@ -16,7 +16,7 @@ fn should_disconnect_on_delete_room() {
 
 	let mut helper = IntegrationTestHelper::new(builder);
 	let (member_id, private_key) = helper.create_member();
-	let client = helper.create_client(member_id, &private_key);
+	let client = helper.create_client(member_id, &private_key, 0);
 	helper.wait_udp();
 
 	execute_with_client(client, |api| {

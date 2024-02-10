@@ -1,5 +1,5 @@
 [workspace]
-resolver="2"
+resolver = "2"
 members = [
     "Client",
     "Common",
@@ -12,7 +12,7 @@ authors = ["kviring <alex@kviring.com>"]
 edition = "2021"
 
 [workspace.dependencies]
-cheetah-game-realtime-protocol= "0.0.3"
+cheetah-game-realtime-protocol = "0.0.4"
 log = "0.4.17"
 serde = "1.0.157"
 serde_json = "1.0.94"

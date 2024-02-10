@@ -10,6 +10,7 @@ use cheetah_client::ffi::client::do_create_client;
 use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
 use cheetah_common::commands::CommandTypeId;
 use cheetah_common::room::object::GameObjectId;
+use cheetah_game_realtime_protocol::frame::ConnectionId;
 use cheetah_server::server::manager::ServerManager;
 use cheetah_server::server::room::config::member::MemberCreateParams;
 
@@ -45,9 +46,9 @@ impl IntegrationTestHelper {
 		Self { socket_addr, room_id, server }
 	}
 
-	pub fn create_client(&self, member_id: RoomMemberId, private_key: &MemberPrivateKey) -> ClientId {
+	pub fn create_client(&self, member_id: RoomMemberId, private_key: &MemberPrivateKey, connection_id: ConnectionId) -> ClientId {
 		let mut client: ClientId = 0;
-		do_create_client(0, &self.socket_addr.to_string(), member_id, self.room_id, private_key, 10, &mut client);
+		do_create_client(connection_id, &self.socket_addr.to_string(), member_id, self.room_id, private_key, 10, &mut client);
 		client
 	}
 
@@ -86,7 +87,7 @@ pub fn setup<const N: usize>(builder: IntegrationTestServerBuilder) -> (Integrat
 	let mut members = [0; N];
 	for member in members.iter_mut() {
 		let (member_id, private_key) = helper.create_member();
-		*member = helper.create_client(member_id, &private_key);
+		*member = helper.create_client(member_id, &private_key, 0);
 	}
 	(helper, members)
 }
