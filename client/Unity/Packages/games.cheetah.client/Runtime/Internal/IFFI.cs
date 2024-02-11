@@ -21,6 +21,7 @@ namespace Games.Cheetah.Client.Internal
         byte GetStatistics(ushort clientId, out Statistics clientStatistics);
         unsafe byte Receive(ushort clientId, S2CCommand* commands, ref ushort count);
         byte DestroyClient(ushort clientId);
+        byte DestroyClientWithoutDisconnect(ushort clientId);
         byte AttachToRoom(ushort clientId);
         byte DetachFromRoom(ushort clientId);
         byte SetChannelType(ushort clientId, ReliabilityGuarantees reliabilityGuarantees, byte group);

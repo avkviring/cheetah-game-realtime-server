@@ -35,6 +35,11 @@ namespace Games.Cheetah.Client.Internal.FFI
             return FFIMethods.DestroyClient(clientId);
         }
 
+        public byte DestroyClientWithoutDisconnect(ushort clientId)
+        {
+            return FFIMethods.DestroyClientWithoutDisconnect(clientId);
+        }
+
         public byte AttachToRoom(ushort clientId)
         {
             return FFIMethods.AttachToRoom(clientId);

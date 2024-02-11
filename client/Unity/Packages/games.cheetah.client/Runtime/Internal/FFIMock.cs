@@ -79,6 +79,11 @@ namespace Games.Cheetah.Client.Internal
             return 0;
         }
 
+        public byte DestroyClientWithoutDisconnect(ushort clientId)
+        {
+            return 0;
+        }
+
         public byte AttachToRoom(ushort clientId)
         {
             return 0;

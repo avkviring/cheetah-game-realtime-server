@@ -41,7 +41,9 @@ namespace Games.Cheetah.Client.Internal.FFI
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_client")]
         public static extern byte DestroyClient(ushort clientId);
-
+        
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_client_without_disconnect")]
+        public static extern byte DestroyClientWithoutDisconnect(ushort clientId);
 
         [DllImport(dllName: Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "attach_to_room")]
         public static extern byte AttachToRoom(ushort clientId);
@@ -112,5 +114,8 @@ namespace Games.Cheetah.Client.Internal.FFI
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "add_item")]
         public static extern byte AddItem(ushort clientId, in NetworkObjectId objectId, ushort fieldIdId,
             ref NetworkBuffer buffer);
+
+        
+
     }
 }

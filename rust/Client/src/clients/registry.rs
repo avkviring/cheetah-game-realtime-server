@@ -107,4 +107,8 @@ impl Registry {
 			}
 		}
 	}
+
+	pub fn destroy_client_without_disconnect(&mut self, client_id: ClientId) -> Option<ApplicationThreadClient> {
+		self.clients.remove(&client_id)
+	}
 }

@@ -70,6 +70,14 @@ pub extern "C" fn destroy_client(client: ClientId) -> u8 {
 }
 
 #[no_mangle]
+pub extern "C" fn destroy_client_without_disconnect(client: ClientId) -> u8 {
+	execute(|registry| match registry.destroy_client_without_disconnect(client) {
+		None => Err(ClientError::ClientNotFound(client)),
+		Some(_) => Ok(()),
+	})
+}
+
+#[no_mangle]
 pub extern "C" fn receive(client_id: ClientId, out_commands: *mut S2CCommandFFI, count: &mut u16) -> u8 {
 	execute_with_client(client_id, |client| unsafe {
 		client.receive(out_commands, count);

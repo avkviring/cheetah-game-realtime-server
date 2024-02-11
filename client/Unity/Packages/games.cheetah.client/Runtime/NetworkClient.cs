@@ -42,7 +42,7 @@ namespace Games.Cheetah.Client
          * connectionId
          *   - идентификатор соединения, изначально 0, если потребуется снова присоединится к данному клиенту на сервере,
          *     то connectionId должен быть +1 к предыдущему. Данный механизм используется только для переподключения клиента при краше игры.
-         * 
+         *
          */
         public NetworkClient(
             ulong connectionId,
@@ -176,6 +176,14 @@ namespace Games.Cheetah.Client
         }
 
         /// <summary>
+        /// Удалить информацию о текущем клиенте, но не посылать команду Disconnect на сервер
+        /// </summary>
+        public void DisposeWithoutDisconnect()
+        {
+            ResultChecker.Check(ffi.DestroyClientWithoutDisconnect(Id));
+        }
+
+        /// <summary>
         /// Получить серверное время (монотонно возрастающее, отсчет от времени запуска сервера)
         /// </summary>
         /// <returns></returns>
@@ -199,13 +207,15 @@ namespace Games.Cheetah.Client
         /// <param name="group">группа, для групповых каналов, для остальных игнорируется</param>
         public void SetReliabilityGuarantees(ReliabilityGuaranteesChannel reliabilityGuaranteesChannel)
         {
-            if (currentReliabilityGuaranteesChannel != null && currentReliabilityGuaranteesChannel.Equals(reliabilityGuaranteesChannel))
+            if (currentReliabilityGuaranteesChannel != null &&
+                currentReliabilityGuaranteesChannel.Equals(reliabilityGuaranteesChannel))
             {
                 return;
             }
 
             currentReliabilityGuaranteesChannel = reliabilityGuaranteesChannel;
-            ResultChecker.Check(ffi.SetChannelType(Id, reliabilityGuaranteesChannel.ReliabilityGuarantees, reliabilityGuaranteesChannel.group));
+            ResultChecker.Check(ffi.SetChannelType(Id, reliabilityGuaranteesChannel.ReliabilityGuarantees,
+                reliabilityGuaranteesChannel.group));
         }
 
 
