@@ -10,7 +10,7 @@ use crate::server::room::Room;
 pub(crate) fn set(field: &BinaryField, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let object_id = field.object_id;
 	let action = |object: &mut GameObject| {
-		object.structure_fields.set(field.field_id, field.value);
+		object.structure_fields.set(field.field_id, Box::new(field.value));
 		Ok(Some(S2CCommand::SetStructure(field.clone().into())))
 	};
 	room.send_command_from_action(object_id, member_id, None, action)
@@ -49,7 +49,7 @@ mod tests {
 		structure::set(&command, &mut room, member_id).unwrap();
 		let object = room.get_object_mut(object_id).unwrap();
 
-		assert_eq!(*object.structure_fields.get(100).unwrap(), command.value);
+		assert_eq!(**object.structure_fields.get(100).unwrap(), command.value);
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::SetStructure(c))) if c == 
 			command.into()));
 	}

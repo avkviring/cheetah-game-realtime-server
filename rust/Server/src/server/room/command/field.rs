@@ -87,7 +87,7 @@ mod tests {
 	pub(crate) fn should_delete_field() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), Default::default(), false);
 
-		object.structure_fields.set(1, Buffer::from([1, 2, 3].as_ref()));
+		object.structure_fields.set(1, Box::new(Buffer::from([1, 2, 3].as_ref())));
 		object.structure_fields.delete(1);
 
 		object.double_fields.set(2, 10.0);

@@ -7,13 +7,13 @@ use cheetah_common::room::object::GameObjectId;
 use crate::server::room::object::fields::FieldValue;
 
 pub type Structure = Buffer;
-impl FieldValue for Structure {
+impl FieldValue for Box<Structure> {
 	fn into(&self, object_id: GameObjectId, field_id: FieldId, collector: &mut Vec<S2CCommand>) {
 		collector.push(S2CCommand::SetStructure(
 			BinaryField {
 				object_id,
 				field_id,
-				value: self.clone(),
+				value: *self.clone(),
 			}
 			.into(),
 		));

@@ -63,7 +63,7 @@ impl GameObjectCreateParams {
 
 		self.longs.iter().for_each(|(&k, v)| object.long_fields.set(k, *v));
 		self.doubles.iter().for_each(|(&k, v)| object.double_fields.set(k, *v));
-		self.structures.iter().for_each(|(&k, v)| object.structure_fields.set(k, *v));
+		self.structures.iter().for_each(|(&k, v)| object.structure_fields.set(k, Box::new(*v)));
 
 		object
 	}
@@ -134,6 +134,6 @@ mod tests {
 
 		let config_value = config_object.structures.get(&2).unwrap();
 		let object_value = object.structure_fields.get(2).unwrap();
-		assert_eq!(*config_value, *object_value);
+		assert_eq!(*config_value, **object_value);
 	}
 }

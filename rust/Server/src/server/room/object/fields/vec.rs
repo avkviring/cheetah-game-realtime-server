@@ -8,12 +8,12 @@ use cheetah_common::room::object::GameObjectId;
 use crate::server::room::object::fields::structure::Structure;
 use crate::server::room::object::fields::FieldValue;
 
-pub type Items = VecDeque<Structure>;
+pub type Items = VecDeque<Box<Structure>>;
 
 impl FieldValue for Items {
 	fn into(&self, object_id: GameObjectId, field_id: FieldId, collector: &mut Vec<S2CCommand>) {
 		self.iter()
-			.map(|item| S2CCommand::AddItem(BinaryField { object_id, field_id, value: *item }.into()))
+			.map(|item| S2CCommand::AddItem(BinaryField { object_id, field_id, value: **item }.into()))
 			.for_each(|command| collector.push(command))
 	}
 }
