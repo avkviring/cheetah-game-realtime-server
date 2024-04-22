@@ -31,7 +31,7 @@ pub struct GameObject {
 	pub created: bool,
 	pub double_fields: Fields<f64>,
 	pub long_fields: Fields<i64>,
-	pub structure_fields: Fields<Structure>,
+	pub structure_fields: Fields<Box<Structure>>,
 	pub structures_fields: Fields<Items>,
 }
 
@@ -100,8 +100,10 @@ mod tests {
 		let mut object = GameObject::new(id, 55, AccessGroups(63), Default::default(), true);
 		object.long_fields.set(1, 100);
 		object.double_fields.set(2, 200.200);
-		object.structure_fields.set(1, [1, 2, 3].as_ref().into());
-		object.structures_fields.set(1, [[1, 2, 3].as_ref().into(), [4, 5, 6].as_ref().into()].into_iter().collect());
+		object.structure_fields.set(1, Box::new([1, 2, 3].as_ref().into()));
+		object
+			.structures_fields
+			.set(1, [Box::new([1, 2, 3].as_ref().into()), Box::new([4, 5, 6].as_ref().into())].into_iter().collect());
 
 		let mut commands = S2CCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
@@ -191,8 +193,8 @@ mod tests {
 	#[test]
 	pub(crate) fn should_update_structure() {
 		let mut object = GameObject::new(GameObjectId::default(), 0, Default::default(), Default::default(), false);
-		object.structure_fields.set(1, Buffer::from([1, 2, 3].as_ref()));
-		object.structure_fields.set(1, Buffer::from([4, 5, 6, 7].as_ref()));
+		object.structure_fields.set(1, Box::new(Buffer::from([1, 2, 3].as_ref())));
+		object.structure_fields.set(1, Box::new(Buffer::from([4, 5, 6, 7].as_ref())));
 
 		let s: &Buffer = object.structure_fields.get(1).unwrap();
 		assert_eq!(s.as_slice(), [4, 5, 6, 7]);
