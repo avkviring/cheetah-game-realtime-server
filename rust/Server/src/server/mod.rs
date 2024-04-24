@@ -1,4 +1,4 @@
-use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTaskExecutionError, ManagementTaskResult, RoomMembersCount};
+use crate::server::manager::{ManagementTask, ManagementTaskChannel, ManagementTaskExecutionError, ManagementTaskResult, RoomMembers};
 use crate::server::measurer::Measurer;
 use crate::server::network::Network;
 use crate::server::room::command::ServerCommandError;
@@ -91,13 +91,12 @@ impl Server {
 			ManagementTask::DeleteMember(id) => self.delete_member(id).map(|_| ManagementTaskResult::DeleteMember)?,
 			ManagementTask::Dump(room_id) => ManagementTaskResult::Dump(self.rooms.get(&room_id).cloned()),
 			ManagementTask::GetRooms => ManagementTaskResult::GetRooms(self.rooms.rooms().map(|r| r.0).copied().collect()),
-			ManagementTask::GetRoomsMemberCount => ManagementTaskResult::GetRoomsMemberCount(
+			ManagementTask::GetRoomsMembers => ManagementTaskResult::GetRoomsMemberCount(
 				self.rooms
 					.rooms()
-					.map(|(room_id, room)| RoomMembersCount {
+					.map(|(room_id, room)| RoomMembers {
 						room_id: *room_id,
-						members: room.members.len(),
-						connected_members: room.members.iter().filter(|p| p.1.connected).count(),
+						members: room.members.iter().map(|i| i.1.clone()).collect(),
 					})
 					.collect(),
 			),

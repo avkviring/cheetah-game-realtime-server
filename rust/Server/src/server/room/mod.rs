@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::server::room::command::{execute, ServerCommandError};
 use crate::server::room::config::member::MemberCreateParams;
 use crate::server::room::config::object::GameObjectConfig;
+use crate::server::room::member::RoomMemberStatus;
 use crate::server::room::object::{GameObject, S2CCommandsCollector};
 use cheetah_common::commands::guarantees::{ChannelGroup, ReliabilityGuarantees};
 use cheetah_common::commands::s2c::S2CCommand;
@@ -115,7 +116,7 @@ impl Room {
 	///
 	pub fn execute_commands(&mut self, member_id: RoomMemberId, commands: &[CommandWithReliabilityGuarantees]) {
 		if let Some(member) = self.members.get(&member_id) {
-			if !member.connected {
+			if !member.status.is_online() {
 				if let Err(e) = self.connect_member(member_id) {
 					e.log_error(self.id, member_id);
 					return;
@@ -163,7 +164,7 @@ impl Room {
 		}
 
 		let member = self.members.get_mut(&member_id).ok_or(ServerCommandError::MemberNotFound(member_id))?;
-		member.connected = true;
+		member.status = RoomMemberStatus::Connected;
 		Ok(())
 	}
 
@@ -172,8 +173,7 @@ impl Room {
 		let member_id = self.member_id_generator;
 		let member = RoomMember {
 			id: member_id,
-			connected: false,
-			attached: false,
+			status: RoomMemberStatus::Created,
 			template,
 			out_commands: Default::default(),
 		};
@@ -283,6 +283,7 @@ mod tests {
 	use crate::server::room::config::member::MemberCreateParams;
 	use crate::server::room::config::object::GameObjectCreateParams;
 	use crate::server::room::config::room::RoomCreateParams;
+	use crate::server::room::member::RoomMemberStatus;
 	use crate::server::room::object::GameObject;
 	use crate::server::room::Room;
 	use cheetah_common::commands::c2s::C2SCommand;
@@ -320,10 +321,9 @@ mod tests {
 			self.get_object_mut(id).unwrap()
 		}
 
-		pub fn mark_as_connected_in_test(&mut self, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
+		pub fn mark_as_attached_in_test(&mut self, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 			let member = self.get_member_mut(&member_id)?;
-			member.connected = true;
-			member.attached = true;
+			member.status = RoomMemberStatus::Attached;
 			Ok(())
 		}
 
@@ -490,7 +490,7 @@ mod tests {
 		let mut room = Room::default();
 		let member_template = MemberCreateParams::stub(AccessGroups(8));
 		let member_id = room.register_member(member_template);
-		room.mark_as_connected_in_test(member_id).unwrap();
+		room.mark_as_attached_in_test(member_id).unwrap();
 		let member = room.get_member_mut(&member_id).unwrap();
 		member.out_commands.push(CommandWithChannelType {
 			channel_type: ReliabilityGuarantees::ReliableUnordered,
@@ -523,10 +523,10 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let mut room = Room::new(0, template);
 		let member_1 = room.register_member(MemberCreateParams::stub(access_groups));
-		room.mark_as_connected_in_test(member_1).unwrap();
+		room.mark_as_attached_in_test(member_1).unwrap();
 
 		let member_2 = room.register_member(MemberCreateParams::stub(access_groups));
-		room.mark_as_connected_in_test(member_2).unwrap();
+		room.mark_as_attached_in_test(member_2).unwrap();
 		room.connect_member(member_2).unwrap();
 
 		assert_eq!(S2CCommand::MemberConnected(MemberConnected { member_id: member_2 }), room.get_member_out_commands_for_test(member_1)[0]);
@@ -538,11 +538,11 @@ mod tests {
 		let access_groups = AccessGroups(10);
 		let mut room = Room::new(0, template);
 		let member_1 = room.register_member(MemberCreateParams::stub(access_groups));
-		room.mark_as_connected_in_test(member_1).unwrap();
 		room.connect_member(member_1).unwrap();
+		room.mark_as_attached_in_test(member_1).unwrap();
 
 		let member_2 = room.register_member(MemberCreateParams::stub(access_groups));
-		room.mark_as_connected_in_test(member_2).unwrap();
+		room.mark_as_attached_in_test(member_2).unwrap();
 		room.connect_member(member_2).unwrap();
 		room.disconnect_member(member_2).unwrap();
 

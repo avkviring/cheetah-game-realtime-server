@@ -40,8 +40,8 @@ mod tests {
 		let mut room = Room::new(0, template);
 		let member_a_id = room.register_member(MemberCreateParams::stub(access_groups));
 		let member_b_id = room.register_member(MemberCreateParams::stub(access_groups));
-		room.mark_as_connected_in_test(member_a_id).unwrap();
-		room.mark_as_connected_in_test(member_b_id).unwrap();
+		room.mark_as_attached_in_test(member_a_id).unwrap();
+		room.mark_as_attached_in_test(member_b_id).unwrap();
 
 		let object_id = room.test_create_object_with_created_state(GameObjectOwner::Member(member_a_id), access_groups, Default::default()).id;
 		room.test_out_commands.clear();

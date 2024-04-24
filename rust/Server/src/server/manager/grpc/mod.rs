@@ -1,8 +1,19 @@
 use crate::server::manager::grpc::proto::realtime_server_management_service_server::RealtimeServerManagementService;
-use crate::server::manager::grpc::proto::{
-	CreateMemberRequest, CreateMemberResponse, CreateSuperMemberRequest, DeleteMemberRequest, DeleteMemberResponse, DeleteRoomRequest, DeleteRoomResponse, EmptyRequest, GetRoomsMembersCountResponse,
-	GetRoomsResponse, ProbeRequest, ProbeResponse, RoomIdResponse, RoomMembersCountResponse, RoomTemplate,
-};
+use crate::server::manager::grpc::proto::CreateMemberRequest;
+use crate::server::manager::grpc::proto::CreateMemberResponse;
+use crate::server::manager::grpc::proto::CreateSuperMemberRequest;
+use crate::server::manager::grpc::proto::DeleteMemberRequest;
+use crate::server::manager::grpc::proto::DeleteMemberResponse;
+use crate::server::manager::grpc::proto::DeleteRoomRequest;
+use crate::server::manager::grpc::proto::DeleteRoomResponse;
+use crate::server::manager::grpc::proto::EmptyRequest;
+use crate::server::manager::grpc::proto::GetRoomsMembersResponse;
+use crate::server::manager::grpc::proto::GetRoomsResponse;
+use crate::server::manager::grpc::proto::ProbeRequest;
+use crate::server::manager::grpc::proto::ProbeResponse;
+use crate::server::manager::grpc::proto::RoomIdResponse;
+use crate::server::manager::grpc::proto::RoomMembersResponse;
+use crate::server::manager::grpc::proto::RoomTemplate;
 use crate::server::manager::{ManagementTaskError, ManagementTaskExecutionError};
 use crate::server::room::command::ServerCommandError;
 use crate::server::room::config::member::MemberCreateParams;
@@ -109,19 +120,18 @@ impl RealtimeServerManagementService for RealtimeServerManagementServiceImpl {
 		server.delete_room(room_id).map(|_| Response::new(DeleteRoomResponse {})).map_err(Status::from)
 	}
 
-	async fn get_rooms_members_count(&self, _request: Request<EmptyRequest>) -> Result<Response<GetRoomsMembersCountResponse>, Status> {
+	async fn get_rooms_members(&self, _request: Request<EmptyRequest>) -> Result<Response<GetRoomsMembersResponse>, Status> {
 		self.server_manager
 			.lock()
 			.await
 			.get_rooms_member_count()
 			.map(|rooms| {
-				Response::new(GetRoomsMembersCountResponse {
+				Response::new(GetRoomsMembersResponse {
 					rooms: rooms
 						.into_iter()
-						.map(|r| RoomMembersCountResponse {
+						.map(|r| RoomMembersResponse {
 							room: r.room_id,
-							members: r.members as u32,
-							connected_members: r.connected_members as u32,
+							members: r.members.into_iter().map(From::from).collect(),
 						})
 						.collect(),
 				})
@@ -150,7 +160,7 @@ impl From<ManagementTaskError> for Status {
 #[cfg(test)]
 mod test {
 	use crate::server::manager::grpc::proto::realtime_server_management_service_server::RealtimeServerManagementService;
-	use crate::server::manager::grpc::proto::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, RoomMembersCountResponse};
+	use crate::server::manager::grpc::proto::{DeleteMemberRequest, DeleteRoomRequest, EmptyRequest, Member, MemberStatus, RoomMembersResponse};
 	use crate::server::manager::grpc::{RealtimeServerManagementServiceImpl, SUPER_MEMBER_KEY_ENV};
 	use crate::server::manager::ServerManager;
 	use crate::server::room::config::member::MemberCreateParams;
@@ -181,7 +191,7 @@ mod test {
 		let service = RealtimeServerManagementServiceImpl::new(Arc::clone(&server_manager));
 		let room_1 = server_manager.lock().await.create_room(Default::default()).unwrap();
 		let room_2 = server_manager.lock().await.create_room(Default::default()).unwrap();
-		server_manager
+		let member_id = server_manager
 			.lock()
 			.await
 			.create_member(
@@ -195,17 +205,18 @@ mod test {
 			)
 			.unwrap();
 
-		let rooms_response = service.get_rooms_members_count(Request::new(EmptyRequest::default())).await.unwrap();
+		let rooms_response = service.get_rooms_members(Request::new(EmptyRequest::default())).await.unwrap();
 		let rooms = rooms_response.get_ref();
-		assert!(rooms.rooms.contains(&RoomMembersCountResponse {
+		assert!(rooms.rooms.contains(&RoomMembersResponse {
 			room: room_1,
-			members: 1,
-			connected_members: 0
+			members: vec![Member {
+				id: member_id,
+				status: MemberStatus::Created.into()
+			}],
 		}));
-		assert!(rooms.rooms.contains(&RoomMembersCountResponse {
+		assert!(rooms.rooms.contains(&RoomMembersResponse {
 			room: room_2,
-			members: 0,
-			connected_members: 0
+			members: Default::default(),
 		}));
 		assert_eq!(rooms.rooms.len(), 2);
 	}

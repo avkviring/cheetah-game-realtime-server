@@ -6,7 +6,7 @@ use cheetah_common::commands::{BothDirectionCommand, CommandWithChannelType};
 use cheetah_common::room::access::AccessGroups;
 
 use crate::server::room::command::ServerCommandError;
-use crate::server::room::member::RoomMember;
+use crate::server::room::member::{RoomMember, RoomMemberStatus};
 use crate::server::room::Room;
 
 ///
@@ -26,8 +26,7 @@ impl Room {
 		let members_for_send = self
 			.members
 			.values_mut()
-			.filter(|member| member.attached)
-			.filter(|member| member.connected)
+			.filter(|member| member.status == RoomMemberStatus::Attached)
 			.filter(|member| member.template.groups.contains_any(&access_groups))
 			.filter(|member| filter(member));
 
@@ -47,7 +46,7 @@ impl Room {
 		let channel = self.current_channel.unwrap_or(ReliabilityGuarantees::ReliableSequence(ChannelGroup(0)));
 		let member = self.get_member_mut(member_id)?;
 
-		if member.attached && member.connected {
+		if member.status == RoomMemberStatus::Attached {
 			for command in commands {
 				let member = self.get_member_mut(member_id)?;
 				member.out_commands.push(CommandWithChannelType {
@@ -86,7 +85,7 @@ mod tests {
 		object.access_groups = access_groups;
 		object.created = true;
 		let object_id = object.id;
-		room.mark_as_connected_in_test(member_id).unwrap();
+		room.mark_as_attached_in_test(member_id).unwrap();
 
 		room.send_command_from_action(object_id, member_id, None, |_| {
 			Ok(Some(S2CCommand::SetLong(LongField {
@@ -129,7 +128,7 @@ mod tests {
 		let _member_source_id = room.register_member(MemberCreateParams::stub(groups));
 		let member_target_id = room.register_member(MemberCreateParams::stub(groups));
 
-		room.mark_as_connected_in_test(member_target_id).unwrap();
+		room.mark_as_attached_in_test(member_target_id).unwrap();
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_target_id), groups, Default::default());
 		object.created = true;
 		object.template_id = object_template;
@@ -158,8 +157,8 @@ mod tests {
 		let member_2 = room.register_member(MemberCreateParams::stub(access_groups));
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_1), access_groups, Default::default());
 		let object_id = object.id;
-		room.mark_as_connected_in_test(member_1).unwrap();
-		room.mark_as_connected_in_test(member_2).unwrap();
+		room.mark_as_attached_in_test(member_1).unwrap();
+		room.mark_as_attached_in_test(member_2).unwrap();
 
 		room.send_command_from_action(object_id, member_1, None, |_| Ok(Some(S2CCommand::SetLong(LongField { object_id, field_id: 100, value: 200 }))))
 			.unwrap();

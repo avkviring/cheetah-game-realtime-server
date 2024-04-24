@@ -64,9 +64,9 @@ mod tests {
 		let member2 = room.register_member(MemberCreateParams::stub(access_groups));
 		let member3 = room.register_member(MemberCreateParams::stub(access_groups));
 
-		room.mark_as_connected_in_test(member1).unwrap();
-		room.mark_as_connected_in_test(member2).unwrap();
-		room.mark_as_connected_in_test(member3).unwrap();
+		room.mark_as_attached_in_test(member1).unwrap();
+		room.mark_as_attached_in_test(member2).unwrap();
+		room.mark_as_attached_in_test(member3).unwrap();
 
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member1), access_groups, Default::default());
 		object.created = true;

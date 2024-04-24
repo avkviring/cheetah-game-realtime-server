@@ -1,20 +1,24 @@
-pub mod grpc;
-use crate::server::room::command::ServerCommandError;
-use crate::server::room::config::member::MemberCreateParams;
-use crate::server::room::config::room::RoomCreateParams;
-use crate::server::room::Room;
-use crate::server::room_registry::RoomNotFoundError;
-use crate::server::Server;
-use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
-use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
-use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use std::net::UdpSocket;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{RecvTimeoutError, SendError, Sender};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+
+use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+use cheetah_game_realtime_protocol::others::member_id::MemberAndRoomId;
+use cheetah_game_realtime_protocol::{RoomId, RoomMemberId};
 use thiserror::Error;
+
+use crate::server::room::command::ServerCommandError;
+use crate::server::room::config::member::MemberCreateParams;
+use crate::server::room::config::room::RoomCreateParams;
+use crate::server::room::member::RoomMember;
+use crate::server::room::Room;
+use crate::server::room_registry::RoomNotFoundError;
+use crate::server::Server;
+
+pub mod grpc;
 
 ///
 /// Управление сервером
@@ -34,7 +38,7 @@ pub enum ManagementTask {
 	Dump(RoomId),
 	GetRooms,
 	GetCreatedRoomsCount,
-	GetRoomsMemberCount,
+	GetRoomsMembers,
 	DeleteRoom(RoomId),
 }
 
@@ -45,16 +49,15 @@ pub enum ManagementTaskResult {
 	DeleteMember,
 	Dump(Option<Room>),
 	GetRooms(Vec<RoomId>),
-	GetRoomsMemberCount(Vec<RoomMembersCount>),
+	GetRoomsMemberCount(Vec<RoomMembers>),
 	GetCreatedRoomsCount(usize),
 	DeleteRoom,
 }
 
 #[derive(Debug)]
-pub struct RoomMembersCount {
+pub struct RoomMembers {
 	pub room_id: RoomId,
-	pub members: usize,
-	pub connected_members: usize,
+	pub members: Vec<RoomMember>,
 }
 
 #[derive(Error, Debug)]
@@ -139,8 +142,8 @@ impl ServerManager {
 		})?
 	}
 
-	pub(crate) fn get_rooms_member_count(&self) -> Result<Vec<RoomMembersCount>, ManagementTaskError> {
-		self.execute_task(ManagementTask::GetRoomsMemberCount).map(|res| {
+	pub(crate) fn get_rooms_member_count(&self) -> Result<Vec<RoomMembers>, ManagementTaskError> {
+		self.execute_task(ManagementTask::GetRoomsMembers).map(|res| {
 			if let ManagementTaskResult::GetRoomsMemberCount(rooms) = res {
 				Ok(rooms)
 			} else {
@@ -210,12 +213,15 @@ impl ServerManager {
 
 #[cfg(test)]
 mod test {
+	use std::time::Duration;
+
+	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
+
+	use cheetah_common::network::bind_to_free_socket;
+
 	use crate::server::manager::ServerManager;
 	use crate::server::room::config::member::MemberCreateParams;
 	use crate::server::room::config::room::RoomCreateParams;
-	use cheetah_common::network::bind_to_free_socket;
-	use cheetah_game_realtime_protocol::coniguration::ProtocolConfiguration;
-	use std::time::Duration;
 
 	#[test]
 	fn should_get_rooms() {

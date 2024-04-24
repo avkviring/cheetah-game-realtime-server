@@ -1,8 +1,9 @@
 use crate::server::manager::grpc;
 use crate::server::manager::grpc::proto;
 use crate::server::manager::grpc::proto::field_value::Variant;
-use crate::server::manager::grpc::proto::{GameObjectConfig, GameObjectTemplate, ItemConfig};
+use crate::server::manager::grpc::proto::{GameObjectConfig, GameObjectTemplate, ItemConfig, Member, MemberStatus};
 use crate::server::room::config::{member, object, room};
+use crate::server::room::member::{RoomMember, RoomMemberStatus};
 use cheetah_common::room::access::AccessGroups;
 use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::field::FieldId;
@@ -70,6 +71,28 @@ impl From<GameObjectTemplate> for object::GameObjectCreateParams {
 				.map(|(field_id, value)| if let Variant::Long(v) = value { Some((*field_id, *v)) } else { None })
 				.flatten()
 				.collect(),
+		}
+	}
+}
+
+impl From<RoomMember> for Member {
+	fn from(value: RoomMember) -> Self {
+		Member {
+			id: value.id,
+			status: MemberStatus::from(value.status).into(),
+		}
+	}
+}
+
+impl From<RoomMemberStatus> for MemberStatus {
+	fn from(value: RoomMemberStatus) -> Self {
+		match value {
+			RoomMemberStatus::Created => MemberStatus::Created,
+			RoomMemberStatus::CreatedNotConnectedAndDeleted => MemberStatus::CreatedNotConnectedAndDeleted,
+			RoomMemberStatus::Connected => MemberStatus::Connected,
+			RoomMemberStatus::Attached => MemberStatus::Attached,
+			RoomMemberStatus::Detached => MemberStatus::Detached,
+			RoomMemberStatus::Disconnected => MemberStatus::Disconnected,
 		}
 	}
 }
