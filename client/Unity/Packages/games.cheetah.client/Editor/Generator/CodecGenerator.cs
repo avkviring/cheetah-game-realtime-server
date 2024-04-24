@@ -49,10 +49,12 @@ namespace Games.Cheetah.Client.Editor.Generator
             var decodeMethod = new StringBuilder();
             var encodeMethod = new StringBuilder();
 
-            decodeMethod.AppendLine($"public void Decode(ref {nameof(NetworkBuffer)} buffer, ref {targetTypeFullName} dest)");
+            decodeMethod.AppendLine(
+                $"public void Decode(ref {nameof(NetworkBuffer)} buffer, ref {targetTypeFullName} dest)");
             decodeMethod.AppendLine("{");
 
-            encodeMethod.AppendLine($"public void  Encode(in {targetTypeFullName} source, ref {nameof(NetworkBuffer)} buffer)");
+            encodeMethod.AppendLine(
+                $"public void  Encode(in {targetTypeFullName} source, ref {nameof(NetworkBuffer)} buffer)");
             encodeMethod.AppendLine("{");
 
             var processedFields = new HashSet<string>();
@@ -71,11 +73,15 @@ namespace Games.Cheetah.Client.Editor.Generator
                         VariableSizeFieldGenerator.Create(formatters, fieldInfoAccessor) ??
                         FormattedPresentTypesFieldGenerator.Create(formatters, fieldInfoAccessor) ??
                         EnumFieldGenerator.Create(formatters, fieldInfoAccessor) ??
+                        CodecNativeListFieldGenerator.Create(codecsImporter, fieldInfoAccessor) ??
                         FixedArrayFieldGenerator.Create(formatters, fieldInfoAccessor, processedFields, allFields) ??
-                        FormatterArrayFieldGenerator.Create(formatters, fieldInfoAccessor, processedFields, allFields) ??
-                        CodecArrayFieldGenerator.Create(codecsImporter, fieldInfoAccessor, processedFields, allFields) ??
+                        FormatterArrayFieldGenerator.Create(formatters, fieldInfoAccessor, processedFields,
+                            allFields) ??
+                        CodecArrayFieldGenerator.Create(codecsImporter, fieldInfoAccessor, processedFields,
+                            allFields) ??
                         CodecFieldGenerator.Create(codecsImporter, fieldInfoAccessor) ?? // должен быть самым последним
-                        throw new Exception($"Unsupported field {field.Name} with type {field.FieldType.FullName} in class {type.Name}.");
+                        throw new Exception(
+                            $"Unsupported field {field.Name} with type {field.FieldType.FullName} in class {type.Name}.");
 
                     decodeMethod.Append(AddTabs(generator.GenerateDecode()));
                     encodeMethod.Append(AddTabs(generator.GenerateEncode()));
@@ -83,7 +89,8 @@ namespace Games.Cheetah.Client.Editor.Generator
                 }
                 catch (Exception e)
                 {
-                    throw new Exception($"Generate codec for field {field.Name} in class {type.Name} error: {e.Message}.");
+                    throw new Exception(
+                        $"Generate codec for field {field.Name} in class {type.Name}", e);
                 }
             }
 

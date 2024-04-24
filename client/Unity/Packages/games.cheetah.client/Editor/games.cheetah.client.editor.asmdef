@@ -3,7 +3,8 @@
   "rootNamespace": "Games.Cheetah.Client",
   "references": [
     "games.cheetah.grpc",
-    "games.cheetah.client"
+    "games.cheetah.client",
+    "Unity.Collections"
   ],
   "includePlatforms": [
     "Editor"
