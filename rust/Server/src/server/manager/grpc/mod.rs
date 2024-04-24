@@ -34,7 +34,7 @@ impl RealtimeServerManagementServiceImpl {
 		let private_key = template.private_key.clone();
 		self.server_manager.lock().await.create_member(room_id, template).map_err(Status::from).map(|member_id| {
 			Response::new(CreateMemberResponse {
-				user_id: u32::from(member_id),
+				user_id: u64::from(member_id),
 				private_key: private_key.into(),
 			})
 		})
@@ -256,7 +256,7 @@ mod test {
 		);
 
 		assert!(
-			!server_manager.lock().await.dump(room_id).unwrap().unwrap().members.iter().any(|u| *u.0 == member_id as u16),
+			!server_manager.lock().await.dump(room_id).unwrap().unwrap().members.iter().any(|u| *u.0 == member_id as u64),
 			"deleted member should not be in the room"
 		);
 	}

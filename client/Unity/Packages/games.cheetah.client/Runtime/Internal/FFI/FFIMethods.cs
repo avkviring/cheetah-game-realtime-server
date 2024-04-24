@@ -20,7 +20,7 @@ namespace Games.Cheetah.Client.Internal.FFI
         public static extern byte CreateClient(
             ulong connectionId,
             [MarshalAs(UnmanagedType.LPStr)] string serverAddress,
-            ushort memberId,
+            ulong memberId,
             ulong roomId,
             ref NetworkBuffer userPrivateKey,
             ulong disconnectTimeInSec,
@@ -41,8 +41,9 @@ namespace Games.Cheetah.Client.Internal.FFI
 
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_client")]
         public static extern byte DestroyClient(ushort clientId);
-        
-        [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "destroy_client_without_disconnect")]
+
+        [DllImport(Library, CallingConvention = CallingConvention.Cdecl,
+            EntryPoint = "destroy_client_without_disconnect")]
         public static extern byte DestroyClientWithoutDisconnect(ushort clientId);
 
         [DllImport(dllName: Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "attach_to_room")]
@@ -114,8 +115,5 @@ namespace Games.Cheetah.Client.Internal.FFI
         [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "add_item")]
         public static extern byte AddItem(ushort clientId, in NetworkObjectId objectId, ushort fieldIdId,
             ref NetworkBuffer buffer);
-
-        
-
     }
 }

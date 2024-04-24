@@ -15,7 +15,7 @@ namespace Games.Cheetah.Client
     /// </summary>
     public class NetworkClient
     {
-        public readonly uint MemberId;
+        public readonly ulong MemberId;
         public readonly ulong roomId;
         public readonly byte[] privateUserKey;
         public readonly string serverUdpHost;
@@ -48,7 +48,7 @@ namespace Games.Cheetah.Client
             ulong connectionId,
             string serverUdpHost,
             ushort serverUdpPort,
-            uint memberId,
+            ulong memberId,
             ulong roomId,
             byte[] privateUserKey,
             CodecRegistry codecRegistry,
@@ -65,7 +65,7 @@ namespace Games.Cheetah.Client
             IFFI ffi,
             string serverUdpHost,
             ushort serverUdpPort,
-            uint memberId,
+            ulong memberId,
             ulong roomId,
             byte[] privateUserKey,
             CodecRegistry codecRegistry,

@@ -10,7 +10,7 @@ namespace Games.Cheetah.Client.Internal
         byte CreateClient(
             ulong connectionId,
             string serverAddress,
-            ushort memberId,
+            ulong memberId,
             ulong roomId,
             ref NetworkBuffer userPrivateKey,
             ulong disconnectTimeInSec,

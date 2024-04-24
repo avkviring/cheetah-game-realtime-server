@@ -14,7 +14,7 @@ pub(crate) fn send(event: &BinaryField, room: &mut Room, member_id: RoomMemberId
 	room.send_command_from_action(object_id, member_id, None, action)
 }
 
-pub(crate) fn send_target(target_event: &TargetEvent, room: &mut Room, member_id: u16) -> Result<(), ServerCommandError> {
+pub(crate) fn send_target(target_event: &TargetEvent, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let object_id = target_event.event.object_id;
 	let target = target_event.target;
 	let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(target_event.event.clone().into())));

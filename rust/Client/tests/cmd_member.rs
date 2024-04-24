@@ -24,7 +24,7 @@ fn should_disconnect() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::MemberDisconnected,
 			command: S2CommandUnionFFI {
-				member_disconnect: MemberDisconnected { member_id: client2 }
+				member_disconnect: MemberDisconnected { member_id: 2 }
 			}
 		}
 	);

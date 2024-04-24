@@ -54,15 +54,15 @@ impl GameObjectId {
 	pub fn encode(&self, out: &mut Cursor<&mut [u8]>) -> std::io::Result<()> {
 		out.write_variable_u64(u64::from(self.id))?;
 		if self.is_room_owner {
-			out.write_variable_i64(-1)
+			out.write_variable_u64(0)
 		} else {
-			out.write_variable_i64(i64::from(self.member_id))
+			out.write_variable_u64(self.member_id)
 		}
 	}
 	pub fn decode(input: &mut Cursor<&[u8]>) -> std::io::Result<Self> {
 		let id = input.read_variable_u64()?.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
-		let owner = input.read_variable_i64()?;
-		let room_owner = owner == -1;
+		let owner = input.read_variable_u64()?;
+		let room_owner = owner == 0;
 		let member_id = if room_owner { 0 } else { owner.try_into().map_err(|e| Error::new(ErrorKind::InvalidData, e))? };
 		Ok(GameObjectId {
 			id,
