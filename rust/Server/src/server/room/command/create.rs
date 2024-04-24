@@ -44,6 +44,7 @@ mod tests {
 	use cheetah_common::room::access::AccessGroups;
 	use cheetah_common::room::object::GameObjectId;
 	use cheetah_common::room::owner::GameObjectOwner;
+	use cheetah_game_realtime_protocol::RoomMemberId;
 
 	use crate::server::room::command::ServerCommandError;
 	use crate::server::room::config::member::MemberCreateParams;
@@ -144,7 +145,7 @@ mod tests {
 		assert!(matches!(room.get_object_mut(object_id), Ok(object) if object.template_id == 777));
 	}
 
-	fn setup(access_groups: AccessGroups) -> (Room, u16) {
+	fn setup(access_groups: AccessGroups) -> (Room, RoomMemberId) {
 		let template = RoomCreateParams::default();
 		let mut room = Room::new(0, template);
 		let member_id = room.register_member(MemberCreateParams::stub(access_groups));

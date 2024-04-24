@@ -476,7 +476,7 @@ mod tests {
 		});
 		assert_eq!(order, "1005200");
 
-		room.delete_object(GameObjectId::new(100, GameObjectOwner::Room), u16::MAX).unwrap();
+		room.delete_object(GameObjectId::new(100, GameObjectOwner::Room), u64::MAX as RoomMemberId).unwrap();
 
 		let mut order = String::new();
 		room.objects.values().for_each(|o| {
@@ -513,7 +513,7 @@ mod tests {
 		let unique_key = Buffer::from([1, 2, 3, 4].as_slice());
 		room.set_singleton_key(unique_key.clone(), object_id);
 		assert!(room.has_object_singleton_key(&unique_key));
-		room.delete_object(object_id, u16::MAX).unwrap();
+		room.delete_object(object_id, u64::MAX as RoomMemberId).unwrap();
 		assert!(!room.has_object_singleton_key(&unique_key));
 	}
 

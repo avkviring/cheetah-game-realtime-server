@@ -82,7 +82,7 @@ impl IntegrationTestHelper {
 }
 
 #[must_use]
-pub fn setup<const N: usize>(builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, [u16; N]) {
+pub fn setup<const N: usize>(builder: IntegrationTestServerBuilder) -> (IntegrationTestHelper, [ClientId; N]) {
 	let mut helper = IntegrationTestHelper::new(builder);
 	let mut members = [0; N];
 	for member in members.iter_mut() {

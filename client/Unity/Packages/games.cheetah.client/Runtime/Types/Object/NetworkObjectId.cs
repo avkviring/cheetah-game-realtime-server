@@ -20,7 +20,7 @@ namespace Games.Cheetah.Client.Types.Object
         /// <summary>
         /// Идентификатор участника комнаты
         /// </summary>
-        public ushort memberId;
+        public ulong memberId;
 
         public static NetworkObjectId Empty;
 

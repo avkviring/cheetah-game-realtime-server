@@ -7,11 +7,13 @@ namespace Games.Cheetah.Client.Internal.FFI
 {
     public class FFIImpl : IFFI
     {
-        public byte CreateClient(ulong connectionId, string serverAddress, ushort memberId, ulong roomId, ref NetworkBuffer userPrivateKey,
+        public byte CreateClient(ulong connectionId, string serverAddress, ulong memberId, ulong roomId,
+            ref NetworkBuffer userPrivateKey,
             ulong disconnectTimeInSec,
             out ushort clientId)
         {
-            return FFIMethods.CreateClient(connectionId, serverAddress, memberId, roomId, ref userPrivateKey, disconnectTimeInSec, out clientId);
+            return FFIMethods.CreateClient(connectionId, serverAddress, memberId, roomId, ref userPrivateKey,
+                disconnectTimeInSec, out clientId);
         }
 
         public byte GetConnectionStatus(ushort clientId, out ConnectionStatus status)
@@ -90,12 +92,14 @@ namespace Games.Cheetah.Client.Internal.FFI
             return FFIMethods.Increment(clientId, in objectId, fieldId.Id, increment);
         }
 
-        public byte Send(ushort clientId, in NetworkObjectId objectId, FieldId.Event fieldId, ref NetworkBuffer eventData)
+        public byte Send(ushort clientId, in NetworkObjectId objectId, FieldId.Event fieldId,
+            ref NetworkBuffer eventData)
         {
             return FFIMethods.Send(clientId, in objectId, fieldId.Id, ref eventData);
         }
 
-        public byte Send(ushort clientId, ushort targetUser, in NetworkObjectId objectId, FieldId.Event fieldId, ref NetworkBuffer eventData)
+        public byte Send(ushort clientId, ushort targetUser, in NetworkObjectId objectId, FieldId.Event fieldId,
+            ref NetworkBuffer eventData)
         {
             return FFIMethods.Send(clientId, targetUser, in objectId, fieldId.Id, ref eventData);
         }
@@ -120,7 +124,8 @@ namespace Games.Cheetah.Client.Internal.FFI
             return FFIMethods.CreateObject(clientId, template, accessGroup, ref objectId);
         }
 
-        public byte CreatedObject(ushort clientId, in NetworkObjectId objectId, bool roomOwner, ref NetworkBuffer singletonKey)
+        public byte CreatedObject(ushort clientId, in NetworkObjectId objectId, bool roomOwner,
+            ref NetworkBuffer singletonKey)
         {
             return FFIMethods.CreatedObject(clientId, in objectId, roomOwner, ref singletonKey);
         }
@@ -130,12 +135,14 @@ namespace Games.Cheetah.Client.Internal.FFI
             return FFIMethods.DeleteObject(clientId, in objectId);
         }
 
-        public byte Set(ushort clientId, in NetworkObjectId objectId, FieldId.Structure fieldId, ref NetworkBuffer value)
+        public byte Set(ushort clientId, in NetworkObjectId objectId, FieldId.Structure fieldId,
+            ref NetworkBuffer value)
         {
             return FFIMethods.Set(clientId, in objectId, fieldId.Id, ref value);
         }
 
-        public byte AddItem(ushort clientId, in NetworkObjectId objectId, FieldId.Items fieldId, ref NetworkBuffer buffer)
+        public byte AddItem(ushort clientId, in NetworkObjectId objectId, FieldId.Items fieldId,
+            ref NetworkBuffer buffer)
         {
             return FFIMethods.AddItem(clientId, in objectId, fieldId.Id, ref buffer);
         }

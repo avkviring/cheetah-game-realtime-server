@@ -69,7 +69,7 @@ message CreateSuperMemberRequest {
 }
 
 message  CreateMemberResponse {
-  uint32 user_id = 1;
+  uint64 user_id = 1;
   bytes private_key = 2;
 }
 
@@ -124,7 +124,7 @@ message DeleteRoomResponse {
 
 message DeleteMemberRequest {
   uint64 room_id = 1;
-  uint32 user_id = 2;
+  uint64 user_id = 2;
 }
 
 message  DeleteMemberResponse {
