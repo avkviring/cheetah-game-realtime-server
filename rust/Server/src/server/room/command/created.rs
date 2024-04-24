@@ -70,8 +70,8 @@ mod tests {
 	#[test]
 	pub(crate) fn should_send_commands() {
 		let (mut room, object_id, member1, member2) = setup_two_players();
-		room.mark_as_connected_in_test(member1).unwrap();
-		room.mark_as_connected_in_test(member2).unwrap();
+		room.mark_as_attached_in_test(member1).unwrap();
+		room.mark_as_attached_in_test(member2).unwrap();
 		let command = C2SCreatedGameObject::new(object_id, false, None);
 		created_object(&command, &mut room, member1).unwrap();
 

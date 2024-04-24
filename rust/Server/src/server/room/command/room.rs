@@ -1,4 +1,5 @@
 use crate::server::room::command::ServerCommandError;
+use crate::server::room::member::RoomMemberStatus;
 use crate::server::room::object::S2CCommandsCollector;
 use crate::server::room::Room;
 use cheetah_common::room::object::GameObjectTemplateId;
@@ -6,7 +7,7 @@ use cheetah_game_realtime_protocol::RoomMemberId;
 
 pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(&member_id)?;
-	member.attached = true;
+	member.status = RoomMemberStatus::Attached;
 	let access_group = member.template.groups;
 	let mut command_collector = Vec::<(GameObjectTemplateId, S2CCommandsCollector)>::new();
 	room.objects
@@ -27,7 +28,7 @@ pub fn attach_to_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), Se
 
 pub fn detach_from_room(room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let member = room.get_member_mut(&member_id)?;
-	member.attached = false;
+	member.status = RoomMemberStatus::Detached;
 	Ok(())
 }
 
@@ -50,8 +51,8 @@ mod tests {
 		let groups_b = AccessGroups(0b10);
 		let member_b = room.register_member(MemberCreateParams::stub(groups_b));
 
-		room.mark_as_connected_in_test(member_a).unwrap();
-		room.mark_as_connected_in_test(member_b).unwrap();
+		room.mark_as_attached_in_test(member_a).unwrap();
+		room.mark_as_attached_in_test(member_b).unwrap();
 
 		let object_a_1 = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member_b), groups_a, Default::default());
 		object_a_1.created = true;
@@ -78,7 +79,7 @@ mod tests {
 		let mut room = Room::new(0, template);
 		let groups = AccessGroups(0b100);
 		let member = room.register_member(MemberCreateParams::stub(groups));
-		room.mark_as_connected_in_test(member).unwrap();
+		room.mark_as_attached_in_test(member).unwrap();
 
 		let object = room.test_create_object_with_not_created_state(GameObjectOwner::Member(member), groups, Default::default());
 		object.created = true;

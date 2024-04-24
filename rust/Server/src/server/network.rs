@@ -244,7 +244,7 @@ mod tests {
 
 	use crate::server::network::Network;
 	use crate::server::room::config::member::MemberCreateParams;
-	use crate::server::room::member::RoomMember;
+	use crate::server::room::member::{RoomMember, RoomMemberStatus};
 	use crate::server::room_registry::Rooms;
 	use cheetah_common::network::bind_to_free_socket;
 	use cheetah_game_realtime_protocol::codec::cipher::Cipher;
@@ -296,8 +296,7 @@ mod tests {
 		let member_template = MemberCreateParams::new_member(Default::default(), Default::default());
 		let member = RoomMember {
 			id: 100,
-			connected: false,
-			attached: false,
+			status: RoomMemberStatus::Created,
 			template: member_template.clone(),
 			out_commands: Default::default(),
 		};

@@ -39,7 +39,7 @@ service RealtimeServerManagementService {
    */
   rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse);
 
-  rpc GetRoomsMembersCount(EmptyRequest) returns(GetRoomsMembersCountResponse);
+  rpc GetRoomsMembers(EmptyRequest) returns(GetRoomsMembersResponse);
 }
 
 
@@ -135,15 +135,29 @@ message GetRoomsResponse {
   repeated uint64 rooms = 1;
 }
 
-message GetRoomsMembersCountResponse {
-  repeated RoomMembersCountResponse rooms = 1;
+message GetRoomsMembersResponse {
+  repeated RoomMembersResponse rooms = 1;
 }
 
-message RoomMembersCountResponse {
+message RoomMembersResponse {
   uint64 room = 1;
-  uint32 members = 2;
-  uint32 connected_members = 3;
+  repeated Member members = 2;
 }
+
+message Member {
+  uint64 id = 1;
+  MemberStatus status = 2;
+}
+
+enum MemberStatus {
+  Created = 0;
+  CreatedNotConnectedAndDeleted = 1;
+  Connected = 2;
+  Attached = 3;
+  Disconnected = 4;
+  Detached = 5;
+}
+
 enum FieldType {
   Long = 0;
   Double = 1;
