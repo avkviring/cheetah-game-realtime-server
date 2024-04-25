@@ -240,6 +240,8 @@ dependencies = [
  "fnv",
  "lazy_static",
  "rand",
+ "serde",
+ "serde_arrays",
  "thiserror",
  "tracing",
  "tracing-core",
@@ -266,6 +268,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_arrays",
+ "serde_bytes",
  "snap",
  "strum",
  "strum_macros",
@@ -1694,6 +1697,15 @@ name = "serde_arrays"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38636132857f68ec3d5f3eb121166d2af33cb55174c4d5ff645db6165cbef0fd"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde_bytes"
+version = "0.11.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b8497c313fd43ab992087548117643f6fcd935cbf36f176ffda0aacf9591734"
 dependencies = [
  "serde",
 ]

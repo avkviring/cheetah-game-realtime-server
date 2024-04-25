@@ -5,8 +5,7 @@ use std::io::Cursor;
 use crate::room::object::GameObjectId;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[repr(C)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BinaryField {
 	pub object_id: GameObjectId,
 	pub field_id: FieldId,

@@ -120,12 +120,12 @@ impl ApplicationThreadClient {
 					}
 					S2CCommand::SetStructure(command) => {
 						command_ffi.command_type = CommandTypeId::SetStructure;
-						command_ffi.command.buffer_field = *command;
+						command_ffi.command.buffer_field = command.into();
 					}
 
 					S2CCommand::Event(command) => {
 						command_ffi.command_type = CommandTypeId::SendEvent;
-						command_ffi.command.buffer_field = *command;
+						command_ffi.command.buffer_field = command.into();
 					}
 					S2CCommand::Delete(command) => {
 						command_ffi.command_type = CommandTypeId::DeleteObject;
@@ -145,7 +145,7 @@ impl ApplicationThreadClient {
 					}
 					S2CCommand::AddItem(command) => {
 						command_ffi.command_type = CommandTypeId::AddItem;
-						command_ffi.command.buffer_field = *command;
+						command_ffi.command.buffer_field = command.into();
 					}
 				}
 				*count += 1;

@@ -70,7 +70,7 @@ impl C2SCreatedGameObject {
 	}
 
 	pub fn get_singleton_key(&self) -> Option<&Buffer> {
-		if self.singleton_key.len == 0 {
+		if self.singleton_key.buffer.len() == 0 {
 			None
 		} else {
 			Some(&self.singleton_key)

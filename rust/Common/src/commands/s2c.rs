@@ -20,13 +20,13 @@ pub enum S2CCommand {
 	Created(GameObjectCreated),
 	SetLong(LongField),
 	SetDouble(DoubleField),
-	SetStructure(Box<BinaryField>),
-	Event(Box<BinaryField>),
+	SetStructure(BinaryField),
+	Event(BinaryField),
 	Delete(GameObjectId),
 	DeleteField(DeleteField),
 	MemberConnected(MemberConnected),
 	MemberDisconnected(MemberDisconnected),
-	AddItem(Box<BinaryField>),
+	AddItem(BinaryField),
 }
 
 impl S2CCommand {

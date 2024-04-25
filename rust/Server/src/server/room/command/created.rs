@@ -26,7 +26,7 @@ pub(crate) fn created_object(command: &C2SCreatedGameObject, room: &mut Room, me
 				room.delete_object(member_object_id, member_id)?;
 				return Ok(());
 			}
-			room.set_singleton_key(*singleton_key, new_room_object_id);
+			room.set_singleton_key(singleton_key.clone(), new_room_object_id);
 		}
 		room.room_object_id_generator += 1;
 		let mut object = room.delete_object(member_object_id, member_id)?;
@@ -168,7 +168,7 @@ mod tests {
 			access_groups,
 		};
 		create_object(&create_command, &mut room, member_id).unwrap();
-		let created_command = C2SCreatedGameObject::new(member_object_id_1, true, singleton_key);
+		let created_command = C2SCreatedGameObject::new(member_object_id_1, true, singleton_key.clone());
 
 		created_object(&created_command, &mut room, member_id).unwrap();
 		room.test_out_commands.clear();
@@ -180,7 +180,7 @@ mod tests {
 			access_groups,
 		};
 		create_object(&create_command, &mut room, member_id).unwrap();
-		let created_command = C2SCreatedGameObject::new(member_object_id_2, true, singleton_key);
+		let created_command = C2SCreatedGameObject::new(member_object_id_2, true, singleton_key.clone());
 		created_object(&created_command, &mut room, member_id).unwrap();
 		assert_eq!(room.objects.len(), 1);
 		assert_eq!(room.test_out_commands.len(), 0);

@@ -101,9 +101,7 @@ mod tests {
 		object.long_fields.set(1, 100);
 		object.double_fields.set(2, 200.200);
 		object.structure_fields.set(1, Box::new([1, 2, 3].as_ref().into()));
-		object
-			.structures_fields
-			.set(1, [Box::new([1, 2, 3].as_ref().into()), Box::new([4, 5, 6].as_ref().into())].into_iter().collect());
+		object.structures_fields.set(1, [[1, 2, 3].as_ref().into(), [4, 5, 6].as_ref().into()].into_iter().collect());
 
 		let mut commands = S2CCommandsCollector::new();
 		object.collect_create_commands(&mut commands);
@@ -197,6 +195,6 @@ mod tests {
 		object.structure_fields.set(1, Box::new(Buffer::from([4, 5, 6, 7].as_ref())));
 
 		let s: &Buffer = object.structure_fields.get(1).unwrap();
-		assert_eq!(s.as_slice(), [4, 5, 6, 7]);
+		assert_eq!(s.buffer.as_slice(), [4, 5, 6, 7]);
 	}
 }
