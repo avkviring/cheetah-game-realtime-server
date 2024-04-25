@@ -2,10 +2,8 @@ use std::thread;
 use std::time::Duration;
 
 use cheetah_client::ffi;
-use cheetah_client::ffi::command::{S2CCommandFFI, S2CommandUnionFFI};
-use cheetah_common::commands::types::structure::BinaryField;
+use cheetah_client::ffi::command::{BinaryFieldFFI, BufferFFI, S2CCommandFFI, S2CommandUnionFFI};
 use cheetah_common::commands::CommandTypeId;
-use cheetah_common::room::buffer::Buffer;
 use cheetah_common::room::field::FieldId;
 use cheetah_common::room::object::GameObjectId;
 
@@ -28,7 +26,7 @@ fn should_items_loaded() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::AddItem,
 			command: S2CommandUnionFFI {
-				buffer_field: BinaryField { object_id, field_id, value: item_1 }
+				buffer_field: BinaryFieldFFI { object_id, field_id, value: item_1 }
 			}
 		}
 	);
@@ -37,7 +35,7 @@ fn should_items_loaded() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::AddItem,
 			command: S2CommandUnionFFI {
-				buffer_field: BinaryField { object_id, field_id, value: item_2 }
+				buffer_field: BinaryFieldFFI { object_id, field_id, value: item_2 }
 			}
 		}
 	);
@@ -59,7 +57,7 @@ fn should_set_items() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::AddItem,
 			command: S2CommandUnionFFI {
-				buffer_field: BinaryField { object_id, field_id, value: item_1 }
+				buffer_field: BinaryFieldFFI { object_id, field_id, value: item_1 }
 			}
 		}
 	);
@@ -68,16 +66,16 @@ fn should_set_items() {
 		S2CCommandFFI {
 			command_type: CommandTypeId::AddItem,
 			command: S2CommandUnionFFI {
-				buffer_field: BinaryField { object_id, field_id, value: item_2 }
+				buffer_field: BinaryFieldFFI { object_id, field_id, value: item_2 }
 			}
 		}
 	);
 }
 
-fn add_items(client1: u16, object_id: &GameObjectId) -> (FieldId, Buffer, Buffer) {
+fn add_items(client1: u16, object_id: &GameObjectId) -> (FieldId, BufferFFI, BufferFFI) {
 	let field_id = 10;
-	let item_1 = Buffer::from([100].as_slice());
-	let item_2 = Buffer::from([200].as_slice());
+	let item_1 = BufferFFI::from([100].as_slice());
+	let item_2 = BufferFFI::from([200].as_slice());
 	ffi::command::items::add_item(client1, &object_id, field_id, &item_1);
 	ffi::command::items::add_item(client1, &object_id, field_id, &item_2);
 	(field_id, item_1, item_2)

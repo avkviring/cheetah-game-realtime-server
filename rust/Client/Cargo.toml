@@ -20,6 +20,8 @@ tracing.workspace = true
 tracing-core.workspace = true
 tracing-log.workspace = true
 tracing-subscriber.workspace = true
+serde = { version = "1.0.188", features = ["derive"] }
+serde_arrays = "0.1.0"
 
 [dev-dependencies]
 cheetah-server = { path = "../Server" }

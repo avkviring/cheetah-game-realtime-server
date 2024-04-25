@@ -10,7 +10,7 @@ use crate::server::room::Room;
 
 pub(crate) fn send(event: &BinaryField, room: &mut Room, member_id: RoomMemberId) -> Result<(), ServerCommandError> {
 	let object_id = event.object_id;
-	let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event((*event).into())));
+	let action = |_object: &mut GameObject| Ok(Some(S2CCommand::Event(event.clone())));
 	room.send_command_from_action(object_id, member_id, None, action)
 }
 

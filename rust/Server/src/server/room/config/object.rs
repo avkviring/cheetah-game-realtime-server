@@ -63,7 +63,7 @@ impl GameObjectCreateParams {
 
 		self.longs.iter().for_each(|(&k, v)| object.long_fields.set(k, *v));
 		self.doubles.iter().for_each(|(&k, v)| object.double_fields.set(k, *v));
-		self.structures.iter().for_each(|(&k, v)| object.structure_fields.set(k, Box::new(*v)));
+		self.structures.iter().for_each(|(&k, v)| object.structure_fields.set(k, Box::new(v.clone())));
 
 		object
 	}

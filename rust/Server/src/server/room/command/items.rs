@@ -25,8 +25,8 @@ pub(crate) fn add(item: &BinaryField, room: &mut Room, member_id: RoomMemberId) 
 		if deque.len() >= item_config.capacity {
 			deque.pop_front();
 		}
-		deque.push_back(Box::new(item.value));
-		Ok(Some(S2CCommand::AddItem((*item).into())))
+		deque.push_back(item.value.clone());
+		Ok(Some(S2CCommand::AddItem(item.clone())))
 	};
 
 	room.send_command_from_action(object_id, member_id, None, action)
@@ -65,7 +65,7 @@ mod tests {
 		add(&command_2, &mut room, member_id).unwrap();
 		let object = room.get_object_mut(object_id).unwrap();
 		let structures = object.structures_fields.get(100).unwrap();
-		assert_eq!(*structures, VecDeque::from([Box::new(command_1.value), Box::new(command_2.value)]));
+		assert_eq!(*structures, VecDeque::from([command_1.value.clone(), command_2.value.clone()]));
 		assert!(matches!(room.test_out_commands.pop_back(), Some((.., S2CCommand::AddItem(c))) if c ==
 			command_1.into()));
 	}
@@ -102,7 +102,7 @@ mod tests {
 
 		let object = room.get_object_mut(object_id).unwrap();
 		let structures = object.structures_fields.get(field_id).unwrap();
-		assert_eq!(*structures, VecDeque::from([Box::new(command_2.value)]));
+		assert_eq!(*structures, VecDeque::from([command_2.value]));
 	}
 
 	fn setup(room_create_params: RoomCreateParams, template_id: GameObjectTemplateId) -> (Room, RoomMemberId, GameObjectId) {

@@ -8,7 +8,7 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use crate::clients::registry::ClientId;
-use crate::ffi::command::S2CCommandFFI;
+use crate::ffi::command::{BufferFFI, S2CCommandFFI};
 use crate::ffi::{execute, execute_with_client, ClientError, LAST_ERROR};
 use cheetah_common::network::ConnectionStatus;
 use cheetah_common::room::buffer::Buffer;
@@ -124,7 +124,7 @@ pub extern "C" fn get_statistics(client_id: ClientId, statistics: &mut Statistic
 
 #[no_mangle]
 #[allow(clippy::cast_possible_truncation)]
-pub extern "C" fn get_last_error_msg(buffer: &mut Buffer) {
+pub extern "C" fn get_last_error_msg(buffer: &mut BufferFFI) {
 	let msg = LAST_ERROR.lock().unwrap();
 	let msg = msg.as_bytes();
 	let length = msg.len();
@@ -151,7 +151,7 @@ pub unsafe extern "C" fn create_client(
 	addr: *const c_char,
 	member_id: RoomMemberId,
 	room_id: RoomId,
-	private_key_buffer: &Buffer,
+	private_key_buffer: &BufferFFI,
 	disconnect_time_in_sec: u64,
 	out_client_id: &mut u16,
 ) -> u8 {
